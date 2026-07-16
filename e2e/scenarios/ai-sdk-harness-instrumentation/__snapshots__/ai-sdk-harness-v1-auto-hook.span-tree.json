@@ -15,7 +15,6 @@
               "input": {
                 "messages": [
                   {
-                    "content": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK.",
                     "role": "user"
                   }
                 ],
@@ -38,7 +37,6 @@
             "maxRetries": 0,
             "messages": [
               {
-                "content": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK.",
                 "role": "user"
               }
             ],
@@ -61,12 +59,6 @@
         "prompt": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK."
       },
       "output": {
-        "content": [
-          {
-            "text": "Running the requested bash command once, then I’ll return only its output.",
-            "type": "text"
-          }
-        ],
         "finishReason": "other",
         "response": {
           "id": "<span:1>",
@@ -74,44 +66,6 @@
           "modelId": "shared-harness-session",
           "timestamp": "<timestamp>"
         },
-        "responseMessages": "<omitted>",
-        "steps": [
-          {
-            "content": [
-              {
-                "text": "Running the requested bash command once, then I’ll return only its output.",
-                "type": "text"
-              }
-            ],
-            "finishReason": "other",
-            "model": {
-              "modelId": "shared-harness-session",
-              "provider": "harness:codex"
-            },
-            "performance": {
-              "effectiveOutputTokensPerSecond": 0,
-              "effectiveTotalTokensPerSecond": 0,
-              "responseTimeMs": 0,
-              "stepTimeMs": 0,
-              "toolExecutionMs": {}
-            },
-            "response": {
-              "id": "<span:1>",
-              "messages": [],
-              "modelId": "shared-harness-session",
-              "timestamp": "<timestamp>"
-            },
-            "runtimeContext": {},
-            "stepNumber": 0,
-            "usage": {
-              "inputTokenDetails": {},
-              "outputTokenDetails": {}
-            }
-          }
-        ],
-        "text": "Running the requested bash command once, then I’ll return only its output.",
-        "toolCalls": [],
-        "toolResults": [],
         "totalUsage": {
           "inputTokenDetails": {},
           "outputTokenDetails": {}
@@ -129,7 +83,9 @@
         },
         "harnessId": "codex",
         "permissionMode": "allow-all",
+        "scenario": "ai-sdk-harness-instrumentation",
         "sessionId": "shared-harness-session",
+        "testRunId": "<run:1>",
         "tools": {
           "bash": {
             "commonName": "bash",
@@ -187,7 +143,6 @@
               "input": {
                 "messages": [
                   {
-                    "content": "",
                     "role": "user"
                   }
                 ],
@@ -197,18 +152,6 @@
                 }
               },
               "output": {
-                "content": [
-                  {
-                    "text": "GENERATE_OK",
-                    "type": "text"
-                  },
-                  {
-                    "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}",
-                    "toolCallId": "<toolCallId:2>",
-                    "toolName": "bash",
-                    "type": "tool-call"
-                  }
-                ],
                 "finishReason": {
                   "raw": "stop",
                   "unified": "stop"
@@ -224,7 +167,6 @@
                     "total": 14771
                   },
                   "outputTokens": {
-                    "text": 112,
                     "total": 112
                   }
                 }
@@ -264,7 +206,6 @@
             "maxRetries": 0,
             "messages": [
               {
-                "content": "",
                 "role": "user"
               }
             ],
@@ -274,7 +215,6 @@
             }
           },
           "output": {
-            "content": [],
             "finishReason": {
               "raw": "stop",
               "unified": "stop"
@@ -285,9 +225,6 @@
               "modelId": "gpt-5.4-mini",
               "timestamp": "<timestamp>"
             },
-            "steps": [
-              null
-            ],
             "totalUsage": {
               "inputTokens": {
                 "cacheRead": 7168,
@@ -296,7 +233,6 @@
                 "total": 14771
               },
               "outputTokens": {
-                "text": 112,
                 "total": 112
               }
             },
@@ -308,7 +244,6 @@
                 "total": 14771
               },
               "outputTokens": {
-                "text": 112,
                 "total": 112
               }
             }
@@ -327,95 +262,13 @@
         "toolApprovalContinuations": []
       },
       "output": {
-        "content": [
-          {
-            "input": {
-              "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
-            },
-            "providerExecuted": true,
-            "toolCallId": "<toolCallId:1>",
-            "toolName": "bash",
-            "type": "tool-call"
-          },
-          {
-            "text": "GENERATE_OK",
-            "type": "text"
-          }
-        ],
         "finishReason": "stop",
         "response": {
-          "id": "<span:2>",
+          "id": "<span:1>",
           "messages": [],
           "modelId": "shared-harness-session",
           "timestamp": "<timestamp>"
         },
-        "responseMessages": "<omitted>",
-        "steps": [
-          {
-            "content": [
-              {
-                "input": {
-                  "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
-                },
-                "providerExecuted": true,
-                "toolCallId": "<toolCallId:1>",
-                "toolName": "bash",
-                "type": "tool-call"
-              },
-              {
-                "text": "GENERATE_OK",
-                "type": "text"
-              }
-            ],
-            "finishReason": "stop",
-            "model": {
-              "modelId": "shared-harness-session",
-              "provider": "harness:codex"
-            },
-            "performance": {
-              "effectiveOutputTokensPerSecond": 0,
-              "effectiveTotalTokensPerSecond": 0,
-              "responseTimeMs": 0,
-              "stepTimeMs": 0,
-              "toolExecutionMs": {}
-            },
-            "rawFinishReason": "stop",
-            "response": {
-              "id": "<span:2>",
-              "messages": [],
-              "modelId": "shared-harness-session",
-              "timestamp": "<timestamp>"
-            },
-            "runtimeContext": {},
-            "stepNumber": 0,
-            "usage": {
-              "inputTokenDetails": {
-                "cacheReadTokens": 7168,
-                "cacheWriteTokens": 0,
-                "noCacheTokens": 7603
-              },
-              "inputTokens": 14771,
-              "outputTokenDetails": {
-                "textTokens": 112
-              },
-              "outputTokens": 112,
-              "totalTokens": 14883
-            }
-          }
-        ],
-        "text": "GENERATE_OK",
-        "toolCalls": [
-          {
-            "input": {
-              "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
-            },
-            "providerExecuted": true,
-            "toolCallId": "<toolCallId:1>",
-            "toolName": "bash",
-            "type": "tool-call"
-          }
-        ],
-        "toolResults": [],
         "totalUsage": {
           "inputTokenDetails": {
             "cacheReadTokens": 7168,
@@ -451,7 +304,9 @@
         },
         "harnessId": "codex",
         "permissionMode": "allow-all",
+        "scenario": "ai-sdk-harness-instrumentation",
         "sessionId": "shared-harness-session",
+        "testRunId": "<run:1>",
         "tools": {
           "bash": {
             "commonName": "bash",
@@ -516,7 +371,6 @@
               "input": {
                 "messages": [
                   {
-                    "content": "Run the built-in bash command \"touch /workspace/stream-started; sleep 5; printf STREAM_OK\" exactly once. After it finishes, reply exactly STREAM_OK.",
                     "role": "user"
                   }
                 ],
@@ -539,7 +393,6 @@
             "maxRetries": 0,
             "messages": [
               {
-                "content": "Run the built-in bash command \"touch /workspace/stream-started; sleep 5; printf STREAM_OK\" exactly once. After it finishes, reply exactly STREAM_OK.",
                 "role": "user"
               }
             ],
@@ -561,14 +414,12 @@
       "input": {
         "messages": [
           {
-            "content": "Run the built-in bash command \"touch /workspace/stream-started; sleep 5; printf STREAM_OK\" exactly once. After it finishes, reply exactly STREAM_OK.",
             "role": "user"
           }
         ]
       },
       "output": {
-        "finishReason": "other",
-        "text": "I’m running the requested bash command once now and will return only the exact result after it completes."
+        "finishReason": "other"
       },
       "metadata": {
         "braintrust": {
@@ -577,7 +428,9 @@
         },
         "harnessId": "codex",
         "permissionMode": "allow-all",
+        "scenario": "ai-sdk-harness-instrumentation",
         "sessionId": "shared-harness-session",
+        "testRunId": "<run:1>",
         "tools": {
           "bash": {
             "commonName": "bash",
@@ -638,7 +491,6 @@
               "input": {
                 "messages": [
                   {
-                    "content": "",
                     "role": "user"
                   }
                 ],
@@ -648,18 +500,6 @@
                 }
               },
               "output": {
-                "content": [
-                  {
-                    "text": "The command is still running; I’m waiting for it to finish before responding.STREAM_OK",
-                    "type": "text"
-                  },
-                  {
-                    "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}",
-                    "toolCallId": "<toolCallId:2>",
-                    "toolName": "bash",
-                    "type": "tool-call"
-                  }
-                ],
                 "finishReason": {
                   "raw": "stop",
                   "unified": "stop"
@@ -675,7 +515,6 @@
                     "total": 22371
                   },
                   "outputTokens": {
-                    "text": 196,
                     "total": 196
                   }
                 }
@@ -715,7 +554,6 @@
             "maxRetries": 0,
             "messages": [
               {
-                "content": "",
                 "role": "user"
               }
             ],
@@ -725,7 +563,6 @@
             }
           },
           "output": {
-            "content": [],
             "finishReason": {
               "raw": "stop",
               "unified": "stop"
@@ -736,9 +573,6 @@
               "modelId": "gpt-5.4-mini",
               "timestamp": "<timestamp>"
             },
-            "steps": [
-              null
-            ],
             "totalUsage": {
               "inputTokens": {
                 "cacheRead": 14336,
@@ -747,7 +581,6 @@
                 "total": 22371
               },
               "outputTokens": {
-                "text": 196,
                 "total": 196
               }
             },
@@ -759,7 +592,6 @@
                 "total": 22371
               },
               "outputTokens": {
-                "text": 196,
                 "total": 196
               }
             }
@@ -778,8 +610,7 @@
         "toolApprovalContinuations": []
       },
       "output": {
-        "finishReason": "stop",
-        "text": "The command is still running; I’m waiting for it to finish before responding.STREAM_OK"
+        "finishReason": "stop"
       },
       "metadata": {
         "braintrust": {
@@ -788,7 +619,9 @@
         },
         "harnessId": "codex",
         "permissionMode": "allow-all",
+        "scenario": "ai-sdk-harness-instrumentation",
         "sessionId": "shared-harness-session",
+        "testRunId": "<run:1>",
         "tools": {
           "bash": {
             "commonName": "bash",

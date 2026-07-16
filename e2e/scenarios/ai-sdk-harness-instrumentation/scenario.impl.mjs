@@ -2,6 +2,12 @@ import { initLogger } from "braintrust";
 import { createDockerSandbox } from "./docker-sandbox.mjs";
 
 const SESSION_ID = "shared-harness-session";
+const TURN_SPAN_INFO = {
+  metadata: {
+    scenario: "ai-sdk-harness-instrumentation",
+    testRunId: process.env.BRAINTRUST_E2E_RUN_ID,
+  },
+};
 
 async function waitForFile(session, filePath) {
   const sandbox = session.getSandboxSession().restricted();
@@ -34,7 +40,6 @@ export async function runHarnessAgentScenario(HarnessAgent) {
     }),
     permissionMode: "allow-all",
     sandbox: dockerSandbox.provider,
-    telemetry: {},
   });
   try {
     let session = await agent.createSession({ sessionId: SESSION_ID });
@@ -42,6 +47,7 @@ export async function runHarnessAgentScenario(HarnessAgent) {
       prompt:
         'Run the built-in bash command "touch /workspace/generate-started; sleep 5; printf GENERATE_OK" exactly once. After it finishes, reply exactly GENERATE_OK.',
       session,
+      span_info: TURN_SPAN_INFO,
     });
     await waitForFile(session, "/workspace/generate-started");
     const generateContinuationState = await session.suspendTurn();
@@ -53,6 +59,7 @@ export async function runHarnessAgentScenario(HarnessAgent) {
     });
     await agent.continueGenerate({
       session,
+      span_info: TURN_SPAN_INFO,
       toolApprovalContinuations: [],
     });
     await session.destroy();
@@ -67,6 +74,7 @@ export async function runHarnessAgentScenario(HarnessAgent) {
         },
       ],
       session,
+      span_info: TURN_SPAN_INFO,
     });
     const streamDrain = (async () => {
       for await (const _part of streamed.fullStream) {
@@ -83,6 +91,7 @@ export async function runHarnessAgentScenario(HarnessAgent) {
     });
     const continuedStream = await agent.continueStream({
       session,
+      span_info: TURN_SPAN_INFO,
       toolApprovalContinuations: [],
     });
     for await (const _part of continuedStream.fullStream) {

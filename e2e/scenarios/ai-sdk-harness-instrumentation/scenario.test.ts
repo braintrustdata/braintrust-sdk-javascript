@@ -80,6 +80,9 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             const turns = turnNames.flatMap((name) =>
               findAllSpans(events, name),
             );
+            const turnsByName = Object.fromEntries(
+              turns.map((turn) => [turn.span.name, turn]),
+            );
             expect(turns).toHaveLength(4);
             expect(new Set(turns.map((turn) => turn.span.rootId)).size).toBe(4);
 
@@ -89,10 +92,31 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
               expect(turn.metadata).toMatchObject({
                 harnessId: "codex",
                 permissionMode: "allow-all",
+                scenario: "ai-sdk-harness-instrumentation",
                 sessionId: "shared-harness-session",
+                testRunId: harness.testRunId,
               });
               expect(turn.input).not.toHaveProperty("session");
             }
+            expect(turnsByName["HarnessAgent.generate"]?.input).toEqual({
+              prompt:
+                'Run the built-in bash command "touch /workspace/generate-started; sleep 5; printf GENERATE_OK" exactly once. After it finishes, reply exactly GENERATE_OK.',
+            });
+            expect(turnsByName["HarnessAgent.stream"]?.input).toEqual({
+              messages: [
+                {
+                  role: "user",
+                  content:
+                    'Run the built-in bash command "touch /workspace/stream-started; sleep 5; printf STREAM_OK" exactly once. After it finishes, reply exactly STREAM_OK.',
+                },
+              ],
+            });
+            expect(turnsByName["HarnessAgent.continueGenerate"]?.input).toEqual(
+              { toolApprovalContinuations: [] },
+            );
+            expect(turnsByName["HarnessAgent.continueStream"]?.input).toEqual({
+              toolApprovalContinuations: [],
+            });
             expect(turns.some((turn) => (turn.metrics?.tokens ?? 0) > 0)).toBe(
               true,
             );
@@ -100,12 +124,10 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             expect(findAllSpans(events, "HarnessAgent.createSession")).toEqual(
               [],
             );
-            if (mode === "auto-hook") {
-              expect(findAllSpans(events, "doGenerate").length).toBeGreaterThan(
-                0,
-              );
-              expect(findAllSpans(events, "bash").length).toBeGreaterThan(0);
-            }
+            expect(findAllSpans(events, "doGenerate").length).toBeGreaterThan(
+              0,
+            );
+            expect(findAllSpans(events, "bash").length).toBeGreaterThan(0);
 
             await matchSpanTreeSnapshot(
               events,
@@ -113,7 +135,23 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
                 import.meta.url,
                 `${scenario.variantKey}-${mode}.span-tree.json`,
               ),
-              { normalize: { omittedKeys: ["callId"] } },
+              {
+                normalize: {
+                  // Codex may include its tool call in either side of the
+                  // suspended turn. Assert the exact turn inputs and tool
+                  // lifecycle above, while snapshotting the stable trace
+                  // shape and aggregate usage.
+                  omittedKeys: [
+                    "callId",
+                    "content",
+                    "responseMessages",
+                    "steps",
+                    "text",
+                    "toolCalls",
+                    "toolResults",
+                  ],
+                },
+              },
             );
           });
         });

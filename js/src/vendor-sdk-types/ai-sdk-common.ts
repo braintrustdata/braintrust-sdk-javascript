@@ -286,6 +286,14 @@ export interface AISDKHarnessAgentCallParams extends AISDKCallParams {
   toolApprovalContinuations?: unknown;
 }
 
+export interface AISDKHarnessAgentSettings {
+  telemetry?: {
+    isEnabled?: boolean;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 export type AISDKHarnessAgentGenerateFunction = (
   params: AISDKHarnessAgentCallParams,
 ) => Promise<AISDKResult>;
@@ -297,6 +305,7 @@ export type AISDKHarnessAgentStreamFunction = (
 export interface AISDKHarnessAgentInstance {
   harnessId?: string;
   permissionMode?: string;
+  settings?: AISDKHarnessAgentSettings;
   tools?: AISDKTools;
   generate: AISDKHarnessAgentGenerateFunction;
   stream: AISDKHarnessAgentStreamFunction;

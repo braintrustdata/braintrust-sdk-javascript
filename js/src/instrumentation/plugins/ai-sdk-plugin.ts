@@ -34,6 +34,7 @@ import type {
   AISDKEmbedParams,
   AISDKEmbeddingResult,
   AISDKHarnessAgentCallParams,
+  AISDKHarnessAgentSettings,
   AISDKLanguageModel,
   AISDKModel,
   AISDKModelStreamChunk,
@@ -1273,6 +1274,24 @@ function prepareAISDKHarnessAgentInput(
   input: unknown;
   metadata: Record<string, unknown>;
 } {
+  if (isObject(self)) {
+    try {
+      if (isObject(self.settings)) {
+        const settings = self.settings as AISDKHarnessAgentSettings;
+        if (settings.telemetry === undefined) {
+          // HarnessAgent reads telemetry from its constructor settings after
+          // this channel starts. Replace the settings object so instrumentation
+          // does not mutate the configuration object supplied by the caller.
+          Reflect.set(self, "settings", { ...settings, telemetry: {} });
+        }
+      }
+    } catch {
+      // A frozen or custom HarnessAgent may not allow settings replacement.
+      // Root turn tracing still works; only its optional lifecycle spans are
+      // unavailable in that case.
+    }
+  }
+
   const selectedInput: AISDKHarnessAgentCallParams = {};
   if (params.prompt !== undefined) {
     selectedInput.prompt = params.prompt;

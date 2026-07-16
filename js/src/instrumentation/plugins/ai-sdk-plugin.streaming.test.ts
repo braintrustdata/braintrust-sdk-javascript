@@ -1021,6 +1021,7 @@ describe("AI SDK streaming instrumentation", () => {
 
       private record(params: any) {
         expect(this.#secret).toBe("preserved");
+        expect(this.settings.telemetry).toEqual({});
         receivedParams.push(params);
       }
 
@@ -1067,7 +1068,6 @@ describe("AI SDK streaming instrumentation", () => {
       prompt: "generate prompt",
       providerOptions: { mock: { option: true } },
       session,
-      telemetry: {},
     });
     const streamResult = await agent.stream({
       messages: [{ role: "user", content: "stream prompt" }],
@@ -1090,6 +1090,10 @@ describe("AI SDK streaming instrumentation", () => {
       expect(params).not.toHaveProperty("shouldNeverReachCall");
       expect(params.session).toBe(session);
     }
+    expect(agent.settings).toEqual({
+      shouldNeverReachCall: true,
+      telemetry: {},
+    });
 
     const spans = (await backgroundLogger.drain()) as any[];
     const harnessSpans = spans.filter((span) =>
@@ -1129,6 +1133,32 @@ describe("AI SDK streaming instrumentation", () => {
         tokens: 10,
       });
     }
+  });
+
+  test("wrapAgentClass preserves explicit HarnessAgent telemetry settings", async () => {
+    const telemetry = { isEnabled: false };
+
+    class HarnessAgent {
+      readonly harnessId = "mock-harness";
+      readonly permissionMode = "allow-all";
+      readonly settings = { telemetry };
+      readonly tools = {};
+
+      async generate() {
+        expect(this.settings.telemetry).toBe(telemetry);
+        return {
+          text: "generated",
+          usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        };
+      }
+    }
+
+    const WrappedHarnessAgent = wrapAgentClass(HarnessAgent);
+    const agent = new WrappedHarnessAgent();
+    await agent.generate({ session: { sessionId: "session-123" } });
+
+    expect(agent.settings.telemetry).toBe(telemetry);
+    expect(await backgroundLogger.drain()).toHaveLength(1);
   });
 
   test("wrapAgentClass preserves HarnessAgent errors", async () => {

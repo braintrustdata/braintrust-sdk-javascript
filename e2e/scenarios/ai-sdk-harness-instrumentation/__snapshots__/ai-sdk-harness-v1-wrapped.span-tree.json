@@ -3,17 +3,62 @@
     {
       "name": "HarnessAgent.generate",
       "type": "task",
-      "children": [],
+      "children": [
+        {
+          "name": "harness",
+          "type": "function",
+          "children": [
+            {
+              "name": "doGenerate",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-5.4-mini",
+                  "provider": "codex"
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-5.4-mini",
+                "provider": "codex"
+              }
+            }
+          ],
+          "input": {
+            "maxRetries": 0,
+            "messages": [
+              {
+                "role": "user"
+              }
+            ],
+            "model": {
+              "modelId": "gpt-5.4-mini",
+              "provider": "codex"
+            }
+          },
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "model": "gpt-5.4-mini",
+            "provider": "codex"
+          }
+        }
+      ],
       "input": {
         "prompt": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK."
       },
       "output": {
-        "content": [
-          {
-            "text": "Running the requested bash command once, then I’ll return only its output.",
-            "type": "text"
-          }
-        ],
         "finishReason": "other",
         "response": {
           "id": "<span:1>",
@@ -21,44 +66,6 @@
           "modelId": "shared-harness-session",
           "timestamp": "<timestamp>"
         },
-        "responseMessages": "<omitted>",
-        "steps": [
-          {
-            "content": [
-              {
-                "text": "Running the requested bash command once, then I’ll return only its output.",
-                "type": "text"
-              }
-            ],
-            "finishReason": "other",
-            "model": {
-              "modelId": "shared-harness-session",
-              "provider": "harness:codex"
-            },
-            "performance": {
-              "effectiveOutputTokensPerSecond": 0,
-              "effectiveTotalTokensPerSecond": 0,
-              "responseTimeMs": 0,
-              "stepTimeMs": 0,
-              "toolExecutionMs": {}
-            },
-            "response": {
-              "id": "<span:1>",
-              "messages": [],
-              "modelId": "shared-harness-session",
-              "timestamp": "<timestamp>"
-            },
-            "runtimeContext": {},
-            "stepNumber": 0,
-            "usage": {
-              "inputTokenDetails": {},
-              "outputTokenDetails": {}
-            }
-          }
-        ],
-        "text": "Running the requested bash command once, then I’ll return only its output.",
-        "toolCalls": [],
-        "toolResults": [],
         "totalUsage": {
           "inputTokenDetails": {},
           "outputTokenDetails": {}
@@ -76,7 +83,9 @@
         },
         "harnessId": "codex",
         "permissionMode": "allow-all",
+        "scenario": "ai-sdk-harness-instrumentation",
         "sessionId": "shared-harness-session",
+        "testRunId": "<run:1>",
         "tools": {
           "bash": {
             "commonName": "bash",
@@ -122,100 +131,144 @@
     {
       "name": "HarnessAgent.continueGenerate",
       "type": "task",
-      "children": [],
+      "children": [
+        {
+          "name": "harness",
+          "type": "function",
+          "children": [
+            {
+              "name": "doGenerate",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-5.4-mini",
+                  "provider": "codex"
+                }
+              },
+              "output": {
+                "finishReason": {
+                  "raw": "stop",
+                  "unified": "stop"
+                },
+                "response": {
+                  "id": "<span:1>"
+                },
+                "usage": {
+                  "inputTokens": {
+                    "cacheRead": 7168,
+                    "cacheWrite": 0,
+                    "noCache": 7603,
+                    "total": 14771
+                  },
+                  "outputTokens": {
+                    "total": 112
+                  }
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-5.4-mini",
+                "provider": "codex"
+              },
+              "metrics": {
+                "completion_tokens": 112,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 7168,
+                "prompt_tokens": 14771,
+                "tokens": 14883
+              }
+            },
+            {
+              "name": "bash",
+              "type": "tool",
+              "children": [],
+              "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}",
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "bash"
+              }
+            }
+          ],
+          "input": {
+            "maxRetries": 0,
+            "messages": [
+              {
+                "role": "user"
+              }
+            ],
+            "model": {
+              "modelId": "gpt-5.4-mini",
+              "provider": "codex"
+            }
+          },
+          "output": {
+            "finishReason": {
+              "raw": "stop",
+              "unified": "stop"
+            },
+            "response": {
+              "id": "<span:1>",
+              "messages": [],
+              "modelId": "gpt-5.4-mini",
+              "timestamp": "<timestamp>"
+            },
+            "totalUsage": {
+              "inputTokens": {
+                "cacheRead": 7168,
+                "cacheWrite": 0,
+                "noCache": 7603,
+                "total": 14771
+              },
+              "outputTokens": {
+                "total": 112
+              }
+            },
+            "usage": {
+              "inputTokens": {
+                "cacheRead": 7168,
+                "cacheWrite": 0,
+                "noCache": 7603,
+                "total": 14771
+              },
+              "outputTokens": {
+                "total": 112
+              }
+            }
+          },
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "model": "gpt-5.4-mini",
+            "provider": "codex"
+          }
+        }
+      ],
       "input": {
         "toolApprovalContinuations": []
       },
       "output": {
-        "content": [
-          {
-            "input": {
-              "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
-            },
-            "providerExecuted": true,
-            "toolCallId": "<toolCallId:1>",
-            "toolName": "bash",
-            "type": "tool-call"
-          },
-          {
-            "text": "GENERATE_OK",
-            "type": "text"
-          }
-        ],
         "finishReason": "stop",
         "response": {
-          "id": "<span:2>",
+          "id": "<span:1>",
           "messages": [],
           "modelId": "shared-harness-session",
           "timestamp": "<timestamp>"
         },
-        "responseMessages": "<omitted>",
-        "steps": [
-          {
-            "content": [
-              {
-                "input": {
-                  "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
-                },
-                "providerExecuted": true,
-                "toolCallId": "<toolCallId:1>",
-                "toolName": "bash",
-                "type": "tool-call"
-              },
-              {
-                "text": "GENERATE_OK",
-                "type": "text"
-              }
-            ],
-            "finishReason": "stop",
-            "model": {
-              "modelId": "shared-harness-session",
-              "provider": "harness:codex"
-            },
-            "performance": {
-              "effectiveOutputTokensPerSecond": 0,
-              "effectiveTotalTokensPerSecond": 0,
-              "responseTimeMs": 0,
-              "stepTimeMs": 0,
-              "toolExecutionMs": {}
-            },
-            "rawFinishReason": "stop",
-            "response": {
-              "id": "<span:2>",
-              "messages": [],
-              "modelId": "shared-harness-session",
-              "timestamp": "<timestamp>"
-            },
-            "runtimeContext": {},
-            "stepNumber": 0,
-            "usage": {
-              "inputTokenDetails": {
-                "cacheReadTokens": 7168,
-                "cacheWriteTokens": 0,
-                "noCacheTokens": 7603
-              },
-              "inputTokens": 14771,
-              "outputTokenDetails": {
-                "textTokens": 112
-              },
-              "outputTokens": 112,
-              "totalTokens": 14883
-            }
-          }
-        ],
-        "text": "GENERATE_OK",
-        "toolCalls": [
-          {
-            "input": {
-              "command": "/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'"
-            },
-            "providerExecuted": true,
-            "toolCallId": "<toolCallId:1>",
-            "toolName": "bash",
-            "type": "tool-call"
-          }
-        ],
-        "toolResults": [],
         "totalUsage": {
           "inputTokenDetails": {
             "cacheReadTokens": 7168,
@@ -251,7 +304,9 @@
         },
         "harnessId": "codex",
         "permissionMode": "allow-all",
+        "scenario": "ai-sdk-harness-instrumentation",
         "sessionId": "shared-harness-session",
+        "testRunId": "<run:1>",
         "tools": {
           "bash": {
             "commonName": "bash",
@@ -304,18 +359,67 @@
     {
       "name": "HarnessAgent.stream",
       "type": "task",
-      "children": [],
+      "children": [
+        {
+          "name": "harness",
+          "type": "function",
+          "children": [
+            {
+              "name": "doGenerate",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-5.4-mini",
+                  "provider": "codex"
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-5.4-mini",
+                "provider": "codex"
+              }
+            }
+          ],
+          "input": {
+            "maxRetries": 0,
+            "messages": [
+              {
+                "role": "user"
+              }
+            ],
+            "model": {
+              "modelId": "gpt-5.4-mini",
+              "provider": "codex"
+            }
+          },
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "model": "gpt-5.4-mini",
+            "provider": "codex"
+          }
+        }
+      ],
       "input": {
         "messages": [
           {
-            "content": "Run the built-in bash command \"touch /workspace/stream-started; sleep 5; printf STREAM_OK\" exactly once. After it finishes, reply exactly STREAM_OK.",
             "role": "user"
           }
         ]
       },
       "output": {
-        "finishReason": "other",
-        "text": "I’m running the requested bash command once now and will return only the exact result after it completes."
+        "finishReason": "other"
       },
       "metadata": {
         "braintrust": {
@@ -324,7 +428,9 @@
         },
         "harnessId": "codex",
         "permissionMode": "allow-all",
+        "scenario": "ai-sdk-harness-instrumentation",
         "sessionId": "shared-harness-session",
+        "testRunId": "<run:1>",
         "tools": {
           "bash": {
             "commonName": "bash",
@@ -373,13 +479,138 @@
     {
       "name": "HarnessAgent.continueStream",
       "type": "task",
-      "children": [],
+      "children": [
+        {
+          "name": "harness",
+          "type": "function",
+          "children": [
+            {
+              "name": "doGenerate",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-5.4-mini",
+                  "provider": "codex"
+                }
+              },
+              "output": {
+                "finishReason": {
+                  "raw": "stop",
+                  "unified": "stop"
+                },
+                "response": {
+                  "id": "<span:1>"
+                },
+                "usage": {
+                  "inputTokens": {
+                    "cacheRead": 14336,
+                    "cacheWrite": 0,
+                    "noCache": 8035,
+                    "total": 22371
+                  },
+                  "outputTokens": {
+                    "total": 196
+                  }
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-5.4-mini",
+                "provider": "codex"
+              },
+              "metrics": {
+                "completion_tokens": 196,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14336,
+                "prompt_tokens": 22371,
+                "tokens": 22567
+              }
+            },
+            {
+              "name": "bash",
+              "type": "tool",
+              "children": [],
+              "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}",
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "bash"
+              }
+            }
+          ],
+          "input": {
+            "maxRetries": 0,
+            "messages": [
+              {
+                "role": "user"
+              }
+            ],
+            "model": {
+              "modelId": "gpt-5.4-mini",
+              "provider": "codex"
+            }
+          },
+          "output": {
+            "finishReason": {
+              "raw": "stop",
+              "unified": "stop"
+            },
+            "response": {
+              "id": "<span:1>",
+              "messages": [],
+              "modelId": "gpt-5.4-mini",
+              "timestamp": "<timestamp>"
+            },
+            "totalUsage": {
+              "inputTokens": {
+                "cacheRead": 14336,
+                "cacheWrite": 0,
+                "noCache": 8035,
+                "total": 22371
+              },
+              "outputTokens": {
+                "total": 196
+              }
+            },
+            "usage": {
+              "inputTokens": {
+                "cacheRead": 14336,
+                "cacheWrite": 0,
+                "noCache": 8035,
+                "total": 22371
+              },
+              "outputTokens": {
+                "total": 196
+              }
+            }
+          },
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "model": "gpt-5.4-mini",
+            "provider": "codex"
+          }
+        }
+      ],
       "input": {
         "toolApprovalContinuations": []
       },
       "output": {
-        "finishReason": "stop",
-        "text": "The command is still running; I’m waiting for it to finish before responding.STREAM_OK"
+        "finishReason": "stop"
       },
       "metadata": {
         "braintrust": {
@@ -388,7 +619,9 @@
         },
         "harnessId": "codex",
         "permissionMode": "allow-all",
+        "scenario": "ai-sdk-harness-instrumentation",
         "sessionId": "shared-harness-session",
+        "testRunId": "<run:1>",
         "tools": {
           "bash": {
             "commonName": "bash",
