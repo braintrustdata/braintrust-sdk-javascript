@@ -749,8 +749,14 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       expect(tool?.span.parentIds).not.toContain(llm?.span.id ?? "");
     });
 
-    test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, snapshotPath);
-    });
+    test(
+      "matches the shared span tree snapshot",
+      testConfig,
+      async ({ expect }) => {
+        await matchSpanTreeSnapshot(events, snapshotPath, {
+          snapshotExpect: expect,
+        });
+      },
+    );
   });
 }

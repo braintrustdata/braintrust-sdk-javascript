@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect } from "vitest";
+import { expect, type ExpectStatic } from "vitest";
 import { normalizeForSnapshot, type Json } from "./normalize";
 
 function sortJsonKeys(value: Json): Json {
@@ -26,8 +26,9 @@ export function formatJsonFileSnapshot(value: Json): string {
 export async function matchFileSnapshot(
   value: string,
   path: string,
+  snapshotExpect: ExpectStatic = expect,
 ): Promise<void> {
-  await expect(value).toMatchFileSnapshot(path);
+  await snapshotExpect(value).toMatchFileSnapshot(path);
 }
 
 export function resolveFileSnapshotPath(

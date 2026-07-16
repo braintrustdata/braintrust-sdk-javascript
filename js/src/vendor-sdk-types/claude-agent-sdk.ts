@@ -73,8 +73,6 @@ export interface ClaudeAgentSDKQueryOptions {
   additionalDirectories?: string[];
   permissionMode?: string;
   debug?: boolean;
-  apiKey?: string;
-  apiKeySource?: string;
   agentName?: string;
   instructions?: string;
   mcpServers?: ClaudeAgentSDKMcpServersConfig;
