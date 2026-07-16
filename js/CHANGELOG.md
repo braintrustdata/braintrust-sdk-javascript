@@ -1,5 +1,26 @@
 # braintrust
 
+## 3.23.1
+
+### Patch Changes
+
+- feat(claude-agent-sdk): Clean up span metadata (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2240)
+
+## 3.23.0
+
+### Minor Changes
+
+- feat: Track Eve turns as individual traces and record Eve session IDs on all spans (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2230)
+- feat: Add `langsmith` tracing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2224)
+- feat(strands): Log inline document, image, and video bytes as Braintrust attachments (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2229)
+
+### Patch Changes
+
+- fix(mastra): Record `time_to_first_token` for streaming (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2214)
+- feat: Retry transient failures for internal, read-only BTQL requests used to fetch datasets, objects, spans, and prompt versions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2227)
+- fix(eve): Avoid reporting unresolved dynamic model fallbacks as model metadata (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2233)
+- fix: Capture parallel tool calls in eve llm span output (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2232)
+
 ## 3.22.0
 
 ### Minor Changes

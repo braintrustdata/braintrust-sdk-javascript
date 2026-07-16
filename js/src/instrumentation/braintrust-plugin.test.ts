@@ -15,6 +15,7 @@ import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 import { LangChainPlugin } from "./plugins/langchain-plugin";
+import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 
@@ -96,6 +97,10 @@ vi.mock("./plugins/github-copilot-plugin", () => ({
 
 vi.mock("./plugins/langchain-plugin", () => ({
   LangChainPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/langsmith-plugin", () => ({
+  LangSmithPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/pi-coding-agent-plugin", () => ({
@@ -552,6 +557,33 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
     });
 
+    it("should create LangSmith with LangChain deduplication by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(LangSmithPlugin).toHaveBeenCalledWith({
+        skipLangChainRuns: true,
+      });
+      const mockInstance = vi.mocked(LangSmithPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should disable LangSmith or let it capture LangChain runs", () => {
+      const disabled = new BraintrustPlugin({
+        integrations: { langsmith: false },
+      });
+      disabled.enable();
+      expect(LangSmithPlugin).not.toHaveBeenCalled();
+
+      const withoutLangChain = new BraintrustPlugin({
+        integrations: { langchain: false },
+      });
+      withoutLangChain.enable();
+      expect(LangSmithPlugin).toHaveBeenCalledWith({
+        skipLangChainRuns: false,
+      });
+    });
+
     it("should not create OpenRouter Agent plugin when openrouterAgent: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { openrouterAgent: false },
@@ -580,6 +612,7 @@ describe("BraintrustPlugin", () => {
           groq: false,
           gitHubCopilot: false,
           langchain: false,
+          langsmith: false,
           piCodingAgent: false,
           strandsAgentSDK: false,
         },
@@ -601,6 +634,7 @@ describe("BraintrustPlugin", () => {
       expect(GroqPlugin).not.toHaveBeenCalled();
       expect(GitHubCopilotPlugin).not.toHaveBeenCalled();
       expect(LangChainPlugin).not.toHaveBeenCalled();
+      expect(LangSmithPlugin).not.toHaveBeenCalled();
       expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
       expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
     });
@@ -698,6 +732,9 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(LangChainPlugin).not.toHaveBeenCalled();
+      expect(LangSmithPlugin).toHaveBeenCalledWith({
+        skipLangChainRuns: true,
+      });
     });
 
     it("should not create AI SDK plugin when both aisdk and vercel are false", () => {
@@ -925,6 +962,7 @@ describe("BraintrustPlugin", () => {
       expect(PiCodingAgentPlugin).toHaveBeenCalledTimes(1);
       expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       expect(LangChainPlugin).toHaveBeenCalledTimes(1);
+      expect(LangSmithPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should only disable plugins that were enabled", () => {

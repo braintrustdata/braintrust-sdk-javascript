@@ -1328,6 +1328,7 @@ class HTTPConnection {
     path: string,
     params?: Record<string, unknown> | string,
     config?: RequestInit,
+    retries: number = 0,
   ) {
     const { headers, ...rest } = config || {};
     // On platforms like Cloudflare, we lose "this" when we make an async call,
@@ -1336,25 +1337,50 @@ class HTTPConnection {
     const this_base_url = this.base_url;
     const this_headers = this.headers;
 
-    return await checkResponse(
-      await this_fetch(_urljoin(this_base_url, path), {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          ...this_headers,
-          ...headers,
-        },
-        body:
-          typeof params === "string"
-            ? params
-            : params
-              ? JSON.stringify(params)
-              : undefined,
-        keepalive: true,
-        ...rest,
-      }),
-    );
+    const tries = retries + 1;
+    for (let i = 0; i < tries; i++) {
+      try {
+        return await checkResponse(
+          await this_fetch(_urljoin(this_base_url, path), {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              ...this_headers,
+              ...headers,
+            },
+            body:
+              typeof params === "string"
+                ? params
+                : params
+                  ? JSON.stringify(params)
+                  : undefined,
+            keepalive: true,
+            ...rest,
+          }),
+        );
+      } catch (error) {
+        if (config?.signal?.aborted) {
+          throw getAbortReason(config.signal);
+        }
+        if (i === tries - 1 || !isRetryableHTTPError(error)) {
+          throw error;
+        }
+
+        debugLogger.debug(
+          `Retrying API request ${path} after ${formatHTTPError(error)}`,
+        );
+        const sleepTimeMs =
+          HTTP_RETRY_BASE_SLEEP_TIME_S * 1000 * 2 ** i +
+          Math.random() * HTTP_RETRY_JITTER_MS;
+        debugLogger.info(
+          `Sleeping for ${sleepTimeMs}ms before retrying API request`,
+        );
+        await waitForRetry(sleepTimeMs, config?.signal);
+      }
+    }
+
+    throw new Error("Unexpected retry state");
   }
 
   async get_json(
@@ -2922,6 +2948,57 @@ export class TestBackgroundLogger implements BackgroundLogger {
 
 const BACKGROUND_LOGGER_BASE_SLEEP_TIME_S = 1.0;
 const HTTP_RETRY_BASE_SLEEP_TIME_S = 1.0;
+const HTTP_RETRY_JITTER_MS = 200;
+const BTQL_HTTP_RETRIES = 3;
+const RETRYABLE_HTTP_STATUS_CODES = new Set([500, 502, 503, 504]);
+
+function isRetryableHTTPError(error: unknown): boolean {
+  return (
+    !(error instanceof FailedHTTPResponse) ||
+    RETRYABLE_HTTP_STATUS_CODES.has(error.status)
+  );
+}
+
+function formatHTTPError(error: unknown): string {
+  if (error instanceof FailedHTTPResponse) {
+    return `${error.status} ${error.text}`;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
+function getAbortReason(signal: AbortSignal): unknown {
+  return signal.reason ?? new Error("Request aborted");
+}
+
+async function waitForRetry(
+  delayMs: number,
+  signal?: AbortSignal | null,
+): Promise<void> {
+  if (!signal) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return;
+  }
+
+  if (signal.aborted) {
+    throw getAbortReason(signal);
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timeout);
+      signal.removeEventListener("abort", onAbort);
+      reject(getAbortReason(signal));
+    };
+    const timeout = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, delayMs);
+    signal.addEventListener("abort", onAbort, { once: true });
+    if (signal.aborted) {
+      onAbort();
+    }
+  });
+}
 
 // We should only have one instance of this object per state object in
 // 'BraintrustState._bgLogger'. Be careful about spawning multiple
@@ -6840,6 +6917,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
             : {}),
         },
         { headers: { "Accept-Encoding": "gzip" } },
+        BTQL_HTTP_RETRIES,
       );
       const respJson = await resp.json();
       const mutate = this.mutateRecord;
@@ -9436,6 +9514,7 @@ export async function getPromptVersions(
       brainstore_realtime: true,
     },
     { headers: { "Accept-Encoding": "gzip" } },
+    BTQL_HTTP_RETRIES,
   );
 
   if (!response.ok) {

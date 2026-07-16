@@ -1,17 +1,25 @@
 import { defineAgent, defineDynamic } from "eve";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { withReadableReasoning } from "./reasoning-model";
 
-const openai = createOpenAI({
-  ...(process.env.OPENAI_BASE_URL
-    ? { baseURL: process.env.OPENAI_BASE_URL }
+const openrouter = createOpenRouter({
+  ...(process.env.OPENROUTER_BASE_URL
+    ? { baseURL: process.env.OPENROUTER_BASE_URL }
     : {}),
 });
 
-const dynamicModel = openai("gpt-5.4-mini");
+const dynamicModel = withReadableReasoning(
+  openrouter("qwen/qwen3-30b-a3b", {
+    provider: {
+      only: ["deepinfra"],
+      require_parameters: true,
+    },
+  }),
+);
 
 export default defineAgent({
   model: defineDynamic({
-    fallback: openai("gpt-5.4-mini"),
+    fallback: dynamicModel,
     events: {
       "step.started": () => dynamicModel,
     },

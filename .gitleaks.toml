@@ -10,7 +10,7 @@ description = "Braintrust API key"
 regex = '''\bsk-[a-zA-Z0-9]{40,}\b'''
 tags = ["key", "braintrust"]
 
-[allowlist]
+[[allowlists]]
 description = "E2E scenario variant keys are cassette/snapshot identifiers, not secrets"
 condition = "AND"
 regexTarget = "line"
@@ -19,3 +19,13 @@ paths = [
   '''e2e/scenarios/.*/scenario\.test\.ts''',
 ]
 regexes = ['''variantKey"?\s*:\s*"[a-z0-9-]+"''']
+
+[[allowlists]]
+description = "LangSmith E2E variant identifiers are not API keys"
+condition = "AND"
+targetRules = ["generic-api-key"]
+regexes = ['''^langsmith-v0-(3-30|5-11|8-1)$''']
+paths = [
+  '''^e2e/config/pr-comment-scenarios\.json$''',
+  '''^e2e/scenarios/langsmith-instrumentation/scenario\.test\.ts$''',
+]

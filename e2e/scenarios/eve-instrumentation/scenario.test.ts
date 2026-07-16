@@ -1,6 +1,9 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
-import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
+import type {
+  CapturedLogEvent,
+  CapturedLogPayload,
+} from "../../helpers/mock-braintrust-server";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
@@ -25,10 +28,15 @@ const TIMEOUT_MS = 120_000;
 
 describe("eve instrumentation", () => {
   let events: CapturedLogEvent[] = [];
+  let payloads: CapturedLogPayload[] = [];
 
   beforeAll(async () => {
     await withScenarioHarness(
-      async ({ events: harnessEvents, runScenarioDir }) => {
+      async ({
+        events: harnessEvents,
+        payloads: harnessPayloads,
+        runScenarioDir,
+      }) => {
         await runScenarioDir({
           entry: "scenario.ts",
           env: {
@@ -42,6 +50,7 @@ describe("eve instrumentation", () => {
           timeoutMs: TIMEOUT_MS,
         });
         events = harnessEvents();
+        payloads = harnessPayloads();
       },
     );
   }, TIMEOUT_MS);
@@ -120,10 +129,19 @@ describe("eve instrumentation", () => {
       {
         finish_reason: "tool_calls",
         message: {
+          reasoning: [{ content: expect.any(String) }],
           tool_calls: [
             { function: { name: "researcher" }, type: "function" },
             { function: { name: "read" }, type: "function" },
           ],
+        },
+      },
+    ]);
+    expect(steps[1]?.output).toMatchObject([
+      {
+        finish_reason: "stop",
+        message: {
+          reasoning: [{ content: expect.any(String) }],
         },
       },
     ]);
@@ -162,8 +180,8 @@ describe("eve instrumentation", () => {
     expect(childTurn?.span.rootId).toEqual(root?.span.rootId);
     expect(childTurn?.metadata).toMatchObject({
       "eve.session_id": expect.any(String),
-      model: "gpt-5.4-mini",
-      provider: "openai",
+      model: "qwen/qwen3-30b-a3b",
+      provider: "openrouter",
       scenario: "eve-instrumentation",
       testRunId: expect.any(String),
     });
@@ -182,11 +200,18 @@ describe("eve instrumentation", () => {
       expect(step.input[0]).toMatchObject({ role: "system" });
       expect(step.metadata).toMatchObject({
         "eve.session_id": childTurn?.metadata?.["eve.session_id"],
-        model: "gpt-5.4-mini",
-        provider: "openai",
+        model: "qwen/qwen3-30b-a3b",
+        provider: "openrouter",
         scenario: "eve-instrumentation",
         testRunId: expect.any(String),
       });
+      expect(step.output).toMatchObject([
+        {
+          message: {
+            reasoning: [{ content: expect.any(String) }],
+          },
+        },
+      ]);
     }
 
     expect(childSearch).toBeDefined();
@@ -243,10 +268,19 @@ describe("eve instrumentation", () => {
       {
         finish_reason: "tool_calls",
         message: {
+          reasoning: [{ content: expect.any(String) }],
           tool_calls: [
             { function: { name: "researcher" }, type: "function" },
             { function: { name: "read" }, type: "function" },
           ],
+        },
+      },
+    ]);
+    expect(secondSteps[1]?.output).toMatchObject([
+      {
+        finish_reason: "stop",
+        message: {
+          reasoning: [{ content: expect.any(String) }],
         },
       },
     ]);
@@ -262,8 +296,8 @@ describe("eve instrumentation", () => {
     expect(secondChildTurn?.span.rootId).toEqual(secondRoot?.span.rootId);
     expect(secondChildTurn?.metadata).toMatchObject({
       "eve.session_id": expect.any(String),
-      model: "gpt-5.4-mini",
-      provider: "openai",
+      model: "qwen/qwen3-30b-a3b",
+      provider: "openrouter",
     });
     expect(secondChildTurn?.metadata?.["eve.session_id"]).not.toEqual(
       secondRoot?.metadata?.["eve.session_id"],
@@ -274,6 +308,17 @@ describe("eve instrumentation", () => {
     expect(secondRead?.metadata).toMatchObject({
       "eve.session_id": secondRoot?.metadata?.["eve.session_id"],
     });
+
+    const rawRows = payloads.flatMap((payload) => payload.rows);
+    for (const step of findAllSpans(events, "eve.step")) {
+      expect(
+        rawRows.filter(
+          (row) =>
+            row.id === step.row.id &&
+            Object.prototype.hasOwnProperty.call(row, "output"),
+        ),
+      ).toHaveLength(1);
+    }
 
     await matchSpanTreeSnapshot(events, spanTreeSnapshotPath, {
       normalize: {
