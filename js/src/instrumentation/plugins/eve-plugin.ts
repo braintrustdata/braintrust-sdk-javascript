@@ -17,7 +17,10 @@ import type {
   EveHookContext,
   EveHookDefinition,
   EveInstrumentationDefinition,
+  EveInstrumentationModelInput,
   EveInstrumentationStepStartedEventInput,
+  EveModelMessage,
+  EveModelMessageContentPart,
   EveRuntimeActionRequest,
   EveRuntimeActionResult,
   EveRuntimeToolCallActionRequest,
@@ -51,12 +54,14 @@ type StepState = SpanState & {
   input?: unknown;
   metrics: Record<string, number>;
   output?: unknown;
+  reasoning: readonly EveReasoningBlock[];
 };
 
 type TurnState = SpanState & {
   key: string;
   metrics: Record<string, number>;
   output?: unknown;
+  sessionId: string;
   stepsByIndex: Map<number, StepState>;
   turnId: string;
 };
@@ -77,6 +82,7 @@ type EveDefineState = <T>(name: string, initial: () => T) => EveStateHandle<T>;
 
 type EveTraceState = {
   metadata: Record<string, unknown>;
+  reasoningBlocks: readonly (EveReasoningBlock & { key: string })[];
   spanReferences: readonly EveSpanReference[];
   stepStarts: readonly {
     ordinal: number;
@@ -90,13 +96,24 @@ type EveTraceState = {
   }[];
 };
 
+type EveReasoningBlock = {
+  content: string;
+  eventAt?: string;
+};
+
 const EVE_TRACE_STATE_KEY = "braintrust.eve.tracing";
 const MAX_EVE_CACHE_ENTRIES = 10_000;
 const MAX_STORED_LLM_INPUTS = 100;
+const MAX_STORED_REASONING_BLOCKS = 100;
 const MAX_STORED_SPAN_REFERENCES = 10_000;
 const MAX_STORED_STEP_STARTS = 10_000;
 
-type CapturedEveModelInput = readonly unknown[];
+type CapturedEveModelMessage = {
+  content: string | readonly Record<string, unknown>[];
+  role: EveModelMessage["role"];
+};
+
+type CapturedEveModelInput = readonly CapturedEveModelMessage[];
 
 /** Manual hook instrumentation for eve runtime stream events. */
 export function braintrustEveHook(options: {
@@ -401,6 +418,9 @@ class EveBridge {
       case "step.started":
         await this.handleStepStarted(event, ctx, hookMetadata);
         return true;
+      case "reasoning.completed":
+        this.handleReasoningCompleted(event, ctx);
+        return true;
       case "message.completed":
         this.handleMessageCompleted(event, ctx);
         return true;
@@ -506,6 +526,7 @@ class EveBridge {
       key,
       metadata,
       metrics: {},
+      sessionId,
       span,
       stepsByIndex: new Map(),
       turnId: event.data.turnId,
@@ -548,6 +569,12 @@ class EveBridge {
       const endTime = eventTime(event);
       existing.span.end(endTime === undefined ? undefined : { endTime });
       this.markStepEnded(event.data.turnId, event.data.stepIndex);
+      clearStoredEveReasoning(
+        this.state,
+        sessionId,
+        event.data.turnId,
+        event.data.stepIndex,
+      );
     }
 
     const stepOrdinal = this.stepOrdinal(event);
@@ -558,6 +585,13 @@ class EveBridge {
       event.data.turnId,
       event.data.stepIndex,
     );
+    const reasoning = readStoredEveReasoning(
+      this.state,
+      sessionId,
+      event.data.turnId,
+      event.data.stepIndex,
+    );
+    const output = mergeEveReasoning(undefined, reasoning);
     const { rowId: eventId, spanId } = await generateEveIds(
       "step",
       sessionId,
@@ -575,14 +609,39 @@ class EveBridge {
       spanId,
       startTime: eventTime(event),
     });
-    span.log({ ...(input !== undefined ? { input } : {}), metadata });
+    span.log({
+      ...(input !== undefined ? { input } : {}),
+      metadata,
+    });
 
     turn.stepsByIndex.set(event.data.stepIndex, {
       ...(input !== undefined ? { input } : {}),
       metadata,
       metrics: {},
+      ...(output !== undefined ? { output } : {}),
+      reasoning,
       span,
     });
+  }
+
+  private handleReasoningCompleted(
+    event: Extract<
+      EveHandleMessageStreamEvent,
+      { type: "reasoning.completed" }
+    >,
+    ctx: unknown,
+  ): void {
+    const sessionId = sessionIdFromContext(ctx);
+    if (!sessionId) {
+      return;
+    }
+
+    const reasoning = storeEveReasoning(this.state, sessionId, event);
+    const step = this.stepForEvent(event, ctx);
+    if (step) {
+      step.reasoning = reasoning;
+      step.output = mergeEveReasoning(step.output, reasoning);
+    }
   }
 
   private handleMessageCompleted(
@@ -594,26 +653,26 @@ class EveBridge {
       return;
     }
 
-    const existingMessage =
-      Array.isArray(step.output) && isObject(step.output[0])
-        ? step.output[0].message
-        : undefined;
+    const existingMessage = eveOutputMessage(step.output);
     const existingToolCalls = isObject(existingMessage)
       ? existingMessage.tool_calls
       : undefined;
-    step.output = [
-      {
-        finish_reason: normalizedFinishReason(event.data.finishReason),
-        index: 0,
-        message: {
-          content: event.data.message,
-          role: "assistant",
-          ...(Array.isArray(existingToolCalls)
-            ? { tool_calls: existingToolCalls }
-            : {}),
+    step.output = mergeEveReasoning(
+      [
+        {
+          finish_reason: normalizedFinishReason(event.data.finishReason),
+          index: 0,
+          message: {
+            content: event.data.message,
+            role: "assistant",
+            ...(Array.isArray(existingToolCalls)
+              ? { tool_calls: existingToolCalls }
+              : {}),
+          },
         },
-      },
-    ];
+      ],
+      step.reasoning,
+    );
 
     const turn = this.turnForEvent(event, ctx);
     if (turn && event.data.finishReason !== "tool-calls") {
@@ -627,16 +686,19 @@ class EveBridge {
   ): void {
     const step = this.stepForEvent(event, ctx);
     if (step) {
-      step.output = [
-        {
-          finish_reason: "stop",
-          index: 0,
-          message: {
-            content: event.data.result,
-            role: "assistant",
+      step.output = mergeEveReasoning(
+        [
+          {
+            finish_reason: "stop",
+            index: 0,
+            message: {
+              content: event.data.result,
+              role: "assistant",
+            },
           },
-        },
-      ];
+        ],
+        step.reasoning,
+      );
     }
 
     const turn = this.turnForEvent(event, ctx);
@@ -700,18 +762,20 @@ class EveBridge {
       });
     }
 
-    step.output = [
-      {
-        finish_reason: "tool_calls",
-        index: 0,
-        message: {
-          content: null,
-          role: "assistant",
-          tool_calls: [...toolCallsById.values()],
+    step.output = mergeEveReasoning(
+      [
+        {
+          finish_reason: "tool_calls",
+          index: 0,
+          message: {
+            content: null,
+            role: "assistant",
+            tool_calls: [...toolCallsById.values()],
+          },
         },
-      },
-    ];
-    step.span.log({ metadata: step.metadata, output: step.output });
+      ],
+      step.reasoning,
+    );
   }
 
   private async handleActionResult(
@@ -983,6 +1047,7 @@ class EveBridge {
       ...(costUsd !== undefined ? { estimated_cost: costUsd } : {}),
     };
     step.metrics = { ...step.metrics, ...metrics };
+    const sessionId = sessionIdFromContext(ctx);
     if (Array.isArray(step.output) && isObject(step.output[0])) {
       const finishReason = step.output[0].finish_reason;
       if (typeof finishReason !== "string") {
@@ -1008,6 +1073,14 @@ class EveBridge {
       turn.stepsByIndex.delete(event.data.stepIndex);
     }
     this.markStepEnded(event.data.turnId, event.data.stepIndex);
+    if (sessionId) {
+      clearStoredEveReasoning(
+        this.state,
+        sessionId,
+        event.data.turnId,
+        event.data.stepIndex,
+      );
+    }
   }
 
   private handleStepFailed(
@@ -1030,6 +1103,15 @@ class EveBridge {
     const turn = this.turnForEvent(event, ctx);
     turn?.stepsByIndex.delete(event.data.stepIndex);
     this.markStepEnded(event.data.turnId, event.data.stepIndex);
+    const sessionId = sessionIdFromContext(ctx);
+    if (sessionId) {
+      clearStoredEveReasoning(
+        this.state,
+        sessionId,
+        event.data.turnId,
+        event.data.stepIndex,
+      );
+    }
   }
 
   private handleTurnCompleted(
@@ -1159,6 +1241,7 @@ class EveBridge {
       key,
       metadata,
       metrics: {},
+      sessionId,
       span,
       stepsByIndex: new Map<number, StepState>(),
       turnId: event.data.turnId,
@@ -1499,6 +1582,10 @@ class EveBridge {
       const normalized = normalizeEveTraceState(current);
       return {
         ...normalized,
+        reasoningBlocks: normalized.reasoningBlocks.filter(
+          (entry) =>
+            !entry.key.startsWith(`${turn.sessionId}\0${turn.turnId}\0`),
+        ),
         stepStarts: normalized.stepStarts.filter(
           (entry) => entry.turnId !== turn.turnId,
         ),
@@ -1541,6 +1628,7 @@ function emptyEveTraceState(): EveTraceState {
   return {
     llmInputs: [],
     metadata: {},
+    reasoningBlocks: [],
     spanReferences: [],
     stepStarts: [],
   };
@@ -1628,6 +1716,29 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
         })
         .slice(-MAX_STORED_LLM_INPUTS)
     : [];
+  const reasoningBlocks = Array.isArray(state["reasoningBlocks"])
+    ? state["reasoningBlocks"]
+        .flatMap((entry): EveTraceState["reasoningBlocks"] => {
+          if (!isObject(entry)) {
+            return [];
+          }
+          const content = entry["content"];
+          const eventAt = entry["eventAt"];
+          const key = entry["key"];
+          return typeof content === "string" &&
+            (eventAt === undefined || typeof eventAt === "string") &&
+            typeof key === "string"
+            ? [
+                {
+                  content,
+                  ...(typeof eventAt === "string" ? { eventAt } : {}),
+                  key,
+                },
+              ]
+            : [];
+        })
+        .slice(-MAX_STORED_REASONING_BLOCKS)
+    : [];
   const stepStarts = Array.isArray(state["stepStarts"])
     ? state["stepStarts"]
         .flatMap((entry): EveTraceState["stepStarts"] => {
@@ -1650,7 +1761,13 @@ function normalizeEveTraceState(state: unknown): EveTraceState {
         })
         .slice(-MAX_STORED_STEP_STARTS)
     : [];
-  return { llmInputs, metadata: { ...metadata }, spanReferences, stepStarts };
+  return {
+    llmInputs,
+    metadata: { ...metadata },
+    reasoningBlocks,
+    spanReferences,
+    stepStarts,
+  };
 }
 
 function readEveTraceState(
@@ -1663,33 +1780,123 @@ function readEveTraceState(
   }
 }
 
+function storeEveReasoning(
+  state: EveStateHandle<EveTraceState>,
+  sessionId: string,
+  event: Extract<EveHandleMessageStreamEvent, { type: "reasoning.completed" }>,
+): readonly EveReasoningBlock[] {
+  const eventAt = event.meta?.at;
+  const key = llmInputKey(sessionId, event.data.turnId, event.data.stepIndex);
+  let stored: readonly EveReasoningBlock[] = [];
+  state.update((current) => {
+    const normalized = normalizeEveTraceState(current);
+    const alreadyStored = normalized.reasoningBlocks.some(
+      (entry) =>
+        entry.content === event.data.reasoning &&
+        entry.eventAt === eventAt &&
+        entry.key === key,
+    );
+    const reasoningBlocks = alreadyStored
+      ? normalized.reasoningBlocks
+      : [
+          ...normalized.reasoningBlocks,
+          {
+            content: event.data.reasoning,
+            ...(eventAt ? { eventAt } : {}),
+            key,
+          },
+        ].slice(-MAX_STORED_REASONING_BLOCKS);
+    stored = reasoningBlocks.flatMap((entry) =>
+      entry.key === key
+        ? [
+            {
+              content: entry.content,
+              ...(entry.eventAt ? { eventAt: entry.eventAt } : {}),
+            },
+          ]
+        : [],
+    );
+    return alreadyStored ? normalized : { ...normalized, reasoningBlocks };
+  });
+  return stored;
+}
+
+function readStoredEveReasoning(
+  state: EveStateHandle<EveTraceState>,
+  sessionId: string,
+  turnId: string,
+  stepIndex: number,
+): readonly EveReasoningBlock[] {
+  const key = llmInputKey(sessionId, turnId, stepIndex);
+  return readEveTraceState(state).reasoningBlocks.flatMap((entry) =>
+    entry.key === key
+      ? [
+          {
+            content: entry.content,
+            ...(entry.eventAt ? { eventAt: entry.eventAt } : {}),
+          },
+        ]
+      : [],
+  );
+}
+
+function clearStoredEveReasoning(
+  state: EveStateHandle<EveTraceState>,
+  sessionId: string,
+  turnId: string,
+  stepIndex: number,
+): void {
+  const key = llmInputKey(sessionId, turnId, stepIndex);
+  state.update((current) => {
+    const normalized = normalizeEveTraceState(current);
+    return {
+      ...normalized,
+      reasoningBlocks: normalized.reasoningBlocks.filter(
+        (entry) => entry.key !== key,
+      ),
+    };
+  });
+}
+
+function eveOutputMessage(output: unknown): unknown {
+  return Array.isArray(output) && isObject(output[0])
+    ? output[0]["message"]
+    : undefined;
+}
+
+function mergeEveReasoning(
+  output: unknown,
+  reasoning: readonly { content: string }[],
+): unknown | undefined {
+  if (reasoning.length === 0) {
+    return output;
+  }
+
+  const choice = Array.isArray(output) && isObject(output[0]) ? output[0] : {};
+  const message = isObject(choice["message"]) ? choice["message"] : {};
+  return [
+    {
+      ...choice,
+      index: typeof choice["index"] === "number" ? choice["index"] : 0,
+      message: {
+        ...message,
+        content: "content" in message ? message["content"] : null,
+        reasoning: reasoning.map((block) => ({ content: block.content })),
+        role:
+          typeof message["role"] === "string" ? message["role"] : "assistant",
+      },
+    },
+  ];
+}
+
 function captureEveModelInput(
   state: EveStateHandle<EveTraceState>,
   input: EveInstrumentationStepStartedEventInput,
 ): void {
-  if (!isObject(input)) {
-    return;
-  }
-  const session = input["session"];
-  const turn = input["turn"];
-  const step = input["step"];
-  if (!isObject(session) || !isObject(turn) || !isObject(step)) {
-    return;
-  }
-
-  const sessionId = session["id"];
-  const turnId = turn["id"];
-  const stepIndex = step["index"];
-  if (
-    typeof sessionId !== "string" ||
-    typeof turnId !== "string" ||
-    typeof stepIndex !== "number" ||
-    !Number.isInteger(stepIndex)
-  ) {
-    return;
-  }
-
-  const captured = capturedModelInput(input["modelInput"]);
+  const sessionId = input.session.id;
+  const turnId = input.turn.id;
+  const stepIndex = input.step.index;
+  const captured = capturedModelInput(input.modelInput);
   if (!captured) {
     return;
   }
@@ -1738,24 +1945,17 @@ function consumeCapturedEveModelInput(
 }
 
 function capturedModelInput(
-  modelInput: unknown,
+  modelInput: EveInstrumentationModelInput,
 ): CapturedEveModelInput | undefined {
-  if (!isObject(modelInput)) {
-    return undefined;
+  const { instructions, messages } = modelInput;
+  const value: CapturedEveModelMessage[] = [];
+  if (typeof instructions === "string") {
+    value.push({ content: instructions, role: "system" });
+  } else if (instructions) {
+    value.push(...instructions.map(capturedEveModelMessage));
   }
+  value.push(...messages.map(capturedEveModelMessage));
 
-  const messages = modelInput["messages"];
-  if (!Array.isArray(messages)) {
-    return undefined;
-  }
-
-  const instructions = modelInput["instructions"];
-  const value = [
-    ...(instructions !== undefined
-      ? [{ content: instructions, role: "system" }]
-      : []),
-    ...messages,
-  ];
   try {
     const cloned: unknown = JSON.parse(JSON.stringify(value));
     if (!Array.isArray(cloned)) {
@@ -1767,8 +1967,152 @@ function capturedModelInput(
   }
 }
 
+function capturedEveModelMessage(
+  message: EveModelMessage,
+): CapturedEveModelMessage {
+  const { content, role } = message;
+  if (typeof content === "string") {
+    return { content, role };
+  }
+  return { content: content.map(capturedEveModelContentPart), role };
+}
+
+function capturedEveModelContentPart(
+  part: EveModelMessageContentPart,
+): Record<string, unknown> {
+  switch (part.type) {
+    case "text":
+    case "reasoning":
+      return { text: part.text, type: part.type };
+    case "image":
+      return {
+        image: part.image,
+        ...(part.mediaType !== undefined ? { mediaType: part.mediaType } : {}),
+        type: "image",
+      };
+    case "file":
+    case "reasoning-file":
+      return {
+        data: part.data,
+        ...(part.type === "file" && part.filename !== undefined
+          ? { filename: part.filename }
+          : {}),
+        mediaType: part.mediaType,
+        type: part.type,
+      };
+    case "custom":
+      return {
+        ...("kind" in part ? { kind: part.kind } : {}),
+        type: "custom",
+      };
+    case "tool-call":
+      return {
+        input: part.input,
+        ...(part.providerExecuted !== undefined
+          ? { providerExecuted: part.providerExecuted }
+          : {}),
+        toolCallId: part.toolCallId,
+        toolName: part.toolName,
+        type: "tool-call",
+      };
+    case "tool-result": {
+      const output = part.output;
+      let capturedOutput: Record<string, unknown>;
+      switch (output.type) {
+        case "text":
+        case "error-text":
+          capturedOutput = { type: output.type, value: output.value };
+          break;
+        case "json":
+        case "error-json":
+          capturedOutput = { type: output.type, value: output.value };
+          break;
+        case "execution-denied":
+          capturedOutput = {
+            ...(output.reason !== undefined ? { reason: output.reason } : {}),
+            type: "execution-denied",
+          };
+          break;
+        case "content":
+          capturedOutput = {
+            type: "content",
+            value: output.value.map(capturedEveModelContentPart),
+          };
+          break;
+      }
+      return {
+        output: capturedOutput,
+        toolCallId: part.toolCallId,
+        toolName: part.toolName,
+        type: "tool-result",
+      };
+    }
+    case "tool-approval-request":
+      return {
+        approvalId: part.approvalId,
+        ...(part.isAutomatic !== undefined
+          ? { isAutomatic: part.isAutomatic }
+          : {}),
+        ...(part.signature !== undefined ? { signature: part.signature } : {}),
+        toolCallId: part.toolCallId,
+        type: "tool-approval-request",
+      };
+    case "tool-approval-response":
+      return {
+        approvalId: part.approvalId,
+        approved: part.approved,
+        ...(part.providerExecuted !== undefined
+          ? { providerExecuted: part.providerExecuted }
+          : {}),
+        ...(part.reason !== undefined ? { reason: part.reason } : {}),
+        type: "tool-approval-response",
+      };
+    case "file-data":
+    case "image-data":
+      return {
+        data: part.data,
+        ...(part.type === "file-data" && part.filename !== undefined
+          ? { filename: part.filename }
+          : {}),
+        mediaType: part.mediaType,
+        type: part.type,
+      };
+    case "file-url":
+    case "image-url":
+      return {
+        ...(part.type === "file-url" && part.mediaType !== undefined
+          ? { mediaType: part.mediaType }
+          : {}),
+        type: part.type,
+        url: part.url,
+      };
+    case "file-id":
+    case "image-file-id":
+      return { fileId: part.fileId, type: part.type };
+    case "file-reference":
+    case "image-file-reference":
+      return {
+        providerReference: part.providerReference,
+        type: part.type,
+      };
+  }
+}
+
 function isCapturedModelInput(input: unknown): input is CapturedEveModelInput {
-  return Array.isArray(input);
+  return (
+    Array.isArray(input) &&
+    input.every(
+      (message) =>
+        isObject(message) &&
+        (message["role"] === "system" ||
+          message["role"] === "user" ||
+          message["role"] === "assistant" ||
+          message["role"] === "tool") &&
+        (typeof message["content"] === "string" ||
+          (Array.isArray(message["content"]) &&
+            message["content"].every(isObject))),
+    )
+  );
 }
 
 function llmInputKey(

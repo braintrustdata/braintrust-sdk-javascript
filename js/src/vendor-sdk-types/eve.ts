@@ -16,8 +16,8 @@ export type EveJsonValue =
 export type EveJsonObject = { readonly [key: string]: EveJsonValue };
 
 export interface EveHookContext {
-  readonly session?: {
-    readonly id?: string;
+  readonly session: {
+    readonly id: string;
     readonly parent?: {
       readonly callId?: string;
       readonly sessionId?: string;
@@ -144,6 +144,16 @@ export type EveHandleMessageStreamEvent =
       };
       readonly meta?: EveStreamEventMeta;
       readonly type: "message.completed";
+    }
+  | {
+      readonly data: {
+        readonly reasoning: string;
+        readonly sequence: number;
+        readonly stepIndex: number;
+        readonly turnId: string;
+      };
+      readonly meta?: EveStreamEventMeta;
+      readonly type: "reasoning.completed";
     }
   | {
       readonly data: {
@@ -300,23 +310,187 @@ export interface EveInstrumentationSetupContext {
   readonly agentName: string;
 }
 
+type EveTextPart = {
+  readonly text: string;
+  readonly type: "text";
+};
+
+type EveImagePart = {
+  readonly image: unknown;
+  readonly mediaType?: string;
+  readonly type: "image";
+};
+
+type EveFilePart = {
+  readonly data: unknown;
+  readonly filename?: string;
+  readonly mediaType: string;
+  readonly type: "file";
+};
+
+type EveReasoningPart = {
+  readonly text: string;
+  readonly type: "reasoning";
+};
+
+type EveReasoningFilePart = {
+  readonly data: unknown;
+  readonly mediaType: string;
+  readonly type: "reasoning-file";
+};
+
+type EveCustomPart = {
+  readonly kind: `${string}.${string}`;
+  readonly type: "custom";
+};
+
+type EveToolCallPart = {
+  readonly input: unknown;
+  readonly providerExecuted?: boolean;
+  readonly toolCallId: string;
+  readonly toolName: string;
+  readonly type: "tool-call";
+};
+
+type EveToolResultContentPart =
+  | EveTextPart
+  | EveFilePart
+  | {
+      readonly data: string;
+      readonly filename?: string;
+      readonly mediaType: string;
+      readonly type: "file-data";
+    }
+  | {
+      readonly mediaType?: string;
+      readonly type: "file-url";
+      readonly url: string;
+    }
+  | {
+      readonly fileId: string | Readonly<Record<string, string>>;
+      readonly type: "file-id" | "image-file-id";
+    }
+  | {
+      readonly providerReference: Readonly<Record<string, string>>;
+      readonly type: "file-reference" | "image-file-reference";
+    }
+  | {
+      readonly data: string;
+      readonly mediaType: string;
+      readonly type: "image-data";
+    }
+  | {
+      readonly type: "image-url";
+      readonly url: string;
+    }
+  | { readonly type: "custom" };
+
+type EveToolResultOutput =
+  | {
+      readonly type: "text" | "error-text";
+      readonly value: string;
+    }
+  | {
+      readonly type: "json" | "error-json";
+      readonly value: EveJsonValue;
+    }
+  | {
+      readonly reason?: string;
+      readonly type: "execution-denied";
+    }
+  | {
+      readonly type: "content";
+      readonly value: readonly EveToolResultContentPart[];
+    };
+
+type EveToolResultPart = {
+  readonly output: EveToolResultOutput;
+  readonly toolCallId: string;
+  readonly toolName: string;
+  readonly type: "tool-result";
+};
+
+type EveToolApprovalRequest = {
+  readonly approvalId: string;
+  readonly isAutomatic?: boolean;
+  readonly signature?: string;
+  readonly toolCallId: string;
+  readonly type: "tool-approval-request";
+};
+
+type EveToolApprovalResponse = {
+  readonly approvalId: string;
+  readonly approved: boolean;
+  readonly providerExecuted?: boolean;
+  readonly reason?: string;
+  readonly type: "tool-approval-response";
+};
+
+export type EveModelMessageContentPart =
+  | EveTextPart
+  | EveImagePart
+  | EveFilePart
+  | EveReasoningPart
+  | EveReasoningFilePart
+  | EveCustomPart
+  | EveToolCallPart
+  | EveToolResultPart
+  | EveToolApprovalRequest
+  | EveToolApprovalResponse
+  | EveToolResultContentPart;
+
+export type EveSystemModelMessage = {
+  readonly content: string;
+  readonly role: "system";
+};
+
+export type EveModelMessage =
+  | EveSystemModelMessage
+  | {
+      readonly content:
+        | string
+        | readonly (EveTextPart | EveImagePart | EveFilePart)[];
+      readonly role: "user";
+    }
+  | {
+      readonly content:
+        | string
+        | readonly (
+            | EveTextPart
+            | EveCustomPart
+            | EveFilePart
+            | EveReasoningPart
+            | EveReasoningFilePart
+            | EveToolCallPart
+            | EveToolResultPart
+            | EveToolApprovalRequest
+          )[];
+      readonly role: "assistant";
+    }
+  | {
+      readonly content: readonly (
+        | EveToolResultPart
+        | EveToolApprovalResponse
+      )[];
+      readonly role: "tool";
+    };
+
 export interface EveInstrumentationModelInput {
-  readonly instructions?: string | readonly EveJsonObject[];
-  readonly messages: readonly EveJsonObject[];
+  readonly instructions?: string | readonly EveSystemModelMessage[];
+  readonly messages: readonly EveModelMessage[];
 }
 
 export interface EveInstrumentationStepStartedEventInput {
-  readonly channel?: unknown;
   readonly modelInput: EveInstrumentationModelInput;
   readonly session: {
-    readonly id?: string;
+    readonly id: string;
   };
   readonly step: {
-    readonly index?: number;
+    readonly index: number;
   };
   readonly turn: {
-    readonly id?: string;
-    readonly sequence?: number;
+    readonly id: string;
+    readonly sequence: number;
   };
 }
 
