@@ -1,6 +1,9 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
-import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
+import type {
+  CapturedLogEvent,
+  CapturedLogPayload,
+} from "../../helpers/mock-braintrust-server";
 import {
   prepareScenarioDir,
   resolveScenarioDir,
@@ -25,10 +28,15 @@ const TIMEOUT_MS = 120_000;
 
 describe("eve instrumentation", () => {
   let events: CapturedLogEvent[] = [];
+  let payloads: CapturedLogPayload[] = [];
 
   beforeAll(async () => {
     await withScenarioHarness(
-      async ({ events: harnessEvents, runScenarioDir }) => {
+      async ({
+        events: harnessEvents,
+        payloads: harnessPayloads,
+        runScenarioDir,
+      }) => {
         await runScenarioDir({
           entry: "scenario.ts",
           env: {
@@ -42,6 +50,7 @@ describe("eve instrumentation", () => {
           timeoutMs: TIMEOUT_MS,
         });
         events = harnessEvents();
+        payloads = harnessPayloads();
       },
     );
   }, TIMEOUT_MS);
@@ -299,6 +308,17 @@ describe("eve instrumentation", () => {
     expect(secondRead?.metadata).toMatchObject({
       "eve.session_id": secondRoot?.metadata?.["eve.session_id"],
     });
+
+    const rawRows = payloads.flatMap((payload) => payload.rows);
+    for (const step of findAllSpans(events, "eve.step")) {
+      expect(
+        rawRows.filter(
+          (row) =>
+            row.id === step.row.id &&
+            Object.prototype.hasOwnProperty.call(row, "output"),
+        ),
+      ).toHaveLength(1);
+    }
 
     await matchSpanTreeSnapshot(events, spanTreeSnapshotPath, {
       normalize: {

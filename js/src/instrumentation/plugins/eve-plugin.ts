@@ -603,7 +603,6 @@ class EveBridge {
         id: eventId,
         ...(input !== undefined ? { input } : {}),
         metadata,
-        ...(output !== undefined ? { output } : {}),
       },
       name: "eve.step",
       spanAttributes: { type: SpanTypeAttribute.LLM },
@@ -613,7 +612,6 @@ class EveBridge {
     span.log({
       ...(input !== undefined ? { input } : {}),
       metadata,
-      ...(output !== undefined ? { output } : {}),
     });
 
     turn.stepsByIndex.set(event.data.stepIndex, {
@@ -778,7 +776,6 @@ class EveBridge {
       ],
       step.reasoning,
     );
-    step.span.log({ metadata: step.metadata, output: step.output });
   }
 
   private async handleActionResult(

@@ -1160,6 +1160,9 @@ describe("braintrustEveHook", () => {
       },
       ctx,
     );
+    const resumedStartWrites = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
     await resumedHook?.(reasoningEvent, ctx);
     await resumedHook?.(
       {
@@ -1193,6 +1196,9 @@ describe("braintrustEveHook", () => {
       },
       ctx,
     );
+    const resumedIntermediateWrites = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
     await resumedHook?.(
       {
         data: { finishReason: "tool-calls", sequence: 0, stepIndex: 0, turnId },
@@ -1208,7 +1214,25 @@ describe("braintrustEveHook", () => {
     const resumedWrites = (await backgroundLogger.drain()) as Array<
       Record<string, any> & { id: string }
     >;
-    const spans = mergeRowBatch([...resumedWrites, ...initialWrites]);
+    const allWrites = [
+      ...initialWrites,
+      ...resumedStartWrites,
+      ...resumedIntermediateWrites,
+      ...resumedWrites,
+    ];
+    const stepRowId = deterministicEveIdForTest(
+      "eve:row:step",
+      "session-reasoning-replay",
+      turnId,
+      "0",
+    );
+    expect(
+      allWrites.filter(
+        (write) => write.id === stepRowId && write.output !== undefined,
+      ),
+    ).toHaveLength(1);
+
+    const spans = mergeRowBatch([...allWrites].reverse());
     const steps = spans.filter(
       (span) => span.span_attributes?.name === "eve.step",
     );
