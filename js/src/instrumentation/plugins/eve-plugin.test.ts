@@ -196,7 +196,7 @@ describe("braintrustEveHook", () => {
           role: "assistant",
         },
       ],
-    };
+    } as const;
 
     await emit({
       data: {
@@ -333,7 +333,7 @@ describe("braintrustEveHook", () => {
         },
         session: { id: "session-malformed-state" },
         step: { index: 0 },
-        turn: { id: "turn-malformed-state" },
+        turn: { id: "turn-malformed-state", sequence: 0 },
       }),
     ).not.toThrow();
 

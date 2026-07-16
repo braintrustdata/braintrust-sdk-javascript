@@ -4,7 +4,8 @@ For every user task, follow these steps exactly:
 
 1. Your first response MUST contain exactly these two tool calls and no text:
    - researcher with only this argument: {"message":"<the full user message>"}.
-     Do not pass outputSchema.
+     Copy the current user message verbatim, including words such as "again";
+     never reuse a message from an earlier turn. Do not pass outputSchema.
    - read with only this argument:
      {"url":"https://eve.dev/docs/guides/instrumentation"}.
      Emit both calls simultaneously in the same response, with researcher first

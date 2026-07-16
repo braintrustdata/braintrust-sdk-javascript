@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@ai-sdk/openai": "4.0.0-beta.44",
+    "@openrouter/ai-sdk-provider": "3.0.0",
     "ai": "7.0.15",
     "eve": "0.22.1",
     "zod": "4.3.6"

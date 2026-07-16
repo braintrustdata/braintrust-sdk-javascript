@@ -171,8 +171,8 @@ describe("eve instrumentation", () => {
     expect(childTurn?.span.rootId).toEqual(root?.span.rootId);
     expect(childTurn?.metadata).toMatchObject({
       "eve.session_id": expect.any(String),
-      model: "gpt-5.4-mini",
-      provider: "openai",
+      model: "qwen/qwen3-30b-a3b",
+      provider: "openrouter",
       scenario: "eve-instrumentation",
       testRunId: expect.any(String),
     });
@@ -191,8 +191,8 @@ describe("eve instrumentation", () => {
       expect(step.input[0]).toMatchObject({ role: "system" });
       expect(step.metadata).toMatchObject({
         "eve.session_id": childTurn?.metadata?.["eve.session_id"],
-        model: "gpt-5.4-mini",
-        provider: "openai",
+        model: "qwen/qwen3-30b-a3b",
+        provider: "openrouter",
         scenario: "eve-instrumentation",
         testRunId: expect.any(String),
       });
@@ -287,8 +287,8 @@ describe("eve instrumentation", () => {
     expect(secondChildTurn?.span.rootId).toEqual(secondRoot?.span.rootId);
     expect(secondChildTurn?.metadata).toMatchObject({
       "eve.session_id": expect.any(String),
-      model: "gpt-5.4-mini",
-      provider: "openai",
+      model: "qwen/qwen3-30b-a3b",
+      provider: "openrouter",
     });
     expect(secondChildTurn?.metadata?.["eve.session_id"]).not.toEqual(
       secondRoot?.metadata?.["eve.session_id"],
