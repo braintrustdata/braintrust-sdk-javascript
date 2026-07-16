@@ -1,6 +1,5 @@
 ---
-"braintrust": patch
+"braintrust": minor
 ---
 
-Add tracing support for AI SDK HarnessAgent turns, automatically enabling its
-lifecycle telemetry when callers have not configured it.
+feat(ai-sdk): Add HarnessAgent tracing support
