@@ -180,6 +180,11 @@ import { lintTemplate as _lintMustacheTemplate } from "./template/mustache-utils
 import { prettifyXact } from "../util/index";
 import { SpanCache, CachedSpan } from "./span-cache";
 import type { EvalParameters, InferParameters } from "./eval-parameters";
+import {
+  detectSpanOriginEnvironment,
+  mergeSpanOriginContext,
+  type SpanOriginEnvironment,
+} from "./span-origin";
 
 // Manual type definition for inline attachments (not in generated_types)
 const InlineAttachmentReferenceSchema = z.object({
@@ -752,6 +757,7 @@ export class BraintrustState {
   private _idGenerator: IDGenerator | null = null;
   private _contextManager: ContextManager | null = null;
   private _otelFlushCallback: (() => Promise<void>) | null = null;
+  public spanOriginEnvironment: SpanOriginEnvironment | undefined;
 
   constructor(private loginParams: LoginOptions) {
     this.id = `${new Date().toLocaleString()}-${stateNonce++}`; // This is for debugging. uuidv4() breaks on platforms like Cloudflare.
@@ -813,6 +819,7 @@ export class BraintrustState {
     });
 
     this.spanCache = new SpanCache({ disabled: loginParams.disableSpanCache });
+    this.spanOriginEnvironment = detectSpanOriginEnvironment();
   }
 
   public resetLoginInfo() {
@@ -4610,6 +4617,7 @@ type AsyncFlushArg<IsAsyncFlush> = {
 export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
   projectName?: string;
   projectId?: string;
+  environment?: SpanOriginEnvironment;
   setCurrent?: boolean;
   state?: BraintrustState;
   orgProjectMetadata?: OrgProjectMetadata;
@@ -4643,6 +4651,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
     orgName,
     forceLogin,
     debugLogLevel,
+    environment,
     fetch,
     state: stateArg,
   } = options || {};
@@ -4664,6 +4673,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
 
   const state = stateArg ?? _globalState;
   state.setDebugLogLevel(debugLogLevel);
+  state.spanOriginEnvironment = detectSpanOriginEnvironment(environment);
 
   // Enable queue size limit enforcement for initLogger() calls
   // This ensures production observability doesn't OOM customer processes
@@ -7620,7 +7630,11 @@ export class SpanImpl implements Span {
       metrics: {
         start: args.startTime ?? getCurrentUnixTimestamp(),
       },
-      context: { ...callerLocation },
+      context: mergeSpanOriginContext(
+        { ...callerLocation },
+        "braintrust-js-logger",
+        this._state.spanOriginEnvironment,
+      ),
       span_attributes: {
         name,
         type,

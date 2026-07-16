@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 import { defineConfig } from "vitest/config";
@@ -15,8 +16,14 @@ if (!testRunId) {
 const { default: BraintrustVitestEvalsReporter } = await import(
   pathToFileURL(path.join(repoRoot, "js/dist/vitest-evals-reporter.mjs")).href
 );
+const packageJson = JSON.parse(
+  readFileSync(path.join(repoRoot, "js/package.json"), "utf8"),
+);
 
 export default defineConfig({
+  define: {
+    __BRAINTRUST_SDK_VERSION__: JSON.stringify(packageJson.version),
+  },
   test: {
     hookTimeout: 30_000,
     include: ["runner.vitest-evals-reporter.case.ts"],

@@ -1,7 +1,15 @@
 import tsconfigPaths from "vite-tsconfig-paths";
 import path from "path";
+import { readFileSync } from "node:fs";
+
+const packageJson = JSON.parse(
+  readFileSync(new URL("./package.json", import.meta.url), "utf8"),
+);
 
 const config = {
+  define: {
+    __BRAINTRUST_SDK_VERSION__: JSON.stringify(packageJson.version),
+  },
   plugins: [
     tsconfigPaths({
       // Explicitly specify the root tsconfig to prevent scanning vendor folders
