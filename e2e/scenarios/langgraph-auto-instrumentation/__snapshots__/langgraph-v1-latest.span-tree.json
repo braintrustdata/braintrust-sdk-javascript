@@ -116,7 +116,7 @@
                     "completion_tokens",
                     "prompt_cached_tokens",
                     "prompt_tokens",
-                    "total_tokens"
+                    "tokens"
                   ]
                 }
               ],

@@ -37,11 +37,7 @@
     "span_id": "<span:2>"
   },
   {
-    "context": {
-      "caller_filename": "<node-internal>",
-      "caller_functionname": "<node-internal>",
-      "caller_lineno": 0
-    },
+    "context": {},
     "created": "<timestamp>",
     "id": "<span:4>",
     "input": {},
@@ -85,11 +81,7 @@
     ]
   },
   {
-    "context": {
-      "caller_filename": "<node-internal>",
-      "caller_functionname": "<node-internal>",
-      "caller_lineno": 0
-    },
+    "context": {},
     "created": "<timestamp>",
     "id": "<span:6>",
     "input": {
@@ -186,11 +178,7 @@
     ]
   },
   {
-    "context": {
-      "caller_filename": "<node-internal>",
-      "caller_functionname": "<node-internal>",
-      "caller_lineno": 0
-    },
+    "context": {},
     "created": "<timestamp>",
     "id": "<span:8>",
     "input": [
@@ -282,7 +270,7 @@
       "prompt_cached_tokens": "<number>",
       "prompt_tokens": "<number>",
       "start": 0,
-      "total_tokens": "<number>"
+      "tokens": "<number>"
     },
     "output": {
       "generations": [
@@ -429,11 +417,7 @@
     ]
   },
   {
-    "context": {
-      "caller_filename": "<node-internal>",
-      "caller_functionname": "<node-internal>",
-      "caller_lineno": 0
-    },
+    "context": {},
     "created": "<timestamp>",
     "id": "<span:13>",
     "input": {

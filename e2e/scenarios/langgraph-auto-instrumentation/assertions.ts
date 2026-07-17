@@ -55,8 +55,25 @@ function normalizeLangGraphPayloadRows(rows: unknown[]): unknown[] {
     normalizeTokenMetrics(normalized.metrics);
     normalizeLLMOutput(normalized.output);
     normalizeLangchainMetadata(normalized);
+    normalizeInternalCallerContext(normalized);
     return normalized;
   });
+}
+
+function normalizeInternalCallerContext(row: Record<string, unknown>): void {
+  const context = row.context;
+  if (!context || typeof context !== "object" || Array.isArray(context)) {
+    return;
+  }
+
+  const record = context as Record<string, unknown>;
+  const callerFilename = record.caller_filename;
+  if (
+    typeof callerFilename === "string" &&
+    (callerFilename.startsWith("node:") || callerFilename === "<node-internal>")
+  ) {
+    row.context = {};
+  }
 }
 
 const LANGCHAIN_LS_VOLATILE_KEYS = new Set([
@@ -209,14 +226,14 @@ export function assertLangGraphAutoInstrumentation(options: {
     (event) =>
       typeof event.metrics?.completion_tokens === "number" &&
       typeof event.metrics?.prompt_tokens === "number" &&
-      typeof event.metrics?.total_tokens === "number",
+      typeof event.metrics?.tokens === "number",
   );
   expect(llmSpan).toBeDefined();
   expect(llmSpan?.span.type).toBe("llm");
   expect(llmSpan?.metrics).toMatchObject({
     completion_tokens: expect.any(Number),
     prompt_tokens: expect.any(Number),
-    total_tokens: expect.any(Number),
+    tokens: expect.any(Number),
   });
 
   const spanTree = [root, graphSpan, sayHelloSpan, llmSpan, sayByeSpan].map(
