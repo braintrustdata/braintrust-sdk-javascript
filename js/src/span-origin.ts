@@ -14,7 +14,10 @@ type SpanOrigin = {
   environment?: SpanOriginEnvironment;
 };
 
-const SDK_VERSION = __BRAINTRUST_SDK_VERSION__;
+const SDK_VERSION =
+  typeof __BRAINTRUST_SDK_VERSION__ !== "undefined"
+    ? __BRAINTRUST_SDK_VERSION__
+    : "0.0.0";
 
 export function detectSpanOriginEnvironment(
   explicit?: SpanOriginEnvironment,

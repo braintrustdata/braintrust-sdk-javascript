@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import iso from "./isomorph";
@@ -6,10 +5,6 @@ import {
   detectSpanOriginEnvironment,
   mergeSpanOriginContext,
 } from "./span-origin";
-
-const packageJson = JSON.parse(
-  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-) as { version: string };
 
 const originalGetEnv = iso.getEnv;
 
@@ -19,12 +14,12 @@ afterEach(() => {
 });
 
 describe("mergeSpanOriginContext", () => {
-  it("loads the SDK version from package.json", () => {
+  it("uses the test fallback SDK version when no build-time version is defined", () => {
     const context = mergeSpanOriginContext(undefined, "test-instrumentation");
 
     expect(context.span_origin).toMatchObject({
       name: "braintrust.sdk.javascript",
-      version: packageJson.version,
+      version: "0.0.0",
       instrumentation: { name: "test-instrumentation" },
     });
   });
