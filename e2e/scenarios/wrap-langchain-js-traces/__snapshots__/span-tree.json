@@ -163,8 +163,7 @@
                 "completion_tokens": 2,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 12,
-                "tokens": 14,
-                "total_tokens": 14
+                "tokens": 14
               }
             }
           ],
@@ -434,8 +433,7 @@
                     "completion_tokens": 2,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 18,
-                    "tokens": 20,
-                    "total_tokens": 20
+                    "tokens": 20
                   }
                 }
               ],
@@ -763,8 +761,7 @@
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 22,
                 "time_to_first_token": 0,
-                "tokens": 28,
-                "total_tokens": 28
+                "tokens": 28
               }
             }
           ],
@@ -999,8 +996,7 @@
                 "completion_tokens": 16,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 72,
-                "tokens": 88,
-                "total_tokens": 88
+                "tokens": 88
               }
             }
           ],
@@ -1263,8 +1259,7 @@
                 "completion_tokens": 21,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 76,
-                "tokens": 97,
-                "total_tokens": 97
+                "tokens": 97
               }
             },
             {
@@ -1538,8 +1533,7 @@
                 "completion_tokens": 11,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 106,
-                "tokens": 117,
-                "total_tokens": 117
+                "tokens": 117
               }
             }
           ],

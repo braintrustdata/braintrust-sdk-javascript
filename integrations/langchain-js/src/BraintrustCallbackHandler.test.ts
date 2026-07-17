@@ -134,7 +134,7 @@ describe("BraintrustCallbackHandler", () => {
         ],
         metrics: {
           start: expect.any(Number),
-          total_tokens: expect.any(Number),
+          tokens: expect.any(Number),
           prompt_tokens: expect.any(Number),
           completion_tokens: expect.any(Number),
           end: expect.any(Number),
@@ -295,7 +295,7 @@ it("should handle streaming LLM calls", async () => {
         end: expect.any(Number),
         prompt_tokens: 16,
         start: expect.any(Number),
-        total_tokens: 22,
+        tokens: 22,
       },
       metadata: {
         tags: ["seq:step:2"],
@@ -373,7 +373,7 @@ it("should track time-to-first-token in streaming calls", async () => {
     time_to_first_token: expect.any(Number),
     prompt_tokens: expect.any(Number),
     completion_tokens: expect.any(Number),
-    total_tokens: expect.any(Number),
+    tokens: expect.any(Number),
   });
 
   // Verify TTFT is a reasonable value (positive and less than total time)
@@ -482,7 +482,7 @@ it("should handle multi-step chains with memory", async () => {
         end: expect.any(Number),
         prompt_tokens: expect.any(Number),
         start: expect.any(Number),
-        total_tokens: expect.any(Number),
+        tokens: expect.any(Number),
       },
       metadata: {
         tags: ["seq:step:2", "test"],
@@ -597,7 +597,7 @@ it("should handle tool/agent usage", async () => {
         end: expect.any(Number),
         prompt_tokens: expect.any(Number),
         start: expect.any(Number),
-        total_tokens: expect.any(Number),
+        tokens: expect.any(Number),
       },
       metadata: {
         model: "gpt-4o-mini-2024-07-18",

@@ -209,14 +209,14 @@ export function assertLangGraphAutoInstrumentation(options: {
     (event) =>
       typeof event.metrics?.completion_tokens === "number" &&
       typeof event.metrics?.prompt_tokens === "number" &&
-      typeof event.metrics?.total_tokens === "number",
+      typeof event.metrics?.tokens === "number",
   );
   expect(llmSpan).toBeDefined();
   expect(llmSpan?.span.type).toBe("llm");
   expect(llmSpan?.metrics).toMatchObject({
     completion_tokens: expect.any(Number),
     prompt_tokens: expect.any(Number),
-    total_tokens: expect.any(Number),
+    tokens: expect.any(Number),
   });
 
   const spanTree = [root, graphSpan, sayHelloSpan, llmSpan, sayByeSpan].map(

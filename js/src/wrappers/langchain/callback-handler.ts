@@ -452,6 +452,7 @@ function normalizeTokenMetrics(
     metrics.tokens = metrics.prompt_tokens + metrics.completion_tokens;
   }
 
+  delete metrics.total_tokens;
   return metrics;
 }
 

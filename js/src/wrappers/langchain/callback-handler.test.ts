@@ -77,7 +77,6 @@ describe("BraintrustLangChainCallbackHandler metrics", () => {
     });
 
     expect(endLog.metrics).toEqual({
-      total_tokens: 99,
       prompt_tokens: 10,
       completion_tokens: 2,
       tokens: 99,

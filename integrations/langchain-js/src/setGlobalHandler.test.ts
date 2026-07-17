@@ -122,7 +122,7 @@ describe("setGlobalHandler", () => {
           end: expect.any(Number),
           prompt_tokens: 15,
           start: expect.any(Number),
-          total_tokens: 23,
+          tokens: 23,
         },
         metadata: {
           tags: ["seq:step:2"],

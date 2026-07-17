@@ -158,7 +158,7 @@ span_tree:
     │         "completion_tokens": 2,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 12,
-    │         "total_tokens": 14
+    │         "tokens": 14
     │       }
     ├── langchain-chain-operation
     │   metadata: {
@@ -556,7 +556,7 @@ span_tree:
     │             "completion_tokens": 2,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 18,
-    │             "total_tokens": 20
+    │             "tokens": 20
     │           }
     ├── langchain-stream-operation
     │   metadata: {
@@ -720,7 +720,7 @@ span_tree:
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 22,
     │         "time_to_first_token": 0,
-    │         "total_tokens": 28
+    │         "tokens": 28
     │       }
     ├── langchain-tool-operation
     │   metadata: {
@@ -943,7 +943,7 @@ span_tree:
     │         "completion_tokens": 16,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 72,
-    │         "total_tokens": 88
+    │         "tokens": 88
     │       }
     └── langchain-tool-result-operation
         metadata: {
@@ -1194,7 +1194,7 @@ span_tree:
         │     "completion_tokens": 21,
         │     "prompt_cached_tokens": 0,
         │     "prompt_tokens": 76,
-        │     "total_tokens": 97
+        │     "tokens": 97
         │   }
         └── ChatOpenAI [llm]
             input: [
@@ -1460,5 +1460,5 @@ span_tree:
               "completion_tokens": 11,
               "prompt_cached_tokens": 0,
               "prompt_tokens": 106,
-              "total_tokens": 117
+              "tokens": 117
             }

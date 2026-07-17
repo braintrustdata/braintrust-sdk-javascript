@@ -283,8 +283,7 @@
       "prompt_cached_tokens": "<number>",
       "prompt_tokens": "<number>",
       "start": 0,
-      "tokens": "<number>",
-      "total_tokens": "<number>"
+      "tokens": "<number>"
     },
     "output": {
       "generations": [
