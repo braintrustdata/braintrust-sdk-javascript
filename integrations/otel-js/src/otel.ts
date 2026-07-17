@@ -25,6 +25,8 @@ import {
   type Span as BraintrustSpan,
 } from "braintrust";
 
+declare const __BRAINTRUST_OTEL_VERSION__: string;
+
 interface ExportResult {
   code: number;
   error?: Error;
@@ -37,6 +39,11 @@ const FILTER_PREFIXES = [
   "ai.",
   "traceloop.",
 ] as const;
+
+const SYSTEM_ATTRIBUTE_NAMES = new Set([
+  "braintrust.parent",
+  "braintrust.context_json",
+]);
 
 /**
  * Custom filter function type for span filtering.
@@ -72,7 +79,9 @@ function isAISpan(span: ReadableSpan): boolean {
   }
   const attributes = span.attributes;
   if (attributes) {
-    const attributeNames = Object.keys(attributes);
+    const attributeNames = Object.keys(attributes).filter(
+      (name) => !SYSTEM_ATTRIBUTE_NAMES.has(name),
+    );
     if (
       attributeNames.some((name) =>
         FILTER_PREFIXES.some((prefix) => name.startsWith(prefix)),
@@ -192,12 +201,130 @@ interface BraintrustSpanProcessorOptions {
    * Additional headers to send with telemetry data
    */
   headers?: Record<string, string>;
+  environment?: { type?: string; name?: string };
   /**
    * @internal
    * Internal option for dependency injection during testing.
    * If provided, this processor will be used instead of creating an OTLP exporter.
    */
   _spanProcessor?: SpanProcessor;
+}
+
+const SDK_VERSION = __BRAINTRUST_OTEL_VERSION__;
+
+function spanOriginContext(environment?: { type?: string; name?: string }) {
+  return {
+    span_origin: {
+      name: "braintrust.sdk.javascript",
+      version: SDK_VERSION,
+      instrumentation: { name: "braintrust-otel-js" },
+      ...(environment ? { environment } : {}),
+    },
+  };
+}
+
+function mergeSpanOriginContextJson(
+  existingContextJson: unknown,
+  environment?: { type?: string; name?: string },
+): string {
+  const context =
+    typeof existingContextJson === "string" && existingContextJson
+      ? parseContextJson(existingContextJson)
+      : {};
+  const existingOrigin =
+    context.span_origin &&
+    typeof context.span_origin === "object" &&
+    !Array.isArray(context.span_origin)
+      ? context.span_origin
+      : {};
+  return JSON.stringify({
+    ...context,
+    span_origin: {
+      ...spanOriginContext(environment).span_origin,
+      ...existingOrigin,
+    },
+  });
+}
+
+function parseContextJson(contextJson: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(contextJson);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function withSpanOriginAttributes(
+  span: ReadableSpan,
+  environment?: { type?: string; name?: string },
+): ReadableSpan {
+  const attributes = {
+    ...span.attributes,
+    "braintrust.context_json": mergeSpanOriginContextJson(
+      span.attributes["braintrust.context_json"],
+      environment,
+    ),
+  };
+  return new Proxy(span, {
+    get(target, prop, receiver) {
+      if (prop === "attributes") return attributes;
+      const value = Reflect.get(target, prop, receiver);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+}
+
+function detectEnvironment(explicit?: {
+  type?: string;
+  name?: string;
+}): { type?: string; name?: string } | undefined {
+  if (explicit) return explicit;
+  const envType = _internalIso.getEnv("BRAINTRUST_ENVIRONMENT_TYPE");
+  const envName = _internalIso.getEnv("BRAINTRUST_ENVIRONMENT_NAME");
+  if (envType || envName) {
+    return {
+      ...(envType ? { type: envType } : {}),
+      ...(envName ? { name: envName } : {}),
+    };
+  }
+  if (_internalIso.getEnv("GITHUB_ACTIONS"))
+    return { type: "ci", name: "github_actions" };
+  if (_internalIso.getEnv("GITLAB_CI"))
+    return { type: "ci", name: "gitlab_ci" };
+  if (_internalIso.getEnv("CIRCLECI")) return { type: "ci", name: "circleci" };
+  if (_internalIso.getEnv("BUILDKITE"))
+    return { type: "ci", name: "buildkite" };
+  if (_internalIso.getEnv("CI")) return { type: "ci", name: "ci" };
+  if (_internalIso.getEnv("VERCEL")) return { type: "server", name: "vercel" };
+  if (_internalIso.getEnv("NETLIFY"))
+    return { type: "server", name: "netlify" };
+  const awsExecutionEnv = _internalIso.getEnv("AWS_EXECUTION_ENV");
+  if (
+    _internalIso.getEnv("ECS_CONTAINER_METADATA_URI") ||
+    _internalIso.getEnv("ECS_CONTAINER_METADATA_URI_V4") ||
+    awsExecutionEnv?.startsWith("AWS_ECS_")
+  ) {
+    return { type: "server", name: "ecs" };
+  }
+  if (
+    _internalIso.getEnv("AWS_LAMBDA_FUNCTION_NAME") ||
+    awsExecutionEnv?.startsWith("AWS_Lambda_")
+  ) {
+    return { type: "server", name: "aws_lambda" };
+  }
+  const nodeEnv = _internalIso.getEnv("NODE_ENV");
+  if (!nodeEnv) return undefined;
+  const normalizedNodeEnv = nodeEnv.toLowerCase();
+  if (normalizedNodeEnv === "production" || normalizedNodeEnv === "staging") {
+    return { type: "server", name: normalizedNodeEnv };
+  }
+  if (normalizedNodeEnv === "development" || normalizedNodeEnv === "local") {
+    return { type: "local", name: normalizedNodeEnv };
+  }
+  return { name: nodeEnv };
 }
 
 class LazyBraintrustOTLPTraceExporter implements SpanExporter {
@@ -377,8 +504,10 @@ export class BraintrustSpanProcessor implements SpanProcessor {
   private readonly processor: SpanProcessor;
   private readonly aiSpanProcessor: SpanProcessor;
   private readonly exporter?: LazyBraintrustOTLPTraceExporter;
+  private readonly environment?: { type?: string; name?: string };
 
   constructor(options: BraintrustSpanProcessorOptions = {}) {
+    this.environment = detectEnvironment(options.environment);
     // If a processor is injected (for testing), use it directly
     if (options._spanProcessor) {
       this.processor = options._spanProcessor;
@@ -524,7 +653,9 @@ export class BraintrustSpanProcessor implements SpanProcessor {
   }
 
   onEnd(span: ReadableSpan): void {
-    this.aiSpanProcessor.onEnd(span);
+    this.aiSpanProcessor.onEnd(
+      withSpanOriginAttributes(span, this.environment),
+    );
   }
 
   shutdown(): Promise<void> {

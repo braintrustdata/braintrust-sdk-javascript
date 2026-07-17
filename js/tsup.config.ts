@@ -1,4 +1,13 @@
 import { defineConfig } from "tsup";
+import { readFileSync } from "node:fs";
+
+const packageJson = JSON.parse(
+  readFileSync(new URL("./package.json", import.meta.url), "utf8"),
+) as { version: string };
+
+const define = {
+  __BRAINTRUST_SDK_VERSION__: JSON.stringify(packageJson.version),
+};
 
 export default defineConfig([
   // Node.js entrypoint
@@ -20,6 +29,7 @@ export default defineConfig([
       },
     },
     splitting: true,
+    define,
     clean: true,
   },
   {
@@ -30,6 +40,7 @@ export default defineConfig([
     external: ["esbuild", "prettier", "typescript", "zod"],
     // CLI doesn't need DTS
     dts: false,
+    define,
     clean: false,
   },
   {
@@ -45,6 +56,7 @@ export default defineConfig([
       },
     },
     splitting: true,
+    define,
     clean: true,
   },
   {
@@ -60,6 +72,7 @@ export default defineConfig([
       },
     },
     splitting: true,
+    define,
     clean: true,
   },
   // Browser/edge entrypoints
@@ -78,6 +91,7 @@ export default defineConfig([
     platform: "browser",
     splitting: false,
     dts: true,
+    define,
     clean: false,
   },
   {
@@ -91,6 +105,7 @@ export default defineConfig([
       },
     },
     splitting: false,
+    define,
     clean: true,
   },
   {
@@ -108,6 +123,7 @@ export default defineConfig([
     outDir: "dist/auto-instrumentations",
     dts: true,
     external: ["zod"],
+    define,
     outExtension({ format }) {
       if (format === "esm") {
         return { js: ".mjs" };
@@ -125,6 +141,7 @@ export default defineConfig([
     outDir: "dist/auto-instrumentations",
     dts: true,
     external: ["zod"],
+    define,
     outExtension() {
       return { js: ".cjs" };
     },
@@ -140,6 +157,7 @@ export default defineConfig([
     dts: false,
     platform: "node",
     external: ["@anthropic-ai/sdk", "zod"],
+    define,
     outExtension({ format }) {
       return { js: ".mjs" };
     },

@@ -373,7 +373,11 @@
     ]
   },
   {
-    "context": {},
+    "context": {
+      "caller_filename": "<node-internal>",
+      "caller_functionname": "<node-internal>",
+      "caller_lineno": 0
+    },
     "created": "<timestamp>",
     "id": "<span:11>",
     "input": [

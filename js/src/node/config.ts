@@ -31,7 +31,17 @@ export function configureNode() {
   iso.getPastNAncestors = getPastNAncestors;
   iso.getEnv = (name) => {
     const value = process.env[name];
-    return name === "BRAINTRUST_API_KEY" && !value?.trim() ? undefined : value;
+    if (name === "BRAINTRUST_API_KEY") {
+      return value?.trim() ? value : undefined;
+    }
+    if (
+      (name === "BRAINTRUST_ENVIRONMENT_TYPE" ||
+        name === "BRAINTRUST_ENVIRONMENT_NAME") &&
+      !value?.trim()
+    ) {
+      return getNearestBraintrustEnvValue(name);
+    }
+    return value;
   };
   iso.getBraintrustApiKey = async () => {
     const value = process.env.BRAINTRUST_API_KEY;
@@ -151,4 +161,32 @@ export function configureNode() {
 
   // Enable auto-instrumentation
   registry.enable();
+}
+
+function getNearestBraintrustEnvValue(name: string): string | undefined {
+  for (
+    let dir = process.cwd(), depth = 0;
+    depth <= BRAINTRUST_ENV_SEARCH_PARENT_LIMIT;
+    dir = path.dirname(dir), depth++
+  ) {
+    const envPath = path.join(dir, ".env.braintrust");
+    try {
+      const parsed = dotenv.parse(fsSync.readFileSync(envPath, "utf8"));
+      const value = parsed[name];
+      return value?.trim() ? value : undefined;
+    } catch (e) {
+      if (
+        typeof e !== "object" ||
+        e === null ||
+        !("code" in e) ||
+        e.code !== "ENOENT"
+      ) {
+        return undefined;
+      }
+    }
+    if (path.dirname(dir) === dir) {
+      break;
+    }
+  }
+  return undefined;
 }

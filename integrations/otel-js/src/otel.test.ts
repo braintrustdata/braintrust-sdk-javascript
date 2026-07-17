@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
+import { readFileSync } from "node:fs";
 import { describe, it, expect, beforeEach, afterEach, vi, test } from "vitest";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -34,19 +35,30 @@ import {
 import { SpanComponentsV3, SpanComponentsV4 } from "braintrust/util";
 import { setupOtelCompat, resetOtelCompat } from ".";
 
-async function withEmptyBraintrustEnvFile<T>(
+const packageJson = JSON.parse(
+  readFileSync(path.join(__dirname, "../package.json"), "utf8"),
+) as { version: string };
+
+async function withBraintrustEnvFile<T>(
+  content: string,
   fn: () => T | Promise<T>,
 ): Promise<T> {
   const originalCwd = process.cwd();
   const tempDir = await mkdtemp(path.join(tmpdir(), "braintrust-otel-env-"));
   try {
-    await writeFile(path.join(tempDir, ".env.braintrust"), "");
+    await writeFile(path.join(tempDir, ".env.braintrust"), content);
     process.chdir(tempDir);
     return fn();
   } finally {
     process.chdir(originalCwd);
     await rm(tempDir, { force: true, recursive: true });
   }
+}
+
+async function withEmptyBraintrustEnvFile<T>(
+  fn: () => T | Promise<T>,
+): Promise<T> {
+  return withBraintrustEnvFile("", fn);
 }
 
 describe("AISpanProcessor", () => {
@@ -176,6 +188,35 @@ describe("AISpanProcessor", () => {
     expect(aiAttrSpans).toHaveLength(2);
     // The regular span should be filtered out
     expect(spans.find((s) => s.attributes["foo"] === "bar")).toBeUndefined();
+  });
+
+  it("should ignore Braintrust system attributes when filtering AI spans", async () => {
+    const rootSpan = tracer.startSpan("root");
+
+    const parentContext = trace.setSpanContext(
+      context.active(),
+      rootSpan.spanContext(),
+    );
+    const systemAttrSpan = tracer.startSpan(
+      "some.operation",
+      {
+        attributes: {
+          "braintrust.context_json": JSON.stringify({
+            span_origin: { name: "braintrust.sdk.javascript" },
+          }),
+          "braintrust.parent": "project_name:test",
+        },
+      },
+      parentContext,
+    );
+
+    systemAttrSpan.end();
+    rootSpan.end();
+
+    await provider.forceFlush();
+
+    const spans = memoryExporter.getFinishedSpans();
+    expect(spans.find((s) => s.name === "some.operation")).toBeUndefined();
   });
 
   it("should support custom filter that keeps root spans using isRootSpan", () => {
@@ -752,6 +793,161 @@ describe("BraintrustSpanProcessor", () => {
     // Test shutdown and forceFlush
     await expect(processor.shutdown()).resolves.toBeUndefined();
     await expect(processor.forceFlush()).resolves.toBeUndefined();
+  });
+
+  it("should merge span origin with context_json set after span start", () => {
+    let endedSpan: ReadableSpan | undefined;
+    const innerProcessor = {
+      onStart: vi.fn(),
+      onEnd: vi.fn((span: ReadableSpan) => {
+        endedSpan = span;
+      }),
+      shutdown: vi.fn(async () => undefined),
+      forceFlush: vi.fn(async () => undefined),
+    };
+
+    const processor = new BraintrustSpanProcessor({
+      apiKey: "test-api-key",
+      _spanProcessor: innerProcessor as any,
+    });
+
+    const mockSpan = {
+      spanContext: () => ({ traceId: "test-trace", spanId: "test-span" }),
+      setAttributes: vi.fn(),
+      name: "late-context",
+      attributes: {
+        "braintrust.context_json": JSON.stringify({
+          metadata: { source: "late-attribute" },
+        }),
+      },
+      parentSpanContext: undefined,
+    } as any;
+
+    processor.onStart(mockSpan, context.active());
+    processor.onEnd(mockSpan);
+
+    expect(endedSpan).toBeDefined();
+    const contextJson = endedSpan?.attributes["braintrust.context_json"];
+    expect(typeof contextJson).toBe("string");
+    const parsed = JSON.parse(contextJson as string);
+    expect(parsed.metadata.source).toBe("late-attribute");
+    expect(parsed.span_origin.name).toBe("braintrust.sdk.javascript");
+    expect(parsed.span_origin.version).toBe(packageJson.version);
+    expect(parsed.span_origin.instrumentation.name).toBe("braintrust-otel-js");
+  });
+
+  it("should preserve explicit environment name without type", () => {
+    process.env.BRAINTRUST_ENVIRONMENT_NAME = "staging";
+    delete process.env.BRAINTRUST_ENVIRONMENT_TYPE;
+
+    let endedSpan: ReadableSpan | undefined;
+    const innerProcessor = {
+      onStart: vi.fn(),
+      onEnd: vi.fn((span: ReadableSpan) => {
+        endedSpan = span;
+      }),
+      shutdown: vi.fn(async () => undefined),
+      forceFlush: vi.fn(async () => undefined),
+    };
+
+    const processor = new BraintrustSpanProcessor({
+      apiKey: "test-api-key",
+      _spanProcessor: innerProcessor as any,
+    });
+
+    const mockSpan = {
+      spanContext: () => ({ traceId: "test-trace", spanId: "test-span" }),
+      setAttributes: vi.fn(),
+      name: "environment-name-only",
+      attributes: {},
+      parentSpanContext: undefined,
+    } as any;
+
+    processor.onStart(mockSpan, context.active());
+    processor.onEnd(mockSpan);
+
+    const parsed = JSON.parse(
+      endedSpan?.attributes["braintrust.context_json"] as string,
+    );
+    expect(parsed.span_origin.environment).toEqual({ name: "staging" });
+  });
+
+  it("should read explicit environment name from .env.braintrust", async () => {
+    delete process.env.BRAINTRUST_ENVIRONMENT_NAME;
+    delete process.env.BRAINTRUST_ENVIRONMENT_TYPE;
+
+    await withBraintrustEnvFile(
+      "BRAINTRUST_ENVIRONMENT_NAME=staging\n",
+      async () => {
+        let endedSpan: ReadableSpan | undefined;
+        const innerProcessor = {
+          onStart: vi.fn(),
+          onEnd: vi.fn((span: ReadableSpan) => {
+            endedSpan = span;
+          }),
+          shutdown: vi.fn(async () => undefined),
+          forceFlush: vi.fn(async () => undefined),
+        };
+
+        const processor = new BraintrustSpanProcessor({
+          apiKey: "test-api-key",
+          _spanProcessor: innerProcessor as any,
+        });
+
+        const mockSpan = {
+          spanContext: () => ({ traceId: "test-trace", spanId: "test-span" }),
+          setAttributes: vi.fn(),
+          name: "environment-from-file",
+          attributes: {},
+          parentSpanContext: undefined,
+        } as any;
+
+        processor.onStart(mockSpan, context.active());
+        processor.onEnd(mockSpan);
+
+        const parsed = JSON.parse(
+          endedSpan?.attributes["braintrust.context_json"] as string,
+        );
+        expect(parsed.span_origin.environment).toEqual({ name: "staging" });
+      },
+    );
+  });
+
+  it("should preserve custom NODE_ENV values as environment names", () => {
+    process.env.NODE_ENV = "preview";
+    delete process.env.BRAINTRUST_ENVIRONMENT_NAME;
+    delete process.env.BRAINTRUST_ENVIRONMENT_TYPE;
+
+    let endedSpan: ReadableSpan | undefined;
+    const innerProcessor = {
+      onStart: vi.fn(),
+      onEnd: vi.fn((span: ReadableSpan) => {
+        endedSpan = span;
+      }),
+      shutdown: vi.fn(async () => undefined),
+      forceFlush: vi.fn(async () => undefined),
+    };
+
+    const processor = new BraintrustSpanProcessor({
+      apiKey: "test-api-key",
+      _spanProcessor: innerProcessor as any,
+    });
+
+    const mockSpan = {
+      spanContext: () => ({ traceId: "test-trace", spanId: "test-span" }),
+      setAttributes: vi.fn(),
+      name: "custom-node-env",
+      attributes: {},
+      parentSpanContext: undefined,
+    } as any;
+
+    processor.onStart(mockSpan, context.active());
+    processor.onEnd(mockSpan);
+
+    const parsed = JSON.parse(
+      endedSpan?.attributes["braintrust.context_json"] as string,
+    );
+    expect(parsed.span_origin.environment).toEqual({ name: "preview" });
   });
 
   it("should use default parent when none is provided", () => {

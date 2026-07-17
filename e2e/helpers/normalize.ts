@@ -263,6 +263,24 @@ function normalizeObject(
         return [];
       }
 
+      if (key === "span_origin") {
+        return [];
+      }
+
+      if (key === "braintrust.context_json" && typeof entry === "string") {
+        const normalizedContextJson = normalizeJsonString(
+          entry,
+          tokenMaps,
+          options,
+        );
+        if (normalizedContextJson === "{}") {
+          return [];
+        }
+        if (normalizedContextJson) {
+          return [[key, normalizedContextJson]];
+        }
+      }
+
       if (isNodeInternalCaller) {
         if (key === "caller_filename") {
           return [[key, "<node-internal>"]];
@@ -281,6 +299,16 @@ function normalizeObject(
         (value.type === "thought" || value.type === "thought_signature")
       ) {
         return [[key, tokenFor(tokenMaps.ids, entry, "signature")]];
+      }
+
+      if (
+        key === "environment" &&
+        entry &&
+        typeof entry === "object" &&
+        !Array.isArray(entry) &&
+        "type" in entry
+      ) {
+        return [];
       }
 
       return [[key, normalizeValue(entry as Json, tokenMaps, options, key)]];
@@ -341,6 +369,17 @@ function normalizeValue(
   }
 
   if (typeof value === "string") {
+    if (currentKey === "braintrust.context_json") {
+      const normalizedContextJson = normalizeJsonString(
+        value,
+        tokenMaps,
+        options,
+      );
+      if (normalizedContextJson) {
+        return normalizedContextJson;
+      }
+    }
+
     value = normalizeStackLikeString(value);
 
     const normalizedUrl = normalizeMockServerUrl(value);
@@ -459,6 +498,20 @@ function normalizeValue(
   }
 
   return value;
+}
+
+function normalizeJsonString(
+  value: string,
+  tokenMaps: TokenMaps,
+  options: ResolvedNormalizeOptions,
+): string | undefined {
+  try {
+    return JSON.stringify(
+      normalizeValue(JSON.parse(value) as Json, tokenMaps, options),
+    );
+  } catch {
+    return undefined;
+  }
 }
 
 function resolveNormalizeOptions(
