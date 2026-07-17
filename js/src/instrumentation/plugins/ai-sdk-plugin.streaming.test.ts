@@ -1011,7 +1011,10 @@ describe("AI SDK streaming instrumentation", () => {
       #secret = "preserved";
       readonly harnessId = "mock-harness";
       readonly permissionMode = "allow-edits";
-      readonly settings = { shouldNeverReachCall: true };
+      readonly settings: {
+        shouldNeverReachCall: boolean;
+        telemetry?: Record<string, unknown>;
+      } = { shouldNeverReachCall: true };
       readonly tools = {
         lookup: {
           description: "Look up a value",
