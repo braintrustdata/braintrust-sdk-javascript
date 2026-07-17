@@ -55,8 +55,25 @@ function normalizeLangGraphPayloadRows(rows: unknown[]): unknown[] {
     normalizeTokenMetrics(normalized.metrics);
     normalizeLLMOutput(normalized.output);
     normalizeLangchainMetadata(normalized);
+    normalizeInternalCallerContext(normalized);
     return normalized;
   });
+}
+
+function normalizeInternalCallerContext(row: Record<string, unknown>): void {
+  const context = row.context;
+  if (!context || typeof context !== "object" || Array.isArray(context)) {
+    return;
+  }
+
+  const record = context as Record<string, unknown>;
+  const callerFilename = record.caller_filename;
+  if (
+    typeof callerFilename === "string" &&
+    (callerFilename.startsWith("node:") || callerFilename === "<node-internal>")
+  ) {
+    row.context = {};
+  }
 }
 
 const LANGCHAIN_LS_VOLATILE_KEYS = new Set([
