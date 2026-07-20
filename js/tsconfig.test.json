@@ -3,6 +3,7 @@
   "compilerOptions": {
     "declaration": false,
     "module": "es2022",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "types": ["node", "vitest/globals"],
     "paths": {
