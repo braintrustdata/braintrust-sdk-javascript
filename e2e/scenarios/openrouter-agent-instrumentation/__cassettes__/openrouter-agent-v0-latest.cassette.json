@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "b07479a2600fb868",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "recordedAt": "2026-07-07T13:52:09.118Z",
+      "recordedAt": "2026-07-20T15:39:22.051Z",
       "request": {
         "body": {
           "kind": "json",
@@ -44,32 +44,32 @@
       "response": {
         "body": {
           "chunks": [
-            ": ",
-            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1783432328-KUcbnsEqu9Zhlj04vGTv\",\"object\":\"response\",\"created_at\":1783432328,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
-            "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1783432328-KUcbnsEqu9Zhlj04vGTv\",\"object\":\"response\",\"created_at\":1783432328,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}",
-            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_29f0omce7xs\",\"type\":\"function_call\",\"status\":\"in_progress\",\"call_id\":\"tool_lookup_weather_9ik1A4KC5aWhFO0ffwPv\",\"name\":\"lookup_weather\",\"arguments\":\"\"},\"sequence_number\":2}",
-            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_29f0omce7xs\",\"delta\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":3}",
-            "data: {\"type\":\"response.function_call_arguments.done\",\"output_index\":0,\"item_id\":\"fc_tmp_29f0omce7xs\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":4}",
-            "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_29f0omce7xs\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"tool_lookup_weather_9ik1A4KC5aWhFO0ffwPv\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":5}",
-            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1783432328-KUcbnsEqu9Zhlj04vGTv\",\"object\":\"response\",\"created_at\":1783432328,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1783432329,\"output\":[{\"id\":\"fc_tmp_29f0omce7xs\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"tool_lookup_weather_9ik1A4KC5aWhFO0ffwPv\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"default\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":34,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":5,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":39,\"cost\":0.0000054,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.0000054,\"upstream_inference_input_cost\":0.0000034,\"upstream_inference_output_cost\":0.000002}}},\"sequence_number\":6}",
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1784561961-wpvmapVuf1ICdK60seaX\",\"object\":\"response\",\"created_at\":1784561961,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"prompt_cache_options\":null,\"usage\":null},\"sequence_number\":0}",
+            "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1784561961-wpvmapVuf1ICdK60seaX\",\"object\":\"response\",\"created_at\":1784561961,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"prompt_cache_options\":null,\"usage\":null},\"sequence_number\":1}",
+            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_8lffzo0uz4p\",\"type\":\"function_call\",\"status\":\"in_progress\",\"call_id\":\"tool_lookup_weather_l1bie5P1NSQcBR39emdb\",\"name\":\"lookup_weather\",\"arguments\":\"\"},\"sequence_number\":2}",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"item_id\":\"fc_tmp_8lffzo0uz4p\",\"delta\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":3}",
+            "data: {\"type\":\"response.function_call_arguments.done\",\"output_index\":0,\"item_id\":\"fc_tmp_8lffzo0uz4p\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\",\"sequence_number\":4}",
+            "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"fc_tmp_8lffzo0uz4p\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"tool_lookup_weather_l1bie5P1NSQcBR39emdb\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"},\"sequence_number\":5}",
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1784561961-wpvmapVuf1ICdK60seaX\",\"object\":\"response\",\"created_at\":1784561961,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1784561962,\"output\":[{\"id\":\"fc_tmp_8lffzo0uz4p\",\"type\":\"function_call\",\"status\":\"completed\",\"call_id\":\"tool_lookup_weather_l1bie5P1NSQcBR39emdb\",\"name\":\"lookup_weather\",\"arguments\":\"{\\\"city\\\":\\\"Vienna\\\"}\"}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"default\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"prompt_cache_options\":null,\"usage\":{\"input_tokens\":34,\"input_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0},\"output_tokens\":5,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":39,\"cost\":0.0000054,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.0000054,\"upstream_inference_input_cost\":0.0000034,\"upstream_inference_output_cost\":0.000002}}},\"sequence_number\":6}",
             "data: [DONE]"
           ],
           "kind": "sse"
         },
         "headers": {
           "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,cf-ray",
           "cache-control": "no-cache",
-          "cf-ray": "a17753f40e653cc0-VIE",
+          "cf-ray": "a1e30ee45e87d6f0-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Tue, 07 Jul 2026 13:52:09 GMT",
+          "date": "Mon, 20 Jul 2026 15:39:22 GMT",
           "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
           "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
           "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1783432328-KUcbnsEqu9Zhlj04vGTv"
+          "x-generation-id": "gen-1784561961-wpvmapVuf1ICdK60seaX"
         },
         "status": 200,
         "statusText": "OK"
@@ -79,7 +79,7 @@
       "callIndex": 1,
       "id": "e208119c9e8de6b2",
       "matchKey": "POST openrouter.ai/api/v1/responses",
-      "recordedAt": "2026-07-07T13:52:09.525Z",
+      "recordedAt": "2026-07-20T15:39:22.442Z",
       "request": {
         "body": {
           "kind": "json",
@@ -91,15 +91,15 @@
               },
               {
                 "arguments": "{\"city\":\"Vienna\"}",
-                "call_id": "tool_lookup_weather_9ik1A4KC5aWhFO0ffwPv",
-                "id": "fc_tmp_29f0omce7xs",
+                "call_id": "tool_lookup_weather_l1bie5P1NSQcBR39emdb",
+                "id": "fc_tmp_8lffzo0uz4p",
                 "name": "lookup_weather",
                 "status": "completed",
                 "type": "function_call"
               },
               {
-                "call_id": "tool_lookup_weather_9ik1A4KC5aWhFO0ffwPv",
-                "id": "output_tool_lookup_weather_9ik1A4KC5aWhFO0ffwPv",
+                "call_id": "tool_lookup_weather_l1bie5P1NSQcBR39emdb",
+                "id": "output_tool_lookup_weather_l1bie5P1NSQcBR39emdb",
                 "output": "{\"forecast\":\"Sunny in Vienna\"}",
                 "type": "function_call_output"
               }
@@ -138,34 +138,35 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1783432329-cn09BR5wkznrVCwR5SLJ\",\"object\":\"response\",\"created_at\":1783432329,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":0}",
-            "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1783432329-cn09BR5wkznrVCwR5SLJ\",\"object\":\"response\",\"created_at\":1783432329,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":null},\"sequence_number\":1}",
-            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"msg_tmp_2ds89v2291i\",\"type\":\"message\",\"status\":\"in_progress\",\"role\":\"assistant\",\"content\":[]},\"sequence_number\":2}",
-            "data: {\"type\":\"response.content_part.added\",\"output_index\":0,\"item_id\":\"msg_tmp_2ds89v2291i\",\"content_index\":0,\"part\":{\"type\":\"output_text\",\"text\":\"\",\"annotations\":[],\"logprobs\":[]},\"sequence_number\":3}",
-            "data: {\"type\":\"response.output_text.delta\",\"output_index\":0,\"item_id\":\"msg_tmp_2ds89v2291i\",\"content_index\":0,\"delta\":\"Sunny\",\"logprobs\":[],\"sequence_number\":4}",
-            "data: {\"type\":\"response.output_text.delta\",\"output_index\":0,\"item_id\":\"msg_tmp_2ds89v2291i\",\"content_index\":0,\"delta\":\" in Vienna.\",\"logprobs\":[],\"sequence_number\":5}",
-            "data: {\"type\":\"response.output_text.done\",\"output_index\":0,\"item_id\":\"msg_tmp_2ds89v2291i\",\"content_index\":0,\"text\":\"Sunny in Vienna.\",\"logprobs\":[],\"sequence_number\":6}",
-            "data: {\"type\":\"response.content_part.done\",\"output_index\":0,\"item_id\":\"msg_tmp_2ds89v2291i\",\"content_index\":0,\"part\":{\"type\":\"output_text\",\"text\":\"Sunny in Vienna.\",\"annotations\":[],\"logprobs\":[]},\"sequence_number\":7}",
-            "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"msg_tmp_2ds89v2291i\",\"type\":\"message\",\"status\":\"completed\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"Sunny in Vienna.\",\"annotations\":[],\"logprobs\":[]}]},\"sequence_number\":8}",
-            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1783432329-cn09BR5wkznrVCwR5SLJ\",\"object\":\"response\",\"created_at\":1783432329,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1783432329,\"output\":[{\"id\":\"msg_tmp_2ds89v2291i\",\"type\":\"message\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"Sunny in Vienna.\",\"annotations\":[],\"logprobs\":[]}]}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"default\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"usage\":{\"input_tokens\":46,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":4,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":50,\"cost\":0.0000062,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.0000062,\"upstream_inference_input_cost\":0.0000046,\"upstream_inference_output_cost\":0.0000016}}},\"sequence_number\":9}",
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"gen-1784561962-GDH1DmyGFvJ1setTUlYb\",\"object\":\"response\",\"created_at\":1784561962,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"prompt_cache_options\":null,\"usage\":null},\"sequence_number\":0}",
+            "data: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"gen-1784561962-GDH1DmyGFvJ1setTUlYb\",\"object\":\"response\",\"created_at\":1784561962,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"in_progress\",\"completed_at\":null,\"output\":[],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"auto\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"prompt_cache_options\":null,\"usage\":null},\"sequence_number\":1}",
+            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"id\":\"msg_tmp_1u8xwo9a1c\",\"type\":\"message\",\"status\":\"in_progress\",\"role\":\"assistant\",\"content\":[]},\"sequence_number\":2}",
+            "data: {\"type\":\"response.content_part.added\",\"output_index\":0,\"item_id\":\"msg_tmp_1u8xwo9a1c\",\"content_index\":0,\"part\":{\"type\":\"output_text\",\"text\":\"\",\"annotations\":[],\"logprobs\":[]},\"sequence_number\":3}",
+            "data: {\"type\":\"response.output_text.delta\",\"output_index\":0,\"item_id\":\"msg_tmp_1u8xwo9a1c\",\"content_index\":0,\"delta\":\"Sunny\",\"logprobs\":[],\"sequence_number\":4}",
+            "data: {\"type\":\"response.output_text.delta\",\"output_index\":0,\"item_id\":\"msg_tmp_1u8xwo9a1c\",\"content_index\":0,\"delta\":\" in Vienna.\",\"logprobs\":[],\"sequence_number\":5}",
+            "data: {\"type\":\"response.output_text.done\",\"output_index\":0,\"item_id\":\"msg_tmp_1u8xwo9a1c\",\"content_index\":0,\"text\":\"Sunny in Vienna.\",\"logprobs\":[],\"sequence_number\":6}",
+            "data: {\"type\":\"response.content_part.done\",\"output_index\":0,\"item_id\":\"msg_tmp_1u8xwo9a1c\",\"content_index\":0,\"part\":{\"type\":\"output_text\",\"text\":\"Sunny in Vienna.\",\"annotations\":[],\"logprobs\":[]},\"sequence_number\":7}",
+            "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"msg_tmp_1u8xwo9a1c\",\"type\":\"message\",\"status\":\"completed\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"Sunny in Vienna.\",\"annotations\":[],\"logprobs\":[]}]},\"sequence_number\":8}",
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"gen-1784561962-GDH1DmyGFvJ1setTUlYb\",\"object\":\"response\",\"created_at\":1784561962,\"model\":\"google/gemini-2.5-flash-lite\",\"status\":\"completed\",\"completed_at\":1784561962,\"output\":[{\"id\":\"msg_tmp_1u8xwo9a1c\",\"type\":\"message\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"Sunny in Vienna.\",\"annotations\":[],\"logprobs\":[]}]}],\"error\":null,\"incomplete_details\":null,\"tools\":[{\"type\":\"function\",\"name\":\"lookup_weather\",\"description\":\"Look up the weather forecast for a city.\",\"strict\":null,\"parameters\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"additionalProperties\":false}}],\"tool_choice\":\"auto\",\"parallel_tool_calls\":true,\"max_output_tokens\":16,\"temperature\":0,\"top_p\":1,\"presence_penalty\":0,\"frequency_penalty\":0,\"top_logprobs\":0,\"max_tool_calls\":null,\"metadata\":{},\"background\":false,\"previous_response_id\":null,\"service_tier\":\"default\",\"truncation\":\"disabled\",\"store\":false,\"instructions\":null,\"text\":{\"format\":{\"type\":\"text\"}},\"reasoning\":null,\"safety_identifier\":null,\"prompt_cache_key\":null,\"prompt_cache_options\":null,\"usage\":{\"input_tokens\":46,\"input_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0},\"output_tokens\":4,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":50,\"cost\":0.0000062,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.0000062,\"upstream_inference_input_cost\":0.0000046,\"upstream_inference_output_cost\":0.0000016}}},\"sequence_number\":9}",
             "data: [DONE]"
           ],
           "kind": "sse"
         },
         "headers": {
           "access-control-allow-origin": "*",
-          "access-control-expose-headers": "X-Generation-Id,cf-ray",
+          "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,cf-ray",
           "cache-control": "no-cache",
-          "cf-ray": "a17753f97fb63cc0-VIE",
+          "cf-ray": "a1e30ee70e9ed6f0-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Tue, 07 Jul 2026 13:52:09 GMT",
+          "date": "Mon, 20 Jul 2026 15:39:22 GMT",
           "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
           "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
           "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1783432329-cn09BR5wkznrVCwR5SLJ"
+          "x-generation-id": "gen-1784561962-GDH1DmyGFvJ1setTUlYb"
         },
         "status": 200,
         "statusText": "OK"

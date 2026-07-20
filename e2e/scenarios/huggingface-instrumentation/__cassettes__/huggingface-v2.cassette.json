@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "2bb2abdc43ebde9d",
       "matchKey": "POST router.huggingface.co/v1/chat/completions",
-      "recordedAt": "2026-07-07T13:52:22.861Z",
+      "recordedAt": "2026-07-20T15:34:57.927Z",
       "request": {
         "body": {
           "kind": "json",
@@ -30,47 +30,29 @@
           "value": {
             "choices": [
               {
-                "content_filter_results": {
-                  "hate": {
-                    "filtered": false
-                  },
-                  "jailbreak": {
-                    "detected": false,
-                    "filtered": false
-                  },
-                  "profanity": {
-                    "detected": false,
-                    "filtered": false
-                  },
-                  "self_harm": {
-                    "filtered": false
-                  },
-                  "sexual": {
-                    "filtered": false
-                  },
-                  "violence": {
-                    "filtered": false
-                  }
-                },
                 "finish_reason": "stop",
                 "index": 0,
+                "logprobs": null,
                 "message": {
-                  "content": "OK.",
-                  "role": "assistant"
+                  "content": "OK",
+                  "name": null,
+                  "reasoning_content": null,
+                  "role": "assistant",
+                  "tool_calls": null
                 }
               }
             ],
-            "created": 1783432342,
-            "id": "36ae97845fed6028c13c9c393feeb3e3",
-            "model": "meta-llama/llama-3.1-8b-instruct",
+            "created": 1784561697,
+            "id": "chatcmpl-RUcbzNM8YK2QgwD4hq8XTzoM",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
             "object": "chat.completion",
-            "system_fingerprint": "",
+            "service_tier": "default",
             "usage": {
-              "completion_tokens": 3,
-              "completion_tokens_details": null,
-              "prompt_tokens": 40,
+              "completion_tokens": 2,
+              "estimated_cost": 3.5999999999999994e-7,
+              "prompt_tokens": 15,
               "prompt_tokens_details": null,
-              "total_tokens": 43
+              "total_tokens": 17
             }
           }
         },
@@ -78,28 +60,21 @@
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "connection": "keep-alive",
-          "content-length": "620",
+          "content-length": "471",
           "content-type": "application/json",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:52:22 GMT",
-          "inference-id": "0-019f3cd9-eb07-7704-9fc4-d1a1751129ff",
+          "date": "Mon, 20 Jul 2026 15:34:57 GMT",
           "referrer-policy": "strict-origin-when-cross-origin",
+          "server": "uvicorn",
           "vary": "Origin",
-          "via": "1.1 a40452b50d020fed241266888afec252.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "149gzVDqL30Z2yYPxDUz3mzAJNSoVKL1KypegvRiHdk_EunuFMdcoQ==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 d640ec12547ee097cb75dd5bdc8787b8.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "WyJHPg1pVeu177_NDBClDkhJUtHkiGuAnpKpizTu7yPWFz6nRRgqXA==",
+          "x-amz-cf-pop": "IAD61-P1",
           "x-cache": "Miss from cloudfront",
-          "x-inference-provider": "novita",
+          "x-inference-provider": "deepinfra",
           "x-powered-by": "huggingface-moon",
-          "x-ratelimit-limit-requests": "6000",
-          "x-ratelimit-limit-tokens": "50000000",
-          "x-ratelimit-remaining-requests": "5971",
-          "x-ratelimit-remaining-tokens": "49976141",
-          "x-ratelimit-reset-requests": "290ms",
-          "x-ratelimit-reset-tokens": "29ms",
-          "x-request-id": "Root=1-6a4d0496-73bd5a04564fa57b262ea77d",
-          "x-robots-tag": "none",
-          "x-trace-id": "36ae97845fed6028c13c9c393feeb3e3"
+          "x-request-id": "RUcbzNM8YK2QgwD4hq8XTzoM",
+          "x-robots-tag": "noindex"
         },
         "status": 200,
         "statusText": "OK"

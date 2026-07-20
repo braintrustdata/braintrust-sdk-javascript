@@ -56,7 +56,7 @@ span_tree:
         │       │   output: [
         │       │     {
         │       │       "arguments": "{\"city\":\"Vienna\"}",
-        │       │       "call_id": "call_tBDFWK0zZBjOK0bSamAmfrg0",
+        │       │       "call_id": "call_LD3cFnlGZTR5Y4uVuOYogtOA",
         │       │       "id": "<span:1>",
         │       │       "name": "lookup_weather",
         │       │       "status": "completed",
@@ -85,7 +85,7 @@ span_tree:
         │       │     "parallel_tool_calls": true,
         │       │     "presence_penalty": 0,
         │       │     "previous_response_id": null,
-        │       │     "prompt_cache_key": "[REDACTED]",
+        │       │     "prompt_cache_key": null,
         │       │     "prompt_cache_retention": "in_memory",
         │       │     "reasoning": {
         │       │       "context": null,
@@ -126,6 +126,7 @@ span_tree:
         │       │       {
         │       │         "description": "Look up the weather forecast for a city.",
         │       │         "name": "lookup_weather",
+        │       │         "output_schema": null,
         │       │         "parameters": {
         │       │           "additionalProperties": false,
         │       │           "properties": {
@@ -149,6 +150,7 @@ span_tree:
         │       │   }
         │       │   metrics: {
         │       │     "completion_tokens": 7,
+        │       │     "prompt_cache_creation_tokens": 0,
         │       │     "prompt_cached_tokens": 0,
         │       │     "prompt_tokens": 81,
         │       │     "time_to_first_token": 0,
@@ -168,7 +170,7 @@ span_tree:
         │             },
         │             {
         │               "arguments": "{\"city\":\"Vienna\"}",
-        │               "callId": "call_tBDFWK0zZBjOK0bSamAmfrg0",
+        │               "callId": "call_LD3cFnlGZTR5Y4uVuOYogtOA",
         │               "id": "<span:1>",
         │               "name": "lookup_weather",
         │               "providerData": {
@@ -179,7 +181,7 @@ span_tree:
         │               "type": "function_call"
         │             },
         │             {
-        │               "callId": "call_tBDFWK0zZBjOK0bSamAmfrg0",
+        │               "callId": "call_LD3cFnlGZTR5Y4uVuOYogtOA",
         │               "name": "lookup_weather",
         │               "output": {
         │                 "text": "Sunny in Vienna",
@@ -227,7 +229,7 @@ span_tree:
         │             "parallel_tool_calls": true,
         │             "presence_penalty": 0,
         │             "previous_response_id": null,
-        │             "prompt_cache_key": "[REDACTED]",
+        │             "prompt_cache_key": null,
         │             "prompt_cache_retention": "in_memory",
         │             "reasoning": {
         │               "context": null,
@@ -268,6 +270,7 @@ span_tree:
         │               {
         │                 "description": "Look up the weather forecast for a city.",
         │                 "name": "lookup_weather",
+        │                 "output_schema": null,
         │                 "parameters": {
         │                   "additionalProperties": false,
         │                   "properties": {
@@ -291,6 +294,7 @@ span_tree:
         │           }
         │           metrics: {
         │             "completion_tokens": 6,
+        │             "prompt_cache_creation_tokens": 0,
         │             "prompt_cached_tokens": 0,
         │             "prompt_tokens": 96,
         │             "time_to_first_token": 0,
@@ -307,7 +311,7 @@ span_tree:
         │   output: [
         │     {
         │       "arguments": "{\"city\":\"Vienna\"}",
-        │       "call_id": "call_tBDFWK0zZBjOK0bSamAmfrg0",
+        │       "call_id": "call_LD3cFnlGZTR5Y4uVuOYogtOA",
         │       "id": "<span:1>",
         │       "name": "lookup_weather",
         │       "status": "completed",
@@ -337,7 +341,7 @@ span_tree:
         │     "parallel_tool_calls": true,
         │     "presence_penalty": 0,
         │     "previous_response_id": null,
-        │     "prompt_cache_key": "[REDACTED]",
+        │     "prompt_cache_key": null,
         │     "prompt_cache_retention": "in_memory",
         │     "provider": "openai",
         │     "reasoning": {
@@ -380,6 +384,7 @@ span_tree:
         │       {
         │         "description": "Look up the weather forecast for a city.",
         │         "name": "lookup_weather",
+        │         "output_schema": null,
         │         "parameters": {
         │           "additionalProperties": false,
         │           "properties": {
@@ -404,6 +409,7 @@ span_tree:
         │   metrics: {
         │     "completion_reasoning_tokens": 0,
         │     "completion_tokens": 7,
+        │     "prompt_cache_write_tokens": 0,
         │     "prompt_cached_tokens": 0,
         │     "prompt_tokens": 81,
         │     "time_to_first_token": 0,
@@ -417,14 +423,14 @@ span_tree:
               },
               {
                 "arguments": "{\"city\":\"Vienna\"}",
-                "call_id": "call_tBDFWK0zZBjOK0bSamAmfrg0",
+                "call_id": "call_LD3cFnlGZTR5Y4uVuOYogtOA",
                 "id": "<span:1>",
                 "name": "lookup_weather",
                 "status": "completed",
                 "type": "function_call"
               },
               {
-                "call_id": "call_tBDFWK0zZBjOK0bSamAmfrg0",
+                "call_id": "call_LD3cFnlGZTR5Y4uVuOYogtOA",
                 "output": "Sunny in Vienna",
                 "status": "completed",
                 "type": "function_call_output"
@@ -469,7 +475,7 @@ span_tree:
               "parallel_tool_calls": true,
               "presence_penalty": 0,
               "previous_response_id": null,
-              "prompt_cache_key": "[REDACTED]",
+              "prompt_cache_key": null,
               "prompt_cache_retention": "in_memory",
               "provider": "openai",
               "reasoning": {
@@ -512,6 +518,7 @@ span_tree:
                 {
                   "description": "Look up the weather forecast for a city.",
                   "name": "lookup_weather",
+                  "output_schema": null,
                   "parameters": {
                     "additionalProperties": false,
                     "properties": {
@@ -536,6 +543,7 @@ span_tree:
             metrics: {
               "completion_reasoning_tokens": 0,
               "completion_tokens": 6,
+              "prompt_cache_write_tokens": 0,
               "prompt_cached_tokens": 0,
               "prompt_tokens": 96,
               "time_to_first_token": 0,

@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "e57cdc8cb2af8700",
       "matchKey": "GET huggingface.co/api/models/meta-llama/Llama-3.1-8B-Instruct",
-      "recordedAt": "2026-07-07T13:53:05.969Z",
+      "recordedAt": "2026-07-20T15:36:26.312Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -43,12 +43,6 @@
                 "providerId": "meta-llama/Llama-3.1-8B-Instruct",
                 "status": "live",
                 "task": "conversational"
-              },
-              "scaleway": {
-                "isModelAuthor": false,
-                "providerId": "llama-3.1-8b-instruct",
-                "status": "live",
-                "task": "conversational"
               }
             }
           }
@@ -59,21 +53,21 @@
           "access-control-max-age": "86400",
           "alt-svc": "h3=\":443\"; ma=86400",
           "connection": "keep-alive",
-          "content-length": "715",
+          "content-length": "603",
           "content-type": "application/json; charset=utf-8",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:53:05 GMT",
-          "etag": "W/\"2cb-KyNfBwlPvpAwn0saBdsWzcNNu3g\"",
-          "ratelimit": "\"api\";r=996;t=103",
+          "date": "Mon, 20 Jul 2026 15:36:26 GMT",
+          "etag": "W/\"25b-zPGp/njLCYsh3acpUcesdMwaiho\"",
+          "ratelimit": "\"api\";r=996;t=202",
           "ratelimit-policy": "\"fixed window\";\"api\";q=1000;w=300",
           "referrer-policy": "strict-origin-when-cross-origin",
           "vary": "Origin",
-          "via": "1.1 92e153168d2c05a354abcd11544943e2.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "rt-jQ4iXQVtbBJS8zTHpAFrmEBIklZki_ZGy5emUTCRdH9-HTgFeSw==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 cc5a019539e6efe2b661a72253272ed6.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "JmeYqv4JABr2_uFKt5-4_Z2wCbD8PdpfQS6ljBECh326_h_FpvXhAw==",
+          "x-amz-cf-pop": "IAD55-P8",
           "x-cache": "Miss from cloudfront",
           "x-powered-by": "huggingface-moon",
-          "x-request-id": "Root=1-6a4d04c1-1acb700c6005f5015fa8b8bb"
+          "x-request-id": "Root=1-6a5e407a-6300a98e4a458b320b00746a"
         },
         "status": 200,
         "statusText": "OK"
@@ -83,7 +77,7 @@
       "callIndex": 0,
       "id": "3ca5b258d2627f18",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/chat/completions",
-      "recordedAt": "2026-07-07T13:53:07.248Z",
+      "recordedAt": "2026-07-20T15:36:36.310Z",
       "request": {
         "body": {
           "kind": "json",
@@ -112,20 +106,20 @@
                 "finish_reason": "stop",
                 "index": 0,
                 "message": {
-                  "content": "OK.",
+                  "content": "OK",
                   "role": "assistant"
                 }
               }
             ],
-            "created": 1783432386,
-            "id": "bee05451-7c9f-4699-acc9-e02f811ef532",
+            "created": 1784561787,
+            "id": "c3f6ff25-22d5-4f7d-b807-c4839f9016b4",
             "model": "meta-llama/Llama-3.1-8B-Instruct",
             "object": "chat.completion",
-            "system_fingerprint": "fp1-rss-s1",
+            "system_fingerprint": "fp1-rss-p1",
             "usage": {
-              "completion_tokens": 2,
-              "prompt_tokens": 15,
-              "total_tokens": 17
+              "completion_tokens": 1,
+              "prompt_tokens": 40,
+              "total_tokens": 41
             }
           }
         },
@@ -136,26 +130,26 @@
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "cache-control": "no-cache",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a177555d7daed64c-IAD",
+          "cf-ray": "a1e30a9d0e290739-IAD",
           "connection": "keep-alive",
           "content-type": "application/json",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:53:06 GMT",
+          "date": "Mon, 20 Jul 2026 15:36:35 GMT",
           "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
           "referrer-policy": "strict-origin-when-cross-origin",
-          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=ahCsUkYOPcjvNJW2nQxTqI2%2Br2c2NxYnQbEoA0LC0UOlm67U2e8l8OKoEofFqQytFQthzRG5N%2Bq0ydWOjY5f%2By5q9T3PMKuEg%2FcrcgUJcy7Zh65x6ze2W5F48DeKFrWLVwH3OA%3D%3D\"}]}",
-          "request-id": "bee05451-7c9f-4699-acc9-e02f811ef532",
+          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=P39FcXhhA1zqfu4eYsq5Vy6UdRR2up385aF4%2Bf9Y%2FDOK5Xei7RVV0GdHbyYPo4W5PkpmYlben5pu0FmONETzKoKyDy8FfCbD3pgO2JO9zAke%2BzhOUouJYhVYCbVXculw1C4t8A%3D%3D\"}]}",
+          "request-id": "c3f6ff25-22d5-4f7d-b807-c4839f9016b4",
           "server": "cloudflare",
           "strict-transport-security": "max-age=15724800; includeSubDomains",
           "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 a40452b50d020fed241266888afec252.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "tA5dGELUn_Y-Tx3fKsk7zZwEDU220RWqTWmn9eHD6hYH1_notvkqQg==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 1ac532da7db85d551ad10ca7bd9957b8.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "taTDnVuOwv_622f8ygDGSZsjK-woMqAoYKVSeoY8KZvd66cGxhiBqQ==",
+          "x-amz-cf-pop": "IAD61-P1",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "featherless-ai",
           "x-powered-by": "huggingface-moon",
-          "x-request-id": "Root=1-6a4d04c2-53c083b5187a1d5242e8e463",
+          "x-request-id": "Root=1-6a5e407a-6ca9f99573e188460c47eaa8",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -166,7 +160,7 @@
       "callIndex": 1,
       "id": "f9dfb25c3e946122",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/chat/completions",
-      "recordedAt": "2026-07-07T13:53:09.716Z",
+      "recordedAt": "2026-07-20T15:36:41.662Z",
       "request": {
         "body": {
           "kind": "json",
@@ -190,10 +184,10 @@
       "response": {
         "body": {
           "chunks": [
-            ": FEATHERLESS PROCESSING\ndata: {\"id\":\"257d1c4a-1537-4742-abce-662668b8f18c\",\"object\":\"chat.completion.chunk\",\"created\":1783432387,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"OK\",\"role\":\"assistant\"},\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"257d1c4a-1537-4742-abce-662668b8f18c\",\"object\":\"chat.completion.chunk\",\"created\":1783432387,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\".\"},\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"257d1c4a-1537-4742-abce-662668b8f18c\",\"object\":\"chat.completion.chunk\",\"created\":1783432387,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"stop\"}],\"system_fingerprint\":\"fp1-rss-s1\"}",
-            "data: {\"id\":\"257d1c4a-1537-4742-abce-662668b8f18c\",\"object\":\"chat.completion.chunk\",\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"created\":1783432387,\"choices\":[],\"usage\":{\"prompt_tokens\":15,\"completion_tokens\":2,\"total_tokens\":17}}",
+            ": FEATHERLESS PROCESSING\ndata: {\"id\":\"4b4a7898-f082-40e9-bc67-c97fa4d3344f\",\"object\":\"chat.completion.chunk\",\"created\":1784561799,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\"OK\",\"role\":\"assistant\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"4b4a7898-f082-40e9-bc67-c97fa4d3344f\",\"object\":\"chat.completion.chunk\",\"created\":1784561799,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"content\":\".\"},\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"4b4a7898-f082-40e9-bc67-c97fa4d3344f\",\"object\":\"chat.completion.chunk\",\"created\":1784561799,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"stop\"}],\"system_fingerprint\":\"fp1-rss-p1\"}",
+            "data: {\"id\":\"4b4a7898-f082-40e9-bc67-c97fa4d3344f\",\"object\":\"chat.completion.chunk\",\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"created\":1784561799,\"choices\":[],\"usage\":{\"prompt_tokens\":40,\"completion_tokens\":2,\"total_tokens\":42}}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -204,26 +198,26 @@
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "cache-control": "no-cache",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a17755657fcde047-IAD",
+          "cf-ray": "a1e30adb8c2fe5c3-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:53:09 GMT",
+          "date": "Mon, 20 Jul 2026 15:36:39 GMT",
           "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
           "referrer-policy": "strict-origin-when-cross-origin",
-          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=eLvnsLpy3y19CzjqpoI1SLDo9f8BGj6p5aBeAyNbyCX2n3wt1oCwgofL5K6O4nPLnJfh%2BQET9f7P7nAQamh0O6UwPquiwn7PmphAZeQQX8OFB09hDxS3jYaBO7mq02Lrby7eig%3D%3D\"}]}",
-          "request-id": "257d1c4a-1537-4742-abce-662668b8f18c",
+          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=BXlz0fLyN1UIw4WbXSGy5yRCCjd2HTn5KBuPNC7EprhT2sIo1C3RFWvmAdJIS5q2YfK7tmDAcFHxj2b0%2Fs8HvxeVIykpIR1KI941BUpxW9%2FtVKocX78H7%2BkgTHn4ujHlBPjrvQ%3D%3D\"}]}",
+          "request-id": "4b4a7898-f082-40e9-bc67-c97fa4d3344f",
           "server": "cloudflare",
           "strict-transport-security": "max-age=15724800; includeSubDomains",
           "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 a40452b50d020fed241266888afec252.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "cFrwidbnLVsJMYt-4s2cnaUuOLdMnk19wsnbWewLp8SSRjuqJk2ykA==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 1ac532da7db85d551ad10ca7bd9957b8.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "psLGqcTPcjBdI63GIt3M6W5Uvqmc6pnCeFdxZnRQqrFSxKPnOrggew==",
+          "x-amz-cf-pop": "IAD61-P1",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "featherless-ai",
           "x-powered-by": "huggingface-moon",
-          "x-request-id": "Root=1-6a4d04c3-0dbc8c824741b3fa6710a312",
+          "x-request-id": "Root=1-6a5e4084-6f6b42c34dd285fd1bc4aeeb",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -234,7 +228,7 @@
       "callIndex": 2,
       "id": "8231fc5d9a4306d2",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/chat/completions",
-      "recordedAt": "2026-07-07T13:53:15.375Z",
+      "recordedAt": "2026-07-20T15:36:46.413Z",
       "request": {
         "body": {
           "kind": "json",
@@ -278,10 +272,10 @@
       "response": {
         "body": {
           "chunks": [
-            ": FEATHERLESS PROCESSING\ndata: {\"id\":\"ad146525-5f3b-4725-8026-63789b91a6d7\",\"object\":\"chat.completion.chunk\",\"created\":1783432393,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"llama-1783432394593-uctiunwta\",\"type\":\"function\",\"function\":{\"name\":\"get_current_weather\"}}],\"role\":\"assistant\"},\"index\":0}]}",
-            "data: {\"id\":\"ad146525-5f3b-4725-8026-63789b91a6d7\",\"object\":\"chat.completion.chunk\",\"created\":1783432393,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"location\\\":\\\"San Francisco\\\"}\"}}]},\"index\":0}]}",
-            "data: {\"id\":\"ad146525-5f3b-4725-8026-63789b91a6d7\",\"object\":\"chat.completion.chunk\",\"created\":1783432393,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"tool_calls\"}],\"system_fingerprint\":\"fp1-rss-s1-llam\"}",
-            "data: {\"id\":\"ad146525-5f3b-4725-8026-63789b91a6d7\",\"object\":\"chat.completion.chunk\",\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"created\":1783432393,\"choices\":[],\"usage\":{\"prompt_tokens\":203,\"completion_tokens\":18,\"total_tokens\":221}}",
+            ": FEATHERLESS PROCESSING\n: FEATHERLESS PROCESSING\n: FEATHERLESS PROCESSING\ndata: {\"id\":\"dc028c02-edfb-4b70-a55b-24c951bd0721\",\"object\":\"chat.completion.chunk\",\"created\":1784561801,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"llama-1784561805656-c35ds8xh4\",\"type\":\"function\",\"function\":{\"name\":\"get_current_weather\"}}],\"role\":\"assistant\"},\"index\":0}]}",
+            "data: {\"id\":\"dc028c02-edfb-4b70-a55b-24c951bd0721\",\"object\":\"chat.completion.chunk\",\"created\":1784561801,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"location\\\":\\\"San Francisco\\\"}\"}}]},\"index\":0}]}",
+            "data: {\"id\":\"dc028c02-edfb-4b70-a55b-24c951bd0721\",\"object\":\"chat.completion.chunk\",\"created\":1784561801,\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"tool_calls\"}],\"system_fingerprint\":\"fp1-rss-s1-llam\"}",
+            "data: {\"id\":\"dc028c02-edfb-4b70-a55b-24c951bd0721\",\"object\":\"chat.completion.chunk\",\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"created\":1784561801,\"choices\":[],\"usage\":{\"prompt_tokens\":203,\"completion_tokens\":18,\"total_tokens\":221}}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -292,26 +286,26 @@
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "cache-control": "no-cache",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1775574efb3f493-IAD",
+          "cf-ray": "a1e30afcef77b49c-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:53:14 GMT",
+          "date": "Mon, 20 Jul 2026 15:36:42 GMT",
           "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
           "referrer-policy": "strict-origin-when-cross-origin",
-          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=Rw4JCAUvNxnZ46uxNDCFyzMcGOwTm5Vnj1CuJW%2Bvddo0o4E14SrAMQIhpSEiFYafsF%2BDrycnF0rTtGm6tRCnD8fAxZkSj6%2F84EpANMiRu5i3aCjXe%2Bi47DFyFXdefMAqiCO8CA%3D%3D\"}]}",
-          "request-id": "ad146525-5f3b-4725-8026-63789b91a6d7",
+          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=XuwMVowF7EHsWz%2F%2FxJbncGFhYNpkAissfP16iDvhywin79M5WFpjvC%2FZZSwdOC3Mjyuax8EOneu8rI%2FwmSR9P%2B0Y4QFz6Pc%2FX4aV%2Bo%2FS1HQVI87CeTj%2F9tks3w4pZliNUTqjTw%3D%3D\"}]}",
+          "request-id": "dc028c02-edfb-4b70-a55b-24c951bd0721",
           "server": "cloudflare",
           "strict-transport-security": "max-age=15724800; includeSubDomains",
           "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 a40452b50d020fed241266888afec252.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "dv4Kk4ROKhMg9MpAuvQXoMfUAhRrnvnQPq9FR9I2x10_deIlyK7nYw==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 1ac532da7db85d551ad10ca7bd9957b8.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "KZ9A3yMFZYuJSukrIAMA5sHWn8aLS6TqX--n40l-dEZY9oS0tPCpSg==",
+          "x-amz-cf-pop": "IAD61-P1",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "featherless-ai",
           "x-powered-by": "huggingface-moon",
-          "x-request-id": "Root=1-6a4d04c5-37476a871c5db3402e9b96e4",
+          "x-request-id": "Root=1-6a5e4089-3b640fab3abfa4d23b63d15d",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -322,7 +316,7 @@
       "callIndex": 0,
       "id": "09b8ba9e1a3a15cd",
       "matchKey": "GET huggingface.co/api/models/meta-llama/Llama-3.1-8B",
-      "recordedAt": "2026-07-07T13:53:16.184Z",
+      "recordedAt": "2026-07-20T15:36:46.448Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -356,18 +350,18 @@
           "content-length": "220",
           "content-type": "application/json; charset=utf-8",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:53:16 GMT",
+          "date": "Mon, 20 Jul 2026 15:36:46 GMT",
           "etag": "W/\"dc-W0FyxPM91s5ueKPnqs2bHZOqNJM\"",
-          "ratelimit": "\"api\";r=995;t=92",
+          "ratelimit": "\"api\";r=995;t=182",
           "ratelimit-policy": "\"fixed window\";\"api\";q=1000;w=300",
           "referrer-policy": "strict-origin-when-cross-origin",
           "vary": "Origin",
-          "via": "1.1 4593b0cdf0749eff96c25bb0d7e1bc84.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "CER_f72ONp0Iym0rSZqbbHzIm5yYUoNaraSPEQjxOpwW7Z1fYXCjyA==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 5130f24afa7aed6f49e6e72496306d12.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "Lq9BLPcCi5TE7ATRFeYznZggZDQsWWczBwnfZSFRv8PnLbLcHi4tOg==",
+          "x-amz-cf-pop": "IAD55-P8",
           "x-cache": "Miss from cloudfront",
           "x-powered-by": "huggingface-moon",
-          "x-request-id": "Root=1-6a4d04cc-0abde846692900632b44d31b"
+          "x-request-id": "Root=1-6a5e408e-7a3652c27ff7c5161c30be91"
         },
         "status": 200,
         "statusText": "OK"
@@ -377,7 +371,7 @@
       "callIndex": 0,
       "id": "935173bcae49f969",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/completions",
-      "recordedAt": "2026-07-07T13:53:19.592Z",
+      "recordedAt": "2026-07-20T15:36:50.901Z",
       "request": {
         "body": {
           "kind": "json",
@@ -402,18 +396,18 @@
                 "finish_reason": "length",
                 "index": 0,
                 "logprobs": null,
-                "text": " a city that is"
+                "text": " a city of many"
               }
             ],
-            "created": 1783432396,
-            "id": "54910cf8-bf37-4b70-81a7-98f2be3e65af",
+            "created": 1784561806,
+            "id": "293ef4c9-82e5-4e5f-a8a5-9d3d36d40ebf",
             "model": "meta-llama/Meta-Llama-3.1-8B",
             "object": "text_completion",
             "system_fingerprint": "fp1-rss-s1",
             "usage": {
               "completion_tokens": 4,
-              "prompt_tokens": 5,
-              "total_tokens": 9
+              "prompt_tokens": 6,
+              "total_tokens": 10
             }
           }
         },
@@ -424,26 +418,26 @@
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "cache-control": "no-cache",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a177559d6f4cf493-IAD",
+          "cf-ray": "a1e30b1acc03e61b-IAD",
           "connection": "keep-alive",
           "content-type": "application/json",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:53:18 GMT",
+          "date": "Mon, 20 Jul 2026 15:36:50 GMT",
           "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
           "referrer-policy": "strict-origin-when-cross-origin",
-          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=svkM7UfUK7S3L2g3bvzeDLIvmXPA1V%2FqDe3i8TJ7GkxcLwjoqbJzqLbXXAVCyxwyb1VEF7%2F2YnU7ID9amH5mZzQUe7eUThz4A5zeMlbab1DwXADvNEAtMp%2FtOhLk%2BYGqzUFcSQ%3D%3D\"}]}",
-          "request-id": "54910cf8-bf37-4b70-81a7-98f2be3e65af",
+          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=9M0K%2FyI4pmvxWWYAHEhy5L%2B5nhU9b0BE8HyRzhXN9FmPs9VLBrb4RE5mc%2FZR1I4qzfPruXkgR2WyjCOeU%2BYSw%2Bz%2BBDxNgOzU4IMyEg4pphc4VUEQyqJ%2BwSDyDv23BsrQZcqrug%3D%3D\"}]}",
+          "request-id": "293ef4c9-82e5-4e5f-a8a5-9d3d36d40ebf",
           "server": "cloudflare",
           "strict-transport-security": "max-age=15724800; includeSubDomains",
           "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 a40452b50d020fed241266888afec252.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "IkYGZQO9aw5tJeqZEnkZYqj98yeRJMhcSVAIeWJuOdBU8uUiCRCXmQ==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 1ac532da7db85d551ad10ca7bd9957b8.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "LgxFxbRfZyXFTVKBfZd8jgXTS8pWOGU9C6IS8dbA0Tm44fdEBWSaQg==",
+          "x-amz-cf-pop": "IAD61-P1",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "featherless-ai",
           "x-powered-by": "huggingface-moon",
-          "x-request-id": "Root=1-6a4d04cc-7deaa77f2700ff573a45a96c",
+          "x-request-id": "Root=1-6a5e408e-39adbcdd07199913222c8708",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -454,7 +448,7 @@
       "callIndex": 1,
       "id": "50c83039f6d91cde",
       "matchKey": "POST router.huggingface.co/featherless-ai/v1/completions",
-      "recordedAt": "2026-07-07T13:53:24.553Z",
+      "recordedAt": "2026-07-20T15:36:53.569Z",
       "request": {
         "body": {
           "kind": "json",
@@ -474,12 +468,12 @@
       "response": {
         "body": {
           "chunks": [
-            ": FEATHERLESS PROCESSING\n: FEATHERLESS PROCESSING\n: FEATHERLESS PROCESSING\ndata: {\"id\":\"5d5d24a0-b955-4485-8515-021b3e0decb7\",\"object\":\"text_completion\",\"created\":1783432400,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\" a\",\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"5d5d24a0-b955-4485-8515-021b3e0decb7\",\"object\":\"text_completion\",\"created\":1783432400,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\" city\",\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"5d5d24a0-b955-4485-8515-021b3e0decb7\",\"object\":\"text_completion\",\"created\":1783432400,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\" that\",\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"5d5d24a0-b955-4485-8515-021b3e0decb7\",\"object\":\"text_completion\",\"created\":1783432400,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\" is\",\"index\":0,\"finish_reason\":null}]}",
-            "data: {\"id\":\"5d5d24a0-b955-4485-8515-021b3e0decb7\",\"object\":\"text_completion\",\"created\":1783432400,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\"\",\"index\":0,\"finish_reason\":\"length\"}],\"system_fingerprint\":\"fp1-rss-s1\"}",
-            "data: {\"id\":\"5d5d24a0-b955-4485-8515-021b3e0decb7\",\"object\":\"text_completion\",\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"created\":1783432400,\"choices\":[],\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":4,\"total_tokens\":9}}",
+            ": FEATHERLESS PROCESSING\ndata: {\"id\":\"96cf679d-d976-42e4-941a-9b73daa6a35a\",\"object\":\"text_completion\",\"created\":1784561811,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\" Paris\",\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"96cf679d-d976-42e4-941a-9b73daa6a35a\",\"object\":\"text_completion\",\"created\":1784561811,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\".\",\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"96cf679d-d976-42e4-941a-9b73daa6a35a\",\"object\":\"text_completion\",\"created\":1784561811,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\" It\",\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"96cf679d-d976-42e4-941a-9b73daa6a35a\",\"object\":\"text_completion\",\"created\":1784561811,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\" is\",\"index\":0,\"finish_reason\":null}]}",
+            "data: {\"id\":\"96cf679d-d976-42e4-941a-9b73daa6a35a\",\"object\":\"text_completion\",\"created\":1784561811,\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"choices\":[{\"text\":\"\",\"index\":0,\"finish_reason\":\"length\"}],\"system_fingerprint\":\"fp1-rss-s1\"}",
+            "data: {\"id\":\"96cf679d-d976-42e4-941a-9b73daa6a35a\",\"object\":\"text_completion\",\"model\":\"meta-llama/Meta-Llama-3.1-8B\",\"created\":1784561811,\"choices\":[],\"usage\":{\"prompt_tokens\":6,\"completion_tokens\":4,\"total_tokens\":10}}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -490,26 +484,26 @@
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "cache-control": "no-cache",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a17755b2bd6fd10e-IAD",
+          "cf-ray": "a1e30b36ab1de5eb-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:53:23 GMT",
+          "date": "Mon, 20 Jul 2026 15:36:52 GMT",
           "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
           "referrer-policy": "strict-origin-when-cross-origin",
-          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=sNDJXsoPjZrAXJAVpdAonHM%2BQmFNZwQPymlLrUb9uIjBLWSMZ5LVpkLoD88xySDpyWBm76I0St%2FZB8WpVE6wWCS2ct2gxDE%2BgI3Tu3Mj6%2Fnzk2AM%2F57lDVlHNzaJP2TUN6gJhA%3D%3D\"}]}",
-          "request-id": "5d5d24a0-b955-4485-8515-021b3e0decb7",
+          "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=RSVWxSdqaCMz%2BE8%2BFRtLrJ7fxdErtBlD09kEZr4IC0V9fMPkAfWqMORhpf0kXBLCNuwKt1l%2FAGGeo2ZPlNeUw7yiEXVr6r8b6ttwx5j99u8MznbanDZPcUoIBRppdBF%2BxpfJYg%3D%3D\"}]}",
+          "request-id": "96cf679d-d976-42e4-941a-9b73daa6a35a",
           "server": "cloudflare",
           "strict-transport-security": "max-age=15724800; includeSubDomains",
           "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 a40452b50d020fed241266888afec252.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "2reGj4KfOJ1lZh_fr2NdQJyR-1mYuu-IJ7zHp8n9wTFAiKxFVNUdXg==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 1ac532da7db85d551ad10ca7bd9957b8.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "mT1VDAqzM_8Kewnsqu4qddUsnRUzF7AFnVkCrggXlIfPn31RXTr8NQ==",
+          "x-amz-cf-pop": "IAD61-P1",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "featherless-ai",
           "x-powered-by": "huggingface-moon",
-          "x-request-id": "Root=1-6a4d04cf-6df1f08963b341e7604bbcd5",
+          "x-request-id": "Root=1-6a5e4092-15d61c013634403a5da2ad17",
           "x-robots-tag": "none"
         },
         "status": 200,
@@ -520,7 +514,7 @@
       "callIndex": 0,
       "id": "daf98736c72b7239",
       "matchKey": "GET huggingface.co/api/models/thenlper/gte-large",
-      "recordedAt": "2026-07-07T13:53:24.793Z",
+      "recordedAt": "2026-07-20T15:36:53.604Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -554,18 +548,18 @@
           "content-length": "207",
           "content-type": "application/json; charset=utf-8",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:53:24 GMT",
+          "date": "Mon, 20 Jul 2026 15:36:53 GMT",
           "etag": "W/\"cf-GQV9MDOIuIIvOhkuehQ4kYwLtyU\"",
-          "ratelimit": "\"api\";r=994;t=84",
+          "ratelimit": "\"api\";r=994;t=175",
           "ratelimit-policy": "\"fixed window\";\"api\";q=1000;w=300",
           "referrer-policy": "strict-origin-when-cross-origin",
           "vary": "Origin",
-          "via": "1.1 92c5569a97069559c478c4715ad8d400.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "2dBmXW8KIpMk3bimu8y_Vc9RU2AODHi4bc70LvH5S6u2CHkgIxRKLQ==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 5b0b018dc5d72a42f205b24b17f4f56e.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "O0G7Muu8bKqF7lttON9_mhUO_IALcm57if1Qu1f3A6eKGFpUz7usDg==",
+          "x-amz-cf-pop": "IAD55-P8",
           "x-cache": "Miss from cloudfront",
           "x-powered-by": "huggingface-moon",
-          "x-request-id": "Root=1-6a4d04d4-703a0b534cca5bee41492163"
+          "x-request-id": "Root=1-6a5e4095-46ccd13d03c2ca5e344f1e28"
         },
         "status": 200,
         "statusText": "OK"
@@ -575,7 +569,7 @@
       "callIndex": 0,
       "id": "74a095efcf384d0e",
       "matchKey": "POST router.huggingface.co/hf-inference/models/thenlper/gte-large/pipeline/feature-extraction",
-      "recordedAt": "2026-07-07T13:53:25.064Z",
+      "recordedAt": "2026-07-20T15:37:00.497Z",
       "request": {
         "body": {
           "kind": "json",
@@ -946,21 +940,21 @@
           "content-length": "21664",
           "content-type": "application/json",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:53:25 GMT",
+          "date": "Mon, 20 Jul 2026 15:37:00 GMT",
           "referrer-policy": "strict-origin-when-cross-origin",
           "server": "uvicorn",
           "vary": "origin, access-control-request-method, access-control-request-headers, origin, access-control-request-method, access-control-request-headers",
-          "via": "1.1 a40452b50d020fed241266888afec252.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "jqc2eYMO1fd5T_Iz4aPAcvjdIrGxc482tecqyGA0B8upSdgPVYs0wQ==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 1ac532da7db85d551ad10ca7bd9957b8.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "qaNUaEmIu5Ibg8MOQdvPaYMFDZ7Ok3BbDVS9lhpuIK_FcUeGDDa-Vg==",
+          "x-amz-cf-pop": "IAD61-P1",
           "x-cache": "Miss from cloudfront",
-          "x-inference-id": "2b0b9d1b-e13a-4f41-aee8-4882c955e09a",
+          "x-inference-id": "70a820b4-39ea-45ca-8f4c-bc5cc3dd45fc",
           "x-inference-provider": "hf-inference",
           "x-powered-by": "huggingface-moon",
-          "x-proxied-host": "http://10.109.16.157",
+          "x-proxied-host": "http://10.109.131.10",
           "x-proxied-path": "/pipeline/feature-extraction",
-          "x-proxied-replica": "44vf5qav-cfvnt",
-          "x-request-id": "Root=1-6a4d04d4-1bbb612a7ebd6177390eee9d",
+          "x-proxied-replica": "44vf5qav-jpscz",
+          "x-request-id": "Root=1-6a5e4095-30b1a6291e0780ce6acb9ee5",
           "x-robots-tag": "none"
         },
         "status": 200,

@@ -49,7 +49,7 @@
       },
       "metadata": {},
       "name": "LangGraph",
-      "run_id": "<uuid:6>",
+      "run_id": "<uuid:7>",
       "serialized": {
         "id": [
           "langgraph",
@@ -94,7 +94,8 @@
         "sdk_language": "javascript"
       },
       "metadata": {
-        "langgraph_checkpoint_ns": "sayHello:<uuid:9>",
+        "checkpoint_ns": "sayHello:<uuid:10>",
+        "langgraph_checkpoint_ns": "sayHello:<uuid:10>",
         "langgraph_node": "sayHello",
         "langgraph_path": [
           "__pregel_pull",
@@ -106,8 +107,8 @@
         ]
       },
       "name": "sayHello",
-      "parent_run_id": "<uuid:6>",
-      "run_id": "<uuid:10>",
+      "parent_run_id": "<uuid:7>",
+      "run_id": "<uuid:11>",
       "serialized": {
         "id": [
           "langchain_core",
@@ -213,8 +214,8 @@
         "temperature": 0
       },
       "metadata": {
-        "checkpoint_ns": "sayHello:<uuid:9>",
-        "langgraph_checkpoint_ns": "sayHello:<uuid:9>",
+        "checkpoint_ns": "sayHello:<uuid:10>",
+        "langgraph_checkpoint_ns": "sayHello:<uuid:10>",
         "langgraph_node": "sayHello",
         "langgraph_path": [
           "__pregel_pull",
@@ -238,8 +239,8 @@
       "options": {
         "signal": {}
       },
-      "parent_run_id": "<uuid:10>",
-      "run_id": "<uuid:13>",
+      "parent_run_id": "<uuid:11>",
+      "run_id": "<uuid:14>",
       "serialized": {
         "id": [
           "langchain",
@@ -288,7 +289,7 @@
               "kwargs": {
                 "additional_kwargs": {},
                 "content": "<llm-response>",
-                "id": "<span:9>",
+                "id": "<span:10>",
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "stop",
@@ -354,7 +355,7 @@
       "name": "ChatOpenAI",
       "type": "llm"
     },
-    "span_id": "<span:10>",
+    "span_id": "<span:9>",
     "span_parents": [
       "<span:7>"
     ]
@@ -430,6 +431,7 @@
         "sdk_language": "javascript"
       },
       "metadata": {
+        "checkpoint_ns": "sayBye:<uuid:19>",
         "langgraph_checkpoint_ns": "sayBye:<uuid:19>",
         "langgraph_node": "sayBye",
         "langgraph_path": [
@@ -442,7 +444,7 @@
         ]
       },
       "name": "sayBye",
-      "parent_run_id": "<uuid:6>",
+      "parent_run_id": "<uuid:7>",
       "run_id": "<uuid:20>",
       "serialized": {
         "id": [

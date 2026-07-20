@@ -8,17 +8,17 @@ importers:
 
   .:
     dependencies:
-      anthropic-sdk-v0-latest:
-        specifier: npm:@anthropic-ai/sdk@0.110.0
-        version: '@anthropic-ai/sdk@0.110.0'
       anthropic-sdk-v0:
         specifier: npm:@anthropic-ai/sdk@0.27.3
         version: '@anthropic-ai/sdk@0.27.3'
+      anthropic-sdk-v0-latest:
+        specifier: npm:@anthropic-ai/sdk@0.112.1
+        version: '@anthropic-ai/sdk@0.112.1'
 
 packages:
 
-  '@anthropic-ai/sdk@0.110.0':
-    resolution: {integrity: sha512-hOP4bNYXDFHDxxiEgzlILXrxZIYCDnhe8sry0RDRKD/QnsEpvZcQpablCdm9X/WuD/YgOiSIkkqsL1mLLlTqJw==}
+  '@anthropic-ai/sdk@0.112.1':
+    resolution: {integrity: sha512-vPRhHWxG9gIDyI9anVET2tBkmMBOXyTpIFvQgUVveiAV0ihmQgBYzQHb/s9+pZ/FxprSWcQnj15YnRfPxOIEmg==}
     hasBin: true
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
@@ -190,7 +190,7 @@ packages:
 
 snapshots:
 
-  '@anthropic-ai/sdk@0.110.0':
+  '@anthropic-ai/sdk@0.112.1':
     dependencies:
       json-schema-to-ts: 3.1.1
       standardwebhooks: 1.0.0

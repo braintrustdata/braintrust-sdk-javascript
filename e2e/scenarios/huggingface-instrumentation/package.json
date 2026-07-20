@@ -25,6 +25,6 @@
     "huggingface-inference-sdk-v3": "npm:@huggingface/inference@3.15.0",
     "huggingface-inference-sdk-v3-latest": "npm:@huggingface/inference@3.15.0",
     "huggingface-inference-sdk-v4": "npm:@huggingface/inference@4.13.15",
-    "huggingface-inference-sdk-v4-latest": "npm:@huggingface/inference@4.13.22"
+    "huggingface-inference-sdk-v4-latest": "npm:@huggingface/inference@4.13.23"
   }
 }

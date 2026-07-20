@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "35e9b66e5608392b",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent",
-      "recordedAt": "2026-07-07T15:24:49.957Z",
+      "recordedAt": "2026-07-20T15:30:51.429Z",
       "request": {
         "body": {
           "kind": "json",
@@ -39,7 +39,7 @@
                   "parts": [
                     {
                       "text": "OK.",
-                      "thoughtSignature": "EjQKMgERTTIP+kbCS5h3Lhf2dZTj5ZGg/NRU+4dTVt3uDXfJ35gZI0hNX/gMSm0K1wzrPQRo"
+                      "thoughtSignature": "EjQKMgERTTIPF0xwdubSXslpmFXOS8IgraS539LJbf7osLHWqMhFnhdcko7YkP1375FXvsYc"
                     }
                   ],
                   "role": "model"
@@ -49,7 +49,7 @@
               }
             ],
             "modelVersion": "gemini-3.1-flash-lite",
-            "responseId": "QRpNaoysFvmtxN8P2OrViAg",
+            "responseId": "Kj9eaoqhPObVjMcPoOeqkQU",
             "usageMetadata": {
               "candidatesTokenCount": 2,
               "promptTokenCount": 6,
@@ -68,9 +68,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Tue, 07 Jul 2026 15:24:49 GMT",
+          "date": "Mon, 20 Jul 2026 15:30:51 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=669",
+          "server-timing": "gfet4t7; dur=493",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -86,7 +86,7 @@
       "callIndex": 0,
       "id": "03eeb24aaf9bd21f",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:streamGenerateContent",
-      "recordedAt": "2026-07-07T15:24:50.536Z",
+      "recordedAt": "2026-07-20T15:30:51.962Z",
       "request": {
         "body": {
           "kind": "json",
@@ -114,8 +114,8 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"The sun rises on a new horizon.\"}],\"role\":\"model\"},\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":6,\"candidatesTokenCount\":8,\"totalTokenCount\":14,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":6}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-3.1-flash-lite\",\"responseId\":\"QhpNaqqoBviMxN8P3te0yAI\"}",
-            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"\",\"thoughtSignature\":\"EjQKMgERTTIPKrmFupLZUi7jxJRosOrXKRtOfuleX1ZiGCRTRJpNYOKynqWwXYul6Yl24JXT\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":6,\"candidatesTokenCount\":8,\"totalTokenCount\":14,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":6}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-3.1-flash-lite\",\"responseId\":\"QhpNaqqoBviMxN8P3te0yAI\"}"
+            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"The sun rises on a new horizon.\"}],\"role\":\"model\"},\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":6,\"candidatesTokenCount\":8,\"totalTokenCount\":14,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":6}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-3.1-flash-lite\",\"responseId\":\"Kz9eavTVIvzE-sAP3syBuAY\"}",
+            "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"\",\"thoughtSignature\":\"EjQKMgERTTIPaC521tmWesecG22igIxLgsXyrNX1PqaBqtwqXF+j3zSqdPIV1YGzC055hcXs\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":6,\"candidatesTokenCount\":8,\"totalTokenCount\":14,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":6}],\"serviceTier\":\"standard\"},\"modelVersion\":\"gemini-3.1-flash-lite\",\"responseId\":\"Kz9eavTVIvzE-sAP3syBuAY\"}"
           ],
           "kind": "sse"
         },
@@ -123,9 +123,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-disposition": "attachment",
           "content-type": "text/event-stream",
-          "date": "Tue, 07 Jul 2026 15:24:50 GMT",
+          "date": "Mon, 20 Jul 2026 15:30:51 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=530",
+          "server-timing": "gfet4t7; dur=467",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -140,7 +140,7 @@
       "callIndex": 0,
       "id": "d7fbe35254ae2abc",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent",
-      "recordedAt": "2026-07-07T15:24:50.835Z",
+      "recordedAt": "2026-07-20T15:30:52.140Z",
       "request": {
         "body": {
           "kind": "json",
@@ -933,9 +933,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Tue, 07 Jul 2026 15:24:50 GMT",
+          "date": "Mon, 20 Jul 2026 15:30:52 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=256",
+          "server-timing": "gfet4t7; dur=145",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -950,7 +950,7 @@
       "callIndex": 1,
       "id": "1c871b03e835f53c",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent",
-      "recordedAt": "2026-07-07T15:24:51.594Z",
+      "recordedAt": "2026-07-20T15:30:52.566Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1007,10 +1007,10 @@
                         "args": {
                           "city": "Vienna"
                         },
-                        "id": "NPuIwQ0R",
+                        "id": "Co3HjuUu",
                         "name": "cityMarkerTool"
                       },
-                      "thoughtSignature": "EjQKMgERTTIPofbt6Eaxq8VQrIkzuyFZ0CBkr/wgh1EtALBQudZ4G3H8yRepTcQJWQWxw5Pl"
+                      "thoughtSignature": "EjQKMgERTTIP6mKfnoo96Z/IEs7S9jGYCXDct0TAvB4vTogYz09BXEBD+ym0u2nZSzU0/Jka"
                     }
                   ],
                   "role": "model"
@@ -1021,7 +1021,7 @@
               }
             ],
             "modelVersion": "gemini-3.1-flash-lite",
-            "responseId": "QhpNatvHOvvlxN8Pi-j-qAM",
+            "responseId": "LD9eavGHDYWJ-sAP-PbZiAo",
             "usageMetadata": {
               "candidatesTokenCount": 16,
               "promptTokenCount": 69,
@@ -1040,9 +1040,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Tue, 07 Jul 2026 15:24:51 GMT",
+          "date": "Mon, 20 Jul 2026 15:30:52 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=724",
+          "server-timing": "gfet4t7; dur=407",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",
@@ -1058,7 +1058,7 @@
       "callIndex": 2,
       "id": "8d0adb71f389e0c4",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent",
-      "recordedAt": "2026-07-07T15:24:52.493Z",
+      "recordedAt": "2026-07-20T15:30:53.098Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1079,10 +1079,10 @@
                       "args": {
                         "city": "Vienna"
                       },
-                      "id": "NPuIwQ0R",
+                      "id": "Co3HjuUu",
                       "name": "cityMarkerTool"
                     },
-                    "thoughtSignature": "EjQKMgERTTIPofbt6Eaxq8VQrIkzuyFZ0CBkr/wgh1EtALBQudZ4G3H8yRepTcQJWQWxw5Pl"
+                    "thoughtSignature": "EjQKMgERTTIP6mKfnoo96Z/IEs7S9jGYCXDct0TAvB4vTogYz09BXEBD+ym0u2nZSzU0/Jka"
                   }
                 ],
                 "role": "model"
@@ -1091,7 +1091,7 @@
                 "parts": [
                   {
                     "functionResponse": {
-                      "id": "NPuIwQ0R",
+                      "id": "Co3HjuUu",
                       "name": "cityMarkerTool",
                       "response": {
                         "content": {
@@ -1144,7 +1144,7 @@
                   "parts": [
                     {
                       "text": "The city marker for Vienna is `genkit-model-tool-called-vienna`.",
-                      "thoughtSignature": "EjQKMgERTTIP/68fuG+pwxk8E0KcbLNXaZO6ntpp3cVHHi2rKrQFfqPXxAgxPK/YNFS7bfWc"
+                      "thoughtSignature": "EjQKMgERTTIP24giWKW8FKOvG1tqqWcr9FGdYnmbOVXurgcgYyWcKTTLXv65Oq2dYX/qqy4t"
                     }
                   ],
                   "role": "model"
@@ -1154,7 +1154,7 @@
               }
             ],
             "modelVersion": "gemini-3.1-flash-lite",
-            "responseId": "QxpNaruxK6_1vdIPmKWyiQQ",
+            "responseId": "LD9ear3JJ6Xh-sAPyJauyAU",
             "usageMetadata": {
               "candidatesTokenCount": 19,
               "promptTokenCount": 119,
@@ -1173,9 +1173,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Tue, 07 Jul 2026 15:24:52 GMT",
+          "date": "Mon, 20 Jul 2026 15:30:53 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=870",
+          "server-timing": "gfet4t7; dur=517",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",

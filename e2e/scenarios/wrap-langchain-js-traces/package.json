@@ -18,9 +18,9 @@
   "dependencies": {
     "zod": "3.25.76",
     "langchain-core-v1": "npm:@langchain/core@1.1.35",
-    "langchain-core-v1-latest": "npm:@langchain/core@1.2.1",
+    "langchain-core-v1-latest": "npm:@langchain/core@1.2.3",
     "langchain-openai-v1": "npm:@langchain/openai@1.3.0",
-    "langchain-openai-v1-latest": "npm:@langchain/openai@1.5.3"
+    "langchain-openai-v1-latest": "npm:@langchain/openai@1.5.5"
   },
   "pnpm": {
     "overrides": {

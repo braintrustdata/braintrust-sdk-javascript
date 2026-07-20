@@ -21,7 +21,7 @@ span_tree:
     │           "finish_reason": "stop",
     │           "index": 0,
     │           "message": {
-    │             "content": "OK.",
+    │             "content": "OK",
     │             "role": "assistant"
     │           }
     │         }
@@ -36,9 +36,9 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_tokens": 2,
-    │         "prompt_tokens": 15,
-    │         "tokens": 17
+    │         "completion_tokens": 1,
+    │         "prompt_tokens": 40,
+    │         "tokens": 41
     │       }
     ├── huggingface-chat-stream-operation
     │   metadata: {
@@ -75,9 +75,9 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_tokens": 2,
-    │         "prompt_tokens": 15,
+    │         "prompt_tokens": 40,
     │         "time_to_first_token": 0,
-    │         "tokens": 17
+    │         "tokens": 42
     │       }
     ├── huggingface-chat-stream-tool-call-operation
     │   metadata: {
@@ -158,7 +158,7 @@ span_tree:
     │   └── huggingface.text_generation [llm]
     │       input: "The capital of France is"
     │       output: {
-    │         "generated_text": " a city that is"
+    │         "generated_text": " a city of many"
     │       }
     │       metadata: {
     │         "model": "meta-llama/Llama-3.1-8B",
@@ -178,7 +178,7 @@ span_tree:
     │       input: "The capital of France is"
     │       output: {
     │         "finish_reason": "length",
-    │         "generated_text": " a city that is"
+    │         "generated_text": " Paris. It is"
     │       }
     │       metadata: {
     │         "finish_reason": "length",
@@ -192,9 +192,9 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_tokens": 4,
-    │         "prompt_tokens": 5,
+    │         "prompt_tokens": 6,
     │         "time_to_first_token": 0,
-    │         "tokens": 9
+    │         "tokens": 10
     │       }
     └── huggingface-feature-extraction-operation
         metadata: {

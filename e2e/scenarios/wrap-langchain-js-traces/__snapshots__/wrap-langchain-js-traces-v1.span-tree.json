@@ -123,8 +123,12 @@
                   "ls_model_type": "chat",
                   "ls_provider": "openai",
                   "ls_temperature": 0,
+                  "max_tokens": 24,
+                  "model": "gpt-4o-mini-2024-07-18",
+                  "stream": false,
+                  "temperature": 0,
                   "versions": {
-                    "@langchain/core": "1.2.1",
+                    "@langchain/core": "1.1.35",
                     "@langchain/openai": "1.3.0"
                   }
                 },
@@ -386,8 +390,12 @@
                       "ls_model_type": "chat",
                       "ls_provider": "openai",
                       "ls_temperature": 0,
+                      "max_tokens": 32,
+                      "model": "gpt-4o-mini-2024-07-18",
+                      "stream": false,
+                      "temperature": 0,
                       "versions": {
-                        "@langchain/core": "1.2.1",
+                        "@langchain/core": "1.1.35",
                         "@langchain/openai": "1.3.0"
                       }
                     },
@@ -708,8 +716,15 @@
                   "ls_model_type": "chat",
                   "ls_provider": "openai",
                   "ls_temperature": 0,
+                  "max_tokens": 32,
+                  "model": "gpt-4o-mini-2024-07-18",
+                  "stream": true,
+                  "stream_options": {
+                    "include_usage": true
+                  },
+                  "temperature": 0,
                   "versions": {
-                    "@langchain/core": "1.2.1",
+                    "@langchain/core": "1.1.35",
                     "@langchain/openai": "1.3.0"
                   }
                 },
@@ -917,8 +932,12 @@
                   "ls_model_type": "chat",
                   "ls_provider": "openai",
                   "ls_temperature": 0,
+                  "max_tokens": 128,
+                  "model": "gpt-4o-mini-2024-07-18",
+                  "stream": false,
+                  "temperature": 0,
                   "versions": {
-                    "@langchain/core": "1.2.1",
+                    "@langchain/core": "1.1.35",
                     "@langchain/openai": "1.3.0"
                   }
                 },
@@ -1163,8 +1182,12 @@
                   "ls_model_type": "chat",
                   "ls_provider": "openai",
                   "ls_temperature": 0,
+                  "max_tokens": 128,
+                  "model": "gpt-4o-mini-2024-07-18",
+                  "stream": false,
+                  "temperature": 0,
                   "versions": {
-                    "@langchain/core": "1.2.1",
+                    "@langchain/core": "1.1.35",
                     "@langchain/openai": "1.3.0"
                   }
                 },
@@ -1296,7 +1319,7 @@
                       "additional_kwargs": {},
                       "content": "6223",
                       "response_metadata": {},
-                      "tool_call_id": "call_CntJIwZg1SsU86VjMiAhxghE"
+                      "tool_call_id": "call_3380GF0oncMipdW7HOXLyn2d"
                     },
                     "lc": 1,
                     "type": "constructor"
@@ -1433,8 +1456,12 @@
                   "ls_model_type": "chat",
                   "ls_provider": "openai",
                   "ls_temperature": 0,
+                  "max_tokens": 128,
+                  "model": "gpt-4o-mini-2024-07-18",
+                  "stream": false,
+                  "temperature": 0,
                   "versions": {
-                    "@langchain/core": "1.2.1",
+                    "@langchain/core": "1.1.35",
                     "@langchain/openai": "1.3.0"
                   }
                 },

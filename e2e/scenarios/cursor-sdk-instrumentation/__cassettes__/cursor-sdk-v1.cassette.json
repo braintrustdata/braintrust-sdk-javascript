@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "3056d63956e85565",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:45.924Z",
+      "recordedAt": "2026-07-20T15:31:04.460Z",
       "request": {
         "body": {
           "kind": "json",
@@ -28,7 +28,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:45 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:04 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -39,7 +39,7 @@
       "callIndex": 0,
       "id": "30973cd9bcce6459",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-07-07T14:09:46.117Z",
+      "recordedAt": "2026-07-20T15:31:04.496Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -62,7 +62,7 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:46 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:04 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -73,7 +73,7 @@
       "callIndex": 0,
       "id": "61bed072048628da",
       "matchKey": "GET api.cursor.com/v1/models",
-      "recordedAt": "2026-07-07T14:09:46.948Z",
+      "recordedAt": "2026-07-20T15:31:04.570Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -96,6 +96,124 @@
                     "displayName": "Auto",
                     "isDefault": true,
                     "params": []
+                  }
+                ]
+              },
+              {
+                "displayName": "Cursor Grok 4.5",
+                "id": "grok-4.5",
+                "parameters": [
+                  {
+                    "displayName": "Effort",
+                    "id": "effort",
+                    "values": [
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast​",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "Cursor Grok 4.5",
+                    "params": [
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Cursor Grok 4.5",
+                    "params": [
+                      {
+                        "id": "effort",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Cursor Grok 4.5",
+                    "params": [
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Cursor Grok 4.5",
+                    "params": [
+                      {
+                        "id": "effort",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Cursor Grok 4.5",
+                    "params": [
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Cursor Grok 4.5",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "effort",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
                   }
                 ]
               },
@@ -1210,6 +1328,379 @@
                       {
                         "id": "fast",
                         "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["gpt-latest", "gpt", "gpt-5-6-sol", "gpt-5.6"],
+                "displayName": "GPT-5.6 Sol",
+                "id": "gpt-5.6-sol",
+                "parameters": [
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "272K",
+                        "value": "272k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "None",
+                        "value": "none"
+                      },
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "xhigh"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Sol",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
                       }
                     ]
                   }
@@ -2332,6 +2823,379 @@
                       {
                         "id": "effort",
                         "value": "max"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "aliases": ["gpt-5-6-terra"],
+                "displayName": "GPT-5.6 Terra",
+                "id": "gpt-5.6-terra",
+                "parameters": [
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "272K",
+                        "value": "272k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "None",
+                        "value": "none"
+                      },
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "xhigh"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Terra",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
                       }
                     ]
                   }
@@ -3937,48 +4801,6 @@
                 ]
               },
               {
-                "aliases": ["grok-build"],
-                "displayName": "Grok Build 0.1",
-                "id": "grok-build-0.1",
-                "parameters": [
-                  {
-                    "displayName": "Context",
-                    "id": "context",
-                    "values": [
-                      {
-                        "displayName": "200K",
-                        "value": "200k"
-                      },
-                      {
-                        "displayName": "1M",
-                        "value": "1m"
-                      }
-                    ]
-                  }
-                ],
-                "variants": [
-                  {
-                    "displayName": "Grok Build 0.1",
-                    "params": [
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Grok Build 0.1",
-                    "isDefault": true,
-                    "params": [
-                      {
-                        "id": "context",
-                        "value": "1m"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "aliases": ["gpt"],
                 "displayName": "GPT-5.4",
                 "id": "gpt-5.4",
@@ -4816,6 +5638,379 @@
                 ]
               },
               {
+                "aliases": ["gpt-5-6-luna"],
+                "displayName": "GPT-5.6 Luna",
+                "id": "gpt-5.6-luna",
+                "parameters": [
+                  {
+                    "displayName": "Context",
+                    "id": "context",
+                    "values": [
+                      {
+                        "displayName": "272K",
+                        "value": "272k"
+                      },
+                      {
+                        "displayName": "1M",
+                        "value": "1m"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Reasoning",
+                    "id": "reasoning",
+                    "values": [
+                      {
+                        "displayName": "None",
+                        "value": "none"
+                      },
+                      {
+                        "displayName": "Low",
+                        "value": "low"
+                      },
+                      {
+                        "displayName": "Medium",
+                        "value": "medium"
+                      },
+                      {
+                        "displayName": "High",
+                        "value": "high"
+                      },
+                      {
+                        "displayName": "Extra High",
+                        "value": "xhigh"
+                      },
+                      {
+                        "displayName": "Max",
+                        "value": "max"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "Fast",
+                    "id": "fast",
+                    "values": [
+                      {
+                        "value": "false"
+                      },
+                      {
+                        "displayName": "Fast",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ],
+                "variants": [
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "272k"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "none"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "low"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "isDefault": true,
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "medium"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "high"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "xhigh"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  },
+                  {
+                    "displayName": "GPT-5.6 Luna",
+                    "params": [
+                      {
+                        "id": "context",
+                        "value": "1m"
+                      },
+                      {
+                        "id": "reasoning",
+                        "value": "max"
+                      },
+                      {
+                        "id": "fast",
+                        "value": "false"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "aliases": [
                   "gemini-latest",
                   "gemini-pro-latest",
@@ -5029,48 +6224,6 @@
                       {
                         "id": "thinking",
                         "value": "true"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "aliases": ["grok-latest", "grok"],
-                "displayName": "Grok 4.3",
-                "id": "grok-4.3",
-                "parameters": [
-                  {
-                    "displayName": "Context",
-                    "id": "context",
-                    "values": [
-                      {
-                        "displayName": "200K",
-                        "value": "200k"
-                      },
-                      {
-                        "displayName": "1M",
-                        "value": "1m"
-                      }
-                    ]
-                  }
-                ],
-                "variants": [
-                  {
-                    "displayName": "Grok 4.3",
-                    "params": [
-                      {
-                        "id": "context",
-                        "value": "200k"
-                      }
-                    ]
-                  },
-                  {
-                    "displayName": "Grok 4.3",
-                    "isDefault": true,
-                    "params": [
-                      {
-                        "id": "context",
-                        "value": "1m"
                       }
                     ]
                   }
@@ -5707,9 +6860,9 @@
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connection": "keep-alive",
-          "content-length": "46614",
+          "content-length": "56189",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:46 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:04 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -5720,7 +6873,7 @@
       "callIndex": 1,
       "id": "0a485ba15b4341f4",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:47.107Z",
+      "recordedAt": "2026-07-20T15:31:04.657Z",
       "request": {
         "body": {
           "kind": "json",
@@ -5744,7 +6897,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:47 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:04 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -5755,7 +6908,7 @@
       "callIndex": 0,
       "id": "d1f7ceb3bf90cdd7",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.AnalyticsService/BootstrapStatsig",
-      "recordedAt": "2026-07-07T14:09:47.360Z",
+      "recordedAt": "2026-07-20T15:31:04.766Z",
       "request": {
         "body": {
           "kind": "json",
@@ -5769,17 +6922,17 @@
         "body": {
           "contentType": "application/json",
           "kind": "binary",
-          "path": "cursor-sdk-v1.cassette.blobs/123b16623ff17157f2915e19d5890f7893b4b29b8510019e13acd798c56af853.bin",
-          "sha256": "123b16623ff17157f2915e19d5890f7893b4b29b8510019e13acd798c56af853"
+          "path": "cursor-sdk-v1.cassette.blobs/1bacd3583ba27dea5f3b5a009683f5a5c8d17007f7db0c859d946e2da3c33526.bin",
+          "sha256": "1bacd3583ba27dea5f3b5a009683f5a5c8d17007f7db0c859d946e2da3c33526"
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connection": "keep-alive",
           "content-encoding": "gzip",
-          "content-length": "82150",
+          "content-length": "90724",
           "content-type": "application/json",
-          "date": "Tue, 07 Jul 2026 14:09:47 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:04 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -5790,7 +6943,7 @@
       "callIndex": 2,
       "id": "597e06e6bda9541c",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:47.535Z",
+      "recordedAt": "2026-07-20T15:31:04.826Z",
       "request": {
         "body": {
           "kind": "json",
@@ -5814,7 +6967,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:47 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:04 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -5825,7 +6978,7 @@
       "callIndex": 0,
       "id": "d53dfb862e5ae5f7",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-07-07T14:09:47.704Z",
+      "recordedAt": "2026-07-20T15:31:04.918Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -5838,15 +6991,15 @@
         "body": {
           "contentType": "application/proto",
           "kind": "base64",
-          "value": "GgxCBggBEAEYAVAAWAEiADIGCAAYACAAOhUgAjAAQAJIAFgBcAGAAQCIAQCoAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAdgCgJy1B+ACAIIDAIoDAJIDBhIEVEVBTaADALADAMADAMgDAQ=="
+          "value": "Gg5CCAgBEAEYASABUABYASIAMgYIABgAIAA6FSACMABAAkgAWAFwAYABAIgBAKgBAEIASgCCAQCQAQCYAQCgAQCqAQcIARIBAhgAwAEAygEA4gEA6AEB8gECCAH6AQCAAgCKAgIQAKoCALICAgoAwAIB2AKAnLUH4AIAggMAigMAkgMGEgRURUFNoAMAsAMAwAMAyAMB"
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connection": "keep-alive",
-          "content-length": "148",
+          "content-length": "150",
           "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:47 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:04 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -5857,7 +7010,7 @@
       "callIndex": 1,
       "id": "4d511cf3b47c2629",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-07-07T14:09:47.964Z",
+      "recordedAt": "2026-07-20T15:31:04.989Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -5880,7 +7033,7 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:47 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:04 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -5891,7 +7044,7 @@
       "callIndex": 3,
       "id": "6533d1db768ada38",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:48.153Z",
+      "recordedAt": "2026-07-20T15:31:05.057Z",
       "request": {
         "body": {
           "kind": "json",
@@ -5915,37 +7068,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:48 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 0,
-      "id": "f6841d25c577100e",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-07-07T14:09:48.197Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "0",
-          "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:48 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -5956,7 +7079,7 @@
       "callIndex": 0,
       "id": "a340d783dfbb6997",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-07-07T14:09:48.555Z",
+      "recordedAt": "2026-07-20T15:31:05.065Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -5972,7 +7095,7 @@
         "headers": {
           "connection": "keep-alive",
           "content-length": "0",
-          "date": "Tue, 07 Jul 2026 14:09:48 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "server": "awselb/2.0"
         },
         "status": 464
@@ -5982,7 +7105,7 @@
       "callIndex": 4,
       "id": "713ac62a8481085f",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:48.716Z",
+      "recordedAt": "2026-07-20T15:31:05.123Z",
       "request": {
         "body": {
           "kind": "json",
@@ -6006,7 +7129,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:48 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -6017,7 +7140,7 @@
       "callIndex": 5,
       "id": "159b9254fd967a4f",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:48.882Z",
+      "recordedAt": "2026-07-20T15:31:05.162Z",
       "request": {
         "body": {
           "kind": "json",
@@ -6041,7 +7164,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:48 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -6052,7 +7175,7 @@
       "callIndex": 6,
       "id": "83ee8051122ed115",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:49.051Z",
+      "recordedAt": "2026-07-20T15:31:05.257Z",
       "request": {
         "body": {
           "kind": "json",
@@ -6076,7 +7199,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -6087,7 +7210,7 @@
       "callIndex": 2,
       "id": "00f0c09b48c1898a",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-07-07T14:09:49.215Z",
+      "recordedAt": "2026-07-20T15:31:05.291Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -6110,7 +7233,7 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -6121,7 +7244,7 @@
       "callIndex": 1,
       "id": "d2ea7953262b608d",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-07-07T14:09:49.224Z",
+      "recordedAt": "2026-07-20T15:31:05.303Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -6134,15 +7257,15 @@
         "body": {
           "contentType": "application/proto",
           "kind": "base64",
-          "value": "GgxCBggBEAEYAVAAWAEiADIGCAAYACAAOhUgAjAAQAJIAFgBcAGAAQCIAQCoAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAdgCgJy1B+ACAIIDAIoDAJIDBhIEVEVBTaADALADAMADAMgDAQ=="
+          "value": "Gg5CCAgBEAEYASABUABYASIAMgYIABgAIAA6FSACMABAAkgAWAFwAYABAIgBAKgBAEIASgCCAQCQAQCYAQCgAQCqAQcIARIBAhgAwAEAygEA4gEA6AEB8gECCAH6AQCAAgCKAgIQAKoCALICAgoAwAIB2AKAnLUH4AIAggMAigMAkgMGEgRURUFNoAMAsAMAwAMAyAMB"
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connection": "keep-alive",
-          "content-length": "148",
+          "content-length": "150",
           "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -6153,7 +7276,7 @@
       "callIndex": 7,
       "id": "215c1c7456d5ac18",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:49.401Z",
+      "recordedAt": "2026-07-20T15:31:05.348Z",
       "request": {
         "body": {
           "kind": "json",
@@ -6177,37 +7300,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 1,
-      "id": "0fe2bdc8216b7c85",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-07-07T14:09:49.449Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "0",
-          "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -6218,7 +7311,7 @@
       "callIndex": 1,
       "id": "f76197c334b438d4",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-07-07T14:09:49.803Z",
+      "recordedAt": "2026-07-20T15:31:05.354Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -6234,7 +7327,7 @@
         "headers": {
           "connection": "keep-alive",
           "content-length": "0",
-          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "server": "awselb/2.0"
         },
         "status": 464
@@ -6244,7 +7337,7 @@
       "callIndex": 8,
       "id": "b5a62fe3d5fdca42",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:49.963Z",
+      "recordedAt": "2026-07-20T15:31:05.414Z",
       "request": {
         "body": {
           "kind": "json",
@@ -6268,39 +7361,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:49 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 2,
-      "id": "70d3bcff6501f80d",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-07-07T14:09:50.142Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "GgxCBggBEAEYAVAAWAEiADIGCAAYACAAOhUgAjAAQAJIAFgBcAGAAQCIAQCoAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAdgCgJy1B+ACAIIDAIoDAJIDBhIEVEVBTaADALADAMADAMgDAQ=="
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "148",
-          "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -6311,7 +7372,7 @@
       "callIndex": 3,
       "id": "ca48e39a4afe13dd",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-07-07T14:09:50.150Z",
+      "recordedAt": "2026-07-20T15:31:05.444Z",
       "request": {
         "body": {
           "contentType": "application/proto",
@@ -6334,42 +7395,7 @@
           "connection": "keep-alive",
           "content-length": "4",
           "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 9,
-      "id": "89cbc244285e665c",
-      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:50.330Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {}
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "accessToken": "[REDACTED]",
-            "refreshToken": "[REDACTED]"
-          }
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "932",
-          "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -6378,100 +7404,9 @@
     },
     {
       "callIndex": 2,
-      "id": "d73f41eeedbf5def",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-07-07T14:09:50.391Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "0",
-          "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 2,
-      "id": "3298fd0cf5accbd1",
-      "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-07-07T14:09:50.742Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/agent.v1.AgentService/Run"
-      },
-      "response": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {
-          "connection": "keep-alive",
-          "content-length": "0",
-          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
-          "server": "awselb/2.0"
-        },
-        "status": 464
-      }
-    },
-    {
-      "callIndex": 10,
-      "id": "3fa8e8ca5dbfda3f",
-      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:50.937Z",
-      "request": {
-        "body": {
-          "kind": "json",
-          "value": {}
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "accessToken": "[REDACTED]",
-            "refreshToken": "[REDACTED]"
-          }
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "932",
-          "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:50 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 3,
-      "id": "88f9130fc6561ba9",
+      "id": "70d3bcff6501f80d",
       "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
-      "recordedAt": "2026-07-07T14:09:51.102Z",
+      "recordedAt": "2026-07-20T15:31:05.472Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -6484,15 +7419,15 @@
         "body": {
           "contentType": "application/proto",
           "kind": "base64",
-          "value": "GgxCBggBEAEYAVAAWAEiADIGCAAYACAAOhUgAjAAQAJIAFgBcAGAAQCIAQCoAQBCAEoAggEAkAEAmAEAoAEAqgEHCAESAQIYAMABAMoBAOIBAOgBAfIBAggB+gEAgAIAigICEACqAgCyAgIKAMACAdgCgJy1B+ACAIIDAIoDAJIDBhIEVEVBTaADALADAMADAMgDAQ=="
+          "value": "Gg5CCAgBEAEYASABUABYASIAMgYIABgAIAA6FSACMABAAkgAWAFwAYABAIgBAKgBAEIASgCCAQCQAQCYAQCgAQCqAQcIARIBAhgAwAEAygEA4gEA6AEB8gECCAH6AQCAAgCKAgIQAKoCALICAgoAwAIB2AKAnLUH4AIAggMAigMAkgMGEgRURUFNoAMAsAMAwAMAyAMB"
         },
         "headers": {
           "access-control-allow-credentials": "true",
           "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
           "connection": "keep-alive",
-          "content-length": "148",
+          "content-length": "150",
           "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:51 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -6500,44 +7435,10 @@
       }
     },
     {
-      "callIndex": 4,
-      "id": "233bbcc27fbdca7f",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
-      "recordedAt": "2026-07-07T14:09:51.137Z",
-      "request": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "CAE="
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
-      },
-      "response": {
-        "body": {
-          "contentType": "application/proto",
-          "kind": "base64",
-          "value": "CAIYAQ=="
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "4",
-          "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:51 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 11,
-      "id": "f2a00b03d6c1de3c",
+      "callIndex": 9,
+      "id": "89cbc244285e665c",
       "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
-      "recordedAt": "2026-07-07T14:09:51.314Z",
+      "recordedAt": "2026-07-20T15:31:05.493Z",
       "request": {
         "body": {
           "kind": "json",
@@ -6561,7 +7462,7 @@
           "connection": "keep-alive",
           "content-length": "932",
           "content-type": "application/json; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:09:51 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "vary": "Origin"
         },
         "status": 200,
@@ -6569,40 +7470,10 @@
       }
     },
     {
-      "callIndex": 3,
-      "id": "4b1a9ef52c437a05",
-      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam",
-      "recordedAt": "2026-07-07T14:09:51.352Z",
-      "request": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamReposOrEmptyIfNotInTeam"
-      },
-      "response": {
-        "body": {
-          "kind": "empty"
-        },
-        "headers": {
-          "access-control-allow-credentials": "true",
-          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
-          "connection": "keep-alive",
-          "content-length": "0",
-          "content-type": "application/proto",
-          "date": "Tue, 07 Jul 2026 14:09:51 GMT",
-          "vary": "Origin"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 3,
-      "id": "a471eaadb3f011d8",
+      "callIndex": 2,
+      "id": "3298fd0cf5accbd1",
       "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
-      "recordedAt": "2026-07-07T14:09:51.709Z",
+      "recordedAt": "2026-07-20T15:31:05.499Z",
       "request": {
         "body": {
           "kind": "empty"
@@ -6618,7 +7489,169 @@
         "headers": {
           "connection": "keep-alive",
           "content-length": "0",
-          "date": "Tue, 07 Jul 2026 14:09:51 GMT",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
+          "server": "awselb/2.0"
+        },
+        "status": 464
+      }
+    },
+    {
+      "callIndex": 10,
+      "id": "3fa8e8ca5dbfda3f",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-07-20T15:31:05.555Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 4,
+      "id": "233bbcc27fbdca7f",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode",
+      "recordedAt": "2026-07-20T15:31:05.596Z",
+      "request": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAE="
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetUserPrivacyMode"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "CAIYAQ=="
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "4",
+          "content-type": "application/proto",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "88f9130fc6561ba9",
+      "matchKey": "POST api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam",
+      "recordedAt": "2026-07-20T15:31:05.604Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/aiserver.v1.DashboardService/GetTeamAdminSettingsOrEmptyIfNotInTeam"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/proto",
+          "kind": "base64",
+          "value": "Gg5CCAgBEAEYASABUABYASIAMgYIABgAIAA6FSACMABAAkgAWAFwAYABAIgBAKgBAEIASgCCAQCQAQCYAQCgAQCqAQcIARIBAhgAwAEAygEA4gEA6AEB8gECCAH6AQCAAgCKAgIQAKoCALICAgoAwAIB2AKAnLUH4AIAggMAigMAkgMGEgRURUFNoAMAsAMAwAMAyAMB"
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "150",
+          "content-type": "application/proto",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 11,
+      "id": "f2a00b03d6c1de3c",
+      "matchKey": "POST api2.cursor.sh/auth/exchange_user_api_key",
+      "recordedAt": "2026-07-20T15:31:05.655Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {}
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/auth/exchange_user_api_key"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "accessToken": "[REDACTED]",
+            "refreshToken": "[REDACTED]"
+          }
+        },
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-expose-headers": "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin, Content-Encoding, Connect-Content-Encoding, traceparent, backend-traceparent, x-amzn-trace-id, x-request-id",
+          "connection": "keep-alive",
+          "content-length": "932",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
+          "vary": "Origin"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "a471eaadb3f011d8",
+      "matchKey": "POST api2.cursor.sh/agent.v1.AgentService/Run",
+      "recordedAt": "2026-07-20T15:31:05.662Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api2.cursor.sh/agent.v1.AgentService/Run"
+      },
+      "response": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "0",
+          "date": "Mon, 20 Jul 2026 15:31:05 GMT",
           "server": "awselb/2.0"
         },
         "status": 464

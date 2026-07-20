@@ -103,8 +103,8 @@ span_tree:
     │       metrics: {
     │         "completion_tokens": 3,
     │         "latency_ms": 0,
-    │         "prompt_cache_creation_tokens": 0,
-    │         "prompt_cached_tokens": 14922,
+    │         "prompt_cache_creation_tokens": 14922,
+    │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 6,
     │         "time_to_first_token": 0,
     │         "tokens": 14931
@@ -217,16 +217,16 @@ span_tree:
               "provider": "aws-bedrock",
               "trace": {},
               "usage": {
-                "cacheReadInputTokenCount": 0,
-                "cacheWriteInputTokenCount": 14922,
+                "cacheReadInputTokenCount": 14922,
+                "cacheWriteInputTokenCount": 0,
                 "inputTokens": 6,
                 "outputTokens": 3
               }
             }
             metrics: {
               "completion_tokens": 3,
-              "prompt_cache_creation_tokens": 14922,
-              "prompt_cached_tokens": 0,
+              "prompt_cache_creation_tokens": 0,
+              "prompt_cached_tokens": 14922,
               "prompt_tokens": 6,
               "time_to_first_token": 0,
               "tokens": 14931

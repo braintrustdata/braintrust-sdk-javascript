@@ -36,7 +36,7 @@ span_tree:
             │           "content": [
             │             {
             │               "metadata": {
-            │                 "thoughtSignature": "EjQKMgERTTIP+kbCS5h3Lhf2dZTj5ZGg/NRU+4dTVt3uDXfJ35gZI0hNX/gMSm0K1wzrPQRo"
+            │                 "thoughtSignature": "EjQKMgERTTIPF0xwdubSXslpmFXOS8IgraS539LJbf7osLHWqMhFnhdcko7YkP1375FXvsYc"
             │               },
             │               "text": "OK."
             │             }
@@ -74,7 +74,7 @@ span_tree:
             │             },
             │             {
             │               "metadata": {
-            │                 "thoughtSignature": "EjQKMgERTTIPKrmFupLZUi7jxJRosOrXKRtOfuleX1ZiGCRTRJpNYOKynqWwXYul6Yl24JXT"
+            │                 "thoughtSignature": "EjQKMgERTTIPaC521tmWesecG22igIxLgsXyrNX1PqaBqtwqXF+j3zSqdPIV1YGzC055hcXs"
             │               },
             │               "text": ""
             │             }
@@ -151,7 +151,7 @@ span_tree:
                         "content": [
                           {
                             "metadata": {
-                              "thoughtSignature": "EjQKMgERTTIP/68fuG+pwxk8E0KcbLNXaZO6ntpp3cVHHi2rKrQFfqPXxAgxPK/YNFS7bfWc"
+                              "thoughtSignature": "EjQKMgERTTIP24giWKW8FKOvG1tqqWcr9FGdYnmbOVXurgcgYyWcKTTLXv65Oq2dYX/qqy4t"
                             },
                             "text": "The city marker for Vienna is `genkit-model-tool-called-vienna`."
                           }

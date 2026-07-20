@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "e6926053c025e8b6",
       "matchKey": "POST bedrock-runtime.aws-region.amazonaws.com/model/us.anthropic.claude-sonnet-4-5-20250929-v1:0/invoke",
-      "recordedAt": "2026-07-06T14:36:30.877Z",
+      "recordedAt": "2026-07-20T15:22:10.837Z",
       "request": {
         "body": {
           "kind": "json",
@@ -34,7 +34,7 @@
                 "type": "text"
               }
             ],
-            "id": "msg_bdrk_01Tq8MgJjVBsgx64V9AZ21TV",
+            "id": "msg_bdrk_01XWhRD3YaRVPBRCgDPv4e6S",
             "model": "claude-sonnet-4-5-20250929",
             "role": "assistant",
             "stop_details": null,
@@ -57,13 +57,13 @@
           "connection": "keep-alive",
           "content-length": "406",
           "content-type": "application/json",
-          "date": "Mon, 06 Jul 2026 14:36:30 GMT",
+          "date": "Mon, 20 Jul 2026 15:22:10 GMT",
           "x-amzn-bedrock-cache-read-input-token-count": "0",
           "x-amzn-bedrock-cache-write-input-token-count": "0",
           "x-amzn-bedrock-input-token-count": "12",
-          "x-amzn-bedrock-invocation-latency": "1358",
+          "x-amzn-bedrock-invocation-latency": "1841",
           "x-amzn-bedrock-output-token-count": "4",
-          "x-amzn-requestid": "31890d1b-8cf7-4102-a225-d10738940695"
+          "x-amzn-requestid": "384fe17d-cb7e-4eaf-a9a5-7c884ad5a373"
         },
         "status": 200,
         "statusText": "OK"
@@ -73,7 +73,7 @@
       "callIndex": 0,
       "id": "5dd8e64febed30e6",
       "matchKey": "POST bedrock-runtime.aws-region.amazonaws.com/model/us.anthropic.claude-sonnet-4-5-20250929-v1:0/invoke-with-response-stream",
-      "recordedAt": "2026-07-06T14:36:32.718Z",
+      "recordedAt": "2026-07-20T15:22:13.298Z",
       "request": {
         "body": {
           "kind": "json",
@@ -97,15 +97,15 @@
         "body": {
           "contentType": "application/vnd.amazon.eventstream",
           "kind": "base64",
-          "value": "AAACswAAAEueg5S+CzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaWJXVnpjMkZuWlY5emRHRnlkQ0lzSW0xbGMzTmhaMlVpT25zaWJXOWtaV3dpT2lKamJHRjFaR1V0YzI5dWJtVjBMVFF0TlMweU1ESTFNRGt5T1NJc0ltbGtJam9pYlhOblgySmtjbXRmTURGT1RXZG9abUY1VlZscWJ6aDVaMmgxVURSRU9VTnBJaXdpZEhsd1pTSTZJbTFsYzNOaFoyVWlMQ0p5YjJ4bElqb2lZWE56YVhOMFlXNTBJaXdpWTI5dWRHVnVkQ0k2VzEwc0luTjBiM0JmY21WaGMyOXVJanB1ZFd4c0xDSnpkRzl3WDNObGNYVmxibU5sSWpwdWRXeHNMQ0p6ZEc5d1gyUmxkR0ZwYkhNaU9tNTFiR3dzSW5WellXZGxJanA3SW1sdWNIVjBYM1J2YTJWdWN5STZNalFzSW1OaFkyaGxYMk55WldGMGFXOXVYMmx1Y0hWMFgzUnZhMlZ1Y3lJNk1Dd2lZMkZqYUdWZmNtVmhaRjlwYm5CMWRGOTBiMnRsYm5NaU9qQXNJbU5oWTJobFgyTnlaV0YwYVc5dUlqcDdJbVZ3YUdWdFpYSmhiRjgxYlY5cGJuQjFkRjkwYjJ0bGJuTWlPakFzSW1Wd2FHVnRaWEpoYkY4eGFGOXBibkIxZEY5MGIydGxibk1pT2pCOUxDSnZkWFJ3ZFhSZmRHOXJaVzV6SWpveGZYMTkiLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKSyJ9pIGejAAAAPcAAABLfjjLPAs6ZXZlbnQtdHlwZQcABWNodW5rDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsiYnl0ZXMiOiJleUowZVhCbElqb2lZMjl1ZEdWdWRGOWliRzlqYTE5emRHRnlkQ0lzSW1sdVpHVjRJam93TENKamIyNTBaVzUwWDJKc2IyTnJJanA3SW5SNWNHVWlPaUowWlhoMElpd2lkR1Y0ZENJNklpSjlmUT09IiwicCI6ImFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHkifXQG3pQAAAESAAAAS1VQUDYLOmV2ZW50LXR5cGUHAAVjaHVuaw06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImJ5dGVzIjoiZXlKMGVYQmxJam9pWTI5dWRHVnVkRjlpYkc5amExOWtaV3gwWVNJc0ltbHVaR1Y0SWpvd0xDSmtaV3gwWVNJNmV5SjBlWEJsSWpvaWRHVjRkRjlrWld4MFlTSXNJblJsZUhRaU9pSXhJQ0o5ZlE9PSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ekFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaIn2YhzYPAAAA9gAAAEtDWOKMCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaVkyOXVkR1Z1ZEY5aWJHOWphMTlrWld4MFlTSXNJbWx1WkdWNElqb3dMQ0prWld4MFlTSTZleUowZVhCbElqb2lkR1Y0ZEY5a1pXeDBZU0lzSW5SbGVIUWlPaUl0SW4xOSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ekFCIn05eem/AAABHAAAAEvqYO5XCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaVkyOXVkR1Z1ZEY5aWJHOWphMTlrWld4MFlTSXNJbWx1WkdWNElqb3dMQ0prWld4MFlTSTZleUowZVhCbElqb2lkR1Y0ZEY5a1pXeDBZU0lzSW5SbGVIUWlPaUlnYjI1bFhHNHlJQzBnZEhkdlhHNHpJbjE5IiwicCI6ImFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6QUJDREVGR0hJSktMTU5PUFFSU1Qifb5ni2YAAADwAAAAS8wYFywLOmV2ZW50LXR5cGUHAAVjaHVuaw06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImJ5dGVzIjoiZXlKMGVYQmxJam9pWTI5dWRHVnVkRjlpYkc5amExOWtaV3gwWVNJc0ltbHVaR1Y0SWpvd0xDSmtaV3gwWVNJNmV5SjBlWEJsSWpvaWRHVjRkRjlrWld4MFlTSXNJblJsZUhRaU9pSWdMU0IwYUhKbFpTSjlmUT09IiwicCI6ImFiY2RlZmdoaWoifXiD98MAAACyAAAAS+4rHAULOmV2ZW50LXR5cGUHAAVjaHVuaw06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImJ5dGVzIjoiZXlKMGVYQmxJam9pWTI5dWRHVnVkRjlpYkc5amExOXpkRzl3SWl3aWFXNWtaWGdpT2pCOSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wIn1T9ao9AAABowAAAEt493GSCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaWJXVnpjMkZuWlY5a1pXeDBZU0lzSW1SbGJIUmhJanA3SW5OMGIzQmZjbVZoYzI5dUlqb2laVzVrWDNSMWNtNGlMQ0p6ZEc5d1gzTmxjWFZsYm1ObElqcHVkV3hzTENKemRHOXdYMlJsZEdGcGJITWlPbTUxYkd4OUxDSjFjMkZuWlNJNmV5SnBibkIxZEY5MGIydGxibk1pT2pJMExDSmpZV05vWlY5amNtVmhkR2x2Ymw5cGJuQjFkRjkwYjJ0bGJuTWlPakFzSW1OaFkyaGxYM0psWVdSZmFXNXdkWFJmZEc5clpXNXpJam93TENKdmRYUndkWFJmZEc5clpXNXpJam94T0gxOSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ekFCQ0RFRkcifammaMgAAAFjAAAAS5HimUkLOmV2ZW50LXR5cGUHAAVjaHVuaw06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImJ5dGVzIjoiZXlKMGVYQmxJam9pYldWemMyRm5aVjl6ZEc5d0lpd2lZVzFoZW05dUxXSmxaSEp2WTJzdGFXNTJiMk5oZEdsdmJrMWxkSEpwWTNNaU9uc2lhVzV3ZFhSVWIydGxia052ZFc1MElqb3lOQ3dpYjNWMGNIVjBWRzlyWlc1RGIzVnVkQ0k2TVRnc0ltbHVkbTlqWVhScGIyNU1ZWFJsYm1ONUlqb3hOalV5TENKbWFYSnpkRUo1ZEdWTVlYUmxibU41SWpveE16VTVmWDA9IiwicCI6ImFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6QUJDREVGR0hJSktMTU5PIn0J5fgK"
+          "value": "AAACqQAAAEu00xudCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaWJXVnpjMkZuWlY5emRHRnlkQ0lzSW0xbGMzTmhaMlVpT25zaWJXOWtaV3dpT2lKamJHRjFaR1V0YzI5dWJtVjBMVFF0TlMweU1ESTFNRGt5T1NJc0ltbGtJam9pYlhOblgySmtjbXRmTURGRWVqTTFlbWRRVlRkMGJtSTFXbmRtV0ZKb05YaFZJaXdpZEhsd1pTSTZJbTFsYzNOaFoyVWlMQ0p5YjJ4bElqb2lZWE56YVhOMFlXNTBJaXdpWTI5dWRHVnVkQ0k2VzEwc0luTjBiM0JmY21WaGMyOXVJanB1ZFd4c0xDSnpkRzl3WDNObGNYVmxibU5sSWpwdWRXeHNMQ0p6ZEc5d1gyUmxkR0ZwYkhNaU9tNTFiR3dzSW5WellXZGxJanA3SW1sdWNIVjBYM1J2YTJWdWN5STZNalFzSW1OaFkyaGxYMk55WldGMGFXOXVYMmx1Y0hWMFgzUnZhMlZ1Y3lJNk1Dd2lZMkZqYUdWZmNtVmhaRjlwYm5CMWRGOTBiMnRsYm5NaU9qQXNJbU5oWTJobFgyTnlaV0YwYVc5dUlqcDdJbVZ3YUdWdFpYSmhiRjgxYlY5cGJuQjFkRjkwYjJ0bGJuTWlPakFzSW1Wd2FHVnRaWEpoYkY4eGFGOXBibkIxZEY5MGIydGxibk1pT2pCOUxDSnZkWFJ3ZFhSZmRHOXJaVzV6SWpveGZYMTkiLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBIn0hvr3dAAABGgAAAEtlIBv3CzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaVkyOXVkR1Z1ZEY5aWJHOWphMTl6ZEdGeWRDSXNJbWx1WkdWNElqb3dMQ0pqYjI1MFpXNTBYMkpzYjJOcklqcDdJblI1Y0dVaU9pSjBaWGgwSWl3aWRHVjRkQ0k2SWlKOWZRPT0iLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3In1YY9rAAAABAwAAAEsI0O4ECzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaVkyOXVkR1Z1ZEY5aWJHOWphMTlrWld4MFlTSXNJbWx1WkdWNElqb3dMQ0prWld4MFlTSTZleUowZVhCbElqb2lkR1Y0ZEY5a1pXeDBZU0lzSW5SbGVIUWlPaUl4SUNKOWZRPT0iLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKSyJ9bCMKYAAAAP8AAABLTkiA/Qs6ZXZlbnQtdHlwZQcABWNodW5rDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsiYnl0ZXMiOiJleUowZVhCbElqb2lZMjl1ZEdWdWRGOWliRzlqYTE5a1pXeDBZU0lzSW1sdVpHVjRJam93TENKa1pXeDBZU0k2ZXlKMGVYQmxJam9pZEdWNGRGOWtaV3gwWVNJc0luUmxlSFFpT2lJdEluMTkiLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKSyJ98/jSsAAAAPkAAABLwQh1XQs6ZXZlbnQtdHlwZQcABWNodW5rDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsiYnl0ZXMiOiJleUowZVhCbElqb2lZMjl1ZEdWdWRGOWliRzlqYTE5a1pXeDBZU0lzSW1sdVpHVjRJam93TENKa1pXeDBZU0k2ZXlKMGVYQmxJam9pZEdWNGRGOWtaV3gwWVNJc0luUmxlSFFpT2lJZ2IyNWxYRzR5SUMwZ2RIZHZYRzR6SW4xOSIsInAiOiJhYmNkZWZnaGlqayJ9eGcL8gAAARAAAABLL5ADVgs6ZXZlbnQtdHlwZQcABWNodW5rDTpjb250ZW50LXR5cGUHABBhcHBsaWNhdGlvbi9qc29uDTptZXNzYWdlLXR5cGUHAAVldmVudHsiYnl0ZXMiOiJleUowZVhCbElqb2lZMjl1ZEdWdWRGOWliRzlqYTE5a1pXeDBZU0lzSW1sdVpHVjRJam93TENKa1pXeDBZU0k2ZXlKMGVYQmxJam9pZEdWNGRGOWtaV3gwWVNJc0luUmxlSFFpT2lJZ0xTQjBhSEpsWlNKOWZRPT0iLCJwIjoiYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QIn3E+o8bAAAAqgAAAEu+u8BGCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaVkyOXVkR1Z1ZEY5aWJHOWphMTl6ZEc5d0lpd2lhVzVrWlhnaU9qQjkiLCJwIjoiYWJjZGVmZ2gifcwchfMAAAG6AAAASxUHhGELOmV2ZW50LXR5cGUHAAVjaHVuaw06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbg06bWVzc2FnZS10eXBlBwAFZXZlbnR7ImJ5dGVzIjoiZXlKMGVYQmxJam9pYldWemMyRm5aVjlrWld4MFlTSXNJbVJsYkhSaElqcDdJbk4wYjNCZmNtVmhjMjl1SWpvaVpXNWtYM1IxY200aUxDSnpkRzl3WDNObGNYVmxibU5sSWpwdWRXeHNMQ0p6ZEc5d1gyUmxkR0ZwYkhNaU9tNTFiR3g5TENKMWMyRm5aU0k2ZXlKcGJuQjFkRjkwYjJ0bGJuTWlPakkwTENKallXTm9aVjlqY21WaGRHbHZibDlwYm5CMWRGOTBiMnRsYm5NaU9qQXNJbU5oWTJobFgzSmxZV1JmYVc1d2RYUmZkRzlyWlc1eklqb3dMQ0p2ZFhSd2RYUmZkRzlyWlc1eklqb3hPSDE5IiwicCI6ImFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVowMTIzIn382y+sAAABdAAAAEtDItLbCzpldmVudC10eXBlBwAFY2h1bmsNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24NOm1lc3NhZ2UtdHlwZQcABWV2ZW50eyJieXRlcyI6ImV5SjBlWEJsSWpvaWJXVnpjMkZuWlY5emRHOXdJaXdpWVcxaGVtOXVMV0psWkhKdlkyc3RhVzUyYjJOaGRHbHZiazFsZEhKcFkzTWlPbnNpYVc1d2RYUlViMnRsYmtOdmRXNTBJam95TkN3aWIzVjBjSFYwVkc5clpXNURiM1Z1ZENJNk1UZ3NJbWx1ZG05allYUnBiMjVNWVhSbGJtTjVJam95TkRNMExDSm1hWEp6ZEVKNWRHVk1ZWFJsYm1ONUlqb3lNVFkzZlgwPSIsInAiOiJhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ekFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaMDEyMzQ1In0wnbv2"
         },
         "headers": {
           "connection": "keep-alive",
           "content-type": "application/vnd.amazon.eventstream",
-          "date": "Mon, 06 Jul 2026 14:36:32 GMT",
+          "date": "Mon, 20 Jul 2026 15:22:13 GMT",
           "transfer-encoding": "chunked",
           "x-amzn-bedrock-content-type": "application/json",
-          "x-amzn-requestid": "bd6cb4c9-9535-41f1-a035-de93104f6ea7"
+          "x-amzn-requestid": "586e49d7-de37-4294-b53a-35e93251168e"
         },
         "status": 200,
         "statusText": "OK"

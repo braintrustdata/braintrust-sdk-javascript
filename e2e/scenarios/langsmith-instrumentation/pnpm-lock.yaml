@@ -15,8 +15,8 @@ importers:
         specifier: npm:langsmith@0.3.30
         version: langsmith@0.3.30(openai@4.104.0)
       langsmith-v0-latest:
-        specifier: npm:langsmith@0.8.1
-        version: langsmith@0.8.1(openai@4.104.0)
+        specifier: npm:langsmith@0.8.3
+        version: langsmith@0.8.3(openai@4.104.0)
       openai:
         specifier: 4.104.0
         version: 4.104.0
@@ -186,6 +186,26 @@ packages:
 
   langsmith@0.8.1:
     resolution: {integrity: sha512-Y48oSj51aLvehAVwy+VU2i9COlCFmLi9T5REFyL4pWT2npcIKiBSiSlnyjxdkNXOdZ0YYz7Lud8aiZPjkjkXvA==}
+    peerDependencies:
+      '@opentelemetry/api': '*'
+      '@opentelemetry/exporter-trace-otlp-proto': '*'
+      '@opentelemetry/sdk-trace-base': '*'
+      openai: '*'
+      ws: '>=7'
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
+      '@opentelemetry/exporter-trace-otlp-proto':
+        optional: true
+      '@opentelemetry/sdk-trace-base':
+        optional: true
+      openai:
+        optional: true
+      ws:
+        optional: true
+
+  langsmith@0.8.3:
+    resolution: {integrity: sha512-3y1PRTmY24wiN8NiMb0CcNI2LwgovsKAz+ymVmBSmUx4nXL+GlmPY6Ju7FGeaPV1DMfQs9SjceNZHIfY2XYMKQ==}
     peerDependencies:
       '@opentelemetry/api': '*'
       '@opentelemetry/exporter-trace-otlp-proto': '*'
@@ -491,6 +511,12 @@ snapshots:
       openai: 4.104.0
 
   langsmith@0.8.1(openai@4.104.0):
+    dependencies:
+      p-queue: 6.6.2
+    optionalDependencies:
+      openai: 4.104.0
+
+  langsmith@0.8.3(openai@4.104.0):
     dependencies:
       p-queue: 6.6.2
     optionalDependencies:

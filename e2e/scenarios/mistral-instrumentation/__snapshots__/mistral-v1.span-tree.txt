@@ -61,7 +61,7 @@ span_tree:
     │       ]
     │       output: [
     │         {
-    │           "finishReason": null,
+    │           "finishReason": "stop",
     │           "index": 0,
     │           "message": {
     │             "content": "streamed output",
@@ -80,7 +80,10 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "time_to_first_token": 0
+    │         "completion_tokens": 4,
+    │         "prompt_tokens": 10,
+    │         "time_to_first_token": 0,
+    │         "tokens": 14
     │       }
     ├── mistral-chat-reasoning-stream-operation
     │   metadata: {
@@ -359,10 +362,10 @@ span_tree:
     │       input: "const project = "
     │       output: [
     │         {
-    │           "finishReason": null,
+    │           "finishReason": "length",
     │           "index": 0,
     │           "message": {
-    │             "content": "{\n  name: 'project',\n  title: 'Projects',\n ",
+    │             "content": "{\n  name: 'project',\n  title: 'Projects',\n  type:",
     │             "role": "assistant"
     │           }
     │         }
@@ -378,7 +381,10 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "time_to_first_token": 0
+    │         "completion_tokens": 16,
+    │         "prompt_tokens": 9,
+    │         "time_to_first_token": 0,
+    │         "tokens": 25
     │       }
     ├── mistral-agents-complete-operation
     │   metadata: {
@@ -464,7 +470,7 @@ span_tree:
     │             "toolCalls": [
     │               {
     │                 "function": {
-    │                   "arguments": "{}",
+    │                   "arguments": "{\"city\": \"Vienna\"}",
     │                   "name": "get_time_in_city"
     │                 },
     │                 "id": "<span:1>",
@@ -489,10 +495,10 @@ span_tree:
     │         "toolChoice": "required"
     │       }
     │       metrics: {
-    │         "completion_tokens": 8,
+    │         "completion_tokens": 14,
     │         "prompt_tokens": 71,
     │         "time_to_first_token": 0,
-    │         "tokens": 79
+    │         "tokens": 85
     │       }
     ├── mistral-agents-stream-operation
     │   metadata: {
@@ -551,6 +557,13 @@ span_tree:
               "model": "mistral-embed",
               "object": "list",
               "provider": "mistral"
+            }
+            metrics: {
+              "completion_tokens": 0,
+              "prompt_tokens": 9,
+              "tokens": 9
+            }
+   "provider": "mistral"
             }
             metrics: {
               "completion_tokens": 0,

@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "9aa262365558ebc2",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-07T14:31:50.639Z",
+      "recordedAt": "2026-07-20T15:09:39.351Z",
       "request": {
         "body": {
           "kind": "json",
@@ -37,11 +37,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1783434710,
-            "created_at": 1783434709,
+            "completed_at": 1784560179,
+            "created_at": 1784560178,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0b0dbdf92c2e11ee006a4d0dd5cec8819fb779402931caa085",
+            "id": "resp_088072b2d9ff4e78006a5e3a3258d8819f84ce7c36141c0a5f",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 24,
@@ -60,7 +60,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_0b0dbdf92c2e11ee006a4d0dd65de0819fadc9d829b7cce74a",
+                "id": "msg_088072b2d9ff4e78006a5e3a333338819fb2d7365306ac9bca",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -113,6 +113,7 @@
             "usage": {
               "input_tokens": 18,
               "input_tokens_details": {
+                "cache_write_tokens": 0,
                 "cached_tokens": 0
               },
               "output_tokens": 3,
@@ -128,13 +129,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1778e17ce1ff406-VIE",
+          "cf-ray": "a1e2e35a59a873f7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 07 Jul 2026 14:31:50 GMT",
+          "date": "Mon, 20 Jul 2026 15:09:39 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "698",
+          "openai-processing-ms": "1019",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -145,10 +146,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "150000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999965",
+          "x-ratelimit-remaining-tokens": "149999962",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "63097e6c-a918-450e-a05c-9410a82b8c40"
+          "x-request-id": "req_9933b6a0348b4d5697b501233e05da22"
         },
         "status": 200,
         "statusText": "OK"
@@ -158,7 +159,7 @@
       "callIndex": 1,
       "id": "73f020504ad08514",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-07T14:31:51.679Z",
+      "recordedAt": "2026-07-20T15:09:40.446Z",
       "request": {
         "body": {
           "kind": "json",
@@ -187,20 +188,20 @@
       "response": {
         "body": {
           "chunks": [
-            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_06fa2133fac23263006a4d0dd6d4f881a1a33738a69d99a2da\",\"object\":\"response\",\"created_at\":1783434710,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
-            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_06fa2133fac23263006a4d0dd6d4f881a1a33738a69d99a2da\",\"object\":\"response\",\"created_at\":1783434710,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
-            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
-            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"One\",\"item_id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"logprobs\":[],\"obfuscation\":\"vIR5dKigFALiY\",\"output_index\":0,\"sequence_number\":4}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"logprobs\":[],\"obfuscation\":\"SCoar6g8JQNEYlv\",\"output_index\":0,\"sequence_number\":5}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" two\",\"item_id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"logprobs\":[],\"obfuscation\":\"JFwQDeRletdA\",\"output_index\":0,\"sequence_number\":6}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"logprobs\":[],\"obfuscation\":\"gMmDn2WmXisTtsT\",\"output_index\":0,\"sequence_number\":7}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" three\",\"item_id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"logprobs\":[],\"obfuscation\":\"86xCBuKIYC\",\"output_index\":0,\"sequence_number\":8}",
-            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".\",\"item_id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"logprobs\":[],\"obfuscation\":\"BimFQR5zFCzEOCy\",\"output_index\":0,\"sequence_number\":9}",
-            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":10,\"text\":\"One, two, three.\"}",
-            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"},\"sequence_number\":11}",
-            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":12}",
-            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_06fa2133fac23263006a4d0dd6d4f881a1a33738a69d99a2da\",\"object\":\"response\",\"created_at\":1783434710,\"status\":\"completed\",\"background\":false,\"completed_at\":1783434711,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_06fa2133fac23263006a4d0dd765c481a18539156c1d87a472\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":22,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens\":7,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":29},\"user\":null,\"metadata\":{}},\"sequence_number\":13}"
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0e8fcb13bea49982006a5e3a337b80819c8917981ef534d33c\",\"object\":\"response\",\"created_at\":1784560179,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0e8fcb13bea49982006a5e3a337b80819c8917981ef534d33c\",\"object\":\"response\",\"created_at\":1784560179,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"One\",\"item_id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"logprobs\":[],\"obfuscation\":\"pfDTIxeu0TWvq\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"logprobs\":[],\"obfuscation\":\"aa6ZDf3YCUsAlVS\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" two\",\"item_id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"logprobs\":[],\"obfuscation\":\"lHTffn91ssKC\",\"output_index\":0,\"sequence_number\":6}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\",\",\"item_id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"logprobs\":[],\"obfuscation\":\"UTBkMWlp1HwTvB2\",\"output_index\":0,\"sequence_number\":7}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" three\",\"item_id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"logprobs\":[],\"obfuscation\":\"AIUUeM4Uc8\",\"output_index\":0,\"sequence_number\":8}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".\",\"item_id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"logprobs\":[],\"obfuscation\":\"xzA1sPderOPNNRW\",\"output_index\":0,\"sequence_number\":9}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":10,\"text\":\"One, two, three.\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"},\"sequence_number\":11}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":12}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0e8fcb13bea49982006a5e3a337b80819c8917981ef534d33c\",\"object\":\"response\",\"created_at\":1784560179,\"status\":\"completed\",\"background\":false,\"completed_at\":1784560180,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"msg_0e8fcb13bea49982006a5e3a343e94819c8992a28b463e3df5\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"One, two, three.\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":true,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":22,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":7,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":29},\"user\":null,\"metadata\":{}},\"sequence_number\":13}"
           ],
           "kind": "sse"
         },
@@ -208,12 +209,12 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1778e1e296af406-VIE",
+          "cf-ray": "a1e2e36188f473f7-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Tue, 07 Jul 2026 14:31:51 GMT",
+          "date": "Mon, 20 Jul 2026 15:09:39 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "123",
+          "openai-processing-ms": "179",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -221,7 +222,7 @@
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-request-id": "82599158-1ec3-440b-9783-6b57984a615f"
+          "x-request-id": "req_551fcf67048a4e51b86c85d62593f256"
         },
         "status": 200,
         "statusText": "OK"
@@ -231,7 +232,7 @@
       "callIndex": 2,
       "id": "5ae6bdcc44841e63",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-07T14:31:53.600Z",
+      "recordedAt": "2026-07-20T15:09:42.896Z",
       "request": {
         "body": {
           "kind": "json",
@@ -288,11 +289,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1783434713,
-            "created_at": 1783434711,
+            "completed_at": 1784560182,
+            "created_at": 1784560181,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_08961c5b2a5965e1006a4d0dd7dcc881a196d4fc097a0bba8a",
+            "id": "resp_0e63752fa6f39a5a006a5e3a34c63c81a1b9e127c94e596801",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -304,8 +305,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_3lnvJgviRjMsQ0cx1uu3igi2",
-                "id": "fc_08961c5b2a5965e1006a4d0dd9038881a1a8f99f3e53b02ee8",
+                "call_id": "call_k2vie6oLkODivLMo4A34xH4b",
+                "id": "fc_0e63752fa6f39a5a006a5e3a36588c81a1827d5e100360fde7",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -355,6 +356,7 @@
               {
                 "description": "Get the weather for a location",
                 "name": "get_weather",
+                "output_schema": null,
                 "parameters": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
@@ -377,6 +379,7 @@
             "usage": {
               "input_tokens": 94,
               "input_tokens_details": {
+                "cache_write_tokens": 0,
                 "cached_tokens": 0
               },
               "output_tokens": 8,
@@ -392,13 +395,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1778e246cbaf406-VIE",
+          "cf-ray": "a1e2e3680e4373f7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 07 Jul 2026 14:31:53 GMT",
+          "date": "Mon, 20 Jul 2026 15:09:42 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1708",
+          "openai-processing-ms": "2352",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -409,10 +412,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "150000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999690",
+          "x-ratelimit-remaining-tokens": "149999687",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "85f59912-006e-4a82-ad41-f0cadaa87646"
+          "x-request-id": "req_59a7846fceca4270a837aa2a6487da34"
         },
         "status": 200,
         "statusText": "OK"
@@ -420,9 +423,9 @@
     },
     {
       "callIndex": 3,
-      "id": "09025b3e1283c69e",
+      "id": "9bdf4624cfcbc474",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-07T14:31:54.622Z",
+      "recordedAt": "2026-07-20T15:09:44.112Z",
       "request": {
         "body": {
           "kind": "json",
@@ -443,12 +446,12 @@
               },
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_3lnvJgviRjMsQ0cx1uu3igi2",
+                "call_id": "call_k2vie6oLkODivLMo4A34xH4b",
                 "name": "get_weather",
                 "type": "function_call"
               },
               {
-                "call_id": "call_3lnvJgviRjMsQ0cx1uu3igi2",
+                "call_id": "call_k2vie6oLkODivLMo4A34xH4b",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               }
@@ -490,11 +493,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1783434714,
-            "created_at": 1783434713,
+            "completed_at": 1784560183,
+            "created_at": 1784560182,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_09ffddb6e49a0d7f006a4d0dd9c0ac81a1851d23936f12eb76",
+            "id": "resp_00f6308e552e3f71006a5e3a36f6dc81a3a60026e944856945",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -506,8 +509,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_xsdaTUdHvAy9ksu9JI5bbrsv",
-                "id": "fc_09ffddb6e49a0d7f006a4d0dda595c81a191e6242ff44f185a",
+                "call_id": "call_saPAX3jvhPQLFWWWY87xDRtV",
+                "id": "fc_00f6308e552e3f71006a5e3a37bf8481a3912dd0249d348c1f",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -557,6 +560,7 @@
               {
                 "description": "Get the weather for a location",
                 "name": "get_weather",
+                "output_schema": null,
                 "parameters": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
@@ -579,6 +583,7 @@
             "usage": {
               "input_tokens": 133,
               "input_tokens_details": {
+                "cache_write_tokens": 0,
                 "cached_tokens": 0
               },
               "output_tokens": 8,
@@ -594,13 +599,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1778e304cd4f406-VIE",
+          "cf-ray": "a1e2e377399073f7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 07 Jul 2026 14:31:54 GMT",
+          "date": "Mon, 20 Jul 2026 15:09:44 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "843",
+          "openai-processing-ms": "1150",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -614,7 +619,7 @@
           "x-ratelimit-remaining-tokens": "149999650",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "cf528f90-f03b-4718-80f1-f5d72d851f3c"
+          "x-request-id": "req_44d1a80de85347ae8d7c1aa76b91a571"
         },
         "status": 200,
         "statusText": "OK"
@@ -622,9 +627,9 @@
     },
     {
       "callIndex": 4,
-      "id": "c2e5dba0ee113065",
+      "id": "bf8022c4e62bab6a",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-07T14:31:56.105Z",
+      "recordedAt": "2026-07-20T15:09:44.844Z",
       "request": {
         "body": {
           "kind": "json",
@@ -645,23 +650,23 @@
               },
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_3lnvJgviRjMsQ0cx1uu3igi2",
+                "call_id": "call_k2vie6oLkODivLMo4A34xH4b",
                 "name": "get_weather",
                 "type": "function_call"
               },
               {
-                "call_id": "call_3lnvJgviRjMsQ0cx1uu3igi2",
+                "call_id": "call_k2vie6oLkODivLMo4A34xH4b",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               },
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_xsdaTUdHvAy9ksu9JI5bbrsv",
+                "call_id": "call_saPAX3jvhPQLFWWWY87xDRtV",
                 "name": "get_weather",
                 "type": "function_call"
               },
               {
-                "call_id": "call_xsdaTUdHvAy9ksu9JI5bbrsv",
+                "call_id": "call_saPAX3jvhPQLFWWWY87xDRtV",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               }
@@ -703,11 +708,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1783434715,
-            "created_at": 1783434714,
+            "completed_at": 1784560184,
+            "created_at": 1784560184,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_026181492cb22859006a4d0ddac24c819fbe6e53375ada9c2f",
+            "id": "resp_0da9ffabb8d15bd1006a5e3a382ee481918c18e83d8472f23e",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -719,8 +724,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_A6sHbcf8zpQpTMGvYwnNljuj",
-                "id": "fc_026181492cb22859006a4d0ddb945c819f9be50cbdf6a24be7",
+                "call_id": "call_KNNkSblhb9LPcTYnYMH7wqDW",
+                "id": "fc_0da9ffabb8d15bd1006a5e3a38ad248191abd58bdf6a572bea",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -770,6 +775,7 @@
               {
                 "description": "Get the weather for a location",
                 "name": "get_weather",
+                "output_schema": null,
                 "parameters": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
@@ -792,6 +798,7 @@
             "usage": {
               "input_tokens": 172,
               "input_tokens_details": {
+                "cache_write_tokens": 0,
                 "cached_tokens": 0
               },
               "output_tokens": 8,
@@ -807,13 +814,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1778e36aaaff406-VIE",
+          "cf-ray": "a1e2e37edcd173f7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 07 Jul 2026 14:31:56 GMT",
+          "date": "Mon, 20 Jul 2026 15:09:44 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1222",
+          "openai-processing-ms": "676",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -824,10 +831,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "150000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999610",
+          "x-ratelimit-remaining-tokens": "149999612",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "3685f93a-9046-42c2-a46a-46048c46691c"
+          "x-request-id": "req_dee0952245874192bc82c07255030df9"
         },
         "status": 200,
         "statusText": "OK"
@@ -835,9 +842,9 @@
     },
     {
       "callIndex": 5,
-      "id": "66aae6a88831137a",
+      "id": "2fd3ee40b4eaae54",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-07T14:31:57.194Z",
+      "recordedAt": "2026-07-20T15:09:45.543Z",
       "request": {
         "body": {
           "kind": "json",
@@ -858,34 +865,34 @@
               },
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_3lnvJgviRjMsQ0cx1uu3igi2",
+                "call_id": "call_k2vie6oLkODivLMo4A34xH4b",
                 "name": "get_weather",
                 "type": "function_call"
               },
               {
-                "call_id": "call_3lnvJgviRjMsQ0cx1uu3igi2",
+                "call_id": "call_k2vie6oLkODivLMo4A34xH4b",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               },
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_xsdaTUdHvAy9ksu9JI5bbrsv",
+                "call_id": "call_saPAX3jvhPQLFWWWY87xDRtV",
                 "name": "get_weather",
                 "type": "function_call"
               },
               {
-                "call_id": "call_xsdaTUdHvAy9ksu9JI5bbrsv",
+                "call_id": "call_saPAX3jvhPQLFWWWY87xDRtV",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               },
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_A6sHbcf8zpQpTMGvYwnNljuj",
+                "call_id": "call_KNNkSblhb9LPcTYnYMH7wqDW",
                 "name": "get_weather",
                 "type": "function_call"
               },
               {
-                "call_id": "call_A6sHbcf8zpQpTMGvYwnNljuj",
+                "call_id": "call_KNNkSblhb9LPcTYnYMH7wqDW",
                 "output": "{\"condition\":\"sunny\",\"location\":\"Paris, France\",\"temperatureC\":22}",
                 "type": "function_call_output"
               }
@@ -927,11 +934,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1783434716,
-            "created_at": 1783434716,
+            "completed_at": 1784560185,
+            "created_at": 1784560184,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_047f239a2b81a280006a4d0ddc415c819ca90d9812c935b27c",
+            "id": "resp_0d28a5b123e73d68006a5e3a38e91c81a19f5b3ffbb03cf941",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 128,
@@ -943,8 +950,8 @@
             "output": [
               {
                 "arguments": "{\"location\":\"Paris, France\"}",
-                "call_id": "call_CiQLiTpL9TaI6tHRJEpGzuM4",
-                "id": "fc_047f239a2b81a280006a4d0ddccb88819c980f93367acbb881",
+                "call_id": "call_fwJRJwHsw6QKXOZjfIm7nxZ9",
+                "id": "fc_0d28a5b123e73d68006a5e3a39535081a1b47739e76f1e35b4",
                 "name": "get_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -994,6 +1001,7 @@
               {
                 "description": "Get the weather for a location",
                 "name": "get_weather",
+                "output_schema": null,
                 "parameters": {
                   "$schema": "http://json-schema.org/draft-07/schema#",
                   "additionalProperties": false,
@@ -1016,6 +1024,7 @@
             "usage": {
               "input_tokens": 211,
               "input_tokens_details": {
+                "cache_write_tokens": 0,
                 "cached_tokens": 0
               },
               "output_tokens": 8,
@@ -1031,13 +1040,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1778e3fe83ff406-VIE",
+          "cf-ray": "a1e2e3836c7573f7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 07 Jul 2026 14:31:57 GMT",
+          "date": "Mon, 20 Jul 2026 15:09:45 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "902",
+          "openai-processing-ms": "647",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1048,10 +1057,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "150000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "149999572",
+          "x-ratelimit-remaining-tokens": "149999570",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "f1b20d53-5a7f-47e9-96a8-7e632470ca7a"
+          "x-request-id": "req_f953a7dadcac49099ec13df21cdcbde5"
         },
         "status": 200,
         "statusText": "OK"

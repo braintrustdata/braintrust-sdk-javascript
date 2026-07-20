@@ -17,7 +17,7 @@ span_tree:
     │         "github_copilot.end_reason": "complete",
     │         "github_copilot.model": "gpt-4.1",
     │         "github_copilot.provider_type": "openai",
-    │         "github_copilot.total_input_tokens": 13350,
+    │         "github_copilot.total_input_tokens": 11776,
     │         "github_copilot.total_output_tokens": 2
     │       }
     │       └── Copilot Turn [task]
@@ -25,7 +25,7 @@ span_tree:
     │           output: "OK"
     │           └── github.copilot.llm [llm]
     │               metadata: {
-    │                 "github_copilot.api_call_id": "chatcmpl-Dz0mI2pWYBGuNvrrYbxHHFZqkjjNi",
+    │                 "github_copilot.api_call_id": "chatcmpl-E3kJ10c3tsIRdBZh8CnF516X8BYCx",
     │                 "github_copilot.cost": 0,
     │                 "github_copilot.duration_ms": 0,
     │                 "github_copilot.initiator": "user",
@@ -35,10 +35,10 @@ span_tree:
     │               metrics: {
     │                 "completion_reasoning_tokens": 0,
     │                 "completion_tokens": 2,
-    │                 "prompt_cached_tokens": 6144,
-    │                 "prompt_tokens": 19494,
+    │                 "prompt_cached_tokens": 6016,
+    │                 "prompt_tokens": 17792,
     │                 "reasoning_tokens": 0,
-    │                 "tokens": 19496
+    │                 "tokens": 17794
     │               }
     └── github-copilot-tool-operation
         metadata: {
@@ -53,7 +53,7 @@ span_tree:
               "github_copilot.end_reason": "complete",
               "github_copilot.model": "gpt-4.1",
               "github_copilot.provider_type": "openai",
-              "github_copilot.total_input_tokens": 26805,
+              "github_copilot.total_input_tokens": 23653,
               "github_copilot.total_output_tokens": 27
             }
             ├── Copilot Turn [task]
@@ -61,7 +61,7 @@ span_tree:
             │   output: ""
             │   ├── github.copilot.llm [llm]
             │   │   metadata: {
-            │   │     "github_copilot.api_call_id": "chatcmpl-Dz0mJFPJFcfO3d7sP2hUgSQBpPFwI",
+            │   │     "github_copilot.api_call_id": "chatcmpl-E3kJ2qY4Yu9l6guzWfWHjMKBiaL7L",
             │   │     "github_copilot.cost": 0,
             │   │     "github_copilot.duration_ms": 0,
             │   │     "github_copilot.initiator": "user",
@@ -71,10 +71,10 @@ span_tree:
             │   │   metrics: {
             │   │     "completion_reasoning_tokens": 0,
             │   │     "completion_tokens": 14,
-            │   │     "prompt_cached_tokens": 6144,
-            │   │     "prompt_tokens": 19530,
+            │   │     "prompt_cached_tokens": 6400,
+            │   │     "prompt_tokens": 18210,
             │   │     "reasoning_tokens": 0,
-            │   │     "tokens": 19544
+            │   │     "tokens": 18224
             │   │   }
             │   └── tool: get_weather [tool]
             │       input: {
@@ -85,14 +85,14 @@ span_tree:
             │         "detailedContent": "The weather in Tokyo is 72°F and sunny."
             │       }
             │       metadata: {
-            │         "gen_ai.tool.call.id": "call_uvgitfst7hFpjoj1OojUq1yT",
+            │         "gen_ai.tool.call.id": "call_rVTIITUNTR1vMHdFguRcpCkr",
             │         "gen_ai.tool.name": "get_weather"
             │       }
             └── Copilot Turn [task]
                 output: "The weather in Tokyo is currently 72°F and sunny."
                 └── github.copilot.llm [llm]
                     metadata: {
-                      "github_copilot.api_call_id": "chatcmpl-Dz0mLrwHGiVa5TxN4CYnFzVomZHcN",
+                      "github_copilot.api_call_id": "chatcmpl-E3kJ3xswOOtVYtevs1grpCoduOlIa",
                       "github_copilot.cost": 0,
                       "github_copilot.duration_ms": 0,
                       "github_copilot.initiator": "agent",
@@ -102,8 +102,8 @@ span_tree:
                     metrics: {
                       "completion_reasoning_tokens": 0,
                       "completion_tokens": 13,
-                      "prompt_cached_tokens": 13312,
-                      "prompt_tokens": 26731,
+                      "prompt_cached_tokens": 11648,
+                      "prompt_tokens": 23491,
                       "reasoning_tokens": 0,
-                      "tokens": 26744
+                      "tokens": 23504
                     }

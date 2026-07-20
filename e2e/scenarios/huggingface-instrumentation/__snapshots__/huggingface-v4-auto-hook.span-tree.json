@@ -111,21 +111,11 @@
               "output": {
                 "choices": [
                   {
-                    "finish_reason": "tool_calls",
+                    "finish_reason": "length",
                     "index": 0,
                     "message": {
-                      "content": "",
-                      "role": "assistant",
-                      "tool_calls": [
-                        {
-                          "function": {
-                            "arguments": "{\"location\":\"San Francisco\"}",
-                            "name": "get_current_weather"
-                          },
-                          "id": "<span:1>",
-                          "type": "function"
-                        }
-                      ]
+                      "content": "However, I'm a large language model, I don't have the ability to directly call external APIs or tools. But I can suggest some alternatives to get the current weather in San Francisco:\n\n1. **Check online weather websites**: You can visit websites like AccuWeather, Weather.com, or the National Weather Service (",
+                      "role": "assistant"
                     }
                   }
                 ]
@@ -162,10 +152,10 @@
                 ]
               },
               "metrics": {
-                "completion_tokens": 18,
-                "prompt_tokens": 203,
+                "completion_tokens": 64,
+                "prompt_tokens": 25,
                 "time_to_first_token": 0,
-                "tokens": 221
+                "tokens": 89
               }
             }
           ],
@@ -183,7 +173,7 @@
               "children": [],
               "input": "The capital of France is",
               "output": {
-                "generated_text": " a city that is"
+                "generated_text": " a beautiful city."
               },
               "metadata": {
                 "model": "meta-llama/Llama-3.1-8B",
@@ -211,7 +201,7 @@
               "input": "The capital of France is",
               "output": {
                 "finish_reason": "length",
-                "generated_text": " a city that is"
+                "generated_text": " a great place to"
               },
               "metadata": {
                 "finish_reason": "length",
@@ -225,9 +215,9 @@
               },
               "metrics": {
                 "completion_tokens": 4,
-                "prompt_tokens": 5,
+                "prompt_tokens": 6,
                 "time_to_first_token": 0,
-                "tokens": 9
+                "tokens": 10
               }
             }
           ],

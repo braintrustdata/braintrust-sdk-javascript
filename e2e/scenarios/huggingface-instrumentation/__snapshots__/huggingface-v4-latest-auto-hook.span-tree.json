@@ -183,7 +183,7 @@
               "children": [],
               "input": "The capital of France is",
               "output": {
-                "generated_text": " an elegant city,"
+                "generated_text": " Paris. The capital"
               },
               "metadata": {
                 "model": "meta-llama/Llama-3.1-8B",
@@ -211,7 +211,7 @@
               "input": "The capital of France is",
               "output": {
                 "finish_reason": "length",
-                "generated_text": " one of the most"
+                "generated_text": " a major world city"
               },
               "metadata": {
                 "finish_reason": "length",
@@ -225,9 +225,9 @@
               },
               "metrics": {
                 "completion_tokens": 4,
-                "prompt_tokens": 5,
+                "prompt_tokens": 6,
                 "time_to_first_token": 0,
-                "tokens": 9
+                "tokens": 10
               }
             }
           ],

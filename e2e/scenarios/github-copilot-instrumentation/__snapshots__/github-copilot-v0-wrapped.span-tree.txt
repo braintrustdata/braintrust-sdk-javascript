@@ -17,7 +17,7 @@ span_tree:
     │         "github_copilot.end_reason": "complete",
     │         "github_copilot.model": "gpt-4.1",
     │         "github_copilot.provider_type": "openai",
-    │         "github_copilot.total_input_tokens": 13344,
+    │         "github_copilot.total_input_tokens": 11772,
     │         "github_copilot.total_output_tokens": 2
     │       }
     │       └── Copilot Turn [task]
@@ -25,7 +25,7 @@ span_tree:
     │           output: "OK"
     │           └── github.copilot.llm [llm]
     │               metadata: {
-    │                 "github_copilot.api_call_id": "chatcmpl-Dz0m4bFQA3x9b0lECIv2URbntiufR",
+    │                 "github_copilot.api_call_id": "chatcmpl-E3kInuLvykbaccBYkM3jaKBERVLaH",
     │                 "github_copilot.cost": 0,
     │                 "github_copilot.duration_ms": 0,
     │                 "github_copilot.initiator": "user",
@@ -35,10 +35,9 @@ span_tree:
     │               metrics: {
     │                 "completion_reasoning_tokens": 0,
     │                 "completion_tokens": 2,
-    │                 "prompt_cached_tokens": 6144,
-    │                 "prompt_tokens": 19488,
+    │                 "prompt_tokens": 11772,
     │                 "reasoning_tokens": 0,
-    │                 "tokens": 19490
+    │                 "tokens": 11774
     │               }
     └── github-copilot-tool-operation
         metadata: {
@@ -53,15 +52,15 @@ span_tree:
               "github_copilot.end_reason": "complete",
               "github_copilot.model": "gpt-4.1",
               "github_copilot.provider_type": "openai",
-              "github_copilot.total_input_tokens": 26797,
-              "github_copilot.total_output_tokens": 27
+              "github_copilot.total_input_tokens": 23665,
+              "github_copilot.total_output_tokens": 26
             }
             ├── Copilot Turn [task]
             │   input: "What is the weather in Tokyo? Use the get_weather tool and report the result."
             │   output: ""
             │   ├── github.copilot.llm [llm]
             │   │   metadata: {
-            │   │     "github_copilot.api_call_id": "chatcmpl-Dz0m8BrtPeNu6rFlhy8HV9YiamecI",
+            │   │     "github_copilot.api_call_id": "chatcmpl-E3kIo2xjhJX2hOumkk6Iuc9zIlpmf",
             │   │     "github_copilot.cost": 0,
             │   │     "github_copilot.duration_ms": 0,
             │   │     "github_copilot.initiator": "user",
@@ -71,10 +70,10 @@ span_tree:
             │   │   metrics: {
             │   │     "completion_reasoning_tokens": 0,
             │   │     "completion_tokens": 14,
-            │   │     "prompt_cached_tokens": 6528,
-            │   │     "prompt_tokens": 19910,
+            │   │     "prompt_cached_tokens": 6016,
+            │   │     "prompt_tokens": 17832,
             │   │     "reasoning_tokens": 0,
-            │   │     "tokens": 19924
+            │   │     "tokens": 17846
             │   │   }
             │   └── tool: get_weather [tool]
             │       input: {
@@ -85,14 +84,14 @@ span_tree:
             │         "detailedContent": "The weather in Tokyo is 72°F and sunny."
             │       }
             │       metadata: {
-            │         "gen_ai.tool.call.id": "call_8rwbKI8PnoBqNh9f9k0EoLaV",
+            │         "gen_ai.tool.call.id": "call_401i5vjovMjWcNLx8LbEzXln",
             │         "gen_ai.tool.name": "get_weather"
             │       }
             └── Copilot Turn [task]
-                output: "The weather in Tokyo is currently 72°F and sunny."
+                output: "The weather in Tokyo is 72°F and sunny."
                 └── github.copilot.llm [llm]
                     metadata: {
-                      "github_copilot.api_call_id": "chatcmpl-Dz0m9qFHEsV0C0HGsShZRoufrdlU1",
+                      "github_copilot.api_call_id": "chatcmpl-E3kIpDt1dkNQFrJCxBCJf3wdQavYd",
                       "github_copilot.cost": 0,
                       "github_copilot.duration_ms": 0,
                       "github_copilot.initiator": "agent",
@@ -101,9 +100,9 @@ span_tree:
                     }
                     metrics: {
                       "completion_reasoning_tokens": 0,
-                      "completion_tokens": 13,
-                      "prompt_cached_tokens": 13312,
-                      "prompt_tokens": 26727,
+                      "completion_tokens": 12,
+                      "prompt_cached_tokens": 11648,
+                      "prompt_tokens": 23497,
                       "reasoning_tokens": 0,
-                      "tokens": 26740
+                      "tokens": 23509
                     }

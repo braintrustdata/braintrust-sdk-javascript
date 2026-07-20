@@ -18,7 +18,7 @@
                   "input": "Braintrust SDK JavaScript",
                   "metadata": {
                     "gen_ai.tool.name": "web_search",
-                    "openai_codex.item_id": "ws_028f0df0f9208adf016a4d04906664819f8db95e34bb8ce129",
+                    "openai_codex.item_id": "ws_01146db25effc76a016a5e3f96439481a2980252e293648ad1",
                     "openai_codex.item_type": "web_search"
                   }
                 },
@@ -51,17 +51,17 @@
                 "openai_codex.operation": "Thread.run",
                 "openai_codex.sandbox_mode": "read-only",
                 "openai_codex.skip_git_repo_check": true,
-                "openai_codex.version": "0.142.5",
+                "openai_codex.version": "0.144.5",
                 "openai_codex.web_search_mode": "live",
                 "openai_codex.working_directory": "<tmp>/braintrust-codex-e2e/run",
                 "provider": "openai"
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 90,
+                "completion_tokens": 102,
                 "duration": 0,
-                "prompt_cached_tokens": 12160,
-                "prompt_tokens": 18378
+                "prompt_cached_tokens": 12032,
+                "prompt_tokens": 19771
               }
             }
           ],
@@ -84,7 +84,7 @@
                   "input": "",
                   "metadata": {
                     "gen_ai.tool.name": "web_search",
-                    "openai_codex.item_id": "ws_0bc262a4332a51b0016a4d049557b481a3948a2f58c73a4045",
+                    "openai_codex.item_id": "ws_0c61cc5993cd63dc016a5e3f9fb4d08191b78a77cd76950c70",
                     "openai_codex.item_type": "web_search"
                   }
                 },
@@ -119,17 +119,17 @@
                 "openai_codex.sandbox_mode": "read-only",
                 "openai_codex.skip_git_repo_check": true,
                 "openai_codex.thread_id": "<uuid:1>",
-                "openai_codex.version": "0.142.5",
+                "openai_codex.version": "0.144.5",
                 "openai_codex.web_search_mode": "live",
                 "openai_codex.working_directory": "<tmp>/braintrust-codex-e2e/stream",
                 "provider": "openai"
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 88,
+                "completion_tokens": 80,
                 "duration": 0,
-                "prompt_cached_tokens": 12160,
-                "prompt_tokens": 20378
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 19753
               }
             }
           ],

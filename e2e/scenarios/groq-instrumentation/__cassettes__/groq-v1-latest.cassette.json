@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "28e177edbf44f07c",
       "matchKey": "POST api.groq.com/openai/v1/chat/completions",
-      "recordedAt": "2026-07-07T14:10:51.070Z",
+      "recordedAt": "2026-07-20T15:38:58.661Z",
       "request": {
         "body": {
           "kind": "json",
@@ -39,25 +39,25 @@
                 }
               }
             ],
-            "created": 1783433451,
-            "id": "chatcmpl-a5b178b3-195d-41cf-a92a-c95dadc5eb02",
+            "created": 1784561938,
+            "id": "chatcmpl-f2ff42df-6120-49d8-8ac1-a3178aad2daa",
             "model": "llama-3.3-70b-versatile",
             "object": "chat.completion",
             "service_tier": "on_demand",
-            "system_fingerprint": "fp_ce7bc1685b",
+            "system_fingerprint": "fp_3272ea2d91",
             "usage": {
-              "completion_time": 0.008214024,
+              "completion_time": 0.006653452,
               "completion_tokens": 2,
-              "prompt_time": 0.001729875,
+              "prompt_time": 0.007874934,
               "prompt_tokens": 40,
-              "queue_time": 0.122455043,
-              "total_time": 0.009943899,
+              "queue_time": 0.279864717,
+              "total_time": 0.014528386,
               "total_tokens": 42
             },
             "usage_breakdown": null,
             "x_groq": {
-              "id": "req_01kwyennfbfh4s1k5myj5kaj57",
-              "seed": 984591563
+              "id": "req_01ky02wbxcem6sh51y830b5ja1",
+              "seed": 977029822
             }
           }
         },
@@ -65,25 +65,24 @@
           "alt-svc": "h3=\":443\"; ma=86400",
           "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1776f5c9dbea280-VIE",
+          "cf-ray": "a1e30e52894ecd1b-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 07 Jul 2026 14:10:51 GMT",
+          "date": "Mon, 20 Jul 2026 15:38:58 GMT",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000",
           "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 google",
-          "x-groq-region": "fra",
+          "x-groq-region": "yul",
           "x-ratelimit-limit-requests": "1000",
           "x-ratelimit-limit-tokens": "12000",
-          "x-ratelimit-remaining-requests": "990",
-          "x-ratelimit-remaining-tokens": "11875",
-          "x-ratelimit-reset-requests": "14m24s",
-          "x-ratelimit-reset-tokens": "625ms",
-          "x-request-id": "req_01kwyennfbfh4s1k5myj5kaj57"
+          "x-ratelimit-remaining-requests": "993",
+          "x-ratelimit-remaining-tokens": "11948",
+          "x-ratelimit-reset-requests": "10m4.8s",
+          "x-ratelimit-reset-tokens": "260ms",
+          "x-request-id": "req_01ky02wbxcem6sh51y830b5ja1"
         },
         "status": 200,
         "statusText": "OK"
@@ -93,7 +92,7 @@
       "callIndex": 1,
       "id": "b4cc6840b5b1793d",
       "matchKey": "POST api.groq.com/openai/v1/chat/completions",
-      "recordedAt": "2026-07-07T14:10:51.164Z",
+      "recordedAt": "2026-07-20T15:38:58.992Z",
       "request": {
         "body": {
           "kind": "json",
@@ -116,9 +115,9 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"id\":\"chatcmpl-5a99ceed-0757-4598-b45c-0c9221833fcf\",\"object\":\"chat.completion.chunk\",\"created\":1783433451,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_ce7bc1685b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_01kwyennmffh4t83tsac51zm5a\",\"seed\":1715239675}}",
-            "data: {\"id\":\"chatcmpl-5a99ceed-0757-4598-b45c-0c9221833fcf\",\"object\":\"chat.completion.chunk\",\"created\":1783433451,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_ce7bc1685b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"STREAM\"},\"logprobs\":null,\"finish_reason\":null}]}",
-            "data: {\"id\":\"chatcmpl-5a99ceed-0757-4598-b45c-0c9221833fcf\",\"object\":\"chat.completion.chunk\",\"created\":1783433451,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_ce7bc1685b\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_01kwyennmffh4t83tsac51zm5a\",\"usage\":{\"queue_time\":0.050999295,\"prompt_tokens\":40,\"prompt_time\":0.005232794,\"completion_tokens\":2,\"completion_time\":0.006698614,\"total_tokens\":42,\"total_time\":0.011931408}},\"usage\":{\"queue_time\":0.050999295,\"prompt_tokens\":40,\"prompt_time\":0.005232794,\"completion_tokens\":2,\"completion_time\":0.006698614,\"total_tokens\":42,\"total_time\":0.011931408}}",
+            "data: {\"id\":\"chatcmpl-164fde6f-f314-4192-8c32-c70c3986ac13\",\"object\":\"chat.completion.chunk\",\"created\":1784561938,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_dae98b5ecb\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_01ky02wc80emb8ankac5xk4jgs\",\"seed\":40585861}}",
+            "data: {\"id\":\"chatcmpl-164fde6f-f314-4192-8c32-c70c3986ac13\",\"object\":\"chat.completion.chunk\",\"created\":1784561938,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_dae98b5ecb\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"STREAM\"},\"logprobs\":null,\"finish_reason\":null}]}",
+            "data: {\"id\":\"chatcmpl-164fde6f-f314-4192-8c32-c70c3986ac13\",\"object\":\"chat.completion.chunk\",\"created\":1784561938,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_dae98b5ecb\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_01ky02wc80emb8ankac5xk4jgs\",\"usage\":{\"queue_time\":0.277064116,\"prompt_tokens\":40,\"prompt_time\":0.007212554,\"completion_tokens\":2,\"completion_time\":0.006723029,\"total_tokens\":42,\"total_time\":0.013935583}},\"usage\":{\"queue_time\":0.277064116,\"prompt_tokens\":40,\"prompt_time\":0.007212554,\"completion_tokens\":2,\"completion_time\":0.006723029,\"total_tokens\":42,\"total_time\":0.013935583}}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -127,24 +126,23 @@
           "alt-svc": "h3=\":443\"; ma=86400",
           "cache-control": "no-cache",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1776f5d9965a280-VIE",
+          "cf-ray": "a1e30e54af9dcd1b-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Tue, 07 Jul 2026 14:10:51 GMT",
+          "date": "Mon, 20 Jul 2026 15:38:58 GMT",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000",
           "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 google",
-          "x-groq-region": "fra",
+          "x-groq-region": "yul",
           "x-ratelimit-limit-requests": "1000",
           "x-ratelimit-limit-tokens": "12000",
-          "x-ratelimit-remaining-requests": "989",
-          "x-ratelimit-remaining-tokens": "11865",
-          "x-ratelimit-reset-requests": "15m50.4s",
-          "x-ratelimit-reset-tokens": "674ms",
-          "x-request-id": "req_01kwyennmffh4t83tsac51zm5a"
+          "x-ratelimit-remaining-requests": "992",
+          "x-ratelimit-remaining-tokens": "11959",
+          "x-ratelimit-reset-requests": "11m31.2s",
+          "x-ratelimit-reset-tokens": "205ms",
+          "x-request-id": "req_01ky02wc80emb8ankac5xk4jgs"
         },
         "status": 200,
         "statusText": "OK"
@@ -154,7 +152,7 @@
       "callIndex": 2,
       "id": "4ad34400d0e920e9",
       "matchKey": "POST api.groq.com/openai/v1/chat/completions",
-      "recordedAt": "2026-07-07T14:10:51.887Z",
+      "recordedAt": "2026-07-20T15:38:59.043Z",
       "request": {
         "body": {
           "kind": "json",
@@ -178,129 +176,12 @@
       },
       "response": {
         "body": {
-          "contentType": "text/event-stream",
-          "kind": "binary",
-          "path": "groq-v1-latest.cassette.blobs/c6a34d346531d7bd440aa0dca133437264abc048c2b37c149a505ced7fc1f825.bin",
-          "sha256": "c6a34d346531d7bd440aa0dca133437264abc048c2b37c149a505ced7fc1f825"
-        },
-        "headers": {
-          "alt-svc": "h3=\":443\"; ma=86400",
-          "cache-control": "no-cache",
-          "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1776f5e2b2aa280-VIE",
-          "connection": "keep-alive",
-          "content-type": "text/event-stream",
-          "date": "Tue, 07 Jul 2026 14:10:51 GMT",
-          "server": "cloudflare",
-          "set-cookie": "[REDACTED]",
-          "strict-transport-security": "max-age=15552000",
-          "transfer-encoding": "chunked",
-          "vary": "Origin",
-          "via": "1.1 google",
-          "x-groq-region": "fra",
-          "x-ratelimit-limit-requests": "1000",
-          "x-ratelimit-limit-tokens": "6000",
-          "x-ratelimit-remaining-requests": "996",
-          "x-ratelimit-remaining-tokens": "4010",
-          "x-ratelimit-reset-requests": "5m45.6s",
-          "x-ratelimit-reset-tokens": "19.9s",
-          "x-request-id": "req_01kwyennqbfh5b2w1q290xjs0q"
-        },
-        "status": 200,
-        "statusText": "OK"
-      }
-    },
-    {
-      "callIndex": 3,
-      "id": "fec9a601404950ed",
-      "matchKey": "POST api.groq.com/openai/v1/chat/completions",
-      "recordedAt": "2026-07-07T14:10:52.063Z",
-      "request": {
-        "body": {
           "kind": "json",
           "value": {
-            "messages": [
-              {
-                "content": "Check the weather in Vienna and use the weather tool.",
-                "role": "user"
-              }
-            ],
-            "model": "llama-3.3-70b-versatile",
-            "temperature": 0,
-            "tool_choice": {
-              "function": {
-                "name": "get_weather"
-              },
-              "type": "function"
-            },
-            "tools": [
-              {
-                "function": {
-                  "description": "Get the weather for a city.",
-                  "name": "get_weather",
-                  "parameters": {
-                    "properties": {
-                      "location": {
-                        "description": "City name.",
-                        "type": "string"
-                      }
-                    },
-                    "required": ["location"],
-                    "type": "object"
-                  }
-                },
-                "type": "function"
-              }
-            ]
-          }
-        },
-        "headers": {},
-        "method": "POST",
-        "url": "https://api.groq.com/openai/v1/chat/completions"
-      },
-      "response": {
-        "body": {
-          "kind": "json",
-          "value": {
-            "choices": [
-              {
-                "finish_reason": "tool_calls",
-                "index": 0,
-                "logprobs": null,
-                "message": {
-                  "role": "assistant",
-                  "tool_calls": [
-                    {
-                      "function": {
-                        "arguments": "{\"location\":\"Vienna\"}",
-                        "name": "get_weather"
-                      },
-                      "id": "2rg97y1g9",
-                      "type": "function"
-                    }
-                  ]
-                }
-              }
-            ],
-            "created": 1783433452,
-            "id": "chatcmpl-dd039259-61b2-44e7-b8e1-0ec34f1c6c7e",
-            "model": "llama-3.3-70b-versatile",
-            "object": "chat.completion",
-            "service_tier": "on_demand",
-            "system_fingerprint": "fp_dae98b5ecb",
-            "usage": {
-              "completion_time": 0.036818462,
-              "completion_tokens": 11,
-              "prompt_time": 0.013157764,
-              "prompt_tokens": 246,
-              "queue_time": 0.090738845,
-              "total_time": 0.049976226,
-              "total_tokens": 257
-            },
-            "usage_breakdown": null,
-            "x_groq": {
-              "id": "req_01kwyenpe0f65ae2fpynewh9an",
-              "seed": 1124181415
+            "error": {
+              "code": "model_not_found",
+              "message": "The model `qwen/qwen3-32b` does not exist or you do not have access to it.",
+              "type": "invalid_request_error"
             }
           }
         },
@@ -308,28 +189,21 @@
           "alt-svc": "h3=\":443\"; ma=86400",
           "cache-control": "private, max-age=0, no-store, no-cache, must-revalidate",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1776f62ba17a280-VIE",
+          "cf-ray": "a1e30e56bd44cd1b-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 07 Jul 2026 14:10:52 GMT",
+          "date": "Mon, 20 Jul 2026 15:38:59 GMT",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000",
           "transfer-encoding": "chunked",
           "vary": "Origin",
-          "via": "1.1 google",
-          "x-groq-region": "fra",
-          "x-ratelimit-limit-requests": "1000",
-          "x-ratelimit-limit-tokens": "12000",
-          "x-ratelimit-remaining-requests": "988",
-          "x-ratelimit-remaining-tokens": "11752",
-          "x-ratelimit-reset-requests": "17m16.8s",
-          "x-ratelimit-reset-tokens": "1.24s",
-          "x-request-id": "req_01kwyenpe0f65ae2fpynewh9an"
+          "x-groq-region": "yul",
+          "x-request-id": "req_01ky02wcjfehsvj29mkxrm2jve"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 404,
+        "statusText": "Not Found"
       }
     }
   ],

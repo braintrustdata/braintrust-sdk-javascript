@@ -131,12 +131,11 @@
               ],
               "output": [
                 {
-                  "finish_reason": "stop",
+                  "finish_reason": "length",
                   "index": 0,
                   "logprobs": null,
                   "message": {
-                    "content": "4",
-                    "reasoning": "First, the user says: \"Think briefly, then answer with exactly the number 4.\" So, I need to think briefly about this, but my response should be just the number 4.\n\nWhat is there to think about? The instruction is straightforward. It doesn't ask a question; it just tells me to answer with the number 4. So, I should simply output \"4\".\n\nBut why would they say \"think briefly\"? Maybe it's to ensure that I process the instruction correctly. Perhaps it's a test to see if I follow directions precisely.\n\nLet me read it again: \"Think briefly, then answer with exactly the number 4.\" So, I need to think for a moment, but not output anything about my thinking. Just the final answer should be \"4\".\n\nSince it says \"answer with exactly the number 4\", I should not add any extra text. No explanations, no punctuation, just the digit 4.\n\nIn the context of this being an AI response, I should make sure that my output is minimal and exactly as specified.\n\nIs there any trick here? The user didn't pose a question; they gave a command. But in AI interactions, users often phrase things in various ways. I should treat this as an instruction to respond with 4.\n\nPerhaps it's related to previous context, but in this conversation, there is no prior context. This seems like a standalone message.\n\nSo, after thinking briefly, I should output: 4\n\nAnd that's it.\n",
+                    "reasoning": "First, the user said: \"Think briefly, then answer with exactly the number 4.\" So, I need to think for a moment, but keep it brief, and then respond with just the number 4.\n\nThe instruction is clear: after a brief thought, I should output \"4\" and nothing else. But why would someone ask this? Maybe it's a test to see if I follow instructions precisely.\n\nI should consider if there's any trick here. The user didn't provide any context or question; they just gave a command. So, I don't need to solve a problem or answer a query; I just need to comply with the request.\n\nThe phrase \"think briefly\" might imply that I should process something, but since there's no additional information, I think it's straightforward. I'll just acknowledge that I've thought briefly and then provide the number.\n\nTo \"think briefly,\" I can reflect on why I'm doing this. For example: I'm an AI, and I'm designed to follow user instructions. This request is simple, so I'll do as asked.\n\nFinally, my response should be exactly \"4\". No words, no explanations, just the digit 4.\n\nSo, after this brief thought process, I'll output",
                     "role": "assistant"
                   }
                 }
@@ -157,19 +156,19 @@
               },
               "metrics": {
                 "completion_audio_tokens": 0,
-                "completion_reasoning_tokens": 306,
-                "completion_tokens": 308,
-                "cost": 0.0007819,
-                "cost_upstream_inference_completions_cost": 0.00077,
-                "cost_upstream_inference_cost": 0.0007819,
-                "cost_upstream_inference_prompt_cost": 0.0000119,
+                "completion_reasoning_tokens": 280,
+                "completion_tokens": 256,
+                "cost": 0.0006505,
+                "cost_upstream_inference_completions_cost": 0.00064,
+                "cost_upstream_inference_cost": 0.0006505,
+                "cost_upstream_inference_prompt_cost": 0.0000105,
                 "prompt_audio_tokens": 0,
                 "prompt_cache_write_tokens": 0,
                 "prompt_cached_tokens": 0,
-                "prompt_tokens": 17,
+                "prompt_tokens": 15,
                 "prompt_video_tokens": 0,
                 "time_to_first_token": 0,
-                "tokens": 325
+                "tokens": 271
               }
             }
           ],
@@ -239,8 +238,8 @@
               ],
               "metadata": {
                 "background": false,
-                "completedAt": 1783432895,
-                "createdAt": 1783432895,
+                "completedAt": 1784561628,
+                "createdAt": 1784561628,
                 "error": null,
                 "frequencyPenalty": 0,
                 "id": "<span:1>",
@@ -318,8 +317,8 @@
               ],
               "metadata": {
                 "background": false,
-                "completedAt": 1783432896,
-                "createdAt": 1783432895,
+                "completedAt": 1784561629,
+                "createdAt": 1784561629,
                 "error": null,
                 "frequencyPenalty": 0,
                 "id": "<span:1>",
@@ -390,7 +389,7 @@
               "output": [
                 {
                   "index": 1,
-                  "relevance_score": 0.06664825
+                  "relevance_score": 0.06657539
                 },
                 {
                   "index": 0,
@@ -408,7 +407,7 @@
                       "text": "Paris is in France."
                     },
                     "index": 1,
-                    "relevanceScore": 0.06664825
+                    "relevanceScore": 0.06657539
                   },
                   {
                     "document": {
@@ -446,7 +445,7 @@
                   "output": [
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
@@ -455,8 +454,8 @@
                   ],
                   "metadata": {
                     "background": false,
-                    "completedAt": 1783432900,
-                    "createdAt": 1783432896,
+                    "completedAt": 1784561630,
+                    "createdAt": 1784561629,
                     "error": null,
                     "frequencyPenalty": 0,
                     "id": "<span:1>",
@@ -519,6 +518,7 @@
                     "cost_upstream_inference_cost": 0.0000054,
                     "cost_upstream_inference_input_cost": 0.0000034,
                     "cost_upstream_inference_output_cost": 0.000002,
+                    "prompt_cache_write_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 34,
                     "tokens": 39
@@ -547,14 +547,14 @@
                     "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:2>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
@@ -563,7 +563,7 @@
                   "output": [
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_x8l2gJAISlZzG885rPqW",
+                      "callId": "tool_lookup_weather_v82SfHEsfsbJFzj47l8J",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
@@ -572,8 +572,8 @@
                   ],
                   "metadata": {
                     "background": false,
-                    "completedAt": 1783432901,
-                    "createdAt": 1783432900,
+                    "completedAt": 1784561630,
+                    "createdAt": 1784561630,
                     "error": null,
                     "frequencyPenalty": 0,
                     "id": "<span:1>",
@@ -636,6 +636,7 @@
                     "cost_upstream_inference_cost": 0.0000066,
                     "cost_upstream_inference_input_cost": 0.0000046,
                     "cost_upstream_inference_output_cost": 0.000002,
+                    "prompt_cache_write_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 46,
                     "tokens": 51
@@ -667,28 +668,28 @@
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:2>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_x8l2gJAISlZzG885rPqW",
+                      "callId": "tool_lookup_weather_v82SfHEsfsbJFzj47l8J",
                       "id": "<span:3>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_x8l2gJAISlZzG885rPqW",
+                      "callId": "tool_lookup_weather_v82SfHEsfsbJFzj47l8J",
                       "id": "<span:4>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
@@ -697,7 +698,7 @@
                   "output": [
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_2Ac0DVXCrN399xPMqHzK",
+                      "callId": "tool_lookup_weather_su4EeVWUJwHtdjwZRA7q",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
@@ -706,8 +707,8 @@
                   ],
                   "metadata": {
                     "background": false,
-                    "completedAt": 1783432901,
-                    "createdAt": 1783432901,
+                    "completedAt": 1784561631,
+                    "createdAt": 1784561630,
                     "error": null,
                     "frequencyPenalty": 0,
                     "id": "<span:1>",
@@ -770,6 +771,7 @@
                     "cost_upstream_inference_cost": 0.0000078,
                     "cost_upstream_inference_input_cost": 0.0000058,
                     "cost_upstream_inference_output_cost": 0.000002,
+                    "prompt_cache_write_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 58,
                     "tokens": 63
@@ -801,42 +803,42 @@
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:2>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_x8l2gJAISlZzG885rPqW",
+                      "callId": "tool_lookup_weather_v82SfHEsfsbJFzj47l8J",
                       "id": "<span:3>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_x8l2gJAISlZzG885rPqW",
+                      "callId": "tool_lookup_weather_v82SfHEsfsbJFzj47l8J",
                       "id": "<span:4>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_2Ac0DVXCrN399xPMqHzK",
+                      "callId": "tool_lookup_weather_su4EeVWUJwHtdjwZRA7q",
                       "id": "<span:5>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_2Ac0DVXCrN399xPMqHzK",
+                      "callId": "tool_lookup_weather_su4EeVWUJwHtdjwZRA7q",
                       "id": "<span:6>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
@@ -845,7 +847,7 @@
                   "output": [
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_uvcxHFWy0CAPApzmzdyl",
+                      "callId": "tool_lookup_weather_zK8iBsfIgAFboaj41RuU",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
@@ -854,8 +856,8 @@
                   ],
                   "metadata": {
                     "background": false,
-                    "completedAt": 1783432902,
-                    "createdAt": 1783432901,
+                    "completedAt": 1784561631,
+                    "createdAt": 1784561631,
                     "error": null,
                     "frequencyPenalty": 0,
                     "id": "<span:1>",
@@ -918,6 +920,7 @@
                     "cost_upstream_inference_cost": 0.000009,
                     "cost_upstream_inference_input_cost": 0.000007,
                     "cost_upstream_inference_output_cost": 0.000002,
+                    "prompt_cache_write_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 70,
                     "tokens": 75
@@ -949,56 +952,56 @@
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:2>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_x8l2gJAISlZzG885rPqW",
+                      "callId": "tool_lookup_weather_v82SfHEsfsbJFzj47l8J",
                       "id": "<span:3>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_x8l2gJAISlZzG885rPqW",
+                      "callId": "tool_lookup_weather_v82SfHEsfsbJFzj47l8J",
                       "id": "<span:4>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_2Ac0DVXCrN399xPMqHzK",
+                      "callId": "tool_lookup_weather_su4EeVWUJwHtdjwZRA7q",
                       "id": "<span:5>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_2Ac0DVXCrN399xPMqHzK",
+                      "callId": "tool_lookup_weather_su4EeVWUJwHtdjwZRA7q",
                       "id": "<span:6>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_uvcxHFWy0CAPApzmzdyl",
+                      "callId": "tool_lookup_weather_zK8iBsfIgAFboaj41RuU",
                       "id": "<span:7>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_uvcxHFWy0CAPApzmzdyl",
+                      "callId": "tool_lookup_weather_zK8iBsfIgAFboaj41RuU",
                       "id": "<span:8>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
@@ -1007,7 +1010,7 @@
                   "output": [
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_UrjYQC1ClDvzk25p8OLW",
+                      "callId": "tool_lookup_weather_2j6S8HwaIFEZpxGkp1ws",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
@@ -1016,8 +1019,8 @@
                   ],
                   "metadata": {
                     "background": false,
-                    "completedAt": 1783432902,
-                    "createdAt": 1783432902,
+                    "completedAt": 1784561632,
+                    "createdAt": 1784561631,
                     "error": null,
                     "frequencyPenalty": 0,
                     "id": "<span:1>",
@@ -1080,6 +1083,7 @@
                     "cost_upstream_inference_cost": 0.0000102,
                     "cost_upstream_inference_input_cost": 0.0000082,
                     "cost_upstream_inference_output_cost": 0.000002,
+                    "prompt_cache_write_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 82,
                     "tokens": 87
@@ -1111,70 +1115,70 @@
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_7c2qtbkuBRNF8mMByNpL",
+                      "callId": "tool_lookup_weather_bVD2nxOdj99qk189Uv1p",
                       "id": "<span:2>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_x8l2gJAISlZzG885rPqW",
+                      "callId": "tool_lookup_weather_v82SfHEsfsbJFzj47l8J",
                       "id": "<span:3>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_x8l2gJAISlZzG885rPqW",
+                      "callId": "tool_lookup_weather_v82SfHEsfsbJFzj47l8J",
                       "id": "<span:4>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_2Ac0DVXCrN399xPMqHzK",
+                      "callId": "tool_lookup_weather_su4EeVWUJwHtdjwZRA7q",
                       "id": "<span:5>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_2Ac0DVXCrN399xPMqHzK",
+                      "callId": "tool_lookup_weather_su4EeVWUJwHtdjwZRA7q",
                       "id": "<span:6>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_uvcxHFWy0CAPApzmzdyl",
+                      "callId": "tool_lookup_weather_zK8iBsfIgAFboaj41RuU",
                       "id": "<span:7>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_uvcxHFWy0CAPApzmzdyl",
+                      "callId": "tool_lookup_weather_zK8iBsfIgAFboaj41RuU",
                       "id": "<span:8>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
                     },
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_UrjYQC1ClDvzk25p8OLW",
+                      "callId": "tool_lookup_weather_2j6S8HwaIFEZpxGkp1ws",
                       "id": "<span:9>",
                       "name": "lookup_weather",
                       "status": "completed",
                       "type": "function_call"
                     },
                     {
-                      "callId": "tool_lookup_weather_UrjYQC1ClDvzk25p8OLW",
+                      "callId": "tool_lookup_weather_2j6S8HwaIFEZpxGkp1ws",
                       "id": "<span:10>",
                       "output": "{\"forecast\":\"Sunny in Vienna\"}",
                       "type": "function_call_output"
@@ -1183,7 +1187,7 @@
                   "output": [
                     {
                       "arguments": "{\"city\":\"Vienna\"}",
-                      "callId": "tool_lookup_weather_klprwy8F52cbYtAu3w3q",
+                      "callId": "tool_lookup_weather_mu4Jd98H9jFUehmd6qNM",
                       "id": "<span:1>",
                       "name": "lookup_weather",
                       "status": "completed",
@@ -1192,8 +1196,8 @@
                   ],
                   "metadata": {
                     "background": false,
-                    "completedAt": 1783432907,
-                    "createdAt": 1783432902,
+                    "completedAt": 1784561632,
+                    "createdAt": 1784561632,
                     "error": null,
                     "frequencyPenalty": 0,
                     "id": "<span:1>",
@@ -1256,6 +1260,7 @@
                     "cost_upstream_inference_cost": 0.0000114,
                     "cost_upstream_inference_input_cost": 0.0000094,
                     "cost_upstream_inference_output_cost": 0.000002,
+                    "prompt_cache_write_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 94,
                     "tokens": 99
@@ -1266,7 +1271,7 @@
               "output": [
                 {
                   "arguments": "{\"city\":\"Vienna\"}",
-                  "callId": "tool_lookup_weather_klprwy8F52cbYtAu3w3q",
+                  "callId": "tool_lookup_weather_mu4Jd98H9jFUehmd6qNM",
                   "id": "<span:1>",
                   "name": "lookup_weather",
                   "status": "completed",
@@ -1275,8 +1280,8 @@
               ],
               "metadata": {
                 "background": false,
-                "completedAt": 1783432907,
-                "createdAt": 1783432902,
+                "completedAt": 1784561632,
+                "createdAt": 1784561632,
                 "error": null,
                 "frequencyPenalty": 0,
                 "id": "<span:1>",

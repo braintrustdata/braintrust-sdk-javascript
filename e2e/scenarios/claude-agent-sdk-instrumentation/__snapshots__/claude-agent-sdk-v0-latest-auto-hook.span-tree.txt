@@ -14,7 +14,7 @@ span_tree:
     │       output: {
     │         "content": [
     │           {
-    │             "text": "15 × 7 = **105**",
+    │             "text": "The result of multiplying 15 by 7 is **105**.",
     │             "type": "text"
     │           }
     │         ],
@@ -37,8 +37,8 @@ span_tree:
     │       │     {
     │       │       "content": [
     │       │         {
-    │       │           "signature": "EvEDCm0IDxgCKkCa7INbJawXcODSeC5YOcckx62Sa176HBWIxJgHaPQATnme69kna9sQKbOIUCxYMuAWrz48rGklqiNjzjaGoMN2MhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOABCCHRoaW5raW5nEgyQiJ8QOG1oWCQvg3MaDCIcZm83Iok6BUjzySIwPIUQwS6fYA4rvJbfu2NtmnMmeugdoHbog+aRc2pjOE8ITqYv0P4rO6Lvgsr8bDCoKrEC9fbvQCT7+Gh3VOYFdNK3yQyUgrr/lj9aVHkpngF0jXPPIizY8nRJwUmasersC+f1UEciFAHq6gXRunFrIz2O/CPJHZ4W+O/nCxyAQ4r4cYmw9Jw0wFNl8VZZPTT3A0d9jXMna3r9TzbfS+y9QojvjDiTZ/+cOxnJvSvXjLYx7/0KYhks/QYh//SPr+0JrRNOGQGN7VrUMPwoJF7wHNZjS3MOx4vg8J3PpptARAGb4qJR8j8fZg7a2ULPUTCsTSi2TEQBZIecBPn/f12W+foMO503DAlXpLpXWc3qmrNzOR5D1zLLLgphoFeK05qPGAMZ8tGKHimvzjrqxuZj4RDNgQYkyR+0M/uXWR7sFl8Ppek91tBWfBf47WhsRvLRkd4sLbCYItX8EgdhYpPozwI5g14YAQ==",
-    │       │           "thinking": "The user is asking me to use the calculator tool to multiply 15 by 7. They specifically say \"Do not answer from memory,\" so I need to use the mcp__calculator__calculator tool rather than just calculating it myself.\n\nLet me call the calculator tool with operation \"multiply\", a=15, and b=7.",
+    │       │           "signature": "EugDCpMBCA8YAipAh+7dM3KNPbcFgqnW6l/fcYgMVPLYScPecXJ4mk791HNKwQd7AlwI7KbdK08b0Uu3iS8QoIdQ3CESkUHDWDh1+TIZY2xhdWRlLWhhaWt1LTQtNS0yMDI1MTAwMTgAQgh0aGlua2luZ1okMjc3OTY2NjgtNzM1MS00MGFjLWFjYzQtMDI0YWVlODk5NWE1Egy/qt48G4u8Tp8sHwkaDFSTt8cNsjDW6tyWQSIwN2qxq5ICd/H/Rel0+ZszaZhYhFSbqvZCme+ll+yDYfBgTqMvz5mePJMdf6pgBytdKoECfadyzkgN+7X9C9lTJFTES+Y6H+/nrQ9m1RjK9rxVKzMYXvo0XTJm+hMebqvbb8mITJiVi1PqEcBNdnNXRZfMyZw9d8XE7zNcFW5aq62ZBXLtl/4rLoX0knV4Y5S0k685NOmAhuF/ubYmCHdJXea9BgsJb4f6SIVMMA3rV0/B6bGtigdeJhVuUT0ZuuB0fdoL2Y/t7uwmOYshUhfAgspyGhi4ypyX7tpFyKORDy/JM1f4cwNIddV5o2Y1A907pSOgeCZUmTiTsOS691zDvrE410s+ZELVRmcHWY9kBrnjPzbBey8+azhddbj8t7hseytey/Ter0IMbWUZGcvzk+srvW8YAQ==",
+    │       │           "thinking": "The user is asking me to use the calculator tool to multiply 15 by 7. They specifically say not to answer from memory, so I need to use the mcp__calculator__calculator tool.\n\nLet me call that tool with:\n- operation: \"multiply\"\n- a: 15\n- b: 7",
     │       │           "type": "thinking"
     │       │         }
     │       │       ],
@@ -68,9 +68,9 @@ span_tree:
     │       │   }
     │       │   metrics: {
     │       │     "completion_tokens": 7,
-    │       │     "prompt_cached_tokens": 24243,
-    │       │     "prompt_tokens": 24253,
-    │       │     "tokens": 24260
+    │       │     "prompt_cache_creation_tokens": 24075,
+    │       │     "prompt_tokens": 24085,
+    │       │     "tokens": 24092
     │       │   }
     │       ├── tool: calculator/calculator [tool]
     │       │   input: {
@@ -88,7 +88,7 @@ span_tree:
     │       │   }
     │       │   metadata: {
     │       │     "claude_agent_sdk.raw_tool_name": "mcp__calculator__calculator",
-    │       │     "gen_ai.tool.call.id": "toolu_01QiEjkBaC9vDtcLcogRZGdj",
+    │       │     "gen_ai.tool.call.id": "toolu_01EUKPWRCT4gXsHo4dJEaT8b",
     │       │     "gen_ai.tool.name": "calculator",
     │       │     "mcp.server": "calculator"
     │       │   }
@@ -122,8 +122,8 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "signature": "EqwCCm0IDxgCKkB1hMNVYipGZtMlmxxqVj1/QY/rg9o0CoLrX7J4fHkFER9YpdBx8Upjg0yt2IGNhznyfbgoA4uyd1kHvcdNGM+RMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOABCCHRoaW5raW5nEgzoFHqUsbAvQJPkO74aDCBI2MoQEX54mNXeWSIwx0kV63V40P9ug240S8Jukiuw7AG1ZRf3y8hEthfM45lXLJKyVHs6BaLi4TcIpz33Km0wOrF6b8a0NaY2rzXbzSy/PMiHyaCyXzvk0q/sy0rD3tg30lHH5SaBnzBwsaqsAJZYJNIVwZEwluhD92PowIPw5XvwJBlXvFIFwigu1ZMqtl7RF8k2is7ALbq6YzIalbXUUdQY0SdNkipWsxKuGAE=",
-    │                   "thinking": "The calculator tool returned the result: 15 × 7 = 105. I'll provide this answer to the user.",
+    │                   "signature": "EqwCCpMBCA8YAipA/h8Kg6F+8uXInssnyK2jXwL1mAkeMNKcrfDlkrT+vJDNeHVhnAiQKIW7ydgZcN/RIi4z5VHvh4dpctJl+3flZDIZY2xhdWRlLWhhaWt1LTQtNS0yMDI1MTAwMTgAQgh0aGlua2luZ1okMjc3OTY2NjgtNzM1MS00MGFjLWFjYzQtMDI0YWVlODk5NWE1EgyHqoV4Fh8RvUF2qg0aDGd0L1UQert24WwnmCIwRDEK05vqGVeabOHf6SrVpdZHMGUgfwLcxvdH5pE9DBgjhFz1I5BU2ryxJZUOT5h/KkZvmxq6MqAZdlC4HLsv6EUvYit3Ybc6aH0etPOx8e31kl3FHqQFnD+pU/iLEOYE1IEnggaXaFls9RmV3NfeBGXdj3T3LsPrGAE=",
+    │                   "thinking": "The calculator tool returned the result: 15 × 7 = 105",
     │                   "type": "thinking"
     │                 }
     │               ],
@@ -132,7 +132,7 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "text": "15 × 7 = **105**",
+    │                   "text": "The result of multiplying 15 by 7 is **105**.",
     │                   "type": "text"
     │                 }
     │               ],
@@ -143,11 +143,11 @@ span_tree:
     │             "model": "claude-haiku-4-5-20251001"
     │           }
     │           metrics: {
-    │             "completion_tokens": 209,
-    │             "prompt_cache_creation_tokens": 199,
-    │             "prompt_cached_tokens": 48486,
-    │             "prompt_tokens": 48693,
-    │             "tokens": 48902
+    │             "completion_tokens": 204,
+    │             "prompt_cache_creation_tokens": 24273,
+    │             "prompt_cached_tokens": 24075,
+    │             "prompt_tokens": 48356,
+    │             "tokens": 48560
     │           }
     ├── claude-agent-async-prompt-operation
     │   metadata: {
@@ -174,7 +174,7 @@ span_tree:
     │       output: {
     │         "content": [
     │           {
-    │             "text": "I'm ready to help, but I don't see the actual task or request yet. Could you please provide **what you'd like me to do?**\n\nFor example:\n- \"Add an e2e test for...\"\n- \"Fix a bug in...\"\n- \"Set up instrumentation for...\"\n- \"Review this pull request...\"\n- Or any other task you need help with\n\nPlease go ahead with your request!",
+    │             "text": "I'm still waiting for your actual request! \"Part 2\" suggests you might have more context or a specific task in mind. \n\nCould you please tell me what you'd like me to do? For example:\n- A bug to fix\n- A feature to implement\n- Tests to run or debug\n- Code to review\n- Configuration to update\n- Or anything else related to the Braintrust SDK\n\nWhat's your request?",
     │             "type": "text"
     │           }
     │         ],
@@ -202,8 +202,8 @@ span_tree:
     │       │     {
     │       │       "content": [
     │       │         {
-    │       │           "signature": "EqgKCm0IDxgCKkDyWMR47NbpwpfrZGpVca66F9y/fWCJ36HSquUPEnROc68lKkcrz3czJUJuggxX1gcBNMnOhUmR/UJONUxOLs9WMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOABCCHRoaW5raW5nEgzkovoIlM+RNZeBW+kaDP7IHoG75kSeyF5qVSIwPwS+soNc24/ldWc/szZFvM+vEPnLOmfsTOl8CZR12w/rtKmv5y7rSdtThST+b7AvKugIblbuhTTZVMjk7Xi1RGIu7u3jZUwfj47OuY3QeZPKYMYLpZOW7DuSdwH+1m6fDDlIx5cYknH/js+pjKb8oF03pVibkI1UzV9yEajqIHF/LPzs7v9GH76WKbye88ONmjczjSEIurM0SRXN5DwZgFQIH6aRx5lKQxbeDbuicVpy8lvfsqzuvPFMtLvhRWkSZQbj7FqRelK/YezN6SHoEnRKUNKiThS9GxiX5e9len81ypRaeBvA3LiVXh6XdrUw6g3IvYIT2Cn5JhRUjX53ETrQZii/bi1j7Y9Dz/ESLpMVTWNCBhvTh35xv5F4gBIrdT4SVDt7VMoK1g0WamOzMbOJic7nj918uHjmB4+5t8Rr47iU74JBXiC948sckIeo03RX33D9RIw3jMv6smBLPoZThRqAQj/eabxBy8phEuwwdcY7pYGCCw+jR09VRnwNb1hcx1IEO4AWBN/NnqxfBlWErZa5edR+8OM61iXfT6YDaMZdGSZ3MiqKmLIDGurb3EqhpYwRwBm0ZpJu51BcsBqpOvXUQnggbCWbnyntdrhjPNQ7SL32DIv+3iFApMiBw4vgAWw/Qu6jbyzZjtzqPqdnluPVAvs8NIbwNfH5vriLtdsKstFhRx+iA6n2MhafsDD82MMCHqrDTuBxhT9OFpVllnB2w0IlNQoyrTEfA8ITr4kz4/zwhK8JOiGzpi7fehGb8B/uhqUHd4Tpxx0HFxaxqb5ZsxlTIquRjGADko7FT66l3G1ra/HhdE89Dd4A7SVH/cDYITxFAJZ82Ii7Z5Hi6miCxgY05JlsCg14btXw8v6UkzdoHUvK/5XFGvXFNtciQMvtSLtQU8BpYkXw+5/SFC4DNMxVsBMzPTbfYE6ObWYImJi/6d92XduiAnQBEGFLj56FVsOf15yAt0cHzMwTQqui2XPl5N5yTBlAe+JrEHgVayR1YdFZ2PUlpEfRfwgrP9z4sozrE2PYka44Zpygom0rd9xVGx6hJiU5doO7eUp554XK8/DMQuDi3Wfzq278FeP8s18Ny+i/wQjEU/I8ktL7GA74dE2CiXPeuFls+vdH7/0bAlzhTyIAqlhu9dP/FDcfG4En4At7q5hkRj9t2KXln1ei29Z9BGJxQTPjXAiVnx5PPRaGLeOACpoJFJAjMUCw8AJ15EPhYJ3fs3JlhFKVc9FSum7agtQkDXIjzicMliJnarKY4bYqSEhtKLoPyGIFkMNb6LBRICxLAmtjz/nErukBlQ0nXVTjXfY8QTiSuNt5/cBA8EH5zY+5WoXthKg1BKMe7dRqzK+aMQZ3PZpORrNusqcbTBwb/hMNOKnki09P4TsJM6jvWvgKDt3eHfqYo2rT2xGssbzYRcCRVjTwBlUvMzHeJB+7g0USyVC/Z/0zA6/QsKoxpxcuT7qYxsHbYO6xdhZ60Jsah4FzBLcF6JRyCxpl67aW+qInwWaP8KVc9XPqLuiJ2GuJPqn/ljSbH5obtnL1UC+BxdKIRyRXpKvXIQrpGAE=",
-    │       │           "thinking": "The user has provided me with system reminders containing:\n\n1. A list of available skills I can use with the Skill tool\n2. A CLAUDE.md file with instructions for the Braintrust JavaScript SDK monorepo project\n3. The current date (<timestamp>)\n\nThe user's message says \"Part 1\" which is incomplete. I should wait for the actual request or task description. However, let me make sure I understand the context:\n\nThe project is a Braintrust JavaScript SDK monorepo that:\n- Uses `pnpm` workspaces\n- Has main package in `js/`, integrations in `integrations/`, e2e tests in `e2e/`\n- Uses Vitest for testing\n- Has special e2e scenario tests that run against a mock server\n- Uses Orchestrion for instrumentation\n- Has pre-commit hooks for code formatting\n\nThe available skills that are most relevant to this project appear to be:\n- `e2e-tests`: For working with e2e tests\n- `instrumentation`: For instrumentation work\n- `simplify`: For code review\n- And others for general tasks\n\nSince the user only said \"Part 1\", I should acknowledge that I've received the context and ask them to provide their actual request or task.",
+    │       │           "signature": "ErUFCpMBCA8YAipAsMW3gzmbEjEK34bYZT7XjJqe6dMD8mkswJ7Tmr2pNcUS8AaRYBYVsKMMJiY9ic23+jAZ2oblPHSb6ZTS7hVt1jIZY2xhdWRlLWhhaWt1LTQtNS0yMDI1MTAwMTgAQgh0aGlua2luZ1okMjc3OTY2NjgtNzM1MS00MGFjLWFjYzQtMDI0YWVlODk5NWE1Egx/dfQNGb7XZ7poNsQaDB07skHMGWdf8HJF6yIwIetHrI3V/qwtLoKYAgWYPTcIbz9O30X8FDTSRaQBLhFJqQtmVrUBC324WObC8xcgKs4DjjT6pLgZE/xDtfGji7c5VaN5LaJAaLsmNVOMag4KJkTecD17+p/9Ycaujk6Ik7ME5enJmoq3NpFJmqUqXYcPCePm3GAWIsbnum8GejZTCVr+z4fU4+Cs09jhCvv3RSxJAu9RKxQOW4Af3hqgONZMWuMYLjJ6lQEI26vzsgIP+4bA8fN/GqjNRCW9Bs+sqdcVJkTFFMXrKZa6tDli0fDPUv7zHfIQ0MMzjA17/7heDbTo8rZlqnJXQGG18n56gvEpHE8fs0/y3505XmFCVE/A1116W0UHwFL9SGVObbKfCTC5JbkFiV5F/av0LCeXsxCi/nxjDtlo2r/p2zZf7FhF0bZgvPDQUdvJN7T63mSkc9YCSDXMnxnaDZw4u+IbISgg5vWG3m1WayVpZ+tv0g/tWBhO+ndq3sWNxlBgAHIk+MZ3iEN6bZ+yLu9FBCvBaD+PbNDLUG+18b7mu1FrwRpXbINkPZwi9cD63FoembeUJowkkMBKJ0qAXnviDE9AxpMCQ4nDuXyqFSbktSSsjRGMPrbu+pw9HJI0gLYr0C4vE7dmL9geEC7i27ENRKZ1VGw5LjJru7wuT3m+TCvTelP9y7GcOZrwZuJX7R0lrbZ3GAE=",
+    │       │           "thinking": "The user has provided system reminders about available skills and some context from CLAUDE.md about a Braintrust JavaScript SDK Monorepo project. They haven't asked me a specific question yet - they just said \"Part 1\".\n\nThis seems like they might be starting a conversation or testing if I'm ready. I should acknowledge that I'm ready to help and ask them what they'd like me to do.\n\nLet me wait for them to provide their actual request/question.",
     │       │           "type": "thinking"
     │       │         }
     │       │       ],
@@ -212,7 +212,7 @@ span_tree:
     │       │     {
     │       │       "content": [
     │       │         {
-    │       │           "text": "I've received the context for the Braintrust JavaScript SDK monorepo project. I understand:\n\n- This is a TypeScript monorepo using `pnpm` workspaces with main SDK in `js/`, integrations in `integrations/`, and e2e tests in `e2e/`\n- Testing uses Vitest for unit/integration tests and custom e2e scenarios with a mock server\n- Code must be formatted with Prettier before committing (pre-commit hook)\n- Instrumentation uses Orchestrion with special config + plugins by default\n- Several specialized skills are available for e2e tests, instrumentation, code reviews, and more\n\n**I'm ready to help! What would you like me to do? Please provide Part 2 with your actual task or request.**",
+    │       │           "text": "I'm ready to help! I can see you have a Braintrust JavaScript SDK Monorepo project set up. I have access to the available skills and understand the project structure and guidelines.\n\nWhat would you like me to help you with? Whether it's:\n- Building or testing the codebase\n- Implementing features\n- Fixing bugs\n- Code review\n- Configuration changes\n- Or something else\n\nJust let me know what you need!",
     │       │           "type": "text"
     │       │         }
     │       │       ],
@@ -223,10 +223,10 @@ span_tree:
     │       │     "model": "claude-haiku-4-5-20251001"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_tokens": 475,
-    │       │     "prompt_cached_tokens": 24110,
-    │       │     "prompt_tokens": 24120,
-    │       │     "tokens": 24595
+    │       │     "completion_tokens": 209,
+    │       │     "prompt_cache_creation_tokens": 23949,
+    │       │     "prompt_tokens": 23959,
+    │       │     "tokens": 24168
     │       │   }
     │       └── anthropic.messages.create [llm]
     │           input: [
@@ -241,7 +241,7 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "text": "I've received the context for the Braintrust JavaScript SDK monorepo project. I understand:\n\n- This is a TypeScript monorepo using `pnpm` workspaces with main SDK in `js/`, integrations in `integrations/`, and e2e tests in `e2e/`\n- Testing uses Vitest for unit/integration tests and custom e2e scenarios with a mock server\n- Code must be formatted with Prettier before committing (pre-commit hook)\n- Instrumentation uses Orchestrion with special config + plugins by default\n- Several specialized skills are available for e2e tests, instrumentation, code reviews, and more\n\n**I'm ready to help! What would you like me to do? Please provide Part 2 with your actual task or request.**",
+    │                   "text": "I'm ready to help! I can see you have a Braintrust JavaScript SDK Monorepo project set up. I have access to the available skills and understand the project structure and guidelines.\n\nWhat would you like me to help you with? Whether it's:\n- Building or testing the codebase\n- Implementing features\n- Fixing bugs\n- Code review\n- Configuration changes\n- Or something else\n\nJust let me know what you need!",
     │                   "type": "text"
     │                 }
     │               ],
@@ -252,8 +252,8 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "signature": "EroDCm0IDxgCKkBi8RWg8R9ikht56jcPMVS/HQKyqFKqlZJ96B5rlsd4AdPiB8tCJV0Oj6HxxtCab9vvDOzf87lgseLNUdEkjD7aMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOABCCHRoaW5raW5nEgzuIWPrNucANvwG0hwaDDs+tTrJSz577YPMWiIwBHhPggYfk/96CXutivEtyJJyWT+OsgOmkg01U4l19ktxc9BQBeoo7LC4NpHhd4/wKvoB5gFw7TCZe4KneX2U4PLX8UVRlJ3nqLXxn5msE6hrCq3A9uVIi9U/2o3GPmxzBib3Ru26a16FKiTC8SMmavnJyomG21oWwEn0fGU1TIeVFAurRt4xdaqVQypykhliH6L0vBU1ybc+XM8np3SaKBSdMv0BQ9n8vMyJUarE1W2tgaPz1FbdiZUa5osOFCXBJ5VCkyUbk3gUiURlojmXtympDykYOeCHpicHfl4kxlb0zm8+omHkUq1BZFXP/tuRHTKwwUTLvfOAc+fQIvlHTnofwOB4OVGAAwJnzsWO9dMK4L4U5yUBztf8713jAX/CqNVpHuEq1lmWUJOn1hgB",
-    │                   "thinking": "The user is still saying \"Part 2\" without providing an actual request. They may still be providing context or they may have accidentally split their message. I should ask them to provide the actual task or request they want help with.",
+    │                   "signature": "EvgDCpMBCA8YAipAo6Gs8dcDeObLRepFNW3NvUUUMHf5e3gUazyOFHipqTpvV0z1RcUoY2s0wLGQiH1YL+Cqu8SJOck6fra3h6PK/DIZY2xhdWRlLWhhaWt1LTQtNS0yMDI1MTAwMTgAQgh0aGlua2luZ1okMjc3OTY2NjgtNzM1MS00MGFjLWFjYzQtMDI0YWVlODk5NWE1EgyqW7Jx15t5mnVDeKUaDAKnI8S6hwQKVbXRJSIwI9uGaGQ4NzarZ9rXsIAi5RVnII92CItC1qnPX2yTp3pk4mMChACIIiWKDdj5jwxKKpEChlqkZmW1X3alxeQKlaHw2Bg3v2TaJSNPmId5lNFOmtYAhQaaPweFwy98aapJXm9QDrR+jBrHGBSy4l/8ofMYrdZBs+ENjoy/qwuSpojCOhhiFkBYlw0ad7ZuihaA9/EM9Vx9K9dhZUJid71C74vsusJC5nTUImhQcpVsdY9nBGsfXEqSW5Z7KojEOhFTgVSWoYp5tCk/zj4T9RPevgnfutsIZVmAR61x7qT6CaUqI7NN3gSGiQgHMjv/9r/hC0tgXqypYTWiTl2bs43INYgFXhqH+IOCQ6dSZy06Eqa192db7xQRTven6LM6pK1tiDh1cyT6fIIfUeZ73z5SoCD5GS2OMk/1shmnqz8qdM2tEAZ8GAE=",
+    │                   "thinking": "The user is saying \"Part 2\" but still hasn't given me a specific request. They might be waiting for me to ask for clarification, or they might be testing the system. I should ask what they'd like me to do, since there's no actual task or question presented.",
     │                   "type": "thinking"
     │                 }
     │               ],
@@ -262,7 +262,7 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "text": "I'm ready to help, but I don't see the actual task or request yet. Could you please provide **what you'd like me to do?**\n\nFor example:\n- \"Add an e2e test for...\"\n- \"Fix a bug in...\"\n- \"Set up instrumentation for...\"\n- \"Review this pull request...\"\n- Or any other task you need help with\n\nPlease go ahead with your request!",
+    │                   "text": "I'm still waiting for your actual request! \"Part 2\" suggests you might have more context or a specific task in mind. \n\nCould you please tell me what you'd like me to do? For example:\n- A bug to fix\n- A feature to implement\n- Tests to run or debug\n- Code to review\n- Configuration to update\n- Or anything else related to the Braintrust SDK\n\nWhat's your request?",
     │                   "type": "text"
     │                 }
     │               ],
@@ -274,10 +274,10 @@ span_tree:
     │           }
     │           metrics: {
     │             "completion_tokens": 4,
-    │             "prompt_cache_creation_tokens": 488,
-    │             "prompt_cached_tokens": 24110,
-    │             "prompt_tokens": 24608,
-    │             "tokens": 24612
+    │             "prompt_cache_creation_tokens": 222,
+    │             "prompt_cached_tokens": 23949,
+    │             "prompt_tokens": 24181,
+    │             "tokens": 24185
     │           }
     ├── claude-agent-subagent-operation
     │   metadata: {
@@ -289,7 +289,7 @@ span_tree:
     │       output: {
     │         "content": [
     │           {
-    │             "text": "The math-expert subagent has calculated the result:\n\n**15 + 27 = 42**",
+    │             "text": "The math-expert agent has completed the calculation. **The result of adding 15 and 27 is 42.**",
     │             "type": "text"
     │           }
     │         ],
@@ -315,8 +315,8 @@ span_tree:
     │       │     {
     │       │       "content": [
     │       │         {
-    │       │           "signature": "EoIFCm0IDxgCKkAQcntET6WZmwEnXKdKOb+Dt6T70GoQ5HXJA4tvbtfp3YlQxxZcJzLh6JhpRPnOIK2SEF0VJHln1VAHSoClW4hEMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOABCCHRoaW5raW5nEgwaIHvJWg3L+TyZlFgaDDLAwdUDuSJcKB8EmiIwnQ5r2huabQ4j2PUNeRAbvCg4jofzfo0nDh63jMaHQuK4aAmOMsGCc5b9TSZ2GKJGKsIDNIEm2M8YaEu/di801VGukiMRjQ/ocMqsZ9iyA28G4iGgsOJizuGWj81msDLtBIKaZ07r5QtxAnKDeEUtVpvCiwMFjYkmQ3TJ/BKvcKBx2CqN7Dx3mPsr17BzojwKrtlRh4UtP5ckcvNfN+vokxfnyZQvS1vvioLf86O/9VxRd3sM/5ShsG8geO3R1D3gevD/NNjs+BzKF3z3EmOyR9mkDPdLyjhdFPwCNEPQ8hrdHe2mvTxybe90jiRdw5gFw38DAHO3YT1M+sdrCBlRnI8NPHH7xo98aA7COR8WSl3IyCu3BKJbij575z85dkiIG9QdObWWBhlXJ+mAcxH+93nBQ/gaX7bTS6f4bgMK0suDKhFFVFNFpOzAN/yFkLD5zAxIH2mDLyBLfKw4qE33SO05Ahk3Uf7BJg0eyTlZ5UWclXERHMcwxWJcHt/iMnd0bwN856wRFxf9/3HZIwzpIGc+Uu6O+30yjtA4tVcGOul5NkEPopu+LvLCEesy4TxV7ac+JIaYqEBNPTIdT0yeoahMTzGhiPgPPQjDqBApqbtLgH5sWTrmbCYc3aBaAYnty810E5BQHiAnYTJaHn2hXBPDAlmSGAE=",
-    │       │           "thinking": "The user wants me to spawn a math-expert subagent to add 15 and 27 using the calculator tool. They explicitly say not to solve it myself. \n\nI should use the Agent tool with subagent_type \"math-expert\" to accomplish this task. The math-expert agent has access to the calculator tool and should be able to use it to perform the addition.\n\nLet me craft a prompt that asks the math-expert agent to add 15 and 27 using the calculator tool.",
+    │       │           "signature": "EoQGCpMBCA8YAipAbviWONXgUUfKS/7Jqx+l1+Xew9hQ9enx0MWEjXFPr0zcYCKaUVoDxr6AOGP3qxaQeeKk44U3cPZTUcy33iAZ2zIZY2xhdWRlLWhhaWt1LTQtNS0yMDI1MTAwMTgAQgh0aGlua2luZ1okMjc3OTY2NjgtNzM1MS00MGFjLWFjYzQtMDI0YWVlODk5NWE1EgxM5dHUazOMMc4flKIaDF0hqu9WuF/c4Lv6yiIwdJk71HFR7fkvXOeeJMgzD85kGXb9WgmI1PVwWTVo7As/kUU7LErOHun3aEmWtub/Kp0EfRuD+C/YeDaDvEhsOGr7dZq+lMDqLhvCRUma8J4F5oBb28/scB73WjUyIKVaxNlQ4egWGqWzxSWYi5QgmqEGw/sy0gPEingodDFM+RCbP5cMEpo5KmW3tYo7Da7Khsij4sIlhX5juEds9YVfuBqtM6QtQyvsOVDvJToqJ3KUNO5uFGEW8dZ2bvI+1uBvqsd1/+hqEplRoTWDxSWhb2HSfFU3FV49x9wxBcpD12+aQ1ZUvX1SixBy08ZS5gNpkfCK9A7CrJhV0pg8x/NxaFLNzkZHQV/8GOJTQZvUEGMt3dnmV4rh/rqJTnjbli9kafdxq3ObJS7bjtN8qMxe629hE8nx6PzHHdo6PF5gtb7w3/QAcowS43mjLZFB6UPp73Zra8eWocp2ohWVBJ1QbHNFuEEkviGwxJgIORRQG+d0rW4/UvXHftqVFryq1VT+TfuO0GOPSvd4Y4v8MKsKw/XonWoYlUNqknMukZaTf+cSt9THHGlrf2JWeZq0MvVGlE4jHRY6FCSpKlkURmXhMEh2xRrtpDt40Ip+3bYeSG2ZuARFS6rcYCzM5fcVrfp2PFdxusFOSCJJn6G83SjBOxfk1n4pAthMeENW8Ybm3UdJMlpm4ptf9035RaDBWdqTiUR7Z7+PUabMCFMtak/LcCWTiaNyu1KzBDrgnzuSq7q3kizR9NemAoyG2hFd65lHNktCWhRsNmLgRJCIeZf+BhgB",
+    │       │           "thinking": "The user is asking me to spawn a math-expert subagent to add 15 and 27 using the calculator tool. They explicitly say not to solve it myself, so I need to delegate this to the math-expert agent type using the Agent tool.\n\nLet me call the Agent tool with:\n- description: Something like \"Add 15 and 27\"\n- subagent_type: \"math-expert\"\n- prompt: A clear instruction to use the calculator tool to add 15 and 27\n\nThe math-expert agent has access to the calculator tool and other tools, so it should be able to accomplish this task.",
     │       │           "type": "thinking"
     │       │         }
     │       │       ],
@@ -331,7 +331,7 @@ span_tree:
     │       │           "id": "<span:1>",
     │       │           "input": {
     │       │             "description": "Add 15 and 27 using calculator",
-    │       │             "prompt": "Please add 15 and 27 using the calculator tool and report the result.",
+    │       │             "prompt": "Use the calculator tool to add 15 and 27. Report the exact result.",
     │       │             "subagent_type": "math-expert"
     │       │           },
     │       │           "name": "Agent",
@@ -345,15 +345,15 @@ span_tree:
     │       │     "model": "claude-haiku-4-5-20251001"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_tokens": 3,
-    │       │     "prompt_cached_tokens": 24271,
-    │       │     "prompt_tokens": 24281,
-    │       │     "tokens": 24284
+    │       │     "completion_tokens": 7,
+    │       │     "prompt_cache_creation_tokens": 24110,
+    │       │     "prompt_tokens": 24120,
+    │       │     "tokens": 24127
     │       │   }
     │       ├── tool: Agent [tool]
     │       │   input: {
     │       │     "description": "Add 15 and 27 using calculator",
-    │       │     "prompt": "Please add 15 and 27 using the calculator tool and report the result.",
+    │       │     "prompt": "Use the calculator tool to add 15 and 27. Report the exact result.",
     │       │     "subagent_type": "math-expert"
     │       │   }
     │       │   output: {
@@ -361,11 +361,11 @@ span_tree:
     │       │     "agentType": "math-expert",
     │       │     "content": [
     │       │       {
-    │       │         "text": "15 + 27 = **42**",
+    │       │         "text": "The exact result of adding 15 and 27 is **42**.",
     │       │         "type": "text"
     │       │       }
     │       │     ],
-    │       │     "prompt": "Please add 15 and 27 using the calculator tool and report the result.",
+    │       │     "prompt": "Use the calculator tool to add 15 and 27. Report the exact result.",
     │       │     "status": "completed",
     │       │     "toolStats": {
     │       │       "bashCount": 0,
@@ -377,31 +377,31 @@ span_tree:
     │       │       "searchCount": 0
     │       │     },
     │       │     "totalDurationMs": 0,
-    │       │     "totalTokens": 19139,
+    │       │     "totalTokens": 18063,
     │       │     "totalToolUseCount": 1,
     │       │     "usage": {
     │       │       "cache_creation": {
     │       │         "ephemeral_1h_input_tokens": 0,
-    │       │         "ephemeral_5m_input_tokens": 125
+    │       │         "ephemeral_5m_input_tokens": 124
     │       │       },
-    │       │       "cache_creation_input_tokens": 125,
-    │       │       "cache_read_input_tokens": 18995,
+    │       │       "cache_creation_input_tokens": 124,
+    │       │       "cache_read_input_tokens": 17914,
     │       │       "inference_geo": "",
     │       │       "input_tokens": 6,
     │       │       "iterations": [
     │       │         {
     │       │           "cache_creation": {
     │       │             "ephemeral_1h_input_tokens": 0,
-    │       │             "ephemeral_5m_input_tokens": 125
+    │       │             "ephemeral_5m_input_tokens": 124
     │       │           },
-    │       │           "cache_creation_input_tokens": 125,
-    │       │           "cache_read_input_tokens": 18995,
+    │       │           "cache_creation_input_tokens": 124,
+    │       │           "cache_read_input_tokens": 17914,
     │       │           "input_tokens": 6,
-    │       │           "output_tokens": 13,
+    │       │           "output_tokens": 19,
     │       │           "type": "message"
     │       │         }
     │       │       ],
-    │       │       "output_tokens": 13,
+    │       │       "output_tokens": 19,
     │       │       "server_tool_use": {
     │       │         "web_fetch_requests": 0,
     │       │         "web_search_requests": 0
@@ -414,14 +414,14 @@ span_tree:
     │       │     "claude_agent_sdk.cwd": "<repo>/e2e/scenarios/claude-agent-sdk-instrumentation/",
     │       │     "claude_agent_sdk.raw_tool_name": "Agent",
     │       │     "claude_agent_sdk.session_id": "<uuid:1>",
-    │       │     "gen_ai.tool.call.id": "toolu_01M5UQLWvJ6jgo9jvuaWotuW",
+    │       │     "gen_ai.tool.call.id": "toolu_01UURkBZxUyocnE8v27ZvFAV",
     │       │     "gen_ai.tool.name": "Agent"
     │       │   }
     │       │   └── Agent: Add 15 and 27 using calculator [task]
-    │       │       input: "Please add 15 and 27 using the calculator tool and report the result."
+    │       │       input: "Use the calculator tool to add 15 and 27. Report the exact result."
     │       │       output: [
     │       │         {
-    │       │           "text": "15 + 27 = **42**",
+    │       │           "text": "The exact result of adding 15 and 27 is **42**.",
     │       │           "type": "text"
     │       │         }
     │       │       ]
@@ -434,15 +434,15 @@ span_tree:
     │       │         "claude_agent_sdk.task_id": "<claude_agent_sdk.task_id:1>",
     │       │         "claude_agent_sdk.task_type": "local_agent",
     │       │         "claude_agent_sdk.tool_use_count": 1,
-    │       │         "claude_agent_sdk.tool_use_id": "toolu_01M5UQLWvJ6jgo9jvuaWotuW",
-    │       │         "claude_agent_sdk.total_tokens": 19004
+    │       │         "claude_agent_sdk.tool_use_id": "toolu_01UURkBZxUyocnE8v27ZvFAV",
+    │       │         "claude_agent_sdk.total_tokens": 17919
     │       │       }
     │       │       ├── anthropic.messages.create [llm]
     │       │       │   input: [
     │       │       │     {
     │       │       │       "content": [
     │       │       │         {
-    │       │       │           "text": "Please add 15 and 27 using the calculator tool and report the result.",
+    │       │       │           "text": "Use the calculator tool to add 15 and 27. Report the exact result.",
     │       │       │           "type": "text"
     │       │       │         }
     │       │       │       ],
@@ -473,11 +473,10 @@ span_tree:
     │       │       │     "model": "claude-haiku-4-5-20251001"
     │       │       │   }
     │       │       │   metrics: {
-    │       │       │     "completion_tokens": 3,
-    │       │       │     "prompt_cache_creation_tokens": 2201,
-    │       │       │     "prompt_cached_tokens": 16794,
-    │       │       │     "prompt_tokens": 18998,
-    │       │       │     "tokens": 19001
+    │       │       │     "completion_tokens": 1,
+    │       │       │     "prompt_cache_creation_tokens": 17914,
+    │       │       │     "prompt_tokens": 17917,
+    │       │       │     "tokens": 17918
     │       │       │   }
     │       │       └── tool: calculator/calculator [tool]
     │       │           input: {
@@ -495,7 +494,7 @@ span_tree:
     │       │           }
     │       │           metadata: {
     │       │             "claude_agent_sdk.raw_tool_name": "mcp__calculator__calculator",
-    │       │             "gen_ai.tool.call.id": "toolu_01FQmwuUJdU8onJ8pv1pEzxK",
+    │       │             "gen_ai.tool.call.id": "toolu_01F2MonibrAamVQnCfN32Yk9",
     │       │             "gen_ai.tool.name": "calculator",
     │       │             "mcp.server": "calculator"
     │       │           }
@@ -515,7 +514,7 @@ span_tree:
     │                   "id": "<span:1>",
     │                   "input": {
     │                     "description": "Add 15 and 27 using calculator",
-    │                     "prompt": "Please add 15 and 27 using the calculator tool and report the result.",
+    │                     "prompt": "Use the calculator tool to add 15 and 27. Report the exact result.",
     │                     "subagent_type": "math-expert"
     │                   },
     │                   "name": "Agent",
@@ -529,8 +528,8 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "signature": "ErUCCm0IDxgCKkC+ox7bp2JGrpgNbmfdIcs5aiFMS6GdDpd+ToztYAzzScWEI0ccOQ6RrktMHSjxvBldQMIBVaAWzGmJTiVUD40iMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOABCCHRoaW5raW5nEgxvHnN1QYbbDW9QOSIaDI/8IpSrFTiLppzsRyIw6zn4ki36ravtnBZAZOrwlOc/j/Bw/S8H0qOqqoLE39U2oJyQykgc9idg/XGiqa6aKnaOnqoV37Fs4d2+RzqE9Jid5ubhMheeISFjtG/oaLuzY/wVqx9JbN9RRgPqddDf2ZsyvPl8bKeg6sfgqsCkR1jIe0L9Sc32g3szTDrerzhCVUiQqlyNy3bV2iSlkVGniGr2Xpa3FSk3s9FAWbIvQMIeJ9b80vPPGAE=",
-    │                   "thinking": "Great! The math-expert subagent has used the calculator tool and completed the task. The result is 42.",
+    │                   "signature": "EoYDCpMBCA8YAipA0X2XOnED28PtqBPHoN0HC9XHtznb/M31dBHngzLqeak2M8Ahl3DVCLwVVYl7+oh9myyTnjA2BRwnLgahbeLehDIZY2xhdWRlLWhhaWt1LTQtNS0yMDI1MTAwMTgAQgh0aGlua2luZ1okMjc3OTY2NjgtNzM1MS00MGFjLWFjYzQtMDI0YWVlODk5NWE1Egw6De2Pg9Thz7XqWw4aDKj5OQMv6kx/POzXDiIw73B4LSUNUKPW7jn4coooBy8AnLeQu5z6eeo7PTpYwE8J3IuDwH+tDeQJVbhRrwj2Kp8Bqdxvo/AfT3owWK8+myR1t/rQC7capm6tLs0gm3xha3twDTfWyJ/hqxwx3jgeqE1ucGCIH6O/pqVPtpZpsaA1IjeA5BZkQaQcZ7vP/e2EP0vnOki9RGYADg58pMDpvpILzwYrQzqd773Z2xTdaJOwbRPUwocF7EZ4WTQRwqDTaJwjYul0Slndnjx2Ha1auPsVa0kUN4cnLpgEaG1Sx3luGAE=",
+    │                   "thinking": "Great! The math-expert agent successfully used the calculator tool to add 15 and 27 and got the result of 42. I should report this to the user.",
     │                   "type": "thinking"
     │                 }
     │               ],
@@ -539,7 +538,7 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "text": "The math-expert subagent has calculated the result:\n\n**15 + 27 = 42**",
+    │                   "text": "The math-expert agent has completed the calculation. **The result of adding 15 and 27 is 42.**",
     │                   "type": "text"
     │                 }
     │               ],
@@ -550,11 +549,11 @@ span_tree:
     │             "model": "claude-haiku-4-5-20251001"
     │           }
     │           metrics: {
-    │             "completion_tokens": 288,
-    │             "prompt_cache_creation_tokens": 331,
-    │             "prompt_cached_tokens": 48542,
-    │             "prompt_tokens": 48881,
-    │             "tokens": 49169
+    │             "completion_tokens": 328,
+    │             "prompt_cache_creation_tokens": 24475,
+    │             "prompt_cached_tokens": 24110,
+    │             "prompt_tokens": 48593,
+    │             "tokens": 48921
     │           }
     ├── claude-agent-subagent-built-in-tool-operation
     │   metadata: {
@@ -566,7 +565,7 @@ span_tree:
     │       output: {
     │         "content": [
     │           {
-    │             "text": "The echo agent has completed and displayed a greeting message.",
+    │             "text": "The echo agent has completed the greeting task.",
     │             "type": "text"
     │           }
     │         ],
@@ -593,8 +592,8 @@ span_tree:
     │       │     {
     │       │       "content": [
     │       │         {
-    │       │           "signature": "EqwGCm4IDxgCKkDGh3YW0HHfUTI4RgXoeCXbHdEgtc4O+CT4nqYXe4V68UXD4VzFGDrLt7ylbkQGLjDr1Cl6sJ9E6hVGlv44HR1TMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMwHlkl+Rf5Ed2LdUaGgw9IU5/ULTTQrev0w0iMPn7qZDAgWD/M10OA0QU5OFHLJ6m1tBil1RmyKt/zR835dncjudZQWVEDg986hsoWCrrBIddhgxJhxonNxZDFk2UwlSSBee0cqLzDXbbTEgigI0ai0Ww20teCBi0p9E9At6bx3/dwEcmVDhI2Cpu/A+njCHUQxxdrXc5kzgNcBgw2C8qml2uf6uQzV4kU3JKPJmrMnvlovlvQOWRxL63wLVlFNCQMLGXY3tCZ9Husp+o9G7f1E/D3d7x75/Dzi6NqZfK8hxh+24TbymjkrzHOMXEmwGr67zYu3lJMs6EEbm2KVOUUZHBkg51VzvhzChfAiqukwLoGjNEnP1INoNucc5IrASGFHBgI9cr1hAf8SBYDOjqBlXL80e59P8/roD3i2rEZyGD/5W7dSpvEp+QdVQVmYvCMtd1TAqLAm4LZbDSv2eYXlilCOhL/53mah2Jl0byiSwJ1pOTK10JY3hj1YiXsOhWq9fi0fEKQ9RS3oVE45ADcmYSVxYUWK9YJZQZpA3bQFToY/vEMmkscnz4ABoqcBfFfMG4+3K6+xlZA9IY5de/4Wy73VUEMlaZubZPkC4FhrVEJIwyZ6cyZt+BwLYOjChYjioARTUBaXzMS+SXWS8GRSpTQU5L/CViKoqx4Z3sh9pQeDZzoAUH9PQoZ45u/mWFa9S4fNrEmM7YD6ZwDueaQVpmLsK9fuuYeVRmTm1oNFDIGvKFuOoPYfVxARrdGD/dnDAc34Z41/jqcKqP2VR+1d4BERnEhVcb2xO1Kq6ei5rmIkqTX/vF86+dwOrXN2h+NKRXSlU5q7svaiYxKNEfnEn/nFSsxJm9uu+ji3AeBHAPwREWmJFu1sOXyX5kWOmX1g4SHXyHYbTp2+pwqpCSV5IWrKtMP77KPlUYAQ==",
-    │       │           "thinking": "The user is explicitly instructing me to call the Agent tool with subagent_type=\"echo\" and description \"echo greeting\". They're telling me NOT to call Bash myself and NOT to answer with text myself - I must delegate to the echo sub-agent.\n\nLooking at the Agent tool description, I can see there's an \"echo\" agent type that \"Runs one bash echo and reports back.\"\n\nSo I need to:\n1. Call the Agent tool\n2. Set subagent_type to \"echo\"\n3. Set description to \"echo greeting\"\n4. Provide a prompt that tells the echo agent what to do\n\nThe prompt should ask the echo agent to run an echo command with a greeting.",
+    │       │           "signature": "EogHCpQBCA8YAipAQPEJilfWZaAbV4yYyDbayOkUU7v/86mdfwH/gyFfHqYyeWlQ7TjMd0DIwPuthPG8axC80l+Tz75bXGrboDdxqTIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDI3Nzk2NjY4LTczNTEtNDBhYy1hY2M0LTAyNGFlZTg5OTVhNRIMBW5lhV6N1KqL+r1JGgwCRIwNgNOb1Ky1QQUiMDo4Xopn0Juyh1GqfVhzQOzPWVjKPdIoQOmYE0BP1b9VoBgKTLjKiz5tNt1c6wCh3CqgBWtBTDD6xUFOYWbQ9Q3uQhJHYXg1ihuxb2WNXW2SL5SOTE07r8GGtJVY2zWcZbMYtCkffPyLX7OAIBqXIp06cyzgEB4YOZjC4C+v+zy6h9aZ6yYIlhdpuVITxrG+3KwA4X948XQAWd78GDcKTieMZHDPCDsns/S96km90zc9bw75wqIgsuRYHwfWCpH+QcTW8S8mYndUMUIWlp7ZDXUWItpGNbPnUjUtziFSUXp7l2mPiK25BK/DrDIzHFMjKx8g/Hq/XMsG1hWWrhnjWkx79XexUl/7+Z8nLeJFfhKyHx/WlnK90W65V52g818f7g5j/0ZzzIVuvso0bk9ELkyDn1aF5Tj80l8JDZg1i3+nrfs5CvYvTX1Il/O9gAef5GMoQFIilUyRhpoDEuiRAKbf2+WCJ9lbYNtjT8wJXMrV3GCmFvZGVxKJY1Va9ceqTwIfhCSoPbiHw/paqiQougNYTkhy7KOG1JjYOAHWRV4NMbCfA1k8w1Nr+bzlhxj73J00b5JncRYp7mVP2zOjsS8igfrTi4ght29r4kg4Qd2l6Mjj/yQmWH1H+7mFbNJDKYHrMZpwR2tEbM0jpYqDUOSiGzFtvBQJXc1p6TZM0C7yXTj+cjFZvs7tihH4rNnmsi17F3lwCkvWAkL+L8e/ZAsMZKM8VLBPfc8nePLsDVWdiNFq4ODoL5XY+6RR23RhoIxdpniX0reg4JvwbXR3eAeo4Z8HPfvURXBcWsHGFIjKu/pWRJzIJLiAcdMuvGQpUV+uA/LwTTbqp2Zx/rGonWPNlm+O3g/g1ntNrEkAYSkKHGsNMoOrkLEpNl4lguoH4gBePa4I6t6SiW4+bmsK++eE4qD+ZTmFufzGB7yQCYtb7fDjTlxkUPZGyIlIdE+pPUiyzxgB",
+    │       │           "thinking": "The user is explicitly instructing me to call the Agent tool with specific parameters:\n- subagent_type=\"echo\"\n- description=\"echo greeting\"\n\nThey're telling me NOT to call Bash myself, and NOT to answer with text myself. I must delegate to the echo sub-agent.\n\nLooking at the Agent tool description, I can see that the \"echo\" agent type is listed:\n\"- echo: Runs one bash echo and reports back. (Tools: Bash)\"\n\nSo I need to call the Agent tool with:\n- subagent_type: \"echo\"\n- description: \"echo greeting\"\n- prompt: I need to provide a prompt for what the agent should do\n\nThe user wants a greeting, so I should ask the echo agent to echo a greeting message.",
     │       │           "type": "thinking"
     │       │         }
     │       │       ],
@@ -609,7 +608,7 @@ span_tree:
     │       │           "id": "<span:1>",
     │       │           "input": {
     │       │             "description": "echo greeting",
-    │       │             "prompt": "Run an echo command to display a greeting message.",
+    │       │             "prompt": "Echo a greeting message to the user",
     │       │             "subagent_type": "echo"
     │       │           },
     │       │           "name": "Agent",
@@ -623,15 +622,15 @@ span_tree:
     │       │     "model": "claude-sonnet-4-5-20250929"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_tokens": 3,
-    │       │     "prompt_cached_tokens": 24171,
-    │       │     "prompt_tokens": 24181,
-    │       │     "tokens": 24184
+    │       │     "completion_tokens": 4,
+    │       │     "prompt_cache_creation_tokens": 24010,
+    │       │     "prompt_tokens": 24020,
+    │       │     "tokens": 24024
     │       │   }
     │       ├── tool: Agent [tool]
     │       │   input: {
     │       │     "description": "echo greeting",
-    │       │     "prompt": "Run an echo command to display a greeting message.",
+    │       │     "prompt": "Echo a greeting message to the user",
     │       │     "subagent_type": "echo"
     │       │   }
     │       │   output: {
@@ -643,7 +642,7 @@ span_tree:
     │       │         "type": "text"
     │       │       }
     │       │     ],
-    │       │     "prompt": "Run an echo command to display a greeting message.",
+    │       │     "prompt": "Echo a greeting message to the user",
     │       │     "status": "completed",
     │       │     "toolStats": {
     │       │       "bashCount": 1,
@@ -655,25 +654,25 @@ span_tree:
     │       │       "searchCount": 0
     │       │     },
     │       │     "totalDurationMs": 0,
-    │       │     "totalTokens": 6001,
+    │       │     "totalTokens": 5033,
     │       │     "totalToolUseCount": 1,
     │       │     "usage": {
     │       │       "cache_creation": {
     │       │         "ephemeral_1h_input_tokens": 0,
-    │       │         "ephemeral_5m_input_tokens": 84
+    │       │         "ephemeral_5m_input_tokens": 64
     │       │       },
-    │       │       "cache_creation_input_tokens": 84,
-    │       │       "cache_read_input_tokens": 5907,
+    │       │       "cache_creation_input_tokens": 64,
+    │       │       "cache_read_input_tokens": 4959,
     │       │       "inference_geo": "",
     │       │       "input_tokens": 6,
     │       │       "iterations": [
     │       │         {
     │       │           "cache_creation": {
     │       │             "ephemeral_1h_input_tokens": 0,
-    │       │             "ephemeral_5m_input_tokens": 84
+    │       │             "ephemeral_5m_input_tokens": 64
     │       │           },
-    │       │           "cache_creation_input_tokens": 84,
-    │       │           "cache_read_input_tokens": 5907,
+    │       │           "cache_creation_input_tokens": 64,
+    │       │           "cache_read_input_tokens": 4959,
     │       │           "input_tokens": 6,
     │       │           "output_tokens": 4,
     │       │           "type": "message"
@@ -692,11 +691,11 @@ span_tree:
     │       │     "claude_agent_sdk.cwd": "<repo>/e2e/scenarios/claude-agent-sdk-instrumentation/",
     │       │     "claude_agent_sdk.raw_tool_name": "Agent",
     │       │     "claude_agent_sdk.session_id": "<uuid:1>",
-    │       │     "gen_ai.tool.call.id": "toolu_013oq3KBnnaq2iczYAZHs5WV",
+    │       │     "gen_ai.tool.call.id": "toolu_0175Wtj87wSNrMVCFvzFaJzv",
     │       │     "gen_ai.tool.name": "Agent"
     │       │   }
     │       │   └── Agent: echo greeting [task]
-    │       │       input: "Run an echo command to display a greeting message."
+    │       │       input: "Echo a greeting message to the user"
     │       │       output: [
     │       │         {
     │       │           "text": "done",
@@ -705,22 +704,22 @@ span_tree:
     │       │       ]
     │       │       metadata: {
     │       │         "claude_agent_sdk.agent_type": "echo",
-    │       │         "claude_agent_sdk.description": "Running Display a greeting message",
+    │       │         "claude_agent_sdk.description": "Running echo hello",
     │       │         "claude_agent_sdk.duration_ms": 0,
     │       │         "claude_agent_sdk.last_tool_name": "Bash",
     │       │         "claude_agent_sdk.status": "completed",
     │       │         "claude_agent_sdk.task_id": "<claude_agent_sdk.task_id:1>",
     │       │         "claude_agent_sdk.task_type": "local_agent",
     │       │         "claude_agent_sdk.tool_use_count": 1,
-    │       │         "claude_agent_sdk.tool_use_id": "toolu_013oq3KBnnaq2iczYAZHs5WV",
-    │       │         "claude_agent_sdk.total_tokens": 5967
+    │       │         "claude_agent_sdk.tool_use_id": "toolu_0175Wtj87wSNrMVCFvzFaJzv",
+    │       │         "claude_agent_sdk.total_tokens": 5016
     │       │       }
     │       │       ├── anthropic.messages.create [llm]
     │       │       │   input: [
     │       │       │     {
     │       │       │       "content": [
     │       │       │         {
-    │       │       │           "text": "Run an echo command to display a greeting message.",
+    │       │       │           "text": "Echo a greeting message to the user",
     │       │       │           "type": "text"
     │       │       │         }
     │       │       │       ],
@@ -736,8 +735,7 @@ span_tree:
     │       │       │           },
     │       │       │           "id": "<span:1>",
     │       │       │           "input": {
-    │       │       │             "command": "echo hello",
-    │       │       │             "description": "Display a greeting message"
+    │       │       │             "command": "echo hello"
     │       │       │           },
     │       │       │           "name": "Bash",
     │       │       │           "type": "tool_use"
@@ -750,16 +748,14 @@ span_tree:
     │       │       │     "model": "claude-haiku-4-5-20251001"
     │       │       │   }
     │       │       │   metrics: {
-    │       │       │     "completion_tokens": 57,
-    │       │       │     "prompt_cache_creation_tokens": 1359,
-    │       │       │     "prompt_cached_tokens": 4548,
-    │       │       │     "prompt_tokens": 5910,
-    │       │       │     "tokens": 5967
+    │       │       │     "completion_tokens": 54,
+    │       │       │     "prompt_cache_creation_tokens": 4959,
+    │       │       │     "prompt_tokens": 4962,
+    │       │       │     "tokens": 5016
     │       │       │   }
     │       │       └── tool: Bash [tool]
     │       │           input: {
-    │       │             "command": "echo hello",
-    │       │             "description": "Display a greeting message"
+    │       │             "command": "echo hello"
     │       │           }
     │       │           output: {
     │       │             "interrupted": false,
@@ -772,7 +768,7 @@ span_tree:
     │       │             "claude_agent_sdk.cwd": "<repo>/e2e/scenarios/claude-agent-sdk-instrumentation/",
     │       │             "claude_agent_sdk.raw_tool_name": "Bash",
     │       │             "claude_agent_sdk.session_id": "<uuid:1>",
-    │       │             "gen_ai.tool.call.id": "toolu_01WBnqyHoLV4Ccn5ovLGEYq8",
+    │       │             "gen_ai.tool.call.id": "toolu_01Cnj2PnT1WRXKn6FVstzoo1",
     │       │             "gen_ai.tool.name": "Bash"
     │       │           }
     │       └── anthropic.messages.create [llm]
@@ -790,7 +786,7 @@ span_tree:
     │                   "id": "<span:1>",
     │                   "input": {
     │                     "description": "echo greeting",
-    │                     "prompt": "Run an echo command to display a greeting message.",
+    │                     "prompt": "Echo a greeting message to the user",
     │                     "subagent_type": "echo"
     │                   },
     │                   "name": "Agent",
@@ -804,8 +800,8 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "signature": "EtAECm4IDxgCKkAYdW6ReSC3bZfV02dnVRK/ivZV9i2OM9Xu0kH1LSmi8KdDwj5XGPbzH1Doj6UUOi3/1QQpnYRPsp/muLq4SL2ZMhpjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOTgAQgh0aGlua2luZxIMkvnYUZe//xD0+2kEGgzs5YpSdipRzdg3qZgiMOImkFFoTdKzTmriyVrb6uJfBNZ10c+w9aVfPvXeN5Ej1Z2oB23imQvkYKLTS66AACqPA2jNnG7KIGwswpx+XVUSwdhc273icCVBUmxvlVFd+jgTl1aJgckG77ETMhbrZrNlnaXC18nh/pOEKopBBSprGgpzw1OlotJzgrv0JQpZ/TPiazO6M7zi8vKjU64IjAT+bRK9tGmIieRzUOFcAA8LFYw2hUTjO877/wvmUTPPZbMpNwuKq8/RDM4qbWl8vEQXtq2X0yfK/eNd0v4Q1yO7aGminy24t03KR5EI/eMgICY/MobfnlsLa7jzwVCygv0z/5n/AkEeU/wCrJvD5gpMKtCV9VoyWhMkbElmKRUmAh6qkITzkbuVDbexZEsR+4L8gadptMDMh/LhGoe4B10J4qVfS0NhdVdVVBTf5hLS27FR5b7I9uGi1/YcchLfAre5MR+CmjeVdRXLd0g1BhGoIdz8RKmMBwcK7W44rQzclu4lP4atV46Kn72dxU3H9wgm1u56muUIXhQnhK7VnwcPHNbob13++OlgGDpCmUmOtjBOriBvg4VnHSzGNgUw0f+zhn0w9g6FhYRjRdrAllMnJBgB",
-    │                   "thinking": "The echo agent has completed. It ran and returned with \"done\". The agent executed the echo command as requested. The result shows it completed successfully with agent ID a42b3b7dc766d5eee.\n\nSince the user instructed me to delegate to the echo sub-agent and not answer with text myself, I should report what the agent did. The agent has completed its task of running an echo greeting.",
+    │                   "signature": "EsUFCpQBCA8YAipAXIi0W/4+eDB9XyQ7VhPoDxtkvi/N7HI0mnlPUhwbiNmBP9AnVXnIlwBeFJy//SoweQic5fEikJNX0PAW7eiQwzIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDI3Nzk2NjY4LTczNTEtNDBhYy1hY2M0LTAyNGFlZTg5OTVhNRIMgTPObnQoSyKSb4IUGgxKIn+d1eN4sfoum2wiMJrEyM5GzVx0iAwY5Ds1NWiElBZ150xSBVSSyUUBhZMwKWhUIYgI6ehlIHJSaedx5SrdAy9AiI74Vqt2oy/x86aoC0NVRG/1d6Dg8vSRVt8GfJyyb263/KV6Is432Sg+OFx+ha3Iivj0VohADOhPUOl4J9OGeJHVgwyjSGAr320EnFD7yrrfTtSCxJHcN1WI7QiWZqCtP3QLBp4PusY637OB1RvwuZu94ACdTlC7YJOAha1HzPklrBTh8hzt6jiZW1QIKH/tkx3BCk4arMenJ+5KKdhOGglYHayS8b1z65rF/54QlOqLkDje2U+ZD12amBCY3Bxq97Kqy8G4yLkUlOZIvU2xz5XOsa7g+Famyl/lqWAShAsnrNh4IumphlEq5mIxV4ZvuA0KoCm2f1MFCKltBs9DrgsJMg4iWiRahliZgqiIlQwZ0/vjuEjJpuWI4E/fdBteweWKhCD0CMVvPVuMq3CwT3dUEQfipc8V+dUDc4OScAV5t/Jc7li2DFrg4S1Wy1xwR6HiU9UK2YrOBM9BikIVPaCxMMBIPxnkHoM4E1IqKzLrQ8KQmtw654Hi7R9jXLdTDzuatAg1zRaB/1Q6MU9beH6XEDl9Mde5GB2GeVh8k7+JZ2G8Tc3GK3eJg9sTfo5zrjyCO4Kkpnym3eN8jO42XkvpRXJf2rrAMEJ3e5HJm+Bp+2iXRhlJ24AviRgB",
+    │                   "thinking": "The echo agent has completed its task. According to the Agent tool description:\n\"When the agent is done, it will return a single message back to you. The result returned by the agent is not visible to the user. To show the user the result, you should send a text message back to the user with a concise summary of the result.\"\n\nSo I need to report back to the user what the agent did. The agent was supposed to echo a greeting message. Let me provide a summary.",
     │                   "type": "thinking"
     │                 }
     │               ],
@@ -814,7 +810,7 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "text": "The echo agent has completed and displayed a greeting message.",
+    │                   "text": "The echo agent has completed the greeting task.",
     │                   "type": "text"
     │                 }
     │               ],
@@ -825,11 +821,11 @@ span_tree:
     │             "model": "claude-sonnet-4-5-20250929"
     │           }
     │           metrics: {
-    │             "completion_tokens": 308,
-    │             "prompt_cache_creation_tokens": 353,
-    │             "prompt_cached_tokens": 48342,
-    │             "prompt_tokens": 48703,
-    │             "tokens": 49011
+    │             "completion_tokens": 339,
+    │             "prompt_cache_creation_tokens": 24376,
+    │             "prompt_cached_tokens": 24010,
+    │             "prompt_tokens": 48394,
+    │             "tokens": 48733
     │           }
     └── claude-agent-failure-operation
         metadata: {
@@ -841,7 +837,7 @@ span_tree:
             output: {
               "content": [
                 {
-                  "text": "The calculator tool encountered a **division by zero** error when attempting to divide 2 by 0.",
+                  "text": "The operation failed with a division by zero error.",
                   "type": "text"
                 }
               ],
@@ -864,8 +860,8 @@ span_tree:
             │     {
             │       "content": [
             │         {
-            │           "signature": "EoUFCm0IDxgCKkC2rq8K04PKoSytapqhWhlpIlARXBuWLKOJe5+wMbnfwPqWjIOkgSTV/hVMESUdunw4V0xSIew5jWU30FzgN22QMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOABCCHRoaW5raW5nEgzB4aCyQrnOVESy8hYaDEBVJR/l10vY6nNIySIwU78X61g1MhP9DOa1ld8WaRuAD6BlRv9p57oiKn7kyesH0rSqrz6BgG8fBp4YlOWBKsUDQ1aD+PX4zzJU/ZTSw3cKFDcVy6Cdtk+NWro7fI01yyLW/F6xAv1XVJlxTh3k3Pa5KzaIILGvjuzsO1CerOlEH3Uqz2xuCohbjZzYa6ULrYWMQ8QZ8goKK/HW7iTebnLS6fwnhnuIxGlZev5z9YTyTyg8eNc+8De+KyBG5dEjFwo8FDdjJPf7pglXYgt1Pl1QW2mhDm0XhyOoRl9c4x87ASabg54cLCGrWn9AvbjhkIytIP3+QxgJk8xgFwRMRQwevWoXX6xJkxZ6Wjm6oHjeoaIC9zGzpQosuSZhOYQa3iFu168hhEpbuMf9z7iGEIvmSOrCu2yJvrEiwBu26YsN2zhD9MCw4h3WOTxF22qLYBXDSgWMiXQRhs28apRzMNT4Gvef3FXkzqXWNY+U4xm8xh69MBjW5GEJr/lJH9fDbWgUnhs54l0bSjnbEqD6v+4YwqRRGddCd7mcQa6kcVUMqNBFSQENp1uweygwVKDHLeYgKuY0dk1rK8pELubBJM9vmM3t0qZtBv+THFcKNWsVomHynVDtvHHnIhSfBfuWqqUCIbt4JtvQaAW52+fCoKCW+CkvaUtW6jDBdZO1E2ox2KbBjK8NGAE=",
-            │           "thinking": "The user is asking me to divide 2 by 0 using the calculator tool, and explicitly telling me not to recover from the error. This is asking me to demonstrate what happens when you attempt a mathematically undefined operation (division by zero).\n\nLet me use the calculator tool with these parameters:\n- operation: \"divide\"\n- a: 2\n- b: 0\n\nI should call the tool and then report what happens without attempting to handle any error gracefully.",
+            │           "signature": "EqcECpMBCA8YAipAvZ5/eqkXfXDsnM/+xACPSivnvW6VhSXInOQ4xN4XtoimfTpyImEfIL1RBnoYedwDdTIy+XMSZVWrYp4xlaveeDIZY2xhdWRlLWhhaWt1LTQtNS0yMDI1MTAwMTgAQgh0aGlua2luZ1okMjc3OTY2NjgtNzM1MS00MGFjLWFjYzQtMDI0YWVlODk5NWE1Egyox/zklLEZMtNpmiwaDFNX5emTBKwH6ZvLFSIwjZw+KZG6PClw/KzjoUlNxLLQARHLIXX92qePJ34dDi/BydhGpJv0aPMhvojvy/BGKsACVpx/Dg2Q2AJ572YIhOD4OqlTPphAmPWV7/SYZ5dBy/HT9Hwgt8zXvVLoR1U8BOI/A72sigPXbk6lQH9xu6F+zubEtxG5lXjTZ0uEBeGZ4H0pPSwYtCQPFYQxt/IP9NVL2xhaSrZrNTJl9zQbWLMLhPIbYWEnYv5OM7tTeUHMGWRbTZjPK/YVL6G943j97wWsevKt2/d3Cz0gPANH9Bt8uZ0PHLHWKmwmgePxyHM9IsF7Pt0GEGHPXpggJKO2qfZgRKzovv5AXV6QutNLY33LZ9IFGDaJARC8aevz6RMdoamLXZwi/L9ay0keEZJO6UY7lek0na5NCR1OFU6l5zgy4BpBmnzr+5V0muE/TgFeD8RMw4rUC5SlgV7KxGF/PuOI00fS4BZfti2kyR7QIoTLAYt5ny0zmDXj69I3iu3gypYYAQ==",
+            │           "thinking": "The user is asking me to divide 2 by 0 using the calculator tool and explicitly says \"Do not recover from the error.\"\n\nLet me proceed with this request. Division by zero will result in an error, and I should not attempt to recover or provide alternatives - I should just let the error occur as requested.",
             │           "type": "thinking"
             │         }
             │       ],
@@ -894,11 +890,11 @@ span_tree:
             │     "model": "claude-haiku-4-5-20251001"
             │   }
             │   metrics: {
-            │     "completion_tokens": 7,
-            │     "prompt_cache_creation_tokens": 2374,
+            │     "completion_tokens": 3,
+            │     "prompt_cache_creation_tokens": 2213,
             │     "prompt_cached_tokens": 21870,
-            │     "prompt_tokens": 24254,
-            │     "tokens": 24261
+            │     "prompt_tokens": 24093,
+            │     "tokens": 24096
             │   }
             ├── tool: calculator/calculator [tool]
             │   input: {
@@ -908,7 +904,7 @@ span_tree:
             │   }
             │   metadata: {
             │     "claude_agent_sdk.raw_tool_name": "mcp__calculator__calculator",
-            │     "gen_ai.tool.call.id": "toolu_01KJo2DZdGT1FVwBuhtHgJGT",
+            │     "gen_ai.tool.call.id": "toolu_012f4AtL6Ye5AZEsyJWr44DB",
             │     "gen_ai.tool.name": "calculator",
             │     "mcp.server": "calculator"
             │   }
@@ -944,8 +940,8 @@ span_tree:
                   {
                     "content": [
                       {
-                        "signature": "Eu4CCm0IDxgCKkAxgcJdkLT+N5oruQGEfqwSv8CARwr338V215Bst2jo6eFLJgyJxN+m6lrtzm0fSrmoFu1+YcnOCfngcewpR4kNMhljbGF1ZGUtaGFpa3UtNC01LTIwMjUxMDAxOABCCHRoaW5raW5nEgyeDeX57RARmY/Aa2caDNEhUDf7S7o+W2gkpCIwiEHOXYP4JcKDTUKMZ2V6bv0g3JJYyfyWZQUxMi55C3ac6ec1bZVMCLmDmSClACcVKq4BsJYVBvO7BU5R41g8hiwU32qEvQCvXeLKBmltKWR0jRDTbN48r4kiFILF+XLLtq3ID2/rpurxUaG07/19DFmeqL/SR9JyT27VEuvS20w2TCiKB4rbim9oICxWTG8MuFAFR5OJdnkUeEd0t9znIDcgMNYROakpik+xMit9aU7e/A8kC9in3cWvAiv0OJMCh8/p9gdEjY9Fkm4rcun1bRJgyYc9YVFCqINaB8zMQxPkGAE=",
-                        "thinking": "The calculator tool returned an error: \"division by zero\". As requested, I won't recover from this error or try to handle it - I'll just report what happened.",
+                        "signature": "EsoDCpMBCA8YAipAEFFVxKOv/HiPa+iyBhjAF76pNkTkmNJ/zslDDCMIJSoQKjXt5xTEKqQ7pdA0ccQHR4MUxTf+iVdl9JQepzTgFDIZY2xhdWRlLWhhaWt1LTQtNS0yMDI1MTAwMTgAQgh0aGlua2luZ1okMjc3OTY2NjgtNzM1MS00MGFjLWFjYzQtMDI0YWVlODk5NWE1EgxT6MHzzHLPIXUNXxEaDACJpsVKk/IaCL08uyIw+gLjztXEXnisglDNehSr2ZG1v4WkBICl7JiLCNrc3cwidwRv57oYkCJWzOGHPNLiKuMBkxlSidMlrDuFJHQLr89saEvTrrd6KOECuM/K811lu4beI6iUmaPdF9NwA5HbfqmZIEEZU64r88KY24dSYAR4roUympDAfgjwrZ86Io/iTrEm6Da8FSZXAioUZMigQab7kj0QakRrawdTDHyw4q5I78VgO0TNFSjO08nmpEKLfjUsaVjc6A3XaCaRPgqF6I2VjAPNdA+FQ2dsDqcQ6ACR7Da/dSc7Dy95ZArL0UZYpbdZ8CgqfopX9mSj96m3bEsPEH1SjKfc+NCJ2Opp753vrCIWq3UlZt4WPLR2PnKJyAyHlfsYAQ==",
+                        "thinking": "The calculator returned a \"division by zero\" error as expected. The user asked me not to recover from the error, so I'll simply report what happened without attempting to fix it or provide alternative solutions.",
                         "type": "thinking"
                       }
                     ],
@@ -954,7 +950,7 @@ span_tree:
                   {
                     "content": [
                       {
-                        "text": "The calculator tool encountered a **division by zero** error when attempting to divide 2 by 0.",
+                        "text": "The operation failed with a division by zero error.",
                         "type": "text"
                       }
                     ],
@@ -965,9 +961,9 @@ span_tree:
                   "model": "claude-haiku-4-5-20251001"
                 }
                 metrics: {
-                  "completion_tokens": 260,
-                  "prompt_cache_creation_tokens": 2605,
-                  "prompt_cached_tokens": 46114,
-                  "prompt_tokens": 48727,
-                  "tokens": 48987
+                  "completion_tokens": 224,
+                  "prompt_cache_creation_tokens": 2410,
+                  "prompt_cached_tokens": 45953,
+                  "prompt_tokens": 48371,
+                  "tokens": 48595
                 }

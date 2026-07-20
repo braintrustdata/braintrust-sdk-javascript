@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "7c0e162d6794cf5d",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-07T14:11:17.022Z",
+      "recordedAt": "2026-07-20T15:39:26.393Z",
       "request": {
         "body": {
           "kind": "json",
@@ -53,11 +53,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1783433476,
-            "created_at": 1783433476,
+            "completed_at": 1784561966,
+            "created_at": 1784561965,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0e40c1648b66213e006a4d09042924819e9ff4ebd89376b996",
+            "id": "resp_02d6e33c98d96385006a5e412d596c819e8d131f46e74a890d",
             "incomplete_details": null,
             "instructions": "Use the lookup_weather tool exactly once, then answer only with the forecast.",
             "max_output_tokens": null,
@@ -69,8 +69,8 @@
             "output": [
               {
                 "arguments": "{\"city\":\"Vienna\"}",
-                "call_id": "call_tBDFWK0zZBjOK0bSamAmfrg0",
-                "id": "fc_0e40c1648b66213e006a4d0904c990819ebeabdd286ca56a79",
+                "call_id": "call_LD3cFnlGZTR5Y4uVuOYogtOA",
+                "id": "fc_02d6e33c98d96385006a5e412e2244819ea02278b24bc997b1",
                 "name": "lookup_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -120,6 +120,7 @@
               {
                 "description": "Look up the weather forecast for a city.",
                 "name": "lookup_weather",
+                "output_schema": null,
                 "parameters": {
                   "additionalProperties": false,
                   "properties": {
@@ -140,6 +141,7 @@
             "usage": {
               "input_tokens": 81,
               "input_tokens_details": {
+                "cache_write_tokens": 0,
                 "cached_tokens": 0
               },
               "output_tokens": 7,
@@ -155,13 +157,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1776ff8ca81b4b5-VIE",
+          "cf-ray": "a1e30efa98c85c5d-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 07 Jul 2026 14:11:17 GMT",
+          "date": "Mon, 20 Jul 2026 15:39:26 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "851",
+          "openai-processing-ms": "1040",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -175,7 +177,7 @@
           "x-ratelimit-remaining-tokens": "149999702",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "f4091604-c5f4-4ad3-b863-6da1442a7f03"
+          "x-request-id": "req_996ae7b37cca4321959a0b1c165b1d43"
         },
         "status": 200,
         "statusText": "OK"
@@ -185,7 +187,7 @@
       "callIndex": 1,
       "id": "f12aff3913439248",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-07T14:11:17.893Z",
+      "recordedAt": "2026-07-20T15:39:27.420Z",
       "request": {
         "body": {
           "kind": "json",
@@ -198,14 +200,14 @@
               },
               {
                 "arguments": "{\"city\":\"Vienna\"}",
-                "call_id": "call_tBDFWK0zZBjOK0bSamAmfrg0",
-                "id": "fc_0e40c1648b66213e006a4d0904c990819ebeabdd286ca56a79",
+                "call_id": "call_LD3cFnlGZTR5Y4uVuOYogtOA",
+                "id": "fc_02d6e33c98d96385006a5e412e2244819ea02278b24bc997b1",
                 "name": "lookup_weather",
                 "status": "completed",
                 "type": "function_call"
               },
               {
-                "call_id": "call_tBDFWK0zZBjOK0bSamAmfrg0",
+                "call_id": "call_LD3cFnlGZTR5Y4uVuOYogtOA",
                 "output": "Sunny in Vienna",
                 "status": "completed",
                 "type": "function_call_output"
@@ -247,11 +249,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1783433477,
-            "created_at": 1783433477,
+            "completed_at": 1784561967,
+            "created_at": 1784561966,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0e40c1648b66213e006a4d0905321c819e8b8dc500fabb074d",
+            "id": "resp_02d6e33c98d96385006a5e412e7274819eabddceb0b9c9f25d",
             "incomplete_details": null,
             "instructions": "Use the lookup_weather tool exactly once, then answer only with the forecast.",
             "max_output_tokens": null,
@@ -270,7 +272,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_0e40c1648b66213e006a4d0905bbb0819ea93cfe2c76f382c9",
+                "id": "msg_02d6e33c98d96385006a5e412f3dac819e8914dac033ad6c08",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -320,6 +322,7 @@
               {
                 "description": "Look up the weather forecast for a city.",
                 "name": "lookup_weather",
+                "output_schema": null,
                 "parameters": {
                   "additionalProperties": false,
                   "properties": {
@@ -340,6 +343,7 @@
             "usage": {
               "input_tokens": 96,
               "input_tokens_details": {
+                "cache_write_tokens": 0,
                 "cached_tokens": 0
               },
               "output_tokens": 6,
@@ -355,13 +359,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1776fffdadeb4b5-VIE",
+          "cf-ray": "a1e30f02090f5c5d-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 07 Jul 2026 14:11:17 GMT",
+          "date": "Mon, 20 Jul 2026 15:39:27 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "706",
+          "openai-processing-ms": "970",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -375,7 +379,7 @@
           "x-ratelimit-remaining-tokens": "149999687",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "1ec7b02e-1b24-4e76-8b5f-a13c354ae23b"
+          "x-request-id": "req_bb2878d5a1e84fd9a86140f251b275cd"
         },
         "status": 200,
         "statusText": "OK"

@@ -28,16 +28,16 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_reasoning_tokens": 0,
-    │         "completion_tokens": 92,
+    │         "completion_tokens": 76,
     │         "duration": 0,
-    │         "prompt_cached_tokens": 12160,
-    │         "prompt_tokens": 18394
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 20387
     │       }
     │       ├── tool: web_search [tool]
     │       │   input: "Braintrust SDK JavaScript"
     │       │   metadata: {
     │       │     "gen_ai.tool.name": "web_search",
-    │       │     "openai_codex.item_id": "ws_021a690378e1901f016a4d0479378c819caaac71eda20d0d60",
+    │       │     "openai_codex.item_id": "ws_0ad18fe81173bdb5016a5e3f7816b081a3b9b8ac746c0d11ab",
     │       │     "openai_codex.item_type": "web_search"
     │       │   }
     │       └── OpenAI Codex LLM [llm]
@@ -77,17 +77,17 @@ span_tree:
               "provider": "openai"
             }
             metrics: {
-              "completion_reasoning_tokens": 0,
-              "completion_tokens": 79,
+              "completion_reasoning_tokens": 128,
+              "completion_tokens": 227,
               "duration": 0,
-              "prompt_cached_tokens": 12160,
-              "prompt_tokens": 20376
+              "prompt_cached_tokens": 0,
+              "prompt_tokens": 20531
             }
             ├── tool: web_search [tool]
             │   input: ""
             │   metadata: {
             │     "gen_ai.tool.name": "web_search",
-            │     "openai_codex.item_id": "ws_0e363d8c4bd8908e016a4d047de29481a19b11ee7f372ccc18",
+            │     "openai_codex.item_id": "ws_089278421c2072b5016a5e3f7d408481a382b6f87a03369d55",
             │     "openai_codex.item_type": "web_search"
             │   }
             └── OpenAI Codex LLM [llm]

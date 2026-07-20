@@ -4,7 +4,7 @@
   "dependencies": {
     "openai": "^6.7.0",
     "strands-agent-sdk-v1": "npm:@strands-agents/sdk@1.6.0",
-    "strands-agent-sdk-v1-latest": "npm:@strands-agents/sdk@1.7.0"
+    "strands-agent-sdk-v1-latest": "npm:@strands-agents/sdk@1.10.0"
   },
   "braintrustScenario": {
     "bump": {

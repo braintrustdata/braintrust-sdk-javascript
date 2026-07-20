@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "ecdbd469610aca8b",
       "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
-      "recordedAt": "2026-07-07T15:13:15.386Z",
+      "recordedAt": "2026-07-20T15:26:22.605Z",
       "request": {
         "body": {
           "kind": "json",
@@ -55,7 +55,7 @@
               }
             ],
             "modelVersion": "gemini-2.5-flash-lite",
-            "responseId": "iBdNat_AEdzzkdUPr_KOgA0",
+            "responseId": "Hj5eaviZELvJ_uMP9aDh4Q8",
             "usageMetadata": {
               "candidatesTokenCount": 16,
               "promptTokenCount": 37,
@@ -74,9 +74,9 @@
           "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
           "content-encoding": "gzip",
           "content-type": "application/json; charset=UTF-8",
-          "date": "Tue, 07 Jul 2026 15:13:15 GMT",
+          "date": "Mon, 20 Jul 2026 15:26:22 GMT",
           "server": "scaffolding on HTTPServer2",
-          "server-timing": "gfet4t7; dur=3146",
+          "server-timing": "gfet4t7; dur=421",
           "transfer-encoding": "chunked",
           "vary": "Origin, X-Origin, Referer",
           "x-content-type-options": "nosniff",

@@ -12,9 +12,6 @@ span_tree:
         │   input: {
         │     "message": ""
         │   }
-        │   output: {
-        │     "message": "hello from langgraph"
-        │   }
         │   └── ChatOpenAI [llm]
         │       input: [
         │         [
