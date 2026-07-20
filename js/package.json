@@ -180,7 +180,7 @@
     "@types/argparse": "^2.0.14",
     "@types/async": "^3.2.24",
     "@types/cli-progress": "^3.11.5",
-    "@types/cors": "^2.8.17",
+    "@types/cors": "^2.8.19",
     "@types/esquery": "^1.5.4",
     "@types/express": "^5.0.0",
     "@types/http-errors": "^2.0.4",
@@ -190,7 +190,7 @@
     "@types/tar": "^6.1.13",
     "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@typescript-eslint/parser": "^8.49.0",
-    "ai": "^6.0.0",
+    "ai": "^5.0.215",
     "async": "^3.2.5",
     "cross-env": "^7.0.3",
     "eslint-plugin-es-x": "9.7.0",
@@ -213,9 +213,9 @@
     "zod": "^3.25.34"
   },
   "dependencies": {
-    "@next/env": "^14.2.3",
-    "@vercel/functions": "^1.0.2",
-    "acorn": "^8.16.0",
+    "@next/env": "^14.2.35",
+    "@vercel/functions": "^1.6.0",
+    "acorn": "^8.17.0",
     "acorn-import-attributes": "^1.9.5",
     "ajv": "^8.20.0",
     "argparse": "^2.0.1",
@@ -223,10 +223,10 @@
     "cjs-module-lexer": "^2.2.0",
     "cli-progress": "^3.12.0",
     "cli-table3": "^0.6.5",
-    "cors": "^2.8.5",
+    "cors": "^2.8.6",
     "dc-browser": "^1.0.4",
-    "dotenv": "^16.4.5",
-    "esbuild": "0.28.0",
+    "dotenv": "^16.6.1",
+    "esbuild": "0.28.1",
     "esquery": "^1.7.0",
     "eventsource-parser": "^1.1.2",
     "express": "^5.2.1",
@@ -242,19 +242,19 @@
     "termi-link": "^1.0.1",
     "unplugin": "^2.3.5",
     "uuid": "^11.1.1",
-    "zod-to-json-schema": "^3.25.0"
+    "zod-to-json-schema": "^3.25.2"
   },
   "peerDependencies": {
     "zod": "^3.25.34 || ^4.0"
   },
   "optionalDependencies": {
-    "@braintrust/bt-darwin-arm64": "0.12.0",
-    "@braintrust/bt-darwin-x64": "0.12.0",
-    "@braintrust/bt-linux-arm64": "0.12.0",
-    "@braintrust/bt-linux-x64": "0.12.0",
-    "@braintrust/bt-linux-x64-musl": "0.12.0",
-    "@braintrust/bt-win32-arm64": "0.12.0",
-    "@braintrust/bt-win32-x64": "0.12.0"
+    "@braintrust/bt-darwin-arm64": "0.15.1",
+    "@braintrust/bt-darwin-x64": "0.15.1",
+    "@braintrust/bt-linux-arm64": "0.15.1",
+    "@braintrust/bt-linux-x64": "0.15.1",
+    "@braintrust/bt-linux-x64-musl": "0.15.1",
+    "@braintrust/bt-win32-arm64": "0.15.1",
+    "@braintrust/bt-win32-x64": "0.15.1"
   },
   "publishConfig": {
     "access": "public",
