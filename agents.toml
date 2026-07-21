@@ -2,7 +2,6 @@
 
 version = 1
 agents = ["claude", "codex", "cursor", "vscode", "opencode"]
-gitignore = false
 
 [trust]
 github_orgs = ["braintrustdata"]
@@ -14,3 +13,7 @@ source = "path:.agents/skills/e2e-tests"
 [[skills]]
 name = "instrumentation"
 source = "path:.agents/skills/instrumentation"
+
+[[skills]]
+name = "instrumentation-spec"
+source = "braintrustdata/braintrust-spec"
