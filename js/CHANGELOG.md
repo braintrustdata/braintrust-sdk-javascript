@@ -5,7 +5,7 @@
 ### Minor Changes
 
 - feat(ai-sdk): Add HarnessAgent tracing support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2236)
-- Add span origin provenance metadata to Braintrust and OpenTelemetry spans. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2226)
+- feat: Add span origin provenance metadata to Braintrust and OpenTelemetry spans (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2226)
 
 ### Patch Changes
 
