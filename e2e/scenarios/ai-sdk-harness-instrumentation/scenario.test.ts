@@ -129,18 +129,21 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             );
             expect(findAllSpans(events, "bash").length).toBeGreaterThan(0);
 
+            const snapshotEvents = events.filter(
+              (event) => event.span.name !== "bash",
+            );
             await matchSpanTreeSnapshot(
-              events,
+              snapshotEvents,
               resolveFileSnapshotPath(
                 import.meta.url,
                 `${scenario.variantKey}-${mode}.span-tree.json`,
               ),
               {
                 normalize: {
-                  // Codex may include its tool call in either side of the
-                  // suspended turn. Assert the exact turn inputs and tool
-                  // lifecycle above, while snapshotting the stable trace
-                  // shape and aggregate usage.
+                  // The tool span can be parented to either side of the
+                  // suspended turn, so its presence is asserted above and it
+                  // is omitted from the structural snapshot. Snapshot the
+                  // stable trace shape and aggregate usage here.
                   omittedKeys: [
                     "callId",
                     "content",
