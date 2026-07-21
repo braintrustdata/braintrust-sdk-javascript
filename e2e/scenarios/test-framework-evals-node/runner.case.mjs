@@ -1,14 +1,28 @@
+import assert from "node:assert/strict";
 import { after, describe, test } from "node:test";
 import { currentSpan, initNodeTestSuite, login } from "braintrust/node";
 
 const testRunId = process.env.BRAINTRUST_E2E_RUN_ID;
 const scenario = "test-framework-evals-node";
-const scopedName = (base) =>
-  `${base}-${testRunId.toLowerCase().replace(/[^a-z0-9-]/g, "-")}`;
+const scopedName = (base) => {
+  const configuredProjectName = process.env.BRAINTRUST_E2E_PROJECT_NAME?.trim();
+  if (configuredProjectName) {
+    return configuredProjectName;
+  }
+
+  return `${base}-${testRunId.toLowerCase().replace(/[^a-z0-9-]/g, "-")}`;
+};
 
 await login({
   apiKey: process.env.BRAINTRUST_API_KEY,
   appUrl: process.env.BRAINTRUST_APP_URL,
+});
+
+test("node:test uses the configured CI project", () => {
+  assert.equal(
+    scopedName("e2e-test-framework-evals-node"),
+    process.env.BRAINTRUST_E2E_PROJECT_NAME,
+  );
 });
 
 describe("test-framework-evals-node", () => {

@@ -19,6 +19,8 @@ const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
 const TIMEOUT_MS = 90_000;
+const CONFIGURED_PROJECT_NAME =
+  process.env.BRAINTRUST_E2E_PROJECT_NAME || "sdk-e2e-tests";
 
 function findEventByCase(events: CapturedLogEvent[], testCase: string) {
   return events.find((event) => {
@@ -44,6 +46,7 @@ test(
         const cursor = requestCursor();
 
         await runDenoScenarioDir({
+          env: { BRAINTRUST_E2E_PROJECT_NAME: CONFIGURED_PROJECT_NAME },
           scenarioDir,
           timeoutMs: TIMEOUT_MS,
         });
@@ -156,6 +159,16 @@ test(
             "/logs3",
           ]),
         );
+        const projectRegistrations = requests.filter(
+          (request) => request.path === "/api/project/register",
+        );
+        expect(projectRegistrations.length).toBeGreaterThan(0);
+        for (const request of projectRegistrations) {
+          expect(request.jsonBody).toEqual({
+            org_id: "mock-org-id",
+            project_name: CONFIGURED_PROJECT_NAME,
+          });
+        }
 
         await matchSpanTreeSnapshot(
           capturedEvents,
