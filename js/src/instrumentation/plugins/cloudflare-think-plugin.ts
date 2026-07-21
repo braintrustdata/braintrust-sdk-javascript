@@ -71,12 +71,14 @@ export class CloudflareThinkPlugin extends BasePlugin {
     const channel = cloudflareThinkChannels.runInferenceLoop.tracingChannel();
     const states = new WeakMap<object, ThinkRunState>();
     const state = _internalGetGlobalState();
-    const contextManager = state.contextManager;
-    const currentSpanStore = (
-      contextManager as {
-        [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-      }
-    )[BRAINTRUST_CURRENT_SPAN_STORE];
+    const contextManager = state?.contextManager;
+    const currentSpanStore = contextManager
+      ? (
+          contextManager as {
+            [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
+          }
+        )[BRAINTRUST_CURRENT_SPAN_STORE]
+      : undefined;
 
     const ensureState = (
       event: ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>,
@@ -119,7 +121,7 @@ export class CloudflareThinkPlugin extends BasePlugin {
       return runState;
     };
 
-    if (currentSpanStore && channel.start) {
+    if (contextManager && currentSpanStore && channel.start) {
       channel.start.bindStore(currentSpanStore, (event) => {
         const runState = ensureState(event);
         return runState
@@ -262,7 +264,7 @@ export class CloudflareThinkPlugin extends BasePlugin {
 
   private currentState(): ThinkRunState | undefined {
     const parentIds =
-      _internalGetGlobalState().contextManager.getParentSpanIds()
+      _internalGetGlobalState()?.contextManager.getParentSpanIds()
         ?.spanParents ?? [];
     for (const parentId of parentIds) {
       const state = this.statesBySpanId.get(parentId);

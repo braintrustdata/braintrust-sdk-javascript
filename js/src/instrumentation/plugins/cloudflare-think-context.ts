@@ -16,7 +16,7 @@ export function unregisterCloudflareThinkSpan(span: Span): void {
 
 export function currentCloudflareThinkSpan(): Span | undefined {
   const parentSpanIds =
-    _internalGetGlobalState().contextManager.getParentSpanIds()?.spanParents ??
+    _internalGetGlobalState()?.contextManager.getParentSpanIds()?.spanParents ??
     [];
   for (const parentSpanId of parentSpanIds) {
     const span = cloudflareThinkSpans.get(parentSpanId);
