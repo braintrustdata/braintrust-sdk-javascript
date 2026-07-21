@@ -1,5 +1,6 @@
 import type { ChannelSpanInfo, SpanInfoCarrier, StartEvent } from "./types";
 import { debugLogger } from "../../debug-logger";
+import type { Span } from "../../logger";
 import { isObject, mergeDicts } from "../../util";
 
 type ChannelConfigName =
@@ -8,6 +9,7 @@ type ChannelConfigName =
 
 export type ChannelConfig = {
   name: ChannelConfigName;
+  parent?: (args: unknown[], event: unknown) => Span | string | undefined;
   shouldTrace?: (args: unknown[], event: unknown) => boolean;
   type: string;
 };

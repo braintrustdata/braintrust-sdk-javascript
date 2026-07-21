@@ -1051,8 +1051,10 @@ describe("AI SDK streaming instrumentation", () => {
 
     const WrappedHarnessAgent = wrapAgentClass(HarnessAgent);
     const agent = new WrappedHarnessAgent();
-    const session: any = { sessionId: "session-123" };
-    session.self = session;
+    const generateSession: any = { sessionId: "generate-session" };
+    generateSession.self = generateSession;
+    const streamSession: any = { sessionId: "stream-session" };
+    streamSession.self = streamSession;
     const toolApprovalContinuations = [
       {
         approvalResponse: { id: "approval-1", approved: true },
@@ -1070,18 +1072,21 @@ describe("AI SDK streaming instrumentation", () => {
       onStepFinish: () => {},
       prompt: "generate prompt",
       providerOptions: { mock: { option: true } },
-      session,
+      session: generateSession,
+    });
+    await agent.continueGenerate({
+      session: generateSession,
+      toolApprovalContinuations,
     });
     const streamResult = await agent.stream({
       messages: [{ role: "user", content: "stream prompt" }],
-      session,
+      session: streamSession,
     });
     for await (const _chunk of streamResult.fullStream) {
       // Drain the stream so the root span records its final output and usage.
     }
-    await agent.continueGenerate({ session, toolApprovalContinuations });
     const continueStreamResult = await agent.continueStream({
-      session,
+      session: streamSession,
       toolApprovalContinuations,
     });
     for await (const _chunk of continueStreamResult.fullStream) {
@@ -1091,7 +1096,7 @@ describe("AI SDK streaming instrumentation", () => {
     expect(receivedParams).toHaveLength(4);
     for (const params of receivedParams) {
       expect(params).not.toHaveProperty("shouldNeverReachCall");
-      expect(params.session).toBe(session);
+      expect([generateSession, streamSession]).toContain(params.session);
     }
     expect(agent.settings).toEqual({
       shouldNeverReachCall: true,
@@ -1103,7 +1108,7 @@ describe("AI SDK streaming instrumentation", () => {
       span.span_attributes?.name?.startsWith("HarnessAgent."),
     );
     expect(harnessSpans).toHaveLength(4);
-    expect(new Set(harnessSpans.map((span) => span.root_span_id)).size).toBe(4);
+    expect(new Set(harnessSpans.map((span) => span.root_span_id)).size).toBe(2);
 
     const byName = Object.fromEntries(
       harnessSpans.map((span) => [span.span_attributes.name, span]),
@@ -1120,13 +1125,21 @@ describe("AI SDK streaming instrumentation", () => {
     expect(byName["HarnessAgent.continueStream"]?.input).toEqual({
       toolApprovalContinuations,
     });
+    expect(byName["HarnessAgent.generate"]?.span_parents).toEqual(undefined);
+    expect(byName["HarnessAgent.stream"]?.span_parents).toEqual(undefined);
+    expect(byName["HarnessAgent.continueGenerate"]?.span_parents).toEqual([
+      byName["HarnessAgent.generate"]?.span_id,
+    ]);
+    expect(byName["HarnessAgent.continueStream"]?.span_parents).toEqual([
+      byName["HarnessAgent.stream"]?.span_id,
+    ]);
 
     for (const span of harnessSpans) {
       expect(span.span_attributes.type).toBe("task");
       expect(span.metadata).toMatchObject({
         harnessId: "mock-harness",
         permissionMode: "allow-edits",
-        sessionId: "session-123",
+        sessionId: expect.stringMatching(/-session$/),
       });
       expect(span.metadata.tools).toBeDefined();
       expect(span.input).not.toHaveProperty("session");
@@ -1253,6 +1266,78 @@ describe("AI SDK streaming instrumentation", () => {
         permissionMode: "allow-all",
       });
     }
+  });
+
+  test("wrapAgentClass preserves HarnessAgent turn context across serialized continuation state", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    class HarnessAgent {
+      readonly harnessId = "mock-harness";
+      readonly permissionMode = "allow-all";
+      readonly settings: { telemetry?: Record<string, unknown> } = {};
+      readonly tools = {};
+
+      async createSession(params: {
+        continueFrom?: unknown;
+        sessionId?: string;
+      }) {
+        return {
+          sessionId: params.sessionId,
+          suspendTurn: async () => ({
+            data: { cursor: 1 },
+            harnessId: "mock-harness",
+            specificationVersion: "harness-v1",
+            type: "continue-turn",
+          }),
+        };
+      }
+
+      async generate() {
+        return { text: "suspended" };
+      }
+
+      async continueGenerate() {
+        return { text: "finished" };
+      }
+    }
+
+    const WrappedHarnessAgent = wrapAgentClass(HarnessAgent);
+    const agent = new WrappedHarnessAgent();
+    const initialSession = await agent.createSession({
+      sessionId: "serialized-session",
+    });
+    await agent.generate({
+      prompt: "start",
+      session: initialSession,
+    });
+
+    const continuation = JSON.parse(
+      JSON.stringify(await initialSession.suspendTurn()),
+    );
+    const resumedSession = await agent.createSession({
+      continueFrom: continuation,
+      sessionId: "serialized-session",
+    });
+    await agent.continueGenerate({ session: resumedSession });
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const byName = Object.fromEntries(
+      spans
+        .filter((span) =>
+          span.span_attributes?.name?.startsWith("HarnessAgent."),
+        )
+        .map((span) => [span.span_attributes.name, span]),
+    );
+    expect(Object.keys(byName)).toEqual([
+      "HarnessAgent.generate",
+      "HarnessAgent.continueGenerate",
+    ]);
+    expect(byName["HarnessAgent.continueGenerate"]?.root_span_id).toBe(
+      byName["HarnessAgent.generate"]?.root_span_id,
+    );
+    expect(byName["HarnessAgent.continueGenerate"]?.span_parents).toEqual([
+      byName["HarnessAgent.generate"]?.span_id,
+    ]);
   });
 
   test("wrapAgentClass preserves explicit HarnessAgent telemetry settings", async () => {

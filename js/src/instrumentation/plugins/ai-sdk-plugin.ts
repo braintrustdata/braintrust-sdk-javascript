@@ -23,6 +23,13 @@ import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logg
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
 import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
 import {
+  captureHarnessCreateSessionParent,
+  extendHarnessTurn,
+  harnessContinuationParent,
+  registerHarnessSessionParent,
+  registerHarnessTurnSpan,
+} from "../../wrappers/ai-sdk/harness-agent-context";
+import {
   registerWorkflowAgentWrapperSpan,
   unregisterWorkflowAgentWrapperSpan,
 } from "../../wrappers/ai-sdk/workflow-agent-context";
@@ -172,6 +179,7 @@ export class AISDKPlugin extends BasePlugin {
       this.config.denyOutputPaths || DEFAULT_DENY_OUTPUT_PATHS;
 
     this.unsubscribers.push(subscribeToAISDKV7TelemetryDispatcher());
+    this.unsubscribers.push(subscribeToHarnessAgentCreateSession());
 
     // generateText - async function that may return streams
     this.unsubscribers.push(
@@ -427,8 +435,8 @@ export class AISDKPlugin extends BasePlugin {
       traceStreamingChannel(harnessAgentChannels.generate, {
         name: "HarnessAgent.generate",
         type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event) =>
-          prepareAISDKHarnessAgentInput(params, event.self),
+        extractInput: ([params], event, span) =>
+          prepareAISDKHarnessAgentInput(params, event.self, span, false),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -444,8 +452,8 @@ export class AISDKPlugin extends BasePlugin {
       traceStreamingChannel(harnessAgentChannels.stream, {
         name: "HarnessAgent.stream",
         type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event) =>
-          prepareAISDKHarnessAgentInput(params, event.self),
+        extractInput: ([params], event, span) =>
+          prepareAISDKHarnessAgentInput(params, event.self, span, false),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -476,9 +484,11 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(harnessAgentChannels.continueGenerate, {
         name: "HarnessAgent.continueGenerate",
+        parent: (args) =>
+          harnessContinuationParent(harnessSessionFromArguments(args)),
         type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event) =>
-          prepareAISDKHarnessAgentInput(params, event.self),
+        extractInput: ([params], event, span) =>
+          prepareAISDKHarnessAgentInput(params, event.self, span, true),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -486,6 +496,10 @@ export class AISDKPlugin extends BasePlugin {
           ),
         extractMetrics: (result) => extractTokenMetrics(result),
         aggregateChunks: aggregateAISDKChunks,
+        onComplete: ({ endEvent }) =>
+          extendHarnessTurn(
+            harnessContinuationParent(endEvent.arguments?.[0]?.session),
+          ),
       }),
     );
 
@@ -493,9 +507,11 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(harnessAgentChannels.continueStream, {
         name: "HarnessAgent.continueStream",
+        parent: (args) =>
+          harnessContinuationParent(harnessSessionFromArguments(args)),
         type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event) =>
-          prepareAISDKHarnessAgentInput(params, event.self),
+        extractInput: ([params], event, span) =>
+          prepareAISDKHarnessAgentInput(params, event.self, span, true),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -514,6 +530,10 @@ export class AISDKPlugin extends BasePlugin {
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,
             endEvent,
+            onComplete: () =>
+              extendHarnessTurn(
+                harnessContinuationParent(endEvent.arguments?.[0]?.session),
+              ),
             result,
             resolvePromiseUsage: true,
             span,
@@ -613,6 +633,29 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
   }
+}
+
+function subscribeToHarnessAgentCreateSession(): () => void {
+  const channel = harnessAgentChannels.createSession.tracingChannel();
+  const handlers: IsoChannelHandlers<
+    ChannelMessage<typeof harnessAgentChannels.createSession>
+  > = {
+    start: (event) => {
+      event.__braintrust_harness_turn_parent =
+        captureHarnessCreateSessionParent(event.arguments?.[0]);
+    },
+    asyncEnd: (event) => {
+      registerHarnessSessionParent(
+        event.result,
+        typeof event.__braintrust_harness_turn_parent === "string"
+          ? event.__braintrust_harness_turn_parent
+          : undefined,
+      );
+    },
+  };
+
+  channel.subscribe(handlers);
+  return () => channel.unsubscribe(handlers);
 }
 
 function subscribeToAISDKV7TelemetryDispatcher(): () => void {
@@ -1270,10 +1313,19 @@ function prepareAISDKCallInput(
 function prepareAISDKHarnessAgentInput(
   params: AISDKHarnessAgentCallParams,
   self?: unknown,
+  span?: Span,
+  continuation = false,
 ): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
+  if (span) {
+    registerHarnessTurnSpan({
+      continuation,
+      session: params.session,
+      span,
+    });
+  }
   if (isObject(self)) {
     try {
       if (isObject(self.settings)) {
@@ -1323,6 +1375,11 @@ function prepareAISDKHarnessAgentInput(
     input: processAISDKCallInput(selectedInput).input,
     metadata,
   };
+}
+
+function harnessSessionFromArguments(args: unknown[]): unknown {
+  const params = args[0];
+  return isObject(params) ? params.session : undefined;
 }
 
 function prepareAISDKWorkflowAgentStreamInput(

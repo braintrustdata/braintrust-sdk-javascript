@@ -53,6 +53,234 @@
             "model": "gpt-5.4-mini",
             "provider": "codex"
           }
+        },
+        {
+          "name": "HarnessAgent.continueGenerate",
+          "type": "task",
+          "children": [
+            {
+              "name": "harness",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "messages": [
+                      {
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "gpt-5.4-mini",
+                      "provider": "codex"
+                    }
+                  },
+                  "output": {
+                    "finishReason": {
+                      "raw": "stop",
+                      "unified": "stop"
+                    },
+                    "response": {
+                      "id": "<span:1>"
+                    },
+                    "usage": {
+                      "inputTokens": {
+                        "cacheRead": 14336,
+                        "cacheWrite": 0,
+                        "noCache": 8021,
+                        "total": 22357
+                      },
+                      "outputTokens": {
+                        "total": 189
+                      }
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-5.4-mini",
+                    "provider": "codex"
+                  },
+                  "metrics": {
+                    "completion_tokens": 189,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 14336,
+                    "prompt_tokens": 22357,
+                    "tokens": 22546
+                  }
+                }
+              ],
+              "input": {
+                "maxRetries": 0,
+                "messages": [
+                  {
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-5.4-mini",
+                  "provider": "codex"
+                }
+              },
+              "output": {
+                "finishReason": {
+                  "raw": "stop",
+                  "unified": "stop"
+                },
+                "response": {
+                  "id": "<span:1>",
+                  "messages": [],
+                  "modelId": "gpt-5.4-mini",
+                  "timestamp": "<timestamp>"
+                },
+                "totalUsage": {
+                  "inputTokens": {
+                    "cacheRead": 14336,
+                    "cacheWrite": 0,
+                    "noCache": 8021,
+                    "total": 22357
+                  },
+                  "outputTokens": {
+                    "total": 189
+                  }
+                },
+                "usage": {
+                  "inputTokens": {
+                    "cacheRead": 14336,
+                    "cacheWrite": 0,
+                    "noCache": 8021,
+                    "total": 22357
+                  },
+                  "outputTokens": {
+                    "total": 189
+                  }
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-5.4-mini",
+                "provider": "codex"
+              }
+            }
+          ],
+          "input": {
+            "toolApprovalContinuations": []
+          },
+          "output": {
+            "finishReason": "stop",
+            "response": {
+              "id": "<span:1>",
+              "messages": [],
+              "modelId": "shared-harness-session",
+              "timestamp": "<timestamp>"
+            },
+            "totalUsage": {
+              "inputTokenDetails": {
+                "cacheReadTokens": 14336,
+                "cacheWriteTokens": 0,
+                "noCacheTokens": 8021
+              },
+              "inputTokens": 22357,
+              "outputTokenDetails": {
+                "textTokens": 189
+              },
+              "outputTokens": 189,
+              "totalTokens": 22546
+            },
+            "usage": {
+              "inputTokenDetails": {
+                "cacheReadTokens": 14336,
+                "cacheWriteTokens": 0,
+                "noCacheTokens": 8021
+              },
+              "inputTokens": 22357,
+              "outputTokenDetails": {
+                "textTokens": 189
+              },
+              "outputTokens": 189,
+              "totalTokens": 22546
+            },
+            "warnings": []
+          },
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "harnessId": "codex",
+            "permissionMode": "allow-all",
+            "scenario": "ai-sdk-harness-instrumentation",
+            "sessionId": "shared-harness-session",
+            "testRunId": "<run:1>",
+            "tools": {
+              "bash": {
+                "commonName": "bash",
+                "description": "Execute a shell command",
+                "inputSchema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "command": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "command"
+                  ],
+                  "type": "object"
+                },
+                "nativeName": "shell",
+                "toolUseKind": "bash"
+              },
+              "webSearch": {
+                "commonName": "webSearch",
+                "description": "Search the web",
+                "inputSchema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "nativeName": "web_search",
+                "toolUseKind": "readonly"
+              }
+            }
+          },
+          "metrics": {
+            "completion_tokens": 189,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 14336,
+            "prompt_tokens": 22357,
+            "tokens": 22546
+          }
+        },
+        {
+          "name": "bash",
+          "type": "tool",
+          "children": [],
+          "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}",
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "toolCallId": "<toolCallId:1>",
+            "toolName": "bash"
+          }
         }
       ],
       "input": {
@@ -129,234 +357,6 @@
       }
     },
     {
-      "name": "HarnessAgent.continueGenerate",
-      "type": "task",
-      "children": [
-        {
-          "name": "harness",
-          "type": "function",
-          "children": [
-            {
-              "name": "doGenerate",
-              "type": "llm",
-              "children": [],
-              "input": {
-                "messages": [
-                  {
-                    "role": "user"
-                  }
-                ],
-                "model": {
-                  "modelId": "gpt-5.4-mini",
-                  "provider": "codex"
-                }
-              },
-              "output": {
-                "finishReason": {
-                  "raw": "stop",
-                  "unified": "stop"
-                },
-                "response": {
-                  "id": "<span:1>"
-                },
-                "usage": {
-                  "inputTokens": {
-                    "cacheRead": 14336,
-                    "cacheWrite": 0,
-                    "noCache": 8021,
-                    "total": 22357
-                  },
-                  "outputTokens": {
-                    "total": 189
-                  }
-                }
-              },
-              "metadata": {
-                "braintrust": {
-                  "integration_name": "ai-sdk",
-                  "sdk_language": "typescript"
-                },
-                "model": "gpt-5.4-mini",
-                "provider": "codex"
-              },
-              "metrics": {
-                "completion_tokens": 189,
-                "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 14336,
-                "prompt_tokens": 22357,
-                "tokens": 22546
-              }
-            },
-            {
-              "name": "bash",
-              "type": "tool",
-              "children": [],
-              "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}",
-              "metadata": {
-                "braintrust": {
-                  "integration_name": "ai-sdk",
-                  "sdk_language": "typescript"
-                },
-                "toolCallId": "<toolCallId:1>",
-                "toolName": "bash"
-              }
-            }
-          ],
-          "input": {
-            "maxRetries": 0,
-            "messages": [
-              {
-                "role": "user"
-              }
-            ],
-            "model": {
-              "modelId": "gpt-5.4-mini",
-              "provider": "codex"
-            }
-          },
-          "output": {
-            "finishReason": {
-              "raw": "stop",
-              "unified": "stop"
-            },
-            "response": {
-              "id": "<span:1>",
-              "messages": [],
-              "modelId": "gpt-5.4-mini",
-              "timestamp": "<timestamp>"
-            },
-            "totalUsage": {
-              "inputTokens": {
-                "cacheRead": 14336,
-                "cacheWrite": 0,
-                "noCache": 8021,
-                "total": 22357
-              },
-              "outputTokens": {
-                "total": 189
-              }
-            },
-            "usage": {
-              "inputTokens": {
-                "cacheRead": 14336,
-                "cacheWrite": 0,
-                "noCache": 8021,
-                "total": 22357
-              },
-              "outputTokens": {
-                "total": 189
-              }
-            }
-          },
-          "metadata": {
-            "braintrust": {
-              "integration_name": "ai-sdk",
-              "sdk_language": "typescript"
-            },
-            "model": "gpt-5.4-mini",
-            "provider": "codex"
-          }
-        }
-      ],
-      "input": {
-        "toolApprovalContinuations": []
-      },
-      "output": {
-        "finishReason": "stop",
-        "response": {
-          "id": "<span:1>",
-          "messages": [],
-          "modelId": "shared-harness-session",
-          "timestamp": "<timestamp>"
-        },
-        "totalUsage": {
-          "inputTokenDetails": {
-            "cacheReadTokens": 14336,
-            "cacheWriteTokens": 0,
-            "noCacheTokens": 8021
-          },
-          "inputTokens": 22357,
-          "outputTokenDetails": {
-            "textTokens": 189
-          },
-          "outputTokens": 189,
-          "totalTokens": 22546
-        },
-        "usage": {
-          "inputTokenDetails": {
-            "cacheReadTokens": 14336,
-            "cacheWriteTokens": 0,
-            "noCacheTokens": 8021
-          },
-          "inputTokens": 22357,
-          "outputTokenDetails": {
-            "textTokens": 189
-          },
-          "outputTokens": 189,
-          "totalTokens": 22546
-        },
-        "warnings": []
-      },
-      "metadata": {
-        "braintrust": {
-          "integration_name": "ai-sdk",
-          "sdk_language": "typescript"
-        },
-        "harnessId": "codex",
-        "permissionMode": "allow-all",
-        "scenario": "ai-sdk-harness-instrumentation",
-        "sessionId": "shared-harness-session",
-        "testRunId": "<run:1>",
-        "tools": {
-          "bash": {
-            "commonName": "bash",
-            "description": "Execute a shell command",
-            "inputSchema": {
-              "$schema": "http://json-schema.org/draft-07/schema#",
-              "additionalProperties": false,
-              "properties": {
-                "command": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "command"
-              ],
-              "type": "object"
-            },
-            "nativeName": "shell",
-            "toolUseKind": "bash"
-          },
-          "webSearch": {
-            "commonName": "webSearch",
-            "description": "Search the web",
-            "inputSchema": {
-              "$schema": "http://json-schema.org/draft-07/schema#",
-              "additionalProperties": false,
-              "properties": {
-                "query": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "query"
-              ],
-              "type": "object"
-            },
-            "nativeName": "web_search",
-            "toolUseKind": "readonly"
-          }
-        }
-      },
-      "metrics": {
-        "completion_tokens": 189,
-        "prompt_cache_creation_tokens": 0,
-        "prompt_cached_tokens": 14336,
-        "prompt_tokens": 22357,
-        "tokens": 22546
-      }
-    },
-    {
       "name": "HarnessAgent.stream",
       "type": "task",
       "children": [
@@ -408,6 +408,202 @@
             },
             "model": "gpt-5.4-mini",
             "provider": "codex"
+          }
+        },
+        {
+          "name": "HarnessAgent.continueStream",
+          "type": "task",
+          "children": [
+            {
+              "name": "harness",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "messages": [
+                      {
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "gpt-5.4-mini",
+                      "provider": "codex"
+                    }
+                  },
+                  "output": {
+                    "finishReason": {
+                      "raw": "stop",
+                      "unified": "stop"
+                    },
+                    "response": {
+                      "id": "<span:1>"
+                    },
+                    "usage": {
+                      "inputTokens": {
+                        "cacheRead": 14336,
+                        "cacheWrite": 0,
+                        "noCache": 7973,
+                        "total": 22309
+                      },
+                      "outputTokens": {
+                        "total": 153
+                      }
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-5.4-mini",
+                    "provider": "codex"
+                  },
+                  "metrics": {
+                    "completion_tokens": 153,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 14336,
+                    "prompt_tokens": 22309,
+                    "tokens": 22462
+                  }
+                }
+              ],
+              "input": {
+                "maxRetries": 0,
+                "messages": [
+                  {
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-5.4-mini",
+                  "provider": "codex"
+                }
+              },
+              "output": {
+                "finishReason": {
+                  "raw": "stop",
+                  "unified": "stop"
+                },
+                "response": {
+                  "id": "<span:1>",
+                  "messages": [],
+                  "modelId": "gpt-5.4-mini",
+                  "timestamp": "<timestamp>"
+                },
+                "totalUsage": {
+                  "inputTokens": {
+                    "cacheRead": 14336,
+                    "cacheWrite": 0,
+                    "noCache": 7973,
+                    "total": 22309
+                  },
+                  "outputTokens": {
+                    "total": 153
+                  }
+                },
+                "usage": {
+                  "inputTokens": {
+                    "cacheRead": 14336,
+                    "cacheWrite": 0,
+                    "noCache": 7973,
+                    "total": 22309
+                  },
+                  "outputTokens": {
+                    "total": 153
+                  }
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-5.4-mini",
+                "provider": "codex"
+              }
+            }
+          ],
+          "input": {
+            "toolApprovalContinuations": []
+          },
+          "output": {
+            "finishReason": "stop"
+          },
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "harnessId": "codex",
+            "permissionMode": "allow-all",
+            "scenario": "ai-sdk-harness-instrumentation",
+            "sessionId": "shared-harness-session",
+            "testRunId": "<run:1>",
+            "tools": {
+              "bash": {
+                "commonName": "bash",
+                "description": "Execute a shell command",
+                "inputSchema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "command": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "command"
+                  ],
+                  "type": "object"
+                },
+                "nativeName": "shell",
+                "toolUseKind": "bash"
+              },
+              "webSearch": {
+                "commonName": "webSearch",
+                "description": "Search the web",
+                "inputSchema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                },
+                "nativeName": "web_search",
+                "toolUseKind": "readonly"
+              }
+            }
+          },
+          "metrics": {
+            "completion_tokens": 153,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 14336,
+            "prompt_tokens": 22309,
+            "time_to_first_token": 0,
+            "tokens": 22462
+          }
+        },
+        {
+          "name": "bash",
+          "type": "tool",
+          "children": [],
+          "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}",
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "toolCallId": "<toolCallId:1>",
+            "toolName": "bash"
           }
         }
       ],
@@ -474,202 +670,6 @@
       },
       "metrics": {
         "time_to_first_token": 0
-      }
-    },
-    {
-      "name": "HarnessAgent.continueStream",
-      "type": "task",
-      "children": [
-        {
-          "name": "harness",
-          "type": "function",
-          "children": [
-            {
-              "name": "doGenerate",
-              "type": "llm",
-              "children": [],
-              "input": {
-                "messages": [
-                  {
-                    "role": "user"
-                  }
-                ],
-                "model": {
-                  "modelId": "gpt-5.4-mini",
-                  "provider": "codex"
-                }
-              },
-              "output": {
-                "finishReason": {
-                  "raw": "stop",
-                  "unified": "stop"
-                },
-                "response": {
-                  "id": "<span:1>"
-                },
-                "usage": {
-                  "inputTokens": {
-                    "cacheRead": 14336,
-                    "cacheWrite": 0,
-                    "noCache": 7973,
-                    "total": 22309
-                  },
-                  "outputTokens": {
-                    "total": 153
-                  }
-                }
-              },
-              "metadata": {
-                "braintrust": {
-                  "integration_name": "ai-sdk",
-                  "sdk_language": "typescript"
-                },
-                "model": "gpt-5.4-mini",
-                "provider": "codex"
-              },
-              "metrics": {
-                "completion_tokens": 153,
-                "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 14336,
-                "prompt_tokens": 22309,
-                "tokens": 22462
-              }
-            },
-            {
-              "name": "bash",
-              "type": "tool",
-              "children": [],
-              "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}",
-              "metadata": {
-                "braintrust": {
-                  "integration_name": "ai-sdk",
-                  "sdk_language": "typescript"
-                },
-                "toolCallId": "<toolCallId:1>",
-                "toolName": "bash"
-              }
-            }
-          ],
-          "input": {
-            "maxRetries": 0,
-            "messages": [
-              {
-                "role": "user"
-              }
-            ],
-            "model": {
-              "modelId": "gpt-5.4-mini",
-              "provider": "codex"
-            }
-          },
-          "output": {
-            "finishReason": {
-              "raw": "stop",
-              "unified": "stop"
-            },
-            "response": {
-              "id": "<span:1>",
-              "messages": [],
-              "modelId": "gpt-5.4-mini",
-              "timestamp": "<timestamp>"
-            },
-            "totalUsage": {
-              "inputTokens": {
-                "cacheRead": 14336,
-                "cacheWrite": 0,
-                "noCache": 7973,
-                "total": 22309
-              },
-              "outputTokens": {
-                "total": 153
-              }
-            },
-            "usage": {
-              "inputTokens": {
-                "cacheRead": 14336,
-                "cacheWrite": 0,
-                "noCache": 7973,
-                "total": 22309
-              },
-              "outputTokens": {
-                "total": 153
-              }
-            }
-          },
-          "metadata": {
-            "braintrust": {
-              "integration_name": "ai-sdk",
-              "sdk_language": "typescript"
-            },
-            "model": "gpt-5.4-mini",
-            "provider": "codex"
-          }
-        }
-      ],
-      "input": {
-        "toolApprovalContinuations": []
-      },
-      "output": {
-        "finishReason": "stop"
-      },
-      "metadata": {
-        "braintrust": {
-          "integration_name": "ai-sdk",
-          "sdk_language": "typescript"
-        },
-        "harnessId": "codex",
-        "permissionMode": "allow-all",
-        "scenario": "ai-sdk-harness-instrumentation",
-        "sessionId": "shared-harness-session",
-        "testRunId": "<run:1>",
-        "tools": {
-          "bash": {
-            "commonName": "bash",
-            "description": "Execute a shell command",
-            "inputSchema": {
-              "$schema": "http://json-schema.org/draft-07/schema#",
-              "additionalProperties": false,
-              "properties": {
-                "command": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "command"
-              ],
-              "type": "object"
-            },
-            "nativeName": "shell",
-            "toolUseKind": "bash"
-          },
-          "webSearch": {
-            "commonName": "webSearch",
-            "description": "Search the web",
-            "inputSchema": {
-              "$schema": "http://json-schema.org/draft-07/schema#",
-              "additionalProperties": false,
-              "properties": {
-                "query": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "query"
-              ],
-              "type": "object"
-            },
-            "nativeName": "web_search",
-            "toolUseKind": "readonly"
-          }
-        }
-      },
-      "metrics": {
-        "completion_tokens": 153,
-        "prompt_cache_creation_tokens": 0,
-        "prompt_cached_tokens": 14336,
-        "prompt_tokens": 22309,
-        "time_to_first_token": 0,
-        "tokens": 22462
       }
     }
   ]

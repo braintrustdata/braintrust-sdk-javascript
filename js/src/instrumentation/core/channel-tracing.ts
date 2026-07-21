@@ -197,10 +197,23 @@ function startSpanForEvent<
     config,
     event,
   );
-  const span = startSpan({
+  const spanArgs = {
     name,
     spanAttributes,
-  });
+  };
+  let span: Span;
+  try {
+    const parent = config.parent?.(event.arguments, event);
+    span =
+      typeof parent === "string"
+        ? startSpan({ ...spanArgs, parent })
+        : parent
+          ? parent.startSpan(spanArgs)
+          : startSpan(spanArgs);
+  } catch (error) {
+    debugLogger.error(`Error resolving span parent for ${channelName}:`, error);
+    span = startSpan(spanArgs);
+  }
   const startTime = getCurrentUnixTimestamp();
 
   try {

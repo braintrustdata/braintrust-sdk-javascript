@@ -84,11 +84,10 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
               turns.map((turn) => [turn.span.name, turn]),
             );
             expect(turns).toHaveLength(4);
-            expect(new Set(turns.map((turn) => turn.span.rootId)).size).toBe(4);
+            expect(new Set(turns.map((turn) => turn.span.rootId)).size).toBe(2);
 
             for (const turn of turns) {
               expect(turn.span.type).toBe("task");
-              expect(turn.span.parentIds).toEqual([]);
               expect(turn.metadata).toMatchObject({
                 harnessId: "codex",
                 permissionMode: "allow-all",
@@ -98,6 +97,18 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
               });
               expect(turn.input).not.toHaveProperty("session");
             }
+            expect(
+              turnsByName["HarnessAgent.generate"]?.span.parentIds,
+            ).toEqual([]);
+            expect(turnsByName["HarnessAgent.stream"]?.span.parentIds).toEqual(
+              [],
+            );
+            expect(
+              turnsByName["HarnessAgent.continueGenerate"]?.span.parentIds,
+            ).toEqual([turnsByName["HarnessAgent.generate"]?.span.id]);
+            expect(
+              turnsByName["HarnessAgent.continueStream"]?.span.parentIds,
+            ).toEqual([turnsByName["HarnessAgent.stream"]?.span.id]);
             expect(turnsByName["HarnessAgent.generate"]?.input).toEqual({
               prompt:
                 'Run the built-in bash command "touch /workspace/generate-started; sleep 5; printf GENERATE_OK" exactly once. After it finishes, reply exactly GENERATE_OK.',
@@ -127,7 +138,40 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             expect(findAllSpans(events, "doGenerate").length).toBeGreaterThan(
               0,
             );
-            expect(findAllSpans(events, "bash").length).toBeGreaterThan(0);
+            const bashSpans = findAllSpans(events, "bash");
+            expect(bashSpans).toHaveLength(2);
+            for (const bashSpan of bashSpans) {
+              expect(bashSpan.span.type).toBe("tool");
+              expect(bashSpan.span.parentIds).toHaveLength(1);
+              expect(bashSpan.metadata).toMatchObject({
+                toolName: "bash",
+              });
+            }
+
+            const generateBashSpan = bashSpans.find((span) =>
+              String(span.input).includes("/workspace/generate-started"),
+            );
+            const streamBashSpan = bashSpans.find((span) =>
+              String(span.input).includes("/workspace/stream-started"),
+            );
+            expect(generateBashSpan?.input).toBe(
+              '{"command":"/bin/bash -lc \'touch /workspace/generate-started; sleep 5; printf GENERATE_OK\'"}',
+            );
+            expect(streamBashSpan?.input).toBe(
+              '{"command":"/bin/bash -lc \'touch /workspace/stream-started; sleep 5; printf STREAM_OK\'"}',
+            );
+            expect(generateBashSpan?.span.rootId).toBe(
+              turnsByName["HarnessAgent.generate"]?.span.rootId,
+            );
+            expect(generateBashSpan?.span.parentIds).toEqual([
+              turnsByName["HarnessAgent.generate"]?.span.id,
+            ]);
+            expect(streamBashSpan?.span.rootId).toBe(
+              turnsByName["HarnessAgent.stream"]?.span.rootId,
+            );
+            expect(streamBashSpan?.span.parentIds).toEqual([
+              turnsByName["HarnessAgent.stream"]?.span.id,
+            ]);
 
             await matchSpanTreeSnapshot(
               events,
@@ -137,10 +181,9 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
               ),
               {
                 normalize: {
-                  // Codex may include its tool call in either side of the
-                  // suspended turn. Assert the exact turn inputs and tool
-                  // lifecycle above, while snapshotting the stable trace
-                  // shape and aggregate usage.
+                  // These fields can be split across either side of a
+                  // suspended Codex turn. The trace hierarchy and tool
+                  // ownership remain stable and are snapshot-tested.
                   omittedKeys: [
                     "callId",
                     "content",
