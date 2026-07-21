@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { SpanTypeAttribute } from "../../../util";
-import { aiSDKChannels } from "../../instrumentation/plugins/ai-sdk-channels";
+import {
+  aiSDKChannels,
+  harnessAgentChannels,
+} from "../../instrumentation/plugins/ai-sdk-channels";
 import type {
   AISDK,
   AISDKAgentClass,
@@ -10,6 +13,10 @@ import type {
   AISDKEmbedFunction,
   AISDKEmbedParams,
   AISDKGenerateFunction,
+  AISDKHarnessAgentCallParams,
+  AISDKHarnessAgentGenerateFunction,
+  AISDKHarnessAgentInstance,
+  AISDKHarnessAgentStreamFunction,
   AISDKRerankFunction,
   AISDKRerankParams,
   AISDKStreamFunction,
@@ -147,6 +154,36 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
   }) as T;
 }
 
+function isHarnessAgentInstance(
+  instance: AISDKAgentInstance,
+): instance is AISDKAgentInstance & AISDKHarnessAgentInstance {
+  try {
+    const visited = new Set<object>();
+    let prototype: object | null = Object.getPrototypeOf(instance);
+
+    while (prototype !== null && !visited.has(prototype)) {
+      visited.add(prototype);
+      const constructor = Object.getOwnPropertyDescriptor(
+        prototype,
+        "constructor",
+      )?.value;
+      const constructorName =
+        typeof constructor === "function"
+          ? Object.getOwnPropertyDescriptor(constructor, "name")?.value
+          : undefined;
+      if (constructorName === "HarnessAgent") {
+        return true;
+      }
+      prototype = Object.getPrototypeOf(prototype);
+    }
+  } catch {
+    // Treat custom or revoked proxies as regular agents. Instrumentation must
+    // not prevent construction when their prototype cannot be inspected.
+  }
+
+  return false;
+}
+
 export const wrapAgentClass = (
   AgentClass: any,
   options: WrapAISDKOptions = {},
@@ -162,9 +199,47 @@ export const wrapAgentClass = (
         args,
         newTarget,
       ) as AISDKAgentInstance;
+      const harnessAgent = isHarnessAgentInstance(instance) ? instance : null;
       return new Proxy(instance, {
         get(instanceTarget, prop, instanceReceiver) {
           const original = Reflect.get(instanceTarget, prop, instanceTarget);
+
+          if (harnessAgent && typeof original === "function") {
+            switch (prop) {
+              case "generate":
+                return wrapHarnessAgentGenerate(
+                  original as AISDKHarnessAgentGenerateFunction,
+                  harnessAgent,
+                  harnessAgentChannels.generate,
+                  "HarnessAgent.generate",
+                  options,
+                );
+              case "stream":
+                return wrapHarnessAgentStream(
+                  original as AISDKHarnessAgentStreamFunction,
+                  harnessAgent,
+                  harnessAgentChannels.stream,
+                  "HarnessAgent.stream",
+                  options,
+                );
+              case "continueGenerate":
+                return wrapHarnessAgentGenerate(
+                  original as AISDKHarnessAgentGenerateFunction,
+                  harnessAgent,
+                  harnessAgentChannels.continueGenerate,
+                  "HarnessAgent.continueGenerate",
+                  options,
+                );
+              case "continueStream":
+                return wrapHarnessAgentStream(
+                  original as AISDKHarnessAgentStreamFunction,
+                  harnessAgent,
+                  harnessAgentChannels.continueStream,
+                  "HarnessAgent.continueStream",
+                  options,
+                );
+            }
+          }
 
           if (
             prop === "generate" &&
@@ -189,6 +264,46 @@ export const wrapAgentClass = (
     },
   }) as any;
 };
+
+const wrapHarnessAgentGenerate = (
+  generate: AISDKHarnessAgentGenerateFunction,
+  instance: AISDKHarnessAgentInstance,
+  channel:
+    | typeof harnessAgentChannels.generate
+    | typeof harnessAgentChannels.continueGenerate,
+  name: string,
+  options: WrapAISDKOptions,
+) =>
+  makeGenerateTextWrapper(
+    channel,
+    name,
+    generate.bind(instance),
+    {
+      self: instance,
+      spanType: SpanTypeAttribute.TASK,
+    },
+    options,
+  );
+
+const wrapHarnessAgentStream = (
+  stream: AISDKHarnessAgentStreamFunction,
+  instance: AISDKHarnessAgentInstance,
+  channel:
+    | typeof harnessAgentChannels.stream
+    | typeof harnessAgentChannels.continueStream,
+  name: string,
+  options: WrapAISDKOptions,
+) =>
+  makeStreamWrapper(
+    channel,
+    name,
+    stream.bind(instance),
+    {
+      self: instance,
+      spanType: SpanTypeAttribute.TASK,
+    },
+    options,
+  );
 
 const wrapAgentGenerate = (
   generate: AISDKGenerateFunction,
@@ -264,9 +379,11 @@ const makeGenerateTextWrapper = (
     | typeof aiSDKChannels.generateText
     | typeof aiSDKChannels.generateObject
     | typeof aiSDKChannels.agentGenerate
+    | typeof harnessAgentChannels.generate
+    | typeof harnessAgentChannels.continueGenerate
     | typeof aiSDKChannels.toolLoopAgentGenerate,
   name: string,
-  generateText: AISDKGenerateFunction,
+  generateText: AISDKGenerateFunction | AISDKHarnessAgentGenerateFunction,
   contextOptions: {
     aiSDK?: AISDK;
     self?: unknown;
@@ -274,7 +391,9 @@ const makeGenerateTextWrapper = (
   } = {},
   options: WrapAISDKOptions = {},
 ) => {
-  const wrapper = async function (allParams: AISDKCallParams & SpanInfo) {
+  const wrapper = async function (
+    allParams: (AISDKCallParams | AISDKHarnessAgentCallParams) & SpanInfo,
+  ) {
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
 
@@ -426,10 +545,12 @@ const makeStreamWrapper = (
     | typeof aiSDKChannels.streamText
     | typeof aiSDKChannels.streamObject
     | typeof aiSDKChannels.agentStream
+    | typeof harnessAgentChannels.stream
+    | typeof harnessAgentChannels.continueStream
     | typeof aiSDKChannels.toolLoopAgentStream
     | typeof aiSDKChannels.workflowAgentStream,
   name: string,
-  streamText: AISDKStreamFunction,
+  streamText: AISDKStreamFunction | AISDKHarnessAgentStreamFunction,
   contextOptions: {
     aiSDK?: AISDK;
     self?: unknown;
@@ -437,7 +558,9 @@ const makeStreamWrapper = (
   } = {},
   options: WrapAISDKOptions = {},
 ) => {
-  const wrapper = function (allParams: AISDKCallParams & SpanInfo) {
+  const wrapper = function (
+    allParams: (AISDKCallParams | AISDKHarnessAgentCallParams) & SpanInfo,
+  ) {
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
     const context = createAISDKChannelContext(tracedParams, {
