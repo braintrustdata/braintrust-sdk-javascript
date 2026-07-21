@@ -1926,7 +1926,7 @@ function closeOpenAISDKModelPatchSpans(entry: AISDKModelPatchEntry): void {
   entry.openSpans.clear();
 }
 
-export function prepareAISDKChildTracing(
+function prepareAISDKChildTracing(
   params: AISDKCallParams,
   self: unknown,
   parentSpan: Span,
