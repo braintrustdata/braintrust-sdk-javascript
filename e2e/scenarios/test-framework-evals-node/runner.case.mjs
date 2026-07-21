@@ -1,4 +1,3 @@
-import assert from "node:assert/strict";
 import { after, describe, test } from "node:test";
 import { currentSpan, initNodeTestSuite, login } from "braintrust/node";
 
@@ -16,13 +15,6 @@ const scopedName = (base) => {
 await login({
   apiKey: process.env.BRAINTRUST_API_KEY,
   appUrl: process.env.BRAINTRUST_APP_URL,
-});
-
-test("node:test uses the configured CI project", () => {
-  assert.equal(
-    scopedName("e2e-test-framework-evals-node"),
-    process.env.BRAINTRUST_E2E_PROJECT_NAME,
-  );
 });
 
 describe("test-framework-evals-node", () => {

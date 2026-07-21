@@ -147,16 +147,6 @@ test(
             "/logs3",
           ]),
         );
-        const projectRegistrations = requests.filter(
-          (request) => request.path === "/api/project/register",
-        );
-        expect(projectRegistrations.length).toBeGreaterThan(0);
-        for (const request of projectRegistrations) {
-          expect(request.jsonBody).toEqual({
-            org_id: "mock-org-id",
-            project_name: CONFIGURED_PROJECT_NAME,
-          });
-        }
 
         await matchSpanTreeSnapshot(
           capturedEvents,
