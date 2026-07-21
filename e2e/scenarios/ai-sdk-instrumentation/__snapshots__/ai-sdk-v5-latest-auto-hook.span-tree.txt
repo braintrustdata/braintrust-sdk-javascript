@@ -1,7 +1,7 @@
 span_tree:
 └── ai-sdk-instrumentation-root [task]
     metadata: {
-      "aiSdkVersion": "5.0.210",
+      "aiSdkVersion": "5.0.216",
       "scenario": "ai-sdk-instrumentation",
       "testRunId": "<run:1>"
     }
@@ -50,7 +50,10 @@ span_tree:
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<responseId:2>",
-    │             "serviceTier": "default"
+    │             "serviceTier": "default",
+    │             "usage": {
+    │               "cacheWriteTokens": 0
+    │             }
     │           }
     │         },
     │         "response": {
@@ -91,7 +94,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:2>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -184,7 +190,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:1>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -287,7 +296,10 @@ span_tree:
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<responseId:2>",
-    │             "serviceTier": "default"
+    │             "serviceTier": "default",
+    │             "usage": {
+    │               "cacheWriteTokens": 0
+    │             }
     │           }
     │         },
     │         "response": {
@@ -328,7 +340,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:2>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -437,7 +452,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:1>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -675,7 +693,10 @@ span_tree:
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<responseId:8>",
-    │             "serviceTier": "default"
+    │             "serviceTier": "default",
+    │             "usage": {
+    │               "cacheWriteTokens": 0
+    │             }
     │           }
     │         },
     │         "response": {
@@ -834,7 +855,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:2>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -911,7 +935,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:4>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -1018,7 +1045,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:6>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -1155,7 +1185,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:8>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -1425,7 +1458,10 @@ span_tree:
     │       │     "providerMetadata": {
     │       │       "openai": {
     │       │         "responseId": "<responseId:1>",
-    │       │         "serviceTier": "default"
+    │       │         "serviceTier": "default",
+    │       │         "usage": {
+    │       │           "cacheWriteTokens": 0
+    │       │         }
     │       │       }
     │       │     },
     │       │     "response": {
@@ -1555,7 +1591,10 @@ span_tree:
     │       │     "providerMetadata": {
     │       │       "openai": {
     │       │         "responseId": "<responseId:1>",
-    │       │         "serviceTier": "default"
+    │       │         "serviceTier": "default",
+    │       │         "usage": {
+    │       │           "cacheWriteTokens": 0
+    │       │         }
     │       │       }
     │       │     },
     │       │     "response": {
@@ -1715,7 +1754,10 @@ span_tree:
     │       │     "providerMetadata": {
     │       │       "openai": {
     │       │         "responseId": "<responseId:1>",
-    │       │         "serviceTier": "default"
+    │       │         "serviceTier": "default",
+    │       │         "usage": {
+    │       │           "cacheWriteTokens": 0
+    │       │         }
     │       │       }
     │       │     },
     │       │     "response": {
@@ -1905,7 +1947,10 @@ span_tree:
     │       │     "providerMetadata": {
     │       │       "openai": {
     │       │         "responseId": "<responseId:1>",
-    │       │         "serviceTier": "default"
+    │       │         "serviceTier": "default",
+    │       │         "usage": {
+    │       │           "cacheWriteTokens": 0
+    │       │         }
     │       │       }
     │       │     },
     │       │     "response": {
@@ -1989,7 +2034,10 @@ span_tree:
     │     "providerMetadata": {
     │       "openai": {
     │         "responseId": "<responseId:2>",
-    │         "serviceTier": "default"
+    │         "serviceTier": "default",
+    │         "usage": {
+    │           "cacheWriteTokens": 0
+    │         }
     │       }
     │     },
     │     "response": {
@@ -2030,7 +2078,10 @@ span_tree:
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<responseId:2>",
-    │             "serviceTier": "default"
+    │             "serviceTier": "default",
+    │             "usage": {
+    │               "cacheWriteTokens": 0
+    │             }
     │           }
     │         },
     │         "response": {
@@ -2128,7 +2179,10 @@ span_tree:
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<responseId:1>",
-    │             "serviceTier": "default"
+    │             "serviceTier": "default",
+    │             "usage": {
+    │               "cacheWriteTokens": 0
+    │             }
     │           }
     │         },
     │         "response": {
@@ -2212,7 +2266,10 @@ span_tree:
     │   │     "providerMetadata": {
     │   │       "openai": {
     │   │         "responseId": "<responseId:2>",
-    │   │         "serviceTier": "default"
+    │   │         "serviceTier": "default",
+    │   │         "usage": {
+    │   │           "cacheWriteTokens": 0
+    │   │         }
     │   │       }
     │   │     },
     │   │     "response": {
@@ -2253,7 +2310,10 @@ span_tree:
     │   │         "providerMetadata": {
     │   │           "openai": {
     │   │             "responseId": "<responseId:2>",
-    │   │             "serviceTier": "default"
+    │   │             "serviceTier": "default",
+    │   │             "usage": {
+    │   │               "cacheWriteTokens": 0
+    │   │             }
     │   │           }
     │   │         },
     │   │         "response": {
@@ -2351,7 +2411,10 @@ span_tree:
     │   │         "providerMetadata": {
     │   │           "openai": {
     │   │             "responseId": "<responseId:1>",
-    │   │             "serviceTier": "default"
+    │   │             "serviceTier": "default",
+    │   │             "usage": {
+    │   │               "cacheWriteTokens": 0
+    │   │             }
     │   │           }
     │   │         },
     │   │         "response": {
@@ -2430,7 +2493,10 @@ span_tree:
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<responseId:2>",
-    │             "serviceTier": "default"
+    │             "serviceTier": "default",
+    │             "usage": {
+    │               "cacheWriteTokens": 0
+    │             }
     │           }
     │         },
     │         "response": {
@@ -2471,7 +2537,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:2>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -2569,7 +2638,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:1>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -3361,7 +3433,10 @@ span_tree:
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<responseId:2>",
-    │             "serviceTier": "default"
+    │             "serviceTier": "default",
+    │             "usage": {
+    │               "cacheWriteTokens": 0
+    │             }
     │           }
     │         },
     │         "request": {
@@ -3461,6 +3536,7 @@ span_tree:
     │             "usage": {
     │               "input_tokens": 17,
     │               "input_tokens_details": {
+    │                 "cache_write_tokens": 0,
     │                 "cached_tokens": 0
     │               },
     │               "output_tokens": 3,
@@ -3507,7 +3583,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:2>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "request": {
@@ -3607,6 +3686,7 @@ span_tree:
     │                 "usage": {
     │                   "input_tokens": 17,
     │                   "input_tokens_details": {
+    │                     "cache_write_tokens": 0,
     │                     "cached_tokens": 0
     │                   },
     │                   "output_tokens": 3,
@@ -3705,7 +3785,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:1>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -3789,7 +3872,10 @@ span_tree:
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<responseId:1>",
-    │             "serviceTier": "default"
+    │             "serviceTier": "default",
+    │             "usage": {
+    │               "cacheWriteTokens": 0
+    │             }
     │           }
     │         },
     │         "response": {
@@ -3862,7 +3948,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:1>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -4049,7 +4138,10 @@ span_tree:
     │         "providerMetadata": {
     │           "openai": {
     │             "responseId": "<responseId:2>",
-    │             "serviceTier": "default"
+    │             "serviceTier": "default",
+    │             "usage": {
+    │               "cacheWriteTokens": 0
+    │             }
     │           }
     │         },
     │         "response": {
@@ -4090,7 +4182,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:2>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -4196,7 +4291,10 @@ span_tree:
     │             "providerMetadata": {
     │               "openai": {
     │                 "responseId": "<responseId:2>",
-    │                 "serviceTier": "default"
+    │                 "serviceTier": "default",
+    │                 "usage": {
+    │                   "cacheWriteTokens": 0
+    │                 }
     │               }
     │             },
     │             "response": {
@@ -4237,7 +4335,10 @@ span_tree:
     │                 "providerMetadata": {
     │                   "openai": {
     │                     "responseId": "<responseId:2>",
-    │                     "serviceTier": "default"
+    │                     "serviceTier": "default",
+    │                     "usage": {
+    │                       "cacheWriteTokens": 0
+    │                     }
     │                   }
     │                 },
     │                 "response": {
@@ -4333,7 +4434,10 @@ span_tree:
     │                 "providerMetadata": {
     │                   "openai": {
     │                     "responseId": "<responseId:1>",
-    │                     "serviceTier": "default"
+    │                     "serviceTier": "default",
+    │                     "usage": {
+    │                       "cacheWriteTokens": 0
+    │                     }
     │                   }
     │                 },
     │                 "response": {
