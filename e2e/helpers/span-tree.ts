@@ -302,7 +302,36 @@ function buildEntries(
   }
 
   const sortEntries = (items: NormalizedEntry[]) => {
-    items.sort((left, right) => left.firstSeen - right.firstSeen);
+    items.sort((left, right) => {
+      const leftStart =
+        typeof left.event.metrics?.start === "number"
+          ? left.event.metrics.start
+          : undefined;
+      const rightStart =
+        typeof right.event.metrics?.start === "number"
+          ? right.event.metrics.start
+          : undefined;
+
+      if (
+        leftStart !== undefined &&
+        rightStart !== undefined &&
+        leftStart !== rightStart
+      ) {
+        return leftStart - rightStart;
+      }
+
+      if (leftStart !== undefined && rightStart === undefined) {
+        return -1;
+      }
+      if (leftStart === undefined && rightStart !== undefined) {
+        return 1;
+      }
+
+      // Preserve capture order when timestamps are absent or identical. Log
+      // batches can arrive out of order, so capture order alone is not a
+      // stable chronology for spans with distinct start times.
+      return left.firstSeen - right.firstSeen;
+    });
     for (const item of items) {
       sortEntries(item.children);
     }
