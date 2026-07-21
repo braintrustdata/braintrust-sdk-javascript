@@ -32,6 +32,7 @@ type SpanTreeJsonNode = {
 
 type SpanTreeSnapshotOptions = {
   normalize?: NormalizeOptions;
+  siblingOrder?: "capture" | "name";
   snapshotExpect?: ExpectStatic;
 };
 
@@ -227,6 +228,7 @@ function formatFieldBlock(
 
 function buildEntries(
   inputs: readonly (CapturedLogEvent | SpanTreeEntry)[],
+  siblingOrder: "capture" | "name" = "capture",
 ): NormalizedEntry[] {
   const entriesById = new Map<string, NormalizedEntry>();
 
@@ -303,33 +305,10 @@ function buildEntries(
 
   const sortEntries = (items: NormalizedEntry[]) => {
     items.sort((left, right) => {
-      const leftStart =
-        typeof left.event.metrics?.start === "number"
-          ? left.event.metrics.start
-          : undefined;
-      const rightStart =
-        typeof right.event.metrics?.start === "number"
-          ? right.event.metrics.start
-          : undefined;
-
-      if (
-        leftStart !== undefined &&
-        rightStart !== undefined &&
-        leftStart !== rightStart
-      ) {
-        return leftStart - rightStart;
+      if (siblingOrder === "name" && left.name !== right.name) {
+        return left.name < right.name ? -1 : 1;
       }
 
-      if (leftStart !== undefined && rightStart === undefined) {
-        return -1;
-      }
-      if (leftStart === undefined && rightStart !== undefined) {
-        return 1;
-      }
-
-      // Preserve capture order when timestamps are absent or identical. Log
-      // batches can arrive out of order, so capture order alone is not a
-      // stable chronology for spans with distinct start times.
       return left.firstSeen - right.firstSeen;
     });
     for (const item of items) {
@@ -377,7 +356,7 @@ export function formatSpanTreeSnapshot(
   entries: readonly (CapturedLogEvent | SpanTreeEntry)[],
   options?: SpanTreeSnapshotOptions,
 ): string {
-  const roots = buildEntries(entries);
+  const roots = buildEntries(entries, options?.siblingOrder);
   return [
     "span_tree:",
     ...roots.flatMap((entry, index) =>
@@ -410,7 +389,7 @@ export function formatSpanTreeJsonSnapshot(
   entries: readonly (CapturedLogEvent | SpanTreeEntry)[],
   options?: SpanTreeSnapshotOptions,
 ): string {
-  const roots = buildEntries(entries);
+  const roots = buildEntries(entries, options?.siblingOrder);
   return `${JSON.stringify(
     {
       span_tree: roots.map((entry) => jsonEntry(entry, options)),

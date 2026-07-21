@@ -72,47 +72,6 @@ span_tree:
 │       }
 │     }
 │   }
-│   ├── harness [function]
-│   │   input: {
-│   │     "maxRetries": 0,
-│   │     "messages": [
-│   │       {
-│   │         "role": "user"
-│   │       }
-│   │     ],
-│   │     "model": {
-│   │       "modelId": "gpt-5.4-mini",
-│   │       "provider": "codex"
-│   │     }
-│   │   }
-│   │   metadata: {
-│   │     "braintrust": {
-│   │       "integration_name": "ai-sdk",
-│   │       "sdk_language": "typescript"
-│   │     },
-│   │     "model": "gpt-5.4-mini",
-│   │     "provider": "codex"
-│   │   }
-│   │   └── doGenerate [llm]
-│   │       input: {
-│   │         "messages": [
-│   │           {
-│   │             "role": "user"
-│   │           }
-│   │         ],
-│   │         "model": {
-│   │           "modelId": "gpt-5.4-mini",
-│   │           "provider": "codex"
-│   │         }
-│   │       }
-│   │       metadata: {
-│   │         "braintrust": {
-│   │           "integration_name": "ai-sdk",
-│   │           "sdk_language": "typescript"
-│   │         },
-│   │         "model": "gpt-5.4-mini",
-│   │         "provider": "codex"
-│   │       }
 │   ├── HarnessAgent.continueGenerate [task]
 │   │   input: {
 │   │     "toolApprovalContinuations": []
@@ -313,16 +272,57 @@ span_tree:
 │   │             "prompt_tokens": 22357,
 │   │             "tokens": 22546
 │   │           }
-│   └── bash [tool]
-│       input: "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}"
+│   ├── bash [tool]
+│   │   input: "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}"
+│   │   metadata: {
+│   │     "braintrust": {
+│   │       "integration_name": "ai-sdk",
+│   │       "sdk_language": "typescript"
+│   │     },
+│   │     "toolCallId": "<toolCallId:1>",
+│   │     "toolName": "bash"
+│   │   }
+│   └── harness [function]
+│       input: {
+│         "maxRetries": 0,
+│         "messages": [
+│           {
+│             "role": "user"
+│           }
+│         ],
+│         "model": {
+│           "modelId": "gpt-5.4-mini",
+│           "provider": "codex"
+│         }
+│       }
 │       metadata: {
 │         "braintrust": {
 │           "integration_name": "ai-sdk",
 │           "sdk_language": "typescript"
 │         },
-│         "toolCallId": "<toolCallId:1>",
-│         "toolName": "bash"
+│         "model": "gpt-5.4-mini",
+│         "provider": "codex"
 │       }
+│       └── doGenerate [llm]
+│           input: {
+│             "messages": [
+│               {
+│                 "role": "user"
+│               }
+│             ],
+│             "model": {
+│               "modelId": "gpt-5.4-mini",
+│               "provider": "codex"
+│             }
+│           }
+│           metadata: {
+│             "braintrust": {
+│               "integration_name": "ai-sdk",
+│               "sdk_language": "typescript"
+│             },
+│             "model": "gpt-5.4-mini",
+│             "provider": "codex"
+│           }
 └── HarnessAgent.stream [task]
     input: {
       "messages": [
@@ -388,47 +388,6 @@ span_tree:
     metrics: {
       "time_to_first_token": 0
     }
-    ├── harness [function]
-    │   input: {
-    │     "maxRetries": 0,
-    │     "messages": [
-    │       {
-    │         "role": "user"
-    │       }
-    │     ],
-    │     "model": {
-    │       "modelId": "gpt-5.4-mini",
-    │       "provider": "codex"
-    │     }
-    │   }
-    │   metadata: {
-    │     "braintrust": {
-    │       "integration_name": "ai-sdk",
-    │       "sdk_language": "typescript"
-    │     },
-    │     "model": "gpt-5.4-mini",
-    │     "provider": "codex"
-    │   }
-    │   └── doGenerate [llm]
-    │       input: {
-    │         "messages": [
-    │           {
-    │             "role": "user"
-    │           }
-    │         ],
-    │         "model": {
-    │           "modelId": "gpt-5.4-mini",
-    │           "provider": "codex"
-    │         }
-    │       }
-    │       metadata: {
-    │         "braintrust": {
-    │           "integration_name": "ai-sdk",
-    │           "sdk_language": "typescript"
-    │         },
-    │         "model": "gpt-5.4-mini",
-    │         "provider": "codex"
-    │       }
     ├── HarnessAgent.continueStream [task]
     │   input: {
     │     "toolApprovalContinuations": []
@@ -597,13 +556,54 @@ span_tree:
     │             "prompt_tokens": 22309,
     │             "tokens": 22462
     │           }
-    └── bash [tool]
-        input: "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}"
+    ├── bash [tool]
+    │   input: "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}"
+    │   metadata: {
+    │     "braintrust": {
+    │       "integration_name": "ai-sdk",
+    │       "sdk_language": "typescript"
+    │     },
+    │     "toolCallId": "<toolCallId:1>",
+    │     "toolName": "bash"
+    │   }
+    └── harness [function]
+        input: {
+          "maxRetries": 0,
+          "messages": [
+            {
+              "role": "user"
+            }
+          ],
+          "model": {
+            "modelId": "gpt-5.4-mini",
+            "provider": "codex"
+          }
+        }
         metadata: {
           "braintrust": {
             "integration_name": "ai-sdk",
             "sdk_language": "typescript"
           },
-          "toolCallId": "<toolCallId:1>",
-          "toolName": "bash"
+          "model": "gpt-5.4-mini",
+          "provider": "codex"
         }
+        └── doGenerate [llm]
+            input: {
+              "messages": [
+                {
+                  "role": "user"
+                }
+              ],
+              "model": {
+                "modelId": "gpt-5.4-mini",
+                "provider": "codex"
+              }
+            }
+            metadata: {
+              "braintrust": {
+                "integration_name": "ai-sdk",
+                "sdk_language": "typescript"
+              },
+              "model": "gpt-5.4-mini",
+              "provider": "codex"
+            }

@@ -5,56 +5,6 @@
       "type": "task",
       "children": [
         {
-          "name": "harness",
-          "type": "function",
-          "children": [
-            {
-              "name": "doGenerate",
-              "type": "llm",
-              "children": [],
-              "input": {
-                "messages": [
-                  {
-                    "role": "user"
-                  }
-                ],
-                "model": {
-                  "modelId": "gpt-5.4-mini",
-                  "provider": "codex"
-                }
-              },
-              "metadata": {
-                "braintrust": {
-                  "integration_name": "ai-sdk",
-                  "sdk_language": "typescript"
-                },
-                "model": "gpt-5.4-mini",
-                "provider": "codex"
-              }
-            }
-          ],
-          "input": {
-            "maxRetries": 0,
-            "messages": [
-              {
-                "role": "user"
-              }
-            ],
-            "model": {
-              "modelId": "gpt-5.4-mini",
-              "provider": "codex"
-            }
-          },
-          "metadata": {
-            "braintrust": {
-              "integration_name": "ai-sdk",
-              "sdk_language": "typescript"
-            },
-            "model": "gpt-5.4-mini",
-            "provider": "codex"
-          }
-        },
-        {
           "name": "HarnessAgent.continueGenerate",
           "type": "task",
           "children": [
@@ -281,6 +231,56 @@
             "toolCallId": "<toolCallId:1>",
             "toolName": "bash"
           }
+        },
+        {
+          "name": "harness",
+          "type": "function",
+          "children": [
+            {
+              "name": "doGenerate",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-5.4-mini",
+                  "provider": "codex"
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-5.4-mini",
+                "provider": "codex"
+              }
+            }
+          ],
+          "input": {
+            "maxRetries": 0,
+            "messages": [
+              {
+                "role": "user"
+              }
+            ],
+            "model": {
+              "modelId": "gpt-5.4-mini",
+              "provider": "codex"
+            }
+          },
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "model": "gpt-5.4-mini",
+            "provider": "codex"
+          }
         }
       ],
       "input": {
@@ -360,56 +360,6 @@
       "name": "HarnessAgent.stream",
       "type": "task",
       "children": [
-        {
-          "name": "harness",
-          "type": "function",
-          "children": [
-            {
-              "name": "doGenerate",
-              "type": "llm",
-              "children": [],
-              "input": {
-                "messages": [
-                  {
-                    "role": "user"
-                  }
-                ],
-                "model": {
-                  "modelId": "gpt-5.4-mini",
-                  "provider": "codex"
-                }
-              },
-              "metadata": {
-                "braintrust": {
-                  "integration_name": "ai-sdk",
-                  "sdk_language": "typescript"
-                },
-                "model": "gpt-5.4-mini",
-                "provider": "codex"
-              }
-            }
-          ],
-          "input": {
-            "maxRetries": 0,
-            "messages": [
-              {
-                "role": "user"
-              }
-            ],
-            "model": {
-              "modelId": "gpt-5.4-mini",
-              "provider": "codex"
-            }
-          },
-          "metadata": {
-            "braintrust": {
-              "integration_name": "ai-sdk",
-              "sdk_language": "typescript"
-            },
-            "model": "gpt-5.4-mini",
-            "provider": "codex"
-          }
-        },
         {
           "name": "HarnessAgent.continueStream",
           "type": "task",
@@ -604,6 +554,56 @@
             },
             "toolCallId": "<toolCallId:1>",
             "toolName": "bash"
+          }
+        },
+        {
+          "name": "harness",
+          "type": "function",
+          "children": [
+            {
+              "name": "doGenerate",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "gpt-5.4-mini",
+                  "provider": "codex"
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-5.4-mini",
+                "provider": "codex"
+              }
+            }
+          ],
+          "input": {
+            "maxRetries": 0,
+            "messages": [
+              {
+                "role": "user"
+              }
+            ],
+            "model": {
+              "modelId": "gpt-5.4-mini",
+              "provider": "codex"
+            }
+          },
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "model": "gpt-5.4-mini",
+            "provider": "codex"
           }
         }
       ],

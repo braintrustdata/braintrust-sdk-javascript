@@ -180,6 +180,11 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
                 `${scenario.variantKey}-${mode}.span-tree.json`,
               ),
               {
+                // Tool telemetry can cross the suspend/resume boundary, so
+                // sibling capture and start order are both nondeterministic.
+                // Canonicalize sibling display order while separately
+                // asserting the exact parent/root relationships above.
+                siblingOrder: "name",
                 normalize: {
                   // These fields can be split across either side of a
                   // suspended Codex turn. The trace hierarchy and tool

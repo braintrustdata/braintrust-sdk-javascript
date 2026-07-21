@@ -24,7 +24,7 @@ function spanEvent(args: {
 }
 
 describe("span tree ordering", () => {
-  test("orders siblings by span start time instead of log arrival", () => {
+  test("preserves capture order by default", () => {
     const snapshot = JSON.parse(
       formatSpanTreeJsonSnapshot([
         spanEvent({
@@ -46,25 +46,28 @@ describe("span tree ordering", () => {
     };
 
     expect(snapshot.span_tree[0]?.children.map(({ name }) => name)).toEqual([
-      "earlier",
       "later",
+      "earlier",
     ]);
   });
 
-  test("uses log arrival when sibling start times are unavailable", () => {
+  test("can order siblings by name for structurally concurrent traces", () => {
     const snapshot = JSON.parse(
-      formatSpanTreeJsonSnapshot([
-        spanEvent({ id: "first", name: "first", parentIds: ["root"] }),
-        spanEvent({ id: "second", name: "second", parentIds: ["root"] }),
-        spanEvent({ id: "root", name: "root", start: 1 }),
-      ]),
+      formatSpanTreeJsonSnapshot(
+        [
+          spanEvent({ id: "later", name: "later", parentIds: ["root"] }),
+          spanEvent({ id: "earlier", name: "earlier", parentIds: ["root"] }),
+          spanEvent({ id: "root", name: "root" }),
+        ],
+        { siblingOrder: "name" },
+      ),
     ) as {
       span_tree: Array<{ children: Array<{ name: string }> }>;
     };
 
     expect(snapshot.span_tree[0]?.children.map(({ name }) => name)).toEqual([
-      "first",
-      "second",
+      "earlier",
+      "later",
     ]);
   });
 });
