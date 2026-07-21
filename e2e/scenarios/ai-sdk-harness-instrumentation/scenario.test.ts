@@ -127,10 +127,23 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             expect(findAllSpans(events, "doGenerate").length).toBeGreaterThan(
               0,
             );
-            expect(findAllSpans(events, "bash").length).toBeGreaterThan(0);
+            const bashSpans = findAllSpans(events, "bash");
+            expect(bashSpans).toHaveLength(2);
+            expect(bashSpans.map((span) => span.input).sort()).toEqual([
+              '{"command":"/bin/bash -lc \'touch /workspace/generate-started; sleep 5; printf GENERATE_OK\'"}',
+              '{"command":"/bin/bash -lc \'touch /workspace/stream-started; sleep 5; printf STREAM_OK\'"}',
+            ]);
+
+            // Codex can attribute a suspended tool call to either side of the
+            // turn boundary. Assert both calls exactly above, but omit them
+            // from the structural snapshot so scheduling does not change the
+            // otherwise stable tree.
+            const snapshotEvents = events.filter(
+              (event) => event.span.name !== "bash",
+            );
 
             await matchSpanTreeSnapshot(
-              events,
+              snapshotEvents,
               resolveFileSnapshotPath(
                 import.meta.url,
                 `${scenario.variantKey}-${mode}.span-tree.json`,
