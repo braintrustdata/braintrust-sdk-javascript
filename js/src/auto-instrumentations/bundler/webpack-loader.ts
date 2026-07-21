@@ -27,6 +27,7 @@ import { readFileSync } from "fs";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getDefaultInstrumentationConfigs } from "../configs/all";
 import { type LegacyBundlerPluginOptions } from "./plugin";
+import { getPackageName } from "../loader/get-package-version";
 
 /**
  * Helper function to get module version from package.json
@@ -119,7 +120,8 @@ function codeTransformerLoader(
     return callback(null, code, inputSourceMap);
   }
 
-  const moduleName = moduleDetails.name;
+  const moduleName =
+    getPackageName(moduleDetails.basedir) ?? moduleDetails.name;
   const moduleVersion = getModuleVersion(moduleDetails.basedir);
 
   if (!moduleVersion) {

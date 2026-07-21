@@ -34,6 +34,7 @@ export { anthropicConfigs } from "./configs/anthropic";
 export { bedrockRuntimeConfigs } from "./configs/bedrock-runtime";
 export { aiSDKConfigs } from "./configs/ai-sdk";
 export { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk";
+export { cloudflareThinkConfigs } from "./configs/cloudflare-think";
 export { cursorSDKConfigs } from "./configs/cursor-sdk";
 export { openAIAgentsCoreConfigs } from "./configs/openai-agents";
 export { googleGenAIConfigs } from "./configs/google-genai";

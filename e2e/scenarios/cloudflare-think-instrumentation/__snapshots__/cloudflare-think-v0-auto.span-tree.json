@@ -1,0 +1,79 @@
+{
+  "span_tree": [
+    {
+      "name": "Think.runTurn",
+      "type": "task",
+      "children": [
+        {
+          "name": "doStream",
+          "type": "llm",
+          "children": [],
+          "metadata": {
+            "model": "gpt-5-nano",
+            "provider": "openai.chat"
+          },
+          "metrics": {
+            "completion_tokens": 152,
+            "prompt_tokens": 1042,
+            "tokens": 1194
+          }
+        },
+        {
+          "name": "lookup_weather",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "city": "Vienna"
+          },
+          "output": {
+            "city": "Vienna",
+            "condition": "sunny",
+            "degreesC": 21
+          }
+        },
+        {
+          "name": "doStream",
+          "type": "llm",
+          "children": [],
+          "metadata": {
+            "model": "gpt-5-nano",
+            "provider": "openai.chat"
+          },
+          "metrics": {
+            "completion_tokens": 147,
+            "prompt_tokens": 1087,
+            "tokens": 1234
+          }
+        }
+      ],
+      "input": [
+        {
+          "content": [
+            {
+              "text": "What is the weather in Vienna?",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "output": {
+        "content": "Vienna is sunny and 21°C.",
+        "role": "assistant"
+      },
+      "metadata": {
+        "braintrust": {
+          "integration_name": "cloudflare-think",
+          "sdk_language": "typescript"
+        },
+        "model": "gpt-5-nano",
+        "provider": "openai.chat"
+      },
+      "metrics": {
+        "completion_tokens": 299,
+        "prompt_tokens": 2129,
+        "tokens": 2428
+      }
+    }
+  ]
+}

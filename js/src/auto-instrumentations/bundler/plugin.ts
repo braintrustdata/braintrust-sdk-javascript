@@ -1,11 +1,12 @@
 import { createUnplugin } from "unplugin";
 import { create, type InstrumentationConfig } from "../orchestrion-js";
-import { extname, join, sep } from "path";
+import { extname, isAbsolute, join, sep } from "path";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getDefaultInstrumentationConfigs } from "../configs/all";
 import { applySpecialCasePatch } from "../loader/special-case-patches";
+import { getPackageName } from "../loader/get-package-version";
 
 export interface LegacyBundlerPluginOptions {
   /**
@@ -85,6 +86,20 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
     return {
       name: "code-transformer",
       enforce: "pre",
+      transformInclude(id: string) {
+        const pathWithoutQuery = id.split("?", 1)[0];
+        if (!pathWithoutQuery) {
+          return false;
+        }
+        if (pathWithoutQuery.startsWith("file:")) {
+          try {
+            return isAbsolute(fileURLToPath(pathWithoutQuery));
+          } catch {
+            return false;
+          }
+        }
+        return isAbsolute(pathWithoutQuery);
+      },
       transform(code: string, id: string) {
         if (!id) {
           // Some modules apparently don't have an id?
@@ -118,7 +133,11 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
         }
 
         // Use module details for accurate module information
-        const moduleName = moduleDetails.name;
+        // npm aliases retain the canonical package name in package.json even
+        // though their node_modules directory uses the alias. Match configs
+        // against that canonical name so aliased dependencies are instrumented.
+        const moduleName =
+          getPackageName(moduleDetails.basedir) ?? moduleDetails.name;
         // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
         const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
         const moduleVersion = getModuleVersion(moduleDetails.basedir);
