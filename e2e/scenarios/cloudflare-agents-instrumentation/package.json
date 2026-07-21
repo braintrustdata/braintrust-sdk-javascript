@@ -1,0 +1,27 @@
+{
+  "name": "@braintrust/e2e-cloudflare-agents-instrumentation",
+  "private": true,
+  "type": "module",
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "agents-v0-17-latest": {
+          "package": "agents",
+          "range": ">=0.17.0 <0.18.0"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@cloudflare/vite-plugin": "1.45.1",
+    "@cloudflare/workers-types": "5.20260719.1",
+    "agents-v0-17": "npm:agents@0.17.0",
+    "agents-v0-17-latest": "npm:agents@0.17.4",
+    "ai": "6.0.82",
+    "dc-browser": "1.0.4",
+    "react": "19.2.3",
+    "vite": "6.4.3",
+    "wrangler": "4.112.0",
+    "zod": "4.3.6"
+  }
+}

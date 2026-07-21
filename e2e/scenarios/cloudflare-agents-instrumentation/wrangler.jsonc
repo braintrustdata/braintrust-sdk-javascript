@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "braintrust-cloudflare-agents-e2e",
+  "main": "worker.ts",
+  "compatibility_date": "2026-06-11",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env",
+    "enable_nodejs_process_v2",
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PARENT_AGENT",
+        "class_name": "ParentAgent",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["ParentAgent"],
+    },
+  ],
+}

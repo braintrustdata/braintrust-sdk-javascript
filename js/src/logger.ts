@@ -280,6 +280,8 @@ export type StartSpanArgs = {
   type?: SpanType;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   spanAttributes?: Record<any, any>;
+  /** Internal context fields to merge into the span's generated context. */
+  context?: Record<string, unknown>;
   startTime?: number;
   /**
    * The parent to start this span under. May be an exported span slug string
@@ -7631,7 +7633,7 @@ export class SpanImpl implements Span {
         start: args.startTime ?? getCurrentUnixTimestamp(),
       },
       context: mergeSpanOriginContext(
-        { ...callerLocation },
+        { ...callerLocation, ...args.context },
         "braintrust-js-logger",
         this._state.spanOriginEnvironment,
       ),

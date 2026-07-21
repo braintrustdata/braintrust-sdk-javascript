@@ -1,0 +1,68 @@
+{
+  "span_tree": [
+    {
+      "name": "cloudflare-agents-e2e-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "DeterministicToolAgent",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "case": "concurrent-a",
+            "delayMs": 0,
+            "value": "allowed-a"
+          },
+          "output": {
+            "case": "concurrent-a",
+            "echoed": "allowed-a"
+          }
+        },
+        {
+          "name": "DeterministicToolAgent",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "case": "concurrent-b",
+            "delayMs": 0,
+            "value": "allowed-b"
+          },
+          "output": {
+            "case": "concurrent-b",
+            "echoed": "allowed-b"
+          }
+        },
+        {
+          "name": "DeterministicToolAgent",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "case": "error",
+            "delayMs": 0,
+            "value": "allowed-error"
+          },
+          "error": "deterministic child failure"
+        },
+        {
+          "name": "DeterministicToolAgent",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "case": "success",
+            "delayMs": 0,
+            "value": "allowed-success"
+          },
+          "output": {
+            "case": "success",
+            "echoed": "allowed-success"
+          }
+        }
+      ],
+      "metadata": {
+        "instrumentationMode": "auto",
+        "scenario": "cloudflare-agents-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}
