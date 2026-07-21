@@ -1138,6 +1138,123 @@ describe("AI SDK streaming instrumentation", () => {
     }
   });
 
+  test("wrapAgentClass instruments HarnessAgent subclasses", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    const receivedParams: any[] = [];
+    const usage = {
+      inputTokens: { total: 2 },
+      outputTokens: { total: 1 },
+      totalTokens: 3,
+    };
+    const streamingResult = (text: string) => ({
+      fullStream: new ReadableStream({
+        start(controller) {
+          controller.enqueue({ type: "text-delta", text });
+          controller.enqueue({ type: "finish", usage });
+          controller.close();
+        },
+      }),
+      text: Promise.resolve(text),
+      totalUsage: Promise.resolve(usage),
+      usage: Promise.resolve(usage),
+    });
+
+    class HarnessAgent {
+      readonly harnessId = "mock-harness";
+      readonly permissionMode = "allow-all";
+      readonly settings: Record<string, unknown> = {
+        constructorOnly: true,
+      };
+      readonly tools = {};
+
+      async generate(params: any) {
+        receivedParams.push(params);
+        return { text: "generated", usage };
+      }
+
+      async stream(params: any) {
+        receivedParams.push(params);
+        return streamingResult("streamed");
+      }
+
+      async continueGenerate(params: any) {
+        receivedParams.push(params);
+        return { text: "continued", usage };
+      }
+
+      async continueStream(params: any) {
+        receivedParams.push(params);
+        return streamingResult("continued-stream");
+      }
+    }
+
+    class DirectSubclass extends HarnessAgent {
+      async generate(params: any) {
+        return super.generate(params);
+      }
+    }
+
+    const WrappedDirectSubclass = wrapAgentClass(DirectSubclass);
+    const WrappedHarnessAgent = wrapAgentClass(HarnessAgent);
+    class SubclassOfWrappedAgent extends WrappedHarnessAgent {
+      async continueStream(params: any) {
+        return super.continueStream(params);
+      }
+    }
+
+    const agents = [new WrappedDirectSubclass(), new SubclassOfWrappedAgent()];
+    for (const [index, agent] of agents.entries()) {
+      const session = { sessionId: `session-${index}` };
+      await agent.generate({ prompt: `generate-${index}`, session });
+      const streamResult = await agent.stream({
+        messages: [{ role: "user", content: `stream-${index}` }],
+        session,
+      });
+      for await (const _chunk of streamResult.fullStream) {
+        // Drain the stream so the root span records its final output and usage.
+      }
+      await agent.continueGenerate({ session, toolApprovalContinuations: [] });
+      const continueStreamResult = await agent.continueStream({
+        session,
+        toolApprovalContinuations: [],
+      });
+      for await (const _chunk of continueStreamResult.fullStream) {
+        // Drain the stream so the root span records its final output and usage.
+      }
+    }
+
+    expect(receivedParams).toHaveLength(8);
+    for (const params of receivedParams) {
+      expect(params).not.toHaveProperty("constructorOnly");
+    }
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const harnessSpans = spans.filter((span) =>
+      span.span_attributes?.name?.startsWith("HarnessAgent."),
+    );
+    expect(harnessSpans).toHaveLength(8);
+    expect(
+      harnessSpans.map((span) => span.span_attributes.name).sort(),
+    ).toEqual(
+      [
+        "HarnessAgent.continueGenerate",
+        "HarnessAgent.continueStream",
+        "HarnessAgent.generate",
+        "HarnessAgent.stream",
+      ]
+        .flatMap((name) => [name, name])
+        .sort(),
+    );
+    for (const span of harnessSpans) {
+      expect(span.span_attributes.type).toBe("task");
+      expect(span.metadata).toMatchObject({
+        harnessId: "mock-harness",
+        permissionMode: "allow-all",
+      });
+    }
+  });
+
   test("wrapAgentClass preserves explicit HarnessAgent telemetry settings", async () => {
     const telemetry = { isEnabled: false };
 

@@ -154,6 +154,36 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
   }) as T;
 }
 
+function isHarnessAgentInstance(
+  instance: AISDKAgentInstance,
+): instance is AISDKAgentInstance & AISDKHarnessAgentInstance {
+  try {
+    const visited = new Set<object>();
+    let prototype: object | null = Object.getPrototypeOf(instance);
+
+    while (prototype !== null && !visited.has(prototype)) {
+      visited.add(prototype);
+      const constructor = Object.getOwnPropertyDescriptor(
+        prototype,
+        "constructor",
+      )?.value;
+      const constructorName =
+        typeof constructor === "function"
+          ? Object.getOwnPropertyDescriptor(constructor, "name")?.value
+          : undefined;
+      if (constructorName === "HarnessAgent") {
+        return true;
+      }
+      prototype = Object.getPrototypeOf(prototype);
+    }
+  } catch {
+    // Treat custom or revoked proxies as regular agents. Instrumentation must
+    // not prevent construction when their prototype cannot be inspected.
+  }
+
+  return false;
+}
+
 export const wrapAgentClass = (
   AgentClass: any,
   options: WrapAISDKOptions = {},
@@ -169,16 +199,12 @@ export const wrapAgentClass = (
         args,
         newTarget,
       ) as AISDKAgentInstance;
+      const harnessAgent = isHarnessAgentInstance(instance) ? instance : null;
       return new Proxy(instance, {
         get(instanceTarget, prop, instanceReceiver) {
           const original = Reflect.get(instanceTarget, prop, instanceTarget);
 
-          if (
-            instanceTarget.constructor.name === "HarnessAgent" &&
-            typeof original === "function"
-          ) {
-            const harnessAgent =
-              instanceTarget as unknown as AISDKHarnessAgentInstance;
+          if (harnessAgent && typeof original === "function") {
             switch (prop) {
               case "generate":
                 return wrapHarnessAgentGenerate(
