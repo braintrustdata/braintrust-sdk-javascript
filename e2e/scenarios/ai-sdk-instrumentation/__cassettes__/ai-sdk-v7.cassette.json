@@ -1306,8 +1306,10 @@
                 "role": "user"
               },
               {
-                "id": "fc_0caab4837986b3f6006a4b6d08c37c81a2bb30cd909a4d987c",
-                "type": "item_reference"
+                "arguments": "{\"location\":\"Paris, France\"}",
+                "call_id": "call_uPHoh5wVkNKZDjSCr3lPK1Z5",
+                "name": "get_weather",
+                "type": "function_call"
               },
               {
                 "call_id": "call_uPHoh5wVkNKZDjSCr3lPK1Z5",
@@ -1506,8 +1508,10 @@
                 "role": "user"
               },
               {
-                "id": "fc_0caab4837986b3f6006a4b6d08c37c81a2bb30cd909a4d987c",
-                "type": "item_reference"
+                "arguments": "{\"location\":\"Paris, France\"}",
+                "call_id": "call_uPHoh5wVkNKZDjSCr3lPK1Z5",
+                "name": "get_weather",
+                "type": "function_call"
               },
               {
                 "call_id": "call_uPHoh5wVkNKZDjSCr3lPK1Z5",
@@ -1515,8 +1519,10 @@
                 "type": "function_call_output"
               },
               {
-                "id": "fc_0caab4837986b3f6006a4b6d09a92c81a281d78cc11a7c1ee6",
-                "type": "item_reference"
+                "arguments": "{\"location\":\"Paris, France\"}",
+                "call_id": "call_b2lYM8hPhHxrfckl6q6sCCTM",
+                "name": "get_weather",
+                "type": "function_call"
               },
               {
                 "call_id": "call_b2lYM8hPhHxrfckl6q6sCCTM",
@@ -1715,8 +1721,10 @@
                 "role": "user"
               },
               {
-                "id": "fc_0caab4837986b3f6006a4b6d08c37c81a2bb30cd909a4d987c",
-                "type": "item_reference"
+                "arguments": "{\"location\":\"Paris, France\"}",
+                "call_id": "call_uPHoh5wVkNKZDjSCr3lPK1Z5",
+                "name": "get_weather",
+                "type": "function_call"
               },
               {
                 "call_id": "call_uPHoh5wVkNKZDjSCr3lPK1Z5",
@@ -1724,8 +1732,10 @@
                 "type": "function_call_output"
               },
               {
-                "id": "fc_0caab4837986b3f6006a4b6d09a92c81a281d78cc11a7c1ee6",
-                "type": "item_reference"
+                "arguments": "{\"location\":\"Paris, France\"}",
+                "call_id": "call_b2lYM8hPhHxrfckl6q6sCCTM",
+                "name": "get_weather",
+                "type": "function_call"
               },
               {
                 "call_id": "call_b2lYM8hPhHxrfckl6q6sCCTM",
@@ -1733,8 +1743,10 @@
                 "type": "function_call_output"
               },
               {
-                "id": "fc_0caab4837986b3f6006a4b6d0aacdc81a2be14bc16ed684d76",
-                "type": "item_reference"
+                "arguments": "{\"location\":\"Paris, France\"}",
+                "call_id": "call_tlq2OdrQF8d7RsHw1f9kOjgm",
+                "name": "get_weather",
+                "type": "function_call"
               },
               {
                 "call_id": "call_tlq2OdrQF8d7RsHw1f9kOjgm",
@@ -2724,12 +2736,16 @@
                 "role": "user"
               },
               {
-                "id": "fc_0e66d4cf3b44aa7f006a4b6d11a20481a2861ceb3b6811d1b6",
-                "type": "item_reference"
+                "arguments": "{\"item\":\"laptop\",\"store\":\"StoreA\"}",
+                "call_id": "call_qRuXzm1GdT1ybr2tWRFjAvX7",
+                "name": "get_store_price",
+                "type": "function_call"
               },
               {
-                "id": "fc_0e66d4cf3b44aa7f006a4b6d11a21881a28cbf7de8a8e33987",
-                "type": "item_reference"
+                "arguments": "{\"item\":\"laptop\",\"store\":\"StoreB\"}",
+                "call_id": "call_hITB5sbet06fDK494deB5ZIz",
+                "name": "get_store_price",
+                "type": "function_call"
               },
               {
                 "call_id": "call_qRuXzm1GdT1ybr2tWRFjAvX7",
@@ -3002,12 +3018,16 @@
                 "role": "user"
               },
               {
-                "id": "fc_0e66d4cf3b44aa7f006a4b6d11a20481a2861ceb3b6811d1b6",
-                "type": "item_reference"
+                "arguments": "{\"item\":\"laptop\",\"store\":\"StoreA\"}",
+                "call_id": "call_qRuXzm1GdT1ybr2tWRFjAvX7",
+                "name": "get_store_price",
+                "type": "function_call"
               },
               {
-                "id": "fc_0e66d4cf3b44aa7f006a4b6d11a21881a28cbf7de8a8e33987",
-                "type": "item_reference"
+                "arguments": "{\"item\":\"laptop\",\"store\":\"StoreB\"}",
+                "call_id": "call_hITB5sbet06fDK494deB5ZIz",
+                "name": "get_store_price",
+                "type": "function_call"
               },
               {
                 "call_id": "call_qRuXzm1GdT1ybr2tWRFjAvX7",
@@ -3020,8 +3040,10 @@
                 "type": "function_call_output"
               },
               {
-                "id": "fc_0e66d4cf3b44aa7f006a4b6d128a6481a2a78d18759b1ec966",
-                "type": "item_reference"
+                "arguments": "{\"discountCode\":\"SAVE20\",\"total\":999}",
+                "call_id": "call_ctBQl0V8LZYr2ghBNzEbmtNW",
+                "name": "apply_discount",
+                "type": "function_call"
               },
               {
                 "call_id": "call_ctBQl0V8LZYr2ghBNzEbmtNW",

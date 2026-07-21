@@ -58,8 +58,7 @@
         },
         "ai-sdk-openai-v7-latest": {
           "package": "@ai-sdk/openai",
-          "range": "4.0.0-beta.44",
-          "allowPrerelease": true
+          "range": "4"
         }
       }
     }
@@ -93,8 +92,8 @@
     "ai-sdk-cohere-v6-latest": "npm:@ai-sdk/cohere@3.0.44",
     "ai-sdk-v7": "npm:ai@7.0.0",
     "ai-sdk-v7-latest": "npm:ai@7.0.0",
-    "ai-sdk-openai-v7": "npm:@ai-sdk/openai@4.0.0-beta.44",
-    "ai-sdk-openai-v7-latest": "npm:@ai-sdk/openai@4.0.0-beta.44",
+    "ai-sdk-openai-v7": "npm:@ai-sdk/openai@4.0.0",
+    "ai-sdk-openai-v7-latest": "npm:@ai-sdk/openai@4.0.16",
     "ai-sdk-workflow-v1": "npm:@ai-sdk/workflow@1.0.8"
   },
   "pnpm": {
