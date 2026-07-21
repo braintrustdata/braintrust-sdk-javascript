@@ -1,5 +1,8 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { aiSDKChannels } from "../../instrumentation/plugins/ai-sdk-channels";
+import {
+  aiSDKChannels,
+  harnessAgentChannels,
+} from "../../instrumentation/plugins/ai-sdk-channels";
 
 /**
  * Instrumentation configurations for the Vercel AI SDK.
@@ -13,6 +16,28 @@ import { aiSDKChannels } from "../../instrumentation/plugins/ai-sdk-channels";
  * "orchestrion:ai-sdk:generateText"
  */
 export const aiSDKConfigs: InstrumentationConfig[] = [
+  // HarnessAgent turn methods are published only from the package's ESM
+  // `./agent` entrypoint. The compiled class expression is anonymous, so match
+  // the first async method with each public name instead of a class name.
+  ...[
+    ["generate", harnessAgentChannels.generate.channelName],
+    ["stream", harnessAgentChannels.stream.channelName],
+    ["continueGenerate", harnessAgentChannels.continueGenerate.channelName],
+    ["continueStream", harnessAgentChannels.continueStream.channelName],
+  ].map(([methodName, channelName]) => ({
+    channelName,
+    module: {
+      name: "@ai-sdk/harness",
+      versionRange: ">=1.0.0 <2.0.0",
+      filePath: "dist/agent/index.js",
+    },
+    functionQuery: {
+      methodName,
+      kind: "Async" as const,
+      index: 0,
+    },
+  })),
+
   // generateText - async function
   {
     channelName: aiSDKChannels.generateText.channelName,

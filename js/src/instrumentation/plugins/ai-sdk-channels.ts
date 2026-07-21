@@ -5,6 +5,7 @@ import type {
   AISDKCallParams,
   AISDKEmbedParams,
   AISDKEmbeddingResult,
+  AISDKHarnessAgentCallParams,
   AISDKRerankParams,
   AISDKRerankResult,
   AISDKResult,
@@ -155,5 +156,44 @@ export const aiSDKChannels = defineChannels("ai", {
   >({
     channelName: "createTelemetryDispatcher",
     kind: "sync-stream",
+  }),
+});
+
+export const harnessAgentChannels = defineChannels("@ai-sdk/harness", {
+  generate: channel<
+    [AISDKHarnessAgentCallParams],
+    AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "HarnessAgent.generate",
+    kind: "async",
+  }),
+  stream: channel<
+    [AISDKHarnessAgentCallParams],
+    AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "HarnessAgent.stream",
+    kind: "async",
+  }),
+  continueGenerate: channel<
+    [AISDKHarnessAgentCallParams],
+    AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "HarnessAgent.continueGenerate",
+    kind: "async",
+  }),
+  continueStream: channel<
+    [AISDKHarnessAgentCallParams],
+    AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "HarnessAgent.continueStream",
+    kind: "async",
   }),
 });

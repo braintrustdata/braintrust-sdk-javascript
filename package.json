@@ -61,7 +61,7 @@
     "overrides": {
       "handlebars": "^4.7.9",
       "protobufjs": "^7.5.8",
-      "esbuild": "0.27.4",
+      "esbuild": "0.28.1",
       "uuid": "11.1.1",
       "router@2.2.0>path-to-regexp": "8.4.0",
       "express@5.2.1>qs": "6.15.2",
