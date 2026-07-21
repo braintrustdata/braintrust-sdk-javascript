@@ -1,5 +1,18 @@
 # braintrust
 
+## 3.24.0
+
+### Minor Changes
+
+- feat(ai-sdk): Add HarnessAgent tracing support (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2236)
+- Add span origin provenance metadata to Braintrust and OpenTelemetry spans. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2226)
+
+### Patch Changes
+
+- deps: Bump esbuild (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2244)
+- fix(eve): Capture readable reasoning on the originating LLM span across workflow resumes (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2237)
+- fix: Emit canonical LangChain JS total token metrics (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2181)
+
 ## 3.23.1
 
 ### Patch Changes

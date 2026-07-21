@@ -1,5 +1,15 @@
 # @braintrust/otel
 
+## 0.3.0
+
+### Minor Changes
+
+- Add span origin provenance metadata to Braintrust and OpenTelemetry spans. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2226)
+
+### Patch Changes
+
+- Updated dependencies: braintrust@3.24.0
+
 ## 0.2.1
 
 ### Patch Changes
