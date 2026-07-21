@@ -276,6 +276,47 @@ export interface AISDKAgentInstance {
   [key: string]: unknown;
 }
 
+export interface AISDKHarnessAgentSession {
+  sessionId?: string;
+  [key: string]: unknown;
+}
+
+export interface AISDKHarnessAgentCallParams extends AISDKCallParams {
+  session?: AISDKHarnessAgentSession;
+  toolApprovalContinuations?: unknown;
+}
+
+export interface AISDKHarnessAgentSettings {
+  telemetry?: {
+    isEnabled?: boolean;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export type AISDKHarnessAgentGenerateFunction = (
+  params: AISDKHarnessAgentCallParams,
+) => Promise<AISDKResult>;
+
+export type AISDKHarnessAgentStreamFunction = (
+  params: AISDKHarnessAgentCallParams,
+) => Promise<AISDKResult>;
+
+export interface AISDKHarnessAgentInstance {
+  harnessId?: string;
+  permissionMode?: string;
+  settings?: AISDKHarnessAgentSettings;
+  tools?: AISDKTools;
+  generate: AISDKHarnessAgentGenerateFunction;
+  stream: AISDKHarnessAgentStreamFunction;
+  continueGenerate: AISDKHarnessAgentGenerateFunction;
+  continueStream: AISDKHarnessAgentStreamFunction;
+  constructor: {
+    name: string;
+  };
+  [key: string]: unknown;
+}
+
 export interface AISDKAgentClass {
   new (...args: unknown[]): AISDKAgentInstance;
 }

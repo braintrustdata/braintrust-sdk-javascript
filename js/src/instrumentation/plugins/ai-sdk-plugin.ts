@@ -27,12 +27,14 @@ import {
   unregisterWorkflowAgentWrapperSpan,
 } from "../../wrappers/ai-sdk/workflow-agent-context";
 import { zodToJsonSchema } from "../../zod/utils";
-import { aiSDKChannels } from "./ai-sdk-channels";
+import { aiSDKChannels, harnessAgentChannels } from "./ai-sdk-channels";
 import type {
   AISDK,
   AISDKCallParams,
   AISDKEmbedParams,
   AISDKEmbeddingResult,
+  AISDKHarnessAgentCallParams,
+  AISDKHarnessAgentSettings,
   AISDKLanguageModel,
   AISDKModel,
   AISDKModelStreamChunk,
@@ -414,6 +416,106 @@ export class AISDKPlugin extends BasePlugin {
             defaultDenyOutputPaths: denyOutputPaths,
             endEvent,
             result,
+            span,
+            startTime,
+          }),
+      }),
+    );
+
+    // HarnessAgent.generate - one task span per agent turn
+    this.unsubscribers.push(
+      traceStreamingChannel(harnessAgentChannels.generate, {
+        name: "HarnessAgent.generate",
+        type: SpanTypeAttribute.TASK,
+        extractInput: ([params], event) =>
+          prepareAISDKHarnessAgentInput(params, event.self),
+        extractOutput: (result, endEvent) =>
+          processAISDKOutput(
+            result,
+            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+          ),
+        extractMetrics: (result) => extractTokenMetrics(result),
+        aggregateChunks: aggregateAISDKChunks,
+      }),
+    );
+
+    // HarnessAgent.stream - async method returning an AI SDK stream result
+    this.unsubscribers.push(
+      traceStreamingChannel(harnessAgentChannels.stream, {
+        name: "HarnessAgent.stream",
+        type: SpanTypeAttribute.TASK,
+        extractInput: ([params], event) =>
+          prepareAISDKHarnessAgentInput(params, event.self),
+        extractOutput: (result, endEvent) =>
+          processAISDKOutput(
+            result,
+            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+          ),
+        extractMetrics: (result, startTime) => ({
+          ...extractTokenMetrics(result),
+          ...(startTime === undefined
+            ? {}
+            : {
+                time_to_first_token: getCurrentUnixTimestamp() - startTime,
+              }),
+        }),
+        aggregateChunks: aggregateAISDKChunks,
+        patchResult: ({ endEvent, result, span, startTime }) =>
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths: denyOutputPaths,
+            endEvent,
+            result,
+            resolvePromiseUsage: true,
+            span,
+            startTime,
+          }),
+      }),
+    );
+
+    // HarnessAgent.continueGenerate - continuation of one agent turn
+    this.unsubscribers.push(
+      traceStreamingChannel(harnessAgentChannels.continueGenerate, {
+        name: "HarnessAgent.continueGenerate",
+        type: SpanTypeAttribute.TASK,
+        extractInput: ([params], event) =>
+          prepareAISDKHarnessAgentInput(params, event.self),
+        extractOutput: (result, endEvent) =>
+          processAISDKOutput(
+            result,
+            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+          ),
+        extractMetrics: (result) => extractTokenMetrics(result),
+        aggregateChunks: aggregateAISDKChunks,
+      }),
+    );
+
+    // HarnessAgent.continueStream - streaming continuation of one agent turn
+    this.unsubscribers.push(
+      traceStreamingChannel(harnessAgentChannels.continueStream, {
+        name: "HarnessAgent.continueStream",
+        type: SpanTypeAttribute.TASK,
+        extractInput: ([params], event) =>
+          prepareAISDKHarnessAgentInput(params, event.self),
+        extractOutput: (result, endEvent) =>
+          processAISDKOutput(
+            result,
+            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+          ),
+        extractMetrics: (result, startTime) => ({
+          ...extractTokenMetrics(result),
+          ...(startTime === undefined
+            ? {}
+            : {
+                time_to_first_token: getCurrentUnixTimestamp() - startTime,
+              }),
+        }),
+        aggregateChunks: aggregateAISDKChunks,
+        patchResult: ({ endEvent, result, span, startTime }) =>
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths: denyOutputPaths,
+            endEvent,
+            result,
+            resolvePromiseUsage: true,
             span,
             startTime,
           }),
@@ -1161,6 +1263,64 @@ function prepareAISDKCallInput(
 
   return {
     input,
+    metadata,
+  };
+}
+
+function prepareAISDKHarnessAgentInput(
+  params: AISDKHarnessAgentCallParams,
+  self?: unknown,
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  if (isObject(self)) {
+    try {
+      if (isObject(self.settings)) {
+        const settings = self.settings as AISDKHarnessAgentSettings;
+        if (settings.telemetry === undefined) {
+          // HarnessAgent reads telemetry from its constructor settings after
+          // this channel starts. Replace the settings object so instrumentation
+          // does not mutate the configuration object supplied by the caller.
+          Reflect.set(self, "settings", { ...settings, telemetry: {} });
+        }
+      }
+    } catch {
+      // A frozen or custom HarnessAgent may not allow settings replacement.
+      // Root turn tracing still works; only its optional lifecycle spans are
+      // unavailable in that case.
+    }
+  }
+
+  const selectedInput: AISDKHarnessAgentCallParams = {};
+  if (params.prompt !== undefined) {
+    selectedInput.prompt = params.prompt;
+  }
+  if (params.messages !== undefined) {
+    selectedInput.messages = params.messages;
+  }
+  if (params.toolApprovalContinuations !== undefined) {
+    selectedInput.toolApprovalContinuations = params.toolApprovalContinuations;
+  }
+
+  const metadata = extractMetadataFromCallParams({}, self);
+  if (
+    isObject(params.session) &&
+    typeof params.session.sessionId === "string"
+  ) {
+    metadata.sessionId = params.session.sessionId;
+  }
+  if (isObject(self)) {
+    if (typeof self.harnessId === "string") {
+      metadata.harnessId = self.harnessId;
+    }
+    if (typeof self.permissionMode === "string") {
+      metadata.permissionMode = self.permissionMode;
+    }
+  }
+
+  return {
+    input: processAISDKCallInput(selectedInput).input,
     metadata,
   };
 }
@@ -2402,6 +2562,7 @@ function patchAISDKStreamingResult(args: {
   endEvent: { denyOutputPaths?: string[]; [key: string]: unknown };
   onComplete?: () => void;
   result: AISDKResult;
+  resolvePromiseUsage?: boolean;
   span: Span;
   startTime: number;
 }): boolean {
@@ -2410,6 +2571,7 @@ function patchAISDKStreamingResult(args: {
     endEvent,
     onComplete,
     result,
+    resolvePromiseUsage,
     span,
     startTime,
   } = args;
@@ -2439,6 +2601,23 @@ function patchAISDKStreamingResult(args: {
 
     try {
       const metrics = extractTopLevelAISDKMetrics(result, endEvent);
+      if (resolvePromiseUsage) {
+        try {
+          const resultRecord = result as Record<string, unknown>;
+          const pendingUsage = resultRecord.totalUsage ?? resultRecord.usage;
+          if (isPromiseLike(pendingUsage)) {
+            const usage = await Promise.resolve(pendingUsage);
+            if (isObject(usage)) {
+              Object.assign(
+                metrics,
+                extractTokenMetrics({ usage: usage as AISDKUsage }),
+              );
+            }
+          }
+        } catch {
+          // Keep any eagerly available metrics if a usage getter rejects.
+        }
+      }
       if (
         metrics.time_to_first_token === undefined &&
         firstChunkTime !== undefined
