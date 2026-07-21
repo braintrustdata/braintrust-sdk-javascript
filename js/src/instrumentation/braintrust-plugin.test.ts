@@ -18,6 +18,7 @@ import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
+import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 
 function createPluginClassMock() {
   return vi.fn(function MockPlugin(this: {
@@ -109,6 +110,10 @@ vi.mock("./plugins/pi-coding-agent-plugin", () => ({
 
 vi.mock("./plugins/strands-agent-sdk-plugin", () => ({
   StrandsAgentSDKPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/cloudflare-ai-chat-plugin", () => ({
+  CloudflareAIChatPlugin: createPluginClassMock(),
 }));
 
 describe("BraintrustPlugin", () => {
@@ -261,6 +266,16 @@ describe("BraintrustPlugin", () => {
 
       expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       const mockInstance = vi.mocked(StrandsAgentSDKPlugin).mock.results[0]
+        .value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable Cloudflare AI Chat plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(CloudflareAIChatPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(CloudflareAIChatPlugin).mock.results[0]
         .value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
@@ -615,6 +630,7 @@ describe("BraintrustPlugin", () => {
           langsmith: false,
           piCodingAgent: false,
           strandsAgentSDK: false,
+          cloudflareAIChat: false,
         },
       });
       plugin.enable();
@@ -637,6 +653,7 @@ describe("BraintrustPlugin", () => {
       expect(LangSmithPlugin).not.toHaveBeenCalled();
       expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
       expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(CloudflareAIChatPlugin).not.toHaveBeenCalled();
     });
 
     it("should not create Pi Coding Agent plugin when piCodingAgent: false", () => {
@@ -657,6 +674,16 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create Cloudflare AI Chat plugin when cloudflareAIChat: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { cloudflareAIChat: false },
+      });
+      plugin.enable();
+
+      expect(CloudflareAIChatPlugin).not.toHaveBeenCalled();
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
     });
 

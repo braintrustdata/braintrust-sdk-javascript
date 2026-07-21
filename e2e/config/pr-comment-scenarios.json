@@ -84,6 +84,21 @@
     ]
   },
   {
+    "scenarioDirName": "cloudflare-ai-chat-instrumentation",
+    "label": "Cloudflare AI Chat Instrumentation",
+    "metadataScenario": "cloudflare-ai-chat-instrumentation",
+    "variants": [
+      {
+        "variantKey": "cloudflare-ai-chat-v0",
+        "label": "v0.9 pinned"
+      },
+      {
+        "variantKey": "cloudflare-ai-chat-v0-latest",
+        "label": "v0.9 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "openai-agents-instrumentation",
     "label": "OpenAI Agents Instrumentation",
     "metadataScenario": "openai-agents-instrumentation",

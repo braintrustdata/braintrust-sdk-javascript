@@ -166,7 +166,7 @@ function traceInstanceMethod(
 
   const classBody = node.body;
 
-  if (classBody.body.some(({ key }: AnyNode) => key.name === methodName)) {
+  if (classBody.body.some(({ key }: AnyNode) => key?.name === methodName)) {
     return;
   }
 
