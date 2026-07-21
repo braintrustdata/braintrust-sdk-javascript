@@ -59,6 +59,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 18,
                         "total": 18
                       },
@@ -70,6 +71,7 @@
                       "raw": {
                         "input_tokens": 18,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 3,
@@ -94,6 +96,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 3,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 18,
                     "reasoning_tokens": 0,
@@ -215,6 +218,7 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 18
                       },
                       "inputTokens": 18,
@@ -226,6 +230,7 @@
                       "raw": {
                         "input_tokens": 18,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 3,
@@ -246,6 +251,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 18
                   },
                   "inputTokens": 18,
@@ -261,6 +267,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 18
                   },
                   "inputTokens": 18,
@@ -272,6 +279,7 @@
                   "raw": {
                     "input_tokens": 18,
                     "input_tokens_details": {
+                      "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
                     "output_tokens": 3,
@@ -378,6 +386,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 45,
                         "total": 45
                       },
@@ -389,6 +398,7 @@
                       "raw": {
                         "input_tokens": 45,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 6,
@@ -413,6 +423,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 6,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 45,
                     "reasoning_tokens": 0,
@@ -554,6 +565,7 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 45
                       },
                       "inputTokens": 45,
@@ -565,6 +577,7 @@
                       "raw": {
                         "input_tokens": 45,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 6,
@@ -585,6 +598,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 45
                   },
                   "inputTokens": 45,
@@ -600,6 +614,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 45
                   },
                   "inputTokens": 45,
@@ -611,6 +626,7 @@
                   "raw": {
                     "input_tokens": 45,
                     "input_tokens_details": {
+                      "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
                     "output_tokens": 6,
@@ -674,6 +690,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 22,
                         "total": 22
                       },
@@ -685,6 +702,7 @@
                       "raw": {
                         "input_tokens": 22,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 7,
@@ -708,6 +726,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 7,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 22,
                     "reasoning_tokens": 0,
@@ -823,7 +842,7 @@
               "output": [
                 {
                   "index": 1,
-                  "relevance_score": 0.06664825
+                  "relevance_score": 0.06657539
                 },
                 {
                   "index": 0,
@@ -931,6 +950,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 94,
                         "total": 94
                       },
@@ -942,6 +962,7 @@
                       "raw": {
                         "input_tokens": 94,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 8,
@@ -966,6 +987,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 8,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 94,
                     "reasoning_tokens": 0,
@@ -1093,6 +1115,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 133,
                         "total": 133
                       },
@@ -1104,6 +1127,7 @@
                       "raw": {
                         "input_tokens": 133,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 8,
@@ -1128,6 +1152,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 8,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 133,
                     "reasoning_tokens": 0,
@@ -1290,6 +1315,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 172,
                         "total": 172
                       },
@@ -1301,6 +1327,7 @@
                       "raw": {
                         "input_tokens": 172,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 8,
@@ -1325,6 +1352,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 8,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 172,
                     "reasoning_tokens": 0,
@@ -1522,6 +1550,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 211,
                         "total": 211
                       },
@@ -1533,6 +1562,7 @@
                       "raw": {
                         "input_tokens": 211,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 8,
@@ -1557,6 +1587,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 8,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 211,
                     "reasoning_tokens": 0,
@@ -1888,6 +1919,7 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 94
                       },
                       "inputTokens": 94,
@@ -1899,6 +1931,7 @@
                       "raw": {
                         "input_tokens": 94,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 8,
@@ -2033,6 +2066,7 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 133
                       },
                       "inputTokens": 133,
@@ -2044,6 +2078,7 @@
                       "raw": {
                         "input_tokens": 133,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 8,
@@ -2213,6 +2248,7 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 172
                       },
                       "inputTokens": 172,
@@ -2224,6 +2260,7 @@
                       "raw": {
                         "input_tokens": 172,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 8,
@@ -2428,6 +2465,7 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 211
                       },
                       "inputTokens": 211,
@@ -2439,6 +2477,7 @@
                       "raw": {
                         "input_tokens": 211,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 8,
@@ -2487,6 +2526,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 610
                   },
                   "inputTokens": 610,
@@ -2502,6 +2542,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 211
                   },
                   "inputTokens": 211,
@@ -2513,6 +2554,7 @@
                   "raw": {
                     "input_tokens": 211,
                     "input_tokens_details": {
+                      "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
                     "output_tokens": 8,
@@ -2619,6 +2661,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 3456,
+                        "cacheWrite": 0,
                         "noCache": 161,
                         "total": 3617
                       },
@@ -2630,6 +2673,7 @@
                       "raw": {
                         "input_tokens": 3617,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 3456
                         },
                         "output_tokens": 3,
@@ -2654,6 +2698,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 3,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 3456,
                     "prompt_tokens": 3617,
                     "reasoning_tokens": 0,
@@ -2780,6 +2825,7 @@
                       "cachedInputTokens": 3456,
                       "inputTokenDetails": {
                         "cacheReadTokens": 3456,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 161
                       },
                       "inputTokens": 3617,
@@ -2791,6 +2837,7 @@
                       "raw": {
                         "input_tokens": 3617,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 3456
                         },
                         "output_tokens": 3,
@@ -2811,6 +2858,7 @@
                   "cachedInputTokens": 3456,
                   "inputTokenDetails": {
                     "cacheReadTokens": 3456,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 161
                   },
                   "inputTokens": 3617,
@@ -2826,6 +2874,7 @@
                   "cachedInputTokens": 3456,
                   "inputTokenDetails": {
                     "cacheReadTokens": 3456,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 161
                   },
                   "inputTokens": 3617,
@@ -2837,6 +2886,7 @@
                   "raw": {
                     "input_tokens": 3617,
                     "input_tokens_details": {
+                      "cache_write_tokens": 0,
                       "cached_tokens": 3456
                     },
                     "output_tokens": 3,
@@ -2915,6 +2965,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 3456,
+                        "cacheWrite": 0,
                         "noCache": 161,
                         "total": 3617
                       },
@@ -2926,6 +2977,7 @@
                       "raw": {
                         "input_tokens": 3617,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 3456
                         },
                         "output_tokens": 3,
@@ -2950,6 +3002,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 3,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 3456,
                     "prompt_tokens": 3617,
                     "reasoning_tokens": 0,
@@ -3076,6 +3129,7 @@
                       "cachedInputTokens": 3456,
                       "inputTokenDetails": {
                         "cacheReadTokens": 3456,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 161
                       },
                       "inputTokens": 3617,
@@ -3087,6 +3141,7 @@
                       "raw": {
                         "input_tokens": 3617,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 3456
                         },
                         "output_tokens": 3,
@@ -3107,6 +3162,7 @@
                   "cachedInputTokens": 3456,
                   "inputTokenDetails": {
                     "cacheReadTokens": 3456,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 161
                   },
                   "inputTokens": 3617,
@@ -3122,6 +3178,7 @@
                   "cachedInputTokens": 3456,
                   "inputTokenDetails": {
                     "cacheReadTokens": 3456,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 161
                   },
                   "inputTokens": 3617,
@@ -3133,6 +3190,7 @@
                   "raw": {
                     "input_tokens": 3617,
                     "input_tokens_details": {
+                      "cache_write_tokens": 0,
                       "cached_tokens": 3456
                     },
                     "output_tokens": 3,
@@ -3858,6 +3916,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 17,
                         "total": 17
                       },
@@ -3869,6 +3928,7 @@
                       "raw": {
                         "input_tokens": 17,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 3,
@@ -3893,6 +3953,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 3,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 17,
                     "reasoning_tokens": 0,
@@ -4040,6 +4101,7 @@
                     "usage": {
                       "input_tokens": 17,
                       "input_tokens_details": {
+                        "cache_write_tokens": 0,
                         "cached_tokens": 0
                       },
                       "output_tokens": 3,
@@ -4190,6 +4252,7 @@
                         "usage": {
                           "input_tokens": 17,
                           "input_tokens_details": {
+                            "cache_write_tokens": 0,
                             "cached_tokens": 0
                           },
                           "output_tokens": 3,
@@ -4224,6 +4287,7 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 17
                       },
                       "inputTokens": 17,
@@ -4235,6 +4299,7 @@
                       "raw": {
                         "input_tokens": 17,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 3,
@@ -4255,6 +4320,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 17
                   },
                   "inputTokens": 17,
@@ -4270,6 +4336,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 17
                   },
                   "inputTokens": 17,
@@ -4281,6 +4348,7 @@
                   "raw": {
                     "input_tokens": 17,
                     "input_tokens_details": {
+                      "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
                     "output_tokens": 3,
@@ -4379,6 +4447,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 38,
                         "total": 38
                       },
@@ -4390,6 +4459,7 @@
                       "raw": {
                         "input_tokens": 38,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 6,
@@ -4414,6 +4484,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 6,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 38,
                     "reasoning_tokens": 0,
@@ -4477,6 +4548,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 38
                   },
                   "inputTokens": 38,
@@ -4488,6 +4560,7 @@
                   "raw": {
                     "input_tokens": 38,
                     "input_tokens_details": {
+                      "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
                     "output_tokens": 6,
@@ -4567,6 +4640,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 38,
                         "total": 38
                       },
@@ -4578,6 +4652,7 @@
                       "raw": {
                         "input_tokens": 38,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 6,
@@ -4601,6 +4676,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 6,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 38,
                     "reasoning_tokens": 0,
@@ -4723,6 +4799,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 16,
                         "total": 16
                       },
@@ -4734,6 +4811,7 @@
                       "raw": {
                         "input_tokens": 16,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 3,
@@ -4758,6 +4836,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 3,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 16,
                     "reasoning_tokens": 0,
@@ -4884,6 +4963,7 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 16
                       },
                       "inputTokens": 16,
@@ -4895,6 +4975,7 @@
                       "raw": {
                         "input_tokens": 16,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 3,
@@ -4915,6 +4996,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 16
                   },
                   "inputTokens": 16,
@@ -4930,6 +5012,7 @@
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 16
                   },
                   "inputTokens": 16,
@@ -4941,6 +5024,7 @@
                   "raw": {
                     "input_tokens": 16,
                     "input_tokens_details": {
+                      "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
                     "output_tokens": 3,
@@ -5003,6 +5087,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 17,
                         "total": 17
                       },
@@ -5014,6 +5099,7 @@
                       "raw": {
                         "input_tokens": 17,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 4,
@@ -5037,6 +5123,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 4,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 17,
                     "reasoning_tokens": 0,
@@ -5236,6 +5323,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 173,
                         "total": 173
                       },
@@ -5247,6 +5335,7 @@
                       "raw": {
                         "input_tokens": 173,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 59,
@@ -5271,6 +5360,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 59,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 173,
                     "reasoning_tokens": 0,
@@ -5483,6 +5573,7 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 260,
                         "total": 260
                       },
@@ -5494,6 +5585,7 @@
                       "raw": {
                         "input_tokens": 260,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 21,
@@ -5518,6 +5610,7 @@
                   "metrics": {
                     "completion_reasoning_tokens": 0,
                     "completion_tokens": 21,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 260,
                     "reasoning_tokens": 0,
@@ -5734,7 +5827,7 @@
                             "itemId": "<itemId:2>"
                           }
                         },
-                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                         "type": "text"
                       }
                     ],
@@ -5755,20 +5848,22 @@
                     "usage": {
                       "inputTokens": {
                         "cacheRead": 0,
+                        "cacheWrite": 0,
                         "noCache": 305,
                         "total": 305
                       },
                       "outputTokens": {
                         "reasoning": 0,
-                        "text": 62,
-                        "total": 62
+                        "text": 59,
+                        "total": 59
                       },
                       "raw": {
                         "input_tokens": 305,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 62,
+                        "output_tokens": 59,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
@@ -5789,11 +5884,12 @@
                   },
                   "metrics": {
                     "completion_reasoning_tokens": 0,
-                    "completion_tokens": 62,
+                    "completion_tokens": 59,
+                    "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 305,
                     "reasoning_tokens": 0,
-                    "tokens": 367
+                    "tokens": 364
                   }
                 }
               ],
@@ -5888,12 +5984,12 @@
                         "itemId": "<itemId:6>"
                       }
                     },
-                    "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                    "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                     "type": "text"
                   }
                 ],
                 "finishReason": "stop",
-                "output": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                "output": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                 "providerMetadata": {
                   "openai": {
                     "responseId": "<responseId:7>",
@@ -6009,7 +6105,7 @@
                               "itemId": "<itemId:6>"
                             }
                           },
-                          "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                          "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                           "type": "text"
                         }
                       ],
@@ -6164,6 +6260,7 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 173
                       },
                       "inputTokens": 173,
@@ -6175,6 +6272,7 @@
                       "raw": {
                         "input_tokens": 173,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 59,
@@ -6339,6 +6437,7 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 260
                       },
                       "inputTokens": 260,
@@ -6350,6 +6449,7 @@
                       "raw": {
                         "input_tokens": 260,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
                         "output_tokens": 21,
@@ -6370,7 +6470,7 @@
                             "itemId": "<itemId:6>"
                           }
                         },
-                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                         "type": "text"
                       }
                     ],
@@ -6494,7 +6594,7 @@
                                   "itemId": "<itemId:6>"
                                 }
                               },
-                              "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                              "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                               "type": "text"
                             }
                           ],
@@ -6509,72 +6609,77 @@
                       "cachedInputTokens": 0,
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
+                        "cacheWriteTokens": 0,
                         "noCacheTokens": 305
                       },
                       "inputTokens": 305,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 62
+                        "textTokens": 59
                       },
-                      "outputTokens": 62,
+                      "outputTokens": 59,
                       "raw": {
                         "input_tokens": 305,
                         "input_tokens_details": {
+                          "cache_write_tokens": 0,
                           "cached_tokens": 0
                         },
-                        "output_tokens": 62,
+                        "output_tokens": 59,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
                       "reasoningTokens": 0,
-                      "totalTokens": 367
+                      "totalTokens": 364
                     },
                     "warnings": []
                   }
                 ],
-                "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                 "toolCalls": [],
                 "toolResults": [],
                 "totalUsage": {
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 738
                   },
                   "inputTokens": 738,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 142
+                    "textTokens": 139
                   },
-                  "outputTokens": 142,
+                  "outputTokens": 139,
                   "reasoningTokens": 0,
-                  "totalTokens": 880
+                  "totalTokens": 877
                 },
                 "usage": {
                   "cachedInputTokens": 0,
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
+                    "cacheWriteTokens": 0,
                     "noCacheTokens": 305
                   },
                   "inputTokens": 305,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 62
+                    "textTokens": 59
                   },
-                  "outputTokens": 62,
+                  "outputTokens": 59,
                   "raw": {
                     "input_tokens": 305,
                     "input_tokens_details": {
+                      "cache_write_tokens": 0,
                       "cached_tokens": 0
                     },
-                    "output_tokens": 62,
+                    "output_tokens": 59,
                     "output_tokens_details": {
                       "reasoning_tokens": 0
                     }
                   },
                   "reasoningTokens": 0,
-                  "totalTokens": 367
+                  "totalTokens": 364
                 },
                 "warnings": []
               },
@@ -6641,7 +6746,7 @@
         }
       ],
       "metadata": {
-        "aiSdkVersion": "6.0.219",
+        "aiSdkVersion": "6.0.230",
         "scenario": "ai-sdk-instrumentation",
         "testRunId": "<run:1>"
       }
