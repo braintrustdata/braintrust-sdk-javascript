@@ -13,6 +13,6 @@
   },
   "dependencies": {
     "openai-codex-sdk-v0": "npm:@openai/codex-sdk@0.142.5",
-    "openai-codex-sdk-v0-latest": "npm:@openai/codex-sdk@0.142.5"
+    "openai-codex-sdk-v0-latest": "npm:@openai/codex-sdk@0.144.5"
   }
 }
