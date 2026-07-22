@@ -6608,7 +6608,9 @@ export function deepCopyEvent<T extends Partial<BackgroundLogEvent>>(
   // this could be changed to a "real" deep copy so that immutable types (long
   // strings) do not have to be copied.
   const serialized = JSON.stringify(event, (_k, v) => {
-    if (v instanceof SpanImpl || v instanceof NoopSpan) {
+    if (v instanceof Error) {
+      return v.message;
+    } else if (v instanceof SpanImpl || v instanceof NoopSpan) {
       return `<span>`;
     } else if (v instanceof Experiment) {
       return `<experiment>`;

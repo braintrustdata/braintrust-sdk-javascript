@@ -12,16 +12,21 @@ import {
   currentSpan,
   initLogger,
   NOOP_SPAN,
+  type Span,
   type TestBackgroundLogger,
 } from "../../logger";
 import { configureNode } from "../../node/config";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { channel, defineChannels } from "./channel-definitions";
-import { traceAsyncChannel } from "./channel-tracing";
+import { traceAsyncChannel, traceStreamingChannel } from "./channel-tracing";
 
 const testChannels = defineChannels("channel-tracing-test", {
   asyncCall: channel<[Record<string, unknown>], { ok: true }>({
     channelName: "async.call",
+    kind: "async",
+  }),
+  streamingCall: channel<[Record<string, unknown>], { ok: true }>({
+    channelName: "streaming.call",
     kind: "async",
   }),
 });
@@ -192,5 +197,53 @@ describe("traceAsyncChannel current span binding", () => {
 
     const spans = await backgroundLogger.drain();
     expect(spans).toHaveLength(0);
+  });
+
+  it("runs streaming cleanup hooks when span logging fails", async () => {
+    const onComplete = vi.fn();
+    const onError = vi.fn();
+    const end = vi.fn();
+    const child = {
+      end,
+      log: vi.fn(() => {
+        throw new Error("logging failed");
+      }),
+    } as unknown as Span;
+    const parent = {
+      startSpan: vi.fn(() => child),
+    } as unknown as Span;
+    const unsubscribe = traceStreamingChannel(testChannels.streamingCall, {
+      name: "streaming-channel-test",
+      parent: () => parent,
+      type: "function",
+      extractInput: () => ({ input: "input", metadata: undefined }),
+      extractOutput: (result) => result,
+      extractMetrics: () => ({}),
+      onComplete,
+      onError,
+    });
+
+    try {
+      await expect(
+        testChannels.streamingCall.tracePromise(
+          async () => ({ ok: true as const }),
+          { arguments: [{}] } as any,
+        ),
+      ).resolves.toEqual({ ok: true });
+      await expect(
+        testChannels.streamingCall.tracePromise(
+          async () => {
+            throw new Error("call failed");
+          },
+          { arguments: [{}] } as any,
+        ),
+      ).rejects.toThrow("call failed");
+    } finally {
+      unsubscribe();
+    }
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(end).toHaveBeenCalledTimes(2);
   });
 });

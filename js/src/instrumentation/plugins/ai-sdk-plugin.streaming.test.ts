@@ -16,6 +16,10 @@ import {
   TestBackgroundLogger,
 } from "../../logger";
 import { wrapAISDK, wrapAgentClass } from "../../wrappers/ai-sdk";
+import {
+  captureHarnessCreateSessionParent,
+  harnessContinuationParent,
+} from "../../wrappers/ai-sdk/harness-agent-context";
 import { workflowAgentWrapperSpanCountForTesting } from "../../wrappers/ai-sdk/workflow-agent-context";
 import { aiSDKChannels } from "./ai-sdk-channels";
 import { AISDKPlugin } from "./ai-sdk-plugin";
@@ -1297,7 +1301,10 @@ describe("AI SDK streaming instrumentation", () => {
       }
 
       async continueGenerate() {
-        return { text: "finished" };
+        return {
+          text: "finished",
+          usage: { inputTokens: 4, outputTokens: 2, totalTokens: 6 },
+        };
       }
     }
 
@@ -1311,13 +1318,21 @@ describe("AI SDK streaming instrumentation", () => {
       session: initialSession,
     });
 
-    const continuation = JSON.parse(
-      JSON.stringify(await initialSession.suspendTurn()),
-    );
+    const suspended = await initialSession.suspendTurn();
+    const continuation = JSON.parse(JSON.stringify(suspended));
+    expect(
+      captureHarnessCreateSessionParent({
+        continueFrom: continuation,
+        sessionId: "serialized-session",
+      }),
+    ).toEqual(expect.any(String));
     const resumedSession = await agent.createSession({
       continueFrom: continuation,
       sessionId: "serialized-session",
     });
+    expect(harnessContinuationParent(resumedSession)).toEqual(
+      expect.any(String),
+    );
     await agent.continueGenerate({ session: resumedSession });
 
     const spans = (await backgroundLogger.drain()) as any[];
@@ -1338,6 +1353,236 @@ describe("AI SDK streaming instrumentation", () => {
     expect(byName["HarnessAgent.continueGenerate"]?.span_parents).toEqual([
       byName["HarnessAgent.generate"]?.span_id,
     ]);
+    expect(byName["HarnessAgent.generate"]?.output).toMatchObject({
+      text: "finished",
+    });
+    expect(byName["HarnessAgent.generate"]?.metrics).toMatchObject({
+      completion_tokens: 2,
+      prompt_tokens: 4,
+      tokens: 6,
+    });
+    expect(
+      byName["HarnessAgent.generate"]?.metrics?.end,
+    ).toBeGreaterThanOrEqual(
+      byName["HarnessAgent.continueGenerate"]?.metrics?.end,
+    );
+  });
+
+  test("wrapAgentClass extends suspended HarnessAgent turns on continuation errors", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    class HarnessAgent {
+      readonly harnessId = "failing-continuation-harness";
+      readonly permissionMode = "allow-all";
+      readonly settings: { telemetry?: Record<string, unknown> } = {};
+      readonly tools = {};
+
+      async createSession(params: {
+        continueFrom?: unknown;
+        sessionId?: string;
+      }) {
+        return {
+          sessionId: params.sessionId,
+          suspendTurn: async () => ({
+            data: { cursor: 1 },
+            harnessId: "failing-continuation-harness",
+            specificationVersion: "harness-v1",
+            type: "continue-turn",
+          }),
+        };
+      }
+
+      async generate() {
+        return { text: "suspended" };
+      }
+
+      async continueGenerate() {
+        throw new Error("continuation failed");
+      }
+    }
+
+    const WrappedHarnessAgent = wrapAgentClass(HarnessAgent);
+    const agent = new WrappedHarnessAgent();
+    const initialSession = await agent.createSession({
+      sessionId: "failed-continuation-session",
+    });
+    await agent.generate({ prompt: "start", session: initialSession });
+    const continuation = JSON.parse(
+      JSON.stringify(await initialSession.suspendTurn()),
+    );
+    const resumedSession = await agent.createSession({
+      continueFrom: continuation,
+      sessionId: "failed-continuation-session",
+    });
+
+    await expect(
+      agent.continueGenerate({ session: resumedSession }),
+    ).rejects.toThrow("continuation failed");
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const byName = Object.fromEntries(
+      spans
+        .filter((span) =>
+          span.span_attributes?.name?.startsWith("HarnessAgent."),
+        )
+        .map((span) => [span.span_attributes.name, span]),
+    );
+    expect(byName["HarnessAgent.generate"]?.error).toBe("continuation failed");
+    expect(
+      byName["HarnessAgent.generate"]?.metrics?.end,
+    ).toBeGreaterThanOrEqual(
+      byName["HarnessAgent.continueGenerate"]?.metrics?.end,
+    );
+  });
+
+  test("wrapAgentClass extends suspended turns when continueStream rejects", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    class HarnessAgent {
+      readonly harnessId = "failing-stream-continuation-harness";
+      readonly permissionMode = "allow-all";
+      readonly settings: { telemetry?: Record<string, unknown> } = {};
+      readonly tools = {};
+
+      async createSession(params: {
+        continueFrom?: unknown;
+        sessionId?: string;
+      }) {
+        return {
+          sessionId: params.sessionId,
+          suspendTurn: async () => ({
+            data: { cursor: 1 },
+            harnessId: "failing-stream-continuation-harness",
+            specificationVersion: "harness-v1",
+            type: "continue-turn",
+          }),
+        };
+      }
+
+      async generate() {
+        return { text: "suspended" };
+      }
+
+      async continueStream() {
+        throw new Error("stream continuation failed");
+      }
+    }
+
+    const WrappedHarnessAgent = wrapAgentClass(HarnessAgent);
+    const agent = new WrappedHarnessAgent();
+    const initialSession = await agent.createSession({
+      sessionId: "failed-stream-continuation-session",
+    });
+    await agent.generate({ prompt: "start", session: initialSession });
+    const continuation = JSON.parse(
+      JSON.stringify(await initialSession.suspendTurn()),
+    );
+    const resumedSession = await agent.createSession({
+      continueFrom: continuation,
+      sessionId: "failed-stream-continuation-session",
+    });
+
+    await expect(
+      agent.continueStream({ session: resumedSession }),
+    ).rejects.toThrow("stream continuation failed");
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const byName = Object.fromEntries(
+      spans
+        .filter((span) =>
+          span.span_attributes?.name?.startsWith("HarnessAgent."),
+        )
+        .map((span) => [span.span_attributes.name, span]),
+    );
+    expect(byName["HarnessAgent.generate"]?.error).toBe(
+      "stream continuation failed",
+    );
+    expect(
+      byName["HarnessAgent.generate"]?.metrics?.end,
+    ).toBeGreaterThanOrEqual(
+      byName["HarnessAgent.continueStream"]?.metrics?.end,
+    );
+  });
+
+  test("wrapAgentClass preserves suspended output when a continuation stream is cancelled", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+
+    class HarnessAgent {
+      readonly harnessId = "cancelled-stream-continuation-harness";
+      readonly permissionMode = "allow-all";
+      readonly settings: { telemetry?: Record<string, unknown> } = {};
+      readonly tools = {};
+
+      async createSession(params: {
+        continueFrom?: unknown;
+        sessionId?: string;
+      }) {
+        return {
+          sessionId: params.sessionId,
+          suspendTurn: async () => ({
+            data: { cursor: 1 },
+            harnessId: "cancelled-stream-continuation-harness",
+            specificationVersion: "harness-v1",
+            type: "continue-turn",
+          }),
+        };
+      }
+
+      async generate() {
+        return { text: "suspended" };
+      }
+
+      async continueStream() {
+        return {
+          fullStream: (async function* () {
+            yield { text: "partial", type: "text-delta" };
+            yield { text: "unread", type: "text-delta" };
+          })(),
+          text: Promise.resolve("partialunread"),
+          totalUsage: Promise.resolve({
+            inputTokens: 2,
+            outputTokens: 1,
+            totalTokens: 3,
+          }),
+        };
+      }
+    }
+
+    const WrappedHarnessAgent = wrapAgentClass(HarnessAgent);
+    const agent = new WrappedHarnessAgent();
+    const initialSession = await agent.createSession({
+      sessionId: "cancelled-stream-continuation-session",
+    });
+    await agent.generate({ prompt: "start", session: initialSession });
+    const continuation = JSON.parse(
+      JSON.stringify(await initialSession.suspendTurn()),
+    );
+    const resumedSession = await agent.createSession({
+      continueFrom: continuation,
+      sessionId: "cancelled-stream-continuation-session",
+    });
+    const result = await agent.continueStream({ session: resumedSession });
+    for await (const _chunk of result.fullStream) {
+      break;
+    }
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    const byName = Object.fromEntries(
+      spans
+        .filter((span) =>
+          span.span_attributes?.name?.startsWith("HarnessAgent."),
+        )
+        .map((span) => [span.span_attributes.name, span]),
+    );
+    expect(byName["HarnessAgent.generate"]?.output).toMatchObject({
+      text: "suspended",
+    });
+    expect(byName["HarnessAgent.generate"]?.error).toBeUndefined();
+    expect(
+      byName["HarnessAgent.generate"]?.metrics?.end,
+    ).toBeGreaterThanOrEqual(
+      byName["HarnessAgent.continueStream"]?.metrics?.end,
+    );
   });
 
   test("wrapAgentClass preserves explicit HarnessAgent telemetry settings", async () => {

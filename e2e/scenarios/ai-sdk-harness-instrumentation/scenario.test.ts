@@ -20,6 +20,15 @@ const turnNames = [
   "HarnessAgent.continueGenerate",
   "HarnessAgent.continueStream",
 ] as const;
+
+function numericMetric(
+  event: { metrics?: Record<string, unknown> } | undefined,
+  name: string,
+): number {
+  const value = event?.metrics?.[name];
+  expect(value, `expected numeric ${name} metric`).toEqual(expect.any(Number));
+  return value as number;
+}
 // The 1.0.0 Codex adapter supports suspended-turn replay against both Harness
 // baselines; newer adapter releases abort the active turn during suspension.
 const scenarios = await Promise.all(
@@ -109,6 +118,29 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             expect(
               turnsByName["HarnessAgent.continueStream"]?.span.parentIds,
             ).toEqual([turnsByName["HarnessAgent.stream"]?.span.id]);
+            for (const [initialName, continuationName] of [
+              ["HarnessAgent.generate", "HarnessAgent.continueGenerate"],
+              ["HarnessAgent.stream", "HarnessAgent.continueStream"],
+            ] as const) {
+              const initial = turnsByName[initialName];
+              const continuation = turnsByName[continuationName];
+              expect(numericMetric(initial, "start")).toBeLessThanOrEqual(
+                numericMetric(continuation, "start"),
+              );
+              expect(numericMetric(continuation, "end")).toBeLessThanOrEqual(
+                numericMetric(initial, "end"),
+              );
+              expect(initial?.output).toEqual(continuation?.output);
+              for (const metric of [
+                "completion_tokens",
+                "prompt_tokens",
+                "tokens",
+              ]) {
+                expect(initial?.metrics?.[metric]).toBe(
+                  continuation?.metrics?.[metric],
+                );
+              }
+            }
             expect(turnsByName["HarnessAgent.generate"]?.input).toEqual({
               prompt:
                 'Run the built-in bash command "touch /workspace/generate-started; sleep 5; printf GENERATE_OK" exactly once. After it finishes, reply exactly GENERATE_OK.',
@@ -172,6 +204,17 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             expect(streamBashSpan?.span.parentIds).toEqual([
               turnsByName["HarnessAgent.stream"]?.span.id,
             ]);
+            for (const [toolSpan, initialName] of [
+              [generateBashSpan, "HarnessAgent.generate"],
+              [streamBashSpan, "HarnessAgent.stream"],
+            ] as const) {
+              expect(
+                numericMetric(turnsByName[initialName], "start"),
+              ).toBeLessThanOrEqual(numericMetric(toolSpan, "start"));
+              expect(numericMetric(toolSpan, "start")).toBeLessThanOrEqual(
+                numericMetric(turnsByName[initialName], "end"),
+              );
+            }
 
             // Suspension can attach the bash tool span to either side of the
             // continued turn. Its presence is asserted above; omit its
@@ -186,10 +229,8 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
                 `${scenario.variantKey}-${mode}.span-tree.json`,
               ),
               {
-                // Tool telemetry can cross the suspend/resume boundary, so
-                // sibling capture and start order are both nondeterministic.
-                // Canonicalize sibling display order while separately
-                // asserting the exact parent/root relationships above.
+                // Keep display deterministic while the focused assertions
+                // above preserve the suspend/resume chronology contract.
                 siblingOrder: "name",
                 normalize: {
                   // These fields can be split across either side of a

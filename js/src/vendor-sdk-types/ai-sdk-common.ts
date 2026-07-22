@@ -277,7 +277,9 @@ export interface AISDKAgentInstance {
 }
 
 export interface AISDKHarnessAgentSession {
+  detach?: (...args: unknown[]) => Promise<unknown>;
   sessionId?: string;
+  stop?: (...args: unknown[]) => Promise<unknown>;
   suspendTurn?: (...args: unknown[]) => Promise<unknown>;
   [key: string]: unknown;
 }
