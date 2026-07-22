@@ -1,0 +1,3 @@
+# Hide generated e2e artifacts from GitHub diffs by default.
+e2e/**/__cassettes__/** linguist-generated=true
+e2e/**/*.span-tree.json linguist-generated=true
