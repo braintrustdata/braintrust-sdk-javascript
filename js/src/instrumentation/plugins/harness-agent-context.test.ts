@@ -2,10 +2,12 @@ import { beforeAll, describe, expect, test, vi } from "vitest";
 import type { Span } from "../../logger";
 import { _exportsForTestingOnly } from "../../logger";
 import { configureNode } from "../../node/config";
+import { SpanObjectTypeV3 } from "../../util";
 import {
   captureHarnessCreateSessionParent,
-  extendHarnessTurn,
+  endHarnessTurn,
   registerHarnessTurnSpan,
+  updateHarnessTurn,
 } from "../../wrappers/ai-sdk/harness-agent-context";
 
 try {
@@ -14,10 +16,17 @@ try {
 
 const contextKey = "__braintrust_trace_context";
 
-function exportOnlySpan(exported: () => Promise<string>): Span {
+function serializableSpan(exported = vi.fn()): Span {
   return {
     export: exported,
-    getParentInfo: () => undefined,
+    getParentInfo: () =>
+      ({
+        computeObjectMetadataArgs: undefined,
+        objectId: {
+          getSync: () => ({ value: "project-id" }),
+        },
+        objectType: SpanObjectTypeV3.PROJECT_LOGS,
+      }) as ReturnType<Span["getParentInfo"]>,
     id: "row-id",
     rootSpanId: "root-span-id",
     spanId: "span-id",
@@ -71,8 +80,10 @@ describe("HarnessAgent continuation context", () => {
       Session.prototype,
       "suspendTurn",
     );
-    const span = exportOnlySpan(async () => "exported-parent");
-    registerHarnessTurnSpan({ continuation: false, session, span });
+    const exportSpan = vi.fn();
+    const span = serializableSpan(exportSpan);
+    registerHarnessTurnSpan({ session, span });
+    expect(exportSpan).not.toHaveBeenCalled();
 
     const suspendPromise = session.suspendTurn();
     expect(suspendPromise).toBe(session.suspendPromise);
@@ -99,20 +110,23 @@ describe("HarnessAgent continuation context", () => {
 
     await expect(session.detach()).resolves.toBe(detached);
     expect(detachedContinuation[contextKey]).toMatchObject({
-      parent: "exported-parent",
+      parent: expect.any(String),
       signature: expect.any(String),
       version: 2,
     });
 
     await expect(session.stop()).resolves.toBe(stopped);
     expect(stoppedContinuation[contextKey]).toMatchObject({
-      parent: "exported-parent",
+      parent: detachedContinuation[contextKey]
+        ? (detachedContinuation[contextKey] as { parent: string }).parent
+        : undefined,
       signature: expect.any(String),
       version: 2,
     });
+    expect(exportSpan).not.toHaveBeenCalled();
   });
 
-  test("does not wait for export or lifecycle-state access", async () => {
+  test("never exports a turn span and contains lifecycle-state access", async () => {
     const suspended = { cursor: 1 };
     const resumeState = Object.defineProperty({}, "continueFrom", {
       get() {
@@ -125,38 +139,44 @@ describe("HarnessAgent continuation context", () => {
       sessionId: "session-2",
       suspendTurn: () => suspendPromise,
     };
-    const span = exportOnlySpan(() => new Promise(() => {}));
+    const exportSpan = vi.fn(() => new Promise<string>(() => {}));
+    const span = serializableSpan(exportSpan);
 
-    registerHarnessTurnSpan({ continuation: false, session, span });
+    registerHarnessTurnSpan({ session, span });
+    expect(exportSpan).not.toHaveBeenCalled();
 
     expect(session.suspendTurn()).toBe(suspendPromise);
     await expect(suspendPromise).resolves.toBe(suspended);
-    expect(suspended).not.toHaveProperty(contextKey);
+    expect(suspended).toHaveProperty(contextKey);
     await expect(session.detach()).resolves.toBe(resumeState);
+    expect(exportSpan).not.toHaveBeenCalled();
   });
 
   test("authenticates and binds serialized parents to lifecycle state and session", async () => {
-    const parent = exportOnlySpan(async () => "signed-parent");
+    const exportSpan = vi.fn();
+    const parent = serializableSpan(exportSpan);
     const session = {
       sessionId: "bound-session",
       suspendTurn: async () => ({ cursor: 1 }),
     };
-    registerHarnessTurnSpan({ continuation: false, session, span: parent });
+    registerHarnessTurnSpan({ session, span: parent });
     const continuation = await session.suspendTurn();
     const serialized = JSON.parse(JSON.stringify(continuation));
+    const serializedParent = serialized[contextKey].parent;
+    expect(exportSpan).not.toHaveBeenCalled();
 
     expect(
       captureHarnessCreateSessionParent({
         continueFrom: serialized,
         sessionId: "bound-session",
       }),
-    ).toBe("signed-parent");
+    ).toBe(serializedParent);
     expect(
       captureHarnessCreateSessionParent({
         continueFrom: serialized,
         sessionId: "bound-session",
       }),
-    ).toBe("signed-parent");
+    ).toBe(serializedParent);
 
     expect(
       captureHarnessCreateSessionParent({
@@ -193,24 +213,27 @@ describe("HarnessAgent continuation context", () => {
     ).toBeUndefined();
   });
 
-  test("updates trusted local parents with final output, usage, and end", () => {
+  test("updates and extends trusted local parents", () => {
     const log = vi.fn();
     const parent = { log } as unknown as Span;
 
-    extendHarnessTurn(parent, {
+    updateHarnessTurn(parent, {
       metrics: { completion_tokens: 2, prompt_tokens: 3, tokens: 5 },
       output: "finished",
     });
+    endHarnessTurn(parent);
 
     expect(log).toHaveBeenNthCalledWith(1, { output: null });
     expect(log).toHaveBeenNthCalledWith(2, {
       metrics: {
         completion_tokens: 2,
-        end: expect.any(Number),
         prompt_tokens: 3,
         tokens: 5,
       },
       output: "finished",
+    });
+    expect(log).toHaveBeenNthCalledWith(3, {
+      metrics: { end: expect.any(Number) },
     });
   });
 });

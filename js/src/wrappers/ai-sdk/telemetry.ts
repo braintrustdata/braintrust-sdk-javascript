@@ -470,18 +470,24 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
           ? currentWorkflowAgentWrapperSpan()
           : undefined;
         const ownsSpan = !wrapperSpan;
+        const harnessTurnParent = currentHarnessTurnParent();
         const span = ownsSpan
-          ? startSpan({
-              name: operationName,
-              spanAttributes: { type: SpanTypeAttribute.FUNCTION },
-            })
+          ? harnessTurnParent
+            ? startHarnessTurnChildSpan(harnessTurnParent, {
+                name: operationName,
+                spanAttributes: { type: SpanTypeAttribute.FUNCTION },
+              })
+            : startSpan({
+                name: operationName,
+                spanAttributes: { type: SpanTypeAttribute.FUNCTION },
+              })
           : wrapperSpan;
         const operationKey = createOperationKey(event, operationName);
 
         registerOperation({
           callId: event.callId,
           hadModelChild: false,
-          harnessTurnParent: currentHarnessTurnParent(),
+          harnessTurnParent,
           loggedInput: false,
           operationName,
           operationKey,

@@ -1111,7 +1111,7 @@ describe("AI SDK streaming instrumentation", () => {
     const harnessSpans = spans.filter((span) =>
       span.span_attributes?.name?.startsWith("HarnessAgent."),
     );
-    expect(harnessSpans).toHaveLength(4);
+    expect(harnessSpans).toHaveLength(2);
     expect(new Set(harnessSpans.map((span) => span.root_span_id)).size).toBe(2);
 
     const byName = Object.fromEntries(
@@ -1123,20 +1123,14 @@ describe("AI SDK streaming instrumentation", () => {
     expect(byName["HarnessAgent.stream"]?.input).toEqual({
       messages: [{ role: "user", content: "stream prompt" }],
     });
-    expect(byName["HarnessAgent.continueGenerate"]?.input).toEqual({
-      toolApprovalContinuations,
-    });
-    expect(byName["HarnessAgent.continueStream"]?.input).toEqual({
-      toolApprovalContinuations,
-    });
     expect(byName["HarnessAgent.generate"]?.span_parents).toEqual(undefined);
     expect(byName["HarnessAgent.stream"]?.span_parents).toEqual(undefined);
-    expect(byName["HarnessAgent.continueGenerate"]?.span_parents).toEqual([
-      byName["HarnessAgent.generate"]?.span_id,
-    ]);
-    expect(byName["HarnessAgent.continueStream"]?.span_parents).toEqual([
-      byName["HarnessAgent.stream"]?.span_id,
-    ]);
+    expect(byName["HarnessAgent.generate"]?.output).toMatchObject({
+      text: "continued",
+    });
+    expect(byName["HarnessAgent.stream"]?.output).toMatchObject({
+      text: "continued-stream",
+    });
 
     for (const span of harnessSpans) {
       expect(span.span_attributes.type).toBe("task");
@@ -1250,16 +1244,11 @@ describe("AI SDK streaming instrumentation", () => {
     const harnessSpans = spans.filter((span) =>
       span.span_attributes?.name?.startsWith("HarnessAgent."),
     );
-    expect(harnessSpans).toHaveLength(8);
+    expect(harnessSpans).toHaveLength(4);
     expect(
       harnessSpans.map((span) => span.span_attributes.name).sort(),
     ).toEqual(
-      [
-        "HarnessAgent.continueGenerate",
-        "HarnessAgent.continueStream",
-        "HarnessAgent.generate",
-        "HarnessAgent.stream",
-      ]
+      ["HarnessAgent.generate", "HarnessAgent.stream"]
         .flatMap((name) => [name, name])
         .sort(),
     );
@@ -1343,16 +1332,7 @@ describe("AI SDK streaming instrumentation", () => {
         )
         .map((span) => [span.span_attributes.name, span]),
     );
-    expect(Object.keys(byName)).toEqual([
-      "HarnessAgent.generate",
-      "HarnessAgent.continueGenerate",
-    ]);
-    expect(byName["HarnessAgent.continueGenerate"]?.root_span_id).toBe(
-      byName["HarnessAgent.generate"]?.root_span_id,
-    );
-    expect(byName["HarnessAgent.continueGenerate"]?.span_parents).toEqual([
-      byName["HarnessAgent.generate"]?.span_id,
-    ]);
+    expect(Object.keys(byName)).toEqual(["HarnessAgent.generate"]);
     expect(byName["HarnessAgent.generate"]?.output).toMatchObject({
       text: "finished",
     });
@@ -1361,10 +1341,8 @@ describe("AI SDK streaming instrumentation", () => {
       prompt_tokens: 4,
       tokens: 6,
     });
-    expect(
-      byName["HarnessAgent.generate"]?.metrics?.end,
-    ).toBeGreaterThanOrEqual(
-      byName["HarnessAgent.continueGenerate"]?.metrics?.end,
+    expect(byName["HarnessAgent.generate"]?.metrics?.end).toEqual(
+      expect.any(Number),
     );
   });
 
@@ -1428,10 +1406,10 @@ describe("AI SDK streaming instrumentation", () => {
         .map((span) => [span.span_attributes.name, span]),
     );
     expect(byName["HarnessAgent.generate"]?.error).toBe("continuation failed");
-    expect(
-      byName["HarnessAgent.generate"]?.metrics?.end,
-    ).toBeGreaterThanOrEqual(
-      byName["HarnessAgent.continueGenerate"]?.metrics?.end,
+    expect(byName["HarnessAgent.generate"]?.output).toBeNull();
+    expect(Object.keys(byName)).toEqual(["HarnessAgent.generate"]);
+    expect(byName["HarnessAgent.generate"]?.metrics?.end).toEqual(
+      expect.any(Number),
     );
   });
 
@@ -1497,10 +1475,10 @@ describe("AI SDK streaming instrumentation", () => {
     expect(byName["HarnessAgent.generate"]?.error).toBe(
       "stream continuation failed",
     );
-    expect(
-      byName["HarnessAgent.generate"]?.metrics?.end,
-    ).toBeGreaterThanOrEqual(
-      byName["HarnessAgent.continueStream"]?.metrics?.end,
+    expect(byName["HarnessAgent.generate"]?.output).toBeNull();
+    expect(Object.keys(byName)).toEqual(["HarnessAgent.generate"]);
+    expect(byName["HarnessAgent.generate"]?.metrics?.end).toEqual(
+      expect.any(Number),
     );
   });
 
@@ -1578,10 +1556,9 @@ describe("AI SDK streaming instrumentation", () => {
       text: "suspended",
     });
     expect(byName["HarnessAgent.generate"]?.error).toBeUndefined();
-    expect(
-      byName["HarnessAgent.generate"]?.metrics?.end,
-    ).toBeGreaterThanOrEqual(
-      byName["HarnessAgent.continueStream"]?.metrics?.end,
+    expect(Object.keys(byName)).toEqual(["HarnessAgent.generate"]);
+    expect(byName["HarnessAgent.generate"]?.metrics?.end).toEqual(
+      expect.any(Number),
     );
   });
 

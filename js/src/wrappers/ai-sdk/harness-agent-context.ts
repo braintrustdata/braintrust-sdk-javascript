@@ -1,4 +1,5 @@
 import iso from "../../isomorph";
+import type { IsoAsyncLocalStorage, IsoTracingChannel } from "../../isomorph";
 import {
   _internalGetGlobalState,
   currentSpan,
@@ -17,7 +18,7 @@ import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
 const BRAINTRUST_TURN_CONTEXT_KEY = "__braintrust_trace_context";
 const BRAINTRUST_TURN_CONTEXT_VERSION = 2;
 
-type HarnessTurnParent = Span | string;
+export type HarnessTurnParent = Span | string;
 
 type SerializedHarnessTurnContext = {
   parent: string;
@@ -25,18 +26,16 @@ type SerializedHarnessTurnContext = {
   version: typeof BRAINTRUST_TURN_CONTEXT_VERSION;
 };
 
-type HarnessTurnUpdate = {
-  error?: unknown;
-  metrics?: Record<string, number>;
-  output?: unknown;
-};
+type HarnessTurnUpdate = Parameters<Span["log"]>[0];
 
 type LifecycleMethod = "detach" | "stop" | "suspendTurn";
 
 const sessionTurnParents = new WeakMap<object, HarnessTurnParent>();
 const wrapperTurnParents = new WeakMap<Span, HarnessTurnParent>();
 const patchedLifecycleMethods = new WeakMap<object, Set<LifecycleMethod>>();
-const exportedSpanCache = new WeakMap<Span, string>();
+let harnessTurnParentStore:
+  | IsoAsyncLocalStorage<HarnessTurnParent | undefined>
+  | undefined;
 
 function serializedTurnContext(
   value: unknown,
@@ -158,11 +157,6 @@ function continuationParentFromCreateSessionParams(
 }
 
 function exportSpanSynchronously(span: Span): string | undefined {
-  const cached = exportedSpanCache.get(span);
-  if (cached !== undefined) {
-    return cached;
-  }
-
   const parentInfo = span.getParentInfo();
   if (!parentInfo) {
     return undefined;
@@ -188,17 +182,6 @@ function exportSpanSynchronously(span: Span): string | undefined {
 
 function exportedParent(parent: HarnessTurnParent): string | undefined {
   return typeof parent === "string" ? parent : exportSpanSynchronously(parent);
-}
-
-function cacheExportedSpan(span: Span): void {
-  try {
-    void Promise.resolve(span.export()).then(
-      (exported) => exportedSpanCache.set(span, exported),
-      () => {},
-    );
-  } catch {
-    // Export is best-effort and must not affect the instrumented turn.
-  }
 }
 
 function addSerializedContext(args: {
@@ -343,7 +326,6 @@ function patchLifecycleMethods(session: AISDKHarnessAgentSession): void {
 }
 
 export function registerHarnessTurnSpan(args: {
-  continuation: boolean;
   session: unknown;
   span: Span;
 }): void {
@@ -352,17 +334,8 @@ export function registerHarnessTurnSpan(args: {
   }
   const session: AISDKHarnessAgentSession = args.session;
 
-  if (args.continuation) {
-    const parent = sessionTurnParents.get(session);
-    if (parent) {
-      wrapperTurnParents.set(args.span, parent);
-    }
-    return;
-  }
-
   sessionTurnParents.set(session, args.span);
   wrapperTurnParents.set(args.span, args.span);
-  cacheExportedSpan(args.span);
   patchLifecycleMethods(session);
 }
 
@@ -398,7 +371,31 @@ export function registerHarnessSessionParent(
 }
 
 export function currentHarnessTurnParent(): HarnessTurnParent | undefined {
-  return wrapperTurnParents.get(currentSpan());
+  return (
+    harnessTurnParentStore?.getStore() ?? wrapperTurnParents.get(currentSpan())
+  );
+}
+
+export function bindHarnessTurnParentToStart<T>(
+  tracingChannel: IsoTracingChannel<T>,
+  parentFromEvent: (event: T) => HarnessTurnParent | undefined,
+): () => void {
+  const startChannel = tracingChannel.start;
+  if (!startChannel) {
+    return () => {};
+  }
+
+  harnessTurnParentStore ??= iso.newAsyncLocalStorage<
+    HarnessTurnParent | undefined
+  >();
+  const store = harnessTurnParentStore;
+  startChannel.bindStore(
+    store,
+    (event) => parentFromEvent(event) ?? store.getStore(),
+  );
+  return () => {
+    startChannel.unbindStore(store);
+  };
 }
 
 export function startHarnessTurnChildSpan(
@@ -410,7 +407,7 @@ export function startHarnessTurnChildSpan(
     : parent.startSpan(args);
 }
 
-export function extendHarnessTurn(
+export function updateHarnessTurn(
   parent: HarnessTurnParent | undefined,
   update: HarnessTurnUpdate = {},
 ): void {
@@ -432,14 +429,29 @@ export function extendHarnessTurn(
       // the continuation's final output replaces it.
       log({ output: null });
     }
-    log({
-      ...update,
-      metrics: {
-        ...update.metrics,
-        end: getCurrentUnixTimestamp(),
-      },
-    });
+    log(update);
   } catch {
     // Logging failures must not affect the agent call.
   }
+}
+
+export function endHarnessTurn(parent: HarnessTurnParent | undefined): number {
+  const endTime = getCurrentUnixTimestamp();
+  if (!parent) {
+    return endTime;
+  }
+
+  try {
+    const event = { metrics: { end: endTime } };
+    if (typeof parent === "string") {
+      updateSpan({ exported: parent, ...event });
+    } else {
+      // The original task was already ended when it suspended. Span.end()
+      // retains that first timestamp, so explicitly extend its end metric.
+      parent.log(event);
+    }
+  } catch {
+    // Logging failures must not affect the agent call.
+  }
+  return endTime;
 }

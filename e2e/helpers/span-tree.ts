@@ -32,7 +32,6 @@ type SpanTreeJsonNode = {
 
 type SpanTreeSnapshotOptions = {
   normalize?: NormalizeOptions;
-  siblingOrder?: "capture" | "name";
   snapshotExpect?: ExpectStatic;
 };
 
@@ -228,7 +227,6 @@ function formatFieldBlock(
 
 function buildEntries(
   inputs: readonly (CapturedLogEvent | SpanTreeEntry)[],
-  siblingOrder: "capture" | "name" = "capture",
 ): NormalizedEntry[] {
   const entriesById = new Map<string, NormalizedEntry>();
 
@@ -304,13 +302,7 @@ function buildEntries(
   }
 
   const sortEntries = (items: NormalizedEntry[]) => {
-    items.sort((left, right) => {
-      if (siblingOrder === "name" && left.name !== right.name) {
-        return left.name < right.name ? -1 : 1;
-      }
-
-      return left.firstSeen - right.firstSeen;
-    });
+    items.sort((left, right) => left.firstSeen - right.firstSeen);
     for (const item of items) {
       sortEntries(item.children);
     }
@@ -356,7 +348,7 @@ export function formatSpanTreeSnapshot(
   entries: readonly (CapturedLogEvent | SpanTreeEntry)[],
   options?: SpanTreeSnapshotOptions,
 ): string {
-  const roots = buildEntries(entries, options?.siblingOrder);
+  const roots = buildEntries(entries);
   return [
     "span_tree:",
     ...roots.flatMap((entry, index) =>
@@ -389,7 +381,7 @@ export function formatSpanTreeJsonSnapshot(
   entries: readonly (CapturedLogEvent | SpanTreeEntry)[],
   options?: SpanTreeSnapshotOptions,
 ): string {
-  const roots = buildEntries(entries, options?.siblingOrder);
+  const roots = buildEntries(entries);
   return `${JSON.stringify(
     {
       span_tree: roots.map((entry) => jsonEntry(entry, options)),

@@ -14,12 +14,7 @@ const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
 const TIMEOUT_MS = 120_000;
-const turnNames = [
-  "HarnessAgent.generate",
-  "HarnessAgent.stream",
-  "HarnessAgent.continueGenerate",
-  "HarnessAgent.continueStream",
-] as const;
+const turnNames = ["HarnessAgent.generate", "HarnessAgent.stream"] as const;
 
 function numericMetric(
   event: { metrics?: Record<string, unknown> } | undefined,
@@ -92,7 +87,7 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             const turnsByName = Object.fromEntries(
               turns.map((turn) => [turn.span.name, turn]),
             );
-            expect(turns).toHaveLength(4);
+            expect(turns).toHaveLength(2);
             expect(new Set(turns.map((turn) => turn.span.rootId)).size).toBe(2);
 
             for (const turn of turns) {
@@ -113,34 +108,11 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
               [],
             );
             expect(
-              turnsByName["HarnessAgent.continueGenerate"]?.span.parentIds,
-            ).toEqual([turnsByName["HarnessAgent.generate"]?.span.id]);
-            expect(
-              turnsByName["HarnessAgent.continueStream"]?.span.parentIds,
-            ).toEqual([turnsByName["HarnessAgent.stream"]?.span.id]);
-            for (const [initialName, continuationName] of [
-              ["HarnessAgent.generate", "HarnessAgent.continueGenerate"],
-              ["HarnessAgent.stream", "HarnessAgent.continueStream"],
-            ] as const) {
-              const initial = turnsByName[initialName];
-              const continuation = turnsByName[continuationName];
-              expect(numericMetric(initial, "start")).toBeLessThanOrEqual(
-                numericMetric(continuation, "start"),
-              );
-              expect(numericMetric(continuation, "end")).toBeLessThanOrEqual(
-                numericMetric(initial, "end"),
-              );
-              expect(initial?.output).toEqual(continuation?.output);
-              for (const metric of [
-                "completion_tokens",
-                "prompt_tokens",
-                "tokens",
-              ]) {
-                expect(initial?.metrics?.[metric]).toBe(
-                  continuation?.metrics?.[metric],
-                );
-              }
-            }
+              findAllSpans(events, "HarnessAgent.continueGenerate"),
+            ).toEqual([]);
+            expect(findAllSpans(events, "HarnessAgent.continueStream")).toEqual(
+              [],
+            );
             expect(turnsByName["HarnessAgent.generate"]?.input).toEqual({
               prompt:
                 'Run the built-in bash command "touch /workspace/generate-started; sleep 5; printf GENERATE_OK" exactly once. After it finishes, reply exactly GENERATE_OK.',
@@ -154,15 +126,11 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
                 },
               ],
             });
-            expect(turnsByName["HarnessAgent.continueGenerate"]?.input).toEqual(
-              { toolApprovalContinuations: [] },
-            );
-            expect(turnsByName["HarnessAgent.continueStream"]?.input).toEqual({
-              toolApprovalContinuations: [],
-            });
-            expect(turns.some((turn) => (turn.metrics?.tokens ?? 0) > 0)).toBe(
-              true,
-            );
+            for (const turn of turns) {
+              expect(turn.output).toBeDefined();
+              expect(turn.metrics?.tokens).toEqual(expect.any(Number));
+              expect(turn.metrics?.tokens).toBeGreaterThan(0);
+            }
 
             expect(findAllSpans(events, "HarnessAgent.createSession")).toEqual(
               [],
@@ -170,6 +138,8 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             expect(findAllSpans(events, "doGenerate").length).toBeGreaterThan(
               0,
             );
+            const harnessSpans = findAllSpans(events, "harness");
+            expect(harnessSpans).toHaveLength(4);
             const bashSpans = findAllSpans(events, "bash");
             expect(bashSpans).toHaveLength(2);
             for (const bashSpan of bashSpans) {
@@ -214,11 +184,41 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
               expect(numericMetric(toolSpan, "start")).toBeLessThanOrEqual(
                 numericMetric(turnsByName[initialName], "end"),
               );
+
+              const turn = turnsByName[initialName];
+              const operations = harnessSpans
+                .filter((span) => span.span.rootId === turn?.span.rootId)
+                .sort(
+                  (left, right) =>
+                    numericMetric(left, "start") -
+                    numericMetric(right, "start"),
+                );
+              expect(operations).toHaveLength(2);
+              for (const operation of operations) {
+                expect(operation.span.parentIds).toEqual([turn?.span.id]);
+              }
+              expect(numericMetric(operations[0], "start")).toBeLessThanOrEqual(
+                numericMetric(operations[1], "start"),
+              );
+              const modelSpans = findAllSpans(events, "doGenerate").filter(
+                (span) =>
+                  operations.some((operation) =>
+                    span.span.parentIds.includes(operation.span.id),
+                  ),
+              );
+              expect(modelSpans).toHaveLength(2);
+              for (const operation of operations) {
+                expect(
+                  modelSpans.filter((span) =>
+                    span.span.parentIds.includes(operation.span.id),
+                  ),
+                ).toHaveLength(1);
+              }
             }
 
-            // Suspension can attach the bash tool span to either side of the
-            // continued turn. Its presence is asserted above; omit its
-            // placement from the stable tree contract.
+            // Harness releases report provider-executed tool timing at
+            // different lifecycle points. The focused assertions above cover
+            // its ownership and root lifetime without inventing a boundary.
             const snapshotEvents = events.filter(
               (event) => event.span.name !== "bash",
             );
@@ -229,13 +229,10 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
                 `${scenario.variantKey}-${mode}.span-tree.json`,
               ),
               {
-                // Keep display deterministic while the focused assertions
-                // above preserve the suspend/resume chronology contract.
-                siblingOrder: "name",
                 normalize: {
                   // These fields can be split across either side of a
-                  // suspended Codex turn. The trace hierarchy and tool
-                  // ownership remain stable and are snapshot-tested.
+                  // suspended Codex turn. The trace hierarchy and model
+                  // ordering remain stable and are snapshot-tested.
                   omittedKeys: [
                     "callId",
                     "content",

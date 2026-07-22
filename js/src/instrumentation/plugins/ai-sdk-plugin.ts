@@ -7,7 +7,7 @@ import {
   unsubscribeAll,
 } from "../core/channel-tracing";
 import type { ChannelMessage } from "../core/channel-definitions";
-import { isAsyncIterable } from "../core/stream-patcher";
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import type { IsoChannelHandlers } from "../../isomorph";
 import {
   SpanTypeAttribute,
@@ -24,11 +24,14 @@ import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logg
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
 import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
 import {
+  bindHarnessTurnParentToStart,
   captureHarnessCreateSessionParent,
-  extendHarnessTurn,
+  endHarnessTurn,
   harnessContinuationParent,
   registerHarnessSessionParent,
   registerHarnessTurnSpan,
+  updateHarnessTurn,
+  type HarnessTurnParent,
 } from "../../wrappers/ai-sdk/harness-agent-context";
 import {
   registerWorkflowAgentWrapperSpan,
@@ -181,6 +184,16 @@ export class AISDKPlugin extends BasePlugin {
 
     this.unsubscribers.push(subscribeToAISDKV7TelemetryDispatcher());
     this.unsubscribers.push(subscribeToHarnessAgentCreateSession());
+    this.unsubscribers.push(
+      subscribeToHarnessContinuation(
+        harnessAgentChannels.continueGenerate,
+        denyOutputPaths,
+      ),
+      subscribeToHarnessContinuation(
+        harnessAgentChannels.continueStream,
+        denyOutputPaths,
+      ),
+    );
 
     // generateText - async function that may return streams
     this.unsubscribers.push(
@@ -437,7 +450,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "HarnessAgent.generate",
         type: SpanTypeAttribute.TASK,
         extractInput: ([params], event, span) =>
-          prepareAISDKHarnessAgentInput(params, event.self, span, false),
+          prepareAISDKHarnessAgentInput(params, event.self, span),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -454,7 +467,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "HarnessAgent.stream",
         type: SpanTypeAttribute.TASK,
         extractInput: ([params], event, span) =>
-          prepareAISDKHarnessAgentInput(params, event.self, span, false),
+          prepareAISDKHarnessAgentInput(params, event.self, span),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -481,15 +494,16 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
-    // HarnessAgent.continueGenerate - continuation of one agent turn
+    // Trace a continuation as its own task only when its original turn cannot
+    // be recovered. Known continuations extend the original Harness task.
     this.unsubscribers.push(
       traceStreamingChannel(harnessAgentChannels.continueGenerate, {
         name: "HarnessAgent.continueGenerate",
-        parent: (args) =>
-          harnessContinuationParent(harnessSessionFromArguments(args)),
+        shouldTrace: (args) =>
+          !harnessContinuationParent(harnessSessionFromArguments(args)),
         type: SpanTypeAttribute.TASK,
         extractInput: ([params], event, span) =>
-          prepareAISDKHarnessAgentInput(params, event.self, span, true),
+          prepareAISDKHarnessAgentInput(params, event.self, span),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -497,28 +511,17 @@ export class AISDKPlugin extends BasePlugin {
           ),
         extractMetrics: (result) => extractTokenMetrics(result),
         aggregateChunks: aggregateAISDKChunks,
-        onComplete: ({ endEvent, metrics, output }) =>
-          extendHarnessTurn(
-            harnessContinuationParent(endEvent.arguments?.[0]?.session),
-            { metrics, output },
-          ),
-        onError: ({ error, event }) =>
-          extendHarnessTurn(
-            harnessContinuationParent(event.arguments?.[0]?.session),
-            { error, output: null },
-          ),
       }),
     );
 
-    // HarnessAgent.continueStream - streaming continuation of one agent turn
     this.unsubscribers.push(
       traceStreamingChannel(harnessAgentChannels.continueStream, {
         name: "HarnessAgent.continueStream",
-        parent: (args) =>
-          harnessContinuationParent(harnessSessionFromArguments(args)),
+        shouldTrace: (args) =>
+          !harnessContinuationParent(harnessSessionFromArguments(args)),
         type: SpanTypeAttribute.TASK,
         extractInput: ([params], event, span) =>
-          prepareAISDKHarnessAgentInput(params, event.self, span, true),
+          prepareAISDKHarnessAgentInput(params, event.self, span),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -533,29 +536,10 @@ export class AISDKPlugin extends BasePlugin {
               }),
         }),
         aggregateChunks: aggregateAISDKChunks,
-        onError: ({ error, event }) =>
-          extendHarnessTurn(
-            harnessContinuationParent(event.arguments?.[0]?.session),
-            { error, output: null },
-          ),
         patchResult: ({ endEvent, result, span, startTime }) =>
           patchAISDKStreamingResult({
             defaultDenyOutputPaths: denyOutputPaths,
             endEvent,
-            onComplete: ({ metrics, output }) =>
-              extendHarnessTurn(
-                harnessContinuationParent(endEvent.arguments?.[0]?.session),
-                { metrics, output },
-              ),
-            onCancel: () =>
-              extendHarnessTurn(
-                harnessContinuationParent(endEvent.arguments?.[0]?.session),
-              ),
-            onError: (error) =>
-              extendHarnessTurn(
-                harnessContinuationParent(endEvent.arguments?.[0]?.session),
-                { error, output: null },
-              ),
             result,
             resolvePromiseUsage: true,
             span,
@@ -687,6 +671,160 @@ function subscribeToHarnessAgentCreateSession(): () => void {
 
   channel.subscribe(handlers);
   return () => channel.unsubscribe(handlers);
+}
+
+type HarnessContinuationChannel = typeof harnessAgentChannels.continueGenerate;
+
+function harnessContinuationParentFromEvent(
+  event: ChannelMessage<HarnessContinuationChannel>,
+): HarnessTurnParent | undefined {
+  try {
+    return harnessContinuationParent(event.arguments?.[0]?.session);
+  } catch {
+    return undefined;
+  }
+}
+
+function subscribeToHarnessContinuation(
+  continuationChannel: HarnessContinuationChannel,
+  defaultDenyOutputPaths: string[],
+): () => void {
+  const channel = continuationChannel.tracingChannel();
+  const parents = new WeakMap<object, HarnessTurnParent>();
+  const startTimes = new WeakMap<object, number>();
+  const unbindParentStore = bindHarnessTurnParentToStart(
+    channel,
+    harnessContinuationParentFromEvent,
+  );
+  const handlers: IsoChannelHandlers<
+    ChannelMessage<HarnessContinuationChannel>
+  > = {
+    start: (event) => {
+      const parent = harnessContinuationParentFromEvent(event);
+      if (!parent) {
+        return;
+      }
+
+      parents.set(event, parent);
+      startTimes.set(event, getCurrentUnixTimestamp());
+      try {
+        const params = event.arguments?.[0];
+        if (params) {
+          // Harness reads telemetry from its settings after this event starts.
+          // The original task already contains the turn input, so only install
+          // telemetry here; continuation work is logged onto that task.
+          prepareAISDKHarnessAgentInput(params, event.self);
+        }
+      } catch (error) {
+        debugLogger.error(
+          "Error preparing Harness continuation telemetry:",
+          error,
+        );
+      }
+    },
+    asyncEnd: (event) => {
+      const parent = parents.get(event);
+      const startTime = startTimes.get(event) ?? getCurrentUnixTimestamp();
+      parents.delete(event);
+      startTimes.delete(event);
+      if (!parent) {
+        return;
+      }
+
+      const endEvent = event as ChannelMessage<HarnessContinuationChannel> & {
+        result: AISDKResult | AsyncIterable<unknown>;
+      };
+      const span = {
+        end: () => endHarnessTurn(parent),
+        log: (update: Parameters<Span["log"]>[0]) =>
+          updateHarnessTurn(
+            parent,
+            Object.prototype.hasOwnProperty.call(update, "error") &&
+              !Object.prototype.hasOwnProperty.call(update, "output")
+              ? { ...update, output: null }
+              : update,
+          ),
+      };
+
+      try {
+        if (isAsyncIterable(endEvent.result)) {
+          patchStreamIfNeeded(endEvent.result, {
+            onComplete: (chunks) => {
+              try {
+                const { metadata, metrics, output } = aggregateAISDKChunks(
+                  chunks,
+                  endEvent.result,
+                  endEvent,
+                );
+                span.log({
+                  ...(metadata ? { metadata } : {}),
+                  metrics,
+                  output,
+                });
+              } catch (error) {
+                debugLogger.error(
+                  "Error aggregating Harness continuation stream:",
+                  error,
+                );
+              } finally {
+                span.end();
+              }
+            },
+            onError: (error) => {
+              span.log({ error: toLoggedError(error), output: null });
+              span.end();
+            },
+          });
+          return;
+        }
+
+        if (
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths,
+            endEvent,
+            result: endEvent.result,
+            resolvePromiseUsage: true,
+            span,
+            startTime,
+          })
+        ) {
+          return;
+        }
+
+        finalizeAISDKChildTracing(endEvent);
+        span.log({
+          metrics: extractTokenMetrics(endEvent.result),
+          output: processAISDKOutput(
+            endEvent.result,
+            resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+          ),
+        });
+        span.end();
+      } catch (error) {
+        debugLogger.error("Error tracing Harness continuation:", error);
+        span.end();
+      }
+    },
+    error: (event) => {
+      const parent = parents.get(event);
+      parents.delete(event);
+      startTimes.delete(event);
+      if (!parent) {
+        return;
+      }
+      updateHarnessTurn(parent, {
+        error: toLoggedError(event.error),
+        output: null,
+      });
+      endHarnessTurn(parent);
+    },
+  };
+
+  channel.subscribe(handlers);
+  return () => {
+    unbindParentStore();
+    channel.unsubscribe(handlers);
+  };
 }
 
 function subscribeToAISDKV7TelemetryDispatcher(): () => void {
@@ -1345,14 +1483,12 @@ function prepareAISDKHarnessAgentInput(
   params: AISDKHarnessAgentCallParams,
   self?: unknown,
   span?: Span,
-  continuation = false,
 ): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
   if (span) {
     registerHarnessTurnSpan({
-      continuation,
       session: params.session,
       span,
     });
@@ -2656,7 +2792,7 @@ function patchAISDKStreamingResult(args: {
   onError?: (error: Error) => void;
   result: AISDKResult;
   resolvePromiseUsage?: boolean;
-  span: Span;
+  span: Pick<Span, "end" | "log">;
   startTime: number;
 }): boolean {
   const {
