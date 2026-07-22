@@ -129,6 +129,9 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             );
             expect(findAllSpans(events, "bash").length).toBeGreaterThan(0);
 
+            // Suspension can attach the bash tool span to either side of the
+            // continued turn. Its presence is asserted above; omit its
+            // placement from the stable tree contract.
             const snapshotEvents = events.filter(
               (event) => event.span.name !== "bash",
             );
@@ -140,10 +143,10 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
               ),
               {
                 normalize: {
-                  // The tool span can be parented to either side of the
-                  // suspended turn, so its presence is asserted above and it
-                  // is omitted from the structural snapshot. Snapshot the
-                  // stable trace shape and aggregate usage here.
+                  // Codex may include its tool call in either side of the
+                  // suspended turn. Assert the exact turn inputs and tool
+                  // lifecycle above, while snapshotting the stable trace
+                  // shape and aggregate usage.
                   omittedKeys: [
                     "callId",
                     "content",
