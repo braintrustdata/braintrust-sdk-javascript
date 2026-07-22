@@ -266,62 +266,52 @@ span_tree:
 │         "model": "gpt-5.4-mini",
 │         "provider": "codex"
 │       }
-│       ├── doGenerate [llm]
-│       │   input: {
-│       │     "messages": [
-│       │       {
-│       │         "role": "user"
-│       │       }
-│       │     ],
-│       │     "model": {
-│       │       "modelId": "gpt-5.4-mini",
-│       │       "provider": "codex"
-│       │     }
-│       │   }
-│       │   output: {
-│       │     "finishReason": {
-│       │       "raw": "stop",
-│       │       "unified": "stop"
-│       │     },
-│       │     "response": {
-│       │       "id": "<span:1>"
-│       │     },
-│       │     "usage": {
-│       │       "inputTokens": {
-│       │         "cacheRead": 7168,
-│       │         "cacheWrite": 0,
-│       │         "noCache": 7603,
-│       │         "total": 14771
-│       │       },
-│       │       "outputTokens": {
-│       │         "total": 112
-│       │       }
-│       │     }
-│       │   }
-│       │   metadata: {
-│       │     "braintrust": {
-│       │       "integration_name": "ai-sdk",
-│       │       "sdk_language": "typescript"
-│       │     },
-│       │     "model": "gpt-5.4-mini",
-│       │     "provider": "codex"
-│       │   }
-│       │   metrics: {
-│       │     "completion_tokens": 112,
-│       │     "prompt_cache_creation_tokens": 0,
-│       │     "prompt_cached_tokens": 7168,
-│       │     "prompt_tokens": 14771,
-│       │     "tokens": 14883
-│       │   }
-│       └── bash [tool]
-│           input: "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}"
+│       └── doGenerate [llm]
+│           input: {
+│             "messages": [
+│               {
+│                 "role": "user"
+│               }
+│             ],
+│             "model": {
+│               "modelId": "gpt-5.4-mini",
+│               "provider": "codex"
+│             }
+│           }
+│           output: {
+│             "finishReason": {
+│               "raw": "stop",
+│               "unified": "stop"
+│             },
+│             "response": {
+│               "id": "<span:1>"
+│             },
+│             "usage": {
+│               "inputTokens": {
+│                 "cacheRead": 7168,
+│                 "cacheWrite": 0,
+│                 "noCache": 7603,
+│                 "total": 14771
+│               },
+│               "outputTokens": {
+│                 "total": 112
+│               }
+│             }
+│           }
 │           metadata: {
 │             "braintrust": {
 │               "integration_name": "ai-sdk",
 │               "sdk_language": "typescript"
 │             },
-│             "toolCallId": "<toolCallId:1>",
-│             "toolName": "bash"
+│             "model": "gpt-5.4-mini",
+│             "provider": "codex"
+│           }
+│           metrics: {
+│             "completion_tokens": 112,
+│             "prompt_cache_creation_tokens": 0,
+│             "prompt_cached_tokens": 7168,
+│             "prompt_tokens": 14771,
+│             "tokens": 14883
 │           }
 ├── HarnessAgent.stream [task]
 │   input: {
@@ -550,60 +540,50 @@ span_tree:
           "model": "gpt-5.4-mini",
           "provider": "codex"
         }
-        ├── doGenerate [llm]
-        │   input: {
-        │     "messages": [
-        │       {
-        │         "role": "user"
-        │       }
-        │     ],
-        │     "model": {
-        │       "modelId": "gpt-5.4-mini",
-        │       "provider": "codex"
-        │     }
-        │   }
-        │   output: {
-        │     "finishReason": {
-        │       "raw": "stop",
-        │       "unified": "stop"
-        │     },
-        │     "response": {
-        │       "id": "<span:1>"
-        │     },
-        │     "usage": {
-        │       "inputTokens": {
-        │         "cacheRead": 14336,
-        │         "cacheWrite": 0,
-        │         "noCache": 8035,
-        │         "total": 22371
-        │       },
-        │       "outputTokens": {
-        │         "total": 196
-        │       }
-        │     }
-        │   }
-        │   metadata: {
-        │     "braintrust": {
-        │       "integration_name": "ai-sdk",
-        │       "sdk_language": "typescript"
-        │     },
-        │     "model": "gpt-5.4-mini",
-        │     "provider": "codex"
-        │   }
-        │   metrics: {
-        │     "completion_tokens": 196,
-        │     "prompt_cache_creation_tokens": 0,
-        │     "prompt_cached_tokens": 14336,
-        │     "prompt_tokens": 22371,
-        │     "tokens": 22567
-        │   }
-        └── bash [tool]
-            input: "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}"
+        └── doGenerate [llm]
+            input: {
+              "messages": [
+                {
+                  "role": "user"
+                }
+              ],
+              "model": {
+                "modelId": "gpt-5.4-mini",
+                "provider": "codex"
+              }
+            }
+            output: {
+              "finishReason": {
+                "raw": "stop",
+                "unified": "stop"
+              },
+              "response": {
+                "id": "<span:1>"
+              },
+              "usage": {
+                "inputTokens": {
+                  "cacheRead": 14336,
+                  "cacheWrite": 0,
+                  "noCache": 8035,
+                  "total": 22371
+                },
+                "outputTokens": {
+                  "total": 196
+                }
+              }
+            }
             metadata: {
               "braintrust": {
                 "integration_name": "ai-sdk",
                 "sdk_language": "typescript"
               },
-              "toolCallId": "<toolCallId:1>",
-              "toolName": "bash"
+              "model": "gpt-5.4-mini",
+              "provider": "codex"
+            }
+            metrics: {
+              "completion_tokens": 196,
+              "prompt_cache_creation_tokens": 0,
+              "prompt_cached_tokens": 14336,
+              "prompt_tokens": 22371,
+              "tokens": 22567
             }

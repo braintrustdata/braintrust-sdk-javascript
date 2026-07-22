@@ -3461,6 +3461,7 @@ span_tree:
     │             "usage": {
     │               "input_tokens": 17,
     │               "input_tokens_details": {
+    │                 "cache_write_tokens": 0,
     │                 "cached_tokens": 0
     │               },
     │               "output_tokens": 3,
@@ -3607,6 +3608,7 @@ span_tree:
     │                 "usage": {
     │                   "input_tokens": 17,
     │                   "input_tokens_details": {
+    │                     "cache_write_tokens": 0,
     │                     "cached_tokens": 0
     │                   },
     │                   "output_tokens": 3,
