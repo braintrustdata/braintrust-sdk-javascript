@@ -186,20 +186,6 @@
                 "prompt_tokens": 14771,
                 "tokens": 14883
               }
-            },
-            {
-              "name": "bash",
-              "type": "tool",
-              "children": [],
-              "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}",
-              "metadata": {
-                "braintrust": {
-                  "integration_name": "ai-sdk",
-                  "sdk_language": "typescript"
-                },
-                "toolCallId": "<toolCallId:1>",
-                "toolName": "bash"
-              }
             }
           ],
           "input": {
@@ -533,20 +519,6 @@
                 "prompt_cached_tokens": 14336,
                 "prompt_tokens": 22371,
                 "tokens": 22567
-              }
-            },
-            {
-              "name": "bash",
-              "type": "tool",
-              "children": [],
-              "input": "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}",
-              "metadata": {
-                "braintrust": {
-                  "integration_name": "ai-sdk",
-                  "sdk_language": "typescript"
-                },
-                "toolCallId": "<toolCallId:1>",
-                "toolName": "bash"
               }
             }
           ],

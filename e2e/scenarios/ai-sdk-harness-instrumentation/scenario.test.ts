@@ -129,8 +129,14 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             );
             expect(findAllSpans(events, "bash").length).toBeGreaterThan(0);
 
+            // Suspension can attach the bash tool span to either side of the
+            // continued turn. Its presence is asserted above; omit its
+            // placement from the stable tree contract.
+            const snapshotEvents = events.filter(
+              (event) => event.span.name !== "bash",
+            );
             await matchSpanTreeSnapshot(
-              events,
+              snapshotEvents,
               resolveFileSnapshotPath(
                 import.meta.url,
                 `${scenario.variantKey}-${mode}.span-tree.json`,
