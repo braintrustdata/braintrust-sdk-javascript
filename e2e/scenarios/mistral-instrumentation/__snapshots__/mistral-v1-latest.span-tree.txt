@@ -565,17 +565,17 @@ span_tree:
     │             "violence_and_threats": false
     │           },
     │           "categoryScores": {
-    │             "criminal": 0.007937993854284286,
-    │             "dangerous": 0.005730246659368277,
-    │             "financial": 0.00011235327838221565,
-    │             "hate_and_discrimination": 0.002251847181469202,
-    │             "health": 0.00036259007174521685,
-    │             "jailbreaking": 0.019271135330200195,
+    │             "criminal": 0.00806199200451374,
+    │             "dangerous": 0.005911068990826607,
+    │             "financial": 0.00011591934162424877,
+    │             "hate_and_discrimination": 0.0023231625091284513,
+    │             "health": 0.0003799845289904624,
+    │             "jailbreaking": 0.018689308315515518,
     │             "law": 0.00020342697098385543,
     │             "pii": 0.001098731067031622,
     │             "selfharm": 0.0006361911655403674,
-    │             "sexual": 0.0030278353951871395,
-    │             "violence_and_threats": 0.0045384312979876995
+    │             "sexual": 0.0031236486975103617,
+    │             "violence_and_threats": 0.004609572701156139
     │           }
     │         }
     │       ]
@@ -612,17 +612,17 @@ span_tree:
                   "violence_and_threats": false
                 },
                 "categoryScores": {
-                  "criminal": 0.000755405577365309,
-                  "dangerous": 0.00022693384380545467,
-                  "financial": 0.00006402006692951545,
-                  "hate_and_discrimination": 0.0007096704212017357,
+                  "criminal": 0.0007672925130464137,
+                  "dangerous": 0.00023050671734381467,
+                  "financial": 0.00006605214002775028,
+                  "hate_and_discrimination": 0.0007208380266092718,
                   "health": 0.00008481103577651083,
-                  "jailbreaking": 0.0030278353951871395,
+                  "jailbreaking": 0.0031236486975103617,
                   "law": 0.00011235327838221565,
-                  "pii": 0.000552778597921133,
-                  "selfharm": 0.00004133539550821297,
+                  "pii": 0.0005703156930394471,
+                  "selfharm": 0.00004264746530679986,
                   "sexual": 0.0003799845289904624,
-                  "violence_and_threats": 0.00024923254386521876
+                  "violence_and_threats": 0.0002531563804950565
                 }
               }
             ]

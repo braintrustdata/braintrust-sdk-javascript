@@ -4,7 +4,7 @@ span_tree:
 │     "prompt": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK."
 │   }
 │   output: {
-│     "finishReason": "other",
+│     "finishReason": "stop",
 │     "response": {
 │       "id": "<span:1>",
 │       "messages": [],
@@ -12,12 +12,30 @@ span_tree:
 │       "timestamp": "<timestamp>"
 │     },
 │     "totalUsage": {
-│       "inputTokenDetails": {},
-│       "outputTokenDetails": {}
+│       "inputTokenDetails": {
+│         "cacheReadTokens": 7168,
+│         "cacheWriteTokens": 0,
+│         "noCacheTokens": 7603
+│       },
+│       "inputTokens": 14771,
+│       "outputTokenDetails": {
+│         "textTokens": 112
+│       },
+│       "outputTokens": 112,
+│       "totalTokens": 14883
 │     },
 │     "usage": {
-│       "inputTokenDetails": {},
-│       "outputTokenDetails": {}
+│       "inputTokenDetails": {
+│         "cacheReadTokens": 7168,
+│         "cacheWriteTokens": 0,
+│         "noCacheTokens": 7603
+│       },
+│       "inputTokens": 14771,
+│       "outputTokenDetails": {
+│         "textTokens": 112
+│       },
+│       "outputTokens": 112,
+│       "totalTokens": 14883
 │     },
 │     "warnings": []
 │   }
@@ -71,6 +89,13 @@ span_tree:
 │         "toolUseKind": "readonly"
 │       }
 │     }
+│   }
+│   metrics: {
+│     "completion_tokens": 112,
+│     "prompt_cache_creation_tokens": 0,
+│     "prompt_cached_tokens": 7168,
+│     "prompt_tokens": 14771,
+│     "tokens": 14883
 │   }
 │   ├── HarnessAgent.continueGenerate [task]
 │   │   input: {
@@ -272,16 +297,6 @@ span_tree:
 │   │             "prompt_tokens": 14771,
 │   │             "tokens": 14883
 │   │           }
-│   ├── bash [tool]
-│   │   input: "{\"command\":\"/bin/bash -lc 'touch /workspace/generate-started; sleep 5; printf GENERATE_OK'\"}"
-│   │   metadata: {
-│   │     "braintrust": {
-│   │       "integration_name": "ai-sdk",
-│   │       "sdk_language": "typescript"
-│   │     },
-│   │     "toolCallId": "<toolCallId:1>",
-│   │     "toolName": "bash"
-│   │   }
 │   └── harness [function]
 │       input: {
 │         "maxRetries": 0,
@@ -332,7 +347,7 @@ span_tree:
       ]
     }
     output: {
-      "finishReason": "other"
+      "finishReason": "stop"
     }
     metadata: {
       "braintrust": {
@@ -386,7 +401,12 @@ span_tree:
       }
     }
     metrics: {
-      "time_to_first_token": 0
+      "completion_tokens": 196,
+      "prompt_cache_creation_tokens": 0,
+      "prompt_cached_tokens": 14336,
+      "prompt_tokens": 22371,
+      "time_to_first_token": 0,
+      "tokens": 22567
     }
     ├── HarnessAgent.continueStream [task]
     │   input: {
@@ -556,16 +576,6 @@ span_tree:
     │             "prompt_tokens": 22371,
     │             "tokens": 22567
     │           }
-    ├── bash [tool]
-    │   input: "{\"command\":\"/bin/bash -lc 'touch /workspace/stream-started; sleep 5; printf STREAM_OK'\"}"
-    │   metadata: {
-    │     "braintrust": {
-    │       "integration_name": "ai-sdk",
-    │       "sdk_language": "typescript"
-    │     },
-    │     "toolCallId": "<toolCallId:1>",
-    │     "toolName": "bash"
-    │   }
     └── harness [function]
         input: {
           "maxRetries": 0,
