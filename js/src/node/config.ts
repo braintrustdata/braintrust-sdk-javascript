@@ -143,9 +143,6 @@ export function configureNode() {
   iso.gzip = promisify(zlib.gzip);
   iso.gunzip = promisify(zlib.gunzip);
   iso.hash = (data) => crypto.createHash("sha256").update(data).digest("hex");
-  iso.hmacSha256 = (key, data) =>
-    crypto.createHmac("sha256", key).update(data).digest("hex");
-
   _internalSetInitialState();
 
   // The Mastra patches rewritten by the bundler plugin and the loader hook

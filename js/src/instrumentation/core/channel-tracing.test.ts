@@ -209,12 +209,9 @@ describe("traceAsyncChannel current span binding", () => {
         throw new Error("logging failed");
       }),
     } as unknown as Span;
-    const parent = {
-      startSpan: vi.fn(() => child),
-    } as unknown as Span;
     const unsubscribe = traceStreamingChannel(testChannels.streamingCall, {
       name: "streaming-channel-test",
-      parent: () => parent,
+      startSpan: () => child,
       type: "function",
       extractInput: () => ({ input: "input", metadata: undefined }),
       extractOutput: (result) => result,

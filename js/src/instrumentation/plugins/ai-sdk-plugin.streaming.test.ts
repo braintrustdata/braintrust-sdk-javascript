@@ -532,6 +532,41 @@ describe("AI SDK streaming instrumentation", () => {
     ).toBeDefined();
   });
 
+  test("wrapAISDK unregisters WorkflowAgent spans when result streams fail", async () => {
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+
+    const streamError = new Error("workflow result stream failed");
+    class WorkflowAgent {
+      async stream(params: any) {
+        return {
+          messages: params.messages,
+          steps: [],
+          textStream: (async function* () {
+            yield "first";
+            throw streamError;
+          })(),
+        };
+      }
+    }
+
+    const wrappedWorkflow = wrapAISDK({ WorkflowAgent });
+    const agent = new wrappedWorkflow.WorkflowAgent();
+    const result = await agent.stream({
+      messages: [{ role: "user", content: "Hello" }],
+    });
+
+    await expect(
+      (async () => {
+        for await (const _chunk of result.textStream) {
+          // Drain until the result stream fails.
+        }
+      })(),
+    ).rejects.toThrow(streamError);
+
+    expect(workflowAgentWrapperSpanCountForTesting()).toBe(0);
+  });
+
   test("wrapAISDK records WorkflowAgent instance tool spans", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 

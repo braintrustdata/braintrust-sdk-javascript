@@ -1,7 +1,6 @@
 import iso from "../../isomorph";
 import type { IsoAsyncLocalStorage, IsoTracingChannel } from "../../isomorph";
 import {
-  _internalGetGlobalState,
   currentSpan,
   startSpan,
   updateSpan,
@@ -16,14 +15,12 @@ import type {
 import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
 
 const BRAINTRUST_TURN_CONTEXT_KEY = "__braintrust_trace_context";
-const BRAINTRUST_TURN_CONTEXT_VERSION = 2;
 
 export type HarnessTurnParent = Span | string;
 
 type SerializedHarnessTurnContext = {
   parent: string;
-  signature: string;
-  version: typeof BRAINTRUST_TURN_CONTEXT_VERSION;
+  sessionId: string;
 };
 
 type HarnessTurnUpdate = Parameters<Span["log"]>[0];
@@ -47,80 +44,25 @@ function serializedTurnContext(
   const context = value[BRAINTRUST_TURN_CONTEXT_KEY];
   if (
     !isObject(context) ||
-    context.version !== BRAINTRUST_TURN_CONTEXT_VERSION ||
     typeof context.parent !== "string" ||
-    typeof context.signature !== "string"
+    typeof context.sessionId !== "string"
+  ) {
+    return undefined;
+  }
+
+  const parent = SpanComponentsV4.fromStr(context.parent);
+  if (
+    !parent.data.row_id ||
+    !parent.data.root_span_id ||
+    !parent.data.span_id
   ) {
     return undefined;
   }
 
   return {
     parent: context.parent,
-    signature: context.signature,
-    version: BRAINTRUST_TURN_CONTEXT_VERSION,
+    sessionId: context.sessionId,
   };
-}
-
-function sortJsonValue(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sortJsonValue);
-  }
-  if (!isObject(value)) {
-    return value;
-  }
-
-  const sorted: Record<string, unknown> = Object.create(null);
-  for (const key of Object.keys(value).sort()) {
-    sorted[key] = sortJsonValue(value[key]);
-  }
-  return sorted;
-}
-
-function canonicalLifecycleState(value: unknown): string | undefined {
-  const serialized = JSON.stringify(value, function (key, nestedValue) {
-    return this === value && key === BRAINTRUST_TURN_CONTEXT_KEY
-      ? undefined
-      : nestedValue;
-  });
-  if (serialized === undefined) {
-    return undefined;
-  }
-  return JSON.stringify(sortJsonValue(JSON.parse(serialized)));
-}
-
-function turnContextSignature(args: {
-  parent: string;
-  sessionId: string;
-  state: unknown;
-}): string | undefined {
-  const signingKey =
-    _internalGetGlobalState()?.loginToken ?? iso.getEnv("BRAINTRUST_API_KEY");
-  const canonicalState = canonicalLifecycleState(args.state);
-  if (!iso.hmacSha256 || !signingKey || canonicalState === undefined) {
-    return undefined;
-  }
-
-  return iso.hmacSha256(
-    signingKey,
-    [
-      String(BRAINTRUST_TURN_CONTEXT_VERSION),
-      args.parent,
-      args.sessionId,
-      canonicalState,
-    ].join("\0"),
-  );
-}
-
-function signaturesEqual(left: string, right: string): boolean {
-  if (left.length !== right.length) {
-    return false;
-  }
-
-  let mismatch = 0;
-  for (let i = 0; i < left.length; i++) {
-    mismatch |= left.charCodeAt(i) ^ right.charCodeAt(i);
-  }
-  return mismatch === 0;
 }
 
 function continuationParentFromCreateSessionParams(
@@ -138,21 +80,10 @@ function continuationParentFromCreateSessionParams(
     return undefined;
   }
 
-  const expectedSignature =
-    typeof params.sessionId === "string"
-      ? turnContextSignature({
-          parent: context.parent,
-          sessionId: params.sessionId,
-          state: continuation,
-        })
-      : undefined;
-
-  if (
-    expectedSignature === undefined ||
-    !signaturesEqual(context.signature, expectedSignature)
-  ) {
+  if (params.sessionId !== context.sessionId) {
     return undefined;
   }
+
   return context.parent;
 }
 
@@ -189,7 +120,7 @@ function addSerializedContext(args: {
   parent: HarnessTurnParent;
   sessionId: string | undefined;
 }): void {
-  if (!isObject(args.continuation)) {
+  if (!isObject(args.continuation) || args.sessionId === undefined) {
     return;
   }
 
@@ -197,25 +128,12 @@ function addSerializedContext(args: {
   if (!parent) {
     return;
   }
-  const signature =
-    args.sessionId === undefined
-      ? undefined
-      : turnContextSignature({
-          parent,
-          sessionId: args.sessionId,
-          state: args.continuation,
-        });
-  if (signature === undefined) {
-    return;
-  }
-
   Object.defineProperty(args.continuation, BRAINTRUST_TURN_CONTEXT_KEY, {
     configurable: true,
     enumerable: true,
     value: {
       parent,
-      signature,
-      version: BRAINTRUST_TURN_CONTEXT_VERSION,
+      sessionId: args.sessionId,
     } satisfies SerializedHarnessTurnContext,
     writable: true,
   });

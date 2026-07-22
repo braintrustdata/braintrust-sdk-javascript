@@ -1,6 +1,5 @@
-import { beforeAll, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { Span } from "../../logger";
-import { _exportsForTestingOnly } from "../../logger";
 import { configureNode } from "../../node/config";
 import { SpanObjectTypeV3 } from "../../util";
 import {
@@ -34,10 +33,6 @@ function serializableSpan(exported = vi.fn()): Span {
 }
 
 describe("HarnessAgent continuation context", () => {
-  beforeAll(async () => {
-    await _exportsForTestingOnly.simulateLoginForTests();
-  });
-
   test("preserves lifecycle promises, result identity, prototypes, and descriptors", async () => {
     const prototype = { kind: "continuation" };
     const suspended = Object.create(prototype) as Record<string, unknown>;
@@ -104,15 +99,16 @@ describe("HarnessAgent continuation context", () => {
       writable: false,
     });
 
-    // The throwing getter prevents state authentication, but context injection
-    // remains contained and the exact lifecycle result is still returned.
-    expect(suspended).not.toHaveProperty(contextKey);
+    // Context injection must not enumerate unrelated lifecycle state.
+    expect(suspended[contextKey]).toMatchObject({
+      parent: expect.any(String),
+      sessionId: "session-1",
+    });
 
     await expect(session.detach()).resolves.toBe(detached);
     expect(detachedContinuation[contextKey]).toMatchObject({
       parent: expect.any(String),
-      signature: expect.any(String),
-      version: 2,
+      sessionId: "session-1",
     });
 
     await expect(session.stop()).resolves.toBe(stopped);
@@ -120,8 +116,7 @@ describe("HarnessAgent continuation context", () => {
       parent: detachedContinuation[contextKey]
         ? (detachedContinuation[contextKey] as { parent: string }).parent
         : undefined,
-      signature: expect.any(String),
-      version: 2,
+      sessionId: "session-1",
     });
     expect(exportSpan).not.toHaveBeenCalled();
   });
@@ -152,7 +147,7 @@ describe("HarnessAgent continuation context", () => {
     expect(exportSpan).not.toHaveBeenCalled();
   });
 
-  test("authenticates and binds serialized parents to lifecycle state and session", async () => {
+  test("validates and binds serialized parents to their session without credentials", async () => {
     const exportSpan = vi.fn();
     const parent = serializableSpan(exportSpan);
     const session = {
@@ -183,7 +178,7 @@ describe("HarnessAgent continuation context", () => {
         continueFrom: { ...serialized, cursor: 2 },
         sessionId: "bound-session",
       }),
-    ).toBeUndefined();
+    ).toBe(serializedParent);
     expect(
       captureHarnessCreateSessionParent({
         continueFrom: serialized,
@@ -196,8 +191,7 @@ describe("HarnessAgent continuation context", () => {
         continueFrom: {
           [contextKey]: {
             parent: "caller-controlled-parent",
-            signature: "forged",
-            version: 2,
+            sessionId: "bound-session",
           },
         },
         sessionId: "bound-session",

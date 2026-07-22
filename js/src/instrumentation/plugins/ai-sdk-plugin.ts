@@ -15,7 +15,13 @@ import {
   isPromiseLike,
 } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
-import { Attachment, currentSpan, type Span, withCurrent } from "../../logger";
+import {
+  _internalStartSpanWithInitialMerge,
+  Attachment,
+  currentSpan,
+  type Span,
+  withCurrent,
+} from "../../logger";
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
@@ -448,6 +454,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(harnessAgentChannels.generate, {
         name: "HarnessAgent.generate",
+        startSpan: _internalStartSpanWithInitialMerge,
         type: SpanTypeAttribute.TASK,
         extractInput: ([params], event, span) =>
           prepareAISDKHarnessAgentInput(params, event.self, span),
@@ -465,6 +472,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(harnessAgentChannels.stream, {
         name: "HarnessAgent.stream",
+        startSpan: _internalStartSpanWithInitialMerge,
         type: SpanTypeAttribute.TASK,
         extractInput: ([params], event, span) =>
           prepareAISDKHarnessAgentInput(params, event.self, span),
@@ -501,6 +509,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "HarnessAgent.continueGenerate",
         shouldTrace: (args) =>
           !harnessContinuationParent(harnessSessionFromArguments(args)),
+        startSpan: _internalStartSpanWithInitialMerge,
         type: SpanTypeAttribute.TASK,
         extractInput: ([params], event, span) =>
           prepareAISDKHarnessAgentInput(params, event.self, span),
@@ -519,6 +528,7 @@ export class AISDKPlugin extends BasePlugin {
         name: "HarnessAgent.continueStream",
         shouldTrace: (args) =>
           !harnessContinuationParent(harnessSessionFromArguments(args)),
+        startSpan: _internalStartSpanWithInitialMerge,
         type: SpanTypeAttribute.TASK,
         extractInput: ([params], event, span) =>
           prepareAISDKHarnessAgentInput(params, event.self, span),
@@ -633,6 +643,7 @@ export class AISDKPlugin extends BasePlugin {
             endEvent,
             onComplete: () => unregisterWorkflowAgentWrapperSpan(span),
             onCancel: () => unregisterWorkflowAgentWrapperSpan(span),
+            onError: () => unregisterWorkflowAgentWrapperSpan(span),
             result,
             span,
             startTime,
@@ -644,28 +655,22 @@ export class AISDKPlugin extends BasePlugin {
 
 function subscribeToHarnessAgentCreateSession(): () => void {
   const channel = harnessAgentChannels.createSession.tracingChannel();
-  const parentKey = Symbol("braintrust.harnessTurnParent");
-  type CreateSessionEvent = ChannelMessage<
-    typeof harnessAgentChannels.createSession
-  > & {
-    [parentKey]?: ReturnType<typeof captureHarnessCreateSessionParent>;
-  };
+  const parents = new WeakMap<object, HarnessTurnParent>();
   const handlers: IsoChannelHandlers<
     ChannelMessage<typeof harnessAgentChannels.createSession>
   > = {
     start: (event) => {
       const parent = captureHarnessCreateSessionParent(event.arguments?.[0]);
       if (parent) {
-        (event as CreateSessionEvent)[parentKey] = parent;
+        parents.set(event, parent);
       }
     },
     asyncEnd: (event) => {
-      const createSessionEvent = event as CreateSessionEvent;
-      registerHarnessSessionParent(event.result, createSessionEvent[parentKey]);
-      delete createSessionEvent[parentKey];
+      registerHarnessSessionParent(event.result, parents.get(event));
+      parents.delete(event);
     },
     error: (event) => {
-      delete (event as CreateSessionEvent)[parentKey];
+      parents.delete(event);
     },
   };
 
