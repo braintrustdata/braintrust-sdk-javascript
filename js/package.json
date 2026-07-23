@@ -198,7 +198,7 @@
     "eslint-plugin-node-import": "^1.0.5",
     "openai": "6.25.0",
     "rollup": "^4.60.3",
-    "tar": "^7.5.16",
+    "tar": "^7.5.19",
     "tinybench": "^4.0.1",
     "ts-declaration-location": "^1.0.7",
     "tsup": "^8.5.1",
