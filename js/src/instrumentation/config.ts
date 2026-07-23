@@ -67,6 +67,8 @@ const envIntegrationAliases: Record<
   claudeagentsdk: "claudeAgentSDK",
   "claude-agent-sdk": "claudeAgentSDK",
   cloudflareaichat: "cloudflareAIChat",
+  "cloudflare-ai-chat": "cloudflareAIChat",
+  "@cloudflare/ai-chat": "cloudflareAIChat",
   cursor: "cursor",
   "cursor-sdk": "cursorSDK",
   cursorsdk: "cursorSDK",
