@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
@@ -48,6 +50,109 @@ const scenarios = await Promise.all(
 );
 
 describe.sequential("HarnessAgent instrumentation variants", () => {
+  test(
+    "preserves a turn across a real subprocess handoff",
+    { timeout: TIMEOUT_MS },
+    async () => {
+      await withScenarioHarness(async (harness) => {
+        const handoffPath = join(
+          scenarioDir,
+          `subprocess-handoff-${harness.testRunId}.json`,
+        );
+        const baseEnv = {
+          BRAINTRUST_HARNESS_HANDOFF_PATH: handoffPath,
+        };
+
+        await harness.runNodeScenarioDir({
+          entry: "subprocess-handoff.mjs",
+          env: {
+            ...baseEnv,
+            BRAINTRUST_HARNESS_HANDOFF_PHASE: "suspend",
+          },
+          scenarioDir,
+          timeoutMs: TIMEOUT_MS,
+        });
+
+        const serializedHandoff = JSON.parse(
+          await readFile(handoffPath, "utf8"),
+        ) as {
+          continuation: {
+            __braintrust_trace_context?: {
+              parent?: unknown;
+              sessionId?: unknown;
+            };
+          };
+          producerPid: number;
+        };
+        expect(
+          serializedHandoff.continuation.__braintrust_trace_context,
+        ).toMatchObject({
+          parent: expect.any(String),
+          sessionId: "subprocess-handoff-session",
+        });
+
+        const initialEvents = harness.events();
+        const initialTurn = findAllSpans(
+          initialEvents,
+          "HarnessAgent.generate",
+        );
+        expect(initialTurn).toHaveLength(1);
+        expect(initialTurn[0]?.output).toMatchObject({
+          text: "suspended output",
+        });
+        const initialEventCount = initialEvents.length;
+
+        const resumed = await harness.runNodeScenarioDir({
+          entry: "subprocess-handoff.mjs",
+          env: {
+            ...baseEnv,
+            BRAINTRUST_HARNESS_HANDOFF_PHASE: "resume",
+          },
+          scenarioDir,
+          timeoutMs: TIMEOUT_MS,
+        });
+        const processIds = JSON.parse(resumed.stdout) as {
+          producerPid: number;
+          resumerPid: number;
+        };
+        expect(processIds.producerPid).toBe(serializedHandoff.producerPid);
+        expect(processIds.resumerPid).not.toBe(processIds.producerPid);
+
+        const events = harness.events();
+        const turns = findAllSpans(events, "HarnessAgent.generate");
+        expect(turns).toHaveLength(1);
+        expect(turns[0]?.span.id).toBe(initialTurn[0]?.span.id);
+        expect(turns[0]?.span.rootId).toBe(initialTurn[0]?.span.rootId);
+        expect(turns[0]?.input).toEqual({
+          prompt: "Start a turn that will resume in another process.",
+        });
+        expect(turns[0]?.output).toMatchObject({
+          text: "resumed output",
+        });
+        expect(turns[0]?.metrics).toMatchObject({
+          completion_tokens: 3,
+          prompt_tokens: 7,
+          tokens: 10,
+        });
+        expect(turns[0]?.span.ended).toBe(true);
+        expect(findAllSpans(events, "HarnessAgent.continueGenerate")).toEqual(
+          [],
+        );
+
+        const resumedRows = events.slice(initialEventCount);
+        expect(
+          resumedRows.some(
+            (event) =>
+              event.isMerge &&
+              event.row.id === initialTurn[0]?.row.id &&
+              event.span.id === initialTurn[0]?.span.id &&
+              event.span.rootId === initialTurn[0]?.span.rootId,
+          ),
+        ).toBe(true);
+      });
+    },
+  );
+
   for (const scenario of scenarios) {
     describe.sequential(`@ai-sdk/harness ${scenario.version}`, () => {
       for (const mode of ["wrapped", "auto-hook"] as const) {
