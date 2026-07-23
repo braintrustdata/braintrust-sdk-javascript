@@ -144,7 +144,7 @@
   "scripts": {
     "postinstall": "node ./scripts/install.js",
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" tsup",
-    "check:typings": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "check:typings": "tsc --noEmit -p tsconfig.vendor-hooks.json && tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "watch": "tsup --watch",
     "clean": "rm -r dist/* && rm -r dev/dist/* && rm -r util/dist/*",
     "docs": "typedoc --options typedoc.json src/node/index.ts",
