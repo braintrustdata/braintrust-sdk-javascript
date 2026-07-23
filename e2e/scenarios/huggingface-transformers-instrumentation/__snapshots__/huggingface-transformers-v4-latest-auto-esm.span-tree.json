@@ -1,0 +1,175 @@
+{
+  "span_tree": [
+    {
+      "name": "huggingface-transformers-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "transformers-text-generation-operation",
+          "children": [
+            {
+              "name": "huggingface.transformers.text_generation",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Hello",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "Deterministic output",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "fixture/text-generation",
+                "provider": "huggingface",
+                "temperature": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "text-generation",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "transformers-text2text-generation-operation",
+          "children": [
+            {
+              "name": "huggingface.transformers.text2text_generation",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Translate this",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "Deterministic output",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "fixture/text2text-generation",
+                "provider": "huggingface"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "text2text-generation",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "transformers-summarization-operation",
+          "children": [
+            {
+              "name": "huggingface.transformers.summarization",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "A deliberately long passage.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "Deterministic output",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "fixture/summarization",
+                "provider": "huggingface"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "summarization",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "transformers-feature-extraction-operation",
+          "children": [
+            {
+              "name": "huggingface.transformers.feature_extraction",
+              "type": "llm",
+              "children": [],
+              "input": "Embed this",
+              "output": {
+                "embedding_batch_count": 1,
+                "embedding_count": 1,
+                "embedding_length": 3
+              },
+              "metadata": {
+                "model": "fixture/feature-extraction",
+                "provider": "huggingface"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "feature-extraction",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "transformers-question-answering-operation",
+          "children": [
+            {
+              "name": "huggingface.transformers.question_answering",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Context:\nAda built it.\n\nQuestion:\nWho built it?",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "Ada",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "fixture/question-answering",
+                "provider": "huggingface"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "question-answering",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "huggingface-transformers-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

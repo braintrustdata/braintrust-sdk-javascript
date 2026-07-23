@@ -8,6 +8,7 @@ import { CursorSDKPlugin } from "./plugins/cursor-sdk-plugin";
 import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
+import { HuggingFaceTransformersPlugin } from "./plugins/huggingface-transformers-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
@@ -56,6 +57,8 @@ export class BraintrustPlugin extends BasePlugin {
   private openAIAgentsPlugin: OpenAIAgentsPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
   private huggingFacePlugin: HuggingFacePlugin | null = null;
+  private huggingFaceTransformersPlugin: HuggingFaceTransformersPlugin | null =
+    null;
   private openRouterPlugin: OpenRouterPlugin | null = null;
   private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
   private mistralPlugin: MistralPlugin | null = null;
@@ -130,6 +133,8 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.huggingface !== false) {
       this.huggingFacePlugin = new HuggingFacePlugin();
       this.huggingFacePlugin.enable();
+      this.huggingFaceTransformersPlugin = new HuggingFaceTransformersPlugin();
+      this.huggingFaceTransformersPlugin.enable();
     }
 
     if (integrations.openrouter !== false) {
@@ -260,6 +265,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.huggingFacePlugin) {
       this.huggingFacePlugin.disable();
       this.huggingFacePlugin = null;
+    }
+
+    if (this.huggingFaceTransformersPlugin) {
+      this.huggingFaceTransformersPlugin.disable();
+      this.huggingFaceTransformersPlugin = null;
     }
 
     if (this.openRouterPlugin) {

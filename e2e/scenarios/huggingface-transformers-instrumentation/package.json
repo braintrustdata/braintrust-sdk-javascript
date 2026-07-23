@@ -1,0 +1,25 @@
+{
+  "name": "@braintrust/e2e-huggingface-transformers-instrumentation",
+  "private": true,
+  "type": "module",
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "huggingface-transformers-v3-latest": {
+          "package": "@huggingface/transformers",
+          "range": "3"
+        },
+        "huggingface-transformers-v4-latest": {
+          "package": "@huggingface/transformers",
+          "range": "4"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "huggingface-transformers-v3": "npm:@huggingface/transformers@3.0.0",
+    "huggingface-transformers-v3-latest": "npm:@huggingface/transformers@3.8.1",
+    "huggingface-transformers-v4": "npm:@huggingface/transformers@4.0.0",
+    "huggingface-transformers-v4-latest": "npm:@huggingface/transformers@4.2.0"
+  }
+}

@@ -1,0 +1,127 @@
+span_tree:
+└── huggingface-transformers-instrumentation-root [task]
+    metadata: {
+      "scenario": "huggingface-transformers-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── transformers-text-generation-operation
+    │   metadata: {
+    │     "operation": "text-generation",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── huggingface.transformers.text_generation [llm]
+    │       input: [
+    │         {
+    │           "content": "Hello",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "Deterministic output",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "fixture/text-generation",
+    │         "provider": "huggingface",
+    │         "temperature": 0
+    │       }
+    ├── transformers-text2text-generation-operation
+    │   metadata: {
+    │     "operation": "text2text-generation",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── huggingface.transformers.text2text_generation [llm]
+    │       input: [
+    │         {
+    │           "content": "Translate this",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "Deterministic output",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "fixture/text2text-generation",
+    │         "provider": "huggingface"
+    │       }
+    ├── transformers-summarization-operation
+    │   metadata: {
+    │     "operation": "summarization",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── huggingface.transformers.summarization [llm]
+    │       input: [
+    │         {
+    │           "content": "A deliberately long passage.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "Deterministic output",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "fixture/summarization",
+    │         "provider": "huggingface"
+    │       }
+    ├── transformers-feature-extraction-operation
+    │   metadata: {
+    │     "operation": "feature-extraction",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── huggingface.transformers.feature_extraction [llm]
+    │       input: "Embed this"
+    │       output: {
+    │         "embedding_batch_count": 1,
+    │         "embedding_count": 1,
+    │         "embedding_length": 3
+    │       }
+    │       metadata: {
+    │         "model": "fixture/feature-extraction",
+    │         "provider": "huggingface"
+    │       }
+    └── transformers-question-answering-operation
+        metadata: {
+          "operation": "question-answering",
+          "testRunId": "<run:1>"
+        }
+        └── huggingface.transformers.question_answering [llm]
+            input: [
+              {
+                "content": "Context:\nAda built it.\n\nQuestion:\nWho built it?",
+                "role": "user"
+              }
+            ]
+            output: [
+              {
+                "finish_reason": "stop",
+                "index": 0,
+                "message": {
+                  "content": "Ada",
+                  "role": "assistant"
+                }
+              }
+            ]
+            metadata: {
+              "model": "fixture/question-answering",
+              "provider": "huggingface"
+            }
