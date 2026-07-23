@@ -37,6 +37,13 @@
       "require": "./dist/index.js",
       "default": "./dist/index.mjs"
     },
+    "./custom-views": {
+      "types": "./dist/custom-views.d.ts",
+      "import": "./dist/custom-views.mjs",
+      "module": "./dist/custom-views.mjs",
+      "require": "./dist/custom-views.js",
+      "default": "./dist/custom-views.mjs"
+    },
     "./workerd": {
       "import": "./dist/workerd.mjs",
       "require": "./dist/workerd.js",

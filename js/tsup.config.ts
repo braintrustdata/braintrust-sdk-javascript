@@ -14,6 +14,7 @@ export default defineConfig([
   {
     entry: {
       index: "src/node/index.ts",
+      "custom-views": "src/custom-views/exports.ts",
       "apply-auto-instrumentation":
         "src/node/apply-auto-instrumentation-entry.ts",
       "vitest-evals-reporter": "src/wrappers/vitest-evals/reporter.ts",
