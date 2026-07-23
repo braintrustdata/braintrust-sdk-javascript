@@ -12,7 +12,7 @@ describe("piCodingAgentConfigs", () => {
       channelName: piCodingAgentChannelName,
       module: {
         name: "@earendil-works/pi-coding-agent",
-        versionRange: ">=0.79.0 <0.80.0",
+        versionRange: ">=0.79.0 <0.82.0",
         filePath: "dist/core/agent-session.js",
       },
       functionQuery: {
