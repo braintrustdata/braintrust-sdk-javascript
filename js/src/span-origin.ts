@@ -7,17 +7,79 @@ export type SpanOriginEnvironment = {
   name?: string;
 };
 
+export const INSTRUMENTATION_NAMES = {
+  AI_SDK: "ai-sdk",
+  ANTHROPIC: "anthropic",
+  BEDROCK_RUNTIME: "bedrock-runtime",
+  BRAINTRUST_JS_LOGGER: "braintrust-js-logger",
+  CLAUDE_AGENT_SDK: "claude-agent-sdk",
+  COHERE: "cohere",
+  CURSOR_SDK: "cursor-sdk",
+  EVE: "eve",
+  FLUE: "flue",
+  GENKIT: "genkit",
+  GITHUB_COPILOT: "github-copilot",
+  GOOGLE_ADK: "google-adk",
+  GOOGLE_GENAI: "google-genai",
+  GROQ: "groq",
+  HUGGINGFACE: "huggingface",
+  LANGCHAIN: "langchain",
+  LANGSMITH: "langsmith",
+  MASTRA: "mastra",
+  MISTRAL: "mistral",
+  OPENAI: "openai",
+  OPENAI_AGENTS: "openai-agents",
+  OPENAI_CODEX: "openai-codex",
+  OPENROUTER: "openrouter",
+  OPENROUTER_AGENT: "openrouter-agent",
+  PI_CODING_AGENT: "pi-coding-agent",
+  STRANDS_AGENT_SDK: "strands-agent-sdk",
+} as const;
+
+export type SpanInstrumentationName =
+  (typeof INSTRUMENTATION_NAMES)[keyof typeof INSTRUMENTATION_NAMES];
+
 type SpanOrigin = {
   name: string;
   version: string;
-  instrumentation: { name: string };
+  instrumentation: { name: SpanInstrumentationName };
   environment?: SpanOriginEnvironment;
+};
+
+export const INTERNAL_SPAN_INSTRUMENTATION_NAME = Symbol.for(
+  "braintrust.spanInstrumentationName",
+);
+
+type InternalSpanInstrumentationName = {
+  [INTERNAL_SPAN_INSTRUMENTATION_NAME]?: SpanInstrumentationName;
 };
 
 const SDK_VERSION =
   typeof __BRAINTRUST_SDK_VERSION__ !== "undefined"
     ? __BRAINTRUST_SDK_VERSION__
     : "0.0.0";
+
+export function withSpanInstrumentationName<T extends object>(
+  args: T,
+  instrumentationName: SpanInstrumentationName,
+): T & InternalSpanInstrumentationName {
+  return {
+    ...args,
+    [INTERNAL_SPAN_INSTRUMENTATION_NAME]: instrumentationName,
+  };
+}
+
+export function getSpanInstrumentationName(
+  args: unknown,
+): SpanInstrumentationName | undefined {
+  if (typeof args !== "object" || args === null) {
+    return undefined;
+  }
+  const value = (args as InternalSpanInstrumentationName)[
+    INTERNAL_SPAN_INSTRUMENTATION_NAME
+  ];
+  return isSpanInstrumentationName(value) ? value : undefined;
+}
 
 export function detectSpanOriginEnvironment(
   explicit?: SpanOriginEnvironment,
@@ -85,7 +147,7 @@ export function detectSpanOriginEnvironment(
 }
 
 function makeSpanOrigin(
-  instrumentationName: string,
+  instrumentationName: SpanInstrumentationName,
   environment?: SpanOriginEnvironment,
 ): SpanOrigin {
   return {
@@ -98,7 +160,7 @@ function makeSpanOrigin(
 
 export function mergeSpanOriginContext(
   context: Record<string, unknown> | undefined,
-  instrumentationName: string,
+  instrumentationName: SpanInstrumentationName,
   environment?: SpanOriginEnvironment,
 ): Record<string, unknown> {
   const next = { ...(context ?? {}) };
@@ -108,6 +170,12 @@ export function mergeSpanOriginContext(
     ...current,
   };
   return next;
+}
+
+function isSpanInstrumentationName(
+  value: unknown,
+): value is SpanInstrumentationName {
+  return Object.values(INSTRUMENTATION_NAMES).some((name) => name === value);
 }
 
 function firstPresent(entries: Array<[string, string]>): string | undefined {

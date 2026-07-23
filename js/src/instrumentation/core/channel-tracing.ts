@@ -6,6 +6,10 @@ import {
   startSpan,
 } from "../../logger";
 import type { CurrentSpanStore, Span } from "../../logger";
+import {
+  withSpanInstrumentationName,
+  type SpanInstrumentationName,
+} from "../../span-origin";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
 import type {
   AnyAsyncChannel,
@@ -192,15 +196,19 @@ function startSpanForEvent<
   },
   event: StartOf<TChannel>,
   channelName: string,
+  instrumentationName: SpanInstrumentationName,
 ): SpanState {
   const { name, spanAttributes, spanInfoMetadata } = buildStartSpanArgs(
     config,
     event,
   );
-  const spanArgs = {
-    name,
-    spanAttributes,
-  };
+  const spanArgs = withSpanInstrumentationName(
+    {
+      name,
+      spanAttributes,
+    },
+    instrumentationName,
+  );
   let span: Span;
   try {
     span = config.startSpan?.(spanArgs) ?? startSpan(spanArgs);
@@ -265,6 +273,7 @@ function ensureSpanStateForEvent<
   },
   event: StartOf<TChannel>,
   channelName: string,
+  instrumentationName: SpanInstrumentationName,
 ): SpanState | undefined {
   const key = event as object;
   const existing = states.get(key);
@@ -276,7 +285,12 @@ function ensureSpanStateForEvent<
     return undefined;
   }
 
-  const created = startSpanForEvent<TChannel>(config, event, channelName);
+  const created = startSpanForEvent<TChannel>(
+    config,
+    event,
+    channelName,
+    instrumentationName,
+  );
   states.set(key, created);
   return created;
 }
@@ -297,6 +311,7 @@ function bindCurrentSpanStoreToStart<
     };
   },
   channelName: string,
+  instrumentationName: SpanInstrumentationName,
 ): (() => void) | undefined {
   const state = _internalGetGlobalState();
   const startChannel = tracingChannel.start;
@@ -325,6 +340,7 @@ function bindCurrentSpanStoreToStart<
         config,
         event as StartOf<TChannel>,
         channelName,
+        instrumentationName,
       );
       return spanState
         ? contextManager!.wrapSpanForStore(spanState.span)
@@ -437,6 +453,7 @@ export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
     states,
     config,
     channelName,
+    channel.instrumentationName,
   );
 
   const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
@@ -450,6 +467,7 @@ export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
         config,
         event as StartOf<TChannel>,
         channelName,
+        channel.instrumentationName,
       );
     },
     asyncEnd: (event) => {
@@ -517,6 +535,7 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
     states,
     config,
     channelName,
+    channel.instrumentationName,
   );
 
   const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
@@ -530,6 +549,7 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
         config,
         event as StartOf<TChannel>,
         channelName,
+        channel.instrumentationName,
       );
     },
     asyncEnd: (event) => {
@@ -785,6 +805,7 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
     states,
     config,
     channelName,
+    channel.instrumentationName,
   );
 
   const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
@@ -798,6 +819,7 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
         config,
         event as StartOf<TChannel>,
         channelName,
+        channel.instrumentationName,
       );
     },
     end: (event) => {
