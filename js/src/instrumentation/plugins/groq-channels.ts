@@ -1,4 +1,5 @@
 import { channel, defineChannels } from "../core/channel-definitions";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
   GroqChatCompletion,
   GroqChatCompletionChunk,
@@ -10,21 +11,26 @@ import type {
 
 type GroqChatResult = GroqChatCompletion | GroqChatStream;
 
-export const groqChannels = defineChannels("groq-sdk", {
-  chatCompletionsCreate: channel<
-    [GroqChatCreateParams],
-    GroqChatResult,
-    Record<string, unknown>,
-    GroqChatCompletionChunk
-  >({
-    channelName: "chat.completions.create",
-    kind: "async",
-  }),
+export const groqChannels = defineChannels(
+  "groq-sdk",
+  {
+    chatCompletionsCreate: channel<
+      [GroqChatCreateParams],
+      GroqChatResult,
+      Record<string, unknown>,
+      GroqChatCompletionChunk
+    >({
+      channelName: "chat.completions.create",
+      kind: "async",
+    }),
 
-  embeddingsCreate: channel<[GroqEmbeddingCreateParams], GroqEmbeddingResponse>(
-    {
+    embeddingsCreate: channel<
+      [GroqEmbeddingCreateParams],
+      GroqEmbeddingResponse
+    >({
       channelName: "embeddings.create",
       kind: "async",
-    },
-  ),
-});
+    }),
+  },
+  { instrumentationName: INSTRUMENTATION_NAMES.GROQ },
+);
