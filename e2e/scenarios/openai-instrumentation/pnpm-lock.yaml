@@ -8,24 +8,24 @@ importers:
 
   .:
     dependencies:
-      openai-v4-latest:
-        specifier: npm:openai@4.104.0
-        version: openai@4.104.0
       openai-v4:
         specifier: npm:openai@4.104.0
         version: openai@4.104.0
-      openai-v5-latest:
-        specifier: npm:openai@5.23.2
-        version: openai@5.23.2
+      openai-v4-latest:
+        specifier: npm:openai@4.104.0
+        version: openai@4.104.0
       openai-v5:
         specifier: npm:openai@5.11.0
         version: openai@5.11.0
-      openai-v6-latest:
-        specifier: npm:openai@6.45.0
-        version: openai@6.45.0
+      openai-v5-latest:
+        specifier: npm:openai@5.23.2
+        version: openai@5.23.2
       openai-v6:
         specifier: npm:openai@6.25.0
         version: openai@6.25.0
+      openai-v6-latest:
+        specifier: npm:openai@6.48.0
+        version: openai@6.48.0
 
 packages:
 
@@ -200,8 +200,8 @@ packages:
       zod:
         optional: true
 
-  openai@6.45.0:
-    resolution: {integrity: sha512-5DQVNErssk0afNpTTHUm/qZPU4iKR9OYdNid8Ib4puq4gHNNvGWZht2zY4h9a8JMF949Ik6m8gQutllVPbjdnw==}
+  openai@6.48.0:
+    resolution: {integrity: sha512-KhVp+FyV50QrXNextvL9hIU5l6ox5HYuKQjGVk7lIqprgJol90+dQXWONV6S1lRWsKA1bXjrow8RsUT14M1hNA==}
     peerDependencies:
       '@aws-sdk/credential-provider-node': '>=3.972.0 <4'
       '@smithy/hash-node': '>=4.3.0 <5'
@@ -376,7 +376,7 @@ snapshots:
 
   openai@6.25.0: {}
 
-  openai@6.45.0: {}
+  openai@6.48.0: {}
 
   tr46@0.0.3: {}
 

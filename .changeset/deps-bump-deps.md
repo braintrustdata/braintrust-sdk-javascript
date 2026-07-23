@@ -2,4 +2,4 @@
 "braintrust": patch
 ---
 
-deps: Bump esbuild
+deps: Bump deps

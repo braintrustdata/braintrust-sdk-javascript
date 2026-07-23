@@ -251,6 +251,10 @@ interface Common {
   // hash a string. not guaranteed to be crypto safe.
   hash?: (data: string) => string;
 
+  // HMAC-SHA256 for authenticating opaque instrumentation state.
+  hmacSha256?: (key: string, data: string) => string;
+  timingSafeEqual?: (left: string, right: string) => boolean;
+
   // Cross-platform utilities.
   basename: (filepath: string) => string;
   writeln: (text: string) => void;

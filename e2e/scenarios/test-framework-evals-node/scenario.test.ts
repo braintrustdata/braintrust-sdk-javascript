@@ -12,6 +12,8 @@ const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
 const TIMEOUT_MS = 90_000;
+const CONFIGURED_PROJECT_NAME =
+  process.env.BRAINTRUST_E2E_PROJECT_NAME || "sdk-e2e-tests";
 const spanTreeSnapshotPath = resolveFileSnapshotPath(
   import.meta.url,
   "span-tree.json",
@@ -25,7 +27,11 @@ test(
   async () => {
     await withScenarioHarness(
       async ({ runScenarioDir, testRunEvents, testRunId }) => {
-        await runScenarioDir({ scenarioDir, timeoutMs: TIMEOUT_MS });
+        await runScenarioDir({
+          env: { BRAINTRUST_E2E_PROJECT_NAME: CONFIGURED_PROJECT_NAME },
+          scenarioDir,
+          timeoutMs: TIMEOUT_MS,
+        });
 
         const capturedEvents = testRunEvents();
         const basicEval = findLatestSpan(

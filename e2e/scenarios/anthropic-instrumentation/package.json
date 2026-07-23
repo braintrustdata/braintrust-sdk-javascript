@@ -13,6 +13,6 @@
   },
   "dependencies": {
     "anthropic-sdk-v0": "npm:@anthropic-ai/sdk@0.27.3",
-    "anthropic-sdk-v0-latest": "npm:@anthropic-ai/sdk@0.112.2"
+    "anthropic-sdk-v0-latest": "npm:@anthropic-ai/sdk@0.112.3"
   }
 }

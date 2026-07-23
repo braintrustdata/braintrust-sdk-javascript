@@ -1,4 +1,5 @@
 import { BasePlugin, toLoggedError } from "../core";
+import { debugLogger } from "../../debug-logger";
 import {
   traceAsyncChannel,
   traceStreamingChannel,
@@ -6,7 +7,7 @@ import {
   unsubscribeAll,
 } from "../core/channel-tracing";
 import type { ChannelMessage } from "../core/channel-definitions";
-import { isAsyncIterable } from "../core/stream-patcher";
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import type { IsoChannelHandlers } from "../../isomorph";
 import {
   SpanTypeAttribute,
@@ -14,7 +15,13 @@ import {
   isPromiseLike,
 } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
-import { Attachment, currentSpan, type Span, withCurrent } from "../../logger";
+import {
+  _internalStartSpanWithInitialMerge,
+  Attachment,
+  currentSpan,
+  type Span,
+  withCurrent,
+} from "../../logger";
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
@@ -22,6 +29,16 @@ import {
 import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logged-output";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
 import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
+import {
+  bindHarnessTurnParentToStart,
+  captureHarnessCreateSessionParent,
+  endHarnessTurn,
+  harnessContinuationParent,
+  registerHarnessSessionParent,
+  registerHarnessTurnSpan,
+  updateHarnessTurn,
+  type HarnessTurnParent,
+} from "../../wrappers/ai-sdk/harness-agent-context";
 import {
   registerWorkflowAgentWrapperSpan,
   unregisterWorkflowAgentWrapperSpan,
@@ -173,6 +190,17 @@ export class AISDKPlugin extends BasePlugin {
       this.config.denyOutputPaths || DEFAULT_DENY_OUTPUT_PATHS;
 
     this.unsubscribers.push(subscribeToAISDKV7TelemetryDispatcher());
+    this.unsubscribers.push(subscribeToHarnessAgentCreateSession());
+    this.unsubscribers.push(
+      subscribeToHarnessContinuation(
+        harnessAgentChannels.continueGenerate,
+        denyOutputPaths,
+      ),
+      subscribeToHarnessContinuation(
+        harnessAgentChannels.continueStream,
+        denyOutputPaths,
+      ),
+    );
 
     // generateText - async function that may return streams
     this.unsubscribers.push(
@@ -429,9 +457,10 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(harnessAgentChannels.generate, {
         name: "HarnessAgent.generate",
+        startSpan: _internalStartSpanWithInitialMerge,
         type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event) =>
-          prepareAISDKHarnessAgentInput(params, event.self),
+        extractInput: ([params], event, span) =>
+          prepareAISDKHarnessAgentInput(params, event.self, span),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -446,9 +475,10 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceStreamingChannel(harnessAgentChannels.stream, {
         name: "HarnessAgent.stream",
+        startSpan: _internalStartSpanWithInitialMerge,
         type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event) =>
-          prepareAISDKHarnessAgentInput(params, event.self),
+        extractInput: ([params], event, span) =>
+          prepareAISDKHarnessAgentInput(params, event.self, span),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -475,13 +505,17 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
-    // HarnessAgent.continueGenerate - continuation of one agent turn
+    // Trace a continuation as its own task only when its original turn cannot
+    // be recovered. Known continuations extend the original Harness task.
     this.unsubscribers.push(
       traceStreamingChannel(harnessAgentChannels.continueGenerate, {
         name: "HarnessAgent.continueGenerate",
+        shouldTrace: (args) =>
+          !harnessContinuationParent(harnessSessionFromArguments(args)),
+        startSpan: _internalStartSpanWithInitialMerge,
         type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event) =>
-          prepareAISDKHarnessAgentInput(params, event.self),
+        extractInput: ([params], event, span) =>
+          prepareAISDKHarnessAgentInput(params, event.self, span),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -492,13 +526,15 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
 
-    // HarnessAgent.continueStream - streaming continuation of one agent turn
     this.unsubscribers.push(
       traceStreamingChannel(harnessAgentChannels.continueStream, {
         name: "HarnessAgent.continueStream",
+        shouldTrace: (args) =>
+          !harnessContinuationParent(harnessSessionFromArguments(args)),
+        startSpan: _internalStartSpanWithInitialMerge,
         type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event) =>
-          prepareAISDKHarnessAgentInput(params, event.self),
+        extractInput: ([params], event, span) =>
+          prepareAISDKHarnessAgentInput(params, event.self, span),
         extractOutput: (result, endEvent) =>
           processAISDKOutput(
             result,
@@ -609,6 +645,8 @@ export class AISDKPlugin extends BasePlugin {
             defaultDenyOutputPaths: denyOutputPaths,
             endEvent,
             onComplete: () => unregisterWorkflowAgentWrapperSpan(span),
+            onCancel: () => unregisterWorkflowAgentWrapperSpan(span),
+            onError: () => unregisterWorkflowAgentWrapperSpan(span),
             result,
             span,
             startTime,
@@ -616,6 +654,185 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
   }
+}
+
+function subscribeToHarnessAgentCreateSession(): () => void {
+  const channel = harnessAgentChannels.createSession.tracingChannel();
+  const parents = new WeakMap<object, HarnessTurnParent>();
+  const handlers: IsoChannelHandlers<
+    ChannelMessage<typeof harnessAgentChannels.createSession>
+  > = {
+    start: (event) => {
+      const parent = captureHarnessCreateSessionParent(event.arguments?.[0]);
+      if (parent) {
+        parents.set(event, parent);
+      }
+    },
+    asyncEnd: (event) => {
+      registerHarnessSessionParent(event.result, parents.get(event));
+      parents.delete(event);
+    },
+    error: (event) => {
+      parents.delete(event);
+    },
+  };
+
+  channel.subscribe(handlers);
+  return () => channel.unsubscribe(handlers);
+}
+
+type HarnessContinuationChannel = typeof harnessAgentChannels.continueGenerate;
+
+function harnessContinuationParentFromEvent(
+  event: ChannelMessage<HarnessContinuationChannel>,
+): HarnessTurnParent | undefined {
+  try {
+    return harnessContinuationParent(event.arguments?.[0]?.session);
+  } catch {
+    return undefined;
+  }
+}
+
+function subscribeToHarnessContinuation(
+  continuationChannel: HarnessContinuationChannel,
+  defaultDenyOutputPaths: string[],
+): () => void {
+  const channel = continuationChannel.tracingChannel();
+  const parents = new WeakMap<object, HarnessTurnParent>();
+  const startTimes = new WeakMap<object, number>();
+  const unbindParentStore = bindHarnessTurnParentToStart(
+    channel,
+    harnessContinuationParentFromEvent,
+  );
+  const handlers: IsoChannelHandlers<
+    ChannelMessage<HarnessContinuationChannel>
+  > = {
+    start: (event) => {
+      const parent = harnessContinuationParentFromEvent(event);
+      if (!parent) {
+        return;
+      }
+
+      parents.set(event, parent);
+      startTimes.set(event, getCurrentUnixTimestamp());
+      try {
+        const params = event.arguments?.[0];
+        if (params) {
+          // Harness reads telemetry from its settings after this event starts.
+          // The original task already contains the turn input, so only install
+          // telemetry here; continuation work is logged onto that task.
+          prepareAISDKHarnessAgentInput(params, event.self);
+        }
+      } catch (error) {
+        debugLogger.error(
+          "Error preparing Harness continuation telemetry:",
+          error,
+        );
+      }
+    },
+    asyncEnd: (event) => {
+      const parent = parents.get(event);
+      const startTime = startTimes.get(event) ?? getCurrentUnixTimestamp();
+      parents.delete(event);
+      startTimes.delete(event);
+      if (!parent) {
+        return;
+      }
+
+      const endEvent = event as ChannelMessage<HarnessContinuationChannel> & {
+        result: AISDKResult | AsyncIterable<unknown>;
+      };
+      const span = {
+        end: () => endHarnessTurn(parent),
+        log: (update: Parameters<Span["log"]>[0]) =>
+          updateHarnessTurn(
+            parent,
+            Object.prototype.hasOwnProperty.call(update, "error") &&
+              !Object.prototype.hasOwnProperty.call(update, "output")
+              ? { ...update, output: null }
+              : update,
+          ),
+      };
+
+      try {
+        if (isAsyncIterable(endEvent.result)) {
+          patchStreamIfNeeded(endEvent.result, {
+            onComplete: (chunks) => {
+              try {
+                const { metadata, metrics, output } = aggregateAISDKChunks(
+                  chunks,
+                  endEvent.result,
+                  endEvent,
+                );
+                span.log({
+                  ...(metadata ? { metadata } : {}),
+                  metrics,
+                  output,
+                });
+              } catch (error) {
+                debugLogger.error(
+                  "Error aggregating Harness continuation stream:",
+                  error,
+                );
+              } finally {
+                span.end();
+              }
+            },
+            onError: (error) => {
+              span.log({ error: toLoggedError(error), output: null });
+              span.end();
+            },
+          });
+          return;
+        }
+
+        if (
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths,
+            endEvent,
+            result: endEvent.result,
+            resolvePromiseUsage: true,
+            span,
+            startTime,
+          })
+        ) {
+          return;
+        }
+
+        finalizeAISDKChildTracing(endEvent);
+        span.log({
+          metrics: extractTokenMetrics(endEvent.result),
+          output: processAISDKOutput(
+            endEvent.result,
+            resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+          ),
+        });
+        span.end();
+      } catch (error) {
+        debugLogger.error("Error tracing Harness continuation:", error);
+        span.end();
+      }
+    },
+    error: (event) => {
+      const parent = parents.get(event);
+      parents.delete(event);
+      startTimes.delete(event);
+      if (!parent) {
+        return;
+      }
+      updateHarnessTurn(parent, {
+        error: toLoggedError(event.error),
+        output: null,
+      });
+      endHarnessTurn(parent);
+    },
+  };
+
+  channel.subscribe(handlers);
+  return () => {
+    unbindParentStore();
+    channel.unsubscribe(handlers);
+  };
 }
 
 function subscribeToAISDKV7TelemetryDispatcher(): () => void {
@@ -1273,10 +1490,17 @@ function prepareAISDKCallInput(
 function prepareAISDKHarnessAgentInput(
   params: AISDKHarnessAgentCallParams,
   self?: unknown,
+  span?: Span,
 ): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
+  if (span) {
+    registerHarnessTurnSpan({
+      session: params.session,
+      span,
+    });
+  }
   if (isObject(self)) {
     try {
       if (isObject(self.settings)) {
@@ -1326,6 +1550,11 @@ function prepareAISDKHarnessAgentInput(
     input: processAISDKCallInput(selectedInput).input,
     metadata,
   };
+}
+
+function harnessSessionFromArguments(args: unknown[]): unknown {
+  const params = args[0];
+  return isObject(params) ? params.session : undefined;
 }
 
 function prepareAISDKWorkflowAgentStreamInput(
@@ -2619,10 +2848,15 @@ export function patchAISDKStreamingResult(args: {
   defaultDenyOutputPaths: string[];
   endEvent: { denyOutputPaths?: string[]; [key: string]: unknown };
   forceTopLevelMetrics?: boolean;
-  onComplete?: () => void;
+  onComplete?: (result: {
+    metrics: Record<string, number>;
+    output: unknown;
+  }) => void;
+  onCancel?: () => void;
+  onError?: (error: Error) => void;
   result: AISDKResult;
   resolvePromiseUsage?: boolean;
-  span: Span;
+  span: Pick<Span, "end" | "log">;
   startTime: number;
   transformOutput?: (output: unknown) => unknown;
 }): boolean {
@@ -2631,6 +2865,8 @@ export function patchAISDKStreamingResult(args: {
     endEvent,
     forceTopLevelMetrics,
     onComplete,
+    onCancel,
+    onError,
     result,
     resolvePromiseUsage,
     span,
@@ -2645,14 +2881,47 @@ export function patchAISDKStreamingResult(args: {
   const resultRecord = result as Record<string, unknown>;
   attachKnownResultPromiseHandlers(resultRecord);
   let finalized = false;
-  const finalize = () => {
+  const finalize = (
+    outcome?:
+      | { error: Error }
+      | { metrics: Record<string, number>; output: unknown },
+  ) => {
     if (finalized) {
       return;
     }
     finalized = true;
-    finalizeAISDKChildTracing(endEvent);
-    span.end();
-    onComplete?.();
+    try {
+      finalizeAISDKChildTracing(endEvent);
+    } catch (error) {
+      debugLogger.error("Error finalizing AI SDK child tracing:", error);
+    }
+    try {
+      span.end();
+    } catch (error) {
+      debugLogger.error("Error ending AI SDK streaming span:", error);
+    }
+    if (outcome && "error" in outcome) {
+      try {
+        onError?.(outcome.error);
+      } catch (error) {
+        debugLogger.error("Error in AI SDK streaming error hook:", error);
+      }
+    } else if (outcome) {
+      try {
+        onComplete?.(outcome);
+      } catch (error) {
+        debugLogger.error("Error in AI SDK streaming completion hook:", error);
+      }
+    } else {
+      try {
+        onCancel?.();
+      } catch (error) {
+        debugLogger.error(
+          "Error in AI SDK streaming cancellation hook:",
+          error,
+        );
+      }
+    }
   };
   let outputLogged = false;
   const logStreamingOutput = async (firstChunkTime?: number) => {
@@ -2698,15 +2967,29 @@ export function patchAISDKStreamingResult(args: {
         : processedOutput;
       const metadata = buildResolvedMetadataPayload(result).metadata;
 
-      span.log({
-        output,
-        ...(metadata ? { metadata } : {}),
-        metrics,
-      });
+      try {
+        span.log({
+          output,
+          ...(metadata ? { metadata } : {}),
+          metrics,
+        });
+      } catch (error) {
+        debugLogger.error("Error logging AI SDK streaming output:", error);
+      }
+      finalize({ metrics, output });
     } catch (error) {
-      span.log({ error: toLoggedError(error) });
-    } finally {
-      finalize();
+      const loggedError = toLoggedError(error);
+      try {
+        span.log({ error: loggedError });
+      } catch (loggingError) {
+        debugLogger.error(
+          "Error logging AI SDK streaming failure:",
+          loggingError,
+        );
+      }
+      finalize({
+        error: error instanceof Error ? error : new Error(String(loggedError)),
+      });
     }
   };
   const createAsyncIterableHooks = () => {
@@ -2727,11 +3010,16 @@ export function patchAISDKStreamingResult(args: {
       onError: (error: Error) => {
         if (!outputLogged) {
           outputLogged = true;
-          span.log({
-            error: error.message,
-          });
+          try {
+            span.log({ error });
+          } catch (loggingError) {
+            debugLogger.error(
+              "Error logging AI SDK stream failure:",
+              loggingError,
+            );
+          }
         }
-        finalize();
+        finalize({ error });
       },
       onCancel: finalize,
     };
@@ -2838,8 +3126,19 @@ export function patchAISDKStreamingResult(args: {
 
           controller.enqueue(value);
         } catch (error) {
-          span.log({ error: toLoggedError(error) });
-          finalize();
+          const loggedError = toLoggedError(error);
+          try {
+            span.log({ error: loggedError });
+          } catch (loggingError) {
+            debugLogger.error(
+              "Error logging AI SDK base stream failure:",
+              loggingError,
+            );
+          }
+          finalize({
+            error:
+              error instanceof Error ? error : new Error(String(loggedError)),
+          });
           controller.error(error);
         }
       },

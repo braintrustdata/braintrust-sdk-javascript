@@ -179,6 +179,12 @@ test("deepCopyEvent basic", () => {
   expect(copy.output).not.toBe(original.output);
 });
 
+test("deepCopyEvent serializes Error values", () => {
+  expect(deepCopyEvent({ error: new Error("logged failure") })).toEqual({
+    error: "logged failure",
+  });
+});
+
 test("deepCopyEvent preserves attachments", () => {
   const attachment = new Attachment({
     data: new Blob(["data"]),

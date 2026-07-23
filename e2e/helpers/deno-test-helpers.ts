@@ -20,6 +20,13 @@ export function getTestRunId(): string {
 }
 
 export function scopedName(base: string): string {
+  const configuredProjectName = Deno.env
+    .get("BRAINTRUST_E2E_PROJECT_NAME")
+    ?.trim();
+  if (configuredProjectName) {
+    return configuredProjectName;
+  }
+
   return `${base}-${getTestRunId()
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, "-")}`;

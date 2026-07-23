@@ -11,18 +11,18 @@ importers:
 
   .:
     dependencies:
-      mistral-sdk-v1-latest:
-        specifier: npm:@mistralai/mistralai@1.15.1
-        version: '@mistralai/mistralai@1.15.1'
       mistral-sdk-v1:
         specifier: npm:@mistralai/mistralai@1.3.4
         version: '@mistralai/mistralai@1.3.4(zod@4.3.6)'
-      mistral-sdk-v2-latest:
-        specifier: npm:@mistralai/mistralai@2.4.1
-        version: '@mistralai/mistralai@2.4.1'
+      mistral-sdk-v1-latest:
+        specifier: npm:@mistralai/mistralai@1.15.1
+        version: '@mistralai/mistralai@1.15.1'
       mistral-sdk-v2:
         specifier: npm:@mistralai/mistralai@2.1.2
         version: '@mistralai/mistralai@2.1.2'
+      mistral-sdk-v2-latest:
+        specifier: npm:@mistralai/mistralai@2.5.0
+        version: '@mistralai/mistralai@2.5.0'
 
 packages:
 
@@ -37,8 +37,8 @@ packages:
   '@mistralai/mistralai@2.1.2':
     resolution: {integrity: sha512-0NlXBNdTMmi4z0oSUWa8KseBHlli+/FkaUTaAyLYTJzkKh3mYM/D3DnJzRil8VD6QC7W3IteARjd3LnxAZGPUw==}
 
-  '@mistralai/mistralai@2.4.1':
-    resolution: {integrity: sha512-vNpR2GR76aW7fK8Dcu1NRx3fdSPO1QruRDo4GbfXfkro2mvp194xIAvJ2BP4ZykzyWtJoDmBe+Qsk9D443aqlg==}
+  '@mistralai/mistralai@2.5.0':
+    resolution: {integrity: sha512-S/r6tkiUHblaDJGsb84WS0ePTF2YHVta2EoTi1NJqHNt5mfRRS2uE4v7hCYV134+an+fk6WgG3+aFfinJbQBjQ==}
     peerDependencies:
       '@opentelemetry/api': ^1.9.0
     peerDependenciesMeta:
@@ -93,7 +93,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@mistralai/mistralai@2.4.1':
+  '@mistralai/mistralai@2.5.0':
     dependencies:
       '@opentelemetry/semantic-conventions': 1.41.1
       ws: 8.21.0

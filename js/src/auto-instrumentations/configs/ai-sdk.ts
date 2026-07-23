@@ -20,6 +20,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
   // `./agent` entrypoint. The compiled class expression is anonymous, so match
   // the first async method with each public name instead of a class name.
   ...[
+    ["createSession", harnessAgentChannels.createSession.channelName],
     ["generate", harnessAgentChannels.generate.channelName],
     ["stream", harnessAgentChannels.stream.channelName],
     ["continueGenerate", harnessAgentChannels.continueGenerate.channelName],
