@@ -27,6 +27,20 @@ const openRouterScenarios = await Promise.all(
       supportsRerank: true,
       wrapperEntry: "scenario.ts",
     },
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "openrouter-sdk-v1",
+      snapshotName: "openrouter-v1",
+      supportsRerank: true,
+      wrapperEntry: "scenario.ts",
+    },
+    {
+      autoEntry: "scenario.mjs",
+      dependencyName: "openrouter-sdk-v1-latest",
+      snapshotName: "openrouter-v1-latest",
+      supportsRerank: true,
+      wrapperEntry: "scenario.ts",
+    },
   ].map(async (scenario) => ({
     ...scenario,
     version: await readInstalledPackageVersion(
