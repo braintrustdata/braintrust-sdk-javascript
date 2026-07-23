@@ -6,6 +6,8 @@ import type {
   AISDKEmbedParams,
   AISDKEmbeddingResult,
   AISDKHarnessAgentCallParams,
+  AISDKHarnessAgentCreateSessionParams,
+  AISDKHarnessAgentSession,
   AISDKRerankParams,
   AISDKRerankResult,
   AISDKResult,
@@ -160,6 +162,14 @@ export const aiSDKChannels = defineChannels("ai", {
 });
 
 export const harnessAgentChannels = defineChannels("@ai-sdk/harness", {
+  createSession: channel<
+    [AISDKHarnessAgentCreateSessionParams?],
+    AISDKHarnessAgentSession,
+    AISDKChannelContext
+  >({
+    channelName: "HarnessAgent.createSession",
+    kind: "async",
+  }),
   generate: channel<
     [AISDKHarnessAgentCallParams],
     AISDKStreamResult,

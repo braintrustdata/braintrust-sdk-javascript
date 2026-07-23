@@ -760,6 +760,7 @@ export class BraintrustState {
   private _contextManager: ContextManager | null = null;
   private _otelFlushCallback: (() => Promise<void>) | null = null;
   public spanOriginEnvironment: SpanOriginEnvironment | undefined;
+  private traceContextSigningSecret: string | undefined;
 
   constructor(private loginParams: LoginOptions) {
     this.id = `${new Date().toLocaleString()}-${stateNonce++}`; // This is for debugging. uuidv4() breaks on platforms like Cloudflare.
@@ -822,6 +823,26 @@ export class BraintrustState {
 
     this.spanCache = new SpanCache({ disabled: loginParams.disableSpanCache });
     this.spanOriginEnvironment = detectSpanOriginEnvironment();
+    this._internalSetTraceContextSigningSecret(loginParams.apiKey);
+  }
+
+  /** @internal */
+  public _internalSetTraceContextSigningSecret(
+    secret: string | undefined,
+  ): void {
+    const normalizedSecret = secret?.trim();
+    if (normalizedSecret) {
+      this.traceContextSigningSecret = normalizedSecret;
+    }
+  }
+
+  /** @internal */
+  public _internalGetTraceContextSigningSecret(): string | undefined {
+    return (
+      this.traceContextSigningSecret ??
+      this.loginToken ??
+      iso.getEnv("BRAINTRUST_API_KEY")
+    )?.trim();
   }
 
   public resetLoginInfo() {
@@ -893,6 +914,7 @@ export class BraintrustState {
     this.gitMetadataSettings = other.gitMetadataSettings;
     this.debugLogLevel = other.debugLogLevel;
     this.debugLogLevelConfigured = other.debugLogLevelConfigured;
+    this.traceContextSigningSecret = other.traceContextSigningSecret;
     setGlobalDebugLogLevel(
       this.debugLogLevelConfigured ? (this.debugLogLevel ?? false) : undefined,
     );
@@ -1014,6 +1036,7 @@ export class BraintrustState {
   }
 
   public async login(loginParams: LoginOptions & { forceLogin?: boolean }) {
+    this._internalSetTraceContextSigningSecret(loginParams.apiKey);
     this.setDebugLogLevel(loginParams.debugLogLevel);
     if (this.apiUrl && !loginParams.forceLogin) {
       return;
@@ -3855,6 +3878,7 @@ export function init<IsOpen extends boolean = false>(
   }
 
   const state = stateArg ?? _globalState;
+  state._internalSetTraceContextSigningSecret(apiKey);
 
   // Ensure unlimited queue for init() calls (experiments)
   // Experiments should never drop data
@@ -4674,6 +4698,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   };
 
   const state = stateArg ?? _globalState;
+  state._internalSetTraceContextSigningSecret(apiKey);
   state.setDebugLogLevel(debugLogLevel);
   state.spanOriginEnvironment = detectSpanOriginEnvironment(environment);
 
@@ -6610,7 +6635,9 @@ export function deepCopyEvent<T extends Partial<BackgroundLogEvent>>(
   // this could be changed to a "real" deep copy so that immutable types (long
   // strings) do not have to be copied.
   const serialized = JSON.stringify(event, (_k, v) => {
-    if (v instanceof SpanImpl || v instanceof NoopSpan) {
+    if (v instanceof Error) {
+      return v.message;
+    } else if (v instanceof SpanImpl || v instanceof NoopSpan) {
       return `<span>`;
     } else if (v instanceof Experiment) {
       return `<experiment>`;

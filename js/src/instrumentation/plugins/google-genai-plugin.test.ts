@@ -365,12 +365,13 @@ describe("GoogleGenAIPlugin", () => {
     it("ends the interaction span when a stream errors", async () => {
       plugin.enable();
 
+      const streamError = new Error("stream failed");
       async function* stream() {
         yield {
           event_type: "interaction.created",
           interaction: { id: "interaction-3", status: "in_progress" },
         };
-        throw new Error("stream failed");
+        throw streamError;
       }
 
       const handlers = subscribeSpy.mock.calls[3][0];
@@ -399,7 +400,7 @@ describe("GoogleGenAIPlugin", () => {
       }).rejects.toThrow("stream failed");
 
       expect(span.log).toHaveBeenLastCalledWith({
-        error: "stream failed",
+        error: streamError,
       });
       expect(span.end).toHaveBeenCalledTimes(1);
     });

@@ -53,85 +53,7 @@
             "model": "gpt-5.4-mini",
             "provider": "codex"
           }
-        }
-      ],
-      "input": {
-        "prompt": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK."
-      },
-      "output": {
-        "finishReason": "other",
-        "response": {
-          "id": "<span:1>",
-          "messages": [],
-          "modelId": "shared-harness-session",
-          "timestamp": "<timestamp>"
         },
-        "totalUsage": {
-          "inputTokenDetails": {},
-          "outputTokenDetails": {}
-        },
-        "usage": {
-          "inputTokenDetails": {},
-          "outputTokenDetails": {}
-        },
-        "warnings": []
-      },
-      "metadata": {
-        "braintrust": {
-          "integration_name": "ai-sdk",
-          "sdk_language": "typescript"
-        },
-        "harnessId": "codex",
-        "permissionMode": "allow-all",
-        "scenario": "ai-sdk-harness-instrumentation",
-        "sessionId": "shared-harness-session",
-        "testRunId": "<run:1>",
-        "tools": {
-          "bash": {
-            "commonName": "bash",
-            "description": "Execute a shell command",
-            "inputSchema": {
-              "$schema": "http://json-schema.org/draft-07/schema#",
-              "additionalProperties": false,
-              "properties": {
-                "command": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "command"
-              ],
-              "type": "object"
-            },
-            "nativeName": "shell",
-            "toolUseKind": "bash"
-          },
-          "webSearch": {
-            "commonName": "webSearch",
-            "description": "Search the web",
-            "inputSchema": {
-              "$schema": "http://json-schema.org/draft-07/schema#",
-              "additionalProperties": false,
-              "properties": {
-                "query": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "query"
-              ],
-              "type": "object"
-            },
-            "nativeName": "web_search",
-            "toolUseKind": "readonly"
-          }
-        }
-      }
-    },
-    {
-      "name": "HarnessAgent.continueGenerate",
-      "type": "task",
-      "children": [
         {
           "name": "harness",
           "type": "function",
@@ -245,7 +167,7 @@
         }
       ],
       "input": {
-        "toolApprovalContinuations": []
+        "prompt": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK."
       },
       "output": {
         "finishReason": "stop",
@@ -395,77 +317,7 @@
             "model": "gpt-5.4-mini",
             "provider": "codex"
           }
-        }
-      ],
-      "input": {
-        "messages": [
-          {
-            "role": "user"
-          }
-        ]
-      },
-      "output": {
-        "finishReason": "other"
-      },
-      "metadata": {
-        "braintrust": {
-          "integration_name": "ai-sdk",
-          "sdk_language": "typescript"
         },
-        "harnessId": "codex",
-        "permissionMode": "allow-all",
-        "scenario": "ai-sdk-harness-instrumentation",
-        "sessionId": "shared-harness-session",
-        "testRunId": "<run:1>",
-        "tools": {
-          "bash": {
-            "commonName": "bash",
-            "description": "Execute a shell command",
-            "inputSchema": {
-              "$schema": "http://json-schema.org/draft-07/schema#",
-              "additionalProperties": false,
-              "properties": {
-                "command": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "command"
-              ],
-              "type": "object"
-            },
-            "nativeName": "shell",
-            "toolUseKind": "bash"
-          },
-          "webSearch": {
-            "commonName": "webSearch",
-            "description": "Search the web",
-            "inputSchema": {
-              "$schema": "http://json-schema.org/draft-07/schema#",
-              "additionalProperties": false,
-              "properties": {
-                "query": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "query"
-              ],
-              "type": "object"
-            },
-            "nativeName": "web_search",
-            "toolUseKind": "readonly"
-          }
-        }
-      },
-      "metrics": {
-        "time_to_first_token": 0
-      }
-    },
-    {
-      "name": "HarnessAgent.continueStream",
-      "type": "task",
-      "children": [
         {
           "name": "harness",
           "type": "function",
@@ -579,7 +431,11 @@
         }
       ],
       "input": {
-        "toolApprovalContinuations": []
+        "messages": [
+          {
+            "role": "user"
+          }
+        ]
       },
       "output": {
         "finishReason": "stop"
