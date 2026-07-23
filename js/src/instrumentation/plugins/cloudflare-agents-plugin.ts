@@ -1,6 +1,6 @@
 import { debugLogger } from "../../debug-logger";
 import type { IsoChannelHandlers } from "../../isomorph";
-import { startSpan } from "../../logger";
+import { _internalStartSpanWithContext } from "../../logger";
 import type { Span } from "../../logger";
 import { mergeSpanOriginContext } from "../../span-origin";
 import { SpanTypeAttribute } from "../../../util/index";
@@ -37,14 +37,16 @@ export class CloudflareAgentsPlugin extends BasePlugin {
             return;
           }
 
-          const span = startSpan({
-            name,
-            spanAttributes: { type: SpanTypeAttribute.TOOL },
-            context: CLOUDFLARE_WORKERS_ORIGIN,
-            event: {
-              input: ownValue(options, "input"),
+          const span = _internalStartSpanWithContext(
+            {
+              name,
+              spanAttributes: { type: SpanTypeAttribute.TOOL },
+              event: {
+                input: ownValue(options, "input"),
+              },
             },
-          });
+            CLOUDFLARE_WORKERS_ORIGIN,
+          );
           spans.set(event, span);
         } catch (error) {
           logInstrumentationError("start", error);

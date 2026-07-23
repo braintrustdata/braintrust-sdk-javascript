@@ -1,11 +1,20 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+  vi,
+} from "vitest";
+import type { StartSpanArgs } from "../../logger";
 
 const { mockStartSpan } = vi.hoisted(() => ({
   mockStartSpan: vi.fn(),
 }));
 
 vi.mock("../../logger", () => ({
-  startSpan: (...args: unknown[]) => mockStartSpan(...args),
+  _internalStartSpanWithContext: (...args: unknown[]) => mockStartSpan(...args),
 }));
 
 vi.mock("../../isomorph", () => ({
@@ -26,6 +35,7 @@ describe("CloudflareAgentsPlugin", () => {
   let unsubscribe: ReturnType<typeof vi.fn>;
   let spans: Array<{
     args: any;
+    context: any;
     end: ReturnType<typeof vi.fn>;
     log: ReturnType<typeof vi.fn>;
   }>;
@@ -37,8 +47,8 @@ describe("CloudflareAgentsPlugin", () => {
     });
     unsubscribe = vi.fn();
     mockNewTracingChannel.mockReturnValue({ subscribe, unsubscribe });
-    mockStartSpan.mockImplementation((args: any) => {
-      const span = { args, end: vi.fn(), log: vi.fn() };
+    mockStartSpan.mockImplementation((args: any, context: any) => {
+      const span = { args, context, end: vi.fn(), log: vi.fn() };
       spans.push(span);
       return span;
     });
@@ -61,6 +71,14 @@ describe("CloudflareAgentsPlugin", () => {
     plugin.disable();
     plugin.disable();
     expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps SDK-controlled context out of the public start-span arguments", () => {
+    type HasPublicContext = "context" extends keyof StartSpanArgs
+      ? true
+      : false;
+
+    expectTypeOf<HasPublicContext>().toEqualTypeOf<false>();
   });
 
   it("records only the child class name, input, and completed output", () => {
@@ -95,16 +113,17 @@ describe("CloudflareAgentsPlugin", () => {
     expect(spans[0].args).toEqual({
       name: "ResearchAgent",
       spanAttributes: { type: "tool" },
-      context: {
-        span_origin: {
-          name: "braintrust.sdk.javascript",
-          version: expect.any(String),
-          instrumentation: { name: "cloudflare-agents" },
-          environment: { type: "server", name: "cloudflare_workers" },
-        },
-      },
       event: {
         input: { query: "cloudflare" },
+      },
+    });
+    expect(spans[0].args).not.toHaveProperty("context");
+    expect(spans[0].context).toEqual({
+      span_origin: {
+        name: "braintrust.sdk.javascript",
+        version: expect.any(String),
+        instrumentation: { name: "cloudflare-agents" },
+        environment: { type: "server", name: "cloudflare_workers" },
       },
     });
     expect(spans[0].log).toHaveBeenCalledExactlyOnceWith({

@@ -270,9 +270,14 @@ type StartSpanEventArgs = ExperimentLogPartialArgs & Partial<IdField>;
 const INITIAL_SPAN_WRITE_AS_MERGE = Symbol(
   "braintrust.initial-span-write-as-merge",
 );
+const INTERNAL_SPAN_CONTEXT = Symbol("braintrust.internal-span-context");
 
 type InitialSpanWriteAsMergeArg = {
   readonly [INITIAL_SPAN_WRITE_AS_MERGE]?: true;
+};
+
+type InternalSpanContextArg = {
+  readonly [INTERNAL_SPAN_CONTEXT]?: Record<string, unknown>;
 };
 
 export type StartSpanArgs = {
@@ -280,8 +285,6 @@ export type StartSpanArgs = {
   type?: SpanType;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   spanAttributes?: Record<any, any>;
-  /** Internal context fields to merge into the span's generated context. */
-  context?: Record<string, unknown>;
   startTime?: number;
   /**
    * The parent to start this span under. May be an exported span slug string
@@ -6323,6 +6326,19 @@ export function _internalStartSpanWithInitialMerge<
     InitialSpanWriteAsMergeArg).span;
 }
 
+/** @internal Start a span with SDK-controlled context fields. */
+export function _internalStartSpanWithContext<
+  IsAsyncFlush extends boolean = true,
+>(
+  args: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg,
+  context: Record<string, unknown>,
+): Span {
+  return startSpanAndIsLogger({
+    ...args,
+    [INTERNAL_SPAN_CONTEXT]: context,
+  }).span;
+}
+
 /**
  * Flush any pending rows to the server.
  */
@@ -6342,7 +6358,10 @@ export function setFetch(fetch: typeof globalThis.fetch): void {
 }
 
 function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
-  args?: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg,
+  args?: StartSpanArgs &
+    AsyncFlushArg<IsAsyncFlush> &
+    OptionalStateArg &
+    InternalSpanContextArg,
 ): { span: Span; isSyncFlushLogger: boolean } {
   const state = args?.state ?? _globalState;
 
@@ -7616,7 +7635,8 @@ export class SpanImpl implements Span {
       spanId?: string;
       propagatedState?: PropagatedState | undefined;
     } & Omit<StartSpanArgs, "parent"> &
-      InitialSpanWriteAsMergeArg,
+      InitialSpanWriteAsMergeArg &
+      InternalSpanContextArg,
   ) {
     this._state = args.state;
     this._propagatedState = args.propagatedState;
@@ -7660,7 +7680,7 @@ export class SpanImpl implements Span {
         start: args.startTime ?? getCurrentUnixTimestamp(),
       },
       context: mergeSpanOriginContext(
-        { ...callerLocation, ...args.context },
+        { ...callerLocation, ...args[INTERNAL_SPAN_CONTEXT] },
         "braintrust-js-logger",
         this._state.spanOriginEnvironment,
       ),
