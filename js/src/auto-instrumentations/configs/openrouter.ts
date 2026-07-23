@@ -6,7 +6,7 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     channelName: openRouterChannels.chatSend.channelName,
     module: {
       name: "@openrouter/sdk",
-      versionRange: ">=0.9.11 <1.0.0",
+      versionRange: ">=0.9.11 <2.0.0",
       filePath: "esm/sdk/chat.js",
     },
     functionQuery: {
@@ -20,7 +20,7 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     channelName: openRouterChannels.embeddingsGenerate.channelName,
     module: {
       name: "@openrouter/sdk",
-      versionRange: ">=0.9.11 <1.0.0",
+      versionRange: ">=0.9.11 <2.0.0",
       filePath: "esm/sdk/embeddings.js",
     },
     functionQuery: {
@@ -34,7 +34,7 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     channelName: openRouterChannels.rerankRerank.channelName,
     module: {
       name: "@openrouter/sdk",
-      versionRange: ">=0.12.0 <1.0.0",
+      versionRange: ">=0.12.0 <2.0.0",
       filePath: "esm/sdk/rerank.js",
     },
     functionQuery: {
@@ -48,7 +48,7 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     channelName: openRouterChannels.betaResponsesSend.channelName,
     module: {
       name: "@openrouter/sdk",
-      versionRange: ">=0.9.11 <1.0.0",
+      versionRange: ">=0.9.11 <2.0.0",
       filePath: "esm/sdk/responses.js",
     },
     functionQuery: {
@@ -62,7 +62,7 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     channelName: openRouterChannels.callModel.channelName,
     module: {
       name: "@openrouter/sdk",
-      versionRange: ">=0.9.11 <1.0.0",
+      versionRange: ">=0.9.11 <2.0.0",
       filePath: "esm/sdk/sdk.js",
     },
     functionQuery: {

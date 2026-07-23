@@ -1,4 +1,8 @@
-import { startSpan, withCurrent } from "../../logger";
+import { startSpan as startBaseSpan, withCurrent } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { SpanTypeAttribute, isPromiseLike } from "../../../util/index";
 import { toLoggedError } from "../core";
 import { getClaudeLocalToolParentResolver } from "./claude-agent-sdk-local-tool-context";
@@ -58,22 +62,27 @@ export function wrapLocalClaudeToolHandler(
         toolUseId && localToolParentResolver
           ? await localToolParentResolver(toolUseId).catch(() => undefined)
           : undefined;
-      const span = startSpan({
-        event: {
-          input: handlerArgs[0],
-          metadata: {
-            "claude_agent_sdk.raw_tool_name": rawToolName,
-            "gen_ai.tool.name": metadata.toolName,
-            ...(toolUseId && { "gen_ai.tool.call.id": toolUseId }),
-            ...(metadata.serverName && {
-              "mcp.server": metadata.serverName,
-            }),
+      const span = startBaseSpan(
+        withSpanInstrumentationName(
+          {
+            event: {
+              input: handlerArgs[0],
+              metadata: {
+                "claude_agent_sdk.raw_tool_name": rawToolName,
+                "gen_ai.tool.name": metadata.toolName,
+                ...(toolUseId && { "gen_ai.tool.call.id": toolUseId }),
+                ...(metadata.serverName && {
+                  "mcp.server": metadata.serverName,
+                }),
+              },
+            },
+            name: spanName,
+            ...(parent && { parent }),
+            spanAttributes: { type: SpanTypeAttribute.TOOL },
           },
-        },
-        name: spanName,
-        ...(parent && { parent }),
-        spanAttributes: { type: SpanTypeAttribute.TOOL },
-      });
+          INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK,
+        ),
+      );
 
       const runHandler = () => Reflect.apply(handler, this, handlerArgs);
       const finalizeSuccess = (result: unknown) => {

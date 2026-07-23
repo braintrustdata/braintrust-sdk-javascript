@@ -87,6 +87,9 @@ describe("AI SDK streaming instrumentation", () => {
       (s) => s?.span_attributes?.name === "doGenerate",
     );
 
+    expect(doGenerateSpan?.context?.span_origin).toMatchObject({
+      instrumentation: { name: "ai-sdk" },
+    });
     expect(doGenerateSpan?.output?.text).toBe("hello");
     expect(doGenerateSpan?.metrics?.prompt_tokens).toBeUndefined();
     expect(doGenerateSpan?.metrics?.completion_tokens).toBeUndefined();
@@ -147,6 +150,9 @@ describe("AI SDK streaming instrumentation", () => {
       (s) => s?.span_attributes?.name === "doStream",
     );
 
+    expect(doStreamSpan?.context?.span_origin).toMatchObject({
+      instrumentation: { name: "ai-sdk" },
+    });
     expect(doStreamSpan?.output?.text).toBe("hello");
     expect(doStreamSpan?.output?.finishReason).toBe("stop");
     expect(doStreamSpan?.metrics?.prompt_tokens).toBeUndefined();

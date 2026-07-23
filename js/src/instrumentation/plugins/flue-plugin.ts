@@ -5,11 +5,15 @@ import {
   BRAINTRUST_CURRENT_SPAN_STORE,
   flush,
   _internalGetGlobalState,
-  startSpan,
+  startSpan as startBaseSpan,
   withCurrent,
 } from "../../logger";
 import type { Span, StartSpanArgs } from "../../logger";
 import type { CurrentSpanStore } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { SpanTypeAttribute } from "../../../util/index";
 import { flueChannels } from "./flue-channels";
 import type {
@@ -503,15 +507,20 @@ class FlueObserveBridge {
       safeLog(existing.span, { input, metadata });
       return;
     }
-    const span = startSpan({
-      name: `workflow:${workflowName}`,
-      spanAttributes: { type: SpanTypeAttribute.TASK },
-      startTime: eventTime(event.startedAt ?? event.timestamp),
-      event: {
-        input,
-        metadata,
-      },
-    });
+    const span = startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          name: `workflow:${workflowName}`,
+          spanAttributes: { type: SpanTypeAttribute.TASK },
+          startTime: eventTime(event.startedAt ?? event.timestamp),
+          event: {
+            input,
+            metadata,
+          },
+        },
+        INSTRUMENTATION_NAMES.FLUE,
+      ),
+    );
     this.runsById.set(event.runId, { metadata, span });
   }
 
@@ -537,12 +546,17 @@ class FlueObserveBridge {
       safeLog(existing.span, { metadata });
       return;
     }
-    const span = startSpan({
-      name: `workflow:${workflowName}`,
-      spanAttributes: { type: SpanTypeAttribute.TASK },
-      startTime: eventTime(event.startedAt ?? event.timestamp),
-      event: { metadata },
-    });
+    const span = startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          name: `workflow:${workflowName}`,
+          spanAttributes: { type: SpanTypeAttribute.TASK },
+          startTime: eventTime(event.startedAt ?? event.timestamp),
+          event: { metadata },
+        },
+        INSTRUMENTATION_NAMES.FLUE,
+      ),
+    );
     this.runsById.set(event.runId, { metadata, span });
   }
 
@@ -1328,7 +1342,15 @@ function stateMatchesRun(state: SpanState, runId: string): boolean {
 }
 
 function startFlueSpan(parent: Span | undefined, args: StartSpanArgs): Span {
-  return parent ? withCurrent(parent, () => startSpan(args)) : startSpan(args);
+  return parent
+    ? withCurrent(parent, () =>
+        startBaseSpan(
+          withSpanInstrumentationName(args, INSTRUMENTATION_NAMES.FLUE),
+        ),
+      )
+    : startBaseSpan(
+        withSpanInstrumentationName(args, INSTRUMENTATION_NAMES.FLUE),
+      );
 }
 
 function runWithCurrentSpanStore<T>(

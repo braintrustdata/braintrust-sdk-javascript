@@ -2,17 +2,20 @@ import { debugLogger } from "../../debug-logger";
 import type { IsoChannelHandlers } from "../../isomorph";
 import { _internalStartSpanWithContext } from "../../logger";
 import type { Span } from "../../logger";
-import { mergeSpanOriginContext } from "../../span-origin";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { SpanTypeAttribute } from "../../../util/index";
 import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import { cloudflareAgentsChannels } from "./cloudflare-agents-channels";
 
-const CLOUDFLARE_WORKERS_ORIGIN = mergeSpanOriginContext(
-  undefined,
-  "cloudflare-agents",
-  { type: "server", name: "cloudflare_workers" },
-);
+const CLOUDFLARE_WORKERS_CONTEXT = {
+  span_origin: {
+    environment: { type: "server", name: "cloudflare_workers" },
+  },
+};
 
 export class CloudflareAgentsPlugin extends BasePlugin {
   protected onEnable(): void {
@@ -38,14 +41,17 @@ export class CloudflareAgentsPlugin extends BasePlugin {
           }
 
           const span = _internalStartSpanWithContext(
-            {
-              name,
-              spanAttributes: { type: SpanTypeAttribute.TOOL },
-              event: {
-                input: ownValue(options, "input"),
+            withSpanInstrumentationName(
+              {
+                name,
+                spanAttributes: { type: SpanTypeAttribute.TOOL },
+                event: {
+                  input: ownValue(options, "input"),
+                },
               },
-            },
-            CLOUDFLARE_WORKERS_ORIGIN,
+              INSTRUMENTATION_NAMES.CLOUDFLARE_AGENTS,
+            ),
+            CLOUDFLARE_WORKERS_CONTEXT,
           );
           spans.set(event, span);
         } catch (error) {

@@ -5,10 +5,14 @@ import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
   BRAINTRUST_CURRENT_SPAN_STORE,
   _internalGetGlobalState,
-  startSpan,
+  startSpan as startBaseSpan,
   withCurrent,
 } from "../../logger";
 import type { CurrentSpanStore, Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { googleADKChannels } from "./google-adk-channels";
@@ -92,12 +96,17 @@ export class GoogleADKPlugin extends BasePlugin {
         | Record<string, unknown>;
       const contextKey = extractRunnerContextKey(params);
 
-      const span = startSpan({
-        name: "Google ADK Runner",
-        spanAttributes: {
-          type: SpanTypeAttribute.TASK,
-        },
-      });
+      const span = startBaseSpan(
+        withSpanInstrumentationName(
+          {
+            name: "Google ADK Runner",
+            spanAttributes: {
+              type: SpanTypeAttribute.TASK,
+            },
+          },
+          INSTRUMENTATION_NAMES.GOOGLE_ADK,
+        ),
+      );
       const startTime = getCurrentUnixTimestamp();
 
       try {
@@ -208,20 +217,25 @@ export class GoogleADKPlugin extends BasePlugin {
       );
       const contextKey = extractInvocationContextKey(parentContext);
 
-      const span = startSpan({
-        name: agentName ? `Agent: ${agentName}` : "Google ADK Agent",
-        spanAttributes: {
-          type: SpanTypeAttribute.TASK,
-        },
-        ...(runnerParentSpan
-          ? {
-              parentSpanIds: {
-                spanId: runnerParentSpan.spanId,
-                rootSpanId: runnerParentSpan.rootSpanId,
-              },
-            }
-          : {}),
-      });
+      const span = startBaseSpan(
+        withSpanInstrumentationName(
+          {
+            name: agentName ? `Agent: ${agentName}` : "Google ADK Agent",
+            spanAttributes: {
+              type: SpanTypeAttribute.TASK,
+            },
+            ...(runnerParentSpan
+              ? {
+                  parentSpanIds: {
+                    spanId: runnerParentSpan.spanId,
+                    rootSpanId: runnerParentSpan.rootSpanId,
+                  },
+                }
+              : {}),
+          },
+          INSTRUMENTATION_NAMES.GOOGLE_ADK,
+        ),
+      );
       const startTime = getCurrentUnixTimestamp();
 
       try {
@@ -335,22 +349,27 @@ export class GoogleADKPlugin extends BasePlugin {
         );
 
         const createSpan = () =>
-          startSpan({
-            name: toolName ? `tool: ${toolName}` : "Google ADK Tool",
-            spanAttributes: {
-              type: SpanTypeAttribute.TOOL,
-            },
-            event: {
-              input: req.args,
-              metadata: {
-                provider: "google-adk",
-                ...(toolName && { "google_adk.tool_name": toolName }),
-                ...(extractToolCallId(req) && {
-                  "google_adk.tool_call_id": extractToolCallId(req),
-                }),
+          startBaseSpan(
+            withSpanInstrumentationName(
+              {
+                name: toolName ? `tool: ${toolName}` : "Google ADK Tool",
+                spanAttributes: {
+                  type: SpanTypeAttribute.TOOL,
+                },
+                event: {
+                  input: req.args,
+                  metadata: {
+                    provider: "google-adk",
+                    ...(toolName && { "google_adk.tool_name": toolName }),
+                    ...(extractToolCallId(req) && {
+                      "google_adk.tool_call_id": extractToolCallId(req),
+                    }),
+                  },
+                },
               },
-            },
-          });
+              INSTRUMENTATION_NAMES.GOOGLE_ADK,
+            ),
+          );
         const span = parentSpan
           ? withCurrent(parentSpan, () => createSpan())
           : createSpan();

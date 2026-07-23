@@ -1,5 +1,6 @@
 import iso from "../../isomorph";
 import type { IsoTracingChannel } from "../../isomorph";
+import type { SpanInstrumentationName } from "../../span-origin";
 import type {
   AsyncEndEventWith,
   EndEventWith,
@@ -124,6 +125,7 @@ export type ChannelMessage<TChannel extends AnyChannelSpec> =
     Partial<Pick<ErrorOf<TChannel>, "error">>;
 
 type BaseTypedChannel<TSpec extends AnyChannelSpec> = TSpec & {
+  instrumentationName: SpanInstrumentationName;
   tracingChannel(): IsoTracingChannel<ChannelMessage<TSpec>>;
 };
 
@@ -185,9 +187,11 @@ type MaterializedChannel<T extends AnyChannelSpec> = T["kind"] extends "async"
 export function defineChannels<T extends ChannelSpecMap>(
   pkg: string,
   channels: T,
+  options: { instrumentationName: SpanInstrumentationName },
 ): {
   [K in keyof T]: MaterializedChannel<T[K]>;
 } {
+  const { instrumentationName } = options;
   return Object.fromEntries(
     Object.entries(channels).map(([key, spec]) => {
       const fullChannelName = `orchestrion:${pkg}:${spec.channelName}`;
@@ -207,6 +211,7 @@ export function defineChannels<T extends ChannelSpecMap>(
           key,
           {
             ...asyncSpec,
+            instrumentationName,
             tracingChannel,
             tracePromise: <TReturn extends Promise<ResultOf<typeof asyncSpec>>>(
               fn: () => TReturn,
@@ -236,6 +241,7 @@ export function defineChannels<T extends ChannelSpecMap>(
         key,
         {
           ...syncSpec,
+          instrumentationName,
           tracingChannel,
           traceSync: <TResult>(
             fn: () => TResult,

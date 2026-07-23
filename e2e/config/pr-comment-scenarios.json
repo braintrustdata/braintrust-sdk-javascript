@@ -394,6 +394,14 @@
       {
         "variantKey": "openrouter-v0-latest",
         "label": "v0 latest"
+      },
+      {
+        "variantKey": "openrouter-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "openrouter-v1-latest",
+        "label": "v1 latest"
       }
     ]
   },

@@ -10,11 +10,15 @@ import {
   _internalGetGlobalState,
   Attachment,
   BRAINTRUST_CURRENT_SPAN_STORE,
-  startSpan,
+  startSpan as startBaseSpan,
   type CurrentSpanStore,
-  type StartSpanArgs,
   type Span,
+  type StartSpanArgs,
 } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { googleGenAIChannels } from "./google-genai-channels";
@@ -113,13 +117,18 @@ export class GoogleGenAIPlugin extends BasePlugin {
         const params = event.arguments[0];
         const input = serializeGenerateContentInput(params);
         const metadata = extractGenerateContentMetadata(params);
-        const span = startSpan({
-          name: "generate_content",
-          spanAttributes: {
-            type: SpanTypeAttribute.LLM,
-          },
-          event: createWrapperParityEvent({ input, metadata }),
-        });
+        const span = startBaseSpan(
+          withSpanInstrumentationName(
+            {
+              name: "generate_content",
+              spanAttributes: {
+                type: SpanTypeAttribute.LLM,
+              },
+              event: createWrapperParityEvent({ input, metadata }),
+            },
+            INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+          ),
+        );
 
         return {
           span,
@@ -135,13 +144,18 @@ export class GoogleGenAIPlugin extends BasePlugin {
             const params = event.arguments[0];
             const input = serializeGenerateContentInput(params);
             const metadata = extractGenerateContentMetadata(params);
-            const span = startSpan({
-              name: "generate_content",
-              spanAttributes: {
-                type: SpanTypeAttribute.LLM,
-              },
-              event: createWrapperParityEvent({ input, metadata }),
-            });
+            const span = startBaseSpan(
+              withSpanInstrumentationName(
+                {
+                  name: "generate_content",
+                  spanAttributes: {
+                    type: SpanTypeAttribute.LLM,
+                  },
+                  event: createWrapperParityEvent({ input, metadata }),
+                },
+                INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+              ),
+            );
 
             return {
               span,
@@ -232,13 +246,18 @@ export class GoogleGenAIPlugin extends BasePlugin {
         const params = event.arguments[0];
         const input = serializeEmbedContentInput(params);
         const metadata = extractEmbedContentMetadata(params);
-        const span = startSpan({
-          name: "embed_content",
-          spanAttributes: {
-            type: SpanTypeAttribute.LLM,
-          },
-          event: createWrapperParityEvent({ input, metadata }),
-        });
+        const span = startBaseSpan(
+          withSpanInstrumentationName(
+            {
+              name: "embed_content",
+              spanAttributes: {
+                type: SpanTypeAttribute.LLM,
+              },
+              event: createWrapperParityEvent({ input, metadata }),
+            },
+            INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+          ),
+        );
 
         return {
           span,
@@ -253,13 +272,18 @@ export class GoogleGenAIPlugin extends BasePlugin {
           const params = event.arguments[0];
           const input = serializeEmbedContentInput(params);
           const metadata = extractEmbedContentMetadata(params);
-          const span = startSpan({
-            name: "embed_content",
-            spanAttributes: {
-              type: SpanTypeAttribute.LLM,
-            },
-            event: createWrapperParityEvent({ input, metadata }),
-          });
+          const span = startBaseSpan(
+            withSpanInstrumentationName(
+              {
+                name: "embed_content",
+                spanAttributes: {
+                  type: SpanTypeAttribute.LLM,
+                },
+                event: createWrapperParityEvent({ input, metadata }),
+              },
+              INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+            ),
+          );
 
           return {
             span,
@@ -427,16 +451,21 @@ function patchGoogleGenAIStreamingResult(args: {
 
   const ensureSpan = () => {
     if (!span) {
-      span = startSpan({
-        name: "generate_content_stream",
-        spanAttributes: {
-          type: SpanTypeAttribute.LLM,
-        },
-        event: {
-          input,
-          metadata,
-        },
-      });
+      span = startBaseSpan(
+        withSpanInstrumentationName(
+          {
+            name: "generate_content_stream",
+            spanAttributes: {
+              type: SpanTypeAttribute.LLM,
+            },
+            event: {
+              input,
+              metadata,
+            },
+          },
+          INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+        ),
+      );
     }
 
     return span;

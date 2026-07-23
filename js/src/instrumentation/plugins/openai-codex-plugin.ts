@@ -2,8 +2,12 @@ import { BasePlugin, toLoggedError } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
-import { startSpan } from "../../logger";
-import type { Span } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
+import type { Span, StartSpanArgs } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute } from "../../../util/index";
 import { openAICodexChannels } from "./openai-codex-channels";
@@ -152,10 +156,15 @@ function startCodexRun(
       ? { "openai_codex.version": event.moduleVersion }
       : {}),
   };
-  const span = startSpan({
-    name: "OpenAI Codex",
-    spanAttributes: { type: SpanTypeAttribute.TASK },
-  });
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        name: "OpenAI Codex",
+        spanAttributes: { type: SpanTypeAttribute.TASK },
+      },
+      INSTRUMENTATION_NAMES.OPENAI_CODEX,
+    ),
+  );
   const startTime = getCurrentUnixTimestamp();
   safeLog(span, {
     input: sanitizedInput,
@@ -366,7 +375,12 @@ async function createCompletedItemSpan(
     return;
   }
 
-  const span = startSpan(spanArgs.start);
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      spanArgs.start,
+      INSTRUMENTATION_NAMES.OPENAI_CODEX,
+    ),
+  );
   safeLog(span, spanArgs.end);
   span.end();
 }
@@ -429,15 +443,20 @@ async function ensureActiveLlmSpan(
     "openai_codex.llm_sequence": sequence,
   };
 
-  const span = startSpan({
-    event: {
-      ...(sequence === 1 ? { input: state.input } : {}),
-      metadata,
-    },
-    name: "OpenAI Codex LLM",
-    parent: await state.span.export(),
-    spanAttributes: { type: SpanTypeAttribute.LLM },
-  });
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        event: {
+          ...(sequence === 1 ? { input: state.input } : {}),
+          metadata,
+        },
+        name: "OpenAI Codex LLM",
+        parent: await state.span.export(),
+        spanAttributes: { type: SpanTypeAttribute.LLM },
+      },
+      INSTRUMENTATION_NAMES.OPENAI_CODEX,
+    ),
+  );
 
   state.activeLlmSpan = {
     anonymousMessages: [],
@@ -501,7 +520,15 @@ async function startCodexItemSpan(
   if (!spanArgs) {
     return;
   }
-  state.activeItemSpans.set(itemId, startSpan(spanArgs.start));
+  state.activeItemSpans.set(
+    itemId,
+    startBaseSpan(
+      withSpanInstrumentationName(
+        spanArgs.start,
+        INSTRUMENTATION_NAMES.OPENAI_CODEX,
+      ),
+    ),
+  );
 }
 
 function updateCodexItem(
@@ -551,7 +578,7 @@ async function itemSpanArgs(
   item: OpenAICodexThreadItem,
 ): Promise<
   | {
-      start: Parameters<typeof startSpan>[0];
+      start: StartSpanArgs;
       end: Parameters<Span["log"]>[0];
     }
   | undefined

@@ -8,6 +8,10 @@ import {
   type Span,
   type StartSpanArgs,
 } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
 import type {
   AISDKHarnessAgentCreateSessionParams,
@@ -354,9 +358,13 @@ export function startHarnessTurnChildSpan(
   parent: HarnessTurnParent,
   args: StartSpanArgs,
 ): Span {
+  const spanArgs = withSpanInstrumentationName(
+    args,
+    INSTRUMENTATION_NAMES.AI_SDK,
+  );
   return typeof parent === "string"
-    ? startSpan({ ...args, parent })
-    : parent.startSpan(args);
+    ? startSpan({ ...spanArgs, parent })
+    : parent.startSpan(spanArgs);
 }
 
 export function updateHarnessTurn(

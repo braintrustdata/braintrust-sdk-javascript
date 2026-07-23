@@ -1,8 +1,16 @@
 import { BasePlugin, toLoggedError } from "../core";
 import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
-import { Attachment, startSpan, withCurrent } from "../../logger";
+import {
+  Attachment,
+  startSpan as startBaseSpan,
+  withCurrent,
+} from "../../logger";
 import type { Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
@@ -143,12 +151,17 @@ export class AnthropicPlugin extends BasePlugin {
         }
 
         const params = (event.arguments[0] ?? {}) as AnthropicToolRunnerParams;
-        const span = startSpan({
-          name: "anthropic.beta.messages.toolRunner",
-          spanAttributes: {
-            type: SpanTypeAttribute.TASK,
-          },
-        });
+        const span = startBaseSpan(
+          withSpanInstrumentationName(
+            {
+              name: "anthropic.beta.messages.toolRunner",
+              spanAttributes: {
+                type: SpanTypeAttribute.TASK,
+              },
+            },
+            INSTRUMENTATION_NAMES.ANTHROPIC,
+          ),
+        );
 
         span.log({
           input: processAttachmentsInInput(
@@ -349,19 +362,22 @@ function wrapAnthropicToolRunnerTool(
             return finalizeError(error);
           }
         },
-        {
-          event: {
-            input: getAnthropicToolRunnerInput(args),
-            metadata: {
-              "gen_ai.tool.name": toolName,
-              provider: "anthropic",
+        withSpanInstrumentationName(
+          {
+            event: {
+              input: getAnthropicToolRunnerInput(args),
+              metadata: {
+                "gen_ai.tool.name": toolName,
+                provider: "anthropic",
+              },
+            },
+            name: `tool: ${toolName}`,
+            spanAttributes: {
+              type: SpanTypeAttribute.TOOL,
             },
           },
-          name: `tool: ${toolName}`,
-          spanAttributes: {
-            type: SpanTypeAttribute.TOOL,
-          },
-        },
+          INSTRUMENTATION_NAMES.ANTHROPIC,
+        ),
       );
     },
     writable: runDescriptor?.writable ?? true,

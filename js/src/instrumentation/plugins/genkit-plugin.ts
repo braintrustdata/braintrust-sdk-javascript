@@ -10,9 +10,13 @@ import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
   _internalGetGlobalState,
   BRAINTRUST_CURRENT_SPAN_STORE,
-  startSpan,
+  startSpan as startBaseSpan,
 } from "../../logger";
 import type { CurrentSpanStore, Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
 import { SpanTypeAttribute } from "../../../util/index";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
@@ -258,12 +262,17 @@ function startActionSpanState(args: {
     return undefined;
   }
 
-  const span = startSpan({
-    name: actionSpanName(args.metadata, args.runStepName),
-    spanAttributes: {
-      type: actionSpanType(args.metadata),
-    },
-  });
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        name: actionSpanName(args.metadata, args.runStepName),
+        spanAttributes: {
+          type: actionSpanType(args.metadata),
+        },
+      },
+      INSTRUMENTATION_NAMES.GENKIT,
+    ),
+  );
   const startTime = getCurrentUnixTimestamp();
 
   span.log({

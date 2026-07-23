@@ -8,6 +8,10 @@ import {
   vi,
 } from "vitest";
 import type { StartSpanArgs } from "../../logger";
+import {
+  getSpanInstrumentationName,
+  INSTRUMENTATION_NAMES,
+} from "../../span-origin";
 
 const { mockStartSpan } = vi.hoisted(() => ({
   mockStartSpan: vi.fn(),
@@ -110,19 +114,24 @@ describe("CloudflareAgentsPlugin", () => {
     );
 
     expect(spans).toHaveLength(1);
-    expect(spans[0].args).toEqual({
+    expect(spans[0].args).toMatchObject({
       name: "ResearchAgent",
       spanAttributes: { type: "tool" },
       event: {
         input: { query: "cloudflare" },
       },
     });
+    expect(Object.keys(spans[0].args).sort()).toEqual([
+      "event",
+      "name",
+      "spanAttributes",
+    ]);
     expect(spans[0].args).not.toHaveProperty("context");
+    expect(getSpanInstrumentationName(spans[0].args)).toBe(
+      INSTRUMENTATION_NAMES.CLOUDFLARE_AGENTS,
+    );
     expect(spans[0].context).toEqual({
       span_origin: {
-        name: "braintrust.sdk.javascript",
-        version: expect.any(String),
-        instrumentation: { name: "cloudflare-agents" },
         environment: { type: "server", name: "cloudflare_workers" },
       },
     });

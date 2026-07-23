@@ -182,6 +182,8 @@ import { SpanCache, CachedSpan } from "./span-cache";
 import type { EvalParameters, InferParameters } from "./eval-parameters";
 import {
   detectSpanOriginEnvironment,
+  getSpanInstrumentationName,
+  INSTRUMENTATION_NAMES,
   mergeSpanOriginContext,
   type SpanOriginEnvironment,
 } from "./span-origin";
@@ -7640,6 +7642,9 @@ export class SpanImpl implements Span {
   ) {
     this._state = args.state;
     this._propagatedState = args.propagatedState;
+    const instrumentationName =
+      getSpanInstrumentationName(args) ??
+      INSTRUMENTATION_NAMES.BRAINTRUST_JS_LOGGER;
 
     const spanAttributes = args.spanAttributes ?? {};
     const rawEvent = args.event ?? {};
@@ -7681,7 +7686,7 @@ export class SpanImpl implements Span {
       },
       context: mergeSpanOriginContext(
         { ...callerLocation, ...args[INTERNAL_SPAN_CONTEXT] },
-        "braintrust-js-logger",
+        instrumentationName,
         this._state.spanOriginEnvironment,
       ),
       span_attributes: {

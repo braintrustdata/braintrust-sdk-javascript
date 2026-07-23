@@ -5,8 +5,12 @@ import {
   type Span as BraintrustSpan,
   NOOP_SPAN,
   currentSpan,
-  startSpan,
+  startSpan as startBaseSpan,
 } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import type {
   OpenAIAgentsAgentSpanData,
   OpenAIAgentsCustomSpanData,
@@ -213,21 +217,24 @@ export class OpenAIAgentsTraceProcessor {
     }
 
     const current = currentSpan();
+    const spanArgs = withSpanInstrumentationName(
+      {
+        name: trace.name,
+        type: SpanTypeAttribute.TASK,
+      },
+      INSTRUMENTATION_NAMES.OPENAI_AGENTS,
+    );
     const span =
       current && current !== NOOP_SPAN
-        ? current.startSpan({
-            name: trace.name,
-            type: SpanTypeAttribute.TASK,
-          })
+        ? current.startSpan(spanArgs)
         : this.logger
-          ? this.logger.startSpan({
-              name: trace.name,
-              type: SpanTypeAttribute.TASK,
-            })
-          : startSpan({
-              name: trace.name,
-              type: SpanTypeAttribute.TASK,
-            });
+          ? this.logger.startSpan(spanArgs)
+          : startBaseSpan(
+              withSpanInstrumentationName(
+                spanArgs,
+                INSTRUMENTATION_NAMES.OPENAI_AGENTS,
+              ),
+            );
 
     span.log({
       input: "Agent workflow started",
@@ -289,10 +296,15 @@ export class OpenAIAgentsTraceProcessor {
       return Promise.resolve();
     }
 
-    const childSpan = parentSpan.startSpan({
-      name: spanNameFromAgents(span),
-      type: spanTypeFromAgents(span),
-    });
+    const childSpan = parentSpan.startSpan(
+      withSpanInstrumentationName(
+        {
+          name: spanNameFromAgents(span),
+          type: spanTypeFromAgents(span),
+        },
+        INSTRUMENTATION_NAMES.OPENAI_AGENTS,
+      ),
+    );
     traceData.childSpans.set(span.spanId, childSpan);
 
     return Promise.resolve();
