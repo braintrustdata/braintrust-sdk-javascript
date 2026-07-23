@@ -9,13 +9,11 @@ export interface HuggingFaceTransformersTensor {
   dims?: readonly number[];
   data?: ArrayLike<number>;
   tolist?: () => unknown;
-  [key: string]: unknown;
 }
 
 export interface HuggingFaceTransformersModel {
   config?: Record<string, unknown>;
   name?: string;
-  [key: string]: unknown;
 }
 
 export interface HuggingFaceTransformersPipeline {
@@ -23,7 +21,6 @@ export interface HuggingFaceTransformersPipeline {
   task?: string;
   model?: HuggingFaceTransformersModel;
   tokenizer?: unknown;
-  [key: string]: unknown;
 }
 
 export interface HuggingFaceTransformersPipelineConstructor {
@@ -41,5 +38,4 @@ export interface HuggingFaceTransformersModule {
   SummarizationPipeline?: HuggingFaceTransformersPipelineConstructor;
   FeatureExtractionPipeline?: HuggingFaceTransformersPipelineConstructor;
   QuestionAnsweringPipeline?: HuggingFaceTransformersPipelineConstructor;
-  [key: string]: unknown;
 }

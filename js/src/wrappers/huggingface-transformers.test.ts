@@ -13,6 +13,11 @@ import {
 } from "../logger";
 import { configureNode } from "../node/config";
 import { wrapHuggingFaceTransformers } from "./huggingface-transformers";
+import type {
+  HuggingFaceTransformersModule,
+  HuggingFaceTransformersPipeline,
+  HuggingFaceTransformersPipelineConstructor,
+} from "../vendor-sdk-types/huggingface-transformers";
 
 try {
   configureNode();
@@ -20,7 +25,7 @@ try {
   // Shared process setup in tests can run this more than once.
 }
 
-function makePipeline(task: string) {
+function makePipeline(task: string): HuggingFaceTransformersPipeline {
   const outputs: Record<string, unknown> = {
     "text-generation": [{ generated_text: "Hello world" }],
     "text2text-generation": [{ generated_text: "Bonjour" }],
@@ -39,12 +44,9 @@ function makePipeline(task: string) {
   });
 }
 
-function makeModule() {
+function makeModule(): HuggingFaceTransformersModule {
   return {
     pipeline: async (task: string) => makePipeline(task),
-    TextGenerationPipeline: function (options: { task: string }) {
-      return makePipeline(options.task);
-    },
   };
 }
 
@@ -84,12 +86,32 @@ describe("wrapHuggingFaceTransformers", () => {
 
     const spans = await backgroundLogger.drain();
     expect(spans).toHaveLength(5);
-    expect(spans.map((span) => span.span_attributes?.name)).toEqual([
-      "huggingface.transformers.text_generation",
-      "huggingface.transformers.text2text_generation",
-      "huggingface.transformers.summarization",
-      "huggingface.transformers.feature_extraction",
-      "huggingface.transformers.question_answering",
+    expect(spans).toMatchObject([
+      {
+        span_attributes: {
+          name: "huggingface.transformers.text_generation",
+        },
+      },
+      {
+        span_attributes: {
+          name: "huggingface.transformers.text2text_generation",
+        },
+      },
+      {
+        span_attributes: {
+          name: "huggingface.transformers.summarization",
+        },
+      },
+      {
+        span_attributes: {
+          name: "huggingface.transformers.feature_extraction",
+        },
+      },
+      {
+        span_attributes: {
+          name: "huggingface.transformers.question_answering",
+        },
+      },
     ]);
     expect(spans[0]).toMatchObject({
       input: [{ role: "user", content: "Hello" }],
@@ -115,7 +137,11 @@ describe("wrapHuggingFaceTransformers", () => {
   });
 
   test("wraps exported pipeline constructors and is idempotent", async () => {
-    const module = makeModule();
+    const module: HuggingFaceTransformersModule = {
+      TextGenerationPipeline: function (options: { task: string }) {
+        return makePipeline(options.task);
+      } as unknown as HuggingFaceTransformersPipelineConstructor,
+    };
     const wrapped = wrapHuggingFaceTransformers(module);
     expect(wrapHuggingFaceTransformers(wrapped)).toBe(wrapped);
 
@@ -152,8 +178,8 @@ describe("wrapHuggingFaceTransformers", () => {
 
   test("propagates pipeline errors and logs the original failure", async () => {
     const failure = new Error("local inference failed");
-    const pipeline = Object.assign(
-      async () => {
+    const pipeline: HuggingFaceTransformersPipeline = Object.assign(
+      async (..._args: unknown[]) => {
         throw failure;
       },
       { task: "text-generation" },

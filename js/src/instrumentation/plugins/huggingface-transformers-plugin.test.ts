@@ -90,10 +90,13 @@ describe("HuggingFaceTransformersPlugin extraction", () => {
   });
 
   it("uses factory metadata and only keeps allowed request settings", () => {
-    const pipeline = Object.assign(async () => [], {
-      task: "text-generation",
-      model: { config: { model_type: "gpt2" } },
-    }) as HuggingFaceTransformersPipeline;
+    const pipeline: HuggingFaceTransformersPipeline = Object.assign(
+      async () => [],
+      {
+        task: "text-generation",
+        model: { config: { model_type: "gpt2" } },
+      },
+    );
     registerHuggingFaceTransformersPipeline(
       pipeline,
       "text-generation",
