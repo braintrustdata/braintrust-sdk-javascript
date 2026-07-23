@@ -1,6 +1,7 @@
 import iso from "../../isomorph";
 import type { IsoAsyncLocalStorage, IsoTracingChannel } from "../../isomorph";
 import {
+  _internalGetGlobalState,
   currentSpan,
   startSpan,
   updateSpan,
@@ -18,9 +19,13 @@ const BRAINTRUST_TURN_CONTEXT_KEY = "__braintrust_trace_context";
 
 export type HarnessTurnParent = Span | string;
 
-type SerializedHarnessTurnContext = {
+type HarnessTurnContext = {
   parent: string;
   sessionId: string;
+};
+
+type SerializedHarnessTurnContext = HarnessTurnContext & {
+  signature: string;
 };
 
 type HarnessTurnUpdate = Parameters<Span["log"]>[0];
@@ -34,9 +39,7 @@ let harnessTurnParentStore:
   | IsoAsyncLocalStorage<HarnessTurnParent | undefined>
   | undefined;
 
-function serializedTurnContext(
-  value: unknown,
-): SerializedHarnessTurnContext | undefined {
+function serializedTurnContext(value: unknown): HarnessTurnContext | undefined {
   if (!isObject(value)) {
     return undefined;
   }
@@ -45,7 +48,19 @@ function serializedTurnContext(
   if (
     !isObject(context) ||
     typeof context.parent !== "string" ||
-    typeof context.sessionId !== "string"
+    typeof context.sessionId !== "string" ||
+    typeof context.signature !== "string"
+  ) {
+    return undefined;
+  }
+
+  const expectedSignature = signTurnContext({
+    parent: context.parent,
+    sessionId: context.sessionId,
+  });
+  if (
+    !expectedSignature ||
+    !iso.timingSafeEqual?.(context.signature, expectedSignature)
   ) {
     return undefined;
   }
@@ -63,6 +78,17 @@ function serializedTurnContext(
     parent: context.parent,
     sessionId: context.sessionId,
   };
+}
+
+function signTurnContext(context: HarnessTurnContext): string | undefined {
+  const secret =
+    _internalGetGlobalState()._internalGetTraceContextSigningSecret();
+  return secret
+    ? iso.hmacSha256?.(
+        secret,
+        JSON.stringify([BRAINTRUST_TURN_CONTEXT_KEY, context]),
+      )
+    : undefined;
 }
 
 function continuationParentFromCreateSessionParams(
@@ -128,12 +154,20 @@ function addSerializedContext(args: {
   if (!parent) {
     return;
   }
+  const context = {
+    parent,
+    sessionId: args.sessionId,
+  };
+  const signature = signTurnContext(context);
+  if (!signature) {
+    return;
+  }
   Object.defineProperty(args.continuation, BRAINTRUST_TURN_CONTEXT_KEY, {
     configurable: true,
     enumerable: true,
     value: {
-      parent,
-      sessionId: args.sessionId,
+      ...context,
+      signature,
     } satisfies SerializedHarnessTurnContext,
     writable: true,
   });

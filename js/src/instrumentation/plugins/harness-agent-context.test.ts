@@ -1,7 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import type { Span } from "../../logger";
+import { _internalGetGlobalState, type Span } from "../../logger";
 import { configureNode } from "../../node/config";
 import { SpanObjectTypeV3 } from "../../util";
+import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
 import {
   captureHarnessCreateSessionParent,
   endHarnessTurn,
@@ -12,6 +13,9 @@ import {
 try {
   configureNode();
 } catch {}
+_internalGetGlobalState()._internalSetTraceContextSigningSecret(
+  "harness-context-test-secret",
+);
 
 const contextKey = "__braintrust_trace_context";
 
@@ -103,12 +107,14 @@ describe("HarnessAgent continuation context", () => {
     expect(suspended[contextKey]).toMatchObject({
       parent: expect.any(String),
       sessionId: "session-1",
+      signature: expect.any(String),
     });
 
     await expect(session.detach()).resolves.toBe(detached);
     expect(detachedContinuation[contextKey]).toMatchObject({
       parent: expect.any(String),
       sessionId: "session-1",
+      signature: expect.any(String),
     });
 
     await expect(session.stop()).resolves.toBe(stopped);
@@ -117,6 +123,7 @@ describe("HarnessAgent continuation context", () => {
         ? (detachedContinuation[contextKey] as { parent: string }).parent
         : undefined,
       sessionId: "session-1",
+      signature: expect.any(String),
     });
     expect(exportSpan).not.toHaveBeenCalled();
   });
@@ -147,7 +154,7 @@ describe("HarnessAgent continuation context", () => {
     expect(exportSpan).not.toHaveBeenCalled();
   });
 
-  test("validates and binds serialized parents to their session without credentials", async () => {
+  test("authenticates and binds serialized parents to their session", async () => {
     const exportSpan = vi.fn();
     const parent = serializableSpan(exportSpan);
     const session = {
@@ -158,6 +165,13 @@ describe("HarnessAgent continuation context", () => {
     const continuation = await session.suspendTurn();
     const serialized = JSON.parse(JSON.stringify(continuation));
     const serializedParent = serialized[contextKey].parent;
+    const otherParent = new SpanComponentsV4({
+      object_type: SpanObjectTypeV3.PROJECT_LOGS,
+      object_id: "other-project-id",
+      row_id: "other-row-id",
+      root_span_id: "other-root-span-id",
+      span_id: "other-span-id",
+    }).toStr();
     expect(exportSpan).not.toHaveBeenCalled();
 
     expect(
@@ -189,8 +203,34 @@ describe("HarnessAgent continuation context", () => {
     expect(
       captureHarnessCreateSessionParent({
         continueFrom: {
+          ...serialized,
           [contextKey]: {
-            parent: "caller-controlled-parent",
+            ...serialized[contextKey],
+            parent: otherParent,
+          },
+        },
+        sessionId: "bound-session",
+      }),
+    ).toBeUndefined();
+
+    expect(
+      captureHarnessCreateSessionParent({
+        continueFrom: {
+          ...serialized,
+          [contextKey]: {
+            ...serialized[contextKey],
+            sessionId: "attacker-session",
+          },
+        },
+        sessionId: "attacker-session",
+      }),
+    ).toBeUndefined();
+
+    expect(
+      captureHarnessCreateSessionParent({
+        continueFrom: {
+          [contextKey]: {
+            parent: otherParent,
             sessionId: "bound-session",
           },
         },

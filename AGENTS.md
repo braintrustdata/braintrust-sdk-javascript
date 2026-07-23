@@ -29,6 +29,8 @@ pnpm run build      # Build all workspace packages (from repo root)
 
 Use the normal Orchestrion config plus plugin/channel path by default. Special-case source patches should be rare exceptions only when the target SDK cannot be instrumented through the standard transformer path, and the reason should be documented next to the patch.
 
+Instrumentation patches generally do not need to be removed during teardown. Prefer leaving behavior-preserving patches installed when they are idempotent; do not add unpatching machinery by default.
+
 ## Testing
 
 Uses Vitest. Prefer running the **narrowest relevant test** rather than the full suite.

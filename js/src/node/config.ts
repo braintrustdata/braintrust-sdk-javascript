@@ -143,6 +143,16 @@ export function configureNode() {
   iso.gzip = promisify(zlib.gzip);
   iso.gunzip = promisify(zlib.gunzip);
   iso.hash = (data) => crypto.createHash("sha256").update(data).digest("hex");
+  iso.hmacSha256 = (key, data) =>
+    crypto.createHmac("sha256", key).update(data).digest("hex");
+  iso.timingSafeEqual = (left, right) => {
+    const leftBuffer = Buffer.from(left);
+    const rightBuffer = Buffer.from(right);
+    return (
+      leftBuffer.length === rightBuffer.length &&
+      crypto.timingSafeEqual(leftBuffer, rightBuffer)
+    );
+  };
   _internalSetInitialState();
 
   // The Mastra patches rewritten by the bundler plugin and the loader hook
