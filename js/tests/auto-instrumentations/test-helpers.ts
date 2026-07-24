@@ -2,12 +2,11 @@
  * Test helpers for functional testing of instrumented code.
  */
 
-import * as diagnostics_channel from "diagnostics_channel";
-
-// Use type assertion for tracingChannel which may not be in older @types/node
-const tracingChannel = (diagnostics_channel as any).tracingChannel as (
-  name: string,
-) => any;
+import {
+  newGlobalTracingChannel,
+  type GlobalHookHandlers,
+  type GlobalTracingChannel,
+} from "../../src/global-instrumentation-hooks";
 
 export interface CapturedEvent {
   arguments?: any[];
@@ -29,9 +28,13 @@ export interface EventCollector {
 }
 
 /**
- * Creates an event collector for capturing diagnostics_channel events.
+ * Creates an event collector for capturing global instrumentation hook events.
  */
 export function createEventCollector(): EventCollector {
+  const subscriptions: Array<{
+    channel: GlobalTracingChannel;
+    handlers: GlobalHookHandlers;
+  }> = [];
   const collector: EventCollector = {
     start: [],
     end: [],
@@ -46,8 +49,8 @@ export function createEventCollector(): EventCollector {
       this.error = [];
     },
     subscribe(channelName: string) {
-      const channel = tracingChannel(channelName);
-      channel.subscribe({
+      const channel = newGlobalTracingChannel(channelName);
+      const handlers = {
         start: (ctx: any) => {
           this.start.push({
             arguments: ctx.arguments ? Array.from(ctx.arguments) : undefined,
@@ -78,11 +81,14 @@ export function createEventCollector(): EventCollector {
             timestamp: Date.now(),
           });
         },
-      });
+      };
+      channel.subscribe(handlers);
+      subscriptions.push({ channel, handlers });
     },
     unsubscribe() {
-      // Note: diagnostics_channel doesn't provide a direct unsubscribe API
-      // In a real scenario, you'd store the channel reference and manage subscriptions
+      for (const { channel, handlers } of subscriptions.splice(0)) {
+        channel.unsubscribe(handlers);
+      }
     },
   };
 

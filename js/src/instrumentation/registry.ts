@@ -24,7 +24,7 @@ export type { InstrumentationConfig } from "./config";
 //
 // - BT-5139 scenario: two SDK instances share the same state object → the
 //   second instance sees the marker left by the first and skips subscription,
-//   preventing duplicate diagnostics_channel listeners.
+//   preventing duplicate global hook listeners.
 //
 // - vi.resetModules() test scenario: the test deletes the state from
 //   globalThis between runs, so the next import creates a fresh state with no
@@ -71,7 +71,7 @@ class PluginRegistry {
     }
 
     // If another SDK instance in the same process already registered plugins,
-    // skip to avoid duplicate diagnostics_channel subscriptions.
+    // skip to avoid duplicate global hook subscriptions.
     const sharedState = getSharedState();
     if (sharedState) {
       if (sharedState[REGISTRY_STATE_KEY] !== undefined) {

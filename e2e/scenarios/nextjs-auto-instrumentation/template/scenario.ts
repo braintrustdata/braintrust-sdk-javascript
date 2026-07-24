@@ -98,12 +98,12 @@ async function main() {
 
     if (!data.instrumented) {
       throw new Error(
-        `OpenAI tracing channel did not fire; Next.js ${bundler} instrumentation is not working`,
+        `OpenAI global hook did not fire; Next.js ${bundler} instrumentation is not working`,
       );
     }
 
     console.log(
-      `OpenAI tracing channel fired at runtime; Next.js ${bundler} instrumentation is active`,
+      `OpenAI global hook fired at runtime; Next.js ${bundler} instrumentation is active`,
     );
 
     const edgeResponse = await httpGet(`http://localhost:${PORT}/api/edge`);

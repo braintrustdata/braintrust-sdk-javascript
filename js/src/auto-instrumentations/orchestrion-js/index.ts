@@ -11,9 +11,8 @@ import type { InstrumentationConfig } from "./types";
  */
 export function create(
   configs: InstrumentationConfig[],
-  dcModule?: string | null,
 ): InstrumentationMatcher {
-  return new InstrumentationMatcher(configs, dcModule);
+  return new InstrumentationMatcher(configs);
 }
 
 export type { InstrumentationConfig, ModuleType } from "./types";

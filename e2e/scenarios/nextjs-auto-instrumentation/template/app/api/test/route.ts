@@ -1,11 +1,19 @@
-import "braintrust"; // Triggers configureNode(), which applies patchTracingChannel
+import "braintrust"; // Registers Braintrust's global instrumentation hooks.
 import OpenAI from "openai";
-import { tracingChannel } from "node:diagnostics_channel";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 
 // Must be dynamic — this route starts an in-process HTTP server per request.
 export const dynamic = "force-dynamic";
+
+type InstrumentationHook = {
+  subscribe(handlers: InstrumentationHookHandlers): void;
+  unsubscribe(handlers: InstrumentationHookHandlers): boolean;
+};
+
+type InstrumentationHookHandlers = {
+  start(): void;
+};
 
 export async function GET() {
   // Spin up a minimal mock OpenAI server so no real API calls are made.
@@ -33,19 +41,20 @@ export async function GET() {
   );
   const { port } = mockServer.address() as AddressInfo;
 
-  const channel = tracingChannel("orchestrion:openai:chat.completions.create");
-  let channelFired = false;
+  const hooks = (
+    globalThis as typeof globalThis & {
+      __braintrust_instrumentation_hooks?: Map<string, InstrumentationHook>;
+    }
+  ).__braintrust_instrumentation_hooks;
+  const hook = hooks?.get("orchestrion:openai:chat.completions.create");
+  let hookFired = false;
   const subscriber = {
     start: () => {
-      channelFired = true;
+      hookFired = true;
     },
-    end: () => {},
-    asyncStart: () => {},
-    asyncEnd: () => {},
-    error: () => {},
   };
 
-  channel.subscribe(subscriber);
+  hook?.subscribe(subscriber);
 
   try {
     const client = new OpenAI({
@@ -58,9 +67,9 @@ export async function GET() {
       messages: [{ role: "user", content: "hi" }],
     });
   } finally {
-    channel.unsubscribe(subscriber);
+    hook?.unsubscribe(subscriber);
     mockServer.close();
   }
 
-  return Response.json({ instrumented: channelFired });
+  return Response.json({ instrumented: hookFired });
 }

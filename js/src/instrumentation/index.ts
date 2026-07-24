@@ -1,8 +1,8 @@
 /**
  * Instrumentation APIs for auto-instrumentation.
  *
- * This module provides the core plugin infrastructure for converting
- * diagnostics_channel events into Braintrust spans.
+ * This module provides the core plugin infrastructure for converting global
+ * instrumentation hook events into Braintrust spans.
  *
  * Following the OpenTelemetry pattern, BasePlugin (like InstrumentationBase)
  * lives in the core SDK, while individual instrumentation implementations

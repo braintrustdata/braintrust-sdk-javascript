@@ -31,8 +31,6 @@ describe("Function Behavior Preservation", () => {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-
-    // Note: dc-browser is now an npm package, no symlinks needed
   });
 
   afterAll(() => {

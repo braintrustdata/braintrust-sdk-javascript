@@ -7,7 +7,7 @@
  * - Error event contains correct error information
  * - Both sync and async errors are handled
  *
- * Tests run against bundled code with actual diagnostics_channel subscriptions.
+ * Tests run against bundled code with actual global hook subscriptions.
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
@@ -33,8 +33,6 @@ describe("Error Handling", () => {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-
-    // Note: dc-browser is now an npm package, no symlinks needed
   });
 
   beforeEach(() => {

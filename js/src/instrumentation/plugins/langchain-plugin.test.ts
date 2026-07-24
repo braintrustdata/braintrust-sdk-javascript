@@ -1,13 +1,6 @@
-import * as diagnosticsChannel from "node:diagnostics_channel";
 import { describe, expect, it } from "vitest";
-import iso from "../../isomorph";
 import { LangChainPlugin } from "./langchain-plugin";
 import { langChainChannels } from "./langchain-channels";
-
-iso.newTracingChannel = <M = unknown>(nameOrChannels: string | object) =>
-  diagnosticsChannel.tracingChannel(
-    nameOrChannels as string,
-  ) as never as ReturnType<typeof iso.newTracingChannel<M>>;
 
 function createManager(handlers: unknown[] = []) {
   return {

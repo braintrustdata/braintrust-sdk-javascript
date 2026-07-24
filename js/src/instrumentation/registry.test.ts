@@ -59,7 +59,7 @@ describe("Plugin Registry", () => {
     // Regression test for BT-5139: when the SDK is loaded from two different
     // module paths in the same process, each gets its own PluginRegistry
     // instance. Without cross-instance deduplication, both would subscribe to
-    // the same diagnostics_channel, causing every OpenAI call to produce two
+    // the same global hook, causing every OpenAI call to produce two
     // LLM spans.
     //
     // The dedup mechanism checks globalThis[Symbol.for("braintrust-state")],
@@ -76,7 +76,7 @@ describe("Plugin Registry", () => {
       instanceA.enable();
       expect(instanceA.isEnabled()).toBe(true);
 
-      // instanceB should be blocked — the channel is already subscribed
+      // instanceB should be blocked — the hook is already subscribed
       instanceB.enable();
       expect(instanceB.isEnabled()).toBe(false);
     } finally {

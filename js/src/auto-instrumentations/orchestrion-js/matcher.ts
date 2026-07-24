@@ -13,12 +13,10 @@ import type { InstrumentationConfig } from "./types";
  */
 export class InstrumentationMatcher {
   private configs: InstrumentationConfig[] = [];
-  private dcModule: string;
   private transformers: Record<string, Transformer> = {};
 
-  constructor(configs: InstrumentationConfig[], dcModule?: string | null) {
+  constructor(configs: InstrumentationConfig[]) {
     this.configs = configs;
-    this.dcModule = dcModule || "diagnostics_channel";
   }
 
   /**
@@ -54,7 +52,6 @@ export class InstrumentationMatcher {
       version,
       filePath,
       configs,
-      this.dcModule,
     );
 
     return this.transformers[id];

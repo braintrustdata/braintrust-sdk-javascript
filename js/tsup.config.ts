@@ -98,7 +98,7 @@ export default defineConfig([
     entry: ["src/instrumentation/index.ts"],
     format: ["cjs", "esm"],
     outDir: "dist/instrumentation",
-    external: ["dc-browser", "@braintrust/instrumentation-core", "zod"],
+    external: ["@braintrust/instrumentation-core", "zod"],
     dts: {
       compilerOptions: {
         skipLibCheck: true,

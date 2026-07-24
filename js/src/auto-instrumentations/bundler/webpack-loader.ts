@@ -58,8 +58,7 @@ function getMatcher(options: LegacyBundlerPluginOptions): Matcher {
   const allInstrumentations = getDefaultInstrumentationConfigs({
     additionalInstrumentations: options.instrumentations,
   });
-  const dcModule = options.browser ? "dc-browser" : undefined;
-  const configHash = JSON.stringify({ allInstrumentations, dcModule });
+  const configHash = JSON.stringify({ allInstrumentations });
 
   if (matcherCache.has(configHash)) {
     return matcherCache.get(configHash)!;
@@ -71,7 +70,7 @@ function getMatcher(options: LegacyBundlerPluginOptions): Matcher {
     }
   }
 
-  const matcher = create(allInstrumentations, dcModule ?? null);
+  const matcher = create(allInstrumentations);
   matcherCache.set(configHash, matcher);
   return matcher;
 }

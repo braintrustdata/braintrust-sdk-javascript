@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { _exportsForTestingOnly, initLogger } from "../../logger";
 import { GenkitPlugin } from "./genkit-plugin";
 import { genkitChannels } from "./genkit-channels";
 
@@ -37,8 +38,21 @@ async function collectAsync<T>(stream: AsyncIterable<T>): Promise<T[]> {
 describe("GenkitPlugin stream patching", () => {
   const plugin = new GenkitPlugin();
 
+  beforeAll(async () => {
+    await _exportsForTestingOnly.simulateLoginForTests();
+  });
+
+  beforeEach(() => {
+    _exportsForTestingOnly.useTestBackgroundLogger();
+    initLogger({
+      projectName: "genkit-plugin.test.ts",
+      projectId: "test-project-id",
+    });
+  });
+
   afterEach(() => {
     plugin.disable();
+    _exportsForTestingOnly.clearTestBackgroundLogger();
   });
 
   it("does not consume generateStream chunks before user code reads them", async () => {

@@ -59,7 +59,7 @@ export type FunctionQuery =
  */
 export interface InstrumentationConfig {
   /**
-   * The name of the diagnostics channel to publish to.
+   * The name of the global instrumentation hook to invoke.
    */
   channelName: string;
 
