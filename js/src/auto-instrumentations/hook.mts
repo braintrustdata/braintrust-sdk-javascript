@@ -13,7 +13,7 @@
  * - CJS modules: Transformed via ModulePatch monkey-patching Module._compile
  */
 
-import { register } from "node:module";
+import { register as registerModule } from "node:module";
 import {
   isInstrumentationIntegrationDisabled,
   readDisabledInstrumentationEnvConfig,
@@ -23,6 +23,28 @@ import { installMastraExporterFactory } from "./loader/mastra-observability-patc
 import { getDefaultAutoInstrumentationConfigs } from "./configs/all.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
 import { patchTracingChannel } from "./patch-tracing-channel.js";
+import registerState from "./import-in-the-middle/lib/register.mjs";
+import { createHook as createImportInTheMiddleHook } from "./import-in-the-middle/create-hook.mjs";
+import {
+  getDefaultTopLevelImportHooks,
+  installTopLevelImportHookRunner,
+} from "./loader/top-level-export-patches.js";
+import { installNodeTopLevelExportPatches } from "./loader/top-level-export-patches-node.js";
+
+const BRAINTRUST_IITM_LOADER_PARAM = "braintrust-iitm-loader";
+const registryImportUrl = getCanonicalHookUrl(import.meta.url);
+const asyncImportHookUrl = getImportInTheMiddleLoaderUrl(registryImportUrl);
+const isImportInTheMiddleLoader = hasImportInTheMiddleLoaderParam(
+  import.meta.url,
+);
+const importInTheMiddleHook = createImportInTheMiddleHook(import.meta, {
+  registerUrl: registryImportUrl,
+});
+
+export const initialize = importInTheMiddleHook.initialize;
+export const resolve = importInTheMiddleHook.resolve;
+export const load = importInTheMiddleHook.load;
+export const register = registerState.register;
 
 const state = ((globalThis as any)[
   Symbol.for("braintrust.applyAutoInstrumentation")
@@ -32,13 +54,13 @@ const alreadyApplied = state.applied;
 // Patch diagnostics_channel.tracePromise to handle APIPromise correctly.
 // MUST be done here (before any SDK code runs) to fix Anthropic APIPromise incompatibility.
 // Construct the module path dynamically to prevent build from stripping "node:" prefix.
-if (!alreadyApplied) {
+if (!isImportInTheMiddleLoader && !alreadyApplied) {
   const dcPath = ["node", "diagnostics_channel"].join(":");
   const dc: any = await import(/* @vite-ignore */ dcPath as any);
   patchTracingChannel(dc.tracingChannel);
 }
 
-if (!alreadyApplied) {
+if (!isImportInTheMiddleLoader && !alreadyApplied) {
   const allConfigs = getDefaultAutoInstrumentationConfigs();
 
   // Expose the Mastra exporter factory on globalThis so the loader patches
@@ -52,8 +74,19 @@ if (!alreadyApplied) {
     installMastraExporterFactory(() => new BraintrustObservabilityExporter());
   }
 
+  const topLevelImportHooks = getDefaultTopLevelImportHooks({
+    disabledIntegrationConfig: disabled,
+    target: "node",
+  });
+  installTopLevelImportHookRunner(topLevelImportHooks);
+  installNodeTopLevelExportPatches({
+    asyncImportHookUrl,
+    hooks: topLevelImportHooks,
+    registryImportUrl,
+  });
+
   // 1. Register ESM loader for ESM modules
-  register("./loader/esm-hook.mjs", {
+  registerModule("./loader/esm-hook.mjs", {
     parentURL: import.meta.url,
     data: { instrumentations: allConfigs },
   } as any);
@@ -81,4 +114,25 @@ if (!alreadyApplied) {
       console.error("[Braintrust] CJS patch failed:", err);
     }
   }
+}
+
+function hasImportInTheMiddleLoaderParam(url: string): boolean {
+  try {
+    return new URL(url).searchParams.has(BRAINTRUST_IITM_LOADER_PARAM);
+  } catch {
+    return false;
+  }
+}
+
+function getCanonicalHookUrl(url: string): string {
+  const parsed = new URL(url);
+  parsed.searchParams.delete(BRAINTRUST_IITM_LOADER_PARAM);
+  parsed.hash = "";
+  return parsed.href;
+}
+
+function getImportInTheMiddleLoaderUrl(canonicalUrl: string): string {
+  const parsed = new URL(canonicalUrl);
+  parsed.searchParams.set(BRAINTRUST_IITM_LOADER_PARAM, "true");
+  return parsed.href;
 }

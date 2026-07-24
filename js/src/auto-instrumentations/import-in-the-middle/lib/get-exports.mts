@@ -2,11 +2,17 @@
 
 import getEsmExports from "./get-esm-exports.mjs";
 import { parse as parseCjs, initSync } from "cjs-module-lexer";
-import { readFileSync, existsSync } from "fs";
-import { builtinModules, createRequire } from "module";
-import { fileURLToPath, pathToFileURL } from "url";
-import { dirname, join } from "path";
+import { existsSync, readFileSync } from "node:fs";
+import { builtinModules, createRequire } from "node:module";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { LOAD } from "./io.mjs";
+import type {
+  LoaderContext,
+  LoaderOperation,
+  LoadOperation,
+  LoadResult,
+} from "./io.mjs";
 
 const nodeMajor = Number(process.versions.node.split(".")[0]);
 export const hasModuleExportsCJSDefault = nodeMajor >= 23;
@@ -24,11 +30,22 @@ function ensureParserInitialized() {
   }
 }
 
-function addDefault(arr) {
+type NodeRequire = ReturnType<typeof createRequire>;
+type ExportGenerator = Generator<LoaderOperation, Set<string>, LoadResult>;
+type PackageImportBranch = {
+  default?: unknown;
+  node?: unknown;
+};
+type PackageImportObject = PackageImportBranch & {
+  import?: unknown;
+  require?: unknown;
+};
+
+function addDefault(arr: Iterable<string>): Set<string> {
   return new Set(["default", ...arr]);
 }
 
-function hasEsmSyntax(source) {
+function hasEsmSyntax(source: string): boolean {
   // Lightweight scan (no full parse) to determine if the *source code*
   // contains ESM-specific syntax. This is used only when:
   // - the loader chain didn't tell us a `format`, and
@@ -41,14 +58,14 @@ function hasEsmSyntax(source) {
   //   in CJS as an expression.
   if (source.indexOf("import") === -1) return false;
 
-  const isIdentCharCode = (code) =>
+  const isIdentCharCode = (code: number) =>
     (code >= 48 && code <= 57) || // 0-9
     (code >= 65 && code <= 90) || // A-Z
     (code >= 97 && code <= 122) || // a-z
     code === 95 || // _
     code === 36; // $
 
-  const skipWhitespace = (idx) => {
+  const skipWhitespace = (idx: number) => {
     while (idx < source.length) {
       const c = source.charCodeAt(idx);
       // space, tab, cr, lf
@@ -150,9 +167,60 @@ function hasEsmSyntax(source) {
 }
 
 // Cached exports for Node built-in modules
-const BUILT_INS = new Map();
+const BUILT_INS = new Map<string, Set<string>>();
 
-let require;
+let require: NodeRequire | undefined;
+
+function getRequire(): NodeRequire {
+  if (!require) {
+    require = createRequire(pathToFileURL(process.execPath));
+  }
+  return require;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object";
+}
+
+function getStringProperty(
+  value: Record<string, unknown>,
+  property: string,
+): string | undefined {
+  const result = value[property];
+  return typeof result === "string" ? result : undefined;
+}
+
+function getImportBranch(value: unknown): PackageImportBranch | undefined {
+  return isRecord(value) ? value : undefined;
+}
+
+function getPackageImportTarget(imports: unknown): string | undefined {
+  if (typeof imports === "string") {
+    return imports;
+  }
+
+  if (!isRecord(imports)) {
+    return undefined;
+  }
+
+  const conditionalImports = imports as PackageImportObject;
+  const requireExport = getImportBranch(conditionalImports.require);
+  const importExport = getImportBranch(conditionalImports.import);
+
+  if (requireExport || importExport) {
+    return (
+      (requireExport && getStringProperty(requireExport, "node")) ||
+      (requireExport && getStringProperty(requireExport, "default")) ||
+      (importExport && getStringProperty(importExport, "node")) ||
+      (importExport && getStringProperty(importExport, "default"))
+    );
+  }
+
+  return (
+    getStringProperty(conditionalImports, "node") ||
+    getStringProperty(conditionalImports, "default")
+  );
+}
 
 // Returns a builtin's exports object. `process.getBuiltinModule` (Node >=
 // 20.16 / >= 22.3) bypasses registered loader hooks; `require` does not. Under
@@ -161,23 +229,20 @@ let require;
 // the native module. The off-thread `module.register` loader runs `require` on
 // the loader thread where the hooks aren't installed, so the fallback stays
 // correct on older Node that lacks getBuiltinModule.
-function loadBuiltin(name) {
+function loadBuiltin(name: string): unknown {
   if (typeof process.getBuiltinModule === "function") {
     return process.getBuiltinModule(name);
   }
-  if (!require) {
-    require = createRequire(import.meta.url);
-  }
-  return require(name);
+  return getRequire()(name);
 }
 
-function getExportsForNodeBuiltIn(name) {
+function getExportsForNodeBuiltIn(name: string): Set<string> {
   let exports = BUILT_INS.get(name);
 
   if (!exports) {
     // get all properties both enumerable and non-enumerable
     exports = new Set(
-      addDefault(Object.getOwnPropertyNames(loadBuiltin(name))),
+      addDefault(Object.getOwnPropertyNames(loadBuiltin(name) as object)),
     );
     // added in node 23 as alias for default in cjs modules
     if (hasModuleExportsCJSDefault) {
@@ -198,7 +263,10 @@ const urlsBeingProcessed = new Set(); // Guard against circular imports.
  * @param {URL|string} fromUrl The url from which the search starts from
  * @returns array with url and resolvedExport
  */
-function resolvePackageImports(specifier, fromUrl) {
+function resolvePackageImports(
+  specifier: string,
+  fromUrl: URL | string,
+): [URL | string, string] | null {
   try {
     const fromPath = fileURLToPath(fromUrl);
     let currentDir = dirname(fromPath);
@@ -208,29 +276,16 @@ function resolvePackageImports(specifier, fromUrl) {
       const packageJsonPath = join(currentDir, "package.json");
 
       if (existsSync(packageJsonPath)) {
-        const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
-        if (packageJson.imports && packageJson.imports[specifier]) {
-          const imports = packageJson.imports[specifier];
+        const packageJson = JSON.parse(
+          readFileSync(packageJsonPath, "utf8"),
+        ) as unknown;
+        const packageImports =
+          isRecord(packageJson) && isRecord(packageJson.imports)
+            ? packageJson.imports[specifier]
+            : undefined;
 
-          // Look for path inside packageJson
-          let resolvedExport;
-          if (imports && typeof imports === "object") {
-            const requireExport = imports.require;
-            const importExport = imports.import;
-            // look for the possibility of require and import which is standard for CJS/ESM
-            if (requireExport || importExport) {
-              // trying to resolve based on order of importance
-              resolvedExport =
-                requireExport.node ||
-                requireExport.default ||
-                importExport.node ||
-                importExport.default;
-            } else if (imports.node || imports.default) {
-              resolvedExport = imports.node || imports.default;
-            }
-          } else if (typeof imports === "string") {
-            resolvedExport = imports;
-          }
+        if (packageImports) {
+          const resolvedExport = getPackageImportTarget(packageImports);
 
           if (resolvedExport) {
             const url = resolvedExport.startsWith(".")
@@ -251,7 +306,11 @@ function resolvePackageImports(specifier, fromUrl) {
   return null;
 }
 
-function* getCjsExports(url, context, source) {
+function* getCjsExports(
+  url: string,
+  context: LoaderContext,
+  source: string,
+): ExportGenerator {
   if (urlsBeingProcessed.has(url)) {
     return new Set();
   }
@@ -274,7 +333,7 @@ function* getCjsExports(url, context, source) {
       // resolution scoped to this iteration: a `#`-import rewrites both the
       // base URL and the specifier, and that rewrite must not leak into the
       // next re-export.
-      let reUrl = url;
+      let reUrl: string | URL = url;
       let reSpecifier = reexport === "." ? "./" : reexport;
 
       // Entries in the import field should always start with #
@@ -284,11 +343,8 @@ function* getCjsExports(url, context, source) {
         [reUrl, reSpecifier] = resolved;
       }
 
-      if (!require) {
-        require = createRequire(import.meta.url);
-      }
       const newUrl = pathToFileURL(
-        require.resolve(reSpecifier, {
+        getRequire().resolve(reSpecifier, {
           paths: [dirname(fileURLToPath(reUrl))],
         }),
       ).href;
@@ -335,11 +391,15 @@ function* getCjsExports(url, context, source) {
  * Please see {@link getEsmExports} for caveats on special identifiers that may
  * be included in the result set.
  */
-export function* getExports(url, context) {
+export function* getExports(
+  url: string,
+  context: LoaderContext,
+): ExportGenerator {
   // `[LOAD, ...]` gives us the possibility of getting the source from an
   // upstream loader. This doesn't always work though, so later on we fall back
   // to reading it from disk.
-  const parentCtx = yield [LOAD, url, context];
+  const loadOperation: LoadOperation = [LOAD, url, context];
+  const parentCtx = yield loadOperation;
   let source = parentCtx.source;
   const format = parentCtx.format;
 
@@ -373,32 +433,32 @@ export function* getExports(url, context) {
     source = readFileSync(fileURLToPath(url), "utf8");
   }
 
+  const moduleSource = source as string;
+
   try {
     if (format === "module") {
-      return getEsmExports(source);
+      return getEsmExports(moduleSource);
     }
 
     if (format === "commonjs") {
-      return yield* getCjsExports(url, context, source);
+      return yield* getCjsExports(url, context, moduleSource);
     }
 
     // At this point our `format` is either undefined or not known by us. Fall
     // back to parsing as ESM/CJS.
-    const esmExports = getEsmExports(source);
+    const esmExports = getEsmExports(moduleSource);
     if (!esmExports.size) {
       // If there's strong evidence this is ESM (static import/import.meta),
       // prefer returning the empty ESM export set over incorrectly treating it
       // as CJS.
-      if (!hasEsmSyntax(source)) {
+      if (!hasEsmSyntax(moduleSource)) {
         // It might be possible to get here if the format
         // isn't set at first and yet we have an ESM module with no exports.
-        return yield* getCjsExports(url, context, source);
+        return yield* getCjsExports(url, context, moduleSource);
       }
     }
     return esmExports;
   } catch (cause) {
-    const err = new Error(`Failed to parse '${url}'`);
-    err.cause = cause;
-    throw err;
+    throw new Error(`Failed to parse '${url}'`, { cause });
   }
 }

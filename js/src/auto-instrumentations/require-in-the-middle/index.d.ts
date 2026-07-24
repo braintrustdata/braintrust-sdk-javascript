@@ -20,3 +20,4 @@ export interface HookConstructor {
 }
 
 export declare const Hook: HookConstructor;
+export default Hook;

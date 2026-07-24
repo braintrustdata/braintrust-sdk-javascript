@@ -306,6 +306,42 @@ describe("Orchestrion Transformation Tests", () => {
       expect(output).not.toContain("TracingChannel");
     });
 
+    it("should apply node top-level export patches", async () => {
+      const { braintrustEsbuildPlugin } =
+        await import("../../src/auto-instrumentations/bundler/esbuild.js");
+
+      const entryPoint = path.join(fixturesDir, "test-mastra-bundler.js");
+      const outfile = path.join(outputDir, "esbuild-mastra-bundle.js");
+
+      const result = await esbuild.build({
+        absWorkingDir: fixturesDir,
+        bundle: true,
+        entryPoints: [entryPoint],
+        format: "esm",
+        logLevel: "error",
+        outfile,
+        platform: "node",
+        plugins: [braintrustEsbuildPlugin()],
+        preserveSymlinks: true,
+        write: true,
+      });
+
+      expect(result.errors).toHaveLength(0);
+      expect(fs.existsSync(outfile)).toBe(true);
+
+      const output = fs.readFileSync(outfile, "utf-8");
+
+      expect(output).toContain("__braintrustTopLevelImportHookRunner");
+      expect(output).toContain("__braintrustExports");
+      expect(output.replace(/\\/g, "/")).not.toContain(
+        JSON.stringify(
+          path
+            .join(fixturesDir, "node_modules", "@mastra", "core")
+            .replace(/\\/g, "/"),
+        ),
+      );
+    });
+
     it("should bundle dc-browser module when useDiagnosticChannelCompatShim is true", async () => {
       const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
@@ -341,6 +377,69 @@ describe("Orchestrion Transformation Tests", () => {
       expect(output).toContain("TracingChannel");
       // Should NOT import from external diagnostics_channel
       expect(output).not.toMatch(/from\s+["']diagnostics_channel["']/);
+    });
+
+    it("should skip node-only top-level export patches for browser bundles", async () => {
+      const { braintrustEsbuildPlugin } =
+        await import("../../src/auto-instrumentations/bundler/esbuild.js");
+
+      const entryPoint = path.join(fixturesDir, "test-mastra-bundler.js");
+      const outfile = path.join(outputDir, "esbuild-mastra-browser-bundle.js");
+
+      const result = await esbuild.build({
+        absWorkingDir: fixturesDir,
+        bundle: true,
+        entryPoints: [entryPoint],
+        format: "esm",
+        logLevel: "error",
+        outfile,
+        platform: "browser",
+        plugins: [
+          braintrustEsbuildPlugin({ useDiagnosticChannelCompatShim: true }),
+        ],
+        preserveSymlinks: true,
+        write: true,
+      });
+
+      expect(result.errors).toHaveLength(0);
+      expect(fs.existsSync(outfile)).toBe(true);
+
+      const output = fs.readFileSync(outfile, "utf-8");
+
+      expect(output).not.toContain("__braintrustTopLevelImportHookRunner");
+      expect(output).not.toContain("__braintrustOriginal");
+    });
+
+    it("should keep legacy default bundles browser-safe for top-level export patches", async () => {
+      const { esbuildPlugin } =
+        await import("../../src/auto-instrumentations/bundler/esbuild.js");
+
+      const entryPoint = path.join(fixturesDir, "test-mastra-bundler.js");
+      const outfile = path.join(
+        outputDir,
+        "esbuild-mastra-legacy-default-bundle.js",
+      );
+
+      const result = await esbuild.build({
+        absWorkingDir: fixturesDir,
+        bundle: true,
+        entryPoints: [entryPoint],
+        format: "esm",
+        logLevel: "error",
+        outfile,
+        platform: "browser",
+        plugins: [esbuildPlugin()],
+        preserveSymlinks: true,
+        write: true,
+      });
+
+      expect(result.errors).toHaveLength(0);
+      expect(fs.existsSync(outfile)).toBe(true);
+
+      const output = fs.readFileSync(outfile, "utf-8");
+
+      expect(output).not.toContain("__braintrustTopLevelImportHookRunner");
+      expect(output).not.toContain("__braintrustOriginal");
     });
   });
 
@@ -568,6 +667,37 @@ describe("Orchestrion Transformation Tests", () => {
       expect(errors).toHaveLength(0);
       expect(output).toContain("tracingChannel");
       expect(output).toContain("orchestrion:openai:chat.completions.create");
+    });
+
+    it("should apply top-level export patches (turbopack loader-only mode)", async () => {
+      const { errors, output } = await runWebpackWithLoader({
+        entry: path.join(fixturesDir, "test-mastra-bundler.js"),
+        output: {
+          path: outputDir,
+          filename: "turbopack-mastra-bundle.js",
+          library: { type: "module" },
+        },
+        experiments: { outputModule: true },
+        mode: "development",
+        resolve: { modules: [nodeModulesDir, "node_modules"] },
+        externals: { "node:module": "module node:module" },
+        module: {
+          rules: [
+            {
+              use: [
+                {
+                  loader: webpackLoaderPath,
+                  options: { browser: false },
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(errors).toHaveLength(0);
+      expect(output).toContain("__braintrustTopLevelImportHookRunner");
+      expect(output).toContain("__braintrustExports");
     });
 
     it("should bundle dc-browser polyfill when browser: true (turbopack loader-only mode)", async () => {
