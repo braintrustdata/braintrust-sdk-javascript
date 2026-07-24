@@ -213,7 +213,7 @@ export class BraintrustPlugin extends BasePlugin {
     // ObservabilityExporter contract, and `BraintrustObservabilityExporter`
     // (wrappers/mastra.ts) is auto-installed by the loader patch in
     // `auto-instrumentations/loader/mastra-observability-patch.ts` rather than
-    // by a BasePlugin / tracingChannel subscription.
+    // by a BasePlugin / global hook subscription.
   }
 
   protected onDisable(): void {

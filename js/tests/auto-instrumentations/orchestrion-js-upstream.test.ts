@@ -30,7 +30,6 @@ interface UpstreamFixtureCase {
   mjs?: boolean;
   filePath?: string;
   transformerFilePath?: string;
-  dcModule?: string;
 }
 
 let outputRoot: string;
@@ -57,7 +56,6 @@ function runFixture({
   mjs = false,
   filePath = TEST_MODULE_PATH,
   transformerFilePath = filePath,
-  dcModule,
 }: UpstreamFixtureCase): void {
   const ext = mjs ? "mjs" : "js";
   const sourceDir = path.join(fixtureRoot, name);
@@ -66,7 +64,7 @@ function runFixture({
   fs.rmSync(runDir, { recursive: true, force: true });
   fs.cpSync(sourceDir, runDir, { recursive: true });
 
-  const matcher = create(configs, dcModule);
+  const matcher = create(configs);
   const transformer = matcher.getTransformer(
     TEST_MODULE_NAME,
     TEST_MODULE_VERSION,
@@ -320,19 +318,6 @@ const fixtureCases: UpstreamFixtureCase[] = [
         kind: "Async",
       }),
     ],
-  },
-  {
-    name: "polyfill_cjs",
-    title: "supports a custom diagnostics channel module in CJS",
-    configs: [config("fetch_decl", { functionName: "fetch", kind: "Async" })],
-    dcModule: "./polyfill.js",
-  },
-  {
-    name: "polyfill_mjs",
-    title: "supports a custom diagnostics channel module in ESM",
-    configs: [config("fetch_decl", { functionName: "fetch", kind: "Async" })],
-    dcModule: "./polyfill.js",
-    mjs: true,
   },
   {
     name: "promise_subclass",

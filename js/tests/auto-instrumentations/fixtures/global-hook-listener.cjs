@@ -1,32 +1,52 @@
-/**
- * Unless explicitly stated otherwise all files in this repository are licensed under the Apache-2.0 License.
- * This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2025 Datadog, Inc.
- **/
-const assert = require("node:assert");
+const hooks =
+  globalThis.__braintrust_instrumentation_hooks ??
+  (() => {
+    const registry = new Map();
+    Object.defineProperty(globalThis, "__braintrust_instrumentation_hooks", {
+      configurable: false,
+      enumerable: false,
+      value: registry,
+      writable: false,
+    });
+    return registry;
+  })();
 
-const hooks = new Map();
-Object.defineProperty(globalThis, "__braintrust_instrumentation_hooks", {
-  configurable: false,
-  enumerable: false,
-  value: hooks,
-  writable: false,
-});
-
-function phase() {
+function phase(name) {
   const subscribers = [];
+  const stores = new Map();
   return {
+    name,
     get hasSubscribers() {
-      return subscribers.length > 0;
+      return subscribers.length > 0 || stores.size > 0;
+    },
+    bindStore(store, transform) {
+      stores.set(store, transform);
+    },
+    unbindStore(store) {
+      return stores.delete(store);
     },
     publish(message) {
-      for (const subscriber of subscribers) subscriber(message);
+      for (const subscriber of subscribers) subscriber(message, name);
     },
     runStores(message, fn) {
-      this.publish(message);
-      return fn();
+      let run = () => {
+        this.publish(message);
+        return fn();
+      };
+      for (const [store, transform] of stores) {
+        const next = run;
+        run = () => store.run(transform ? transform(message) : message, next);
+      }
+      return run();
     },
     subscribe(subscriber) {
       subscribers.push(subscriber);
+    },
+    unsubscribe(subscriber) {
+      const index = subscribers.indexOf(subscriber);
+      if (index === -1) return false;
+      subscribers.splice(index, 1);
+      return true;
     },
   };
 }
@@ -36,11 +56,11 @@ function getTracingHook(channelName) {
   if (hook) return hook;
 
   hook = {
-    start: phase(),
-    end: phase(),
-    asyncStart: phase(),
-    asyncEnd: phase(),
-    error: phase(),
+    start: phase(`tracing:${channelName}:start`),
+    end: phase(`tracing:${channelName}:end`),
+    asyncStart: phase(`tracing:${channelName}:asyncStart`),
+    asyncEnd: phase(`tracing:${channelName}:asyncEnd`),
+    error: phase(`tracing:${channelName}:error`),
     get hasSubscribers() {
       return (
         this.start.hasSubscribers ||
@@ -54,6 +74,15 @@ function getTracingHook(channelName) {
       for (const name of ["start", "end", "asyncStart", "asyncEnd", "error"]) {
         if (handlers[name]) this[name].subscribe(handlers[name]);
       }
+    },
+    unsubscribe(handlers) {
+      let done = true;
+      for (const name of ["start", "end", "asyncStart", "asyncEnd", "error"]) {
+        if (handlers[name] && !this[name].unsubscribe(handlers[name])) {
+          done = false;
+        }
+      }
+      return done;
     },
     traceSync(fn, message) {
       return this.start.runStores(message, () => {
@@ -79,28 +108,21 @@ function getTracingHook(channelName) {
             return result;
           }
           this.end.publish(message);
-          const resolve = (value) => {
-            message.result = value;
-            this.asyncStart.publish(message);
-            this.asyncEnd.publish(message);
-            return value;
-          };
-          const reject = (error) => {
-            message.error = error;
-            this.error.publish(message);
-            this.asyncStart.publish(message);
-            this.asyncEnd.publish(message);
-            throw error;
-          };
-          if (result instanceof Promise && result.constructor === Promise) {
-            return result.then(resolve, reject);
-          }
-          result.then(resolve, (error) => {
-            try {
-              reject(error);
-            } catch {}
-          });
-          return result;
+          return result.then(
+            (value) => {
+              message.result = value;
+              this.asyncStart.publish(message);
+              this.asyncEnd.publish(message);
+              return value;
+            },
+            (error) => {
+              message.error = error;
+              this.error.publish(message);
+              this.asyncStart.publish(message);
+              this.asyncEnd.publish(message);
+              throw error;
+            },
+          );
         } catch (error) {
           message.error = error;
           this.error.publish(message);
@@ -151,26 +173,4 @@ function getTracingHook(channelName) {
   return hook;
 }
 
-function getContext(channelName) {
-  const channel = getTracingHook(channelName);
-  const context = {};
-  channel.subscribe({
-    start(message) {
-      message.context = context;
-      context.start = true;
-    },
-    end(message) {
-      message.context.end = message.result ?? true;
-      // Handle end message
-    },
-    asyncStart(message) {
-      message.context.asyncStart = message.result;
-      // Handle asyncStart message
-    },
-    asyncEnd(message) {
-      message.context.asyncEnd = message.result;
-    },
-  });
-  return context;
-}
-module.exports = { assert, getContext, getTracingHook };
+module.exports = { getTracingHook };

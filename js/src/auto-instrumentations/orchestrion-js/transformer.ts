@@ -22,7 +22,7 @@ type TraceOperator = "traceCallback" | "tracePromise" | "traceSync";
 
 /**
  * Applies instrumentation configs to JavaScript source by parsing it into an
- * AST, locating target functions, injecting diagnostics_channel tracing
+ * AST, locating target functions, injecting global instrumentation hooks
  * wrappers, and regenerating the source.
  */
 export class Transformer {
@@ -30,24 +30,21 @@ export class Transformer {
   private version: string;
   private filePath: string;
   private configs: InstrumentationConfig[] = [];
-  private dcModule: string;
 
   constructor(
     moduleName: string,
     version: string,
     filePath: string,
     configs: InstrumentationConfig[],
-    dcModule: string,
   ) {
     this.moduleName = moduleName;
     this.version = version;
     this.filePath = filePath;
     this.configs = configs;
-    this.dcModule = dcModule;
   }
 
   /**
-   * Instruments `code` by injecting diagnostics_channel tracing around the
+   * Instruments `code` by injecting global tracing hooks around the
    * target functions defined by this transformer's configs.
    */
   transform(code: string | Buffer, moduleType: ModuleType): TransformOutput {
@@ -91,7 +88,6 @@ export class Transformer {
       const query = astQuery || this.fromFunctionQuery(resolvedFunctionQuery);
       const state: TransformState = {
         ...config,
-        dcModule: this.dcModule,
         moduleType,
         moduleVersion: this.version,
         functionQuery: resolvedFunctionQuery,

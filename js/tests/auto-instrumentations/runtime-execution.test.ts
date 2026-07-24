@@ -33,8 +33,6 @@ describe("Runtime Execution of Bundled Code", () => {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-
-    // Note: dc-browser is now an npm package, no symlinks needed
   });
 
   afterAll(() => {
@@ -249,9 +247,6 @@ describe("Runtime Execution of Bundled Code", () => {
           outDir,
           emptyOutDir: true,
           minify: false,
-          rollupOptions: {
-            external: ["diagnostics_channel"],
-          },
         },
         plugins: [vitePlugin({ browser: false })],
         logLevel: "error",
@@ -311,9 +306,6 @@ describe("Runtime Execution of Bundled Code", () => {
           outDir,
           emptyOutDir: true,
           minify: false,
-          rollupOptions: {
-            external: ["diagnostics_channel"],
-          },
         },
         plugins: [vitePlugin({ browser: false })],
         logLevel: "error",

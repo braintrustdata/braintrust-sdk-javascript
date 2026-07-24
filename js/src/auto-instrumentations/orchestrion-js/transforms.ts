@@ -5,6 +5,7 @@
 
 import esquery from "esquery";
 import { parse } from "meriyah";
+import { GLOBAL_INSTRUMENTATION_HOOKS_KEY } from "../../global-instrumentation-hooks";
 import type { FunctionQuery, InstrumentationConfig, ModuleType } from "./types";
 
 type AnyNode = any;
@@ -17,7 +18,6 @@ type TransformFn = (
 type TraceOperator = "traceCallback" | "tracePromise" | "traceSync";
 
 export interface TransformState extends InstrumentationConfig {
-  dcModule: string;
   moduleType: ModuleType;
   moduleVersion: string;
   functionQuery: FunctionQuery;
@@ -25,71 +25,44 @@ export interface TransformState extends InstrumentationConfig {
   functionIndex?: number;
 }
 
-const tracingChannelPredicate = (node: AnyNode): boolean =>
-  node.declarations?.[0]?.id?.properties?.[0]?.value?.name ===
-  "tr_ch_apm_tracingChannel";
-
 const CHANNEL_REGEX = /[^\w]/g;
 
 function formatChannelVariable(channelName: string): string {
   return `tr_ch_apm$${channelName.replace(CHANNEL_REGEX, "_")}`;
 }
 
+function formatChannelGetter(channelName: string): string {
+  return `tr_ch_apm$get_${channelName.replace(CHANNEL_REGEX, "_")}`;
+}
+
 export const transforms: Record<string, TransformFn> = {
-  tracingChannelImport({ dcModule, moduleType }, node) {
-    if (node.body.some(tracingChannelPredicate)) {
-      return;
-    }
-
-    const options = { module: moduleType === "esm" };
-    const index = node.body.findIndex(
-      (child: AnyNode) => child.directive === "use strict",
-    );
-    const dc =
-      moduleType === "esm"
-        ? `import tr_ch_apm_dc from "${dcModule}"`
-        : `const tr_ch_apm_dc = ${"require"}("${dcModule}")`;
-    const tracingChannel =
-      "const { tracingChannel: tr_ch_apm_tracingChannel } = tr_ch_apm_dc";
-    const hasSubscribers = `const tr_ch_apm_hasSubscribers = ch => ch.start.hasSubscribers
-      || ch.end.hasSubscribers
-      || ch.asyncStart.hasSubscribers
-      || ch.asyncEnd.hasSubscribers
-      || ch.error.hasSubscribers`;
-
-    node.body.splice(
-      index + 1,
-      0,
-      parse(dc, options as any).body[0],
-      parse(tracingChannel, options as any).body[0],
-      parse(hasSubscribers, options as any).body[0],
-    );
-  },
-
-  tracingChannelDeclaration(state, node) {
+  tracingHookDeclaration(state, node) {
     const {
       channelName,
       module: { name },
     } = state;
     const channelVariable = formatChannelVariable(channelName);
+    const channelGetter = formatChannelGetter(channelName);
 
     if (
       node.body.some(
-        (child: AnyNode) =>
-          child.declarations?.[0]?.id?.name === channelVariable,
+        (child: AnyNode) => child.declarations?.[0]?.id?.name === channelGetter,
       )
     ) {
       return;
     }
 
-    transforms.tracingChannelImport(state, node, null, []);
-
-    const index = node.body.findIndex(tracingChannelPredicate);
+    const index = node.body.findIndex(
+      (child: AnyNode) => child.directive === "use strict",
+    );
     const code = `
-      const ${channelVariable} = tr_ch_apm_tracingChannel("orchestrion:${name}:${channelName}")
+      let ${channelVariable};
+      const ${channelGetter} = () => ${channelVariable} ??= globalThis[${JSON.stringify(
+        GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+      )}]?.get?.("orchestrion:${name}:${channelName}");
     `;
 
-    node.body.splice(index + 1, 0, parse(code).body[0]);
+    node.body.splice(index + 1, 0, ...parse(code).body);
   },
 
   traceCallback: traceAny,
@@ -117,7 +90,7 @@ function traceFunction(
   node: AnyNode,
   program: AnyNode,
 ): void {
-  transforms.tracingChannelDeclaration(state, program, null, []);
+  transforms.tracingHookDeclaration(state, program, null, []);
 
   const { functionQuery } = state;
   const methodName =
@@ -172,7 +145,7 @@ function traceInstanceMethod(
 
   let ctor = classBody.body.find(({ kind }: AnyNode) => kind === "constructor");
 
-  transforms.tracingChannelDeclaration(state, program, null, []);
+  transforms.tracingHookDeclaration(state, program, null, []);
 
   if (!ctor) {
     ctor = (
@@ -307,141 +280,46 @@ function wrapCallback(state: TransformState): AnyNode {
     channelName,
     functionQuery: { callbackIndex = -1 },
   } = state;
-  const channelVariable = formatChannelVariable(channelName);
+  const channelGetter = formatChannelGetter(channelName);
 
   return parse(`
     function wrapper () {
-      const __apm$cb = Array.prototype.at.call(arguments, ${callbackIndex});
-
-      if (!${channelVariable}.start.hasSubscribers) return __apm$traced();
-
-      function __apm$wrappedCb(err, res) {
-        if (err) {
-          __apm$ctx.error = err;
-          ${channelVariable}.error.publish(__apm$ctx);
-        } else {
-          __apm$ctx.result = res;
-        }
-
-        ${channelVariable}.asyncStart.runStores(__apm$ctx, () => {
-          try {
-            if (__apm$cb) {
-              return __apm$cb.apply(this, arguments);
-            }
-          } finally {
-            ${channelVariable}.asyncEnd.publish(__apm$ctx);
-          }
-        });
-      }
-
-      if (typeof __apm$cb !== 'function') {
-        return __apm$traced();
-      }
-      Array.prototype.splice.call(arguments, ${callbackIndex}, 1, __apm$wrappedCb);
-
-      return ${channelVariable}.start.runStores(__apm$ctx, () => {
-        try {
-          return __apm$traced();
-        } catch (err) {
-          __apm$ctx.error = err;
-          ${channelVariable}.error.publish(__apm$ctx);
-          throw err;
-        } finally {
-          __apm$ctx.self ??= this;
-          ${channelVariable}.end.publish(__apm$ctx);
-        }
-      });
+      const __apm$hook = ${channelGetter}();
+      if (!__apm$hook?.hasSubscribers) return __apm$traced();
+      __apm$ctx.self ??= this;
+      return __apm$hook.traceCallback(
+        __apm$traced,
+        ${callbackIndex},
+        __apm$ctx
+      );
     }
   `);
 }
 
 function wrapPromise(state: TransformState): AnyNode {
   const { channelName } = state;
-  const channelVariable = formatChannelVariable(channelName);
+  const channelGetter = formatChannelGetter(channelName);
 
   return parse(`
     function wrapper () {
-      if (!tr_ch_apm_hasSubscribers(${channelVariable})) return __apm$traced();
-
-      return ${channelVariable}.start.runStores(__apm$ctx, () => {
-        try {
-          let promise = __apm$traced();
-          if (typeof promise?.then !== 'function') {
-            __apm$ctx.result = promise;
-            return promise;
-          }
-          // Mirror Node.js core diagnostics_channel behaviour: for native Promise
-          // instances, chain normally (safe since there is no subclass API to
-          // preserve). For Promise subclasses and other thenables, side-chain the
-          // callbacks for event publishing and return the original so that any
-          // subclass-specific methods (e.g. APIPromise.withResponse()) remain
-          // accessible to the caller.
-          if (promise instanceof Promise && promise.constructor === Promise) {
-            return promise.then(
-              result => {
-                __apm$ctx.result = result;
-                ${channelVariable}.asyncStart.publish(__apm$ctx);
-                ${channelVariable}.asyncEnd.publish(__apm$ctx);
-                return result;
-              },
-              err => {
-                __apm$ctx.error = err;
-                ${channelVariable}.error.publish(__apm$ctx);
-                ${channelVariable}.asyncStart.publish(__apm$ctx);
-                ${channelVariable}.asyncEnd.publish(__apm$ctx);
-                throw err;
-              }
-            );
-          }
-          promise.then(
-            result => {
-              __apm$ctx.result = result;
-              ${channelVariable}.asyncStart.publish(__apm$ctx);
-              ${channelVariable}.asyncEnd.publish(__apm$ctx);
-            },
-            err => {
-              __apm$ctx.error = err;
-              ${channelVariable}.error.publish(__apm$ctx);
-              ${channelVariable}.asyncStart.publish(__apm$ctx);
-              ${channelVariable}.asyncEnd.publish(__apm$ctx);
-            }
-          );
-          return promise;
-        } catch (err) {
-          __apm$ctx.error = err;
-          ${channelVariable}.error.publish(__apm$ctx);
-          throw err;
-        } finally {
-          __apm$ctx.self ??= this;
-          ${channelVariable}.end.publish(__apm$ctx);
-        }
-      });
+      const __apm$hook = ${channelGetter}();
+      if (!__apm$hook?.hasSubscribers) return __apm$traced();
+      __apm$ctx.self ??= this;
+      return __apm$hook.tracePromise(__apm$traced, __apm$ctx);
     }
   `);
 }
 
 function wrapSync(state: TransformState): AnyNode {
   const { channelName } = state;
-  const channelVariable = formatChannelVariable(channelName);
+  const channelGetter = formatChannelGetter(channelName);
 
   return parse(`
     function wrapper () {
-      if (!tr_ch_apm_hasSubscribers(${channelVariable})) return __apm$traced();
-
-      return ${channelVariable}.start.runStores(__apm$ctx, () => {
-        try {
-          const result = __apm$traced();
-          __apm$ctx.result = result;
-          return result;
-        } catch (err) {
-          __apm$ctx.error = err;
-          ${channelVariable}.error.publish(__apm$ctx);
-          throw err;
-        } finally {
-         __apm$ctx.self ??= this;
-          ${channelVariable}.end.publish(__apm$ctx);
-        }
-      });
+      const __apm$hook = ${channelGetter}();
+      if (!__apm$hook?.hasSubscribers) return __apm$traced();
+      __apm$ctx.self ??= this;
+      return __apm$hook.traceSync(__apm$traced, __apm$ctx);
     }
   `);
 }

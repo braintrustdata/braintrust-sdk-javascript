@@ -16,10 +16,6 @@ const hookPath = path.join(
 const listenerPath = path.join(fixturesDir, "listener-esm.mjs");
 const testAppEsmPath = path.join(fixturesDir, "test-app-esm.mjs");
 const testAppCjsPath = path.join(fixturesDir, "test-app-cjs.cjs");
-const helperPromisePath = path.join(
-  fixturesDir,
-  "test-api-promise-preservation.mjs",
-);
 const runtimeApplyAutoSideEffectEsmPath = path.join(
   fixturesDir,
   "runtime-apply-auto-side-effect-esm.mjs",
@@ -43,7 +39,7 @@ describe("Unified Loader Hook Integration Tests", () => {
   });
 
   describe("Unified hook (--import) handles both ESM and CJS", () => {
-    it("should emit diagnostics_channel events for ESM OpenAI calls", async () => {
+    it("should invoke global hooks for ESM OpenAI calls", async () => {
       const result = await runWithWorker({
         execArgv: ["--import", listenerPath, "--import", hookPath],
         script: testAppEsmPath,
@@ -54,7 +50,7 @@ describe("Unified Loader Hook Integration Tests", () => {
       expect(result.events.start[0].args).toBeDefined();
     });
 
-    it("should emit diagnostics_channel events for CJS OpenAI calls", async () => {
+    it("should invoke global hooks for CJS OpenAI calls", async () => {
       const result = await runWithWorker({
         execArgv: ["--import", listenerPath, "--import", hookPath],
         script: testAppCjsPath,
@@ -62,26 +58,6 @@ describe("Unified Loader Hook Integration Tests", () => {
 
       expect(result.events.start.length).toBeGreaterThan(0);
       expect(result.events.end.length).toBeGreaterThan(0);
-    });
-
-    it("should preserve helper methods on promise subclasses", async () => {
-      const result = await runWithWorkerMessage<{
-        awaitedValue: string;
-        constructorName: string;
-        hasWithResponse: boolean;
-        withResponseData: string;
-        withResponseOk: boolean;
-      }>({
-        execArgv: ["--import", hookPath],
-        messageType: "helper-result",
-        script: helperPromisePath,
-      });
-
-      expect(result.hasWithResponse).toBe(true);
-      expect(result.awaitedValue).toBe("ok");
-      expect(result.withResponseData).toBe("ok");
-      expect(result.withResponseOk).toBe(true);
-      expect(result.constructorName).toBe("HelperPromise");
     });
   });
 

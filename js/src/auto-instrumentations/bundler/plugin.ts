@@ -21,9 +21,8 @@ export interface LegacyBundlerPluginOptions {
   /**
    * Whether to bundle for browser environments.
    *
-   * When true, uses 'dc-browser' for browser-compatible diagnostics_channel polyfill.
-   * When false, uses Node.js built-in 'diagnostics_channel' and 'async_hooks'.
-   * Defaults to true (assumes browser build).
+   * This remains as a legacy target hint for special-case patches. Global
+   * instrumentation hooks are runtime-independent.
    */
   browser?: boolean;
 }
@@ -40,13 +39,11 @@ export interface BundlerPluginOptions {
   instrumentations?: InstrumentationConfig[];
 
   /**
-   * Use the `diagnostics_channel` compatibility shim in patched code instead
-   * of Node.js's built-in `diagnostics_channel` module.
+   * Legacy browser target hint.
    *
-   * Enable this for browser, edge, or worker bundles where Node's
-   * `diagnostics_channel` module is unavailable. Leave it disabled for Node.js
-   * bundles so transformed SDK code publishes on the native `diagnostics_channel`
-   * registry.
+   * Global instrumentation hooks no longer require a diagnostics-channel shim.
+   * The option is retained for source compatibility and only controls whether
+   * Node-specific special-case patches are skipped.
    *
    * @default false
    */
@@ -76,11 +73,8 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
       additionalInstrumentations: options.instrumentations,
     });
 
-    // Default to browser build, use polyfill unless explicitly disabled
-    const dcModule = options.browser === false ? undefined : "dc-browser";
-
     // Create the code transformer instrumentor
-    const instrumentationMatcher = create(allInstrumentations, dcModule);
+    const instrumentationMatcher = create(allInstrumentations);
 
     return {
       name: "code-transformer",
@@ -164,13 +158,8 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
           // Transform the code
           const moduleType = isModule ? "esm" : "cjs";
           const result = transformer.transform(code, moduleType);
-          const transformedCode = result.code.replace(
-            /const \{tracingChannel: ([A-Za-z_$][\w$]*)\} = ([A-Za-z_$][\w$]*);/g,
-            "const $1 = $2.tracingChannel;",
-          );
-
           return {
-            code: transformedCode,
+            code: result.code,
             map: result.map,
           };
         } catch (error) {

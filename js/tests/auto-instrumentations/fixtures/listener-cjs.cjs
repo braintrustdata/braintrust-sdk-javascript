@@ -1,12 +1,12 @@
-const { tracingChannel } = require("diagnostics_channel");
 const { parentPort } = require("worker_threads");
+const { getTracingHook } = require("./global-hook-listener.cjs");
 
 const events = { start: [], end: [], error: [] };
 // NOTE: code-transformer prepends "orchestrion:openai:" to the channel name
 const expectedChannel = "orchestrion:openai:chat.completions.create";
 
-// Subscribe to the channel and accumulate events
-const channel = tracingChannel(expectedChannel);
+// Subscribe to the global hook and accumulate events
+const channel = getTracingHook(expectedChannel);
 channel.subscribe({
   start: (ctx) => {
     // Convert arguments to array for serialization

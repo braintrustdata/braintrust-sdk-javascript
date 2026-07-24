@@ -30,7 +30,7 @@ export class ModulePatch {
   /**
    * Patches the Node.js module class method that is responsible for compiling code.
    * If a module is found that has an instrumentator, it will transform the code before compiling it
-   * with tracing channel methods.
+   * with global hook calls.
    */
   patch() {
     const self = this;

@@ -5,7 +5,7 @@
  *   node --import @braintrust/auto-instrumentations/hook.mjs app.js
  *
  * This hook performs AST transformation at load-time for BOTH ESM and CJS modules,
- * injecting TracingChannel calls into AI SDK functions.
+ * injecting global instrumentation hook calls into AI SDK functions.
  *
  * Many modern apps use a mix of ESM and CJS modules, so this single hook
  * handles both:
@@ -22,21 +22,11 @@ import { BraintrustObservabilityExporter } from "../wrappers/mastra.js";
 import { installMastraExporterFactory } from "./loader/mastra-observability-patch.js";
 import { getDefaultAutoInstrumentationConfigs } from "./configs/all.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
-import { patchTracingChannel } from "./patch-tracing-channel.js";
 
 const state = ((globalThis as any)[
   Symbol.for("braintrust.applyAutoInstrumentation")
 ] ??= {}) as { applied?: boolean };
 const alreadyApplied = state.applied;
-
-// Patch diagnostics_channel.tracePromise to handle APIPromise correctly.
-// MUST be done here (before any SDK code runs) to fix Anthropic APIPromise incompatibility.
-// Construct the module path dynamically to prevent build from stripping "node:" prefix.
-if (!alreadyApplied) {
-  const dcPath = ["node", "diagnostics_channel"].join(":");
-  const dc: any = await import(/* @vite-ignore */ dcPath as any);
-  patchTracingChannel(dc.tracingChannel);
-}
 
 if (!alreadyApplied) {
   const allConfigs = getDefaultAutoInstrumentationConfigs();

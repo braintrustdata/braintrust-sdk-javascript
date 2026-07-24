@@ -1,14 +1,14 @@
 /**
  * EVENT CONTENT VALIDATION TESTS
  *
- * These tests verify that diagnostics_channel events contain the correct information:
+ * These tests verify that global hook events contain the correct information:
  * - Start events contain correct arguments
  * - End events contain correct results
  * - `self` context is captured correctly
  * - moduleVersion is populated (if available)
  * - Event timing and ordering
  *
- * Tests run against bundled code with actual diagnostics_channel subscriptions.
+ * Tests run against bundled code with actual global hook subscriptions.
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
@@ -35,8 +35,6 @@ describe("Event Content Validation", () => {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-
-    // Note: dc-browser is now an npm package, no symlinks needed
   });
 
   beforeEach(() => {
