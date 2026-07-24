@@ -1,5 +1,20 @@
 [
   {
+    "scenarioDirName": "cloudflare-agents-instrumentation",
+    "label": "Cloudflare Agents Instrumentation",
+    "metadataScenario": "cloudflare-agents-instrumentation",
+    "variants": [
+      {
+        "variantKey": "cloudflare-agents-v0-17",
+        "label": "v0.17 pinned"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-17-latest",
+        "label": "v0.17 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "openai-instrumentation",
     "label": "OpenAI Instrumentation",
     "metadataScenario": "openai-instrumentation",
