@@ -4979,6 +4979,10 @@
             "type": ["boolean", "null"],
             "description": "If true, disable real-time queries for this project. This can improve query performance for high-volume logs."
           },
+          "monitor_charts_use_metrics_start": {
+            "type": ["boolean", "null"],
+            "description": "If true, use metrics.start rather than created for monitor chart time bucket dimensions."
+          },
           "default_preprocessor": {
             "$ref": "#/components/schemas/NullableSavedFunctionId"
           }
@@ -6437,6 +6441,11 @@
           "disable_reconciliation": {
             "type": "boolean",
             "description": "Whether new topic generation should ignore the previously saved report during reconciliation. Defaults to false when omitted."
+          },
+          "reconcile_mode": {
+            "type": "string",
+            "enum": ["evolve", "names_only"],
+            "description": "How reconciliation carries the previous map forward: \"evolve\" re-routes new samples into the previous topics before naming; \"names_only\" keeps the fresh clustering and carries only topic ids/names. Defaults to \"evolve\" when omitted."
           },
           "distance_threshold": {
             "type": "number",
