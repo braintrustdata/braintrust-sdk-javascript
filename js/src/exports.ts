@@ -296,6 +296,8 @@ export {
   PromptDefinitionWithTools,
 } from "./prompt-schemas";
 
+export { prompt } from "./experimental-prompt-api";
+
 export type { Trace, SpanData, GetThreadOptions } from "./trace";
 export { SpanFetcher, CachedSpanFetcher, LocalTrace } from "./trace";
 
