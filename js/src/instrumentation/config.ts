@@ -8,6 +8,7 @@ export interface InstrumentationIntegrationsConfig {
   googleADK?: boolean;
   huggingface?: boolean;
   claudeAgentSDK?: boolean;
+  cloudflareAIChat?: boolean;
   cursor?: boolean;
   cursorSDK?: boolean;
   flue?: boolean;
@@ -65,6 +66,9 @@ const envIntegrationAliases: Record<
   vercel: "vercel",
   claudeagentsdk: "claudeAgentSDK",
   "claude-agent-sdk": "claudeAgentSDK",
+  cloudflareaichat: "cloudflareAIChat",
+  "cloudflare-ai-chat": "cloudflareAIChat",
+  "@cloudflare/ai-chat": "cloudflareAIChat",
   cursor: "cursor",
   "cursor-sdk": "cursorSDK",
   cursorsdk: "cursorSDK",
@@ -121,6 +125,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     googleADK: true,
     huggingface: true,
     claudeAgentSDK: true,
+    cloudflareAIChat: true,
     cursor: true,
     cursorSDK: true,
     flue: true,

@@ -42,6 +42,7 @@ export { openRouterAgentConfigs } from "./configs/openrouter-agent";
 export { openRouterConfigs } from "./configs/openrouter";
 export { mistralConfigs } from "./configs/mistral";
 export { googleADKConfigs } from "./configs/google-adk";
+export { cloudflareAIChatConfigs } from "./configs/cloudflare-ai-chat";
 export { cohereConfigs } from "./configs/cohere";
 export { groqConfigs } from "./configs/groq";
 export { genkitConfigs } from "./configs/genkit";
