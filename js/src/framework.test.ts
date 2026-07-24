@@ -679,6 +679,39 @@ describe("runEvaluator", () => {
       await run;
       expect(vi.getTimerCount()).toBe(0);
     });
+
+    test("runEvaluator cleans up cancellation resources after completing", async () => {
+      const abortController = new AbortController();
+      const addEventListener = vi.spyOn(
+        abortController.signal,
+        "addEventListener",
+      );
+      const removeEventListener = vi.spyOn(
+        abortController.signal,
+        "removeEventListener",
+      );
+
+      await runEvaluator(
+        null,
+        {
+          projectName: "proj",
+          evalName: "eval",
+          data: [{ input: 1, expected: 2 }],
+          task: async (input: number) => input * 2,
+          scores: [],
+          timeout: 5_000,
+          signal: abortController.signal,
+        },
+        new NoopProgressReporter(),
+        [],
+        undefined,
+      );
+
+      expect(vi.getTimerCount()).toBe(0);
+      expect(addEventListener).toHaveBeenCalledOnce();
+      const abortHandler = addEventListener.mock.calls[0][1];
+      expect(removeEventListener).toHaveBeenCalledWith("abort", abortHandler);
+    });
   });
 });
 
