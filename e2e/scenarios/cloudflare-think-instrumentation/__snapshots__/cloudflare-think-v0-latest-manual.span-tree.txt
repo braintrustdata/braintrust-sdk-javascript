@@ -1,0 +1,59 @@
+span_tree:
+└── Think.runTurn [task]
+    input: [
+      {
+        "content": [
+          {
+            "text": "What is the weather in Vienna?",
+            "type": "text"
+          }
+        ],
+        "role": "user"
+      }
+    ]
+    output: {
+      "content": "Vienna is sunny and 21°C.",
+      "role": "assistant"
+    }
+    metadata: {
+      "braintrust": {
+        "integration_name": "cloudflare-think",
+        "sdk_language": "typescript"
+      },
+      "model": "gpt-5-nano",
+      "provider": "openai.chat"
+    }
+    metrics: {
+      "completion_tokens": 810,
+      "prompt_tokens": 2129,
+      "tokens": 2939
+    }
+    ├── doStream [llm]
+    │   metadata: {
+    │     "model": "gpt-5-nano",
+    │     "provider": "openai.chat"
+    │   }
+    │   metrics: {
+    │     "completion_tokens": 472,
+    │     "prompt_tokens": 1042,
+    │     "tokens": 1514
+    │   }
+    ├── lookup_weather [tool]
+    │   input: {
+    │     "city": "Vienna"
+    │   }
+    │   output: {
+    │     "city": "Vienna",
+    │     "condition": "sunny",
+    │     "degreesC": 21
+    │   }
+    └── doStream [llm]
+        metadata: {
+          "model": "gpt-5-nano",
+          "provider": "openai.chat"
+        }
+        metrics: {
+          "completion_tokens": 338,
+          "prompt_tokens": 1087,
+          "tokens": 1425
+        }

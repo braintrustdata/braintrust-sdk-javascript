@@ -1,0 +1,651 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "02bfffc5f7e45fcc",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "recordedAt": "2026-07-20T14:52:25.812Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
+                "role": "developer"
+              },
+              {
+                "content": "What is the weather in Vienna?",
+                "role": "user"
+              }
+            ],
+            "model": "gpt-5-nano",
+            "stream": true,
+            "stream_options": {
+              "include_usage": true
+            },
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "function": {
+                  "description": "Read a workspace file. Text files return line-numbered content. Images and PDFs are passed to capable models as file content. Use offset and limit for large text files. Returns null if the file does not exist.",
+                  "name": "read",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "limit": {
+                        "description": "Number of lines to read",
+                        "maximum": 9007199254740991,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "description": "1-indexed line number to start reading from",
+                        "maximum": 9007199254740991,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "description": "Absolute path to the file",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Write content to a file. Creates the file if it does not exist, overwrites if it does. Parent directories are created automatically.",
+                  "name": "write",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "content": {
+                        "description": "Content to write to the file",
+                        "type": "string"
+                      },
+                      "path": {
+                        "description": "Absolute path to the file",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path", "content"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Make a targeted edit to a file by replacing an exact string match. Provide the old_string to find and new_string to replace it with. The old_string must match exactly (including whitespace and indentation). Use an empty old_string with new_string to create a new file.",
+                  "name": "edit",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "new_string": {
+                        "description": "Replacement text",
+                        "type": "string"
+                      },
+                      "old_string": {
+                        "description": "Exact text to find and replace. Empty string to create a new file.",
+                        "type": "string"
+                      },
+                      "path": {
+                        "description": "Absolute path to the file",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path", "old_string", "new_string"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "List files and directories in a given path. Returns names, types, and sizes for each entry.",
+                  "name": "list",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "limit": {
+                        "description": "Maximum number of entries to return (default: 200)",
+                        "maximum": 1000,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "description": "Number of entries to skip (for pagination)",
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "default": "/",
+                        "description": "Absolute path to the directory to list",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Find files matching a glob pattern. Supports standard glob syntax: * matches any file, ** matches directories recursively, ? matches a single character. Returns matching file paths with types and sizes.",
+                  "name": "find",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "pattern": {
+                        "description": "Glob pattern to match (e.g. \"**/*.ts\", \"src/**/*.test.ts\", \"*.md\")",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["pattern"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Search file contents using a regular expression or fixed string. Returns matching lines with file paths and line numbers. Searches all files matching the include glob, or all files if not specified.",
+                  "name": "grep",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "caseSensitive": {
+                        "description": "If true, search is case-sensitive (default: false)",
+                        "type": "boolean"
+                      },
+                      "contextLines": {
+                        "description": "Number of context lines around each match (default: 0)",
+                        "maximum": 10,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "fixedString": {
+                        "description": "If true, treat query as a literal string instead of regex",
+                        "type": "boolean"
+                      },
+                      "include": {
+                        "description": "Glob pattern to filter files (e.g. \"**/*.ts\"). Defaults to \"**/*\"",
+                        "type": "string"
+                      },
+                      "query": {
+                        "description": "Search pattern (regex or fixed string)",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["query"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Delete a file or directory. Set recursive to true to remove non-empty directories.",
+                  "name": "delete",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "path": {
+                        "description": "Absolute path to the file or directory",
+                        "type": "string"
+                      },
+                      "recursive": {
+                        "description": "If true, remove directories and their contents recursively",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["path"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Run a Bash script against the workspace. Use for shell-style workflows that combine multiple file operations. The script runs in a sandboxed virtual filesystem with the workspace mounted at `/` (also the default working directory) — there is no `/workspace` or `/home`; use absolute paths like `/notes.txt`. Changed files are written back to the workspace.",
+                  "name": "bash",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "cwd": {
+                        "description": "Working directory for the script. Defaults to / (the workspace root)",
+                        "type": "string"
+                      },
+                      "script": {
+                        "description": "Bash script to run",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["script"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Get deterministic weather for a city.",
+                  "name": "lookup_weather",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "city": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["city"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-E3jduJXxphNYFI8ZkrTbQ6VKN5lff\",\"object\":\"chat.completion.chunk\",\"created\":1784559142,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"index\":0,\"id\":\"call_mhXleGKtQKxBEaZl2TwAWENj\",\"type\":\"function\",\"function\":{\"name\":\"lookup_weather\",\"arguments\":\"\"}}],\"refusal\":null},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"4TXwvdIx9VfYx\"}",
+            "data: {\"id\":\"chatcmpl-E3jduJXxphNYFI8ZkrTbQ6VKN5lff\",\"object\":\"chat.completion.chunk\",\"created\":1784559142,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"qlHiC2THID\"}",
+            "data: {\"id\":\"chatcmpl-E3jduJXxphNYFI8ZkrTbQ6VKN5lff\",\"object\":\"chat.completion.chunk\",\"created\":1784559142,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"city\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"5M5GoS9lm\"}",
+            "data: {\"id\":\"chatcmpl-E3jduJXxphNYFI8ZkrTbQ6VKN5lff\",\"object\":\"chat.completion.chunk\",\"created\":1784559142,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\":\\\"\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"2xJ4ndtW\"}",
+            "data: {\"id\":\"chatcmpl-E3jduJXxphNYFI8ZkrTbQ6VKN5lff\",\"object\":\"chat.completion.chunk\",\"created\":1784559142,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"Vien\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"rDH9woasL\"}",
+            "data: {\"id\":\"chatcmpl-E3jduJXxphNYFI8ZkrTbQ6VKN5lff\",\"object\":\"chat.completion.chunk\",\"created\":1784559142,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"na\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"AC8ALlnw4HI\"}",
+            "data: {\"id\":\"chatcmpl-E3jduJXxphNYFI8ZkrTbQ6VKN5lff\",\"object\":\"chat.completion.chunk\",\"created\":1784559142,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"}\"}}]},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"8CAXmNORTN\"}",
+            "data: {\"id\":\"chatcmpl-E3jduJXxphNYFI8ZkrTbQ6VKN5lff\",\"object\":\"chat.completion.chunk\",\"created\":1784559142,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":null,\"obfuscation\":\"P7HS088Q2UB\"}",
+            "data: {\"id\":\"chatcmpl-E3jduJXxphNYFI8ZkrTbQ6VKN5lff\",\"object\":\"chat.completion.chunk\",\"created\":1784559142,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[],\"usage\":{\"prompt_tokens\":1042,\"completion_tokens\":344,\"total_tokens\":1386,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":320,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"ceow5M8GXDtGmr9\"}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1e2ca0d1abec946-IAD",
+          "connection": "keep-alive",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Mon, 20 Jul 2026 14:52:25 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "3758",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999805",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_2c7552a5eac94a7586babe88829e6a64"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "9076672dec69b810",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "recordedAt": "2026-07-20T14:52:27.896Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
+                "role": "developer"
+              },
+              {
+                "content": "What is the weather in Vienna?",
+                "role": "user"
+              },
+              {
+                "content": null,
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"city\":\"Vienna\"}",
+                      "name": "lookup_weather"
+                    },
+                    "id": "call_mhXleGKtQKxBEaZl2TwAWENj",
+                    "type": "function"
+                  }
+                ]
+              },
+              {
+                "content": "{\"city\":\"Vienna\",\"condition\":\"sunny\",\"degreesC\":21}",
+                "role": "tool",
+                "tool_call_id": "call_mhXleGKtQKxBEaZl2TwAWENj"
+              }
+            ],
+            "model": "gpt-5-nano",
+            "stream": true,
+            "stream_options": {
+              "include_usage": true
+            },
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "function": {
+                  "description": "Read a workspace file. Text files return line-numbered content. Images and PDFs are passed to capable models as file content. Use offset and limit for large text files. Returns null if the file does not exist.",
+                  "name": "read",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "limit": {
+                        "description": "Number of lines to read",
+                        "maximum": 9007199254740991,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "description": "1-indexed line number to start reading from",
+                        "maximum": 9007199254740991,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "description": "Absolute path to the file",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Write content to a file. Creates the file if it does not exist, overwrites if it does. Parent directories are created automatically.",
+                  "name": "write",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "content": {
+                        "description": "Content to write to the file",
+                        "type": "string"
+                      },
+                      "path": {
+                        "description": "Absolute path to the file",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path", "content"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Make a targeted edit to a file by replacing an exact string match. Provide the old_string to find and new_string to replace it with. The old_string must match exactly (including whitespace and indentation). Use an empty old_string with new_string to create a new file.",
+                  "name": "edit",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "new_string": {
+                        "description": "Replacement text",
+                        "type": "string"
+                      },
+                      "old_string": {
+                        "description": "Exact text to find and replace. Empty string to create a new file.",
+                        "type": "string"
+                      },
+                      "path": {
+                        "description": "Absolute path to the file",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["path", "old_string", "new_string"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "List files and directories in a given path. Returns names, types, and sizes for each entry.",
+                  "name": "list",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "limit": {
+                        "description": "Maximum number of entries to return (default: 200)",
+                        "maximum": 1000,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "offset": {
+                        "description": "Number of entries to skip (for pagination)",
+                        "maximum": 9007199254740991,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "default": "/",
+                        "description": "Absolute path to the directory to list",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Find files matching a glob pattern. Supports standard glob syntax: * matches any file, ** matches directories recursively, ? matches a single character. Returns matching file paths with types and sizes.",
+                  "name": "find",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "pattern": {
+                        "description": "Glob pattern to match (e.g. \"**/*.ts\", \"src/**/*.test.ts\", \"*.md\")",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["pattern"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Search file contents using a regular expression or fixed string. Returns matching lines with file paths and line numbers. Searches all files matching the include glob, or all files if not specified.",
+                  "name": "grep",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "caseSensitive": {
+                        "description": "If true, search is case-sensitive (default: false)",
+                        "type": "boolean"
+                      },
+                      "contextLines": {
+                        "description": "Number of context lines around each match (default: 0)",
+                        "maximum": 10,
+                        "minimum": 0,
+                        "type": "integer"
+                      },
+                      "fixedString": {
+                        "description": "If true, treat query as a literal string instead of regex",
+                        "type": "boolean"
+                      },
+                      "include": {
+                        "description": "Glob pattern to filter files (e.g. \"**/*.ts\"). Defaults to \"**/*\"",
+                        "type": "string"
+                      },
+                      "query": {
+                        "description": "Search pattern (regex or fixed string)",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["query"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Delete a file or directory. Set recursive to true to remove non-empty directories.",
+                  "name": "delete",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "path": {
+                        "description": "Absolute path to the file or directory",
+                        "type": "string"
+                      },
+                      "recursive": {
+                        "description": "If true, remove directories and their contents recursively",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["path"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Run a Bash script against the workspace. Use for shell-style workflows that combine multiple file operations. The script runs in a sandboxed virtual filesystem with the workspace mounted at `/` (also the default working directory) — there is no `/workspace` or `/home`; use absolute paths like `/notes.txt`. Changed files are written back to the workspace.",
+                  "name": "bash",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "cwd": {
+                        "description": "Working directory for the script. Defaults to / (the workspace root)",
+                        "type": "string"
+                      },
+                      "script": {
+                        "description": "Bash script to run",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["script"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              },
+              {
+                "function": {
+                  "description": "Get deterministic weather for a city.",
+                  "name": "lookup_weather",
+                  "parameters": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "additionalProperties": false,
+                    "properties": {
+                      "city": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["city"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Iuoer\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Vien\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Omd\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"na\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Bz1Y0\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" is\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"BWed\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" sunny\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"D\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" and\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"0FB\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"D2rUzB\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"21\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"PtMcu\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"°C\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"KF6c5\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"l3Afxb\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":null,\"obfuscation\":\"3\"}",
+            "data: {\"id\":\"chatcmpl-E3jdys08eYN4lL67RNwOnxhC55ciz\",\"object\":\"chat.completion.chunk\",\"created\":1784559146,\"model\":\"gpt-5-nano-2025-08-07\",\"service_tier\":\"default\",\"system_fingerprint\":null,\"choices\":[],\"usage\":{\"prompt_tokens\":1087,\"completion_tokens\":210,\"total_tokens\":1297,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":192,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"B6kJ0BZeZqChWQT\"}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1e2ca25aa20c946-IAD",
+          "connection": "keep-alive",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Mon, 20 Jul 2026 14:52:27 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "1894",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999790",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_585765b7523241a38133f2b76492d7ad"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-07-20T14:52:28.130Z"
+  }
+}

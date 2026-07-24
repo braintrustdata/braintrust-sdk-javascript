@@ -84,6 +84,21 @@
     ]
   },
   {
+    "scenarioDirName": "cloudflare-think-instrumentation",
+    "label": "Cloudflare Think Instrumentation",
+    "metadataScenario": "cloudflare-think-instrumentation",
+    "variants": [
+      {
+        "variantKey": "cloudflare-think-v0",
+        "label": "v0.13 pinned"
+      },
+      {
+        "variantKey": "cloudflare-think-v0-latest",
+        "label": "v0.13 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "openai-agents-instrumentation",
     "label": "OpenAI Agents Instrumentation",
     "metadataScenario": "openai-agents-instrumentation",

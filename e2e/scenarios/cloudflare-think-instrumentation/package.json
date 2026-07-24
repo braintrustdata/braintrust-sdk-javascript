@@ -1,0 +1,28 @@
+{
+  "name": "@braintrust/e2e-cloudflare-think-instrumentation",
+  "private": true,
+  "type": "module",
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "cloudflare-think-v0-latest": {
+          "package": "@cloudflare/think",
+          "range": ">=0.13.0 <0.14.0"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "3.0.80",
+    "@cloudflare/vite-plugin": "1.45.1",
+    "agents": "0.17.4",
+    "ai": "6.0.202",
+    "ai-unwrapped": "npm:ai@6.0.202",
+    "cloudflare-think-v0": "npm:@cloudflare/think@0.13.0",
+    "cloudflare-think-v0-latest": "npm:@cloudflare/think@0.13.0",
+    "dc-browser": "1.0.4",
+    "vite": "7.3.1",
+    "wrangler": "4.112.0",
+    "zod": "4.3.6"
+  }
+}

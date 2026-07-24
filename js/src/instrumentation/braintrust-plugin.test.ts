@@ -5,6 +5,7 @@ import { OpenAICodexPlugin } from "./plugins/openai-codex-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
+import { CloudflareThinkPlugin } from "./plugins/cloudflare-think-plugin";
 import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
@@ -57,6 +58,10 @@ vi.mock("./plugins/ai-sdk-plugin", () => ({
 
 vi.mock("./plugins/claude-agent-sdk-plugin", () => ({
   ClaudeAgentSDKPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/cloudflare-think-plugin", () => ({
+  CloudflareThinkPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/openai-agents-plugin", () => ({
@@ -160,6 +165,16 @@ describe("BraintrustPlugin", () => {
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       const mockInstance =
         vi.mocked(ClaudeAgentSDKPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable Cloudflare Think plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(CloudflareThinkPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(CloudflareThinkPlugin).mock.results[0]
+        .value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -418,6 +433,16 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
+    it("should not create Cloudflare Think plugin when cloudflareThink: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { cloudflareThink: false },
+      });
+      plugin.enable();
+
+      expect(CloudflareThinkPlugin).not.toHaveBeenCalled();
+      expect(AISDKPlugin).toHaveBeenCalledTimes(1);
+    });
+
     it("should not create OpenAI Agents plugin when openAIAgents: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { openAIAgents: false },
@@ -602,6 +627,7 @@ describe("BraintrustPlugin", () => {
           anthropic: false,
           aisdk: false,
           claudeAgentSDK: false,
+          cloudflareThink: false,
           openAIAgents: false,
           googleGenAI: false,
           huggingface: false,
@@ -624,6 +650,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).not.toHaveBeenCalled();
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(CloudflareThinkPlugin).not.toHaveBeenCalled();
       expect(OpenAIAgentsPlugin).not.toHaveBeenCalled();
       expect(GoogleGenAIPlugin).not.toHaveBeenCalled();
       expect(HuggingFacePlugin).not.toHaveBeenCalled();

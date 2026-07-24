@@ -49,6 +49,7 @@ import {
 } from "../../wrappers/ai-sdk/workflow-agent-context";
 import { zodToJsonSchema } from "../../zod/utils";
 import { aiSDKChannels, harnessAgentChannels } from "./ai-sdk-channels";
+import { currentCloudflareThinkSpan } from "./cloudflare-think-context";
 import type {
   AISDK,
   AISDKCallParams,
@@ -230,6 +231,7 @@ export class AISDKPlugin extends BasePlugin {
       traceStreamingChannel(aiSDKChannels.streamText, {
         name: "streamText",
         type: SpanTypeAttribute.FUNCTION,
+        shouldTrace: () => currentCloudflareThinkSpan() === undefined,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         extractOutput: (result, endEvent) =>
@@ -256,6 +258,7 @@ export class AISDKPlugin extends BasePlugin {
       traceSyncStreamChannel(aiSDKChannels.streamTextSync, {
         name: "streamText",
         type: SpanTypeAttribute.FUNCTION,
+        shouldTrace: () => currentCloudflareThinkSpan() === undefined,
         extractInput: ([params], event, span) =>
           prepareAISDKCallInput(params, event, span, denyOutputPaths),
         patchResult: ({ endEvent, result, span, startTime }) =>
@@ -1594,6 +1597,43 @@ function prepareAISDKWorkflowAgentStreamInput(
   };
 }
 
+/**
+ * Prepares an AI SDK stream owned by an outer agent framework span.
+ * The framework owns the parent span lifecycle while AI SDK model and tool
+ * calls are attached directly beneath it.
+ */
+export function prepareAISDKAgentCallInput(
+  params: AISDKCallParams,
+  event: {
+    aiSDK?: AISDK;
+    denyOutputPaths?: string[];
+    self?: unknown;
+    [key: string]: unknown;
+  },
+  span: Span,
+  defaultDenyOutputPaths: string[] = DEFAULT_DENY_OUTPUT_PATHS,
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  const { input } = processAISDKWorkflowAgentCallInput(params);
+  const metadata = extractMetadataFromCallParams(params, event.self);
+  const childTracing = prepareAISDKChildTracing(
+    params,
+    event.self,
+    span,
+    defaultDenyOutputPaths,
+    event.aiSDK,
+    { agentOwner: true },
+  );
+  event.modelWrapped = childTracing.modelWrapped;
+  if (childTracing.cleanup) {
+    event.__braintrust_ai_sdk_cleanup = childTracing.cleanup;
+  }
+
+  return { input, metadata };
+}
+
 function prepareAISDKEmbedInput(
   params: AISDKEmbedParams,
   self?: unknown,
@@ -1639,6 +1679,22 @@ function extractTopLevelAISDKMetrics(
   }
 
   return metrics;
+}
+
+async function extractResolvedAISDKTokenMetrics(
+  result: AISDKResult,
+): Promise<Record<string, number>> {
+  for (const field of ["totalUsage", "usage"] as const) {
+    try {
+      const usage = await Promise.resolve(result[field]);
+      if (usage !== undefined) {
+        return extractTokenMetrics({ [field]: usage } as AISDKResult);
+      }
+    } catch {
+      // Fall back to the next usage field or the synchronous extractor.
+    }
+  }
+  return extractTokenMetrics(result);
 }
 
 function hasModelChildTracing(event?: { [key: string]: unknown }): boolean {
@@ -2667,7 +2723,9 @@ function prepareAISDKChildTracing(
   };
 }
 
-function finalizeAISDKChildTracing(event?: { [key: string]: unknown }): void {
+export function finalizeAISDKChildTracing(event?: {
+  [key: string]: unknown;
+}): void {
   const cleanup = event?.__braintrust_ai_sdk_cleanup;
   if (event && typeof cleanup === "function") {
     cleanup();
@@ -2806,9 +2864,10 @@ function isAISDKContentAsyncIterableChunk(chunk: unknown): boolean {
   return isObject(part) && typeof part.type !== "string";
 }
 
-function patchAISDKStreamingResult(args: {
+export function patchAISDKStreamingResult(args: {
   defaultDenyOutputPaths: string[];
   endEvent: { denyOutputPaths?: string[]; [key: string]: unknown };
+  forceTopLevelMetrics?: boolean;
   onComplete?: (result: {
     metrics: Record<string, number>;
     output: unknown;
@@ -2819,10 +2878,12 @@ function patchAISDKStreamingResult(args: {
   resolvePromiseUsage?: boolean;
   span: Pick<Span, "end" | "log">;
   startTime: number;
+  transformOutput?: (output: unknown) => unknown;
 }): boolean {
   const {
     defaultDenyOutputPaths,
     endEvent,
+    forceTopLevelMetrics,
     onComplete,
     onCancel,
     onError,
@@ -2830,6 +2891,7 @@ function patchAISDKStreamingResult(args: {
     resolvePromiseUsage,
     span,
     startTime,
+    transformOutput,
   } = args;
 
   if (!result || typeof result !== "object") {
@@ -2889,8 +2951,10 @@ function patchAISDKStreamingResult(args: {
     outputLogged = true;
 
     try {
-      const metrics = extractTopLevelAISDKMetrics(result, endEvent);
-      if (resolvePromiseUsage) {
+      const metrics = forceTopLevelMetrics
+        ? await extractResolvedAISDKTokenMetrics(result)
+        : extractTopLevelAISDKMetrics(result, endEvent);
+      if (resolvePromiseUsage && !forceTopLevelMetrics) {
         try {
           const resultRecord = result as Record<string, unknown>;
           const pendingUsage = resultRecord.totalUsage ?? resultRecord.usage;
@@ -2914,10 +2978,13 @@ function patchAISDKStreamingResult(args: {
         metrics.time_to_first_token = firstChunkTime - startTime;
       }
 
-      const output = await processAISDKStreamingOutput(
+      const processedOutput = await processAISDKStreamingOutput(
         result,
         resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
       );
+      const output = transformOutput
+        ? transformOutput(processedOutput)
+        : processedOutput;
       const metadata = buildResolvedMetadataPayload(result).metadata;
 
       try {

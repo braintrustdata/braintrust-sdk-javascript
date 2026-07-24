@@ -8,6 +8,7 @@ import { aiSDKConfigs } from "./ai-sdk";
 import { anthropicConfigs } from "./anthropic";
 import { bedrockRuntimeConfigs } from "./bedrock-runtime";
 import { claudeAgentSDKConfigs } from "./claude-agent-sdk";
+import { cloudflareThinkConfigs } from "./cloudflare-think";
 import { cohereConfigs } from "./cohere";
 import { cursorSDKConfigs } from "./cursor-sdk";
 import { flueConfigs } from "./flue";
@@ -52,6 +53,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["claudeAgentSDK"],
       configs: claudeAgentSDKConfigs,
+    },
+    {
+      integrations: ["cloudflareThink"],
+      configs: cloudflareThinkConfigs,
     },
     { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
     {
