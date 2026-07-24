@@ -13,12 +13,12 @@ export interface GlobalHookAsyncLocalStorage<T> {
   getStore(): T | undefined;
 }
 
-export type GlobalHookMessageFunction<
-  M = any,
-  N extends string | symbol = string,
-> = (message: M, name: N) => void;
+type GlobalHookMessageFunction<M = any, N extends string | symbol = string> = (
+  message: M,
+  name: N,
+) => void;
 
-export type GlobalHookTransformFunction<M, S> = (message: M) => S;
+type GlobalHookTransformFunction<M, S> = (message: M) => S;
 
 export interface GlobalHookChannel<
   M = any,

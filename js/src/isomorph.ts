@@ -5,7 +5,6 @@ import {
 import {
   newGlobalTracingChannel,
   type GlobalHookAsyncLocalStorage,
-  type GlobalHookChannel,
   type GlobalHookHandlers,
   type GlobalTracingChannel,
   type GlobalTracingChannelCollection,
@@ -18,10 +17,6 @@ export interface CallerLocation {
 }
 
 export type IsoAsyncLocalStorage<T> = GlobalHookAsyncLocalStorage<T>;
-export type IsoChannel<
-  M = any,
-  N extends string | symbol = string,
-> = GlobalHookChannel<M, N>;
 
 class DefaultAsyncLocalStorage<T> implements IsoAsyncLocalStorage<T> {
   constructor() {}
@@ -35,8 +30,7 @@ class DefaultAsyncLocalStorage<T> implements IsoAsyncLocalStorage<T> {
   }
 }
 
-export type IsoTracingChannelCollection<M = any> =
-  GlobalTracingChannelCollection<M>;
+type IsoTracingChannelCollection<M = any> = GlobalTracingChannelCollection<M>;
 export type IsoTracingChannel<M = any> = GlobalTracingChannel<M>;
 export type IsoChannelHandlers<M = any> = GlobalHookHandlers<M>;
 
