@@ -7,5 +7,12 @@
     "@flue/runtime": "1.0.0-beta.3",
     "hono": "^4.8.3",
     "valibot": "^1.1.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@hono/node-server@>=2.0.0 <2.0.10": "^2.0.10",
+      "fast-uri@<3.1.4": "^3.1.4",
+      "fast-xml-parser@>=5.9.3 <5.10.1": "^5.10.1"
+    }
   }
 }

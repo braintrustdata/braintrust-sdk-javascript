@@ -6,6 +6,12 @@
     "strands-agent-sdk-v1": "npm:@strands-agents/sdk@1.6.0",
     "strands-agent-sdk-v1-latest": "npm:@strands-agents/sdk@1.7.0"
   },
+  "pnpm": {
+    "overrides": {
+      "fast-uri@<3.1.4": "^3.1.4",
+      "hono@>=4.0.0 <4.12.27": "^4.12.27"
+    }
+  },
   "braintrustScenario": {
     "bump": {
       "dependencies": {
