@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 7817da7abc7229e4) -- do not modify
+// Auto-generated file (content hash 37813d3baba101c0) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -291,6 +291,7 @@ export const TopicMapData = z.object({
   topic_names: z.record(z.string()).optional(),
   generation_settings: TopicMapGenerationSettings.optional(),
   disable_reconciliation: z.boolean().optional(),
+  reconcile_mode: z.enum(["evolve", "names_only"]).optional(),
   distance_threshold: z.number().optional(),
   btql_filter: z.string().optional(),
   automation_btql_filter: z.string().optional(),
@@ -1566,6 +1567,7 @@ export const ProjectSettings = z.union([
         z.null(),
       ]),
       disable_realtime_queries: z.union([z.boolean(), z.null()]),
+      monitor_charts_use_metrics_start: z.union([z.boolean(), z.null()]),
       default_preprocessor: NullableSavedFunctionId,
     })
     .partial(),
