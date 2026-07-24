@@ -298,6 +298,29 @@
     ]
   },
   {
+    "scenarioDirName": "huggingface-transformers-instrumentation",
+    "label": "Hugging Face Transformers.js Instrumentation",
+    "metadataScenario": "huggingface-transformers-instrumentation",
+    "variants": [
+      {
+        "variantKey": "huggingface-transformers-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "huggingface-transformers-v3-latest",
+        "label": "v3 latest"
+      },
+      {
+        "variantKey": "huggingface-transformers-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "huggingface-transformers-v4-latest",
+        "label": "v4 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "langgraph-auto-instrumentation",
     "label": "LangGraph Auto-Instrumentation",
     "metadataScenario": "langgraph-auto-instrumentation",

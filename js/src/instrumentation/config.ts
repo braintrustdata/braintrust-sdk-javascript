@@ -79,6 +79,8 @@ const envIntegrationAliases: Record<
   "google-genai": "googleGenAI",
   googlegenai: "googleGenAI",
   huggingface: "huggingface",
+  "@huggingface/transformers": "huggingface",
+  transformers: "huggingface",
   openrouter: "openrouter",
   openrouteragent: "openrouterAgent",
   "openrouter-agent": "openrouterAgent",

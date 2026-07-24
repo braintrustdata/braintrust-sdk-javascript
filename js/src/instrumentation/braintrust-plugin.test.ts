@@ -8,6 +8,7 @@ import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
 import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
+import { HuggingFaceTransformersPlugin } from "./plugins/huggingface-transformers-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
@@ -69,6 +70,10 @@ vi.mock("./plugins/google-genai-plugin", () => ({
 
 vi.mock("./plugins/huggingface-plugin", () => ({
   HuggingFacePlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/huggingface-transformers-plugin", () => ({
+  HuggingFaceTransformersPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/openrouter-plugin", () => ({
@@ -188,6 +193,10 @@ describe("BraintrustPlugin", () => {
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       const mockInstance = vi.mocked(HuggingFacePlugin).mock.results[0].value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+      expect(HuggingFaceTransformersPlugin).toHaveBeenCalledTimes(1);
+      const transformersMockInstance = vi.mocked(HuggingFaceTransformersPlugin)
+        .mock.results[0].value;
+      expect(transformersMockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
     it("should create and enable OpenRouter plugin by default", () => {
@@ -443,6 +452,7 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(HuggingFacePlugin).not.toHaveBeenCalled();
+      expect(HuggingFaceTransformersPlugin).not.toHaveBeenCalled();
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
@@ -810,6 +820,9 @@ describe("BraintrustPlugin", () => {
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
       const huggingFaceMock =
         vi.mocked(HuggingFacePlugin).mock.results[0].value;
+      const huggingFaceTransformersMock = vi.mocked(
+        HuggingFaceTransformersPlugin,
+      ).mock.results[0].value;
       const openRouterMock = vi.mocked(OpenRouterPlugin).mock.results[0].value;
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
@@ -830,6 +843,7 @@ describe("BraintrustPlugin", () => {
       expect(openAIAgentsMock.enable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.enable).toHaveBeenCalledTimes(1);
       expect(huggingFaceMock.enable).toHaveBeenCalledTimes(1);
+      expect(huggingFaceTransformersMock.enable).toHaveBeenCalledTimes(1);
       expect(openRouterMock.enable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.enable).toHaveBeenCalledTimes(1);
       expect(mistralMock.enable).toHaveBeenCalledTimes(1);
@@ -857,6 +871,9 @@ describe("BraintrustPlugin", () => {
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
       const huggingFaceMock =
         vi.mocked(HuggingFacePlugin).mock.results[0].value;
+      const huggingFaceTransformersMock = vi.mocked(
+        HuggingFaceTransformersPlugin,
+      ).mock.results[0].value;
       const openRouterMock = vi.mocked(OpenRouterPlugin).mock.results[0].value;
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
@@ -879,6 +896,7 @@ describe("BraintrustPlugin", () => {
       expect(openAIAgentsMock.disable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.disable).toHaveBeenCalledTimes(1);
       expect(huggingFaceMock.disable).toHaveBeenCalledTimes(1);
+      expect(huggingFaceTransformersMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(mistralMock.disable).toHaveBeenCalledTimes(1);

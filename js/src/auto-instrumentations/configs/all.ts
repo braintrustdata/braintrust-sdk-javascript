@@ -17,6 +17,7 @@ import { googleADKConfigs } from "./google-adk";
 import { googleGenAIConfigs } from "./google-genai";
 import { groqConfigs } from "./groq";
 import { huggingFaceConfigs } from "./huggingface";
+import { huggingFaceTransformersConfigs } from "./huggingface-transformers";
 import { langchainConfigs } from "./langchain";
 import { langSmithConfigs } from "./langsmith";
 import { mistralConfigs } from "./mistral";
@@ -62,7 +63,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       integrations: ["google", "googleGenAI"],
       configs: googleGenAIConfigs,
     },
-    { integrations: ["huggingface"], configs: huggingFaceConfigs },
+    {
+      integrations: ["huggingface"],
+      configs: [...huggingFaceConfigs, ...huggingFaceTransformersConfigs],
+    },
     {
       integrations: ["langchain", "langgraph"],
       configs: langchainConfigs,
