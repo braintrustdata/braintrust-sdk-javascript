@@ -26,6 +26,10 @@ vi.mock("../../logger", () => ({
 }));
 
 import iso from "../../isomorph";
+import {
+  INSTRUMENTATION_NAMES,
+  INTERNAL_SPAN_INSTRUMENTATION_NAME,
+} from "../../span-origin";
 import { CloudflareAIChatPlugin } from "./cloudflare-ai-chat-plugin";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
@@ -96,6 +100,8 @@ describe("CloudflareAIChatPlugin", () => {
     expect(mockStartSpan).toHaveBeenCalledWith({
       name: "AIChatAgent.onChatMessage",
       spanAttributes: { type: "task" },
+      [INTERNAL_SPAN_INSTRUMENTATION_NAME]:
+        INSTRUMENTATION_NAMES.CLOUDFLARE_AI_CHAT,
     });
     expect(span.log).toHaveBeenCalledWith({
       input: [

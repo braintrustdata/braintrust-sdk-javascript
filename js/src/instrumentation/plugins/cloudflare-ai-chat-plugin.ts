@@ -4,11 +4,15 @@ import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
   BRAINTRUST_CURRENT_SPAN_STORE,
   _internalGetGlobalState,
-  startSpan,
+  startSpan as startBaseSpan,
   withCurrent,
 } from "../../logger";
 import type { CurrentSpanStore, Span } from "../../logger";
 import { debugLogger } from "../../debug-logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { SpanTypeAttribute } from "../../../util/index";
 import type {
   CloudflareAIChatAgent,
@@ -213,10 +217,15 @@ export class CloudflareAIChatPlugin extends BasePlugin {
     agent: object | undefined,
     key: string | symbol,
   ): TurnState {
-    const span = startSpan({
-      name: "AIChatAgent.onChatMessage",
-      spanAttributes: { type: SpanTypeAttribute.TASK },
-    });
+    const span = startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          name: "AIChatAgent.onChatMessage",
+          spanAttributes: { type: SpanTypeAttribute.TASK },
+        },
+        INSTRUMENTATION_NAMES.CLOUDFLARE_AI_CHAT,
+      ),
+    );
     const state: TurnState = {
       agent,
       depth: 1,
