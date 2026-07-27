@@ -30,14 +30,14 @@ export interface TransformState extends InstrumentationConfig {
   functionIndex?: number;
 }
 
-const CHANNEL_REGEX = /[^\w]/g;
+const HOOK_IDENTIFIER_REGEX = /[^\w]/g;
 
-function formatChannelVariable(channelName: string): string {
-  return `tr_ch_apm$${channelName.replace(CHANNEL_REGEX, "_")}`;
+function formatHookVariable(channelName: string): string {
+  return `__apm$hook_${channelName.replace(HOOK_IDENTIFIER_REGEX, "_")}`;
 }
 
-function formatChannelGetter(channelName: string): string {
-  return `tr_ch_apm$get_${channelName.replace(CHANNEL_REGEX, "_")}`;
+function formatHookGetter(channelName: string): string {
+  return `__apm$get_hook_${channelName.replace(HOOK_IDENTIFIER_REGEX, "_")}`;
 }
 
 export const transforms: Record<string, TransformFn> = {
@@ -47,12 +47,12 @@ export const transforms: Record<string, TransformFn> = {
       module: { name },
       operator,
     } = state;
-    const channelVariable = formatChannelVariable(channelName);
-    const channelGetter = formatChannelGetter(channelName);
+    const hookVariable = formatHookVariable(channelName);
+    const hookGetter = formatHookGetter(channelName);
 
     if (
       node.body.some(
-        (child: AnyNode) => child.declarations?.[0]?.id?.name === channelGetter,
+        (child: AnyNode) => child.declarations?.[0]?.id?.name === hookGetter,
       )
     ) {
       return;
@@ -62,8 +62,8 @@ export const transforms: Record<string, TransformFn> = {
       (child: AnyNode) => child.directive === "use strict",
     );
     const code = `
-      let ${channelVariable};
-      const ${channelGetter} = () => {
+      let ${hookVariable};
+      const ${hookGetter} = () => {
         try {
           const __apm$hooks = globalThis[${JSON.stringify(
             GLOBAL_INSTRUMENTATION_HOOKS_KEY,
@@ -88,7 +88,7 @@ export const transforms: Record<string, TransformFn> = {
             typeof __apm$hook.hasSubscribers !== "boolean" ||
             typeof __apm$hook[${JSON.stringify(operator)}] !== "function"
           ) return undefined;
-          return ${channelVariable} ??= __apm$hook;
+          return ${hookVariable} ??= __apm$hook;
         } catch {
           return undefined;
         }
@@ -313,11 +313,11 @@ function wrapCallback(state: TransformState): AnyNode {
     channelName,
     functionQuery: { callbackIndex = -1 },
   } = state;
-  const channelGetter = formatChannelGetter(channelName);
+  const hookGetter = formatHookGetter(channelName);
 
   return parse(`
     function wrapper () {
-      const __apm$hook = ${channelGetter}();
+      const __apm$hook = ${hookGetter}();
       if (!__apm$hook?.hasSubscribers) return __apm$traced();
       __apm$ctx.self ??= this;
       return __apm$hook.traceCallback(
@@ -331,11 +331,11 @@ function wrapCallback(state: TransformState): AnyNode {
 
 function wrapPromise(state: TransformState): AnyNode {
   const { channelName } = state;
-  const channelGetter = formatChannelGetter(channelName);
+  const hookGetter = formatHookGetter(channelName);
 
   return parse(`
     function wrapper () {
-      const __apm$hook = ${channelGetter}();
+      const __apm$hook = ${hookGetter}();
       if (!__apm$hook?.hasSubscribers) return __apm$traced();
       __apm$ctx.self ??= this;
       return __apm$hook.tracePromise(__apm$traced, __apm$ctx);
@@ -345,11 +345,11 @@ function wrapPromise(state: TransformState): AnyNode {
 
 function wrapSync(state: TransformState): AnyNode {
   const { channelName } = state;
-  const channelGetter = formatChannelGetter(channelName);
+  const hookGetter = formatHookGetter(channelName);
 
   return parse(`
     function wrapper () {
-      const __apm$hook = ${channelGetter}();
+      const __apm$hook = ${hookGetter}();
       if (!__apm$hook?.hasSubscribers) return __apm$traced();
       __apm$ctx.self ??= this;
       return __apm$hook.traceSync(__apm$traced, __apm$ctx);

@@ -14,6 +14,7 @@ import {
   create,
   type InstrumentationConfig,
 } from "../../src/auto-instrumentations/orchestrion-js";
+import { buildTestGlobalHookRuntime } from "./test-global-hook-runtime";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixtureRoot = path.join(__dirname, "fixtures/orchestrion-js");
@@ -33,6 +34,7 @@ interface UpstreamFixtureCase {
 }
 
 let outputRoot: string;
+let globalHookRuntimePath: string;
 
 function config(
   channelName: string,
@@ -81,10 +83,7 @@ function runFixture({
     cwd: runDir,
     env: {
       ...process.env,
-      BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME: path.join(
-        __dirname,
-        "../../dist/auto-instrumentations/global-instrumentation-hooks.cjs",
-      ),
+      BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME: globalHookRuntimePath,
     },
     stdio: "pipe",
   });
@@ -371,10 +370,11 @@ const fixtureCases: UpstreamFixtureCase[] = [
 ];
 
 describe("Orchestrion-JS upstream-derived behavior", () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     outputRoot = fs.mkdtempSync(
       path.join(os.tmpdir(), "braintrust-orchestrion-js-"),
     );
+    globalHookRuntimePath = await buildTestGlobalHookRuntime(outputRoot);
     fs.cpSync(
       path.join(fixtureRoot, "common"),
       path.join(outputRoot, "common"),

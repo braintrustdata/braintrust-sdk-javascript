@@ -370,6 +370,47 @@ describe("global instrumentation hooks", () => {
     ]);
   });
 
+  it("replaces unbranded hook-shaped entries without mutating them", () => {
+    const name = uniqueChannelName("unbranded-entry");
+    const registry = Object.getOwnPropertyDescriptor(
+      globalThis,
+      GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+    )?.value as Map<string, unknown>;
+    const foreignChannel = {
+      bindStore: vi.fn(),
+      hasSubscribers: false,
+      publish: vi.fn(),
+      runStores: vi.fn(),
+      subscribe: vi.fn(),
+      unbindStore: vi.fn(),
+      unsubscribe: vi.fn(),
+    };
+    const foreignHook = {
+      asyncEnd: foreignChannel,
+      asyncStart: foreignChannel,
+      end: foreignChannel,
+      error: foreignChannel,
+      hasSubscribers: false,
+      start: foreignChannel,
+      subscribe: vi.fn(),
+      traceCallback: vi.fn(),
+      tracePromise: vi.fn(),
+      traceSync: vi.fn(),
+      unsubscribe: vi.fn(),
+    };
+    registry.set(name, foreignHook);
+
+    const channel = newGlobalTracingChannel(name);
+
+    expect(channel).not.toBe(foreignHook);
+    expect(registry.get(name)).toBe(channel);
+    expect(
+      (foreignHook as Record<symbol, unknown>)[
+        Symbol.for(GLOBAL_INSTRUMENTATION_HOOK_BRAND)
+      ],
+    ).toBeUndefined();
+  });
+
   it("wraps callbacks without changing arguments or receiver semantics", async () => {
     const channel = newGlobalTracingChannel<Record<string, unknown>>(
       uniqueChannelName("callback"),

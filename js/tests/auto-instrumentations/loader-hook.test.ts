@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Worker } from "node:worker_threads";
+import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { buildTestGlobalHookRuntime } from "./test-global-hook-runtime";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
@@ -28,6 +31,10 @@ const incompatibleGlobalHookRegistryPath = path.join(
   fixturesDir,
   "incompatible-global-hook-registry.cjs",
 );
+const configurableGlobalHookRegistryPath = path.join(
+  fixturesDir,
+  "configurable-global-hook-registry.cjs",
+);
 const legacyAutoInstrumentationMarkerPath = path.join(
   fixturesDir,
   "legacy-auto-instrumentation-marker.mjs",
@@ -37,13 +44,20 @@ interface TestResult {
   events: { start: any[]; end: any[]; error: any[] };
 }
 
+let testRuntimeDirectory: string;
+let globalHookRuntimePath: string;
+
 describe("Unified Loader Hook Integration Tests", () => {
-  beforeAll(() => {
-    // No setup needed - test/fixtures/node_modules/openai is committed to the repo
+  beforeAll(async () => {
+    testRuntimeDirectory = fs.mkdtempSync(
+      path.join(os.tmpdir(), "braintrust-global-hook-runtime-"),
+    );
+    globalHookRuntimePath =
+      await buildTestGlobalHookRuntime(testRuntimeDirectory);
   });
 
   afterAll(() => {
-    // No cleanup needed - we don't create any temporary files
+    fs.rmSync(testRuntimeDirectory, { recursive: true, force: true });
   });
 
   describe("Unified hook (--import) handles both ESM and CJS", () => {
@@ -148,6 +162,36 @@ describe("Unified Loader Hook Integration Tests", () => {
       subscriberCalls: 0,
     });
   });
+
+  it("replaces a configurable foreign registry with the immutable protocol registry", async () => {
+    const result = await runWithWorkerMessage<{
+      descriptor: {
+        configurable: boolean;
+        enumerable: boolean;
+        writable: boolean;
+      };
+      foreignRegistryBranded: boolean;
+      foreignRegistryRetained: boolean;
+      result: string;
+      subscriberCalls: number;
+    }>({
+      execArgv: [],
+      messageType: "configurable-registry",
+      script: configurableGlobalHookRegistryPath,
+    });
+
+    expect(result).toEqual({
+      descriptor: {
+        configurable: false,
+        enumerable: false,
+        writable: false,
+      },
+      foreignRegistryBranded: false,
+      foreignRegistryRetained: false,
+      result: "result",
+      subscriberCalls: 1,
+    });
+  });
 });
 
 async function runWithWorker(options: {
@@ -197,7 +241,12 @@ async function runWithWorkerMessage<T>(options: {
 
     const worker = new Worker(scriptUrl, {
       execArgv,
-      env: { ...process.env, ...options.env, NODE_OPTIONS: "" },
+      env: {
+        ...process.env,
+        ...options.env,
+        BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME: globalHookRuntimePath,
+        NODE_OPTIONS: "",
+      },
     });
 
     worker.on("message", (msg) => {

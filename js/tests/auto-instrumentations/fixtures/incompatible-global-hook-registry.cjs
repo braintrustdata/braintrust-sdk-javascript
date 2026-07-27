@@ -7,9 +7,9 @@ Object.defineProperty(globalThis, "__braintrust_instrumentation_hooks", {
   writable: false,
 });
 
-const {
-  newGlobalTracingChannel,
-} = require("../../../dist/auto-instrumentations/global-instrumentation-hooks.cjs");
+const { newGlobalTracingChannel } = require(
+  process.env.BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME,
+);
 
 const channel = newGlobalTracingChannel(
   "orchestrion:test:incompatible-registry",

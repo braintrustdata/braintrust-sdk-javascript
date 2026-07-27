@@ -148,19 +148,6 @@ export default defineConfig([
     clean: false,
   },
   {
-    entry: {
-      "global-instrumentation-hooks": "src/global-instrumentation-hooks.ts",
-    },
-    format: ["cjs"],
-    outDir: "dist/auto-instrumentations",
-    dts: false,
-    define,
-    outExtension() {
-      return { js: ".cjs" };
-    },
-    clean: false,
-  },
-  {
     entry: [
       "src/auto-instrumentations/hook.mts",
       "src/auto-instrumentations/loader/esm-hook.mts",

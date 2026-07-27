@@ -641,93 +641,84 @@ function hasTracingHookShape(
   }
 }
 
-function ensureCompatibleTracingHook(
+function isCompatibleTracingHook(
   value: unknown,
 ): value is GlobalTracingChannel<any> {
-  if (!hasTracingHookShape(value)) {
-    return false;
-  }
-
-  let version: unknown;
   try {
-    version = (value as unknown as Record<symbol, unknown>)[hookBrand];
-  } catch {
-    return false;
-  }
-  if (version === GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION) {
-    return true;
-  }
-  if (version !== undefined) {
-    return false;
-  }
-
-  try {
-    Object.defineProperty(value, hookBrand, {
-      configurable: false,
-      enumerable: false,
-      value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
-      writable: false,
-    });
-    return true;
+    return (
+      (value as unknown as Record<symbol, unknown>)[hookBrand] ===
+        GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION &&
+      hasTracingHookShape(value)
+    );
   } catch {
     return false;
   }
 }
 
-function ensureCompatibleHookRegistry(value: unknown): value is HookRegistry {
-  if (!(value instanceof Map)) {
-    return false;
-  }
-
-  let version: unknown;
+function isCompatibleHookRegistry(value: unknown): value is HookRegistry {
   try {
-    version = (value as unknown as Record<symbol, unknown>)[registryBrand];
-  } catch {
-    return false;
-  }
-  if (version === GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION) {
-    return true;
-  }
-  if (version !== undefined) {
-    return false;
-  }
-
-  try {
-    for (const [name, hook] of Map.prototype.entries.call(value) as Iterable<
-      [unknown, unknown]
-    >) {
-      if (typeof name !== "string" || !ensureCompatibleTracingHook(hook)) {
-        return false;
-      }
-    }
-    Object.defineProperty(value, registryBrand, {
-      configurable: false,
-      enumerable: false,
-      value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
-      writable: false,
-    });
-    return true;
+    return (
+      value instanceof Map &&
+      (value as unknown as Record<symbol, unknown>)[registryBrand] ===
+        GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION
+    );
   } catch {
     return false;
   }
 }
 
 function getHookRegistry(): HookRegistry | undefined {
-  const target = globalThis as Record<string, unknown>;
-  let existing: unknown;
+  let descriptor: PropertyDescriptor | undefined;
   try {
-    existing = target[GLOBAL_INSTRUMENTATION_HOOKS_KEY];
-  } catch {
-    // A configurable accessor can still be replaced below.
+    descriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+    );
+  } catch (error) {
+    reportError(error);
+    return undefined;
   }
-  if (ensureCompatibleHookRegistry(existing)) {
-    return existing;
+
+  if (
+    descriptor &&
+    "value" in descriptor &&
+    isCompatibleHookRegistry(descriptor.value) &&
+    (descriptor.configurable || descriptor.enumerable === false)
+  ) {
+    if (descriptor.configurable || descriptor.writable) {
+      try {
+        Object.defineProperty(globalThis, GLOBAL_INSTRUMENTATION_HOOKS_KEY, {
+          configurable: false,
+          enumerable: false,
+          value: descriptor.value,
+          writable: false,
+        });
+      } catch (error) {
+        reportError(error);
+        return undefined;
+      }
+    }
+    return descriptor.value;
+  }
+
+  if (descriptor && !descriptor.configurable) {
+    reportError(new Error("Incompatible global instrumentation hook registry"));
+    return undefined;
   }
 
   const registry: HookRegistry = new Map();
-  if (!ensureCompatibleHookRegistry(registry)) {
+  try {
+    Object.defineProperty(registry, registryBrand, {
+      configurable: false,
+      enumerable: false,
+      value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+      writable: false,
+    });
+  } catch (error) {
+    reportError(error);
     return undefined;
   }
+
   try {
     Object.defineProperty(globalThis, GLOBAL_INSTRUMENTATION_HOOKS_KEY, {
       configurable: false,
@@ -760,7 +751,7 @@ export function newGlobalTracingChannel<M = any>(
     reportError(error);
     return inertTracingHook as GlobalTracingChannel<M>;
   }
-  if (ensureCompatibleTracingHook(existing)) {
+  if (isCompatibleTracingHook(existing)) {
     return existing as GlobalTracingChannel<M>;
   }
   if (existing !== undefined) {

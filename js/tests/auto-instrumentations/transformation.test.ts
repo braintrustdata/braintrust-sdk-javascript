@@ -416,38 +416,6 @@ describe("Orchestrion Transformation Tests", () => {
       expectGlobalHookTransform(output);
     });
 
-    it("should accept the deprecated browser compatibility option", async () => {
-      const { braintrustEsbuildPlugin } =
-        await import("../../src/auto-instrumentations/bundler/esbuild.js");
-
-      const entryPoint = path.join(fixturesDir, "test-app.js");
-      const outfile = path.join(outputDir, "esbuild-browser-bundle.js");
-
-      const result = await esbuild.build({
-        entryPoints: [entryPoint],
-        bundle: true,
-        write: true,
-        outfile,
-        format: "esm",
-        plugins: [
-          braintrustEsbuildPlugin({
-            useDiagnosticChannelCompatShim: true,
-          }),
-        ],
-        logLevel: "error",
-        absWorkingDir: fixturesDir,
-        preserveSymlinks: true,
-        platform: "browser",
-      });
-
-      expect(result.errors).toHaveLength(0);
-      expect(fs.existsSync(outfile)).toBe(true);
-
-      const output = fs.readFileSync(outfile, "utf-8");
-
-      expectGlobalHookTransform(output);
-    });
-
     it.each([
       ["browser", "browser"],
       ["edge", "neutral"],

@@ -96,8 +96,7 @@ Node built-in or browser-shim import.
 Bundler plugins accept `browser: true` when their output targets a browser or
 edge-like runtime. Global hooks themselves are runtime-independent; this hint
 only prevents the Node-specific Mastra source patch from entering those
-bundles. The legacy `useDiagnosticChannelCompatShim` option is retained as a
-no-op for backwards compatibility.
+bundles.
 
 ## Adding an Instrumentation
 
