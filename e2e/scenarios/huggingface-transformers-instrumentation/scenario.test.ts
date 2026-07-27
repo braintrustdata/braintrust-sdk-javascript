@@ -67,7 +67,7 @@ describe.concurrent("variants", () => {
         timeoutMs: SCENARIO_TIMEOUT_MS,
       });
 
-      if (scenario === scenarios.at(-1)) {
+      if (scenario.runCjsAutoInstrumentation) {
         defineAssertions({
           name: "auto-hook instrumentation CJS",
           runScenario: async ({ runNodeScenarioDir }) => {

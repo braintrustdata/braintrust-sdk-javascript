@@ -3,36 +3,35 @@ import { traceAsyncChannel, unsubscribeAll } from "../core/channel-tracing";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import { SpanTypeAttribute, isObject } from "../../../util";
-import type {
-  HuggingFaceTransformersPipeline,
-  HuggingFaceTransformersTask,
-  HuggingFaceTransformersTensor,
-} from "../../vendor-sdk-types/huggingface-transformers";
+import type { HuggingFaceTransformersPipeline } from "../../vendor-sdk-types/huggingface-transformers";
 import {
   getHuggingFaceTransformersPipelineInfo,
   huggingFaceTransformersChannels,
+  isSupportedHuggingFaceTransformersTask,
   registerHuggingFaceTransformersPipeline,
   type HuggingFaceTransformersEventContext,
 } from "./huggingface-transformers-channels";
 
-const SUPPORTED_TASKS: ReadonlySet<string> = new Set([
-  "text-generation",
-  "text2text-generation",
-  "summarization",
-  "feature-extraction",
-  "question-answering",
-]);
+const REQUEST_METADATA_KEYS = [
+  "temperature",
+  "top_p",
+  "max_tokens",
+  "stop",
+] as const;
 
 export class HuggingFaceTransformersPlugin extends BasePlugin {
   protected onEnable(): void {
     this.subscribeToPipelineFactory();
     this.unsubscribers.push(
       traceAsyncChannel(huggingFaceTransformersChannels.pipelineCall, {
-        name: (_args, event) =>
-          `huggingface.transformers.${getTask(event as HuggingFaceTransformersEventContext)?.replaceAll("-", "_") ?? "unknown"}`,
+        name: (_args, event) => {
+          const task = getTask(event as HuggingFaceTransformersEventContext);
+          const operation = task?.replaceAll("-", "_") ?? "unknown";
+          return `huggingface.transformers.${operation}`;
+        },
         type: SpanTypeAttribute.LLM,
         shouldTrace: (_args, event) =>
-          isSupportedTask(
+          isSupportedHuggingFaceTransformersTask(
             getTask(event as HuggingFaceTransformersEventContext),
           ),
         extractInput: (args, event) => ({
@@ -84,20 +83,18 @@ export class HuggingFaceTransformersPlugin extends BasePlugin {
   }
 }
 
-function isSupportedTask(
-  task: string | undefined,
-): task is HuggingFaceTransformersTask {
-  return task !== undefined && SUPPORTED_TASKS.has(task);
-}
-
 function getTask(
   event: HuggingFaceTransformersEventContext,
 ): string | undefined {
   const self = event.self;
-  return (
-    getHuggingFaceTransformersPipelineInfo(self)?.task ??
-    (typeof self?.task === "string" ? self.task : undefined)
-  );
+  const registeredTask = getHuggingFaceTransformersPipelineInfo(self)?.task;
+  if (registeredTask !== undefined) {
+    return registeredTask;
+  }
+  if (typeof self?.task === "string") {
+    return self.task;
+  }
+  return undefined;
 }
 
 function extractMetadata(
@@ -116,10 +113,9 @@ function extractMetadata(
   }
 
   const task = getTask(event);
-  const options =
-    task === "question-answering" ? args[2] : isObject(args[1]) ? args[1] : {};
+  const options = task === "question-answering" ? args[2] : args[1];
   if (isObject(options)) {
-    for (const key of ["temperature", "top_p", "max_tokens", "stop"]) {
+    for (const key of REQUEST_METADATA_KEYS) {
       if (options[key] !== undefined) {
         metadata[key] = options[key];
       }
@@ -152,35 +148,35 @@ function modelIdentifier(
 }
 
 function extractInput(task: string | undefined, args: unknown[]): unknown {
-  if (task === "feature-extraction") {
-    return args[0];
-  }
-
-  if (task === "question-answering") {
-    const question = args[0];
-    const context = args[1];
-    if (
-      Array.isArray(question) &&
-      Array.isArray(context) &&
-      question.every((value) => typeof value === "string") &&
-      context.every((value) => typeof value === "string")
-    ) {
-      return question.map((value, index) => [
-        {
-          role: "user",
-          content: `Context:\n${context[index] ?? ""}\n\nQuestion:\n${value}`,
-        },
-      ]);
+  switch (task) {
+    case "feature-extraction":
+      return args[0];
+    case "question-answering": {
+      const question = args[0];
+      const context = args[1];
+      if (
+        Array.isArray(question) &&
+        Array.isArray(context) &&
+        question.every((value) => typeof value === "string") &&
+        context.every((value) => typeof value === "string")
+      ) {
+        return question.map((value, index) => [
+          {
+            role: "user",
+            content: `Context:\n${context[index] ?? ""}\n\nQuestion:\n${value}`,
+          },
+        ]);
+      }
+      if (typeof question === "string" && typeof context === "string") {
+        return [
+          {
+            role: "user",
+            content: `Context:\n${context}\n\nQuestion:\n${question}`,
+          },
+        ];
+      }
+      return { context, question };
     }
-    if (typeof question === "string" && typeof context === "string") {
-      return [
-        {
-          role: "user",
-          content: `Context:\n${context}\n\nQuestion:\n${question}`,
-        },
-      ];
-    }
-    return { context, question };
   }
 
   const input = args[0];
@@ -201,7 +197,12 @@ function extractInput(task: string | undefined, args: unknown[]): unknown {
     Array.isArray(input) &&
     input.every((value) => typeof value === "string")
   ) {
-    return input.map((value) => [{ role: "user", content: value }]);
+    return input.map((value) => [
+      {
+        role: "user",
+        content: value,
+      },
+    ]);
   }
   return input;
 }
@@ -220,13 +221,14 @@ function isChat(value: unknown): value is Array<Record<string, unknown>> {
 }
 
 function extractOutput(task: string | undefined, result: unknown): unknown {
-  if (task === "feature-extraction") {
-    return summarizeEmbedding(result);
+  switch (task) {
+    case "feature-extraction":
+      return summarizeEmbedding(result);
+    case "question-answering":
+      return choicesFromAnswers(result);
+    default:
+      return choicesFromGenerations(result);
   }
-  if (task === "question-answering") {
-    return choicesFromAnswers(result);
-  }
-  return choicesFromGenerations(result);
 }
 
 function summarizeEmbedding(
@@ -236,9 +238,8 @@ function summarizeEmbedding(
     return undefined;
   }
 
-  const dims = (result as HuggingFaceTransformersTensor).dims;
+  const { dims } = result;
   if (
-    !dims ||
     dims.length === 0 ||
     !dims.every((dimension) => typeof dimension === "number")
   ) {
@@ -262,20 +263,22 @@ function summarizeEmbedding(
 
 function choicesFromAnswers(result: unknown): unknown {
   const answers = Array.isArray(result) ? result.flat() : [result];
-  const choices = answers.flatMap((answer, index) =>
-    isObject(answer) && typeof answer.answer === "string"
-      ? [
-          {
-            index,
-            finish_reason: "stop",
-            message: {
-              role: "assistant",
-              content: answer.answer,
-            },
-          },
-        ]
-      : [],
-  );
+  const choices = answers.flatMap((answer, index) => {
+    if (!isObject(answer) || typeof answer.answer !== "string") {
+      return [];
+    }
+
+    return [
+      {
+        index,
+        finish_reason: "stop",
+        message: {
+          role: "assistant",
+          content: answer.answer,
+        },
+      },
+    ];
+  });
   return choices.length > 0 ? choices : undefined;
 }
 
@@ -285,26 +288,29 @@ function choicesFromGenerations(result: unknown): unknown {
     if (!isObject(generation)) {
       return [];
     }
-    const generated =
-      generation.generated_text ?? generation.summary_text ?? undefined;
-    const content =
-      typeof generated === "string"
-        ? generated
-        : isChat(generated)
-          ? generated.at(-1)?.content
-          : undefined;
-    return typeof content === "string"
-      ? [
-          {
-            index,
-            finish_reason: "stop",
-            message: {
-              role: "assistant",
-              content,
-            },
-          },
-        ]
-      : [];
+
+    const generated = generation.generated_text ?? generation.summary_text;
+    let content: unknown;
+    if (typeof generated === "string") {
+      content = generated;
+    } else if (isChat(generated)) {
+      content = generated.at(-1)?.content;
+    }
+
+    if (typeof content !== "string") {
+      return [];
+    }
+
+    return [
+      {
+        index,
+        finish_reason: "stop",
+        message: {
+          role: "assistant",
+          content,
+        },
+      },
+    ];
   });
   return choices.length > 0 ? choices : undefined;
 }
@@ -313,5 +319,5 @@ export const _exportsForTestingOnly = {
   extractInput,
   extractMetadata,
   extractOutput,
-  isSupportedTask,
+  isSupportedTask: isSupportedHuggingFaceTransformersTask,
 };

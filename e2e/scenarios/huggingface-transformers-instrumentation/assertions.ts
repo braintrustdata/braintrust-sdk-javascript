@@ -29,12 +29,27 @@ type RunScenario = (harness: {
 }) => Promise<void>;
 
 const EXPECTED_SPANS = [
-  "huggingface.transformers.text_generation",
-  "huggingface.transformers.text2text_generation",
-  "huggingface.transformers.summarization",
-  "huggingface.transformers.feature_extraction",
-  "huggingface.transformers.question_answering",
-];
+  {
+    name: "huggingface.transformers.text_generation",
+    task: "text-generation",
+  },
+  {
+    name: "huggingface.transformers.text2text_generation",
+    task: "text2text-generation",
+  },
+  {
+    name: "huggingface.transformers.summarization",
+    task: "summarization",
+  },
+  {
+    name: "huggingface.transformers.feature_extraction",
+    task: "feature-extraction",
+  },
+  {
+    name: "huggingface.transformers.question_answering",
+    task: "question-answering",
+  },
+] as const;
 
 export function defineAssertions(options: {
   name: string;
@@ -65,17 +80,12 @@ export function defineAssertions(options: {
     }, options.timeoutMs);
 
     test("captures all supported local pipeline executions", testConfig, () => {
-      for (const name of EXPECTED_SPANS) {
+      for (const { name, task } of EXPECTED_SPANS) {
         const matches = findAllSpans(traceEvents, name);
         expect(matches, `expected one ${name} span`).toHaveLength(1);
         expect(matches[0]?.span.type).toBe("llm");
         expect(matches[0]?.metadata).toMatchObject({
-          model:
-            MODEL_IDS[
-              name
-                .slice("huggingface.transformers.".length)
-                .replaceAll("_", "-")
-            ],
+          model: MODEL_IDS[task],
           provider: "huggingface",
         });
       }

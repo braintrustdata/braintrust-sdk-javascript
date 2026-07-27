@@ -1,4 +1,7 @@
-import { huggingFaceTransformersChannels } from "../instrumentation/plugins/huggingface-transformers-channels";
+import {
+  huggingFaceTransformersChannels,
+  isSupportedHuggingFaceTransformersTask,
+} from "../instrumentation/plugins/huggingface-transformers-channels";
 import type {
   HuggingFaceTransformersModule,
   HuggingFaceTransformersPipeline,
@@ -11,13 +14,6 @@ const PIPELINE_CONSTRUCTOR_KEYS = new Set([
   "SummarizationPipeline",
   "FeatureExtractionPipeline",
   "QuestionAnsweringPipeline",
-]);
-const SUPPORTED_TASKS = new Set([
-  "text-generation",
-  "text2text-generation",
-  "summarization",
-  "feature-extraction",
-  "question-answering",
 ]);
 const wrappedValues = new WeakMap<object, object>();
 
@@ -32,8 +28,7 @@ export function wrapHuggingFaceTransformers(transformers: unknown): unknown {
   const pipelineTask = (transformers as { task?: unknown } | null)?.task;
   if (
     typeof transformers === "function" &&
-    typeof pipelineTask === "string" &&
-    SUPPORTED_TASKS.has(pipelineTask)
+    isSupportedHuggingFaceTransformersTask(pipelineTask)
   ) {
     return wrapPipeline(transformers as HuggingFaceTransformersPipeline);
   }
@@ -77,12 +72,16 @@ function isSupportedModule(
   ) {
     return false;
   }
-  return (
-    typeof Reflect.get(value, "pipeline") === "function" ||
-    [...PIPELINE_CONSTRUCTOR_KEYS].some(
-      (key) => typeof Reflect.get(value, key) === "function",
-    )
-  );
+  if (typeof Reflect.get(value, "pipeline") === "function") {
+    return true;
+  }
+
+  for (const key of PIPELINE_CONSTRUCTOR_KEYS) {
+    if (typeof Reflect.get(value, key) === "function") {
+      return true;
+    }
+  }
+  return false;
 }
 
 function wrapPipelineFactory(
@@ -108,11 +107,12 @@ function wrapPipelineFactory(
     };
     return huggingFaceTransformersChannels.pipeline
       .tracePromise(() => Reflect.apply(factory, this, args), context)
-      .then((pipeline) =>
-        SUPPORTED_TASKS.has(pipeline.task ?? task)
-          ? wrapPipeline(pipeline)
-          : pipeline,
-      );
+      .then((pipeline) => {
+        if (isSupportedHuggingFaceTransformersTask(pipeline.task ?? task)) {
+          return wrapPipeline(pipeline);
+        }
+        return pipeline;
+      });
   };
   wrappedValues.set(factory, wrapped);
   wrappedValues.set(wrapped, wrapped);
@@ -129,10 +129,10 @@ function wrapPipelineConstructor(
   const proxy = new Proxy(constructor, {
     construct(target, args, newTarget) {
       const pipeline = Reflect.construct(target, args, newTarget);
-      return typeof pipeline.task === "string" &&
-        SUPPORTED_TASKS.has(pipeline.task)
-        ? wrapPipeline(pipeline)
-        : pipeline;
+      if (isSupportedHuggingFaceTransformersTask(pipeline.task)) {
+        return wrapPipeline(pipeline);
+      }
+      return pipeline;
     },
   });
   wrappedValues.set(constructor, proxy);

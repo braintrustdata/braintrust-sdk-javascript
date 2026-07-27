@@ -31,6 +31,7 @@ export const SCENARIO_SPECS = [
   },
   {
     dependencyName: "huggingface-transformers-v4-latest",
+    runCjsAutoInstrumentation: true,
     snapshotName: "huggingface-transformers-v4-latest",
   },
 ];

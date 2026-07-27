@@ -2,6 +2,7 @@ import { channel, defineChannels } from "../core/channel-definitions";
 import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
   HuggingFaceTransformersPipeline,
+  HuggingFaceTransformersTask,
   HuggingFaceTransformersTensor,
 } from "../../vendor-sdk-types/huggingface-transformers";
 
@@ -15,7 +16,21 @@ type HuggingFaceTransformersPipelineInfo = {
   task: string;
 };
 
+const SUPPORTED_TASKS: ReadonlySet<string> = new Set([
+  "text-generation",
+  "text2text-generation",
+  "summarization",
+  "feature-extraction",
+  "question-answering",
+]);
+
 const pipelineInfo = new WeakMap<object, HuggingFaceTransformersPipelineInfo>();
+
+export function isSupportedHuggingFaceTransformersTask(
+  task: unknown,
+): task is HuggingFaceTransformersTask {
+  return typeof task === "string" && SUPPORTED_TASKS.has(task);
+}
 
 export function registerHuggingFaceTransformersPipeline(
   pipeline: HuggingFaceTransformersPipeline,
@@ -26,10 +41,11 @@ export function registerHuggingFaceTransformersPipeline(
     return;
   }
 
-  pipelineInfo.set(pipeline, {
-    task,
-    ...(typeof model === "string" ? { model } : {}),
-  });
+  const info: HuggingFaceTransformersPipelineInfo = { task };
+  if (typeof model === "string") {
+    info.model = model;
+  }
+  pipelineInfo.set(pipeline, info);
 }
 
 export function getHuggingFaceTransformersPipelineInfo(
