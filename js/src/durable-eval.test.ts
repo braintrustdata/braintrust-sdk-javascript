@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -9,6 +9,8 @@ import {
   FileDurableEvalStore,
   MemoryDurableEvalStore,
   type DurableBatchTaskItem,
+  type DurableEvalStore,
+  type DurableEvalWriteCondition,
 } from "./durable-eval";
 import type { EvaluatorFile } from "./framework";
 import { configureNode } from "./node/config";
@@ -51,6 +53,33 @@ describe("DurableEval", () => {
       const keys: string[] = [];
       for await (const key of store.list("runs/")) keys.push(key);
       expect(keys).toEqual(["runs/one"]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  test("filesystem store recovers stale locks and rejects Windows traversal keys", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "durable-eval-locks-"));
+    try {
+      const store = new FileDurableEvalStore(directory);
+      const value = new TextEncoder().encode("one");
+      const first = await store.write("runs/one", value, { ifAbsent: true });
+      expect(first.written).toBe(true);
+
+      const lockPath = join(directory, "runs", "one.lock");
+      await writeFile(lockPath, "orphaned");
+      const staleTime = new Date(Date.now() - 60_000);
+      await utimes(lockPath, staleTime, staleTime);
+      const current = await store.read("runs/one");
+      await expect(
+        store.write("runs/one", new TextEncoder().encode("two"), {
+          ifVersion: current!.version,
+        }),
+      ).resolves.toMatchObject({ written: true });
+
+      await expect(
+        store.write("..\\outside", value, { ifAbsent: true }),
+      ).rejects.toThrow("Invalid durable eval store key");
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
@@ -103,6 +132,31 @@ describe("DurableEval", () => {
     expect(second.status).toBe("completed");
     expect(task).toHaveBeenCalledTimes(2);
     expect(scorerCalls).toBe(2);
+  });
+
+  test("persists metadata written through hooks.meta", async () => {
+    const result = await DurableEval("metadata-hooks", {
+      revision: "v1",
+      data: [{ id: "one", input: "hello" }],
+      task: (_input, hooks) => {
+        hooks.meta({ source: "deprecated-hook" });
+        return hooks.metadata.source;
+      },
+      scores: [
+        function exact({ output }) {
+          return output === "deprecated-hook" ? 1 : 0;
+        },
+      ],
+    }).run({
+      runId: "metadata-run",
+      store: new MemoryDurableEvalStore(),
+      noSendLogs: true,
+    });
+
+    expect(result).toMatchObject({
+      status: "completed",
+      summary: { scores: { exact: { score: 1 } } },
+    });
   });
 
   test("requires stable case identifiers", async () => {
@@ -213,6 +267,84 @@ describe("DurableEval", () => {
     expect(result.summary.scores.exact?.score).toBe(1);
     expect(taskJobs).toHaveLength(2);
     expect(scoreJobs).toHaveLength(2);
+  });
+
+  test("retries raced case writes before completing a batch job", async () => {
+    class FailOneResultWriteStore implements DurableEvalStore {
+      readonly inner = new MemoryDurableEvalStore();
+      failed = false;
+
+      read(key: string) {
+        return this.inner.read(key);
+      }
+
+      async write(
+        key: string,
+        value: Uint8Array,
+        condition: DurableEvalWriteCondition,
+      ) {
+        const serialized = new TextDecoder().decode(value);
+        if (
+          !this.failed &&
+          key.includes("/cases/") &&
+          serialized.includes('"status":"succeeded"')
+        ) {
+          this.failed = true;
+          return {
+            written: false as const,
+            currentVersion: (await this.inner.read(key))?.version,
+          };
+        }
+        return this.inner.write(key, value, condition);
+      }
+
+      list(prefix: string) {
+        return this.inner.list(prefix);
+      }
+    }
+
+    const store = new FailOneResultWriteStore();
+    const result = await DurableEval("cas-batch-results", {
+      revision: "eval-v1",
+      data: [{ id: "one", input: 1, expected: 2 }],
+      task: BatchTask<
+        number,
+        number,
+        number,
+        void,
+        Record<string, never>,
+        { id: string }
+      >({
+        revision: "task-v1",
+        async submit() {
+          return { id: "provider-job" };
+        },
+        completion: {
+          mode: "poll",
+          async poll() {
+            return { status: "complete" };
+          },
+        },
+        async *collect() {
+          yield { id: "one:trial:0", output: 2 };
+        },
+      }),
+      scores: [
+        function exact({ output, expected }) {
+          return output === expected ? 1 : 0;
+        },
+      ],
+    }).run({
+      runId: "cas-run",
+      store,
+      noSendLogs: true,
+    });
+
+    expect(store.failed).toBe(true);
+    expect(result).toMatchObject({
+      status: "completed",
+      progress: { taskSucceeded: 1, scoreSucceeded: 1 },
+    });
   });
 
   test("pauses for webhooks and processes bounded sub-batches", async () => {
@@ -595,6 +727,76 @@ describe("DurableEval", () => {
     expect(submitCount).toBe(1);
   });
 
+  test("renews provider leases while polling exceeds the lease duration", async () => {
+    vi.useFakeTimers();
+    try {
+      const store = new MemoryDurableEvalStore();
+      let pollCalls = 0;
+      let releasePoll: () => void = () => undefined;
+      const pollGate = new Promise<void>((resolve) => {
+        releasePoll = resolve;
+      });
+      const durable = DurableEval("long-provider-poll", {
+        revision: "eval-v1",
+        data: [{ id: "one", input: "input" }],
+        task: BatchTask<
+          string,
+          string,
+          void,
+          void,
+          Record<string, never>,
+          { id: string }
+        >({
+          revision: "task-v1",
+          async submit() {
+            return { id: "long-job" };
+          },
+          completion: {
+            mode: "poll",
+            async poll() {
+              pollCalls++;
+              await pollGate;
+              return { status: "complete" };
+            },
+          },
+          async *collect() {
+            yield { id: "one:trial:0", output: "done" };
+          },
+        }),
+        scores: [],
+      });
+
+      const first = durable.run({
+        runId: "long-poll-run",
+        store,
+        noSendLogs: true,
+        workerId: "worker-one",
+      });
+      while (pollCalls === 0) await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(61_000);
+
+      const second = durable.run({
+        runId: "long-poll-run",
+        store,
+        noSendLogs: true,
+        workerId: "worker-two",
+        deadlineMs: 5,
+      });
+      await vi.advanceTimersByTimeAsync(10);
+      await expect(second).resolves.toMatchObject({
+        status: "paused",
+        reason: "deadline",
+      });
+      expect(pollCalls).toBe(1);
+
+      releasePoll();
+      await vi.advanceTimersByTimeAsync(0);
+      await expect(first).resolves.toMatchObject({ status: "completed" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("cancels active provider batches and terminally checkpoints the work", async () => {
     const store = new MemoryDurableEvalStore();
     const abort = new AbortController();
@@ -609,12 +811,12 @@ describe("DurableEval", () => {
     >({
       revision: "task-v1",
       async submit(_items, context) {
-        abort.abort();
         return { jobId: context.batchId };
       },
       completion: {
         mode: "poll",
         async poll() {
+          abort.abort();
           return { status: "pending" };
         },
       },
@@ -725,6 +927,141 @@ describe("DurableEval", () => {
     expect(submits).toBe(1);
   });
 
+  test("deadline aborts an active provider submission", async () => {
+    const neverSubmitted = new Promise<{ id: string }>(() => undefined);
+    const durable = DurableEval("submit-deadline", {
+      revision: "eval-v1",
+      data: [{ id: "one", input: "input" }],
+      task: BatchTask<
+        string,
+        string,
+        void,
+        void,
+        Record<string, never>,
+        { id: string }
+      >({
+        revision: "task-v1",
+        async submit() {
+          return await neverSubmitted;
+        },
+        completion: {
+          mode: "poll",
+          async poll() {
+            return { status: "pending" };
+          },
+        },
+        async *collect() {
+          // The submission never returns a handle.
+        },
+      }),
+      scores: [],
+    });
+
+    const started = Date.now();
+    const result = await durable.run({
+      runId: "submit-deadline-run",
+      store: new MemoryDurableEvalStore(),
+      noSendLogs: true,
+      deadlineMs: 10,
+    });
+    expect(result).toMatchObject({ status: "paused", reason: "deadline" });
+    expect(Date.now() - started).toBeLessThan(1_000);
+  });
+
+  test("reserves one deterministic experiment name across concurrent shards", async () => {
+    const store = new MemoryDurableEvalStore();
+    const durable = DurableEval("experiment-reservation", {
+      revision: "v1",
+      data: [
+        { id: "one", input: 1 },
+        { id: "two", input: 2 },
+        { id: "three", input: 3 },
+        { id: "four", input: 4 },
+      ],
+      task: (input) => input,
+      scores: [],
+    });
+
+    await Promise.all([
+      durable.run({
+        runId: "shared-run",
+        shard: { index: 0, count: 2 },
+        store,
+        noSendLogs: true,
+      }),
+      durable.run({
+        runId: "shared-run",
+        shard: { index: 1, count: 2 },
+        store,
+        noSendLogs: true,
+      }),
+    ]);
+
+    const manifests: string[] = [];
+    for await (const key of store.list("durable-eval/v1/")) {
+      if (!key.endsWith("/manifest")) continue;
+      const record = await store.read(key);
+      if (record) manifests.push(new TextDecoder().decode(record.value));
+    }
+    expect(manifests).toHaveLength(1);
+    expect(JSON.parse(manifests[0])).toMatchObject({
+      experimentName: "experiment-reservation-shared-run",
+      shardCount: 2,
+    });
+
+    await expect(
+      durable.status({
+        runId: "shared-run",
+        store,
+        noSendLogs: true,
+      }),
+    ).resolves.toMatchObject({ status: "completed" });
+  });
+
+  test("applies lifecycle retries to every shard when no shard is specified", async () => {
+    const store = new MemoryDurableEvalStore();
+    let succeed = false;
+    const durable = DurableEval("sharded-lifecycle", {
+      revision: "v1",
+      data: [1, 2, 3, 4].map((input) => ({
+        id: `case-${input}`,
+        input,
+      })),
+      task: (input) => {
+        if (!succeed) throw new Error("try again later");
+        return input;
+      },
+      scores: [],
+    });
+
+    await Promise.all([
+      durable.run({
+        runId: "sharded-lifecycle-run",
+        shard: { index: 0, count: 2 },
+        store,
+        noSendLogs: true,
+      }),
+      durable.run({
+        runId: "sharded-lifecycle-run",
+        shard: { index: 1, count: 2 },
+        store,
+        noSendLogs: true,
+      }),
+    ]);
+
+    succeed = true;
+    await expect(
+      durable.retryFailed({
+        runId: "sharded-lifecycle-run",
+        store,
+        noSendLogs: true,
+      }),
+    ).resolves.toMatchObject({
+      status: "completed",
+      progress: { taskSucceeded: 4, taskFailed: 0 },
+    });
+  });
+
   test("keeps completed work when the definition revision changes", async () => {
     const store = new MemoryDurableEvalStore();
     const firstTask = vi.fn((input: number) => input);
@@ -762,6 +1099,52 @@ describe("DurableEval", () => {
     expect(result.status).toBe("completed");
     expect(firstTask).toHaveBeenCalledOnce();
     expect(changedTask).not.toHaveBeenCalled();
+  });
+
+  test("removes inactive scorer state when a definition changes", async () => {
+    const store = new MemoryDurableEvalStore();
+    await DurableEval("remove-scorer", {
+      revision: "v1",
+      data: [{ id: "one", input: 1 }],
+      task: (input) => input,
+      scores: [
+        function oldScore() {
+          return 1;
+        },
+      ],
+    }).run({
+      runId: "remove-scorer-run",
+      store,
+      noSendLogs: true,
+    });
+
+    const result = await DurableEval("remove-scorer", {
+      revision: "v2",
+      data: [{ id: "one", input: 1 }],
+      task: (input) => input,
+      scores: [],
+    }).run({
+      runId: "remove-scorer-run",
+      store,
+      noSendLogs: true,
+    });
+    expect(result).toMatchObject({
+      status: "completed",
+      summary: { scores: {} },
+    });
+
+    const cases: Array<Record<string, unknown>> = [];
+    for await (const key of store.list("durable-eval/v1/")) {
+      if (!key.includes("/cases/")) continue;
+      const record = await store.read(key);
+      if (record)
+        cases.push(JSON.parse(new TextDecoder().decode(record.value)));
+    }
+    expect(cases).toHaveLength(1);
+    expect(cases[0]).toMatchObject({
+      scores: {},
+      removedScores: ["oldScore"],
+    });
   });
 
   test("pauses safely when submit may have created a provider job", async () => {

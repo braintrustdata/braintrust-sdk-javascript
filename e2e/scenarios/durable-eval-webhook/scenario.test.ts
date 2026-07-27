@@ -15,19 +15,30 @@ test("durable eval collects webhook sub-batches and logs completed rows", async 
     await runScenarioDir({ scenarioDir });
 
     const evalSpans = findAllSpans(testRunEvents(), "eval");
-    expect(evalSpans).toHaveLength(3);
-    expect(evalSpans.map((event) => event.output).sort()).toEqual([2, 4, 6]);
+    const webhookSpans = evalSpans.filter(
+      (event) => event.metadata?.kind === "webhook",
+    );
+    expect(webhookSpans).toHaveLength(3);
+    expect(webhookSpans.map((event) => event.output).sort()).toEqual([2, 4, 6]);
     expect(
-      evalSpans
+      webhookSpans
         .map((event) => event.scores)
         .sort((left, right) =>
           JSON.stringify(left).localeCompare(JSON.stringify(right)),
         ),
     ).toEqual([{ exact: 1 }, { exact: 1 }, { exact: 1 }]);
-    expect(evalSpans.map((event) => event.metadata?.durable_eval)).toEqual([
+    expect(webhookSpans.map((event) => event.metadata?.durable_eval)).toEqual([
       expect.objectContaining({ run_id: expect.any(String) }),
       expect.objectContaining({ run_id: expect.any(String) }),
       expect.objectContaining({ run_id: expect.any(String) }),
     ]);
+
+    const shardedSpans = evalSpans.filter(
+      (event) => event.metadata?.kind === "sharded",
+    );
+    expect(shardedSpans).toHaveLength(4);
+    expect(new Set(shardedSpans.map((event) => event.experimentId)).size).toBe(
+      1,
+    );
   });
 });

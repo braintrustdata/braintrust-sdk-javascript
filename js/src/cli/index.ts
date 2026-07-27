@@ -249,6 +249,9 @@ function buildWatchPluginForEvaluator(
         evaluators.evaluators = evaluators.evaluators.filter(
           (e) => e.sourceFile !== inFile,
         );
+        evaluators.durableEvaluators = evaluators.durableEvaluators.filter(
+          (e) => e.sourceFile !== inFile,
+        );
 
         // Update the evaluators and reporters
         for (const evaluator of Object.values(evalResult.evaluators)) {
@@ -262,6 +265,21 @@ function buildWatchPluginForEvaluator(
               BaseMetadata
             >,
             reporter: evaluator.reporter,
+          });
+        }
+        for (const registration of Object.values(
+          evalResult.durableEvaluators ?? {},
+        )) {
+          evaluators.durableEvaluators.push({
+            sourceFile: inFile,
+            // Runtime registrations are intentionally generic-erased.
+            definition: registration.definition as DurableEvalDefinition<
+              any,
+              any,
+              any,
+              any,
+              any
+            >,
           });
         }
         for (const [reporterName, reporter] of Object.entries(
@@ -309,6 +327,20 @@ function buildWatchPluginForEvaluator(
           );
 
           addReport(evalReports, resolvedReporter, report);
+        }
+        for (const registration of evaluators.durableEvaluators.filter(
+          (candidate) => candidate.sourceFile === inFile,
+        )) {
+          const result = await runDurableEvaluator(
+            registration.definition,
+            opts,
+          );
+          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+          console.error(
+            result.status === "completed"
+              ? `Durable eval ${result.runId} completed`
+              : `Durable eval ${result.runId} paused: ${result.reason}`,
+          );
         }
 
         for (const [reporterName, { reporter, results }] of Object.entries(
@@ -561,6 +593,36 @@ export async function buildEvaluators(
   return { evaluators, buildResults };
 }
 
+async function runDurableEvaluator(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  opts: EvaluatorOpts,
+) {
+  const options: DurableEvalRuntimeOptions = {
+    runId: opts.durableRunId,
+    shard: opts.durableShard,
+    deadlineMs: opts.durableDeadlineMs,
+    checkpointDir: opts.checkpointDir,
+    noSendLogs: opts.noSendLogs,
+  };
+  if (!opts.durableOperation) {
+    return await definition.run(options);
+  }
+  if (!opts.durableRunId) {
+    throw new Error(`--${opts.durableOperation} requires --run-id`);
+  }
+  const existingOptions = { ...options, runId: opts.durableRunId };
+  switch (opts.durableOperation) {
+    case "status":
+      return await definition.status(existingOptions);
+    case "retry-failed":
+      return await definition.retryFailed(existingOptions);
+    case "resubmit-unknown":
+      return await definition.resubmitUnknown(existingOptions);
+    case "cancel":
+      return await definition.cancel(existingOptions);
+  }
+}
+
 async function runOnce(
   handles: Record<string, FileHandle>,
   opts: EvaluatorOpts,
@@ -629,34 +691,8 @@ async function runOnce(
     }
   });
   const durableResultPromises = evaluators.durableEvaluators.map(
-    async (registration) => {
-      const options: DurableEvalRuntimeOptions = {
-        runId: opts.durableRunId,
-        shard: opts.durableShard,
-        deadlineMs: opts.durableDeadlineMs,
-        checkpointDir: opts.checkpointDir,
-        noSendLogs: opts.noSendLogs,
-      };
-      if (!opts.durableOperation) {
-        return await registration.definition.run(options);
-      }
-      if (!opts.durableRunId) {
-        throw new Error(
-          `--${opts.durableOperation.replaceAll("-", "_")} requires --run-id`,
-        );
-      }
-      const existingOptions = { ...options, runId: opts.durableRunId };
-      switch (opts.durableOperation) {
-        case "status":
-          return await registration.definition.status(existingOptions);
-        case "retry-failed":
-          return await registration.definition.retryFailed(existingOptions);
-        case "resubmit-unknown":
-          return await registration.definition.resubmitUnknown(existingOptions);
-        case "cancel":
-          return await registration.definition.cancel(existingOptions);
-      }
-    },
+    async (registration) =>
+      await runDurableEvaluator(registration.definition, opts),
   );
 
   // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.

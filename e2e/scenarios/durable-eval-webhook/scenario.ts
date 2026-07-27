@@ -18,7 +18,7 @@ async function main() {
     DurableBatchTaskItem<
       number,
       number,
-      { testRunId: string },
+      { testRunId: string; kind: string },
       Record<string, never>
     >[]
   >();
@@ -26,7 +26,7 @@ async function main() {
     number,
     number,
     number,
-    { testRunId: string },
+    { testRunId: string; kind: string },
     Record<string, never>,
     { id: string }
   >({
@@ -61,7 +61,7 @@ async function main() {
         id: `case-${input}`,
         input,
         expected: input * 2,
-        metadata: { testRunId },
+        metadata: { testRunId, kind: "webhook" },
       })),
       task,
       scores: [
@@ -101,6 +101,32 @@ async function main() {
       throw new Error("Durable eval did not complete after the final webhook");
     }
   }
+
+  const sharded = DurableEval(
+    scopedName("e2e-durable-eval-sharded-project", testRunId),
+    {
+      revision: "eval-v1",
+      data: [1, 2, 3, 4].map((input) => ({
+        id: `shard-case-${input}`,
+        input,
+        metadata: { testRunId, kind: "sharded" },
+      })),
+      task: (input) => input * 10,
+      scores: [],
+    },
+  );
+  await Promise.all([
+    sharded.run({
+      runId: `sharded-${testRunId}`,
+      shard: { index: 0, count: 2 },
+      store,
+    }),
+    sharded.run({
+      runId: `sharded-${testRunId}`,
+      shard: { index: 1, count: 2 },
+      store,
+    }),
+  ]);
 }
 
 runMain(main);

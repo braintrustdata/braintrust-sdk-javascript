@@ -30,6 +30,9 @@ const CHECKPOINT_VERSION = 2;
 const DEFAULT_BATCH_SIZE = 1_000;
 const DEFAULT_MAX_CONCURRENT_BATCHES = 1;
 const JOB_LEASE_MS = 60_000;
+const LEASE_HEARTBEAT_MS = JOB_LEASE_MS / 3;
+const FILE_LOCK_STALE_MS = 10_000;
+const FILE_LOCK_WAIT_MS = 15_000;
 
 type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
@@ -141,6 +144,7 @@ export class FileDurableEvalStore implements DurableEvalStore {
   private pathFor(key: string) {
     if (
       key.startsWith("/") ||
+      key.includes("\\") ||
       key.split("/").some((part) => part === ".." || part === ".")
     ) {
       throw new Error(`Invalid durable eval store key: ${key}`);
@@ -150,16 +154,43 @@ export class FileDurableEvalStore implements DurableEvalStore {
 
   private async withLock<T>(path: string, fn: () => Promise<T>): Promise<T> {
     const lockPath = `${path}.lock`;
+    const lockContents = stableStringify({
+      owner: newId(),
+      createdAt: new Date().toISOString(),
+    });
     await iso.mkdir!(iso.pathDirname!(path), { recursive: true });
     const started = Date.now();
-    let handle: { close(): Promise<void> } | undefined;
+    let handle:
+      | { close(): Promise<void>; writeFile(value: string): Promise<void> }
+      | undefined;
     while (!handle) {
       try {
-        handle = await iso.openFile!(lockPath, "wx");
-      } catch (error) {
-        if (!isErrorCode(error, "EEXIST") || Date.now() - started >= 10_000) {
+        const candidate = await iso.openFile!(lockPath, "wx");
+        try {
+          await candidate.writeFile(lockContents);
+          handle = candidate;
+        } catch (error) {
+          await candidate.close();
+          await iso.unlink!(lockPath).catch(() => undefined);
           throw error;
         }
+      } catch (error) {
+        if (!isErrorCode(error, "EEXIST")) {
+          throw error;
+        }
+        try {
+          const lockStat = await iso.stat!(lockPath);
+          if (Date.now() - lockStat.mtimeMs >= FILE_LOCK_STALE_MS) {
+            await iso.unlink!(lockPath).catch((unlinkError) => {
+              if (!isErrorCode(unlinkError, "ENOENT")) throw unlinkError;
+            });
+            continue;
+          }
+        } catch (statError) {
+          if (!isErrorCode(statError, "ENOENT")) throw statError;
+          continue;
+        }
+        if (Date.now() - started >= FILE_LOCK_WAIT_MS) throw error;
         await delay(10);
       }
     }
@@ -167,7 +198,14 @@ export class FileDurableEvalStore implements DurableEvalStore {
       return await fn();
     } finally {
       await handle.close();
-      await iso.unlink!(lockPath).catch(() => undefined);
+      try {
+        const currentLock = await iso.readFile!(lockPath);
+        if (decoder.decode(currentLock) === lockContents) {
+          await iso.unlink!(lockPath).catch(() => undefined);
+        }
+      } catch (error) {
+        if (!isErrorCode(error, "ENOENT")) throw error;
+      }
     }
   }
 
@@ -621,6 +659,7 @@ type DurableCaseRecord = {
   metadata: JsonValue;
   tags?: string[];
   logPending?: boolean;
+  removedScores?: string[];
 };
 
 type DurableJobRecord = {
@@ -661,6 +700,15 @@ type DurableRunManifest = {
   activeScorers: string[];
   experimentName?: string;
   createdAt: string;
+};
+
+type DurableExperimentInitRecord = {
+  schemaVersion: number;
+  experimentName: string;
+  status: "initializing" | "ready";
+  workerId?: string;
+  leaseUntil?: number;
+  experimentId?: string;
 };
 
 type Versioned<T> = { value: T; version: string };
@@ -920,6 +968,9 @@ async function processDurableBatchResult<
     await markWebhookEventApplied(store, storedEventKey, locator.batchId);
     return { status: "duplicate", batchId: locator.batchId };
   }
+  if (attached === "in_progress") {
+    return { status: "duplicate", batchId: locator.batchId };
+  }
 
   const run = await runDurableEval(
     definition.projectName,
@@ -952,8 +1003,6 @@ async function runDurableEval<
   options: DurableEvalExecutionOptions = {},
 ): Promise<DurableEvalResult> {
   const runId = options.runId ?? newId();
-  const shard = options.shard ?? { index: 0, count: 1 };
-  validateShard(shard);
   const workerId = options.workerId ?? newId();
   const store =
     options.store ??
@@ -988,6 +1037,11 @@ async function runDurableEval<
     store,
     manifestKey,
   );
+  const shard = options.shard ?? {
+    index: 0,
+    count: existingManifest?.value.shardCount ?? 1,
+  };
+  validateShard(shard);
   if (options.operation && options.operation !== "run" && !existingManifest) {
     throw new Error(`DurableEval run ${runId} does not exist`);
   }
@@ -1002,13 +1056,51 @@ async function runDurableEval<
       shardCount: shard.count,
       dataSealed: false,
       activeScorers: scorerNames,
-      experimentName: evaluator.experimentName,
+      experimentName: evaluator.experimentName ?? `${evalName}-${runId}`,
       createdAt: new Date().toISOString(),
     }));
   if (manifest.value.shardCount !== shard.count) {
     throw new Error(
       `DurableEval run ${runId} was created with ${manifest.value.shardCount} shards, not ${shard.count}`,
     );
+  }
+  if (
+    options.shard === undefined &&
+    manifest.value.shardCount > 1 &&
+    (options.operation === "retry-failed" ||
+      options.operation === "resubmit-unknown" ||
+      options.operation === "cancel")
+  ) {
+    let lastResult: DurableEvalResult | undefined;
+    let pausedLifecycleResult: DurableEvalResult | undefined;
+    for (let index = 0; index < manifest.value.shardCount; index++) {
+      const result = await runDurableEval(projectName, evaluator, {
+        ...options,
+        runId,
+        store,
+        shard: { index, count: manifest.value.shardCount },
+      });
+      lastResult = result;
+      if (
+        result.status === "paused" &&
+        result.reason !== "shard_complete" &&
+        result.reason !== "status_only" &&
+        !pausedLifecycleResult
+      ) {
+        pausedLifecycleResult = result;
+      }
+    }
+    if (!lastResult) throw new Error("DurableEval sharded lifecycle failed");
+    return pausedLifecycleResult ?? lastResult;
+  }
+  if (!manifest.value.experimentName) {
+    manifest = await updateManifest(store, manifestKey, (current) => ({
+      ...current,
+      experimentName:
+        current.experimentName ??
+        evaluator.experimentName ??
+        `${evalName}-${runId}`,
+    }));
   }
 
   if (!manifest.value.dataSealed) {
@@ -1028,33 +1120,32 @@ async function runDurableEval<
 
   const experiment: Experiment | null = options.noSendLogs
     ? null
-    : initExperiment({
-        state: evaluator.state,
-        ...(evaluator.projectId
-          ? { projectId: evaluator.projectId }
-          : { project: projectName }),
-        experiment: manifest.value.experimentName,
-        update: manifest.value.experimentName !== undefined,
-        description: evaluator.description,
-        metadata: evaluator.metadata,
-        tags: evaluator.tags,
-        setCurrent: false,
+    : await initializeDurableExperiment({
+        store,
+        key: `${prefix}/experiment`,
+        workerId,
+        experimentName: manifest.value.experimentName!,
+        create: () =>
+          initExperiment({
+            state: evaluator.state,
+            ...(evaluator.projectId
+              ? { projectId: evaluator.projectId }
+              : { project: projectName }),
+            experiment: manifest.value.experimentName,
+            update: true,
+            description: evaluator.description,
+            metadata: evaluator.metadata,
+            tags: evaluator.tags,
+            setCurrent: false,
+          }),
       });
-
-  if (experiment && !manifest.value.experimentName) {
-    const summary = await experiment.summarize({ summarizeScores: false });
-    manifest = await updateManifest(store, manifestKey, (current) => ({
-      ...current,
-      experimentName: summary.experimentName,
-    }));
-  }
 
   await reconcileScorers(store, prefix, scorerNames);
 
   if (options.operation === "retry-failed") {
-    await resetStages(store, prefix, scorerNames, "failed");
+    await resetStages(store, prefix, scorerNames, "failed", shard.index);
   } else if (options.operation === "resubmit-unknown") {
-    await resetStages(store, prefix, scorerNames, "unknown");
+    await resetStages(store, prefix, scorerNames, "unknown", shard.index);
   } else if (options.operation === "cancel") {
     await cancelRun({
       store,
@@ -1119,6 +1210,13 @@ async function runDurableEval<
   const controller = new AbortController();
   const abortHandler = () => controller.abort();
   options.signal?.addEventListener("abort", abortHandler, { once: true });
+  const deadlineTimer =
+    deadlineAt === undefined
+      ? undefined
+      : setTimeout(
+          () => controller.abort(),
+          Math.max(deadlineAt - Date.now(), 0),
+        );
 
   const resume = (overrides: Partial<DurableEvalRuntimeOptions> = {}) =>
     runDurableEval(projectName, evaluator, {
@@ -1170,7 +1268,6 @@ async function runDurableEval<
             projectName,
             evalName,
             scorer,
-            evaluatorRevision: evaluator.revision,
             shard,
             workerId,
             runId,
@@ -1191,6 +1288,14 @@ async function runDurableEval<
       }
 
       const progress = await collectProgress(store, prefix, scorerNames);
+      if (controller.signal.aborted) {
+        return pausedResult(
+          runId,
+          options.signal?.aborted ? "aborted" : "deadline",
+          progress,
+          resume,
+        );
+      }
       if (progress.unknown > 0) {
         return pausedResult(runId, "unknown_submission", progress, resume);
       }
@@ -1242,6 +1347,7 @@ async function runDurableEval<
       }
     }
   } finally {
+    if (deadlineTimer) clearTimeout(deadlineTimer);
     options.signal?.removeEventListener("abort", abortHandler);
   }
 }
@@ -1297,6 +1403,123 @@ async function updateManifest(
       ifVersion: current.version,
     });
     if (result.written) return { value: next, version: result.version };
+  }
+}
+
+async function initializeDurableExperiment({
+  store,
+  key,
+  workerId,
+  experimentName,
+  create,
+}: {
+  store: DurableEvalStore;
+  key: string;
+  workerId: string;
+  experimentName: string;
+  create: () => Experiment;
+}): Promise<Experiment> {
+  while (true) {
+    const current = await readJson<DurableExperimentInitRecord>(store, key);
+    if (current?.value.status === "ready") {
+      const experiment = create();
+      const experimentId = await experiment.id;
+      if (
+        current.value.experimentId &&
+        current.value.experimentId !== experimentId
+      ) {
+        throw new Error(
+          `DurableEval experiment ${experimentName} resolved to multiple experiment IDs`,
+        );
+      }
+      return experiment;
+    }
+
+    const now = Date.now();
+    if (!current || (current.value.leaseUntil ?? 0) <= now) {
+      const claimed: DurableExperimentInitRecord = {
+        schemaVersion: CHECKPOINT_VERSION,
+        experimentName,
+        status: "initializing",
+        workerId,
+        leaseUntil: now + JOB_LEASE_MS,
+      };
+      const write = await writeJson(
+        store,
+        key,
+        claimed,
+        current ? { ifVersion: current.version } : { ifAbsent: true },
+      );
+      if (write.written) {
+        const heartbeat = startLeaseHeartbeat(async () => {
+          let renewed = false;
+          await updateExperimentInitRecord(store, key, (record) => {
+            if (
+              record.status !== "initializing" ||
+              record.workerId !== workerId
+            ) {
+              return undefined;
+            }
+            renewed = true;
+            return { ...record, leaseUntil: Date.now() + JOB_LEASE_MS };
+          });
+          return renewed;
+        });
+        try {
+          const experiment = create();
+          const experimentId = await experiment.id;
+          const finalized = await updateExperimentInitRecord(
+            store,
+            key,
+            (record) =>
+              record.status === "initializing" && record.workerId === workerId
+                ? {
+                    schemaVersion: CHECKPOINT_VERSION,
+                    experimentName,
+                    status: "ready",
+                    experimentId,
+                  }
+                : undefined,
+          );
+          if (!finalized) {
+            throw new Error(
+              `DurableEval lost the experiment initialization lease for ${experimentName}`,
+            );
+          }
+          return experiment;
+        } catch (error) {
+          await updateExperimentInitRecord(store, key, (record) =>
+            record.status === "initializing" && record.workerId === workerId
+              ? { ...record, leaseUntil: 0 }
+              : undefined,
+          );
+          throw error;
+        } finally {
+          await heartbeat.stop();
+        }
+      }
+    }
+
+    await delay(25);
+  }
+}
+
+async function updateExperimentInitRecord(
+  store: DurableEvalStore,
+  key: string,
+  update: (
+    record: DurableExperimentInitRecord,
+  ) => DurableExperimentInitRecord | undefined,
+) {
+  while (true) {
+    const current = await readJson<DurableExperimentInitRecord>(store, key);
+    if (!current) return false;
+    const next = update(structuredClone(current.value));
+    if (!next) return false;
+    const written = await writeJson(store, key, next, {
+      ifVersion: current.version,
+    });
+    if (written.written) return true;
   }
 }
 
@@ -1421,17 +1644,59 @@ async function reconcileScorers(
   prefix: string,
   scorerNames: string[],
 ) {
+  const active = new Set(scorerNames);
   for await (const record of listCases(store, prefix)) {
-    const missing = scorerNames.filter(
-      (name) => record.value.scores[name] === undefined,
-    );
-    if (!missing.length) continue;
-    const next = structuredClone(record.value);
-    for (const name of missing) {
-      next.scores[name] = { status: "pending", attempts: 0 };
-    }
-    await writeJson(store, caseKey(prefix, record.value.id), next, {
-      ifVersion: record.version,
+    await updateCaseRecord(store, prefix, record.value.id, (next) => {
+      const missing = scorerNames.filter(
+        (name) => next.scores[name] === undefined,
+      );
+      const removed = Object.keys(next.scores).filter(
+        (name) => !active.has(name),
+      );
+      if (!missing.length && !removed.length) return undefined;
+      for (const name of missing) {
+        next.scores[name] = { status: "pending", attempts: 0 };
+      }
+      const removedScoreKeys = removed.flatMap((name) => {
+        const state = next.scores[name];
+        return state?.status === "succeeded"
+          ? typeof state.value === "object" &&
+            state.value !== null &&
+            !Array.isArray(state.value)
+            ? Object.keys(state.value)
+            : [name]
+          : [];
+      });
+      for (const name of removed) {
+        delete next.scores[name];
+      }
+      if (removedScoreKeys.length) {
+        next.removedScores = [
+          ...new Set([...(next.removedScores ?? []), ...removedScoreKeys]),
+        ];
+        next.logPending = true;
+      }
+      return next;
+    });
+  }
+  for await (const key of store.list(`${prefix}/jobs/`)) {
+    await updateJobRecord(store, key, (job) => {
+      if (
+        !job.stage.startsWith("score:") ||
+        active.has(job.stage.slice("score:".length)) ||
+        job.status === "complete" ||
+        job.status === "failed"
+      ) {
+        return undefined;
+      }
+      job.status = "failed";
+      job.error = {
+        name: "ScorerRemovedError",
+        message: `Scorer ${job.stage.slice("score:".length)} was removed`,
+      };
+      delete job.workerId;
+      delete job.leaseUntil;
+      return job;
     });
   }
 }
@@ -1441,32 +1706,31 @@ async function resetStages(
   prefix: string,
   scorerNames: string[],
   status: "failed" | "unknown",
+  shard: number,
 ) {
   for await (const current of listCases(store, prefix)) {
-    const next = structuredClone(current.value);
-    let changed = false;
-    if (next.task.status === status) {
-      next.task = {
-        status: "pending",
-        attempts: next.task.attempts,
-      };
-      changed = true;
-    }
-    for (const name of scorerNames) {
-      const state = next.scores[name];
-      if (state?.status === status) {
-        next.scores[name] = {
+    if (current.value.shard !== shard) continue;
+    await updateCaseRecord(store, prefix, current.value.id, (next) => {
+      let changed = false;
+      if (next.task.status === status) {
+        next.task = {
           status: "pending",
-          attempts: state.attempts,
+          attempts: next.task.attempts,
         };
         changed = true;
       }
-    }
-    if (changed) {
-      await writeJson(store, caseKey(prefix, next.id), next, {
-        ifVersion: current.version,
-      });
-    }
+      for (const name of scorerNames) {
+        const state = next.scores[name];
+        if (state?.status === status) {
+          next.scores[name] = {
+            status: "pending",
+            attempts: state.attempts,
+          };
+          changed = true;
+        }
+      }
+      return changed ? next : undefined;
+    });
   }
 }
 
@@ -1522,59 +1786,63 @@ async function cancelRun({
         batchContext(runId, job.stage, job, shard, signal),
       );
     }
-    if (
-      job.status === "preparing" ||
-      job.status === "submitting" ||
-      job.status === "submitted" ||
-      job.status === "unknown"
-    ) {
-      job.status = "failed";
-      job.error = { name: "CancelledError", message: "Durable eval cancelled" };
-      delete job.workerId;
-      delete job.leaseUntil;
-      await writeJson(store, key, job, { ifVersion: current.version });
-    }
+    await updateJobRecord(store, key, (latest) => {
+      if (
+        latest.status !== "preparing" &&
+        latest.status !== "submitting" &&
+        latest.status !== "submitted" &&
+        latest.status !== "unknown"
+      ) {
+        return undefined;
+      }
+      latest.status = "failed";
+      latest.error = {
+        name: "CancelledError",
+        message: "Durable eval cancelled",
+      };
+      delete latest.workerId;
+      delete latest.leaseUntil;
+      return latest;
+    });
   }
 
   for await (const current of listCases(store, prefix)) {
     if (current.value.shard !== shard.index) continue;
-    const next = structuredClone(current.value);
-    let changed = false;
-    if (!isTerminal(next.task)) {
-      next.task = {
-        status: "failed",
-        attempts: next.task.attempts,
-        revision: evaluator.revision,
-        error: {
-          name: "CancelledError",
-          message: "Durable eval cancelled",
-        },
-      };
-      changed = true;
-    }
-    if (next.task.status === "succeeded") {
-      for (const definition of scorerDefinitions) {
-        const state = next.scores[definition.name];
-        if (!isTerminal(state)) {
-          next.scores[definition.name] = {
-            status: "failed",
-            attempts: state?.attempts ?? 0,
-            revision: definition.revision,
-            error: {
-              name: "CancelledError",
-              message: "Durable eval cancelled",
-            },
-          };
-          changed = true;
+    await updateCaseRecord(store, prefix, current.value.id, (next) => {
+      let changed = false;
+      if (!isTerminal(next.task)) {
+        next.task = {
+          status: "failed",
+          attempts: next.task.attempts,
+          revision: evaluator.revision,
+          error: {
+            name: "CancelledError",
+            message: "Durable eval cancelled",
+          },
+        };
+        changed = true;
+      }
+      if (next.task.status === "succeeded") {
+        for (const definition of scorerDefinitions) {
+          const state = next.scores[definition.name];
+          if (!isTerminal(state)) {
+            next.scores[definition.name] = {
+              status: "failed",
+              attempts: state?.attempts ?? 0,
+              revision: definition.revision,
+              error: {
+                name: "CancelledError",
+                message: "Durable eval cancelled",
+              },
+            };
+            changed = true;
+          }
         }
       }
-    }
-    if (changed) {
+      if (!changed) return undefined;
       next.logPending = true;
-      await writeJson(store, caseKey(prefix, next.id), next, {
-        ifVersion: current.version,
-      });
-    }
+      return next;
+    });
   }
 }
 
@@ -1646,7 +1914,7 @@ async function runTaskPass({
       status: "leased",
       attempts: current.value.task.attempts,
       workerId,
-      leaseUntil: Date.now() + 60_000,
+      leaseUntil: Date.now() + JOB_LEASE_MS,
     };
     const claim = await writeJson(
       store,
@@ -1655,22 +1923,38 @@ async function runTaskPass({
       { ifVersion: current.version },
     );
     if (!claim.written) continue;
+    const heartbeat = startCaseLeaseHeartbeat({
+      store,
+      prefix,
+      id: current.value.id,
+      kind: "task",
+      workerId,
+    });
     const datum = current.value.datum as EvalCase<
       unknown,
       unknown,
       BaseMetadata
     >;
     const attempt = current.value.task.attempts + 1;
-    const next = structuredClone(current.value);
+    let taskResult:
+      | {
+          status: "succeeded";
+          output: JsonValue;
+          metadata: JsonValue;
+          tags?: string[];
+        }
+      | { status: "failed"; error: unknown };
     try {
-      let metadata = { ...(current.value.metadata as Record<string, unknown>) };
+      const metadata = {
+        ...(current.value.metadata as Record<string, unknown>),
+      };
       const hooks: EvalHooks<
         unknown,
         Record<string, unknown>,
         EvalParameters
       > = {
         meta: (value) => {
-          metadata = { ...metadata, ...(value as Record<string, unknown>) };
+          Object.assign(metadata, value);
         },
         metadata,
         expected: "expected" in datum ? datum.expected : undefined,
@@ -1680,34 +1964,57 @@ async function runTaskPass({
         trialIndex: current.value.trialIndex,
         tags: current.value.tags,
       };
-      const output = await localTask(datum.input, hooks);
-      next.metadata = assertJsonValue(hooks.metadata, "task metadata");
-      next.tags = hooks.tags;
-      next.task = {
+      const output = await awaitWithSignal(
+        Promise.resolve().then(() => localTask(datum.input, hooks)),
+        signal,
+      );
+      taskResult = {
         status: "succeeded",
-        attempts: attempt,
-        revision: evaluator.revision,
-        value: assertJsonValue(output, "task output"),
+        output: assertJsonValue(output, "task output"),
+        metadata: assertJsonValue(hooks.metadata, "task metadata"),
+        tags: hooks.tags,
       };
     } catch (error) {
-      next.task =
-        attempt < 3
-          ? { status: "pending", attempts: attempt }
-          : {
-              status: "failed",
-              attempts: attempt,
-              revision: evaluator.revision,
-              error: serializeError(error),
-            };
+      taskResult = { status: "failed", error };
+    } finally {
+      await heartbeat.stop();
     }
-    next.logPending = true;
-    const result = await writeJson(
-      store,
-      caseKey(prefix, current.value.id),
-      next,
-      { ifVersion: claim.version },
-    );
-    changed = result.written || changed;
+    changed =
+      (await updateCaseRecord(store, prefix, current.value.id, (next) => {
+        if (next.task.status !== "leased" || next.task.workerId !== workerId) {
+          return undefined;
+        }
+        if (signal.aborted) {
+          next.task = {
+            status: "pending",
+            attempts: next.task.attempts,
+          };
+          return next;
+        }
+        if (taskResult.status === "succeeded") {
+          next.metadata = taskResult.metadata;
+          next.tags = taskResult.tags;
+          next.task = {
+            status: "succeeded",
+            attempts: attempt,
+            revision: evaluator.revision,
+            value: taskResult.output,
+          };
+        } else {
+          next.task =
+            attempt < 3
+              ? { status: "pending", attempts: attempt }
+              : {
+                  status: "failed",
+                  attempts: attempt,
+                  revision: evaluator.revision,
+                  error: serializeError(taskResult.error),
+                };
+        }
+        next.logPending = true;
+        return next;
+      })) || changed;
+    if (signal.aborted) return changed;
   }
   return changed;
 }
@@ -1728,7 +2035,6 @@ async function runScorePass({
   projectName: string;
   evalName: string;
   scorer: ResolvedScorer;
-  evaluatorRevision: string;
   shard: { index: number; count: number };
   workerId: string;
   runId: string;
@@ -1763,6 +2069,12 @@ async function runScorePass({
     });
   }
 
+  const localScorer = scorer.scorer as EvalScorer<
+    unknown,
+    unknown,
+    unknown,
+    Record<string, unknown>
+  >;
   let changed = false;
   for await (const current of listCases(store, prefix)) {
     const state = current.value.scores[scorer.name];
@@ -1778,7 +2090,7 @@ async function runScorePass({
       status: "leased",
       attempts: state.attempts,
       workerId,
-      leaseUntil: Date.now() + 60_000,
+      leaseUntil: Date.now() + JOB_LEASE_MS,
     };
     const claim = await writeJson(
       store,
@@ -1787,48 +2099,81 @@ async function runScorePass({
       { ifVersion: current.version },
     );
     if (!claim.written) continue;
+    const heartbeat = startCaseLeaseHeartbeat({
+      store,
+      prefix,
+      id: current.value.id,
+      kind: "score",
+      scorerName: scorer.name,
+      workerId,
+    });
     const datum = current.value.datum as EvalCase<
       unknown,
       unknown,
       BaseMetadata
     >;
     const attempt = state.attempts + 1;
-    const next = structuredClone(current.value);
+    const taskOutput = current.value.task.value;
+    let scoreResult:
+      | { status: "succeeded"; value: JsonValue }
+      | { status: "failed"; error: unknown };
     try {
-      const raw = await scorer.scorer({
-        input: datum.input,
-        expected: "expected" in datum ? datum.expected : undefined,
-        metadata: current.value.metadata as BaseMetadata,
-        output: current.value.task.value,
-      });
-      next.scores[scorer.name] = {
+      const raw = await awaitWithSignal(
+        Promise.resolve().then(() =>
+          localScorer({
+            input: datum.input,
+            expected: "expected" in datum ? datum.expected : undefined,
+            metadata: current.value.metadata as Record<string, unknown>,
+            output: taskOutput,
+          }),
+        ),
+        signal,
+      );
+      scoreResult = {
         status: "succeeded",
-        attempts: attempt,
-        revision: scorer.revision,
         value: assertJsonValue(
           normalizeScores(raw, scorer.name),
           `scorer ${scorer.name} output`,
         ),
       };
     } catch (error) {
-      next.scores[scorer.name] =
-        attempt < 3
-          ? { status: "pending", attempts: attempt }
-          : {
-              status: "failed",
-              attempts: attempt,
-              revision: scorer.revision,
-              error: serializeError(error),
-            };
+      scoreResult = { status: "failed", error };
+    } finally {
+      await heartbeat.stop();
     }
-    next.logPending = true;
-    const result = await writeJson(
-      store,
-      caseKey(prefix, current.value.id),
-      next,
-      { ifVersion: claim.version },
-    );
-    changed = result.written || changed;
+    changed =
+      (await updateCaseRecord(store, prefix, current.value.id, (next) => {
+        const latest = next.scores[scorer.name];
+        if (latest?.status !== "leased" || latest.workerId !== workerId) {
+          return undefined;
+        }
+        if (signal.aborted) {
+          next.scores[scorer.name] = {
+            status: "pending",
+            attempts: latest.attempts,
+          };
+          return next;
+        }
+        next.scores[scorer.name] =
+          scoreResult.status === "succeeded"
+            ? {
+                status: "succeeded",
+                attempts: attempt,
+                revision: scorer.revision,
+                value: scoreResult.value,
+              }
+            : attempt < 3
+              ? { status: "pending", attempts: attempt }
+              : {
+                  status: "failed",
+                  attempts: attempt,
+                  revision: scorer.revision,
+                  error: serializeError(scoreResult.error),
+                };
+        next.logPending = true;
+        return next;
+      })) || changed;
+    if (signal.aborted) return changed;
   }
   return changed;
 }
@@ -1891,25 +2236,40 @@ async function runBatchStage<Item, Result, Handle extends JsonValue>({
     if (job.status === "preparing") {
       activeJobs++;
       if ((job.leaseUntil ?? 0) > Date.now()) continue;
+      const takeover = {
+        ...job,
+        workerId,
+        leaseUntil: Date.now() + JOB_LEASE_MS,
+      };
+      const takeoverResult = await writeJson(store, current.key, takeover, {
+        ifVersion: current.version,
+      });
+      if (!takeoverResult.written) continue;
+      job = takeover;
       const preparationError = new Error(
         "Batch preparation lease expired before provider submission",
       );
-      await retryBatchItems({
-        store,
-        prefix,
-        job,
-        scorerName,
-        processor,
-        error: preparationError,
-        retryable: true,
+      const failed = await updateJobRecord(store, current.key, (latest) => {
+        if (latest.workerId !== workerId || latest.status !== "preparing") {
+          return undefined;
+        }
+        latest.status = "failed";
+        latest.error = serializeError(preparationError);
+        delete latest.workerId;
+        delete latest.leaseUntil;
+        return latest;
       });
-      job.status = "failed";
-      job.error = serializeError(preparationError);
-      delete job.workerId;
-      delete job.leaseUntil;
-      await writeJson(store, current.key, job, {
-        ifVersion: current.version,
-      });
+      if (failed?.written && failed.value.status === "failed") {
+        await retryBatchItems({
+          store,
+          prefix,
+          job,
+          scorerName,
+          processor,
+          error: preparationError,
+          retryable: true,
+        });
+      }
       activeJobs--;
       changed = true;
       continue;
@@ -1947,26 +2307,50 @@ async function runBatchStage<Item, Result, Handle extends JsonValue>({
     });
     if (!jobClaim.written) continue;
     job = claimedJob;
-    let jobVersion = current.version;
-    jobVersion = jobClaim.version;
     const context = batchContext(runId, stage, job, shard, signal);
     let handle = job.handle as Handle | undefined;
     if (!handle) {
-      const recovery = processor.recover
-        ? await processor.recover(context)
-        : { status: "unknown" as const };
+      let recovery: DurableBatchRecovery<Handle>;
+      try {
+        recovery = processor.recover
+          ? await withJobLeaseHeartbeat({
+              store,
+              key: current.key,
+              workerId,
+              signal,
+              operation: () => processor.recover!(context),
+            })
+          : { status: "unknown" };
+      } catch (error) {
+        await updateJobRecord(store, current.key, (latest) => {
+          if (latest.workerId !== workerId) return undefined;
+          latest.error = serializeError(error);
+          latest.nextPollAt = Date.now() + 10_000;
+          delete latest.workerId;
+          delete latest.leaseUntil;
+          return latest;
+        });
+        changed = true;
+        continue;
+      }
+      const latest = await readJson<DurableJobRecord>(store, current.key);
+      if (!latest || latest.value.workerId !== workerId) {
+        changed = true;
+        continue;
+      }
+      job = latest.value;
       if (recovery.status === "found") {
         handle = recovery.handle;
         const external = externalBatchReference(processor, handle, context);
         const recovered = await persistSubmittedJob({
           store,
           jobKey: current.key,
+          workerId,
           handle: assertJsonValue(handle, `${stage} batch handle`),
           external,
           submittedAt: job.submittedAt ?? Date.now(),
         });
         job = recovered.value;
-        jobVersion = recovered.version;
         const locator = batchLocator({
           projectName,
           evalName,
@@ -1983,35 +2367,41 @@ async function runBatchStage<Item, Result, Handle extends JsonValue>({
         const latest = await readJson<DurableJobRecord>(store, current.key);
         if (latest) {
           job = latest.value;
-          jobVersion = latest.version;
         }
         changed = true;
       } else if (recovery.status === "not_found") {
-        await retryBatchItems({
-          store,
-          prefix,
-          job,
-          scorerName,
-          processor,
-          error: new Error("Provider confirmed batch was not submitted"),
-          retryable: true,
+        const error = new Error("Provider confirmed batch was not submitted");
+        const failed = await updateJobRecord(store, current.key, (latest) => {
+          if (latest.workerId !== workerId) return undefined;
+          latest.status = "failed";
+          delete latest.workerId;
+          delete latest.leaseUntil;
+          return latest;
         });
-        job.status = "failed";
-        delete job.workerId;
-        delete job.leaseUntil;
-        await writeJson(store, current.key, job, {
-          ifVersion: jobVersion,
-        });
+        if (failed?.written && failed.value.status === "failed") {
+          await retryBatchItems({
+            store,
+            prefix,
+            job,
+            scorerName,
+            processor,
+            error,
+            retryable: true,
+          });
+        }
         changed = true;
         continue;
       } else {
-        await markBatchUnknown(store, prefix, job, scorerName);
-        job.status = "unknown";
-        delete job.workerId;
-        delete job.leaseUntil;
-        await writeJson(store, current.key, job, {
-          ifVersion: jobVersion,
+        const unknown = await updateJobRecord(store, current.key, (latest) => {
+          if (latest.workerId !== workerId) return undefined;
+          latest.status = "unknown";
+          delete latest.workerId;
+          delete latest.leaseUntil;
+          return latest;
         });
+        if (unknown?.written) {
+          await markBatchUnknown(store, prefix, job, scorerName);
+        }
         changed = true;
         continue;
       }
@@ -2024,10 +2414,11 @@ async function runBatchStage<Item, Result, Handle extends JsonValue>({
       (!fallbackReady || job.outcome !== undefined)
     ) {
       activeJobs++;
-      delete job.workerId;
-      delete job.leaseUntil;
-      await writeJson(store, current.key, job, {
-        ifVersion: jobVersion,
+      await updateJobRecord(store, current.key, (latest) => {
+        if (latest.workerId !== workerId) return undefined;
+        delete latest.workerId;
+        delete latest.leaseUntil;
+        return latest;
       });
       continue;
     }
@@ -2040,72 +2431,98 @@ async function runBatchStage<Item, Result, Handle extends JsonValue>({
             : undefined;
       if (!poller) {
         activeJobs++;
-        delete job.workerId;
-        delete job.leaseUntil;
-        await writeJson(store, current.key, job, {
-          ifVersion: jobVersion,
+        await updateJobRecord(store, current.key, (latest) => {
+          if (latest.workerId !== workerId) return undefined;
+          delete latest.workerId;
+          delete latest.leaseUntil;
+          return latest;
         });
         continue;
       }
       try {
-        poll = await poller.poll(handle, context);
+        poll = await withJobLeaseHeartbeat({
+          store,
+          key: current.key,
+          workerId,
+          signal,
+          operation: () => poller.poll(handle, context),
+        });
+        const latest = await readJson<DurableJobRecord>(store, current.key);
+        if (!latest || latest.value.workerId !== workerId) {
+          changed = true;
+          continue;
+        }
+        job = latest.value;
         delete job.error;
       } catch (error) {
         activeJobs++;
-        job.nextPollAt = Date.now() + (poller.intervalMs ?? 10_000);
-        job.error = serializeError(error);
-        delete job.workerId;
-        delete job.leaseUntil;
-        await writeJson(store, current.key, job, {
-          ifVersion: jobVersion,
+        await updateJobRecord(store, current.key, (latest) => {
+          if (latest.workerId !== workerId) return undefined;
+          latest.nextPollAt = Date.now() + (poller.intervalMs ?? 10_000);
+          latest.error = serializeError(error);
+          delete latest.workerId;
+          delete latest.leaseUntil;
+          return latest;
         });
         continue;
       }
     }
     if (poll.status === "pending") {
       activeJobs++;
-      delete job.error;
-      job.nextPollAt =
-        Date.now() +
-        (poll.retryAfterMs ??
-          (completion.mode === "poll"
-            ? completion.intervalMs
-            : fallback?.intervalMs) ??
-          10_000);
-      delete job.workerId;
-      delete job.leaseUntil;
-      await writeJson(store, current.key, job, {
-        ifVersion: jobVersion,
+      await updateJobRecord(store, current.key, (latest) => {
+        if (latest.workerId !== workerId) return undefined;
+        delete latest.error;
+        latest.nextPollAt =
+          Date.now() +
+          (poll.retryAfterMs ??
+            (completion.mode === "poll"
+              ? completion.intervalMs
+              : fallback?.intervalMs) ??
+            10_000);
+        delete latest.workerId;
+        delete latest.leaseUntil;
+        return latest;
       });
       continue;
     }
     if (poll.status === "failed") {
-      await retryBatchItems({
-        store,
-        prefix,
-        job,
-        scorerName,
-        processor,
-        error: poll.error,
-        retryable: poll.retryable ?? false,
+      const failed = await updateJobRecord(store, current.key, (latest) => {
+        if (latest.workerId !== workerId) return undefined;
+        latest.status = "failed";
+        latest.error = serializeError(poll.error);
+        delete latest.workerId;
+        delete latest.leaseUntil;
+        return latest;
       });
-      job.status = "failed";
-      job.error = serializeError(poll.error);
-      delete job.workerId;
-      delete job.leaseUntil;
-      await writeJson(store, current.key, job, {
-        ifVersion: jobVersion,
-      });
-      await markWebhookApplied(store, job);
+      if (failed?.written && failed.value.status === "failed") {
+        await retryBatchItems({
+          store,
+          prefix,
+          job,
+          scorerName,
+          processor,
+          error: poll.error,
+          retryable: poll.retryable ?? false,
+        });
+        await markWebhookApplied(store, failed.value);
+      }
       changed = true;
       continue;
     }
 
+    const collectionHeartbeat = startJobLeaseHeartbeat(
+      store,
+      current.key,
+      workerId,
+    );
     try {
       delete job.error;
       const seen = new Set<string>();
-      const collected = await processor.collect(handle, context);
-      for await (const result of toAsyncIterable(collected)) {
+      const collected = await awaitWithSignal(
+        Promise.resolve().then(() => processor.collect(handle, context)),
+        signal,
+      );
+      for await (const result of toAbortableAsyncIterable(collected, signal)) {
         const resultId = resultItemId(result);
         if (seen.has(resultId) || !job.itemIds.includes(resultId)) {
           throw new Error(
@@ -2113,74 +2530,63 @@ async function runBatchStage<Item, Result, Handle extends JsonValue>({
           );
         }
         seen.add(resultId);
-        const caseRecord = await readJson<DurableCaseRecord>(
-          store,
-          caseKey(prefix, resultId),
-        );
-        if (
-          !caseRecord ||
-          !stageBelongsToJob(caseRecord.value, job.kind, job.id, scorerName)
-        ) {
-          continue;
-        }
-        const next = applyResult(
-          structuredClone(caseRecord.value),
-          result,
-          job.revision,
-          job.attempt,
-        );
-        next.logPending = true;
-        await writeJson(store, caseKey(prefix, resultId), next, {
-          ifVersion: caseRecord.version,
+        await updateCaseRecord(store, prefix, resultId, (record) => {
+          if (!stageBelongsToJob(record, job.kind, job.id, scorerName)) {
+            return undefined;
+          }
+          const next = applyResult(record, result, job.revision, job.attempt);
+          next.logPending = true;
+          return next;
         });
       }
       for (const itemId of job.itemIds) {
         if (seen.has(itemId)) continue;
-        const caseRecord = await readJson<DurableCaseRecord>(
-          store,
-          caseKey(prefix, itemId),
-        );
-        if (
-          !caseRecord ||
-          !stageBelongsToJob(caseRecord.value, job.kind, job.id, scorerName)
-        ) {
-          continue;
-        }
         const missing = {
           id: itemId,
           error: new Error(`Batch stage ${stage} returned no result`),
           retryable: true,
         } as Result;
-        const next = applyResult(
-          structuredClone(caseRecord.value),
-          missing,
-          job.revision,
-          job.attempt,
-        );
-        next.logPending = true;
-        await writeJson(store, caseKey(prefix, itemId), next, {
-          ifVersion: caseRecord.version,
+        await updateCaseRecord(store, prefix, itemId, (record) => {
+          if (!stageBelongsToJob(record, job.kind, job.id, scorerName)) {
+            return undefined;
+          }
+          const next = applyResult(record, missing, job.revision, job.attempt);
+          next.logPending = true;
+          return next;
         });
       }
     } catch (error) {
       activeJobs++;
-      job.error = serializeError(error);
-      job.nextPollAt = Date.now() + 10_000;
-      delete job.workerId;
-      delete job.leaseUntil;
-      await writeJson(store, current.key, job, {
-        ifVersion: jobVersion,
+      await updateJobRecord(store, current.key, (latest) => {
+        if (latest.workerId !== workerId) return undefined;
+        latest.error = serializeError(error);
+        latest.nextPollAt = Date.now() + 10_000;
+        delete latest.workerId;
+        delete latest.leaseUntil;
+        return latest;
       });
       changed = true;
       continue;
+    } finally {
+      await collectionHeartbeat.stop();
     }
-    job.status = "complete";
-    delete job.workerId;
-    delete job.leaseUntil;
-    await writeJson(store, current.key, job, {
-      ifVersion: jobVersion,
+    const completed = await updateJobRecord(store, current.key, (latest) => {
+      if (
+        latest.id !== job.id ||
+        latest.status !== "submitted" ||
+        latest.workerId !== workerId
+      ) {
+        return undefined;
+      }
+      latest.status = "complete";
+      delete latest.workerId;
+      delete latest.leaseUntil;
+      delete latest.error;
+      return latest;
     });
-    await markWebhookApplied(store, job);
+    if (completed?.value.status !== "complete") continue;
+    job = completed.value;
+    await markWebhookApplied(store, completed.value);
     changed = true;
   }
 
@@ -2237,8 +2643,10 @@ async function runBatchStage<Item, Result, Handle extends JsonValue>({
     }),
   );
 
+  const preparationHeartbeat = startJobLeaseHeartbeat(store, jobKey, workerId);
   const claimed: Versioned<DurableCaseRecord>[] = [];
   for (const record of ready) {
+    if (signal.aborted) break;
     const next = structuredClone(record.value);
     const state: StageState = {
       status: "in_batch",
@@ -2259,31 +2667,82 @@ async function runBatchStage<Item, Result, Handle extends JsonValue>({
     if (claim.written) claimed.push(record);
   }
   job.itemIds = claimed.map((record) => record.value.id);
+  if (signal.aborted) {
+    await preparationHeartbeat.stop();
+    const failed = await updateJobRecord(store, jobKey, (latest) => {
+      if (latest.workerId !== workerId || latest.status !== "preparing") {
+        return undefined;
+      }
+      latest.itemIds = job.itemIds;
+      latest.status = "failed";
+      latest.error = serializeError(new DurableEvalAbortError());
+      delete latest.workerId;
+      delete latest.leaseUntil;
+      return latest;
+    });
+    if (failed?.written) {
+      await retryBatchItems({
+        store,
+        prefix,
+        job,
+        scorerName,
+        processor,
+        error: new DurableEvalAbortError(),
+        retryable: true,
+      });
+    }
+    return true;
+  }
   if (!claimed.length) {
-    job.status = "failed";
-    job.error = serializeError(new Error("Batch lost all item claims"));
-    delete job.workerId;
-    delete job.leaseUntil;
-    await writeJson(store, jobKey, job, {
-      ifVersion: created.version,
+    await preparationHeartbeat.stop();
+    await updateJobRecord(store, jobKey, (latest) => {
+      if (latest.workerId !== workerId || latest.status !== "preparing") {
+        return undefined;
+      }
+      latest.status = "failed";
+      latest.error = serializeError(new Error("Batch lost all item claims"));
+      delete latest.workerId;
+      delete latest.leaseUntil;
+      return latest;
     });
     return changed;
   }
 
-  job.status = "submitting";
-  const prepared = await writeJson(store, jobKey, job, {
-    ifVersion: created.version,
+  const prepared = await updateJobRecord(store, jobKey, (latest) => {
+    if (latest.workerId !== workerId || latest.status !== "preparing") {
+      return undefined;
+    }
+    latest.itemIds = job.itemIds;
+    latest.status = "submitting";
+    latest.leaseUntil = Date.now() + JOB_LEASE_MS;
+    return latest;
   });
-  if (!prepared.written) return changed;
+  await preparationHeartbeat.stop();
+  if (
+    !prepared ||
+    !prepared.written ||
+    prepared.value.status !== "submitting" ||
+    prepared.value.workerId !== workerId
+  ) {
+    return changed;
+  }
+  job = prepared.value;
 
   const context = batchContext(runId, stage, job, shard, signal);
   const items = claimed.map((record) => makeItem(record.value));
   try {
-    const handle = await processor.submit(items, context);
+    const handle = await withJobLeaseHeartbeat({
+      store,
+      key: jobKey,
+      workerId,
+      signal,
+      operation: () => processor.submit(items, context),
+    });
     const external = externalBatchReference(processor, handle, context);
     const submitted = await persistSubmittedJob({
       store,
       jobKey,
+      workerId,
       handle: assertJsonValue(handle, `${stage} batch handle`),
       external,
       submittedAt: Date.now(),
@@ -2303,7 +2762,29 @@ async function runBatchStage<Item, Result, Handle extends JsonValue>({
     }
     await attachPendingWebhookEvents(store, jobKey, job);
   } catch (error) {
-    if (error instanceof DurableEvalNotSubmittedError) {
+    const definitelyNotSubmitted =
+      error instanceof DurableEvalNotSubmittedError;
+    const terminalStatus = definitelyNotSubmitted ? "failed" : "unknown";
+    const updated = await updateJobRecord(store, jobKey, (latest) => {
+      if (
+        latest.workerId !== workerId ||
+        latest.status === "complete" ||
+        latest.status === "failed" ||
+        latest.webhookEventKey
+      ) {
+        return undefined;
+      }
+      latest.status = terminalStatus;
+      latest.error = serializeError(error);
+      delete latest.workerId;
+      delete latest.leaseUntil;
+      return latest;
+    });
+    if (
+      updated?.written &&
+      updated.value.status === "failed" &&
+      definitelyNotSubmitted
+    ) {
       await retryBatchItems({
         store,
         prefix,
@@ -2313,18 +2794,13 @@ async function runBatchStage<Item, Result, Handle extends JsonValue>({
         error,
         retryable: true,
       });
-      job.status = "failed";
-      job.error = serializeError(error);
-    } else {
+    } else if (
+      updated?.written &&
+      updated.value.status === "unknown" &&
+      !definitelyNotSubmitted
+    ) {
       await markBatchUnknown(store, prefix, job, scorerName);
-      job.status = "unknown";
-      job.error = serializeError(error);
     }
-    delete job.workerId;
-    delete job.leaseUntil;
-    await writeJson(store, jobKey, job, {
-      ifVersion: prepared.version,
-    });
   }
   return true;
 }
@@ -2444,29 +2920,23 @@ async function retryBatchItems<Handle extends JsonValue>({
   retryable: boolean;
 }) {
   for (const itemId of job.itemIds) {
-    const current = await readJson<DurableCaseRecord>(
-      store,
-      caseKey(prefix, itemId),
-    );
-    if (!current) continue;
-    const next = structuredClone(current.value);
-    if (!stageBelongsToJob(next, job.kind, job.id, scorerName)) {
-      continue;
-    }
-    const state =
-      retryable && job.attempt < (processor.maxAttempts ?? 3)
-        ? ({ status: "pending", attempts: job.attempt } satisfies StageState)
-        : ({
-            status: "failed",
-            attempts: job.attempt,
-            revision: job.revision,
-            error: serializeError(error),
-          } satisfies StageState);
-    if (job.kind === "task") next.task = state;
-    else next.scores[scorerName!] = state;
-    next.logPending = true;
-    await writeJson(store, caseKey(prefix, itemId), next, {
-      ifVersion: current.version,
+    await updateCaseRecord(store, prefix, itemId, (record) => {
+      if (!stageBelongsToJob(record, job.kind, job.id, scorerName)) {
+        return undefined;
+      }
+      const state =
+        retryable && job.attempt < (processor.maxAttempts ?? 3)
+          ? ({ status: "pending", attempts: job.attempt } satisfies StageState)
+          : ({
+              status: "failed",
+              attempts: job.attempt,
+              revision: job.revision,
+              error: serializeError(error),
+            } satisfies StageState);
+      if (job.kind === "task") record.task = state;
+      else record.scores[scorerName!] = state;
+      record.logPending = true;
+      return record;
     });
   }
 }
@@ -2478,23 +2948,19 @@ async function markBatchUnknown(
   scorerName?: string,
 ) {
   for (const itemId of job.itemIds) {
-    const current = await readJson<DurableCaseRecord>(
-      store,
-      caseKey(prefix, itemId),
-    );
-    if (!current) continue;
-    const next = structuredClone(current.value);
-    if (!stageBelongsToJob(next, job.kind, job.id, scorerName)) continue;
-    const state: StageState = {
-      status: "unknown",
-      attempts: job.attempt,
-      revision: job.revision,
-      batchId: job.id,
-    };
-    if (job.kind === "task") next.task = state;
-    else next.scores[scorerName!] = state;
-    await writeJson(store, caseKey(prefix, itemId), next, {
-      ifVersion: current.version,
+    await updateCaseRecord(store, prefix, itemId, (record) => {
+      if (!stageBelongsToJob(record, job.kind, job.id, scorerName)) {
+        return undefined;
+      }
+      const state: StageState = {
+        status: "unknown",
+        attempts: job.attempt,
+        revision: job.revision,
+        batchId: job.id,
+      };
+      if (job.kind === "task") record.task = state;
+      else record.scores[scorerName!] = state;
+      return record;
     });
   }
 }
@@ -2598,12 +3064,14 @@ function externalBatchReference<Item, Result, Handle extends JsonValue>(
 async function persistSubmittedJob({
   store,
   jobKey,
+  workerId,
   handle,
   external,
   submittedAt,
 }: {
   store: DurableEvalStore;
   jobKey: string;
+  workerId: string;
   handle: JsonValue;
   external?: { source: string; id: string };
   submittedAt: number;
@@ -2612,6 +3080,9 @@ async function persistSubmittedJob({
     const current = await readJson<DurableJobRecord>(store, jobKey);
     if (!current) {
       throw new Error("Durable batch job disappeared during submission");
+    }
+    if (current.value.workerId !== workerId) {
+      throw new Error("Durable batch submission lease was lost");
     }
     if (
       current.value.handle !== undefined &&
@@ -2685,7 +3156,7 @@ async function attachWebhookEventToJob(
   jobKey: string,
   storedEventKey: string,
   event: DurableBatchResultEvent,
-): Promise<"attached" | "duplicate" | "missing"> {
+): Promise<"attached" | "duplicate" | "in_progress" | "missing"> {
   while (true) {
     const current = await readJson<DurableJobRecord>(store, jobKey);
     if (!current) return "missing";
@@ -2696,6 +3167,12 @@ async function attachWebhookEventToJob(
       return "duplicate";
     }
     if (current.value.webhookEventKey === storedEventKey) {
+      if (
+        current.value.workerId &&
+        (current.value.leaseUntil ?? 0) > Date.now()
+      ) {
+        return "in_progress";
+      }
       const next = {
         ...current.value,
         nextPollAt: Date.now(),
@@ -2777,7 +3254,7 @@ async function attachPendingWebhookEvents(
       pointer.value.eventKey,
       event.value.event,
     );
-    if (attached !== "attached") {
+    if (attached === "duplicate") {
       await markWebhookEventApplied(store, pointer.value.eventKey, job.id);
     }
   }
@@ -2822,7 +3299,7 @@ async function hasWaitingWebhookJob(
     const job = await readJson<DurableJobRecord>(store, key);
     if (
       job?.value.shard === shard &&
-      job.value.status === "submitted" &&
+      (job.value.status === "submitting" || job.value.status === "submitted") &&
       job.value.outcome === undefined &&
       webhookStages.has(job.value.stage)
     ) {
@@ -2841,7 +3318,7 @@ async function hasProviderErrorJob(
     const job = await readJson<DurableJobRecord>(store, key);
     if (
       job?.value.shard === shard &&
-      job.value.status === "submitted" &&
+      (job.value.status === "submitting" || job.value.status === "submitted") &&
       job.value.error !== undefined
     ) {
       return true;
@@ -2872,21 +3349,16 @@ async function flushPendingLogs({
     }
     await logDurableCase(experiment, current.value, scorerNames, runId);
     await experiment.flush();
-    const latest = await readJson<DurableCaseRecord>(
+    const next = structuredClone(current.value);
+    next.logPending = false;
+    delete next.removedScores;
+    const result = await writeJson(
       store,
       caseKey(prefix, current.value.id),
+      next,
+      { ifVersion: current.version },
     );
-    if (latest) {
-      const next = structuredClone(latest.value);
-      next.logPending = false;
-      const result = await writeJson(
-        store,
-        caseKey(prefix, current.value.id),
-        next,
-        { ifVersion: latest.version },
-      );
-      changed = result.written || changed;
-    }
+    changed = result.written || changed;
   }
   return changed;
 }
@@ -2992,6 +3464,9 @@ function evaluatorState(experiment: Experiment) {
 
 function collectedScores(record: DurableCaseRecord, scorerNames: string[]) {
   const scores: Record<string, number | null> = {};
+  for (const name of record.removedScores ?? []) {
+    scores[name] = null;
+  }
   for (const name of scorerNames) {
     const state = record.scores[name];
     if (state?.status === "succeeded") {
@@ -3301,6 +3776,166 @@ async function writeJson<T>(
   );
 }
 
+async function updateCaseRecord(
+  store: DurableEvalStore,
+  prefix: string,
+  id: string,
+  update: (record: DurableCaseRecord) => DurableCaseRecord | undefined,
+) {
+  while (true) {
+    const current = await readJson<DurableCaseRecord>(
+      store,
+      caseKey(prefix, id),
+    );
+    if (!current) return false;
+    const next = update(structuredClone(current.value));
+    if (!next) return false;
+    const written = await writeJson(store, caseKey(prefix, id), next, {
+      ifVersion: current.version,
+    });
+    if (written.written) return true;
+  }
+}
+
+async function updateJobRecord(
+  store: DurableEvalStore,
+  key: string,
+  update: (record: DurableJobRecord) => DurableJobRecord | undefined,
+) {
+  while (true) {
+    const current = await readJson<DurableJobRecord>(store, key);
+    if (!current) return undefined;
+    const next = update(structuredClone(current.value));
+    if (!next) return { ...current, written: false as const };
+    const written = await writeJson(store, key, next, {
+      ifVersion: current.version,
+    });
+    if (written.written) {
+      return { value: next, version: written.version, written: true as const };
+    }
+  }
+}
+
+function startCaseLeaseHeartbeat({
+  store,
+  prefix,
+  id,
+  kind,
+  scorerName,
+  workerId,
+}: {
+  store: DurableEvalStore;
+  prefix: string;
+  id: string;
+  kind: "task" | "score";
+  scorerName?: string;
+  workerId: string;
+}) {
+  return startLeaseHeartbeat(async () => {
+    const updated = await updateCaseRecord(store, prefix, id, (record) => {
+      const state =
+        kind === "task" ? record.task : record.scores[scorerName ?? ""];
+      if (state?.status !== "leased" || state.workerId !== workerId) {
+        return undefined;
+      }
+      state.leaseUntil = Date.now() + JOB_LEASE_MS;
+      return record;
+    });
+    return updated;
+  });
+}
+
+function startJobLeaseHeartbeat(
+  store: DurableEvalStore,
+  key: string,
+  workerId: string,
+) {
+  return startLeaseHeartbeat(async () => {
+    const updated = await updateJobRecord(store, key, (job) => {
+      if (
+        job.workerId !== workerId ||
+        (job.status !== "preparing" &&
+          job.status !== "submitting" &&
+          job.status !== "submitted")
+      ) {
+        return undefined;
+      }
+      job.leaseUntil = Date.now() + JOB_LEASE_MS;
+      return job;
+    });
+    return updated?.value.workerId === workerId;
+  });
+}
+
+async function withJobLeaseHeartbeat<T>({
+  store,
+  key,
+  workerId,
+  signal,
+  operation,
+}: {
+  store: DurableEvalStore;
+  key: string;
+  workerId: string;
+  signal: AbortSignal;
+  operation: () => Promise<T>;
+}) {
+  if (signal.aborted) throw new DurableEvalAbortError();
+  const heartbeat = startJobLeaseHeartbeat(store, key, workerId);
+  try {
+    return await awaitWithSignal(Promise.resolve().then(operation), signal);
+  } finally {
+    await heartbeat.stop();
+  }
+}
+
+function startLeaseHeartbeat(renew: () => Promise<boolean>) {
+  let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let pending = Promise.resolve();
+  const schedule = () => {
+    if (stopped) return;
+    timer = setTimeout(() => {
+      pending = renew()
+        .then((owned) => {
+          if (!owned) stopped = true;
+        })
+        .finally(schedule);
+    }, LEASE_HEARTBEAT_MS);
+  };
+  schedule();
+  return {
+    async stop() {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+      await pending;
+    },
+  };
+}
+
+function awaitWithSignal<T>(
+  operation: Promise<T>,
+  signal: AbortSignal,
+): Promise<T> {
+  if (signal.aborted) {
+    return Promise.reject(new DurableEvalAbortError());
+  }
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => reject(new DurableEvalAbortError());
+    signal.addEventListener("abort", abort, { once: true });
+    operation.then(resolve, reject).finally(() => {
+      signal.removeEventListener("abort", abort);
+    });
+  });
+}
+
+class DurableEvalAbortError extends Error {
+  constructor() {
+    super("Durable eval operation was aborted");
+    this.name = "AbortError";
+  }
+}
+
 function stableStringify(value: unknown): string {
   return JSON.stringify(value, (_key, nested) => {
     if (nested && typeof nested === "object" && !Array.isArray(nested)) {
@@ -3373,6 +4008,25 @@ async function* toAsyncIterable<T>(
     for await (const item of value) yield item;
   } else {
     for (const item of value) yield item;
+  }
+}
+
+async function* toAbortableAsyncIterable<T>(
+  value: Iterable<T> | AsyncIterable<T>,
+  signal: AbortSignal,
+): AsyncGenerator<T> {
+  if (isAsyncIterable<T>(value)) {
+    const iterator = value[Symbol.asyncIterator]();
+    while (true) {
+      const next = await awaitWithSignal(iterator.next(), signal);
+      if (next.done) return;
+      yield next.value;
+    }
+  } else {
+    for (const item of value) {
+      if (signal.aborted) throw new DurableEvalAbortError();
+      yield item;
+    }
   }
 }
 
