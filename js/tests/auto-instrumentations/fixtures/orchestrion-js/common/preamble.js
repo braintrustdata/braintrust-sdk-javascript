@@ -4,155 +4,12 @@
  **/
 const assert = require("node:assert");
 
-const hooks = new Map();
-Object.defineProperty(globalThis, "__braintrust_instrumentation_hooks", {
-  configurable: false,
-  enumerable: false,
-  value: hooks,
-  writable: false,
-});
-
-function phase() {
-  const subscribers = [];
-  return {
-    get hasSubscribers() {
-      return subscribers.length > 0;
-    },
-    publish(message) {
-      for (const subscriber of subscribers) subscriber(message);
-    },
-    runStores(message, fn) {
-      this.publish(message);
-      return fn();
-    },
-    subscribe(subscriber) {
-      subscribers.push(subscriber);
-    },
-  };
-}
-
-function getTracingHook(channelName) {
-  let hook = hooks.get(channelName);
-  if (hook) return hook;
-
-  hook = {
-    start: phase(),
-    end: phase(),
-    asyncStart: phase(),
-    asyncEnd: phase(),
-    error: phase(),
-    get hasSubscribers() {
-      return (
-        this.start.hasSubscribers ||
-        this.end.hasSubscribers ||
-        this.asyncStart.hasSubscribers ||
-        this.asyncEnd.hasSubscribers ||
-        this.error.hasSubscribers
-      );
-    },
-    subscribe(handlers) {
-      for (const name of ["start", "end", "asyncStart", "asyncEnd", "error"]) {
-        if (handlers[name]) this[name].subscribe(handlers[name]);
-      }
-    },
-    traceSync(fn, message) {
-      return this.start.runStores(message, () => {
-        try {
-          message.result = fn();
-          return message.result;
-        } catch (error) {
-          message.error = error;
-          this.error.publish(message);
-          throw error;
-        } finally {
-          this.end.publish(message);
-        }
-      });
-    },
-    tracePromise(fn, message) {
-      return this.start.runStores(message, () => {
-        try {
-          const result = fn();
-          if (typeof result?.then !== "function") {
-            message.result = result;
-            this.end.publish(message);
-            return result;
-          }
-          this.end.publish(message);
-          const resolve = (value) => {
-            message.result = value;
-            this.asyncStart.publish(message);
-            this.asyncEnd.publish(message);
-            return value;
-          };
-          const reject = (error) => {
-            message.error = error;
-            this.error.publish(message);
-            this.asyncStart.publish(message);
-            this.asyncEnd.publish(message);
-            throw error;
-          };
-          if (result instanceof Promise && result.constructor === Promise) {
-            return result.then(resolve, reject);
-          }
-          result.then(resolve, (error) => {
-            try {
-              reject(error);
-            } catch {}
-          });
-          return result;
-        } catch (error) {
-          message.error = error;
-          this.error.publish(message);
-          this.end.publish(message);
-          throw error;
-        }
-      });
-    },
-    traceCallback(fn, position, message) {
-      const callback = Array.prototype.at.call(message.arguments, position);
-      if (typeof callback !== "function") return fn();
-      const currentHook = this;
-      function wrappedCallback(error, result) {
-        if (error) {
-          message.error = error;
-          currentHook.error.publish(message);
-        } else {
-          message.result = result;
-        }
-        return currentHook.asyncStart.runStores(message, () => {
-          try {
-            return callback.apply(this, arguments);
-          } finally {
-            currentHook.asyncEnd.publish(message);
-          }
-        });
-      }
-      Array.prototype.splice.call(
-        message.arguments,
-        position,
-        1,
-        wrappedCallback,
-      );
-      return this.start.runStores(message, () => {
-        try {
-          return fn();
-        } catch (error) {
-          message.error = error;
-          this.error.publish(message);
-          throw error;
-        } finally {
-          this.end.publish(message);
-        }
-      });
-    },
-  };
-  hooks.set(channelName, hook);
-  return hook;
-}
+const runtimePath = process.env.BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME;
+assert(runtimePath, "BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME must be set");
+const { newGlobalTracingChannel } = require(runtimePath);
 
 function getContext(channelName) {
-  const channel = getTracingHook(channelName);
+  const channel = newGlobalTracingChannel(channelName);
   const context = {};
   channel.subscribe({
     start(message) {
@@ -161,11 +18,9 @@ function getContext(channelName) {
     },
     end(message) {
       message.context.end = message.result ?? true;
-      // Handle end message
     },
     asyncStart(message) {
       message.context.asyncStart = message.result;
-      // Handle asyncStart message
     },
     asyncEnd(message) {
       message.context.asyncEnd = message.result;
@@ -173,4 +28,9 @@ function getContext(channelName) {
   });
   return context;
 }
-module.exports = { assert, getContext, getTracingHook };
+
+module.exports = {
+  assert,
+  getContext,
+  getTracingHook: newGlobalTracingChannel,
+};

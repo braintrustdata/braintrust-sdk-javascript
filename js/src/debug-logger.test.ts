@@ -11,6 +11,7 @@ import {
   getEnvDebugLogLevel,
   resetDebugLoggerForTests,
 } from "./debug-logger";
+import { newGlobalTracingChannel } from "./global-instrumentation-hooks";
 import { configureNode } from "./node/config";
 
 configureNode();
@@ -69,6 +70,27 @@ describe("debug logger", () => {
     debugLogger.forState(state).debug("debug");
 
     expect(debugSpy).toHaveBeenCalledWith("[braintrust]", "debug");
+  });
+
+  test("global hook failures are logged without escaping the provider call", () => {
+    process.env.BRAINTRUST_DEBUG_LOG_LEVEL = "error";
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const subscriberError = new Error("subscriber failed");
+    const channel = newGlobalTracingChannel<Record<string, unknown>>(
+      `test:debug-logger:${Math.random()}`,
+    );
+    channel.subscribe({
+      start() {
+        throw subscriberError;
+      },
+    });
+
+    expect(channel.traceSync(() => "result", {})).toBe("result");
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[braintrust]",
+      "Global instrumentation hook error:",
+      subscriberError,
+    );
   });
 
   test("default logger resolves the global SDK state", () => {

@@ -46,6 +46,8 @@ interface SpecialCaseInput {
   /** Original module source as a string. */
   source: string;
   format: SpecialCaseFormat;
+  /** Whether the transformed source will run in a browser-like environment. */
+  browser?: boolean;
 }
 
 /**
@@ -60,6 +62,10 @@ export function applySpecialCasePatch(input: SpecialCaseInput): string | null {
     input.modulePath.includes("api-promise")
   ) {
     return input.source + OPENAI_API_PROMISE_PATCH;
+  }
+
+  if (input.browser) {
+    return null;
   }
 
   // Mastra: rewrite the stable submodule entries (@mastra/core) or append a

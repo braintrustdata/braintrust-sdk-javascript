@@ -337,7 +337,7 @@ describe("Orchestrion Transformation Tests", () => {
       expectGlobalHookTransform(output);
     });
 
-    it("should use global hooks when the legacy compatibility option is true", async () => {
+    it("should use global hooks for browser builds", async () => {
       const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
@@ -350,9 +350,7 @@ describe("Orchestrion Transformation Tests", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [
-          braintrustEsbuildPlugin({ useDiagnosticChannelCompatShim: true }),
-        ],
+        plugins: [braintrustEsbuildPlugin({ browser: true })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -403,7 +401,7 @@ describe("Orchestrion Transformation Tests", () => {
       expectGlobalHookTransform(output);
     });
 
-    it("should use global hooks when the legacy compatibility option is true", async () => {
+    it("should use global hooks for browser builds", async () => {
       const { braintrustVitePlugin } =
         await import("../../src/auto-instrumentations/bundler/vite.js");
 
@@ -422,9 +420,7 @@ describe("Orchestrion Transformation Tests", () => {
           emptyOutDir: true,
           minify: false,
         },
-        plugins: [
-          braintrustVitePlugin({ useDiagnosticChannelCompatShim: true }),
-        ],
+        plugins: [braintrustVitePlugin({ browser: true })],
         logLevel: "error",
         resolve: {
           preserveSymlinks: true,
@@ -488,7 +484,7 @@ describe("Orchestrion Transformation Tests", () => {
       expectGlobalHookTransform(output);
     });
 
-    it("should use global hooks when the legacy compatibility option is true", async () => {
+    it("should use global hooks for browser builds", async () => {
       const { braintrustWebpackPlugin } =
         await import("../../src/auto-instrumentations/bundler/webpack.js");
 
@@ -502,9 +498,7 @@ describe("Orchestrion Transformation Tests", () => {
         experiments: { outputModule: true },
         mode: "development",
         resolve: { modules: [nodeModulesDir, "node_modules"] },
-        plugins: [
-          braintrustWebpackPlugin({ useDiagnosticChannelCompatShim: true }),
-        ],
+        plugins: [braintrustWebpackPlugin({ browser: true })],
       });
 
       expect(errors).toHaveLength(0);
@@ -648,7 +642,7 @@ describe("Orchestrion Transformation Tests", () => {
       expectGlobalHookTransform(output);
     });
 
-    it("should use global hooks when the legacy compatibility option is true", async () => {
+    it("should use global hooks for browser builds", async () => {
       const { rollup } = await import("rollup");
       const { braintrustRollupPlugin } =
         await import("../../src/auto-instrumentations/bundler/rollup.js");
@@ -672,10 +666,7 @@ describe("Orchestrion Transformation Tests", () => {
 
       const bundle = await rollup({
         input: entryPoint,
-        plugins: [
-          resolverPlugin,
-          braintrustRollupPlugin({ useDiagnosticChannelCompatShim: true }),
-        ],
+        plugins: [resolverPlugin, braintrustRollupPlugin({ browser: true })],
         external: [],
         preserveSymlinks: true,
       });

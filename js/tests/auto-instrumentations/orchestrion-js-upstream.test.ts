@@ -79,6 +79,13 @@ function runFixture({
 
   const result = spawnSync(process.execPath, [`test.${ext}`], {
     cwd: runDir,
+    env: {
+      ...process.env,
+      BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME: path.join(
+        __dirname,
+        "../../dist/auto-instrumentations/global-instrumentation-hooks.cjs",
+      ),
+    },
     stdio: "pipe",
   });
   const output =

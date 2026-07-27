@@ -57,9 +57,18 @@ export const transforms: Record<string, TransformFn> = {
     );
     const code = `
       let ${channelVariable};
-      const ${channelGetter} = () => ${channelVariable} ??= globalThis[${JSON.stringify(
-        GLOBAL_INSTRUMENTATION_HOOKS_KEY,
-      )}]?.get?.("orchestrion:${name}:${channelName}");
+      const ${channelGetter} = () => {
+        try {
+          const __apm$hooks = globalThis[${JSON.stringify(
+            GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+          )}];
+          return ${channelVariable} ??= __apm$hooks instanceof Map
+            ? __apm$hooks.get("orchestrion:${name}:${channelName}")
+            : undefined;
+        } catch {
+          return undefined;
+        }
+      };
     `;
 
     node.body.splice(index + 1, 0, ...parse(code).body);

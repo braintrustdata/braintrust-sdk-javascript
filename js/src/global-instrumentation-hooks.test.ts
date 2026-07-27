@@ -1,11 +1,11 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { tracingChannel } from "node:diagnostics_channel";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   GLOBAL_INSTRUMENTATION_HOOKS_KEY,
-  getGlobalTracingChannel,
   newGlobalTracingChannel,
+  setGlobalHookErrorReporter,
 } from "./global-instrumentation-hooks";
 
 function uniqueChannelName(label: string): string {
@@ -13,6 +13,13 @@ function uniqueChannelName(label: string): string {
 }
 
 describe("global instrumentation hooks", () => {
+  let restoreErrorReporter: (() => void) | undefined;
+
+  afterEach(() => {
+    restoreErrorReporter?.();
+    restoreErrorReporter = undefined;
+  });
+
   it("installs a non-enumerable, immutable global registry", () => {
     const name = uniqueChannelName("descriptor");
     const channel = newGlobalTracingChannel(name);
@@ -27,7 +34,7 @@ describe("global instrumentation hooks", () => {
       writable: false,
     });
     expect(descriptor?.value).toBeInstanceOf(Map);
-    expect(getGlobalTracingChannel(name)).toBe(channel);
+    expect(newGlobalTracingChannel(name)).toBe(channel);
     expect(Object.keys(globalThis)).not.toContain(
       GLOBAL_INSTRUMENTATION_HOOKS_KEY,
     );
@@ -179,6 +186,120 @@ describe("global instrumentation hooks", () => {
     );
     expect(nonPromise).toBe(42);
     expect(lifecycle).toEqual(["end", "asyncStart", "asyncEnd"]);
+  });
+
+  it("returns unusual thenables unchanged when inspecting them fails", () => {
+    const channel = newGlobalTracingChannel<Record<string, unknown>>(
+      uniqueChannelName("hostile-thenable"),
+    );
+    const reportedErrors: unknown[] = [];
+    const lifecycle: string[] = [];
+    restoreErrorReporter = setGlobalHookErrorReporter((error) =>
+      reportedErrors.push(error),
+    );
+    channel.subscribe({
+      start: () => lifecycle.push("start"),
+      end: () => lifecycle.push("end"),
+      asyncStart: () => lifecycle.push("asyncStart"),
+      asyncEnd: () => lifecycle.push("asyncEnd"),
+      error: () => lifecycle.push("error"),
+    });
+
+    const getterError = new Error("then getter failed");
+    const throwingGetter = Object.defineProperty({}, "then", {
+      get() {
+        throw getterError;
+      },
+    }) as PromiseLike<unknown>;
+    const getterContext: Record<string, unknown> = {};
+    expect(channel.tracePromise(() => throwingGetter, getterContext)).toBe(
+      throwingGetter,
+    );
+    expect(getterContext.result).toBe(throwingGetter);
+
+    const constructorError = new Error("constructor getter failed");
+    const throwingConstructor = Object.defineProperty(
+      Object.create(Promise.prototype),
+      "constructor",
+      {
+        get() {
+          throw constructorError;
+        },
+      },
+    ) as PromiseLike<unknown>;
+    const constructorContext: Record<string, unknown> = {};
+    expect(
+      channel.tracePromise(() => throwingConstructor, constructorContext),
+    ).toBe(throwingConstructor);
+    expect(constructorContext.result).toBe(throwingConstructor);
+
+    const invocationError = new Error("then invocation failed");
+    const throwingThen = {
+      then() {
+        throw invocationError;
+      },
+    } as PromiseLike<unknown>;
+    const invocationContext: Record<string, unknown> = {};
+    expect(channel.tracePromise(() => throwingThen, invocationContext)).toBe(
+      throwingThen,
+    );
+    expect(invocationContext.result).toBe(throwingThen);
+
+    expect(lifecycle).toEqual([
+      "start",
+      "end",
+      "asyncStart",
+      "asyncEnd",
+      "start",
+      "end",
+      "asyncStart",
+      "asyncEnd",
+      "start",
+      "end",
+      "asyncStart",
+      "asyncEnd",
+    ]);
+    expect(reportedErrors).toEqual([
+      getterError,
+      constructorError,
+      invocationError,
+    ]);
+  });
+
+  it("contains subscriber and store failures without repeating provider calls", () => {
+    const channel = newGlobalTracingChannel<Record<string, unknown>>(
+      uniqueChannelName("instrumentation-errors"),
+    );
+    const reportedErrors: unknown[] = [];
+    restoreErrorReporter = setGlobalHookErrorReporter((error) =>
+      reportedErrors.push(error),
+    );
+
+    const subscriberError = new Error("subscriber failed");
+    channel.subscribe({
+      start: () => {
+        throw subscriberError;
+      },
+    });
+
+    const storeError = new Error("store failed");
+    const brokenStore = {
+      enterWith() {},
+      getStore() {
+        return undefined;
+      },
+      run<T>(_store: unknown, callback: () => T): T {
+        callback();
+        throw storeError;
+      },
+    };
+    channel.start.bindStore(brokenStore);
+
+    const provider = vi.fn(() => "result");
+    expect(channel.traceSync(provider, {})).toBe("result");
+    expect(provider).toHaveBeenCalledOnce();
+    expect(reportedErrors).toContain(subscriberError);
+    expect(reportedErrors).toContain(storeError);
   });
 
   it("wraps callbacks without changing arguments or receiver semantics", async () => {

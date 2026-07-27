@@ -24,6 +24,10 @@ const runtimeApplyAutoSideEffectCjsPath = path.join(
   fixturesDir,
   "runtime-apply-auto-side-effect-cjs.cjs",
 );
+const incompatibleGlobalHookRegistryPath = path.join(
+  fixturesDir,
+  "incompatible-global-hook-registry.cjs",
+);
 
 interface TestResult {
   events: { start: any[]; end: any[]; error: any[] };
@@ -101,6 +105,26 @@ describe("Unified Loader Hook Integration Tests", () => {
 
       expect(result.events.start.length).toBe(1);
       expect(result.events.end.length).toBe(1);
+    });
+  });
+
+  it("disables instrumentation when the global registry is incompatible", async () => {
+    const result = await runWithWorkerMessage<{
+      hasSubscribers: boolean;
+      providerCalls: number;
+      result: string;
+      subscriberCalls: number;
+    }>({
+      execArgv: [],
+      messageType: "incompatible-registry",
+      script: incompatibleGlobalHookRegistryPath,
+    });
+
+    expect(result).toEqual({
+      hasSubscribers: false,
+      providerCalls: 1,
+      result: "result",
+      subscriberCalls: 0,
     });
   });
 });

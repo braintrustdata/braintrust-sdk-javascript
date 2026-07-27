@@ -95,10 +95,38 @@ type StoreEntry<M> = [
   GlobalHookTransformFunction<M, unknown> | undefined,
 ];
 
+let errorReporter: ((error: unknown) => void) | undefined;
+
+export function setGlobalHookErrorReporter(
+  reporter: ((error: unknown) => void) | undefined,
+): () => void {
+  const previousReporter = errorReporter;
+  errorReporter = reporter;
+  return () => {
+    if (errorReporter === reporter) {
+      errorReporter = previousReporter;
+    }
+  };
+}
+
 function reportError(error: unknown): void {
-  queueMicrotask(() => {
-    throw error;
-  });
+  try {
+    errorReporter?.(error);
+  } catch {
+    // Instrumentation diagnostics must never affect the provider call path.
+  }
+}
+
+function setContextValue(
+  context: Record<string, unknown>,
+  key: "error" | "result",
+  value: unknown,
+): void {
+  try {
+    context[key] = value;
+  } catch (error) {
+    reportError(error);
+  }
 }
 
 function defaultTransform<M>(message: M): M {
@@ -119,7 +147,53 @@ function wrapStoreRun<M>(
       reportError(error);
       return next();
     }
-    return store.run(context, next);
+
+    let called = false;
+    let result: unknown;
+    let providerError: unknown;
+    let providerThrew = false;
+    const runNext = () => {
+      if (called) {
+        reportError(
+          new Error(
+            "Instrumentation store invoked its callback more than once",
+          ),
+        );
+        if (providerThrew) {
+          throw providerError;
+        }
+        return result;
+      }
+
+      called = true;
+      try {
+        result = next();
+        return result;
+      } catch (error) {
+        providerThrew = true;
+        providerError = error;
+        throw error;
+      }
+    };
+
+    try {
+      store.run(context, runNext);
+    } catch (error) {
+      if (!providerThrew || error !== providerError) {
+        reportError(error);
+      }
+    }
+
+    if (!called) {
+      reportError(
+        new Error("Instrumentation store did not invoke its callback"),
+      );
+      return next();
+    }
+    if (providerThrew) {
+      throw providerError;
+    }
+    return result;
   };
 }
 
@@ -283,10 +357,10 @@ class TracingHook<M> implements GlobalTracingChannel<M> {
     return this.start.runStores(message, () => {
       try {
         const result = Reflect.apply(fn, thisArg, args);
-        context.result = result;
+        setContextValue(context, "result", result);
         return result;
       } catch (error) {
-        context.error = error;
+        setContextValue(context, "error", error);
         this.error.publish(message);
         throw error;
       } finally {
@@ -307,58 +381,109 @@ class TracingHook<M> implements GlobalTracingChannel<M> {
 
     const context = message as Record<string, unknown>;
     return this.start.runStores(message, () => {
-      let ended = false;
+      let result: ReturnType<F>;
       try {
-        const result = Reflect.apply(fn, thisArg, args);
+        result = Reflect.apply(fn, thisArg, args) as ReturnType<F>;
+      } catch (error) {
+        setContextValue(context, "error", error);
+        this.error.publish(message);
         this.end.publish(message);
-        ended = true;
+        throw error;
+      }
 
-        if (
-          !result ||
-          (typeof result !== "object" && typeof result !== "function") ||
-          typeof result.then !== "function"
-        ) {
-          context.result = result;
+      this.end.publish(message);
+
+      if (
+        !result ||
+        (typeof result !== "object" && typeof result !== "function")
+      ) {
+        setContextValue(context, "result", result);
+        this.asyncStart.publish(message);
+        this.asyncEnd.publish(message);
+        return result;
+      }
+
+      let terminalPublished = false;
+      const finishUnobservedResult = (error: unknown) => {
+        reportError(error);
+        if (!terminalPublished) {
+          terminalPublished = true;
+          setContextValue(context, "result", result);
           this.asyncStart.publish(message);
           this.asyncEnd.publish(message);
-          return result;
         }
+        return result;
+      };
 
-        const resolve = (resolved: unknown) => {
-          context.result = resolved;
+      let then: unknown;
+      try {
+        then = result.then;
+      } catch (error) {
+        return finishUnobservedResult(error);
+      }
+
+      if (typeof then !== "function") {
+        setContextValue(context, "result", result);
+        this.asyncStart.publish(message);
+        this.asyncEnd.publish(message);
+        return result;
+      }
+
+      const resolve = (resolved: unknown) => {
+        if (!terminalPublished) {
+          terminalPublished = true;
+          setContextValue(context, "result", resolved);
           this.asyncStart.publish(message);
           this.asyncEnd.publish(message);
-          return resolved;
-        };
-        const reject = (error: unknown) => {
-          context.error = error;
+        }
+        return resolved;
+      };
+      let rejectionThrown = false;
+      let rejectionError: unknown;
+      const reject = (error: unknown) => {
+        if (!terminalPublished) {
+          terminalPublished = true;
+          setContextValue(context, "error", error);
           this.error.publish(message);
           this.asyncStart.publish(message);
           this.asyncEnd.publish(message);
-          throw error;
-        };
-
-        if (result instanceof Promise && result.constructor === Promise) {
-          return result.then(resolve, reject);
         }
-
-        void result.then(resolve, (error: unknown) => {
-          try {
-            reject(error);
-          } catch {
-            // The original promise-like object is returned below. Keep the
-            // instrumentation side-chain from changing its rejection behavior.
-          }
-        });
-        return result;
-      } catch (error) {
-        context.error = error;
-        this.error.publish(message);
-        if (!ended) {
-          this.end.publish(message);
-        }
+        rejectionThrown = true;
+        rejectionError = error;
         throw error;
+      };
+
+      let isPlainPromise: boolean;
+      try {
+        isPlainPromise =
+          result instanceof Promise && result.constructor === Promise;
+      } catch (error) {
+        return finishUnobservedResult(error);
       }
+
+      try {
+        if (isPlainPromise) {
+          return Reflect.apply(then, result, [resolve, reject]);
+        }
+
+        Reflect.apply(then, result, [
+          resolve,
+          (error: unknown) => {
+            try {
+              reject(error);
+            } catch {
+              // The original promise-like object is returned below. Keep the
+              // instrumentation side-chain from changing its rejection behavior.
+            }
+          },
+        ]);
+      } catch (error) {
+        if (rejectionThrown && error === rejectionError) {
+          return result;
+        }
+        return finishUnobservedResult(error);
+      }
+      return result;
     }) as ReturnType<F>;
   }
 
@@ -386,10 +511,10 @@ class TracingHook<M> implements GlobalTracingChannel<M> {
     const { asyncStart, asyncEnd, error: errorChannel } = this;
     function wrappedCallback(this: unknown, error: unknown, result: unknown) {
       if (error) {
-        context.error = error;
+        setContextValue(context, "error", error);
         errorChannel.publish(message);
       } else {
-        context.result = result;
+        setContextValue(context, "result", result);
       }
 
       return asyncStart.runStores(message, () => {
@@ -406,7 +531,7 @@ class TracingHook<M> implements GlobalTracingChannel<M> {
       try {
         return Reflect.apply(fn, thisArg, args);
       } catch (error) {
-        context.error = error;
+        setContextValue(context, "error", error);
         this.error.publish(message);
         throw error;
       } finally {
@@ -418,16 +543,45 @@ class TracingHook<M> implements GlobalTracingChannel<M> {
 
 type HookRegistry = Map<string, GlobalTracingChannel<any>>;
 
-const fallbackRegistry: HookRegistry = new Map();
+const inertChannel: GlobalHookChannel<any> = Object.freeze({
+  name: "braintrust:inert",
+  hasSubscribers: false,
+  subscribe() {},
+  unsubscribe() {
+    return false;
+  },
+  bindStore() {},
+  unbindStore() {
+    return false;
+  },
+  publish() {},
+  runStores<F extends (...args: any[]) => any>(
+    _message: unknown,
+    fn: F,
+    thisArg?: ThisParameterType<F>,
+    ...args: Parameters<F>
+  ): ReturnType<F> {
+    return Reflect.apply(fn, thisArg, args) as ReturnType<F>;
+  },
+});
+const inertTracingHook = new TracingHook({
+  start: inertChannel,
+  end: inertChannel,
+  asyncStart: inertChannel,
+  asyncEnd: inertChannel,
+  error: inertChannel,
+});
 
-function getHookRegistry(): HookRegistry {
+function getHookRegistry(): HookRegistry | undefined {
   const target = globalThis as Record<string, unknown>;
-  const existing = target[GLOBAL_INSTRUMENTATION_HOOKS_KEY];
+  let existing: unknown;
+  try {
+    existing = target[GLOBAL_INSTRUMENTATION_HOOKS_KEY];
+  } catch {
+    // A configurable accessor can still be replaced below.
+  }
   if (existing instanceof Map) {
     return existing as HookRegistry;
-  }
-  if (existing !== undefined) {
-    return fallbackRegistry;
   }
 
   const registry: HookRegistry = new Map();
@@ -439,8 +593,9 @@ function getHookRegistry(): HookRegistry {
       writable: false,
     });
     return registry;
-  } catch {
-    return fallbackRegistry;
+  } catch (error) {
+    reportError(error);
+    return undefined;
   }
 }
 
@@ -452,6 +607,9 @@ export function newGlobalTracingChannel<M = any>(
   }
 
   const registry = getHookRegistry();
+  if (!registry) {
+    return inertTracingHook as GlobalTracingChannel<M>;
+  }
   const existing = registry.get(nameOrChannels);
   if (existing) {
     return existing as GlobalTracingChannel<M>;
@@ -460,15 +618,4 @@ export function newGlobalTracingChannel<M = any>(
   const hook = new TracingHook<M>(nameOrChannels);
   registry.set(nameOrChannels, hook);
   return hook;
-}
-
-export function getGlobalTracingChannel<M = any>(
-  name: string,
-): GlobalTracingChannel<M> | undefined {
-  const registry = (globalThis as Record<string, unknown>)[
-    GLOBAL_INSTRUMENTATION_HOOKS_KEY
-  ];
-  return registry instanceof Map
-    ? (registry.get(name) as GlobalTracingChannel<M> | undefined)
-    : undefined;
 }
