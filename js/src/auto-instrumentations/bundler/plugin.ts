@@ -19,22 +19,26 @@ export interface BundlerPluginOptions {
   instrumentations?: InstrumentationConfig[];
 
   /**
-   * Whether to bundle for browser environments.
+   * Whether the transformed source will run in a browser or edge-like
+   * environment.
    *
    * Global instrumentation hooks are runtime-independent. This option only
-   * prevents Node-specific source patches from being added to browser bundles.
+   * prevents the Node-specific Mastra source patch from entering the bundle.
    *
    * @default false
    */
   browser?: boolean;
 
   /**
-   * Deprecated compatibility alias for `browser`.
+   * Previously replaced Node's `diagnostics_channel` implementation with a
+   * browser-compatible shim in transformed code.
    *
-   * This no longer enables a diagnostics-channel shim. It is retained so
-   * existing browser configurations keep excluding Node-only source patches.
+   * Global instrumentation hooks do not use `diagnostics_channel`, so this
+   * option no longer does anything. It is retained for backwards
+   * compatibility.
    *
-   * @deprecated Use `browser` instead.
+   * @deprecated This option no longer does anything. Use `browser` to mark
+   * browser or edge-like bundles.
    */
   useDiagnosticChannelCompatShim?: boolean;
 }
@@ -57,8 +61,7 @@ function getModuleVersion(basedir: string): string | undefined {
 }
 
 export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
-  const browser =
-    options.browser ?? options.useDiagnosticChannelCompatShim ?? false;
+  const browser = options.browser ?? false;
   const allInstrumentations = getDefaultInstrumentationConfigs({
     additionalInstrumentations: options.instrumentations,
   });

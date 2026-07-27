@@ -417,6 +417,42 @@ describe("Orchestrion Transformation Tests", () => {
 
       expectGlobalHookTransform(output);
     });
+
+    it.each([
+      ["browser", "browser"],
+      ["edge", "neutral"],
+    ] as const)(
+      "should keep Mastra %s bundles free of Node-only patches",
+      async (runtime, platform) => {
+        const { braintrustEsbuildPlugin } =
+          await import("../../src/auto-instrumentations/bundler/esbuild.js");
+
+        const entryPoint = path.join(fixturesDir, "mastra-app.js");
+        const outfile = path.join(
+          outputDir,
+          `esbuild-mastra-${runtime}-bundle.js`,
+        );
+
+        const result = await esbuild.build({
+          entryPoints: [entryPoint],
+          bundle: true,
+          write: true,
+          outfile,
+          format: "esm",
+          plugins: [braintrustEsbuildPlugin({ browser: true })],
+          logLevel: "error",
+          absWorkingDir: fixturesDir,
+          preserveSymlinks: true,
+          platform,
+        });
+
+        expect(result.errors).toHaveLength(0);
+        const output = fs.readFileSync(outfile, "utf-8");
+        expect(output).toContain("Mastra = class");
+        expect(output).not.toContain("node:module");
+        expect(output).not.toContain("__braintrustCreateRequire");
+      },
+    );
   });
 
   describe("vite", () => {

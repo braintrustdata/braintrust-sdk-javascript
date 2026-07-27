@@ -2,8 +2,7 @@
 
 Braintrust auto-instrumentation uses the vendored Orchestrion-JS transformer to
 wrap selected AI SDK functions at load time or bundle time. Transformed code
-invokes tracing-compatible hooks stored in a shared global registry; it does not
-import or publish Node.js `diagnostics_channel` events.
+uses hooks stored in a shared global registry.
 
 ## Instrumentation Configs
 
@@ -94,9 +93,11 @@ Bundler integrations are available for esbuild, Vite, Rollup, Webpack, Next.js,
 and Turbopack. Generated provider code is runtime-independent and contains no
 Node built-in or browser-shim import.
 
-Bundler plugins accept `browser: true` when their output targets a browser-like
-runtime. Global hooks do not require a browser shim; the target hint only keeps
-Node-specific source patches out of browser bundles.
+Bundler plugins accept `browser: true` when their output targets a browser or
+edge-like runtime. Global hooks themselves are runtime-independent; this hint
+only prevents the Node-specific Mastra source patch from entering those
+bundles. The legacy `useDiagnosticChannelCompatShim` option is retained as a
+no-op for backwards compatibility.
 
 ## Adding an Instrumentation
 
