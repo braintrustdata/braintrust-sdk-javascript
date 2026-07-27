@@ -456,6 +456,14 @@ export type EvaluatorFile = {
       reporter?: ReporterDef<unknown> | string;
     };
   };
+  durableEvaluators?: Record<
+    string,
+    {
+      // Kept opaque here to avoid coupling the existing Eval framework to the
+      // additive durable evaluator's generic surface.
+      definition: unknown;
+    }
+  >;
   reporters: { [reporterName: string]: ReporterDef<unknown> };
 };
 
@@ -559,6 +567,7 @@ globalThis._evals = {
   prompts: [],
   parameters: [],
   evaluators: {},
+  durableEvaluators: {},
   reporters: {},
 };
 

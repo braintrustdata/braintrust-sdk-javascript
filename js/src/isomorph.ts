@@ -266,9 +266,10 @@ interface Common {
     path: string,
     opts?: { recursive?: boolean },
   ) => Promise<string | undefined>;
-  writeFile?: (filename: string, data: string) => Promise<void>;
+  writeFile?: (filename: string, data: string | Uint8Array) => Promise<void>;
   readFile?: (filename: string) => Promise<Uint8Array>;
   readdir?: (path: string) => Promise<string[]>;
+  rename?: (oldPath: string, newPath: string) => Promise<void>;
   utimes?: (path: string, atime: Date, mtime: Date) => Promise<void>;
   unlink?: (path: string) => Promise<void>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

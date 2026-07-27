@@ -61,6 +61,11 @@ import {
 } from "./util/debug-logging";
 import { pullCommand } from "./util/pull";
 import { runDevServer } from "../../dev/server";
+import {
+  type DurableEvalDefinition,
+  type DurableEvalOperation,
+  type DurableEvalRuntimeOptions,
+} from "../durable-eval";
 
 // This requires require
 // https://stackoverflow.com/questions/50822310/how-to-import-package-json-in-typescript
@@ -213,6 +218,7 @@ function buildWatchPluginForEvaluator(
 ): esbuild.Plugin {
   const evaluators: EvaluatorState = {
     evaluators: [],
+    durableEvaluators: [],
     reporters: {},
   };
   const plugin = {
@@ -412,6 +418,11 @@ interface EvaluatorOpts {
   jsonl: boolean;
   filters: Filter[];
   progressReporter: ProgressReporter;
+  durableRunId?: string;
+  durableShard?: { index: number; count: number };
+  durableDeadlineMs?: number;
+  checkpointDir?: string;
+  durableOperation?: Exclude<DurableEvalOperation, "run">;
 }
 
 export function handleBuildFailure({
@@ -464,6 +475,21 @@ function updateEvaluators(
           BaseMetadata
         >,
         reporter: evaluator.reporter,
+      });
+    }
+    for (const registration of Object.values(
+      result.evaluator.durableEvaluators ?? {},
+    )) {
+      evaluators.durableEvaluators.push({
+        sourceFile: result.sourceFile,
+        // Runtime registrations are intentionally generic-erased.
+        definition: registration.definition as DurableEvalDefinition<
+          any,
+          any,
+          any,
+          any,
+          any
+        >,
       });
     }
 
@@ -528,6 +554,7 @@ export async function buildEvaluators(
 
   const evaluators: EvaluatorState = {
     evaluators: [],
+    durableEvaluators: [],
     reporters: {},
   };
   updateEvaluators(evaluators, buildResults, opts);
@@ -548,11 +575,20 @@ async function runOnce(
     : null;
 
   const { evaluators, buildResults } = await buildEvaluators(handles, opts);
+  if (opts.durableOperation && evaluators.evaluators.length > 0) {
+    throw new Error(
+      "Durable lifecycle flags cannot be used with ordinary Eval definitions",
+    );
+  }
 
   if (opts.list) {
     for (const evaluator of evaluators.evaluators) {
       // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.log(evaluator.evaluator.evalName);
+    }
+    for (const evaluator of evaluators.durableEvaluators) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+      console.log(evaluator.definition.evalName);
     }
     return true;
   }
@@ -592,15 +628,46 @@ async function runOnce(
       }
     }
   });
+  const durableResultPromises = evaluators.durableEvaluators.map(
+    async (registration) => {
+      const options: DurableEvalRuntimeOptions = {
+        runId: opts.durableRunId,
+        shard: opts.durableShard,
+        deadlineMs: opts.durableDeadlineMs,
+        checkpointDir: opts.checkpointDir,
+        noSendLogs: opts.noSendLogs,
+      };
+      if (!opts.durableOperation) {
+        return await registration.definition.run(options);
+      }
+      if (!opts.durableRunId) {
+        throw new Error(
+          `--${opts.durableOperation.replaceAll("-", "_")} requires --run-id`,
+        );
+      }
+      const existingOptions = { ...options, runId: opts.durableRunId };
+      switch (opts.durableOperation) {
+        case "status":
+          return await registration.definition.status(existingOptions);
+        case "retry-failed":
+          return await registration.definition.retryFailed(existingOptions);
+        case "resubmit-unknown":
+          return await registration.definition.resubmitUnknown(existingOptions);
+        case "cancel":
+          return await registration.definition.cancel(existingOptions);
+      }
+    },
+  );
 
   // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.error(
     styleText(
       "dim",
-      `Processing ${styleText("bold", String(resultPromises.length))} evaluator${resultPromises.length === 1 ? "" : "s"}...`,
+      `Processing ${styleText("bold", String(resultPromises.length + durableResultPromises.length))} evaluator${resultPromises.length + durableResultPromises.length === 1 ? "" : "s"}...`,
     ),
   );
   const allEvalsResults = await Promise.all(resultPromises);
+  const allDurableResults = await Promise.all(durableResultPromises);
   opts.progressReporter.stop();
   // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.error("");
@@ -653,6 +720,33 @@ async function runOnce(
   )) {
     const success = await reporter.reportRun(await Promise.all(results));
     allSuccess = allSuccess && success;
+  }
+
+  for (const result of allDurableResults) {
+    if (opts.jsonl) {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+      console.log(JSON.stringify(result));
+    } else if (result.status === "completed") {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+      console.error(
+        `Durable eval ${result.runId} completed (${result.progress.taskSucceeded}/${result.progress.total} tasks)`,
+      );
+    } else {
+      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+      console.error(`Durable eval ${result.runId} paused: ${result.reason}`);
+    }
+    if (
+      result.status === "completed" &&
+      (result.failures.tasks > 0 || result.failures.scorers > 0)
+    ) {
+      allSuccess = false;
+    }
+    if (
+      result.status === "paused" &&
+      ["unknown_submission", "provider_unreachable"].includes(result.reason)
+    ) {
+      allSuccess = false;
+    }
   }
 
   return allSuccess;
@@ -947,12 +1041,44 @@ async function run(args: RunArgs) {
       : new BarProgressReporter(),
     filters: args.filter ? parseFilters(args.filter) : [],
     list: !!args.list,
+    durableRunId: args.run_id,
+    durableShard: args.shard ? parseDurableShard(args.shard) : undefined,
+    durableDeadlineMs: args.deadline
+      ? parseDurationMs(args.deadline)
+      : undefined,
+    checkpointDir: args.checkpoint_dir,
+    durableOperation: args.status
+      ? "status"
+      : args.retry_failed
+        ? "retry-failed"
+        : args.resubmit_unknown
+          ? "resubmit-unknown"
+          : args.cancel
+            ? "cancel"
+            : undefined,
   };
 
   if (args.list && args.watch) {
     // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error(error("Cannot specify both --list and --watch."));
     process.exit(1);
+  }
+  if (args.shard && !args.run_id) {
+    throw new Error("--shard requires --run-id for durable evals");
+  }
+  const lifecycleFlags = [
+    args.status,
+    args.retry_failed,
+    args.resubmit_unknown,
+    args.cancel,
+  ].filter(Boolean);
+  if (lifecycleFlags.length > 1) {
+    throw new Error(
+      "Specify only one of --status, --retry-failed, --resubmit-unknown, or --cancel",
+    );
+  }
+  if (lifecycleFlags.length > 0 && !args.run_id) {
+    throw new Error("Durable lifecycle flags require --run-id");
   }
 
   const plugins = evaluatorOpts.watch
@@ -1015,6 +1141,32 @@ async function run(args: RunArgs) {
   if (!success) {
     process.exit(1);
   }
+}
+
+function parseDurableShard(value: string) {
+  const match = /^(\d+)\/(\d+)$/.exec(value);
+  if (!match) {
+    throw new Error(`Invalid --shard value '${value}'; expected INDEX/COUNT`);
+  }
+  const shard = { index: Number(match[1]), count: Number(match[2]) };
+  if (shard.count < 1 || shard.index < 0 || shard.index >= shard.count) {
+    throw new Error(`Invalid --shard value '${value}'`);
+  }
+  return shard;
+}
+
+function parseDurationMs(value: string) {
+  const match = /^(\d+(?:\.\d+)?)(ms|s|m|h)?$/.exec(value);
+  if (!match) {
+    throw new Error(
+      `Invalid --deadline value '${value}'; expected e.g. 500ms, 30m, or 6h`,
+    );
+  }
+  const multipliers = { ms: 1, s: 1_000, m: 60_000, h: 3_600_000 };
+  return (
+    Number(match[1]) *
+    multipliers[(match[2] ?? "ms") as keyof typeof multipliers]
+  );
 }
 
 function addAuthArgs(parser: ArgumentParser) {
@@ -1100,6 +1252,34 @@ async function main() {
   parser_run.add_argument("--no-progress-bars", {
     action: "store_true",
     help: "Do not show progress bars when processing evaluators.",
+  });
+  parser_run.add_argument("--run-id", {
+    help: "Create or resume a DurableEval run with this stable identifier.",
+  });
+  parser_run.add_argument("--shard", {
+    help: "Run one DurableEval shard in INDEX/COUNT form, for example 0/8.",
+  });
+  parser_run.add_argument("--deadline", {
+    help: "Pause DurableEval work after a duration such as 30m or 6h.",
+  });
+  parser_run.add_argument("--checkpoint-dir", {
+    help: "Override the default .braintrust/evals checkpoint directory.",
+  });
+  parser_run.add_argument("--status", {
+    action: "store_true",
+    help: "Inspect a DurableEval run without claiming new work.",
+  });
+  parser_run.add_argument("--retry-failed", {
+    action: "store_true",
+    help: "Retry terminal DurableEval failures with the current definition.",
+  });
+  parser_run.add_argument("--resubmit-unknown", {
+    action: "store_true",
+    help: "Explicitly resubmit ambiguous provider batches, accepting possible duplicate cost.",
+  });
+  parser_run.add_argument("--cancel", {
+    action: "store_true",
+    help: "Cancel active provider batches and terminally cancel unfinished DurableEval work.",
   });
   parser_run.add_argument("--bundle", {
     action: "store_true",
