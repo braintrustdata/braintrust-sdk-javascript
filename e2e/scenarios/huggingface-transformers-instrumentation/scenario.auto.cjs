@@ -4,4 +4,9 @@ if (!packageName) {
 }
 
 const sdk = require(packageName);
-void import("./scenario.impl.mjs").then(({ runScenario }) => runScenario(sdk));
+void import("./scenario.impl.mjs").then(
+  ({ configureHuggingFaceHub, runScenario }) => {
+    configureHuggingFaceHub(sdk);
+    return runScenario(sdk);
+  },
+);

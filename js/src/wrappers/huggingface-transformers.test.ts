@@ -165,6 +165,30 @@ describe("wrapHuggingFaceTransformers", () => {
     });
   });
 
+  test("wraps ESM module namespace objects", async () => {
+    const module = Object.assign(Object.create(null), makeModule());
+    const wrapped = wrapHuggingFaceTransformers(module);
+
+    expect(wrapped).not.toBe(module);
+    const pipeline = await wrapped.pipeline?.(
+      "text-generation",
+      "model/text-generation",
+    );
+    await pipeline?.("Hello");
+
+    expect(await backgroundLogger.drain()).toMatchObject([
+      {
+        metadata: {
+          model: "model/text-generation",
+          provider: "huggingface",
+        },
+        span_attributes: {
+          name: "huggingface.transformers.text_generation",
+        },
+      },
+    ]);
+  });
+
   test("does not trace unsupported tasks", async () => {
     const transformers = wrapHuggingFaceTransformers(makeModule());
     const pipeline = await transformers.pipeline?.(

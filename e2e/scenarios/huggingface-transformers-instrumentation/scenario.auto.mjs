@@ -1,4 +1,4 @@
-import { runScenario } from "./scenario.impl.mjs";
+import { configureHuggingFaceHub, runScenario } from "./scenario.impl.mjs";
 
 const packageName = process.env.HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME;
 if (!packageName) {
@@ -6,4 +6,5 @@ if (!packageName) {
 }
 
 const sdk = await import(packageName);
+configureHuggingFaceHub(sdk);
 await runScenario(sdk);

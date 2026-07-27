@@ -33,7 +33,6 @@ describe.concurrent("variants", () => {
               HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME: scenario.dependencyName,
             },
             runContext: {
-              cassette: false,
               originalScenarioDir,
               variantKey: scenario.snapshotName,
             },
@@ -56,7 +55,6 @@ describe.concurrent("variants", () => {
             },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
-              cassette: false,
               originalScenarioDir,
               variantKey: scenario.snapshotName,
             },
@@ -68,34 +66,30 @@ describe.concurrent("variants", () => {
         testFileUrl: import.meta.url,
         timeoutMs: SCENARIO_TIMEOUT_MS,
       });
+
+      if (scenario === scenarios.at(-1)) {
+        defineAssertions({
+          name: "auto-hook instrumentation CJS",
+          runScenario: async ({ runNodeScenarioDir }) => {
+            await runNodeScenarioDir({
+              entry: "scenario.auto.cjs",
+              env: {
+                HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME: scenario.dependencyName,
+              },
+              nodeArgs: ["--import", "braintrust/hook.mjs"],
+              runContext: {
+                originalScenarioDir,
+                variantKey: scenario.snapshotName,
+              },
+              scenarioDir,
+              timeoutMs: SCENARIO_TIMEOUT_MS,
+            });
+          },
+          snapshotName: `${scenario.snapshotName}-auto-cjs`,
+          testFileUrl: import.meta.url,
+          timeoutMs: SCENARIO_TIMEOUT_MS,
+        });
+      }
     });
   }
-});
-
-const latestV4 = scenarios.at(-1);
-if (!latestV4) {
-  throw new Error("Expected a latest Transformers.js v4 scenario");
-}
-
-defineAssertions({
-  name: `Transformers.js ${latestV4.version} auto-hook instrumentation CJS`,
-  runScenario: async ({ runNodeScenarioDir }) => {
-    await runNodeScenarioDir({
-      entry: "scenario.auto.cjs",
-      env: {
-        HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME: latestV4.dependencyName,
-      },
-      nodeArgs: ["--import", "braintrust/hook.mjs"],
-      runContext: {
-        cassette: false,
-        originalScenarioDir,
-        variantKey: latestV4.snapshotName,
-      },
-      scenarioDir,
-      timeoutMs: SCENARIO_TIMEOUT_MS,
-    });
-  },
-  snapshotName: `${latestV4.snapshotName}-auto-cjs`,
-  testFileUrl: import.meta.url,
-  timeoutMs: SCENARIO_TIMEOUT_MS,
 });

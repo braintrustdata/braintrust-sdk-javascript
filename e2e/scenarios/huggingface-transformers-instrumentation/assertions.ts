@@ -6,9 +6,9 @@ import {
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
 import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
-import { findLatestSpan } from "../../helpers/trace-selectors";
+import { findAllSpans, findLatestSpan } from "../../helpers/trace-selectors";
 
-import { ROOT_NAME } from "./scenario.impl.mjs";
+import { MODEL_IDS, ROOT_NAME } from "./scenario.impl.mjs";
 
 type RunScenario = (harness: {
   runNodeScenarioDir: (options: {
@@ -66,11 +66,16 @@ export function defineAssertions(options: {
 
     test("captures all supported local pipeline executions", testConfig, () => {
       for (const name of EXPECTED_SPANS) {
-        const matches = traceEvents.filter((event) => event.span.name === name);
+        const matches = findAllSpans(traceEvents, name);
         expect(matches, `expected one ${name} span`).toHaveLength(1);
         expect(matches[0]?.span.type).toBe("llm");
         expect(matches[0]?.metadata).toMatchObject({
-          model: `fixture/${name.slice("huggingface.transformers.".length).replaceAll("_", "-")}`,
+          model:
+            MODEL_IDS[
+              name
+                .slice("huggingface.transformers.".length)
+                .replaceAll("_", "-")
+            ],
           provider: "huggingface",
         });
       }
@@ -81,9 +86,8 @@ export function defineAssertions(options: {
           "huggingface.transformers.feature_extraction",
         )?.output,
       ).toEqual({
-        embedding_batch_count: 1,
         embedding_count: 1,
-        embedding_length: 3,
+        embedding_length: 32,
       });
       expect(
         findLatestSpan(
@@ -95,7 +99,7 @@ export function defineAssertions(options: {
           finish_reason: "stop",
           index: 0,
           message: {
-            content: "Ada",
+            content: "##ace wrote th",
             role: "assistant",
           },
         },

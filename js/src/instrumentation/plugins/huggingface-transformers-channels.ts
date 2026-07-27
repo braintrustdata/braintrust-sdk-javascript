@@ -1,5 +1,4 @@
 import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
   HuggingFaceTransformersPipeline,
   HuggingFaceTransformersTensor,
@@ -59,5 +58,4 @@ export const huggingFaceTransformersChannels = defineChannels(
       kind: "async",
     }),
   },
-  { instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE },
 );

@@ -21,15 +21,14 @@ span_tree:
     │           "finish_reason": "stop",
     │           "index": 0,
     │           "message": {
-    │             "content": "Deterministic output",
+    │             "content": "Hellooo",
     │             "role": "assistant"
     │           }
     │         }
     │       ]
     │       metadata: {
-    │         "model": "fixture/text-generation",
-    │         "provider": "huggingface",
-    │         "temperature": 0
+    │         "model": "onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX",
+    │         "provider": "huggingface"
     │       }
     ├── transformers-text2text-generation-operation
     │   metadata: {
@@ -39,7 +38,7 @@ span_tree:
     │   └── huggingface.transformers.text2text_generation [llm]
     │       input: [
     │         {
-    │           "content": "Translate this",
+    │           "content": "Translate English to German: Hello",
     │           "role": "user"
     │         }
     │       ]
@@ -48,13 +47,13 @@ span_tree:
     │           "finish_reason": "stop",
     │           "index": 0,
     │           "message": {
-    │             "content": "Deterministic output",
+    │             "content": "inedinedined",
     │             "role": "assistant"
     │           }
     │         }
     │       ]
     │       metadata: {
-    │         "model": "fixture/text2text-generation",
+    │         "model": "onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX",
     │         "provider": "huggingface"
     │       }
     ├── transformers-summarization-operation
@@ -65,7 +64,7 @@ span_tree:
     │   └── huggingface.transformers.summarization [llm]
     │       input: [
     │         {
-    │           "content": "A deliberately long passage.",
+    │           "content": "A short passage about tracing.",
     │           "role": "user"
     │         }
     │       ]
@@ -74,13 +73,13 @@ span_tree:
     │           "finish_reason": "stop",
     │           "index": 0,
     │           "message": {
-    │             "content": "Deterministic output",
+    │             "content": "inedinedined",
     │             "role": "assistant"
     │           }
     │         }
     │       ]
     │       metadata: {
-    │         "model": "fixture/summarization",
+    │         "model": "onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX",
     │         "provider": "huggingface"
     │       }
     ├── transformers-feature-extraction-operation
@@ -91,12 +90,11 @@ span_tree:
     │   └── huggingface.transformers.feature_extraction [llm]
     │       input: "Embed this"
     │       output: {
-    │         "embedding_batch_count": 1,
     │         "embedding_count": 1,
-    │         "embedding_length": 3
+    │         "embedding_length": 32
     │       }
     │       metadata: {
-    │         "model": "fixture/feature-extraction",
+    │         "model": "onnx-internal-testing/tiny-random-BertModel-ONNX",
     │         "provider": "huggingface"
     │       }
     └── transformers-question-answering-operation
@@ -107,7 +105,7 @@ span_tree:
         └── huggingface.transformers.question_answering [llm]
             input: [
               {
-                "content": "Context:\nAda built it.\n\nQuestion:\nWho built it?",
+                "content": "Context:\nAda Lovelace wrote the program.\n\nQuestion:\nWho wrote the program?",
                 "role": "user"
               }
             ]
@@ -116,12 +114,12 @@ span_tree:
                 "finish_reason": "stop",
                 "index": 0,
                 "message": {
-                  "content": "Ada",
+                  "content": "##ace wrote th",
                   "role": "assistant"
                 }
               }
             ]
             metadata: {
-              "model": "fixture/question-answering",
+              "model": "onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX",
               "provider": "huggingface"
             }

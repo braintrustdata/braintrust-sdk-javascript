@@ -1,5 +1,5 @@
 import { wrapHuggingFaceTransformers } from "braintrust";
-import { runScenario, withFixturePipelineFactory } from "./scenario.impl.mjs";
+import { configureHuggingFaceHub, runScenario } from "./scenario.impl.mjs";
 
 const packageName = process.env.HUGGINGFACE_TRANSFORMERS_PACKAGE_NAME;
 if (!packageName) {
@@ -7,7 +7,5 @@ if (!packageName) {
 }
 
 const sdk = await import(packageName);
-await runScenario(
-  wrapHuggingFaceTransformers(withFixturePipelineFactory(sdk)),
-  { usePipelineFactory: true },
-);
+configureHuggingFaceHub(sdk);
+await runScenario(wrapHuggingFaceTransformers(sdk));

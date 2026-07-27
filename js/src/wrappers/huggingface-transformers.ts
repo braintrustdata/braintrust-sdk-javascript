@@ -1,4 +1,3 @@
-import { isObject } from "../../util";
 import { huggingFaceTransformersChannels } from "../instrumentation/plugins/huggingface-transformers-channels";
 import type {
   HuggingFaceTransformersModule,
@@ -72,13 +71,16 @@ export function wrapHuggingFaceTransformers(transformers: unknown): unknown {
 function isSupportedModule(
   value: unknown,
 ): value is HuggingFaceTransformersModule {
-  if (!isObject(value)) {
+  if (
+    value === null ||
+    (typeof value !== "object" && typeof value !== "function")
+  ) {
     return false;
   }
   return (
-    typeof value.pipeline === "function" ||
+    typeof Reflect.get(value, "pipeline") === "function" ||
     [...PIPELINE_CONSTRUCTOR_KEYS].some(
-      (key) => typeof value[key] === "function",
+      (key) => typeof Reflect.get(value, key) === "function",
     )
   );
 }
