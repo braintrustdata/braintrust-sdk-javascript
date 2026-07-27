@@ -29,6 +29,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
 const outputDir = path.join(__dirname, "output-transformation");
 const nodeModulesDir = path.join(fixturesDir, "node_modules");
+const mastraFixtureDir = path.join(outputDir, "mastra-fixture");
+const mastraPackageDir = path.join(
+  mastraFixtureDir,
+  "node_modules",
+  "@mastra",
+  "core",
+);
+const mastraEntryPoint = path.join(mastraFixtureDir, "mastra-app.js");
 
 function testConfig(
   functionQuery: InstrumentationConfig["functionQuery"],
@@ -80,6 +88,28 @@ describe("Orchestrion Transformation Tests", () => {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
+    fs.mkdirSync(path.join(mastraPackageDir, "dist"), { recursive: true });
+    fs.writeFileSync(
+      path.join(mastraPackageDir, "package.json"),
+      JSON.stringify({
+        name: "@mastra/core",
+        version: "1.0.0",
+        type: "module",
+        exports: { ".": "./dist/index.js" },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(mastraPackageDir, "dist", "index.js"),
+      `export { Mastra } from "./chunk-BROWSER-SAFE.js";`,
+    );
+    fs.writeFileSync(
+      path.join(mastraPackageDir, "dist", "chunk-BROWSER-SAFE.js"),
+      "export class Mastra {}",
+    );
+    fs.writeFileSync(
+      mastraEntryPoint,
+      `export { Mastra } from "@mastra/core";`,
+    );
   });
 
   afterAll(() => {
@@ -427,21 +457,20 @@ describe("Orchestrion Transformation Tests", () => {
         const { braintrustEsbuildPlugin } =
           await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
-        const entryPoint = path.join(fixturesDir, "mastra-app.js");
         const outfile = path.join(
           outputDir,
           `esbuild-mastra-${runtime}-bundle.js`,
         );
 
         const result = await esbuild.build({
-          entryPoints: [entryPoint],
+          entryPoints: [mastraEntryPoint],
           bundle: true,
           write: true,
           outfile,
           format: "esm",
           plugins: [braintrustEsbuildPlugin({ browser: true })],
           logLevel: "error",
-          absWorkingDir: fixturesDir,
+          absWorkingDir: mastraFixtureDir,
           preserveSymlinks: true,
           platform,
         });
