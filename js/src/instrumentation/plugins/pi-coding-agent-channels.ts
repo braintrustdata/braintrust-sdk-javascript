@@ -1,4 +1,5 @@
 import { channel, defineChannels } from "../core/channel-definitions";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
   PiAgentSession,
   PiPromptOptions,
@@ -16,4 +17,5 @@ export const piCodingAgentChannels = defineChannels(
       kind: "async",
     }),
   },
+  { instrumentationName: INSTRUMENTATION_NAMES.PI_CODING_AGENT },
 );

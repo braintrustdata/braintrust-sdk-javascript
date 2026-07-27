@@ -93,6 +93,11 @@ describe("OpenAIAgentsPlugin", () => {
 
     expect(taskSpan?.span_attributes?.type).toBe("task");
     expect(generationSpan?.span_attributes?.type).toBe("llm");
+    for (const instrumentedSpan of [taskSpan, generationSpan]) {
+      expect(instrumentedSpan?.context?.span_origin).toMatchObject({
+        instrumentation: { name: "openai-agents" },
+      });
+    }
     expect(generationSpan?.metrics).toMatchObject({
       prompt_tokens: 5,
       completion_tokens: 1,

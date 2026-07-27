@@ -1573,6 +1573,20 @@ async function runEvaluatorInternal(
       }
     })();
 
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let abortHandler: (() => void) | undefined;
+
+    const cleanupCancellation = () => {
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+        timeoutId = undefined;
+      }
+      if (abortHandler && evaluator.signal) {
+        evaluator.signal.removeEventListener("abort", abortHandler);
+        abortHandler = undefined;
+      }
+    };
+
     const cancel = async () => {
       await new Promise<never>((_, reject) => {
         // If already cancelled, reject immediately
@@ -1581,21 +1595,12 @@ async function runEvaluatorInternal(
           return;
         }
 
-        let timeoutId: ReturnType<typeof setTimeout> | undefined;
-        let abortHandler: (() => void) | undefined;
-
         const rejectOnce = (error: InternalAbortError) => {
           if (cancelled) {
             return;
           }
           cancelled = true;
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = undefined;
-          }
-          if (abortHandler && evaluator.signal) {
-            evaluator.signal.removeEventListener("abort", abortHandler);
-          }
+          cleanupCancellation();
           reject(error);
         };
 
@@ -1646,6 +1651,8 @@ async function runEvaluatorInternal(
 
       throw e;
     } finally {
+      cleanupCancellation();
+
       // Ensure results are cleared if not collecting to free memory
       if (!collectResults) {
         collectedResults.length = 0;

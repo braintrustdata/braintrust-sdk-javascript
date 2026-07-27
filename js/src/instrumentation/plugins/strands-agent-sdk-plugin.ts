@@ -6,10 +6,14 @@ import { debugLogger } from "../../debug-logger";
 import {
   Attachment,
   BaseAttachment,
-  startSpan,
+  startSpan as startBaseSpan,
   withCurrent,
 } from "../../logger";
 import type { Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { LRUCache } from "../../lru-cache";
 import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
@@ -278,23 +282,33 @@ function startAgentStream(
   );
   const span = parentSpan
     ? withCurrent(parentSpan, () =>
-        startSpan({
-          event: {
-            input,
-            metadata,
-          },
-          name: formatAgentSpanName(agent),
-          spanAttributes: { type: SpanTypeAttribute.TASK },
-        }),
+        startBaseSpan(
+          withSpanInstrumentationName(
+            {
+              event: {
+                input,
+                metadata,
+              },
+              name: formatAgentSpanName(agent),
+              spanAttributes: { type: SpanTypeAttribute.TASK },
+            },
+            INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK,
+          ),
+        ),
       )
-    : startSpan({
-        event: {
-          input,
-          metadata,
-        },
-        name: formatAgentSpanName(agent),
-        spanAttributes: { type: SpanTypeAttribute.TASK },
-      });
+    : startBaseSpan(
+        withSpanInstrumentationName(
+          {
+            event: {
+              input,
+              metadata,
+            },
+            name: formatAgentSpanName(agent),
+            spanAttributes: { type: SpanTypeAttribute.TASK },
+          },
+          INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK,
+        ),
+      );
 
   return {
     activeTools: new Map(),
@@ -326,24 +340,37 @@ function startMultiAgentStream(
   const input = processStrandsInputAttachments(event.arguments[0]);
   const span = parentSpan
     ? withCurrent(parentSpan, () =>
-        startSpan({
-          event: {
-            input,
-            metadata,
-          },
-          name:
-            operation === "Graph.stream" ? "Strands Graph" : "Strands Swarm",
-          spanAttributes: { type: SpanTypeAttribute.TASK },
-        }),
+        startBaseSpan(
+          withSpanInstrumentationName(
+            {
+              event: {
+                input,
+                metadata,
+              },
+              name:
+                operation === "Graph.stream"
+                  ? "Strands Graph"
+                  : "Strands Swarm",
+              spanAttributes: { type: SpanTypeAttribute.TASK },
+            },
+            INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK,
+          ),
+        ),
       )
-    : startSpan({
-        event: {
-          input,
-          metadata,
-        },
-        name: operation === "Graph.stream" ? "Strands Graph" : "Strands Swarm",
-        spanAttributes: { type: SpanTypeAttribute.TASK },
-      });
+    : startBaseSpan(
+        withSpanInstrumentationName(
+          {
+            event: {
+              input,
+              metadata,
+            },
+            name:
+              operation === "Graph.stream" ? "Strands Graph" : "Strands Swarm",
+            spanAttributes: { type: SpanTypeAttribute.TASK },
+          },
+          INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK,
+        ),
+      );
 
   return {
     activeNodes: new Map(),
@@ -463,19 +490,24 @@ function startModelSpan(
     provider: extractProvider(model),
   };
   const span = withCurrent(state.span, () =>
-    startSpan({
-      event: {
-        input: Array.isArray(event.agent?.messages)
-          ? processStrandsInputAttachments(
-              event.agent.messages,
-              state.attachmentCache,
-            )
-          : undefined,
-        metadata,
-      },
-      name: formatModelSpanName(model),
-      spanAttributes: { type: SpanTypeAttribute.LLM },
-    }),
+    startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          event: {
+            input: Array.isArray(event.agent?.messages)
+              ? processStrandsInputAttachments(
+                  event.agent.messages,
+                  state.attachmentCache,
+                )
+              : undefined,
+            metadata,
+          },
+          name: formatModelSpanName(model),
+          spanAttributes: { type: SpanTypeAttribute.LLM },
+        },
+        INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK,
+      ),
+    ),
   );
 
   state.activeModel = {
@@ -549,20 +581,25 @@ function startToolSpan(
 
   const name = extractToolName(toolUse, event.tool);
   const span = withCurrent(state.span, () =>
-    startSpan({
-      event: {
-        input: toolUse?.input,
-        metadata: {
-          "gen_ai.tool.call.id": toolUse?.toolUseId,
-          "gen_ai.tool.name": name,
-          "strands.operation": "tool.call",
-          "strands.tool.name": name,
-          provider: "strands",
+    startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          event: {
+            input: toolUse?.input,
+            metadata: {
+              "gen_ai.tool.call.id": toolUse?.toolUseId,
+              "gen_ai.tool.name": name,
+              "strands.operation": "tool.call",
+              "strands.tool.name": name,
+              provider: "strands",
+            },
+          },
+          name: `tool: ${name}`,
+          spanAttributes: { type: SpanTypeAttribute.TOOL },
         },
-      },
-      name: `tool: ${name}`,
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-    }),
+        INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK,
+      ),
+    ),
   );
 
   state.activeTools.set(key, {
@@ -662,11 +699,16 @@ function startNodeSpan(
     provider: "strands",
   };
   const span = withCurrent(state.span, () =>
-    startSpan({
-      event: { metadata },
-      name: `node: ${nodeId}`,
-      spanAttributes: { type: SpanTypeAttribute.TASK },
-    }),
+    startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          event: { metadata },
+          name: `node: ${nodeId}`,
+          spanAttributes: { type: SpanTypeAttribute.TASK },
+        },
+        INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK,
+      ),
+    ),
   );
   const nodeState = {
     ...(child ? { child } : {}),

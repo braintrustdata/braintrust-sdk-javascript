@@ -14,6 +14,7 @@ import type {
   AISDKEmbedParams,
   AISDKGenerateFunction,
   AISDKHarnessAgentCallParams,
+  AISDKHarnessAgentCreateSessionFunction,
   AISDKHarnessAgentGenerateFunction,
   AISDKHarnessAgentInstance,
   AISDKHarnessAgentStreamFunction,
@@ -206,6 +207,12 @@ export const wrapAgentClass = (
 
           if (harnessAgent && typeof original === "function") {
             switch (prop) {
+              case "createSession":
+                return wrapHarnessAgentCreateSession(
+                  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                  original as AISDKHarnessAgentCreateSessionFunction,
+                  harnessAgent,
+                );
               case "generate":
                 return wrapHarnessAgentGenerate(
                   original as AISDKHarnessAgentGenerateFunction,
@@ -263,6 +270,28 @@ export const wrapAgentClass = (
       });
     },
   }) as any;
+};
+
+const wrapHarnessAgentCreateSession = (
+  createSession: AISDKHarnessAgentCreateSessionFunction,
+  instance: AISDKHarnessAgentInstance,
+) => {
+  const wrapper = function (
+    params?: Parameters<AISDKHarnessAgentCreateSessionFunction>[0],
+  ) {
+    return harnessAgentChannels.createSession.tracePromise(
+      () =>
+        params === undefined
+          ? createSession.call(instance)
+          : createSession.call(instance, params),
+      createAISDKChannelContext(params ?? {}, { self: instance }),
+    );
+  };
+  Object.defineProperty(wrapper, "name", {
+    value: "HarnessAgent.createSession",
+    writable: false,
+  });
+  return wrapper;
 };
 
 const wrapHarnessAgentGenerate = (

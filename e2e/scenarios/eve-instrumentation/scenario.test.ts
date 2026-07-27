@@ -14,6 +14,7 @@ import {
   findAllSpans,
   findChildSpans,
   findLatestChildSpan,
+  spanInstrumentationName,
 } from "../../helpers/trace-selectors";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -308,6 +309,10 @@ describe("eve instrumentation", () => {
     expect(secondRead?.metadata).toMatchObject({
       "eve.session_id": secondRoot?.metadata?.["eve.session_id"],
     });
+
+    for (const event of events) {
+      expect(spanInstrumentationName(event)).toBe("eve");
+    }
 
     const rawRows = payloads.flatMap((payload) => payload.rows);
     for (const step of findAllSpans(events, "eve.step")) {

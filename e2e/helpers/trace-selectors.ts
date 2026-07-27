@@ -128,3 +128,15 @@ export function findLatestChildSpan(
     )
   );
 }
+
+export function spanInstrumentationName(
+  event: CapturedLogEvent | undefined,
+): string | undefined {
+  const spanOrigin = event?.context?.span_origin;
+  if (!isRecord(spanOrigin) || !isRecord(spanOrigin.instrumentation)) {
+    return undefined;
+  }
+  return typeof spanOrigin.instrumentation.name === "string"
+    ? spanOrigin.instrumentation.name
+    : undefined;
+}

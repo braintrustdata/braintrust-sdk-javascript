@@ -3,6 +3,10 @@
 import { SpanTypeAttribute } from "../../../../util/index";
 import { startSpan, type CompiledPrompt } from "../../../logger";
 import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../../span-origin";
+import {
   extractAnthropicCacheTokens,
   finalizeAnthropicTokens,
 } from "../../anthropic-tokens-util";
@@ -280,7 +284,9 @@ export function BraintrustMiddleware(
         },
       };
 
-      const span = startSpan(spanArgs);
+      const span = startSpan(
+        withSpanInstrumentationName(spanArgs, INSTRUMENTATION_NAMES.AI_SDK),
+      );
 
       try {
         const result = await doGenerate();
@@ -357,7 +363,9 @@ export function BraintrustMiddleware(
         },
       };
 
-      const span = startSpan(spanArgs);
+      const span = startSpan(
+        withSpanInstrumentationName(spanArgs, INSTRUMENTATION_NAMES.AI_SDK),
+      );
 
       try {
         const { stream, ...rest } = await doStream();

@@ -1,5 +1,9 @@
 import { currentSpan, initLogger, NOOP_SPAN, startSpan } from "../../logger";
 import type { Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import type {
   LangChainCallbackHandlerOptions,
   LangChainEndSpanArgs,
@@ -84,14 +88,18 @@ export class BraintrustLangChainCallbackHandler<
         ...(this.options.debug ? { runId, parentRunId } : {}),
       },
     };
+    const spanArgs = withSpanInstrumentationName(
+      args,
+      INSTRUMENTATION_NAMES.LANGCHAIN,
+    );
 
-    let span = parentSpan.startSpan(args);
+    let span = parentSpan.startSpan(spanArgs);
 
     if (
       !Object.is(this.options.logger, NOOP_SPAN) &&
       Object.is(span, NOOP_SPAN)
     ) {
-      span = initLogger().startSpan(args);
+      span = initLogger().startSpan(spanArgs);
     }
 
     this.spans.set(runId, span);

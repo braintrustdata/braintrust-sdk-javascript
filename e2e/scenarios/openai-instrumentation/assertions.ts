@@ -14,7 +14,11 @@ import {
   spanTreeFields,
   type SpanTreeEntry,
 } from "../../helpers/span-tree";
-import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
+import {
+  findChildSpans,
+  findLatestSpan,
+  spanInstrumentationName,
+} from "../../helpers/trace-selectors";
 
 import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 
@@ -674,6 +678,18 @@ export function defineOpenAIInstrumentationAssertions(options: {
         },
       );
     }
+
+    test("records OpenAI span provenance", testConfig, () => {
+      for (const spec of operationSpecs) {
+        const operation = findLatestSpan(events, spec.name);
+        const span = findOpenAISpan(
+          events,
+          operation?.span.id,
+          spec.childNames,
+        );
+        expect(spanInstrumentationName(span)).toBe("openai");
+      }
+    });
 
     const scenarioDir = path.dirname(fileURLToPath(options.testFileUrl));
     const cassetteMode = process.env.BRAINTRUST_E2E_CASSETTE_MODE;

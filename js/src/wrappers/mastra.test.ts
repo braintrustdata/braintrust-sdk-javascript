@@ -77,6 +77,9 @@ describe("BraintrustObservabilityExporter", () => {
     expect(merged).toHaveLength(1);
     expect(merged[0].span_attributes?.name).toBe("agent run");
     expect(merged[0].scores?.quality).toBe(0.9);
+    expect(merged[0].context?.span_origin).toMatchObject({
+      instrumentation: { name: "mastra" },
+    });
   });
 
   // Run a model span's full lifecycle through the exporter and return the logged

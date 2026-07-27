@@ -50,7 +50,9 @@ export async function runHarnessAgentScenario(HarnessAgent) {
       span_info: TURN_SPAN_INFO,
     });
     await waitForFile(session, "/workspace/generate-started");
-    const generateContinuationState = await session.suspendTurn();
+    const generateContinuationState = JSON.parse(
+      JSON.stringify(await session.suspendTurn()),
+    );
     await generated;
 
     session = await agent.createSession({
@@ -82,7 +84,9 @@ export async function runHarnessAgentScenario(HarnessAgent) {
       }
     })();
     await waitForFile(session, "/workspace/stream-started");
-    const streamContinuationState = await session.suspendTurn();
+    const streamContinuationState = JSON.parse(
+      JSON.stringify(await session.suspendTurn()),
+    );
     await streamDrain;
 
     session = await agent.createSession({

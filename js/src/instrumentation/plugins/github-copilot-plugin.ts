@@ -1,7 +1,11 @@
 import { BasePlugin } from "../core";
 import type { IsoChannelHandlers } from "../../isomorph";
-import { startSpan } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { SpanTypeAttribute } from "../../../util/index";
 import {
   extractAnthropicCacheTokens,
@@ -165,11 +169,16 @@ async function handleTurnStart(
   }
 
   const parentId = await getParentIdForAgent(state, agentId);
-  const span = startSpan({
-    name: "Copilot Turn",
-    parent: parentId,
-    spanAttributes: { type: SpanTypeAttribute.TASK },
-  });
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        name: "Copilot Turn",
+        parent: parentId,
+        spanAttributes: { type: SpanTypeAttribute.TASK },
+      },
+      INSTRUMENTATION_NAMES.GITHUB_COPILOT,
+    ),
+  );
 
   const pendingUserMessage = state.pendingUserMessages.get(key);
   if (pendingUserMessage) {
@@ -216,11 +225,16 @@ async function handleUsage(
 
   const { metrics, metadata } = extractMetricsFromUsage(usage);
 
-  const llmSpan = startSpan({
-    name: "github.copilot.llm",
-    parent: parentId,
-    spanAttributes: { type: SpanTypeAttribute.LLM },
-  });
+  const llmSpan = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        name: "github.copilot.llm",
+        parent: parentId,
+        spanAttributes: { type: SpanTypeAttribute.LLM },
+      },
+      INSTRUMENTATION_NAMES.GITHUB_COPILOT,
+    ),
+  );
 
   llmSpan.log({
     output: content ?? undefined,
@@ -266,11 +280,16 @@ async function handleToolStart(
     ? `tool: ${mcpServerName}/${toolName}`
     : `tool: ${toolName}`;
 
-  const span = startSpan({
-    name: displayName,
-    parent: parentId,
-    spanAttributes: { type: SpanTypeAttribute.TOOL },
-  });
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        name: displayName,
+        parent: parentId,
+        spanAttributes: { type: SpanTypeAttribute.TOOL },
+      },
+      INSTRUMENTATION_NAMES.GITHUB_COPILOT,
+    ),
+  );
 
   const metadata: Record<string, unknown> = {
     "gen_ai.tool.name": toolName,
@@ -326,11 +345,16 @@ async function handleSubagentStarted(
   const tool = state.activeTools.get(toolCallId);
   const parentId = tool ? await tool.id : await state.session.id;
 
-  const span = startSpan({
-    name: `Agent: ${agentDisplayName}`,
-    parent: parentId,
-    spanAttributes: { type: SpanTypeAttribute.TASK },
-  });
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        name: `Agent: ${agentDisplayName}`,
+        parent: parentId,
+        spanAttributes: { type: SpanTypeAttribute.TASK },
+      },
+      INSTRUMENTATION_NAMES.GITHUB_COPILOT,
+    ),
+  );
 
   span.log({
     metadata: {
@@ -664,10 +688,15 @@ function makeSessionHandlers(
         return;
       }
 
-      const sessionSpan = startSpan({
-        name: "Copilot Session",
-        spanAttributes: { type: SpanTypeAttribute.TASK },
-      });
+      const sessionSpan = startBaseSpan(
+        withSpanInstrumentationName(
+          {
+            name: "Copilot Session",
+            spanAttributes: { type: SpanTypeAttribute.TASK },
+          },
+          INSTRUMENTATION_NAMES.GITHUB_COPILOT,
+        ),
+      );
 
       const metadata: Record<string, unknown> = {};
       if (config.model) {

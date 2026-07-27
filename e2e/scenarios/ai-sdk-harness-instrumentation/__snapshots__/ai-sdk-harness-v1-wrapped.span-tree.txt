@@ -4,120 +4,6 @@ span_tree:
 │     "prompt": "Run the built-in bash command \"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\" exactly once. After it finishes, reply exactly GENERATE_OK."
 │   }
 │   output: {
-│     "finishReason": "other",
-│     "response": {
-│       "id": "<span:1>",
-│       "messages": [],
-│       "modelId": "shared-harness-session",
-│       "timestamp": "<timestamp>"
-│     },
-│     "totalUsage": {
-│       "inputTokenDetails": {},
-│       "outputTokenDetails": {}
-│     },
-│     "usage": {
-│       "inputTokenDetails": {},
-│       "outputTokenDetails": {}
-│     },
-│     "warnings": []
-│   }
-│   metadata: {
-│     "braintrust": {
-│       "integration_name": "ai-sdk",
-│       "sdk_language": "typescript"
-│     },
-│     "harnessId": "codex",
-│     "permissionMode": "allow-all",
-│     "scenario": "ai-sdk-harness-instrumentation",
-│     "sessionId": "shared-harness-session",
-│     "testRunId": "<run:1>",
-│     "tools": {
-│       "bash": {
-│         "commonName": "bash",
-│         "description": "Execute a shell command",
-│         "inputSchema": {
-│           "$schema": "http://json-schema.org/draft-07/schema#",
-│           "additionalProperties": false,
-│           "properties": {
-│             "command": {
-│               "type": "string"
-│             }
-│           },
-│           "required": [
-│             "command"
-│           ],
-│           "type": "object"
-│         },
-│         "nativeName": "shell",
-│         "toolUseKind": "bash"
-│       },
-│       "webSearch": {
-│         "commonName": "webSearch",
-│         "description": "Search the web",
-│         "inputSchema": {
-│           "$schema": "http://json-schema.org/draft-07/schema#",
-│           "additionalProperties": false,
-│           "properties": {
-│             "query": {
-│               "type": "string"
-│             }
-│           },
-│           "required": [
-│             "query"
-│           ],
-│           "type": "object"
-│         },
-│         "nativeName": "web_search",
-│         "toolUseKind": "readonly"
-│       }
-│     }
-│   }
-│   └── harness [function]
-│       input: {
-│         "maxRetries": 0,
-│         "messages": [
-│           {
-│             "role": "user"
-│           }
-│         ],
-│         "model": {
-│           "modelId": "gpt-5.4-mini",
-│           "provider": "codex"
-│         }
-│       }
-│       metadata: {
-│         "braintrust": {
-│           "integration_name": "ai-sdk",
-│           "sdk_language": "typescript"
-│         },
-│         "model": "gpt-5.4-mini",
-│         "provider": "codex"
-│       }
-│       └── doGenerate [llm]
-│           input: {
-│             "messages": [
-│               {
-│                 "role": "user"
-│               }
-│             ],
-│             "model": {
-│               "modelId": "gpt-5.4-mini",
-│               "provider": "codex"
-│             }
-│           }
-│           metadata: {
-│             "braintrust": {
-│               "integration_name": "ai-sdk",
-│               "sdk_language": "typescript"
-│             },
-│             "model": "gpt-5.4-mini",
-│             "provider": "codex"
-│           }
-├── HarnessAgent.continueGenerate [task]
-│   input: {
-│     "toolApprovalContinuations": []
-│   }
-│   output: {
 │     "finishReason": "stop",
 │     "response": {
 │       "id": "<span:1>",
@@ -211,6 +97,47 @@ span_tree:
 │     "prompt_tokens": 14771,
 │     "tokens": 14883
 │   }
+│   ├── harness [function]
+│   │   input: {
+│   │     "maxRetries": 0,
+│   │     "messages": [
+│   │       {
+│   │         "role": "user"
+│   │       }
+│   │     ],
+│   │     "model": {
+│   │       "modelId": "gpt-5.4-mini",
+│   │       "provider": "codex"
+│   │     }
+│   │   }
+│   │   metadata: {
+│   │     "braintrust": {
+│   │       "integration_name": "ai-sdk",
+│   │       "sdk_language": "typescript"
+│   │     },
+│   │     "model": "gpt-5.4-mini",
+│   │     "provider": "codex"
+│   │   }
+│   │   └── doGenerate [llm]
+│   │       input: {
+│   │         "messages": [
+│   │           {
+│   │             "role": "user"
+│   │           }
+│   │         ],
+│   │         "model": {
+│   │           "modelId": "gpt-5.4-mini",
+│   │           "provider": "codex"
+│   │         }
+│   │       }
+│   │       metadata: {
+│   │         "braintrust": {
+│   │           "integration_name": "ai-sdk",
+│   │           "sdk_language": "typescript"
+│   │         },
+│   │         "model": "gpt-5.4-mini",
+│   │         "provider": "codex"
+│   │       }
 │   └── harness [function]
 │       input: {
 │         "maxRetries": 0,
@@ -313,115 +240,13 @@ span_tree:
 │             "prompt_tokens": 14771,
 │             "tokens": 14883
 │           }
-├── HarnessAgent.stream [task]
-│   input: {
-│     "messages": [
-│       {
-│         "role": "user"
-│       }
-│     ]
-│   }
-│   output: {
-│     "finishReason": "other"
-│   }
-│   metadata: {
-│     "braintrust": {
-│       "integration_name": "ai-sdk",
-│       "sdk_language": "typescript"
-│     },
-│     "harnessId": "codex",
-│     "permissionMode": "allow-all",
-│     "scenario": "ai-sdk-harness-instrumentation",
-│     "sessionId": "shared-harness-session",
-│     "testRunId": "<run:1>",
-│     "tools": {
-│       "bash": {
-│         "commonName": "bash",
-│         "description": "Execute a shell command",
-│         "inputSchema": {
-│           "$schema": "http://json-schema.org/draft-07/schema#",
-│           "additionalProperties": false,
-│           "properties": {
-│             "command": {
-│               "type": "string"
-│             }
-│           },
-│           "required": [
-│             "command"
-│           ],
-│           "type": "object"
-│         },
-│         "nativeName": "shell",
-│         "toolUseKind": "bash"
-│       },
-│       "webSearch": {
-│         "commonName": "webSearch",
-│         "description": "Search the web",
-│         "inputSchema": {
-│           "$schema": "http://json-schema.org/draft-07/schema#",
-│           "additionalProperties": false,
-│           "properties": {
-│             "query": {
-│               "type": "string"
-│             }
-│           },
-│           "required": [
-│             "query"
-│           ],
-│           "type": "object"
-│         },
-│         "nativeName": "web_search",
-│         "toolUseKind": "readonly"
-│       }
-│     }
-│   }
-│   metrics: {
-│     "time_to_first_token": 0
-│   }
-│   └── harness [function]
-│       input: {
-│         "maxRetries": 0,
-│         "messages": [
-│           {
-│             "role": "user"
-│           }
-│         ],
-│         "model": {
-│           "modelId": "gpt-5.4-mini",
-│           "provider": "codex"
-│         }
-│       }
-│       metadata: {
-│         "braintrust": {
-│           "integration_name": "ai-sdk",
-│           "sdk_language": "typescript"
-│         },
-│         "model": "gpt-5.4-mini",
-│         "provider": "codex"
-│       }
-│       └── doGenerate [llm]
-│           input: {
-│             "messages": [
-│               {
-│                 "role": "user"
-│               }
-│             ],
-│             "model": {
-│               "modelId": "gpt-5.4-mini",
-│               "provider": "codex"
-│             }
-│           }
-│           metadata: {
-│             "braintrust": {
-│               "integration_name": "ai-sdk",
-│               "sdk_language": "typescript"
-│             },
-│             "model": "gpt-5.4-mini",
-│             "provider": "codex"
-│           }
-└── HarnessAgent.continueStream [task]
+└── HarnessAgent.stream [task]
     input: {
-      "toolApprovalContinuations": []
+      "messages": [
+        {
+          "role": "user"
+        }
+      ]
     }
     output: {
       "finishReason": "stop"
@@ -485,6 +310,47 @@ span_tree:
       "time_to_first_token": 0,
       "tokens": 22567
     }
+    ├── harness [function]
+    │   input: {
+    │     "maxRetries": 0,
+    │     "messages": [
+    │       {
+    │         "role": "user"
+    │       }
+    │     ],
+    │     "model": {
+    │       "modelId": "gpt-5.4-mini",
+    │       "provider": "codex"
+    │     }
+    │   }
+    │   metadata: {
+    │     "braintrust": {
+    │       "integration_name": "ai-sdk",
+    │       "sdk_language": "typescript"
+    │     },
+    │     "model": "gpt-5.4-mini",
+    │     "provider": "codex"
+    │   }
+    │   └── doGenerate [llm]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "model": {
+    │           "modelId": "gpt-5.4-mini",
+    │           "provider": "codex"
+    │         }
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-5.4-mini",
+    │         "provider": "codex"
+    │       }
     └── harness [function]
         input: {
           "maxRetries": 0,

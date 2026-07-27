@@ -29,6 +29,10 @@ import {
   type StartSpanArgs,
   type Span,
 } from "../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../span-origin";
 import { SpanTypeAttribute, isObject } from "../util";
 
 /** Subset of Mastra's `AnyExportedSpan` that we consume — vendored to avoid a
@@ -296,17 +300,20 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
   private onStart(exported: MastraExportedSpan): void {
     if (this.spans.has(exported.id)) return; // duplicate start
 
-    const args: StartSpanArgs = {
-      name: exported.name,
-      spanAttributes: { type: spanTypeFor(exported.type) },
-      startTime: epochSeconds(exported.startTime),
-      // Use the Mastra span id as the Braintrust row id so that
-      // `logFeedback({ id: <mastra span id> })` (and Mastra's score events)
-      // attach to the right row. Without this, `SpanImpl` auto-generates a
-      // row id (`this._id = eventId ?? idGenerator.getSpanId()`) that no
-      // external caller could know.
-      event: { id: exported.id },
-    };
+    const args = withSpanInstrumentationName<StartSpanArgs>(
+      {
+        name: exported.name,
+        spanAttributes: { type: spanTypeFor(exported.type) },
+        startTime: epochSeconds(exported.startTime),
+        // Use the Mastra span id as the Braintrust row id so that
+        // `logFeedback({ id: <mastra span id> })` (and Mastra's score events)
+        // attach to the right row. Without this, `SpanImpl` auto-generates a
+        // row id (`this._id = eventId ?? idGenerator.getSpanId()`) that no
+        // external caller could know.
+        event: { id: exported.id },
+      },
+      INSTRUMENTATION_NAMES.MASTRA,
+    );
 
     const parentRecord = exported.parentSpanId
       ? this.spans.get(exported.parentSpanId)

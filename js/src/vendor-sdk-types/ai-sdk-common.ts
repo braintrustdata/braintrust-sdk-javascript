@@ -277,6 +277,16 @@ export interface AISDKAgentInstance {
 }
 
 export interface AISDKHarnessAgentSession {
+  detach?: (...args: unknown[]) => Promise<unknown>;
+  sessionId?: string;
+  stop?: (...args: unknown[]) => Promise<unknown>;
+  suspendTurn?: (...args: unknown[]) => Promise<unknown>;
+  [key: string]: unknown;
+}
+
+export interface AISDKHarnessAgentCreateSessionParams {
+  continueFrom?: unknown;
+  resumeFrom?: unknown;
   sessionId?: string;
   [key: string]: unknown;
 }
@@ -302,11 +312,16 @@ export type AISDKHarnessAgentStreamFunction = (
   params: AISDKHarnessAgentCallParams,
 ) => Promise<AISDKResult>;
 
+export type AISDKHarnessAgentCreateSessionFunction = (
+  params?: AISDKHarnessAgentCreateSessionParams,
+) => Promise<AISDKHarnessAgentSession>;
+
 export interface AISDKHarnessAgentInstance {
   harnessId?: string;
   permissionMode?: string;
   settings?: AISDKHarnessAgentSettings;
   tools?: AISDKTools;
+  createSession: AISDKHarnessAgentCreateSessionFunction;
   generate: AISDKHarnessAgentGenerateFunction;
   stream: AISDKHarnessAgentStreamFunction;
   continueGenerate: AISDKHarnessAgentGenerateFunction;

@@ -12,7 +12,10 @@ import {
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
 import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
-import { findLatestSpan } from "../../helpers/trace-selectors";
+import {
+  findLatestSpan,
+  spanInstrumentationName,
+} from "../../helpers/trace-selectors";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
@@ -179,6 +182,17 @@ for (const scenario of mastraScenarios) {
       expect(root?.row.metadata).toMatchObject({
         scenario: SCENARIO_NAME,
       });
+    });
+
+    test("records Mastra span provenance", () => {
+      const mastraEvents = events.filter(
+        (event) => event.row.metadata?.entity_type !== undefined,
+      );
+
+      expect(mastraEvents.length).toBeGreaterThan(0);
+      for (const event of mastraEvents) {
+        expect(spanInstrumentationName(event)).toBe("mastra");
+      }
     });
 
     // Anchored on entity_type strings emitted by Mastra's ObservabilityExporter

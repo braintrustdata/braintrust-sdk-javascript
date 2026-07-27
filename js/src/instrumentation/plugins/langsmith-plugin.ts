@@ -1,7 +1,11 @@
 import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
-import { startSpan } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { LRUCache } from "../../lru-cache";
 import type {
   LangSmithBatchIngestRuns,
@@ -209,19 +213,24 @@ export class LangSmithPlugin extends BasePlugin {
       stringValue(ownValue(ownValue(run, "parent_run"), "id"));
     const startTime = timestampSeconds(ownValue(run, "start_time"));
 
-    return startSpan({
-      name: stringValue(ownValue(run, "name")) ?? "LangSmith run",
-      spanId: id,
-      parentSpanIds: {
-        parentSpanIds: parentId ? [parentId] : [],
-        rootSpanId: traceId,
-      },
-      spanAttributes: {
-        type: mapRunType(ownValue(run, "run_type")),
-      },
-      ...(startTime === undefined ? {} : { startTime }),
-      event: { id },
-    });
+    return startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          name: stringValue(ownValue(run, "name")) ?? "LangSmith run",
+          spanId: id,
+          parentSpanIds: {
+            parentSpanIds: parentId ? [parentId] : [],
+            rootSpanId: traceId,
+          },
+          spanAttributes: {
+            type: mapRunType(ownValue(run, "run_type")),
+          },
+          ...(startTime === undefined ? {} : { startTime }),
+          event: { id },
+        },
+        INSTRUMENTATION_NAMES.LANGSMITH,
+      ),
+    );
   }
 
   private logRun(

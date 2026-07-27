@@ -5,6 +5,10 @@ import {
 } from "../../util";
 import { logError, startSpan, withCurrent, type Span } from "../../logger";
 import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
+import {
   createAISDKIntegrationMetadata,
   DEFAULT_DENY_OUTPUT_PATHS,
   extractWorkflowMetadataFromCallParams,
@@ -33,11 +37,16 @@ import type {
 } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 import { currentWorkflowAgentWrapperSpan } from "./workflow-agent-context";
+import {
+  currentHarnessTurnParent,
+  startHarnessTurnChildSpan,
+} from "./harness-agent-context";
 
 type OperationState = {
   callId: string;
   firstChunkTime?: number;
   hadModelChild: boolean;
+  harnessTurnParent?: Span | string;
   loggedInput: boolean;
   operationName: string;
   operationKey: string;
@@ -86,14 +95,22 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     name: string,
     type: SpanTypeAttribute,
     event?: { input?: unknown; metadata?: Record<string, unknown> },
+    parentOverride?: Span | string,
   ) => {
     const parent = operations.get(operationKey)?.span;
-    const spanArgs = {
-      name,
-      spanAttributes: { type },
-      ...(event ? { event } : {}),
-    };
-    const span = parent ? parent.startSpan(spanArgs) : startSpan(spanArgs);
+    const spanArgs = withSpanInstrumentationName(
+      {
+        name,
+        spanAttributes: { type },
+        ...(event ? { event } : {}),
+      },
+      INSTRUMENTATION_NAMES.AI_SDK,
+    );
+    const span = parentOverride
+      ? startHarnessTurnChildSpan(parentOverride, spanArgs)
+      : parent
+        ? parent.startSpan(spanArgs)
+        : startSpan(spanArgs);
     const state = operations.get(operationKey);
     if (state && type === SpanTypeAttribute.LLM) {
       state.hadModelChild = true;
@@ -460,17 +477,35 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
           ? currentWorkflowAgentWrapperSpan()
           : undefined;
         const ownsSpan = !wrapperSpan;
+        const harnessTurnParent = currentHarnessTurnParent();
         const span = ownsSpan
-          ? startSpan({
-              name: operationName,
-              spanAttributes: { type: SpanTypeAttribute.FUNCTION },
-            })
+          ? harnessTurnParent
+            ? startHarnessTurnChildSpan(
+                harnessTurnParent,
+                withSpanInstrumentationName(
+                  {
+                    name: operationName,
+                    spanAttributes: { type: SpanTypeAttribute.FUNCTION },
+                  },
+                  INSTRUMENTATION_NAMES.AI_SDK,
+                ),
+              )
+            : startSpan(
+                withSpanInstrumentationName(
+                  {
+                    name: operationName,
+                    spanAttributes: { type: SpanTypeAttribute.FUNCTION },
+                  },
+                  INSTRUMENTATION_NAMES.AI_SDK,
+                ),
+              )
           : wrapperSpan;
         const operationKey = createOperationKey(event, operationName);
 
         registerOperation({
           callId: event.callId,
           hadModelChild: false,
+          harnessTurnParent,
           loggedInput: false,
           operationName,
           operationKey,
@@ -797,6 +832,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
                 : {}),
             },
           },
+          state?.harnessTurnParent,
         );
         toolSpans.set(toolCallId, { operationKey, span });
       });

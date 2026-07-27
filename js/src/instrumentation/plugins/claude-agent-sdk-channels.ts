@@ -1,4 +1,5 @@
 import { channel, defineChannels } from "../core/channel-definitions";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
   ClaudeAgentSDKMessage,
   ClaudeAgentSDKQueryParams,
@@ -17,4 +18,5 @@ export const claudeAgentSDKChannels = defineChannels(
       kind: "sync-stream",
     }),
   },
+  { instrumentationName: INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK },
 );
