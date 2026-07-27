@@ -5,7 +5,12 @@
 
 import esquery from "esquery";
 import { parse } from "meriyah";
-import { GLOBAL_INSTRUMENTATION_HOOKS_KEY } from "../../global-instrumentation-hooks";
+import {
+  GLOBAL_INSTRUMENTATION_HOOK_BRAND,
+  GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+  GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+  GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
+} from "../../global-instrumentation-hooks";
 import type { FunctionQuery, InstrumentationConfig, ModuleType } from "./types";
 
 type AnyNode = any;
@@ -40,6 +45,7 @@ export const transforms: Record<string, TransformFn> = {
     const {
       channelName,
       module: { name },
+      operator,
     } = state;
     const channelVariable = formatChannelVariable(channelName);
     const channelGetter = formatChannelGetter(channelName);
@@ -62,9 +68,27 @@ export const transforms: Record<string, TransformFn> = {
           const __apm$hooks = globalThis[${JSON.stringify(
             GLOBAL_INSTRUMENTATION_HOOKS_KEY,
           )}];
-          return ${channelVariable} ??= __apm$hooks instanceof Map
-            ? __apm$hooks.get("orchestrion:${name}:${channelName}")
-            : undefined;
+          if (
+            !(__apm$hooks instanceof Map) ||
+            __apm$hooks[Symbol.for(${JSON.stringify(
+              GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
+            )})] !== ${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION}
+          ) return undefined;
+          const __apm$hook = Map.prototype.get.call(
+            __apm$hooks,
+            "orchestrion:${name}:${channelName}"
+          );
+          if (
+            (__apm$hook === null ||
+              (typeof __apm$hook !== "object" &&
+                typeof __apm$hook !== "function")) ||
+            __apm$hook[Symbol.for(${JSON.stringify(
+              GLOBAL_INSTRUMENTATION_HOOK_BRAND,
+            )})] !== ${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION} ||
+            typeof __apm$hook.hasSubscribers !== "boolean" ||
+            typeof __apm$hook[${JSON.stringify(operator)}] !== "function"
+          ) return undefined;
+          return ${channelVariable} ??= __apm$hook;
         } catch {
           return undefined;
         }

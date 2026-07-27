@@ -27,6 +27,16 @@ export interface BundlerPluginOptions {
    * @default false
    */
   browser?: boolean;
+
+  /**
+   * Deprecated compatibility alias for `browser`.
+   *
+   * This no longer enables a diagnostics-channel shim. It is retained so
+   * existing browser configurations keep excluding Node-only source patches.
+   *
+   * @deprecated Use `browser` instead.
+   */
+  useDiagnosticChannelCompatShim?: boolean;
 }
 
 /**
@@ -47,6 +57,8 @@ function getModuleVersion(basedir: string): string | undefined {
 }
 
 export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
+  const browser =
+    options.browser ?? options.useDiagnosticChannelCompatShim ?? false;
   const allInstrumentations = getDefaultInstrumentationConfigs({
     additionalInstrumentations: options.instrumentations,
   });
@@ -103,7 +115,7 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
         modulePath: normalizedModulePath,
         source: code,
         format: isModule ? "esm" : "cjs",
-        browser: options.browser === true,
+        browser,
       });
       if (patched !== null) {
         return { code: patched, map: null };

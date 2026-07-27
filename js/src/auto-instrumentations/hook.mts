@@ -22,9 +22,12 @@ import { BraintrustObservabilityExporter } from "../wrappers/mastra.js";
 import { installMastraExporterFactory } from "./loader/mastra-observability-patch.js";
 import { getDefaultAutoInstrumentationConfigs } from "./configs/all.js";
 import { ModulePatch } from "./loader/cjs-patch.js";
+import { GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION } from "../global-instrumentation-hooks.js";
 
 const state = ((globalThis as any)[
-  Symbol.for("braintrust.applyAutoInstrumentation")
+  Symbol.for(
+    `braintrust.applyAutoInstrumentation.global-hooks.v${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION}`,
+  )
 ] ??= {}) as { applied?: boolean };
 const alreadyApplied = state.applied;
 

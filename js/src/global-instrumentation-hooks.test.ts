@@ -3,7 +3,10 @@ import { randomUUID } from "node:crypto";
 import { tracingChannel } from "node:diagnostics_channel";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  GLOBAL_INSTRUMENTATION_HOOK_BRAND,
   GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+  GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+  GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
   newGlobalTracingChannel,
   setGlobalHookErrorReporter,
 } from "./global-instrumentation-hooks";
@@ -34,6 +37,14 @@ describe("global instrumentation hooks", () => {
       writable: false,
     });
     expect(descriptor?.value).toBeInstanceOf(Map);
+    expect(
+      descriptor?.value[
+        Symbol.for(GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND)
+      ],
+    ).toBe(GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION);
+    expect(
+      (channel as any)[Symbol.for(GLOBAL_INSTRUMENTATION_HOOK_BRAND)],
+    ).toBe(GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION);
     expect(newGlobalTracingChannel(name)).toBe(channel);
     expect(Object.keys(globalThis)).not.toContain(
       GLOBAL_INSTRUMENTATION_HOOKS_KEY,
@@ -300,6 +311,63 @@ describe("global instrumentation hooks", () => {
     expect(provider).toHaveBeenCalledOnce();
     expect(reportedErrors).toContain(subscriberError);
     expect(reportedErrors).toContain(storeError);
+  });
+
+  it("does not repeat provider calls when a store invokes its callback late", () => {
+    const channel = newGlobalTracingChannel<Record<string, unknown>>(
+      uniqueChannelName("late-store"),
+    );
+    const reportedErrors: unknown[] = [];
+    restoreErrorReporter = setGlobalHookErrorReporter((error) =>
+      reportedErrors.push(error),
+    );
+
+    let callback: (() => unknown) | undefined;
+    channel.start.bindStore({
+      enterWith() {},
+      getStore() {
+        return undefined;
+      },
+      run<T>(_store: unknown, next: () => T): T {
+        callback = next;
+        return undefined as T;
+      },
+    });
+
+    const provider = vi.fn(() => "result");
+    expect(channel.traceSync(provider, {})).toBe("result");
+    expect(provider).toHaveBeenCalledOnce();
+    expect(callback?.()).toBe("result");
+    expect(provider).toHaveBeenCalledOnce();
+    expect(reportedErrors.map(String)).toEqual([
+      "Error: Instrumentation store did not invoke its callback",
+      "Error: Instrumentation store invoked its callback more than once",
+    ]);
+  });
+
+  it("replaces malformed entries without executing them", () => {
+    const name = uniqueChannelName("malformed-entry");
+    const registry = Object.getOwnPropertyDescriptor(
+      globalThis,
+      GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+    )?.value as Map<string, unknown>;
+    registry.set(name, { hasSubscribers: true });
+
+    const reportedErrors: unknown[] = [];
+    restoreErrorReporter = setGlobalHookErrorReporter((error) =>
+      reportedErrors.push(error),
+    );
+    const channel = newGlobalTracingChannel(name);
+    const subscriber = vi.fn();
+    channel.subscribe({ start: subscriber });
+    const provider = vi.fn(() => "result");
+
+    expect(channel.traceSync(provider, {})).toBe("result");
+    expect(provider).toHaveBeenCalledOnce();
+    expect(subscriber).toHaveBeenCalledOnce();
+    expect(reportedErrors.map(String)).toEqual([
+      `Error: Invalid global instrumentation hook: ${name}`,
+    ]);
   });
 
   it("wraps callbacks without changing arguments or receiver semantics", async () => {

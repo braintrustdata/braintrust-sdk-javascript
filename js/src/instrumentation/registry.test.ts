@@ -86,6 +86,22 @@ describe("Plugin Registry", () => {
     }
   });
 
+  it("should ignore deduplication markers from older transports", () => {
+    const stateKey = Symbol.for("braintrust-state");
+    (globalThis as any)[stateKey] = {
+      [Symbol.for("braintrust.registry")]: {},
+    };
+    const testRegistry = new (registry.constructor as any)();
+
+    try {
+      testRegistry.enable();
+      expect(testRegistry.isEnabled()).toBe(true);
+    } finally {
+      testRegistry.disable();
+      delete (globalThis as any)[stateKey];
+    }
+  });
+
   it("should warn if configureInstrumentation is called after enable", () => {
     const testRegistry = new (registry.constructor as any)();
     const warnSpy = [] as string[];

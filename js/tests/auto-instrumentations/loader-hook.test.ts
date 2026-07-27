@@ -28,6 +28,10 @@ const incompatibleGlobalHookRegistryPath = path.join(
   fixturesDir,
   "incompatible-global-hook-registry.cjs",
 );
+const legacyAutoInstrumentationMarkerPath = path.join(
+  fixturesDir,
+  "legacy-auto-instrumentation-marker.mjs",
+);
 
 interface TestResult {
   events: { start: any[]; end: any[]; error: any[] };
@@ -58,6 +62,23 @@ describe("Unified Loader Hook Integration Tests", () => {
       const result = await runWithWorker({
         execArgv: ["--import", listenerPath, "--import", hookPath],
         script: testAppCjsPath,
+      });
+
+      expect(result.events.start.length).toBeGreaterThan(0);
+      expect(result.events.end.length).toBeGreaterThan(0);
+    });
+
+    it("should ignore loader markers from older transports", async () => {
+      const result = await runWithWorker({
+        execArgv: [
+          "--import",
+          legacyAutoInstrumentationMarkerPath,
+          "--import",
+          listenerPath,
+          "--import",
+          hookPath,
+        ],
+        script: testAppEsmPath,
       });
 
       expect(result.events.start.length).toBeGreaterThan(0);

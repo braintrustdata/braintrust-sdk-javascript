@@ -13,11 +13,17 @@ import { build as viteBuild } from "vite";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { runInNewContext } from "node:vm";
 import {
   create,
   type InstrumentationConfig,
 } from "../../src/auto-instrumentations/orchestrion-js";
-import { newGlobalTracingChannel } from "../../src/global-instrumentation-hooks";
+import {
+  GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+  GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+  GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
+  newGlobalTracingChannel,
+} from "../../src/global-instrumentation-hooks";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
@@ -60,6 +66,8 @@ function transformTestCode(
 
 function expectGlobalHookTransform(output: string): void {
   expect(output).toContain("__braintrust_instrumentation_hooks");
+  expect(output).toContain("braintrust.global-instrumentation-hooks.registry");
+  expect(output).toContain("braintrust.global-instrumentation-hooks.hook");
   expect(output).toContain("orchestrion:openai:chat.completions.create");
   expect(output).toContain("__apm$hook.tracePromise");
   expect(output).not.toContain("diagnostics_channel");
@@ -126,6 +134,47 @@ describe("Orchestrion Transformation Tests", () => {
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
       expect(result.code).toContain("__apm$hook.traceSync");
+    });
+
+    it("ignores malformed global hook entries at runtime", () => {
+      const result = transformTestCode(
+        { functionName: "query", kind: "Sync" },
+        `
+          let calls = 0;
+          function query(input) {
+            calls += 1;
+            return input;
+          }
+          module.exports = { query, getCalls: () => calls };
+        `,
+        "cjs",
+      );
+      const registry = new Map<string, unknown>([
+        ["orchestrion:test-sdk:test", { hasSubscribers: true }],
+      ]);
+      Object.defineProperty(
+        registry,
+        Symbol.for(GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND),
+        { value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION },
+      );
+      const module = {
+        exports: {} as {
+          getCalls(): number;
+          query(input: string): string;
+        },
+      };
+
+      runInNewContext(result.code, {
+        globalThis: {
+          [GLOBAL_INSTRUMENTATION_HOOKS_KEY]: registry,
+        },
+        Map,
+        module,
+        Symbol,
+      });
+
+      expect(module.exports.query("result")).toBe("result");
+      expect(module.exports.getCalls()).toBe(1);
     });
 
     it("supports export-alias function configs", () => {
@@ -337,7 +386,7 @@ describe("Orchestrion Transformation Tests", () => {
       expectGlobalHookTransform(output);
     });
 
-    it("should use global hooks for browser builds", async () => {
+    it("should accept the deprecated browser compatibility option", async () => {
       const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
@@ -350,7 +399,11 @@ describe("Orchestrion Transformation Tests", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [braintrustEsbuildPlugin({ browser: true })],
+        plugins: [
+          braintrustEsbuildPlugin({
+            useDiagnosticChannelCompatShim: true,
+          }),
+        ],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,

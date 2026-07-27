@@ -12,6 +12,7 @@ import {
   readDisabledInstrumentationEnvConfig,
   type InstrumentationConfig,
 } from "./config";
+import { GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION } from "../global-instrumentation-hooks";
 
 export type { InstrumentationConfig } from "./config";
 
@@ -29,7 +30,9 @@ export type { InstrumentationConfig } from "./config";
 // - vi.resetModules() test scenario: the test deletes the state from
 //   globalThis between runs, so the next import creates a fresh state with no
 //   marker and can subscribe normally.
-const REGISTRY_STATE_KEY = Symbol.for("braintrust.registry");
+const REGISTRY_STATE_KEY = Symbol.for(
+  `braintrust.registry.global-hooks.v${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION}`,
+);
 
 function getSharedState(): Record<symbol, unknown> | undefined {
   const state = (globalThis as Record<symbol, unknown>)[

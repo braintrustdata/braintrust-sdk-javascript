@@ -6,6 +6,14 @@
 
 export const GLOBAL_INSTRUMENTATION_HOOKS_KEY =
   "__braintrust_instrumentation_hooks";
+export const GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION = 1;
+export const GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND =
+  "braintrust.global-instrumentation-hooks.registry";
+export const GLOBAL_INSTRUMENTATION_HOOK_BRAND =
+  "braintrust.global-instrumentation-hooks.hook";
+
+const registryBrand = Symbol.for(GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND);
+const hookBrand = Symbol.for(GLOBAL_INSTRUMENTATION_HOOK_BRAND);
 
 export interface GlobalHookAsyncLocalStorage<T> {
   enterWith(store: T): void;
@@ -188,7 +196,7 @@ function wrapStoreRun<M>(
       reportError(
         new Error("Instrumentation store did not invoke its callback"),
       );
-      return next();
+      return runNext();
     }
     if (providerThrew) {
       throw providerError;
@@ -295,6 +303,13 @@ class TracingHook<M> implements GlobalTracingChannel<M> {
   readonly error: GlobalHookChannel<M>;
 
   constructor(nameOrChannels: string | GlobalTracingChannelCollection<M>) {
+    Object.defineProperty(this, hookBrand, {
+      configurable: false,
+      enumerable: false,
+      value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+      writable: false,
+    });
+
     if (typeof nameOrChannels === "string") {
       this.start = new HookChannel(`tracing:${nameOrChannels}:start`);
       this.end = new HookChannel(`tracing:${nameOrChannels}:end`);
@@ -541,7 +556,7 @@ class TracingHook<M> implements GlobalTracingChannel<M> {
   }
 }
 
-type HookRegistry = Map<string, GlobalTracingChannel<any>>;
+type HookRegistry = Map<string, unknown>;
 
 const inertChannel: GlobalHookChannel<any> = Object.freeze({
   name: "braintrust:inert",
@@ -572,6 +587,131 @@ const inertTracingHook = new TracingHook({
   error: inertChannel,
 });
 
+function isHookChannel(value: unknown): value is GlobalHookChannel<unknown> {
+  if (
+    (typeof value !== "object" && typeof value !== "function") ||
+    value === null
+  ) {
+    return false;
+  }
+
+  try {
+    const channel = value as GlobalHookChannel<unknown>;
+    return (
+      typeof channel.hasSubscribers === "boolean" &&
+      typeof channel.subscribe === "function" &&
+      typeof channel.unsubscribe === "function" &&
+      typeof channel.bindStore === "function" &&
+      typeof channel.unbindStore === "function" &&
+      typeof channel.publish === "function" &&
+      typeof channel.runStores === "function"
+    );
+  } catch {
+    return false;
+  }
+}
+
+function hasTracingHookShape(
+  value: unknown,
+): value is GlobalTracingChannel<any> {
+  if (
+    (typeof value !== "object" && typeof value !== "function") ||
+    value === null
+  ) {
+    return false;
+  }
+
+  try {
+    const hook = value as GlobalTracingChannel<any>;
+    return (
+      typeof hook.hasSubscribers === "boolean" &&
+      typeof hook.subscribe === "function" &&
+      typeof hook.unsubscribe === "function" &&
+      typeof hook.traceSync === "function" &&
+      typeof hook.tracePromise === "function" &&
+      typeof hook.traceCallback === "function" &&
+      isHookChannel(hook.start) &&
+      isHookChannel(hook.end) &&
+      isHookChannel(hook.asyncStart) &&
+      isHookChannel(hook.asyncEnd) &&
+      isHookChannel(hook.error)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function ensureCompatibleTracingHook(
+  value: unknown,
+): value is GlobalTracingChannel<any> {
+  if (!hasTracingHookShape(value)) {
+    return false;
+  }
+
+  let version: unknown;
+  try {
+    version = (value as unknown as Record<symbol, unknown>)[hookBrand];
+  } catch {
+    return false;
+  }
+  if (version === GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION) {
+    return true;
+  }
+  if (version !== undefined) {
+    return false;
+  }
+
+  try {
+    Object.defineProperty(value, hookBrand, {
+      configurable: false,
+      enumerable: false,
+      value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+      writable: false,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function ensureCompatibleHookRegistry(value: unknown): value is HookRegistry {
+  if (!(value instanceof Map)) {
+    return false;
+  }
+
+  let version: unknown;
+  try {
+    version = (value as unknown as Record<symbol, unknown>)[registryBrand];
+  } catch {
+    return false;
+  }
+  if (version === GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION) {
+    return true;
+  }
+  if (version !== undefined) {
+    return false;
+  }
+
+  try {
+    for (const [name, hook] of Map.prototype.entries.call(value) as Iterable<
+      [unknown, unknown]
+    >) {
+      if (typeof name !== "string" || !ensureCompatibleTracingHook(hook)) {
+        return false;
+      }
+    }
+    Object.defineProperty(value, registryBrand, {
+      configurable: false,
+      enumerable: false,
+      value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+      writable: false,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function getHookRegistry(): HookRegistry | undefined {
   const target = globalThis as Record<string, unknown>;
   let existing: unknown;
@@ -580,11 +720,14 @@ function getHookRegistry(): HookRegistry | undefined {
   } catch {
     // A configurable accessor can still be replaced below.
   }
-  if (existing instanceof Map) {
-    return existing as HookRegistry;
+  if (ensureCompatibleHookRegistry(existing)) {
+    return existing;
   }
 
   const registry: HookRegistry = new Map();
+  if (!ensureCompatibleHookRegistry(registry)) {
+    return undefined;
+  }
   try {
     Object.defineProperty(globalThis, GLOBAL_INSTRUMENTATION_HOOKS_KEY, {
       configurable: false,
@@ -610,12 +753,34 @@ export function newGlobalTracingChannel<M = any>(
   if (!registry) {
     return inertTracingHook as GlobalTracingChannel<M>;
   }
-  const existing = registry.get(nameOrChannels);
-  if (existing) {
+  let existing: unknown;
+  try {
+    existing = Map.prototype.get.call(registry, nameOrChannels);
+  } catch (error) {
+    reportError(error);
+    return inertTracingHook as GlobalTracingChannel<M>;
+  }
+  if (ensureCompatibleTracingHook(existing)) {
     return existing as GlobalTracingChannel<M>;
+  }
+  if (existing !== undefined) {
+    reportError(
+      new Error(`Invalid global instrumentation hook: ${nameOrChannels}`),
+    );
+    try {
+      Map.prototype.delete.call(registry, nameOrChannels);
+    } catch (error) {
+      reportError(error);
+      return inertTracingHook as GlobalTracingChannel<M>;
+    }
   }
 
   const hook = new TracingHook<M>(nameOrChannels);
-  registry.set(nameOrChannels, hook);
+  try {
+    Map.prototype.set.call(registry, nameOrChannels, hook);
+  } catch (error) {
+    reportError(error);
+    return inertTracingHook as GlobalTracingChannel<M>;
+  }
   return hook;
 }
