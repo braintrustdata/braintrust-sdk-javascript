@@ -31,9 +31,9 @@
     "@types/node": "^22.15.21",
     "braintrust": "workspace:*",
     "tsup": "^8.5.0",
-    "typedoc": "^0.28.15",
-    "typescript": "5.5.4",
-    "vitest": "4.1.5"
+    "typedoc": "^0.28.20",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
   },
   "peerDependencies": {
     "@opentelemetry/api": ">=1.9.0",
