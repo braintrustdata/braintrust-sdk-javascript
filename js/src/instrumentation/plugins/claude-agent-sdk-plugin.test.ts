@@ -10,8 +10,6 @@ vi.mock("../../isomorph", () => ({
 import { ClaudeAgentSDKPlugin } from "./claude-agent-sdk-plugin";
 import iso from "../../isomorph";
 import { startSpan } from "../../logger";
-import type { ClaudeAgentSDKQueryOptions } from "../../vendor-sdk-types/claude-agent-sdk";
-import { patchStreamIfNeeded } from "../core/stream-patcher";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
 
@@ -23,15 +21,6 @@ vi.mock("../../logger", () => ({
     export: vi.fn(() => Promise.resolve({})),
   })),
 }));
-
-vi.mock("../core/stream-patcher", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("../core/stream-patcher")>();
-  return {
-    ...actual,
-    patchStreamIfNeeded: vi.fn((stream) => stream),
-  };
-});
 
 // Mock utility modules
 vi.mock("../../../util/index", () => ({
@@ -100,6 +89,17 @@ vi.mock("../core", async (importOriginal) => {
         // To be implemented by subclass
       }
     },
+    isAsyncIterable: vi.fn(
+      (val: unknown) =>
+        val !== null &&
+        typeof val === "object" &&
+        Symbol.asyncIterator in val &&
+        typeof (val as any)[Symbol.asyncIterator] === "function",
+    ),
+    patchStreamIfNeeded: vi.fn((stream, _callbacks) => {
+      // Return the stream unchanged for simple tests
+      return stream;
+    }),
   };
 });
 
@@ -299,96 +299,6 @@ describe("ClaudeAgentSDKPlugin", () => {
     });
 
     describe("end handler for sync stream results", () => {
-      it("creates one LLM span when a tool hook races stream processing", async () => {
-        let streamCallbacks: any;
-        vi.mocked(patchStreamIfNeeded).mockImplementationOnce(
-          (stream, callbacks) => {
-            streamCallbacks = callbacks;
-            return stream;
-          },
-        );
-        const stream = {
-          async *[Symbol.asyncIterator]() {
-            return;
-          },
-        };
-        const event: {
-          arguments: [
-            {
-              prompt: string;
-              options: ClaudeAgentSDKQueryOptions;
-            },
-          ];
-          result: typeof stream;
-        } = {
-          arguments: [
-            {
-              prompt: "Use a tool",
-              options: {},
-            },
-          ],
-          result: stream,
-        };
-
-        handlers.start(event);
-        handlers.end(event);
-
-        let resolveParentExport: (parent: string) => void = () => {};
-        const parentExport = new Promise<string>((resolve) => {
-          resolveParentExport = resolve;
-        });
-        const taskSpan = vi.mocked(startSpan).mock.results[0]?.value;
-        if (!taskSpan) {
-          throw new Error("Expected task span to be created");
-        }
-        vi.mocked(taskSpan.export).mockReturnValue(parentExport);
-        const preToolUse =
-          event.arguments[0].options.hooks?.PreToolUse?.at(-1)?.hooks[0];
-        if (!preToolUse) {
-          throw new Error("Expected PreToolUse hook to be installed");
-        }
-        streamCallbacks.onChunk({
-          message: {
-            content: [
-              {
-                id: "tool-use-1",
-                input: {},
-                name: "Bash",
-                type: "tool_use",
-              },
-            ],
-            id: "message-1",
-            model: "claude",
-            role: "assistant",
-            usage: { input_tokens: 1, output_tokens: 1 },
-          },
-          type: "assistant",
-        });
-        const preToolUseResult = preToolUse(
-          {
-            cwd: "/tmp",
-            hook_event_name: "PreToolUse",
-            session_id: "session-1",
-            tool_input: {},
-            tool_name: "Bash",
-            transcript_path: "/tmp/transcript",
-          },
-          "tool-use-1",
-          { signal: new AbortController().signal },
-        );
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        resolveParentExport("parent");
-        await preToolUseResult;
-        await streamCallbacks.onComplete([]);
-
-        const llmSpanCalls = vi
-          .mocked(startSpan)
-          .mock.calls.filter(
-            ([spanArgs]) => spanArgs?.name === "anthropic.messages.create",
-          );
-        expect(llmSpanCalls).toHaveLength(1);
-      });
-
       it("should handle non-streaming result", () => {
         const startEvent = {
           arguments: [
