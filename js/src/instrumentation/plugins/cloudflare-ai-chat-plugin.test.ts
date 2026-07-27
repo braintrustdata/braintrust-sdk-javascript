@@ -125,7 +125,7 @@ describe("CloudflareAIChatPlugin", () => {
     expect(span.end).toHaveBeenCalledTimes(1);
   });
 
-  it("correlates response errors and preserves partial output", () => {
+  it("correlates response errors and preserves partial output", async () => {
     plugin.enable();
     const turnHandlers = turnChannel().handlers();
     const responseHandlers = responseChannel().handlers();
@@ -135,6 +135,7 @@ describe("CloudflareAIChatPlugin", () => {
       self: agent,
     } as any;
     turnHandlers.start?.(event, "start");
+    await event.arguments[1]();
 
     responseHandlers.start?.(
       {
@@ -157,6 +158,161 @@ describe("CloudflareAIChatPlugin", () => {
       error: "stream failed",
       input: [],
       output: { parts: [{ text: "partial" }], role: "assistant" },
+    });
+    expect(span.end).toHaveBeenCalledTimes(1);
+  });
+
+  it("retains a settled turn until its queued response is observed", async () => {
+    plugin.enable();
+    const handlers = turnChannel().handlers();
+    const agent = {
+      messages: [
+        {
+          id: "user-nested",
+          parts: [{ text: "nested", type: "text" }],
+          role: "user",
+        },
+      ],
+      onChatResponse(_result?: unknown) {},
+    };
+    const event = {
+      arguments: ["request-nested", async () => undefined, undefined],
+      self: agent,
+    } as any;
+
+    handlers.start?.(event, "start");
+    await event.arguments[1]();
+    handlers.asyncEnd?.(event, "asyncEnd");
+
+    const span = mockStartSpan.mock.results[0].value;
+    expect(span.end).toHaveBeenCalledTimes(1);
+
+    agent.onChatResponse({
+      error: "nested failure",
+      message: {
+        id: "assistant-nested",
+        parts: [{ text: "nested response", type: "text" }],
+        role: "assistant",
+      },
+      requestId: "request-nested",
+      status: "error",
+    });
+
+    expect(span.log).toHaveBeenCalledWith({
+      error: "nested failure",
+      input: [
+        {
+          id: "user-nested",
+          parts: [{ text: "nested", type: "text" }],
+          role: "user",
+        },
+      ],
+      output: {
+        id: "assistant-nested",
+        parts: [{ text: "nested response", type: "text" }],
+        role: "assistant",
+      },
+    });
+    expect(span.end).toHaveBeenCalledTimes(1);
+  });
+
+  it("drops retained turns that never produce a response", () => {
+    vi.useFakeTimers();
+    try {
+      plugin.enable();
+      const handlers = turnChannel().handlers();
+      const agent = {
+        messages: [],
+        onChatResponse(_result?: unknown) {},
+      };
+      const event = {
+        arguments: [
+          "request-without-response",
+          async () => undefined,
+          undefined,
+        ],
+        self: agent,
+      } as any;
+
+      handlers.start?.(event, "start");
+      handlers.asyncEnd?.(event, "asyncEnd");
+
+      const span = mockStartSpan.mock.results[0].value;
+      expect(span.end).toHaveBeenCalledTimes(1);
+      vi.runOnlyPendingTimers();
+
+      agent.onChatResponse({
+        message: {
+          id: "assistant-late",
+          parts: [{ text: "too late", type: "text" }],
+          role: "assistant",
+        },
+        requestId: "request-without-response",
+        status: "completed",
+      });
+      expect(span.log).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("preserves pre-turn input when a continuation reuses its output id", async () => {
+    plugin.enable();
+    const handlers = turnChannel().handlers();
+    const agent = {
+      messages: [
+        {
+          id: "user-1",
+          parts: [{ text: "start", type: "text" }],
+          role: "user",
+        },
+        {
+          id: "assistant-1",
+          parts: [{ text: "partial", type: "text" }],
+          role: "assistant",
+        },
+      ],
+      onChatResponse(_result?: unknown) {},
+    };
+    const event = {
+      arguments: ["request-continuation", async () => undefined, undefined],
+      self: agent,
+    } as any;
+
+    handlers.start?.(event, "start");
+    await event.arguments[1]();
+    agent.messages[1] = {
+      id: "assistant-1",
+      parts: [{ text: "partial response", type: "text" }],
+      role: "assistant",
+    };
+    agent.onChatResponse({
+      continuation: true,
+      message: agent.messages[1],
+      requestId: "request-continuation",
+      status: "completed",
+    });
+    handlers.asyncEnd?.(event, "asyncEnd");
+
+    const span = mockStartSpan.mock.results[0].value;
+    expect(span.log).toHaveBeenCalledWith({
+      input: [
+        {
+          id: "user-1",
+          parts: [{ text: "start", type: "text" }],
+          role: "user",
+        },
+        {
+          id: "assistant-1",
+          parts: [{ text: "partial", type: "text" }],
+          role: "assistant",
+        },
+      ],
+      output: {
+        id: "assistant-1",
+        parts: [{ text: "partial response", type: "text" }],
+        role: "assistant",
+      },
     });
     expect(span.end).toHaveBeenCalledTimes(1);
   });

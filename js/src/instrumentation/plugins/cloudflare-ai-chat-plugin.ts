@@ -23,14 +23,19 @@ type ResponseChannel = typeof cloudflareAIChatChannels.onChatResponse;
 
 type TurnState = {
   agent?: object;
+  cleanupTimer?: ReturnType<typeof setTimeout>;
   depth: number;
   ended: boolean;
+  input?: Record<string, unknown>[];
   key: string | symbol;
   pendingError?: unknown;
+  responseObserved: boolean;
+  settled: boolean;
   span: Span;
 };
 
 const BLOCKED_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const RESPONSE_STATE_RETENTION_MS = 60_000;
 
 export class CloudflareAIChatPlugin extends BasePlugin {
   private readonly activeStates = new Set<TurnState>();
@@ -52,7 +57,7 @@ export class CloudflareAIChatPlugin extends BasePlugin {
     this.unsubscribers = [];
 
     for (const state of this.activeStates) {
-      this.finalizeState(state);
+      this.cleanupState(state);
     }
     this.activeStates.clear();
   }
@@ -90,29 +95,31 @@ export class CloudflareAIChatPlugin extends BasePlugin {
       >;
     const handlers: IsoChannelHandlers<ChannelMessage<ResponseChannel>> = {
       start: (event) => {
+        let state: TurnState | undefined;
         try {
           const agent = asObject(event.self);
           const result = event.arguments[0];
-          const state = agent
+          state = agent
             ? this.findResponseState(
                 agent,
                 stringValue(ownValue(result, "requestId")),
               )
             : undefined;
-          if (!state || state.ended) {
+          if (!state) {
             return;
           }
+          state.responseObserved = true;
 
           const output = serializeMessage(ownValue(result, "message"));
           const status = stringValue(ownValue(result, "status"));
           const error = ownValue(result, "error");
-          const outputId = output?.id;
-          const input = serializeMessages(
-            readProperty(agent, "messages"),
-          )?.filter(
-            (message) =>
-              typeof outputId !== "string" || message.id !== outputId,
-          );
+          const input =
+            ownValue(result, "continuation") === true
+              ? state.input
+              : serializeMessages(readProperty(agent, "messages"))?.filter(
+                  (message) =>
+                    typeof output?.id !== "string" || message.id !== output.id,
+                );
           state.span.log({
             ...(input !== undefined ? { input } : {}),
             ...(output !== undefined ? { output } : {}),
@@ -123,6 +130,10 @@ export class CloudflareAIChatPlugin extends BasePlugin {
             "Failed to process @cloudflare/ai-chat response hook:",
             error,
           );
+        } finally {
+          if (state?.settled) {
+            this.cleanupState(state);
+          }
         }
       },
     };
@@ -175,15 +186,15 @@ export class CloudflareAIChatPlugin extends BasePlugin {
       const activeForAgent = agent ? this.getActiveTurns(agent) : undefined;
       const existing = activeForAgent?.get(key);
       const state =
-        existing && !existing.ended
+        existing && !existing.settled
           ? existing
           : this.createTurnState(agent, key);
 
-      if (existing && !existing.ended) {
+      if (existing && !existing.settled) {
         state.depth += 1;
       }
       this.eventStates.set(eventKey, state);
-      this.bindTurnCallback(event, agent, state.span);
+      this.bindTurnCallback(event, agent, state);
 
       if (agent) {
         instrumentCloudflareAIChatResponseHook(agent as CloudflareAIChatAgent);
@@ -211,6 +222,8 @@ export class CloudflareAIChatPlugin extends BasePlugin {
       depth: 1,
       ended: false,
       key,
+      responseObserved: false,
+      settled: false,
       span,
     };
     this.activeStates.add(state);
@@ -224,7 +237,7 @@ export class CloudflareAIChatPlugin extends BasePlugin {
   private bindTurnCallback(
     event: ChannelMessage<TurnChannel>,
     agent: object | undefined,
-    span: Span,
+    state: TurnState,
   ): void {
     const callback = event.arguments[1];
     if (typeof callback !== "function") {
@@ -236,11 +249,12 @@ export class CloudflareAIChatPlugin extends BasePlugin {
         this: unknown,
         ...args: unknown[]
       ): unknown {
-        return withCurrent(span, () => {
+        return withCurrent(state.span, () => {
           try {
             const input = serializeMessages(readProperty(agent, "messages"));
-            if (input !== undefined) {
-              span.log({ input });
+            if (input !== undefined && state.input === undefined) {
+              state.input = input;
+              state.span.log({ input });
             }
           } catch (error) {
             debugLogger.debug(
@@ -274,11 +288,28 @@ export class CloudflareAIChatPlugin extends BasePlugin {
     }
     state.depth -= 1;
     if (state.depth === 0) {
-      this.finalizeState(state);
+      state.settled = true;
+      this.endState(state);
+      if (state.responseObserved || error !== undefined) {
+        this.cleanupState(state);
+      } else {
+        state.cleanupTimer = setTimeout(
+          () => this.cleanupState(state),
+          RESPONSE_STATE_RETENTION_MS,
+        );
+        if (
+          typeof state.cleanupTimer === "object" &&
+          state.cleanupTimer !== null &&
+          "unref" in state.cleanupTimer &&
+          typeof state.cleanupTimer.unref === "function"
+        ) {
+          state.cleanupTimer.unref();
+        }
+      }
     }
   }
 
-  private finalizeState(state: TurnState): void {
+  private endState(state: TurnState): void {
     if (state.ended) {
       return;
     }
@@ -289,6 +320,17 @@ export class CloudflareAIChatPlugin extends BasePlugin {
       }
     } finally {
       state.span.end();
+    }
+  }
+
+  private cleanupState(state: TurnState): void {
+    if (state.cleanupTimer !== undefined) {
+      clearTimeout(state.cleanupTimer);
+      state.cleanupTimer = undefined;
+    }
+    try {
+      this.endState(state);
+    } finally {
       this.activeStates.delete(state);
       if (state.agent) {
         const activeForAgent = this.activeTurns.get(state.agent);
@@ -319,7 +361,7 @@ export class CloudflareAIChatPlugin extends BasePlugin {
     if (requestId !== undefined) {
       return turns.get(requestId);
     }
-    const active = [...turns.values()].filter((state) => !state.ended);
+    const active = [...turns.values()];
     return active.length === 1 ? active[0] : undefined;
   }
 }
