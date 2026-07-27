@@ -849,7 +849,7 @@ function injectTracingHooks(
 
 type QueryState = {
   accumulatedOutputTokens: number;
-  activeLlmSpansByParentToolUse: Map<string, Span>;
+  activeLlmSpanPromisesByParentToolUse: Map<string, Promise<Span>>;
   activeToolSpans: Map<string, Span>;
   conversationHistoryByParentKey: Map<string, ClaudeConversationMessage[]>;
   capturedPromptMessages: ClaudeAgentSDKMessage[] | undefined;
@@ -930,7 +930,11 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
       parentSpan = await subAgentSpan.export();
     }
   }
-  const existingLlmSpan = state.activeLlmSpansByParentToolUse.get(parentKey);
+  const existingLlmSpanPromise =
+    state.activeLlmSpanPromisesByParentToolUse.get(parentKey);
+  const existingLlmSpan = existingLlmSpanPromise
+    ? await existingLlmSpanPromise
+    : undefined;
 
   const llmSpanResult = await createLLMSpanForMessages(
     state.currentMessages,
@@ -961,7 +965,7 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
   // Keep the active LLM parent visible until the finalized exported parent
   // reference has been published. Otherwise tool hooks can race this gap and
   // fall back to the broader sub-agent task span instead of the LLM span.
-  state.activeLlmSpansByParentToolUse.delete(parentKey);
+  state.activeLlmSpanPromisesByParentToolUse.delete(parentKey);
 
   const lastMessage = state.currentMessages[state.currentMessages.length - 1];
   if (lastMessage?.message?.usage) {
@@ -1085,9 +1089,9 @@ async function ensureSubAgentSpan(
   return subAgentSpan;
 }
 
-async function ensureActiveLlmSpanForParentToolUse(
+function ensureActiveLlmSpanForParentToolUse(
   rootSpan: Span,
-  activeLlmSpansByParentToolUse: Map<string, Span>,
+  activeLlmSpanPromisesByParentToolUse: Map<string, Promise<Span>>,
   subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   activeToolSpans: Map<string, Span>,
   subAgentSpans: Map<string, Span>,
@@ -1095,38 +1099,50 @@ async function ensureActiveLlmSpanForParentToolUse(
   startTime: number,
 ): Promise<Span> {
   const parentKey = llmParentKey(parentToolUseId);
-  const existingLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
-  if (existingLlmSpan) {
-    return existingLlmSpan;
+  const existingLlmSpanPromise =
+    activeLlmSpanPromisesByParentToolUse.get(parentKey);
+  if (existingLlmSpanPromise) {
+    return existingLlmSpanPromise;
   }
 
-  let llmParentSpan = await rootSpan.export();
-  if (parentToolUseId) {
-    const subAgentSpan = await ensureSubAgentSpan(
-      subAgentDetailsByToolUseId,
-      rootSpan,
-      activeToolSpans,
-      subAgentSpans,
-      parentToolUseId,
-    );
-    llmParentSpan = await subAgentSpan.export();
-  }
+  const llmSpanPromise = (async () => {
+    let llmParentSpan = await rootSpan.export();
+    if (parentToolUseId) {
+      const subAgentSpan = await ensureSubAgentSpan(
+        subAgentDetailsByToolUseId,
+        rootSpan,
+        activeToolSpans,
+        subAgentSpans,
+        parentToolUseId,
+      );
+      llmParentSpan = await subAgentSpan.export();
+    }
 
-  const llmSpan = startBaseSpan(
-    withSpanInstrumentationName(
-      {
-        name: "anthropic.messages.create",
-        parent: llmParentSpan,
-        spanAttributes: {
-          type: SpanTypeAttribute.LLM,
+    return startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          name: "anthropic.messages.create",
+          parent: llmParentSpan,
+          spanAttributes: {
+            type: SpanTypeAttribute.LLM,
+          },
+          startTime,
         },
-        startTime,
-      },
-      INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK,
-    ),
-  );
-  activeLlmSpansByParentToolUse.set(parentKey, llmSpan);
-  return llmSpan;
+        INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK,
+      ),
+    );
+  })();
+  activeLlmSpanPromisesByParentToolUse.set(parentKey, llmSpanPromise);
+
+  void llmSpanPromise.catch(() => {
+    if (
+      activeLlmSpanPromisesByParentToolUse.get(parentKey) === llmSpanPromise
+    ) {
+      activeLlmSpanPromisesByParentToolUse.delete(parentKey);
+    }
+  });
+
+  return llmSpanPromise;
 }
 
 async function maybeHandleTaskLifecycleMessage(
@@ -1306,7 +1322,7 @@ async function handleStreamMessage(
     const parentToolUseId = message.parent_tool_use_id ?? null;
     await ensureActiveLlmSpanForParentToolUse(
       state.span,
-      state.activeLlmSpansByParentToolUse,
+      state.activeLlmSpanPromisesByParentToolUse,
       state.subAgentDetailsByToolUseId,
       state.activeToolSpans,
       state.subAgentSpans,
@@ -1390,10 +1406,15 @@ async function finalizeQuerySpan(state: QueryState): Promise<void> {
       }
     }
   } finally {
-    for (const llmSpan of state.activeLlmSpansByParentToolUse.values()) {
-      llmSpan.end();
+    const activeLlmSpanResults = await Promise.allSettled(
+      state.activeLlmSpanPromisesByParentToolUse.values(),
+    );
+    for (const result of activeLlmSpanResults) {
+      if (result.status === "fulfilled") {
+        result.value.end();
+      }
     }
-    state.activeLlmSpansByParentToolUse.clear();
+    state.activeLlmSpanPromisesByParentToolUse.clear();
 
     for (const toolSpan of state.activeToolSpans.values()) {
       toolSpan.end();
@@ -1489,7 +1510,10 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         }
 
         const activeToolSpans = new Map<string, Span>();
-        const activeLlmSpansByParentToolUse = new Map<string, Span>();
+        const activeLlmSpanPromisesByParentToolUse = new Map<
+          string,
+          Promise<Span>
+        >();
         const conversationHistoryByParentKey = new Map<
           string,
           ClaudeConversationMessage[]
@@ -1525,7 +1549,8 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
               ? (taskIdToToolUseId.get(context.agentId) ?? null)
               : null);
           const parentKey = llmParentKey(parentToolUseId);
-          const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
+          const activeLlmSpanPromise =
+            activeLlmSpanPromisesByParentToolUse.get(parentKey);
           const latestLlmParent = parentToolUseId
             ? latestLlmParentBySubAgentToolUse.get(parentToolUseId)
             : latestRootLlmParentRef.value;
@@ -1533,10 +1558,12 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           // Tool spans should be siblings of the driving LLM turn, but we still
           // materialize that LLM span first so trace ordering reflects that the
           // tool call was produced by the model.
-          if (!activeLlmSpan && !latestLlmParent) {
+          if (activeLlmSpanPromise) {
+            await activeLlmSpanPromise;
+          } else if (!latestLlmParent) {
             await ensureActiveLlmSpanForParentToolUse(
               span,
-              activeLlmSpansByParentToolUse,
+              activeLlmSpanPromisesByParentToolUse,
               subAgentDetailsByToolUseId,
               activeToolSpans,
               subAgentSpans,
@@ -1577,7 +1604,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
 
         spans.set(event, {
           accumulatedOutputTokens: 0,
-          activeLlmSpansByParentToolUse,
+          activeLlmSpanPromisesByParentToolUse,
           activeToolSpans,
           conversationHistoryByParentKey,
           capturedPromptMessages,
