@@ -9,11 +9,6 @@ import { applySpecialCasePatch } from "../loader/special-case-patches";
 
 export interface BundlerPluginOptions {
   /**
-   * Enable debug logging
-   */
-  debug?: boolean;
-
-  /**
    * Additional instrumentation configs to apply
    */
   instrumentations?: InstrumentationConfig[];
@@ -28,6 +23,19 @@ export interface BundlerPluginOptions {
    * @default false
    */
   browser?: boolean;
+
+  /**
+   * Previously replaced Node's `diagnostics_channel` implementation with a
+   * browser-compatible shim in transformed code.
+   *
+   * Global instrumentation hooks do not use `diagnostics_channel`, so this
+   * option no longer does anything. It is retained for backwards
+   * compatibility.
+   *
+   * @deprecated This option no longer does anything. Use `browser` to mark
+   * browser or edge-like bundles.
+   */
+  useDiagnosticChannelCompatShim?: boolean;
 }
 
 /**

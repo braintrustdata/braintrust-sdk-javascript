@@ -27,6 +27,7 @@ import { readFileSync } from "fs";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getDefaultInstrumentationConfigs } from "../configs/all";
 import { type BundlerPluginOptions } from "./plugin";
+import { applySpecialCasePatch } from "../loader/special-case-patches";
 
 /**
  * Helper function to get module version from package.json
@@ -83,7 +84,7 @@ process.on("exit", () => {
 /**
  * Webpack loader that instruments JavaScript code using code-transformer.
  *
- * Accepts the same options as the legacy webpack plugin.
+ * Accepts the same options as the Braintrust bundler plugins.
  */
 function codeTransformerLoader(
   this: any,
@@ -119,14 +120,24 @@ function codeTransformerLoader(
   }
 
   const moduleName = moduleDetails.name;
-  const moduleVersion = getModuleVersion(moduleDetails.basedir);
+  // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
+  const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
 
+  const patched = applySpecialCasePatch({
+    packageName: moduleName,
+    modulePath: normalizedModulePath,
+    source: code,
+    format: isModule ? "esm" : "cjs",
+    browser: options.browser ?? false,
+  });
+  if (patched !== null) {
+    return callback(null, patched);
+  }
+
+  const moduleVersion = getModuleVersion(moduleDetails.basedir);
   if (!moduleVersion) {
     return callback(null, code, inputSourceMap);
   }
-
-  // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
-  const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
 
   const matcher = getMatcher(options);
   const transformer = matcher.getTransformer(

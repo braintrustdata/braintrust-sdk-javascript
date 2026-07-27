@@ -37,6 +37,15 @@ const mastraPackageDir = path.join(
   "core",
 );
 const mastraEntryPoint = path.join(mastraFixtureDir, "mastra-app.js");
+const openAIPromisePackageDir = path.join(
+  mastraFixtureDir,
+  "node_modules",
+  "openai",
+);
+const openAIPromiseEntryPoint = path.join(
+  mastraFixtureDir,
+  "openai-api-promise-app.js",
+);
 
 function testConfig(
   functionQuery: InstrumentationConfig["functionQuery"],
@@ -109,6 +118,28 @@ describe("Orchestrion Transformation Tests", () => {
     fs.writeFileSync(
       mastraEntryPoint,
       `export { Mastra } from "@mastra/core";`,
+    );
+    fs.mkdirSync(path.join(openAIPromisePackageDir, "core"), {
+      recursive: true,
+    });
+    fs.writeFileSync(
+      path.join(openAIPromisePackageDir, "package.json"),
+      JSON.stringify({
+        name: "openai",
+        version: "5.0.0",
+        type: "module",
+        exports: {
+          "./core/api-promise": "./core/api-promise.mjs",
+        },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(openAIPromisePackageDir, "core", "api-promise.mjs"),
+      "export class APIPromise extends Promise {}",
+    );
+    fs.writeFileSync(
+      openAIPromiseEntryPoint,
+      `export { APIPromise } from "openai/core/api-promise";`,
     );
   });
 
@@ -417,11 +448,11 @@ describe("Orchestrion Transformation Tests", () => {
     });
 
     it.each([
-      ["browser", "browser"],
-      ["edge", "neutral"],
+      ["browser", "browser", { browser: true }],
+      ["edge", "neutral", { browser: true }],
     ] as const)(
       "should keep Mastra %s bundles free of Node-only patches",
-      async (runtime, platform) => {
+      async (runtime, platform, pluginOptions) => {
         const { braintrustEsbuildPlugin } =
           await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
@@ -436,7 +467,7 @@ describe("Orchestrion Transformation Tests", () => {
           write: true,
           outfile,
           format: "esm",
-          plugins: [braintrustEsbuildPlugin({ browser: true })],
+          plugins: [braintrustEsbuildPlugin(pluginOptions)],
           logLevel: "error",
           absWorkingDir: mastraFixtureDir,
           preserveSymlinks: true,
@@ -681,6 +712,77 @@ describe("Orchestrion Transformation Tests", () => {
 
       expect(errors).toHaveLength(0);
       expectGlobalHookTransform(output);
+    });
+
+    it.each([
+      ["apply", "node", "node", { useDiagnosticChannelCompatShim: true }, true],
+      ["skip", "browser", "web", { browser: true }, false],
+    ] as const)(
+      "should %s special-case patches for %s turbopack loader targets",
+      async (_action, runtime, target, options, shouldPatch) => {
+        const { errors, output } = await runWebpackWithLoader({
+          entry: mastraEntryPoint,
+          output: {
+            path: outputDir,
+            filename: `turbopack-mastra-${runtime}-bundle.js`,
+            library: { type: "module" },
+          },
+          experiments: { outputModule: true },
+          mode: "development",
+          target,
+          module: {
+            rules: [
+              {
+                use: [
+                  {
+                    loader: webpackLoaderPath,
+                    options,
+                  },
+                ],
+              },
+            ],
+          },
+        });
+
+        expect(errors).toHaveLength(0);
+        if (shouldPatch) {
+          expect(output).toContain("__braintrustObservabilityClass");
+          expect(output).toContain("@mastra/observability");
+        } else {
+          expect(output).not.toContain("__braintrustObservabilityClass");
+          expect(output).not.toContain("node:module");
+        }
+      },
+    );
+
+    it("should apply the OpenAI APIPromise patch in turbopack loader-only mode", async () => {
+      const { errors, output } = await runWebpackWithLoader({
+        entry: openAIPromiseEntryPoint,
+        output: {
+          path: outputDir,
+          filename: "turbopack-openai-api-promise-bundle.js",
+          library: { type: "module" },
+        },
+        experiments: { outputModule: true },
+        mode: "development",
+        target: "web",
+        module: {
+          rules: [
+            {
+              use: [
+                {
+                  loader: webpackLoaderPath,
+                  options: { browser: true },
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(errors).toHaveLength(0);
+      expect(output).toContain("__btPatchAPIPromise");
+      expect(output).toContain("__btParsePatched");
     });
   });
 
