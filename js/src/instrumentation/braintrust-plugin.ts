@@ -22,6 +22,7 @@ import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
+import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
 import type { InstrumentationIntegrationsConfig } from "./config";
 
 export interface BraintrustPluginConfig {
@@ -41,6 +42,7 @@ export interface BraintrustPluginConfig {
  * - LangChain.js and LangGraph
  * - Mistral SDK
  * - Cohere SDK
+ * - Voyage AI SDK
  *
  * The plugin is automatically enabled when the Braintrust library is loaded.
  * Individual integrations can be disabled via configuration.
@@ -70,6 +72,7 @@ export class BraintrustPlugin extends BasePlugin {
   private langSmithPlugin: LangSmithPlugin | null = null;
   private piCodingAgentPlugin: PiCodingAgentPlugin | null = null;
   private strandsAgentSDKPlugin: StrandsAgentSDKPlugin | null = null;
+  private voyageAIPlugin: VoyageAIPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -156,6 +159,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.cohere !== false) {
       this.coherePlugin = new CoherePlugin();
       this.coherePlugin.enable();
+    }
+
+    if (integrations.voyageai !== false) {
+      this.voyageAIPlugin = new VoyageAIPlugin();
+      this.voyageAIPlugin.enable();
     }
 
     if (integrations.groq !== false) {
@@ -285,6 +293,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.coherePlugin) {
       this.coherePlugin.disable();
       this.coherePlugin = null;
+    }
+
+    if (this.voyageAIPlugin) {
+      this.voyageAIPlugin.disable();
+      this.voyageAIPlugin = null;
     }
 
     if (this.groqPlugin) {
