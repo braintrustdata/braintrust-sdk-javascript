@@ -8,9 +8,9 @@ overrides:
   protobufjs@<7.5.8: ^7.5.8
   uuid: ^11.1.1
   qs@>=6.7.0 <6.15.2: ^6.15.2
-  hono@>=4.0.0 <4.12.18: ^4.12.18
+  hono@>=4.0.0 <4.12.27: ^4.12.27
   ws@>=8.0.0 <8.20.1: ^8.20.1
-  fast-uri@<3.1.2: ^3.1.2
+  fast-uri@<3.1.4: ^3.1.4
   fast-xml-builder@<1.1.7: ^1.1.7
   ip-address@>=10.0.0 <10.1.1: ^10.1.1
   brace-expansion@>=4.0.0 <5.0.6: ^5.0.6
@@ -23,18 +23,18 @@ importers:
 
   .:
     dependencies:
-      google-adk-sdk-v0-latest:
-        specifier: npm:@google/adk@0.6.1
-        version: '@google/adk@0.6.1(71c6fbe96c14c583afc78db44c65d7e5)'
       google-adk-sdk-v0:
         specifier: npm:@google/adk@0.6.1
         version: '@google/adk@0.6.1(71c6fbe96c14c583afc78db44c65d7e5)'
-      google-adk-sdk-v1-latest:
-        specifier: npm:@google/adk@1.3.0
-        version: '@google/adk@1.3.0(@grpc/grpc-js@1.14.3)(@mikro-orm/mariadb@6.6.12(@mikro-orm/core@6.6.12)(pg@8.20.0))(@mikro-orm/mssql@6.6.12(@azure/core-client@1.10.1)(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/mysql@6.6.12(@mikro-orm/core@6.6.12)(@types/node@25.5.2)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/postgresql@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5))(@mikro-orm/sqlite@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)'
+      google-adk-sdk-v0-latest:
+        specifier: npm:@google/adk@0.6.1
+        version: '@google/adk@0.6.1(71c6fbe96c14c583afc78db44c65d7e5)'
       google-adk-sdk-v1:
         specifier: npm:@google/adk@1.0.0
         version: '@google/adk@1.0.0(@grpc/grpc-js@1.14.3)(@mikro-orm/mariadb@6.6.12(@mikro-orm/core@6.6.12)(pg@8.20.0))(@mikro-orm/mssql@6.6.12(@azure/core-client@1.10.1)(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/mysql@6.6.12(@mikro-orm/core@6.6.12)(@types/node@25.5.2)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/postgresql@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5))(@mikro-orm/sqlite@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)'
+      google-adk-sdk-v1-latest:
+        specifier: npm:@google/adk@1.3.0
+        version: '@google/adk@1.3.0(@grpc/grpc-js@1.14.3)(@mikro-orm/mariadb@6.6.12(@mikro-orm/core@6.6.12)(pg@8.20.0))(@mikro-orm/mssql@6.6.12(@azure/core-client@1.10.1)(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/mysql@6.6.12(@mikro-orm/core@6.6.12)(@types/node@25.5.2)(mariadb@3.4.5)(pg@8.20.0))(@mikro-orm/postgresql@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5))(@mikro-orm/sqlite@6.6.12(@mikro-orm/core@6.6.12)(mariadb@3.4.5)(pg@8.20.0))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)'
 
 packages:
 
@@ -246,7 +246,7 @@ packages:
     resolution: {integrity: sha512-TsQLe4i2gvoTtrHje625ngThGBySOgSK3Xo2XRYOdqGN1teR8+I7vchQC46uLJi8OF62YTYA3AhSpumtkhsaKQ==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: ^4.12.18
+      hono: ^4.12.27
 
   '@js-joda/core@5.7.0':
     resolution: {integrity: sha512-WBu4ULVVxySLLzK1Ppq+OdfP+adRS4ntmDQT915rzDJ++i95gc2jZkM5B6LWEAwN3lGXpfie3yPABozdD3K3Vg==}
@@ -989,8 +989,8 @@ packages:
     resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
     engines: {node: '>=8.6.0'}
 
-  fast-uri@3.1.2:
-    resolution: {integrity: sha512-rVjf7ArG3LTk+FS6Yw81V1DLuZl1bRbNrev6Tmd/9RaroeeRRJhAt7jg/6YFxbvAQXUCavSoZhPPj6oOx+5KjQ==}
+  fast-uri@3.1.4:
+    resolution: {integrity: sha512-8JnbkQ4juDyvYs4mgFGQqg4yCYtFDtUtmp2QIQq11ZZe5CFQ5wcqm1rqDgAh/QdMySuBnPzMUiJUNZG5N/AiQw==}
 
   fast-xml-builder@1.2.0:
     resolution: {integrity: sha512-00aAWieqff+ZJhsXA4g1g7M8k+7AYoMUUHF+/zFb5U6Uv/P0Vl4QZo84/IcufzYalLuEj9928bXN9PbbFzMF0Q==}
@@ -1181,8 +1181,8 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
-  hono@4.12.23:
-    resolution: {integrity: sha512-eIaZ9qDgu7XV0pxOCrg7/WhnQ6Ivm22UcxhXx/A3dcbqbbYgBEkc6e/J/s7j2tS96zoB0S9VBdLwQNCWwUo4LA==}
+  hono@4.12.31:
+    resolution: {integrity: sha512-zJIHFrl6bq3RDd2YusFNCDlM8qUprxKswyi/OPzPyzKDdyBXDqWx8bZlZ7R+saTdSTatUmb3O7K4SspGPaEOQg==}
     engines: {node: '>=16.9.0'}
 
   html-entities@2.6.0:
@@ -2649,9 +2649,9 @@ snapshots:
       protobufjs: 7.6.1
       yargs: 17.7.2
 
-  '@hono/node-server@1.19.13(hono@4.12.23)':
+  '@hono/node-server@1.19.13(hono@4.12.31)':
     dependencies:
-      hono: 4.12.23
+      hono: 4.12.31
 
   '@js-joda/core@5.7.0': {}
 
@@ -2849,7 +2849,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.29.0(zod@4.3.6)':
     dependencies:
-      '@hono/node-server': 1.19.13(hono@4.12.23)
+      '@hono/node-server': 1.19.13(hono@4.12.31)
       ajv: 8.18.0
       ajv-formats: 3.0.1(ajv@8.18.0)
       content-type: 1.0.5
@@ -2859,7 +2859,7 @@ snapshots:
       eventsource-parser: 3.0.6
       express: 5.2.1
       express-rate-limit: 8.3.2(express@5.2.1)
-      hono: 4.12.23
+      hono: 4.12.31
       jose: 6.2.2
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -3138,7 +3138,7 @@ snapshots:
   ajv@8.18.0:
     dependencies:
       fast-deep-equal: 3.1.3
-      fast-uri: 3.1.2
+      fast-uri: 3.1.4
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
@@ -3589,7 +3589,7 @@ snapshots:
       merge2: 1.4.1
       micromatch: 4.0.8
 
-  fast-uri@3.1.2: {}
+  fast-uri@3.1.4: {}
 
   fast-xml-builder@1.2.0:
     dependencies:
@@ -3857,7 +3857,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  hono@4.12.23: {}
+  hono@4.12.31: {}
 
   html-entities@2.6.0: {}
 
