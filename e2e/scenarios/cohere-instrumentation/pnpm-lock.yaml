@@ -12,16 +12,16 @@ importers:
 
   .:
     dependencies:
-      cohere-sdk-v7-latest:
-        specifier: npm:cohere-ai@7.21.0
-        version: cohere-ai@7.21.0
       cohere-sdk-v7:
         specifier: npm:cohere-ai@7.14.0
         version: cohere-ai@7.14.0
-      cohere-sdk-v8-latest:
+      cohere-sdk-v7-latest:
+        specifier: npm:cohere-ai@7.21.0
+        version: cohere-ai@7.21.0
+      cohere-sdk-v8:
         specifier: npm:cohere-ai@8.0.0
         version: cohere-ai@8.0.0(@aws-crypto/sha256-js@5.2.0)(@aws-sdk/credential-providers@3.1028.0)(@smithy/protocol-http@5.3.13)(@smithy/signature-v4@5.3.13)
-      cohere-sdk-v8:
+      cohere-sdk-v8-latest:
         specifier: npm:cohere-ai@8.0.0
         version: cohere-ai@8.0.0(@aws-crypto/sha256-js@5.2.0)(@aws-sdk/credential-providers@3.1028.0)(@smithy/protocol-http@5.3.13)(@smithy/signature-v4@5.3.13)
 

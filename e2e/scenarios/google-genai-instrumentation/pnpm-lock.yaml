@@ -12,16 +12,16 @@ importers:
 
   .:
     dependencies:
-      google-genai-sdk-v1-latest:
-        specifier: npm:@google/genai@1.52.0
-        version: '@google/genai@1.52.0'
       google-genai-sdk-v1:
         specifier: npm:@google/genai@1.30.0
         version: '@google/genai@1.30.0'
-      google-genai-sdk-v2-latest:
+      google-genai-sdk-v1-latest:
+        specifier: npm:@google/genai@1.52.0
+        version: '@google/genai@1.52.0'
+      google-genai-sdk-v2:
         specifier: npm:@google/genai@2.8.0
         version: '@google/genai@2.8.0'
-      google-genai-sdk-v2:
+      google-genai-sdk-v2-latest:
         specifier: npm:@google/genai@2.8.0
         version: '@google/genai@2.8.0'
 

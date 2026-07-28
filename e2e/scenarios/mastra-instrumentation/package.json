@@ -17,15 +17,5 @@
     "mastra-core-v1": "npm:@mastra/core@1.26.0",
     "mastra-core-v1-latest": "npm:@mastra/core@1.26.1-alpha.0",
     "@mastra/observability": "npm:@mastra/observability@1.15.2"
-  },
-  "pnpm": {
-    "overrides": {
-      "hono@>=4.0.0 <4.12.27": "^4.12.27",
-      "fast-uri@<3.1.4": "^3.1.4",
-      "ip-address@>=10.0.0 <10.1.1": "^10.1.1",
-      "ws@>=8.0.0 <8.20.1": "^8.20.1",
-      "uuid@<11.1.1": "^11.1.1",
-      "qs@>=6.7.0 <6.15.2": "^6.15.2"
-    }
   }
 }

@@ -11,10 +11,10 @@ importers:
 
   .:
     dependencies:
-      github-copilot-sdk-v0-latest:
+      github-copilot-sdk-v0:
         specifier: npm:@github/copilot-sdk@0.3.0
         version: '@github/copilot-sdk@0.3.0'
-      github-copilot-sdk-v0:
+      github-copilot-sdk-v0-latest:
         specifier: npm:@github/copilot-sdk@0.3.0
         version: '@github/copilot-sdk@0.3.0'
       vscode-jsonrpc:

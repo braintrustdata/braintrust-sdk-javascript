@@ -1,11 +1,23 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import {
   PUBLISHABLE_PACKAGES,
   appendSummary,
+  orderPackagesForPublish,
+  packageArtifactBase,
   parseArgs,
+  readPackage,
   repoPath,
 } from "./_shared.mjs";
 
@@ -16,39 +28,73 @@ const reportPath =
   args.report ?? path.posix.join(outputDir, "pack-report.json");
 
 const targets = getTargets(manifestPath);
-mkdirSync(repoPath(outputDir), { recursive: true });
+const absoluteOutputDir = repoPath(outputDir);
+mkdirSync(absoluteOutputDir, { recursive: true });
 
-const tarballs = [];
-for (const target of targets) {
-  const relativeOutputDir = path.posix.relative(target.dir, outputDir);
-  const tarball = execFileSync(
-    "npm",
-    ["pack", "--pack-destination", relativeOutputDir],
-    {
-      cwd: repoPath(target.dir),
-      encoding: "utf8",
-    },
-  ).trim();
-
-  tarballs.push({
-    name: target.name,
-    dir: target.dir,
-    version: target.version,
-    tarball,
-  });
-}
+const artifacts = targets.map(packPackage);
 
 writeFileSync(
   repoPath(reportPath),
-  `${JSON.stringify({ tarballs }, null, 2)}\n`,
+  `${JSON.stringify({ artifacts }, null, 2)}\n`,
   "utf8",
 );
-console.log(`Packed ${tarballs.length} package(s) into ${outputDir}`);
+console.log(`Packed ${artifacts.length} package(s) into ${outputDir}`);
 appendSummary(
-  `## Packed publishable packages\n\n${tarballs
-    .map((entry) => `- ${entry.name}@${entry.version}: ${entry.tarball}`)
+  `## Packed publishable packages\n\n${artifacts
+    .map(
+      (entry) =>
+        `- ${entry.name}@${entry.version}: ${entry.tarball}, ${entry.sbom}`,
+    )
     .join("\n")}`,
 );
+
+function packPackage(target) {
+  const packDir = mkdtempSync(path.join(os.tmpdir(), "braintrust-pack-"));
+  try {
+    runPnpm(["pack", "--pack-destination", packDir], {
+      cwd: repoPath(target.dir),
+    });
+
+    const packedTarballs = readdirSync(packDir).filter((file) =>
+      file.endsWith(".tgz"),
+    );
+    if (packedTarballs.length !== 1) {
+      throw new Error(
+        `Expected pnpm pack for ${target.name} to create one tarball, found ${packedTarballs.length}`,
+      );
+    }
+
+    const tarballAsset =
+      target.tarball_asset ??
+      `${packageArtifactBase(target.name, target.version)}.tgz`;
+    const sbomAsset =
+      target.sbom_asset ??
+      `${packageArtifactBase(target.name, target.version)}.sbom.json`;
+    for (const asset of [tarballAsset, sbomAsset]) {
+      if (path.basename(asset) !== asset) {
+        throw new Error(`Release artifact must be a basename: ${asset}`);
+      }
+    }
+
+    const tarballPath = path.join(absoluteOutputDir, tarballAsset);
+    const sbomPath = path.join(absoluteOutputDir, sbomAsset);
+    renameSync(path.join(packDir, packedTarballs[0]), tarballPath);
+    runPnpm(
+      ["sbom", "--sbom-format", "cyclonedx", "--prod", "--out", sbomPath],
+      { cwd: repoPath(target.dir) },
+    );
+
+    return {
+      name: target.name,
+      dir: target.dir,
+      version: target.version,
+      tarball: path.relative(repoPath(), tarballPath),
+      sbom: path.relative(repoPath(), sbomPath),
+    };
+  } finally {
+    rmSync(packDir, { force: true, recursive: true });
+  }
+}
 
 function getTargets(maybeManifestPath) {
   if (!maybeManifestPath) {
@@ -57,26 +103,34 @@ function getTargets(maybeManifestPath) {
     );
   }
 
-  const manifest = JSON.parse(
+  const releaseManifest = JSON.parse(
     readFileSync(repoPath(maybeManifestPath), "utf8"),
   );
-  return manifest.packages.map((pkg) => readPackageInfo(pkg.dir, pkg.name));
+  return orderPackagesForPublish(releaseManifest.packages ?? []).map((pkg) =>
+    readPackageInfo(pkg.dir, pkg.name, pkg),
+  );
 }
 
-function readPackageInfo(relativeDir, expectedName) {
-  const manifest = JSON.parse(
-    readFileSync(repoPath(relativeDir, "package.json"), "utf8"),
-  );
+function readPackageInfo(relativeDir, expectedName, releasePackage = {}) {
+  const packageJson = readPackage(relativeDir);
 
-  if (manifest.name !== expectedName) {
+  if (packageJson.name !== expectedName) {
     throw new Error(
-      `Expected ${relativeDir} to be ${expectedName}, found ${manifest.name}`,
+      `Expected ${relativeDir} to be ${expectedName}, found ${packageJson.name}`,
     );
   }
 
   return {
+    ...releasePackage,
     dir: relativeDir,
-    name: manifest.name,
-    version: manifest.version,
+    name: packageJson.name,
+    version: packageJson.version,
   };
+}
+
+function runPnpm(pnpmArgs, options) {
+  execFileSync("pnpm", pnpmArgs, {
+    ...options,
+    stdio: "inherit",
+  });
 }
