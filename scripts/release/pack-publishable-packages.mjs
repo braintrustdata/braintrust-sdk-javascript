@@ -26,6 +26,7 @@ const outputDir = args["output-dir"] ?? "artifacts/release-packages";
 const manifestPath = args.manifest;
 const reportPath =
   args.report ?? path.posix.join(outputDir, "pack-report.json");
+const PACKAGING_PNPM_VERSION = "11.9.0";
 
 const targets = getTargets(manifestPath);
 const absoluteOutputDir = repoPath(outputDir);
@@ -51,7 +52,7 @@ appendSummary(
 function packPackage(target) {
   const packDir = mkdtempSync(path.join(os.tmpdir(), "braintrust-pack-"));
   try {
-    runPnpm(["pack", "--pack-destination", packDir], {
+    runPackagingPnpm(["pack", "--pack-destination", packDir], {
       cwd: repoPath(target.dir),
     });
 
@@ -79,7 +80,7 @@ function packPackage(target) {
     const tarballPath = path.join(absoluteOutputDir, tarballAsset);
     const sbomPath = path.join(absoluteOutputDir, sbomAsset);
     renameSync(path.join(packDir, packedTarballs[0]), tarballPath);
-    runPnpm(
+    runPackagingPnpm(
       ["sbom", "--sbom-format", "cyclonedx", "--prod", "--out", sbomPath],
       { cwd: repoPath(target.dir) },
     );
@@ -128,9 +129,17 @@ function readPackageInfo(relativeDir, expectedName, releasePackage = {}) {
   };
 }
 
-function runPnpm(pnpmArgs, options) {
-  execFileSync("pnpm", pnpmArgs, {
-    ...options,
-    stdio: "inherit",
-  });
+function runPackagingPnpm(pnpmArgs, options) {
+  execFileSync(
+    "corepack",
+    [`pnpm@${PACKAGING_PNPM_VERSION}`, "--pm-on-fail=ignore", ...pnpmArgs],
+    {
+      ...options,
+      env: {
+        ...process.env,
+        COREPACK_ENABLE_DOWNLOAD_PROMPT: "0",
+      },
+      stdio: "inherit",
+    },
+  );
 }
