@@ -18,6 +18,7 @@ import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
+import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
 
 function createPluginClassMock() {
   return vi.fn(function MockPlugin(this: {
@@ -109,6 +110,10 @@ vi.mock("./plugins/pi-coding-agent-plugin", () => ({
 
 vi.mock("./plugins/strands-agent-sdk-plugin", () => ({
   StrandsAgentSDKPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/cloudflare-agents-plugin", () => ({
+  CloudflareAgentsPlugin: createPluginClassMock(),
 }));
 
 describe("BraintrustPlugin", () => {
@@ -261,6 +266,16 @@ describe("BraintrustPlugin", () => {
 
       expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       const mockInstance = vi.mocked(StrandsAgentSDKPlugin).mock.results[0]
+        .value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable Cloudflare Agents plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(CloudflareAgentsPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(CloudflareAgentsPlugin).mock.results[0]
         .value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
@@ -615,6 +630,7 @@ describe("BraintrustPlugin", () => {
           langsmith: false,
           piCodingAgent: false,
           strandsAgentSDK: false,
+          cloudflareAgents: false,
         },
       });
       plugin.enable();
@@ -637,6 +653,7 @@ describe("BraintrustPlugin", () => {
       expect(LangSmithPlugin).not.toHaveBeenCalled();
       expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
       expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(CloudflareAgentsPlugin).not.toHaveBeenCalled();
     });
 
     it("should not create Pi Coding Agent plugin when piCodingAgent: false", () => {
@@ -657,6 +674,16 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create Cloudflare Agents plugin when cloudflareAgents: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { cloudflareAgents: false },
+      });
+      plugin.enable();
+
+      expect(CloudflareAgentsPlugin).not.toHaveBeenCalled();
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
     });
 
@@ -820,6 +847,8 @@ describe("BraintrustPlugin", () => {
         vi.mocked(PiCodingAgentPlugin).mock.results[0].value;
       const strandsAgentSDKMock = vi.mocked(StrandsAgentSDKPlugin).mock
         .results[0].value;
+      const cloudflareAgentsMock = vi.mocked(CloudflareAgentsPlugin).mock
+        .results[0].value;
       const langChainMock = vi.mocked(LangChainPlugin).mock.results[0].value;
 
       expect(openaiMock.enable).toHaveBeenCalledTimes(1);
@@ -837,6 +866,7 @@ describe("BraintrustPlugin", () => {
       expect(groqMock.enable).toHaveBeenCalledTimes(1);
       expect(piCodingAgentMock.enable).toHaveBeenCalledTimes(1);
       expect(strandsAgentSDKMock.enable).toHaveBeenCalledTimes(1);
+      expect(cloudflareAgentsMock.enable).toHaveBeenCalledTimes(1);
       expect(langChainMock.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -867,6 +897,8 @@ describe("BraintrustPlugin", () => {
         vi.mocked(PiCodingAgentPlugin).mock.results[0].value;
       const strandsAgentSDKMock = vi.mocked(StrandsAgentSDKPlugin).mock
         .results[0].value;
+      const cloudflareAgentsMock = vi.mocked(CloudflareAgentsPlugin).mock
+        .results[0].value;
       const langChainMock = vi.mocked(LangChainPlugin).mock.results[0].value;
 
       plugin.disable();
@@ -886,6 +918,7 @@ describe("BraintrustPlugin", () => {
       expect(groqMock.disable).toHaveBeenCalledTimes(1);
       expect(piCodingAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(strandsAgentSDKMock.disable).toHaveBeenCalledTimes(1);
+      expect(cloudflareAgentsMock.disable).toHaveBeenCalledTimes(1);
       expect(langChainMock.disable).toHaveBeenCalledTimes(1);
     });
 
