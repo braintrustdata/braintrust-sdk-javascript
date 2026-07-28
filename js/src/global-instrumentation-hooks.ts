@@ -137,20 +137,16 @@ function setContextValue(
   }
 }
 
-function defaultTransform<M>(message: M): M {
-  return message;
-}
-
 function wrapStoreRun<M>(
   store: GlobalHookAsyncLocalStorage<unknown>,
   message: M,
   next: () => unknown,
-  transform: GlobalHookTransformFunction<M, unknown> = defaultTransform,
+  transform?: GlobalHookTransformFunction<M, unknown>,
 ): () => unknown {
   return () => {
     let context: unknown;
     try {
-      context = transform(message);
+      context = transform ? transform(message) : message;
     } catch (error) {
       reportError(error);
       return next();

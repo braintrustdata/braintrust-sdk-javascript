@@ -11,7 +11,7 @@ import {
   GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
   GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
 } from "../../global-instrumentation-hooks";
-import type { FunctionQuery, InstrumentationConfig, ModuleType } from "./types";
+import type { FunctionQuery, InstrumentationConfig } from "./types";
 
 type AnyNode = any;
 type TransformFn = (
@@ -23,7 +23,6 @@ type TransformFn = (
 type TraceOperator = "traceCallback" | "tracePromise" | "traceSync";
 
 export interface TransformState extends InstrumentationConfig {
-  moduleType: ModuleType;
   moduleVersion: string;
   functionQuery: FunctionQuery;
   operator: TraceOperator;
@@ -31,6 +30,7 @@ export interface TransformState extends InstrumentationConfig {
 }
 
 const CHANNEL_REGEX = /[^\w]/g;
+const SHARED_HOOK_LOOKUP = "tr_ch_apm$get_hook";
 
 function formatChannelVariable(channelName: string): string {
   return `tr_ch_apm$${channelName.replace(CHANNEL_REGEX, "_")}`;
@@ -49,6 +49,10 @@ export const transforms: Record<string, TransformFn> = {
     } = state;
     const channelVariable = formatChannelVariable(channelName);
     const channelGetter = formatChannelGetter(channelName);
+    const hasSharedHookLookup = node.body.some(
+      (child: AnyNode) =>
+        child.declarations?.[0]?.id?.name === SHARED_HOOK_LOOKUP,
+    );
 
     if (
       node.body.some(
@@ -58,12 +62,10 @@ export const transforms: Record<string, TransformFn> = {
       return;
     }
 
-    const index = node.body.findIndex(
-      (child: AnyNode) => child.directive === "use strict",
-    );
-    const code = `
-      let ${channelVariable};
-      const ${channelGetter} = () => {
+    const sharedHookLookup = hasSharedHookLookup
+      ? ""
+      : `
+      const ${SHARED_HOOK_LOOKUP} = (__apm$hookName, __apm$operator) => {
         try {
           const __apm$hooks = globalThis[${JSON.stringify(
             GLOBAL_INSTRUMENTATION_HOOKS_KEY,
@@ -76,7 +78,7 @@ export const transforms: Record<string, TransformFn> = {
           ) return undefined;
           const __apm$hook = Map.prototype.get.call(
             __apm$hooks,
-            "orchestrion:${name}:${channelName}"
+            __apm$hookName
           );
           if (
             (__apm$hook === null ||
@@ -86,15 +88,34 @@ export const transforms: Record<string, TransformFn> = {
               GLOBAL_INSTRUMENTATION_HOOK_BRAND,
             )})] !== ${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION} ||
             typeof __apm$hook.hasSubscribers !== "boolean" ||
-            typeof __apm$hook[${JSON.stringify(operator)}] !== "function"
+            typeof __apm$hook[__apm$operator] !== "function"
           ) return undefined;
-          return ${channelVariable} ??= __apm$hook;
+          return __apm$hook;
         } catch {
           return undefined;
         }
       };
     `;
+    const code = `
+      ${sharedHookLookup}
+      let ${channelVariable};
+      const ${channelGetter} = () =>
+        ${channelVariable} ??= ${SHARED_HOOK_LOOKUP}(
+          ${JSON.stringify(`orchestrion:${name}:${channelName}`)},
+          ${JSON.stringify(operator)}
+        );
+    `;
 
+    const sharedHookLookupIndex = node.body.findIndex(
+      (child: AnyNode) =>
+        child.declarations?.[0]?.id?.name === SHARED_HOOK_LOOKUP,
+    );
+    const index =
+      sharedHookLookupIndex === -1
+        ? node.body.findIndex(
+            (child: AnyNode) => child.directive === "use strict",
+          )
+        : sharedHookLookupIndex;
     node.body.splice(index + 1, 0, ...parse(code).body);
   },
 
@@ -139,18 +160,14 @@ function traceFunction(
     (!methodName && !privateMethodName && !functionName);
   const type = isConstructor ? "ArrowFunctionExpression" : "FunctionExpression";
 
-  node.body = wrap(
-    state,
-    {
-      type,
-      params: node.params,
-      body: node.body,
-      async: node.async,
-      expression: false,
-      generator: node.generator,
-    },
-    program,
-  );
+  node.body = wrap(state, {
+    type,
+    params: node.params,
+    body: node.body,
+    async: node.async,
+    expression: false,
+    generator: node.generator,
+  });
 
   node.generator = false;
   node.async = false;
@@ -202,22 +219,17 @@ function traceInstanceMethod(
   const fn = ctorBody[1].expression.right;
 
   fn.async = operator === "tracePromise";
-  fn.body = wrap(
-    state,
-    { type: "Identifier", name: `__apm$${methodName}` },
-    program,
-  );
+  fn.body = wrap(state, {
+    type: "Identifier",
+    name: `__apm$${methodName}`,
+  });
 
   wrapSuper(fn);
 
   ctor.value.body.body.push(...ctorBody);
 }
 
-function wrap(
-  state: TransformState,
-  node: AnyNode,
-  program?: AnyNode,
-): AnyNode {
+function wrap(state: TransformState, node: AnyNode): AnyNode {
   const { operator, moduleVersion } = state;
 
   const wrapper =

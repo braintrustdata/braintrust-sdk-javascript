@@ -25,15 +25,13 @@ export interface BundlerPluginOptions {
   browser?: boolean;
 
   /**
-   * Previously replaced Node's `diagnostics_channel` implementation with a
-   * browser-compatible shim in transformed code.
+   * Marks transformed source as targeting a browser or edge-like environment.
    *
-   * Global instrumentation hooks do not use `diagnostics_channel`, so this
-   * option no longer does anything. It is retained for backwards
-   * compatibility.
+   * This retains the previous browser-target behavior of the option. Global
+   * instrumentation hooks are runtime-independent, so no diagnostics-channel
+   * compatibility shim is injected.
    *
-   * @deprecated This option no longer does anything. Use `browser` to mark
-   * browser or edge-like bundles.
+   * @deprecated Use `browser` instead.
    */
   useDiagnosticChannelCompatShim?: boolean;
 }
@@ -56,7 +54,8 @@ function getModuleVersion(basedir: string): string | undefined {
 }
 
 export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
-  const browser = options.browser ?? false;
+  const browser =
+    options.browser ?? options.useDiagnosticChannelCompatShim ?? false;
   const allInstrumentations = getDefaultInstrumentationConfigs({
     additionalInstrumentations: options.instrumentations,
   });

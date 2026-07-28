@@ -369,6 +369,48 @@ describe("Orchestrion Transformation Tests", () => {
       );
     });
 
+    it("injects one shared global hook lookup for multiple channels", () => {
+      const matcher = create([
+        {
+          ...testConfig({ functionName: "first", kind: "Sync" }),
+          channelName: "first",
+        },
+        {
+          ...testConfig({ functionName: "second", kind: "Async" }),
+          channelName: "second",
+        },
+      ]);
+      const transformer = matcher.getTransformer(
+        "test-sdk",
+        "1.0.0",
+        "index.mjs",
+      );
+
+      expect(transformer).toBeDefined();
+      const result = transformer!.transform(
+        `
+          export function first() {
+            return "first";
+          }
+          export async function second() {
+            return "second";
+          }
+        `,
+        "esm",
+      );
+
+      expect(result.code.match(/const tr_ch_apm\$get_hook =/g)).toHaveLength(1);
+      expect(
+        result.code.match(
+          /braintrust\.global-instrumentation-hooks\.registry/g,
+        ),
+      ).toHaveLength(1);
+      expect(result.code).toContain("orchestrion:test-sdk:first");
+      expect(result.code).toContain("orchestrion:test-sdk:second");
+      expect(result.code).toContain("__apm$hook.traceSync");
+      expect(result.code).toContain("__apm$hook.tracePromise");
+    });
+
     it("generates source maps", () => {
       const result = transformTestCode(
         { functionName: "query", kind: "Sync" },
@@ -449,6 +491,7 @@ describe("Orchestrion Transformation Tests", () => {
 
     it.each([
       ["browser", "browser", { browser: true }],
+      ["legacy-browser", "browser", { useDiagnosticChannelCompatShim: true }],
       ["edge", "neutral", { browser: true }],
     ] as const)(
       "should keep Mastra %s bundles free of Node-only patches",
@@ -715,8 +758,15 @@ describe("Orchestrion Transformation Tests", () => {
     });
 
     it.each([
-      ["apply", "node", "node", { useDiagnosticChannelCompatShim: true }, true],
+      [
+        "skip",
+        "legacy browser",
+        "web",
+        { useDiagnosticChannelCompatShim: true },
+        false,
+      ],
       ["skip", "browser", "web", { browser: true }, false],
+      ["apply", "node", "node", { browser: false }, true],
     ] as const)(
       "should %s special-case patches for %s turbopack loader targets",
       async (_action, runtime, target, options, shouldPatch) => {

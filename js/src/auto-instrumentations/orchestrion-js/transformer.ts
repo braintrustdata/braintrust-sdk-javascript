@@ -88,7 +88,6 @@ export class Transformer {
       const query = astQuery || this.fromFunctionQuery(resolvedFunctionQuery);
       const state: TransformState = {
         ...config,
-        moduleType,
         moduleVersion: this.version,
         functionQuery: resolvedFunctionQuery,
         operator: this.getOperator(resolvedFunctionQuery.kind),

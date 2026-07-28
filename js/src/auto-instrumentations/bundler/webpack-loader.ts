@@ -128,7 +128,7 @@ function codeTransformerLoader(
     modulePath: normalizedModulePath,
     source: code,
     format: isModule ? "esm" : "cjs",
-    browser: options.browser ?? false,
+    browser: options.browser ?? options.useDiagnosticChannelCompatShim ?? false,
   });
   if (patched !== null) {
     return callback(null, patched);
