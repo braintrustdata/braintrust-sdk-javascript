@@ -137,7 +137,13 @@ describe("DurableEval", () => {
   test("persists metadata written through hooks.meta", async () => {
     const result = await DurableEval("metadata-hooks", {
       revision: "v1",
-      data: [{ id: "one", input: "hello" }],
+      data: [
+        {
+          id: "one",
+          input: "hello",
+          metadata: { source: "initial" },
+        },
+      ],
       task: (_input, hooks) => {
         hooks.meta({ source: "deprecated-hook" });
         return hooks.metadata.source;
