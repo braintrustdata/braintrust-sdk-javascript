@@ -1,3 +1,0 @@
-overrides:
-  langsmith@<0.3.30: ^0.3.30
-  uuid: ^11.1.1

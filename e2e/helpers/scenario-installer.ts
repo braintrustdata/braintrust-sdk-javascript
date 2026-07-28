@@ -47,7 +47,6 @@ const E2E_ROOT = path.resolve(HELPERS_DIR, "..");
 type ScenarioInstallInputs = {
   lockfileRaw: string;
   manifestRaw: string;
-  workspaceConfigRaw: string | null;
 };
 
 type CachedScenarioDependenciesResult =
@@ -200,14 +199,6 @@ async function readScenarioInstallInputs(
   return {
     lockfileRaw: await fs.readFile(lockfilePath, "utf8"),
     manifestRaw,
-    workspaceConfigRaw: await fs
-      .readFile(path.join(scenarioDir, "pnpm-workspace.yaml"), "utf8")
-      .catch((err: NodeJS.ErrnoException) => {
-        if (err.code === "ENOENT") {
-          return null;
-        }
-        throw err;
-      }),
   };
 }
 
@@ -227,8 +218,6 @@ function scenarioDependencyCacheKey(
   hash.update(inputs.manifestRaw);
   hash.update("\0");
   hash.update(inputs.lockfileRaw);
-  hash.update("\0");
-  hash.update(inputs.workspaceConfigRaw ?? "");
 
   return `${scenarioNameForPath(scenarioDir)}-${hash.digest("hex").slice(0, 16)}`;
 }
@@ -274,12 +263,6 @@ async function installCachedScenarioDependencies({
     await fs.writeFile(
       path.join(stagingDir, "pnpm-lock.yaml"),
       inputs.lockfileRaw,
-    );
-    // Give the staging directory its own workspace root so pnpm 11 reads any
-    // fixture-level settings without inheriting the repository workspace.
-    await fs.writeFile(
-      path.join(stagingDir, "pnpm-workspace.yaml"),
-      inputs.workspaceConfigRaw ?? "packages: []\n",
     );
     await installScenarioDependencies({
       preferOffline,
@@ -361,6 +344,7 @@ export async function installScenarioDependencies({
     "install",
     "--dir",
     scenarioDir,
+    "--ignore-workspace",
     "--frozen-lockfile",
     "--ignore-scripts=false",
     "--strict-peer-dependencies=false",

@@ -34,5 +34,13 @@
     "ai-sdk-v6-latest": "npm:ai@6.0.219",
     "ai-sdk-openai-v6": "npm:@ai-sdk/openai@3.0.7",
     "ai-sdk-openai-v6-latest": "npm:@ai-sdk/openai@3.0.80"
+  },
+  "pnpm": {
+    "overrides": {
+      "protobufjs@<7.5.8": "^7.5.8",
+      "@opentelemetry/sdk-node@<0.217.0": "^0.217.0",
+      "@opentelemetry/exporter-prometheus@<0.217.0": "^0.217.0",
+      "@opentelemetry/propagator-jaeger@<2.9.0": "^2.9.0"
+    }
   }
 }

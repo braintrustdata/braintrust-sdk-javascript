@@ -15,5 +15,10 @@
     "vscode-jsonrpc": "8.2.1",
     "github-copilot-sdk-v0": "npm:@github/copilot-sdk@0.3.0",
     "github-copilot-sdk-v0-latest": "npm:@github/copilot-sdk@0.3.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@github/copilot@<1.0.43": "^1.0.43"
+    }
   }
 }

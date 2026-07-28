@@ -20,5 +20,11 @@
     "google-genai-sdk-v1-latest": "npm:@google/genai@1.52.0",
     "google-genai-sdk-v2": "npm:@google/genai@2.8.0",
     "google-genai-sdk-v2-latest": "npm:@google/genai@2.8.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "protobufjs@<7.5.8": "^7.5.8",
+      "ws@>=8.0.0 <8.20.1": "^8.20.1"
+    }
   }
 }

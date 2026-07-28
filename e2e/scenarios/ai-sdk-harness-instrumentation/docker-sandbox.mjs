@@ -95,7 +95,7 @@ export async function createDockerSandbox() {
       containerName,
       "/bin/sh",
       "-lc",
-      "corepack enable pnpm && corepack install --global pnpm@11.9.0 && mkdir -p /workspace /root/.codex",
+      "corepack enable pnpm && corepack install --global pnpm@10.33.0 && mkdir -p /workspace /root/.codex",
     ]);
   }
 

@@ -12,10 +12,10 @@ importers:
 
   .:
     dependencies:
-      cursor-sdk-v1:
+      cursor-sdk-v1-latest:
         specifier: npm:@cursor/sdk@1.0.12
         version: '@cursor/sdk@1.0.12'
-      cursor-sdk-v1-latest:
+      cursor-sdk-v1:
         specifier: npm:@cursor/sdk@1.0.12
         version: '@cursor/sdk@1.0.12'
 

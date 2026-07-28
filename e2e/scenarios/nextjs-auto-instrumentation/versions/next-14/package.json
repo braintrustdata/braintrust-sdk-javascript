@@ -10,5 +10,10 @@
   "devDependencies": {
     "@types/react": "18.3.27",
     "@types/react-dom": "18.3.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss@<8.5.10": "^8.5.10"
+    }
   }
 }
