@@ -185,7 +185,7 @@
     "@types/express": "^5.0.0",
     "@types/http-errors": "^2.0.4",
     "@types/mustache": "^4.2.5",
-    "@types/node": "^20.10.5",
+    "@types/node": "^20.19.43",
     "@types/pluralize": "^0.0.30",
     "@types/tar": "^6.1.13",
     "@typescript-eslint/eslint-plugin": "^8.49.0",
