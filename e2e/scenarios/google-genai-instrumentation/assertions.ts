@@ -109,6 +109,64 @@ function extractGroundingMetadataFromOutput(
   return undefined;
 }
 
+function expectNormalizedGenerateContentUsage(
+  event: CapturedLogEvent | undefined,
+  options: {
+    reasoning: boolean;
+    toolUse: boolean;
+  },
+): void {
+  const output = event?.output as Json;
+  const metrics = event?.metrics as Json;
+  if (
+    !isRecord(output) ||
+    !isRecord(output.usageMetadata) ||
+    !isRecord(metrics)
+  ) {
+    throw new Error("Missing Google GenAI usage metadata or metrics");
+  }
+
+  const usage = output.usageMetadata;
+  const promptTokenCount = usage.promptTokenCount;
+  const toolUsePromptTokenCount = usage.toolUsePromptTokenCount;
+  const candidatesTokenCount = usage.candidatesTokenCount;
+  const thoughtsTokenCount = usage.thoughtsTokenCount;
+  const totalTokenCount = usage.totalTokenCount;
+
+  if (
+    typeof promptTokenCount !== "number" ||
+    typeof totalTokenCount !== "number" ||
+    (typeof candidatesTokenCount !== "number" &&
+      typeof thoughtsTokenCount !== "number") ||
+    (options.reasoning && typeof thoughtsTokenCount !== "number") ||
+    (options.toolUse && typeof toolUsePromptTokenCount !== "number")
+  ) {
+    throw new Error("Google GenAI response is missing expected token buckets");
+  }
+
+  const normalizedPromptTokens =
+    promptTokenCount +
+    (typeof toolUsePromptTokenCount === "number" ? toolUsePromptTokenCount : 0);
+  const normalizedCompletionTokens =
+    (typeof candidatesTokenCount === "number" ? candidatesTokenCount : 0) +
+    (typeof thoughtsTokenCount === "number" ? thoughtsTokenCount : 0);
+
+  expect(metrics.prompt_tokens).toBe(normalizedPromptTokens);
+  expect(metrics.completion_tokens).toBe(normalizedCompletionTokens);
+  expect(metrics.tokens).toBe(totalTokenCount);
+  expect(totalTokenCount).toBe(
+    normalizedPromptTokens + normalizedCompletionTokens,
+  );
+
+  if (options.reasoning) {
+    expect(thoughtsTokenCount).toBeGreaterThan(0);
+    expect(metrics.completion_reasoning_tokens).toBe(thoughtsTokenCount);
+  }
+  if (options.toolUse) {
+    expect(toolUsePromptTokenCount).toBeGreaterThan(0);
+  }
+}
+
 function normalizeGoogleVariableTokenCounts(value: Json): Json {
   if (Array.isArray(value)) {
     return value.map((entry) =>
@@ -848,6 +906,42 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
           duration: expect.any(Number),
           end: expect.any(Number),
           start: expect.any(Number),
+        });
+      },
+    );
+
+    test.each([
+      {
+        operationName: "google-generate-operation",
+        reasoning: true,
+        spanNames: ["generate_content", "google-genai.generateContent"],
+        toolUse: false,
+      },
+      {
+        operationName: "google-grounded-generate-operation",
+        reasoning: true,
+        spanNames: ["generate_content", "google-genai.generateContent"],
+        toolUse: true,
+      },
+      {
+        operationName: "google-grounded-stream-operation",
+        reasoning: true,
+        spanNames: [
+          "generate_content_stream",
+          "google-genai.generateContentStream",
+        ],
+        toolUse: true,
+      },
+    ])(
+      "normalizes reasoning and tool-use usage for $operationName",
+      testConfig,
+      ({ operationName, reasoning, spanNames, toolUse }) => {
+        const operation = findLatestSpan(events, operationName);
+        const span = findGoogleSpan(events, operation?.span.id, spanNames);
+
+        expectNormalizedGenerateContentUsage(span, {
+          reasoning,
+          toolUse,
         });
       },
     );

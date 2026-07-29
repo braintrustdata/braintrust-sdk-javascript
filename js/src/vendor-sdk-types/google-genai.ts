@@ -221,7 +221,17 @@ export interface GoogleGenAIUsageMetadata {
   candidatesTokenCount?: number;
   totalTokenCount?: number;
   cachedContentTokenCount?: number;
+  toolUsePromptTokenCount?: number;
   thoughtsTokenCount?: number;
+  promptTokensDetails?: GoogleGenAIModalityTokenCount[];
+  cacheTokensDetails?: GoogleGenAIModalityTokenCount[];
+  candidatesTokensDetails?: GoogleGenAIModalityTokenCount[];
+  toolUsePromptTokensDetails?: GoogleGenAIModalityTokenCount[];
+}
+
+export interface GoogleGenAIModalityTokenCount {
+  modality?: string;
+  tokenCount?: number;
 }
 
 export interface GoogleGenAIInteractionUsage {
