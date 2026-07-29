@@ -60,6 +60,8 @@ import { BatchTask, DurableEval, type DurableEvalStore } from "braintrust";
 
 const store: DurableEvalStore = checkpointStore;
 const supportEval = DurableEval("Support bot", {
+  // Records which eval definition produced each checkpointed result. Update it
+  // when eval-level data or orchestration changes; completed cases stay reused.
   revision: process.env.GIT_SHA ?? "local",
   data: [
     {
@@ -69,6 +71,8 @@ const supportEval = DurableEval("Support bot", {
     },
   ],
   task: BatchTask({
+    // Batch stages have their own revision so results retain the version of the
+    // prompt, model, and task code that produced them.
     revision: "generation-v1",
 
     // Each provider job contains at most 500 eval cases. Up to four jobs may
@@ -87,6 +91,10 @@ const supportEval = DurableEval("Support bot", {
       return { id: batch.id };
     },
 
+    // Completion controls how DurableEval learns that the asynchronous job is
+    // ready. "webhook" pauses until processBatchResult receives an event;
+    // "poll" calls a supplied poll function. Webhooks may also define a
+    // pollFallback for delayed or missing events.
     completion: {
       mode: "webhook",
       source: "provider",
@@ -147,21 +155,24 @@ same contract.
 
 ### Webhook processing
 
-Verify the provider signature against the raw request body before calling the
-durable eval definition. The HTTP framework and provider SDK remain outside the
-generic durable API:
+Pass a provider batch's terminal state to the durable eval definition:
 
 ```typescript
-app.post("/webhooks/provider", rawBodyMiddleware, async (request, response) => {
-  const event = provider.verifyWebhook(request.rawBody, request.headers);
+app.post("/webhooks/provider", async (request, response) => {
+  const event = request.body;
   const batch = await provider.getBatch(event.batchId);
 
   const result = await supportEval.processBatchResult(
     {
+      // Uniquely identifies this webhook event so repeated delivery is safe.
       eventId: event.id,
+      // Namespaces provider job IDs when multiple webhook sources share a store.
       source: "provider",
+      // Matches the event to the provider job handle saved during submission.
       externalId: batch.id,
+      // Matches events that arrive before the provider handle is checkpointed.
       batchId: batch.metadata?.durableBatchId,
+      // Supplies the provider handle when recovering an early or ambiguous event.
       handle: { id: batch.id },
       outcome:
         batch.status === "completed"
@@ -169,6 +180,8 @@ app.post("/webhooks/provider", rawBodyMiddleware, async (request, response) => {
           : {
               status: "failed",
               error: { status: batch.status },
+              // false makes this failure terminal; true requeues its items until
+              // the batch stage reaches maxAttempts.
               retryable: false,
             },
       // Optional JSON payloads are checkpointed with the deduplicated event.
