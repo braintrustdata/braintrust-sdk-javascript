@@ -369,6 +369,11 @@
             "type": ["string", "null"],
             "format": "uuid",
             "description": "Unique identifier for the organization"
+          },
+          "expires_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date at which the API key expires. If null, the key never expires."
           }
         },
         "required": ["id", "name", "preview_name"]
@@ -3479,6 +3484,10 @@
                 "type": ["object", "null"],
                 "additionalProperties": {},
                 "description": "Partial function definition to merge with the function being invoked. Fields are validated against the function type's schema at runtime. For facets: { preprocessor?, prompt?, model? }. For prompts: { model?, ... }."
+              },
+              "endpoint_name": {
+                "type": ["string", "null"],
+                "description": "Name of the AI provider secret to pin this invocation to."
               }
             }
           }
@@ -4024,6 +4033,60 @@
         },
         "required": ["id", "name"]
       },
+      "OrgAutomation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the project automation"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the organization that the org automation belongs under"
+          },
+          "user_id": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "Identifies the user who created the project automation"
+          },
+          "created": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date of project automation creation"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the project automation"
+          },
+          "description": {
+            "type": ["string", "null"],
+            "description": "Textual description of the project automation"
+          },
+          "config": {
+            "type": "object",
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "enum": ["retention"],
+                "description": "The type of automation."
+              },
+              "object_type": {
+                "$ref": "#/components/schemas/RetentionObjectType"
+              },
+              "retention_days": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "The number of days to retain the object"
+              }
+            },
+            "required": ["event_type", "object_type", "retention_days"],
+            "description": "The configuration for the org automation rule"
+          }
+        },
+        "required": ["id", "org_id", "name", "config"]
+      },
       "Permission": {
         "type": "string",
         "enum": [
@@ -4037,6 +4100,52 @@
           "delete_acls"
         ],
         "description": "Each permission permits a certain type of operation on an object in the system\n\nPermissions can be assigned to to objects on an individual basis, or grouped into roles"
+      },
+      "PreprocessorSavedFunctionId": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["function"]
+              },
+              "id": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string",
+                "description": "The version of the function"
+              }
+            },
+            "required": ["type", "id"],
+            "title": "function"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["global"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "function_type": {
+                "type": "string",
+                "enum": ["preprocessor"],
+                "default": "preprocessor",
+                "description": "The type of global function. Defaults to 'preprocessor'."
+              }
+            },
+            "required": ["type", "name"],
+            "title": "preprocessor_global"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "For prompt-backed scorers: the preprocessor function to use for trace template variables. Set to null to disable preprocessing. If omitted, the traced project's default preprocessor will be used, falling back to the global 'thread' preprocessor."
       },
       "Project": {
         "type": "object",
@@ -4381,7 +4490,7 @@
                     "$ref": "#/components/schemas/RetentionObjectType"
                   },
                   "retention_days": {
-                    "type": "number",
+                    "type": "integer",
                     "minimum": 0,
                     "description": "The number of days to retain the object"
                   }
@@ -4979,6 +5088,10 @@
             "type": ["boolean", "null"],
             "description": "If true, disable real-time queries for this project. This can improve query performance for high-volume logs."
           },
+          "monitor_charts_use_metrics_start": {
+            "type": ["boolean", "null"],
+            "description": "If true, use metrics.start rather than created for monitor chart time bucket dimensions."
+          },
           "default_preprocessor": {
             "$ref": "#/components/schemas/NullableSavedFunctionId"
           }
@@ -5190,6 +5303,9 @@
           "parser": {
             "$ref": "#/components/schemas/PromptParserNullish"
           },
+          "preprocessor": {
+            "$ref": "#/components/schemas/PreprocessorSavedFunctionId"
+          },
           "tool_functions": {
             "type": ["array", "null"],
             "items": {
@@ -5283,6 +5399,9 @@
           },
           "parser": {
             "$ref": "#/components/schemas/PromptParserNullish"
+          },
+          "preprocessor": {
+            "$ref": "#/components/schemas/PreprocessorSavedFunctionId"
           },
           "tool_functions": {
             "type": ["array", "null"],
@@ -5378,6 +5497,9 @@
           },
           "position": {
             "type": "string"
+          },
+          "endpoint_name": {
+            "type": ["string", "null"]
           }
         }
       },
@@ -5392,6 +5514,9 @@
           },
           "position": {
             "type": "string"
+          },
+          "endpoint_name": {
+            "type": ["string", "null"]
           }
         }
       },
@@ -5916,6 +6041,10 @@
                 }
               }
             }
+          },
+          "endpoint_name": {
+            "type": ["string", "null"],
+            "description": "Name of the AI provider secret to pin this run to."
           }
         },
         "required": ["project_id", "data", "task", "scores"]
@@ -5996,6 +6125,11 @@
             "type": ["string", "null"],
             "format": "uuid",
             "description": "Unique identifier for the organization"
+          },
+          "expires_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date and time at which the service token expires. If null, the token never expires."
           }
         },
         "required": ["id", "name", "preview_name"]
@@ -6438,6 +6572,11 @@
             "type": "boolean",
             "description": "Whether new topic generation should ignore the previously saved report during reconciliation. Defaults to false when omitted."
           },
+          "reconcile_mode": {
+            "type": "string",
+            "enum": ["evolve", "names_only"],
+            "description": "How reconciliation carries the previous map forward: \"evolve\" re-routes new samples into the previous topics before naming; \"names_only\" keeps the fresh clustering and carries only topic ids/names. Defaults to \"names_only\" when omitted."
+          },
           "distance_threshold": {
             "type": "number",
             "description": "Maximum distance to nearest centroid. If exceeded, returns no_match."
@@ -6867,6 +7006,19 @@
                 "required": ["type", "value"]
               },
               "symbolGrouping": {
+                "type": ["object", "null"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["none", "score", "metric", "metadata"]
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": ["type", "value"]
+              },
+              "pointSizeMetric": {
                 "type": ["object", "null"],
                 "properties": {
                   "type": {
