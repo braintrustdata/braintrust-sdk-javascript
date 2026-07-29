@@ -1171,7 +1171,11 @@ function populateInteractionUsageMetrics(
     metrics.prompt_tokens = usage.total_input_tokens;
   }
   if (typeof usage.total_output_tokens === "number") {
-    metrics.completion_tokens = usage.total_output_tokens;
+    metrics.completion_tokens =
+      usage.total_output_tokens +
+      (typeof usage.total_thought_tokens === "number"
+        ? usage.total_thought_tokens
+        : 0);
   }
   if (typeof usage.total_tokens === "number") {
     metrics.tokens = usage.total_tokens;
@@ -1181,6 +1185,41 @@ function populateInteractionUsageMetrics(
   }
   if (typeof usage.total_thought_tokens === "number") {
     metrics.completion_reasoning_tokens = usage.total_thought_tokens;
+  }
+
+  for (const detail of Array.isArray(usage.input_tokens_by_modality)
+    ? usage.input_tokens_by_modality
+    : []) {
+    if (
+      typeof detail?.modality === "string" &&
+      detail.modality.toLowerCase() === "audio" &&
+      typeof detail.tokens === "number"
+    ) {
+      metrics.prompt_audio_tokens =
+        (metrics.prompt_audio_tokens ?? 0) + detail.tokens;
+    }
+  }
+
+  for (const detail of Array.isArray(usage.output_tokens_by_modality)
+    ? usage.output_tokens_by_modality
+    : []) {
+    if (
+      typeof detail?.modality !== "string" ||
+      typeof detail.tokens !== "number"
+    ) {
+      continue;
+    }
+
+    switch (detail.modality.toLowerCase()) {
+      case "audio":
+        metrics.completion_audio_tokens =
+          (metrics.completion_audio_tokens ?? 0) + detail.tokens;
+        break;
+      case "image":
+        metrics.completion_image_tokens =
+          (metrics.completion_image_tokens ?? 0) + detail.tokens;
+        break;
+    }
   }
 }
 

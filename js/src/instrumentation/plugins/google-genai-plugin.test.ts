@@ -180,10 +180,22 @@ describe("GoogleGenAIPlugin", () => {
         output_text: "OK",
         status: "completed",
         usage: {
+          cached_tokens_by_modality: [{ modality: "audio", tokens: 1 }],
+          input_tokens_by_modality: [
+            { modality: "text", tokens: 6 },
+            { modality: "audio", tokens: 2 },
+          ],
+          output_tokens_by_modality: [
+            { modality: "text", tokens: 1 },
+            { modality: "audio", tokens: 1 },
+            { modality: "image", tokens: 1 },
+          ],
+          tool_use_tokens_by_modality: [{ modality: "text", tokens: 1 }],
           total_cached_tokens: 1,
           total_input_tokens: 8,
           total_output_tokens: 2,
           total_thought_tokens: 3,
+          total_tool_use_tokens: 1,
           total_tokens: 13,
         },
       };
@@ -231,8 +243,11 @@ describe("GoogleGenAIPlugin", () => {
             status: "completed",
           },
           metrics: expect.objectContaining({
+            completion_audio_tokens: 1,
+            completion_image_tokens: 1,
             completion_reasoning_tokens: 3,
-            completion_tokens: 2,
+            completion_tokens: 5,
+            prompt_audio_tokens: 2,
             prompt_cached_tokens: 1,
             prompt_tokens: 8,
             tokens: 13,
@@ -249,6 +264,82 @@ describe("GoogleGenAIPlugin", () => {
         }),
       );
       expect(span.end).toHaveBeenCalledTimes(1);
+    });
+
+    it("preserves zero and missing interaction usage values", () => {
+      plugin.enable();
+
+      const handlers = subscribeSpy.mock.calls[3][0];
+      const event: any = {
+        arguments: [
+          {
+            input: "Reply with OK.",
+            model: "gemini-2.5-flash",
+          },
+        ],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = {
+        id: "interaction-zero-usage",
+        status: "completed",
+        usage: {
+          input_tokens_by_modality: [{ modality: "audio", tokens: 0 }],
+          output_tokens_by_modality: [
+            { modality: "audio", tokens: 0 },
+            { modality: "image", tokens: 0 },
+          ],
+          total_cached_tokens: 0,
+          total_input_tokens: 0,
+          total_output_tokens: 0,
+          total_thought_tokens: 0,
+          total_tokens: 0,
+        },
+      };
+
+      handlers.asyncEnd(event);
+
+      expect(span.log).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_audio_tokens: 0,
+            completion_image_tokens: 0,
+            completion_reasoning_tokens: 0,
+            completion_tokens: 0,
+            prompt_audio_tokens: 0,
+            prompt_cached_tokens: 0,
+            prompt_tokens: 0,
+            tokens: 0,
+          }),
+        }),
+      );
+
+      handlers.start(event);
+      const missingUsageSpan = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = {
+        id: "interaction-missing-usage",
+        status: "completed",
+        usage: {},
+      };
+
+      handlers.asyncEnd(event);
+
+      expect(missingUsageSpan.log).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          metrics: expect.not.objectContaining({
+            completion_reasoning_tokens: expect.anything(),
+            completion_tokens: expect.anything(),
+            prompt_cached_tokens: expect.anything(),
+            prompt_tokens: expect.anything(),
+            tokens: expect.anything(),
+          }),
+        }),
+      );
     });
 
     it("does not trace background interaction tasks", () => {

@@ -224,7 +224,17 @@ export interface GoogleGenAIUsageMetadata {
   thoughtsTokenCount?: number;
 }
 
+export interface GoogleGenAIInteractionModalityTokens {
+  modality?: string;
+  tokens?: number;
+  [key: string]: unknown;
+}
+
 export interface GoogleGenAIInteractionUsage {
+  cached_tokens_by_modality?: GoogleGenAIInteractionModalityTokens[];
+  input_tokens_by_modality?: GoogleGenAIInteractionModalityTokens[];
+  output_tokens_by_modality?: GoogleGenAIInteractionModalityTokens[];
+  tool_use_tokens_by_modality?: GoogleGenAIInteractionModalityTokens[];
   total_input_tokens?: number;
   total_output_tokens?: number;
   total_tokens?: number;
