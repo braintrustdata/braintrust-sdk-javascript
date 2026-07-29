@@ -25,7 +25,7 @@
   "author": "Braintrust Data Inc.",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.10.5",
+    "@types/node": "^20.19.43",
     "tsup": "^8.5.1",
     "typescript": "^5.3.3",
     "vitest": "4.1.5"

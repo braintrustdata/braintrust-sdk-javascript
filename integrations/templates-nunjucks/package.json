@@ -34,7 +34,7 @@
     "braintrust": ">=3.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.10.5",
+    "@types/node": "^20.19.43",
     "@types/nunjucks": "^3.2.6",
     "braintrust": "workspace:*",
     "tsup": "^8.5.1",
