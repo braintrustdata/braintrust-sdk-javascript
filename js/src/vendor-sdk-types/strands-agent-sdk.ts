@@ -28,6 +28,7 @@ export interface StrandsAgent {
   readonly description?: string;
   readonly model?: StrandsModel;
   readonly messages?: StrandsMessage[];
+  readonly systemPrompt?: string;
   invoke(
     args: StrandsInvokeArgs,
     options?: StrandsInvokeOptions,
