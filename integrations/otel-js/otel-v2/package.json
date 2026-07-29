@@ -33,7 +33,7 @@
     "@opentelemetry/resources": "2.0.0",
     "@opentelemetry/sdk-node": "^0.200.0",
     "@opentelemetry/sdk-trace-base": "2.0.0",
-    "@types/node": "^22.15.21",
+    "@types/node": "^22.20.1",
     "braintrust": "file:../../../js",
     "msw": "^2.6.6",
     "tsup": "^8.5.0",
