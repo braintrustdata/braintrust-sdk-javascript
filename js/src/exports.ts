@@ -262,42 +262,13 @@ export {
   defaultErrorScoreHandler,
 } from "./framework";
 
-export type {
-  DurableBatchCompletion,
-  DurableBatchContext,
-  DurableBatchOutcome,
-  DurableBatchPoll,
-  DurableBatchProcessingResult,
-  DurableBatchProcessor,
-  DurableBatchRecovery,
-  DurableBatchResultEvent,
-  DurableBatchScorer,
-  DurableBatchScorerItem,
-  DurableBatchScorerResult,
-  DurableBatchTask,
-  DurableBatchTaskItem,
-  DurableBatchTaskResult,
-  DurableEvalDefinition,
-  DurableEvalExistingRunOptions,
-  DurableEvalFailureSummary,
-  DurableEvalOperation,
-  DurableEvalPauseReason,
-  DurableEvalProgress,
-  DurableEvalResult,
-  DurableEvalRuntimeOptions,
-  DurableEvalStore,
-  DurableEvalWriteCondition,
-  DurableEvaluator,
-  JsonValue,
-} from "./durable-eval";
+export type { DurableEvalStore } from "./durable-eval";
 
 export {
   BatchScorer,
   BatchTask,
   DurableEval,
   DurableEvalNotSubmittedError,
-  FileDurableEvalStore,
-  MemoryDurableEvalStore,
 } from "./durable-eval";
 
 export { agentAssertionScorer } from "./agent-assertions";

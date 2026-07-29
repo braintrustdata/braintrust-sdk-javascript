@@ -56,9 +56,9 @@ Every case needs a stable `id` (or a `caseId` function). Reusing a `runId`
 resumes the same input snapshot and never reruns successful work.
 
 ```typescript
-import { BatchTask, DurableEval, FileDurableEvalStore } from "braintrust";
+import { BatchTask, DurableEval, type DurableEvalStore } from "braintrust";
 
-const store = new FileDurableEvalStore();
+const store: DurableEvalStore = checkpointStore;
 const supportEval = DurableEval("Support bot", {
   revision: process.env.GIT_SHA ?? "local",
   data: [
@@ -121,10 +121,9 @@ if (result.status === "paused") {
 ```
 
 Use `BatchScorer` for asynchronous batch scoring. Existing per-item tasks and
-scorers are also supported and gain checkpointing and retries. The filesystem
-store is intended for one machine; distributed workers should share a
-compare-and-set-capable `DurableEvalStore`. Launch fixed shards through the API
-or the existing CLI:
+scorers are also supported and gain checkpointing and retries. Supply a
+compare-and-set-capable `DurableEvalStore`; distributed workers must share the
+same store. Launch fixed shards through the API or the existing CLI:
 
 ```bash
 npx braintrust eval evaluation.eval.ts \
@@ -133,11 +132,10 @@ npx braintrust eval evaluation.eval.ts \
   --deadline 6h
 ```
 
-An ordinary error thrown from `submit` is considered ambiguous, because the
-provider may have created a job before the connection failed. The run pauses
-instead of risking duplicate charges. Throw `DurableEvalNotSubmittedError` only
-when it is known that no provider job was created, or implement `recover` to
-look up a prior submission using `context.batchId`.
+An error thrown from `submit` is considered ambiguous, because the provider may
+have created a job before the connection failed. The run pauses instead of
+risking duplicate charges. Implement `recover` to look up a prior submission
+using `context.batchId`.
 
 The `submit`/`completion`/`collect` split is designed for provider-managed batch
 APIs, including OpenAI's Batch API. A polling adapter uses

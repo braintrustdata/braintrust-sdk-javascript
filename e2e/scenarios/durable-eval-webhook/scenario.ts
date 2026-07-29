@@ -1,27 +1,55 @@
-import {
-  BatchTask,
-  DurableEval,
-  MemoryDurableEvalStore,
-  type DurableBatchTaskItem,
-} from "braintrust";
+import { BatchTask, DurableEval, type DurableEvalStore } from "braintrust";
 import {
   getTestRunId,
   runMain,
   scopedName,
 } from "../../helpers/scenario-runtime";
 
+class MemoryStore implements DurableEvalStore {
+  private readonly values = new Map<
+    string,
+    { value: Uint8Array; version: number }
+  >();
+
+  async read(key: string) {
+    const record = this.values.get(key);
+    return record
+      ? { value: record.value.slice(), version: String(record.version) }
+      : undefined;
+  }
+
+  async write(
+    key: string,
+    value: Uint8Array,
+    condition: Parameters<DurableEvalStore["write"]>[2],
+  ) {
+    const current = this.values.get(key);
+    if (
+      ("ifAbsent" in condition && current) ||
+      ("ifVersion" in condition &&
+        (!current || String(current.version) !== condition.ifVersion))
+    ) {
+      return {
+        written: false as const,
+        currentVersion: current ? String(current.version) : undefined,
+      };
+    }
+    const version = (current?.version ?? 0) + 1;
+    this.values.set(key, { value: value.slice(), version });
+    return { written: true as const, version: String(version) };
+  }
+
+  async *list(prefix: string) {
+    for (const key of [...this.values.keys()].sort()) {
+      if (key.startsWith(prefix)) yield key;
+    }
+  }
+}
+
 async function main() {
   const testRunId = getTestRunId();
-  const store = new MemoryDurableEvalStore();
-  const jobs = new Map<
-    string,
-    DurableBatchTaskItem<
-      number,
-      number,
-      { testRunId: string; kind: string },
-      Record<string, never>
-    >[]
-  >();
+  const store = new MemoryStore();
+  const jobs = new Map<string, Array<{ id: string; input: number }>>();
   const task = BatchTask<
     number,
     number,
