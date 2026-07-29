@@ -28,7 +28,7 @@
   "license": "MIT",
   "devDependencies": {
     "@opentelemetry/context-async-hooks": "2.6.1",
-    "@types/node": "^22.15.21",
+    "@types/node": "^20.19.43",
     "braintrust": "workspace:*",
     "tsup": "^8.5.0",
     "typedoc": "^0.28.15",
