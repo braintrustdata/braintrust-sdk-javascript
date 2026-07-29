@@ -23,6 +23,10 @@ import {
   withCurrent,
 } from "../../logger";
 import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
+import {
   convertDataToBlob,
   getExtensionFromMediaType,
 } from "../../wrappers/attachment-utils";
@@ -2314,19 +2318,22 @@ function prepareAISDKChildTracing(
             activeEntry.openSpans.delete(span);
           }
         },
-        {
-          name: "doGenerate",
-          spanAttributes: {
-            type: SpanTypeAttribute.LLM,
-          },
-          event: buildAISDKModelStartEvent(
-            callOptions,
-            activeEntry.baseMetadata,
-            {
-              workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+        withSpanInstrumentationName(
+          {
+            name: "doGenerate",
+            spanAttributes: {
+              type: SpanTypeAttribute.LLM,
             },
-          ),
-        },
+            event: buildAISDKModelStartEvent(
+              callOptions,
+              activeEntry.baseMetadata,
+              {
+                workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+              },
+            ),
+          },
+          INSTRUMENTATION_NAMES.AI_SDK,
+        ),
       );
     };
 
@@ -2340,19 +2347,24 @@ function prepareAISDKChildTracing(
         }
 
         closeOpenAISDKModelPatchSpans(activeEntry);
-        const span = activeEntry.parentSpan.startSpan({
-          name: "doStream",
-          spanAttributes: {
-            type: SpanTypeAttribute.LLM,
-          },
-          event: buildAISDKModelStartEvent(
-            callOptions,
-            activeEntry.baseMetadata,
+        const span = activeEntry.parentSpan.startSpan(
+          withSpanInstrumentationName(
             {
-              workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+              name: "doStream",
+              spanAttributes: {
+                type: SpanTypeAttribute.LLM,
+              },
+              event: buildAISDKModelStartEvent(
+                callOptions,
+                activeEntry.baseMetadata,
+                {
+                  workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+                },
+              ),
             },
+            INSTRUMENTATION_NAMES.AI_SDK,
           ),
-        });
+        );
         activeEntry.openSpans.add(span);
 
         const streamStartTime = getCurrentUnixTimestamp();
@@ -2569,12 +2581,17 @@ function prepareAISDKChildTracing(
 
       if (isAsyncGenerator(result)) {
         return (async function* () {
-          const span = activeEntry.parentSpan.startSpan({
-            name: activeEntry.name,
-            spanAttributes: {
-              type: SpanTypeAttribute.TOOL,
-            },
-          });
+          const span = activeEntry.parentSpan.startSpan(
+            withSpanInstrumentationName(
+              {
+                name: activeEntry.name,
+                spanAttributes: {
+                  type: SpanTypeAttribute.TOOL,
+                },
+              },
+              INSTRUMENTATION_NAMES.AI_SDK,
+            ),
+          );
           span.log({ input: serializeToolExecutionInput(args) });
 
           try {
@@ -2600,12 +2617,15 @@ function prepareAISDKChildTracing(
           span.log({ output: awaitedResult });
           return awaitedResult;
         },
-        {
-          name: activeEntry.name,
-          spanAttributes: {
-            type: SpanTypeAttribute.TOOL,
+        withSpanInstrumentationName(
+          {
+            name: activeEntry.name,
+            spanAttributes: {
+              type: SpanTypeAttribute.TOOL,
+            },
           },
-        },
+          INSTRUMENTATION_NAMES.AI_SDK,
+        ),
       );
     };
 

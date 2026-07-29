@@ -8,6 +8,10 @@ import {
 } from "../../logger";
 import type { Span } from "../../logger";
 import { LRUCache } from "../../lru-cache";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import type {
@@ -241,7 +245,12 @@ class EveBridge {
         : [],
     };
     const span = withCurrent(NOOP_SPAN, () =>
-      _internalStartSpanWithInitialMerge({ ...args, startTime }),
+      _internalStartSpanWithInitialMerge(
+        withSpanInstrumentationName(
+          { ...args, startTime },
+          INSTRUMENTATION_NAMES.EVE,
+        ),
+      ),
     );
     if (typeof rowId !== "string") {
       return span;

@@ -7,6 +7,10 @@ import {
   startSpan,
 } from "../../logger";
 import type { CurrentSpanStore, Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { debugLogger } from "../../debug-logger";
 import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
@@ -91,10 +95,15 @@ export class CloudflareThinkPlugin extends BasePlugin {
         return existing;
       }
 
-      const span = startSpan({
-        name: "Think.runTurn",
-        spanAttributes: { type: SpanTypeAttribute.TASK },
-      });
+      const span = startSpan(
+        withSpanInstrumentationName(
+          {
+            name: "Think.runTurn",
+            spanAttributes: { type: SpanTypeAttribute.TASK },
+          },
+          INSTRUMENTATION_NAMES.CLOUDFLARE_THINK,
+        ),
+      );
       const runState: ThinkRunState = {
         aiResultPatched: false,
         fallbackInput: extractFallbackInput(event.self?.messages),

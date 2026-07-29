@@ -1,4 +1,5 @@
 import { channel, defineChannels } from "../core/channel-definitions";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
   GoogleADKRunAsyncParams,
   GoogleADKEvent,
@@ -19,33 +20,37 @@ type GoogleADKChannelContext = {
  * tool.runAsync is a regular async function returning Promise<unknown>,
  * so it uses "async" kind.
  */
-export const googleADKChannels = defineChannels("@google/adk", {
-  runnerRunAsync: channel<
-    [GoogleADKRunAsyncParams],
-    AsyncGenerator<GoogleADKEvent>,
-    GoogleADKChannelContext,
-    GoogleADKEvent
-  >({
-    channelName: "runner.runAsync",
-    kind: "sync-stream",
-  }),
+export const googleADKChannels = defineChannels(
+  "@google/adk",
+  {
+    runnerRunAsync: channel<
+      [GoogleADKRunAsyncParams],
+      AsyncGenerator<GoogleADKEvent>,
+      GoogleADKChannelContext,
+      GoogleADKEvent
+    >({
+      channelName: "runner.runAsync",
+      kind: "sync-stream",
+    }),
 
-  agentRunAsync: channel<
-    [unknown],
-    AsyncGenerator<GoogleADKEvent>,
-    GoogleADKChannelContext,
-    GoogleADKEvent
-  >({
-    channelName: "agent.runAsync",
-    kind: "sync-stream",
-  }),
+    agentRunAsync: channel<
+      [unknown],
+      AsyncGenerator<GoogleADKEvent>,
+      GoogleADKChannelContext,
+      GoogleADKEvent
+    >({
+      channelName: "agent.runAsync",
+      kind: "sync-stream",
+    }),
 
-  toolRunAsync: channel<
-    [GoogleADKToolRunRequest],
-    unknown,
-    GoogleADKChannelContext
-  >({
-    channelName: "tool.runAsync",
-    kind: "async",
-  }),
-});
+    toolRunAsync: channel<
+      [GoogleADKToolRunRequest],
+      unknown,
+      GoogleADKChannelContext
+    >({
+      channelName: "tool.runAsync",
+      kind: "async",
+    }),
+  },
+  { instrumentationName: INSTRUMENTATION_NAMES.GOOGLE_ADK },
+);

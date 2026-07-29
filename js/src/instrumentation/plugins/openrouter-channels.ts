@@ -1,4 +1,5 @@
 import { channel, defineChannels } from "../core/channel-definitions";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
   OpenRouterChatCompletion,
   OpenRouterChatCompletionChunk,
@@ -21,72 +22,77 @@ type OpenRouterResponsesResult =
   | OpenRouterResponse
   | AsyncIterable<OpenRouterResponseStreamEvent>;
 
-export const openRouterChannels = defineChannels("@openrouter/sdk", {
-  chatSend: channel<
-    [OpenRouterChatCreateParams],
-    OpenRouterChatResult,
-    Record<string, unknown>,
-    OpenRouterChatCompletionChunk
-  >({
-    channelName: "chat.send",
-    kind: "async",
-  }),
+export const openRouterChannels = defineChannels(
+  "@openrouter/sdk",
+  {
+    chatSend: channel<
+      [OpenRouterChatCreateParams],
+      OpenRouterChatResult,
+      Record<string, unknown>,
+      OpenRouterChatCompletionChunk
+    >({
+      channelName: "chat.send",
+      kind: "async",
+    }),
 
-  embeddingsGenerate: channel<
-    [OpenRouterEmbeddingCreateParams],
-    OpenRouterEmbeddingResponse
-  >({
-    channelName: "embeddings.generate",
-    kind: "async",
-  }),
+    embeddingsGenerate: channel<
+      [OpenRouterEmbeddingCreateParams],
+      OpenRouterEmbeddingResponse
+    >({
+      channelName: "embeddings.generate",
+      kind: "async",
+    }),
 
-  rerankRerank: channel<[OpenRouterRerankCreateParams], OpenRouterRerankResult>(
-    {
+    rerankRerank: channel<
+      [OpenRouterRerankCreateParams],
+      OpenRouterRerankResult
+    >({
       channelName: "rerank.rerank",
       kind: "async",
-    },
-  ),
+    }),
 
-  betaResponsesSend: channel<
-    [OpenRouterResponsesCreateParams],
-    OpenRouterResponsesResult,
-    Record<string, unknown>,
-    OpenRouterResponseStreamEvent
-  >({
-    channelName: "beta.responses.send",
-    kind: "async",
-  }),
+    betaResponsesSend: channel<
+      [OpenRouterResponsesCreateParams],
+      OpenRouterResponsesResult,
+      Record<string, unknown>,
+      OpenRouterResponseStreamEvent
+    >({
+      channelName: "beta.responses.send",
+      kind: "async",
+    }),
 
-  callModel: channel<[OpenRouterCallModelRequest], unknown>({
-    channelName: "callModel",
-    kind: "sync-stream",
-  }),
+    callModel: channel<[OpenRouterCallModelRequest], unknown>({
+      channelName: "callModel",
+      kind: "sync-stream",
+    }),
 
-  callModelTurn: channel<
-    [OpenRouterCallModelRequest | undefined],
-    unknown,
-    {
-      step: number;
-      stepType: "initial" | "continue";
-    }
-  >({
-    channelName: "callModel.turn",
-    kind: "async",
-  }),
+    callModelTurn: channel<
+      [OpenRouterCallModelRequest | undefined],
+      unknown,
+      {
+        step: number;
+        stepType: "initial" | "continue";
+      }
+    >({
+      channelName: "callModel.turn",
+      kind: "async",
+    }),
 
-  toolExecute: channel<
-    [unknown],
-    unknown | AsyncIterable<unknown>,
-    {
-      span_info?: {
-        name?: string;
-      };
-      toolCallId?: string;
-      toolName: string;
-    },
-    unknown
-  >({
-    channelName: "tool.execute",
-    kind: "async",
-  }),
-});
+    toolExecute: channel<
+      [unknown],
+      unknown | AsyncIterable<unknown>,
+      {
+        span_info?: {
+          name?: string;
+        };
+        toolCallId?: string;
+        toolName: string;
+      },
+      unknown
+    >({
+      channelName: "tool.execute",
+      kind: "async",
+    }),
+  },
+  { instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER },
+);

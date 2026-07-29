@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { startSpan } from "../../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../../span-origin";
 import { getCurrentUnixTimestamp, isEmpty } from "../../../util";
 import {
   LEGACY_CACHED_HEADER,
@@ -68,12 +72,17 @@ class BraintrustLanguageModelWrapper {
   // For the first cut, do not support custom span_info arguments. We can
   // propagate those via async local storage
   async doGenerate(options: any) {
-    const span = startSpan({
-      name: "Chat Completion",
-      spanAttributes: {
-        type: "llm",
-      },
-    });
+    const span = startSpan(
+      withSpanInstrumentationName(
+        {
+          name: "Chat Completion",
+          spanAttributes: {
+            type: "llm",
+          },
+        },
+        INSTRUMENTATION_NAMES.AI_SDK,
+      ),
+    );
     const { prompt, mode, ...rest } = options;
     const startTime = getCurrentUnixTimestamp();
 
@@ -114,12 +123,17 @@ class BraintrustLanguageModelWrapper {
     const { prompt, mode, ...rest } = options;
     const startTime = getCurrentUnixTimestamp();
 
-    const span = startSpan({
-      name: "Chat Completion",
-      spanAttributes: {
-        type: "llm",
-      },
-    });
+    const span = startSpan(
+      withSpanInstrumentationName(
+        {
+          name: "Chat Completion",
+          spanAttributes: {
+            type: "llm",
+          },
+        },
+        INSTRUMENTATION_NAMES.AI_SDK,
+      ),
+    );
 
     span.log({
       input: postProcessPrompt(prompt),

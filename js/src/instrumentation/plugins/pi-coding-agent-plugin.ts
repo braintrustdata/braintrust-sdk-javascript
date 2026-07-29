@@ -5,8 +5,12 @@ import iso, {
   type IsoChannelHandlers,
 } from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
-import { startSpan } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
@@ -195,14 +199,19 @@ function startPiPromptRun(
       ? { "pi_coding_agent.version": event.moduleVersion }
       : {}),
   };
-  const span = startSpan({
-    event: {
-      input: extractPromptInput(event.arguments[0], event.arguments[1]),
-      metadata,
-    },
-    name: "AgentSession.prompt",
-    spanAttributes: { type: SpanTypeAttribute.TASK },
-  });
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        event: {
+          input: extractPromptInput(event.arguments[0], event.arguments[1]),
+          metadata,
+        },
+        name: "AgentSession.prompt",
+        spanAttributes: { type: SpanTypeAttribute.TASK },
+      },
+      INSTRUMENTATION_NAMES.PI_CODING_AGENT,
+    ),
+  );
   const streamPatchState = installPiStreamPatch(agent);
   const options = event.arguments[1];
   const promptText = event.arguments[0];
@@ -436,15 +445,20 @@ async function startPiLlmSpan(
     ...extractToolMetadata(context.tools),
     "pi_coding_agent.operation": "agent.streamFn",
   };
-  const span = startSpan({
-    event: {
-      input: processInputAttachments(normalizePiContextInput(context)),
-      metadata,
-    },
-    name: getLlmSpanName(model),
-    parent: await state.span.export(),
-    spanAttributes: { type: SpanTypeAttribute.LLM },
-  });
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        event: {
+          input: processInputAttachments(normalizePiContextInput(context)),
+          metadata,
+        },
+        name: getLlmSpanName(model),
+        parent: await state.span.export(),
+        spanAttributes: { type: SpanTypeAttribute.LLM },
+      },
+      INSTRUMENTATION_NAMES.PI_CODING_AGENT,
+    ),
+  );
   const llmState = {
     finalized: false,
     metadata,
@@ -659,15 +673,20 @@ async function startPiToolSpan(
     "pi_coding_agent.tool.name": event.toolName,
   };
   try {
-    const span = startSpan({
-      event: {
-        input: event.args,
-        metadata,
-      },
-      name: event.toolName || "tool",
-      parent: await state.span.export(),
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-    });
+    const span = startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          event: {
+            input: event.args,
+            metadata,
+          },
+          name: event.toolName || "tool",
+          parent: await state.span.export(),
+          spanAttributes: { type: SpanTypeAttribute.TOOL },
+        },
+        INSTRUMENTATION_NAMES.PI_CODING_AGENT,
+      ),
+    );
     state.activeToolSpans.set(event.toolCallId, {
       restoreAutoInstrumentation,
       span,

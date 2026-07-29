@@ -258,6 +258,11 @@ describe("braintrustEveHook", () => {
     const turn = spans.find(
       (span) => span.span_attributes?.name === "eve.turn",
     );
+    for (const span of [turn, step]) {
+      expect(span?.context?.span_origin).toMatchObject({
+        instrumentation: { name: "eve" },
+      });
+    }
     expect(step?.input).toEqual([
       {
         content: "Answer with the relevant Eve instrumentation detail.",
@@ -1137,6 +1142,13 @@ describe("braintrustEveHook", () => {
     const initialWrites = (await backgroundLogger.drain()) as Array<
       Record<string, any> & { id: string }
     >;
+    expect(
+      initialWrites
+        .filter((span) => span.span_attributes?.name)
+        .every(
+          (span) => span.context?.span_origin?.instrumentation?.name === "eve",
+        ),
+    ).toBe(true);
     for (const [key, value] of eveState.values) {
       eveState.values.set(key, JSON.parse(JSON.stringify(value)));
     }

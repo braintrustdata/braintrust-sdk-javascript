@@ -2,8 +2,12 @@ import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import type { IsoChannelHandlers } from "../../isomorph";
-import { startSpan } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import {
@@ -348,14 +352,19 @@ async function createLLMSpanForMessages(
 
   const span =
     existingSpan ??
-    startSpan({
-      name: "anthropic.messages.create",
-      parent: parentSpan,
-      spanAttributes: {
-        type: SpanTypeAttribute.LLM,
-      },
-      startTime,
-    });
+    startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          name: "anthropic.messages.create",
+          parent: parentSpan,
+          spanAttributes: {
+            type: SpanTypeAttribute.LLM,
+          },
+          startTime,
+        },
+        INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK,
+      ),
+    );
 
   span.log({
     input,
@@ -512,25 +521,30 @@ function createToolTracingHooks(
     }
 
     const parsed = parseToolName(input.tool_name);
-    const toolSpan = startSpan({
-      event: {
-        input: input.tool_input,
-        metadata: {
-          "claude_agent_sdk.cwd": input.cwd,
-          "claude_agent_sdk.raw_tool_name": parsed.rawToolName,
-          "claude_agent_sdk.session_id": input.session_id,
-          "gen_ai.tool.call.id": toolUseID,
-          "gen_ai.tool.name": parsed.toolName,
-          ...(parsed.mcpServer && { "mcp.server": parsed.mcpServer }),
-          ...getMcpServerMetadata(parsed.mcpServer, mcpServers),
+    const toolSpan = startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          event: {
+            input: input.tool_input,
+            metadata: {
+              "claude_agent_sdk.cwd": input.cwd,
+              "claude_agent_sdk.raw_tool_name": parsed.rawToolName,
+              "claude_agent_sdk.session_id": input.session_id,
+              "gen_ai.tool.call.id": toolUseID,
+              "gen_ai.tool.name": parsed.toolName,
+              ...(parsed.mcpServer && { "mcp.server": parsed.mcpServer }),
+              ...getMcpServerMetadata(parsed.mcpServer, mcpServers),
+            },
+          },
+          name: parsed.displayName,
+          parent: await resolveParentSpan(toolUseID, {
+            agentId: input.agent_id,
+          }),
+          spanAttributes: { type: SpanTypeAttribute.TOOL },
         },
-      },
-      name: parsed.displayName,
-      parent: await resolveParentSpan(toolUseID, {
-        agentId: input.agent_id,
-      }),
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-    });
+        INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK,
+      ),
+    );
 
     activeToolSpans.set(toolUseID, toolSpan);
     return {};
@@ -1053,14 +1067,19 @@ async function ensureSubAgentSpan(
     ? await parentToolSpan.export()
     : await rootSpan.export();
 
-  const subAgentSpan = startSpan({
-    event: {
-      metadata: subAgentDetailsToMetadata(details),
-    },
-    name: spanName,
-    parent: parentSpan,
-    spanAttributes: { type: SpanTypeAttribute.TASK },
-  });
+  const subAgentSpan = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        event: {
+          metadata: subAgentDetailsToMetadata(details),
+        },
+        name: spanName,
+        parent: parentSpan,
+        spanAttributes: { type: SpanTypeAttribute.TASK },
+      },
+      INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK,
+    ),
+  );
 
   subAgentSpans.set(parentToolUseId, subAgentSpan);
   return subAgentSpan;
@@ -1093,14 +1112,19 @@ async function ensureActiveLlmSpanForParentToolUse(
     llmParentSpan = await subAgentSpan.export();
   }
 
-  const llmSpan = startSpan({
-    name: "anthropic.messages.create",
-    parent: llmParentSpan,
-    spanAttributes: {
-      type: SpanTypeAttribute.LLM,
-    },
-    startTime,
-  });
+  const llmSpan = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        name: "anthropic.messages.create",
+        parent: llmParentSpan,
+        spanAttributes: {
+          type: SpanTypeAttribute.LLM,
+        },
+        startTime,
+      },
+      INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK,
+    ),
+  );
   activeLlmSpansByParentToolUse.set(parentKey, llmSpan);
   return llmSpan;
 }
@@ -1434,12 +1458,17 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           })();
         }
 
-        const span = startSpan({
-          name: "Claude Agent",
-          spanAttributes: {
-            type: SpanTypeAttribute.TASK,
-          },
-        });
+        const span = startBaseSpan(
+          withSpanInstrumentationName(
+            {
+              name: "Claude Agent",
+              spanAttributes: {
+                type: SpanTypeAttribute.TASK,
+              },
+            },
+            INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK,
+          ),
+        );
         const startTime = getCurrentUnixTimestamp();
 
         try {

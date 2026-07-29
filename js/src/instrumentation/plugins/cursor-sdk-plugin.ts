@@ -2,8 +2,12 @@ import { BasePlugin, toLoggedError } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
-import { startSpan } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute } from "../../../util/index";
 import { cursorSDKChannels } from "./cursor-sdk-channels";
@@ -118,10 +122,15 @@ export class CursorSDKPlugin extends BasePlugin {
             ? { "cursor_sdk.version": event.moduleVersion }
             : {}),
         };
-        const span = startSpan({
-          name: "Cursor Agent",
-          spanAttributes: { type: SpanTypeAttribute.TASK },
-        });
+        const span = startBaseSpan(
+          withSpanInstrumentationName(
+            {
+              name: "Cursor Agent",
+              spanAttributes: { type: SpanTypeAttribute.TASK },
+            },
+            INSTRUMENTATION_NAMES.CURSOR_SDK,
+          ),
+        );
         const startTime = getCurrentUnixTimestamp();
         safeLog(span, {
           input: sanitizeUserMessage(message),
@@ -191,10 +200,15 @@ export class CursorSDKPlugin extends BasePlugin {
             ? { "cursor_sdk.version": event.moduleVersion }
             : {}),
         };
-        const span = startSpan({
-          name: "Cursor Agent",
-          spanAttributes: { type: SpanTypeAttribute.TASK },
-        });
+        const span = startBaseSpan(
+          withSpanInstrumentationName(
+            {
+              name: "Cursor Agent",
+              spanAttributes: { type: SpanTypeAttribute.TASK },
+            },
+            INSTRUMENTATION_NAMES.CURSOR_SDK,
+          ),
+        );
         const startTime = getCurrentUnixTimestamp();
         safeLog(span, {
           input: sanitizeUserMessage(message),
@@ -778,30 +792,40 @@ async function startToolSpan(
     metadata["cursor_sdk.tool.result_truncated"] = args.truncated.result;
   }
 
-  const span = startSpan({
-    event: {
-      input: args.args,
-      metadata,
-    },
-    name: `tool: ${name}`,
-    parent: await state.span.export(),
-    spanAttributes: { type: SpanTypeAttribute.TOOL },
-  });
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        event: {
+          input: args.args,
+          metadata,
+        },
+        name: `tool: ${name}`,
+        parent: await state.span.export(),
+        spanAttributes: { type: SpanTypeAttribute.TOOL },
+      },
+      INSTRUMENTATION_NAMES.CURSOR_SDK,
+    ),
+  );
 
   let subAgentSpan: Span | undefined;
   if (isSubAgentToolName(name)) {
-    subAgentSpan = startSpan({
-      event: {
-        input: args.args,
-        metadata: {
-          "cursor_sdk.subagent.tool_call_id": args.callId,
-          "gen_ai.tool.name": name,
+    subAgentSpan = startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          event: {
+            input: args.args,
+            metadata: {
+              "cursor_sdk.subagent.tool_call_id": args.callId,
+              "gen_ai.tool.name": name,
+            },
+          },
+          name: formatSubAgentSpanName(args.toolCall, args.args),
+          parent: await span.export(),
+          spanAttributes: { type: SpanTypeAttribute.TASK },
         },
-      },
-      name: formatSubAgentSpanName(args.toolCall, args.args),
-      parent: await span.export(),
-      spanAttributes: { type: SpanTypeAttribute.TASK },
-    });
+        INSTRUMENTATION_NAMES.CURSOR_SDK,
+      ),
+    );
   }
 
   return { span, subAgentSpan };

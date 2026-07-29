@@ -4,16 +4,19 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  brace-expansion@>=3.0.0 <5.0.8: ^5.0.8
+
 importers:
 
   .:
     dependencies:
-      pi-coding-agent-v0-latest:
-        specifier: npm:@earendil-works/pi-coding-agent@0.79.10
-        version: '@earendil-works/pi-coding-agent@0.79.10(ws@8.21.0)(zod@4.4.3)'
       pi-coding-agent-v0:
         specifier: npm:@earendil-works/pi-coding-agent@0.79.1
         version: '@earendil-works/pi-coding-agent@0.79.1(ws@8.21.0)(zod@4.4.3)'
+      pi-coding-agent-v0-latest:
+        specifier: npm:@earendil-works/pi-coding-agent@0.79.10
+        version: '@earendil-works/pi-coding-agent@0.79.10(ws@8.21.0)(zod@4.4.3)'
 
 packages:
 
@@ -362,9 +365,9 @@ packages:
   bowser@2.14.1:
     resolution: {integrity: sha512-tzPjzCxygAKWFOJP011oxFHs57HzIhOEracIgAePE4pqB3LikALKnSzUyU4MGs9/iCEUuHlAJTjTc5M+u7YEGg==}
 
-  brace-expansion@5.0.6:
-    resolution: {integrity: sha512-kLpxurY4Z4r9sgMsyG0Z9uzsBlgiU/EFKhj/h91/8yHu0edo7XuixOIH3VcJ8kkxs6/jPzoI6U9Vj3WqbMQ94g==}
-    engines: {node: 18 || 20 || >=22}
+  brace-expansion@5.0.8:
+    resolution: {integrity: sha512-JZyDyq3D4AUifKTPOB7DELf6XsB3WdPuNxCtob1vFXPsSXhdAiHBWJ/tJ8HAc9aH84BK+5JFZLNkJKx3G9kzQg==}
+    engines: {node: 20 || >=22}
 
   buffer-equal-constant-time@1.0.1:
     resolution: {integrity: sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==}
@@ -1191,7 +1194,7 @@ snapshots:
 
   bowser@2.14.1: {}
 
-  brace-expansion@5.0.6:
+  brace-expansion@5.0.8:
     dependencies:
       balanced-match: 4.0.4
 
@@ -1335,7 +1338,7 @@ snapshots:
 
   minimatch@10.2.5:
     dependencies:
-      brace-expansion: 5.0.6
+      brace-expansion: 5.0.8
 
   minipass@7.1.3: {}
 

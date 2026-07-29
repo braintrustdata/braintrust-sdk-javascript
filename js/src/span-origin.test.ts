@@ -3,7 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import iso from "./isomorph";
 import {
   detectSpanOriginEnvironment,
+  getSpanInstrumentationName,
+  INSTRUMENTATION_NAMES,
+  INTERNAL_SPAN_INSTRUMENTATION_NAME,
   mergeSpanOriginContext,
+  withSpanInstrumentationName,
 } from "./span-origin";
 
 const originalGetEnv = iso.getEnv;
@@ -15,13 +19,35 @@ afterEach(() => {
 
 describe("mergeSpanOriginContext", () => {
   it("uses the test fallback SDK version when no build-time version is defined", () => {
-    const context = mergeSpanOriginContext(undefined, "test-instrumentation");
+    const context = mergeSpanOriginContext(
+      undefined,
+      INSTRUMENTATION_NAMES.OPENAI,
+    );
 
     expect(context.span_origin).toMatchObject({
       name: "braintrust.sdk.javascript",
       version: "0.0.0",
-      instrumentation: { name: "test-instrumentation" },
+      instrumentation: { name: INSTRUMENTATION_NAMES.OPENAI },
     });
+  });
+
+  it("carries an internal instrumentation name without changing public span args", () => {
+    const args = withSpanInstrumentationName(
+      { name: "test-span" },
+      INSTRUMENTATION_NAMES.OPENAI,
+    );
+
+    expect(args.name).toBe("test-span");
+    expect(getSpanInstrumentationName(args)).toBe(INSTRUMENTATION_NAMES.OPENAI);
+    expect(getSpanInstrumentationName({ name: "test-span" })).toBeUndefined();
+  });
+
+  it("rejects instrumentation names outside the internal catalog", () => {
+    expect(
+      getSpanInstrumentationName({
+        [INTERNAL_SPAN_INSTRUMENTATION_NAME]: "arbitrary-instrumentation",
+      }),
+    ).toBeUndefined();
   });
 });
 

@@ -70,6 +70,12 @@ describe("Cloudflare Think instrumentation", () => {
 
     expect(spans).toHaveLength(2);
     expect(task).toMatchObject({
+      context: {
+        span_origin: {
+          instrumentation: { name: "cloudflare-think" },
+          name: "braintrust.sdk.javascript",
+        },
+      },
       span_attributes: { name: "Think.runTurn", type: "task" },
       input: [{ role: "user", content: "Say hello" }],
       output: { role: "assistant", content: "Hello from Think" },

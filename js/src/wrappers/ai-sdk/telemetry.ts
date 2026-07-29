@@ -5,6 +5,10 @@ import {
 } from "../../util";
 import { logError, startSpan, withCurrent, type Span } from "../../logger";
 import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
+import {
   createAISDKIntegrationMetadata,
   DEFAULT_DENY_OUTPUT_PATHS,
   extractWorkflowMetadataFromCallParams,
@@ -94,11 +98,14 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
     parentOverride?: Span | string,
   ) => {
     const parent = operations.get(operationKey)?.span;
-    const spanArgs = {
-      name,
-      spanAttributes: { type },
-      ...(event ? { event } : {}),
-    };
+    const spanArgs = withSpanInstrumentationName(
+      {
+        name,
+        spanAttributes: { type },
+        ...(event ? { event } : {}),
+      },
+      INSTRUMENTATION_NAMES.AI_SDK,
+    );
     const span = parentOverride
       ? startHarnessTurnChildSpan(parentOverride, spanArgs)
       : parent
@@ -473,14 +480,25 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
         const harnessTurnParent = currentHarnessTurnParent();
         const span = ownsSpan
           ? harnessTurnParent
-            ? startHarnessTurnChildSpan(harnessTurnParent, {
-                name: operationName,
-                spanAttributes: { type: SpanTypeAttribute.FUNCTION },
-              })
-            : startSpan({
-                name: operationName,
-                spanAttributes: { type: SpanTypeAttribute.FUNCTION },
-              })
+            ? startHarnessTurnChildSpan(
+                harnessTurnParent,
+                withSpanInstrumentationName(
+                  {
+                    name: operationName,
+                    spanAttributes: { type: SpanTypeAttribute.FUNCTION },
+                  },
+                  INSTRUMENTATION_NAMES.AI_SDK,
+                ),
+              )
+            : startSpan(
+                withSpanInstrumentationName(
+                  {
+                    name: operationName,
+                    spanAttributes: { type: SpanTypeAttribute.FUNCTION },
+                  },
+                  INSTRUMENTATION_NAMES.AI_SDK,
+                ),
+              )
           : wrapperSpan;
         const operationKey = createOperationKey(event, operationName);
 

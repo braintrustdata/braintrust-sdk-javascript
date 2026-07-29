@@ -18,7 +18,9 @@
   "pnpm": {
     "overrides": {
       "@tootallnate/once@>=3.0.0 <3.0.1": "^3.0.1",
-      "@tootallnate/once@<2.0.1": "^2.0.1"
+      "@tootallnate/once@<2.0.1": "^2.0.1",
+      "brace-expansion@<1.1.16": "^1.1.16",
+      "tar@<7.5.21": "^7.5.21"
     },
     "onlyBuiltDependencies": [
       "sqlite3"

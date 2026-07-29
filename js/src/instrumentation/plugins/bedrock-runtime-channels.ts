@@ -1,4 +1,5 @@
 import { channel, defineChannels } from "../core/channel-definitions";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
   BedrockRuntimeChannelContext,
   BedrockRuntimeCommandLike,
@@ -21,14 +22,26 @@ const clientSendChannel = channel<
   kind: "async",
 });
 
-export const bedrockRuntimeChannels = defineChannels("aws-bedrock-runtime", {
-  clientSend: clientSendChannel,
-});
+export const bedrockRuntimeChannels = defineChannels(
+  "aws-bedrock-runtime",
+  {
+    clientSend: clientSendChannel,
+  },
+  { instrumentationName: INSTRUMENTATION_NAMES.BEDROCK_RUNTIME },
+);
 
-export const smithyCoreChannels = defineChannels("@smithy/core", {
-  clientSend: clientSendChannel,
-});
+export const smithyCoreChannels = defineChannels(
+  "@smithy/core",
+  {
+    clientSend: clientSendChannel,
+  },
+  { instrumentationName: INSTRUMENTATION_NAMES.BEDROCK_RUNTIME },
+);
 
-export const smithyClientChannels = defineChannels("@smithy/smithy-client", {
-  clientSend: clientSendChannel,
-});
+export const smithyClientChannels = defineChannels(
+  "@smithy/smithy-client",
+  {
+    clientSend: clientSendChannel,
+  },
+  { instrumentationName: INSTRUMENTATION_NAMES.BEDROCK_RUNTIME },
+);
