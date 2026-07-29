@@ -15,5 +15,10 @@
     "zod": "4.3.6",
     "claude-agent-sdk-v0": "npm:@anthropic-ai/claude-agent-sdk@0.2.76",
     "claude-agent-sdk-v0-latest": "npm:@anthropic-ai/claude-agent-sdk@0.2.141"
+  },
+  "pnpm": {
+    "overrides": {
+      "fast-uri@<3.1.4": "^3.1.4"
+    }
   }
 }

@@ -161,6 +161,7 @@ describe("configureInstrumentation API", () => {
         cohere: false,
         mastra: false,
         strandsAgentSDK: false,
+        cloudflareAgents: false,
       },
     });
   });

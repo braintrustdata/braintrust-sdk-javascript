@@ -13,6 +13,7 @@ export const INSTRUMENTATION_NAMES = {
   BEDROCK_RUNTIME: "bedrock-runtime",
   BRAINTRUST_JS_LOGGER: "braintrust-js-logger",
   CLAUDE_AGENT_SDK: "claude-agent-sdk",
+  CLOUDFLARE_AGENTS: "cloudflare-agents",
   COHERE: "cohere",
   CURSOR_SDK: "cursor-sdk",
   EVE: "eve",
