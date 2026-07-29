@@ -29,5 +29,10 @@
     "vitest-v3-latest": "npm:vitest@3.2.6",
     "vitest-v4": "npm:vitest@4.1.5",
     "vitest-v4-latest": "npm:vitest@4.1.9"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss@<8.5.18": "^8.5.18"
+    }
   }
 }

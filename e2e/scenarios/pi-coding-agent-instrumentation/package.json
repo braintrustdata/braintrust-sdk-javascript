@@ -14,5 +14,10 @@
   "dependencies": {
     "pi-coding-agent-v0": "npm:@earendil-works/pi-coding-agent@0.79.1",
     "pi-coding-agent-v0-latest": "npm:@earendil-works/pi-coding-agent@0.79.10"
+  },
+  "pnpm": {
+    "overrides": {
+      "brace-expansion@>=3.0.0 <5.0.8": "^5.0.8"
+    }
   }
 }

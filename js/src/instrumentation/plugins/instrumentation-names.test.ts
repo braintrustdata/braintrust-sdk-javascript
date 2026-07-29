@@ -10,6 +10,7 @@ import {
 } from "./bedrock-runtime-channels";
 import { claudeAgentSDKChannels } from "./claude-agent-sdk-channels";
 import { cloudflareAIChatChannels } from "./cloudflare-ai-chat-channels";
+import { cloudflareAgentsChannels } from "./cloudflare-agents-channels";
 import { cohereChannels } from "./cohere-channels";
 import { cursorSDKChannels } from "./cursor-sdk-channels";
 import { flueChannels } from "./flue-channels";
@@ -42,6 +43,10 @@ describe("built-in instrumentation provenance names", () => {
     [
       cloudflareAIChatChannels.runExclusiveChatTurn,
       INSTRUMENTATION_NAMES.CLOUDFLARE_AI_CHAT,
+    ],
+    [
+      cloudflareAgentsChannels.runAgentTool,
+      INSTRUMENTATION_NAMES.CLOUDFLARE_AGENTS,
     ],
     [cohereChannels.chat, INSTRUMENTATION_NAMES.COHERE],
     [cursorSDKChannels.create, INSTRUMENTATION_NAMES.CURSOR_SDK],

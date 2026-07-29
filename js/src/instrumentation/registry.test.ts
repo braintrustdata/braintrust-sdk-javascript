@@ -162,6 +162,7 @@ describe("configureInstrumentation API", () => {
         mastra: false,
         strandsAgentSDK: false,
         cloudflareAIChat: false,
+        cloudflareAgents: false,
       },
     });
   });

@@ -210,6 +210,7 @@ export { wrapClaudeAgentSDK } from "./wrappers/claude-agent-sdk/claude-agent-sdk
 export { wrapOpenAICodexSDK } from "./wrappers/openai-codex";
 export { wrapCursorSDK } from "./wrappers/cursor-sdk";
 export { wrapPiCodingAgentSDK } from "./wrappers/pi-coding-agent";
+export { wrapCloudflareAgent } from "./wrappers/cloudflare-agent";
 export { wrapStrandsAgentSDK } from "./wrappers/strands-agent-sdk";
 export { wrapCloudflareAIChat } from "./wrappers/cloudflare-ai-chat";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";

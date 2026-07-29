@@ -14,6 +14,7 @@ export const INSTRUMENTATION_NAMES = {
   BRAINTRUST_JS_LOGGER: "braintrust-js-logger",
   CLAUDE_AGENT_SDK: "claude-agent-sdk",
   CLOUDFLARE_AI_CHAT: "cloudflare-ai-chat",
+  CLOUDFLARE_AGENTS: "cloudflare-agents",
   COHERE: "cohere",
   CURSOR_SDK: "cursor-sdk",
   EVE: "eve",

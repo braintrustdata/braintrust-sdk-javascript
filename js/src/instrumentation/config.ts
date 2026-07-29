@@ -27,6 +27,7 @@ export interface InstrumentationIntegrationsConfig {
   openaiCodexSDK?: boolean;
   piCodingAgent?: boolean;
   strandsAgentSDK?: boolean;
+  cloudflareAgents?: boolean;
   langchain?: boolean;
   langgraph?: boolean;
   langsmith?: boolean;
@@ -59,6 +60,9 @@ const envIntegrationAliases: Record<
   strandsagentsdk: "strandsAgentSDK",
   "strands-agent-sdk": "strandsAgentSDK",
   "@strands-agents/sdk": "strandsAgentSDK",
+  agents: "cloudflareAgents",
+  "cloudflare-agents": "cloudflareAgents",
+  cloudflareagents: "cloudflareAgents",
   anthropic: "anthropic",
   aisdk: "aisdk",
   "ai-sdk": "aisdk",
@@ -146,6 +150,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     langsmith: true,
     piCodingAgent: true,
     strandsAgentSDK: true,
+    cloudflareAgents: true,
   };
 }
 
