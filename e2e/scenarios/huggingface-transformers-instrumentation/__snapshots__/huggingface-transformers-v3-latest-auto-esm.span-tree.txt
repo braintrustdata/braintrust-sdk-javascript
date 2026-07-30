@@ -1,0 +1,125 @@
+span_tree:
+└── huggingface-transformers-instrumentation-root [task]
+    metadata: {
+      "scenario": "huggingface-transformers-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── transformers-text-generation-operation
+    │   metadata: {
+    │     "operation": "text-generation",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── huggingface.transformers.text_generation [llm]
+    │       input: [
+    │         {
+    │           "content": "Hello",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "Hellooo",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX",
+    │         "provider": "huggingface"
+    │       }
+    ├── transformers-text2text-generation-operation
+    │   metadata: {
+    │     "operation": "text2text-generation",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── huggingface.transformers.text2text_generation [llm]
+    │       input: [
+    │         {
+    │           "content": "Translate English to German: Hello",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "inedinedined",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX",
+    │         "provider": "huggingface"
+    │       }
+    ├── transformers-summarization-operation
+    │   metadata: {
+    │     "operation": "summarization",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── huggingface.transformers.summarization [llm]
+    │       input: [
+    │         {
+    │           "content": "A short passage about tracing.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "inedinedined",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX",
+    │         "provider": "huggingface"
+    │       }
+    ├── transformers-feature-extraction-operation
+    │   metadata: {
+    │     "operation": "feature-extraction",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── huggingface.transformers.feature_extraction [llm]
+    │       input: "Embed this"
+    │       output: {
+    │         "embedding_count": 1,
+    │         "embedding_length": 32
+    │       }
+    │       metadata: {
+    │         "model": "onnx-internal-testing/tiny-random-BertModel-ONNX",
+    │         "provider": "huggingface"
+    │       }
+    └── transformers-question-answering-operation
+        metadata: {
+          "operation": "question-answering",
+          "testRunId": "<run:1>"
+        }
+        └── huggingface.transformers.question_answering [llm]
+            input: [
+              {
+                "content": "Context:\nAda Lovelace wrote the program.\n\nQuestion:\nWho wrote the program?",
+                "role": "user"
+              }
+            ]
+            output: [
+              {
+                "finish_reason": "stop",
+                "index": 0,
+                "message": {
+                  "content": "##ace wrote th",
+                  "role": "assistant"
+                }
+              }
+            ]
+            metadata: {
+              "model": "onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX",
+              "provider": "huggingface"
+            }

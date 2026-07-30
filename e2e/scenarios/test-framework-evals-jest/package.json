@@ -4,5 +4,10 @@
   "type": "commonjs",
   "dependencies": {
     "jest": "29.7.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "brace-expansion@<1.1.16": "^1.1.16"
+    }
   }
 }

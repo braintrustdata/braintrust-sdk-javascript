@@ -8,6 +8,7 @@ import { CursorSDKPlugin } from "./plugins/cursor-sdk-plugin";
 import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
+import { HuggingFaceTransformersPlugin } from "./plugins/huggingface-transformers-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
@@ -23,6 +24,7 @@ import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
+import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
 import type { InstrumentationIntegrationsConfig } from "./config";
 
@@ -59,6 +61,8 @@ export class BraintrustPlugin extends BasePlugin {
   private openAIAgentsPlugin: OpenAIAgentsPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
   private huggingFacePlugin: HuggingFacePlugin | null = null;
+  private huggingFaceTransformersPlugin: HuggingFaceTransformersPlugin | null =
+    null;
   private openRouterPlugin: OpenRouterPlugin | null = null;
   private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
   private mistralPlugin: MistralPlugin | null = null;
@@ -74,6 +78,7 @@ export class BraintrustPlugin extends BasePlugin {
   private piCodingAgentPlugin: PiCodingAgentPlugin | null = null;
   private strandsAgentSDKPlugin: StrandsAgentSDKPlugin | null = null;
   private voyageAIPlugin: VoyageAIPlugin | null = null;
+  private cloudflareAIChatPlugin: CloudflareAIChatPlugin | null = null;
   private cloudflareAgentsPlugin: CloudflareAgentsPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
@@ -135,6 +140,8 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.huggingface !== false) {
       this.huggingFacePlugin = new HuggingFacePlugin();
       this.huggingFacePlugin.enable();
+      this.huggingFaceTransformersPlugin = new HuggingFaceTransformersPlugin();
+      this.huggingFaceTransformersPlugin.enable();
     }
 
     if (integrations.openrouter !== false) {
@@ -200,6 +207,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.strandsAgentSDK !== false) {
       this.strandsAgentSDKPlugin = new StrandsAgentSDKPlugin();
       this.strandsAgentSDKPlugin.enable();
+    }
+
+    if (integrations.cloudflareAIChat !== false) {
+      this.cloudflareAIChatPlugin = new CloudflareAIChatPlugin();
+      this.cloudflareAIChatPlugin.enable();
     }
 
     if (integrations.cloudflareAgents !== false) {
@@ -277,6 +289,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.huggingFacePlugin = null;
     }
 
+    if (this.huggingFaceTransformersPlugin) {
+      this.huggingFaceTransformersPlugin.disable();
+      this.huggingFaceTransformersPlugin = null;
+    }
+
     if (this.openRouterPlugin) {
       this.openRouterPlugin.disable();
       this.openRouterPlugin = null;
@@ -335,6 +352,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.strandsAgentSDKPlugin) {
       this.strandsAgentSDKPlugin.disable();
       this.strandsAgentSDKPlugin = null;
+    }
+
+    if (this.cloudflareAIChatPlugin) {
+      this.cloudflareAIChatPlugin.disable();
+      this.cloudflareAIChatPlugin = null;
     }
 
     if (this.cloudflareAgentsPlugin) {

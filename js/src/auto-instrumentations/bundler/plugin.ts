@@ -91,9 +91,16 @@ export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
           return null;
         }
 
+        // Vite and Rollup may append cache-busting queries or fragments to
+        // real filesystem module IDs. They are not part of the package path
+        // and prevent exact instrumentation file paths from matching.
+        const cleanId = id.replace(/[?#].*$/, "");
+
         // Convert file:// URLs to regular paths at entry point
         // Node.js ESM loader hooks provide file:// URLs, but downstream code expects paths
-        const filePath = id.startsWith("file:") ? fileURLToPath(id) : id;
+        const filePath = cleanId.startsWith("file:")
+          ? fileURLToPath(cleanId)
+          : cleanId;
 
         // Determine if this is an ES module using multiple methods for accurate detection
         const ext = extname(filePath);
