@@ -99,6 +99,21 @@
     ]
   },
   {
+    "scenarioDirName": "cloudflare-ai-chat-instrumentation",
+    "label": "Cloudflare AI Chat Instrumentation",
+    "metadataScenario": "cloudflare-ai-chat-instrumentation",
+    "variants": [
+      {
+        "variantKey": "cloudflare-ai-chat-v0",
+        "label": "v0.9 pinned"
+      },
+      {
+        "variantKey": "cloudflare-ai-chat-v0-latest",
+        "label": "v0.9 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "cloudflare-think-instrumentation",
     "label": "Cloudflare Think Instrumentation",
     "metadataScenario": "cloudflare-think-instrumentation",
@@ -323,6 +338,29 @@
       },
       {
         "variantKey": "huggingface-v4-latest",
+        "label": "v4 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "huggingface-transformers-instrumentation",
+    "label": "Hugging Face Transformers.js Instrumentation",
+    "metadataScenario": "huggingface-transformers-instrumentation",
+    "variants": [
+      {
+        "variantKey": "huggingface-transformers-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "huggingface-transformers-v3-latest",
+        "label": "v3 latest"
+      },
+      {
+        "variantKey": "huggingface-transformers-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "huggingface-transformers-v4-latest",
         "label": "v4 latest"
       }
     ]

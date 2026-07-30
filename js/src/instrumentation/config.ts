@@ -8,6 +8,7 @@ export interface InstrumentationIntegrationsConfig {
   googleADK?: boolean;
   huggingface?: boolean;
   claudeAgentSDK?: boolean;
+  cloudflareAIChat?: boolean;
   cloudflareThink?: boolean;
   cursor?: boolean;
   cursorSDK?: boolean;
@@ -70,6 +71,9 @@ const envIntegrationAliases: Record<
   vercel: "vercel",
   claudeagentsdk: "claudeAgentSDK",
   "claude-agent-sdk": "claudeAgentSDK",
+  cloudflareaichat: "cloudflareAIChat",
+  "cloudflare-ai-chat": "cloudflareAIChat",
+  "@cloudflare/ai-chat": "cloudflareAIChat",
   cloudflarethink: "cloudflareThink",
   cursor: "cursor",
   "cursor-sdk": "cursorSDK",
@@ -85,6 +89,8 @@ const envIntegrationAliases: Record<
   "google-genai": "googleGenAI",
   googlegenai: "googleGenAI",
   huggingface: "huggingface",
+  "@huggingface/transformers": "huggingface",
+  transformers: "huggingface",
   openrouter: "openrouter",
   openrouteragent: "openrouterAgent",
   "openrouter-agent": "openrouterAgent",
@@ -127,6 +133,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     googleADK: true,
     huggingface: true,
     claudeAgentSDK: true,
+    cloudflareAIChat: true,
     cloudflareThink: true,
     cursor: true,
     cursorSDK: true,
