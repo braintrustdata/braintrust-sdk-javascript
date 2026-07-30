@@ -154,6 +154,13 @@ function getStableReleasePackages() {
       continue;
     }
 
+    if (!tagCommit && alreadyPublished) {
+      console.warn(
+        `Skipping ${tag}: the package is already published but the release tag is missing`,
+      );
+      continue;
+    }
+
     packages.push(
       buildStablePackageEntry(
         approvedPackage.dir,

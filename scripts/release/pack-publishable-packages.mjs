@@ -81,9 +81,32 @@ function packPackage(target) {
     const sbomPath = path.join(absoluteOutputDir, sbomAsset);
     renameSync(path.join(packDir, packedTarballs[0]), tarballPath);
     runPackagingPnpm(
-      ["sbom", "--sbom-format", "cyclonedx", "--prod", "--out", sbomPath],
-      { cwd: repoPath(target.dir) },
+      [
+        "--filter",
+        target.name,
+        "sbom",
+        "--sbom-format",
+        "cyclonedx",
+        "--prod",
+        "--out",
+        sbomPath,
+      ],
+      { cwd: repoPath() },
     );
+
+    const sbom = JSON.parse(readFileSync(sbomPath, "utf8"));
+    const rootComponent = sbom.metadata?.component;
+    const rootPackageName = rootComponent?.group
+      ? `${rootComponent.group}/${rootComponent.name}`
+      : rootComponent?.name;
+    if (
+      rootPackageName !== target.name ||
+      rootComponent?.version !== target.version
+    ) {
+      throw new Error(
+        `Expected SBOM for ${target.name}@${target.version}, found ${rootPackageName}@${rootComponent?.version}`,
+      );
+    }
 
     return {
       name: target.name,
