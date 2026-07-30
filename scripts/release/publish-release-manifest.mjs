@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 
 import {
   isPublishedToNpm,
+  orderPackagesForPublish,
   parseArgs,
   readPackage,
   repoPath,
@@ -48,67 +49,4 @@ for (const pkg of packages) {
     cwd: packageDir,
     stdio: "inherit",
   });
-}
-
-function orderPackagesForPublish(packages) {
-  const packageMap = new Map(
-    packages.map((pkg) => [
-      pkg.name,
-      { ...pkg, manifest: readPackage(pkg.dir) },
-    ]),
-  );
-  const visiting = new Set();
-  const visited = new Set();
-  const ordered = [];
-
-  for (const pkg of packageMap.values()) {
-    visit(pkg);
-  }
-
-  return ordered.map(({ manifest: _manifest, ...pkg }) => pkg);
-
-  function visit(pkg) {
-    if (visited.has(pkg.name)) {
-      return;
-    }
-
-    if (visiting.has(pkg.name)) {
-      throw new Error(
-        `Detected a publish dependency cycle involving ${pkg.name}`,
-      );
-    }
-
-    visiting.add(pkg.name);
-
-    for (const dependencyName of getWorkspaceReleaseDependencies(
-      pkg.manifest,
-    )) {
-      const dependency = packageMap.get(dependencyName);
-      if (dependency) {
-        visit(dependency);
-      }
-    }
-
-    visiting.delete(pkg.name);
-    visited.add(pkg.name);
-    ordered.push(pkg);
-  }
-}
-
-function getWorkspaceReleaseDependencies(manifest) {
-  const dependencyNames = new Set();
-
-  for (const field of [
-    "dependencies",
-    "optionalDependencies",
-    "peerDependencies",
-    "devDependencies",
-  ]) {
-    for (const dependencyName of Object.keys(manifest[field] ?? {})) {
-      dependencyNames.add(dependencyName);
-    }
-  }
-
-  dependencyNames.delete(manifest.name);
-  return dependencyNames;
 }
