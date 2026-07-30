@@ -13,7 +13,11 @@ import {
 } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 
-import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
+import {
+  EXPECTED_GOOGLE_ADK_USAGE_METRICS,
+  ROOT_NAME,
+  SCENARIO_NAME,
+} from "./scenario.impl.mjs";
 
 type RunGoogleADKScenario = (harness: {
   runNodeScenarioDir: (options: {
@@ -326,6 +330,21 @@ export function defineGoogleADKInstrumentationAssertions(options: {
 
       expect(llmSpan).toBeDefined();
       expect(llmSpan?.metrics).toBeDefined();
+    });
+
+    test("records normalized ADK usage metrics", testConfig, () => {
+      const usageRunnerSpan = events.find(
+        (event) =>
+          event.span.name === "Google ADK Runner" &&
+          (event.row.metadata as Record<string, unknown> | undefined)?.[
+            "google_adk.session_id"
+          ] === "test-session-usage",
+      );
+
+      expect(usageRunnerSpan).toBeDefined();
+      expect(usageRunnerSpan?.metrics).toMatchObject(
+        EXPECTED_GOOGLE_ADK_USAGE_METRICS,
+      );
     });
 
     test("matches the shared span tree snapshot", testConfig, async () => {
