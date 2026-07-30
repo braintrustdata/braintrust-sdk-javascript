@@ -691,9 +691,15 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         status: "completed",
       });
       expect(span?.metrics).toMatchObject({
+        completion_reasoning_tokens: expect.any(Number),
+        completion_tokens: expect.any(Number),
         prompt_tokens: expect.any(Number),
         tokens: expect.any(Number),
       });
+      const metrics = span?.metrics as Record<string, number>;
+      expect(metrics.tokens).toBe(
+        metrics.prompt_tokens + metrics.completion_tokens,
+      );
     });
 
     test(
@@ -737,10 +743,16 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
           status: "completed",
         });
         expect(span?.metrics).toMatchObject({
+          completion_reasoning_tokens: expect.any(Number),
+          completion_tokens: expect.any(Number),
           prompt_tokens: expect.any(Number),
           time_to_first_token: expect.any(Number),
           tokens: expect.any(Number),
         });
+        const metrics = span?.metrics as Record<string, number>;
+        expect(metrics.tokens).toBe(
+          metrics.prompt_tokens + metrics.completion_tokens,
+        );
       },
     );
 
