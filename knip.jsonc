@@ -10,6 +10,9 @@
   ],
   "ignoreIssues": {
     "**/generated_types.ts": ["exports", "types"],
+    // These support the inferred signatures of the intentionally small public
+    // DurableEval API and must remain exported for declaration bundling.
+    "js/src/durable-eval.ts": ["types"],
   },
   "workspaces": {
     "dev-packages/seinfeld": {
