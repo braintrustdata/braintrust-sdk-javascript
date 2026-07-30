@@ -210,11 +210,14 @@ export { wrapClaudeAgentSDK } from "./wrappers/claude-agent-sdk/claude-agent-sdk
 export { wrapOpenAICodexSDK } from "./wrappers/openai-codex";
 export { wrapCursorSDK } from "./wrappers/cursor-sdk";
 export { wrapPiCodingAgentSDK } from "./wrappers/pi-coding-agent";
+export { wrapCloudflareAgent } from "./wrappers/cloudflare-agent";
 export { wrapStrandsAgentSDK } from "./wrappers/strands-agent-sdk";
+export { wrapCloudflareAIChat } from "./wrappers/cloudflare-ai-chat";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";
 export { wrapGoogleADK } from "./wrappers/google-adk";
 export { wrapGenkit } from "./wrappers/genkit";
 export { wrapHuggingFace } from "./wrappers/huggingface";
+export { wrapHuggingFaceTransformers } from "./wrappers/huggingface-transformers";
 export { wrapOpenRouterAgent } from "./wrappers/openrouter-agent";
 export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";

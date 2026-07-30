@@ -8,6 +8,8 @@ import { aiSDKConfigs } from "./ai-sdk";
 import { anthropicConfigs } from "./anthropic";
 import { bedrockRuntimeConfigs } from "./bedrock-runtime";
 import { claudeAgentSDKConfigs } from "./claude-agent-sdk";
+import { cloudflareAIChatConfigs } from "./cloudflare-ai-chat";
+import { cloudflareAgentsConfigs } from "./cloudflare-agents";
 import { cohereConfigs } from "./cohere";
 import { cursorSDKConfigs } from "./cursor-sdk";
 import { flueConfigs } from "./flue";
@@ -17,6 +19,7 @@ import { googleADKConfigs } from "./google-adk";
 import { googleGenAIConfigs } from "./google-genai";
 import { groqConfigs } from "./groq";
 import { huggingFaceConfigs } from "./huggingface";
+import { huggingFaceTransformersConfigs } from "./huggingface-transformers";
 import { langchainConfigs } from "./langchain";
 import { langSmithConfigs } from "./langsmith";
 import { mistralConfigs } from "./mistral";
@@ -53,6 +56,14 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       integrations: ["claudeAgentSDK"],
       configs: claudeAgentSDKConfigs,
     },
+    {
+      integrations: ["cloudflareAIChat"],
+      configs: cloudflareAIChatConfigs,
+    },
+    {
+      integrations: ["cloudflareAgents"],
+      configs: cloudflareAgentsConfigs,
+    },
     { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
     {
       integrations: ["openAIAgents"],
@@ -62,7 +73,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       integrations: ["google", "googleGenAI"],
       configs: googleGenAIConfigs,
     },
-    { integrations: ["huggingface"], configs: huggingFaceConfigs },
+    {
+      integrations: ["huggingface"],
+      configs: [...huggingFaceConfigs, ...huggingFaceTransformersConfigs],
+    },
     {
       integrations: ["langchain", "langgraph"],
       configs: langchainConfigs,

@@ -8,6 +8,7 @@ export interface InstrumentationIntegrationsConfig {
   googleADK?: boolean;
   huggingface?: boolean;
   claudeAgentSDK?: boolean;
+  cloudflareAIChat?: boolean;
   cursor?: boolean;
   cursorSDK?: boolean;
   flue?: boolean;
@@ -26,6 +27,7 @@ export interface InstrumentationIntegrationsConfig {
   openaiCodexSDK?: boolean;
   piCodingAgent?: boolean;
   strandsAgentSDK?: boolean;
+  cloudflareAgents?: boolean;
   langchain?: boolean;
   langgraph?: boolean;
   langsmith?: boolean;
@@ -58,6 +60,9 @@ const envIntegrationAliases: Record<
   strandsagentsdk: "strandsAgentSDK",
   "strands-agent-sdk": "strandsAgentSDK",
   "@strands-agents/sdk": "strandsAgentSDK",
+  agents: "cloudflareAgents",
+  "cloudflare-agents": "cloudflareAgents",
+  cloudflareagents: "cloudflareAgents",
   anthropic: "anthropic",
   aisdk: "aisdk",
   "ai-sdk": "aisdk",
@@ -65,6 +70,9 @@ const envIntegrationAliases: Record<
   vercel: "vercel",
   claudeagentsdk: "claudeAgentSDK",
   "claude-agent-sdk": "claudeAgentSDK",
+  cloudflareaichat: "cloudflareAIChat",
+  "cloudflare-ai-chat": "cloudflareAIChat",
+  "@cloudflare/ai-chat": "cloudflareAIChat",
   cursor: "cursor",
   "cursor-sdk": "cursorSDK",
   cursorsdk: "cursorSDK",
@@ -79,6 +87,8 @@ const envIntegrationAliases: Record<
   "google-genai": "googleGenAI",
   googlegenai: "googleGenAI",
   huggingface: "huggingface",
+  "@huggingface/transformers": "huggingface",
+  transformers: "huggingface",
   openrouter: "openrouter",
   openrouteragent: "openrouterAgent",
   "openrouter-agent": "openrouterAgent",
@@ -121,6 +131,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     googleADK: true,
     huggingface: true,
     claudeAgentSDK: true,
+    cloudflareAIChat: true,
     cursor: true,
     cursorSDK: true,
     flue: true,
@@ -141,6 +152,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     langsmith: true,
     piCodingAgent: true,
     strandsAgentSDK: true,
+    cloudflareAgents: true,
   };
 }
 
