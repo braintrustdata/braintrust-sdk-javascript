@@ -20,6 +20,10 @@ const helperPromisePath = path.join(
   fixturesDir,
   "test-api-promise-preservation.mjs",
 );
+const importHookQueryModePath = path.join(
+  fixturesDir,
+  "import-hook-query-mode.mjs",
+);
 const runtimeApplyAutoSideEffectEsmPath = path.join(
   fixturesDir,
   "runtime-apply-auto-side-effect-esm.mjs",
@@ -27,6 +31,18 @@ const runtimeApplyAutoSideEffectEsmPath = path.join(
 const runtimeApplyAutoSideEffectCjsPath = path.join(
   fixturesDir,
   "runtime-apply-auto-side-effect-cjs.cjs",
+);
+const mastraTopLevelEsmPath = path.join(
+  fixturesDir,
+  "test-mastra-top-level-esm.mjs",
+);
+const mastraTopLevelCjsPath = path.join(
+  fixturesDir,
+  "test-mastra-top-level-cjs.cjs",
+);
+const runtimeApplyAutoMastraTopLevelEsmPath = path.join(
+  fixturesDir,
+  "runtime-apply-auto-mastra-top-level-esm.mjs",
 );
 
 interface TestResult {
@@ -83,6 +99,74 @@ describe("Unified Loader Hook Integration Tests", () => {
       expect(result.withResponseOk).toBe(true);
       expect(result.constructorName).toBe("HelperPromise");
     });
+
+    it("should expose import hook exports in query mode without bootstrapping", async () => {
+      const result = await runWithWorkerMessage<{
+        applied: boolean;
+        hasInitialize: boolean;
+        hasLoad: boolean;
+        hasRegister: boolean;
+        hasResolve: boolean;
+      }>({
+        env: {
+          BRAINTRUST_QUERY_HOOK_URL: `${pathToFileURL(hookPath).href}?braintrust-iitm-loader=true`,
+        },
+        execArgv: [],
+        messageType: "hook-query-result",
+        script: importHookQueryModePath,
+      });
+
+      expect(result).toEqual({
+        applied: false,
+        hasInitialize: true,
+        hasLoad: true,
+        hasRegister: true,
+        hasResolve: true,
+      });
+    });
+
+    it("should patch Mastra top-level ESM exports", async () => {
+      const result = await runWithWorkerMessage<{
+        exporters: string[];
+        hasObservability: boolean;
+      }>({
+        execArgv: ["--import", hookPath],
+        messageType: "mastra-result",
+        script: mastraTopLevelEsmPath,
+      });
+
+      expect(result.hasObservability).toBe(true);
+      expect(result.exporters).toEqual(["braintrust"]);
+    });
+
+    it("should patch Mastra top-level CJS exports", async () => {
+      const result = await runWithWorkerMessage<{
+        exporters: string[];
+        hasObservability: boolean;
+      }>({
+        execArgv: ["--import", hookPath],
+        messageType: "mastra-result",
+        script: mastraTopLevelCjsPath,
+      });
+
+      expect(result.hasObservability).toBe(true);
+      expect(result.exporters).toEqual(["braintrust"]);
+    });
+
+    it("should respect Mastra disable config for top-level export patches", async () => {
+      const result = await runWithWorkerMessage<{
+        exporters: string[];
+        hasObservability: boolean;
+      }>({
+        env: { BRAINTRUST_DISABLE_INSTRUMENTATION: "mastra" },
+        execArgv: ["--import", hookPath],
+        messageType: "mastra-result",
+        script: mastraTopLevelEsmPath,
+      });
+
+      expect(result.hasObservability).toBe(false);
+      expect(result.exporters).toEqual([]);
+    });
   });
 
   describe("apply-auto-instrumentation side-effect runtime setup", () => {
@@ -125,6 +209,20 @@ describe("Unified Loader Hook Integration Tests", () => {
 
       expect(result.events.start.length).toBe(1);
       expect(result.events.end.length).toBe(1);
+    });
+
+    it("should apply Mastra top-level export patches through the side-effect export", async () => {
+      const result = await runWithWorkerMessage<{
+        exporters: string[];
+        hasObservability: boolean;
+      }>({
+        execArgv: [],
+        messageType: "mastra-result",
+        script: runtimeApplyAutoMastraTopLevelEsmPath,
+      });
+
+      expect(result.hasObservability).toBe(true);
+      expect(result.exporters).toEqual(["braintrust"]);
     });
   });
 });

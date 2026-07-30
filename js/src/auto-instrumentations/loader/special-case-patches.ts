@@ -21,23 +21,11 @@
  *     .parse()` doesn't double-read the response body. Removable once OpenAI
  *     stops sharing the same `APIPromise` between `create()` and
  *     `_thenUnwrap()`.
- *   - `@mastra/core` and `@mastra/observability` entries: Mastra ships
- *     code-split bundles with content-hashed chunk filenames, so we patch
- *     the stable submodule entries to install the
- *     `BraintrustObservabilityExporter` automatically. Removable when Mastra
- *     adopts a NPM-installable Braintrust exporter package directly, or when
- *     `import-in-the-middle` is reliable enough across Node versions to use
- *     for the same job.
  */
 
-import {
-  classifyMastraTarget,
-  patchMastraSource,
-  type MastraModuleFormat,
-} from "./mastra-observability-patch.js";
 import { OPENAI_API_PROMISE_PATCH } from "./openai-api-promise-patch.js";
 
-type SpecialCaseFormat = MastraModuleFormat;
+export type SpecialCaseFormat = "esm" | "cjs";
 
 interface SpecialCaseInput {
   packageName: string;
@@ -62,16 +50,6 @@ export function applySpecialCasePatch(input: SpecialCaseInput): string | null {
     return input.source + OPENAI_API_PROMISE_PATCH;
   }
 
-  // Mastra: rewrite the stable submodule entries (@mastra/core) or append a
-  // Proxy wrap to the inline class binding (@mastra/observability).
-  const mastraTarget = classifyMastraTarget(
-    input.packageName,
-    input.modulePath,
-  );
-  if (mastraTarget) {
-    return patchMastraSource(input.source, mastraTarget, input.format);
-  }
-
   return null;
 }
 
@@ -85,9 +63,6 @@ export function isSpecialCaseTarget(
   modulePath: string,
 ): boolean {
   if (packageName === "openai" && modulePath.includes("api-promise")) {
-    return true;
-  }
-  if (classifyMastraTarget(packageName, modulePath) !== null) {
     return true;
   }
   return false;

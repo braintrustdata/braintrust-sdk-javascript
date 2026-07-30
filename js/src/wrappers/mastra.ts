@@ -10,9 +10,9 @@
  * Two integration paths:
  *   - **Manual**: `new Mastra({ observability: new Observability({ configs: {
  *     default: { exporters: [new BraintrustObservabilityExporter()] } } }) })`
- *   - **Auto** (under `node --import braintrust/hook.mjs`): the loader patches
- *     `@mastra/core`'s `dist/mastra/index.{js,cjs}` to wrap `Mastra` so it
- *     calls `defaultInstance.registerExporter(exporter)` after construction.
+ *   - **Auto** (under `node --import braintrust/hook.mjs`): the top-level
+ *     import hook registry wraps Mastra's exported constructors so a default
+ *     Observability config receives this exporter automatically.
  *
  * Minimum supported Mastra version: 1.20.0 (when `Mastra.prototype.register`
  * `Exporter` and `ObservabilityInstance.registerExporter` were added). The
@@ -418,7 +418,7 @@ function logExporterError(err: unknown): void {
  *
  * - **Auto-instrumentation**: run your app with
  *   `node --import braintrust/hook.mjs`. The loader installs
- *   `BraintrustObservabilityExporter` into every `new Mastra(...)`
+ *   `BraintrustObservabilityExporter` into Mastra Observability configs
  *   automatically.
  * - **Manual wiring**: pass the exporter yourself:
  *

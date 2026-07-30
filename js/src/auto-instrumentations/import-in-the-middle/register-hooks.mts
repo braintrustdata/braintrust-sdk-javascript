@@ -1,9 +1,13 @@
-import * as module from "module";
+import * as module from "node:module";
 import { createHook, supportsSyncHooks } from "./create-hook.mjs";
 
 export { supportsSyncHooks };
 
 const hook = createHook(import.meta);
+type RegisterHooks = (hooks: {
+  load: typeof hook.loadSync;
+  resolve: typeof hook.resolveSync;
+}) => void;
 
 let registered = false;
 
@@ -46,5 +50,16 @@ export function register() {
   }
   registered = true;
 
-  module.registerHooks({ resolve: hook.resolveSync, load: hook.loadSync });
+  const registerHooks = (
+    module as typeof module & {
+      registerHooks?: RegisterHooks;
+    }
+  ).registerHooks;
+  if (typeof registerHooks !== "function") {
+    throw new Error(
+      "'import-in-the-middle' synchronous hooks require module.registerHooks",
+    );
+  }
+
+  registerHooks({ resolve: hook.resolveSync, load: hook.loadSync });
 }

@@ -2,15 +2,50 @@
 //
 // This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
-const importHooks = []; // TODO should this be a Set?
-const setters = new WeakMap();
-const getters = new WeakMap();
-const specifiers = new Map();
-const toHook = [];
-const hookedModuleCounts = new Map();
-const hookedModules = new Set();
+export type Namespace = Record<string | symbol, unknown>;
+export type ExportSetter = (value: unknown) => boolean;
+export type ExportGetter = () => unknown;
+export type ImportHook = (
+  name: string,
+  namespace: Namespace,
+  specifier?: string,
+) => void;
 
-const proxyHandler = {
+interface RegisterState {
+  getters: WeakMap<Namespace, Record<string | symbol, ExportGetter>>;
+  hookedModuleCounts: Map<string, number>;
+  hookedModules: Set<string>;
+  importHooks: ImportHook[];
+  setters: WeakMap<Namespace, Record<string | symbol, ExportSetter>>;
+  specifiers: Map<string, string | undefined>;
+  toHook: Array<[name: string, namespace: Namespace, specifier?: string]>;
+}
+
+const stateKey = Symbol.for("braintrust.importInTheMiddle.registerState");
+const stateGlobal = globalThis as typeof globalThis &
+  Record<symbol, RegisterState | undefined>;
+
+const state: RegisterState = (stateGlobal[stateKey] ??= {
+  getters: new WeakMap(),
+  hookedModuleCounts: new Map(),
+  hookedModules: new Set(),
+  importHooks: [], // TODO should this be a Set?
+  setters: new WeakMap(),
+  specifiers: new Map(),
+  toHook: [],
+});
+
+const {
+  getters,
+  hookedModuleCounts,
+  hookedModules,
+  importHooks,
+  setters,
+  specifiers,
+  toHook,
+} = state;
+
+const proxyHandler: ProxyHandler<Namespace> = {
   set(target, name, value) {
     const set = setters.get(target);
     const setter = set && set[name];
@@ -27,7 +62,7 @@ const proxyHandler = {
       return "Module";
     }
 
-    const getter = getters.get(target)[name];
+    const getter = getters.get(target)?.[name];
 
     if (typeof getter === "function") {
       return getter();
@@ -50,7 +85,13 @@ const proxyHandler = {
   },
 };
 
-function register(name, namespace, set, get, specifier) {
+export function register(
+  name: string,
+  namespace: Namespace,
+  set: Record<string | symbol, ExportSetter>,
+  get: Record<string | symbol, ExportGetter>,
+  specifier?: string,
+): void {
   specifiers.set(name, specifier);
   setters.set(namespace, set);
   getters.set(namespace, get);
@@ -59,7 +100,7 @@ function register(name, namespace, set, get, specifier) {
   toHook.push([name, proxy, specifier]);
 }
 
-function addHookedModules(modules) {
+function addHookedModules(modules: readonly string[]): void {
   for (const each of modules) {
     const nextCount = (hookedModuleCounts.get(each) || 0) + 1;
     hookedModuleCounts.set(each, nextCount);
@@ -67,7 +108,7 @@ function addHookedModules(modules) {
   }
 }
 
-function deleteHookedModules(modules) {
+function deleteHookedModules(modules: readonly string[]): void {
   for (const each of modules) {
     const nextCount = (hookedModuleCounts.get(each) || 0) - 1;
     if (nextCount > 0) {
@@ -79,10 +120,12 @@ function deleteHookedModules(modules) {
   }
 }
 
-exports.register = register;
-exports.addHookedModules = addHookedModules;
-exports.deleteHookedModules = deleteHookedModules;
-exports.hookedModules = hookedModules;
-exports.importHooks = importHooks;
-exports.specifiers = specifiers;
-exports.toHook = toHook;
+export default {
+  addHookedModules,
+  deleteHookedModules,
+  hookedModules,
+  importHooks,
+  register,
+  specifiers,
+  toHook,
+};

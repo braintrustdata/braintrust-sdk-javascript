@@ -2,10 +2,14 @@
 //
 // This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2021 Datadog, Inc.
 
-const moduleDetailsFromPath = require("module-details-from-path");
-const { isBuiltin } = require("module");
-const { fileURLToPath } = require("url");
-const { MessageChannel } = require("worker_threads");
+import moduleDetailsFromPath from "module-details-from-path";
+import { isBuiltin } from "node:module";
+import { fileURLToPath } from "node:url";
+import { MessageChannel } from "node:worker_threads";
+import registerState, {
+  type ImportHook,
+  type Namespace,
+} from "./lib/register.mjs";
 
 const {
   addHookedModules,
@@ -13,48 +17,81 @@ const {
   importHooks,
   specifiers,
   toHook,
-} = require("./lib/register");
+} = registerState;
 
-function addHook(hook) {
+export type HookFn = (
+  exported: Namespace,
+  name: string,
+  baseDir?: string,
+) => unknown;
+
+interface HookInstance {
+  _iitmHook: ImportHook;
+  _modules: string[];
+}
+
+interface HookConstructor {
+  new (modules: unknown, hookFn: unknown): HookInstance;
+  (modules: unknown, hookFn: unknown): HookInstance;
+  prototype: HookInstance & { unhook(): void };
+}
+
+let sendModulesToLoader: ((modules: string[]) => void) | undefined;
+
+function addHook(hook: ImportHook): void {
   importHooks.push(hook);
   toHook.forEach(([name, namespace, specifier]) =>
     hook(name, namespace, specifier),
   );
 }
 
-function removeHook(hook) {
+function removeHook(hook: ImportHook): void {
   const index = importHooks.indexOf(hook);
   if (index > -1) {
     importHooks.splice(index, 1);
   }
 }
 
-function callHookFn(hookFn, namespace, name, baseDir) {
+function callHookFn(
+  hookFn: HookFn,
+  namespace: Namespace,
+  name: string,
+  baseDir?: string,
+): void {
   const newDefault = hookFn(namespace, name, baseDir);
   if (newDefault && newDefault !== namespace && "default" in namespace) {
     namespace.default = newDefault;
   }
 }
 
-function normalizeModules(modules) {
+function normalizeModules(modules: unknown): string[] {
   if (!Array.isArray(modules) || modules.length === 0) {
     throw new TypeError(
       "Braintrust import-in-the-middle requires a non-empty modules array",
     );
   }
 
+  const normalized: string[] = [];
   for (const each of modules) {
     if (typeof each !== "string") {
       throw new TypeError(
         "Braintrust import-in-the-middle only supports string module names or file URLs",
       );
     }
+    normalized.push(each);
   }
 
-  return modules;
+  return normalized;
 }
 
-function moduleMatches(matchArg, name, filePath, specifier, baseDir, loadUrl) {
+function moduleMatches(
+  matchArg: string,
+  name: string,
+  filePath: string | undefined,
+  specifier: string | undefined,
+  baseDir: string | undefined,
+  loadUrl: string,
+): boolean {
   if (filePath && matchArg === filePath) {
     return true;
   }
@@ -69,17 +106,15 @@ function moduleMatches(matchArg, name, filePath, specifier, baseDir, loadUrl) {
 
   // Keep the top-level package check from upstream, but do not support the
   // broad internals mode. Internal files must be listed explicitly.
-  return matchArg === name && baseDir.endsWith(specifiers.get(loadUrl));
+  return matchArg === name && baseDir.endsWith(String(specifiers.get(loadUrl)));
 }
 
-let sendModulesToLoader;
-
-function createAddHookMessageChannel() {
+export function createAddHookMessageChannel() {
   const { port1, port2 } = new MessageChannel();
   let pendingAckCount = 0;
-  let resolveFn;
+  let resolveFn: (() => void) | undefined;
 
-  sendModulesToLoader = (modules) => {
+  sendModulesToLoader = (modules: string[]) => {
     pendingAckCount++;
     port1.postMessage(modules);
   };
@@ -94,16 +129,16 @@ function createAddHookMessageChannel() {
     })
     .unref();
 
-  function waitForAllMessagesAcknowledged() {
+  function waitForAllMessagesAcknowledged(): Promise<void> {
     const timer = setInterval(() => {}, 1000);
-    const promise = new Promise((resolve) => {
+    const promise = new Promise<void>((resolve) => {
       resolveFn = resolve;
     }).then(() => {
       clearInterval(timer);
     });
 
     if (pendingAckCount === 0) {
-      resolveFn();
+      resolveFn?.();
     }
 
     return promise;
@@ -111,7 +146,7 @@ function createAddHookMessageChannel() {
 
   const addHookMessagePort = port2;
   const registerOptions = {
-    data: { addHookMessagePort, include: [] },
+    data: { addHookMessagePort, include: [] as string[] },
     transferList: [addHookMessagePort],
   };
 
@@ -122,26 +157,33 @@ function createAddHookMessageChannel() {
   };
 }
 
-function Hook(modules, hookFn) {
-  if (this instanceof Hook === false) return new Hook(modules, hookFn);
+const Hook: HookConstructor = function (
+  this: HookInstance | undefined,
+  modules: unknown,
+  hookFn: unknown,
+): HookInstance | void {
+  if (!this || !(this instanceof Hook)) {
+    return new Hook(modules, hookFn);
+  }
 
-  modules = normalizeModules(modules);
+  const normalizedModules = normalizeModules(modules);
   if (typeof hookFn !== "function") {
     throw new TypeError(
       "Braintrust import-in-the-middle requires a hook function",
     );
   }
+  const importHookFn = hookFn as HookFn;
 
-  addHookedModules(modules);
+  addHookedModules(normalizedModules);
   if (sendModulesToLoader) {
-    sendModulesToLoader(modules);
+    sendModulesToLoader(normalizedModules);
   }
 
-  this._modules = modules;
+  this._modules = normalizedModules;
   this._iitmHook = (name, namespace, specifier) => {
     const loadUrl = name;
-    let filePath;
-    let baseDir;
+    let filePath: string | undefined;
+    let baseDir: string | undefined;
 
     if (loadUrl.startsWith("node:")) {
       const unprefixed = name.slice(5);
@@ -154,7 +196,7 @@ function Hook(modules, hookFn) {
       try {
         filePath = fileURLToPath(name);
         name = filePath;
-      } catch (e) {}
+      } catch {}
       Error.stackTraceLimit = stackTraceLimit;
 
       if (filePath) {
@@ -166,12 +208,12 @@ function Hook(modules, hookFn) {
       }
     }
 
-    for (const matchArg of modules) {
+    for (const matchArg of normalizedModules) {
       if (
         moduleMatches(matchArg, name, filePath, specifier, baseDir, loadUrl)
       ) {
         callHookFn(
-          hookFn,
+          importHookFn,
           namespace,
           filePath && matchArg === filePath ? filePath : matchArg,
           baseDir,
@@ -181,13 +223,12 @@ function Hook(modules, hookFn) {
   };
 
   addHook(this._iitmHook);
-}
+} as HookConstructor;
 
-Hook.prototype.unhook = function () {
+Hook.prototype.unhook = function (this: HookInstance): void {
   removeHook(this._iitmHook);
   deleteHookedModules(this._modules);
 };
 
-module.exports = Hook;
-module.exports.Hook = Hook;
-module.exports.createAddHookMessageChannel = createAddHookMessageChannel;
+export { Hook };
+export default Hook;
