@@ -1,0 +1,173 @@
+{
+  "span_tree": [
+    {
+      "name": "huggingface-transformers-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "transformers-text-generation-operation",
+          "children": [
+            {
+              "name": "huggingface.transformers.text_generation",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Hello",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "Hellooo",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX",
+                "provider": "huggingface"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "text-generation",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "transformers-text2text-generation-operation",
+          "children": [
+            {
+              "name": "huggingface.transformers.text2text_generation",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Translate English to German: Hello",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "inedinedined",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX",
+                "provider": "huggingface"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "text2text-generation",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "transformers-summarization-operation",
+          "children": [
+            {
+              "name": "huggingface.transformers.summarization",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "A short passage about tracing.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "inedinedined",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX",
+                "provider": "huggingface"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "summarization",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "transformers-feature-extraction-operation",
+          "children": [
+            {
+              "name": "huggingface.transformers.feature_extraction",
+              "type": "llm",
+              "children": [],
+              "input": "Embed this",
+              "output": {
+                "embedding_count": 1,
+                "embedding_length": 32
+              },
+              "metadata": {
+                "model": "onnx-internal-testing/tiny-random-BertModel-ONNX",
+                "provider": "huggingface"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "feature-extraction",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "transformers-question-answering-operation",
+          "children": [
+            {
+              "name": "huggingface.transformers.question_answering",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Context:\nAda Lovelace wrote the program.\n\nQuestion:\nWho wrote the program?",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "##ace wrote th",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX",
+                "provider": "huggingface"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "question-answering",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "huggingface-transformers-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

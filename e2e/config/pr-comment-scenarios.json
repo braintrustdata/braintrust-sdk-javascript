@@ -1,5 +1,20 @@
 [
   {
+    "scenarioDirName": "cloudflare-agents-instrumentation",
+    "label": "Cloudflare Agents Instrumentation",
+    "metadataScenario": "cloudflare-agents-instrumentation",
+    "variants": [
+      {
+        "variantKey": "cloudflare-agents-v0-17",
+        "label": "v0.17 pinned"
+      },
+      {
+        "variantKey": "cloudflare-agents-v0-17-latest",
+        "label": "v0.17 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "openai-instrumentation",
     "label": "OpenAI Instrumentation",
     "metadataScenario": "openai-instrumentation",
@@ -80,6 +95,21 @@
       {
         "variantKey": "strands-agent-sdk-v1-latest",
         "label": "v1 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "cloudflare-ai-chat-instrumentation",
+    "label": "Cloudflare AI Chat Instrumentation",
+    "metadataScenario": "cloudflare-ai-chat-instrumentation",
+    "variants": [
+      {
+        "variantKey": "cloudflare-ai-chat-v0",
+        "label": "v0.9 pinned"
+      },
+      {
+        "variantKey": "cloudflare-ai-chat-v0-latest",
+        "label": "v0.9 latest"
       }
     ]
   },
@@ -293,6 +323,29 @@
       },
       {
         "variantKey": "huggingface-v4-latest",
+        "label": "v4 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "huggingface-transformers-instrumentation",
+    "label": "Hugging Face Transformers.js Instrumentation",
+    "metadataScenario": "huggingface-transformers-instrumentation",
+    "variants": [
+      {
+        "variantKey": "huggingface-transformers-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "huggingface-transformers-v3-latest",
+        "label": "v3 latest"
+      },
+      {
+        "variantKey": "huggingface-transformers-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "huggingface-transformers-v4-latest",
         "label": "v4 latest"
       }
     ]
@@ -516,7 +569,10 @@
     "scenarioDirName": "eve-instrumentation",
     "label": "Eve Instrumentation",
     "metadataScenario": "eve-instrumentation",
-    "variants": [{ "variantKey": "eve-v0-22-1", "label": "v0.22.1" }]
+    "variants": [
+      { "variantKey": "eve-v0", "label": "v0 pinned" },
+      { "variantKey": "eve-v0-latest", "label": "v0 latest" }
+    ]
   },
   {
     "scenarioDirName": "github-copilot-instrumentation",

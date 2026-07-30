@@ -1,0 +1,1084 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "ff2e4e66e9b094c6",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/config.json",
+      "recordedAt": "2026-07-27T10:38:25.057Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"_attn_implementation_autoset\":true,\"_name_or_path\":\"hf-internal-testing/tiny-random-GPT2LMHeadModel\",\"activation_function\":\"gelu\",\"architectures\":[\"GPT2LMHeadModel\"],\"attn_pdrop\":0.1,\"bos_token_id\":0,\"embd_pdrop\":0.1,\"eos_token_id\":0,\"gradient_checkpointing\":false,\"initializer_range\":0.02,\"is_decoder\":true,\"layer_norm_epsilon\":0.00001,\"model_type\":\"gpt2\",\"n_embd\":32,\"n_head\":4,\"n_inner\":37,\"n_layer\":5,\"n_positions\":512,\"pad_token_id\":1023,\"reorder_and_upcast_attn\":false,\"resid_pdrop\":0.1,\"scale_attn_by_inverse_layer_idx\":false,\"scale_attn_weights\":true,\"summary_activation\":null,\"summary_first_dropout\":0.1,\"summary_proj_to_labels\":true,\"summary_type\":\"cls_index\",\"summary_use_proj\":true,\"transformers_version\":\"4.48.2\",\"type_vocab_size\":16,\"use_cache\":true,\"vocab_size\":1024}"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''config.json; filename=\"config.json\";",
+          "content-length": "920",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:28 GMT",
+          "etag": "\"f182c23142f78d1b215ae300acdb5b9e01e11207\"",
+          "ratelimit": "\"resolvers\";r=2905;t=2",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "NxEQOPAHhEE0SqDlNaq3wUK3su-JIl1Tx-Eu9JS1vrTcdgCGc14s5g==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "e8a341159ca8e6f35cdd59635ee59042260fd0b3",
+          "x-request-id": "Root=1-6a673308-32a9718870652f24161088bd"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "8dc0162951de9d95",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/tokenizer_config.json",
+      "recordedAt": "2026-07-27T10:38:25.083Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/tokenizer_config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "182704",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer_config.json; filename=\"tokenizer_config.json\";",
+          "content-length": "1",
+          "content-range": "bytes 0-0/541",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Sat, 25 Jul 2026 07:53:21 GMT",
+          "etag": "\"a7f77ae154a25a6a0a0b9f9709122116014ae53f\"",
+          "ratelimit": "\"resolvers\";r=2997;t=3",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "GxYuKggWjXRogGOrTyrVDYuwcqH1mm5gotgMtGIBxrdkOnF84UPl4g==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "e8a341159ca8e6f35cdd59635ee59042260fd0b3",
+          "x-request-id": "Root=1-6a646b71-67d470177271063b5e17b449"
+        },
+        "status": 206,
+        "statusText": "Partial Content"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "90ab66f5a761e636",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/tokenizer.json",
+      "recordedAt": "2026-07-27T10:38:25.109Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/tokenizer.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"version\":\"1.0\",\"truncation\":null,\"padding\":null,\"added_tokens\":[{\"id\":0,\"content\":\"<|endoftext|>\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true}],\"normalizer\":null,\"pre_tokenizer\":{\"type\":\"ByteLevel\",\"add_prefix_space\":false,\"trim_offsets\":true,\"use_regex\":true},\"post_processor\":{\"type\":\"ByteLevel\",\"add_prefix_space\":true,\"trim_offsets\":false,\"use_regex\":true},\"decoder\":{\"type\":\"ByteLevel\",\"add_prefix_space\":true,\"trim_offsets\":true,\"use_regex\":true},\"model\":{\"type\":\"BPE\",\"dropout\":null,\"unk_token\":null,\"continuing_subword_prefix\":\"\",\"end_of_word_suffix\":\"\",\"fuse_unk\":false,\"byte_fallback\":false,\"ignore_merges\":false,\"vocab\":{\"0\":16,\"1\":17,\"2\":18,\"3\":19,\"4\":20,\"5\":21,\"6\":22,\"7\":23,\"8\":24,\"9\":25,\"<|endoftext|>\":0,\"!\":1,\"\\\"\":2,\"#\":3,\"$\":4,\"%\":5,\"&\":6,\"'\":7,\"(\":8,\")\":9,\"*\":10,\"+\":11,\",\":12,\"-\":13,\".\":14,\"/\":15,\":\":26,\";\":27,\"<\":28,\"=\":29,\">\":30,\"?\":31,\"@\":32,\"A\":33,\"B\":34,\"C\":35,\"D\":36,\"E\":37,\"F\":38,\"G\":39,\"H\":40,\"I\":41,\"J\":42,\"K\":43,\"L\":44,\"M\":45,\"N\":46,\"O\":47,\"P\":48,\"Q\":49,\"R\":50,\"S\":51,\"T\":52,\"U\":53,\"V\":54,\"W\":55,\"X\":56,\"Y\":57,\"Z\":58,\"[\":59,\"\\\\\":60,\"]\":61,\"^\":62,\"_\":63,\"`\":64,\"a\":65,\"b\":66,\"c\":67,\"d\":68,\"e\":69,\"f\":70,\"g\":71,\"h\":72,\"i\":73,\"j\":74,\"k\":75,\"l\":76,\"m\":77,\"n\":78,\"o\":79,\"p\":80,\"q\":81,\"r\":82,\"s\":83,\"t\":84,\"u\":85,\"v\":86,\"w\":87,\"x\":88,\"y\":89,\"z\":90,\"{\":91,\"|\":92,\"}\":93,\"~\":94,\"¡\":95,\"¢\":96,\"£\":97,\"¤\":98,\"¥\":99,\"¦\":100,\"§\":101,\"¨\":102,\"©\":103,\"ª\":104,\"«\":105,\"¬\":106,\"®\":107,\"¯\":108,\"°\":109,\"±\":110,\"²\":111,\"³\":112,\"´\":113,\"µ\":114,\"¶\":115,\"·\":116,\"¸\":117,\"¹\":118,\"º\":119,\"»\":120,\"¼\":121,\"½\":122,\"¾\":123,\"¿\":124,\"À\":125,\"Á\":126,\"Â\":127,\"Ã\":128,\"Ä\":129,\"Å\":130,\"Æ\":131,\"Ç\":132,\"È\":133,\"É\":134,\"Ê\":135,\"Ë\":136,\"Ì\":137,\"Í\":138,\"Î\":139,\"Ï\":140,\"Ð\":141,\"Ñ\":142,\"Ò\":143,\"Ó\":144,\"Ô\":145,\"Õ\":146,\"Ö\":147,\"×\":148,\"Ø\":149,\"Ù\":150,\"Ú\":151,\"Û\":152,\"Ü\":153,\"Ý\":154,\"Þ\":155,\"ß\":156,\"à\":157,\"á\":158,\"â\":159,\"ã\":160,\"ä\":161,\"å\":162,\"æ\":163,\"ç\":164,\"è\":165,\"é\":166,\"ê\":167,\"ë\":168,\"ì\":169,\"í\":170,\"î\":171,\"ï\":172,\"ð\":173,\"ñ\":174,\"ò\":175,\"ó\":176,\"ô\":177,\"õ\":178,\"ö\":179,\"÷\":180,\"ø\":181,\"ù\":182,\"ú\":183,\"û\":184,\"ü\":185,\"ý\":186,\"þ\":187,\"ÿ\":188,\"Ā\":189,\"ā\":190,\"Ă\":191,\"ă\":192,\"Ą\":193,\"ą\":194,\"Ć\":195,\"ć\":196,\"Ĉ\":197,\"ĉ\":198,\"Ċ\":199,\"ċ\":200,\"Č\":201,\"č\":202,\"Ď\":203,\"ď\":204,\"Đ\":205,\"đ\":206,\"Ē\":207,\"ē\":208,\"Ĕ\":209,\"ĕ\":210,\"Ė\":211,\"ė\":212,\"Ę\":213,\"ę\":214,\"Ě\":215,\"ě\":216,\"Ĝ\":217,\"ĝ\":218,\"Ğ\":219,\"ğ\":220,\"Ġ\":221,\"ġ\":222,\"Ģ\":223,\"ģ\":224,\"Ĥ\":225,\"ĥ\":226,\"Ħ\":227,\"ħ\":228,\"Ĩ\":229,\"ĩ\":230,\"Ī\":231,\"ī\":232,\"Ĭ\":233,\"ĭ\":234,\"Į\":235,\"į\":236,\"İ\":237,\"ı\":238,\"Ĳ\":239,\"ĳ\":240,\"Ĵ\":241,\"ĵ\":242,\"Ķ\":243,\"ķ\":244,\"ĸ\":245,\"Ĺ\":246,\"ĺ\":247,\"Ļ\":248,\"ļ\":249,\"Ľ\":250,\"ľ\":251,\"Ŀ\":252,\"ŀ\":253,\"Ł\":254,\"ł\":255,\"Ń\":256,\"Ġt\":257,\"he\":258,\"Ġa\":259,\"in\":260,\"Ġthe\":261,\"er\":262,\"on\":263,\"Ġ,\":264,\"re\":265,\"Ġs\":266,\"ed\":267,\"Ġo\":268,\"Ġw\":269,\"nd\":270,\"at\":271,\"Ġ.\":272,\"or\":273,\"it\":274,\"Ġc\":275,\"en\":276,\"Ġf\":277,\"is\":278,\"es\":279,\"ar\":280,\"Ġof\":281,\"Ġb\":282,\"an\":283,\"Ġin\":284,\"al\":285,\"ing\":286,\"Ġp\":287,\"Ġand\":288,\"as\":289,\"Ġto\":290,\"ro\":291,\"ic\":292,\"Ġm\":293,\"Ġd\":294,\"Ġh\":295,\"ion\":296,\"le\":297,\"ou\":298,\"ĠT\":299,\"Ġre\":300,\"Ġ=\":301,\"Ġ\\\"\":302,\"ĠA\":303,\"ĠS\":304,\"ent\":305,\"il\":306,\"Ġth\":307,\"Ġ1\":308,\"st\":309,\"ĠC\":310,\"el\":311,\"om\":312,\"Ġl\":313,\"am\":314,\"ĠĊ\":315,\"Ġe\":316,\"Ġn\":317,\"Ġ@\":318,\"ad\":319,\"ac\":320,\"Ġwas\":321,\"ĠM\":322,\"ur\":323,\"ĠThe\":324,\"ec\":325,\"Ġon\":326,\"ly\":327,\"ĠB\":328,\"ĠI\":329,\"Ġg\":330,\"Ġ'\":331,\"et\":332,\"ol\":333,\"id\":334,\"iv\":335,\"im\":336,\"Ġfor\":337,\"ir\":338,\"-@\":339,\"Ġ@-@\":340,\"ig\":341,\"ot\":342,\"ter\":343,\"Ġas\":344,\"ĠH\":345,\"us\":346,\"ow\":347,\"Ġst\":348,\"ut\":349,\"ith\":350,\"ay\":351,\"Ġ2\":352,\"ĠP\":353,\"ation\":354,\"ver\":355,\"Ġbe\":356,\"her\":357,\"Ġthat\":358,\"Ġwith\":359,\"ĠR\":360,\"ce\":361,\"th\":362,\"ĠD\":363,\"Ġis\":364,\"un\":365,\"em\":366,\"ĠF\":367,\"Ġwh\":368,\"ul\":369,\"Ġby\":370,\"Ġal\":371,\"ch\":372,\"Ġ)\":373,\"Ġ(\":374,\"ĠW\":375,\"Ġcon\":376,\"ra\":377,\"ĠG\":378,\"os\":379,\"ĠL\":380,\"ĠN\":381,\"Ġat\":382,\"ers\":383,\"ct\":384,\"Ġit\":385,\"Ġ19\":386,\"rom\":387,\"and\":388,\"Ġan\":389,\"um\":390,\"est\":391,\"ĠJ\":392,\"ag\":393,\"Ġhe\":394,\"00\":395,\"ist\":396,\"ain\":397,\"od\":398,\"av\":399,\"ri\":400,\"ĠE\":401,\"ĠO\":402,\"Ġfrom\":403,\"Ġcom\":404,\"Ġhis\":405,\"op\":406,\"Ġpro\":407,\"res\":408,\"ies\":409,\"if\":410,\"Ġv\":411,\"ort\":412,\"ere\":413,\"ill\":414,\"ld\":415,\"Ġde\":416,\"pp\":417,\"Ġsu\":418,\"ore\":419,\"ĠIn\":420,\"Ġr\":421,\"Ġse\":422,\"Ġwere\":423,\"ew\":424,\"ong\":425,\"igh\":426,\"ard\":427,\"ate\":428,\"all\":429,\"art\":430,\"ak\":431,\"ich\":432,\"Ġch\":433,\"Ġor\":434,\"ab\":435,\"ant\":436,\"ud\":437,\"oc\":438,\"ber\":439,\"Ġex\":440,\"gh\":441,\"ity\":442,\"ated\":443,\"pt\":444,\"ess\":445,\"ear\":446,\"ĠK\":447,\"Ġpl\":448,\"ame\":449,\"qu\":450,\"ive\":451,\"rou\":452,\"Ġare\":453,\"Ġâ\":454,\"Ġsh\":455,\"Ġk\":456,\"ack\":457,\"ect\":458,\"ĠâĢ\":459,\"ĠU\":460,\"Ġhad\":461,\"se\":462,\"Ġwhich\":463,\"red\":464,\"ov\":465,\"ĠSt\":466,\"ast\":467,\"Ġsp\":468,\"ian\":469,\"Ġy\":470,\"ment\":471,\"Ġle\":472,\"Ġnot\":473,\"ge\":474,\"ord\":475,\"rit\":476,\"ip\":477,\"ine\":478,\"ell\":479,\"ally\":480,\"our\":481,\"ost\":482,\"ight\":483,\"ther\":484,\"ap\":485,\"Ġu\":486,\"ish\":487,\"ĠCh\":488,\"oun\":489,\"ia\":490,\"Ġ3\":491,\"ave\":492,\"ary\":493,\"ust\":494,\"og\":495,\"Ġ200\":496,\"Ġun\":497,\"ous\":498,\"irst\":499,\"ĠV\":500,\"cc\":501,\"Ġinc\":502,\"Ġ;\":503,\"Ġcomp\":504,\"ru\":505,\"ions\":506,\"Ġtheir\":507,\"Ġbut\":508,\"ide\":509,\"ure\":510,\"so\":511,\"Ġcont\":512,\"Ġint\":513,\"fter\":514,\"ical\":515,\"ial\":516,\"Ġar\":517,\"Ġfirst\":518,\"ould\":519,\"Ġits\":520,\"hed\":521,\"ĠâĢĵ\":522,\"Ġwhe\":523,\"wo\":524,\"out\":525,\"ub\":526,\"Ġ20\":527,\"ff\":528,\"Ġ:\":529,\"ue\":530,\"Ġher\":531,\"own\":532,\"ok\":533,\"Ġalso\":534,\"Ġcl\":535,\"per\":536,\"ign\":537,\"ater\":538,\"ran\":539,\"orm\":540,\"ie\":541,\"ome\":542,\"ork\":543,\"ass\":544,\"ire\":545,\"end\":546,\"Ġres\":547,\"Ġab\":548,\"Ġad\":549,\"Ġus\":550,\"ry\":551,\"Ġrec\":552,\"Ġhave\":553,\"age\":554,\"ĠHe\":555,\"Ġ4\":556,\"Ġro\":557,\"mer\":558,\"Ġone\":559,\"ond\":560,\"low\":561,\"Ġhas\":562,\"ĠTh\":563,\"du\":564,\"Ġ5\":565,\"Ġper\":566,\"Ġbeen\":567,\"ime\":568,\"Ġtwo\":569,\"ence\":570,\"land\":571,\"Ġ18\":572,\".@\":573,\"Ġ@.@\":574,\"ult\":575,\"ree\":576,\"ough\":577,\"ile\":578,\"Ġwho\":579,\"ĠAl\":580,\"Ġsc\":581,\"uring\":582,\"pl\":583,\"ory\":584,\"ition\":585,\"ric\":586,\"ations\":587,\"Ġdis\":588,\"Ġthis\":589,\"Ġbec\":590,\"Ġapp\":591,\"iz\":592,\"ĠIt\":593,\"are\":594,\"ach\":595,\"lud\":596,\"ade\":597,\"Ġplay\":598,\"Ġj\":599,\"Ġman\":600,\"act\":601,\"ely\":602,\"Ġpart\":603,\"Ġdes\":604,\"Ġag\":605,\"Ġthey\":606,\"Ġyear\":607,\"ount\":608,\"Ġ201\":609,\"Ġover\":610,\"Ġother\":611,\"ound\":612,\"Ġafter\":613,\"ib\":614,\"over\":615,\"Ġser\":616,\"Ġen\":617,\"Ġoff\":618,\"Ġim\":619,\"ction\":620,\"ĠY\":621,\"ke\":622,\"ite\":623,\",@\":624,\"Ġ@,@\":625,\"te\":626,\"urn\":627,\"Ġinclud\":628,\"ress\":629,\"ance\":630,\"ang\":631,\"Ġatt\":632,\"ice\":633,\"ace\":634,\"ark\":635,\"Ġout\":636,\"wn\":637,\"ph\":638,\"ember\":639,\"Ġpre\":640,\"Ġup\":641,\"ens\":642,\"man\":643,\"Ġev\":644,\"Ġtime\":645,\"nder\":646,\"rough\":647,\"ced\":648,\"Ġfin\":649,\"Ġinto\":650,\"one\":651,\"port\":652,\"round\":653,\"we\":654,\"ren\":655,\"les\":656,\"int\":657,\"ĠOn\":658,\"vel\":659,\"Ġcomm\":660,\"Ġshe\":661,\"ason\":662,\"amp\":663,\"Ġte\":664,\"Ġwould\":665,\"ward\":666,\"Ġmore\":667,\"Ġ6\":668,\"ied\":669,\"ose\":670,\"rib\":671,\"ĠUn\":672,\"Ġall\":673,\"ings\":674,\"tern\":675,\"ces\":676,\"able\":677,\"Ġwe\":678,\"ited\":679,\"ever\":680,\"ents\":681,\"Ġhim\":682,\"ased\":683,\"ors\":684,\"oy\":685,\"ood\":686,\"Ġcent\":687,\"ix\":688,\"ase\":689,\"ild\":690,\"ĠAn\":691,\"Ġ7\":692,\"Ġwork\":693,\"ates\":694,\"ious\":695,\"ath\":696,\"Ġpo\":697,\"rop\":698,\"old\":699,\"als\":700,\"iss\":701,\"ey\":702,\"ict\":703,\"Ġfe\":704,\"Ġthem\":705,\"gan\":706,\"Ġsec\":707,\"Ġbet\":708,\"Ġwhen\":709,\"Ġsong\":710,\"Ġrem\":711,\"ep\":712,\"form\":713,\"ail\":714,\"fer\":715,\"Ġear\":716,\"ubl\":717,\"aw\":718,\"Ġkn\":719,\"ake\":720,\"aus\":721,\"Ġmost\":722,\"Ġcons\":723,\"Ġduring\":724,\"ĠAs\":725,\"orth\":726,\"Ġnew\":727,\"ered\":728,\"ilm\":729,\"ved\":730,\"att\":731,\"Ġonly\":732,\"Ġ9\":733,\"Ġdec\":734,\"Ġ8\":735,\"ick\":736,\"Ġgame\":737,\"ons\":738,\"ug\":739,\"Ġtr\":740,\"ft\":741,\"oth\":742,\"ook\":743,\"ĠMar\":744,\"reat\":745,\"way\":746,\"Ġcan\":747,\"ollow\":748,\"outh\":749,\"ween\":750,\"ĠEn\":751,\"Ġ199\":752,\"ters\":753,\"Ġrel\":754,\"ind\":755,\"Ġabout\":756,\"Ġseason\":757,\"Ġagain\":758,\"ral\":759,\"Ġthree\":760,\"ational\":761,\"Ġunder\":762,\"ular\":763,\"Ġme\":764,\"Ġthan\":765,\"ĠCom\":766,\"ĠAr\":767,\"hip\":768,\"ob\":769,\"Ġne\":770,\"Ġbetween\":771,\"Ġfl\":772,\"hn\":773,\"ve\":774,\"Ġchar\":775,\"Ġcol\":776,\"Ġrecord\":777,\"iew\":778,\"ron\":779,\"fore\":780,\"Ġthrough\":781,\"ision\":782,\"orn\":783,\"Ġ00\":784,\"ock\":785,\"Ġver\":786,\"Ġlater\":787,\"Ġnum\":788,\"Ġend\":789,\"olog\":790,\"ames\":791,\"Ġpos\":792,\"Ġwrit\":793,\"Ġprodu\":794,\"Ġwhile\":795,\"Ġact\":796,\"Ġrele\":797,\"Ġfilm\":798,\"ished\":799,\"Ġpr\":800,\"ans\":801,\"Ġreg\":802,\"Ġform\":803,\"Ġass\":804,\"ĠSe\":805,\"ury\":806,\"ted\":807,\"ts\":808,\"Ġmade\":809,\"Ġsub\":810,\"Ġpe\":811,\"Ġso\":812,\"orld\":813,\"Ġret\":814,\"ĠNew\":815,\"Ġspec\":816,\"Ġacc\":817,\"Ġqu\":818,\"Ġwhere\":819,\"ener\":820,\"Ġmov\":821,\"hes\":822,\"meric\":823,\"ating\":824,\"Ġinter\":825,\"ĠLe\":826,\"ĠAmeric\":827,\"Ġra\":828,\"Ġsome\":829,\"Ġco\":830,\"Ġlar\":831,\"Ġbu\":832,\"Ġdef\":833,\"bum\":834,\"Ġac\":835,\"Ġmus\":836,\"Ġfollow\":837,\"ĠAt\":838,\"ins\":839,\"ived\":840,\"ific\":841,\"ual\":842,\"Ġam\":843,\"Ġsuch\":844,\"Ġsecond\":845,\"ike\":846,\"Ġfour\":847,\"Ġind\":848,\"ann\":849,\"hen\":850,\"Ġused\":851,\"ĠRe\":852,\"ics\":853,\"lect\":854,\"Ġday\":855,\"iel\":856,\"ily\":857,\"ĠThis\":858,\"Ġ0\":859,\"Ġpubl\":860,\"Ġcall\":861,\"ĠJo\":862,\"ll\":863,\"Ġalbum\":864,\"Ġ000\":865,\"rans\":866,\"Ġdo\":867,\"any\":868,\"Ġbefore\":869,\"ros\":870,\"ĠSh\":871,\"Ġsy\":872,\"aid\":873,\"ĠEng\":874,\"Ġbeing\":875,\"Ġ10\":876,\"uc\":877,\"Ġep\":878,\"Ġsupp\":879,\"Ġthere\":880,\"Ġyears\":881,\"ars\":882,\"owever\":883,\"Ġent\":884,\"ife\":885,\"Ġhigh\":886,\"Ġfound\":887,\"ird\":888,\"Ġno\":889,\"Ġset\":890,\"ines\":891,\"iver\":892,\"io\":893,\"other\":894,\"ject\":895,\"Ġsur\":896,\"aj\":897,\"ten\":898,\"Ġtra\":899,\"Ġ12\":900,\"ised\":901,\"ities\":902,\"velop\":903,\"Ġbl\":904,\"ale\":905,\"Ġseries\":906,\"Ġloc\":907,\"Ġnumber\":908,\"Ġpres\":909,\"ane\":910,\"ause\":911,\"ode\":912,\"ek\":913,\"ton\":914,\"ĠSc\":915,\"ier\":916,\"ise\":917,\"Ġsever\":918,\"ince\":919,\"Ġboth\":920,\"ank\":921,\"row\":922,\"irect\":923,\"son\":924,\"Ġthen\":925,\"ĠBrit\":926,\"iet\":927,\"Ġ16\":928,\"Ġepis\":929,\"Ġincluding\":930,\"its\":931,\"igin\":932,\"pr\":933,\"Ġ/\":934,\"Ġagainst\":935,\"Ġwell\":936,\"Ġbecame\":937,\"Ġexp\":938,\"Ġknown\":939,\"Ġtrans\":940,\"Ġcharac\":941,\"ĠâĢĶ\":942,\"ram\":943,\"Ġback\":944,\"Ġadd\":945,\"Ġpop\":946,\"Ġgo\":947,\"urch\":948,\"Ġdesc\":949,\"Ġsing\":950,\"ield\":951,\"Ġperform\":952,\"ained\":953,\"Ġrece\":954,\"ident\":955,\"Ġem\":956,\"ert\":957,\"ures\":958,\"Ġinv\":959,\"Ġdep\":960,\"Ġ198\":961,\"air\":962,\"ern\":963,\"ather\":964,\"ful\":965,\"ĠZ\":966,\"Ġmon\":967,\"Ġmany\":968,\"Ġmain\":969,\"Ġstud\":970,\"Ġlong\":971,\"inn\":972,\"though\":973,\"up\":974,\"ool\":975,\"ĠUnited\":976,\"led\":977,\"ement\":978,\"Ġ15\":979,\"ower\":980,\"ĠJohn\":981,\"Ġop\":982,\"Ġ11\":983,\"ined\":984,\"Ġmet\":985,\"ober\":986,\"ley\":987,\"Ġ17\":988,\"Ġcentury\":989,\"Ġteam\":990,\"Ġest\":991,\"ĠAfter\":992,\"yl\":993,\"Ġmin\":994,\"uch\":995,\"ute\":996,\"Ġdevelop\":997,\"ĠShe\":998,\"iam\":999,\"Ġshow\":1000,\"elf\":1001,\"Ġrep\":1002,\"Ġconc\":1003,\"ative\":1004,\"Ġcre\":1005,\"overn\":1006,\"ared\":1007,\"Ġ194\":1008,\"Ġorigin\":1009,\"Ġsm\":1010,\"ivers\":1011,\"az\":1012,\"Ġlead\":1013,\"Ġseveral\":1014,\"ah\":1015,\"Ġob\":1016,\"Ġrev\":1017,\"Ġmill\":1018,\"erm\":1019,\"ually\":1020,\"oot\":1021,\"Ġbegan\":1022,\"Ġ196\":1023},\"merges\":[[\"Ġ\",\"t\"],[\"h\",\"e\"],[\"Ġ\",\"a\"],[\"i\",\"n\"],[\"Ġt\",\"he\"],[\"e\",\"r\"],[\"o\",\"n\"],[\"Ġ\",\",\"],[\"r\",\"e\"],[\"Ġ\",\"s\"],[\"e\",\"d\"],[\"Ġ\",\"o\"],[\"Ġ\",\"w\"],[\"n\",\"d\"],[\"a\",\"t\"],[\"Ġ\",\".\"],[\"o\",\"r\"],[\"i\",\"t\"],[\"Ġ\",\"c\"],[\"e\",\"n\"],[\"Ġ\",\"f\"],[\"i\",\"s\"],[\"e\",\"s\"],[\"a\",\"r\"],[\"Ġo\",\"f\"],[\"Ġ\",\"b\"],[\"a\",\"n\"],[\"Ġ\",\"in\"],[\"a\",\"l\"],[\"in\",\"g\"],[\"Ġ\",\"p\"],[\"Ġa\",\"nd\"],[\"a\",\"s\"],[\"Ġt\",\"o\"],[\"r\",\"o\"],[\"i\",\"c\"],[\"Ġ\",\"m\"],[\"Ġ\",\"d\"],[\"Ġ\",\"h\"],[\"i\",\"on\"],[\"l\",\"e\"],[\"o\",\"u\"],[\"Ġ\",\"T\"],[\"Ġ\",\"re\"],[\"Ġ\",\"=\"],[\"Ġ\",\"\\\"\"],[\"Ġ\",\"A\"],[\"Ġ\",\"S\"],[\"en\",\"t\"],[\"i\",\"l\"],[\"Ġt\",\"h\"],[\"Ġ\",\"1\"],[\"s\",\"t\"],[\"Ġ\",\"C\"],[\"e\",\"l\"],[\"o\",\"m\"],[\"Ġ\",\"l\"],[\"a\",\"m\"],[\"Ġ\",\"Ċ\"],[\"Ġ\",\"e\"],[\"Ġ\",\"n\"],[\"Ġ\",\"@\"],[\"a\",\"d\"],[\"a\",\"c\"],[\"Ġw\",\"as\"],[\"Ġ\",\"M\"],[\"u\",\"r\"],[\"ĠT\",\"he\"],[\"e\",\"c\"],[\"Ġ\",\"on\"],[\"l\",\"y\"],[\"Ġ\",\"B\"],[\"Ġ\",\"I\"],[\"Ġ\",\"g\"],[\"Ġ\",\"'\"],[\"e\",\"t\"],[\"o\",\"l\"],[\"i\",\"d\"],[\"i\",\"v\"],[\"i\",\"m\"],[\"Ġf\",\"or\"],[\"i\",\"r\"],[\"-\",\"@\"],[\"Ġ@\",\"-@\"],[\"i\",\"g\"],[\"o\",\"t\"],[\"t\",\"er\"],[\"Ġa\",\"s\"],[\"Ġ\",\"H\"],[\"u\",\"s\"],[\"o\",\"w\"],[\"Ġs\",\"t\"],[\"u\",\"t\"],[\"it\",\"h\"],[\"a\",\"y\"],[\"Ġ\",\"2\"],[\"Ġ\",\"P\"],[\"at\",\"ion\"],[\"v\",\"er\"],[\"Ġb\",\"e\"],[\"he\",\"r\"],[\"Ġth\",\"at\"],[\"Ġw\",\"ith\"],[\"Ġ\",\"R\"],[\"c\",\"e\"],[\"t\",\"h\"],[\"Ġ\",\"D\"],[\"Ġ\",\"is\"],[\"u\",\"n\"],[\"e\",\"m\"],[\"Ġ\",\"F\"],[\"Ġw\",\"h\"],[\"u\",\"l\"],[\"Ġb\",\"y\"],[\"Ġa\",\"l\"],[\"c\",\"h\"],[\"Ġ\",\")\"],[\"Ġ\",\"(\"],[\"Ġ\",\"W\"],[\"Ġc\",\"on\"],[\"r\",\"a\"],[\"Ġ\",\"G\"],[\"o\",\"s\"],[\"Ġ\",\"L\"],[\"Ġ\",\"N\"],[\"Ġa\",\"t\"],[\"er\",\"s\"],[\"c\",\"t\"],[\"Ġ\",\"it\"],[\"Ġ1\",\"9\"],[\"ro\",\"m\"],[\"a\",\"nd\"],[\"Ġa\",\"n\"],[\"u\",\"m\"],[\"es\",\"t\"],[\"Ġ\",\"J\"],[\"a\",\"g\"],[\"Ġ\",\"he\"],[\"0\",\"0\"],[\"is\",\"t\"],[\"a\",\"in\"],[\"o\",\"d\"],[\"a\",\"v\"],[\"r\",\"i\"],[\"Ġ\",\"E\"],[\"Ġ\",\"O\"],[\"Ġf\",\"rom\"],[\"Ġc\",\"om\"],[\"Ġh\",\"is\"],[\"o\",\"p\"],[\"Ġp\",\"ro\"],[\"re\",\"s\"],[\"i\",\"es\"],[\"i\",\"f\"],[\"Ġ\",\"v\"],[\"or\",\"t\"],[\"er\",\"e\"],[\"il\",\"l\"],[\"l\",\"d\"],[\"Ġd\",\"e\"],[\"p\",\"p\"],[\"Ġs\",\"u\"],[\"o\",\"re\"],[\"ĠI\",\"n\"],[\"Ġ\",\"r\"],[\"Ġs\",\"e\"],[\"Ġw\",\"ere\"],[\"e\",\"w\"],[\"on\",\"g\"],[\"ig\",\"h\"],[\"ar\",\"d\"],[\"at\",\"e\"],[\"al\",\"l\"],[\"ar\",\"t\"],[\"a\",\"k\"],[\"ic\",\"h\"],[\"Ġc\",\"h\"],[\"Ġo\",\"r\"],[\"a\",\"b\"],[\"an\",\"t\"],[\"u\",\"d\"],[\"o\",\"c\"],[\"b\",\"er\"],[\"Ġe\",\"x\"],[\"g\",\"h\"],[\"it\",\"y\"],[\"at\",\"ed\"],[\"p\",\"t\"],[\"es\",\"s\"],[\"e\",\"ar\"],[\"Ġ\",\"K\"],[\"Ġp\",\"l\"],[\"am\",\"e\"],[\"q\",\"u\"],[\"iv\",\"e\"],[\"ro\",\"u\"],[\"Ġa\",\"re\"],[\"Ġ\",\"â\"],[\"Ġs\",\"h\"],[\"Ġ\",\"k\"],[\"ac\",\"k\"],[\"ec\",\"t\"],[\"Ġâ\",\"Ģ\"],[\"Ġ\",\"U\"],[\"Ġh\",\"ad\"],[\"s\",\"e\"],[\"Ġwh\",\"ich\"],[\"re\",\"d\"],[\"o\",\"v\"],[\"ĠS\",\"t\"],[\"as\",\"t\"],[\"Ġs\",\"p\"],[\"i\",\"an\"],[\"Ġ\",\"y\"],[\"m\",\"ent\"],[\"Ġ\",\"le\"],[\"Ġn\",\"ot\"],[\"g\",\"e\"],[\"or\",\"d\"],[\"r\",\"it\"],[\"i\",\"p\"],[\"in\",\"e\"],[\"el\",\"l\"],[\"al\",\"ly\"],[\"ou\",\"r\"],[\"o\",\"st\"],[\"igh\",\"t\"],[\"t\",\"her\"],[\"a\",\"p\"],[\"Ġ\",\"u\"],[\"is\",\"h\"],[\"ĠC\",\"h\"],[\"ou\",\"n\"],[\"i\",\"a\"],[\"Ġ\",\"3\"],[\"av\",\"e\"],[\"ar\",\"y\"],[\"u\",\"st\"],[\"o\",\"g\"],[\"Ġ2\",\"00\"],[\"Ġ\",\"un\"],[\"ou\",\"s\"],[\"ir\",\"st\"],[\"Ġ\",\"V\"],[\"c\",\"c\"],[\"Ġin\",\"c\"],[\"Ġ\",\";\"],[\"Ġcom\",\"p\"],[\"r\",\"u\"],[\"ion\",\"s\"],[\"Ġthe\",\"ir\"],[\"Ġb\",\"ut\"],[\"id\",\"e\"],[\"u\",\"re\"],[\"s\",\"o\"],[\"Ġcon\",\"t\"],[\"Ġin\",\"t\"],[\"f\",\"ter\"],[\"ic\",\"al\"],[\"i\",\"al\"],[\"Ġa\",\"r\"],[\"Ġf\",\"irst\"],[\"ou\",\"ld\"],[\"Ġit\",\"s\"],[\"he\",\"d\"],[\"ĠâĢ\",\"ĵ\"],[\"Ġw\",\"he\"],[\"w\",\"o\"],[\"ou\",\"t\"],[\"u\",\"b\"],[\"Ġ2\",\"0\"],[\"f\",\"f\"],[\"Ġ\",\":\"],[\"u\",\"e\"],[\"Ġ\",\"her\"],[\"ow\",\"n\"],[\"o\",\"k\"],[\"Ġal\",\"so\"],[\"Ġc\",\"l\"],[\"p\",\"er\"],[\"ig\",\"n\"],[\"at\",\"er\"],[\"r\",\"an\"],[\"or\",\"m\"],[\"i\",\"e\"],[\"om\",\"e\"],[\"or\",\"k\"],[\"as\",\"s\"],[\"i\",\"re\"],[\"e\",\"nd\"],[\"Ġre\",\"s\"],[\"Ġa\",\"b\"],[\"Ġa\",\"d\"],[\"Ġ\",\"us\"],[\"r\",\"y\"],[\"Ġre\",\"c\"],[\"Ġh\",\"ave\"],[\"ag\",\"e\"],[\"ĠH\",\"e\"],[\"Ġ\",\"4\"],[\"Ġ\",\"ro\"],[\"m\",\"er\"],[\"Ġon\",\"e\"],[\"on\",\"d\"],[\"l\",\"ow\"],[\"Ġh\",\"as\"],[\"ĠT\",\"h\"],[\"d\",\"u\"],[\"Ġ\",\"5\"],[\"Ġp\",\"er\"],[\"Ġbe\",\"en\"],[\"im\",\"e\"],[\"Ġt\",\"wo\"],[\"en\",\"ce\"],[\"l\",\"and\"],[\"Ġ1\",\"8\"],[\".\",\"@\"],[\"Ġ@\",\".@\"],[\"ul\",\"t\"],[\"re\",\"e\"],[\"ou\",\"gh\"],[\"i\",\"le\"],[\"Ġwh\",\"o\"],[\"ĠA\",\"l\"],[\"Ġs\",\"c\"],[\"ur\",\"ing\"],[\"p\",\"l\"],[\"or\",\"y\"],[\"it\",\"ion\"],[\"r\",\"ic\"],[\"ation\",\"s\"],[\"Ġd\",\"is\"],[\"Ġth\",\"is\"],[\"Ġb\",\"ec\"],[\"Ġa\",\"pp\"],[\"i\",\"z\"],[\"ĠI\",\"t\"],[\"a\",\"re\"],[\"ac\",\"h\"],[\"l\",\"ud\"],[\"ad\",\"e\"],[\"Ġpl\",\"ay\"],[\"Ġ\",\"j\"],[\"Ġm\",\"an\"],[\"ac\",\"t\"],[\"el\",\"y\"],[\"Ġp\",\"art\"],[\"Ġd\",\"es\"],[\"Ġa\",\"g\"],[\"Ġthe\",\"y\"],[\"Ġy\",\"ear\"],[\"oun\",\"t\"],[\"Ġ20\",\"1\"],[\"Ġo\",\"ver\"],[\"Ġo\",\"ther\"],[\"ou\",\"nd\"],[\"Ġa\",\"fter\"],[\"i\",\"b\"],[\"o\",\"ver\"],[\"Ġs\",\"er\"],[\"Ġ\",\"en\"],[\"Ġof\",\"f\"],[\"Ġ\",\"im\"],[\"ct\",\"ion\"],[\"Ġ\",\"Y\"],[\"k\",\"e\"],[\"it\",\"e\"],[\",\",\"@\"],[\"Ġ@\",\",@\"],[\"t\",\"e\"],[\"ur\",\"n\"],[\"Ġinc\",\"lud\"],[\"res\",\"s\"],[\"an\",\"ce\"],[\"an\",\"g\"],[\"Ġat\",\"t\"],[\"ic\",\"e\"],[\"ac\",\"e\"],[\"ar\",\"k\"],[\"Ġo\",\"ut\"],[\"w\",\"n\"],[\"p\",\"h\"],[\"em\",\"ber\"],[\"Ġp\",\"re\"],[\"Ġu\",\"p\"],[\"en\",\"s\"],[\"m\",\"an\"],[\"Ġe\",\"v\"],[\"Ġt\",\"ime\"],[\"nd\",\"er\"],[\"rou\",\"gh\"],[\"c\",\"ed\"],[\"Ġf\",\"in\"],[\"Ġint\",\"o\"],[\"on\",\"e\"],[\"p\",\"ort\"],[\"rou\",\"nd\"],[\"w\",\"e\"],[\"re\",\"n\"],[\"l\",\"es\"],[\"in\",\"t\"],[\"ĠO\",\"n\"],[\"v\",\"el\"],[\"Ġcom\",\"m\"],[\"Ġs\",\"he\"],[\"as\",\"on\"],[\"am\",\"p\"],[\"Ġt\",\"e\"],[\"Ġw\",\"ould\"],[\"w\",\"ard\"],[\"Ġm\",\"ore\"],[\"Ġ\",\"6\"],[\"i\",\"ed\"],[\"os\",\"e\"],[\"ri\",\"b\"],[\"ĠU\",\"n\"],[\"Ġal\",\"l\"],[\"ing\",\"s\"],[\"ter\",\"n\"],[\"c\",\"es\"],[\"ab\",\"le\"],[\"Ġw\",\"e\"],[\"it\",\"ed\"],[\"e\",\"ver\"],[\"ent\",\"s\"],[\"Ġh\",\"im\"],[\"as\",\"ed\"],[\"or\",\"s\"],[\"o\",\"y\"],[\"o\",\"od\"],[\"Ġc\",\"ent\"],[\"i\",\"x\"],[\"as\",\"e\"],[\"il\",\"d\"],[\"ĠA\",\"n\"],[\"Ġ\",\"7\"],[\"Ġw\",\"ork\"],[\"at\",\"es\"],[\"i\",\"ous\"],[\"at\",\"h\"],[\"Ġp\",\"o\"],[\"ro\",\"p\"],[\"ol\",\"d\"],[\"al\",\"s\"],[\"is\",\"s\"],[\"e\",\"y\"],[\"ic\",\"t\"],[\"Ġf\",\"e\"],[\"Ġthe\",\"m\"],[\"g\",\"an\"],[\"Ġs\",\"ec\"],[\"Ġb\",\"et\"],[\"Ġwhe\",\"n\"],[\"Ġs\",\"ong\"],[\"Ġre\",\"m\"],[\"e\",\"p\"],[\"f\",\"orm\"],[\"a\",\"il\"],[\"f\",\"er\"],[\"Ġe\",\"ar\"],[\"ub\",\"l\"],[\"a\",\"w\"],[\"Ġk\",\"n\"],[\"ak\",\"e\"],[\"a\",\"us\"],[\"Ġm\",\"ost\"],[\"Ġcon\",\"s\"],[\"Ġd\",\"uring\"],[\"ĠA\",\"s\"],[\"or\",\"th\"],[\"Ġn\",\"ew\"],[\"er\",\"ed\"],[\"il\",\"m\"],[\"v\",\"ed\"],[\"at\",\"t\"],[\"Ġon\",\"ly\"],[\"Ġ\",\"9\"],[\"Ġd\",\"ec\"],[\"Ġ\",\"8\"],[\"ic\",\"k\"],[\"Ġg\",\"ame\"],[\"on\",\"s\"],[\"u\",\"g\"],[\"Ġt\",\"r\"],[\"f\",\"t\"],[\"ot\",\"h\"],[\"o\",\"ok\"],[\"ĠM\",\"ar\"],[\"re\",\"at\"],[\"w\",\"ay\"],[\"Ġc\",\"an\"],[\"ol\",\"low\"],[\"ou\",\"th\"],[\"we\",\"en\"],[\"ĠE\",\"n\"],[\"Ġ19\",\"9\"],[\"ter\",\"s\"],[\"Ġre\",\"l\"],[\"in\",\"d\"],[\"Ġab\",\"out\"],[\"Ġse\",\"ason\"],[\"Ġag\",\"ain\"],[\"r\",\"al\"],[\"Ġth\",\"ree\"],[\"ation\",\"al\"],[\"Ġu\",\"nder\"],[\"ul\",\"ar\"],[\"Ġm\",\"e\"],[\"Ġth\",\"an\"],[\"ĠC\",\"om\"],[\"ĠA\",\"r\"],[\"h\",\"ip\"],[\"o\",\"b\"],[\"Ġn\",\"e\"],[\"Ġbet\",\"ween\"],[\"Ġf\",\"l\"],[\"h\",\"n\"],[\"v\",\"e\"],[\"Ġch\",\"ar\"],[\"Ġc\",\"ol\"],[\"Ġrec\",\"ord\"],[\"i\",\"ew\"],[\"r\",\"on\"],[\"f\",\"ore\"],[\"Ġth\",\"rough\"],[\"is\",\"ion\"],[\"or\",\"n\"],[\"Ġ\",\"00\"],[\"oc\",\"k\"],[\"Ġ\",\"ver\"],[\"Ġl\",\"ater\"],[\"Ġn\",\"um\"],[\"Ġe\",\"nd\"],[\"ol\",\"og\"],[\"am\",\"es\"],[\"Ġp\",\"os\"],[\"Ġw\",\"rit\"],[\"Ġpro\",\"du\"],[\"Ġwh\",\"ile\"],[\"Ġa\",\"ct\"],[\"Ġre\",\"le\"],[\"Ġf\",\"ilm\"],[\"is\",\"hed\"],[\"Ġp\",\"r\"],[\"an\",\"s\"],[\"Ġre\",\"g\"],[\"Ġfor\",\"m\"],[\"Ġas\",\"s\"],[\"ĠS\",\"e\"],[\"ur\",\"y\"],[\"t\",\"ed\"],[\"t\",\"s\"],[\"Ġm\",\"ade\"],[\"Ġsu\",\"b\"],[\"Ġp\",\"e\"],[\"Ġs\",\"o\"],[\"or\",\"ld\"],[\"Ġre\",\"t\"],[\"ĠN\",\"ew\"],[\"Ġsp\",\"ec\"],[\"Ġa\",\"cc\"],[\"Ġ\",\"qu\"],[\"Ġwhe\",\"re\"],[\"en\",\"er\"],[\"Ġm\",\"ov\"],[\"he\",\"s\"],[\"mer\",\"ic\"],[\"at\",\"ing\"],[\"Ġin\",\"ter\"],[\"ĠL\",\"e\"],[\"ĠA\",\"meric\"],[\"Ġ\",\"ra\"],[\"Ġs\",\"ome\"],[\"Ġc\",\"o\"],[\"Ġl\",\"ar\"],[\"Ġb\",\"u\"],[\"Ġde\",\"f\"],[\"b\",\"um\"],[\"Ġa\",\"c\"],[\"Ġm\",\"us\"],[\"Ġf\",\"ollow\"],[\"ĠA\",\"t\"],[\"in\",\"s\"],[\"iv\",\"ed\"],[\"if\",\"ic\"],[\"u\",\"al\"],[\"Ġa\",\"m\"],[\"Ġsu\",\"ch\"],[\"Ġsec\",\"ond\"],[\"i\",\"ke\"],[\"Ġf\",\"our\"],[\"Ġin\",\"d\"],[\"an\",\"n\"],[\"he\",\"n\"],[\"Ġus\",\"ed\"],[\"ĠR\",\"e\"],[\"ic\",\"s\"],[\"le\",\"ct\"],[\"Ġd\",\"ay\"],[\"i\",\"el\"],[\"il\",\"y\"],[\"ĠTh\",\"is\"],[\"Ġ\",\"0\"],[\"Ġp\",\"ubl\"],[\"Ġc\",\"all\"],[\"ĠJ\",\"o\"],[\"l\",\"l\"],[\"Ġal\",\"bum\"],[\"Ġ00\",\"0\"],[\"ran\",\"s\"],[\"Ġd\",\"o\"],[\"an\",\"y\"],[\"Ġbe\",\"fore\"],[\"ro\",\"s\"],[\"ĠS\",\"h\"],[\"Ġs\",\"y\"],[\"a\",\"id\"],[\"ĠEn\",\"g\"],[\"Ġbe\",\"ing\"],[\"Ġ1\",\"0\"],[\"u\",\"c\"],[\"Ġe\",\"p\"],[\"Ġsu\",\"pp\"],[\"Ġthe\",\"re\"],[\"Ġyear\",\"s\"],[\"ar\",\"s\"],[\"ow\",\"ever\"],[\"Ġ\",\"ent\"],[\"if\",\"e\"],[\"Ġh\",\"igh\"],[\"Ġf\",\"ound\"],[\"ir\",\"d\"],[\"Ġn\",\"o\"],[\"Ġs\",\"et\"],[\"in\",\"es\"],[\"iv\",\"er\"],[\"i\",\"o\"],[\"ot\",\"her\"],[\"j\",\"ect\"],[\"Ġs\",\"ur\"],[\"a\",\"j\"],[\"t\",\"en\"],[\"Ġt\",\"ra\"],[\"Ġ1\",\"2\"],[\"is\",\"ed\"],[\"it\",\"ies\"],[\"vel\",\"op\"],[\"Ġb\",\"l\"],[\"al\",\"e\"],[\"Ġser\",\"ies\"],[\"Ġl\",\"oc\"],[\"Ġnum\",\"ber\"],[\"Ġp\",\"res\"],[\"an\",\"e\"],[\"aus\",\"e\"],[\"od\",\"e\"],[\"e\",\"k\"],[\"t\",\"on\"],[\"ĠS\",\"c\"],[\"i\",\"er\"],[\"is\",\"e\"],[\"Ġse\",\"ver\"],[\"in\",\"ce\"],[\"Ġb\",\"oth\"],[\"an\",\"k\"],[\"ro\",\"w\"],[\"ire\",\"ct\"],[\"s\",\"on\"],[\"Ġthe\",\"n\"],[\"ĠB\",\"rit\"],[\"i\",\"et\"],[\"Ġ1\",\"6\"],[\"Ġep\",\"is\"],[\"Ġinclud\",\"ing\"],[\"it\",\"s\"],[\"ig\",\"in\"],[\"p\",\"r\"],[\"Ġ\",\"/\"],[\"Ġagain\",\"st\"],[\"Ġw\",\"ell\"],[\"Ġbec\",\"ame\"],[\"Ġex\",\"p\"],[\"Ġkn\",\"own\"],[\"Ġt\",\"rans\"],[\"Ġchar\",\"ac\"],[\"ĠâĢ\",\"Ķ\"],[\"r\",\"am\"],[\"Ġb\",\"ack\"],[\"Ġad\",\"d\"],[\"Ġp\",\"op\"],[\"Ġg\",\"o\"],[\"ur\",\"ch\"],[\"Ġdes\",\"c\"],[\"Ġs\",\"ing\"],[\"iel\",\"d\"],[\"Ġper\",\"form\"],[\"ain\",\"ed\"],[\"Ġre\",\"ce\"],[\"id\",\"ent\"],[\"Ġe\",\"m\"],[\"er\",\"t\"],[\"u\",\"res\"],[\"Ġin\",\"v\"],[\"Ġde\",\"p\"],[\"Ġ19\",\"8\"],[\"a\",\"ir\"],[\"er\",\"n\"],[\"at\",\"her\"],[\"f\",\"ul\"],[\"Ġ\",\"Z\"],[\"Ġm\",\"on\"],[\"Ġman\",\"y\"],[\"Ġm\",\"ain\"],[\"Ġst\",\"ud\"],[\"Ġl\",\"ong\"],[\"in\",\"n\"],[\"th\",\"ough\"],[\"u\",\"p\"],[\"o\",\"ol\"],[\"ĠUn\",\"ited\"],[\"l\",\"ed\"],[\"em\",\"ent\"],[\"Ġ1\",\"5\"],[\"ow\",\"er\"],[\"ĠJo\",\"hn\"],[\"Ġo\",\"p\"],[\"Ġ1\",\"1\"],[\"in\",\"ed\"],[\"Ġm\",\"et\"],[\"o\",\"ber\"],[\"le\",\"y\"],[\"Ġ1\",\"7\"],[\"Ġcent\",\"ury\"],[\"Ġte\",\"am\"],[\"Ġ\",\"est\"],[\"ĠA\",\"fter\"],[\"y\",\"l\"],[\"Ġm\",\"in\"],[\"u\",\"ch\"],[\"ut\",\"e\"],[\"Ġde\",\"velop\"],[\"ĠS\",\"he\"],[\"i\",\"am\"],[\"Ġsh\",\"ow\"],[\"el\",\"f\"],[\"Ġre\",\"p\"],[\"Ġcon\",\"c\"],[\"at\",\"ive\"],[\"Ġc\",\"re\"],[\"over\",\"n\"],[\"a\",\"red\"],[\"Ġ19\",\"4\"],[\"Ġor\",\"igin\"],[\"Ġs\",\"m\"],[\"iv\",\"ers\"],[\"a\",\"z\"],[\"Ġle\",\"ad\"],[\"Ġsever\",\"al\"],[\"a\",\"h\"],[\"Ġo\",\"b\"],[\"Ġre\",\"v\"],[\"Ġm\",\"ill\"],[\"er\",\"m\"],[\"u\",\"ally\"],[\"o\",\"ot\"],[\"Ġbe\",\"gan\"],[\"Ġ19\",\"6\"]]}}"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer.json; filename=\"tokenizer.json\";",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:28 GMT",
+          "etag": "W/\"4862cec061d6a8f15f16c77acb16f88861be6eff\"",
+          "ratelimit": "\"resolvers\";r=2903;t=2",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "transfer-encoding": "chunked",
+          "vary": "Origin,Accept-Encoding",
+          "via": "1.1 f28664317eb9628b30397afa3d6b821c.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "i5bUAfEMPoCZWN_JZDMueyP2G_BdhYcqZQ1gxzAcJ8SXgVB7ZeaKiQ==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "e8a341159ca8e6f35cdd59635ee59042260fd0b3",
+          "x-request-id": "Root=1-6a673308-443897d03fc39e65044fe8e3"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "b0cc9d2a404e43ac",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/tokenizer_config.json",
+      "recordedAt": "2026-07-27T10:38:25.111Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/tokenizer_config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"add_bos_token\":false,\"add_prefix_space\":false,\"added_tokens_decoder\":{\"0\":{\"content\":\"<|endoftext|>\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true}},\"bos_token\":\"<|endoftext|>\",\"clean_up_tokenization_spaces\":false,\"eos_token\":\"<|endoftext|>\",\"errors\":\"replace\",\"extra_special_tokens\":{},\"model_max_length\":512,\"pad_token\":null,\"tokenizer_class\":\"GPT2Tokenizer\",\"unk_token\":\"<|endoftext|>\"}"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer_config.json; filename=\"tokenizer_config.json\";",
+          "content-length": "541",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:28 GMT",
+          "etag": "\"a7f77ae154a25a6a0a0b9f9709122116014ae53f\"",
+          "ratelimit": "\"resolvers\";r=2904;t=2",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 5e79d089f5701b7938b599fdf4db1b52.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "QHvMelTd0d8ADjcfghPNnX8iJAhL4rpo0Z0AXvhI8V_2tdfbhSqHBg==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "e8a341159ca8e6f35cdd59635ee59042260fd0b3",
+          "x-request-id": "Root=1-6a673308-24d97cbe578d0380379bcef8"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "3124ecd7acd9b615",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/generation_config.json",
+      "recordedAt": "2026-07-27T10:38:25.119Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/generation_config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"_from_model_config\":true,\"bos_token_id\":0,\"eos_token_id\":0,\"pad_token_id\":1023,\"transformers_version\":\"4.48.2\"}"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''generation_config.json; filename=\"generation_config.json\";",
+          "content-length": "135",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:28 GMT",
+          "etag": "\"c92430893b285e018d7da77496463ca2e25980a2\"",
+          "ratelimit": "\"resolvers\";r=2900;t=2",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 5e79d089f5701b7938b599fdf4db1b52.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "YRyBF7wVt8CrfueN5_UZ7tjX6fD3di2eCAZjManERIbbBQhmt3yHVw==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "e8a341159ca8e6f35cdd59635ee59042260fd0b3",
+          "x-request-id": "Root=1-6a673308-7eb034825784c0334c1fbc42"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "e25e71aa7d8985af",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/onnx/model.onnx",
+      "recordedAt": "2026-07-27T10:38:25.261Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-GPT2LMHeadModel-ONNX/resolve/main/onnx/model.onnx"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/octet-stream",
+          "kind": "binary",
+          "path": "huggingface-transformers-v4-latest.cassette.blobs/aade1d8e6f80680b52cd779573091ababb34a256387ad6f9ebc56342bfdd5b44.bin",
+          "sha256": "aade1d8e6f80680b52cd779573091ababb34a256387ad6f9ebc56342bfdd5b44"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-headers": "Content-Range, Content-Type, Content-Disposition, ETag",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "*",
+          "alt-svc": "h3=\":443\";ma=60;",
+          "content-disposition": "inline; filename*=UTF-8''model.onnx; filename=\"model.onnx\";",
+          "content-length": "516418",
+          "content-type": "application/octet-stream",
+          "date": "Mon, 27 Jul 2026 10:38:25 GMT",
+          "etag": "\"cbbb91d550fb3e75b4d027f0b83cf8d3e873f6e8946076e68d35bfb9af38aa4f\"",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-hf-cdn-pop": "aws-us-east-1",
+          "x-request-id": "01KYHJF2CS9GSMXV5TM201A7CZ"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "eab88d7d069784fa",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/config.json",
+      "recordedAt": "2026-07-27T10:38:25.421Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"_attn_implementation_autoset\":true,\"_name_or_path\":\"hf-internal-testing/tiny-random-BartForConditionalGeneration\",\"activation_dropout\":0,\"activation_function\":\"gelu\",\"architectures\":[\"BartForConditionalGeneration\"],\"attention_dropout\":0.1,\"bos_token_id\":0,\"classifier_dropout\":0,\"d_model\":16,\"decoder_attention_heads\":4,\"decoder_ffn_dim\":4,\"decoder_layerdrop\":0,\"decoder_layers\":2,\"decoder_start_token_id\":2,\"dropout\":0.1,\"encoder_attention_heads\":4,\"encoder_ffn_dim\":4,\"encoder_layerdrop\":0,\"encoder_layers\":2,\"eos_token_id\":2,\"forced_eos_token_id\":null,\"id2label\":{\"0\":\"LABEL_0\",\"1\":\"LABEL_1\",\"2\":\"LABEL_2\"},\"init_std\":0.02,\"is_encoder_decoder\":true,\"label2id\":{\"LABEL_0\":0,\"LABEL_1\":1,\"LABEL_2\":2},\"max_position_embeddings\":100,\"model_type\":\"bart\",\"num_hidden_layers\":2,\"pad_token_id\":1,\"scale_embedding\":false,\"transformers_version\":\"4.48.2\",\"use_cache\":true,\"vocab_size\":1024}"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''config.json; filename=\"config.json\";",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:28 GMT",
+          "etag": "W/\"93f1662b6f07d1579e95cdff6a876e3118d7ba0e\"",
+          "ratelimit": "\"resolvers\";r=2894;t=2",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "transfer-encoding": "chunked",
+          "vary": "Origin,Accept-Encoding",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "FJU-SMINae9uC8Y2Eh9wpeHJn2nt9FrC3b_zoGK5WoJdGMqj4X8OJg==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "1b79f810bb092a83539dfea358459e82dfed197e",
+          "x-request-id": "Root=1-6a673308-2486cbc02c6a00d719bc5640"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "ded4d9be0448cd8d",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/tokenizer_config.json",
+      "recordedAt": "2026-07-27T10:38:25.443Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/tokenizer_config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "691",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer_config.json; filename=\"tokenizer_config.json\";",
+          "content-length": "1",
+          "content-range": "bytes 0-0/1242",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:26:54 GMT",
+          "etag": "\"548cc217bc31e225251e2a0734296368895503c3\"",
+          "ratelimit": "\"resolvers\";r=2936;t=156",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "sOxrHPi_Buy7SoRbyWX3xBzSzSp1m9HJbFIAozBYIaJlWe9PXU8Kkg==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "1b79f810bb092a83539dfea358459e82dfed197e",
+          "x-request-id": "Root=1-6a67326e-64b1219a0d2f3ac544b33b9d"
+        },
+        "status": 206,
+        "statusText": "Partial Content"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "dc97a374cf8a5219",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/tokenizer_config.json",
+      "recordedAt": "2026-07-27T10:38:25.465Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/tokenizer_config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"add_prefix_space\":false,\"added_tokens_decoder\":{\"0\":{\"content\":\"<s>\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"1\":{\"content\":\"<pad>\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"2\":{\"content\":\"</s>\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"3\":{\"content\":\"<unk>\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"4\":{\"content\":\"<mask>\",\"lstrip\":true,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true}},\"bos_token\":\"<s>\",\"clean_up_tokenization_spaces\":true,\"cls_token\":\"<s>\",\"eos_token\":\"</s>\",\"errors\":\"replace\",\"extra_special_tokens\":{},\"mask_token\":\"<mask>\",\"model_max_length\":100,\"pad_token\":\"<pad>\",\"sep_token\":\"</s>\",\"tokenizer_class\":\"BartTokenizer\",\"trim_offsets\":true,\"unk_token\":\"<unk>\"}"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer_config.json; filename=\"tokenizer_config.json\";",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:28 GMT",
+          "etag": "W/\"548cc217bc31e225251e2a0734296368895503c3\"",
+          "ratelimit": "\"resolvers\";r=2896;t=2",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "transfer-encoding": "chunked",
+          "vary": "Origin,Accept-Encoding",
+          "via": "1.1 caa5dc507511eeb90523a221b2bd19b4.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "NTYel97aYXlxvtQdcPiBiVp2YvXpeNH_-ni2v_3y5_Aj9pH-0c1cPA==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "1b79f810bb092a83539dfea358459e82dfed197e",
+          "x-request-id": "Root=1-6a673308-72118bcd32c4a1de39486726"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "8c50d4448b3a1726",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/tokenizer.json",
+      "recordedAt": "2026-07-27T10:38:25.469Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/tokenizer.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"version\":\"1.0\",\"truncation\":null,\"padding\":null,\"added_tokens\":[{\"id\":0,\"content\":\"<s>\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":1,\"content\":\"<pad>\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":2,\"content\":\"</s>\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":3,\"content\":\"<unk>\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":4,\"content\":\"<mask>\",\"single_word\":false,\"lstrip\":true,\"rstrip\":false,\"normalized\":false,\"special\":true}],\"normalizer\":null,\"pre_tokenizer\":{\"type\":\"ByteLevel\",\"add_prefix_space\":false,\"trim_offsets\":true,\"use_regex\":true},\"post_processor\":{\"type\":\"RobertaProcessing\",\"sep\":[\"</s>\",2],\"cls\":[\"<s>\",0],\"trim_offsets\":true,\"add_prefix_space\":false},\"decoder\":{\"type\":\"ByteLevel\",\"add_prefix_space\":true,\"trim_offsets\":true,\"use_regex\":true},\"model\":{\"type\":\"BPE\",\"dropout\":null,\"unk_token\":null,\"continuing_subword_prefix\":\"\",\"end_of_word_suffix\":\"\",\"fuse_unk\":false,\"byte_fallback\":false,\"ignore_merges\":false,\"vocab\":{\"0\":20,\"1\":21,\"2\":22,\"3\":23,\"4\":24,\"5\":25,\"6\":26,\"7\":27,\"8\":28,\"9\":29,\"<s>\":0,\"<pad>\":1,\"</s>\":2,\"<unk>\":3,\"<mask>\":4,\"!\":5,\"\\\"\":6,\"#\":7,\"$\":8,\"%\":9,\"&\":10,\"'\":11,\"(\":12,\")\":13,\"*\":14,\"+\":15,\",\":16,\"-\":17,\".\":18,\"/\":19,\":\":30,\";\":31,\"<\":32,\"=\":33,\">\":34,\"?\":35,\"@\":36,\"A\":37,\"B\":38,\"C\":39,\"D\":40,\"E\":41,\"F\":42,\"G\":43,\"H\":44,\"I\":45,\"J\":46,\"K\":47,\"L\":48,\"M\":49,\"N\":50,\"O\":51,\"P\":52,\"Q\":53,\"R\":54,\"S\":55,\"T\":56,\"U\":57,\"V\":58,\"W\":59,\"X\":60,\"Y\":61,\"Z\":62,\"[\":63,\"\\\\\":64,\"]\":65,\"^\":66,\"_\":67,\"`\":68,\"a\":69,\"b\":70,\"c\":71,\"d\":72,\"e\":73,\"f\":74,\"g\":75,\"h\":76,\"i\":77,\"j\":78,\"k\":79,\"l\":80,\"m\":81,\"n\":82,\"o\":83,\"p\":84,\"q\":85,\"r\":86,\"s\":87,\"t\":88,\"u\":89,\"v\":90,\"w\":91,\"x\":92,\"y\":93,\"z\":94,\"{\":95,\"|\":96,\"}\":97,\"~\":98,\"¡\":99,\"¢\":100,\"£\":101,\"¤\":102,\"¥\":103,\"¦\":104,\"§\":105,\"¨\":106,\"©\":107,\"ª\":108,\"«\":109,\"¬\":110,\"®\":111,\"¯\":112,\"°\":113,\"±\":114,\"²\":115,\"³\":116,\"´\":117,\"µ\":118,\"¶\":119,\"·\":120,\"¸\":121,\"¹\":122,\"º\":123,\"»\":124,\"¼\":125,\"½\":126,\"¾\":127,\"¿\":128,\"À\":129,\"Á\":130,\"Â\":131,\"Ã\":132,\"Ä\":133,\"Å\":134,\"Æ\":135,\"Ç\":136,\"È\":137,\"É\":138,\"Ê\":139,\"Ë\":140,\"Ì\":141,\"Í\":142,\"Î\":143,\"Ï\":144,\"Ð\":145,\"Ñ\":146,\"Ò\":147,\"Ó\":148,\"Ô\":149,\"Õ\":150,\"Ö\":151,\"×\":152,\"Ø\":153,\"Ù\":154,\"Ú\":155,\"Û\":156,\"Ü\":157,\"Ý\":158,\"Þ\":159,\"ß\":160,\"à\":161,\"á\":162,\"â\":163,\"ã\":164,\"ä\":165,\"å\":166,\"æ\":167,\"ç\":168,\"è\":169,\"é\":170,\"ê\":171,\"ë\":172,\"ì\":173,\"í\":174,\"î\":175,\"ï\":176,\"ð\":177,\"ñ\":178,\"ò\":179,\"ó\":180,\"ô\":181,\"õ\":182,\"ö\":183,\"÷\":184,\"ø\":185,\"ù\":186,\"ú\":187,\"û\":188,\"ü\":189,\"ý\":190,\"þ\":191,\"ÿ\":192,\"Ā\":193,\"ā\":194,\"Ă\":195,\"ă\":196,\"Ą\":197,\"ą\":198,\"Ć\":199,\"ć\":200,\"Ĉ\":201,\"ĉ\":202,\"Ċ\":203,\"ċ\":204,\"Č\":205,\"č\":206,\"Ď\":207,\"ď\":208,\"Đ\":209,\"đ\":210,\"Ē\":211,\"ē\":212,\"Ĕ\":213,\"ĕ\":214,\"Ė\":215,\"ė\":216,\"Ę\":217,\"ę\":218,\"Ě\":219,\"ě\":220,\"Ĝ\":221,\"ĝ\":222,\"Ğ\":223,\"ğ\":224,\"Ġ\":225,\"ġ\":226,\"Ģ\":227,\"ģ\":228,\"Ĥ\":229,\"ĥ\":230,\"Ħ\":231,\"ħ\":232,\"Ĩ\":233,\"ĩ\":234,\"Ī\":235,\"ī\":236,\"Ĭ\":237,\"ĭ\":238,\"Į\":239,\"į\":240,\"İ\":241,\"ı\":242,\"Ĳ\":243,\"ĳ\":244,\"Ĵ\":245,\"ĵ\":246,\"Ķ\":247,\"ķ\":248,\"ĸ\":249,\"Ĺ\":250,\"ĺ\":251,\"Ļ\":252,\"ļ\":253,\"Ľ\":254,\"ľ\":255,\"Ŀ\":256,\"ŀ\":257,\"Ł\":258,\"ł\":259,\"Ń\":260,\"Ġt\":261,\"he\":262,\"Ġa\":263,\"in\":264,\"Ġthe\":265,\"er\":266,\"on\":267,\"Ġ,\":268,\"re\":269,\"Ġs\":270,\"ed\":271,\"Ġo\":272,\"Ġw\":273,\"nd\":274,\"at\":275,\"Ġ.\":276,\"or\":277,\"it\":278,\"Ġc\":279,\"en\":280,\"Ġf\":281,\"is\":282,\"es\":283,\"ar\":284,\"Ġof\":285,\"Ġb\":286,\"an\":287,\"Ġin\":288,\"al\":289,\"ing\":290,\"Ġp\":291,\"Ġand\":292,\"as\":293,\"Ġto\":294,\"ro\":295,\"ic\":296,\"Ġm\":297,\"Ġd\":298,\"Ġh\":299,\"ion\":300,\"le\":301,\"ou\":302,\"ĠT\":303,\"Ġre\":304,\"Ġ=\":305,\"Ġ\\\"\":306,\"ĠA\":307,\"ĠS\":308,\"ent\":309,\"il\":310,\"Ġth\":311,\"Ġ1\":312,\"st\":313,\"ĠC\":314,\"el\":315,\"om\":316,\"Ġl\":317,\"am\":318,\"ĠĊ\":319,\"Ġe\":320,\"Ġn\":321,\"Ġ@\":322,\"ad\":323,\"ac\":324,\"Ġwas\":325,\"ĠM\":326,\"ur\":327,\"ĠThe\":328,\"ec\":329,\"Ġon\":330,\"ly\":331,\"ĠB\":332,\"ĠI\":333,\"Ġg\":334,\"Ġ'\":335,\"et\":336,\"ol\":337,\"id\":338,\"iv\":339,\"im\":340,\"Ġfor\":341,\"ir\":342,\"-@\":343,\"Ġ@-@\":344,\"ig\":345,\"ot\":346,\"ter\":347,\"Ġas\":348,\"ĠH\":349,\"us\":350,\"ow\":351,\"Ġst\":352,\"ut\":353,\"ith\":354,\"ay\":355,\"Ġ2\":356,\"ĠP\":357,\"ation\":358,\"ver\":359,\"Ġbe\":360,\"her\":361,\"Ġthat\":362,\"Ġwith\":363,\"ĠR\":364,\"ce\":365,\"th\":366,\"ĠD\":367,\"Ġis\":368,\"un\":369,\"em\":370,\"ĠF\":371,\"Ġwh\":372,\"ul\":373,\"Ġby\":374,\"Ġal\":375,\"ch\":376,\"Ġ)\":377,\"Ġ(\":378,\"ĠW\":379,\"Ġcon\":380,\"ra\":381,\"ĠG\":382,\"os\":383,\"ĠL\":384,\"ĠN\":385,\"Ġat\":386,\"ers\":387,\"ct\":388,\"Ġit\":389,\"Ġ19\":390,\"rom\":391,\"and\":392,\"Ġan\":393,\"um\":394,\"est\":395,\"ĠJ\":396,\"ag\":397,\"Ġhe\":398,\"00\":399,\"ist\":400,\"ain\":401,\"od\":402,\"av\":403,\"ri\":404,\"ĠE\":405,\"ĠO\":406,\"Ġfrom\":407,\"Ġcom\":408,\"Ġhis\":409,\"op\":410,\"Ġpro\":411,\"res\":412,\"ies\":413,\"if\":414,\"Ġv\":415,\"ort\":416,\"ere\":417,\"ill\":418,\"ld\":419,\"Ġde\":420,\"pp\":421,\"Ġsu\":422,\"ore\":423,\"ĠIn\":424,\"Ġr\":425,\"Ġse\":426,\"Ġwere\":427,\"ew\":428,\"ong\":429,\"igh\":430,\"ard\":431,\"ate\":432,\"all\":433,\"art\":434,\"ak\":435,\"ich\":436,\"Ġch\":437,\"Ġor\":438,\"ab\":439,\"ant\":440,\"ud\":441,\"oc\":442,\"ber\":443,\"Ġex\":444,\"gh\":445,\"ity\":446,\"ated\":447,\"pt\":448,\"ess\":449,\"ear\":450,\"ĠK\":451,\"Ġpl\":452,\"ame\":453,\"qu\":454,\"ive\":455,\"rou\":456,\"Ġare\":457,\"Ġâ\":458,\"Ġsh\":459,\"Ġk\":460,\"ack\":461,\"ect\":462,\"ĠâĢ\":463,\"ĠU\":464,\"Ġhad\":465,\"se\":466,\"Ġwhich\":467,\"red\":468,\"ov\":469,\"ĠSt\":470,\"ast\":471,\"Ġsp\":472,\"ian\":473,\"Ġy\":474,\"ment\":475,\"Ġle\":476,\"Ġnot\":477,\"ge\":478,\"ord\":479,\"rit\":480,\"ip\":481,\"ine\":482,\"ell\":483,\"ally\":484,\"our\":485,\"ost\":486,\"ight\":487,\"ther\":488,\"ap\":489,\"Ġu\":490,\"ish\":491,\"ĠCh\":492,\"oun\":493,\"ia\":494,\"Ġ3\":495,\"ave\":496,\"ary\":497,\"ust\":498,\"og\":499,\"Ġ200\":500,\"Ġun\":501,\"ous\":502,\"irst\":503,\"ĠV\":504,\"cc\":505,\"Ġinc\":506,\"Ġ;\":507,\"Ġcomp\":508,\"ru\":509,\"ions\":510,\"Ġtheir\":511,\"Ġbut\":512,\"ide\":513,\"ure\":514,\"so\":515,\"Ġcont\":516,\"Ġint\":517,\"fter\":518,\"ical\":519,\"ial\":520,\"Ġar\":521,\"Ġfirst\":522,\"ould\":523,\"Ġits\":524,\"hed\":525,\"ĠâĢĵ\":526,\"Ġwhe\":527,\"wo\":528,\"out\":529,\"ub\":530,\"Ġ20\":531,\"ff\":532,\"Ġ:\":533,\"ue\":534,\"Ġher\":535,\"own\":536,\"ok\":537,\"Ġalso\":538,\"Ġcl\":539,\"per\":540,\"ign\":541,\"ater\":542,\"ran\":543,\"orm\":544,\"ie\":545,\"ome\":546,\"ork\":547,\"ass\":548,\"ire\":549,\"end\":550,\"Ġres\":551,\"Ġab\":552,\"Ġad\":553,\"Ġus\":554,\"ry\":555,\"Ġrec\":556,\"Ġhave\":557,\"age\":558,\"ĠHe\":559,\"Ġ4\":560,\"Ġro\":561,\"mer\":562,\"Ġone\":563,\"ond\":564,\"low\":565,\"Ġhas\":566,\"ĠTh\":567,\"du\":568,\"Ġ5\":569,\"Ġper\":570,\"Ġbeen\":571,\"ime\":572,\"Ġtwo\":573,\"ence\":574,\"land\":575,\"Ġ18\":576,\".@\":577,\"Ġ@.@\":578,\"ult\":579,\"ree\":580,\"ough\":581,\"ile\":582,\"Ġwho\":583,\"ĠAl\":584,\"Ġsc\":585,\"uring\":586,\"pl\":587,\"ory\":588,\"ition\":589,\"ric\":590,\"ations\":591,\"Ġdis\":592,\"Ġthis\":593,\"Ġbec\":594,\"Ġapp\":595,\"iz\":596,\"ĠIt\":597,\"are\":598,\"ach\":599,\"lud\":600,\"ade\":601,\"Ġplay\":602,\"Ġj\":603,\"Ġman\":604,\"act\":605,\"ely\":606,\"Ġpart\":607,\"Ġdes\":608,\"Ġag\":609,\"Ġthey\":610,\"Ġyear\":611,\"ount\":612,\"Ġ201\":613,\"Ġover\":614,\"Ġother\":615,\"ound\":616,\"Ġafter\":617,\"ib\":618,\"over\":619,\"Ġser\":620,\"Ġen\":621,\"Ġoff\":622,\"Ġim\":623,\"ction\":624,\"ĠY\":625,\"ke\":626,\"ite\":627,\",@\":628,\"Ġ@,@\":629,\"te\":630,\"urn\":631,\"Ġinclud\":632,\"ress\":633,\"ance\":634,\"ang\":635,\"Ġatt\":636,\"ice\":637,\"ace\":638,\"ark\":639,\"Ġout\":640,\"wn\":641,\"ph\":642,\"ember\":643,\"Ġpre\":644,\"Ġup\":645,\"ens\":646,\"man\":647,\"Ġev\":648,\"Ġtime\":649,\"nder\":650,\"rough\":651,\"ced\":652,\"Ġfin\":653,\"Ġinto\":654,\"one\":655,\"port\":656,\"round\":657,\"we\":658,\"ren\":659,\"les\":660,\"int\":661,\"ĠOn\":662,\"vel\":663,\"Ġcomm\":664,\"Ġshe\":665,\"ason\":666,\"amp\":667,\"Ġte\":668,\"Ġwould\":669,\"ward\":670,\"Ġmore\":671,\"Ġ6\":672,\"ied\":673,\"ose\":674,\"rib\":675,\"ĠUn\":676,\"Ġall\":677,\"ings\":678,\"tern\":679,\"ces\":680,\"able\":681,\"Ġwe\":682,\"ited\":683,\"ever\":684,\"ents\":685,\"Ġhim\":686,\"ased\":687,\"ors\":688,\"oy\":689,\"ood\":690,\"Ġcent\":691,\"ix\":692,\"ase\":693,\"ild\":694,\"ĠAn\":695,\"Ġ7\":696,\"Ġwork\":697,\"ates\":698,\"ious\":699,\"ath\":700,\"Ġpo\":701,\"rop\":702,\"old\":703,\"als\":704,\"iss\":705,\"ey\":706,\"ict\":707,\"Ġfe\":708,\"Ġthem\":709,\"gan\":710,\"Ġsec\":711,\"Ġbet\":712,\"Ġwhen\":713,\"Ġsong\":714,\"Ġrem\":715,\"ep\":716,\"form\":717,\"ail\":718,\"fer\":719,\"Ġear\":720,\"ubl\":721,\"aw\":722,\"Ġkn\":723,\"ake\":724,\"aus\":725,\"Ġmost\":726,\"Ġcons\":727,\"Ġduring\":728,\"ĠAs\":729,\"orth\":730,\"Ġnew\":731,\"ered\":732,\"ilm\":733,\"ved\":734,\"att\":735,\"Ġonly\":736,\"Ġ9\":737,\"Ġdec\":738,\"Ġ8\":739,\"ick\":740,\"Ġgame\":741,\"ons\":742,\"ug\":743,\"Ġtr\":744,\"ft\":745,\"oth\":746,\"ook\":747,\"ĠMar\":748,\"reat\":749,\"way\":750,\"Ġcan\":751,\"ollow\":752,\"outh\":753,\"ween\":754,\"ĠEn\":755,\"Ġ199\":756,\"ters\":757,\"Ġrel\":758,\"ind\":759,\"Ġabout\":760,\"Ġseason\":761,\"Ġagain\":762,\"ral\":763,\"Ġthree\":764,\"ational\":765,\"Ġunder\":766,\"ular\":767,\"Ġme\":768,\"Ġthan\":769,\"ĠCom\":770,\"ĠAr\":771,\"hip\":772,\"ob\":773,\"Ġne\":774,\"Ġbetween\":775,\"Ġfl\":776,\"hn\":777,\"ve\":778,\"Ġchar\":779,\"Ġcol\":780,\"Ġrecord\":781,\"iew\":782,\"ron\":783,\"fore\":784,\"Ġthrough\":785,\"ision\":786,\"orn\":787,\"Ġ00\":788,\"ock\":789,\"Ġver\":790,\"Ġlater\":791,\"Ġnum\":792,\"Ġend\":793,\"olog\":794,\"ames\":795,\"Ġpos\":796,\"Ġwrit\":797,\"Ġprodu\":798,\"Ġwhile\":799,\"Ġact\":800,\"Ġrele\":801,\"Ġfilm\":802,\"ished\":803,\"Ġpr\":804,\"ans\":805,\"Ġreg\":806,\"Ġform\":807,\"Ġass\":808,\"ĠSe\":809,\"ury\":810,\"ted\":811,\"ts\":812,\"Ġmade\":813,\"Ġsub\":814,\"Ġpe\":815,\"Ġso\":816,\"orld\":817,\"Ġret\":818,\"ĠNew\":819,\"Ġspec\":820,\"Ġacc\":821,\"Ġqu\":822,\"Ġwhere\":823,\"ener\":824,\"Ġmov\":825,\"hes\":826,\"meric\":827,\"ating\":828,\"Ġinter\":829,\"ĠLe\":830,\"ĠAmeric\":831,\"Ġra\":832,\"Ġsome\":833,\"Ġco\":834,\"Ġlar\":835,\"Ġbu\":836,\"Ġdef\":837,\"bum\":838,\"Ġac\":839,\"Ġmus\":840,\"Ġfollow\":841,\"ĠAt\":842,\"ins\":843,\"ived\":844,\"ific\":845,\"ual\":846,\"Ġam\":847,\"Ġsuch\":848,\"Ġsecond\":849,\"ike\":850,\"Ġfour\":851,\"Ġind\":852,\"ann\":853,\"hen\":854,\"Ġused\":855,\"ĠRe\":856,\"ics\":857,\"lect\":858,\"Ġday\":859,\"iel\":860,\"ily\":861,\"ĠThis\":862,\"Ġ0\":863,\"Ġpubl\":864,\"Ġcall\":865,\"ĠJo\":866,\"ll\":867,\"Ġalbum\":868,\"Ġ000\":869,\"rans\":870,\"Ġdo\":871,\"any\":872,\"Ġbefore\":873,\"ros\":874,\"ĠSh\":875,\"Ġsy\":876,\"aid\":877,\"ĠEng\":878,\"Ġbeing\":879,\"Ġ10\":880,\"uc\":881,\"Ġep\":882,\"Ġsupp\":883,\"Ġthere\":884,\"Ġyears\":885,\"ars\":886,\"owever\":887,\"Ġent\":888,\"ife\":889,\"Ġhigh\":890,\"Ġfound\":891,\"ird\":892,\"Ġno\":893,\"Ġset\":894,\"ines\":895,\"iver\":896,\"io\":897,\"other\":898,\"ject\":899,\"Ġsur\":900,\"aj\":901,\"ten\":902,\"Ġtra\":903,\"Ġ12\":904,\"ised\":905,\"ities\":906,\"velop\":907,\"Ġbl\":908,\"ale\":909,\"Ġseries\":910,\"Ġloc\":911,\"Ġnumber\":912,\"Ġpres\":913,\"ane\":914,\"ause\":915,\"ode\":916,\"ek\":917,\"ton\":918,\"ĠSc\":919,\"ier\":920,\"ise\":921,\"Ġsever\":922,\"ince\":923,\"Ġboth\":924,\"ank\":925,\"row\":926,\"irect\":927,\"son\":928,\"Ġthen\":929,\"ĠBrit\":930,\"iet\":931,\"Ġ16\":932,\"Ġepis\":933,\"Ġincluding\":934,\"its\":935,\"igin\":936,\"pr\":937,\"Ġ/\":938,\"Ġagainst\":939,\"Ġwell\":940,\"Ġbecame\":941,\"Ġexp\":942,\"Ġknown\":943,\"Ġtrans\":944,\"Ġcharac\":945,\"ĠâĢĶ\":946,\"ram\":947,\"Ġback\":948,\"Ġadd\":949,\"Ġpop\":950,\"Ġgo\":951,\"urch\":952,\"Ġdesc\":953,\"Ġsing\":954,\"ield\":955,\"Ġperform\":956,\"ained\":957,\"Ġrece\":958,\"ident\":959,\"Ġem\":960,\"ert\":961,\"ures\":962,\"Ġinv\":963,\"Ġdep\":964,\"Ġ198\":965,\"air\":966,\"ern\":967,\"ather\":968,\"ful\":969,\"ĠZ\":970,\"Ġmon\":971,\"Ġmany\":972,\"Ġmain\":973,\"Ġstud\":974,\"Ġlong\":975,\"inn\":976,\"though\":977,\"up\":978,\"ool\":979,\"ĠUnited\":980,\"led\":981,\"ement\":982,\"Ġ15\":983,\"ower\":984,\"ĠJohn\":985,\"Ġop\":986,\"Ġ11\":987,\"ined\":988,\"Ġmet\":989,\"ober\":990,\"ley\":991,\"Ġ17\":992,\"Ġcentury\":993,\"Ġteam\":994,\"Ġest\":995,\"ĠAfter\":996,\"yl\":997,\"Ġmin\":998,\"uch\":999,\"ute\":1000,\"Ġdevelop\":1001,\"ĠShe\":1002,\"iam\":1003,\"Ġshow\":1004,\"elf\":1005,\"Ġrep\":1006,\"Ġconc\":1007,\"ative\":1008,\"Ġcre\":1009,\"overn\":1010,\"ared\":1011,\"Ġ194\":1012,\"Ġorigin\":1013,\"Ġsm\":1014,\"ivers\":1015,\"az\":1016,\"Ġlead\":1017,\"Ġseveral\":1018,\"ah\":1019,\"Ġob\":1020,\"Ġrev\":1021,\"Ġmill\":1022,\"erm\":1023},\"merges\":[[\"Ġ\",\"t\"],[\"h\",\"e\"],[\"Ġ\",\"a\"],[\"i\",\"n\"],[\"Ġt\",\"he\"],[\"e\",\"r\"],[\"o\",\"n\"],[\"Ġ\",\",\"],[\"r\",\"e\"],[\"Ġ\",\"s\"],[\"e\",\"d\"],[\"Ġ\",\"o\"],[\"Ġ\",\"w\"],[\"n\",\"d\"],[\"a\",\"t\"],[\"Ġ\",\".\"],[\"o\",\"r\"],[\"i\",\"t\"],[\"Ġ\",\"c\"],[\"e\",\"n\"],[\"Ġ\",\"f\"],[\"i\",\"s\"],[\"e\",\"s\"],[\"a\",\"r\"],[\"Ġo\",\"f\"],[\"Ġ\",\"b\"],[\"a\",\"n\"],[\"Ġ\",\"in\"],[\"a\",\"l\"],[\"in\",\"g\"],[\"Ġ\",\"p\"],[\"Ġa\",\"nd\"],[\"a\",\"s\"],[\"Ġt\",\"o\"],[\"r\",\"o\"],[\"i\",\"c\"],[\"Ġ\",\"m\"],[\"Ġ\",\"d\"],[\"Ġ\",\"h\"],[\"i\",\"on\"],[\"l\",\"e\"],[\"o\",\"u\"],[\"Ġ\",\"T\"],[\"Ġ\",\"re\"],[\"Ġ\",\"=\"],[\"Ġ\",\"\\\"\"],[\"Ġ\",\"A\"],[\"Ġ\",\"S\"],[\"en\",\"t\"],[\"i\",\"l\"],[\"Ġt\",\"h\"],[\"Ġ\",\"1\"],[\"s\",\"t\"],[\"Ġ\",\"C\"],[\"e\",\"l\"],[\"o\",\"m\"],[\"Ġ\",\"l\"],[\"a\",\"m\"],[\"Ġ\",\"Ċ\"],[\"Ġ\",\"e\"],[\"Ġ\",\"n\"],[\"Ġ\",\"@\"],[\"a\",\"d\"],[\"a\",\"c\"],[\"Ġw\",\"as\"],[\"Ġ\",\"M\"],[\"u\",\"r\"],[\"ĠT\",\"he\"],[\"e\",\"c\"],[\"Ġ\",\"on\"],[\"l\",\"y\"],[\"Ġ\",\"B\"],[\"Ġ\",\"I\"],[\"Ġ\",\"g\"],[\"Ġ\",\"'\"],[\"e\",\"t\"],[\"o\",\"l\"],[\"i\",\"d\"],[\"i\",\"v\"],[\"i\",\"m\"],[\"Ġf\",\"or\"],[\"i\",\"r\"],[\"-\",\"@\"],[\"Ġ@\",\"-@\"],[\"i\",\"g\"],[\"o\",\"t\"],[\"t\",\"er\"],[\"Ġa\",\"s\"],[\"Ġ\",\"H\"],[\"u\",\"s\"],[\"o\",\"w\"],[\"Ġs\",\"t\"],[\"u\",\"t\"],[\"it\",\"h\"],[\"a\",\"y\"],[\"Ġ\",\"2\"],[\"Ġ\",\"P\"],[\"at\",\"ion\"],[\"v\",\"er\"],[\"Ġb\",\"e\"],[\"he\",\"r\"],[\"Ġth\",\"at\"],[\"Ġw\",\"ith\"],[\"Ġ\",\"R\"],[\"c\",\"e\"],[\"t\",\"h\"],[\"Ġ\",\"D\"],[\"Ġ\",\"is\"],[\"u\",\"n\"],[\"e\",\"m\"],[\"Ġ\",\"F\"],[\"Ġw\",\"h\"],[\"u\",\"l\"],[\"Ġb\",\"y\"],[\"Ġa\",\"l\"],[\"c\",\"h\"],[\"Ġ\",\")\"],[\"Ġ\",\"(\"],[\"Ġ\",\"W\"],[\"Ġc\",\"on\"],[\"r\",\"a\"],[\"Ġ\",\"G\"],[\"o\",\"s\"],[\"Ġ\",\"L\"],[\"Ġ\",\"N\"],[\"Ġa\",\"t\"],[\"er\",\"s\"],[\"c\",\"t\"],[\"Ġ\",\"it\"],[\"Ġ1\",\"9\"],[\"ro\",\"m\"],[\"a\",\"nd\"],[\"Ġa\",\"n\"],[\"u\",\"m\"],[\"es\",\"t\"],[\"Ġ\",\"J\"],[\"a\",\"g\"],[\"Ġ\",\"he\"],[\"0\",\"0\"],[\"is\",\"t\"],[\"a\",\"in\"],[\"o\",\"d\"],[\"a\",\"v\"],[\"r\",\"i\"],[\"Ġ\",\"E\"],[\"Ġ\",\"O\"],[\"Ġf\",\"rom\"],[\"Ġc\",\"om\"],[\"Ġh\",\"is\"],[\"o\",\"p\"],[\"Ġp\",\"ro\"],[\"re\",\"s\"],[\"i\",\"es\"],[\"i\",\"f\"],[\"Ġ\",\"v\"],[\"or\",\"t\"],[\"er\",\"e\"],[\"il\",\"l\"],[\"l\",\"d\"],[\"Ġd\",\"e\"],[\"p\",\"p\"],[\"Ġs\",\"u\"],[\"o\",\"re\"],[\"ĠI\",\"n\"],[\"Ġ\",\"r\"],[\"Ġs\",\"e\"],[\"Ġw\",\"ere\"],[\"e\",\"w\"],[\"on\",\"g\"],[\"ig\",\"h\"],[\"ar\",\"d\"],[\"at\",\"e\"],[\"al\",\"l\"],[\"ar\",\"t\"],[\"a\",\"k\"],[\"ic\",\"h\"],[\"Ġc\",\"h\"],[\"Ġo\",\"r\"],[\"a\",\"b\"],[\"an\",\"t\"],[\"u\",\"d\"],[\"o\",\"c\"],[\"b\",\"er\"],[\"Ġe\",\"x\"],[\"g\",\"h\"],[\"it\",\"y\"],[\"at\",\"ed\"],[\"p\",\"t\"],[\"es\",\"s\"],[\"e\",\"ar\"],[\"Ġ\",\"K\"],[\"Ġp\",\"l\"],[\"am\",\"e\"],[\"q\",\"u\"],[\"iv\",\"e\"],[\"ro\",\"u\"],[\"Ġa\",\"re\"],[\"Ġ\",\"â\"],[\"Ġs\",\"h\"],[\"Ġ\",\"k\"],[\"ac\",\"k\"],[\"ec\",\"t\"],[\"Ġâ\",\"Ģ\"],[\"Ġ\",\"U\"],[\"Ġh\",\"ad\"],[\"s\",\"e\"],[\"Ġwh\",\"ich\"],[\"re\",\"d\"],[\"o\",\"v\"],[\"ĠS\",\"t\"],[\"as\",\"t\"],[\"Ġs\",\"p\"],[\"i\",\"an\"],[\"Ġ\",\"y\"],[\"m\",\"ent\"],[\"Ġ\",\"le\"],[\"Ġn\",\"ot\"],[\"g\",\"e\"],[\"or\",\"d\"],[\"r\",\"it\"],[\"i\",\"p\"],[\"in\",\"e\"],[\"el\",\"l\"],[\"al\",\"ly\"],[\"ou\",\"r\"],[\"o\",\"st\"],[\"igh\",\"t\"],[\"t\",\"her\"],[\"a\",\"p\"],[\"Ġ\",\"u\"],[\"is\",\"h\"],[\"ĠC\",\"h\"],[\"ou\",\"n\"],[\"i\",\"a\"],[\"Ġ\",\"3\"],[\"av\",\"e\"],[\"ar\",\"y\"],[\"u\",\"st\"],[\"o\",\"g\"],[\"Ġ2\",\"00\"],[\"Ġ\",\"un\"],[\"ou\",\"s\"],[\"ir\",\"st\"],[\"Ġ\",\"V\"],[\"c\",\"c\"],[\"Ġin\",\"c\"],[\"Ġ\",\";\"],[\"Ġcom\",\"p\"],[\"r\",\"u\"],[\"ion\",\"s\"],[\"Ġthe\",\"ir\"],[\"Ġb\",\"ut\"],[\"id\",\"e\"],[\"u\",\"re\"],[\"s\",\"o\"],[\"Ġcon\",\"t\"],[\"Ġin\",\"t\"],[\"f\",\"ter\"],[\"ic\",\"al\"],[\"i\",\"al\"],[\"Ġa\",\"r\"],[\"Ġf\",\"irst\"],[\"ou\",\"ld\"],[\"Ġit\",\"s\"],[\"he\",\"d\"],[\"ĠâĢ\",\"ĵ\"],[\"Ġw\",\"he\"],[\"w\",\"o\"],[\"ou\",\"t\"],[\"u\",\"b\"],[\"Ġ2\",\"0\"],[\"f\",\"f\"],[\"Ġ\",\":\"],[\"u\",\"e\"],[\"Ġ\",\"her\"],[\"ow\",\"n\"],[\"o\",\"k\"],[\"Ġal\",\"so\"],[\"Ġc\",\"l\"],[\"p\",\"er\"],[\"ig\",\"n\"],[\"at\",\"er\"],[\"r\",\"an\"],[\"or\",\"m\"],[\"i\",\"e\"],[\"om\",\"e\"],[\"or\",\"k\"],[\"as\",\"s\"],[\"i\",\"re\"],[\"e\",\"nd\"],[\"Ġre\",\"s\"],[\"Ġa\",\"b\"],[\"Ġa\",\"d\"],[\"Ġ\",\"us\"],[\"r\",\"y\"],[\"Ġre\",\"c\"],[\"Ġh\",\"ave\"],[\"ag\",\"e\"],[\"ĠH\",\"e\"],[\"Ġ\",\"4\"],[\"Ġ\",\"ro\"],[\"m\",\"er\"],[\"Ġon\",\"e\"],[\"on\",\"d\"],[\"l\",\"ow\"],[\"Ġh\",\"as\"],[\"ĠT\",\"h\"],[\"d\",\"u\"],[\"Ġ\",\"5\"],[\"Ġp\",\"er\"],[\"Ġbe\",\"en\"],[\"im\",\"e\"],[\"Ġt\",\"wo\"],[\"en\",\"ce\"],[\"l\",\"and\"],[\"Ġ1\",\"8\"],[\".\",\"@\"],[\"Ġ@\",\".@\"],[\"ul\",\"t\"],[\"re\",\"e\"],[\"ou\",\"gh\"],[\"i\",\"le\"],[\"Ġwh\",\"o\"],[\"ĠA\",\"l\"],[\"Ġs\",\"c\"],[\"ur\",\"ing\"],[\"p\",\"l\"],[\"or\",\"y\"],[\"it\",\"ion\"],[\"r\",\"ic\"],[\"ation\",\"s\"],[\"Ġd\",\"is\"],[\"Ġth\",\"is\"],[\"Ġb\",\"ec\"],[\"Ġa\",\"pp\"],[\"i\",\"z\"],[\"ĠI\",\"t\"],[\"a\",\"re\"],[\"ac\",\"h\"],[\"l\",\"ud\"],[\"ad\",\"e\"],[\"Ġpl\",\"ay\"],[\"Ġ\",\"j\"],[\"Ġm\",\"an\"],[\"ac\",\"t\"],[\"el\",\"y\"],[\"Ġp\",\"art\"],[\"Ġd\",\"es\"],[\"Ġa\",\"g\"],[\"Ġthe\",\"y\"],[\"Ġy\",\"ear\"],[\"oun\",\"t\"],[\"Ġ20\",\"1\"],[\"Ġo\",\"ver\"],[\"Ġo\",\"ther\"],[\"ou\",\"nd\"],[\"Ġa\",\"fter\"],[\"i\",\"b\"],[\"o\",\"ver\"],[\"Ġs\",\"er\"],[\"Ġ\",\"en\"],[\"Ġof\",\"f\"],[\"Ġ\",\"im\"],[\"ct\",\"ion\"],[\"Ġ\",\"Y\"],[\"k\",\"e\"],[\"it\",\"e\"],[\",\",\"@\"],[\"Ġ@\",\",@\"],[\"t\",\"e\"],[\"ur\",\"n\"],[\"Ġinc\",\"lud\"],[\"res\",\"s\"],[\"an\",\"ce\"],[\"an\",\"g\"],[\"Ġat\",\"t\"],[\"ic\",\"e\"],[\"ac\",\"e\"],[\"ar\",\"k\"],[\"Ġo\",\"ut\"],[\"w\",\"n\"],[\"p\",\"h\"],[\"em\",\"ber\"],[\"Ġp\",\"re\"],[\"Ġu\",\"p\"],[\"en\",\"s\"],[\"m\",\"an\"],[\"Ġe\",\"v\"],[\"Ġt\",\"ime\"],[\"nd\",\"er\"],[\"rou\",\"gh\"],[\"c\",\"ed\"],[\"Ġf\",\"in\"],[\"Ġint\",\"o\"],[\"on\",\"e\"],[\"p\",\"ort\"],[\"rou\",\"nd\"],[\"w\",\"e\"],[\"re\",\"n\"],[\"l\",\"es\"],[\"in\",\"t\"],[\"ĠO\",\"n\"],[\"v\",\"el\"],[\"Ġcom\",\"m\"],[\"Ġs\",\"he\"],[\"as\",\"on\"],[\"am\",\"p\"],[\"Ġt\",\"e\"],[\"Ġw\",\"ould\"],[\"w\",\"ard\"],[\"Ġm\",\"ore\"],[\"Ġ\",\"6\"],[\"i\",\"ed\"],[\"os\",\"e\"],[\"ri\",\"b\"],[\"ĠU\",\"n\"],[\"Ġal\",\"l\"],[\"ing\",\"s\"],[\"ter\",\"n\"],[\"c\",\"es\"],[\"ab\",\"le\"],[\"Ġw\",\"e\"],[\"it\",\"ed\"],[\"e\",\"ver\"],[\"ent\",\"s\"],[\"Ġh\",\"im\"],[\"as\",\"ed\"],[\"or\",\"s\"],[\"o\",\"y\"],[\"o\",\"od\"],[\"Ġc\",\"ent\"],[\"i\",\"x\"],[\"as\",\"e\"],[\"il\",\"d\"],[\"ĠA\",\"n\"],[\"Ġ\",\"7\"],[\"Ġw\",\"ork\"],[\"at\",\"es\"],[\"i\",\"ous\"],[\"at\",\"h\"],[\"Ġp\",\"o\"],[\"ro\",\"p\"],[\"ol\",\"d\"],[\"al\",\"s\"],[\"is\",\"s\"],[\"e\",\"y\"],[\"ic\",\"t\"],[\"Ġf\",\"e\"],[\"Ġthe\",\"m\"],[\"g\",\"an\"],[\"Ġs\",\"ec\"],[\"Ġb\",\"et\"],[\"Ġwhe\",\"n\"],[\"Ġs\",\"ong\"],[\"Ġre\",\"m\"],[\"e\",\"p\"],[\"f\",\"orm\"],[\"a\",\"il\"],[\"f\",\"er\"],[\"Ġe\",\"ar\"],[\"ub\",\"l\"],[\"a\",\"w\"],[\"Ġk\",\"n\"],[\"ak\",\"e\"],[\"a\",\"us\"],[\"Ġm\",\"ost\"],[\"Ġcon\",\"s\"],[\"Ġd\",\"uring\"],[\"ĠA\",\"s\"],[\"or\",\"th\"],[\"Ġn\",\"ew\"],[\"er\",\"ed\"],[\"il\",\"m\"],[\"v\",\"ed\"],[\"at\",\"t\"],[\"Ġon\",\"ly\"],[\"Ġ\",\"9\"],[\"Ġd\",\"ec\"],[\"Ġ\",\"8\"],[\"ic\",\"k\"],[\"Ġg\",\"ame\"],[\"on\",\"s\"],[\"u\",\"g\"],[\"Ġt\",\"r\"],[\"f\",\"t\"],[\"ot\",\"h\"],[\"o\",\"ok\"],[\"ĠM\",\"ar\"],[\"re\",\"at\"],[\"w\",\"ay\"],[\"Ġc\",\"an\"],[\"ol\",\"low\"],[\"ou\",\"th\"],[\"we\",\"en\"],[\"ĠE\",\"n\"],[\"Ġ19\",\"9\"],[\"ter\",\"s\"],[\"Ġre\",\"l\"],[\"in\",\"d\"],[\"Ġab\",\"out\"],[\"Ġse\",\"ason\"],[\"Ġag\",\"ain\"],[\"r\",\"al\"],[\"Ġth\",\"ree\"],[\"ation\",\"al\"],[\"Ġu\",\"nder\"],[\"ul\",\"ar\"],[\"Ġm\",\"e\"],[\"Ġth\",\"an\"],[\"ĠC\",\"om\"],[\"ĠA\",\"r\"],[\"h\",\"ip\"],[\"o\",\"b\"],[\"Ġn\",\"e\"],[\"Ġbet\",\"ween\"],[\"Ġf\",\"l\"],[\"h\",\"n\"],[\"v\",\"e\"],[\"Ġch\",\"ar\"],[\"Ġc\",\"ol\"],[\"Ġrec\",\"ord\"],[\"i\",\"ew\"],[\"r\",\"on\"],[\"f\",\"ore\"],[\"Ġth\",\"rough\"],[\"is\",\"ion\"],[\"or\",\"n\"],[\"Ġ\",\"00\"],[\"oc\",\"k\"],[\"Ġ\",\"ver\"],[\"Ġl\",\"ater\"],[\"Ġn\",\"um\"],[\"Ġe\",\"nd\"],[\"ol\",\"og\"],[\"am\",\"es\"],[\"Ġp\",\"os\"],[\"Ġw\",\"rit\"],[\"Ġpro\",\"du\"],[\"Ġwh\",\"ile\"],[\"Ġa\",\"ct\"],[\"Ġre\",\"le\"],[\"Ġf\",\"ilm\"],[\"is\",\"hed\"],[\"Ġp\",\"r\"],[\"an\",\"s\"],[\"Ġre\",\"g\"],[\"Ġfor\",\"m\"],[\"Ġas\",\"s\"],[\"ĠS\",\"e\"],[\"ur\",\"y\"],[\"t\",\"ed\"],[\"t\",\"s\"],[\"Ġm\",\"ade\"],[\"Ġsu\",\"b\"],[\"Ġp\",\"e\"],[\"Ġs\",\"o\"],[\"or\",\"ld\"],[\"Ġre\",\"t\"],[\"ĠN\",\"ew\"],[\"Ġsp\",\"ec\"],[\"Ġa\",\"cc\"],[\"Ġ\",\"qu\"],[\"Ġwhe\",\"re\"],[\"en\",\"er\"],[\"Ġm\",\"ov\"],[\"he\",\"s\"],[\"mer\",\"ic\"],[\"at\",\"ing\"],[\"Ġin\",\"ter\"],[\"ĠL\",\"e\"],[\"ĠA\",\"meric\"],[\"Ġ\",\"ra\"],[\"Ġs\",\"ome\"],[\"Ġc\",\"o\"],[\"Ġl\",\"ar\"],[\"Ġb\",\"u\"],[\"Ġde\",\"f\"],[\"b\",\"um\"],[\"Ġa\",\"c\"],[\"Ġm\",\"us\"],[\"Ġf\",\"ollow\"],[\"ĠA\",\"t\"],[\"in\",\"s\"],[\"iv\",\"ed\"],[\"if\",\"ic\"],[\"u\",\"al\"],[\"Ġa\",\"m\"],[\"Ġsu\",\"ch\"],[\"Ġsec\",\"ond\"],[\"i\",\"ke\"],[\"Ġf\",\"our\"],[\"Ġin\",\"d\"],[\"an\",\"n\"],[\"he\",\"n\"],[\"Ġus\",\"ed\"],[\"ĠR\",\"e\"],[\"ic\",\"s\"],[\"le\",\"ct\"],[\"Ġd\",\"ay\"],[\"i\",\"el\"],[\"il\",\"y\"],[\"ĠTh\",\"is\"],[\"Ġ\",\"0\"],[\"Ġp\",\"ubl\"],[\"Ġc\",\"all\"],[\"ĠJ\",\"o\"],[\"l\",\"l\"],[\"Ġal\",\"bum\"],[\"Ġ00\",\"0\"],[\"ran\",\"s\"],[\"Ġd\",\"o\"],[\"an\",\"y\"],[\"Ġbe\",\"fore\"],[\"ro\",\"s\"],[\"ĠS\",\"h\"],[\"Ġs\",\"y\"],[\"a\",\"id\"],[\"ĠEn\",\"g\"],[\"Ġbe\",\"ing\"],[\"Ġ1\",\"0\"],[\"u\",\"c\"],[\"Ġe\",\"p\"],[\"Ġsu\",\"pp\"],[\"Ġthe\",\"re\"],[\"Ġyear\",\"s\"],[\"ar\",\"s\"],[\"ow\",\"ever\"],[\"Ġ\",\"ent\"],[\"if\",\"e\"],[\"Ġh\",\"igh\"],[\"Ġf\",\"ound\"],[\"ir\",\"d\"],[\"Ġn\",\"o\"],[\"Ġs\",\"et\"],[\"in\",\"es\"],[\"iv\",\"er\"],[\"i\",\"o\"],[\"ot\",\"her\"],[\"j\",\"ect\"],[\"Ġs\",\"ur\"],[\"a\",\"j\"],[\"t\",\"en\"],[\"Ġt\",\"ra\"],[\"Ġ1\",\"2\"],[\"is\",\"ed\"],[\"it\",\"ies\"],[\"vel\",\"op\"],[\"Ġb\",\"l\"],[\"al\",\"e\"],[\"Ġser\",\"ies\"],[\"Ġl\",\"oc\"],[\"Ġnum\",\"ber\"],[\"Ġp\",\"res\"],[\"an\",\"e\"],[\"aus\",\"e\"],[\"od\",\"e\"],[\"e\",\"k\"],[\"t\",\"on\"],[\"ĠS\",\"c\"],[\"i\",\"er\"],[\"is\",\"e\"],[\"Ġse\",\"ver\"],[\"in\",\"ce\"],[\"Ġb\",\"oth\"],[\"an\",\"k\"],[\"ro\",\"w\"],[\"ire\",\"ct\"],[\"s\",\"on\"],[\"Ġthe\",\"n\"],[\"ĠB\",\"rit\"],[\"i\",\"et\"],[\"Ġ1\",\"6\"],[\"Ġep\",\"is\"],[\"Ġinclud\",\"ing\"],[\"it\",\"s\"],[\"ig\",\"in\"],[\"p\",\"r\"],[\"Ġ\",\"/\"],[\"Ġagain\",\"st\"],[\"Ġw\",\"ell\"],[\"Ġbec\",\"ame\"],[\"Ġex\",\"p\"],[\"Ġkn\",\"own\"],[\"Ġt\",\"rans\"],[\"Ġchar\",\"ac\"],[\"ĠâĢ\",\"Ķ\"],[\"r\",\"am\"],[\"Ġb\",\"ack\"],[\"Ġad\",\"d\"],[\"Ġp\",\"op\"],[\"Ġg\",\"o\"],[\"ur\",\"ch\"],[\"Ġdes\",\"c\"],[\"Ġs\",\"ing\"],[\"iel\",\"d\"],[\"Ġper\",\"form\"],[\"ain\",\"ed\"],[\"Ġre\",\"ce\"],[\"id\",\"ent\"],[\"Ġe\",\"m\"],[\"er\",\"t\"],[\"u\",\"res\"],[\"Ġin\",\"v\"],[\"Ġde\",\"p\"],[\"Ġ19\",\"8\"],[\"a\",\"ir\"],[\"er\",\"n\"],[\"at\",\"her\"],[\"f\",\"ul\"],[\"Ġ\",\"Z\"],[\"Ġm\",\"on\"],[\"Ġman\",\"y\"],[\"Ġm\",\"ain\"],[\"Ġst\",\"ud\"],[\"Ġl\",\"ong\"],[\"in\",\"n\"],[\"th\",\"ough\"],[\"u\",\"p\"],[\"o\",\"ol\"],[\"ĠUn\",\"ited\"],[\"l\",\"ed\"],[\"em\",\"ent\"],[\"Ġ1\",\"5\"],[\"ow\",\"er\"],[\"ĠJo\",\"hn\"],[\"Ġo\",\"p\"],[\"Ġ1\",\"1\"],[\"in\",\"ed\"],[\"Ġm\",\"et\"],[\"o\",\"ber\"],[\"le\",\"y\"],[\"Ġ1\",\"7\"],[\"Ġcent\",\"ury\"],[\"Ġte\",\"am\"],[\"Ġ\",\"est\"],[\"ĠA\",\"fter\"],[\"y\",\"l\"],[\"Ġm\",\"in\"],[\"u\",\"ch\"],[\"ut\",\"e\"],[\"Ġde\",\"velop\"],[\"ĠS\",\"he\"],[\"i\",\"am\"],[\"Ġsh\",\"ow\"],[\"el\",\"f\"],[\"Ġre\",\"p\"],[\"Ġcon\",\"c\"],[\"at\",\"ive\"],[\"Ġc\",\"re\"],[\"over\",\"n\"],[\"a\",\"red\"],[\"Ġ19\",\"4\"],[\"Ġor\",\"igin\"],[\"Ġs\",\"m\"],[\"iv\",\"ers\"],[\"a\",\"z\"],[\"Ġle\",\"ad\"],[\"Ġsever\",\"al\"],[\"a\",\"h\"],[\"Ġo\",\"b\"],[\"Ġre\",\"v\"],[\"Ġm\",\"ill\"],[\"er\",\"m\"]]}}"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer.json; filename=\"tokenizer.json\";",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:28 GMT",
+          "etag": "W/\"92bf891c6db1a3d72cf83ab31ac1c7310103b47a\"",
+          "ratelimit": "\"resolvers\";r=2895;t=2",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "transfer-encoding": "chunked",
+          "vary": "Origin,Accept-Encoding",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "JDG9T27hlHMQ1ZAaHxzn4JOgrxDxK1miXUt8yO8vhEZW7nE8ewIsTg==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "1b79f810bb092a83539dfea358459e82dfed197e",
+          "x-request-id": "Root=1-6a673308-05d7f9bf3b66fd8b4fa3a73e"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "1036209f9c3d8711",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/generation_config.json",
+      "recordedAt": "2026-07-27T10:38:25.470Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/generation_config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"_from_model_config\":true,\"bos_token_id\":0,\"decoder_start_token_id\":2,\"eos_token_id\":2,\"pad_token_id\":1,\"transformers_version\":\"4.48.2\"}"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''generation_config.json; filename=\"generation_config.json\";",
+          "content-length": "163",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:28 GMT",
+          "etag": "\"f1a1042e44e814bb13a8dd202e504f85d5d1f287\"",
+          "ratelimit": "\"resolvers\";r=2890;t=2",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 5e79d089f5701b7938b599fdf4db1b52.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "J6Q3MCTjgihDW8sASHFxkYbyCIRvmcQLF656aj9wFMTNMZF9zPrjtw==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "1b79f810bb092a83539dfea358459e82dfed197e",
+          "x-request-id": "Root=1-6a673308-2986375504b9586c1271ad29"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "877b98127ee7033b",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/onnx/decoder_model_merged.onnx",
+      "recordedAt": "2026-07-27T10:38:25.567Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/onnx/decoder_model_merged.onnx"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/octet-stream",
+          "kind": "binary",
+          "path": "huggingface-transformers-v4-latest.cassette.blobs/71c5b41e72bd3e19ec858542949ebd90bd873b47dae6a07d31cf2d972bd01d42.bin",
+          "sha256": "71c5b41e72bd3e19ec858542949ebd90bd873b47dae6a07d31cf2d972bd01d42"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-headers": "Content-Range, Content-Type, Content-Disposition, ETag",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "*",
+          "alt-svc": "h3=\":443\";ma=60;",
+          "content-disposition": "inline; filename*=UTF-8''decoder_model_merged.onnx; filename=\"decoder_model_merged.onnx\";",
+          "content-length": "375164",
+          "content-type": "application/octet-stream",
+          "date": "Mon, 27 Jul 2026 10:38:25 GMT",
+          "etag": "\"44c407e2f94ed70a4710f1497b20943ceca60463824847750bf505537442e12b\"",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-hf-cdn-pop": "aws-us-east-1",
+          "x-request-id": "01KYHJF2QXCTQVM94JEA82NB1M"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "56a9482da7d608b9",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/onnx/encoder_model.onnx",
+      "recordedAt": "2026-07-27T10:38:25.597Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BartForConditionalGeneration-ONNX/resolve/main/onnx/encoder_model.onnx"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/octet-stream",
+          "kind": "binary",
+          "path": "huggingface-transformers-v4-latest.cassette.blobs/6f6054008d820c42c4664ac123e6d6d88ec2b6cebe685f9a1bf02008d6f1f610.bin",
+          "sha256": "6f6054008d820c42c4664ac123e6d6d88ec2b6cebe685f9a1bf02008d6f1f610"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-headers": "Content-Range, Content-Type, Content-Disposition, ETag",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "*",
+          "alt-svc": "h3=\":443\";ma=60;",
+          "content-disposition": "inline; filename*=UTF-8''encoder_model.onnx; filename=\"encoder_model.onnx\";",
+          "content-length": "131071",
+          "content-type": "application/octet-stream",
+          "date": "Mon, 27 Jul 2026 10:38:25 GMT",
+          "etag": "\"2b68206886f9decb68e5a9c20a3fcca00c2d18befc07e9fcbb15c2d56d0979d3\"",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-hf-cdn-pop": "aws-us-east-1",
+          "x-request-id": "01KYHJF2QTW992XB1ZDHBZ4CK1"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "d4417a1e699ffb4e",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BertModel-ONNX/resolve/main/config.json",
+      "recordedAt": "2026-07-27T10:38:25.936Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BertModel-ONNX/resolve/main/config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"_attn_implementation_autoset\":true,\"_name_or_path\":\"hf-internal-testing/tiny-random-BertModel\",\"architectures\":[\"BertModel\"],\"attention_probs_dropout_prob\":0.1,\"classifier_dropout\":null,\"hidden_act\":\"gelu\",\"hidden_dropout_prob\":0.1,\"hidden_size\":32,\"initializer_range\":0.02,\"intermediate_size\":37,\"layer_norm_eps\":1e-12,\"max_position_embeddings\":512,\"model_type\":\"bert\",\"num_attention_heads\":4,\"num_hidden_layers\":5,\"pad_token_id\":0,\"position_embedding_type\":\"absolute\",\"transformers_version\":\"4.48.2\",\"type_vocab_size\":16,\"use_cache\":true,\"vocab_size\":1124}"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "2939058",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''config.json; filename=\"config.json\";",
+          "content-length": "654",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Tue, 23 Jun 2026 10:14:08 GMT",
+          "etag": "\"b1e12bb16862840b98680cc34f7538ce2f88f429\"",
+          "ratelimit": "\"resolvers\";r=716;t=28",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "_mE-TLhickCca6Vlsp1I_Xbv4XIgQ-qYWuyM4E5VtASJVKCFs9AAmw==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "3f74b196fbb9932eddd11953553cb7ce04ae671a",
+          "x-request-id": "Root=1-6a3a5c70-5ca0c49951bffadf300c0f71"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "3e71ac8bf0ee7e23",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BertModel-ONNX/resolve/main/tokenizer_config.json",
+      "recordedAt": "2026-07-27T10:38:25.956Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BertModel-ONNX/resolve/main/tokenizer_config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "1773883",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer_config.json; filename=\"tokenizer_config.json\";",
+          "content-length": "1",
+          "content-range": "bytes 0-0/1265",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 06 Jul 2026 21:53:43 GMT",
+          "etag": "\"8a0a80108ae74c3afcd11b743a4036715c547f92\"",
+          "ratelimit": "\"resolvers\";r=1695;t=17",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "jFhuT0bId1hYMM77NxsoyA9l2iEbKybjXcouwrOXWnwDX2Kr-oQvGw==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "3f74b196fbb9932eddd11953553cb7ce04ae671a",
+          "x-request-id": "Root=1-6a4c23e7-75d2fe81674ddb8854653ba0"
+        },
+        "status": 206,
+        "statusText": "Partial Content"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "4676f2a7cd62b54c",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BertModel-ONNX/resolve/main/tokenizer.json",
+      "recordedAt": "2026-07-27T10:38:25.979Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BertModel-ONNX/resolve/main/tokenizer.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"version\":\"1.0\",\"truncation\":null,\"padding\":null,\"added_tokens\":[{\"id\":0,\"content\":\"[PAD]\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":1,\"content\":\"[UNK]\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":2,\"content\":\"[CLS]\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":3,\"content\":\"[SEP]\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":4,\"content\":\"[MASK]\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true}],\"normalizer\":{\"type\":\"BertNormalizer\",\"clean_text\":true,\"handle_chinese_chars\":true,\"strip_accents\":null,\"lowercase\":true},\"pre_tokenizer\":{\"type\":\"BertPreTokenizer\"},\"post_processor\":{\"type\":\"TemplateProcessing\",\"single\":[{\"SpecialToken\":{\"id\":\"[CLS]\",\"type_id\":0}},{\"Sequence\":{\"id\":\"A\",\"type_id\":0}},{\"SpecialToken\":{\"id\":\"[SEP]\",\"type_id\":0}}],\"pair\":[{\"SpecialToken\":{\"id\":\"[CLS]\",\"type_id\":0}},{\"Sequence\":{\"id\":\"A\",\"type_id\":0}},{\"SpecialToken\":{\"id\":\"[SEP]\",\"type_id\":0}},{\"Sequence\":{\"id\":\"B\",\"type_id\":1}},{\"SpecialToken\":{\"id\":\"[SEP]\",\"type_id\":1}}],\"special_tokens\":{\"[CLS]\":{\"id\":\"[CLS]\",\"ids\":[2],\"tokens\":[\"[CLS]\"]},\"[SEP]\":{\"id\":\"[SEP]\",\"ids\":[3],\"tokens\":[\"[SEP]\"]}}},\"decoder\":{\"type\":\"WordPiece\",\"prefix\":\"##\",\"cleanup\":true},\"model\":{\"type\":\"WordPiece\",\"unk_token\":\"[UNK]\",\"continuing_subword_prefix\":\"##\",\"max_input_chars_per_word\":100,\"vocab\":{\"0\":20,\"1\":21,\"2\":22,\"3\":23,\"4\":24,\"5\":25,\"6\":26,\"7\":27,\"8\":28,\"9\":29,\"[PAD]\":0,\"[UNK]\":1,\"[CLS]\":2,\"[SEP]\":3,\"[MASK]\":4,\"!\":5,\"\\\"\":6,\"#\":7,\"$\":8,\"%\":9,\"&\":10,\"'\":11,\"(\":12,\")\":13,\"*\":14,\"+\":15,\",\":16,\"-\":17,\".\":18,\"/\":19,\":\":30,\";\":31,\"<\":32,\"=\":33,\">\":34,\"?\":35,\"@\":36,\"[\":37,\"\\\\\":38,\"]\":39,\"^\":40,\"_\":41,\"`\":42,\"a\":43,\"b\":44,\"c\":45,\"d\":46,\"e\":47,\"f\":48,\"g\":49,\"h\":50,\"i\":51,\"j\":52,\"k\":53,\"l\":54,\"m\":55,\"n\":56,\"o\":57,\"p\":58,\"q\":59,\"r\":60,\"s\":61,\"t\":62,\"u\":63,\"v\":64,\"w\":65,\"x\":66,\"y\":67,\"z\":68,\"|\":69,\"}\":70,\"~\":71,\"¡\":72,\"¢\":73,\"£\":74,\"¥\":75,\"§\":76,\"°\":77,\"±\":78,\"²\":79,\"³\":80,\"´\":81,\"µ\":82,\"·\":83,\"º\":84,\"½\":85,\"¿\":86,\"×\":87,\"ß\":88,\"æ\":89,\"ð\":90,\"ø\":91,\"þ\":92,\"đ\":93,\"ħ\":94,\"ı\":95,\"ł\":96,\"œ\":97,\"ɐ\":98,\"ɑ\":99,\"ɒ\":100,\"ɔ\":101,\"ə\":102,\"ɛ\":103,\"ɜ\":104,\"ɡ\":105,\"ɢ\":106,\"ɪ\":107,\"ɫ\":108,\"ɳ\":109,\"ɽ\":110,\"ɾ\":111,\"ʁ\":112,\"ʃ\":113,\"ʊ\":114,\"ʋ\":115,\"ʒ\":116,\"ʔ\":117,\"ʕ\":118,\"ʲ\":119,\"ʻ\":120,\"ʼ\":121,\"ʾ\":122,\"ʿ\":123,\"ˈ\":124,\"ˌ\":125,\"ː\":126,\"α\":127,\"β\":128,\"γ\":129,\"δ\":130,\"ε\":131,\"η\":132,\"θ\":133,\"ι\":134,\"κ\":135,\"λ\":136,\"μ\":137,\"ν\":138,\"ξ\":139,\"ο\":140,\"π\":141,\"ρ\":142,\"ς\":143,\"σ\":144,\"τ\":145,\"υ\":146,\"φ\":147,\"χ\":148,\"ψ\":149,\"ω\":150,\"а\":151,\"б\":152,\"в\":153,\"г\":154,\"д\":155,\"е\":156,\"ж\":157,\"з\":158,\"и\":159,\"к\":160,\"л\":161,\"м\":162,\"н\":163,\"о\":164,\"п\":165,\"р\":166,\"с\":167,\"т\":168,\"у\":169,\"х\":170,\"ц\":171,\"ш\":172,\"ъ\":173,\"ы\":174,\"ь\":175,\"ю\":176,\"я\":177,\"є\":178,\"א\":179,\"ב\":180,\"ג\":181,\"ה\":182,\"ו\":183,\"ז\":184,\"ח\":185,\"י\":186,\"ל\":187,\"ם\":188,\"מ\":189,\"ן\":190,\"נ\":191,\"ס\":192,\"ף\":193,\"פ\":194,\"צ\":195,\"ר\":196,\"ש\":197,\"ת\":198,\"ء\":199,\"ا\":200,\"ب\":201,\"ة\":202,\"ت\":203,\"ث\":204,\"ج\":205,\"ح\":206,\"خ\":207,\"د\":208,\"ذ\":209,\"ر\":210,\"س\":211,\"ش\":212,\"ص\":213,\"ع\":214,\"ف\":215,\"ق\":216,\"ك\":217,\"ل\":218,\"م\":219,\"ن\":220,\"ه\":221,\"و\":222,\"ي\":223,\"ܐ\":224,\"ܕ\":225,\"ܗ\":226,\"ܝ\":227,\"ܠ\":228,\"ܢ\":229,\"ܬ\":230,\"अ\":231,\"ई\":232,\"क\":233,\"ग\":234,\"ण\":235,\"त\":236,\"द\":237,\"न\":238,\"प\":239,\"ब\":240,\"म\":241,\"य\":242,\"र\":243,\"ल\":244,\"व\":245,\"स\":246,\"ह\":247,\"ा\":248,\"ि\":249,\"আ\":250,\"ল\":251,\"হ\":252,\"া\":253,\"ਅ\":254,\"ਲ\":255,\"ਹ\":256,\"ਾ\":257,\"അ\":258,\"ള\":259,\"ഹ\":260,\"ാ\":261,\"ก\":262,\"ค\":263,\"ง\":264,\"ช\":265,\"ซ\":266,\"ญ\":267,\"ฐ\":268,\"ณ\":269,\"ด\":270,\"ต\":271,\"น\":272,\"บ\":273,\"ป\":274,\"พ\":275,\"ภ\":276,\"ม\":277,\"ย\":278,\"ร\":279,\"ล\":280,\"ว\":281,\"ศ\":282,\"ษ\":283,\"ส\":284,\"ห\":285,\"อ\":286,\"ฮ\":287,\"ะ\":288,\"า\":289,\"เ\":290,\"แ\":291,\"ไ\":292,\"ა\":293,\"ბ\":294,\"გ\":295,\"დ\":296,\"ე\":297,\"ვ\":298,\"ზ\":299,\"თ\":300,\"ი\":301,\"კ\":302,\"ლ\":303,\"მ\":304,\"ნ\":305,\"ო\":306,\"პ\":307,\"ჟ\":308,\"რ\":309,\"ს\":310,\"ტ\":311,\"უ\":312,\"ფ\":313,\"ქ\":314,\"ღ\":315,\"ყ\":316,\"შ\":317,\"ჩ\":318,\"ც\":319,\"ძ\":320,\"წ\":321,\"ჭ\":322,\"ხ\":323,\"ჯ\":324,\"ჰ\":325,\"ჱ\":326,\"ჲ\":327,\"ჳ\":328,\"ჴ\":329,\"ჵ\":330,\"ჶ\":331,\"ჷ\":332,\"ჸ\":333,\"ჹ\":334,\"ჺ\":335,\"჻\":336,\"ᄃ\":337,\"ᄅ\":338,\"ᄇ\":339,\"ᄋ\":340,\"ᄌ\":341,\"ᅡ\":342,\"ᅢ\":343,\"ᅦ\":344,\"ᅧ\":345,\"ᅩ\":346,\"ᅮ\":347,\"ᅵ\":348,\"ᆨ\":349,\"ᆫ\":350,\"ᆯ\":351,\"ᆸ\":352,\"ᆼ\":353,\"ᵻ\":354,\"‐\":355,\"‑\":356,\"–\":357,\"—\":358,\"―\":359,\"‘\":360,\"’\":361,\"“\":362,\"”\":363,\"„\":364,\"†\":365,\"‡\":366,\"•\":367,\"…\":368,\"′\":369,\"″\":370,\"⁄\":371,\"₣\":372,\"₤\":373,\"€\":374,\"₹\":375,\"⅓\":376,\"⅔\":377,\"→\":378,\"−\":379,\"≡\":380,\"≤\":381,\"①\":382,\"☉\":383,\"☫\":384,\"♀\":385,\"♭\":386,\"♯\":387,\"⚳\":388,\"ⴀ\":389,\"ⴂ\":390,\"ⴃ\":391,\"ⴈ\":392,\"ⴌ\":393,\"ⴕ\":394,\"ⴟ\":395,\"〈\":396,\"〉\":397,\"〜\":398,\"あ\":399,\"い\":400,\"う\":401,\"お\":402,\"か\":403,\"き\":404,\"く\":405,\"け\":406,\"こ\":407,\"さ\":408,\"し\":409,\"す\":410,\"せ\":411,\"た\":412,\"ち\":413,\"っ\":414,\"つ\":415,\"と\":416,\"な\":417,\"に\":418,\"の\":419,\"は\":420,\"ひ\":421,\"ふ\":422,\"ほ\":423,\"ま\":424,\"み\":425,\"め\":426,\"も\":427,\"ゃ\":428,\"ゆ\":429,\"ょ\":430,\"ら\":431,\"り\":432,\"る\":433,\"れ\":434,\"わ\":435,\"を\":436,\"ん\":437,\"ァ\":438,\"ア\":439,\"ィ\":440,\"イ\":441,\"ゥ\":442,\"ウ\":443,\"ェ\":444,\"エ\":445,\"ォ\":446,\"オ\":447,\"カ\":448,\"キ\":449,\"ク\":450,\"ケ\":451,\"コ\":452,\"サ\":453,\"シ\":454,\"ス\":455,\"セ\":456,\"タ\":457,\"チ\":458,\"ッ\":459,\"ツ\":460,\"テ\":461,\"ト\":462,\"ナ\":463,\"ニ\":464,\"ネ\":465,\"ノ\":466,\"ハ\":467,\"フ\":468,\"ヘ\":469,\"マ\":470,\"ミ\":471,\"ム\":472,\"モ\":473,\"ャ\":474,\"ュ\":475,\"ョ\":476,\"ラ\":477,\"リ\":478,\"ル\":479,\"レ\":480,\"ロ\":481,\"ン\":482,\"・\":483,\"ー\":484,\"一\":485,\"七\":486,\"下\":487,\"世\":488,\"丙\":489,\"中\":490,\"主\":491,\"乃\":492,\"之\":493,\"乙\":494,\"九\":495,\"二\":496,\"云\":497,\"人\":498,\"今\":499,\"付\":500,\"作\":501,\"侗\":502,\"依\":503,\"信\":504,\"傳\":505,\"儚\":506,\"充\":507,\"光\":508,\"全\":509,\"兵\":510,\"其\":511,\"具\":512,\"円\":513,\"再\":514,\"出\":515,\"判\":516,\"前\":517,\"剛\":518,\"劇\":519,\"劉\":520,\"動\":521,\"化\":522,\"北\":523,\"华\":524,\"厂\":525,\"去\":526,\"古\":527,\"可\":528,\"台\":529,\"史\":530,\"同\":531,\"名\":532,\"君\":533,\"吳\":534,\"周\":535,\"命\":536,\"和\":537,\"咲\":538,\"善\":539,\"四\":540,\"國\":541,\"園\":542,\"圣\":543,\"在\":544,\"坂\":545,\"堤\":546,\"場\":547,\"塘\":548,\"夕\":549,\"大\":550,\"天\":551,\"夫\":552,\"女\":553,\"妙\":554,\"姚\":555,\"子\":556,\"孟\":557,\"守\":558,\"安\":559,\"宋\":560,\"完\":561,\"宗\":562,\"宝\":563,\"宫\":564,\"寝\":565,\"寺\":566,\"小\":567,\"少\":568,\"尾\":569,\"山\":570,\"岳\":571,\"川\":572,\"州\":573,\"巳\":574,\"市\":575,\"師\":576,\"平\":577,\"广\":578,\"庆\":579,\"府\":580,\"座\":581,\"廬\":582,\"建\":583,\"式\":584,\"張\":585,\"彌\":586,\"彩\":587,\"彼\":588,\"後\":589,\"御\":590,\"德\":591,\"思\":592,\"愛\":593,\"憑\":594,\"憶\":595,\"應\":596,\"懷\":597,\"战\":598,\"戦\":599,\"扈\":600,\"技\":601,\"拉\":602,\"拳\":603,\"挑\":604,\"揺\":605,\"攻\":606,\"放\":607,\"政\":608,\"散\":609,\"斯\":610,\"方\":611,\"日\":612,\"旦\":613,\"旭\":614,\"昌\":615,\"明\":616,\"星\":617,\"春\":618,\"晋\":619,\"景\":620,\"曦\":621,\"月\":622,\"望\":623,\"未\":624,\"本\":625,\"李\":626,\"村\":627,\"杜\":628,\"束\":629,\"来\":630,\"林\":631,\"桜\":632,\"梶\":633,\"棘\":634,\"椎\":635,\"楊\":636,\"楚\":637,\"榮\":638,\"橘\":639,\"機\":640,\"正\":641,\"殻\":642,\"殿\":643,\"母\":644,\"水\":645,\"汉\":646,\"沂\":647,\"沙\":648,\"河\":649,\"泗\":650,\"波\":651,\"泣\":652,\"洪\":653,\"淹\":654,\"清\":655,\"湯\":656,\"漢\":657,\"澄\":658,\"澤\":659,\"火\":660,\"灯\":661,\"灵\":662,\"灼\":663,\"焼\":664,\"熱\":665,\"物\":666,\"狐\":667,\"狸\":668,\"玄\":669,\"王\":670,\"玩\":671,\"珂\":672,\"珙\":673,\"球\":674,\"理\":675,\"琦\":676,\"琪\":677,\"瓊\":678,\"生\":679,\"田\":680,\"畢\":681,\"番\":682,\"瘡\":683,\"白\":684,\"皮\":685,\"真\":686,\"砲\":687,\"礮\":688,\"祈\":689,\"神\":690,\"祠\":691,\"秋\":692,\"空\":693,\"立\":694,\"精\":695,\"約\":696,\"絵\":697,\"織\":698,\"義\":699,\"翠\":700,\"者\":701,\"耕\":702,\"肖\":703,\"胡\":704,\"膀\":705,\"臂\":706,\"興\":707,\"良\":708,\"花\":709,\"芳\":710,\"芽\":711,\"若\":712,\"英\":713,\"藕\":714,\"藥\":715,\"蘄\":716,\"蘇\":717,\"行\":718,\"裁\":719,\"規\":720,\"覺\":721,\"观\":722,\"解\":723,\"記\":724,\"誓\":725,\"誡\":726,\"誰\":727,\"謎\":728,\"许\":729,\"谭\":730,\"豪\":731,\"豫\":732,\"費\":733,\"贵\":734,\"赤\":735,\"趙\":736,\"足\":737,\"跡\":738,\"転\":739,\"辛\":740,\"逆\":741,\"遇\":742,\"運\":743,\"過\":744,\"遠\":745,\"選\":746,\"邦\":747,\"邱\":748,\"部\":749,\"郭\":750,\"都\":751,\"酈\":752,\"里\":753,\"野\":754,\"金\":755,\"銃\":756,\"鋼\":757,\"錄\":758,\"錡\":759,\"鍵\":760,\"鐵\":761,\"钱\":762,\"铁\":763,\"關\":764,\"防\":765,\"阿\":766,\"陈\":767,\"陳\":768,\"陽\":769,\"隊\":770,\"階\":771,\"集\":772,\"雪\":773,\"雲\":774,\"霖\":775,\"霹\":776,\"靂\":777,\"韓\":778,\"願\":779,\"顯\":780,\"颜\":781,\"马\":782,\"高\":783,\"龍\":784,\"ﷲ\":785,\"ﻋ\":786,\"／\":787,\"３\":788,\"～\":789,\"##i\":790,\"##y\":791,\"##o\":792,\"##r\":793,\"##g\":794,\"##a\":795,\"##w\":796,\"##l\":797,\"##b\":798,\"##z\":799,\"##t\":800,\"##n\":801,\"##c\":802,\"##h\":803,\"##s\":804,\"##u\":805,\"##d\":806,\"##e\":807,\"##k\":808,\"##v\":809,\"##f\":810,\"##x\":811,\"##q\":812,\"##p\":813,\"##æ\":814,\"##0\":815,\"##5\":816,\"##m\":817,\"##8\":818,\"##4\":819,\"##س\":820,\"##ت\":821,\"##ا\":822,\"##ن\":823,\"##6\":824,\"##1\":825,\"##7\":826,\"##j\":827,\"##つ\":828,\"##う\":829,\"##2\":830,\"##9\":831,\"##3\":832,\"##ø\":833,\"##ล\":834,\"##ว\":835,\"##ง\":836,\"##พ\":837,\"##ไ\":838,\"##ช\":839,\"##ย\":840,\"##า\":841,\"##ร\":842,\"##თ\":843,\"##ა\":844,\"##ვ\":845,\"##რ\":846,\"##ი\":847,\"##ള\":848,\"##あ\":849,\"##ん\":850,\"##α\":851,\"##ν\":852,\"##τ\":853,\"##ο\":854,\"##κ\":855,\"##ρ\":856,\"##ω\":857,\"##ς\":858,\"##の\":859,\"##な\":860,\"##ら\":861,\"##ð\":862,\"##œ\":863,\"##ɛ\":864,\"##ł\":865,\"##η\":866,\"##μ\":867,\"##ซ\":868,\"##ル\":869,\"##シ\":870,\"##ア\":871,\"##リ\":872,\"##ス\":873,\"##ʔ\":874,\"##ल\":875,\"##ᄇ\":876,\"##ᅮ\":877,\"##ᄃ\":878,\"##ᅢ\":879,\"##β\":880,\"##ß\":881,\"##か\":882,\"##た\":883,\"##ə\":884,\"##ʻ\":885,\"##ι\":886,\"##χ\":887,\"##о\":888,\"##л\":889,\"##с\":890,\"##а\":891,\"##т\":892,\"##ы\":893,\"##и\":894,\"##в\":895,\"##к\":896,\"##з\":897,\"##ッ\":898,\"##ク\":899,\"##マ\":900,\"##ン\":901,\"##გ\":902,\"##ლ\":903,\"##ო\":904,\"##ნ\":905,\"##ː\":906,\"##ל\":907,\"##ה\":908,\"##א\":909,\"##く\":910,\"##み\":911,\"##ε\":912,\"##ξ\":913,\"##ল\":914,\"##ˈ\":915,\"##ɡ\":916,\"##ɑ\":917,\"##ɒ\":918,\"##し\":919,\"##す\":920,\"##き\":921,\"##ひ\":922,\"##と\":923,\"##đ\":924,\"##ъ\":925,\"##н\":926,\"##е\":927,\"##י\":928,\"##פ\":929,\"##イ\":930,\"##λ\":931,\"##ق\":932,\"##ع\":933,\"##د\":934,\"##ᅡ\":935,\"##ᆯ\":936,\"##ᄅ\":937,\"##ɪ\":938,\"##ค\":939,\"##ต\":940,\"##व\":941,\"##ा\":942,\"##द\":943,\"##は\":944,\"##り\":945,\"##レ\":946,\"##ー\":947,\"##ツ\":948,\"##ي\":949,\"##ش\":950,\"##و\":951,\"##م\":952,\"##º\":953,\"##ਲ\":954,\"##ਾ\":955,\"##ਹ\":956,\"##д\":957,\"##р\":958,\"##ل\":959,\"##ب\":960,\"##い\":961,\"##ち\":962,\"##ゃ\":963,\"##ʒ\":964,\"##ʃ\":965,\"##ɔ\":966,\"##ह\":967,\"##ニ\":968,\"##ウ\":969,\"##ァ\":970,\"##キ\":971,\"##ュ\":972,\"##３\":973,\"##ხ\":974,\"##ს\":975,\"##お\":976,\"##タ\":977,\"##ാ\":978,\"##ഹ\":979,\"##ɳ\":980,\"##ま\":981,\"##る\":982,\"##ะ\":983,\"##อ\":984,\"##น\":985,\"##ן\":986,\"##я\":987,\"##แ\":988,\"##ก\":989,\"##ɾ\":990,\"##ʲ\":991,\"##フ\":992,\"##უ\":993,\"##ภ\":994,\"##ด\":995,\"##ב\":996,\"##ת\":997,\"##خ\":998,\"##ラ\":999,\"##れ\":1000,\"##ण\":1001,\"##स\":1002,\"##न\":1003,\"##ه\":1004,\"##ف\":1005,\"##ر\":1006,\"##エ\":1007,\"##テ\":1008,\"##ษ\":1009,\"##ฐ\":1010,\"##ィ\":1011,\"##क\":1012,\"##ノ\":1013,\"##θ\":1014,\"##ネ\":1015,\"##ョ\":1016,\"##δ\":1017,\"##ɽ\":1018,\"##ʁ\":1019,\"##ტ\":1020,\"##ჱ\":1021,\"##ェ\":1022,\"##ハ\":1023,\"##υ\":1024,\"##र\":1025,\"##х\":1026,\"##も\":1027,\"##っ\":1028,\"##ょ\":1029,\"##に\":1030,\"##γ\":1031,\"##ც\":1032,\"##ე\":1033,\"##є\":1034,\"##м\":1035,\"##ܕ\":1036,\"##ܝ\":1037,\"##ܢ\":1038,\"##ܬ\":1039,\"##ณ\":1040,\"##ม\":1041,\"##ฮ\":1042,\"##ж\":1043,\"##ם\":1044,\"##ء\":1045,\"##ʊ\":1046,\"##ई\":1047,\"##め\":1048,\"##მ\":1049,\"##ム\":1050,\"##チ\":1051,\"##ᵻ\":1052,\"##ˌ\":1053,\"##ו\":1054,\"##ף\":1055,\"##წ\":1056,\"##ფ\":1057,\"##ャ\":1058,\"##モ\":1059,\"##ɐ\":1060,\"##ᅦ\":1061,\"##ᅩ\":1062,\"##ᆨ\":1063,\"##ᅵ\":1064,\"##ᆸ\":1065,\"##ᅧ\":1066,\"##ᆼ\":1067,\"##ᄋ\":1068,\"##ᆫ\":1069,\"##わ\":1070,\"##ı\":1071,\"##ქ\":1072,\"##დ\":1073,\"##ि\":1074,\"##ჲ\":1075,\"##ר\":1076,\"##セ\":1077,\"##オ\":1078,\"##ゆ\":1079,\"##せ\":1080,\"##ك\":1081,\"##ʿ\":1082,\"##ש\":1083,\"##מ\":1084,\"##צ\":1085,\"##п\":1086,\"##г\":1087,\"##カ\":1088,\"##ܠ\":1089,\"##ܗ\":1090,\"##ܐ\":1091,\"##ナ\":1092,\"##ミ\":1093,\"##こ\":1094,\"##を\":1095,\"##ψ\":1096,\"##サ\":1097,\"##ォ\":1098,\"##π\":1099,\"##ト\":1100,\"##у\":1101,\"##ح\":1102,\"##σ\":1103,\"##เ\":1104,\"##ป\":1105,\"##ш\":1106,\"##ゥ\":1107,\"##ロ\":1108,\"##া\":1109,\"##হ\":1110,\"##ɜ\":1111,\"##ة\":1112,\"##ص\":1113,\"##ס\":1114,\"##ث\":1115,\"##ჳ\":1116,\"##נ\":1117,\"##ذ\":1118,\"##ग\":1119,\"##ɫ\":1120,\"##ц\":1121,\"##ь\":1122,\"##ю\":1123}}}"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer.json; filename=\"tokenizer.json\";",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:29 GMT",
+          "etag": "W/\"048f7e7d6e175186a52e3ce2fe27c01ead7bd9a2\"",
+          "ratelimit": "\"resolvers\";r=2886;t=1",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "transfer-encoding": "chunked",
+          "vary": "Origin,Accept-Encoding",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "vBuvWGkbVaggnDGirQPSeM9zcL3ulK1SmT4_-uIkux9vXx83F-ziNg==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "3f74b196fbb9932eddd11953553cb7ce04ae671a",
+          "x-request-id": "Root=1-6a673309-3f8775b92cc2faf305d24cf8"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "4e7bf924f844805c",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BertModel-ONNX/resolve/main/tokenizer_config.json",
+      "recordedAt": "2026-07-27T10:38:25.980Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BertModel-ONNX/resolve/main/tokenizer_config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"added_tokens_decoder\":{\"0\":{\"content\":\"[PAD]\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"1\":{\"content\":\"[UNK]\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"2\":{\"content\":\"[CLS]\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"3\":{\"content\":\"[SEP]\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"4\":{\"content\":\"[MASK]\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true}},\"clean_up_tokenization_spaces\":false,\"cls_token\":\"[CLS]\",\"do_basic_tokenize\":true,\"do_lower_case\":true,\"extra_special_tokens\":{},\"mask_token\":\"[MASK]\",\"model_max_length\":512,\"never_split\":null,\"pad_token\":\"[PAD]\",\"sep_token\":\"[SEP]\",\"strip_accents\":null,\"tokenize_chinese_chars\":true,\"tokenizer_class\":\"BertTokenizer\",\"unk_token\":\"[UNK]\"}"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer_config.json; filename=\"tokenizer_config.json\";",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:29 GMT",
+          "etag": "W/\"8a0a80108ae74c3afcd11b743a4036715c547f92\"",
+          "ratelimit": "\"resolvers\";r=2885;t=1",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "transfer-encoding": "chunked",
+          "vary": "Origin,Accept-Encoding",
+          "via": "1.1 1a5ddecdee7139ebf663ea7d3699cd88.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "N0WnQg04goSC0RQV3LnMtkH1ZX6fjVVJgGI5qe4exGyZv7dWkkcmgw==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "3f74b196fbb9932eddd11953553cb7ce04ae671a",
+          "x-request-id": "Root=1-6a673309-0459c54459b70bb710084325"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "74610951c29fbd56",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BertModel-ONNX/resolve/main/onnx/model.onnx",
+      "recordedAt": "2026-07-27T10:38:26.075Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BertModel-ONNX/resolve/main/onnx/model.onnx"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/octet-stream",
+          "kind": "binary",
+          "path": "huggingface-transformers-v4-latest.cassette.blobs/0cde355aa30f46be1b03ceaf0dad8dae94335b2e1400a3b08639cc9b1ee59ccb.bin",
+          "sha256": "0cde355aa30f46be1b03ceaf0dad8dae94335b2e1400a3b08639cc9b1ee59ccb"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-headers": "Content-Range, Content-Type, Content-Disposition, ETag",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "*",
+          "alt-svc": "h3=\":443\";ma=60;",
+          "content-disposition": "inline; filename*=UTF-8''model.onnx; filename=\"model.onnx\";",
+          "content-length": "464573",
+          "content-type": "application/octet-stream",
+          "date": "Mon, 27 Jul 2026 10:38:26 GMT",
+          "etag": "\"93ce7eb2ba0bddcc903f2b099c55b60a18f8c4503cd5a6d8ffc9db4bf9a81ff4\"",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-hf-cdn-pop": "aws-us-east-1",
+          "x-request-id": "01KYHJF37TRBFD2WB3SYNKDHMV"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "d422fb5d7be46447",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX/resolve/main/config.json",
+      "recordedAt": "2026-07-27T10:38:26.156Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX/resolve/main/config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"_attn_implementation_autoset\":true,\"_name_or_path\":\"hf-internal-testing/tiny-random-BertForQuestionAnswering\",\"architectures\":[\"BertForQuestionAnswering\"],\"attention_probs_dropout_prob\":0.1,\"classifier_dropout\":null,\"hidden_act\":\"gelu\",\"hidden_dropout_prob\":0.1,\"hidden_size\":32,\"initializer_range\":0.02,\"intermediate_size\":37,\"layer_norm_eps\":1e-12,\"max_position_embeddings\":512,\"model_type\":\"bert\",\"num_attention_heads\":4,\"num_hidden_layers\":5,\"pad_token_id\":0,\"position_embedding_type\":\"absolute\",\"transformers_version\":\"4.48.2\",\"type_vocab_size\":16,\"use_cache\":true,\"vocab_size\":1124}"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''config.json; filename=\"config.json\";",
+          "content-length": "684",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:29 GMT",
+          "etag": "\"d94e4269c10405d8dd409db97726c340da5eea3a\"",
+          "ratelimit": "\"resolvers\";r=2879;t=1",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "ndoye_eLr55dQspxxESx4GqcZcG3j_Etqkq3gWAdvs7DJmyUVkU89Q==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "79c27929ad1c20e7c5c7a60ccbe64b1e64cfa309",
+          "x-request-id": "Root=1-6a673309-59614b481a4472ba62e42562"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "1e24a5f2b6425367",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX/resolve/main/tokenizer_config.json",
+      "recordedAt": "2026-07-27T10:38:26.178Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX/resolve/main/tokenizer_config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "816",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer_config.json; filename=\"tokenizer_config.json\";",
+          "content-length": "1",
+          "content-range": "bytes 0-0/1265",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:24:50 GMT",
+          "etag": "\"8a0a80108ae74c3afcd11b743a4036715c547f92\"",
+          "ratelimit": "\"resolvers\";r=2967;t=280",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "vary": "Origin",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "aqE0GaMkJZkwwGDLu01sBGbngPCGHC76gLXMD4H3fNj54LgMCWq_tw==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "79c27929ad1c20e7c5c7a60ccbe64b1e64cfa309",
+          "x-request-id": "Root=1-6a6731f2-3ca856ba2602c0a824915047"
+        },
+        "status": 206,
+        "statusText": "Partial Content"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "1475c119f9ab15fb",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX/resolve/main/tokenizer_config.json",
+      "recordedAt": "2026-07-27T10:38:26.199Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX/resolve/main/tokenizer_config.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"added_tokens_decoder\":{\"0\":{\"content\":\"[PAD]\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"1\":{\"content\":\"[UNK]\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"2\":{\"content\":\"[CLS]\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"3\":{\"content\":\"[SEP]\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true},\"4\":{\"content\":\"[MASK]\",\"lstrip\":false,\"normalized\":false,\"rstrip\":false,\"single_word\":false,\"special\":true}},\"clean_up_tokenization_spaces\":false,\"cls_token\":\"[CLS]\",\"do_basic_tokenize\":true,\"do_lower_case\":true,\"extra_special_tokens\":{},\"mask_token\":\"[MASK]\",\"model_max_length\":512,\"never_split\":null,\"pad_token\":\"[PAD]\",\"sep_token\":\"[SEP]\",\"strip_accents\":null,\"tokenize_chinese_chars\":true,\"tokenizer_class\":\"BertTokenizer\",\"unk_token\":\"[UNK]\"}"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer_config.json; filename=\"tokenizer_config.json\";",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:29 GMT",
+          "etag": "W/\"8a0a80108ae74c3afcd11b743a4036715c547f92\"",
+          "ratelimit": "\"resolvers\";r=2878;t=1",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "transfer-encoding": "chunked",
+          "vary": "Origin,Accept-Encoding",
+          "via": "1.1 1a5ddecdee7139ebf663ea7d3699cd88.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "qvEHawrBwxVwNsTL_4VYFLdv0CDHMuv1tYWU2NAEu8m2kh1E0IDpDQ==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "79c27929ad1c20e7c5c7a60ccbe64b1e64cfa309",
+          "x-request-id": "Root=1-6a673309-32cd9e3c34b1a5bb1373eb49"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "05a448b89258f858",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX/resolve/main/tokenizer.json",
+      "recordedAt": "2026-07-27T10:38:26.202Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX/resolve/main/tokenizer.json"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"version\":\"1.0\",\"truncation\":null,\"padding\":null,\"added_tokens\":[{\"id\":0,\"content\":\"[PAD]\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":1,\"content\":\"[UNK]\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":2,\"content\":\"[CLS]\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":3,\"content\":\"[SEP]\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true},{\"id\":4,\"content\":\"[MASK]\",\"single_word\":false,\"lstrip\":false,\"rstrip\":false,\"normalized\":false,\"special\":true}],\"normalizer\":{\"type\":\"BertNormalizer\",\"clean_text\":true,\"handle_chinese_chars\":true,\"strip_accents\":null,\"lowercase\":true},\"pre_tokenizer\":{\"type\":\"BertPreTokenizer\"},\"post_processor\":{\"type\":\"TemplateProcessing\",\"single\":[{\"SpecialToken\":{\"id\":\"[CLS]\",\"type_id\":0}},{\"Sequence\":{\"id\":\"A\",\"type_id\":0}},{\"SpecialToken\":{\"id\":\"[SEP]\",\"type_id\":0}}],\"pair\":[{\"SpecialToken\":{\"id\":\"[CLS]\",\"type_id\":0}},{\"Sequence\":{\"id\":\"A\",\"type_id\":0}},{\"SpecialToken\":{\"id\":\"[SEP]\",\"type_id\":0}},{\"Sequence\":{\"id\":\"B\",\"type_id\":1}},{\"SpecialToken\":{\"id\":\"[SEP]\",\"type_id\":1}}],\"special_tokens\":{\"[CLS]\":{\"id\":\"[CLS]\",\"ids\":[2],\"tokens\":[\"[CLS]\"]},\"[SEP]\":{\"id\":\"[SEP]\",\"ids\":[3],\"tokens\":[\"[SEP]\"]}}},\"decoder\":{\"type\":\"WordPiece\",\"prefix\":\"##\",\"cleanup\":true},\"model\":{\"type\":\"WordPiece\",\"unk_token\":\"[UNK]\",\"continuing_subword_prefix\":\"##\",\"max_input_chars_per_word\":100,\"vocab\":{\"0\":20,\"1\":21,\"2\":22,\"3\":23,\"4\":24,\"5\":25,\"6\":26,\"7\":27,\"8\":28,\"9\":29,\"[PAD]\":0,\"[UNK]\":1,\"[CLS]\":2,\"[SEP]\":3,\"[MASK]\":4,\"!\":5,\"\\\"\":6,\"#\":7,\"$\":8,\"%\":9,\"&\":10,\"'\":11,\"(\":12,\")\":13,\"*\":14,\"+\":15,\",\":16,\"-\":17,\".\":18,\"/\":19,\":\":30,\";\":31,\"<\":32,\"=\":33,\">\":34,\"?\":35,\"@\":36,\"[\":37,\"\\\\\":38,\"]\":39,\"^\":40,\"_\":41,\"`\":42,\"a\":43,\"b\":44,\"c\":45,\"d\":46,\"e\":47,\"f\":48,\"g\":49,\"h\":50,\"i\":51,\"j\":52,\"k\":53,\"l\":54,\"m\":55,\"n\":56,\"o\":57,\"p\":58,\"q\":59,\"r\":60,\"s\":61,\"t\":62,\"u\":63,\"v\":64,\"w\":65,\"x\":66,\"y\":67,\"z\":68,\"|\":69,\"}\":70,\"~\":71,\"¡\":72,\"¢\":73,\"£\":74,\"¥\":75,\"§\":76,\"°\":77,\"±\":78,\"²\":79,\"³\":80,\"´\":81,\"µ\":82,\"·\":83,\"º\":84,\"½\":85,\"¿\":86,\"×\":87,\"ß\":88,\"æ\":89,\"ð\":90,\"ø\":91,\"þ\":92,\"đ\":93,\"ħ\":94,\"ı\":95,\"ł\":96,\"œ\":97,\"ɐ\":98,\"ɑ\":99,\"ɒ\":100,\"ɔ\":101,\"ə\":102,\"ɛ\":103,\"ɜ\":104,\"ɡ\":105,\"ɢ\":106,\"ɪ\":107,\"ɫ\":108,\"ɳ\":109,\"ɽ\":110,\"ɾ\":111,\"ʁ\":112,\"ʃ\":113,\"ʊ\":114,\"ʋ\":115,\"ʒ\":116,\"ʔ\":117,\"ʕ\":118,\"ʲ\":119,\"ʻ\":120,\"ʼ\":121,\"ʾ\":122,\"ʿ\":123,\"ˈ\":124,\"ˌ\":125,\"ː\":126,\"α\":127,\"β\":128,\"γ\":129,\"δ\":130,\"ε\":131,\"η\":132,\"θ\":133,\"ι\":134,\"κ\":135,\"λ\":136,\"μ\":137,\"ν\":138,\"ξ\":139,\"ο\":140,\"π\":141,\"ρ\":142,\"ς\":143,\"σ\":144,\"τ\":145,\"υ\":146,\"φ\":147,\"χ\":148,\"ψ\":149,\"ω\":150,\"а\":151,\"б\":152,\"в\":153,\"г\":154,\"д\":155,\"е\":156,\"ж\":157,\"з\":158,\"и\":159,\"к\":160,\"л\":161,\"м\":162,\"н\":163,\"о\":164,\"п\":165,\"р\":166,\"с\":167,\"т\":168,\"у\":169,\"х\":170,\"ц\":171,\"ш\":172,\"ъ\":173,\"ы\":174,\"ь\":175,\"ю\":176,\"я\":177,\"є\":178,\"א\":179,\"ב\":180,\"ג\":181,\"ה\":182,\"ו\":183,\"ז\":184,\"ח\":185,\"י\":186,\"ל\":187,\"ם\":188,\"מ\":189,\"ן\":190,\"נ\":191,\"ס\":192,\"ף\":193,\"פ\":194,\"צ\":195,\"ר\":196,\"ש\":197,\"ת\":198,\"ء\":199,\"ا\":200,\"ب\":201,\"ة\":202,\"ت\":203,\"ث\":204,\"ج\":205,\"ح\":206,\"خ\":207,\"د\":208,\"ذ\":209,\"ر\":210,\"س\":211,\"ش\":212,\"ص\":213,\"ع\":214,\"ف\":215,\"ق\":216,\"ك\":217,\"ل\":218,\"م\":219,\"ن\":220,\"ه\":221,\"و\":222,\"ي\":223,\"ܐ\":224,\"ܕ\":225,\"ܗ\":226,\"ܝ\":227,\"ܠ\":228,\"ܢ\":229,\"ܬ\":230,\"अ\":231,\"ई\":232,\"क\":233,\"ग\":234,\"ण\":235,\"त\":236,\"द\":237,\"न\":238,\"प\":239,\"ब\":240,\"म\":241,\"य\":242,\"र\":243,\"ल\":244,\"व\":245,\"स\":246,\"ह\":247,\"ा\":248,\"ि\":249,\"আ\":250,\"ল\":251,\"হ\":252,\"া\":253,\"ਅ\":254,\"ਲ\":255,\"ਹ\":256,\"ਾ\":257,\"അ\":258,\"ള\":259,\"ഹ\":260,\"ാ\":261,\"ก\":262,\"ค\":263,\"ง\":264,\"ช\":265,\"ซ\":266,\"ญ\":267,\"ฐ\":268,\"ณ\":269,\"ด\":270,\"ต\":271,\"น\":272,\"บ\":273,\"ป\":274,\"พ\":275,\"ภ\":276,\"ม\":277,\"ย\":278,\"ร\":279,\"ล\":280,\"ว\":281,\"ศ\":282,\"ษ\":283,\"ส\":284,\"ห\":285,\"อ\":286,\"ฮ\":287,\"ะ\":288,\"า\":289,\"เ\":290,\"แ\":291,\"ไ\":292,\"ა\":293,\"ბ\":294,\"გ\":295,\"დ\":296,\"ე\":297,\"ვ\":298,\"ზ\":299,\"თ\":300,\"ი\":301,\"კ\":302,\"ლ\":303,\"მ\":304,\"ნ\":305,\"ო\":306,\"პ\":307,\"ჟ\":308,\"რ\":309,\"ს\":310,\"ტ\":311,\"უ\":312,\"ფ\":313,\"ქ\":314,\"ღ\":315,\"ყ\":316,\"შ\":317,\"ჩ\":318,\"ც\":319,\"ძ\":320,\"წ\":321,\"ჭ\":322,\"ხ\":323,\"ჯ\":324,\"ჰ\":325,\"ჱ\":326,\"ჲ\":327,\"ჳ\":328,\"ჴ\":329,\"ჵ\":330,\"ჶ\":331,\"ჷ\":332,\"ჸ\":333,\"ჹ\":334,\"ჺ\":335,\"჻\":336,\"ᄃ\":337,\"ᄅ\":338,\"ᄇ\":339,\"ᄋ\":340,\"ᄌ\":341,\"ᅡ\":342,\"ᅢ\":343,\"ᅦ\":344,\"ᅧ\":345,\"ᅩ\":346,\"ᅮ\":347,\"ᅵ\":348,\"ᆨ\":349,\"ᆫ\":350,\"ᆯ\":351,\"ᆸ\":352,\"ᆼ\":353,\"ᵻ\":354,\"‐\":355,\"‑\":356,\"–\":357,\"—\":358,\"―\":359,\"‘\":360,\"’\":361,\"“\":362,\"”\":363,\"„\":364,\"†\":365,\"‡\":366,\"•\":367,\"…\":368,\"′\":369,\"″\":370,\"⁄\":371,\"₣\":372,\"₤\":373,\"€\":374,\"₹\":375,\"⅓\":376,\"⅔\":377,\"→\":378,\"−\":379,\"≡\":380,\"≤\":381,\"①\":382,\"☉\":383,\"☫\":384,\"♀\":385,\"♭\":386,\"♯\":387,\"⚳\":388,\"ⴀ\":389,\"ⴂ\":390,\"ⴃ\":391,\"ⴈ\":392,\"ⴌ\":393,\"ⴕ\":394,\"ⴟ\":395,\"〈\":396,\"〉\":397,\"〜\":398,\"あ\":399,\"い\":400,\"う\":401,\"お\":402,\"か\":403,\"き\":404,\"く\":405,\"け\":406,\"こ\":407,\"さ\":408,\"し\":409,\"す\":410,\"せ\":411,\"た\":412,\"ち\":413,\"っ\":414,\"つ\":415,\"と\":416,\"な\":417,\"に\":418,\"の\":419,\"は\":420,\"ひ\":421,\"ふ\":422,\"ほ\":423,\"ま\":424,\"み\":425,\"め\":426,\"も\":427,\"ゃ\":428,\"ゆ\":429,\"ょ\":430,\"ら\":431,\"り\":432,\"る\":433,\"れ\":434,\"わ\":435,\"を\":436,\"ん\":437,\"ァ\":438,\"ア\":439,\"ィ\":440,\"イ\":441,\"ゥ\":442,\"ウ\":443,\"ェ\":444,\"エ\":445,\"ォ\":446,\"オ\":447,\"カ\":448,\"キ\":449,\"ク\":450,\"ケ\":451,\"コ\":452,\"サ\":453,\"シ\":454,\"ス\":455,\"セ\":456,\"タ\":457,\"チ\":458,\"ッ\":459,\"ツ\":460,\"テ\":461,\"ト\":462,\"ナ\":463,\"ニ\":464,\"ネ\":465,\"ノ\":466,\"ハ\":467,\"フ\":468,\"ヘ\":469,\"マ\":470,\"ミ\":471,\"ム\":472,\"モ\":473,\"ャ\":474,\"ュ\":475,\"ョ\":476,\"ラ\":477,\"リ\":478,\"ル\":479,\"レ\":480,\"ロ\":481,\"ン\":482,\"・\":483,\"ー\":484,\"一\":485,\"七\":486,\"下\":487,\"世\":488,\"丙\":489,\"中\":490,\"主\":491,\"乃\":492,\"之\":493,\"乙\":494,\"九\":495,\"二\":496,\"云\":497,\"人\":498,\"今\":499,\"付\":500,\"作\":501,\"侗\":502,\"依\":503,\"信\":504,\"傳\":505,\"儚\":506,\"充\":507,\"光\":508,\"全\":509,\"兵\":510,\"其\":511,\"具\":512,\"円\":513,\"再\":514,\"出\":515,\"判\":516,\"前\":517,\"剛\":518,\"劇\":519,\"劉\":520,\"動\":521,\"化\":522,\"北\":523,\"华\":524,\"厂\":525,\"去\":526,\"古\":527,\"可\":528,\"台\":529,\"史\":530,\"同\":531,\"名\":532,\"君\":533,\"吳\":534,\"周\":535,\"命\":536,\"和\":537,\"咲\":538,\"善\":539,\"四\":540,\"國\":541,\"園\":542,\"圣\":543,\"在\":544,\"坂\":545,\"堤\":546,\"場\":547,\"塘\":548,\"夕\":549,\"大\":550,\"天\":551,\"夫\":552,\"女\":553,\"妙\":554,\"姚\":555,\"子\":556,\"孟\":557,\"守\":558,\"安\":559,\"宋\":560,\"完\":561,\"宗\":562,\"宝\":563,\"宫\":564,\"寝\":565,\"寺\":566,\"小\":567,\"少\":568,\"尾\":569,\"山\":570,\"岳\":571,\"川\":572,\"州\":573,\"巳\":574,\"市\":575,\"師\":576,\"平\":577,\"广\":578,\"庆\":579,\"府\":580,\"座\":581,\"廬\":582,\"建\":583,\"式\":584,\"張\":585,\"彌\":586,\"彩\":587,\"彼\":588,\"後\":589,\"御\":590,\"德\":591,\"思\":592,\"愛\":593,\"憑\":594,\"憶\":595,\"應\":596,\"懷\":597,\"战\":598,\"戦\":599,\"扈\":600,\"技\":601,\"拉\":602,\"拳\":603,\"挑\":604,\"揺\":605,\"攻\":606,\"放\":607,\"政\":608,\"散\":609,\"斯\":610,\"方\":611,\"日\":612,\"旦\":613,\"旭\":614,\"昌\":615,\"明\":616,\"星\":617,\"春\":618,\"晋\":619,\"景\":620,\"曦\":621,\"月\":622,\"望\":623,\"未\":624,\"本\":625,\"李\":626,\"村\":627,\"杜\":628,\"束\":629,\"来\":630,\"林\":631,\"桜\":632,\"梶\":633,\"棘\":634,\"椎\":635,\"楊\":636,\"楚\":637,\"榮\":638,\"橘\":639,\"機\":640,\"正\":641,\"殻\":642,\"殿\":643,\"母\":644,\"水\":645,\"汉\":646,\"沂\":647,\"沙\":648,\"河\":649,\"泗\":650,\"波\":651,\"泣\":652,\"洪\":653,\"淹\":654,\"清\":655,\"湯\":656,\"漢\":657,\"澄\":658,\"澤\":659,\"火\":660,\"灯\":661,\"灵\":662,\"灼\":663,\"焼\":664,\"熱\":665,\"物\":666,\"狐\":667,\"狸\":668,\"玄\":669,\"王\":670,\"玩\":671,\"珂\":672,\"珙\":673,\"球\":674,\"理\":675,\"琦\":676,\"琪\":677,\"瓊\":678,\"生\":679,\"田\":680,\"畢\":681,\"番\":682,\"瘡\":683,\"白\":684,\"皮\":685,\"真\":686,\"砲\":687,\"礮\":688,\"祈\":689,\"神\":690,\"祠\":691,\"秋\":692,\"空\":693,\"立\":694,\"精\":695,\"約\":696,\"絵\":697,\"織\":698,\"義\":699,\"翠\":700,\"者\":701,\"耕\":702,\"肖\":703,\"胡\":704,\"膀\":705,\"臂\":706,\"興\":707,\"良\":708,\"花\":709,\"芳\":710,\"芽\":711,\"若\":712,\"英\":713,\"藕\":714,\"藥\":715,\"蘄\":716,\"蘇\":717,\"行\":718,\"裁\":719,\"規\":720,\"覺\":721,\"观\":722,\"解\":723,\"記\":724,\"誓\":725,\"誡\":726,\"誰\":727,\"謎\":728,\"许\":729,\"谭\":730,\"豪\":731,\"豫\":732,\"費\":733,\"贵\":734,\"赤\":735,\"趙\":736,\"足\":737,\"跡\":738,\"転\":739,\"辛\":740,\"逆\":741,\"遇\":742,\"運\":743,\"過\":744,\"遠\":745,\"選\":746,\"邦\":747,\"邱\":748,\"部\":749,\"郭\":750,\"都\":751,\"酈\":752,\"里\":753,\"野\":754,\"金\":755,\"銃\":756,\"鋼\":757,\"錄\":758,\"錡\":759,\"鍵\":760,\"鐵\":761,\"钱\":762,\"铁\":763,\"關\":764,\"防\":765,\"阿\":766,\"陈\":767,\"陳\":768,\"陽\":769,\"隊\":770,\"階\":771,\"集\":772,\"雪\":773,\"雲\":774,\"霖\":775,\"霹\":776,\"靂\":777,\"韓\":778,\"願\":779,\"顯\":780,\"颜\":781,\"马\":782,\"高\":783,\"龍\":784,\"ﷲ\":785,\"ﻋ\":786,\"／\":787,\"３\":788,\"～\":789,\"##i\":790,\"##y\":791,\"##o\":792,\"##r\":793,\"##g\":794,\"##a\":795,\"##w\":796,\"##l\":797,\"##b\":798,\"##z\":799,\"##t\":800,\"##n\":801,\"##c\":802,\"##h\":803,\"##s\":804,\"##u\":805,\"##d\":806,\"##e\":807,\"##k\":808,\"##v\":809,\"##f\":810,\"##x\":811,\"##q\":812,\"##p\":813,\"##æ\":814,\"##0\":815,\"##5\":816,\"##m\":817,\"##8\":818,\"##4\":819,\"##س\":820,\"##ت\":821,\"##ا\":822,\"##ن\":823,\"##6\":824,\"##1\":825,\"##7\":826,\"##j\":827,\"##つ\":828,\"##う\":829,\"##2\":830,\"##9\":831,\"##3\":832,\"##ø\":833,\"##ล\":834,\"##ว\":835,\"##ง\":836,\"##พ\":837,\"##ไ\":838,\"##ช\":839,\"##ย\":840,\"##า\":841,\"##ร\":842,\"##თ\":843,\"##ა\":844,\"##ვ\":845,\"##რ\":846,\"##ი\":847,\"##ള\":848,\"##あ\":849,\"##ん\":850,\"##α\":851,\"##ν\":852,\"##τ\":853,\"##ο\":854,\"##κ\":855,\"##ρ\":856,\"##ω\":857,\"##ς\":858,\"##の\":859,\"##な\":860,\"##ら\":861,\"##ð\":862,\"##œ\":863,\"##ɛ\":864,\"##ł\":865,\"##η\":866,\"##μ\":867,\"##ซ\":868,\"##ル\":869,\"##シ\":870,\"##ア\":871,\"##リ\":872,\"##ス\":873,\"##ʔ\":874,\"##ल\":875,\"##ᄇ\":876,\"##ᅮ\":877,\"##ᄃ\":878,\"##ᅢ\":879,\"##β\":880,\"##ß\":881,\"##か\":882,\"##た\":883,\"##ə\":884,\"##ʻ\":885,\"##ι\":886,\"##χ\":887,\"##о\":888,\"##л\":889,\"##с\":890,\"##а\":891,\"##т\":892,\"##ы\":893,\"##и\":894,\"##в\":895,\"##к\":896,\"##з\":897,\"##ッ\":898,\"##ク\":899,\"##マ\":900,\"##ン\":901,\"##გ\":902,\"##ლ\":903,\"##ო\":904,\"##ნ\":905,\"##ː\":906,\"##ל\":907,\"##ה\":908,\"##א\":909,\"##く\":910,\"##み\":911,\"##ε\":912,\"##ξ\":913,\"##ল\":914,\"##ˈ\":915,\"##ɡ\":916,\"##ɑ\":917,\"##ɒ\":918,\"##し\":919,\"##す\":920,\"##き\":921,\"##ひ\":922,\"##と\":923,\"##đ\":924,\"##ъ\":925,\"##н\":926,\"##е\":927,\"##י\":928,\"##פ\":929,\"##イ\":930,\"##λ\":931,\"##ق\":932,\"##ع\":933,\"##د\":934,\"##ᅡ\":935,\"##ᆯ\":936,\"##ᄅ\":937,\"##ɪ\":938,\"##ค\":939,\"##ต\":940,\"##व\":941,\"##ा\":942,\"##द\":943,\"##は\":944,\"##り\":945,\"##レ\":946,\"##ー\":947,\"##ツ\":948,\"##ي\":949,\"##ش\":950,\"##و\":951,\"##م\":952,\"##º\":953,\"##ਲ\":954,\"##ਾ\":955,\"##ਹ\":956,\"##д\":957,\"##р\":958,\"##ل\":959,\"##ب\":960,\"##い\":961,\"##ち\":962,\"##ゃ\":963,\"##ʒ\":964,\"##ʃ\":965,\"##ɔ\":966,\"##ह\":967,\"##ニ\":968,\"##ウ\":969,\"##ァ\":970,\"##キ\":971,\"##ュ\":972,\"##３\":973,\"##ხ\":974,\"##ს\":975,\"##お\":976,\"##タ\":977,\"##ാ\":978,\"##ഹ\":979,\"##ɳ\":980,\"##ま\":981,\"##る\":982,\"##ะ\":983,\"##อ\":984,\"##น\":985,\"##ן\":986,\"##я\":987,\"##แ\":988,\"##ก\":989,\"##ɾ\":990,\"##ʲ\":991,\"##フ\":992,\"##უ\":993,\"##ภ\":994,\"##ด\":995,\"##ב\":996,\"##ת\":997,\"##خ\":998,\"##ラ\":999,\"##れ\":1000,\"##ण\":1001,\"##स\":1002,\"##न\":1003,\"##ه\":1004,\"##ف\":1005,\"##ر\":1006,\"##エ\":1007,\"##テ\":1008,\"##ษ\":1009,\"##ฐ\":1010,\"##ィ\":1011,\"##क\":1012,\"##ノ\":1013,\"##θ\":1014,\"##ネ\":1015,\"##ョ\":1016,\"##δ\":1017,\"##ɽ\":1018,\"##ʁ\":1019,\"##ტ\":1020,\"##ჱ\":1021,\"##ェ\":1022,\"##ハ\":1023,\"##υ\":1024,\"##र\":1025,\"##х\":1026,\"##も\":1027,\"##っ\":1028,\"##ょ\":1029,\"##に\":1030,\"##γ\":1031,\"##ც\":1032,\"##ე\":1033,\"##є\":1034,\"##м\":1035,\"##ܕ\":1036,\"##ܝ\":1037,\"##ܢ\":1038,\"##ܬ\":1039,\"##ณ\":1040,\"##ม\":1041,\"##ฮ\":1042,\"##ж\":1043,\"##ם\":1044,\"##ء\":1045,\"##ʊ\":1046,\"##ई\":1047,\"##め\":1048,\"##მ\":1049,\"##ム\":1050,\"##チ\":1051,\"##ᵻ\":1052,\"##ˌ\":1053,\"##ו\":1054,\"##ף\":1055,\"##წ\":1056,\"##ფ\":1057,\"##ャ\":1058,\"##モ\":1059,\"##ɐ\":1060,\"##ᅦ\":1061,\"##ᅩ\":1062,\"##ᆨ\":1063,\"##ᅵ\":1064,\"##ᆸ\":1065,\"##ᅧ\":1066,\"##ᆼ\":1067,\"##ᄋ\":1068,\"##ᆫ\":1069,\"##わ\":1070,\"##ı\":1071,\"##ქ\":1072,\"##დ\":1073,\"##ि\":1074,\"##ჲ\":1075,\"##ר\":1076,\"##セ\":1077,\"##オ\":1078,\"##ゆ\":1079,\"##せ\":1080,\"##ك\":1081,\"##ʿ\":1082,\"##ש\":1083,\"##מ\":1084,\"##צ\":1085,\"##п\":1086,\"##г\":1087,\"##カ\":1088,\"##ܠ\":1089,\"##ܗ\":1090,\"##ܐ\":1091,\"##ナ\":1092,\"##ミ\":1093,\"##こ\":1094,\"##を\":1095,\"##ψ\":1096,\"##サ\":1097,\"##ォ\":1098,\"##π\":1099,\"##ト\":1100,\"##у\":1101,\"##ح\":1102,\"##σ\":1103,\"##เ\":1104,\"##ป\":1105,\"##ш\":1106,\"##ゥ\":1107,\"##ロ\":1108,\"##া\":1109,\"##হ\":1110,\"##ɜ\":1111,\"##ة\":1112,\"##ص\":1113,\"##ס\":1114,\"##ث\":1115,\"##ჳ\":1116,\"##נ\":1117,\"##ذ\":1118,\"##ग\":1119,\"##ɫ\":1120,\"##ц\":1121,\"##ь\":1122,\"##ю\":1123}}}"
+        },
+        "headers": {
+          "access-control-allow-origin": "https://huggingface.co",
+          "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
+          "access-control-max-age": "86400",
+          "age": "537",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "connection": "keep-alive",
+          "content-disposition": "inline; filename*=UTF-8''tokenizer.json; filename=\"tokenizer.json\";",
+          "content-encoding": "gzip",
+          "content-security-policy": "default-src 'none'; sandbox",
+          "content-type": "text/plain; charset=utf-8",
+          "cross-origin-opener-policy": "same-origin",
+          "date": "Mon, 27 Jul 2026 10:29:29 GMT",
+          "etag": "W/\"048f7e7d6e175186a52e3ce2fe27c01ead7bd9a2\"",
+          "ratelimit": "\"resolvers\";r=2880;t=1",
+          "ratelimit-policy": "\"fixed window\";\"resolvers\";q=3000;w=300",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "transfer-encoding": "chunked",
+          "vary": "Origin,Accept-Encoding",
+          "via": "1.1 4d89e7f6870714b602988e2ed1135996.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "5pMwkJzOSvsPZ2sRe9VeyEWsw2qoaX9cYEhlRRIk611RYWGk2Lm3LQ==",
+          "x-amz-cf-pop": "IAD55-P8",
+          "x-cache": "Hit from cloudfront",
+          "x-powered-by": "huggingface-moon",
+          "x-repo-commit": "79c27929ad1c20e7c5c7a60ccbe64b1e64cfa309",
+          "x-request-id": "Root=1-6a673309-782fe8f9107b5ac239ef93d6"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "cb4158f1d2d8899a",
+      "matchKey": "GET huggingface.co/onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX/resolve/main/onnx/model.onnx",
+      "recordedAt": "2026-07-27T10:38:26.332Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://huggingface.co/onnx-internal-testing/tiny-random-BertForQuestionAnswering-ONNX/resolve/main/onnx/model.onnx"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/octet-stream",
+          "kind": "binary",
+          "path": "huggingface-transformers-v4-latest.cassette.blobs/99fa5d3a3bac88806211aae23deaa55abf4cdb0ce37a311b6b5b94dd946a5754.bin",
+          "sha256": "99fa5d3a3bac88806211aae23deaa55abf4cdb0ce37a311b6b5b94dd946a5754"
+        },
+        "headers": {
+          "accept-ranges": "bytes",
+          "access-control-allow-headers": "Content-Range, Content-Type, Content-Disposition, ETag",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "*",
+          "alt-svc": "h3=\":443\";ma=60;",
+          "content-disposition": "inline; filename*=UTF-8''model.onnx; filename=\"model.onnx\";",
+          "content-length": "476301",
+          "content-type": "application/octet-stream",
+          "date": "Mon, 27 Jul 2026 10:38:26 GMT",
+          "etag": "\"dca7e3fd9b00e4ab3c17a13f736a272d4420b31fba8d1eb7c46bfb26d323e7d3\"",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-hf-cdn-pop": "aws-us-east-1",
+          "x-request-id": "01KYHJF3ETCVFDR5VPY0KGSCMW"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-07-27T10:29:47.338Z"
+  }
+}

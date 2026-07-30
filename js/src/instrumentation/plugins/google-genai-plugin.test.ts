@@ -126,6 +126,151 @@ describe("GoogleGenAIPlugin", () => {
       expect(handlers).toHaveProperty("asyncEnd");
       expect(handlers).toHaveProperty("error");
     });
+
+    it.each([
+      {
+        name: "candidate-only usage",
+        usageMetadata: { candidatesTokenCount: 5 },
+        expectedMetrics: { completion_tokens: 5 },
+        absentMetrics: [
+          "prompt_tokens",
+          "completion_reasoning_tokens",
+          "tokens",
+        ],
+      },
+      {
+        name: "thought-only usage",
+        usageMetadata: { thoughtsTokenCount: 7 },
+        expectedMetrics: {
+          completion_reasoning_tokens: 7,
+          completion_tokens: 7,
+        },
+        absentMetrics: ["prompt_tokens", "tokens"],
+      },
+      {
+        name: "tool-use-only usage",
+        usageMetadata: { toolUsePromptTokenCount: 11 },
+        expectedMetrics: { prompt_tokens: 11 },
+        absentMetrics: [
+          "completion_tokens",
+          "completion_reasoning_tokens",
+          "tokens",
+        ],
+      },
+      {
+        name: "combined usage",
+        usageMetadata: {
+          cachedContentTokenCount: 3,
+          candidatesTokenCount: 13,
+          promptTokenCount: 17,
+          thoughtsTokenCount: 19,
+          toolUsePromptTokenCount: 23,
+          totalTokenCount: 72,
+        },
+        expectedMetrics: {
+          completion_reasoning_tokens: 19,
+          completion_tokens: 32,
+          prompt_cached_tokens: 3,
+          prompt_tokens: 40,
+          tokens: 72,
+        },
+        absentMetrics: [],
+      },
+      {
+        name: "modality-detail usage",
+        usageMetadata: {
+          candidatesTokensDetails: [
+            { modality: "AUDIO", tokenCount: 29 },
+            { modality: "IMAGE", tokenCount: 31 },
+            { modality: "TEXT", tokenCount: 37 },
+          ],
+          promptTokensDetails: [
+            { modality: "AUDIO", tokenCount: 41 },
+            { modality: "TEXT", tokenCount: 43 },
+          ],
+        },
+        expectedMetrics: {
+          completion_audio_tokens: 29,
+          completion_image_tokens: 31,
+          prompt_audio_tokens: 41,
+        },
+        absentMetrics: ["prompt_tokens", "completion_tokens", "tokens"],
+      },
+    ])(
+      "normalizes $name",
+      ({ usageMetadata, expectedMetrics, absentMetrics }) => {
+        plugin.enable();
+
+        const handlers = subscribeSpy.mock.calls[0][0];
+        const event: any = {
+          arguments: [
+            {
+              contents: "Hello",
+              model: "gemini-2.5-flash",
+            },
+          ],
+        };
+
+        handlers.start(event);
+        const span = mockStartSpan.mock.results.at(-1)?.value as {
+          log: ReturnType<typeof vi.fn>;
+        };
+        event.result = { usageMetadata };
+        handlers.asyncEnd(event);
+
+        const metrics = span.log.mock.calls[0][0].metrics;
+        expect(metrics).toMatchObject(expectedMetrics);
+        for (const metric of absentMetrics) {
+          expect(metrics).not.toHaveProperty(metric);
+        }
+      },
+    );
+
+    it("preserves explicitly reported zero usage", () => {
+      plugin.enable();
+
+      const handlers = subscribeSpy.mock.calls[0][0];
+      const event: any = {
+        arguments: [
+          {
+            contents: "Hello",
+            model: "gemini-2.5-flash",
+          },
+        ],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = {
+        usageMetadata: {
+          cachedContentTokenCount: 0,
+          candidatesTokenCount: 0,
+          candidatesTokensDetails: [
+            { modality: "AUDIO", tokenCount: 0 },
+            { modality: "IMAGE", tokenCount: 0 },
+          ],
+          promptTokenCount: 0,
+          promptTokensDetails: [{ modality: "AUDIO", tokenCount: 0 }],
+          thoughtsTokenCount: 0,
+          toolUsePromptTokenCount: 0,
+          totalTokenCount: 0,
+        },
+      };
+      handlers.asyncEnd(event);
+
+      expect(span.log.mock.calls[0][0].metrics).toMatchObject({
+        completion_audio_tokens: 0,
+        completion_image_tokens: 0,
+        completion_reasoning_tokens: 0,
+        completion_tokens: 0,
+        prompt_audio_tokens: 0,
+        prompt_cached_tokens: 0,
+        prompt_tokens: 0,
+        tokens: 0,
+      });
+    });
   });
 
   describe("interactions.create channel subscription", () => {
@@ -180,10 +325,22 @@ describe("GoogleGenAIPlugin", () => {
         output_text: "OK",
         status: "completed",
         usage: {
+          cached_tokens_by_modality: [{ modality: "audio", tokens: 1 }],
+          input_tokens_by_modality: [
+            { modality: "text", tokens: 6 },
+            { modality: "audio", tokens: 2 },
+          ],
+          output_tokens_by_modality: [
+            { modality: "text", tokens: 1 },
+            { modality: "audio", tokens: 1 },
+            { modality: "image", tokens: 1 },
+          ],
+          tool_use_tokens_by_modality: [{ modality: "text", tokens: 1 }],
           total_cached_tokens: 1,
           total_input_tokens: 8,
           total_output_tokens: 2,
           total_thought_tokens: 3,
+          total_tool_use_tokens: 1,
           total_tokens: 13,
         },
       };
@@ -231,8 +388,11 @@ describe("GoogleGenAIPlugin", () => {
             status: "completed",
           },
           metrics: expect.objectContaining({
+            completion_audio_tokens: 1,
+            completion_image_tokens: 1,
             completion_reasoning_tokens: 3,
-            completion_tokens: 2,
+            completion_tokens: 5,
+            prompt_audio_tokens: 2,
             prompt_cached_tokens: 1,
             prompt_tokens: 8,
             tokens: 13,
@@ -249,6 +409,82 @@ describe("GoogleGenAIPlugin", () => {
         }),
       );
       expect(span.end).toHaveBeenCalledTimes(1);
+    });
+
+    it("preserves zero and missing interaction usage values", () => {
+      plugin.enable();
+
+      const handlers = subscribeSpy.mock.calls[3][0];
+      const event: any = {
+        arguments: [
+          {
+            input: "Reply with OK.",
+            model: "gemini-2.5-flash",
+          },
+        ],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = {
+        id: "interaction-zero-usage",
+        status: "completed",
+        usage: {
+          input_tokens_by_modality: [{ modality: "audio", tokens: 0 }],
+          output_tokens_by_modality: [
+            { modality: "audio", tokens: 0 },
+            { modality: "image", tokens: 0 },
+          ],
+          total_cached_tokens: 0,
+          total_input_tokens: 0,
+          total_output_tokens: 0,
+          total_thought_tokens: 0,
+          total_tokens: 0,
+        },
+      };
+
+      handlers.asyncEnd(event);
+
+      expect(span.log).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_audio_tokens: 0,
+            completion_image_tokens: 0,
+            completion_reasoning_tokens: 0,
+            completion_tokens: 0,
+            prompt_audio_tokens: 0,
+            prompt_cached_tokens: 0,
+            prompt_tokens: 0,
+            tokens: 0,
+          }),
+        }),
+      );
+
+      handlers.start(event);
+      const missingUsageSpan = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = {
+        id: "interaction-missing-usage",
+        status: "completed",
+        usage: {},
+      };
+
+      handlers.asyncEnd(event);
+
+      expect(missingUsageSpan.log).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          metrics: expect.not.objectContaining({
+            completion_reasoning_tokens: expect.anything(),
+            completion_tokens: expect.anything(),
+            prompt_cached_tokens: expect.anything(),
+            prompt_tokens: expect.anything(),
+            tokens: expect.anything(),
+          }),
+        }),
+      );
     });
 
     it("does not trace background interaction tasks", () => {

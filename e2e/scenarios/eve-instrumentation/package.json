@@ -2,10 +2,21 @@
   "name": "eve-instrumentation-scenario",
   "private": true,
   "type": "module",
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "eve-v0-latest": {
+          "package": "eve",
+          "range": "0"
+        }
+      }
+    }
+  },
   "dependencies": {
     "@openrouter/ai-sdk-provider": "3.0.0",
-    "ai": "7.0.15",
-    "eve": "0.22.1",
+    "ai": "7.0.34",
+    "eve-v0": "npm:eve@0.22.1",
+    "eve-v0-latest": "npm:eve@0.27.6",
     "zod": "4.3.6"
   }
 }

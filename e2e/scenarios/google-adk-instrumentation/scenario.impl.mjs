@@ -8,6 +8,16 @@ import {
 const GOOGLE_MODEL = "gemini-2.5-flash-lite";
 const ROOT_NAME = "google-adk-instrumentation-root";
 const SCENARIO_NAME = "google-adk-instrumentation";
+const EXPECTED_GOOGLE_ADK_USAGE_METRICS = {
+  completion_audio_tokens: 2,
+  completion_image_tokens: 3,
+  completion_reasoning_tokens: 5,
+  completion_tokens: 8,
+  prompt_audio_tokens: 1,
+  prompt_cached_tokens: 4,
+  prompt_tokens: 12,
+  tokens: 20,
+};
 
 async function runGoogleADKInstrumentationScenario(adk, options = {}) {
   const decoratedADK = options.decorateSDK ? options.decorateSDK(adk) : adk;
@@ -72,6 +82,42 @@ async function runGoogleADKInstrumentationScenario(adk, options = {}) {
   await runner.sessionService.createSession({
     appName: runner.appName,
     sessionId,
+    userId,
+  });
+
+  const usageAgent = new LlmAgent({
+    name: "usage_agent",
+    model: agentModel,
+    instruction: "Return the deterministic usage response.",
+    beforeModelCallback: () => ({
+      content: {
+        role: "model",
+        parts: [{ text: "Usage response." }],
+      },
+      usageMetadata: {
+        cachedContentTokenCount: 4,
+        candidatesTokenCount: 3,
+        candidatesTokensDetails: [
+          { modality: "AUDIO", tokenCount: 2 },
+          { modality: "IMAGE", tokenCount: 3 },
+        ],
+        promptTokenCount: 10,
+        promptTokensDetails: [{ modality: "AUDIO", tokenCount: 1 }],
+        thoughtsTokenCount: 5,
+        toolUsePromptTokenCount: 2,
+        totalTokenCount: 20,
+      },
+    }),
+  });
+  const usageRunner = new InMemoryRunner({
+    agent: usageAgent,
+    appName: "e2e-test-usage-app",
+  });
+  const usageSessionId = "test-session-usage";
+
+  await usageRunner.sessionService.createSession({
+    appName: usageRunner.appName,
+    sessionId: usageSessionId,
     userId,
   });
 
@@ -146,6 +192,19 @@ async function runGoogleADKInstrumentationScenario(adk, options = {}) {
           }
         },
       );
+
+      await runOperation("adk-usage-run-operation", "usage-run", async () => {
+        await collectAsync(
+          usageRunner.runAsync({
+            userId,
+            sessionId: usageSessionId,
+            newMessage: {
+              role: "user",
+              parts: [{ text: "Return the usage fixture." }],
+            },
+          }),
+        );
+      });
     },
     metadata: {
       scenario: SCENARIO_NAME,
@@ -165,4 +224,9 @@ export async function runAutoGoogleADKInstrumentation(adk) {
   await runGoogleADKInstrumentationScenario(adk);
 }
 
-export { GOOGLE_MODEL, ROOT_NAME, SCENARIO_NAME };
+export {
+  EXPECTED_GOOGLE_ADK_USAGE_METRICS,
+  GOOGLE_MODEL,
+  ROOT_NAME,
+  SCENARIO_NAME,
+};
