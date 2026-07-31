@@ -1,0 +1,228 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "2a86bcda6598aa82",
+      "matchKey": "POST ollama.com/api/chat",
+      "recordedAt": "2026-07-30T14:17:15.919Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "Reply with exactly OK.",
+                "role": "user"
+              }
+            ],
+            "model": "gpt-oss:20b",
+            "options": {
+              "num_predict": 128,
+              "temperature": 0
+            },
+            "stream": false,
+            "think": false
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ollama.com/api/chat"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "created_at": "2026-07-30T14:17:15.968759871Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 40,
+            "message": {
+              "content": "OK",
+              "role": "assistant",
+              "thinking": "The user says: \"Reply with exactly OK.\" So I must reply with exactly \"OK\". No extra spaces, no punctuation. Just OK."
+            },
+            "model": "gpt-oss:20b",
+            "prompt_eval_count": 67,
+            "total_duration": 2759051201
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000",
+          "content-length": "350",
+          "content-type": "application/json",
+          "date": "Thu, 30 Jul 2026 14:17:15 GMT",
+          "server": "Google Frontend",
+          "set-cookie": "[REDACTED]",
+          "traceparent": "00-499b9cbcd8010b751b766ba772b23e2e-45c927d9e2a30383-00",
+          "via": "1.1 google",
+          "x-build-commit": "a8a32868d6b98462cb27eaaeaf00b4aaf8110e7b",
+          "x-build-time": "2026-07-29T17:02:39-07:00",
+          "x-cloud-trace-context": "499b9cbcd8010b751b766ba772b23e2e/5028594275699590019",
+          "x-frame-options": "DENY",
+          "x-request-id": "69feef07-e84b-461c-b965-82ca63d5cd59"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "923a3e6055148564",
+      "matchKey": "POST ollama.com/api/chat",
+      "recordedAt": "2026-07-30T14:17:16.947Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "Reply with exactly STREAM.",
+                "role": "user"
+              }
+            ],
+            "model": "gpt-oss:20b",
+            "options": {
+              "num_predict": 128,
+              "temperature": 0
+            },
+            "stream": true,
+            "think": false
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ollama.com/api/chat"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.420595067Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\"The\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.428180554Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" user\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.434645149Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" says\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.443487256Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\":\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.454888486Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" \\\"\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.464434994Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\"Reply\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.468907788Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" with\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.475863774Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" exactly\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.486244792Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" STREAM\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.494834779Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\".\\\"\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.501858345Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" So\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.513830845Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" the\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.522514833Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" assistant\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.528664688Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" should\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.536021444Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" reply\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.54387051Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" with\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.553723509Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" exactly\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.561350065Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" the\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.588566508Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" word\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.598017396Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" \\\"\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.60322265Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\"STREAM\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.609424945Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\"\\\".\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.619468064Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" No\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.643468554Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" other\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.644496975Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" characters\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.65059612Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\",\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.665049332Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" no\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.666145933Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" punctuation\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.675696741Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\",\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.685230109Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" no\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.68602731Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" whitespace\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.702263893Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\".\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.718099466Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" Just\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.764431305Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\" \\\"\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.794734681Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\"STREAM\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.843230121Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\",\"thinking\":\"\\\".\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.895195035Z\",\"message\":{\"role\":\"assistant\",\"content\":\"STREAM\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.897310446Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\"},\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:16.996437479Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":913140194,\"prompt_eval_count\":67,\"eval_count\":47}\n"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000",
+          "content-type": "application/json",
+          "date": "Thu, 30 Jul 2026 14:17:16 GMT",
+          "server": "Google Frontend",
+          "set-cookie": "[REDACTED]",
+          "traceparent": "00-222faed9a3a0e3c91b766ba772b23075-d9f7f454c56193bb-00",
+          "transfer-encoding": "chunked",
+          "via": "1.1 google",
+          "x-build-commit": "a8a32868d6b98462cb27eaaeaf00b4aaf8110e7b",
+          "x-build-time": "2026-07-29T17:02:39-07:00",
+          "x-cloud-trace-context": "222faed9a3a0e3c91b766ba772b23075/15706290870403830715",
+          "x-frame-options": "DENY",
+          "x-request-id": "56b16227-d494-42bb-abf8-9db1b40d9f6d"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "99f1d8c4b0c43219",
+      "matchKey": "POST ollama.com/api/generate",
+      "recordedAt": "2026-07-30T14:17:18.001Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "model": "gpt-oss:20b",
+            "options": {
+              "num_predict": 128,
+              "temperature": 0
+            },
+            "prompt": "Reply with exactly OK.",
+            "stream": false,
+            "think": false
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ollama.com/api/generate"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "created_at": "2026-07-30T14:17:18.050054605Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 40,
+            "model": "gpt-oss:20b",
+            "prompt_eval_count": 67,
+            "response": "OK",
+            "thinking": "The user says: \"Reply with exactly OK.\" So we must reply with exactly \"OK\". No extra spaces, no punctuation. Just OK.",
+            "total_duration": 947970164
+          }
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000",
+          "content-length": "320",
+          "content-type": "application/json",
+          "date": "Thu, 30 Jul 2026 14:17:18 GMT",
+          "server": "Google Frontend",
+          "set-cookie": "[REDACTED]",
+          "traceparent": "00-163ade5657ad33301b766ba772b2374e-25ddb75508a07d45-00",
+          "via": "1.1 google",
+          "x-build-commit": "a8a32868d6b98462cb27eaaeaf00b4aaf8110e7b",
+          "x-build-time": "2026-07-29T17:02:39-07:00",
+          "x-cloud-trace-context": "163ade5657ad33301b766ba772b2374e/2728538525101227333",
+          "x-frame-options": "DENY",
+          "x-request-id": "ccf7a2c3-d525-44ad-b0fa-cfa55a512239"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "54471dd63ef97520",
+      "matchKey": "POST ollama.com/api/generate",
+      "recordedAt": "2026-07-30T14:17:19.889Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "model": "gpt-oss:20b",
+            "options": {
+              "num_predict": 128,
+              "temperature": 0
+            },
+            "prompt": "Reply with exactly STREAM.",
+            "stream": true,
+            "think": false
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://ollama.com/api/generate"
+      },
+      "response": {
+        "body": {
+          "kind": "text",
+          "value": "{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.599724432Z\",\"response\":\"\",\"thinking\":\"The\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.601082173Z\",\"response\":\"\",\"thinking\":\" user\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.601825504Z\",\"response\":\"\",\"thinking\":\" says\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.603175275Z\",\"response\":\"\",\"thinking\":\":\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.604566096Z\",\"response\":\"\",\"thinking\":\" \\\"\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.605298347Z\",\"response\":\"\",\"thinking\":\"Reply\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.605716007Z\",\"response\":\"\",\"thinking\":\" with\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657090971Z\",\"response\":\"\",\"thinking\":\" exactly\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657144751Z\",\"response\":\"\",\"thinking\":\" STREAM\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.65718348Z\",\"response\":\"\",\"thinking\":\".\\\"\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657229391Z\",\"response\":\"\",\"thinking\":\" So\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657271011Z\",\"response\":\"\",\"thinking\":\" the\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657398341Z\",\"response\":\"\",\"thinking\":\" assistant\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657473381Z\",\"response\":\"\",\"thinking\":\" should\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657507981Z\",\"response\":\"\",\"thinking\":\" reply\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657562171Z\",\"response\":\"\",\"thinking\":\" with\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657608451Z\",\"response\":\"\",\"thinking\":\" exactly\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657649941Z\",\"response\":\"\",\"thinking\":\" the\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.657975201Z\",\"response\":\"\",\"thinking\":\" word\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.658022951Z\",\"response\":\"\",\"thinking\":\" \\\"\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.658079621Z\",\"response\":\"\",\"thinking\":\"STREAM\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.658124381Z\",\"response\":\"\",\"thinking\":\"\\\".\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.658174071Z\",\"response\":\"\",\"thinking\":\" No\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.658224241Z\",\"response\":\"\",\"thinking\":\" other\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.658275511Z\",\"response\":\"\",\"thinking\":\" characters\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.658624692Z\",\"response\":\"\",\"thinking\":\",\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.658671932Z\",\"response\":\"\",\"thinking\":\" no\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.658725682Z\",\"response\":\"\",\"thinking\":\" punctuation\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.658773082Z\",\"response\":\"\",\"thinking\":\",\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.720832694Z\",\"response\":\"\",\"thinking\":\" no\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.721380494Z\",\"response\":\"\",\"thinking\":\" whitespace\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.721458554Z\",\"response\":\"\",\"thinking\":\".\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.721841315Z\",\"response\":\"\",\"thinking\":\" Just\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.721914635Z\",\"response\":\"\",\"thinking\":\" \\\"\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.721965435Z\",\"response\":\"\",\"thinking\":\"STREAM\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.722044485Z\",\"response\":\"\",\"thinking\":\"\\\".\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.722130975Z\",\"response\":\"\",\"thinking\":\" Ensure\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.722193605Z\",\"response\":\"\",\"thinking\":\" no\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.722236845Z\",\"response\":\"\",\"thinking\":\" trailing\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.722295275Z\",\"response\":\"\",\"thinking\":\" spaces\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.722455815Z\",\"response\":\"\",\"thinking\":\" or\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.722508865Z\",\"response\":\"\",\"thinking\":\" new\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.722556475Z\",\"response\":\"\",\"thinking\":\"lines\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.722604435Z\",\"response\":\"\",\"thinking\":\"?\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.722650915Z\",\"response\":\"\",\"thinking\":\" The\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.723595826Z\",\"response\":\"\",\"thinking\":\" instruction\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.723652066Z\",\"response\":\"\",\"thinking\":\":\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.723690436Z\",\"response\":\"\",\"thinking\":\" \\\"\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.723731326Z\",\"response\":\"\",\"thinking\":\"Reply\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.723800286Z\",\"response\":\"\",\"thinking\":\" with\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.723847616Z\",\"response\":\"\",\"thinking\":\" exactly\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.724054236Z\",\"response\":\"\",\"thinking\":\" STREAM\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.840079094Z\",\"response\":\"\",\"thinking\":\".\\\"\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.840384084Z\",\"response\":\"\",\"thinking\":\" Usually\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.840527404Z\",\"response\":\"\",\"thinking\":\" means\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.841446975Z\",\"response\":\"\",\"thinking\":\" output\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.842998126Z\",\"response\":\"\",\"thinking\":\" exactly\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.843058326Z\",\"response\":\"\",\"thinking\":\" the\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.843340866Z\",\"response\":\"\",\"thinking\":\" word\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.843399236Z\",\"response\":\"\",\"thinking\":\" STREAM\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.844343077Z\",\"response\":\"\",\"thinking\":\".\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.844413087Z\",\"response\":\"\",\"thinking\":\" So\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.846992499Z\",\"response\":\"\",\"thinking\":\" I\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.84708117Z\",\"response\":\"\",\"thinking\":\" will\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.848529051Z\",\"response\":\"\",\"thinking\":\" output\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.849822492Z\",\"response\":\"\",\"thinking\":\" \\\"\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.851341573Z\",\"response\":\"\",\"thinking\":\"STREAM\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.851916643Z\",\"response\":\"\",\"thinking\":\"\\\".\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.85971428Z\",\"response\":\"STREAM\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.85989297Z\",\"response\":\"\",\"done\":false}\n{\"model\":\"gpt-oss:20b\",\"created_at\":\"2026-07-30T14:17:19.937042165Z\",\"response\":\"\",\"done\":true,\"done_reason\":\"stop\",\"total_duration\":1721668042,\"prompt_eval_count\":67,\"eval_count\":79}\n"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000",
+          "content-type": "application/json",
+          "date": "Thu, 30 Jul 2026 14:17:19 GMT",
+          "server": "Google Frontend",
+          "set-cookie": "[REDACTED]",
+          "traceparent": "00-55d003c552c6028927ca4a55359c9d81-3b8fecdadd2af271-00",
+          "transfer-encoding": "chunked",
+          "via": "1.1 google",
+          "x-build-commit": "a8a32868d6b98462cb27eaaeaf00b4aaf8110e7b",
+          "x-build-time": "2026-07-29T17:02:39-07:00",
+          "x-cloud-trace-context": "55d003c552c6028927ca4a55359c9d81/4291909394664977009",
+          "x-frame-options": "DENY",
+          "x-request-id": "41903295-2fcb-4eb9-a612-8789e04d7cd7"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-07-30T13:54:11.198Z"
+  }
+}

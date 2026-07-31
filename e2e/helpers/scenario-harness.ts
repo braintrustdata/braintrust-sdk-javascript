@@ -315,6 +315,7 @@ function getCassetteServerRoutes(): CassetteServerRoute[] {
       upstreamOrigin: "https://router.huggingface.co",
     },
     { prefix: "/mistral", upstreamOrigin: "https://api.mistral.ai" },
+    { prefix: "/ollama", upstreamOrigin: "https://ollama.com" },
     { prefix: "/openai", upstreamOrigin: "https://api.openai.com" },
     { prefix: "/openrouter", upstreamOrigin: "https://openrouter.ai" },
   ];
@@ -349,6 +350,7 @@ function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
     HUGGINGFACE_ROUTER_BASE_URL: `${serverUrl}/huggingface-router`,
     MISTRAL_API_URL: `${serverUrl}/mistral`,
     MISTRAL_BASE_URL: `${serverUrl}/mistral`,
+    OLLAMA_HOST: `${serverUrl}/ollama`,
     OPENAI_BASE_URL: `${serverUrl}/openai/v1`,
     OPENROUTER_BASE_URL: `${serverUrl}/openrouter/api/v1`,
   };
@@ -398,6 +400,7 @@ const CASSETTE_PROVIDER_KEYS: Array<{
   { envVars: ["GROQ_API_KEY"], placeholder: "gsk_cassette-placeholder" },
   { envVars: ["HUGGINGFACE_API_KEY"], placeholder: "hf_cassette-placeholder" },
   { envVars: ["MISTRAL_API_KEY"], placeholder: "cassette-placeholder" },
+  { envVars: ["OLLAMA_API_KEY"], placeholder: "cassette-placeholder" },
   { envVars: ["OPENAI_API_KEY"], placeholder: "sk-cassette-placeholder" },
   {
     envVars: ["OPENROUTER_API_KEY"],

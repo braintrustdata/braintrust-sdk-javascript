@@ -1,0 +1,329 @@
+{
+  "span_tree": [
+    {
+      "name": "ollama-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "ollama-chat-operation",
+          "children": [
+            {
+              "name": "ollama.chat",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly OK.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "OK",
+                    "reasoning": "The user says: \"Reply with exactly OK.\" So I must reply with exactly \"OK\". No extra spaces, no punctuation. Just OK.",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 128,
+                "model": "gpt-oss:20b",
+                "provider": "ollama",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 40,
+                "prompt_tokens": 67,
+                "tokens": 107
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ollama-chat-stream-operation",
+          "children": [
+            {
+              "name": "ollama.chat",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly STREAM.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "STREAM",
+                    "reasoning": "The user says: \"Reply with exactly STREAM.\" So the assistant should reply with exactly the word \"STREAM\". No other characters, no punctuation, no whitespace. Just \"STREAM\".",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 128,
+                "model": "gpt-oss:20b",
+                "provider": "ollama",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 47,
+                "prompt_tokens": 67,
+                "time_to_first_token": 0,
+                "tokens": 114
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ollama-generate-operation",
+          "children": [
+            {
+              "name": "ollama.generate",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly OK.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "OK",
+                    "reasoning": "The user says: \"Reply with exactly OK.\" So we must reply with exactly \"OK\". No extra spaces, no punctuation. Just OK.",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 128,
+                "model": "gpt-oss:20b",
+                "provider": "ollama",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 40,
+                "prompt_tokens": 67,
+                "tokens": 107
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "generate",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ollama-generate-stream-operation",
+          "children": [
+            {
+              "name": "ollama.generate",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly STREAM.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "STREAM",
+                    "reasoning": "The user says: \"Reply with exactly STREAM.\" So the assistant should reply with exactly the word \"STREAM\". No other characters, no punctuation, no whitespace. Just \"STREAM\". Ensure no trailing spaces or newlines? The instruction: \"Reply with exactly STREAM.\" Usually means output exactly the word STREAM. So I will output \"STREAM\".",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 128,
+                "model": "gpt-oss:20b",
+                "provider": "ollama",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 79,
+                "prompt_tokens": 67,
+                "time_to_first_token": 0,
+                "tokens": 146
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "generate-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ollama-tool-call-operation",
+          "children": [
+            {
+              "name": "ollama.chat",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use get_temperature for Paris.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "tool_calls",
+                  "index": 0,
+                  "message": {
+                    "content": null,
+                    "role": "assistant",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": "{\"city\":\"Paris\"}",
+                          "name": "get_temperature"
+                        },
+                        "id": "<span:1>",
+                        "type": "function"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "gpt-oss:20b",
+                "provider": "ollama",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the temperature for a city",
+                      "name": "get_temperature",
+                      "parameters": {
+                        "properties": {
+                          "city": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "city"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 5,
+                "prompt_tokens": 12,
+                "tokens": 17
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "tool-call",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ollama-embed-operation",
+          "children": [
+            {
+              "name": "ollama.embed",
+              "type": "llm",
+              "children": [],
+              "input": [
+                "braintrust tracing",
+                "ollama instrumentation"
+              ],
+              "output": {
+                "embedding_length": 4
+              },
+              "metadata": {
+                "model": "embeddinggemma",
+                "provider": "ollama"
+              },
+              "metrics": {
+                "prompt_tokens": 4,
+                "tokens": 4
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embed",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ollama-embeddings-operation",
+          "children": [
+            {
+              "name": "ollama.embeddings",
+              "type": "llm",
+              "children": [],
+              "input": "braintrust tracing",
+              "output": {
+                "embedding_length": 3
+              },
+              "metadata": {
+                "model": "all-minilm",
+                "provider": "ollama"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embeddings",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ollama-error-operation",
+          "children": [
+            {
+              "name": "ollama.chat",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Trigger an error.",
+                  "role": "user"
+                }
+              ],
+              "metadata": {
+                "model": "gpt-oss:20b",
+                "provider": "ollama"
+              },
+              "error": "synthetic Ollama failure"
+            }
+          ],
+          "metadata": {
+            "operation": "error",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "ollama-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

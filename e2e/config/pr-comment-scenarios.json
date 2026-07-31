@@ -398,6 +398,29 @@
     ]
   },
   {
+    "scenarioDirName": "ollama-instrumentation",
+    "label": "Ollama Instrumentation",
+    "metadataScenario": "ollama-instrumentation",
+    "variants": [
+      {
+        "variantKey": "ollama-v0.6-wrapped",
+        "label": "v0.6 pinned wrapped"
+      },
+      {
+        "variantKey": "ollama-v0.6-auto",
+        "label": "v0.6 pinned auto-hook"
+      },
+      {
+        "variantKey": "ollama-v0.6-latest-wrapped",
+        "label": "v0.6 latest wrapped"
+      },
+      {
+        "variantKey": "ollama-v0.6-latest-auto",
+        "label": "v0.6 latest auto-hook"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "cohere-instrumentation",
     "label": "Cohere Instrumentation",
     "metadataScenario": "cohere-instrumentation",

@@ -1,0 +1,257 @@
+span_tree:
+└── ollama-instrumentation-root [task]
+    metadata: {
+      "scenario": "ollama-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── ollama-chat-operation
+    │   metadata: {
+    │     "operation": "chat",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ollama.chat [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly OK.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "OK",
+    │             "reasoning": "The user says: \"Reply with exactly OK.\" So I must reply with exactly \"OK\". No extra spaces, no punctuation. Just OK.",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "max_tokens": 128,
+    │         "model": "gpt-oss:20b",
+    │         "provider": "ollama",
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 40,
+    │         "prompt_tokens": 67,
+    │         "tokens": 107
+    │       }
+    ├── ollama-chat-stream-operation
+    │   metadata: {
+    │     "operation": "chat-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ollama.chat [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly STREAM.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "STREAM",
+    │             "reasoning": "The user says: \"Reply with exactly STREAM.\" So the assistant should reply with exactly the word \"STREAM\". No other characters, no punctuation, no whitespace. Just \"STREAM\".",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "max_tokens": 128,
+    │         "model": "gpt-oss:20b",
+    │         "provider": "ollama",
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 47,
+    │         "prompt_tokens": 67,
+    │         "time_to_first_token": 0,
+    │         "tokens": 114
+    │       }
+    ├── ollama-generate-operation
+    │   metadata: {
+    │     "operation": "generate",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ollama.generate [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly OK.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "OK",
+    │             "reasoning": "The user says: \"Reply with exactly OK.\" So we must reply with exactly \"OK\". No extra spaces, no punctuation. Just OK.",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "max_tokens": 128,
+    │         "model": "gpt-oss:20b",
+    │         "provider": "ollama",
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 40,
+    │         "prompt_tokens": 67,
+    │         "tokens": 107
+    │       }
+    ├── ollama-generate-stream-operation
+    │   metadata: {
+    │     "operation": "generate-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ollama.generate [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly STREAM.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "stop",
+    │           "index": 0,
+    │           "message": {
+    │             "content": "STREAM",
+    │             "reasoning": "The user says: \"Reply with exactly STREAM.\" So the assistant should reply with exactly the word \"STREAM\". No other characters, no punctuation, no whitespace. Just \"STREAM\". Ensure no trailing spaces or newlines? The instruction: \"Reply with exactly STREAM.\" Usually means output exactly the word STREAM. So I will output \"STREAM\".",
+    │             "role": "assistant"
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "max_tokens": 128,
+    │         "model": "gpt-oss:20b",
+    │         "provider": "ollama",
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 79,
+    │         "prompt_tokens": 67,
+    │         "time_to_first_token": 0,
+    │         "tokens": 146
+    │       }
+    ├── ollama-tool-call-operation
+    │   metadata: {
+    │     "operation": "tool-call",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ollama.chat [llm]
+    │       input: [
+    │         {
+    │           "content": "Use get_temperature for Paris.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "tool_calls",
+    │           "index": 0,
+    │           "message": {
+    │             "content": null,
+    │             "role": "assistant",
+    │             "tool_calls": [
+    │               {
+    │                 "function": {
+    │                   "arguments": "{\"city\":\"Paris\"}",
+    │                   "name": "get_temperature"
+    │                 },
+    │                 "id": "<span:1>",
+    │                 "type": "function"
+    │               }
+    │             ]
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "gpt-oss:20b",
+    │         "provider": "ollama",
+    │         "tools": [
+    │           {
+    │             "function": {
+    │               "description": "Get the temperature for a city",
+    │               "name": "get_temperature",
+    │               "parameters": {
+    │                 "properties": {
+    │                   "city": {
+    │                     "type": "string"
+    │                   }
+    │                 },
+    │                 "required": [
+    │                   "city"
+    │                 ],
+    │                 "type": "object"
+    │               }
+    │             },
+    │             "type": "function"
+    │           }
+    │         ]
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 5,
+    │         "prompt_tokens": 12,
+    │         "tokens": 17
+    │       }
+    ├── ollama-embed-operation
+    │   metadata: {
+    │     "operation": "embed",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ollama.embed [llm]
+    │       input: [
+    │         "braintrust tracing",
+    │         "ollama instrumentation"
+    │       ]
+    │       output: {
+    │         "embedding_length": 4
+    │       }
+    │       metadata: {
+    │         "model": "embeddinggemma",
+    │         "provider": "ollama"
+    │       }
+    │       metrics: {
+    │         "prompt_tokens": 4,
+    │         "tokens": 4
+    │       }
+    ├── ollama-embeddings-operation
+    │   metadata: {
+    │     "operation": "embeddings",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── ollama.embeddings [llm]
+    │       input: "braintrust tracing"
+    │       output: {
+    │         "embedding_length": 3
+    │       }
+    │       metadata: {
+    │         "model": "all-minilm",
+    │         "provider": "ollama"
+    │       }
+    └── ollama-error-operation
+        metadata: {
+          "operation": "error",
+          "testRunId": "<run:1>"
+        }
+        └── ollama.chat [llm]
+            input: [
+              {
+                "content": "Trigger an error.",
+                "role": "user"
+              }
+            ]
+            metadata: {
+              "model": "gpt-oss:20b",
+              "provider": "ollama"
+            }
+            error: "synthetic Ollama failure"
