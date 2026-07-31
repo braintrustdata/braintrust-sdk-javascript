@@ -2,7 +2,7 @@
 "braintrust": minor
 ---
 
-feat(vitest-evals): support a direct `input` on eval task meta, mirroring `output`
+feat: `BraintrustVitestEvalsReporter` accepts a direct `input` on eval task meta
 
 Previously the only way to populate an eval row's `input` field was via
 `harness.run.session.messages` (the first message with `role: "user"`), which
