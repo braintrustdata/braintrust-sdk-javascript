@@ -947,6 +947,26 @@ function aggregateUsageFromEvents(
       aggregated.thoughtsTokenCount =
         (aggregated.thoughtsTokenCount ?? 0) + usage.thoughtsTokenCount;
     }
+    if (usage.toolUsePromptTokenCount !== undefined) {
+      aggregated.toolUsePromptTokenCount =
+        (aggregated.toolUsePromptTokenCount ?? 0) +
+        usage.toolUsePromptTokenCount;
+    }
+
+    for (const detailsField of [
+      "promptTokensDetails",
+      "cacheTokensDetails",
+      "candidatesTokensDetails",
+      "toolUsePromptTokensDetails",
+    ] as const) {
+      const details = usage[detailsField];
+      if (details !== undefined) {
+        aggregated[detailsField] = [
+          ...(aggregated[detailsField] ?? []),
+          ...details,
+        ];
+      }
+    }
   }
 
   return hasUsage ? aggregated : undefined;
@@ -956,11 +976,19 @@ function populateUsageMetrics(
   metrics: Record<string, number>,
   usage: GoogleADKUsageMetadata,
 ): void {
-  if (usage.promptTokenCount !== undefined) {
-    metrics.prompt_tokens = usage.promptTokenCount;
+  if (
+    usage.promptTokenCount !== undefined ||
+    usage.toolUsePromptTokenCount !== undefined
+  ) {
+    metrics.prompt_tokens =
+      (usage.promptTokenCount ?? 0) + (usage.toolUsePromptTokenCount ?? 0);
   }
-  if (usage.candidatesTokenCount !== undefined) {
-    metrics.completion_tokens = usage.candidatesTokenCount;
+  if (
+    usage.candidatesTokenCount !== undefined ||
+    usage.thoughtsTokenCount !== undefined
+  ) {
+    metrics.completion_tokens =
+      (usage.candidatesTokenCount ?? 0) + (usage.thoughtsTokenCount ?? 0);
   }
   if (usage.totalTokenCount !== undefined) {
     metrics.tokens = usage.totalTokenCount;
@@ -970,6 +998,22 @@ function populateUsageMetrics(
   }
   if (usage.thoughtsTokenCount !== undefined) {
     metrics.completion_reasoning_tokens = usage.thoughtsTokenCount;
+  }
+  for (const detail of usage.promptTokensDetails ?? []) {
+    if (detail.modality === "AUDIO" && detail.tokenCount !== undefined) {
+      metrics.prompt_audio_tokens =
+        (metrics.prompt_audio_tokens ?? 0) + detail.tokenCount;
+    }
+  }
+  for (const detail of usage.candidatesTokensDetails ?? []) {
+    if (detail.modality === "AUDIO" && detail.tokenCount !== undefined) {
+      metrics.completion_audio_tokens =
+        (metrics.completion_audio_tokens ?? 0) + detail.tokenCount;
+    }
+    if (detail.modality === "IMAGE" && detail.tokenCount !== undefined) {
+      metrics.completion_image_tokens =
+        (metrics.completion_image_tokens ?? 0) + detail.tokenCount;
+    }
   }
 }
 

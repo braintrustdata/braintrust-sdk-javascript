@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 const { packages = [] } = JSON.parse(
@@ -123,6 +124,15 @@ let posted = 0;
 for (const [issueNumber, comment] of [...issueComments].sort(
   ([left], [right]) => left - right,
 )) {
+  const releaseTags = [...comment.releases.keys()].sort();
+  const marker = `<!-- braintrust-release-${createHash("sha256")
+    .update(releaseTags.join("\0"))
+    .digest("hex")} -->`;
+  if (await hasReleaseComment(issueNumber, marker)) {
+    console.log(`Issue #${issueNumber} already has this release comment.`);
+    continue;
+  }
+
   const releases = [...comment.releases.values()]
     .sort((left, right) => left.label.localeCompare(right.label))
     .map((release) => `- [${release.label}](${release.url})`)
@@ -141,7 +151,9 @@ for (const [issueNumber, comment] of [...issueComments].sort(
 
 ${releases}
 
-Included via ${pullRequests}.`,
+Included via ${pullRequests}.
+
+${marker}`,
       }),
     },
   );
@@ -150,6 +162,27 @@ Included via ${pullRequests}.`,
 }
 
 console.log(`Posted ${posted} release issue comment(s).`);
+
+async function hasReleaseComment(issueNumber, marker) {
+  for (let page = 1; ; page += 1) {
+    const response = await fetchGithub(
+      `/repos/braintrustdata/braintrust-sdk-javascript/issues/${issueNumber}/comments?per_page=100&page=${page}`,
+      { method: "GET" },
+    );
+    const comments = await response.json();
+    if (!Array.isArray(comments)) {
+      throw new Error(
+        `Expected an array of comments for issue #${issueNumber}`,
+      );
+    }
+    if (comments.some((comment) => comment.body?.includes(marker))) {
+      return true;
+    }
+    if (comments.length < 100) {
+      return false;
+    }
+  }
+}
 
 async function fetchGithub(endpoint, options) {
   const response = await fetch(`https://api.github.com${endpoint}`, {

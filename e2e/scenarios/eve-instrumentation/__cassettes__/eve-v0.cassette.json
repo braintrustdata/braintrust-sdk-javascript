@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "3fb3297cd72493bd",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "recordedAt": "2026-07-16T08:01:13.171Z",
+      "recordedAt": "2026-07-29T12:32:26.769Z",
       "request": {
         "body": {
           "kind": "json",
@@ -405,24 +405,24 @@
         "body": {
           "contentType": "text/event-stream",
           "kind": "binary",
-          "path": "eve-v0-22-1.cassette.blobs/abb8f0d5667b23843147092285dd0df82b7d68d76a17a8fe3a03e89aaa128005.bin",
-          "sha256": "abb8f0d5667b23843147092285dd0df82b7d68d76a17a8fe3a03e89aaa128005"
+          "path": "eve-v0.cassette.blobs/d14c288fbd82a61fcc0f8224e5efd2c806667788b33dd474af7d2ea5d15936c7.bin",
+          "sha256": "d14c288fbd82a61fcc0f8224e5efd2c806667788b33dd474af7d2ea5d15936c7"
         },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,cf-ray",
           "cache-control": "no-cache",
-          "cf-ray": "a1bf7a21e805c228-VIE",
+          "cf-ray": "a22c2553e8de966d-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Thu, 16 Jul 2026 08:01:07 GMT",
+          "date": "Wed, 29 Jul 2026 12:32:21 GMT",
           "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
           "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1784188866-wjeCNKA3NLDMk1noEALG"
+          "x-generation-id": "gen-1785328341-V0tFxaBAbSdvO1oUuikj"
         },
         "status": 200,
         "statusText": "OK"
@@ -432,7 +432,7 @@
       "callIndex": 1,
       "id": "a82e7bc8c45efa67",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "recordedAt": "2026-07-16T08:01:23.327Z",
+      "recordedAt": "2026-07-29T12:32:38.183Z",
       "request": {
         "body": {
           "kind": "json",
@@ -793,24 +793,24 @@
         "body": {
           "contentType": "text/event-stream",
           "kind": "binary",
-          "path": "eve-v0-22-1.cassette.blobs/b742dba68ff4ada66eb73e6ea21949dba6e424ce8d6b4ced9d81dae1f22f9c5a.bin",
-          "sha256": "b742dba68ff4ada66eb73e6ea21949dba6e424ce8d6b4ced9d81dae1f22f9c5a"
+          "path": "eve-v0.cassette.blobs/8976c469b3c64be9645bed18dadeedac127cccd155bc523b865f44812dd777c5.bin",
+          "sha256": "8976c469b3c64be9645bed18dadeedac127cccd155bc523b865f44812dd777c5"
         },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,cf-ray",
           "cache-control": "no-cache",
-          "cf-ray": "a1bf7a69dd4f1479-VIE",
+          "cf-ray": "a22c2592b8508be2-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Thu, 16 Jul 2026 08:01:18 GMT",
+          "date": "Wed, 29 Jul 2026 12:32:31 GMT",
           "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
           "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1784188878-W58wnCPlTAxXjNlTgCZp"
+          "x-generation-id": "gen-1785328351-9NV84rcKDcRdCDgdcQV7"
         },
         "status": 200,
         "statusText": "OK"
@@ -818,9 +818,9 @@
     },
     {
       "callIndex": 2,
-      "id": "49352a8fe2446cae",
+      "id": "d5abcbc0f5704f5c",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "recordedAt": "2026-07-16T08:01:31.144Z",
+      "recordedAt": "2026-07-29T12:32:46.559Z",
       "request": {
         "body": {
           "kind": "json",
@@ -841,12 +841,12 @@
               },
               {
                 "content": null,
-                "reasoning": "Okay, so the user wants me to act as the researcher subagent for Braintrust Eve instrumentation tests. The task is to run the e2e scenario. Let me break this down.\n\nFirst, I need to understand what the Braintrust Eve instrumentation e2e scenario entails. Since I don't have prior knowledge, I should start by searching the Eve instrumentation documentation. The user mentioned using the search tool exactly once with the full task as the query. So my first step is to call the search function with the query \"Run the Braintrust Eve instrumentation e2e scenario\".\n\nAfter performing the search, I'll get results that should guide me on how to proceed. The next step would be to answer with a single sentence starting with \"Researcher result:\" including the search title and URL. But since I can't actually perform the search here, I have to simulate the process. \n\nWait, the instructions say to call the search tool once. So in a real scenario, I would generate the tool call, wait for the result, then provide the answer. But since this is a simulation, I need to follow the structure. The user wants the final result directly after the researcher's work. \n\nSo, the correct approach is to first make the tool call to search, then once the result is available, output the research result. But in the context of this exercise, I need to generate the tool call first. However, the user's instruction says to complete the task and return the final result directly. Maybe I need to check if there's a specific document or steps mentioned in the search results. \n\nBut since I don't have access to real data, I'll have to assume that the search would return relevant documentation. The answer should then reference the search result. So the final answer would be the researcher result line with the title and URL from the search. \n\nI need to make sure I follow the exact structure: call the search tool once, then present the result. Since the user wants the final answer, I'll proceed to generate the tool call and then the result sentence.\n",
+                "reasoning": "Okay, the user wants me to act as the \"researcher\" subagent for the Braintrust Eve instrumentation tests. The task is to research the Eve instrumentation documentation before the parent reads it. The caller's message is to \"Run the Braintrust Eve instrumentation e2e scenario.\"\n\nFirst, I need to understand what the user is asking for. They want me to perform a search on the Eve instrumentation documentation. Since the instructions say to call the search tool exactly once with the full task as the query, I should use the search function with the query being \"Run the Braintrust Eve instrumentation e2e scenario.\"\n\nWait, the search tool's description says it searches the Eve instrumentation documentation fixture. So, using the search function with the query as the task should retrieve the relevant documentation. Then, after getting the search results, I need to answer with a single sentence starting with \"Researcher result:\" including the search title and URL.\n\nBut I need to make sure I'm following the steps correctly. The user mentioned that for every task, I should call the search tool once. So the first step is to execute the search with the given query. Once that's done, I'll get the results and then formulate the response with the title and URL.\n\nI should check if there are any other tools that might be necessary, but according to the instructions, the search tool is the primary one here. The other tools like grep or read_file might not be needed unless the search results require further actions, but the current task is just to research the documentation, so a straightforward search should suffice.\n\nSo the plan is: call the search function with the query \"Run the Braintrust Eve instrumentation e2e scenario,\" wait for the results, then present the title and URL from the search results in the specified format.\n",
                 "reasoning_details": [
                   {
                     "format": "unknown",
                     "index": 0,
-                    "text": "Okay, so the user wants me to act as the researcher subagent for Braintrust Eve instrumentation tests. The task is to run the e2e scenario. Let me break this down.\n\nFirst, I need to understand what the Braintrust Eve instrumentation e2e scenario entails. Since I don't have prior knowledge, I should start by searching the Eve instrumentation documentation. The user mentioned using the search tool exactly once with the full task as the query. So my first step is to call the search function with the query \"Run the Braintrust Eve instrumentation e2e scenario\".\n\nAfter performing the search, I'll get results that should guide me on how to proceed. The next step would be to answer with a single sentence starting with \"Researcher result:\" including the search title and URL. But since I can't actually perform the search here, I have to simulate the process. \n\nWait, the instructions say to call the search tool once. So in a real scenario, I would generate the tool call, wait for the result, then provide the answer. But since this is a simulation, I need to follow the structure. The user wants the final result directly after the researcher's work. \n\nSo, the correct approach is to first make the tool call to search, then once the result is available, output the research result. But in the context of this exercise, I need to generate the tool call first. However, the user's instruction says to complete the task and return the final result directly. Maybe I need to check if there's a specific document or steps mentioned in the search results. \n\nBut since I don't have access to real data, I'll have to assume that the search would return relevant documentation. The answer should then reference the search result. So the final answer would be the researcher result line with the title and URL from the search. \n\nI need to make sure I follow the exact structure: call the search tool once, then present the result. Since the user wants the final answer, I'll proceed to generate the tool call and then the result sentence.\n",
+                    "text": "Okay, the user wants me to act as the \"researcher\" subagent for the Braintrust Eve instrumentation tests. The task is to research the Eve instrumentation documentation before the parent reads it. The caller's message is to \"Run the Braintrust Eve instrumentation e2e scenario.\"\n\nFirst, I need to understand what the user is asking for. They want me to perform a search on the Eve instrumentation documentation. Since the instructions say to call the search tool exactly once with the full task as the query, I should use the search function with the query being \"Run the Braintrust Eve instrumentation e2e scenario.\"\n\nWait, the search tool's description says it searches the Eve instrumentation documentation fixture. So, using the search function with the query as the task should retrieve the relevant documentation. Then, after getting the search results, I need to answer with a single sentence starting with \"Researcher result:\" including the search title and URL.\n\nBut I need to make sure I'm following the steps correctly. The user mentioned that for every task, I should call the search tool once. So the first step is to execute the search with the given query. Once that's done, I'll get the results and then formulate the response with the title and URL.\n\nI should check if there are any other tools that might be necessary, but according to the instructions, the search tool is the primary one here. The other tools like grep or read_file might not be needed unless the search results require further actions, but the current task is just to research the documentation, so a straightforward search should suffice.\n\nSo the plan is: call the search function with the query \"Run the Braintrust Eve instrumentation e2e scenario,\" wait for the results, then present the title and URL from the search results in the specified format.\n",
                     "type": "reasoning.text"
                   }
                 ],
@@ -857,7 +857,7 @@
                       "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
                       "name": "search"
                     },
-                    "id": "call_va2oW897AFkSmx348ByspIwI",
+                    "id": "call_eADguN2PIwPZFQjOPxePZtyo",
                     "type": "function"
                   }
                 ]
@@ -866,7 +866,7 @@
                 "content": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\",\"title\":\"Eve instrumentation\",\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
                 "name": "search",
                 "role": "tool",
-                "tool_call_id": "call_va2oW897AFkSmx348ByspIwI"
+                "tool_call_id": "call_eADguN2PIwPZFQjOPxePZtyo"
               }
             ],
             "model": "qwen/qwen3-30b-a3b",
@@ -1210,24 +1210,24 @@
         "body": {
           "contentType": "text/event-stream",
           "kind": "binary",
-          "path": "eve-v0-22-1.cassette.blobs/72675e762c5178ec750f85f11c1558c1becfaecd3375b7206196856460d097d9.bin",
-          "sha256": "72675e762c5178ec750f85f11c1558c1becfaecd3375b7206196856460d097d9"
+          "path": "eve-v0.cassette.blobs/5f31832ca01085180dd0a346e312e1b642b39cd2d68a68cb58a4f84a2bb0ecb9.bin",
+          "sha256": "5f31832ca01085180dd0a346e312e1b642b39cd2d68a68cb58a4f84a2bb0ecb9"
         },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,cf-ray",
           "cache-control": "no-cache",
-          "cf-ray": "a1bf7aa8f8325b1e-VIE",
+          "cf-ray": "a22c25d7ab448be2-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Thu, 16 Jul 2026 08:01:28 GMT",
+          "date": "Wed, 29 Jul 2026 12:32:42 GMT",
           "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
           "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1784188888-TatE1CBcnLt0fBESWsyP"
+          "x-generation-id": "gen-1785328362-PRtTR4GNQ1UEc9iGB9Ql"
         },
         "status": 200,
         "statusText": "OK"
@@ -1235,9 +1235,9 @@
     },
     {
       "callIndex": 3,
-      "id": "de616d6f85a95e49",
+      "id": "8846ff1991b5ee0f",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "recordedAt": "2026-07-16T08:01:38.427Z",
+      "recordedAt": "2026-07-29T12:32:58.054Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1258,12 +1258,12 @@
               },
               {
                 "content": null,
-                "reasoning": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me break down what that entails. First, I need to make sure I understand the steps involved in such a scenario. Typically, an e2e test would involve setting up the environment, executing the test steps, and then verifying the results.\n\nLooking at the tools available, there's the 'bash' function which can execute shell commands. Maybe the user expects me to run some commands to set up or execute the test. But the user's message is pretty vague. They just say \"Run the Braintrust Eve instrumentation e2e scenario.\" So I need to figure out the exact steps.\n\nWait, the instructions mention that I should first call the 'researcher' tool with the user's message and then 'read' the documentation. The user's message is about running an e2e scenario, so maybe the researcher needs to get more context from the documentation. The 'read' tool is for reading the Eve documentation, which might have the necessary steps or setup instructions.\n\nSo the first step is to use the researcher tool with the user's message to gather information. Then, read the documentation to find the specific steps for the e2e test. After getting that information, I can proceed to execute the necessary commands. But according to the instructions, I need to make both tool calls first and then provide the final answer once both results are in.\n\nI should check if there are any other tools that might be relevant. The 'glob' or 'grep' tools could help find files, but without more context, it's hard to say. The user might need to provide more details, but since the instructions say to follow the steps exactly, I should proceed with the researcher and read calls as specified.\n\nSo the correct initial response is to call both 'researcher' with the user's message and 'read' the documentation URL. Then, after getting those results, formulate the final answer based on the information retrieved.\n",
+                "reasoning": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which probably refers to a comprehensive test case covering various aspects of the instrumentation.\n\nFirst, I need to check the available tools. The user provided a list of functions, including researcher, read, and others. The instructions say that for every user task, I should first call researcher with the user's message and then read the specified URL. \n\nThe user's message is \"Run the Braintrust Eve instrumentation e2e scenario.\" So, the first step is to call the researcher function with this message. The researcher will handle the query, and then I need to read the documentation page at \"https://eve.dev/docs/guides/instrumentation\" to get the necessary information.\n\nWait, the instructions specify that the first response must contain exactly two tool calls: researcher with the user's message and read with the given URL. I must emit both simultaneously. I can't do them one after another. So, I'll structure the response with both tool calls in the same message.\n\nAfter that, once both results are available, I need to compile a final answer that includes the researcher's result, the title from the read, the URL, and an excerpt from the read. The final answer should be a single sentence starting with \"Final answer from read:\".\n\nI need to make sure I don't miss any steps. Let me verify the parameters for each tool. The researcher requires the message, which is the user's exact input. The read function needs the URL as specified. No other parameters are needed for these initial calls.\n\nI should also ensure that the JSON formatting is correct for both tool calls. No text should be included in the first response, just the two tool calls. Then, after receiving the results, craft the final answer with the required components.\n",
                 "reasoning_details": [
                   {
                     "format": "unknown",
                     "index": 0,
-                    "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me break down what that entails. First, I need to make sure I understand the steps involved in such a scenario. Typically, an e2e test would involve setting up the environment, executing the test steps, and then verifying the results.\n\nLooking at the tools available, there's the 'bash' function which can execute shell commands. Maybe the user expects me to run some commands to set up or execute the test. But the user's message is pretty vague. They just say \"Run the Braintrust Eve instrumentation e2e scenario.\" So I need to figure out the exact steps.\n\nWait, the instructions mention that I should first call the 'researcher' tool with the user's message and then 'read' the documentation. The user's message is about running an e2e scenario, so maybe the researcher needs to get more context from the documentation. The 'read' tool is for reading the Eve documentation, which might have the necessary steps or setup instructions.\n\nSo the first step is to use the researcher tool with the user's message to gather information. Then, read the documentation to find the specific steps for the e2e test. After getting that information, I can proceed to execute the necessary commands. But according to the instructions, I need to make both tool calls first and then provide the final answer once both results are in.\n\nI should check if there are any other tools that might be relevant. The 'glob' or 'grep' tools could help find files, but without more context, it's hard to say. The user might need to provide more details, but since the instructions say to follow the steps exactly, I should proceed with the researcher and read calls as specified.\n\nSo the correct initial response is to call both 'researcher' with the user's message and 'read' the documentation URL. Then, after getting those results, formulate the final answer based on the information retrieved.\n",
+                    "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which probably refers to a comprehensive test case covering various aspects of the instrumentation.\n\nFirst, I need to check the available tools. The user provided a list of functions, including researcher, read, and others. The instructions say that for every user task, I should first call researcher with the user's message and then read the specified URL. \n\nThe user's message is \"Run the Braintrust Eve instrumentation e2e scenario.\" So, the first step is to call the researcher function with this message. The researcher will handle the query, and then I need to read the documentation page at \"https://eve.dev/docs/guides/instrumentation\" to get the necessary information.\n\nWait, the instructions specify that the first response must contain exactly two tool calls: researcher with the user's message and read with the given URL. I must emit both simultaneously. I can't do them one after another. So, I'll structure the response with both tool calls in the same message.\n\nAfter that, once both results are available, I need to compile a final answer that includes the researcher's result, the title from the read, the URL, and an excerpt from the read. The final answer should be a single sentence starting with \"Final answer from read:\".\n\nI need to make sure I don't miss any steps. Let me verify the parameters for each tool. The researcher requires the message, which is the user's exact input. The read function needs the URL as specified. No other parameters are needed for these initial calls.\n\nI should also ensure that the JSON formatting is correct for both tool calls. No text should be included in the first response, just the two tool calls. Then, after receiving the results, craft the final answer with the required components.\n",
                     "type": "reasoning.text"
                   }
                 ],
@@ -1274,7 +1274,7 @@
                       "arguments": "{\"message\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
                       "name": "researcher"
                     },
-                    "id": "call_sE1NhO9DoLWE48IMEWCEIb1E",
+                    "id": "call_U7FGHGoCBOBQTOXXxItKY3Ju",
                     "type": "function"
                   },
                   {
@@ -1282,7 +1282,7 @@
                       "arguments": "{\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
                       "name": "read"
                     },
-                    "id": "call_jEQUmTgsesbcEaGUgPWie4By",
+                    "id": "call_ph2zzDde6mt87rTQRJ0N7mq5",
                     "type": "function"
                   }
                 ]
@@ -1291,13 +1291,13 @@
                 "content": "{\"excerpt\":\"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\",\"section\":\"Runtime context\",\"title\":\"Eve instrumentation\",\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
                 "name": "read",
                 "role": "tool",
-                "tool_call_id": "call_jEQUmTgsesbcEaGUgPWie4By"
+                "tool_call_id": "call_ph2zzDde6mt87rTQRJ0N7mq5"
               },
               {
-                "content": "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation",
+                "content": "Researcher result: {\"title\": \"Eve instrumentation\", \"url\": \"https://eve.dev/docs/guides/instrumentation\"}",
                 "name": "researcher",
                 "role": "tool",
-                "tool_call_id": "call_sE1NhO9DoLWE48IMEWCEIb1E"
+                "tool_call_id": "call_U7FGHGoCBOBQTOXXxItKY3Ju"
               }
             ],
             "model": "qwen/qwen3-30b-a3b",
@@ -1681,24 +1681,24 @@
         "body": {
           "contentType": "text/event-stream",
           "kind": "binary",
-          "path": "eve-v0-22-1.cassette.blobs/0ecfed47ad992f0b0f9537e75f3356dd309e4e0c708bc264e4a1882b9aec461f.bin",
-          "sha256": "0ecfed47ad992f0b0f9537e75f3356dd309e4e0c708bc264e4a1882b9aec461f"
+          "path": "eve-v0.cassette.blobs/6c5b3c53f51cad1dca528d20af687f68eaf25bece4d46bd0b827937a60a980fd.bin",
+          "sha256": "6c5b3c53f51cad1dca528d20af687f68eaf25bece4d46bd0b827937a60a980fd"
         },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,cf-ray",
           "cache-control": "no-cache",
-          "cf-ray": "a1bf7ac8ccd25b1e-VIE",
+          "cf-ray": "a22c260e7ef5e5c9-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Thu, 16 Jul 2026 08:01:33 GMT",
+          "date": "Wed, 29 Jul 2026 12:32:51 GMT",
           "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
           "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1784188893-ttO1RMEdIajTR8NHHLty"
+          "x-generation-id": "gen-1785328370-XC15OY4eBFtkruUYdSsT"
         },
         "status": 200,
         "statusText": "OK"
@@ -1706,9 +1706,9 @@
     },
     {
       "callIndex": 4,
-      "id": "51d0dba791a3d0c8",
+      "id": "d65645b813fd9a6d",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "recordedAt": "2026-07-16T08:01:49.117Z",
+      "recordedAt": "2026-07-29T12:33:09.598Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1729,12 +1729,12 @@
               },
               {
                 "content": null,
-                "reasoning": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me break down what that entails. First, I need to make sure I understand the steps involved in such a scenario. Typically, an e2e test would involve setting up the environment, executing the test steps, and then verifying the results.\n\nLooking at the tools available, there's the 'bash' function which can execute shell commands. Maybe the user expects me to run some commands to set up or execute the test. But the user's message is pretty vague. They just say \"Run the Braintrust Eve instrumentation e2e scenario.\" So I need to figure out the exact steps.\n\nWait, the instructions mention that I should first call the 'researcher' tool with the user's message and then 'read' the documentation. The user's message is about running an e2e scenario, so maybe the researcher needs to get more context from the documentation. The 'read' tool is for reading the Eve documentation, which might have the necessary steps or setup instructions.\n\nSo the first step is to use the researcher tool with the user's message to gather information. Then, read the documentation to find the specific steps for the e2e test. After getting that information, I can proceed to execute the necessary commands. But according to the instructions, I need to make both tool calls first and then provide the final answer once both results are in.\n\nI should check if there are any other tools that might be relevant. The 'glob' or 'grep' tools could help find files, but without more context, it's hard to say. The user might need to provide more details, but since the instructions say to follow the steps exactly, I should proceed with the researcher and read calls as specified.\n\nSo the correct initial response is to call both 'researcher' with the user's message and 'read' the documentation URL. Then, after getting those results, formulate the final answer based on the information retrieved.\n",
+                "reasoning": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which probably refers to a comprehensive test case covering various aspects of the instrumentation.\n\nFirst, I need to check the available tools. The user provided a list of functions, including researcher, read, and others. The instructions say that for every user task, I should first call researcher with the user's message and then read the specified URL. \n\nThe user's message is \"Run the Braintrust Eve instrumentation e2e scenario.\" So, the first step is to call the researcher function with this message. The researcher will handle the query, and then I need to read the documentation page at \"https://eve.dev/docs/guides/instrumentation\" to get the necessary information.\n\nWait, the instructions specify that the first response must contain exactly two tool calls: researcher with the user's message and read with the given URL. I must emit both simultaneously. I can't do them one after another. So, I'll structure the response with both tool calls in the same message.\n\nAfter that, once both results are available, I need to compile a final answer that includes the researcher's result, the title from the read, the URL, and an excerpt from the read. The final answer should be a single sentence starting with \"Final answer from read:\".\n\nI need to make sure I don't miss any steps. Let me verify the parameters for each tool. The researcher requires the message, which is the user's exact input. The read function needs the URL as specified. No other parameters are needed for these initial calls.\n\nI should also ensure that the JSON formatting is correct for both tool calls. No text should be included in the first response, just the two tool calls. Then, after receiving the results, craft the final answer with the required components.\n",
                 "reasoning_details": [
                   {
                     "format": "unknown",
                     "index": 0,
-                    "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me break down what that entails. First, I need to make sure I understand the steps involved in such a scenario. Typically, an e2e test would involve setting up the environment, executing the test steps, and then verifying the results.\n\nLooking at the tools available, there's the 'bash' function which can execute shell commands. Maybe the user expects me to run some commands to set up or execute the test. But the user's message is pretty vague. They just say \"Run the Braintrust Eve instrumentation e2e scenario.\" So I need to figure out the exact steps.\n\nWait, the instructions mention that I should first call the 'researcher' tool with the user's message and then 'read' the documentation. The user's message is about running an e2e scenario, so maybe the researcher needs to get more context from the documentation. The 'read' tool is for reading the Eve documentation, which might have the necessary steps or setup instructions.\n\nSo the first step is to use the researcher tool with the user's message to gather information. Then, read the documentation to find the specific steps for the e2e test. After getting that information, I can proceed to execute the necessary commands. But according to the instructions, I need to make both tool calls first and then provide the final answer once both results are in.\n\nI should check if there are any other tools that might be relevant. The 'glob' or 'grep' tools could help find files, but without more context, it's hard to say. The user might need to provide more details, but since the instructions say to follow the steps exactly, I should proceed with the researcher and read calls as specified.\n\nSo the correct initial response is to call both 'researcher' with the user's message and 'read' the documentation URL. Then, after getting those results, formulate the final answer based on the information retrieved.\n",
+                    "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which probably refers to a comprehensive test case covering various aspects of the instrumentation.\n\nFirst, I need to check the available tools. The user provided a list of functions, including researcher, read, and others. The instructions say that for every user task, I should first call researcher with the user's message and then read the specified URL. \n\nThe user's message is \"Run the Braintrust Eve instrumentation e2e scenario.\" So, the first step is to call the researcher function with this message. The researcher will handle the query, and then I need to read the documentation page at \"https://eve.dev/docs/guides/instrumentation\" to get the necessary information.\n\nWait, the instructions specify that the first response must contain exactly two tool calls: researcher with the user's message and read with the given URL. I must emit both simultaneously. I can't do them one after another. So, I'll structure the response with both tool calls in the same message.\n\nAfter that, once both results are available, I need to compile a final answer that includes the researcher's result, the title from the read, the URL, and an excerpt from the read. The final answer should be a single sentence starting with \"Final answer from read:\".\n\nI need to make sure I don't miss any steps. Let me verify the parameters for each tool. The researcher requires the message, which is the user's exact input. The read function needs the URL as specified. No other parameters are needed for these initial calls.\n\nI should also ensure that the JSON formatting is correct for both tool calls. No text should be included in the first response, just the two tool calls. Then, after receiving the results, craft the final answer with the required components.\n",
                     "type": "reasoning.text"
                   }
                 ],
@@ -1745,7 +1745,7 @@
                       "arguments": "{\"message\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
                       "name": "researcher"
                     },
-                    "id": "call_sE1NhO9DoLWE48IMEWCEIb1E",
+                    "id": "call_U7FGHGoCBOBQTOXXxItKY3Ju",
                     "type": "function"
                   },
                   {
@@ -1753,7 +1753,7 @@
                       "arguments": "{\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
                       "name": "read"
                     },
-                    "id": "call_jEQUmTgsesbcEaGUgPWie4By",
+                    "id": "call_ph2zzDde6mt87rTQRJ0N7mq5",
                     "type": "function"
                   }
                 ]
@@ -1762,22 +1762,22 @@
                 "content": "{\"excerpt\":\"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\",\"section\":\"Runtime context\",\"title\":\"Eve instrumentation\",\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
                 "name": "read",
                 "role": "tool",
-                "tool_call_id": "call_jEQUmTgsesbcEaGUgPWie4By"
+                "tool_call_id": "call_ph2zzDde6mt87rTQRJ0N7mq5"
               },
               {
-                "content": "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation",
+                "content": "Researcher result: {\"title\": \"Eve instrumentation\", \"url\": \"https://eve.dev/docs/guides/instrumentation\"}",
                 "name": "researcher",
                 "role": "tool",
-                "tool_call_id": "call_sE1NhO9DoLWE48IMEWCEIb1E"
+                "tool_call_id": "call_U7FGHGoCBOBQTOXXxItKY3Ju"
               },
               {
-                "content": "Final answer from read: Eve instrumentation https://eve.dev/docs/guides/instrumentation. Title: Eve instrumentation. URL: https://eve.dev/docs/guides/instrumentation. Excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
-                "reasoning": "Okay, let me try to figure out what the user is asking for here. The user initially asked to \"Run the Braintrust Eve instrumentation e2e scenario.\" As a deterministic fixture agent, my job is to follow the specific steps outlined in the instructions.\n\nFirst, I need to make sure I perform the two required tool calls in the same response. The first is the researcher tool with the user's message, and the second is the read tool for the specified URL. I did that in the previous step. Now, after receiving the response from the read tool, I have to generate the final answer.\n\nThe user's instruction says that once both results are available, I should answer with a single sentence starting with \"Final answer from read:\" and include the researcher result, the read title, URL, and excerpt. Let me check the data I have. The researcher result is \"Eve instrumentation https://eve.dev/docs/guides/instrumentation\". The read response has the title \"Eve instrumentation\", the URL \"https://eve.dev/docs/guides/instrumentation\", and the excerpt about Eve hooks exposing runtime stream events.\n\nI need to structure the final answer correctly. I'll start with \"Final answer from read:\", then mention the researcher result, the title, URL, and the excerpt. I should make sure there's no markdown and that it's all in one sentence. Let me put that together: \"Final answer from read: Eve instrumentation https://eve.dev/docs/guides/instrumentation. Title: Eve instrumentation. URL: https://eve.dev/docs/guides/instrumentation. Excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"\n",
+                "content": "Final answer from read: The researcher result indicates the Eve instrumentation documentation at https://eve.dev/docs/guides/instrumentation. The excerpt explains that Eve hooks expose runtime stream events mapped into a nested turn trace.",
+                "reasoning": "Okay, let me process this step by step. The user asked to run the Braintrust Eve instrumentation e2e scenario. First, I called the researcher with their message and read the specified documentation page. The read result gave me an excerpt about Eve hooks exposing runtime stream events, mapping them into a nested turn trace. The researcher's result has the same title and URL as the read's. \n\nNow, the final answer needs to start with \"Final answer from read:\" and include the researcher result, read title, URL, and excerpt. Wait, the researcher result here is the same as the read's data. Maybe the researcher's response is the same as the read's content. So I should structure the sentence to include all those elements.\n\nI need to make sure I mention the researcher's result, which is the title and URL, then the read's title, URL, and excerpt. But the researcher's result might be the same as the read's. Let me check the data again. The researcher's result is {\"title\": \"Eve instrumentation\", \"url\": \"https://eve.dev/docs/guides/instrumentation\"}, and the read's response has the same title and URL, plus the excerpt. \n\nSo the final answer should combine these. Maybe something like: \"Final answer from read: The researcher result indicates the Eve instrumentation documentation at https://eve.dev/docs/guides/instrumentation. The excerpt explains that Eve hooks expose runtime stream events mapped into a nested turn trace.\" That covers the required parts. Let me verify all components are included. Yes, researcher result (title and URL), read title, URL, and excerpt. Perfect.\n",
                 "reasoning_details": [
                   {
                     "format": "unknown",
                     "index": 0,
-                    "text": "Okay, let me try to figure out what the user is asking for here. The user initially asked to \"Run the Braintrust Eve instrumentation e2e scenario.\" As a deterministic fixture agent, my job is to follow the specific steps outlined in the instructions.\n\nFirst, I need to make sure I perform the two required tool calls in the same response. The first is the researcher tool with the user's message, and the second is the read tool for the specified URL. I did that in the previous step. Now, after receiving the response from the read tool, I have to generate the final answer.\n\nThe user's instruction says that once both results are available, I should answer with a single sentence starting with \"Final answer from read:\" and include the researcher result, the read title, URL, and excerpt. Let me check the data I have. The researcher result is \"Eve instrumentation https://eve.dev/docs/guides/instrumentation\". The read response has the title \"Eve instrumentation\", the URL \"https://eve.dev/docs/guides/instrumentation\", and the excerpt about Eve hooks exposing runtime stream events.\n\nI need to structure the final answer correctly. I'll start with \"Final answer from read:\", then mention the researcher result, the title, URL, and the excerpt. I should make sure there's no markdown and that it's all in one sentence. Let me put that together: \"Final answer from read: Eve instrumentation https://eve.dev/docs/guides/instrumentation. Title: Eve instrumentation. URL: https://eve.dev/docs/guides/instrumentation. Excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"\n",
+                    "text": "Okay, let me process this step by step. The user asked to run the Braintrust Eve instrumentation e2e scenario. First, I called the researcher with their message and read the specified documentation page. The read result gave me an excerpt about Eve hooks exposing runtime stream events, mapping them into a nested turn trace. The researcher's result has the same title and URL as the read's. \n\nNow, the final answer needs to start with \"Final answer from read:\" and include the researcher result, read title, URL, and excerpt. Wait, the researcher result here is the same as the read's data. Maybe the researcher's response is the same as the read's content. So I should structure the sentence to include all those elements.\n\nI need to make sure I mention the researcher's result, which is the title and URL, then the read's title, URL, and excerpt. But the researcher's result might be the same as the read's. Let me check the data again. The researcher's result is {\"title\": \"Eve instrumentation\", \"url\": \"https://eve.dev/docs/guides/instrumentation\"}, and the read's response has the same title and URL, plus the excerpt. \n\nSo the final answer should combine these. Maybe something like: \"Final answer from read: The researcher result indicates the Eve instrumentation documentation at https://eve.dev/docs/guides/instrumentation. The excerpt explains that Eve hooks expose runtime stream events mapped into a nested turn trace.\" That covers the required parts. Let me verify all components are included. Yes, researcher result (title and URL), read title, URL, and excerpt. Perfect.\n",
                     "type": "reasoning.text"
                   }
                 ],
@@ -2169,24 +2169,24 @@
         "body": {
           "contentType": "text/event-stream",
           "kind": "binary",
-          "path": "eve-v0-22-1.cassette.blobs/faffec93a710a2c2e859d5155df7bd3a9f300cfb7157297c4ea00e98af5b91bd.bin",
-          "sha256": "faffec93a710a2c2e859d5155df7bd3a9f300cfb7157297c4ea00e98af5b91bd"
+          "path": "eve-v0.cassette.blobs/af1f8d2692b69628be68360634bca1745a21beb28725c82ab2641c019ce12a56.bin",
+          "sha256": "af1f8d2692b69628be68360634bca1745a21beb28725c82ab2641c019ce12a56"
         },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,cf-ray",
           "cache-control": "no-cache",
-          "cf-ray": "a1bf7b062f443255-VIE",
+          "cf-ray": "a22c26558b651585-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Thu, 16 Jul 2026 08:01:44 GMT",
+          "date": "Wed, 29 Jul 2026 12:33:02 GMT",
           "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
           "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1784188903-Mh2lcEQDslz6OXHljmu6"
+          "x-generation-id": "gen-1785328382-9e1sTm5qVSfN9jGC1eiS"
         },
         "status": 200,
         "statusText": "OK"
@@ -2196,7 +2196,7 @@
       "callIndex": 5,
       "id": "cd6ad0bb5e194efe",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "recordedAt": "2026-07-16T08:01:59.349Z",
+      "recordedAt": "2026-07-29T12:33:16.587Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2555,26 +2555,154 @@
       },
       "response": {
         "body": {
-          "contentType": "text/event-stream",
-          "kind": "binary",
-          "path": "eve-v0-22-1.cassette.blobs/04742bbe4ecf7235f64594d0ad2564df0759efd1936583c2d9f320c84edf3155.bin",
-          "sha256": "04742bbe4ecf7235f64594d0ad2564df0759efd1936583c2d9f320c84edf3155"
+          "chunks": [
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"Okay\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"Okay\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\",\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\",\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" user\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" user\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" wants\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" wants\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" me\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" me\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" to\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" to\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" run\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" run\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" Brain\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" Brain\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"trust\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"trust\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" Eve\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" Eve\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" instrumentation\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" instrumentation\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" end\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" end\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"-to\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"-to\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"-end\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"-end\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" scenario\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" scenario\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" again\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" again\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\".\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\".\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" But\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" But\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" wait\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" wait\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\",\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\",\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" I\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" I\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" need\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" need\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" to\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" to\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" research\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" research\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" Eve\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" Eve\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" instrumentation\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" instrumentation\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" documentation\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" documentation\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" first\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" first\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\".\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\".\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" Let\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" Let\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" me\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" me\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" check\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" check\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" tools\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" tools\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" available\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" available\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\".\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\".\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" There\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" There\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"'s\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"'s\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" a\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" a\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" search\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" search\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" function\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" function\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" that\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" that\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" searches\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" searches\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" Eve\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" Eve\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" documentation\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" documentation\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\".\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\".\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" I\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" I\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" should\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" should\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" use\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" use\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" that\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" that\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\".\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\".\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" The\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" The\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" query\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" query\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" should\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" should\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" be\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" be\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" task\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" task\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" itself\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" itself\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\",\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\",\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" which\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" which\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" is\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" is\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" \\\"\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" \\\"\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"Run\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"Run\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" Brain\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" Brain\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"trust\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"trust\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" Eve\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" Eve\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" instrumentation\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" instrumentation\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" e\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" e\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"2\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"2\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"e\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"e\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" scenario\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" scenario\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" again\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" again\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"\\\".\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"\\\".\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" So\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" So\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" I\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" I\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"'ll\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"'ll\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" call\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" call\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" search\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" search\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" tool\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" tool\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" with\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" with\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" that\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" that\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" query\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" query\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\".\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\".\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" Then\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" Then\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\",\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\",\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" once\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" once\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" I\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" I\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" get\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" get\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" results\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" results\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\",\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\",\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" I\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" I\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"'ll\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"'ll\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" have\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" have\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" to\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" to\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" provide\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" provide\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" a\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" a\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" single\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" single\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" sentence\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" sentence\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" with\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" with\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" title\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" title\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" and\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" and\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" URL\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" URL\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" from\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" from\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" search\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" search\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\".\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\".\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" Alright\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" Alright\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\",\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\",\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" let\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" let\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\"'s\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\"'s\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" start\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" start\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" with\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" with\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" the\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" the\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\" search\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\" search\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":\".\\n\",\"reasoning_details\":[{\"type\":\"reasoning.text\",\"text\":\".\\n\",\"format\":\"unknown\",\"index\":0}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            ": OPENROUTER PROCESSING",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":null,\"role\":\"assistant\",\"tool_calls\":[{\"index\":0,\"id\":\"call_Za3faTcmCk7VVLax5pkD58gZ\",\"type\":\"function\",\"function\":{\"name\":\"search\",\"arguments\":\"\"}}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":null,\"role\":\"assistant\",\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"query\\\": \\\"Run the Braintrust Eve instrumentation e2e scenario again\\\"}\"}}]},\"finish_reason\":null,\"native_finish_reason\":null}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\",\"reasoning\":null},\"finish_reason\":\"tool_calls\",\"native_finish_reason\":\"stop\"}]}",
+            "data: {\"id\":\"gen-1785328393-D57r5OB5vKBMPgFV4xgY\",\"object\":\"chat.completion.chunk\",\"created\":1785328393,\"model\":\"qwen/qwen3-30b-a3b\",\"provider\":\"DeepInfra\",\"service_tier\":null,\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\",\"role\":\"assistant\"},\"finish_reason\":\"tool_calls\",\"native_finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":3037,\"completion_tokens\":156,\"total_tokens\":3193,\"cost\":0.00044244,\"is_byok\":false,\"prompt_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0,\"audio_tokens\":0,\"video_tokens\":0},\"cost_details\":{\"upstream_inference_cost\":0.00044244,\"upstream_inference_prompt_cost\":0.00036444,\"upstream_inference_completions_cost\":0.000078},\"completion_tokens_details\":{\"reasoning_tokens\":147,\"image_tokens\":0,\"audio_tokens\":0}}}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
         },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,cf-ray",
           "cache-control": "no-cache",
-          "cf-ray": "a1bf7b46ebc7325f-VIE",
+          "cf-ray": "a22c2699eddc1585-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Thu, 16 Jul 2026 08:01:54 GMT",
+          "date": "Wed, 29 Jul 2026 12:33:13 GMT",
           "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
           "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1784188913-w3Om0kZ9TiJw2HHIYKZc"
+          "x-generation-id": "gen-1785328393-D57r5OB5vKBMPgFV4xgY"
         },
         "status": 200,
         "statusText": "OK"
@@ -2582,9 +2710,9 @@
     },
     {
       "callIndex": 6,
-      "id": "173694846c500a1d",
+      "id": "61c490bc7a4a644e",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "recordedAt": "2026-07-16T08:02:07.246Z",
+      "recordedAt": "2026-07-29T12:33:21.713Z",
       "request": {
         "body": {
           "kind": "json",
@@ -2605,12 +2733,12 @@
               },
               {
                 "content": null,
-                "reasoning": "Okay, so the user wants me to run the Braintrust Eve instrumentation end-to-end scenario again. But wait, I'm supposed to be the researcher subagent, right? My job is to research the Eve instrumentation documentation before the parent reads it. Hmm, maybe the caller wants me to check the documentation first to make sure everything is in order before proceeding with the test.\n\nFirst, I need to figure out what the Braintrust Eve instrumentation e2e scenario involves. Since I don't have that information in my current knowledge, I should search the Eve documentation. The user mentioned using the search tool, so I should call the search function with the query \"Braintrust Eve instrumentation e2e scenario\".\n\nWait, the instructions say to call the search tool exactly once with the full task as the query. The task here is \"Run the Braintrust Eve instrumentation e2e scenario again\". But maybe I should search for the specific scenario details. However, the user's exact instruction is to run it again, but as the researcher, I need to research the documentation first. So perhaps the correct approach is to search for the e2e scenario in the Eve documentation to find relevant information.\n\nI should structure the search query properly. The search function's parameters require a \"query\" field. So the JSON would be {\"name\": \"search\", \"arguments\": {\"query\": \"Run the Braintrust Eve instrumentation e2e scenario again\"}}. But maybe the query should be more about the documentation. Alternatively, since the task is to run the scenario again, the research might involve checking the steps or setup required for that scenario. \n\nAlternatively, maybe the user expects me to look up the e2e scenario in the documentation to ensure that the steps are correct. But since the user hasn't provided the documentation content, the search is the way to go. I'll proceed with the search as instructed.\n",
+                "reasoning": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario again. But wait, I need to research the Eve instrumentation documentation first. Let me check the tools available. There's a search function that searches the Eve documentation. I should use that. The query should be the task itself, which is \"Run the Braintrust Eve instrumentation e2e scenario again\". So I'll call the search tool with that query. Then, once I get the results, I'll have to provide a single sentence with the title and URL from the search. Alright, let's start with the search.\n",
                 "reasoning_details": [
                   {
                     "format": "unknown",
                     "index": 0,
-                    "text": "Okay, so the user wants me to run the Braintrust Eve instrumentation end-to-end scenario again. But wait, I'm supposed to be the researcher subagent, right? My job is to research the Eve instrumentation documentation before the parent reads it. Hmm, maybe the caller wants me to check the documentation first to make sure everything is in order before proceeding with the test.\n\nFirst, I need to figure out what the Braintrust Eve instrumentation e2e scenario involves. Since I don't have that information in my current knowledge, I should search the Eve documentation. The user mentioned using the search tool, so I should call the search function with the query \"Braintrust Eve instrumentation e2e scenario\".\n\nWait, the instructions say to call the search tool exactly once with the full task as the query. The task here is \"Run the Braintrust Eve instrumentation e2e scenario again\". But maybe I should search for the specific scenario details. However, the user's exact instruction is to run it again, but as the researcher, I need to research the documentation first. So perhaps the correct approach is to search for the e2e scenario in the Eve documentation to find relevant information.\n\nI should structure the search query properly. The search function's parameters require a \"query\" field. So the JSON would be {\"name\": \"search\", \"arguments\": {\"query\": \"Run the Braintrust Eve instrumentation e2e scenario again\"}}. But maybe the query should be more about the documentation. Alternatively, since the task is to run the scenario again, the research might involve checking the steps or setup required for that scenario. \n\nAlternatively, maybe the user expects me to look up the e2e scenario in the documentation to ensure that the steps are correct. But since the user hasn't provided the documentation content, the search is the way to go. I'll proceed with the search as instructed.\n",
+                    "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario again. But wait, I need to research the Eve instrumentation documentation first. Let me check the tools available. There's a search function that searches the Eve documentation. I should use that. The query should be the task itself, which is \"Run the Braintrust Eve instrumentation e2e scenario again\". So I'll call the search tool with that query. Then, once I get the results, I'll have to provide a single sentence with the title and URL from the search. Alright, let's start with the search.\n",
                     "type": "reasoning.text"
                   }
                 ],
@@ -2621,7 +2749,7 @@
                       "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario again\"}",
                       "name": "search"
                     },
-                    "id": "call_FTrA7Qv4Sbyo45ErtWh6JtXr",
+                    "id": "call_Za3faTcmCk7VVLax5pkD58gZ",
                     "type": "function"
                   }
                 ]
@@ -2630,7 +2758,7 @@
                 "content": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario again\",\"title\":\"Eve instrumentation\",\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
                 "name": "search",
                 "role": "tool",
-                "tool_call_id": "call_FTrA7Qv4Sbyo45ErtWh6JtXr"
+                "tool_call_id": "call_Za3faTcmCk7VVLax5pkD58gZ"
               }
             ],
             "model": "qwen/qwen3-30b-a3b",
@@ -2974,24 +3102,24 @@
         "body": {
           "contentType": "text/event-stream",
           "kind": "binary",
-          "path": "eve-v0-22-1.cassette.blobs/572de8652c299c88251ee075ec6f0463bf51f4bc49691892691078f280e0b83b.bin",
-          "sha256": "572de8652c299c88251ee075ec6f0463bf51f4bc49691892691078f280e0b83b"
+          "path": "eve-v0.cassette.blobs/ab78b58d485ed97fe33bc4687899ca9f74eb334607b4130aa931ffc17fdaece2.bin",
+          "sha256": "ab78b58d485ed97fe33bc4687899ca9f74eb334607b4130aa931ffc17fdaece2"
         },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,cf-ray",
           "cache-control": "no-cache",
-          "cf-ray": "a1bf7b86ecdbcd5a-VIE",
+          "cf-ray": "a22c26b788141585-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Thu, 16 Jul 2026 08:02:04 GMT",
+          "date": "Wed, 29 Jul 2026 12:33:18 GMT",
           "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
           "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1784188923-X60ApTTXorHJOma3lyuv"
+          "x-generation-id": "gen-1785328398-gNLmBORExqGcMt3Wazt9"
         },
         "status": 200,
         "statusText": "OK"
@@ -2999,9 +3127,9 @@
     },
     {
       "callIndex": 7,
-      "id": "34cc5b8b4c812cdf",
+      "id": "8e8148e79df05242",
       "matchKey": "POST openrouter.ai/api/v1/chat/completions",
-      "recordedAt": "2026-07-16T08:02:13.135Z",
+      "recordedAt": "2026-07-29T12:33:28.551Z",
       "request": {
         "body": {
           "kind": "json",
@@ -3022,12 +3150,12 @@
               },
               {
                 "content": null,
-                "reasoning": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me break down what that entails. First, I need to make sure I understand the steps involved in such a scenario. Typically, an e2e test would involve setting up the environment, executing the test steps, and then verifying the results.\n\nLooking at the tools available, there's the 'bash' function which can execute shell commands. Maybe the user expects me to run some commands to set up or execute the test. But the user's message is pretty vague. They just say \"Run the Braintrust Eve instrumentation e2e scenario.\" So I need to figure out the exact steps.\n\nWait, the instructions mention that I should first call the 'researcher' tool with the user's message and then 'read' the documentation. The user's message is about running an e2e scenario, so maybe the researcher needs to get more context from the documentation. The 'read' tool is for reading the Eve documentation, which might have the necessary steps or setup instructions.\n\nSo the first step is to use the researcher tool with the user's message to gather information. Then, read the documentation to find the specific steps for the e2e test. After getting that information, I can proceed to execute the necessary commands. But according to the instructions, I need to make both tool calls first and then provide the final answer once both results are in.\n\nI should check if there are any other tools that might be relevant. The 'glob' or 'grep' tools could help find files, but without more context, it's hard to say. The user might need to provide more details, but since the instructions say to follow the steps exactly, I should proceed with the researcher and read calls as specified.\n\nSo the correct initial response is to call both 'researcher' with the user's message and 'read' the documentation URL. Then, after getting those results, formulate the final answer based on the information retrieved.\n",
+                "reasoning": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which probably refers to a comprehensive test case covering various aspects of the instrumentation.\n\nFirst, I need to check the available tools. The user provided a list of functions, including researcher, read, and others. The instructions say that for every user task, I should first call researcher with the user's message and then read the specified URL. \n\nThe user's message is \"Run the Braintrust Eve instrumentation e2e scenario.\" So, the first step is to call the researcher function with this message. The researcher will handle the query, and then I need to read the documentation page at \"https://eve.dev/docs/guides/instrumentation\" to get the necessary information.\n\nWait, the instructions specify that the first response must contain exactly two tool calls: researcher with the user's message and read with the given URL. I must emit both simultaneously. I can't do them one after another. So, I'll structure the response with both tool calls in the same message.\n\nAfter that, once both results are available, I need to compile a final answer that includes the researcher's result, the title from the read, the URL, and an excerpt from the read. The final answer should be a single sentence starting with \"Final answer from read:\".\n\nI need to make sure I don't miss any steps. Let me verify the parameters for each tool. The researcher requires the message, which is the user's exact input. The read function needs the URL as specified. No other parameters are needed for these initial calls.\n\nI should also ensure that the JSON formatting is correct for both tool calls. No text should be included in the first response, just the two tool calls. Then, after receiving the results, craft the final answer with the required components.\n",
                 "reasoning_details": [
                   {
                     "format": "unknown",
                     "index": 0,
-                    "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me break down what that entails. First, I need to make sure I understand the steps involved in such a scenario. Typically, an e2e test would involve setting up the environment, executing the test steps, and then verifying the results.\n\nLooking at the tools available, there's the 'bash' function which can execute shell commands. Maybe the user expects me to run some commands to set up or execute the test. But the user's message is pretty vague. They just say \"Run the Braintrust Eve instrumentation e2e scenario.\" So I need to figure out the exact steps.\n\nWait, the instructions mention that I should first call the 'researcher' tool with the user's message and then 'read' the documentation. The user's message is about running an e2e scenario, so maybe the researcher needs to get more context from the documentation. The 'read' tool is for reading the Eve documentation, which might have the necessary steps or setup instructions.\n\nSo the first step is to use the researcher tool with the user's message to gather information. Then, read the documentation to find the specific steps for the e2e test. After getting that information, I can proceed to execute the necessary commands. But according to the instructions, I need to make both tool calls first and then provide the final answer once both results are in.\n\nI should check if there are any other tools that might be relevant. The 'glob' or 'grep' tools could help find files, but without more context, it's hard to say. The user might need to provide more details, but since the instructions say to follow the steps exactly, I should proceed with the researcher and read calls as specified.\n\nSo the correct initial response is to call both 'researcher' with the user's message and 'read' the documentation URL. Then, after getting those results, formulate the final answer based on the information retrieved.\n",
+                    "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which probably refers to a comprehensive test case covering various aspects of the instrumentation.\n\nFirst, I need to check the available tools. The user provided a list of functions, including researcher, read, and others. The instructions say that for every user task, I should first call researcher with the user's message and then read the specified URL. \n\nThe user's message is \"Run the Braintrust Eve instrumentation e2e scenario.\" So, the first step is to call the researcher function with this message. The researcher will handle the query, and then I need to read the documentation page at \"https://eve.dev/docs/guides/instrumentation\" to get the necessary information.\n\nWait, the instructions specify that the first response must contain exactly two tool calls: researcher with the user's message and read with the given URL. I must emit both simultaneously. I can't do them one after another. So, I'll structure the response with both tool calls in the same message.\n\nAfter that, once both results are available, I need to compile a final answer that includes the researcher's result, the title from the read, the URL, and an excerpt from the read. The final answer should be a single sentence starting with \"Final answer from read:\".\n\nI need to make sure I don't miss any steps. Let me verify the parameters for each tool. The researcher requires the message, which is the user's exact input. The read function needs the URL as specified. No other parameters are needed for these initial calls.\n\nI should also ensure that the JSON formatting is correct for both tool calls. No text should be included in the first response, just the two tool calls. Then, after receiving the results, craft the final answer with the required components.\n",
                     "type": "reasoning.text"
                   }
                 ],
@@ -3038,7 +3166,7 @@
                       "arguments": "{\"message\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
                       "name": "researcher"
                     },
-                    "id": "call_sE1NhO9DoLWE48IMEWCEIb1E",
+                    "id": "call_U7FGHGoCBOBQTOXXxItKY3Ju",
                     "type": "function"
                   },
                   {
@@ -3046,7 +3174,7 @@
                       "arguments": "{\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
                       "name": "read"
                     },
-                    "id": "call_jEQUmTgsesbcEaGUgPWie4By",
+                    "id": "call_ph2zzDde6mt87rTQRJ0N7mq5",
                     "type": "function"
                   }
                 ]
@@ -3055,22 +3183,22 @@
                 "content": "{\"excerpt\":\"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\",\"section\":\"Runtime context\",\"title\":\"Eve instrumentation\",\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
                 "name": "read",
                 "role": "tool",
-                "tool_call_id": "call_jEQUmTgsesbcEaGUgPWie4By"
+                "tool_call_id": "call_ph2zzDde6mt87rTQRJ0N7mq5"
               },
               {
-                "content": "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation",
+                "content": "Researcher result: {\"title\": \"Eve instrumentation\", \"url\": \"https://eve.dev/docs/guides/instrumentation\"}",
                 "name": "researcher",
                 "role": "tool",
-                "tool_call_id": "call_sE1NhO9DoLWE48IMEWCEIb1E"
+                "tool_call_id": "call_U7FGHGoCBOBQTOXXxItKY3Ju"
               },
               {
-                "content": "Final answer from read: Eve instrumentation https://eve.dev/docs/guides/instrumentation. Title: Eve instrumentation. URL: https://eve.dev/docs/guides/instrumentation. Excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.",
-                "reasoning": "Okay, let me try to figure out what the user is asking for here. The user initially asked to \"Run the Braintrust Eve instrumentation e2e scenario.\" As a deterministic fixture agent, my job is to follow the specific steps outlined in the instructions.\n\nFirst, I need to make sure I perform the two required tool calls in the same response. The first is the researcher tool with the user's message, and the second is the read tool for the specified URL. I did that in the previous step. Now, after receiving the response from the read tool, I have to generate the final answer.\n\nThe user's instruction says that once both results are available, I should answer with a single sentence starting with \"Final answer from read:\" and include the researcher result, the read title, URL, and excerpt. Let me check the data I have. The researcher result is \"Eve instrumentation https://eve.dev/docs/guides/instrumentation\". The read response has the title \"Eve instrumentation\", the URL \"https://eve.dev/docs/guides/instrumentation\", and the excerpt about Eve hooks exposing runtime stream events.\n\nI need to structure the final answer correctly. I'll start with \"Final answer from read:\", then mention the researcher result, the title, URL, and the excerpt. I should make sure there's no markdown and that it's all in one sentence. Let me put that together: \"Final answer from read: Eve instrumentation https://eve.dev/docs/guides/instrumentation. Title: Eve instrumentation. URL: https://eve.dev/docs/guides/instrumentation. Excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"\n",
+                "content": "Final answer from read: The researcher result indicates the Eve instrumentation documentation at https://eve.dev/docs/guides/instrumentation. The excerpt explains that Eve hooks expose runtime stream events mapped into a nested turn trace.",
+                "reasoning": "Okay, let me process this step by step. The user asked to run the Braintrust Eve instrumentation e2e scenario. First, I called the researcher with their message and read the specified documentation page. The read result gave me an excerpt about Eve hooks exposing runtime stream events, mapping them into a nested turn trace. The researcher's result has the same title and URL as the read's. \n\nNow, the final answer needs to start with \"Final answer from read:\" and include the researcher result, read title, URL, and excerpt. Wait, the researcher result here is the same as the read's data. Maybe the researcher's response is the same as the read's content. So I should structure the sentence to include all those elements.\n\nI need to make sure I mention the researcher's result, which is the title and URL, then the read's title, URL, and excerpt. But the researcher's result might be the same as the read's. Let me check the data again. The researcher's result is {\"title\": \"Eve instrumentation\", \"url\": \"https://eve.dev/docs/guides/instrumentation\"}, and the read's response has the same title and URL, plus the excerpt. \n\nSo the final answer should combine these. Maybe something like: \"Final answer from read: The researcher result indicates the Eve instrumentation documentation at https://eve.dev/docs/guides/instrumentation. The excerpt explains that Eve hooks expose runtime stream events mapped into a nested turn trace.\" That covers the required parts. Let me verify all components are included. Yes, researcher result (title and URL), read title, URL, and excerpt. Perfect.\n",
                 "reasoning_details": [
                   {
                     "format": "unknown",
                     "index": 0,
-                    "text": "Okay, let me try to figure out what the user is asking for here. The user initially asked to \"Run the Braintrust Eve instrumentation e2e scenario.\" As a deterministic fixture agent, my job is to follow the specific steps outlined in the instructions.\n\nFirst, I need to make sure I perform the two required tool calls in the same response. The first is the researcher tool with the user's message, and the second is the read tool for the specified URL. I did that in the previous step. Now, after receiving the response from the read tool, I have to generate the final answer.\n\nThe user's instruction says that once both results are available, I should answer with a single sentence starting with \"Final answer from read:\" and include the researcher result, the read title, URL, and excerpt. Let me check the data I have. The researcher result is \"Eve instrumentation https://eve.dev/docs/guides/instrumentation\". The read response has the title \"Eve instrumentation\", the URL \"https://eve.dev/docs/guides/instrumentation\", and the excerpt about Eve hooks exposing runtime stream events.\n\nI need to structure the final answer correctly. I'll start with \"Final answer from read:\", then mention the researcher result, the title, URL, and the excerpt. I should make sure there's no markdown and that it's all in one sentence. Let me put that together: \"Final answer from read: Eve instrumentation https://eve.dev/docs/guides/instrumentation. Title: Eve instrumentation. URL: https://eve.dev/docs/guides/instrumentation. Excerpt: Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"\n",
+                    "text": "Okay, let me process this step by step. The user asked to run the Braintrust Eve instrumentation e2e scenario. First, I called the researcher with their message and read the specified documentation page. The read result gave me an excerpt about Eve hooks exposing runtime stream events, mapping them into a nested turn trace. The researcher's result has the same title and URL as the read's. \n\nNow, the final answer needs to start with \"Final answer from read:\" and include the researcher result, read title, URL, and excerpt. Wait, the researcher result here is the same as the read's data. Maybe the researcher's response is the same as the read's content. So I should structure the sentence to include all those elements.\n\nI need to make sure I mention the researcher's result, which is the title and URL, then the read's title, URL, and excerpt. But the researcher's result might be the same as the read's. Let me check the data again. The researcher's result is {\"title\": \"Eve instrumentation\", \"url\": \"https://eve.dev/docs/guides/instrumentation\"}, and the read's response has the same title and URL, plus the excerpt. \n\nSo the final answer should combine these. Maybe something like: \"Final answer from read: The researcher result indicates the Eve instrumentation documentation at https://eve.dev/docs/guides/instrumentation. The excerpt explains that Eve hooks expose runtime stream events mapped into a nested turn trace.\" That covers the required parts. Let me verify all components are included. Yes, researcher result (title and URL), read title, URL, and excerpt. Perfect.\n",
                     "type": "reasoning.text"
                   }
                 ],
@@ -3082,12 +3210,12 @@
               },
               {
                 "content": null,
-                "reasoning": "Okay, the user wants me to run the Braintrust Eve instrumentation e2e scenario again. Let me check the previous interactions to make sure I follow the correct steps.\n\nIn the history, the user first asked to run the scenario, and I called the researcher and read functions. The researcher was given the message \"Run the Braintrust Eve instrumentation e2e scenario\" and the read function accessed the documentation URL. Then, after receiving the response, I provided the final answer with the extracted info.\n\nNow the user is asking to do it again. The instructions say that for every user task, I must first make the two tool calls: researcher with the full user message and read with the specific URL. I need to ensure that I don't reuse any previous messages and that both calls are made in parallel.\n\nThe user's current message is \"Run the Braintrust Eve instrumentation e2e scenario again\". The researcher call should include the exact message, including \"again\". Then, the read function should still use the same URL as before, https://eve.dev/docs/guides/instrumentation. \n\nI need to structure the response with both tool calls in the same XML tags, researcher first, then read. No text in between. Once both results are available, I'll generate the final answer sentence as specified, including the researcher result, title, URL, and excerpt.\n\nI should also make sure that the researcher's message is exactly the user's current input, which includes \"again\". The previous researcher call had the message without \"again\", so this time it's necessary to include it. The read URL remains the same as per the instructions.\n\nNo other tools are needed here since the user is asking for the same scenario again, so sticking to the specified functions is correct. I'll proceed to generate the two tool calls as per the steps.\n",
+                "reasoning": "Okay, the user wants me to run the Braintrust Eve instrumentation e2e scenario again. Let me check the previous interaction to make sure I follow the correct steps.\n\nIn the history, the user first asked to run the scenario, and I made two tool calls: researcher with the message \"Run the Braintrust Eve instrumentation e2e scenario\" and read with the URL. Then, after getting the response, I provided the final answer. Now, the user is asking to do it again.\n\nSo, the current step is to repeat the same process. The user's message is \"Run the Braintrust Eve instrumentation e2e scenario again.\" I need to make sure I use the exact same researcher message as before but include the \"again\" part. Wait, the instructions say to copy the current user message verbatim, including words like \"again\". So the researcher argument should be the full user message, which is \"Run the Braintrust Eve instrumentation e2e scenario again.\"\n\nThen, the read tool call is still to the same URL: https://eve.dev/docs/guides/instrumentation. I need to emit both calls simultaneously again. After that, once both results are available, I'll construct the final answer with the researcher result, read title, URL, and excerpt. \n\nI need to make sure I don't miss any steps. The key is to follow the exact procedure as before, ensuring that the researcher message is exactly the user's current input, including \"again\". Also, the read URL remains the same. Then, after the tool responses, format the final answer correctly.\n",
                 "reasoning_details": [
                   {
                     "format": "unknown",
                     "index": 0,
-                    "text": "Okay, the user wants me to run the Braintrust Eve instrumentation e2e scenario again. Let me check the previous interactions to make sure I follow the correct steps.\n\nIn the history, the user first asked to run the scenario, and I called the researcher and read functions. The researcher was given the message \"Run the Braintrust Eve instrumentation e2e scenario\" and the read function accessed the documentation URL. Then, after receiving the response, I provided the final answer with the extracted info.\n\nNow the user is asking to do it again. The instructions say that for every user task, I must first make the two tool calls: researcher with the full user message and read with the specific URL. I need to ensure that I don't reuse any previous messages and that both calls are made in parallel.\n\nThe user's current message is \"Run the Braintrust Eve instrumentation e2e scenario again\". The researcher call should include the exact message, including \"again\". Then, the read function should still use the same URL as before, https://eve.dev/docs/guides/instrumentation. \n\nI need to structure the response with both tool calls in the same XML tags, researcher first, then read. No text in between. Once both results are available, I'll generate the final answer sentence as specified, including the researcher result, title, URL, and excerpt.\n\nI should also make sure that the researcher's message is exactly the user's current input, which includes \"again\". The previous researcher call had the message without \"again\", so this time it's necessary to include it. The read URL remains the same as per the instructions.\n\nNo other tools are needed here since the user is asking for the same scenario again, so sticking to the specified functions is correct. I'll proceed to generate the two tool calls as per the steps.\n",
+                    "text": "Okay, the user wants me to run the Braintrust Eve instrumentation e2e scenario again. Let me check the previous interaction to make sure I follow the correct steps.\n\nIn the history, the user first asked to run the scenario, and I made two tool calls: researcher with the message \"Run the Braintrust Eve instrumentation e2e scenario\" and read with the URL. Then, after getting the response, I provided the final answer. Now, the user is asking to do it again.\n\nSo, the current step is to repeat the same process. The user's message is \"Run the Braintrust Eve instrumentation e2e scenario again.\" I need to make sure I use the exact same researcher message as before but include the \"again\" part. Wait, the instructions say to copy the current user message verbatim, including words like \"again\". So the researcher argument should be the full user message, which is \"Run the Braintrust Eve instrumentation e2e scenario again.\"\n\nThen, the read tool call is still to the same URL: https://eve.dev/docs/guides/instrumentation. I need to emit both calls simultaneously again. After that, once both results are available, I'll construct the final answer with the researcher result, read title, URL, and excerpt. \n\nI need to make sure I don't miss any steps. The key is to follow the exact procedure as before, ensuring that the researcher message is exactly the user's current input, including \"again\". Also, the read URL remains the same. Then, after the tool responses, format the final answer correctly.\n",
                     "type": "reasoning.text"
                   }
                 ],
@@ -3098,7 +3226,7 @@
                       "arguments": "{\"message\":\"Run the Braintrust Eve instrumentation e2e scenario again\"}",
                       "name": "researcher"
                     },
-                    "id": "call_t4llrd4KAqa9seD07jYhHC1M",
+                    "id": "call_0jGr2bKdgKUItxkpxG8TZMIh",
                     "type": "function"
                   },
                   {
@@ -3106,7 +3234,7 @@
                       "arguments": "{\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
                       "name": "read"
                     },
-                    "id": "call_9Tf591bnH6DvTg594osmBrf8",
+                    "id": "call_4k2MYUdiCLP2oSzJwQG6fVrn",
                     "type": "function"
                   }
                 ]
@@ -3115,13 +3243,13 @@
                 "content": "{\"excerpt\":\"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\",\"section\":\"Runtime context\",\"title\":\"Eve instrumentation\",\"url\":\"https://eve.dev/docs/guides/instrumentation\"}",
                 "name": "read",
                 "role": "tool",
-                "tool_call_id": "call_9Tf591bnH6DvTg594osmBrf8"
+                "tool_call_id": "call_4k2MYUdiCLP2oSzJwQG6fVrn"
               },
               {
                 "content": "Researcher result: Eve instrumentation (https://eve.dev/docs/guides/instrumentation)",
                 "name": "researcher",
                 "role": "tool",
-                "tool_call_id": "call_t4llrd4KAqa9seD07jYhHC1M"
+                "tool_call_id": "call_0jGr2bKdgKUItxkpxG8TZMIh"
               }
             ],
             "model": "qwen/qwen3-30b-a3b",
@@ -3505,24 +3633,24 @@
         "body": {
           "contentType": "text/event-stream",
           "kind": "binary",
-          "path": "eve-v0-22-1.cassette.blobs/d963dbeda0c323a9f12784e33b5bac73b682c17fbbf25018209012d5984ec12f.bin",
-          "sha256": "d963dbeda0c323a9f12784e33b5bac73b682c17fbbf25018209012d5984ec12f"
+          "path": "eve-v0.cassette.blobs/f0e6f00e794ed5a3fb8f7852859834c64caf2e3628413c096ba164c8d91b988f.bin",
+          "sha256": "f0e6f00e794ed5a3fb8f7852859834c64caf2e3628413c096ba164c8d91b988f"
         },
         "headers": {
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Generation-Id,X-Provider-Name,cf-ray",
           "cache-control": "no-cache",
-          "cf-ray": "a1bf7bac6b6bcd5a-VIE",
+          "cf-ray": "a22c26dd7b871585-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream",
-          "date": "Thu, 16 Jul 2026 08:02:10 GMT",
+          "date": "Wed, 29 Jul 2026 12:33:24 GMT",
           "permissions-policy": "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")",
           "referrer-policy": "no-referrer, strict-origin-when-cross-origin",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-generation-id": "gen-1784188930-PO1Jj7Ae91bXeSIe0fhH"
+          "x-generation-id": "gen-1785328404-w1LNVENVDsPRFm4n3kFX"
         },
         "status": 200,
         "statusText": "OK"
@@ -3530,6 +3658,6 @@
     }
   ],
   "meta": {
-    "createdAt": "2026-07-06T10:11:31.744Z"
+    "createdAt": "2026-07-29T12:33:36.152Z"
   }
 }
