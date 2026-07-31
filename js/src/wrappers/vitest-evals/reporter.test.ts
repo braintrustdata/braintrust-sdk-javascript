@@ -232,7 +232,7 @@ describe("Braintrust vitest-evals reporter", () => {
           meta: {
             eval: {
               avgScore: 1,
-              input: { memberUuid: "member-1", payPeriodEnd: "2026-06-15" },
+              input: { invoiceId: "inv_123", amount: 42 },
               output: { status: "approved" },
             },
             harness: {
@@ -268,7 +268,7 @@ describe("Braintrust vitest-evals reporter", () => {
       (row: any) => row.metadata?.fullName === "structured input",
     );
     expect(structured?.input).toMatchObject({
-      input: { memberUuid: "member-1", payPeriodEnd: "2026-06-15" },
+      input: { invoiceId: "inv_123", amount: 42 },
     });
 
     const fallback = rows.find(
