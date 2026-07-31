@@ -1,23 +1,21 @@
-import { tracingChannel } from "node:diagnostics_channel";
+import { createRequire } from "node:module";
 import { parentPort } from "node:worker_threads";
-import * as dc from "node:diagnostics_channel";
+
+const { getTracingHook } = createRequire(import.meta.url)(
+  "./global-hook-listener.cjs",
+);
 
 const events = { start: [], end: [], error: [] };
 // NOTE: code-transformer prepends "orchestrion:openai:" to the channel name
 const expectedChannel = "orchestrion:openai:chat.completions.create";
 
-// Get the kStoreKey symbol to access the store
-const kStoreKey = dc.kStoreKey || Symbol.for("diagnostics_channel.store");
-
-// Subscribe to the channel and accumulate events
-const channel = tracingChannel(expectedChannel);
+// Subscribe to the global hook and accumulate events
+const channel = getTracingHook(expectedChannel);
 channel.subscribe({
   start: (ctx) => {
-    // Arguments are stored in the Symbol(diagnostics_channel.store)
-    const store = ctx[kStoreKey];
     events.start.push({
-      args: store?.arguments ? Array.from(store.arguments) : [],
-      self: !!store?.self,
+      args: ctx.arguments ? Array.from(ctx.arguments) : [],
+      self: !!ctx.self,
     });
   },
   asyncEnd: (ctx) => {

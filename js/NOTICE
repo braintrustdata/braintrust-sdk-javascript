@@ -18,3 +18,9 @@ licenses/import-in-the-middle/NOTICE.
 This package also includes a modified fork of require-in-the-middle 8.0.1.
 require-in-the-middle is licensed under the MIT License.
 See licenses/require-in-the-middle/LICENSE.
+
+The global instrumentation hook runtime is adapted from the Node.js
+diagnostics_channel TracingChannel implementation.
+Copyright Node.js contributors. All rights reserved.
+It is licensed under the MIT License.
+See licenses/node-diagnostics-channel/LICENSE.

@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { isAbsolute, join, relative } from "node:path";
+import { join } from "node:path";
 import { webpackPlugin } from "./webpack";
 
 type MaybePromise<T> = T | Promise<T>;
@@ -159,53 +159,14 @@ function wrapTurbopackConfig(
   turbopackConfig: TurbopackConfig | undefined,
 ): TurbopackConfig {
   const config = { ...(turbopackConfig ?? {}) };
-  const resolveAlias =
-    config.resolveAlias &&
-    typeof config.resolveAlias === "object" &&
-    !Array.isArray(config.resolveAlias)
-      ? config.resolveAlias
-      : {};
   const rules =
     config.rules &&
     typeof config.rules === "object" &&
     !Array.isArray(config.rules)
       ? config.rules
       : {};
-  let dcBrowserPath: string | undefined;
-
-  try {
-    dcBrowserPath = createRequire(
-      requireFromProject.resolve("braintrust/package.json"),
-    ).resolve("dc-browser");
-  } catch {
-    try {
-      dcBrowserPath = requireFromProject.resolve("dc-browser");
-    } catch {
-      dcBrowserPath = undefined;
-    }
-  }
-
-  // Absolute Turbopack aliases are interpreted as server-relative imports, so
-  // make the resolved dependency path relative to the app config directory.
-  if (dcBrowserPath && isAbsolute(dcBrowserPath)) {
-    const relativeDcBrowserPath = relative(
-      process.cwd(),
-      dcBrowserPath,
-    ).replace(/\\/g, "/");
-    dcBrowserPath = relativeDcBrowserPath.startsWith(".")
-      ? relativeDcBrowserPath
-      : `./${relativeDcBrowserPath}`;
-  }
-
   return {
     ...config,
-    // Turbopack resolves modules emitted by our loader from the app graph. The
-    // browser diagnostics-channel shim is Braintrust's dependency, so alias it
-    // to the copy installed with Braintrust while still letting user aliases win.
-    resolveAlias:
-      dcBrowserPath && resolveAlias["dc-browser"] === undefined
-        ? { ...resolveAlias, "dc-browser": dcBrowserPath }
-        : config.resolveAlias,
     rules: addBraintrustTurbopackRule(rules),
   };
 }

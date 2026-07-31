@@ -2,10 +2,14 @@
  * Unless explicitly stated otherwise all files in this repository are licensed under the Apache-2.0 License.
  * This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2025 Datadog, Inc.
  **/
-const { tracingChannel } = require("node:diagnostics_channel");
 const assert = require("node:assert");
+
+const runtimePath = process.env.BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME;
+assert(runtimePath, "BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME must be set");
+const { newGlobalTracingChannel } = require(runtimePath);
+
 function getContext(channelName) {
-  const channel = tracingChannel(channelName);
+  const channel = newGlobalTracingChannel(channelName);
   const context = {};
   channel.subscribe({
     start(message) {
@@ -14,11 +18,9 @@ function getContext(channelName) {
     },
     end(message) {
       message.context.end = message.result ?? true;
-      // Handle end message
     },
     asyncStart(message) {
       message.context.asyncStart = message.result;
-      // Handle asyncStart message
     },
     asyncEnd(message) {
       message.context.asyncEnd = message.result;
@@ -26,4 +28,9 @@ function getContext(channelName) {
   });
   return context;
 }
-module.exports = { assert, getContext };
+
+module.exports = {
+  assert,
+  getContext,
+  getTracingHook: newGlobalTracingChannel,
+};

@@ -1,22 +1,14 @@
 import type { VitePlugin } from "unplugin";
-import {
-  BundlerPluginOptions,
-  unplugin,
-  type LegacyBundlerPluginOptions,
-} from "./plugin";
+import { BundlerPluginOptions, unplugin } from "./plugin";
 export type { InstrumentationConfig } from "../orchestrion-js";
 
 export function braintrustVitePlugin(
   options: BundlerPluginOptions = {},
 ): VitePlugin | VitePlugin[] {
-  const { useDiagnosticChannelCompatShim = false, ...pluginOptions } = options;
-  return unplugin.vite({
-    ...pluginOptions,
-    browser: useDiagnosticChannelCompatShim,
-  });
+  return unplugin.vite(options);
 }
 
-export type VitePluginOptions = LegacyBundlerPluginOptions;
+export type VitePluginOptions = BundlerPluginOptions;
 
 /**
  * @deprecated Use {@link braintrustVitePlugin} instead.

@@ -1,15 +1,16 @@
-import * as diagnostics_channel from "node:diagnostics_channel";
 import { register } from "node:module";
 import { pathToFileURL } from "node:url";
 import { getDefaultAutoInstrumentationConfigs } from "../auto-instrumentations/configs/all";
 import { ModulePatch } from "../auto-instrumentations/loader/cjs-patch";
-import { patchTracingChannel } from "../auto-instrumentations/patch-tracing-channel";
+import { GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION } from "../global-instrumentation-hooks";
 
 interface ApplyAutoInstrumentationState {
   applied?: boolean;
 }
 
-const stateKey = Symbol.for("braintrust.applyAutoInstrumentation");
+const stateKey = Symbol.for(
+  `braintrust.applyAutoInstrumentation.global-hooks.v${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION}`,
+);
 const existingState = Object.getOwnPropertyDescriptor(
   globalThis,
   stateKey,
@@ -30,8 +31,6 @@ if (state !== existingState) {
 }
 
 if (!state.applied) {
-  patchTracingChannel(diagnostics_channel.tracingChannel);
-
   const allConfigs = getDefaultAutoInstrumentationConfigs();
 
   const currentModuleUrl = getCurrentModuleUrl();

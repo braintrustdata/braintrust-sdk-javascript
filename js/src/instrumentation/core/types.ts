@@ -1,7 +1,7 @@
 /**
- * Standard event types for diagnostics_channel-based instrumentation.
+ * Standard event types for global hook-based instrumentation.
  *
- * These types follow the TracingChannel pattern from Node.js.
+ * These types retain the TracingChannel-compatible lifecycle.
  * For async functions (tracePromise):
  * - start: Called before the synchronous portion executes
  * - end: Called after the synchronous portion completes (promise returned)
@@ -146,7 +146,7 @@ export type ErrorEventWith<
 > = TypedErrorEvent<TArguments> & TExtra;
 
 /**
- * Subscription handlers for a TracingChannel.
+ * Subscription handlers for a tracing-compatible global hook.
  *
  * Common usage pattern:
  * - Use start to create spans and extract input

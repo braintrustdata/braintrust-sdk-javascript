@@ -12,6 +12,7 @@ import {
   readDisabledInstrumentationEnvConfig,
   type InstrumentationConfig,
 } from "./config";
+import { GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION } from "../global-instrumentation-hooks";
 
 export type { InstrumentationConfig } from "./config";
 
@@ -24,12 +25,14 @@ export type { InstrumentationConfig } from "./config";
 //
 // - BT-5139 scenario: two SDK instances share the same state object → the
 //   second instance sees the marker left by the first and skips subscription,
-//   preventing duplicate diagnostics_channel listeners.
+//   preventing duplicate global hook listeners.
 //
 // - vi.resetModules() test scenario: the test deletes the state from
 //   globalThis between runs, so the next import creates a fresh state with no
 //   marker and can subscribe normally.
-const REGISTRY_STATE_KEY = Symbol.for("braintrust.registry");
+const REGISTRY_STATE_KEY = Symbol.for(
+  `braintrust.registry.global-hooks.v${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION}`,
+);
 
 function getSharedState(): Record<symbol, unknown> | undefined {
   const state = (globalThis as Record<symbol, unknown>)[
@@ -71,7 +74,7 @@ class PluginRegistry {
     }
 
     // If another SDK instance in the same process already registered plugins,
-    // skip to avoid duplicate diagnostics_channel subscriptions.
+    // skip to avoid duplicate global hook subscriptions.
     const sharedState = getSharedState();
     if (sharedState) {
       if (sharedState[REGISTRY_STATE_KEY] !== undefined) {

@@ -2,7 +2,7 @@
  * Utilities for patching async iterables (streams) to collect chunks
  * without modifying the user-facing behavior.
  *
- * This allows diagnostics channel subscribers to collect streaming outputs
+ * This allows global hook subscribers to collect streaming outputs
  * even though they cannot replace return values.
  */
 

@@ -37,7 +37,7 @@ export async function runOpenAIAgentsAutoInstrumentationScenario() {
 
   // Remove the built-in OpenAI trace exporter so it doesn't POST to
   // api.openai.com/v1/traces/ingest with the cassette placeholder key.
-  // Braintrust captures trace events via diagnostics_channel independently.
+  // Braintrust captures trace events via global instrumentation hooks independently.
   setTraceProcessors([]);
 
   await runTracedScenario({
