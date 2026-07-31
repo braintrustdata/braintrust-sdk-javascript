@@ -3,10 +3,10 @@ import { register } from "node:module";
 import {
   Hook,
   createAddHookMessageChannel,
-} from "../../../../src/auto-instrumentations/import-in-the-middle/index.js";
+} from "../../../../src/auto-instrumentations/import-in-the-middle/index.mts";
 
 const hookUrl = new URL(
-  "../../../../src/auto-instrumentations/import-in-the-middle/hook.mjs",
+  "../../../../src/auto-instrumentations/import-in-the-middle/hook.mts",
   import.meta.url,
 );
 const { addHookMessagePort, registerOptions, waitForAllMessagesAcknowledged } =

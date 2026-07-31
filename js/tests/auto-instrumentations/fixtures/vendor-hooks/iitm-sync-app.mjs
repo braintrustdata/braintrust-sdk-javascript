@@ -1,10 +1,10 @@
 import assert from "node:assert";
 import { createRequire } from "node:module";
-import { Hook } from "../../../../src/auto-instrumentations/import-in-the-middle/index.js";
+import { Hook } from "../../../../src/auto-instrumentations/import-in-the-middle/index.mts";
 import {
   register,
   supportsSyncHooks,
-} from "../../../../src/auto-instrumentations/import-in-the-middle/register-hooks.mjs";
+} from "../../../../src/auto-instrumentations/import-in-the-middle/register-hooks.mts";
 
 if (!supportsSyncHooks()) {
   process.exit(0);

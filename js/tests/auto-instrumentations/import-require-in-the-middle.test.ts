@@ -40,15 +40,20 @@ function runNode({
   args: string[];
   cwd: string;
 }): Promise<void> {
+  const nodeArgs = ["--import", "tsx", ...args];
   const normalizedArgs =
     process.platform === "win32"
-      ? args.map((arg, index) => {
-          if (index > 0 && args[index - 1] === "--import") {
+      ? nodeArgs.map((arg, index) => {
+          if (
+            index > 0 &&
+            nodeArgs[index - 1] === "--import" &&
+            path.isAbsolute(arg)
+          ) {
             return pathToFileURL(path.resolve(arg)).href;
           }
           return arg;
         })
-      : args;
+      : nodeArgs;
 
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, normalizedArgs, {

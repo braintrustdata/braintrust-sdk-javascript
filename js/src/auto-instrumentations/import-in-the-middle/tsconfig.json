@@ -1,0 +1,8 @@
+{
+  "extends": "../../../tsconfig.vendor-hooks.json",
+  "include": [
+    "../types/module-details-from-path.d.ts",
+    "../orchestrion-js/vendor-deps.d.ts",
+    "**/*.mts"
+  ]
+}
