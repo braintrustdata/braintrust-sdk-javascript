@@ -4,6 +4,11 @@ import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import { aiSDKChannels, harnessAgentChannels } from "./ai-sdk-channels";
 import { anthropicChannels } from "./anthropic-channels";
 import {
+  bedrockAgentRuntimeChannels,
+  bedrockAgentSmithyClientChannels,
+  bedrockAgentSmithyCoreChannels,
+} from "./bedrock-agent-runtime-channels";
+import {
   bedrockRuntimeChannels,
   smithyClientChannels,
   smithyCoreChannels,
@@ -36,6 +41,18 @@ describe("built-in instrumentation provenance names", () => {
     [aiSDKChannels.generateText, INSTRUMENTATION_NAMES.AI_SDK],
     [harnessAgentChannels.generate, INSTRUMENTATION_NAMES.AI_SDK],
     [anthropicChannels.messagesCreate, INSTRUMENTATION_NAMES.ANTHROPIC],
+    [
+      bedrockAgentRuntimeChannels.clientSend,
+      INSTRUMENTATION_NAMES.BEDROCK_AGENT_RUNTIME,
+    ],
+    [
+      bedrockAgentSmithyCoreChannels.clientSend,
+      INSTRUMENTATION_NAMES.BEDROCK_AGENT_RUNTIME,
+    ],
+    [
+      bedrockAgentSmithyClientChannels.clientSend,
+      INSTRUMENTATION_NAMES.BEDROCK_AGENT_RUNTIME,
+    ],
     [bedrockRuntimeChannels.clientSend, INSTRUMENTATION_NAMES.BEDROCK_RUNTIME],
     [smithyCoreChannels.clientSend, INSTRUMENTATION_NAMES.BEDROCK_RUNTIME],
     [smithyClientChannels.clientSend, INSTRUMENTATION_NAMES.BEDROCK_RUNTIME],

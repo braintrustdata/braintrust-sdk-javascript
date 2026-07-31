@@ -1,0 +1,201 @@
+span_tree:
+└── bedrock-agent-runtime-instrumentation-root [task]
+    metadata: {
+      "scenario": "bedrock-agent-runtime-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── bedrock-agent-operation
+    │   metadata: {
+    │     "operation": "invoke-agent",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── bedrockAgent.invokeAgent [task]
+    │       input: "Use the weather tool and reply with AGENT_OK."
+    │       output: {
+    │         "text": "AGENT_OK"
+    │       }
+    │       metadata: {
+    │         "agentAliasId": "alias-1",
+    │         "agentId": "<agentId:1>",
+    │         "command": "InvokeAgentCommand",
+    │         "contentType": "application/json",
+    │         "enableTrace": true,
+    │         "operation": "invokeAgent",
+    │         "provider": "aws-bedrock",
+    │         "sessionId": "session-1"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "prompt_tokens": 12,
+    │         "time_to_first_token": 0,
+    │         "tokens": 16
+    │       }
+    │       ├── bedrockAgent.modelInvocation [llm]
+    │       │   input: "<bedrock-agent-model-prompt>"
+    │       │   output: "<bedrock-agent-model-output>"
+    │       │   metadata: {
+    │       │     "agentAliasId": "alias-1",
+    │       │     "agentId": "<agentId:1>",
+    │       │     "agentVersion": "1",
+    │       │     "maximumLength": 128,
+    │       │     "model": "us.amazon.nova-lite-v1:0",
+    │       │     "prompt_type": "ORCHESTRATION",
+    │       │     "provider": "aws-bedrock",
+    │       │     "sessionId": "session-1",
+    │       │     "temperature": 0,
+    │       │     "trace_type": "orchestrationTrace"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 4,
+    │       │     "prompt_tokens": 12,
+    │       │     "tokens": 16
+    │       │   }
+    │       └── get_weather [tool]
+    │           input: {
+    │             "parameters": [
+    │               {
+    │                 "name": "city",
+    │                 "value": "Paris"
+    │               }
+    │             ]
+    │           }
+    │           output: {
+    │             "text": "{\"temperature\":18}"
+    │           }
+    │           metadata: {
+    │             "action_group": "weather",
+    │             "agentAliasId": "alias-1",
+    │             "agentId": "<agentId:1>",
+    │             "agentVersion": "1",
+    │             "provider": "aws-bedrock",
+    │             "sessionId": "session-1",
+    │             "tool_type": "action_group",
+    │             "trace_type": "orchestrationTrace"
+    │           }
+    ├── bedrock-agent-inline-operation
+    │   metadata: {
+    │     "operation": "invoke-inline-agent",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── bedrockAgent.invokeInlineAgent [task]
+    │       input: "Reply with exactly INLINE_OK."
+    │       output: {
+    │         "text": "INLINE_OK"
+    │       }
+    │       metadata: {
+    │         "agentName": "braintrust-e2e-inline-agent",
+    │         "command": "InvokeInlineAgentCommand",
+    │         "contentType": "application/json",
+    │         "enableTrace": true,
+    │         "endSession": true,
+    │         "model": "us.amazon.nova-lite-v1:0",
+    │         "operation": "invokeInlineAgent",
+    │         "provider": "aws-bedrock",
+    │         "sessionId": "session-inline"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "prompt_tokens": 12,
+    │         "time_to_first_token": 0,
+    │         "tokens": 16
+    │       }
+    │       └── bedrockAgent.modelInvocation [llm]
+    │           input: "<bedrock-agent-model-prompt>"
+    │           output: "<bedrock-agent-model-output>"
+    │           metadata: {
+    │             "agentAliasId": "alias-1",
+    │             "agentId": "<agentId:1>",
+    │             "agentVersion": "1",
+    │             "maximumLength": 128,
+    │             "model": "us.amazon.nova-lite-v1:0",
+    │             "prompt_type": "ORCHESTRATION",
+    │             "provider": "aws-bedrock",
+    │             "sessionId": "session-1",
+    │             "temperature": 0,
+    │             "trace_type": "orchestrationTrace"
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 4,
+    │             "prompt_tokens": 12,
+    │             "tokens": 16
+    │           }
+    ├── bedrock-agent-rag-operation
+    │   metadata: {
+    │     "operation": "retrieve-and-generate",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── bedrockAgent.retrieveAndGenerate [task]
+    │       input: {
+    │         "text": "Return the deterministic RAG answer."
+    │       }
+    │       output: {
+    │         "citations": [
+    │           {
+    │             "generatedResponsePart": {
+    │               "textResponsePart": {
+    │                 "text": "RAG_OK"
+    │               }
+    │             }
+    │           }
+    │         ],
+    │         "text": "RAG_OK"
+    │       }
+    │       metadata: {
+    │         "command": "RetrieveAndGenerateCommand",
+    │         "guardrailAction": "NONE",
+    │         "knowledgeBaseId": "kb-1",
+    │         "model": "arn:aws:bedrock:us-east-1:000000000000:foundation-model/us.amazon.nova-lite-v1:0",
+    │         "operation": "retrieveAndGenerate",
+    │         "provider": "aws-bedrock",
+    │         "sessionId": "session-rag"
+    │       }
+    └── bedrock-agent-rag-stream-operation
+        metadata: {
+          "operation": "retrieve-and-generate-stream",
+          "testRunId": "<run:1>"
+        }
+        └── bedrockAgent.retrieveAndGenerateStream [task]
+            input: {
+              "text": "Stream the deterministic RAG answer."
+            }
+            output: {
+              "citations": [
+                {
+                  "generatedResponsePart": {
+                    "textResponsePart": {
+                      "span": {
+                        "end": 0,
+                        "start": 0
+                      },
+                      "text": "STREAM_RAG_OK"
+                    }
+                  },
+                  "retrievedReferences": [
+                    {
+                      "content": {
+                        "text": "Deterministic knowledge-base reference."
+                      },
+                      "location": {
+                        "type": "WEB",
+                        "webLocation": {
+                          "url": "https://example.com/reference"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ],
+              "text": "STREAM_RAG_OK"
+            }
+            metadata: {
+              "command": "RetrieveAndGenerateStreamCommand",
+              "guardrailAction": "NONE",
+              "knowledgeBaseId": "kb-1",
+              "model": "arn:aws:bedrock:us-east-1:000000000000:foundation-model/us.amazon.nova-lite-v1:0",
+              "operation": "retrieveAndGenerateStream",
+              "provider": "aws-bedrock",
+              "sessionId": "session-rag-stream"
+            }
+            metrics: {
+              "time_to_first_token": 0
+            }

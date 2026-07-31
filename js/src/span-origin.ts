@@ -10,6 +10,7 @@ export type SpanOriginEnvironment = {
 export const INSTRUMENTATION_NAMES = {
   AI_SDK: "ai-sdk",
   ANTHROPIC: "anthropic",
+  BEDROCK_AGENT_RUNTIME: "bedrock-agent-runtime",
   BEDROCK_RUNTIME: "bedrock-runtime",
   BRAINTRUST_JS_LOGGER: "braintrust-js-logger",
   CLAUDE_AGENT_SDK: "claude-agent-sdk",

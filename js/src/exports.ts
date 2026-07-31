@@ -223,6 +223,7 @@ export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapGroq } from "./wrappers/groq";
+export { wrapBedrockAgentRuntime } from "./wrappers/bedrock-agent-runtime";
 export { wrapBedrockRuntime } from "./wrappers/bedrock-runtime";
 export { wrapCopilotClient } from "./wrappers/github-copilot";
 export {
