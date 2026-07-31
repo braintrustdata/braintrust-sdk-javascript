@@ -1,12 +1,12 @@
 import type { Reporter, TestCase, TestModule, Vitest } from "vitest/node";
-import { configureNode } from "../../node/config";
+import { SpanTypeAttribute, isObject } from "../../../util";
 import {
   initExperiment,
   logError,
   type Experiment,
   type Span,
 } from "../../logger";
-import { SpanTypeAttribute, isObject } from "../../../util";
+import { configureNode } from "../../node/config";
 import { summarizeAndFlush } from "../shared/flush";
 
 configureNode();
@@ -31,6 +31,7 @@ type EvalScore = {
 type EvalMeta = {
   scores?: EvalScore[];
   avgScore?: number | null;
+  input?: unknown;
   output?: unknown;
   thresholdFailed?: boolean;
   toolCalls?: ToolCallRecord[];
@@ -231,6 +232,11 @@ function logEvalTest(
   const result = test.result();
   const diagnostic = test.diagnostic();
   const run = meta.harness?.run;
+  // meta.eval.input is a direct passthrough (mirrors meta.eval.output below) for
+  // harnesses whose input isn't a conversation, so they don't need to fabricate a
+  // session.messages entry just to populate this field. Falls back to the first
+  // user message for harnesses that only report a session.
+  const input = meta.eval?.input ?? firstUserMessageContent(run);
   const output = meta.eval?.output ?? run?.output;
   const scores = buildScores(result.state, meta.eval);
   const metrics = buildMetrics(diagnostic?.duration, run);
@@ -247,7 +253,7 @@ function logEvalTest(
     event: {
       input: {
         test: test.fullName || test.name,
-        input: firstUserMessageContent(run),
+        input,
       },
       ...(output !== undefined ? { output } : {}),
       scores,
@@ -519,6 +525,7 @@ function readEvalMeta(input: unknown): EvalMeta | undefined {
   return {
     ...(scores ? { scores } : {}),
     ...(avgScore !== undefined ? { avgScore } : {}),
+    ...(input.input !== undefined ? { input: input.input } : {}),
     ...(input.output !== undefined ? { output: input.output } : {}),
     ...(typeof input.thresholdFailed === "boolean"
       ? { thresholdFailed: input.thresholdFailed }

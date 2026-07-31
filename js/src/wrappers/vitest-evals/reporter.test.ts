@@ -1,11 +1,11 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import BraintrustVitestEvalsReporter from "./reporter";
-import { configureNode } from "../../node/config";
 import {
   _exportsForTestingOnly,
   type TestBackgroundLogger,
 } from "../../logger";
 import * as logger from "../../logger";
+import { configureNode } from "../../node/config";
 
 configureNode();
 
@@ -218,6 +218,65 @@ describe("Braintrust vitest-evals reporter", () => {
       Date.parse("2026-01-01T00:00:00.100Z") / 1000 + 0.012,
       6,
     );
+  });
+
+  test("meta.eval.input is a direct passthrough that takes precedence over session.messages", async () => {
+    const reporter = new BraintrustVitestEvalsReporter({
+      displaySummary: false,
+      projectName: "vitest-evals-tests",
+    });
+
+    await reporter.onTestRunEnd([
+      fakeModule([
+        fakeTest({
+          meta: {
+            eval: {
+              avgScore: 1,
+              input: { memberUuid: "member-1", payPeriodEnd: "2026-06-15" },
+              output: { status: "approved" },
+            },
+            harness: {
+              run: {
+                session: {
+                  messages: [
+                    {
+                      role: "user",
+                      content: "ignored in favor of meta.eval.input",
+                    },
+                  ],
+                },
+                usage: {},
+              },
+            },
+          },
+          name: "structured input",
+        }),
+        fakeTest({
+          meta: {
+            eval: { avgScore: 1 },
+            harness: { run: { session: { messages: [] }, usage: {} } },
+          },
+          name: "falls back to session when meta.eval.input is absent",
+        }),
+      ]),
+    ] as any);
+
+    await backgroundLogger.flush();
+    const rows = (await backgroundLogger.drain()) as any[];
+
+    const structured = rows.find(
+      (row: any) => row.metadata?.fullName === "structured input",
+    );
+    expect(structured?.input).toMatchObject({
+      input: { memberUuid: "member-1", payPeriodEnd: "2026-06-15" },
+    });
+
+    const fallback = rows.find(
+      (row: any) =>
+        row.metadata?.fullName ===
+        "falls back to session when meta.eval.input is absent",
+    );
+    expect(fallback?.input?.input).toBeUndefined();
   });
 
   test("logs failed eval scores and failure metadata", async () => {
