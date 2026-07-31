@@ -86,7 +86,9 @@ function expectGlobalHookTransform(output: string): void {
   expect(output).toContain("braintrust.global-instrumentation-hooks.registry");
   expect(output).toContain("braintrust.global-instrumentation-hooks.hook");
   expect(output).toContain("orchestrion:openai:chat.completions.create");
-  expect(output).toContain("__apm$hook.tracePromise");
+  expect(output).toContain("__bt$hook.tracePromise");
+  expect(output).not.toContain("__apm$");
+  expect(output).not.toContain("tr_ch_apm$");
   expect(output).not.toContain("diagnostics_channel");
   expect(output).not.toContain("dc-browser");
 }
@@ -164,7 +166,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__apm$hook.tracePromise");
+      expect(result.code).toContain("__bt$hook.tracePromise");
     });
 
     it("supports method-only configs", () => {
@@ -180,7 +182,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__apm$hook.tracePromise");
+      expect(result.code).toContain("__bt$hook.tracePromise");
     });
 
     it("supports function declaration configs", () => {
@@ -194,7 +196,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__apm$hook.traceSync");
+      expect(result.code).toContain("__bt$hook.traceSync");
     });
 
     it("ignores malformed global hook entries at runtime", () => {
@@ -250,7 +252,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__apm$hook.traceSync");
+      expect(result.code).toContain("__bt$hook.traceSync");
     });
 
     it("supports export-alias class method configs", () => {
@@ -272,7 +274,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__apm$hook.tracePromise");
+      expect(result.code).toContain("__bt$hook.tracePromise");
     });
 
     it("supports private class method configs", () => {
@@ -294,7 +296,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__apm$hook.tracePromise");
+      expect(result.code).toContain("__bt$hook.tracePromise");
     });
 
     it("supports object/property configs", () => {
@@ -312,7 +314,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__apm$hook.tracePromise");
+      expect(result.code).toContain("__bt$hook.tracePromise");
     });
 
     it("supports callback configs", () => {
@@ -326,7 +328,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__apm$hook.traceCallback");
+      expect(result.code).toContain("__bt$hook.traceCallback");
     });
 
     it("supports raw AST query configs", () => {
@@ -342,7 +344,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__apm$hook.tracePromise");
+      expect(result.code).toContain("__bt$hook.tracePromise");
     });
 
     it("supports index selection", () => {
@@ -362,10 +364,10 @@ describe("Orchestrion Transformation Tests", () => {
         `,
       );
 
-      const wrapperCount = result.code.match(/__apm\$hook\.tracePromise/g);
+      const wrapperCount = result.code.match(/__bt\$hook\.tracePromise/g);
       expect(wrapperCount).toHaveLength(1);
       expect(result.code.indexOf("secondCreate")).toBeLessThan(
-        result.code.indexOf("__apm$hook.tracePromise"),
+        result.code.indexOf("__bt$hook.tracePromise"),
       );
     });
 
@@ -399,7 +401,7 @@ describe("Orchestrion Transformation Tests", () => {
         "esm",
       );
 
-      expect(result.code.match(/const tr_ch_apm\$get_hook =/g)).toHaveLength(1);
+      expect(result.code.match(/const tr_ch_bt\$get_hook =/g)).toHaveLength(1);
       expect(
         result.code.match(
           /braintrust\.global-instrumentation-hooks\.registry/g,
@@ -407,8 +409,8 @@ describe("Orchestrion Transformation Tests", () => {
       ).toHaveLength(1);
       expect(result.code).toContain("orchestrion:test-sdk:first");
       expect(result.code).toContain("orchestrion:test-sdk:second");
-      expect(result.code).toContain("__apm$hook.traceSync");
-      expect(result.code).toContain("__apm$hook.tracePromise");
+      expect(result.code).toContain("__bt$hook.traceSync");
+      expect(result.code).toContain("__bt$hook.tracePromise");
     });
 
     it("generates source maps", () => {

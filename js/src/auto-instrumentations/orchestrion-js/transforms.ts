@@ -30,14 +30,14 @@ export interface TransformState extends InstrumentationConfig {
 }
 
 const CHANNEL_REGEX = /[^\w]/g;
-const SHARED_HOOK_LOOKUP = "tr_ch_apm$get_hook";
+const SHARED_HOOK_LOOKUP = "tr_ch_bt$get_hook";
 
 function formatChannelVariable(channelName: string): string {
-  return `tr_ch_apm$${channelName.replace(CHANNEL_REGEX, "_")}`;
+  return `tr_ch_bt$${channelName.replace(CHANNEL_REGEX, "_")}`;
 }
 
 function formatChannelGetter(channelName: string): string {
-  return `tr_ch_apm$get_${channelName.replace(CHANNEL_REGEX, "_")}`;
+  return `tr_ch_bt$get_${channelName.replace(CHANNEL_REGEX, "_")}`;
 }
 
 export const transforms: Record<string, TransformFn> = {
@@ -65,32 +65,32 @@ export const transforms: Record<string, TransformFn> = {
     const sharedHookLookup = hasSharedHookLookup
       ? ""
       : `
-      const ${SHARED_HOOK_LOOKUP} = (__apm$hookName, __apm$operator) => {
+      const ${SHARED_HOOK_LOOKUP} = (__bt$hookName, __bt$operator) => {
         try {
-          const __apm$hooks = globalThis[${JSON.stringify(
+          const __bt$hooks = globalThis[${JSON.stringify(
             GLOBAL_INSTRUMENTATION_HOOKS_KEY,
           )}];
           if (
-            !(__apm$hooks instanceof Map) ||
-            __apm$hooks[Symbol.for(${JSON.stringify(
+            !(__bt$hooks instanceof Map) ||
+            __bt$hooks[Symbol.for(${JSON.stringify(
               GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
             )})] !== ${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION}
           ) return undefined;
-          const __apm$hook = Map.prototype.get.call(
-            __apm$hooks,
-            __apm$hookName
+          const __bt$hook = Map.prototype.get.call(
+            __bt$hooks,
+            __bt$hookName
           );
           if (
-            (__apm$hook === null ||
-              (typeof __apm$hook !== "object" &&
-                typeof __apm$hook !== "function")) ||
-            __apm$hook[Symbol.for(${JSON.stringify(
+            (__bt$hook === null ||
+              (typeof __bt$hook !== "object" &&
+                typeof __bt$hook !== "function")) ||
+            __bt$hook[Symbol.for(${JSON.stringify(
               GLOBAL_INSTRUMENTATION_HOOK_BRAND,
             )})] !== ${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION} ||
-            typeof __apm$hook.hasSubscribers !== "boolean" ||
-            typeof __apm$hook[__apm$operator] !== "function"
+            typeof __bt$hook.hasSubscribers !== "boolean" ||
+            typeof __bt$hook[__bt$operator] !== "function"
           ) return undefined;
-          return __apm$hook;
+          return __bt$hook;
         } catch {
           return undefined;
         }
@@ -211,7 +211,7 @@ function traceInstanceMethod(
 
   const ctorBody = (
     parse(`
-    const __apm$${methodName} = this["${methodName}"]
+    const __bt$${methodName} = this["${methodName}"]
     this["${methodName}"] = function () {}
   `) as any
   ).body;
@@ -221,7 +221,7 @@ function traceInstanceMethod(
   fn.async = operator === "tracePromise";
   fn.body = wrap(state, {
     type: "Identifier",
-    name: `__apm$${methodName}`,
+    name: `__bt$${methodName}`,
   });
 
   wrapSuper(fn);
@@ -243,31 +243,31 @@ function wrap(state: TransformState, node: AnyNode): AnyNode {
   const common = parse(
     node.type === "ArrowFunctionExpression"
       ? `
-    const __apm$ctx = {
+    const __bt$ctx = {
       arguments,
       moduleVersion: ${JSON.stringify(moduleVersion)}
     };
-    const __apm$traced = () => {
-      const __apm$wrapped = () => {};
-      return __apm$wrapped(...arguments);
+    const __bt$traced = () => {
+      const __bt$wrapped = () => {};
+      return __bt$wrapped(...arguments);
     };
   `
       : `
-    const __apm$ctx = {
+    const __bt$ctx = {
       arguments,
       self: this,
       moduleVersion: ${JSON.stringify(moduleVersion)}
     };
-    const __apm$traced = () => {
-      const __apm$wrapped = () => {};
-      return __apm$wrapped.apply(this, arguments);
+    const __bt$traced = () => {
+      const __bt$wrapped = () => {};
+      return __bt$wrapped.apply(this, arguments);
     };
   `,
   ).body;
 
   block.body.unshift(...common);
 
-  (esquery.query(block, "[id.name=__apm$wrapped]")[0] as AnyNode).init = node;
+  (esquery.query(block, "[id.name=__bt$wrapped]")[0] as AnyNode).init = node;
 
   return block;
 }
@@ -285,13 +285,13 @@ function wrapSuper(node: AnyNode): void {
 
       if (parent.callee) {
         const { expression } = (
-          parse(`__apm$super['${name}'].call(this)`) as any
+          parse(`__bt$super['${name}'].call(this)`) as any
         ).body[0];
 
         parent.callee = child = expression.callee;
         parent.arguments.unshift(...expression.arguments);
       } else {
-        parent.expression = child = parse(`__apm$super['${name}']`).body[0];
+        parent.expression = child = parse(`__bt$super['${name}']`).body[0];
       }
 
       child.computed = parent.callee.computed;
@@ -306,7 +306,7 @@ function wrapSuper(node: AnyNode): void {
       parse(`
       class Wrapper {
         wrapper () {
-          __apm$super['${name}'] = super['${name}']
+          __bt$super['${name}'] = super['${name}']
         }
       }
     `) as any
@@ -316,7 +316,7 @@ function wrapSuper(node: AnyNode): void {
   }
 
   if (members.size > 0) {
-    node.body.body.unshift(parse("const __apm$super = {}").body[0]);
+    node.body.body.unshift(parse("const __bt$super = {}").body[0]);
   }
 }
 
@@ -329,13 +329,13 @@ function wrapCallback(state: TransformState): AnyNode {
 
   return parse(`
     function wrapper () {
-      const __apm$hook = ${channelGetter}();
-      if (!__apm$hook?.hasSubscribers) return __apm$traced();
-      __apm$ctx.self ??= this;
-      return __apm$hook.traceCallback(
-        __apm$traced,
+      const __bt$hook = ${channelGetter}();
+      if (!__bt$hook?.hasSubscribers) return __bt$traced();
+      __bt$ctx.self ??= this;
+      return __bt$hook.traceCallback(
+        __bt$traced,
         ${callbackIndex},
-        __apm$ctx
+        __bt$ctx
       );
     }
   `);
@@ -347,10 +347,10 @@ function wrapPromise(state: TransformState): AnyNode {
 
   return parse(`
     function wrapper () {
-      const __apm$hook = ${channelGetter}();
-      if (!__apm$hook?.hasSubscribers) return __apm$traced();
-      __apm$ctx.self ??= this;
-      return __apm$hook.tracePromise(__apm$traced, __apm$ctx);
+      const __bt$hook = ${channelGetter}();
+      if (!__bt$hook?.hasSubscribers) return __bt$traced();
+      __bt$ctx.self ??= this;
+      return __bt$hook.tracePromise(__bt$traced, __bt$ctx);
     }
   `);
 }
@@ -361,10 +361,10 @@ function wrapSync(state: TransformState): AnyNode {
 
   return parse(`
     function wrapper () {
-      const __apm$hook = ${channelGetter}();
-      if (!__apm$hook?.hasSubscribers) return __apm$traced();
-      __apm$ctx.self ??= this;
-      return __apm$hook.traceSync(__apm$traced, __apm$ctx);
+      const __bt$hook = ${channelGetter}();
+      if (!__bt$hook?.hasSubscribers) return __bt$traced();
+      __bt$ctx.self ??= this;
+      return __bt$hook.traceSync(__bt$traced, __bt$ctx);
     }
   `);
 }
