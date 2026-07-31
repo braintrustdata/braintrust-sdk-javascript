@@ -56,7 +56,7 @@ type InternalSpanInstrumentationName = {
   [INTERNAL_SPAN_INSTRUMENTATION_NAME]?: SpanInstrumentationName;
 };
 
-const SDK_VERSION =
+export const SDK_VERSION =
   typeof __BRAINTRUST_SDK_VERSION__ !== "undefined"
     ? __BRAINTRUST_SDK_VERSION__
     : "0.0.0";
