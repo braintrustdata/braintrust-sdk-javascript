@@ -399,7 +399,7 @@ export function extractOllamaGenerateInput(args: unknown): {
   };
 }
 
-export function extractOllamaEmbedInput(args: unknown): {
+function extractOllamaEmbedInput(args: unknown): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
@@ -410,7 +410,7 @@ export function extractOllamaEmbedInput(args: unknown): {
   };
 }
 
-export function extractOllamaEmbeddingsInput(args: unknown): {
+function extractOllamaEmbeddingsInput(args: unknown): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
@@ -441,9 +441,7 @@ export function extractOllamaChatOutput(result: OllamaChatResponse): unknown {
   ];
 }
 
-export function extractOllamaGenerateOutput(
-  result: OllamaGenerateResponse,
-): unknown {
+function extractOllamaGenerateOutput(result: OllamaGenerateResponse): unknown {
   if (!isObject(result) || typeof result.response !== "string") {
     return undefined;
   }
@@ -480,7 +478,7 @@ export function extractOllamaEmbeddingsOutput(
     : undefined;
 }
 
-export function extractOllamaResponseMetadata(
+function extractOllamaResponseMetadata(
   result: OllamaUsageResponse,
 ): Record<string, unknown> | undefined {
   return typeof result?.model === "string"
