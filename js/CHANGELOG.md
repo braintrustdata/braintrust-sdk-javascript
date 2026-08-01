@@ -1,5 +1,25 @@
 # braintrust
 
+## 3.26.0
+
+### Minor Changes
+
+- feat: Add `agents` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2257)
+- feat: Add `@cloudflare/ai-chat` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2256)
+
+### Patch Changes
+
+- test(e2e): Bump eve e2e test version (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2310)
+- deps: Bump package versions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2273)
+- fix: Capture systemPrompt in Strands agent model span input Thanks @justcodebruh! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2311)
+- fix(google-gen-ai): Fix output token counting for interactions API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2307)
+- fix(google-gen-ai): Fix output token counting for generate content API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2308)
+- ref: Replace diagnostic channels with proprietary global hooks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2275)
+- fix(google-adk): Fix token count in google adk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2312)
+- deps: Bump deps (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2300)
+- fix(ai-sdk): Fix type compat by returning any from braintrustAISDKTelemetry (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2309)
+- feat: Add instrumentation for `@huggingface/transformers` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2271)
+
 ## 3.25.0
 
 ### Minor Changes
