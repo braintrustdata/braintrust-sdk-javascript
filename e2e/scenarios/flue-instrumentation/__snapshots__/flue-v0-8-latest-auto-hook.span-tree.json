@@ -486,7 +486,7 @@
                           {
                             "arguments": {
                               "agent": "e2e-flue-skill",
-                              "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                              "cwd": ".",
                               "description": "Run e2e-flue-skill with marker SKILL_DONE",
                               "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                             },
@@ -523,7 +523,7 @@
                       "children": [],
                       "input": {
                         "agent": "e2e-flue-skill",
-                        "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                        "cwd": ".",
                         "description": "Run e2e-flue-skill with marker SKILL_DONE",
                         "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                       },
@@ -565,7 +565,7 @@
                             {
                               "arguments": {
                                 "agent": "e2e-flue-skill",
-                                "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                                "cwd": ".",
                                 "description": "Run e2e-flue-skill with marker SKILL_DONE",
                                 "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                               },
@@ -593,7 +593,7 @@
                         "content": [
                           {
                             "arguments": {
-                              "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
+                              "command": "find . -maxdepth 4 -name AGENTS.md -print",
                               "timeout": 100000
                             },
                             "id": "<span:1>",
@@ -628,19 +628,19 @@
                       "type": "tool",
                       "children": [],
                       "input": {
-                        "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
+                        "command": "find . -maxdepth 4 -name AGENTS.md -print",
                         "timeout": 100000
                       },
                       "output": {
                         "content": [
                           {
-                            "text": "(no output)\n\nCommand exited with code 1",
+                            "text": "(no output)",
                             "type": "text"
                           }
                         ],
                         "details": {
-                          "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
-                          "exitCode": 1
+                          "command": "find . -maxdepth 4 -name AGENTS.md -print",
+                          "exitCode": 0
                         }
                       },
                       "metadata": {
@@ -671,7 +671,7 @@
                             {
                               "arguments": {
                                 "agent": "e2e-flue-skill",
-                                "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                                "cwd": ".",
                                 "description": "Run e2e-flue-skill with marker SKILL_DONE",
                                 "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                               },
@@ -698,7 +698,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
+                                "command": "find . -maxdepth 4 -name AGENTS.md -print",
                                 "timeout": 100000
                               },
                               "id": "<span:2>",
@@ -711,7 +711,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -725,7 +725,7 @@
                         "content": [
                           {
                             "arguments": {
-                              "command": "find <repo>/e2e/scenarios/flue-instrumentation/ -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
+                              "command": "find . -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
                               "timeout": 100000
                             },
                             "id": "<span:1>",
@@ -760,19 +760,19 @@
                       "type": "tool",
                       "children": [],
                       "input": {
-                        "command": "find <repo>/e2e/scenarios/flue-instrumentation/ -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
+                        "command": "find . -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
                         "timeout": 100000
                       },
                       "output": {
                         "content": [
                           {
-                            "text": "(no output)\n\nCommand exited with code 1",
+                            "text": "(no output)",
                             "type": "text"
                           }
                         ],
                         "details": {
-                          "command": "find <repo>/e2e/scenarios/flue-instrumentation/ -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
-                          "exitCode": 1
+                          "command": "find . -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
+                          "exitCode": 0
                         }
                       },
                       "metadata": {
@@ -803,7 +803,7 @@
                             {
                               "arguments": {
                                 "agent": "e2e-flue-skill",
-                                "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                                "cwd": ".",
                                 "description": "Run e2e-flue-skill with marker SKILL_DONE",
                                 "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                               },
@@ -830,7 +830,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
+                                "command": "find . -maxdepth 4 -name AGENTS.md -print",
                                 "timeout": 100000
                               },
                               "id": "<span:2>",
@@ -843,7 +843,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -856,7 +856,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e/scenarios/flue-instrumentation/ -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
+                                "command": "find . -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
                                 "timeout": 100000
                               },
                               "id": "<span:3>",
@@ -869,7 +869,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -883,7 +883,7 @@
                         "content": [
                           {
                             "arguments": {
-                              "command": "find <repo>/e2e -maxdepth 6 -type f -name 'AGENTS.md' -print",
+                              "command": "find . -maxdepth 6 -type f -name 'AGENTS.md' -print",
                               "timeout": 100000
                             },
                             "id": "<span:1>",
@@ -918,19 +918,19 @@
                       "type": "tool",
                       "children": [],
                       "input": {
-                        "command": "find <repo>/e2e -maxdepth 6 -type f -name 'AGENTS.md' -print",
+                        "command": "find . -maxdepth 6 -type f -name 'AGENTS.md' -print",
                         "timeout": 100000
                       },
                       "output": {
                         "content": [
                           {
-                            "text": "(no output)\n\nCommand exited with code 1",
+                            "text": "(no output)",
                             "type": "text"
                           }
                         ],
                         "details": {
-                          "command": "find <repo>/e2e -maxdepth 6 -type f -name 'AGENTS.md' -print",
-                          "exitCode": 1
+                          "command": "find . -maxdepth 6 -type f -name 'AGENTS.md' -print",
+                          "exitCode": 0
                         }
                       },
                       "metadata": {
@@ -961,7 +961,7 @@
                             {
                               "arguments": {
                                 "agent": "e2e-flue-skill",
-                                "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                                "cwd": ".",
                                 "description": "Run e2e-flue-skill with marker SKILL_DONE",
                                 "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                               },
@@ -988,7 +988,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
+                                "command": "find . -maxdepth 4 -name AGENTS.md -print",
                                 "timeout": 100000
                               },
                               "id": "<span:2>",
@@ -1001,7 +1001,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1014,7 +1014,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e/scenarios/flue-instrumentation/ -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
+                                "command": "find . -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
                                 "timeout": 100000
                               },
                               "id": "<span:3>",
@@ -1027,7 +1027,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1040,7 +1040,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 6 -type f -name 'AGENTS.md' -print",
+                                "command": "find . -maxdepth 6 -type f -name 'AGENTS.md' -print",
                                 "timeout": 100000
                               },
                               "id": "<span:4>",
@@ -1053,7 +1053,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1067,7 +1067,7 @@
                         "content": [
                           {
                             "arguments": {
-                              "command": "find <repo>/e2e -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
+                              "command": "find . -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
                               "timeout": 100000
                             },
                             "id": "<span:1>",
@@ -1102,19 +1102,19 @@
                       "type": "tool",
                       "children": [],
                       "input": {
-                        "command": "find <repo>/e2e -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
+                        "command": "find . -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
                         "timeout": 100000
                       },
                       "output": {
                         "content": [
                           {
-                            "text": "(no output)\n\nCommand exited with code 1",
+                            "text": "./.agents/skills\n./.agents/skills/e2e-flue-skill",
                             "type": "text"
                           }
                         ],
                         "details": {
-                          "command": "find <repo>/e2e -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
-                          "exitCode": 1
+                          "command": "find . -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
+                          "exitCode": 0
                         }
                       },
                       "metadata": {
@@ -1145,7 +1145,7 @@
                             {
                               "arguments": {
                                 "agent": "e2e-flue-skill",
-                                "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                                "cwd": ".",
                                 "description": "Run e2e-flue-skill with marker SKILL_DONE",
                                 "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                               },
@@ -1172,7 +1172,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
+                                "command": "find . -maxdepth 4 -name AGENTS.md -print",
                                 "timeout": 100000
                               },
                               "id": "<span:2>",
@@ -1185,7 +1185,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1198,7 +1198,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e/scenarios/flue-instrumentation/ -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
+                                "command": "find . -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
                                 "timeout": 100000
                               },
                               "id": "<span:3>",
@@ -1211,7 +1211,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1224,7 +1224,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 6 -type f -name 'AGENTS.md' -print",
+                                "command": "find . -maxdepth 6 -type f -name 'AGENTS.md' -print",
                                 "timeout": 100000
                               },
                               "id": "<span:4>",
@@ -1237,7 +1237,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1250,7 +1250,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
+                                "command": "find . -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
                                 "timeout": 100000
                               },
                               "id": "<span:5>",
@@ -1263,7 +1263,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "./.agents/skills\n./.agents/skills/e2e-flue-skill",
                               "type": "text"
                             }
                           ],
@@ -1277,7 +1277,7 @@
                         "content": [
                           {
                             "arguments": {
-                              "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill && find <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
+                              "command": "find ./.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
                               "timeout": 100000
                             },
                             "id": "<span:1>",
@@ -1312,19 +1312,19 @@
                       "type": "tool",
                       "children": [],
                       "input": {
-                        "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill && find <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
+                        "command": "find ./.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
                         "timeout": 100000
                       },
                       "output": {
                         "content": [
                           {
-                            "text": "(no output)\n\nCommand exited with code 1",
+                            "text": "./.agents/skills/e2e-flue-skill/SKILL.md",
                             "type": "text"
                           }
                         ],
                         "details": {
-                          "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill && find <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
-                          "exitCode": 1
+                          "command": "find ./.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
+                          "exitCode": 0
                         }
                       },
                       "metadata": {
@@ -1355,7 +1355,7 @@
                             {
                               "arguments": {
                                 "agent": "e2e-flue-skill",
-                                "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                                "cwd": ".",
                                 "description": "Run e2e-flue-skill with marker SKILL_DONE",
                                 "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                               },
@@ -1382,7 +1382,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
+                                "command": "find . -maxdepth 4 -name AGENTS.md -print",
                                 "timeout": 100000
                               },
                               "id": "<span:2>",
@@ -1395,7 +1395,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1408,7 +1408,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e/scenarios/flue-instrumentation/ -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
+                                "command": "find . -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
                                 "timeout": 100000
                               },
                               "id": "<span:3>",
@@ -1421,7 +1421,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1434,7 +1434,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 6 -type f -name 'AGENTS.md' -print",
+                                "command": "find . -maxdepth 6 -type f -name 'AGENTS.md' -print",
                                 "timeout": 100000
                               },
                               "id": "<span:4>",
@@ -1447,7 +1447,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1460,7 +1460,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
+                                "command": "find . -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
                                 "timeout": 100000
                               },
                               "id": "<span:5>",
@@ -1473,7 +1473,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "./.agents/skills\n./.agents/skills/e2e-flue-skill",
                               "type": "text"
                             }
                           ],
@@ -1486,7 +1486,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill && find <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
+                                "command": "find ./.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
                                 "timeout": 100000
                               },
                               "id": "<span:6>",
@@ -1499,7 +1499,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "./.agents/skills/e2e-flue-skill/SKILL.md",
                               "type": "text"
                             }
                           ],
@@ -1515,7 +1515,7 @@
                             "arguments": {
                               "limit": 200,
                               "offset": 1,
-                              "path": "<repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill/SKILL.md"
+                              "path": "./.agents/skills/e2e-flue-skill/SKILL.md"
                             },
                             "id": "<span:1>",
                             "name": "read",
@@ -1551,7 +1551,7 @@
                       "input": {
                         "limit": 200,
                         "offset": 1,
-                        "path": "<repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill/SKILL.md"
+                        "path": "./.agents/skills/e2e-flue-skill/SKILL.md"
                       },
                       "output": {
                         "content": [
@@ -1562,7 +1562,7 @@
                         ],
                         "details": {
                           "lines": 7,
-                          "path": "<repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill/SKILL.md"
+                          "path": "./.agents/skills/e2e-flue-skill/SKILL.md"
                         }
                       },
                       "metadata": {
@@ -1593,7 +1593,7 @@
                             {
                               "arguments": {
                                 "agent": "e2e-flue-skill",
-                                "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                                "cwd": ".",
                                 "description": "Run e2e-flue-skill with marker SKILL_DONE",
                                 "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                               },
@@ -1620,7 +1620,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
+                                "command": "find . -maxdepth 4 -name AGENTS.md -print",
                                 "timeout": 100000
                               },
                               "id": "<span:2>",
@@ -1633,7 +1633,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1646,7 +1646,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e/scenarios/flue-instrumentation/ -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
+                                "command": "find . -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
                                 "timeout": 100000
                               },
                               "id": "<span:3>",
@@ -1659,7 +1659,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1672,7 +1672,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 6 -type f -name 'AGENTS.md' -print",
+                                "command": "find . -maxdepth 6 -type f -name 'AGENTS.md' -print",
                                 "timeout": 100000
                               },
                               "id": "<span:4>",
@@ -1685,7 +1685,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1698,7 +1698,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
+                                "command": "find . -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
                                 "timeout": 100000
                               },
                               "id": "<span:5>",
@@ -1711,7 +1711,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "./.agents/skills\n./.agents/skills/e2e-flue-skill",
                               "type": "text"
                             }
                           ],
@@ -1724,7 +1724,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill && find <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
+                                "command": "find ./.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
                                 "timeout": 100000
                               },
                               "id": "<span:6>",
@@ -1737,7 +1737,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "./.agents/skills/e2e-flue-skill/SKILL.md",
                               "type": "text"
                             }
                           ],
@@ -1752,7 +1752,7 @@
                               "arguments": {
                                 "limit": 200,
                                 "offset": 1,
-                                "path": "<repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill/SKILL.md"
+                                "path": "./.agents/skills/e2e-flue-skill/SKILL.md"
                               },
                               "id": "<span:7>",
                               "name": "read",
@@ -1778,7 +1778,7 @@
                         "content": [
                           {
                             "arguments": {
-                              "command": "node -v && ls -la <repo>/e2e/scenarios/flue-instrumentation && cat <repo>/e2e/scenarios/flue-instrumentation/package.json 2>/dev/null || true",
+                              "command": "cat ./package.json",
                               "timeout": 100000
                             },
                             "id": "<span:1>",
@@ -1813,19 +1813,19 @@
                       "type": "tool",
                       "children": [],
                       "input": {
-                        "command": "node -v && ls -la <repo>/e2e/scenarios/flue-instrumentation && cat <repo>/e2e/scenarios/flue-instrumentation/package.json 2>/dev/null || true",
+                        "command": "cat ./package.json",
                         "timeout": 100000
                       },
                       "output": {
                         "content": [
                           {
-                            "text": "(no output)\n\nCommand exited with code 1",
+                            "text": "{\n  \"name\": \"flue-instrumentation-scenario\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"braintrustScenario\": {\n    \"bump\": {\n      \"dependencies\": {\n        \"flue-cli-v0-8-latest\": {\n          \"package\": \"@flue/cli\",\n          \"range\": \">=0.8.0 <0.9.0\"\n        },\n        \"flue-cli-v1-latest\": {\n          \"package\": \"@flue/cli\",\n          \"range\": \">=1.0.0-beta.3 <2.0.0-0\",\n          \"allowPrerelease\": true\n        },\n        \"flue-runtime-v0-8-latest\": {\n          \"package\": \"@flue/runtime\",\n          \"range\": \">=0.8.0 <0.9.0\"\n        },\n        \"flue-runtime-v1-latest\": {\n          \"package\": \"@flue/runtime\",\n          \"range\": \">=1.0.0-beta.3 <2.0.0-0\",\n          \"allowPrerelease\": true\n        },\n        \"flue-runtime-v2-latest\": {\n          \"package\": \"@flue/runtime\",\n          \"range\": \">=2.0.0 <3.0.0\"\n        }\n      }\n    }\n  },\n  \"dependencies\": {\n    \"@flue/cli\": \"0.8.0\",\n    \"@flue/runtime\": \"0.8.0\",\n    \"flue-cli-v0-8-latest\": \"npm:@flue/cli@0.8.1\",\n    \"flue-cli-v1\": \"npm:@flue/cli@1.0.0-beta.3\",\n    \"flue-cli-v1-latest\": \"npm:@flue/cli@1.0.0-beta.9\",\n    \"flue-runtime-v0-8-latest\": \"npm:@flue/runtime@0.8.1\",\n    \"flue-runtime-v1\": \"npm:@flue/runtime@1.0.0-beta.3\",\n    \"flue-runtime-v1-latest\": \"npm:@flue/runtime@1.0.0-beta.9\",\n    \"flue-runtime-v2\": \"npm:@flue/runtime@2.0.0\",\n    \"flue-runtime-v2-latest\": \"npm:@flue/runtime@2.0.1\",\n    \"pi-ai-v2\": \"npm:@earendil-works/pi-ai@0.83.0\",\n    \"valibot\": \"1.4.2\"\n  },\n  \"pnpm\": {\n    \"overrides\": {\n      \"@flue/runtime@0.8.0>@earendil-works/pi-agent-core\": \"0.75.4\",\n      \"@flue/runtime@0.8.0>@earendil-works/pi-ai\": \"0.75.4\",\n      \"@flue/runtime@0.8.1>@earendil-works/pi-agent-core\": \"0.75.4\",\n      \"@flue/runtime@0.8.1>@earendil-works/pi-ai\": \"0.75.4\",\n      \"@hono/node-server@>=2.0.0 <2.0.10\": \"^2.0.10\",\n      \"fast-uri@<3.1.4\": \"^3.1.4\",\n      \"hono@>=4.0.0 <4.12.27\": \"^4.12.27\",\n      \"brace-expansion@>=3.0.0 <5.0.8\": \"^5.0.8\",\n      \"postcss@<8.5.18\": \"^8.5.18\",\n      \"valibot@<1.4.2\": \"^1.4.2\"\n    }\n  }\n}",
                             "type": "text"
                           }
                         ],
                         "details": {
-                          "command": "node -v && ls -la <repo>/e2e/scenarios/flue-instrumentation && cat <repo>/e2e/scenarios/flue-instrumentation/package.json 2>/dev/null || true",
-                          "exitCode": 1
+                          "command": "cat ./package.json",
+                          "exitCode": 0
                         }
                       },
                       "metadata": {
@@ -1856,7 +1856,7 @@
                             {
                               "arguments": {
                                 "agent": "e2e-flue-skill",
-                                "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                                "cwd": ".",
                                 "description": "Run e2e-flue-skill with marker SKILL_DONE",
                                 "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                               },
@@ -1883,7 +1883,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
+                                "command": "find . -maxdepth 4 -name AGENTS.md -print",
                                 "timeout": 100000
                               },
                               "id": "<span:2>",
@@ -1896,7 +1896,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1909,7 +1909,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e/scenarios/flue-instrumentation/ -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
+                                "command": "find . -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
                                 "timeout": 100000
                               },
                               "id": "<span:3>",
@@ -1922,7 +1922,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1935,7 +1935,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 6 -type f -name 'AGENTS.md' -print",
+                                "command": "find . -maxdepth 6 -type f -name 'AGENTS.md' -print",
                                 "timeout": 100000
                               },
                               "id": "<span:4>",
@@ -1948,7 +1948,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -1961,7 +1961,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
+                                "command": "find . -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
                                 "timeout": 100000
                               },
                               "id": "<span:5>",
@@ -1974,7 +1974,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "./.agents/skills\n./.agents/skills/e2e-flue-skill",
                               "type": "text"
                             }
                           ],
@@ -1987,7 +1987,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill && find <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
+                                "command": "find ./.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
                                 "timeout": 100000
                               },
                               "id": "<span:6>",
@@ -2000,7 +2000,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "./.agents/skills/e2e-flue-skill/SKILL.md",
                               "type": "text"
                             }
                           ],
@@ -2015,7 +2015,7 @@
                               "arguments": {
                                 "limit": 200,
                                 "offset": 1,
-                                "path": "<repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill/SKILL.md"
+                                "path": "./.agents/skills/e2e-flue-skill/SKILL.md"
                               },
                               "id": "<span:7>",
                               "name": "read",
@@ -2040,7 +2040,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "node -v && ls -la <repo>/e2e/scenarios/flue-instrumentation && cat <repo>/e2e/scenarios/flue-instrumentation/package.json 2>/dev/null || true",
+                                "command": "cat ./package.json",
                                 "timeout": 100000
                               },
                               "id": "<span:8>",
@@ -2053,7 +2053,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "{\n  \"name\": \"flue-instrumentation-scenario\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"braintrustScenario\": {\n    \"bump\": {\n      \"dependencies\": {\n        \"flue-cli-v0-8-latest\": {\n          \"package\": \"@flue/cli\",\n          \"range\": \">=0.8.0 <0.9.0\"\n        },\n        \"flue-cli-v1-latest\": {\n          \"package\": \"@flue/cli\",\n          \"range\": \">=1.0.0-beta.3 <2.0.0-0\",\n          \"allowPrerelease\": true\n        },\n        \"flue-runtime-v0-8-latest\": {\n          \"package\": \"@flue/runtime\",\n          \"range\": \">=0.8.0 <0.9.0\"\n        },\n        \"flue-runtime-v1-latest\": {\n          \"package\": \"@flue/runtime\",\n          \"range\": \">=1.0.0-beta.3 <2.0.0-0\",\n          \"allowPrerelease\": true\n        },\n        \"flue-runtime-v2-latest\": {\n          \"package\": \"@flue/runtime\",\n          \"range\": \">=2.0.0 <3.0.0\"\n        }\n      }\n    }\n  },\n  \"dependencies\": {\n    \"@flue/cli\": \"0.8.0\",\n    \"@flue/runtime\": \"0.8.0\",\n    \"flue-cli-v0-8-latest\": \"npm:@flue/cli@0.8.1\",\n    \"flue-cli-v1\": \"npm:@flue/cli@1.0.0-beta.3\",\n    \"flue-cli-v1-latest\": \"npm:@flue/cli@1.0.0-beta.9\",\n    \"flue-runtime-v0-8-latest\": \"npm:@flue/runtime@0.8.1\",\n    \"flue-runtime-v1\": \"npm:@flue/runtime@1.0.0-beta.3\",\n    \"flue-runtime-v1-latest\": \"npm:@flue/runtime@1.0.0-beta.9\",\n    \"flue-runtime-v2\": \"npm:@flue/runtime@2.0.0\",\n    \"flue-runtime-v2-latest\": \"npm:@flue/runtime@2.0.1\",\n    \"pi-ai-v2\": \"npm:@earendil-works/pi-ai@0.83.0\",\n    \"valibot\": \"1.4.2\"\n  },\n  \"pnpm\": {\n    \"overrides\": {\n      \"@flue/runtime@0.8.0>@earendil-works/pi-agent-core\": \"0.75.4\",\n      \"@flue/runtime@0.8.0>@earendil-works/pi-ai\": \"0.75.4\",\n      \"@flue/runtime@0.8.1>@earendil-works/pi-agent-core\": \"0.75.4\",\n      \"@flue/runtime@0.8.1>@earendil-works/pi-ai\": \"0.75.4\",\n      \"@hono/node-server@>=2.0.0 <2.0.10\": \"^2.0.10\",\n      \"fast-uri@<3.1.4\": \"^3.1.4\",\n      \"hono@>=4.0.0 <4.12.27\": \"^4.12.27\",\n      \"brace-expansion@>=3.0.0 <5.0.8\": \"^5.0.8\",\n      \"postcss@<8.5.18\": \"^8.5.18\",\n      \"valibot@<1.4.2\": \"^1.4.2\"\n    }\n  }\n}",
                               "type": "text"
                             }
                           ],
@@ -2067,7 +2067,7 @@
                         "content": [
                           {
                             "arguments": {
-                              "command": "cd <repo>/e2e/scenarios/flue-instrumentation && node scenario.cli.mjs --marker SKILL_DONE",
+                              "command": "printf SKILL_DONE",
                               "timeout": 100000
                             },
                             "id": "<span:1>",
@@ -2102,19 +2102,19 @@
                       "type": "tool",
                       "children": [],
                       "input": {
-                        "command": "cd <repo>/e2e/scenarios/flue-instrumentation && node scenario.cli.mjs --marker SKILL_DONE",
+                        "command": "printf SKILL_DONE",
                         "timeout": 100000
                       },
                       "output": {
                         "content": [
                           {
-                            "text": "(no output)\n\nCommand exited with code 1",
+                            "text": "SKILL_DONE",
                             "type": "text"
                           }
                         ],
                         "details": {
-                          "command": "cd <repo>/e2e/scenarios/flue-instrumentation && node scenario.cli.mjs --marker SKILL_DONE",
-                          "exitCode": 1
+                          "command": "printf SKILL_DONE",
+                          "exitCode": 0
                         }
                       },
                       "metadata": {
@@ -2145,7 +2145,7 @@
                             {
                               "arguments": {
                                 "agent": "e2e-flue-skill",
-                                "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                                "cwd": ".",
                                 "description": "Run e2e-flue-skill with marker SKILL_DONE",
                                 "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Ensure completion and report the final output marker only."
                               },
@@ -2172,7 +2172,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents && find <repo>/e2e -maxdepth 4 -name AGENTS.md -print",
+                                "command": "find . -maxdepth 4 -name AGENTS.md -print",
                                 "timeout": 100000
                               },
                               "id": "<span:2>",
@@ -2185,7 +2185,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -2198,7 +2198,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e/scenarios/flue-instrumentation/ -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
+                                "command": "find . -maxdepth 4 -type f -name AGENTS.md -print -exec sed -n '1,200p' {} \\;",
                                 "timeout": 100000
                               },
                               "id": "<span:3>",
@@ -2211,7 +2211,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -2224,7 +2224,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 6 -type f -name 'AGENTS.md' -print",
+                                "command": "find . -maxdepth 6 -type f -name 'AGENTS.md' -print",
                                 "timeout": 100000
                               },
                               "id": "<span:4>",
@@ -2237,7 +2237,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "(no output)",
                               "type": "text"
                             }
                           ],
@@ -2250,7 +2250,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "find <repo>/e2e -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
+                                "command": "find . -maxdepth 5 -type f -name '*flue*skill*' -o -name '*skill*' | head",
                                 "timeout": 100000
                               },
                               "id": "<span:5>",
@@ -2263,7 +2263,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "./.agents/skills\n./.agents/skills/e2e-flue-skill",
                               "type": "text"
                             }
                           ],
@@ -2276,7 +2276,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "ls -la <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill && find <repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
+                                "command": "find ./.agents/skills/e2e-flue-skill -maxdepth 2 -type f -print",
                                 "timeout": 100000
                               },
                               "id": "<span:6>",
@@ -2289,7 +2289,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "./.agents/skills/e2e-flue-skill/SKILL.md",
                               "type": "text"
                             }
                           ],
@@ -2304,7 +2304,7 @@
                               "arguments": {
                                 "limit": 200,
                                 "offset": 1,
-                                "path": "<repo>/e2e/scenarios/flue-instrumentation/.agents/skills/e2e-flue-skill/SKILL.md"
+                                "path": "./.agents/skills/e2e-flue-skill/SKILL.md"
                               },
                               "id": "<span:7>",
                               "name": "read",
@@ -2329,7 +2329,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "node -v && ls -la <repo>/e2e/scenarios/flue-instrumentation && cat <repo>/e2e/scenarios/flue-instrumentation/package.json 2>/dev/null || true",
+                                "command": "cat ./package.json",
                                 "timeout": 100000
                               },
                               "id": "<span:8>",
@@ -2342,7 +2342,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "{\n  \"name\": \"flue-instrumentation-scenario\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"braintrustScenario\": {\n    \"bump\": {\n      \"dependencies\": {\n        \"flue-cli-v0-8-latest\": {\n          \"package\": \"@flue/cli\",\n          \"range\": \">=0.8.0 <0.9.0\"\n        },\n        \"flue-cli-v1-latest\": {\n          \"package\": \"@flue/cli\",\n          \"range\": \">=1.0.0-beta.3 <2.0.0-0\",\n          \"allowPrerelease\": true\n        },\n        \"flue-runtime-v0-8-latest\": {\n          \"package\": \"@flue/runtime\",\n          \"range\": \">=0.8.0 <0.9.0\"\n        },\n        \"flue-runtime-v1-latest\": {\n          \"package\": \"@flue/runtime\",\n          \"range\": \">=1.0.0-beta.3 <2.0.0-0\",\n          \"allowPrerelease\": true\n        },\n        \"flue-runtime-v2-latest\": {\n          \"package\": \"@flue/runtime\",\n          \"range\": \">=2.0.0 <3.0.0\"\n        }\n      }\n    }\n  },\n  \"dependencies\": {\n    \"@flue/cli\": \"0.8.0\",\n    \"@flue/runtime\": \"0.8.0\",\n    \"flue-cli-v0-8-latest\": \"npm:@flue/cli@0.8.1\",\n    \"flue-cli-v1\": \"npm:@flue/cli@1.0.0-beta.3\",\n    \"flue-cli-v1-latest\": \"npm:@flue/cli@1.0.0-beta.9\",\n    \"flue-runtime-v0-8-latest\": \"npm:@flue/runtime@0.8.1\",\n    \"flue-runtime-v1\": \"npm:@flue/runtime@1.0.0-beta.3\",\n    \"flue-runtime-v1-latest\": \"npm:@flue/runtime@1.0.0-beta.9\",\n    \"flue-runtime-v2\": \"npm:@flue/runtime@2.0.0\",\n    \"flue-runtime-v2-latest\": \"npm:@flue/runtime@2.0.1\",\n    \"pi-ai-v2\": \"npm:@earendil-works/pi-ai@0.83.0\",\n    \"valibot\": \"1.4.2\"\n  },\n  \"pnpm\": {\n    \"overrides\": {\n      \"@flue/runtime@0.8.0>@earendil-works/pi-agent-core\": \"0.75.4\",\n      \"@flue/runtime@0.8.0>@earendil-works/pi-ai\": \"0.75.4\",\n      \"@flue/runtime@0.8.1>@earendil-works/pi-agent-core\": \"0.75.4\",\n      \"@flue/runtime@0.8.1>@earendil-works/pi-ai\": \"0.75.4\",\n      \"@hono/node-server@>=2.0.0 <2.0.10\": \"^2.0.10\",\n      \"fast-uri@<3.1.4\": \"^3.1.4\",\n      \"hono@>=4.0.0 <4.12.27\": \"^4.12.27\",\n      \"brace-expansion@>=3.0.0 <5.0.8\": \"^5.0.8\",\n      \"postcss@<8.5.18\": \"^8.5.18\",\n      \"valibot@<1.4.2\": \"^1.4.2\"\n    }\n  }\n}",
                               "type": "text"
                             }
                           ],
@@ -2355,7 +2355,7 @@
                           "content": [
                             {
                               "arguments": {
-                                "command": "cd <repo>/e2e/scenarios/flue-instrumentation && node scenario.cli.mjs --marker SKILL_DONE",
+                                "command": "printf SKILL_DONE",
                                 "timeout": 100000
                               },
                               "id": "<span:9>",
@@ -2368,7 +2368,7 @@
                         {
                           "content": [
                             {
-                              "text": "(no output)\n\nCommand exited with code 1",
+                              "text": "SKILL_DONE",
                               "type": "text"
                             }
                           ],
@@ -2435,7 +2435,7 @@
                 "content": [
                   {
                     "arguments": {
-                      "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                      "cwd": ".",
                       "description": "Run the deterministic Flue instrumentation e2e test skill e2e-flue-skill.",
                       "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Output only the marker and no extra text when finished."
                     },
@@ -2471,7 +2471,7 @@
               "type": "tool",
               "children": [],
               "input": {
-                "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                "cwd": ".",
                 "description": "Run the deterministic Flue instrumentation e2e test skill e2e-flue-skill.",
                 "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Output only the marker and no extra text when finished."
               },
@@ -2483,7 +2483,7 @@
                   }
                 ],
                 "details": {
-                  "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                  "cwd": ".",
                   "messageId": "<messageId:2>",
                   "session": "task:skill:<uuid:1>",
                   "taskId": "<uuid:1>"
@@ -2516,7 +2516,7 @@
                   "content": [
                     {
                       "arguments": {
-                        "cwd": "<repo>/e2e/scenarios/flue-instrumentation/",
+                        "cwd": ".",
                         "description": "Run the deterministic Flue instrumentation e2e test skill e2e-flue-skill.",
                         "prompt": "Run the skill named \"e2e-flue-skill\" with arguments {\"marker\":\"SKILL_DONE\"}. Output only the marker and no extra text when finished."
                       },
