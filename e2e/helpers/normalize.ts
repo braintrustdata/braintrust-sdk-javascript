@@ -110,7 +110,7 @@ const REPO_ROOT = path.resolve(HELPERS_DIR, "../..").replace(/\\/g, "/");
 const STACK_FRAME_REPO_PATH_REGEX =
   /(?:[A-Za-z]:)?[^\s)\n]*braintrust-sdk-javascript(?:[\\/](?:braintrust-sdk-javascript|[^\\/\s)\n]+))?((?:[\\/](?:e2e|js)[^:\s)\n]+)):\d+:\d+/g;
 const REPO_PATH_REGEX =
-  /(?:[A-Za-z]:)?[^\s)\n]*braintrust-sdk-javascript(?:[\\/](?:braintrust-sdk-javascript|[^\\/\s)\n]+))?((?:[\\/](?:e2e|js)[^:\s)\n]+))/g;
+  /(?:[A-Za-z]:)?[^\s)\n]*braintrust-sdk-javascript(?:[\\/](?:braintrust-sdk-javascript|[^\\/\s)\n]+))?((?:[\\/](?:e2e|js)[^:\s)\n]*))/g;
 const NODE_INTERNAL_FRAME_REGEX = /node:[^)\n]+:\d+:\d+/g;
 const TEMP_SCENARIO_PATH_REGEX =
   /\/e2e\/\.bt-tmp\/[^/\s)]+\/scenarios\/([^/\s)]+)\/?/g;
