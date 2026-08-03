@@ -159,7 +159,7 @@ function isFlueChildSpan(
   includeAmbientProbeSpans = true,
 ): boolean {
   return (
-    event.span.name?.startsWith("llm:") === true ||
+    event.span.name === "flue.turn" ||
     event.span.name?.startsWith("tool:") === true ||
     event.span.name?.startsWith("task:") === true ||
     event.span.name?.startsWith("compaction:") === true ||
@@ -321,8 +321,8 @@ export function defineFlueInstrumentationAssertions(options: {
           promptSpan,
           (event) => isFlueChildSpan(event, expectAmbientContext),
         );
-        const promptTurns = promptChildren.filter((event) =>
-          event.span.name?.startsWith("llm:"),
+        const promptTurns = promptChildren.filter(
+          (event) => event.span.name === "flue.turn",
         );
         const promptTools = promptChildren.filter((event) =>
           event.span.name?.startsWith("tool:"),
@@ -331,8 +331,10 @@ export function defineFlueInstrumentationAssertions(options: {
         const compactSpan = findFlueOperation(events, "flue.compact");
         const allLlmSpans = [promptSpan, skillSpan, compactSpan].flatMap(
           (span) =>
-            findFlueDescendants(events, span, (event) =>
-              event.span.name?.startsWith("llm:"),
+            findFlueDescendants(
+              events,
+              span,
+              (event) => event.span.name === "flue.turn",
             ),
         );
         const lookupToolSpan = promptTools.find(
@@ -397,6 +399,11 @@ export function defineFlueInstrumentationAssertions(options: {
       await matchSpanTreeSnapshot(
         buildSpanTree(events, expectAmbientContext),
         snapshotPath,
+        {
+          normalize: {
+            additionalProviderIdKeys: ["messageId"],
+          },
+        },
       );
     });
   });

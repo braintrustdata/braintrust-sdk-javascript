@@ -1,0 +1,362 @@
+span_tree:
+└── flue.prompt [task]
+    input: [
+      {
+        "content": [
+          {
+            "text": "Exercise Flue 2 tool-use instrumentation and finish with PROMPT_DONE.",
+            "type": "text"
+          }
+        ],
+        "role": "user"
+      }
+    ]
+    output: "PROMPT_DONE"
+    metadata: {
+      "flue.agent_name": "InstrumentedAgent",
+      "flue.conversation_id": "<flue.conversation_id:2>",
+      "flue.event_index": 32,
+      "flue.harness": "default",
+      "flue.instance_id": "braintrust-e2e",
+      "flue.is_error": false,
+      "flue.operation": "prompt",
+      "flue.operation_id": "<flue.operation_id:3>",
+      "flue.session": "default",
+      "flue.submission_id": "<flue.submission_id:1>",
+      "provider": "flue"
+    }
+    metrics: {
+      "duration_ms": 0
+    }
+    ├── flue.turn [llm]
+    │   input: [
+    │     {
+    │       "content": [
+    │         {
+    │           "text": "Exercise Flue 2 tool-use instrumentation and finish with PROMPT_DONE.",
+    │           "type": "text"
+    │         }
+    │       ],
+    │       "role": "user"
+    │     }
+    │   ]
+    │   output: {
+    │     "content": [
+    │       {
+    │         "arguments": {
+    │           "query": "Flue 2 instrumentation"
+    │         },
+    │         "id": "<span:1>",
+    │         "name": "lookup",
+    │         "type": "toolCall"
+    │       }
+    │     ],
+    │     "role": "assistant"
+    │   }
+    │   metadata: {
+    │     "flue.agent_name": "InstrumentedAgent",
+    │     "flue.api": "openai-responses",
+    │     "flue.conversation_id": "<flue.conversation_id:2>",
+    │     "flue.event_index": 15,
+    │     "flue.harness": "default",
+    │     "flue.instance_id": "braintrust-e2e",
+    │     "flue.is_error": false,
+    │     "flue.model": "gpt-5.6-luna",
+    │     "flue.operation_id": "<flue.operation_id:3>",
+    │     "flue.provider": "openai",
+    │     "flue.session": "default",
+    │     "flue.stop_reason": "toolUse",
+    │     "flue.submission_id": "<flue.submission_id:1>",
+    │     "flue.system_prompt": "Call the lookup tool exactly once with query Flue 2 instrumentation. Then reply with exactly PROMPT_DONE.\n\n## Available Agents\n\nNone. No subagents are currently declared, so the `task` tool has no valid `agent` value — do not call it unless an agent is introduced later in the conversation.\n\nDate: <timestamp>",
+    │     "flue.turn_id": "<flue.turn_id:4>",
+    │     "flue.turn_purpose": "agent",
+    │     "model": "gpt-5.6-luna",
+    │     "provider": "openai",
+    │     "reasoning": "low",
+    │     "tools": [
+    │       {
+    │         "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \"Available Agents\" in the system prompt.",
+    │         "name": "task",
+    │         "parameters": {
+    │           "properties": {
+    │             "agent": {
+    │               "description": "Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).",
+    │               "minLength": 1,
+    │               "type": "string",
+    │               "~kind": "String"
+    │             },
+    │             "attachments": {
+    │               "description": "Images from this conversation to include in the child agent prompt",
+    │               "items": {
+    │                 "properties": {
+    │                   "id": {
+    │                     "description": "Attachment ID shown in the current conversation",
+    │                     "type": "string",
+    │                     "~kind": "String"
+    │                   }
+    │                 },
+    │                 "required": [
+    │                   "id"
+    │                 ],
+    │                 "type": "object",
+    │                 "~kind": "Object"
+    │               },
+    │               "type": "array",
+    │               "~kind": "Array",
+    │               "~optional": true
+    │             },
+    │             "cwd": {
+    │               "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+    │               "type": "string",
+    │               "~kind": "String",
+    │               "~optional": true
+    │             },
+    │             "description": {
+    │               "description": "Short human-readable label for the delegated work",
+    │               "type": "string",
+    │               "~kind": "String",
+    │               "~optional": true
+    │             },
+    │             "prompt": {
+    │               "description": "Focused instructions for the child agent",
+    │               "type": "string",
+    │               "~kind": "String"
+    │             }
+    │           },
+    │           "required": [
+    │             "prompt",
+    │             "agent"
+    │           ],
+    │           "type": "object",
+    │           "~kind": "Object"
+    │         }
+    │       },
+    │       {
+    │         "description": "Return the deterministic Flue instrumentation result.",
+    │         "name": "lookup",
+    │         "parameters": {
+    │           "properties": {
+    │             "query": {
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "query"
+    │           ],
+    │           "type": "object"
+    │         }
+    │       }
+    │     ]
+    │   }
+    │   metrics: {
+    │     "completion_tokens": 21,
+    │     "duration_ms": 0,
+    │     "estimated_cost": 0.000465,
+    │     "prompt_cache_creation_tokens": 0,
+    │     "prompt_cached_tokens": 0,
+    │     "prompt_tokens": 339,
+    │     "tokens": 360
+    │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
+    ├── flue.turn [llm]
+    │   input: [
+    │     {
+    │       "content": [
+    │         {
+    │           "text": "Exercise Flue 2 tool-use instrumentation and finish with PROMPT_DONE.",
+    │           "type": "text"
+    │         }
+    │       ],
+    │       "role": "user"
+    │     },
+    │     {
+    │       "content": [
+    │         {
+    │           "arguments": {
+    │             "query": "Flue 2 instrumentation"
+    │           },
+    │           "id": "<span:1>",
+    │           "name": "lookup",
+    │           "type": "toolCall"
+    │         }
+    │       ],
+    │       "role": "assistant"
+    │     },
+    │     {
+    │       "content": [
+    │         {
+    │           "text": "{\"framework\":\"flue\",\"query\":\"Flue 2 instrumentation\",\"version\":2}",
+    │           "type": "text"
+    │         }
+    │       ],
+    │       "isError": false,
+    │       "role": "toolResult",
+    │       "toolCallId": "<span:1>",
+    │       "toolName": "lookup"
+    │     }
+    │   ]
+    │   output: {
+    │     "content": [
+    │       {
+    │         "text": "PROMPT_DONE",
+    │         "textSignature": "{\"v\":1,\"id\":\"msg_001d159cf9fa77e0016a705627928c81a29022feff2d34c6c9\",\"phase\":\"final_answer\"}",
+    │         "type": "text"
+    │       }
+    │     ],
+    │     "role": "assistant"
+    │   }
+    │   metadata: {
+    │     "flue.agent_name": "InstrumentedAgent",
+    │     "flue.api": "openai-responses",
+    │     "flue.conversation_id": "<flue.conversation_id:2>",
+    │     "flue.event_index": 28,
+    │     "flue.harness": "default",
+    │     "flue.instance_id": "braintrust-e2e",
+    │     "flue.is_error": false,
+    │     "flue.model": "gpt-5.6-luna",
+    │     "flue.operation_id": "<flue.operation_id:3>",
+    │     "flue.provider": "openai",
+    │     "flue.session": "default",
+    │     "flue.stop_reason": "stop",
+    │     "flue.submission_id": "<flue.submission_id:1>",
+    │     "flue.system_prompt": "Call the lookup tool exactly once with query Flue 2 instrumentation. Then reply with exactly PROMPT_DONE.\n\n## Available Agents\n\nNone. No subagents are currently declared, so the `task` tool has no valid `agent` value — do not call it unless an agent is introduced later in the conversation.\n\nDate: <timestamp>",
+    │     "flue.turn_id": "<flue.turn_id:4>",
+    │     "flue.turn_purpose": "agent",
+    │     "model": "gpt-5.6-luna",
+    │     "provider": "openai",
+    │     "reasoning": "low",
+    │     "tools": [
+    │       {
+    │         "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \"Available Agents\" in the system prompt.",
+    │         "name": "task",
+    │         "parameters": {
+    │           "properties": {
+    │             "agent": {
+    │               "description": "Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).",
+    │               "minLength": 1,
+    │               "type": "string",
+    │               "~kind": "String"
+    │             },
+    │             "attachments": {
+    │               "description": "Images from this conversation to include in the child agent prompt",
+    │               "items": {
+    │                 "properties": {
+    │                   "id": {
+    │                     "description": "Attachment ID shown in the current conversation",
+    │                     "type": "string",
+    │                     "~kind": "String"
+    │                   }
+    │                 },
+    │                 "required": [
+    │                   "id"
+    │                 ],
+    │                 "type": "object",
+    │                 "~kind": "Object"
+    │               },
+    │               "type": "array",
+    │               "~kind": "Array",
+    │               "~optional": true
+    │             },
+    │             "cwd": {
+    │               "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+    │               "type": "string",
+    │               "~kind": "String",
+    │               "~optional": true
+    │             },
+    │             "description": {
+    │               "description": "Short human-readable label for the delegated work",
+    │               "type": "string",
+    │               "~kind": "String",
+    │               "~optional": true
+    │             },
+    │             "prompt": {
+    │               "description": "Focused instructions for the child agent",
+    │               "type": "string",
+    │               "~kind": "String"
+    │             }
+    │           },
+    │           "required": [
+    │             "prompt",
+    │             "agent"
+    │           ],
+    │           "type": "object",
+    │           "~kind": "Object"
+    │         }
+    │       },
+    │       {
+    │         "description": "Return the deterministic Flue instrumentation result.",
+    │         "name": "lookup",
+    │         "parameters": {
+    │           "properties": {
+    │             "query": {
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "query"
+    │           ],
+    │           "type": "object"
+    │         }
+    │       }
+    │     ]
+    │   }
+    │   metrics: {
+    │     "completion_tokens": 7,
+    │     "duration_ms": 0,
+    │     "estimated_cost": 0.00043,
+    │     "prompt_cache_creation_tokens": 0,
+    │     "prompt_cached_tokens": 0,
+    │     "prompt_tokens": 388,
+    │     "tokens": 395
+    │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
+    └── tool:lookup [tool]
+        input: {
+          "query": "Flue 2 instrumentation"
+        }
+        output: {
+          "framework": "flue",
+          "query": "Flue 2 instrumentation",
+          "version": 2
+        }
+        metadata: {
+          "flue.agent_name": "InstrumentedAgent",
+          "flue.conversation_id": "<flue.conversation_id:2>",
+          "flue.event_index": 20,
+          "flue.harness": "default",
+          "flue.instance_id": "braintrust-e2e",
+          "flue.is_error": false,
+          "flue.operation_id": "<flue.operation_id:3>",
+          "flue.session": "default",
+          "flue.submission_id": "<flue.submission_id:1>",
+          "flue.tool_call_id": "<flue.tool_call_id:5>",
+          "flue.tool_name": "lookup",
+          "flue.turn_id": "<flue.turn_id:4>",
+          "provider": "flue"
+        }
+        metrics: {
+          "duration_ms": 0
+        }
+        context: {
+          "caller_filename": "<node-internal>",
+          "caller_functionname": "<node-internal>",
+          "caller_lineno": 0
+        }
+        └── flue.toolCurrentProbe
+            output: "lookup-active"
+            metadata: {
+              "scenario": "flue-instrumentation"
+            }
+            context: {
+              "caller_filename": "<repo>/e2e/scenarios/flue-instrumentation/scenario.v2.ts",
+              "caller_functionname": "Object.run",
+              "caller_lineno": 0
+            }

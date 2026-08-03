@@ -1,9 +1,14 @@
-import { instrument, registerProvider } from "@flue/runtime";
-import { flue } from "@flue/runtime/routing";
 import { flush, initLogger } from "braintrust";
 import { Hono } from "hono";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+
+const runtimePackageName =
+  process.env.FLUE_RUNTIME_PACKAGE_NAME ?? "flue-runtime-v1";
+const [{ instrument, registerProvider }, { flue }] = await Promise.all([
+  import(runtimePackageName),
+  import(`${runtimePackageName}/routing`),
+]);
 
 function projectName() {
   const configured = process.env.BRAINTRUST_E2E_PROJECT_NAME;
