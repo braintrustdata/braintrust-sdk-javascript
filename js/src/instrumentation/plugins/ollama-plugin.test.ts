@@ -321,14 +321,16 @@ describe("Ollama instrumentation extraction", () => {
           model: "gpt-oss:20b",
           system: "Be concise.",
           prompt: "Say OK.",
+          suffix: "Done.",
           options: { temperature: 0, num_predict: 8 },
         },
       ]),
     ).toEqual({
-      input: [
-        { role: "system", content: "Be concise." },
-        { role: "user", content: "Say OK." },
-      ],
+      input: {
+        system: "Be concise.",
+        prompt: "Say OK.",
+        suffix: "Done.",
+      },
       metadata: {
         provider: "ollama",
         model: "gpt-oss:20b",
@@ -374,12 +376,16 @@ describe("Ollama instrumentation extraction", () => {
       [
         {
           model: "gpt-oss:20b",
-          message: { role: "assistant", content: "Hello" },
+          message: {
+            role: "assistant",
+            content: "Hello",
+            thinking: "Check",
+          },
           done: false,
         },
         {
           model: "gpt-oss:20b",
-          message: { role: "assistant", content: "!" },
+          message: { role: "assistant", content: "!", thinking: " done" },
           done: true,
           done_reason: "stop",
           prompt_eval_count: 5,
@@ -394,7 +400,11 @@ describe("Ollama instrumentation extraction", () => {
       {
         index: 0,
         finish_reason: "stop",
-        message: { role: "assistant", content: "Hello!" },
+        message: {
+          role: "assistant",
+          content: "Hello!",
+          reasoning: "Check done",
+        },
       },
     ]);
     expect(chat.metrics).toMatchObject({
@@ -406,10 +416,16 @@ describe("Ollama instrumentation extraction", () => {
 
     const generation = aggregateOllamaGenerateChunks(
       [
-        { model: "gpt-oss:20b", response: "O", done: false },
+        {
+          model: "gpt-oss:20b",
+          response: "O",
+          thinking: "Check",
+          done: false,
+        },
         {
           model: "gpt-oss:20b",
           response: "K",
+          thinking: " done",
           done: true,
           done_reason: "stop",
           prompt_eval_count: 4,
@@ -424,7 +440,11 @@ describe("Ollama instrumentation extraction", () => {
       {
         index: 0,
         finish_reason: "stop",
-        message: { role: "assistant", content: "OK" },
+        message: {
+          role: "assistant",
+          content: "OK",
+          reasoning: "Check done",
+        },
       },
     ]);
     expect(generation.metrics).toMatchObject({

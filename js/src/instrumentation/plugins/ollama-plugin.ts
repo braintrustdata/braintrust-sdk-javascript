@@ -3,8 +3,11 @@ import iso from "../../isomorph";
 import { Attachment } from "../../logger";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
 import type {
+  OllamaChatRequest,
   OllamaChatResponse,
+  OllamaEmbedRequest,
   OllamaEmbedResponse,
+  OllamaGenerateRequest,
   OllamaGenerateResponse,
   OllamaMessage,
   OllamaTool,
@@ -54,23 +57,6 @@ export class OllamaPlugin extends BasePlugin {
   protected onDisable(): void {
     this.unsubscribers = unsubscribeAll(this.unsubscribers);
   }
-}
-
-function getRequestArg(args: unknown): Record<string, unknown> | undefined {
-  const values =
-    Array.isArray(args) || isArrayLike(args) ? Array.from(args) : [args];
-  return values.find((value) => isObject(value)) as
-    | Record<string, unknown>
-    | undefined;
-}
-
-function isArrayLike(value: unknown): value is ArrayLike<unknown> {
-  return (
-    isObject(value) &&
-    typeof value.length === "number" &&
-    Number.isInteger(value.length) &&
-    value.length >= 0
-  );
 }
 
 function isNonNegativeNumber(value: unknown): value is number {
@@ -415,7 +401,13 @@ function extractOptionsMetadata(options: unknown): Record<string, unknown> {
 }
 
 function extractRequestMetadata(
-  request: Record<string, unknown> | undefined,
+  request:
+    | {
+        format?: unknown;
+        model?: unknown;
+        options?: unknown;
+      }
+    | undefined,
 ): Record<string, unknown> {
   return {
     provider: "ollama",
@@ -427,41 +419,57 @@ function extractRequestMetadata(
   };
 }
 
-export function extractOllamaChatInput(args: unknown): {
+export function extractOllamaChatInput([request]: [
+  OllamaChatRequest,
+  ...unknown[],
+]): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const request = getRequestArg(args);
   return {
-    input: normalizeMessages(request?.messages),
+    input: normalizeMessages(request.messages),
     metadata: {
       ...extractRequestMetadata(request),
-      ...extractToolsMetadata(request?.tools),
+      ...extractToolsMetadata(request.tools),
     },
   };
 }
 
-export function extractOllamaGenerateInput(args: unknown): {
+export function extractOllamaGenerateInput([request]: [
+  OllamaGenerateRequest,
+  ...unknown[],
+]): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const request = getRequestArg(args);
   const normalizedPrompt = normalizeTextAndImages(
-    typeof request?.prompt === "string" ? request.prompt : "",
-    Array.isArray(request?.images) ? request.images : undefined,
+    typeof request.prompt === "string" ? request.prompt : "",
+    Array.isArray(request.images) ? request.images : undefined,
   );
-  const input = [
-    ...(typeof request?.system === "string"
-      ? [{ role: "system", content: request.system }]
-      : []),
-    {
-      role: "user",
-      content: normalizedPrompt.content,
-      ...(normalizedPrompt.unrecognizedImages
-        ? { images: normalizedPrompt.unrecognizedImages }
-        : {}),
-    },
-  ];
+  const input =
+    typeof request.suffix === "string"
+      ? {
+          ...(typeof request.system === "string"
+            ? { system: request.system }
+            : {}),
+          prompt: normalizedPrompt.content,
+          suffix: request.suffix,
+          ...(normalizedPrompt.unrecognizedImages
+            ? { images: normalizedPrompt.unrecognizedImages }
+            : {}),
+        }
+      : [
+          ...(typeof request.system === "string"
+            ? [{ role: "system", content: request.system }]
+            : []),
+          {
+            role: "user",
+            content: normalizedPrompt.content,
+            ...(normalizedPrompt.unrecognizedImages
+              ? { images: normalizedPrompt.unrecognizedImages }
+              : {}),
+          },
+        ];
 
   return {
     input,
@@ -469,13 +477,15 @@ export function extractOllamaGenerateInput(args: unknown): {
   };
 }
 
-function extractOllamaEmbedInput(args: unknown): {
+function extractOllamaEmbedInput([request]: [
+  OllamaEmbedRequest,
+  ...unknown[],
+]): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const request = getRequestArg(args);
   return {
-    input: request?.input,
+    input: request.input,
     metadata: extractRequestMetadata(request),
   };
 }
