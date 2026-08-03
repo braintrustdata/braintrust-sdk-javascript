@@ -312,6 +312,46 @@ describe("Ollama instrumentation extraction", () => {
         },
       },
     ]);
+
+    expect(
+      extractOllamaChatOutput(
+        {
+          message: {
+            role: "assistant",
+            content: "",
+            tool_calls: [
+              {
+                function: {
+                  name: "get_weather",
+                  arguments: { city: "Paris" },
+                },
+              },
+            ],
+          },
+          done: true,
+        },
+        2,
+      ),
+    ).toEqual([
+      {
+        index: 0,
+        finish_reason: "tool_calls",
+        message: {
+          role: "assistant",
+          content: null,
+          tool_calls: [
+            {
+              id: "ollama_call_get_weather_2",
+              type: "function",
+              function: {
+                name: "get_weather",
+                arguments: '{"city":"Paris"}',
+              },
+            },
+          ],
+        },
+      },
+    ]);
   });
 
   it("normalizes raw generation input as canonical messages", () => {
@@ -326,11 +366,10 @@ describe("Ollama instrumentation extraction", () => {
         },
       ]),
     ).toEqual({
-      input: {
-        system: "Be concise.",
-        prompt: "Say OK.",
-        suffix: "Done.",
-      },
+      input: [
+        { role: "system", content: "Be concise." },
+        { role: "user", content: "Say OK.", suffix: "Done." },
+      ],
       metadata: {
         provider: "ollama",
         model: "gpt-oss:20b",

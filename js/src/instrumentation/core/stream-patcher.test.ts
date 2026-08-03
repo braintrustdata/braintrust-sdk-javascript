@@ -258,7 +258,7 @@ describe("patchStreamIfNeeded", () => {
     expect(onComplete).toHaveBeenCalledWith([1, 2]);
   });
 
-  it("should complete an abortable stream when abort() is called", async () => {
+  it("should cancel an abortable stream when abort() is called", async () => {
     const iterator = {
       values: [1, 2, 3],
       index: 0,
@@ -277,7 +277,9 @@ describe("patchStreamIfNeeded", () => {
       },
     };
     const onComplete = vi.fn();
+    const onCancel = vi.fn();
     const patched = patchStreamIfNeeded(stream, {
+      onCancel,
       onComplete,
     }) as typeof stream;
     const patchedIterator = patched[Symbol.asyncIterator]();
@@ -287,11 +289,12 @@ describe("patchStreamIfNeeded", () => {
 
     expect(patched.abort()).toBe("aborted");
     expect(abort).toHaveBeenCalledOnce();
-    expect(onComplete).toHaveBeenCalledOnce();
-    expect(onComplete).toHaveBeenCalledWith([1, 2]);
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(onCancel).toHaveBeenCalledWith([1, 2]);
+    expect(onComplete).not.toHaveBeenCalled();
 
     patched.abort();
-    expect(onComplete).toHaveBeenCalledOnce();
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 
   it("should complete an abortable self-iterator when abort() is called", async () => {

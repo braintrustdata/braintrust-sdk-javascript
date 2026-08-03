@@ -15,6 +15,7 @@ import type {
   OllamaUsageResponse,
 } from "../../vendor-sdk-types/ollama";
 import { BasePlugin } from "../core";
+import type { AsyncEndOf } from "../core/channel-definitions";
 import {
   traceAsyncChannel,
   traceStreamingChannel,
@@ -29,7 +30,11 @@ export class OllamaPlugin extends BasePlugin {
         name: "ollama.chat",
         type: SpanTypeAttribute.LLM,
         extractInput: extractOllamaChatInput,
-        extractOutput: extractOllamaChatOutput,
+        extractOutput: (result, event) =>
+          extractOllamaChatOutput(
+            result,
+            countOllamaToolCalls(event?.arguments[0]?.messages),
+          ),
         extractMetadata: extractOllamaResponseMetadata,
         extractMetrics: extractOllamaMetrics,
         aggregateChunks: aggregateOllamaChatChunks,
@@ -123,6 +128,21 @@ function normalizeToolCalls(
     const normalized = normalizeToolCall(toolCall, syntheticIdOffset + index);
     return normalized ? [normalized] : [];
   });
+}
+
+function countOllamaToolCalls(messages: unknown): number {
+  if (!Array.isArray(messages)) {
+    return 0;
+  }
+
+  return messages.reduce(
+    (count, message) =>
+      count +
+      (isObject(message) && Array.isArray(message.tool_calls)
+        ? message.tool_calls.length
+        : 0),
+    0,
+  );
 }
 
 function imageBytes(value: unknown): Uint8Array | undefined {
@@ -446,30 +466,19 @@ export function extractOllamaGenerateInput([request]: [
     typeof request.prompt === "string" ? request.prompt : "",
     Array.isArray(request.images) ? request.images : undefined,
   );
-  const input =
-    typeof request.suffix === "string"
-      ? {
-          ...(typeof request.system === "string"
-            ? { system: request.system }
-            : {}),
-          prompt: normalizedPrompt.content,
-          suffix: request.suffix,
-          ...(normalizedPrompt.unrecognizedImages
-            ? { images: normalizedPrompt.unrecognizedImages }
-            : {}),
-        }
-      : [
-          ...(typeof request.system === "string"
-            ? [{ role: "system", content: request.system }]
-            : []),
-          {
-            role: "user",
-            content: normalizedPrompt.content,
-            ...(normalizedPrompt.unrecognizedImages
-              ? { images: normalizedPrompt.unrecognizedImages }
-              : {}),
-          },
-        ];
+  const input = [
+    ...(typeof request.system === "string"
+      ? [{ role: "system", content: request.system }]
+      : []),
+    {
+      role: "user",
+      content: normalizedPrompt.content,
+      ...(typeof request.suffix === "string" ? { suffix: request.suffix } : {}),
+      ...(normalizedPrompt.unrecognizedImages
+        ? { images: normalizedPrompt.unrecognizedImages }
+        : {}),
+    },
+  ];
 
   return {
     input,
@@ -490,12 +499,19 @@ function extractOllamaEmbedInput([request]: [
   };
 }
 
-export function extractOllamaChatOutput(result: OllamaChatResponse): unknown {
+export function extractOllamaChatOutput(
+  result: OllamaChatResponse,
+  syntheticToolCallIdOffset = 0,
+): unknown {
   if (!isObject(result) || !isObject(result.message)) {
     return undefined;
   }
 
-  const message = normalizeMessage(result.message as OllamaMessage);
+  const message = normalizeMessage(
+    result.message as OllamaMessage,
+    undefined,
+    syntheticToolCallIdOffset,
+  );
   if (!message) {
     return undefined;
   }
@@ -574,7 +590,7 @@ export function extractOllamaMetrics(
 export function aggregateOllamaChatChunks(
   chunks: OllamaChatResponse[],
   _result?: unknown,
-  _event?: unknown,
+  event?: AsyncEndOf<typeof ollamaChannels.chat>,
   _startTime?: number,
 ): {
   output: unknown;
@@ -593,7 +609,10 @@ export function aggregateOllamaChatChunks(
     message,
   };
   return {
-    output: extractOllamaChatOutput(response),
+    output: extractOllamaChatOutput(
+      response,
+      countOllamaToolCalls(event?.arguments[0]?.messages),
+    ),
     metrics: extractOllamaMetrics(last ?? {}),
     metadata: extractOllamaResponseMetadata(last ?? {}),
   };

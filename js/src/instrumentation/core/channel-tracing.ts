@@ -563,6 +563,33 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
 
       if (isAsyncIterable(asyncEndEvent.result)) {
         let firstChunkTime: number | undefined;
+        const handleStreamError = (error: Error) => {
+          try {
+            span.log({ error });
+          } catch (loggingError) {
+            debugLogger.error(
+              `Error logging failure for ${channelName}:`,
+              loggingError,
+            );
+          }
+          try {
+            span.end();
+          } catch (endingError) {
+            debugLogger.error(
+              `Error ending span for ${channelName}:`,
+              endingError,
+            );
+          }
+          states.delete(event as object);
+          runStreamingErrorHook<TChannel>({
+            channelName,
+            config,
+            error,
+            event: asyncEndEvent,
+            span,
+            startTime,
+          });
+        };
 
         patchStreamIfNeeded(asyncEndEvent.result, {
           onChunk: () => {
@@ -661,33 +688,12 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
               });
             }
           },
-          onError: (error: Error) => {
-            try {
-              span.log({ error });
-            } catch (loggingError) {
-              debugLogger.error(
-                `Error logging failure for ${channelName}:`,
-                loggingError,
-              );
-            }
-            try {
-              span.end();
-            } catch (endingError) {
-              debugLogger.error(
-                `Error ending span for ${channelName}:`,
-                endingError,
-              );
-            }
-            states.delete(event as object);
-            runStreamingErrorHook<TChannel>({
-              channelName,
-              config,
-              error,
-              event: asyncEndEvent,
-              span,
-              startTime,
-            });
+          onCancel: () => {
+            const error = new Error("Stream cancelled before completion");
+            error.name = "AbortError";
+            handleStreamError(error);
           },
+          onError: handleStreamError,
         });
         return;
       }

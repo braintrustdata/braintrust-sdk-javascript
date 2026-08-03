@@ -39,6 +39,12 @@ interface StreamPatchOptions<TChunk = unknown, TFinal = unknown> {
   onComplete: (chunks: TChunk[]) => TFinal | void | Promise<TFinal | void>;
 
   /**
+   * Called when the consumer cancels the stream before it completes.
+   * Falls back to onComplete when omitted.
+   */
+  onCancel?: (chunks: TChunk[]) => void | Promise<void>;
+
+  /**
    * Called if the stream errors.
    * If not provided, errors are re-thrown after collection stops.
    */
@@ -146,6 +152,13 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
 
   const chunks: TChunk[] = [];
   let completed = false;
+  const notifyCancellation = async () => {
+    try {
+      await (options.onCancel ?? options.onComplete)(chunks);
+    } catch (error) {
+      debugLogger.error("Error in stream cancellation handler:", error);
+    }
+  };
   const patchAbortIfPresent = () => {
     try {
       if (
@@ -163,18 +176,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
           } finally {
             if (!completed) {
               completed = true;
-              try {
-                void Promise.resolve(options.onComplete(chunks)).catch(
-                  (error) => {
-                    debugLogger.error(
-                      "Error in stream onComplete handler:",
-                      error,
-                    );
-                  },
-                );
-              } catch (error) {
-                debugLogger.error("Error in stream onComplete handler:", error);
-              }
+              void notifyCancellation();
             }
           }
         };
@@ -259,12 +261,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
         stream.return = async (...args: [unknown?]) => {
           if (!completed) {
             completed = true;
-            try {
-              await options.onComplete(chunks);
-            } catch (error) {
-              // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-              console.error("Error in stream onComplete handler:", error);
-            }
+            await notifyCancellation();
           }
           return originalReturn(...args);
         };
@@ -389,13 +386,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
         iterator.return = async function (...args: any[]) {
           if (!completed) {
             completed = true;
-            // Stream was cancelled/returned early
-            try {
-              await options.onComplete(chunks);
-            } catch (error) {
-              // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-              console.error("Error in stream onComplete handler:", error);
-            }
+            await notifyCancellation();
           }
           return originalReturn(...args);
         };
