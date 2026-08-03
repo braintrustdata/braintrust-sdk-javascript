@@ -3,6 +3,7 @@
 export interface OllamaOptions {
   num_predict?: number;
   temperature?: number;
+  top_k?: number;
   top_p?: number;
   frequency_penalty?: number;
   presence_penalty?: number;

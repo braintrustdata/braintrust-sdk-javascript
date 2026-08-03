@@ -33,7 +33,7 @@ export class OllamaPlugin extends BasePlugin {
         extractOutput: (result, event) =>
           extractOllamaChatOutput(
             result,
-            countOllamaToolCalls(event?.arguments[0]?.messages),
+            countOllamaToolCalls(event?.arguments?.[0]?.messages),
           ),
         extractMetadata: extractOllamaResponseMetadata,
         extractMetrics: extractOllamaMetrics,
@@ -611,7 +611,7 @@ export function aggregateOllamaChatChunks(
   return {
     output: extractOllamaChatOutput(
       response,
-      countOllamaToolCalls(event?.arguments[0]?.messages),
+      countOllamaToolCalls(event?.arguments?.[0]?.messages),
     ),
     metrics: extractOllamaMetrics(last ?? {}),
     metadata: extractOllamaResponseMetadata(last ?? {}),
