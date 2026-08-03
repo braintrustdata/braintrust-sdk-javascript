@@ -56,14 +56,16 @@ describe("AnthropicPlugin Sessions instrumentation", () => {
       },
     );
     mockStartSpan.mockImplementation((args: any) => {
+      const end = vi.fn<() => void>();
+      const log = vi.fn<(event: unknown) => void>();
       const span: TestSpan = {
         args,
-        end: vi.fn(),
-        log: vi.fn(),
+        end,
+        log,
         parent: currentSpan,
       };
       if (args.event) {
-        span.log(args.event);
+        log(args.event);
       }
       spans.push(span);
       return span;
@@ -146,7 +148,10 @@ describe("AnthropicPlugin Sessions instrumentation", () => {
         stop_reason: { type: "end_turn" },
       },
     ]);
-    const context = { arguments: ["session-1"] };
+    const context: {
+      arguments: string[];
+      result?: ReturnType<typeof sessionStream>;
+    } = { arguments: ["session-1"] };
 
     handlers.start(context);
     handlers.asyncEnd(Object.assign(context, { result: stream }));
@@ -300,8 +305,8 @@ describe("AnthropicPlugin Sessions instrumentation", () => {
 
 type TestSpan = {
   args: any;
-  end: ReturnType<typeof vi.fn>;
-  log: ReturnType<typeof vi.fn>;
+  end: ReturnType<typeof vi.fn<() => void>>;
+  log: ReturnType<typeof vi.fn<(event: unknown) => void>>;
   parent?: TestSpan;
 };
 
