@@ -1,0 +1,22 @@
+{
+  "name": "@braintrust/e2e-nextjs-auto-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "next-v14-latest": {
+          "package": "next",
+          "range": "14",
+          "targetDependency": "next",
+          "targetManifest": "versions/next-14-latest/package.json"
+        },
+        "next-v16-latest": {
+          "package": "next",
+          "range": "16",
+          "targetDependency": "next",
+          "targetManifest": "versions/next-16-latest/package.json"
+        }
+      }
+    }
+  }
+}

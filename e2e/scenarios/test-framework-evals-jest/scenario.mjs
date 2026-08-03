@@ -6,8 +6,9 @@ import { runMain } from "../../helpers/provider-runtime.mjs";
 
 const require = createRequire(import.meta.url);
 const scenarioDir = path.dirname(fileURLToPath(import.meta.url));
+const jestPackageName = process.env.JEST_PACKAGE_NAME ?? "jest-v29-latest";
 const jestCliPath = path.join(
-  path.dirname(require.resolve("jest/package.json")),
+  path.dirname(require.resolve(`${jestPackageName}/package.json`)),
   "bin/jest.js",
 );
 

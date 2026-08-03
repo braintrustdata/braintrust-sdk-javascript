@@ -1,0 +1,33 @@
+span_tree:
+├── nextjs nodejs logger span [task]
+│   input: {
+│     "route": "/api/smoke-test/node",
+│     "runtime": "nodejs"
+│   }
+│   output: {
+│     "ok": true,
+│     "route": "/api/smoke-test/node",
+│     "runtime": "nodejs"
+│   }
+│   metadata: {
+│     "runtime": "nodejs",
+│     "scenario": "nextjs-instrumentation",
+│     "testRunId": "<run:1>",
+│     "transport": "http"
+│   }
+└── nextjs edge logger span [task]
+    input: {
+      "route": "/api/smoke-test/edge",
+      "runtime": "edge"
+    }
+    output: {
+      "ok": true,
+      "route": "/api/smoke-test/edge",
+      "runtime": "edge"
+    }
+    metadata: {
+      "runtime": "edge",
+      "scenario": "nextjs-instrumentation",
+      "testRunId": "<run:1>",
+      "transport": "http"
+    }

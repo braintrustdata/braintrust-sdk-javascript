@@ -1,3 +1,5 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { expect, test } from "vitest";
 import {
   formatJsonFileSnapshot,
@@ -7,6 +9,7 @@ import {
 import type { Json } from "../../helpers/normalize";
 import {
   prepareScenarioDir,
+  readInstalledPackageVersion,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
@@ -17,9 +20,64 @@ import {
 } from "../../helpers/trace-summary";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 
-const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
-});
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
+const generatedScenarioRoot = path.resolve(
+  originalScenarioDir,
+  "../../.bt-tmp/generated-scenarios/nextjs-instrumentation",
+);
+const scenarios = await Promise.all(
+  [
+    {
+      label: "Next 14 pinned",
+      sourceDir: originalScenarioDir,
+      variantKey: "nextjs-v14",
+    },
+    {
+      label: "Next 14 latest",
+      sourceDir: await prepareLatestScenarioSource(),
+      variantKey: "nextjs-v14-latest",
+    },
+  ].map(async (scenario) => {
+    const scenarioDir = await prepareScenarioDir({
+      linkDependencies: false,
+      scenarioDir: scenario.sourceDir,
+    });
+
+    return {
+      ...scenario,
+      scenarioDir,
+      version: await readInstalledPackageVersion(scenarioDir, "next"),
+    };
+  }),
+);
+
+async function prepareLatestScenarioSource() {
+  const sourceDir = path.join(
+    generatedScenarioRoot,
+    "nextjs-instrumentation-next-14-latest",
+  );
+  await fs.rm(sourceDir, { force: true, recursive: true });
+  await fs.mkdir(sourceDir, { recursive: true });
+  await fs.cp(originalScenarioDir, sourceDir, {
+    filter(source) {
+      const relative = path.relative(originalScenarioDir, source);
+      return (
+        relative === "" ||
+        !["__cassettes__", "__snapshots__", "node_modules", "versions"].some(
+          (name) =>
+            relative === name || relative.startsWith(`${name}${path.sep}`),
+        )
+      );
+    },
+    recursive: true,
+  });
+  await fs.cp(
+    path.join(originalScenarioDir, "versions", "next-14-latest"),
+    sourceDir,
+    { recursive: true },
+  );
+  return sourceDir;
+}
 
 const TIMEOUT_MS = 180_000;
 const RESULT_MARKER = "NEXTJS_E2E_RESULT ";
@@ -100,165 +158,183 @@ function dedupeProjectRegisterRequestSummaries(
   });
 }
 
-test(
-  "nextjs-instrumentation builds a Next.js app and captures Node and Edge runtime traces",
-  {
-    timeout: TIMEOUT_MS,
-  },
-  async () => {
-    await withScenarioHarness(
-      async ({
-        requestCursor,
-        requestsAfter,
-        runScenarioDir,
-        testRunEvents,
-        testRunId,
-      }) => {
-        const cursor = requestCursor();
-        const result = await runScenarioDir({
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-        const responses = parseScenarioResponses(result.stdout);
-
-        expect(responses).toHaveLength(2);
-        expect(responses.map((response) => response.runtime).sort()).toEqual([
-          "edge",
-          "nodejs",
-        ]);
-
-        for (const response of responses) {
-          expect(response.status).toBe(200);
-          expect(response.body.success).toBe(true);
-          expect(response.body.testRunId).toBe(testRunId);
-          expect(response.body.route).toBe(
-            `/api/smoke-test/${response.runtime === "nodejs" ? "node" : response.runtime}`,
-          );
-        }
-
-        const events = testRunEvents();
-        const edgeSpan = findLatestSpan(events, "nextjs edge logger span");
-        const nodeSpan = findLatestSpan(events, "nextjs nodejs logger span");
-
-        expect(edgeSpan).toBeDefined();
-        expect(nodeSpan).toBeDefined();
-        expect(edgeSpan?.row.metadata).toMatchObject({
-          runtime: "edge",
-          scenario: "nextjs-instrumentation",
+for (const scenario of scenarios) {
+  test(
+    `nextjs-instrumentation builds a ${scenario.label} (${scenario.version}) app and captures Node and Edge runtime traces`,
+    {
+      timeout: TIMEOUT_MS,
+    },
+    async () => {
+      await withScenarioHarness(
+        async ({
+          requestCursor,
+          requestsAfter,
+          runScenarioDir,
+          testRunEvents,
           testRunId,
-          transport: "http",
-        });
-        expect(nodeSpan?.row.metadata).toMatchObject({
-          runtime: "nodejs",
-          scenario: "nextjs-instrumentation",
-          testRunId,
-          transport: "http",
-        });
+        }) => {
+          const cursor = requestCursor();
+          const result = await runScenarioDir({
+            runContext: {
+              cassette: false,
+              variantKey: scenario.variantKey,
+            },
+            scenarioDir: scenario.scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
+          const responses = parseScenarioResponses(result.stdout);
 
-        const requests = requestsAfter(
-          cursor,
-          (request) =>
-            request.path === "/api/apikey/login" ||
-            request.path === "/api/project/register" ||
-            request.path === "/logs3" ||
-            request.path === "/otel/v1/traces",
-        );
+          expect(responses).toHaveLength(2);
+          expect(responses.map((response) => response.runtime).sort()).toEqual([
+            "edge",
+            "nodejs",
+          ]);
 
-        expect(requests.some((request) => request.path === "/logs3")).toBe(
-          true,
-        );
-        expect(
-          requests.some((request) => request.path === "/otel/v1/traces"),
-        ).toBe(true);
+          for (const response of responses) {
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.testRunId).toBe(testRunId);
+            expect(response.body.route).toBe(
+              `/api/smoke-test/${response.runtime === "nodejs" ? "node" : response.runtime}`,
+            );
+          }
 
-        const otelRequests = requests.filter(
-          (request) => request.path === "/otel/v1/traces",
-        );
-        const otelSpans = otelRequests.flatMap((request) =>
-          extractOtelSpans(request.jsonBody),
-        );
+          const events = testRunEvents();
+          const edgeSpan = findLatestSpan(events, "nextjs edge logger span");
+          const nodeSpan = findLatestSpan(events, "nextjs nodejs logger span");
 
-        expect(otelSpans.map((span) => span.name)).toContain(
-          "nextjs edge otel span",
-        );
-        expect(otelSpans.map((span) => span.name)).toContain(
-          "nextjs nodejs otel span",
-        );
+          expect(edgeSpan).toBeDefined();
+          expect(nodeSpan).toBeDefined();
+          expect(edgeSpan?.row.metadata).toMatchObject({
+            runtime: "edge",
+            scenario: "nextjs-instrumentation",
+            testRunId,
+            transport: "http",
+          });
+          expect(nodeSpan?.row.metadata).toMatchObject({
+            runtime: "nodejs",
+            scenario: "nextjs-instrumentation",
+            testRunId,
+            transport: "http",
+          });
 
-        if (otelRequests[0]) {
-          expect(otelRequests[0].headers["x-bt-parent"]).toContain(
-            testRunId.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+          const requests = requestsAfter(
+            cursor,
+            (request) =>
+              request.path === "/api/apikey/login" ||
+              request.path === "/api/project/register" ||
+              request.path === "/logs3" ||
+              request.path === "/otel/v1/traces",
           );
-        }
 
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(
-            responses.map((response) => ({
-              body: response.body,
-              runtime: response.runtime,
-              status: response.status,
-            })) as Json,
-          ),
-          resolveFileSnapshotPath(import.meta.url, "route-responses.json"),
-        );
+          expect(requests.some((request) => request.path === "/logs3")).toBe(
+            true,
+          );
+          expect(
+            requests.some((request) => request.path === "/otel/v1/traces"),
+          ).toBe(true);
 
-        await matchSpanTreeSnapshot(
-          events,
-          resolveFileSnapshotPath(import.meta.url, "span-tree.json"),
-        );
+          const otelRequests = requests.filter(
+            (request) => request.path === "/otel/v1/traces",
+          );
+          const otelSpans = otelRequests.flatMap((request) =>
+            extractOtelSpans(request.jsonBody),
+          );
 
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(
-            otelSpans
-              .filter(
-                (span) =>
-                  span.name === "nextjs edge otel span" ||
-                  span.name === "nextjs nodejs otel span",
-              )
-              .map((span) => ({
-                attributes: {
-                  runtime: span.attributes.runtime ?? null,
-                  scenario: span.attributes.scenario ?? null,
-                  testRunId: span.attributes.testRunId ?? null,
-                },
-                hasParent: !!span.parentSpanId,
-                name: span.name,
+          expect(otelSpans.map((span) => span.name)).toContain(
+            "nextjs edge otel span",
+          );
+          expect(otelSpans.map((span) => span.name)).toContain(
+            "nextjs nodejs otel span",
+          );
+
+          if (otelRequests[0]) {
+            expect(otelRequests[0].headers["x-bt-parent"]).toContain(
+              testRunId.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+            );
+          }
+
+          await matchFileSnapshot(
+            formatJsonFileSnapshot(
+              responses.map((response) => ({
+                body: response.body,
+                runtime: response.runtime,
+                status: response.status,
               })) as Json,
-          ),
-          resolveFileSnapshotPath(import.meta.url, "otel-spans.json"),
-        );
+            ),
+            resolveFileSnapshotPath(
+              import.meta.url,
+              `${scenario.variantKey}.route-responses.json`,
+            ),
+          );
 
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(
-            dedupeProjectRegisterRequestSummaries(
-              requests.map((request) => {
-                const summary = summarizeRequest(request, {
-                  includeHeaders: ["content-type", "x-bt-parent"],
-                  normalizeJsonRawBody: request.path === "/logs3",
-                }) as Record<string, unknown>;
+          await matchSpanTreeSnapshot(
+            events,
+            resolveFileSnapshotPath(
+              import.meta.url,
+              `${scenario.variantKey}.span-tree.json`,
+            ),
+          );
 
-                if (request.path === "/otel/v1/traces") {
-                  return {
-                    ...summary,
-                    jsonBody: "<omitted>",
-                    rawBody: "<omitted>",
-                    headers:
-                      summary.headers && typeof summary.headers === "object"
-                        ? {
-                            ...(summary.headers as Record<string, unknown>),
-                            "x-bt-parent": "<x-bt-parent>",
-                          }
-                        : summary.headers,
-                  };
-                }
+          await matchFileSnapshot(
+            formatJsonFileSnapshot(
+              otelSpans
+                .filter(
+                  (span) =>
+                    span.name === "nextjs edge otel span" ||
+                    span.name === "nextjs nodejs otel span",
+                )
+                .map((span) => ({
+                  attributes: {
+                    runtime: span.attributes.runtime ?? null,
+                    scenario: span.attributes.scenario ?? null,
+                    testRunId: span.attributes.testRunId ?? null,
+                  },
+                  hasParent: !!span.parentSpanId,
+                  name: span.name,
+                })) as Json,
+            ),
+            resolveFileSnapshotPath(
+              import.meta.url,
+              `${scenario.variantKey}.otel-spans.json`,
+            ),
+          );
 
-                return normalizeProjectRegisterRequestSummary(summary);
-              }),
-            ) as Json,
-          ),
-          resolveFileSnapshotPath(import.meta.url, "request-flow.json"),
-        );
-      },
-    );
-  },
-);
+          await matchFileSnapshot(
+            formatJsonFileSnapshot(
+              dedupeProjectRegisterRequestSummaries(
+                requests.map((request) => {
+                  const summary = summarizeRequest(request, {
+                    includeHeaders: ["content-type", "x-bt-parent"],
+                    normalizeJsonRawBody: request.path === "/logs3",
+                  }) as Record<string, unknown>;
+
+                  if (request.path === "/otel/v1/traces") {
+                    return {
+                      ...summary,
+                      jsonBody: "<omitted>",
+                      rawBody: "<omitted>",
+                      headers:
+                        summary.headers && typeof summary.headers === "object"
+                          ? {
+                              ...(summary.headers as Record<string, unknown>),
+                              "x-bt-parent": "<x-bt-parent>",
+                            }
+                          : summary.headers,
+                    };
+                  }
+
+                  return normalizeProjectRegisterRequestSummary(summary);
+                }),
+              ) as Json,
+            ),
+            resolveFileSnapshotPath(
+              import.meta.url,
+              `${scenario.variantKey}.request-flow.json`,
+            ),
+          );
+        },
+      );
+    },
+  );
+}

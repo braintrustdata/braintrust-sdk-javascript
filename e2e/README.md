@@ -121,6 +121,8 @@ Scenario-local manifests are optional and should stay slim. They are only for sc
 
 Scenarios that should participate in `test:e2e:bump` declare `braintrustScenario.bump.dependencies` in their existing scenario-local `package.json`. Each rule points at the real npm package and the tested range for that dependency alias; prereleases are ignored unless the rule sets `allowPrerelease: true`.
 
+Packages such as Next.js must be installed under their real dependency name. For a latest lane stored in a nested version manifest, set `targetManifest` to that scenario-relative `package.json` and `targetDependency` to the real dependency name. The bump script updates that manifest and regenerates its colocated lockfile while the rule key remains the logical `*-latest` lane name.
+
 `workspace:` dependency specs are intentionally not supported in scenario-local manifests. If a scenario needs a workspace package, keep that dependency in `e2e/package.json`.
 
 ## Running

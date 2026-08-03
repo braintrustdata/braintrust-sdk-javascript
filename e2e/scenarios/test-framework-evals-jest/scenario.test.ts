@@ -6,6 +6,7 @@ import {
 } from "../../helpers/file-snapshot";
 import {
   prepareScenarioDir,
+  readInstalledPackageVersion,
   resolveScenarioDir,
   withScenarioHarness,
 } from "../../helpers/scenario-harness";
@@ -15,9 +16,30 @@ import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findLatestSpan } from "../../helpers/trace-selectors";
 import { summarizeRequest } from "../../helpers/trace-summary";
 
+const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
-  scenarioDir: resolveScenarioDir(import.meta.url),
+  scenarioDir: originalScenarioDir,
 });
+const scenarios = await Promise.all(
+  [
+    {
+      dependencyName: "jest-v29",
+      label: "Jest 29 pinned",
+      variantKey: "jest-v29",
+    },
+    {
+      dependencyName: "jest-v29-latest",
+      label: "Jest 29 latest",
+      variantKey: "jest-v29-latest",
+    },
+  ].map(async (scenario) => ({
+    ...scenario,
+    version: await readInstalledPackageVersion(
+      scenarioDir,
+      scenario.dependencyName,
+    ),
+  })),
+);
 const TIMEOUT_MS = 90_000;
 const CONFIGURED_PROJECT_NAME =
   process.env.BRAINTRUST_E2E_PROJECT_NAME || "sdk-e2e-tests";
@@ -29,141 +51,161 @@ function findEventByCase(events: CapturedLogEvent[], testCase: string) {
   });
 }
 
-test(
-  "test-framework-evals-jest captures real HTTP traces from a nested Jest runner",
-  {
-    timeout: TIMEOUT_MS,
-  },
-  async () => {
-    await withScenarioHarness(
-      async ({
-        requestCursor,
-        requestsAfter,
-        runNodeScenarioDir,
-        testRunEvents,
-        testRunId,
-      }) => {
-        const cursor = requestCursor();
-
-        await runNodeScenarioDir({
-          env: { BRAINTRUST_E2E_PROJECT_NAME: CONFIGURED_PROJECT_NAME },
-          scenarioDir,
-          timeoutMs: TIMEOUT_MS,
-        });
-
-        const capturedEvents = testRunEvents();
-        const basicSpan = findLatestSpan(capturedEvents, "jest basic span");
-        const jsonAttachment = findEventByCase(
-          capturedEvents,
-          "json-attachment",
-        );
-        const parentSpan = findLatestSpan(capturedEvents, "jest parent span");
-        const childSpan = findLatestSpan(capturedEvents, "jest child span");
-        const nestedParent = findLatestSpan(
-          capturedEvents,
-          "jest nested parent span",
-        );
-        const nestedChild = findLatestSpan(
-          capturedEvents,
-          "jest nested child span",
-        );
-        const nestedGrandchild = findLatestSpan(
-          capturedEvents,
-          "jest nested grandchild span",
-        );
-        const currentSpan = findLatestSpan(capturedEvents, "jest current span");
-
-        for (const span of [
-          basicSpan,
-          jsonAttachment,
-          parentSpan,
-          childSpan,
-          nestedParent,
-          nestedChild,
-          nestedGrandchild,
-          currentSpan,
-        ]) {
-          expect(span).toBeDefined();
-        }
-
-        expect(basicSpan?.input).toBe("What is the capital of France?");
-        expect(basicSpan?.output).toBe("Paris");
-        expect(basicSpan?.expected).toBe("Paris");
-        expect(basicSpan?.row.metadata).toMatchObject({
-          case: "basic-span",
-          scenario: "test-framework-evals-jest",
+for (const scenario of scenarios) {
+  test(
+    `test-framework-evals-jest captures real HTTP traces from a nested ${scenario.label} (${scenario.version}) runner`,
+    {
+      timeout: TIMEOUT_MS,
+    },
+    async () => {
+      await withScenarioHarness(
+        async ({
+          requestCursor,
+          requestsAfter,
+          runNodeScenarioDir,
+          testRunEvents,
           testRunId,
-          transport: "http",
-        });
+        }) => {
+          const cursor = requestCursor();
 
-        expect(jsonAttachment?.input).toMatchObject({
-          type: "chat_completion",
-        });
-        expect(jsonAttachment?.row.metadata).toMatchObject({
-          case: "json-attachment",
-          scenario: "test-framework-evals-jest",
-          testRunId,
-        });
-        expect(jsonAttachment?.output).toMatchObject({
-          attachment: true,
-        });
+          await runNodeScenarioDir({
+            env: {
+              BRAINTRUST_E2E_PROJECT_NAME: CONFIGURED_PROJECT_NAME,
+              JEST_PACKAGE_NAME: scenario.dependencyName,
+            },
+            runContext: {
+              cassette: false,
+              variantKey: scenario.variantKey,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          });
 
-        expect(parentSpan?.output).toMatchObject({
-          phase: "parent",
-          ok: true,
-        });
-        expect(childSpan?.span.parentIds).toEqual([parentSpan?.span.id ?? ""]);
-        expect(childSpan?.output).toMatchObject({
-          phase: "child",
-          ok: true,
-        });
+          const capturedEvents = testRunEvents();
+          const basicSpan = findLatestSpan(capturedEvents, "jest basic span");
+          const jsonAttachment = findEventByCase(
+            capturedEvents,
+            "json-attachment",
+          );
+          const parentSpan = findLatestSpan(capturedEvents, "jest parent span");
+          const childSpan = findLatestSpan(capturedEvents, "jest child span");
+          const nestedParent = findLatestSpan(
+            capturedEvents,
+            "jest nested parent span",
+          );
+          const nestedChild = findLatestSpan(
+            capturedEvents,
+            "jest nested child span",
+          );
+          const nestedGrandchild = findLatestSpan(
+            capturedEvents,
+            "jest nested grandchild span",
+          );
+          const currentSpan = findLatestSpan(
+            capturedEvents,
+            "jest current span",
+          );
 
-        expect(nestedChild?.span.parentIds).toEqual([
-          nestedParent?.span.id ?? "",
-        ]);
-        expect(nestedGrandchild?.span.parentIds).toEqual([
-          nestedChild?.span.id ?? "",
-        ]);
-        expect(nestedGrandchild?.output).toMatchObject({
-          depth: 3,
-        });
+          for (const span of [
+            basicSpan,
+            jsonAttachment,
+            parentSpan,
+            childSpan,
+            nestedParent,
+            nestedChild,
+            nestedGrandchild,
+            currentSpan,
+          ]) {
+            expect(span).toBeDefined();
+          }
 
-        expect(currentSpan?.output).toMatchObject({
-          observedSpanId: currentSpan?.span.id,
-        });
+          expect(basicSpan?.input).toBe("What is the capital of France?");
+          expect(basicSpan?.output).toBe("Paris");
+          expect(basicSpan?.expected).toBe("Paris");
+          expect(basicSpan?.row.metadata).toMatchObject({
+            case: "basic-span",
+            scenario: "test-framework-evals-jest",
+            testRunId,
+            transport: "http",
+          });
 
-        const requests = requestsAfter(
-          cursor,
-          (request) =>
-            request.path === "/api/apikey/login" ||
-            request.path === "/api/project/register" ||
-            request.path === "/logs3",
-        );
+          expect(jsonAttachment?.input).toMatchObject({
+            type: "chat_completion",
+          });
+          expect(jsonAttachment?.row.metadata).toMatchObject({
+            case: "json-attachment",
+            scenario: "test-framework-evals-jest",
+            testRunId,
+          });
+          expect(jsonAttachment?.output).toMatchObject({
+            attachment: true,
+          });
 
-        expect(requests.map((request) => request.path)).toEqual(
-          expect.arrayContaining([
-            "/api/apikey/login",
-            "/api/project/register",
-            "/logs3",
-          ]),
-        );
+          expect(parentSpan?.output).toMatchObject({
+            phase: "parent",
+            ok: true,
+          });
+          expect(childSpan?.span.parentIds).toEqual([
+            parentSpan?.span.id ?? "",
+          ]);
+          expect(childSpan?.output).toMatchObject({
+            phase: "child",
+            ok: true,
+          });
 
-        await matchSpanTreeSnapshot(
-          capturedEvents,
-          resolveFileSnapshotPath(import.meta.url, "span-tree.json"),
-        );
+          expect(nestedChild?.span.parentIds).toEqual([
+            nestedParent?.span.id ?? "",
+          ]);
+          expect(nestedGrandchild?.span.parentIds).toEqual([
+            nestedChild?.span.id ?? "",
+          ]);
+          expect(nestedGrandchild?.output).toMatchObject({
+            depth: 3,
+          });
 
-        await matchFileSnapshot(
-          formatJsonFileSnapshot(
-            requests.map((request) =>
-              summarizeRequest(request, {
-                normalizeJsonRawBody: true,
-              }),
-            ) as Json,
-          ),
-          resolveFileSnapshotPath(import.meta.url, "request-flow.json"),
-        );
-      },
-    );
-  },
-);
+          expect(currentSpan?.output).toMatchObject({
+            observedSpanId: currentSpan?.span.id,
+          });
+
+          const requests = requestsAfter(
+            cursor,
+            (request) =>
+              request.path === "/api/apikey/login" ||
+              request.path === "/api/project/register" ||
+              request.path === "/logs3",
+          );
+
+          expect(requests.map((request) => request.path)).toEqual(
+            expect.arrayContaining([
+              "/api/apikey/login",
+              "/api/project/register",
+              "/logs3",
+            ]),
+          );
+
+          await matchSpanTreeSnapshot(
+            capturedEvents,
+            resolveFileSnapshotPath(
+              import.meta.url,
+              `${scenario.variantKey}.span-tree.json`,
+            ),
+          );
+
+          await matchFileSnapshot(
+            formatJsonFileSnapshot(
+              requests.map((request) =>
+                summarizeRequest(request, {
+                  normalizeJsonRawBody: true,
+                }),
+              ) as Json,
+            ),
+            resolveFileSnapshotPath(
+              import.meta.url,
+              `${scenario.variantKey}.request-flow.json`,
+            ),
+          );
+        },
+      );
+    },
+  );
+}
