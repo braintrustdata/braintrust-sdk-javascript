@@ -30,6 +30,7 @@ import { openRouterConfigs } from "./openrouter";
 import { openRouterAgentConfigs } from "./openrouter-agent";
 import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
+import { stagehandConfigs } from "./stagehand";
 
 interface InstrumentationConfigGroup {
   integrations: readonly (keyof InstrumentationIntegrationsConfig)[];
@@ -106,6 +107,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["strandsAgentSDK"],
       configs: strandsAgentSDKConfigs,
+    },
+    {
+      integrations: ["stagehand"],
+      configs: stagehandConfigs,
     },
     {
       integrations: ["flue"],

@@ -99,6 +99,21 @@
     ]
   },
   {
+    "scenarioDirName": "stagehand-instrumentation",
+    "label": "Stagehand Instrumentation",
+    "metadataScenario": "stagehand-instrumentation",
+    "variants": [
+      {
+        "variantKey": "stagehand-v3",
+        "label": "v3 pinned"
+      },
+      {
+        "variantKey": "stagehand-v3-latest",
+        "label": "v3 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "cloudflare-ai-chat-instrumentation",
     "label": "Cloudflare AI Chat Instrumentation",
     "metadataScenario": "cloudflare-ai-chat-instrumentation",
