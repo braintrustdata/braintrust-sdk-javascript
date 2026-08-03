@@ -59,6 +59,10 @@
         "ai-sdk-openai-v7-latest": {
           "package": "@ai-sdk/openai",
           "range": "4"
+        },
+        "ai-sdk-anthropic-v7-latest": {
+          "package": "@ai-sdk/anthropic",
+          "range": "4"
         }
       }
     }
@@ -94,6 +98,8 @@
     "ai-sdk-v7-latest": "npm:ai@7.0.0",
     "ai-sdk-openai-v7": "npm:@ai-sdk/openai@4.0.0",
     "ai-sdk-openai-v7-latest": "npm:@ai-sdk/openai@4.0.16",
+    "ai-sdk-anthropic-v7": "npm:@ai-sdk/anthropic@4.0.0",
+    "ai-sdk-anthropic-v7-latest": "npm:@ai-sdk/anthropic@4.0.25",
     "ai-sdk-workflow-v1": "npm:@ai-sdk/workflow@1.0.8"
   },
   "pnpm": {
