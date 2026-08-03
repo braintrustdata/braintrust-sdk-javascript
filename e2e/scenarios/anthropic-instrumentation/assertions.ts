@@ -140,6 +140,7 @@ function summarizeAnthropicPayload(event: CapturedLogEvent): Json {
         "stop_reason",
         "stop_sequence",
         "anthropic_tool_runner_iterations",
+        "tool_approval",
       ],
     ),
     metrics: event.metrics as Json,
@@ -349,7 +350,6 @@ function snapshotEvents(
     betaToolRunnerToolSpans[0]?.span.id,
     ["get_weather.lookup"],
   );
-
   return [
     findLatestSpan(events, ROOT_NAME),
     createOperation,
@@ -455,6 +455,7 @@ export function defineAnthropicInstrumentationAssertions(options: {
   snapshotName: string;
   supportsBetaMessages: boolean;
   supportsBetaToolRunner: boolean;
+  supportsSessions: boolean;
   supportsServerToolUse: boolean;
   supportsThinking: boolean;
   testFileUrl: string;
@@ -934,6 +935,82 @@ export function defineAnthropicInstrumentationAssertions(options: {
             ).toBe(true);
           },
         );
+      }
+
+      if (options.supportsSessions) {
+        test("captures a managed Agents Sessions turn", testConfig, () => {
+          const root = findLatestSpan(events, ROOT_NAME);
+          const operation = findLatestSpan(
+            events,
+            "anthropic-sessions-turn-operation",
+          );
+          const turn = findAnthropicSpan(events, operation?.span.id, [
+            "anthropic.beta.sessions.turn",
+          ]);
+          const models = findAnthropicSpans(events, turn?.span.id, [
+            "anthropic.messages.create",
+          ]);
+          const tools = findAnthropicSpans(events, turn?.span.id, [
+            "get_weather",
+          ]);
+          const threadOperation = findLatestSpan(
+            events,
+            "anthropic-sessions-thread-turn-operation",
+          );
+          const threadTurn = findAnthropicSpan(
+            events,
+            threadOperation?.span.id,
+            ["anthropic.beta.sessions.thread.turn"],
+          );
+
+          expect(operation).toBeDefined();
+          expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+          expect(turn?.span.parentIds).toEqual([operation?.span.id ?? ""]);
+          expect(turn?.span.type).toBe("task");
+          expect(turn?.input).toEqual([
+            {
+              role: "user",
+              content: [{ type: "text", text: "Check the weather in Paris." }],
+            },
+          ]);
+          expect(turn?.output).toEqual({
+            role: "assistant",
+            content: [{ type: "text", text: "It is 18C and sunny." }],
+          });
+          expect(turn?.metrics).toMatchObject({
+            completion_tokens: 7,
+            prompt_cache_creation_tokens: 1,
+            prompt_cached_tokens: 2,
+            prompt_tokens: 33,
+            tokens: 40,
+          });
+          expect(models).toHaveLength(2);
+          expect(
+            models.every(
+              (model) =>
+                model.span.parentIds?.[0] === turn?.span.id &&
+                (model.row.metadata as Record<string, unknown> | undefined)
+                  ?.provider === "anthropic",
+            ),
+          ).toBe(true);
+          expect(tools).toHaveLength(1);
+          expect(tools[0]?.span.parentIds).toEqual([turn?.span.id ?? ""]);
+          expect(tools[0]?.input).toEqual({ city: "Paris" });
+          expect(tools[0]?.output).toEqual([
+            { type: "text", text: "18C and sunny" },
+          ]);
+          expect(tools[0]?.row.metadata).toMatchObject({
+            tool_approval: "approved",
+          });
+          expect(threadOperation?.span.parentIds).toEqual([
+            root?.span.id ?? "",
+          ]);
+          expect(threadTurn?.span.parentIds).toEqual([
+            threadOperation?.span.id ?? "",
+          ]);
+          expect(threadTurn?.span.type).toBe("task");
+          expect(threadTurn?.output).toEqual(turn?.output);
+        });
       }
     }
 

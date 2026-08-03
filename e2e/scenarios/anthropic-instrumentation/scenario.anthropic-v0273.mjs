@@ -7,6 +7,7 @@ import { runAutoAnthropicInstrumentation } from "./scenario.impl.mjs";
 runMain(async () =>
   runAutoAnthropicInstrumentation(Anthropic, {
     supportsServerToolUse: false,
+    supportsSessions: false,
     useBetaMessages: false,
   }),
 );

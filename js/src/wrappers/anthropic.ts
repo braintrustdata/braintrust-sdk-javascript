@@ -3,6 +3,10 @@ import { TypedApplyProxy } from "../typed-instrumentation-helpers";
 import type {
   AnthropicBeta,
   AnthropicBetaMessages,
+  AnthropicBetaSessionEvents,
+  AnthropicBetaSessions,
+  AnthropicBetaSessionThreadEvents,
+  AnthropicBetaSessionThreads,
   AnthropicClient,
   AnthropicMessages,
 } from "../vendor-sdk-types/anthropic";
@@ -59,6 +63,88 @@ function betaProxy(
     get(target, prop, receiver) {
       if (prop === "messages") {
         return betaMessagesProxy(target.messages, anthropic);
+      }
+
+      if (prop === "sessions") {
+        return target.sessions
+          ? betaSessionsProxy(target.sessions)
+          : target.sessions;
+      }
+
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}
+
+function betaSessionsProxy(
+  sessions: AnthropicBetaSessions,
+): AnthropicBetaSessions {
+  return new Proxy(sessions, {
+    get(target, prop, receiver) {
+      if (prop === "events") {
+        return betaSessionEventsProxy(target.events);
+      }
+
+      if (prop === "threads") {
+        return target.threads
+          ? betaSessionThreadsProxy(target.threads)
+          : target.threads;
+      }
+
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}
+
+function betaSessionEventsProxy(
+  events: AnthropicBetaSessionEvents,
+): AnthropicBetaSessionEvents {
+  return new Proxy(events, {
+    get(target, prop, receiver) {
+      if (prop === "stream") {
+        return new TypedApplyProxy(target.stream, {
+          apply(stream, thisArg, argArray) {
+            return anthropicChannels.betaSessionsEventsStream.tracePromise(
+              () => Reflect.apply(stream, thisArg, argArray),
+              { arguments: argArray },
+            );
+          },
+        });
+      }
+
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}
+
+function betaSessionThreadsProxy(
+  threads: AnthropicBetaSessionThreads,
+): AnthropicBetaSessionThreads {
+  return new Proxy(threads, {
+    get(target, prop, receiver) {
+      if (prop === "events") {
+        return betaSessionThreadEventsProxy(target.events);
+      }
+
+      return Reflect.get(target, prop, receiver);
+    },
+  });
+}
+
+function betaSessionThreadEventsProxy(
+  events: AnthropicBetaSessionThreadEvents,
+): AnthropicBetaSessionThreadEvents {
+  return new Proxy(events, {
+    get(target, prop, receiver) {
+      if (prop === "stream") {
+        return new TypedApplyProxy(target.stream, {
+          apply(stream, thisArg, argArray) {
+            return anthropicChannels.betaSessionsThreadsEventsStream.tracePromise(
+              () => Reflect.apply(stream, thisArg, argArray),
+              { arguments: argArray },
+            );
+          },
+        });
       }
 
       return Reflect.get(target, prop, receiver);
