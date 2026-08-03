@@ -1,22 +1,14 @@
 import type { WebpackPluginInstance } from "unplugin";
-import {
-  BundlerPluginOptions,
-  unplugin,
-  type LegacyBundlerPluginOptions,
-} from "./plugin";
+import { BundlerPluginOptions, unplugin } from "./plugin";
 export type { InstrumentationConfig } from "../orchestrion-js";
 
 export function braintrustWebpackPlugin(
   options: BundlerPluginOptions = {},
 ): WebpackPluginInstance {
-  const { useDiagnosticChannelCompatShim = false, ...pluginOptions } = options;
-  return unplugin.webpack({
-    ...pluginOptions,
-    browser: useDiagnosticChannelCompatShim,
-  });
+  return unplugin.webpack(options);
 }
 
-export type WebpackPluginOptions = LegacyBundlerPluginOptions;
+export type WebpackPluginOptions = BundlerPluginOptions;
 
 /**
  * @deprecated Use {@link braintrustWebpackPlugin} instead.

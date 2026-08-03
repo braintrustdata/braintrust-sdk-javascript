@@ -33,8 +33,6 @@ describe("Multiple Instrumentations", () => {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // Note: dc-browser is now an npm package, no symlinks needed
-
     // Create mock embeddings module for testing multiple methods
     const embeddingsDir = path.join(nodeModulesDir, "openai/resources");
     if (!fs.existsSync(embeddingsDir)) {

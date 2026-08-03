@@ -13,7 +13,7 @@ import {
 /**
  * Base class for creating instrumentation plugins.
  *
- * Plugins subscribe to diagnostics_channel events and convert them
+ * Plugins subscribe to global instrumentation hook events and convert them
  * into spans, logs, or other observability data.
  */
 export abstract class BasePlugin {

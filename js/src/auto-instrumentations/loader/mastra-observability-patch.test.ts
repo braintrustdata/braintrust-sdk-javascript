@@ -3,6 +3,7 @@ import {
   classifyMastraTarget,
   patchMastraSource,
 } from "./mastra-observability-patch";
+import { applySpecialCasePatch } from "./special-case-patches";
 
 describe("classifyMastraTarget", () => {
   it("identifies @mastra/core main and submodule entries", () => {
@@ -113,5 +114,34 @@ describe("patchMastraSource — @mastra/observability entry", () => {
     const patched = patchMastraSource(original, "observability", "esm");
     expect(patched).not.toBe(original);
     expect(patched.length).toBeGreaterThan(original.length);
+  });
+});
+
+describe("browser special-case patches", () => {
+  it("keeps the OpenAI response-body patch enabled", () => {
+    const original = "export class APIPromise {}";
+    const patched = applySpecialCasePatch({
+      packageName: "openai",
+      modulePath: "dist/core/api-promise.mjs",
+      source: original,
+      format: "esm",
+      browser: true,
+    });
+
+    expect(patched).not.toBeNull();
+    expect(patched).not.toBe(original);
+    expect(patched).toContain(original);
+  });
+
+  it("skips Node-specific Mastra patches", () => {
+    expect(
+      applySpecialCasePatch({
+        packageName: "@mastra/core",
+        modulePath: "dist/index.js",
+        source: `export { Mastra } from "./chunk.js";`,
+        format: "esm",
+        browser: true,
+      }),
+    ).toBeNull();
   });
 });

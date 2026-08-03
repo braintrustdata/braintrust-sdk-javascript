@@ -1,7 +1,7 @@
 /**
  * @braintrust/auto-instrumentations
  *
- * Auto-instrumentation for AI SDKs using orchestrion-js and diagnostics_channel.
+ * Auto-instrumentation for AI SDKs using orchestrion-js and global hooks.
  *
  * This package provides:
  * - Instrumentation configs for orchestrion-js

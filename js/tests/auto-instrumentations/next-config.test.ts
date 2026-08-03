@@ -131,7 +131,7 @@ describe("wrapNextjsConfigWithBraintrust", () => {
         rule.loaders[0].loader.includes("webpack-loader"),
       ),
     ).toBe(true);
-    expect(config.turbopack.resolveAlias["dc-browser"]).toContain("dc-browser");
+    expect(config.turbopack.resolveAlias).toBeUndefined();
     expect(config.turbopack.rules["*.css"]).toEqual({
       loaders: ["css-loader"],
     });
@@ -143,16 +143,12 @@ describe("wrapNextjsConfigWithBraintrust", () => {
     const config = wrapNextjsConfigWithBraintrust({
       turbopack: {
         resolveAlias: {
-          "dc-browser": "/custom/dc-browser.js",
           "user-module": "/custom/user-module.js",
         },
         rules: {},
       },
     }) as any;
 
-    expect(config.turbopack.resolveAlias["dc-browser"]).toBe(
-      "/custom/dc-browser.js",
-    );
     expect(config.turbopack.resolveAlias["user-module"]).toBe(
       "/custom/user-module.js",
     );
@@ -189,14 +185,6 @@ describe("wrapNextjsConfigWithBraintrust", () => {
           resolve: (specifier: string) => {
             if (specifier === "braintrust/webpack-loader") {
               return "/braintrust/webpack-loader.cjs";
-            }
-
-            if (specifier === "braintrust/package.json") {
-              return "/braintrust/package.json";
-            }
-
-            if (specifier === "dc-browser") {
-              return "/braintrust/node_modules/dc-browser/dist/index.js";
             }
 
             throw new Error(`Cannot resolve module ${specifier}`);

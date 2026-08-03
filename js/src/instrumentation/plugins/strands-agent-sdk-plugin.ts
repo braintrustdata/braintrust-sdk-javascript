@@ -472,6 +472,29 @@ function handleMultiAgentStreamEvent(
   }
 }
 
+function buildModelSpanInput(
+  event: StrandsBeforeModelCallEvent,
+  attachmentCache: StrandsAttachmentCache,
+): unknown {
+  const systemPrompt =
+    typeof event.agent?.systemPrompt === "string" &&
+    event.agent.systemPrompt.length > 0
+      ? event.agent.systemPrompt
+      : undefined;
+  const processedMessages = Array.isArray(event.agent?.messages)
+    ? processStrandsInputAttachments(event.agent.messages, attachmentCache)
+    : undefined;
+
+  if (!systemPrompt) {
+    return processedMessages;
+  }
+
+  const systemMessage = { role: "system", content: systemPrompt };
+  return Array.isArray(processedMessages)
+    ? [systemMessage, ...processedMessages]
+    : [systemMessage];
+}
+
 function startModelSpan(
   state: AgentStreamState,
   event: StrandsBeforeModelCallEvent,
@@ -494,12 +517,7 @@ function startModelSpan(
       withSpanInstrumentationName(
         {
           event: {
-            input: Array.isArray(event.agent?.messages)
-              ? processStrandsInputAttachments(
-                  event.agent.messages,
-                  state.attachmentCache,
-                )
-              : undefined,
+            input: buildModelSpanInput(event, state.attachmentCache),
             metadata,
           },
           name: formatModelSpanName(model),
