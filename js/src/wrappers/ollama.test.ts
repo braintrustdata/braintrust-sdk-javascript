@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { debugLogger } from "../debug-logger";
 import { ollamaChannels } from "../instrumentation/plugins/ollama-channels";
 import type { OllamaClient } from "../vendor-sdk-types/ollama";
 import { wrapOllama } from "./ollama";
@@ -52,7 +53,7 @@ describe("wrapOllama", () => {
 
   it("returns unsupported objects unchanged", () => {
     const client = {};
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warn = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
 
     expect(wrapOllama(client)).toBe(client);
     expect(warn).toHaveBeenCalledWith(

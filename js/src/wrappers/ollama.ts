@@ -1,4 +1,6 @@
+import { debugLogger } from "../debug-logger";
 import { ollamaChannels } from "../instrumentation/plugins/ollama-channels";
+import { isObject } from "../../util";
 import type {
   OllamaChatRequest,
   OllamaChatResult,
@@ -20,26 +22,17 @@ export function wrapOllama<T>(ollama: T): T {
     return ollamaProxy(ollama) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Ollama library. Not wrapping.");
+  debugLogger.warn("Unsupported Ollama library. Not wrapping.");
   return ollama;
 }
 
 const ollamaProxyCache = new WeakMap<OllamaClient, OllamaClient>();
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function hasFunction(value: Record<string, unknown>, name: string): boolean {
-  return typeof value[name] === "function";
-}
-
 function isSupportedOllamaClient(value: unknown): value is OllamaClient {
   return (
-    isRecord(value) &&
-    ["chat", "generate", "embed", "embeddings"].some((name) =>
-      hasFunction(value, name),
+    isObject(value) &&
+    ["chat", "generate", "embed", "embeddings"].some(
+      (name) => typeof value[name] === "function",
     )
   );
 }
