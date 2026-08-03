@@ -16,7 +16,7 @@ export default defineConfig({
     ...(manual
       ? []
       : [braintrustVitePlugin({ useDiagnosticChannelCompatShim: true })]),
-    cloudflare(),
+    cloudflare({ inspectorPort: 0 }),
   ],
   resolve: {
     alias: {

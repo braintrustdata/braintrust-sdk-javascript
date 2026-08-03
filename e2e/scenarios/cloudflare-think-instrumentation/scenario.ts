@@ -1,4 +1,5 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { once } from "node:events";
 import { writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -37,6 +38,7 @@ const child = spawn(
     "--force",
   ],
   {
+    detached: process.platform !== "win32",
     env: process.env,
     stdio: ["ignore", "pipe", "pipe"],
   },
@@ -63,10 +65,7 @@ try {
     throw new Error(`Unexpected Think result: ${body}`);
   }
 } finally {
-  child.kill("SIGTERM");
-  if (child.exitCode === null) {
-    await new Promise<void>((resolve) => child.once("close", () => resolve()));
-  }
+  await stopChild(child);
 }
 
 async function waitUntilReady(url: string): Promise<void> {
@@ -94,4 +93,41 @@ function requiredEnv(name: string): string {
     throw new Error(`Missing ${name}`);
   }
   return value;
+}
+
+async function stopChild(child: ChildProcessWithoutNullStreams): Promise<void> {
+  if (child.exitCode !== null) {
+    return;
+  }
+
+  try {
+    if (process.platform !== "win32" && child.pid) {
+      process.kill(-child.pid, "SIGTERM");
+    } else {
+      child.kill("SIGTERM");
+    }
+  } catch {
+    // The process may have exited between the status check and the signal.
+  }
+
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    once(child, "exit"),
+    new Promise<void>((resolve) => {
+      timeout = setTimeout(resolve, 2_000);
+    }),
+  ]);
+  clearTimeout(timeout);
+
+  if (child.exitCode === null) {
+    try {
+      if (process.platform !== "win32" && child.pid) {
+        process.kill(-child.pid, "SIGKILL");
+      } else {
+        child.kill("SIGKILL");
+      }
+    } catch {
+      // The process may have exited before the forced shutdown.
+    }
+  }
 }

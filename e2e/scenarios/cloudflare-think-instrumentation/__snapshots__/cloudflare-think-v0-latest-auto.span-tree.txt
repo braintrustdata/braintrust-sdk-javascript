@@ -30,6 +30,8 @@ span_tree:
     }
     ├── doStream [llm]
     │   input: {
+    │     "abortSignal": "[AbortSignal]",
+    │     "includeRawChunks": false,
     │     "prompt": [
     │       {
     │         "content": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
@@ -50,38 +52,235 @@ span_tree:
     │     },
     │     "tools": [
     │       {
+    │         "description": "Read a workspace file. Text files return line-numbered content. Images and PDFs are passed to capable models as file content. Use offset and limit for large text files. Returns null if the file does not exist.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "limit": {
+    │               "description": "Number of lines to read",
+    │               "maximum": 9007199254740991,
+    │               "minimum": 1,
+    │               "type": "integer"
+    │             },
+    │             "offset": {
+    │               "description": "1-indexed line number to start reading from",
+    │               "maximum": 9007199254740991,
+    │               "minimum": 1,
+    │               "type": "integer"
+    │             },
+    │             "path": {
+    │               "description": "Absolute path to the file",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "path"
+    │           ],
+    │           "type": "object"
+    │         },
     │         "name": "read",
     │         "type": "function"
     │       },
     │       {
+    │         "description": "Write content to a file. Creates the file if it does not exist, overwrites if it does. Parent directories are created automatically.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "content": {
+    │               "description": "Content to write to the file",
+    │               "type": "string"
+    │             },
+    │             "path": {
+    │               "description": "Absolute path to the file",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "path",
+    │             "content"
+    │           ],
+    │           "type": "object"
+    │         },
     │         "name": "write",
     │         "type": "function"
     │       },
     │       {
+    │         "description": "Make a targeted edit to a file by replacing an exact string match. Provide the old_string to find and new_string to replace it with. The old_string must match exactly (including whitespace and indentation). Use an empty old_string with new_string to create a new file.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "new_string": {
+    │               "description": "Replacement text",
+    │               "type": "string"
+    │             },
+    │             "old_string": {
+    │               "description": "Exact text to find and replace. Empty string to create a new file.",
+    │               "type": "string"
+    │             },
+    │             "path": {
+    │               "description": "Absolute path to the file",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "path",
+    │             "old_string",
+    │             "new_string"
+    │           ],
+    │           "type": "object"
+    │         },
     │         "name": "edit",
     │         "type": "function"
     │       },
     │       {
+    │         "description": "List files and directories in a given path. Returns names, types, and sizes for each entry.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "limit": {
+    │               "description": "Maximum number of entries to return (default: 200)",
+    │               "maximum": 1000,
+    │               "minimum": 1,
+    │               "type": "integer"
+    │             },
+    │             "offset": {
+    │               "description": "Number of entries to skip (for pagination)",
+    │               "maximum": 9007199254740991,
+    │               "minimum": 0,
+    │               "type": "integer"
+    │             },
+    │             "path": {
+    │               "default": "/",
+    │               "description": "Absolute path to the directory to list",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "type": "object"
+    │         },
     │         "name": "list",
     │         "type": "function"
     │       },
     │       {
+    │         "description": "Find files matching a glob pattern. Supports standard glob syntax: * matches any file, ** matches directories recursively, ? matches a single character. Returns matching file paths with types and sizes.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "pattern": {
+    │               "description": "Glob pattern to match (e.g. \"**/*.ts\", \"src/**/*.test.ts\", \"*.md\")",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "pattern"
+    │           ],
+    │           "type": "object"
+    │         },
     │         "name": "find",
     │         "type": "function"
     │       },
     │       {
+    │         "description": "Search file contents using a regular expression or fixed string. Returns matching lines with file paths and line numbers. Searches all files matching the include glob, or all files if not specified.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "caseSensitive": {
+    │               "description": "If true, search is case-sensitive (default: false)",
+    │               "type": "boolean"
+    │             },
+    │             "contextLines": {
+    │               "description": "Number of context lines around each match (default: 0)",
+    │               "maximum": 10,
+    │               "minimum": 0,
+    │               "type": "integer"
+    │             },
+    │             "fixedString": {
+    │               "description": "If true, treat query as a literal string instead of regex",
+    │               "type": "boolean"
+    │             },
+    │             "include": {
+    │               "description": "Glob pattern to filter files (e.g. \"**/*.ts\"). Defaults to \"**/*\"",
+    │               "type": "string"
+    │             },
+    │             "query": {
+    │               "description": "Search pattern (regex or fixed string)",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "query"
+    │           ],
+    │           "type": "object"
+    │         },
     │         "name": "grep",
     │         "type": "function"
     │       },
     │       {
+    │         "description": "Delete a file or directory. Set recursive to true to remove non-empty directories.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "path": {
+    │               "description": "Absolute path to the file or directory",
+    │               "type": "string"
+    │             },
+    │             "recursive": {
+    │               "description": "If true, remove directories and their contents recursively",
+    │               "type": "boolean"
+    │             }
+    │           },
+    │           "required": [
+    │             "path"
+    │           ],
+    │           "type": "object"
+    │         },
     │         "name": "delete",
     │         "type": "function"
     │       },
     │       {
+    │         "description": "Run a Bash script against the workspace. Use for shell-style workflows that combine multiple file operations. The script runs in a sandboxed virtual filesystem with the workspace mounted at `/` (also the default working directory) — there is no `/workspace` or `/home`; use absolute paths like `/notes.txt`. Changed files are written back to the workspace.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "cwd": {
+    │               "description": "Working directory for the script. Defaults to / (the workspace root)",
+    │               "type": "string"
+    │             },
+    │             "script": {
+    │               "description": "Bash script to run",
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "script"
+    │           ],
+    │           "type": "object"
+    │         },
     │         "name": "bash",
     │         "type": "function"
     │       },
     │       {
+    │         "description": "Get deterministic weather for a city.",
+    │         "inputSchema": {
+    │           "$schema": "http://json-schema.org/draft-07/schema#",
+    │           "additionalProperties": false,
+    │           "properties": {
+    │             "city": {
+    │               "type": "string"
+    │             }
+    │           },
+    │           "required": [
+    │             "city"
+    │           ],
+    │           "type": "object"
+    │         },
     │         "name": "lookup_weather",
     │         "type": "function"
     │       }
@@ -100,7 +299,32 @@ span_tree:
     │         "toolName": "lookup_weather",
     │         "type": "tool-call"
     │       }
-    │     ]
+    │     ],
+    │     "usage": {
+    │       "inputTokens": {
+    │         "cacheRead": 0,
+    │         "noCache": 1042,
+    │         "total": 1042
+    │       },
+    │       "outputTokens": {
+    │         "reasoning": 320,
+    │         "text": 24,
+    │         "total": 344
+    │       },
+    │       "raw": {
+    │         "completion_tokens": 344,
+    │         "completion_tokens_details": {
+    │           "accepted_prediction_tokens": 0,
+    │           "reasoning_tokens": 320,
+    │           "rejected_prediction_tokens": 0
+    │         },
+    │         "prompt_tokens": 1042,
+    │         "prompt_tokens_details": {
+    │           "cached_tokens": 0
+    │         },
+    │         "total_tokens": 1386
+    │       }
+    │     }
     │   }
     │   metadata: {
     │     "model": "gpt-5-nano",
@@ -122,6 +346,8 @@ span_tree:
     │   }
     └── doStream [llm]
         input: {
+          "abortSignal": "[AbortSignal]",
+          "includeRawChunks": false,
           "prompt": [
             {
               "content": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
@@ -173,38 +399,235 @@ span_tree:
           },
           "tools": [
             {
+              "description": "Read a workspace file. Text files return line-numbered content. Images and PDFs are passed to capable models as file content. Use offset and limit for large text files. Returns null if the file does not exist.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "limit": {
+                    "description": "Number of lines to read",
+                    "maximum": 9007199254740991,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "offset": {
+                    "description": "1-indexed line number to start reading from",
+                    "maximum": 9007199254740991,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "path": {
+                    "description": "Absolute path to the file",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
               "name": "read",
               "type": "function"
             },
             {
+              "description": "Write content to a file. Creates the file if it does not exist, overwrites if it does. Parent directories are created automatically.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "description": "Content to write to the file",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "Absolute path to the file",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ],
+                "type": "object"
+              },
               "name": "write",
               "type": "function"
             },
             {
+              "description": "Make a targeted edit to a file by replacing an exact string match. Provide the old_string to find and new_string to replace it with. The old_string must match exactly (including whitespace and indentation). Use an empty old_string with new_string to create a new file.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "new_string": {
+                    "description": "Replacement text",
+                    "type": "string"
+                  },
+                  "old_string": {
+                    "description": "Exact text to find and replace. Empty string to create a new file.",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "Absolute path to the file",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "old_string",
+                  "new_string"
+                ],
+                "type": "object"
+              },
               "name": "edit",
               "type": "function"
             },
             {
+              "description": "List files and directories in a given path. Returns names, types, and sizes for each entry.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "limit": {
+                    "description": "Maximum number of entries to return (default: 200)",
+                    "maximum": 1000,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "offset": {
+                    "description": "Number of entries to skip (for pagination)",
+                    "maximum": 9007199254740991,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "path": {
+                    "default": "/",
+                    "description": "Absolute path to the directory to list",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
               "name": "list",
               "type": "function"
             },
             {
+              "description": "Find files matching a glob pattern. Supports standard glob syntax: * matches any file, ** matches directories recursively, ? matches a single character. Returns matching file paths with types and sizes.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "pattern": {
+                    "description": "Glob pattern to match (e.g. \"**/*.ts\", \"src/**/*.test.ts\", \"*.md\")",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "pattern"
+                ],
+                "type": "object"
+              },
               "name": "find",
               "type": "function"
             },
             {
+              "description": "Search file contents using a regular expression or fixed string. Returns matching lines with file paths and line numbers. Searches all files matching the include glob, or all files if not specified.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "caseSensitive": {
+                    "description": "If true, search is case-sensitive (default: false)",
+                    "type": "boolean"
+                  },
+                  "contextLines": {
+                    "description": "Number of context lines around each match (default: 0)",
+                    "maximum": 10,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "fixedString": {
+                    "description": "If true, treat query as a literal string instead of regex",
+                    "type": "boolean"
+                  },
+                  "include": {
+                    "description": "Glob pattern to filter files (e.g. \"**/*.ts\"). Defaults to \"**/*\"",
+                    "type": "string"
+                  },
+                  "query": {
+                    "description": "Search pattern (regex or fixed string)",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "type": "object"
+              },
               "name": "grep",
               "type": "function"
             },
             {
+              "description": "Delete a file or directory. Set recursive to true to remove non-empty directories.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "description": "Absolute path to the file or directory",
+                    "type": "string"
+                  },
+                  "recursive": {
+                    "description": "If true, remove directories and their contents recursively",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
               "name": "delete",
               "type": "function"
             },
             {
+              "description": "Run a Bash script against the workspace. Use for shell-style workflows that combine multiple file operations. The script runs in a sandboxed virtual filesystem with the workspace mounted at `/` (also the default working directory) — there is no `/workspace` or `/home`; use absolute paths like `/notes.txt`. Changed files are written back to the workspace.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "cwd": {
+                    "description": "Working directory for the script. Defaults to / (the workspace root)",
+                    "type": "string"
+                  },
+                  "script": {
+                    "description": "Bash script to run",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "script"
+                ],
+                "type": "object"
+              },
               "name": "bash",
               "type": "function"
             },
             {
+              "description": "Get deterministic weather for a city.",
+              "inputSchema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "additionalProperties": false,
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "city"
+                ],
+                "type": "object"
+              },
               "name": "lookup_weather",
               "type": "function"
             }
@@ -216,7 +639,32 @@ span_tree:
             "unified": "stop"
           },
           "text": "Vienna is sunny and 21°C.",
-          "toolCalls": []
+          "toolCalls": [],
+          "usage": {
+            "inputTokens": {
+              "cacheRead": 0,
+              "noCache": 1087,
+              "total": 1087
+            },
+            "outputTokens": {
+              "reasoning": 192,
+              "text": 18,
+              "total": 210
+            },
+            "raw": {
+              "completion_tokens": 210,
+              "completion_tokens_details": {
+                "accepted_prediction_tokens": 0,
+                "reasoning_tokens": 192,
+                "rejected_prediction_tokens": 0
+              },
+              "prompt_tokens": 1087,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              },
+              "total_tokens": 1297
+            }
+          }
         }
         metadata: {
           "model": "gpt-5-nano",

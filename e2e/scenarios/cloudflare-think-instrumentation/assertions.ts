@@ -160,15 +160,8 @@ function stableThinkSpanFields(event: CapturedLogEvent): SpanTreeFields {
   const isTask = event.span.name === "Think.runTurn";
 
   return {
-    input: isTask
-      ? taskUserInput(event.input)
-      : event.span.type === "llm"
-        ? stableModelInput(event.input)
-        : event.input,
-    output:
-      event.span.type === "llm"
-        ? stableModelOutput(event.output)
-        : event.output,
+    input: isTask ? taskUserInput(event.input) : event.input,
+    output: event.output,
     metadata: metadata
       ? {
           braintrust: isTask ? metadata.braintrust : undefined,
@@ -183,41 +176,6 @@ function stableThinkSpanFields(event: CapturedLogEvent): SpanTreeFields {
           tokens: metrics.tokens,
         }
       : undefined,
-  };
-}
-
-function stableModelInput(input: unknown): unknown {
-  if (typeof input !== "object" || input === null) {
-    return input;
-  }
-
-  const inputRecord = input as Record<string, unknown>;
-  return {
-    prompt: inputRecord.prompt,
-    toolChoice: inputRecord.toolChoice,
-    tools: Array.isArray(inputRecord.tools)
-      ? inputRecord.tools.map((tool) =>
-          typeof tool === "object" && tool !== null
-            ? {
-                name: (tool as Record<string, unknown>).name,
-                type: (tool as Record<string, unknown>).type,
-              }
-            : tool,
-        )
-      : inputRecord.tools,
-  };
-}
-
-function stableModelOutput(output: unknown): unknown {
-  if (typeof output !== "object" || output === null) {
-    return output;
-  }
-
-  const outputRecord = output as Record<string, unknown>;
-  return {
-    finishReason: outputRecord.finishReason,
-    text: outputRecord.text,
-    toolCalls: outputRecord.toolCalls,
   };
 }
 
