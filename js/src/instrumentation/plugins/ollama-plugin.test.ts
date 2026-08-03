@@ -1,14 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import iso from "../../isomorph";
+import { configureNode } from "../../node/config";
 import {
   aggregateOllamaChatChunks,
   aggregateOllamaGenerateChunks,
   extractOllamaChatInput,
   extractOllamaChatOutput,
   extractOllamaEmbedOutput,
-  extractOllamaEmbeddingsOutput,
   extractOllamaGenerateInput,
   extractOllamaMetrics,
 } from "./ollama-plugin";
+
+configureNode();
 
 describe("Ollama instrumentation extraction", () => {
   it("normalizes chat inputs, tools, and supported request metadata", () => {
@@ -28,12 +31,40 @@ describe("Ollama instrumentation extraction", () => {
                   arguments: { city: "Paris" },
                 },
               },
+              {
+                function: {
+                  name: "get_forecast",
+                  arguments: { city: "Paris" },
+                },
+              },
             ],
+          },
+          {
+            role: "tool",
+            tool_name: "get_forecast",
+            content: '{"forecast":"sunny"}',
           },
           {
             role: "tool",
             tool_name: "get_weather",
             content: '{"temperature":18}',
+          },
+          {
+            role: "assistant",
+            content: "",
+            tool_calls: [
+              {
+                function: {
+                  name: "get_weather",
+                  arguments: { city: "Paris" },
+                },
+              },
+            ],
+          },
+          {
+            role: "tool",
+            tool_name: "get_weather",
+            content: '{"temperature":19}',
           },
         ],
         tools: [
@@ -78,12 +109,44 @@ describe("Ollama instrumentation extraction", () => {
               arguments: '{"city":"Paris"}',
             },
           },
+          {
+            id: "ollama_call_get_forecast_1",
+            type: "function",
+            function: {
+              name: "get_forecast",
+              arguments: '{"city":"Paris"}',
+            },
+          },
         ],
+      },
+      {
+        role: "tool",
+        tool_call_id: "ollama_call_get_forecast_1",
+        content: '{"forecast":"sunny"}',
       },
       {
         role: "tool",
         tool_call_id: "ollama_call_get_weather_0",
         content: '{"temperature":18}',
+      },
+      {
+        role: "assistant",
+        content: null,
+        tool_calls: [
+          {
+            id: "ollama_call_get_weather_2",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"city":"Paris"}',
+            },
+          },
+        ],
+      },
+      {
+        role: "tool",
+        tool_call_id: "ollama_call_get_weather_2",
+        content: '{"temperature":19}',
       },
     ]);
     expect(result.metadata).toEqual({
@@ -149,6 +212,63 @@ describe("Ollama instrumentation extraction", () => {
         },
       },
     });
+  });
+
+  it("converts local image paths into attachments", () => {
+    const statSync = vi
+      .spyOn(iso, "statSync")
+      .mockReturnValue({ isFile: () => true });
+    const result = extractOllamaGenerateInput([
+      {
+        model: "llava",
+        prompt: "Describe this image.",
+        images: ["/tmp/example.webp"],
+      },
+    ]);
+    statSync.mockRestore();
+
+    const content = (
+      result.input as Array<{
+        content: Array<{
+          type: string;
+          image_url?: { url?: { reference?: unknown } };
+        }>;
+      }>
+    )[0].content;
+    expect(content[1]).toMatchObject({
+      type: "image_url",
+      image_url: {
+        url: {
+          reference: {
+            type: "braintrust_attachment",
+            filename: "example.webp",
+            content_type: "image/webp",
+          },
+        },
+      },
+    });
+  });
+
+  it("preserves image-looking strings that are not readable local paths", () => {
+    const statSync = vi.spyOn(iso, "statSync").mockImplementation(() => {
+      throw new Error("missing");
+    });
+    const result = extractOllamaGenerateInput([
+      {
+        model: "llava",
+        prompt: "Describe this image.",
+        images: ["missing.webp"],
+      },
+    ]);
+    statSync.mockRestore();
+
+    expect(result.input).toEqual([
+      {
+        role: "user",
+        content: "Describe this image.",
+        images: ["missing.webp"],
+      },
+    ]);
   });
 
   it("normalizes chat output and tool calls as OpenAI choices", () => {
@@ -235,6 +355,18 @@ describe("Ollama instrumentation extraction", () => {
         eval_count: Number.NaN,
       }),
     ).toEqual({});
+    expect(
+      extractOllamaMetrics({
+        prompt_eval_count: Number.NaN,
+        eval_count: 3,
+      }),
+    ).toEqual({ completion_tokens: 3, tokens: 3 });
+    expect(
+      extractOllamaMetrics({
+        prompt_eval_count: 7,
+        eval_count: -1,
+      }),
+    ).toEqual({ prompt_tokens: 7, tokens: 7 });
   });
 
   it("aggregates chat and generation streams into final outputs", () => {
@@ -302,7 +434,7 @@ describe("Ollama instrumentation extraction", () => {
     });
   });
 
-  it("summarizes current and legacy embedding responses", () => {
+  it("summarizes embedding responses", () => {
     expect(
       extractOllamaEmbedOutput({
         model: "embeddinggemma",
@@ -312,10 +444,5 @@ describe("Ollama instrumentation extraction", () => {
         ],
       }),
     ).toEqual({ embedding_length: 3 });
-    expect(
-      extractOllamaEmbeddingsOutput({
-        embedding: [0.1, 0.2],
-      }),
-    ).toEqual({ embedding_length: 2 });
   });
 });

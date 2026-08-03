@@ -273,28 +273,6 @@
           }
         },
         {
-          "name": "ollama-embeddings-operation",
-          "children": [
-            {
-              "name": "ollama.embeddings",
-              "type": "llm",
-              "children": [],
-              "input": "braintrust tracing",
-              "output": {
-                "embedding_length": 3
-              },
-              "metadata": {
-                "model": "all-minilm",
-                "provider": "ollama"
-              }
-            }
-          ],
-          "metadata": {
-            "operation": "embeddings",
-            "testRunId": "<run:1>"
-          }
-        },
-        {
           "name": "ollama-error-operation",
           "children": [
             {

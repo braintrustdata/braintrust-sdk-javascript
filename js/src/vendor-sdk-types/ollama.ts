@@ -62,12 +62,6 @@ export interface OllamaEmbedRequest {
   options?: OllamaOptions;
 }
 
-export interface OllamaEmbeddingsRequest {
-  model: string;
-  prompt: string;
-  options?: OllamaOptions;
-}
-
 export interface OllamaUsageResponse {
   model?: string;
   prompt_eval_count?: number;
@@ -91,10 +85,6 @@ export interface OllamaEmbedResponse extends OllamaUsageResponse {
   embeddings?: number[][];
 }
 
-export interface OllamaEmbeddingsResponse {
-  embedding?: number[];
-}
-
 export interface OllamaAsyncIterator<T> extends AsyncIterable<T> {
   abort?: () => void;
 }
@@ -111,7 +101,4 @@ export interface OllamaClient {
   chat?: (request: OllamaChatRequest) => Promise<OllamaChatResult>;
   generate?: (request: OllamaGenerateRequest) => Promise<OllamaGenerateResult>;
   embed?: (request: OllamaEmbedRequest) => Promise<OllamaEmbedResponse>;
-  embeddings?: (
-    request: OllamaEmbeddingsRequest,
-  ) => Promise<OllamaEmbeddingsResponse>;
 }

@@ -5,8 +5,6 @@ import type {
   OllamaChatResult,
   OllamaEmbedRequest,
   OllamaEmbedResponse,
-  OllamaEmbeddingsRequest,
-  OllamaEmbeddingsResponse,
   OllamaGenerateRequest,
   OllamaGenerateResponse,
   OllamaGenerateResult,
@@ -36,10 +34,6 @@ export const ollamaChannels = defineChannels(
     }),
     embed: channel<[OllamaEmbedRequest], OllamaEmbedResponse>({
       channelName: "embed",
-      kind: "async",
-    }),
-    embeddings: channel<[OllamaEmbeddingsRequest], OllamaEmbeddingsResponse>({
-      channelName: "embeddings",
       kind: "async",
     }),
   },

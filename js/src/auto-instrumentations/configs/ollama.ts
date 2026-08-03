@@ -5,7 +5,6 @@ const methods = [
   ["chat", ollamaChannels.chat.channelName],
   ["generate", ollamaChannels.generate.channelName],
   ["embed", ollamaChannels.embed.channelName],
-  ["embeddings", ollamaChannels.embeddings.channelName],
 ] as const;
 
 // Ollama's Node entry points in dist/index.{mjs,cjs} subclass the Ollama class

@@ -10,7 +10,6 @@ import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import {
   EMBEDDING_MODEL,
   GENERATION_MODEL,
-  LEGACY_EMBEDDING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -54,7 +53,6 @@ function selectedEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
     ["ollama-generate-stream-operation", "ollama.generate"],
     ["ollama-tool-call-operation", "ollama.chat"],
     ["ollama-embed-operation", "ollama.embed"],
-    ["ollama-embeddings-operation", "ollama.embeddings"],
     ["ollama-error-operation", "ollama.chat"],
   ] as const;
   return [
@@ -180,16 +178,11 @@ export function defineOllamaInstrumentationAssertions(options: {
       });
     });
 
-    test("captures current and legacy embedding calls compactly", () => {
+    test("captures embedding calls compactly", () => {
       const embed = findProviderSpan(
         events,
         "ollama-embed-operation",
         "ollama.embed",
-      );
-      const embeddings = findProviderSpan(
-        events,
-        "ollama-embeddings-operation",
-        "ollama.embeddings",
       );
 
       expect(embed?.row.metadata).toMatchObject({
@@ -201,12 +194,6 @@ export function defineOllamaInstrumentationAssertions(options: {
         prompt_tokens: 4,
         tokens: 4,
       });
-
-      expect(embeddings?.row.metadata).toMatchObject({
-        model: LEGACY_EMBEDDING_MODEL,
-        provider: "ollama",
-      });
-      expect(embeddings?.output).toEqual({ embedding_length: 3 });
     });
 
     test("captures provider errors without changing caller behavior", () => {

@@ -224,20 +224,6 @@ span_tree:
     │         "prompt_tokens": 4,
     │         "tokens": 4
     │       }
-    ├── ollama-embeddings-operation
-    │   metadata: {
-    │     "operation": "embeddings",
-    │     "testRunId": "<run:1>"
-    │   }
-    │   └── ollama.embeddings [llm]
-    │       input: "braintrust tracing"
-    │       output: {
-    │         "embedding_length": 3
-    │       }
-    │       metadata: {
-    │         "model": "all-minilm",
-    │         "provider": "ollama"
-    │       }
     └── ollama-error-operation
         metadata: {
           "operation": "error",

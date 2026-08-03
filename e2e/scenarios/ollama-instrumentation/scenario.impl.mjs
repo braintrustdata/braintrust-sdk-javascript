@@ -7,7 +7,6 @@ import {
 import {
   EMBEDDING_MODEL,
   GENERATION_MODEL,
-  LEGACY_EMBEDDING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -51,10 +50,6 @@ async function syntheticFetch(input, init) {
       total_duration: 100,
       load_duration: 10,
     });
-  }
-
-  if (url.endsWith("/api/embeddings")) {
-    return jsonResponse({ embedding: [0.1, 0.2, 0.3] });
   }
 
   if (url.endsWith("/api/chat") && Array.isArray(body.tools)) {
@@ -208,17 +203,6 @@ async function runOllamaInstrumentationScenario(
           input: ["braintrust tracing", "ollama instrumentation"],
         });
       });
-
-      await runOperation(
-        "ollama-embeddings-operation",
-        "embeddings",
-        async () => {
-          await syntheticClient.embeddings({
-            model: LEGACY_EMBEDDING_MODEL,
-            prompt: "braintrust tracing",
-          });
-        },
-      );
 
       await runOperation("ollama-error-operation", "error", async () => {
         try {

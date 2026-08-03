@@ -7,8 +7,6 @@ import type {
   OllamaClient,
   OllamaEmbedRequest,
   OllamaEmbedResponse,
-  OllamaEmbeddingsRequest,
-  OllamaEmbeddingsResponse,
   OllamaGenerateRequest,
   OllamaGenerateResult,
 } from "../vendor-sdk-types/ollama";
@@ -31,7 +29,7 @@ const ollamaProxyCache = new WeakMap<OllamaClient, OllamaClient>();
 function isSupportedOllamaClient(value: unknown): value is OllamaClient {
   return (
     isObject(value) &&
-    ["chat", "generate", "embed", "embeddings"].some(
+    ["chat", "generate", "embed"].some(
       (name) => typeof value[name] === "function",
     )
   );
@@ -43,25 +41,49 @@ function ollamaProxy(ollama: OllamaClient): OllamaClient {
     return cached;
   }
 
+  let chatSource: OllamaClient["chat"];
+  let wrappedChat: OllamaClient["chat"];
+  let generateSource: OllamaClient["generate"];
+  let wrappedGenerate: OllamaClient["generate"];
+  let embedSource: OllamaClient["embed"];
+  let wrappedEmbed: OllamaClient["embed"];
+
   const proxy = new Proxy(ollama, {
     get(target, prop, receiver) {
       switch (prop) {
-        case "chat":
-          return typeof target.chat === "function"
-            ? wrapChat(target.chat.bind(target))
-            : target.chat;
-        case "generate":
-          return typeof target.generate === "function"
-            ? wrapGenerate(target.generate.bind(target))
-            : target.generate;
-        case "embed":
-          return typeof target.embed === "function"
-            ? wrapEmbed(target.embed.bind(target))
-            : target.embed;
-        case "embeddings":
-          return typeof target.embeddings === "function"
-            ? wrapEmbeddings(target.embeddings.bind(target))
-            : target.embeddings;
+        case "chat": {
+          const source = target.chat;
+          if (source !== chatSource) {
+            chatSource = source;
+            wrappedChat =
+              typeof source === "function"
+                ? wrapChat(source.bind(target))
+                : source;
+          }
+          return wrappedChat;
+        }
+        case "generate": {
+          const source = target.generate;
+          if (source !== generateSource) {
+            generateSource = source;
+            wrappedGenerate =
+              typeof source === "function"
+                ? wrapGenerate(source.bind(target))
+                : source;
+          }
+          return wrappedGenerate;
+        }
+        case "embed": {
+          const source = target.embed;
+          if (source !== embedSource) {
+            embedSource = source;
+            wrappedEmbed =
+              typeof source === "function"
+                ? wrapEmbed(source.bind(target))
+                : source;
+          }
+          return wrappedEmbed;
+        }
         default:
           return Reflect.get(target, prop, receiver);
       }
@@ -95,17 +117,6 @@ function wrapEmbed(
 ): NonNullable<OllamaClient["embed"]> {
   return (request) =>
     ollamaChannels.embed.tracePromise(() => embed(request), {
-      arguments: [request],
-    });
-}
-
-function wrapEmbeddings(
-  embeddings: (
-    request: OllamaEmbeddingsRequest,
-  ) => Promise<OllamaEmbeddingsResponse>,
-): NonNullable<OllamaClient["embeddings"]> {
-  return (request) =>
-    ollamaChannels.embeddings.tracePromise(() => embeddings(request), {
       arguments: [request],
     });
 }

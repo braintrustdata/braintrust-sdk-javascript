@@ -13,7 +13,6 @@ describe("wrapOllama", () => {
       })),
       generate: vi.fn(async () => ({ response: "OK", done: true })),
       embed: vi.fn(async () => ({ embeddings: [[0.1, 0.2]] })),
-      embeddings: vi.fn(async () => ({ embedding: [0.1, 0.2] })),
     };
     const chatSpy = vi
       .spyOn(ollamaChannels.chat, "tracePromise")
@@ -24,11 +23,10 @@ describe("wrapOllama", () => {
     const embedSpy = vi
       .spyOn(ollamaChannels.embed, "tracePromise")
       .mockImplementation((fn) => fn());
-    const embeddingsSpy = vi
-      .spyOn(ollamaChannels.embeddings, "tracePromise")
-      .mockImplementation((fn) => fn());
-
     const wrapped = wrapOllama(client);
+    expect(wrapped.chat).toBe(wrapped.chat);
+    expect(wrapped.generate).toBe(wrapped.generate);
+    expect(wrapped.embed).toBe(wrapped.embed);
     await wrapped.chat?.({
       model: "gpt-oss:20b",
       messages: [{ role: "user", content: "Say OK." }],
@@ -38,15 +36,10 @@ describe("wrapOllama", () => {
       prompt: "Say OK.",
     });
     await wrapped.embed?.({ model: "embeddinggemma", input: "hello" });
-    await wrapped.embeddings?.({
-      model: "all-minilm",
-      prompt: "hello",
-    });
 
     expect(chatSpy).toHaveBeenCalledOnce();
     expect(generateSpy).toHaveBeenCalledOnce();
     expect(embedSpy).toHaveBeenCalledOnce();
-    expect(embeddingsSpy).toHaveBeenCalledOnce();
     expect(wrapOllama(client)).toBe(wrapped);
     expect(wrapOllama(wrapped)).toBe(wrapped);
   });
@@ -59,5 +52,36 @@ describe("wrapOllama", () => {
     expect(warn).toHaveBeenCalledWith(
       "Unsupported Ollama library. Not wrapping.",
     );
+  });
+
+  it("refreshes stable wrappers when client methods change", async () => {
+    const originalChat = vi.fn(async () => ({
+      message: { role: "assistant", content: "original" },
+      done: true,
+    }));
+    const client: OllamaClient = { chat: originalChat };
+    const tracePromise = vi
+      .spyOn(ollamaChannels.chat, "tracePromise")
+      .mockImplementation((fn) => fn());
+    const wrapped = wrapOllama(client);
+    const firstWrappedChat = wrapped.chat;
+
+    expect(firstWrappedChat).toBe(wrapped.chat);
+
+    const replacementChat = vi.fn(async () => ({
+      message: { role: "assistant", content: "replacement" },
+      done: true,
+    }));
+    client.chat = replacementChat;
+
+    expect(wrapped.chat).not.toBe(firstWrappedChat);
+    expect(wrapped.chat).toBe(wrapped.chat);
+    await wrapped.chat?.({ model: "gpt-oss:20b", messages: [] });
+    expect(originalChat).not.toHaveBeenCalled();
+    expect(replacementChat).toHaveBeenCalledOnce();
+
+    client.chat = undefined;
+    expect(wrapped.chat).toBeUndefined();
+    tracePromise.mockRestore();
   });
 });

@@ -1,9 +1,10 @@
 import { SpanTypeAttribute, isObject } from "../../../util/index";
+import iso from "../../isomorph";
+import { Attachment } from "../../logger";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
 import type {
   OllamaChatResponse,
   OllamaEmbedResponse,
-  OllamaEmbeddingsResponse,
   OllamaGenerateResponse,
   OllamaMessage,
   OllamaTool,
@@ -46,13 +47,6 @@ export class OllamaPlugin extends BasePlugin {
         extractOutput: extractOllamaEmbedOutput,
         extractMetadata: extractOllamaResponseMetadata,
         extractMetrics: extractOllamaMetrics,
-      }),
-      traceAsyncChannel(ollamaChannels.embeddings, {
-        name: "ollama.embeddings",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractOllamaEmbeddingsInput,
-        extractOutput: extractOllamaEmbeddingsOutput,
-        extractMetrics: () => ({}),
       }),
     );
   }
@@ -133,13 +127,14 @@ function normalizeToolCall(
 
 function normalizeToolCalls(
   toolCalls: OllamaToolCall[] | undefined,
+  syntheticIdOffset = 0,
 ): Record<string, unknown>[] {
   if (!Array.isArray(toolCalls)) {
     return [];
   }
 
   return toolCalls.flatMap((toolCall, index) => {
-    const normalized = normalizeToolCall(toolCall, index);
+    const normalized = normalizeToolCall(toolCall, syntheticIdOffset + index);
     return normalized ? [normalized] : [];
   });
 }
@@ -209,19 +204,52 @@ function normalizeTextAndImages(
   const imageParts: Record<string, unknown>[] = [];
   const unrecognizedImages: unknown[] = [];
   for (const image of images) {
-    const mediaType = inferImageMediaType(image);
+    let localImagePath: string | undefined;
+    let localPathMediaType: string | undefined;
+    if (
+      typeof image === "string" &&
+      !/^data:/i.test(image) &&
+      !/^https?:\/\//i.test(image)
+    ) {
+      const extension = image.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+      const extensionMediaType = {
+        png: "image/png",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        gif: "image/gif",
+        webp: "image/webp",
+      }[extension ?? ""];
+      if (extensionMediaType && iso.statSync) {
+        try {
+          if (iso.statSync(image).isFile()) {
+            localImagePath = image;
+            localPathMediaType = extensionMediaType;
+          }
+        } catch {
+          // Ollama treats unreadable strings as base64, so preserve them below.
+        }
+      }
+    }
+
+    const mediaType = localPathMediaType ?? inferImageMediaType(image);
     if (!mediaType) {
       unrecognizedImages.push(image);
       continue;
     }
-    const processed = processInputAttachments({
-      type: "image",
-      image,
-      mediaType,
-    });
+    const processedImage = localImagePath
+      ? new Attachment({
+          data: localImagePath,
+          filename: localImagePath.split(/[\\/]/).at(-1) ?? "image",
+          contentType: mediaType,
+        })
+      : processInputAttachments({
+          type: "image",
+          image,
+          mediaType,
+        }).image;
     imageParts.push({
       type: "image_url",
-      image_url: { url: processed.image },
+      image_url: { url: processedImage },
     });
   }
 
@@ -236,12 +264,17 @@ function normalizeTextAndImages(
 
 function normalizeMessage(
   message: OllamaMessage,
+  toolCallId?: string,
+  syntheticToolCallIdOffset = 0,
 ): Record<string, unknown> | undefined {
   if (typeof message.role !== "string") {
     return undefined;
   }
 
-  const toolCalls = normalizeToolCalls(message.tool_calls);
+  const toolCalls = normalizeToolCalls(
+    message.tool_calls,
+    syntheticToolCallIdOffset,
+  );
   if (message.role === "tool") {
     const toolName =
       typeof message.tool_name === "string" && message.tool_name.length > 0
@@ -249,7 +282,7 @@ function normalizeMessage(
         : "tool";
     return {
       role: "tool",
-      tool_call_id: syntheticToolCallId(toolName, 0),
+      tool_call_id: toolCallId ?? syntheticToolCallId(toolName, 0),
       content: typeof message.content === "string" ? message.content : "",
     };
   }
@@ -279,11 +312,48 @@ function normalizeMessages(messages: unknown): Record<string, unknown>[] {
   if (!Array.isArray(messages)) {
     return [];
   }
+
+  const pendingToolCallIds = new Map<string, string[]>();
+  let syntheticToolCallIdOffset = 0;
   return messages.flatMap((message) => {
     if (!isObject(message)) {
       return [];
     }
-    const normalized = normalizeMessage(message as OllamaMessage);
+
+    const ollamaMessage = message as OllamaMessage;
+    let toolCallId: string | undefined;
+    if (ollamaMessage.role === "tool") {
+      const toolName = ollamaMessage.tool_name;
+      if (typeof toolName === "string") {
+        toolCallId = pendingToolCallIds.get(toolName)?.shift();
+      }
+    }
+
+    const normalized = normalizeMessage(
+      ollamaMessage,
+      toolCallId,
+      syntheticToolCallIdOffset,
+    );
+    if (Array.isArray(ollamaMessage.tool_calls)) {
+      syntheticToolCallIdOffset += ollamaMessage.tool_calls.length;
+    }
+    if (ollamaMessage.role === "assistant" && normalized) {
+      const toolCalls = Array.isArray(normalized.tool_calls)
+        ? normalized.tool_calls
+        : [];
+      for (const toolCall of toolCalls) {
+        if (!isObject(toolCall) || !isObject(toolCall.function)) {
+          continue;
+        }
+        const name = toolCall.function.name;
+        const id = toolCall.id;
+        if (typeof name === "string" && typeof id === "string") {
+          const ids = pendingToolCallIds.get(name) ?? [];
+          ids.push(id);
+          pendingToolCallIds.set(name, ids);
+        }
+      }
+    }
     return normalized ? [normalized] : [];
   });
 }
@@ -410,17 +480,6 @@ function extractOllamaEmbedInput(args: unknown): {
   };
 }
 
-function extractOllamaEmbeddingsInput(args: unknown): {
-  input: unknown;
-  metadata: Record<string, unknown>;
-} {
-  const request = getRequestArg(args);
-  return {
-    input: request?.prompt,
-    metadata: extractRequestMetadata(request),
-  };
-}
-
 export function extractOllamaChatOutput(result: OllamaChatResponse): unknown {
   if (!isObject(result) || !isObject(result.message)) {
     return undefined;
@@ -470,14 +529,6 @@ export function extractOllamaEmbedOutput(result: OllamaEmbedResponse): unknown {
     : undefined;
 }
 
-export function extractOllamaEmbeddingsOutput(
-  result: OllamaEmbeddingsResponse,
-): unknown {
-  return Array.isArray(result?.embedding)
-    ? { embedding_length: result.embedding.length }
-    : undefined;
-}
-
 function extractOllamaResponseMetadata(
   result: OllamaUsageResponse,
 ): Record<string, unknown> | undefined {
@@ -503,7 +554,9 @@ export function extractOllamaMetrics(
     isNonNegativeNumber(promptTokens) ||
     isNonNegativeNumber(completionTokens)
   ) {
-    metrics.tokens = (promptTokens ?? 0) + (completionTokens ?? 0);
+    metrics.tokens =
+      (isNonNegativeNumber(promptTokens) ? promptTokens : 0) +
+      (isNonNegativeNumber(completionTokens) ? completionTokens : 0);
   }
   return metrics;
 }
