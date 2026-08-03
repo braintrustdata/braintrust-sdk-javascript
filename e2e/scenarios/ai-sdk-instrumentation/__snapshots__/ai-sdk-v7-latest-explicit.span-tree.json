@@ -954,6 +954,84 @@
           }
         },
         {
+          "name": "ai-sdk-rerank-operation",
+          "children": [
+            {
+              "name": "rerank",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doRerank",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "documents": [
+                      "Athens is in Greece.",
+                      "Paris is in France.",
+                      "Lima is in Peru."
+                    ],
+                    "query": "Which document is about France?",
+                    "topN": 2
+                  },
+                  "output": [
+                    {
+                      "index": 1,
+                      "relevance_score": 0.06657539
+                    },
+                    {
+                      "index": 0,
+                      "relevance_score": 0.015062517
+                    }
+                  ],
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "rerank-v3.5",
+                    "provider": "cohere.reranking"
+                  }
+                }
+              ],
+              "input": {
+                "documents": [
+                  "Athens is in Greece.",
+                  "Paris is in France.",
+                  "Lima is in Peru."
+                ],
+                "model": {
+                  "modelId": "rerank-v3.5",
+                  "provider": "cohere.reranking"
+                },
+                "query": "Which document is about France?",
+                "topN": 2
+              },
+              "output": [
+                {
+                  "index": 1,
+                  "relevance_score": 0.06657539
+                },
+                {
+                  "index": 0,
+                  "relevance_score": 0.015062517
+                }
+              ],
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "rerank-v3.5",
+                "provider": "cohere.reranking"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "rerank",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "ai-sdk-tool-operation",
           "children": [
             {

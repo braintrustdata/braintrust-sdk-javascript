@@ -160,6 +160,7 @@ export const AI_SDK_SCENARIO_SPECS = [
   {
     agentClassExport: "ToolLoopAgent",
     autoEntry: "scenario.ai-sdk-v7.mjs",
+    cohereModuleName: "ai-sdk-cohere-v7",
     dependencyName: "ai-sdk-v7",
     maxTokensKey: "maxOutputTokens",
     openaiModuleName: "ai-sdk-openai-v7",
@@ -172,7 +173,6 @@ export const AI_SDK_SCENARIO_SPECS = [
     supportsOpenAICacheScenario: false,
     supportsOutputObjectScenario: true,
     supportsProviderCacheAssertions: false,
-    supportsRerank: false,
     supportsStreamObject: true,
     supportsToolExecution: true,
     supportsWorkflowAgent: true,
@@ -186,6 +186,7 @@ export const AI_SDK_SCENARIO_SPECS = [
   {
     agentClassExport: "ToolLoopAgent",
     autoEntry: "scenario.ai-sdk-v7.mjs",
+    cohereModuleName: "ai-sdk-cohere-v7-latest",
     dependencyName: "ai-sdk-v7-latest",
     maxTokensKey: "maxOutputTokens",
     openaiModuleName: "ai-sdk-openai-v7-latest",
@@ -198,7 +199,6 @@ export const AI_SDK_SCENARIO_SPECS = [
     supportsOpenAICacheScenario: false,
     supportsOutputObjectScenario: true,
     supportsProviderCacheAssertions: false,
-    supportsRerank: false,
     supportsStreamObject: true,
     supportsToolExecution: true,
     toolSchemaKey: "inputSchema",
