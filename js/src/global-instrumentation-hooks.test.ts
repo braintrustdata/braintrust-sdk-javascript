@@ -7,6 +7,7 @@ import {
   GLOBAL_INSTRUMENTATION_HOOKS_KEY,
   GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
   GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
+  GLOBAL_INVOCATION_HOOK_BRAND,
   newGlobalTracingChannel,
   setGlobalHookErrorReporter,
 } from "./global-instrumentation-hooks";
@@ -45,6 +46,9 @@ describe("global instrumentation hooks", () => {
     expect(
       (channel as any)[Symbol.for(GLOBAL_INSTRUMENTATION_HOOK_BRAND)],
     ).toBe(GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION);
+    expect((channel as any)[Symbol.for(GLOBAL_INVOCATION_HOOK_BRAND)]).toBe(
+      GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+    );
     expect(newGlobalTracingChannel(name)).toBe(channel);
     expect(Object.keys(globalThis)).not.toContain(
       GLOBAL_INSTRUMENTATION_HOOKS_KEY,
@@ -69,6 +73,153 @@ describe("global instrumentation hooks", () => {
     expect(second.unsubscribe(handlers)).toBe(true);
     expect(first.hasSubscribers).toBe(false);
     expect(second.unsubscribe(handlers)).toBe(false);
+  });
+
+  it("composes invocation interceptors in registration order", () => {
+    const channel = newGlobalTracingChannel(uniqueChannelName("interceptors"));
+    const order: string[] = [];
+    const firstReceiver = { prefix: "first" };
+    const secondReceiver = { prefix: "second" };
+
+    const removeFirst = channel.intercept(
+      (target, _thisArg, args, additional: { suffix: string }) => {
+        order.push(`first:${additional.suffix}`);
+        return `${target.apply(secondReceiver, [args[0] + 1])}:first`;
+      },
+    );
+    const removeSecond = channel.intercept((target, thisArg, args) => {
+      order.push("second");
+      return `${target.apply(thisArg, [args[0] * 2])}:second`;
+    });
+    const target = vi.fn(function (this: { prefix: string }, value: number) {
+      order.push("target");
+      return `${this.prefix}:${value}`;
+    });
+
+    expect(
+      channel.invoke(target, firstReceiver, [2], { suffix: "extra" }),
+    ).toBe("second:6:second:first");
+    expect(order).toEqual(["first:extra", "second", "target"]);
+    expect(target).toHaveBeenCalledOnce();
+
+    removeFirst();
+    removeFirst();
+    removeSecond();
+    expect(channel.hasInterceptors).toBe(false);
+    expect(channel.invoke(target, firstReceiver, [3], {})).toBe("first:3");
+  });
+
+  it("allows interceptors to replace calls and propagates their errors", () => {
+    const channel = newGlobalTracingChannel(uniqueChannelName("replacement"));
+    const target = vi.fn(() => "original");
+    const removeReplacement = channel.intercept(() => "replacement");
+
+    expect(channel.invoke(target, undefined, [], {})).toBe("replacement");
+    expect(target).not.toHaveBeenCalled();
+
+    removeReplacement();
+    const error = new Error("interceptor failed");
+    channel.intercept(() => {
+      throw error;
+    });
+    expect(() => channel.invoke(target, undefined, [], {})).toThrow(error);
+    expect(target).not.toHaveBeenCalled();
+  });
+
+  it("upgrades compatible tracing-only hooks with invocation support", () => {
+    const name = uniqueChannelName("legacy-upgrade");
+    const donor = newGlobalTracingChannel(uniqueChannelName("legacy-donor"));
+    const legacyHook = {
+      asyncEnd: donor.asyncEnd,
+      asyncStart: donor.asyncStart,
+      end: donor.end,
+      error: donor.error,
+      hasSubscribers: false,
+      start: donor.start,
+      subscribe: vi.fn(),
+      traceCallback: vi.fn((target: (...args: unknown[]) => unknown) =>
+        target(),
+      ),
+      tracePromise: vi.fn((target: (...args: unknown[]) => unknown) =>
+        target(),
+      ),
+      traceSync: vi.fn((target: (...args: unknown[]) => unknown) => target()),
+      unsubscribe: vi.fn(() => true),
+    };
+    Object.defineProperty(
+      legacyHook,
+      Symbol.for(GLOBAL_INSTRUMENTATION_HOOK_BRAND),
+      { value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION },
+    );
+    const registry = Object.getOwnPropertyDescriptor(
+      globalThis,
+      GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+    )?.value as Map<string, unknown>;
+    registry.set(name, legacyHook);
+
+    const upgraded = newGlobalTracingChannel(name);
+    expect(upgraded).toBe(legacyHook);
+    const removeInterceptor = upgraded.intercept(() => "upgraded");
+    expect(upgraded.invoke(() => "original", undefined, [], {})).toBe(
+      "upgraded",
+    );
+    expect(
+      upgraded.traceInvocation(
+        "traceSync",
+        () => "original",
+        undefined,
+        [],
+        {},
+      ),
+    ).toBe("upgraded");
+    expect(legacyHook.traceSync).toHaveBeenCalledOnce();
+    removeInterceptor();
+  });
+
+  it("supports AsyncLocalStorage wrapping across asynchronous targets", async () => {
+    const channel = newGlobalTracingChannel(uniqueChannelName("als"));
+    const storage = new AsyncLocalStorage<string>();
+    channel.intercept((target, thisArg, args) =>
+      storage.run("intercepted", () => target.apply(thisArg, args)),
+    );
+
+    await expect(
+      channel.invoke(
+        async () => {
+          await Promise.resolve();
+          return storage.getStore();
+        },
+        undefined,
+        [],
+        {},
+      ),
+    ).resolves.toBe("intercepted");
+    expect(storage.getStore()).toBeUndefined();
+  });
+
+  it("keeps tracing outside the invocation interceptor", () => {
+    const channel = newGlobalTracingChannel<Record<string, unknown>>(
+      uniqueChannelName("tracing-order"),
+    );
+    const lifecycle: string[] = [];
+    const context: Record<string, unknown> = {};
+    channel.subscribe({
+      start: () => lifecycle.push("start"),
+      end: (event) => lifecycle.push(`end:${event.result}`),
+    });
+    channel.intercept(() => {
+      lifecycle.push("interceptor");
+      return "replacement";
+    });
+
+    expect(
+      channel.traceSync(
+        () => channel.invoke(() => "original", undefined, [], {}),
+        context,
+      ),
+    ).toBe("replacement");
+    expect(context.result).toBe("replacement");
+    expect(lifecycle).toEqual(["start", "interceptor", "end:replacement"]);
   });
 
   it("does not publish legacy diagnostics-channel events", () => {
@@ -426,7 +577,11 @@ describe("global instrumentation hooks", () => {
     const receiver = { label: "receiver" };
     const result = await new Promise<string>((resolve) => {
       channel.traceCallback(
-        function (this: typeof receiver, value: string, callback: Function) {
+        function (
+          this: typeof receiver,
+          value: string,
+          callback: (error: unknown, value: string) => void,
+        ) {
           expect(this).toBe(receiver);
           callback.call(this, null, value);
           return "immediate";

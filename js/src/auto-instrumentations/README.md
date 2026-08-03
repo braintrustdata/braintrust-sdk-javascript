@@ -49,10 +49,11 @@ properties:
 - Loading an instrumented provider before Braintrust is safe; calls run normally.
 - Registering Braintrust later enables tracing without retransformation.
 
-When a hook has no subscribers, the original function is called directly.
-Otherwise the generated wrapper invokes `tracePromise`, `traceSync`, or
-`traceCallback` with a context containing the original `arguments`, `self` when
-available, and `moduleVersion`.
+The generated code only applies `traceInvocation`, passing the configured
+operator, original target, receiver, complete arguments, and `moduleVersion`.
+The normal hook runtime handles interceptor composition, the no-listener fast
+path, tracing context construction, and the legacy `tracePromise`, `traceSync`,
+or `traceCallback` dispatch around the effective intercepted call.
 
 The hook lifecycle mirrors tracing channels:
 
@@ -64,6 +65,11 @@ The hook lifecycle mirrors tracing channels:
 The same context object is passed through every phase. Subscribers may mutate
 arguments or returned streams before user code continues.
 
+Invocation interceptors compose as nested middleware and may replace arguments,
+the receiver, the returned value, or the entire implementation. Tracing remains
+the outer compatibility layer, so tracing subscribers observe the interceptor's
+effective result.
+
 ## Global Registry
 
 The SDK installs `globalThis.__braintrust_instrumentation_hooks` with a
@@ -72,6 +78,7 @@ non-enumerable, non-writable property descriptor. Its value is a mutable
 
 The implementation lives in `src/global-instrumentation-hooks.ts`. It supports:
 
+- composable `invoke` / `intercept` wrappers
 - all five lifecycle phases
 - multiple subscribers and complete unsubscription
 - `bindStore` / `unbindStore` for async-context propagation
@@ -103,8 +110,9 @@ bundles.
 1. Add the narrowest supported package/version/file/function config under
    `configs/`.
 2. Define a typed channel with the same package and operation identifier.
-3. Add or update a plugin that subscribes through the shared channel helpers.
-4. Keep manual wrappers on that same typed channel.
+3. Add or update a plugin that intercepts the typed channel; use the tracing
+   helpers only for existing instrumentation awaiting migration.
+4. Keep manual wrappers on that same typed channel through `invoke`.
 5. Add transformation/runtime coverage and a provider e2e scenario when the
    user-visible trace contract changes.
 

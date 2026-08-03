@@ -124,13 +124,42 @@ export type ChannelMessage<TChannel extends AnyChannelSpec> =
     Partial<{ result: ResultOf<TChannel> }> &
     Partial<Pick<ErrorOf<TChannel>, "error">>;
 
+export type InvocationAdditionalOf<TChannel extends AnyChannelSpec> =
+  ExtraOf<TChannel> & { moduleVersion?: string };
+
+type InvocationResultOf<TChannel extends AnyChannelSpec> =
+  TChannel["kind"] extends "async"
+    ? PromiseLike<ResultOf<TChannel>>
+    : ResultOf<TChannel>;
+
+export type ChannelInterceptor<TChannel extends AnyChannelSpec> = (
+  target: (
+    this: unknown,
+    ...args: ArgsOf<TChannel>
+  ) => InvocationResultOf<TChannel>,
+  thisArg: unknown,
+  args: ArgsOf<TChannel>,
+  additional: InvocationAdditionalOf<TChannel>,
+) => InvocationResultOf<TChannel>;
+
+type InterceptMethod<TChannel extends AnyChannelSpec> = {
+  intercept(interceptor: ChannelInterceptor<TChannel>): () => void;
+}["intercept"];
+
 type BaseTypedChannel<TSpec extends AnyChannelSpec> = TSpec & {
   instrumentationName: SpanInstrumentationName;
   tracingChannel(): IsoTracingChannel<ChannelMessage<TSpec>>;
+  intercept: InterceptMethod<TSpec>;
 };
 
 export type TypedAsyncChannel<TSpec extends AnyAsyncChannelSpec> =
   BaseTypedChannel<TSpec> & {
+    invoke<TThis, TReturn extends PromiseLike<ResultOf<TSpec>>>(
+      target: (this: TThis, ...args: ArgsOf<TSpec>) => TReturn,
+      thisArg: TThis,
+      args: ArgsOf<TSpec>,
+      additional: InvocationAdditionalOf<TSpec>,
+    ): TReturn;
     tracePromise<TReturn extends PromiseLike<ResultOf<TSpec>>>(
       fn: () => TReturn,
       context: StartOf<TSpec>,
@@ -139,15 +168,26 @@ export type TypedAsyncChannel<TSpec extends AnyAsyncChannelSpec> =
 
 export type TypedSyncStreamChannel<TSpec extends AnySyncStreamChannelSpec> =
   BaseTypedChannel<TSpec> & {
+    invoke<TThis, TReturn extends ResultOf<TSpec>>(
+      target: (this: TThis, ...args: ArgsOf<TSpec>) => TReturn,
+      thisArg: TThis,
+      args: ArgsOf<TSpec>,
+      additional: InvocationAdditionalOf<TSpec>,
+    ): TReturn;
     traceSync<TResult extends ResultOf<TSpec>>(
       fn: () => TResult,
       context: StartOf<TSpec>,
     ): TResult;
   };
 
-export type AnyAsyncChannel = TypedAsyncChannel<AnyAsyncChannelSpec>;
-export type AnySyncStreamChannel =
-  TypedSyncStreamChannel<AnySyncStreamChannelSpec>;
+export type AnyAsyncChannel = Omit<
+  TypedAsyncChannel<AnyAsyncChannelSpec>,
+  "intercept" | "invoke"
+>;
+export type AnySyncStreamChannel = Omit<
+  TypedSyncStreamChannel<AnySyncStreamChannelSpec>,
+  "intercept" | "invoke"
+>;
 
 type ChannelSpecMap = Record<string, AnyChannelSpec>;
 
@@ -207,11 +247,39 @@ export function defineChannels<T extends ChannelSpecMap>(
           iso.newTracingChannel<ChannelMessage<AnyAsyncChannelSpec>>(
             fullChannelName,
           );
+        const intercept = (
+          interceptor: ChannelInterceptor<AnyAsyncChannelSpec>,
+        ) => {
+          const hook = tracingChannel();
+          return typeof hook.intercept === "function"
+            ? hook.intercept(interceptor)
+            : () => {};
+        };
         return [
           key,
           {
             ...asyncSpec,
             instrumentationName,
+            intercept,
+            invoke: <
+              TThis,
+              TReturn extends PromiseLike<ResultOf<typeof asyncSpec>>,
+            >(
+              target: (
+                this: TThis,
+                ...args: ArgsOf<typeof asyncSpec>
+              ) => TReturn,
+              thisArg: TThis,
+              args: ArgsOf<typeof asyncSpec>,
+              additional: InvocationAdditionalOf<typeof asyncSpec>,
+            ) => {
+              const hook = tracingChannel();
+              return (
+                typeof hook.invoke === "function"
+                  ? hook.invoke(target, thisArg, args, additional)
+                  : Reflect.apply(target, thisArg, args)
+              ) as TReturn;
+            },
             tracingChannel,
             tracePromise: <TReturn extends Promise<ResultOf<typeof asyncSpec>>>(
               fn: () => TReturn,
@@ -237,11 +305,33 @@ export function defineChannels<T extends ChannelSpecMap>(
         iso.newTracingChannel<ChannelMessage<AnySyncStreamChannelSpec>>(
           fullChannelName,
         );
+      const intercept = (
+        interceptor: ChannelInterceptor<AnySyncStreamChannelSpec>,
+      ) => {
+        const hook = tracingChannel();
+        return typeof hook.intercept === "function"
+          ? hook.intercept(interceptor)
+          : () => {};
+      };
       return [
         key,
         {
           ...syncSpec,
           instrumentationName,
+          intercept,
+          invoke: <TThis, TResult extends ResultOf<typeof syncSpec>>(
+            target: (this: TThis, ...args: ArgsOf<typeof syncSpec>) => TResult,
+            thisArg: TThis,
+            args: ArgsOf<typeof syncSpec>,
+            additional: InvocationAdditionalOf<typeof syncSpec>,
+          ) => {
+            const hook = tracingChannel();
+            return (
+              typeof hook.invoke === "function"
+                ? hook.invoke(target, thisArg, args, additional)
+                : Reflect.apply(target, thisArg, args)
+            ) as TResult;
+          },
           tracingChannel,
           traceSync: <TResult>(
             fn: () => TResult,

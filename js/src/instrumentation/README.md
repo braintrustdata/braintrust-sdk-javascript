@@ -1,9 +1,9 @@
 # Writing Braintrust Instrumentation Plugins
 
-Braintrust instrumentation plugins consume tracing-compatible events from the
-internal global hook registry and convert them into spans. Auto-instrumented
-provider code and manual wrappers use the same typed channels, so extraction,
-stream handling, and span behavior stay aligned.
+Braintrust instrumentation plugins wrap provider calls through typed invocation
+hooks or consume tracing-compatible events from the internal global registry.
+Auto-instrumented provider code and manual wrappers use the same typed channels,
+so extraction, stream handling, and span behavior stay aligned.
 
 ## Architecture
 
@@ -13,13 +13,36 @@ An instrumentation has four parts:
    transformation.
 2. A typed channel defines its arguments, result, extra event fields, and stable
    `orchestrion:<package>:<operation>` identifier.
-3. A plugin subscribes to that channel and maps events into Braintrust spans.
+3. A plugin intercepts that channel, or subscribes to its legacy tracing
+   lifecycle, and maps the call into Braintrust spans.
 4. A manual wrapper invokes the same typed channel when transformation is not
    available.
 
-The global hook transport is internal. Plugins should use `defineChannels`,
+The global hook transport is internal. New and migrated plugins should prefer
+the typed channel's `intercept` API. Existing plugins can continue using
 `traceAsyncChannel`, `traceStreamingChannel`, `traceSyncStreamChannel`, or
-`BasePlugin` helpers rather than reading the global property directly.
+`BasePlugin` helpers during the gradual migration.
+
+## Invocation Hooks
+
+Invocation hooks expose the complete target call and are designed for wrappers
+that need to scope the target with `AsyncLocalStorage.run()` or patch arguments,
+the receiver, or the returned value:
+
+```ts
+const removeInterceptor = providerChannels.create.intercept(
+  (target, thisArg, args, additional) =>
+    store.run(additional.context, () => target.apply(thisArg, args)),
+);
+```
+
+Interceptors compose as nested middleware in registration order. Each receives
+the next target and may invoke it with different arguments or receiver, replace
+its result, call it more than once, or not call it at all. Removing an
+interceptor is idempotent. Calling a typed channel through `invoke` only uses
+the invocation hook and does not dispatch the legacy tracing lifecycle.
+Generated auto-instrumentation wrappers separately retain dual emission during
+the migration, with legacy tracing outside the effective intercepted call.
 
 ## Lifecycle
 
@@ -43,8 +66,9 @@ interface InstrumentationContext {
 }
 ```
 
-The generated wrapper creates `arguments`, `self`, and `moduleVersion`.
-Tracing operators add `result` or `error`.
+The generated wrapper passes the target invocation and `moduleVersion` to the
+global hook runtime. That runtime creates `arguments` and `self`; tracing
+operators add `result` or `error`.
 
 ## Defining Typed Channels
 
@@ -112,7 +136,17 @@ that the shared helpers cannot express.
 
 ## Manual Wrappers
 
-Manual wrappers call the same typed channel:
+New and migrated manual wrappers pass the original target, receiver, arguments,
+and any channel-specific fields to the same typed channel:
+
+```ts
+return providerChannels.create.invoke(originalCreate, this, [params], {
+  providerRequestId,
+});
+```
+
+Legacy wrappers can continue calling the tracing-compatible operators until
+their plugin is migrated:
 
 ```ts
 return providerChannels.create.tracePromise(() => originalCreate(params), {
