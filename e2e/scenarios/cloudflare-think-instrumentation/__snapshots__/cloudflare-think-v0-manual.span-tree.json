@@ -8,6 +8,79 @@
           "name": "doStream",
           "type": "llm",
           "children": [],
+          "input": {
+            "prompt": [
+              {
+                "content": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "What is the weather in Vienna?",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "toolChoice": {
+              "type": "auto"
+            },
+            "tools": [
+              {
+                "name": "read",
+                "type": "function"
+              },
+              {
+                "name": "write",
+                "type": "function"
+              },
+              {
+                "name": "edit",
+                "type": "function"
+              },
+              {
+                "name": "list",
+                "type": "function"
+              },
+              {
+                "name": "find",
+                "type": "function"
+              },
+              {
+                "name": "grep",
+                "type": "function"
+              },
+              {
+                "name": "delete",
+                "type": "function"
+              },
+              {
+                "name": "bash",
+                "type": "function"
+              },
+              {
+                "name": "lookup_weather",
+                "type": "function"
+              }
+            ]
+          },
+          "output": {
+            "finishReason": {
+              "raw": "tool_calls",
+              "unified": "tool-calls"
+            },
+            "text": "",
+            "toolCalls": [
+              {
+                "input": "{\"city\":\"Vienna\"}",
+                "toolCallId": "<toolCallId:1>",
+                "toolName": "lookup_weather",
+                "type": "tool-call"
+              }
+            ]
+          },
           "metadata": {
             "model": "gpt-5-nano",
             "provider": "openai.chat"
@@ -35,6 +108,103 @@
           "name": "doStream",
           "type": "llm",
           "children": [],
+          "input": {
+            "prompt": [
+              {
+                "content": "You are a deterministic weather-test agent. You must call lookup_weather exactly once with Vienna before answering. After the tool result, reply with exactly: \"Vienna is sunny and 21°C.\"\n\nYou are running inside a Think agent.\n\nCapabilities available in this turn:\n- You can inspect and edit the agent workspace using the available file tools.\n- Use the tools exposed in this turn when they materially improve accuracy or let you act on the user's request. Treat tool descriptions and schemas as the source of truth.\n- Some tools may call server code, browser/client code, MCP servers, extensions, or delegated agents. Use them according to their descriptions.\n- Do not claim access to capabilities that are not exposed as tools in this turn.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "What is the weather in Vienna?",
+                    "type": "text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "content": [
+                  {
+                    "input": {
+                      "city": "Vienna"
+                    },
+                    "toolCallId": "<toolCallId:1>",
+                    "toolName": "lookup_weather",
+                    "type": "tool-call"
+                  }
+                ],
+                "role": "assistant"
+              },
+              {
+                "content": [
+                  {
+                    "output": {
+                      "type": "json",
+                      "value": {
+                        "city": "Vienna",
+                        "condition": "sunny",
+                        "degreesC": 21
+                      }
+                    },
+                    "toolCallId": "<toolCallId:1>",
+                    "toolName": "lookup_weather",
+                    "type": "tool-result"
+                  }
+                ],
+                "role": "tool"
+              }
+            ],
+            "toolChoice": {
+              "type": "auto"
+            },
+            "tools": [
+              {
+                "name": "read",
+                "type": "function"
+              },
+              {
+                "name": "write",
+                "type": "function"
+              },
+              {
+                "name": "edit",
+                "type": "function"
+              },
+              {
+                "name": "list",
+                "type": "function"
+              },
+              {
+                "name": "find",
+                "type": "function"
+              },
+              {
+                "name": "grep",
+                "type": "function"
+              },
+              {
+                "name": "delete",
+                "type": "function"
+              },
+              {
+                "name": "bash",
+                "type": "function"
+              },
+              {
+                "name": "lookup_weather",
+                "type": "function"
+              }
+            ]
+          },
+          "output": {
+            "finishReason": {
+              "raw": "stop",
+              "unified": "stop"
+            },
+            "text": "Vienna is sunny and 21°C.",
+            "toolCalls": []
+          },
           "metadata": {
             "model": "gpt-5-nano",
             "provider": "openai.chat"

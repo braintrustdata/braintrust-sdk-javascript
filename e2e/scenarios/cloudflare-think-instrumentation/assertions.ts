@@ -84,6 +84,15 @@ export function defineCloudflareThinkAssertions(options: {
         for (const span of modelSpans) {
           expect(span.span.type).toBe("llm");
           expect(span.span.parentIds).toEqual([task?.span.id]);
+          expect(span.input).toEqual(
+            expect.objectContaining({ prompt: expect.any(Array) }),
+          );
+          expect(span.output).toEqual(
+            expect.objectContaining({
+              finishReason: expect.any(Object),
+              toolCalls: expect.any(Array),
+            }),
+          );
           expect(span.row.metadata).toMatchObject({
             model: "gpt-5-nano",
             provider: "openai.chat",
@@ -153,10 +162,13 @@ function stableThinkSpanFields(event: CapturedLogEvent): SpanTreeFields {
   return {
     input: isTask
       ? taskUserInput(event.input)
-      : event.span.type === "tool"
-        ? event.input
-        : undefined,
-    output: isTask || event.span.type === "tool" ? event.output : undefined,
+      : event.span.type === "llm"
+        ? stableModelInput(event.input)
+        : event.input,
+    output:
+      event.span.type === "llm"
+        ? stableModelOutput(event.output)
+        : event.output,
     metadata: metadata
       ? {
           braintrust: isTask ? metadata.braintrust : undefined,
@@ -171,6 +183,41 @@ function stableThinkSpanFields(event: CapturedLogEvent): SpanTreeFields {
           tokens: metrics.tokens,
         }
       : undefined,
+  };
+}
+
+function stableModelInput(input: unknown): unknown {
+  if (typeof input !== "object" || input === null) {
+    return input;
+  }
+
+  const inputRecord = input as Record<string, unknown>;
+  return {
+    prompt: inputRecord.prompt,
+    toolChoice: inputRecord.toolChoice,
+    tools: Array.isArray(inputRecord.tools)
+      ? inputRecord.tools.map((tool) =>
+          typeof tool === "object" && tool !== null
+            ? {
+                name: (tool as Record<string, unknown>).name,
+                type: (tool as Record<string, unknown>).type,
+              }
+            : tool,
+        )
+      : inputRecord.tools,
+  };
+}
+
+function stableModelOutput(output: unknown): unknown {
+  if (typeof output !== "object" || output === null) {
+    return output;
+  }
+
+  const outputRecord = output as Record<string, unknown>;
+  return {
+    finishReason: outputRecord.finishReason,
+    text: outputRecord.text,
+    toolCalls: outputRecord.toolCalls,
   };
 }
 
