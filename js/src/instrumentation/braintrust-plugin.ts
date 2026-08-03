@@ -4,6 +4,7 @@ import { OpenAICodexPlugin } from "./plugins/openai-codex-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
+import { CloudflareThinkPlugin } from "./plugins/cloudflare-think-plugin";
 import { CursorSDKPlugin } from "./plugins/cursor-sdk-plugin";
 import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
@@ -55,6 +56,7 @@ export class BraintrustPlugin extends BasePlugin {
   private anthropicPlugin: AnthropicPlugin | null = null;
   private aiSDKPlugin: AISDKPlugin | null = null;
   private claudeAgentSDKPlugin: ClaudeAgentSDKPlugin | null = null;
+  private cloudflareThinkPlugin: CloudflareThinkPlugin | null = null;
   private cursorSDKPlugin: CursorSDKPlugin | null = null;
   private openAIAgentsPlugin: OpenAIAgentsPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
@@ -114,6 +116,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.claudeAgentSDK !== false) {
       this.claudeAgentSDKPlugin = new ClaudeAgentSDKPlugin();
       this.claudeAgentSDKPlugin.enable();
+    }
+
+    if (integrations.cloudflareThink !== false) {
+      this.cloudflareThinkPlugin = new CloudflareThinkPlugin();
+      this.cloudflareThinkPlugin.enable();
     }
 
     if (integrations.cursorSDK !== false && integrations.cursor !== false) {
@@ -259,6 +266,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.claudeAgentSDKPlugin) {
       this.claudeAgentSDKPlugin.disable();
       this.claudeAgentSDKPlugin = null;
+    }
+
+    if (this.cloudflareThinkPlugin) {
+      this.cloudflareThinkPlugin.disable();
+      this.cloudflareThinkPlugin = null;
     }
 
     if (this.cursorSDKPlugin) {

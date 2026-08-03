@@ -28,7 +28,7 @@ export default defineConfig({
     ...(mode === "auto"
       ? [braintrustVitePlugin({ useDiagnosticChannelCompatShim: true })]
       : []),
-    cloudflare({ configPath: "./wrangler.toml" }),
+    cloudflare({ configPath: "./wrangler.toml", inspectorPort: 0 }),
   ],
   resolve: {
     alias: [
