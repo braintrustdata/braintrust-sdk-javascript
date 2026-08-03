@@ -4,7 +4,7 @@
  * ⚠️ ANTI-PATTERN — DO NOT EXTEND CASUALLY.
  *
  * Every entry in this file represents a target SDK that doesn't expose a
- * stable extension point we can hook through diagnostics_channel + the
+ * stable extension point we can hook through global instrumentation hooks + the
  * internal Orchestrion matcher. New integrations should
  * **prefer the standard channel-handler / `BasePlugin` pattern** used by
  * every other integration in `js/src/instrumentation/plugins/*-plugin.ts`.
@@ -46,6 +46,8 @@ interface SpecialCaseInput {
   /** Original module source as a string. */
   source: string;
   format: SpecialCaseFormat;
+  /** Whether the transformed source will run in a browser-like environment. */
+  browser?: boolean;
 }
 
 /**
@@ -60,6 +62,10 @@ export function applySpecialCasePatch(input: SpecialCaseInput): string | null {
     input.modulePath.includes("api-promise")
   ) {
     return input.source + OPENAI_API_PROMISE_PATCH;
+  }
+
+  if (input.browser) {
+    return null;
   }
 
   // Mastra: rewrite the stable submodule entries (@mastra/core) or append a

@@ -1,23 +1,44 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { once } from "node:events";
+import { readFile, symlink, unlink } from "node:fs/promises";
 import net from "node:net";
 import path from "node:path";
 import { runMain } from "../../helpers/scenario-runtime";
 
 async function main() {
-  const eveBin = path.join(
+  const evePackageName = process.env.EVE_PACKAGE_NAME ?? "eve-v0-latest";
+  const evePackageDir = path.join(
     process.cwd(),
     "node_modules",
-    ".bin",
-    process.platform === "win32" ? "eve.cmd" : "eve",
+    evePackageName,
   );
+  const evePackage = JSON.parse(
+    await readFile(path.join(evePackageDir, "package.json"), "utf8"),
+  ) as { bin?: string | Record<string, string> };
+  const eveBinPath =
+    typeof evePackage.bin === "string" ? evePackage.bin : evePackage.bin?.eve;
+  if (!eveBinPath) {
+    throw new Error(`${evePackageName} does not expose an eve CLI`);
+  }
 
-  await runProcess(eveBin, ["build"], 90_000);
+  const eveModuleDir = path.join(process.cwd(), "node_modules", "eve");
+  try {
+    await unlink(eveModuleDir);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
+    }
+  }
+  await symlink(evePackageDir, eveModuleDir, "dir");
+
+  const eveBin = path.join(evePackageDir, eveBinPath);
+
+  await runProcess(process.execPath, [eveBin, "build"], 90_000);
 
   const port = await getFreePort();
   const server = spawn(
-    eveBin,
-    ["start", "--host", "127.0.0.1", "--port", String(port)],
+    process.execPath,
+    [eveBin, "start", "--host", "127.0.0.1", "--port", String(port)],
     {
       cwd: process.cwd(),
       env: process.env,

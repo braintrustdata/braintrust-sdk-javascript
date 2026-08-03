@@ -1,4 +1,5 @@
 import iso from "./isomorph";
+import { setGlobalHookErrorReporter } from "./global-instrumentation-hooks";
 
 export type DebugLogLevel = "error" | "warn" | "info" | "debug";
 export type DebugLogLevelOption = DebugLogLevel | false | undefined;
@@ -174,3 +175,7 @@ export const debugLogger = {
     return createDebugLogger(state);
   },
 };
+
+setGlobalHookErrorReporter((error) => {
+  debugLogger.error("Global instrumentation hook error:", error);
+});

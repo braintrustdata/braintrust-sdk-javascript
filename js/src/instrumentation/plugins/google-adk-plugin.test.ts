@@ -32,6 +32,7 @@ vi.mock("../../logger", () => ({
   _internalGetGlobalState: (...args: any[]) =>
     (mockInternalGetGlobalState as any)(...args),
   BRAINTRUST_CURRENT_SPAN_STORE: MOCK_CURRENT_SPAN_STORE_SYMBOL,
+  withCurrent: (_span: any, callback: () => unknown) => callback(),
   Attachment: class MockAttachment {
     reference: any;
     constructor(params: any) {
@@ -258,6 +259,189 @@ describe("GoogleADKPlugin", () => {
       handlers.start(event);
 
       expect(mockStartSpan).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      {
+        name: "candidate-only usage",
+        usageMetadata: [{ candidatesTokenCount: 5 }],
+        expectedMetrics: { completion_tokens: 5 },
+        absentMetrics: [
+          "prompt_tokens",
+          "completion_reasoning_tokens",
+          "tokens",
+        ],
+      },
+      {
+        name: "thought-only usage",
+        usageMetadata: [{ thoughtsTokenCount: 7 }],
+        expectedMetrics: {
+          completion_tokens: 7,
+          completion_reasoning_tokens: 7,
+        },
+        absentMetrics: ["prompt_tokens", "tokens"],
+      },
+      {
+        name: "tool-use-only usage",
+        usageMetadata: [{ toolUsePromptTokenCount: 11 }],
+        expectedMetrics: { prompt_tokens: 11 },
+        absentMetrics: [
+          "completion_tokens",
+          "completion_reasoning_tokens",
+          "tokens",
+        ],
+      },
+      {
+        name: "combined usage across events",
+        usageMetadata: [
+          {
+            promptTokenCount: 10,
+            toolUsePromptTokenCount: 2,
+            candidatesTokenCount: 2,
+            thoughtsTokenCount: 1,
+            cachedContentTokenCount: 4,
+            totalTokenCount: 15,
+          },
+          {
+            promptTokenCount: 5,
+            toolUsePromptTokenCount: 1,
+            candidatesTokenCount: 3,
+            thoughtsTokenCount: 2,
+            cachedContentTokenCount: 0,
+            totalTokenCount: 11,
+          },
+        ],
+        expectedMetrics: {
+          prompt_tokens: 18,
+          completion_tokens: 8,
+          completion_reasoning_tokens: 3,
+          prompt_cached_tokens: 4,
+          tokens: 26,
+        },
+        absentMetrics: [],
+      },
+      {
+        name: "modality-detail usage across events",
+        usageMetadata: [
+          {
+            promptTokensDetails: [
+              { modality: "AUDIO", tokenCount: 2 },
+              { modality: "TEXT", tokenCount: 10 },
+            ],
+            candidatesTokensDetails: [
+              { modality: "AUDIO", tokenCount: 3 },
+              { modality: "IMAGE", tokenCount: 4 },
+              { modality: "TEXT", tokenCount: 5 },
+            ],
+          },
+          {
+            promptTokensDetails: [{ modality: "AUDIO", tokenCount: 0 }],
+            candidatesTokensDetails: [
+              { modality: "AUDIO", tokenCount: 2 },
+              { modality: "IMAGE", tokenCount: 1 },
+            ],
+          },
+        ],
+        expectedMetrics: {
+          prompt_audio_tokens: 2,
+          completion_audio_tokens: 5,
+          completion_image_tokens: 5,
+        },
+        absentMetrics: ["prompt_tokens", "completion_tokens", "tokens"],
+      },
+      {
+        name: "missing usage",
+        usageMetadata: [{}],
+        expectedMetrics: {},
+        absentMetrics: [
+          "completion_audio_tokens",
+          "completion_image_tokens",
+          "completion_reasoning_tokens",
+          "completion_tokens",
+          "prompt_audio_tokens",
+          "prompt_cached_tokens",
+          "prompt_tokens",
+          "tokens",
+        ],
+      },
+    ])(
+      "normalizes $name",
+      async ({ usageMetadata, expectedMetrics, absentMetrics }) => {
+        plugin.enable();
+
+        const handlers = subscribeSpy.mock.calls[0][0];
+        const event: any = {
+          arguments: [{ userId: "user-123", sessionId: "session-456" }],
+        };
+
+        handlers.start(event);
+        const span = mockStartSpan.mock.results.at(-1)?.value as {
+          log: ReturnType<typeof vi.fn>;
+        };
+        event.result = (async function* () {
+          for (const usage of usageMetadata) {
+            yield { usageMetadata: usage };
+          }
+        })();
+        handlers.end(event);
+
+        for await (const _event of event.result) {
+          // Consume the runner stream so the span is finalized.
+        }
+
+        const metrics = span.log.mock.calls.at(-1)?.[0].metrics;
+        expect(metrics).toMatchObject(expectedMetrics);
+        for (const metric of absentMetrics) {
+          expect(metrics).not.toHaveProperty(metric);
+        }
+      },
+    );
+
+    it("preserves explicitly reported zero usage", async () => {
+      plugin.enable();
+
+      const handlers = subscribeSpy.mock.calls[0][0];
+      const event: any = {
+        arguments: [{ userId: "user-123", sessionId: "session-456" }],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = (async function* () {
+        yield {
+          usageMetadata: {
+            cachedContentTokenCount: 0,
+            candidatesTokenCount: 0,
+            candidatesTokensDetails: [
+              { modality: "AUDIO", tokenCount: 0 },
+              { modality: "IMAGE", tokenCount: 0 },
+            ],
+            promptTokenCount: 0,
+            promptTokensDetails: [{ modality: "AUDIO", tokenCount: 0 }],
+            thoughtsTokenCount: 0,
+            toolUsePromptTokenCount: 0,
+            totalTokenCount: 0,
+          },
+        };
+      })();
+      handlers.end(event);
+
+      for await (const _event of event.result) {
+        // Consume the runner stream so the span is finalized.
+      }
+
+      expect(span.log.mock.calls.at(-1)?.[0].metrics).toMatchObject({
+        completion_audio_tokens: 0,
+        completion_image_tokens: 0,
+        completion_reasoning_tokens: 0,
+        completion_tokens: 0,
+        prompt_audio_tokens: 0,
+        prompt_cached_tokens: 0,
+        prompt_tokens: 0,
+        tokens: 0,
+      });
     });
   });
 

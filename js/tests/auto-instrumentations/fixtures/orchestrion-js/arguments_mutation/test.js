@@ -3,8 +3,7 @@
  * This product includes software developed at Datadog (https://www.datadoghq.com/). Copyright 2025 Datadog, Inc.
  **/
 const { fetch_simple, fetch_complex } = require("./instrumented.js");
-const assert = require("node:assert");
-const { tracingChannel } = require("node:diagnostics_channel");
+const { assert, getTracingHook } = require("../common/preamble.js");
 
 const handler = {
   start(message) {
@@ -21,8 +20,8 @@ const handler = {
   },
 };
 
-tracingChannel("orchestrion:undici:fetch_simple").subscribe(handler);
-tracingChannel("orchestrion:undici:fetch.complex").subscribe(handler);
+getTracingHook("orchestrion:undici:fetch_simple").subscribe(handler);
+getTracingHook("orchestrion:undici:fetch.complex").subscribe(handler);
 
 assert.strictEqual(fetch_simple.length, 2);
 assert.strictEqual(fetch_complex.length, 2);

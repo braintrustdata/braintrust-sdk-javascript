@@ -8,48 +8,31 @@ import { getDefaultInstrumentationConfigs } from "../configs/all";
 import { applySpecialCasePatch } from "../loader/special-case-patches";
 import { getPackageName } from "../loader/get-package-version";
 
-export interface LegacyBundlerPluginOptions {
-  /**
-   * Enable debug logging
-   */
-  debug?: boolean;
-
-  /**
-   * Additional instrumentation configs to apply
-   */
-  instrumentations?: InstrumentationConfig[];
-
-  /**
-   * Whether to bundle for browser environments.
-   *
-   * When true, uses 'dc-browser' for browser-compatible diagnostics_channel polyfill.
-   * When false, uses Node.js built-in 'diagnostics_channel' and 'async_hooks'.
-   * Defaults to true (assumes browser build).
-   */
-  browser?: boolean;
-}
-
 export interface BundlerPluginOptions {
   /**
-   * Enable debug logging
-   */
-  debug?: boolean;
-
-  /**
    * Additional instrumentation configs to apply
    */
   instrumentations?: InstrumentationConfig[];
 
   /**
-   * Use the `diagnostics_channel` compatibility shim in patched code instead
-   * of Node.js's built-in `diagnostics_channel` module.
+   * Whether the transformed source will run in a browser or edge-like
+   * environment.
    *
-   * Enable this for browser, edge, or worker bundles where Node's
-   * `diagnostics_channel` module is unavailable. Leave it disabled for Node.js
-   * bundles so transformed SDK code publishes on the native `diagnostics_channel`
-   * registry.
+   * Global instrumentation hooks are runtime-independent. This option only
+   * prevents the Node-specific Mastra source patch from entering the bundle.
    *
    * @default false
+   */
+  browser?: boolean;
+
+  /**
+   * Marks transformed source as targeting a browser or edge-like environment.
+   *
+   * This retains the previous browser-target behavior of the option. Global
+   * instrumentation hooks are runtime-independent, so no diagnostics-channel
+   * compatibility shim is injected.
+   *
+   * @deprecated Use `browser` instead.
    */
   useDiagnosticChannelCompatShim?: boolean;
 }
@@ -71,140 +54,128 @@ function getModuleVersion(basedir: string): string | undefined {
   return undefined; // No version found
 }
 
-export const unplugin = createUnplugin<LegacyBundlerPluginOptions>(
-  (options = {}) => {
-    const allInstrumentations = getDefaultInstrumentationConfigs({
-      additionalInstrumentations: options.instrumentations,
-    });
+export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
+  const browser =
+    options.browser ?? options.useDiagnosticChannelCompatShim ?? false;
+  const allInstrumentations = getDefaultInstrumentationConfigs({
+    additionalInstrumentations: options.instrumentations,
+  });
 
-    // Default to browser build, use polyfill unless explicitly disabled
-    const dcModule = options.browser === false ? undefined : "dc-browser";
+  // Create the code transformer instrumentor
+  const instrumentationMatcher = create(allInstrumentations);
 
-    // Create the code transformer instrumentor
-    const instrumentationMatcher = create(allInstrumentations, dcModule);
-
-    return {
-      name: "code-transformer",
-      enforce: "pre",
-      transformInclude(id: string) {
-        const pathWithoutQuery = id.split("?", 1)[0];
-        if (!pathWithoutQuery) {
+  return {
+    name: "code-transformer",
+    enforce: "pre",
+    transformInclude(id: string) {
+      const pathWithoutQuery = id.split("?", 1)[0];
+      if (!pathWithoutQuery) {
+        return false;
+      }
+      if (pathWithoutQuery.startsWith("file:")) {
+        try {
+          return isAbsolute(fileURLToPath(pathWithoutQuery));
+        } catch {
           return false;
         }
-        if (pathWithoutQuery.startsWith("file:")) {
-          try {
-            return isAbsolute(fileURLToPath(pathWithoutQuery));
-          } catch {
-            return false;
-          }
-        }
-        return isAbsolute(pathWithoutQuery);
-      },
-      transform(code: string, id: string) {
-        if (!id) {
-          // Some modules apparently don't have an id?
-          return null;
-        }
+      }
+      return isAbsolute(pathWithoutQuery);
+    },
+    transform(code: string, id: string) {
+      if (!id) {
+        // Some modules apparently don't have an id?
+        return null;
+      }
 
-        // Vite and Rollup may append cache-busting queries or fragments to
-        // real filesystem module IDs. They are not part of the package path
-        // and prevent exact instrumentation file paths from matching.
-        const cleanId = id.replace(/[?#].*$/, "");
+      // Vite and Rollup may append cache-busting queries or fragments to
+      // real filesystem module IDs. They are not part of the package path
+      // and prevent exact instrumentation file paths from matching.
+      const cleanId = id.replace(/[?#].*$/, "");
 
-        // Convert file:// URLs to regular paths at entry point
-        // Node.js ESM loader hooks provide file:// URLs, but downstream code expects paths
-        const filePath = cleanId.startsWith("file:")
-          ? fileURLToPath(cleanId)
-          : cleanId;
+      // Convert file:// URLs to regular paths at entry point
+      // Node.js ESM loader hooks provide file:// URLs, but downstream code expects paths
+      const filePath = cleanId.startsWith("file:")
+        ? fileURLToPath(cleanId)
+        : cleanId;
 
-        // Determine if this is an ES module using multiple methods for accurate detection
-        const ext = extname(filePath);
-        let isModule = ext === ".mjs" || ext === ".ts" || ext === ".tsx";
+      // Determine if this is an ES module using multiple methods for accurate detection
+      const ext = extname(filePath);
+      let isModule = ext === ".mjs" || ext === ".ts" || ext === ".tsx";
 
-        // For .js files, use content analysis for module detection
-        if (ext === ".js") {
-          isModule = code.includes("export ") || code.includes("import ");
-        }
+      // For .js files, use content analysis for module detection
+      if (ext === ".js") {
+        isModule = code.includes("export ") || code.includes("import ");
+      }
 
-        // Try to get module details from the file path
-        // IMPORTANT: module-details-from-path uses path.sep to split paths.
-        // On Windows (path.sep = '\'), we need to convert forward slashes to backslashes.
-        // On Unix (path.sep = '/'), paths should already use forward slashes.
-        // Some bundlers (like Vite/Rollup) may pass paths with forward slashes even on Windows.
-        const normalizedForPlatform = filePath.split("/").join(sep);
-        const moduleDetails = moduleDetailsFromPath(normalizedForPlatform);
+      // Try to get module details from the file path
+      // IMPORTANT: module-details-from-path uses path.sep to split paths.
+      // On Windows (path.sep = '\'), we need to convert forward slashes to backslashes.
+      // On Unix (path.sep = '/'), paths should already use forward slashes.
+      // Some bundlers (like Vite/Rollup) may pass paths with forward slashes even on Windows.
+      const normalizedForPlatform = filePath.split("/").join(sep);
+      const moduleDetails = moduleDetailsFromPath(normalizedForPlatform);
 
-        // If no module details found, the file is not part of a module
-        if (!moduleDetails) {
-          return null;
-        }
+      // If no module details found, the file is not part of a module
+      if (!moduleDetails) {
+        return null;
+      }
 
-        // Use module details for accurate module information
-        // npm aliases retain the canonical package name in package.json even
-        // though their node_modules directory uses the alias. Match configs
-        // against that canonical name so aliased dependencies are instrumented.
-        const moduleName =
-          getPackageName(moduleDetails.basedir) ?? moduleDetails.name;
-        // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
-        const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
-        const moduleVersion = getModuleVersion(moduleDetails.basedir);
+      // npm aliases retain the canonical package name in package.json even
+      // though their node_modules directory uses the alias. Match configs
+      // against that canonical name so aliased dependencies are instrumented.
+      const moduleName =
+        getPackageName(moduleDetails.basedir) ?? moduleDetails.name;
+      // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
+      const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
+      const moduleVersion = getModuleVersion(moduleDetails.basedir);
 
-        // Per-package source patches (see loader/special-case-patches.ts).
-        // Same anti-pattern fallback the runtime loader uses — mirrored here
-        // so bundled apps get the patches without relying on hook.mjs.
-        // Skipped for browser bundles since the wrapper templates use
-        // `node:module`/`require` to resolve `@mastra/observability`.
-        if (options.browser !== true) {
-          const patched = applySpecialCasePatch({
-            packageName: moduleName,
-            modulePath: normalizedModulePath,
-            source: code,
-            format: isModule ? "esm" : "cjs",
-          });
-          if (patched !== null) {
-            return { code: patched, map: null };
-          }
-        }
+      // Per-package source patches (see loader/special-case-patches.ts).
+      // Same anti-pattern fallback the runtime loader uses — mirrored here
+      // so bundled apps get the patches without relying on hook.mjs.
+      const patched = applySpecialCasePatch({
+        packageName: moduleName,
+        modulePath: normalizedModulePath,
+        source: code,
+        format: isModule ? "esm" : "cjs",
+        browser,
+      });
+      if (patched !== null) {
+        return { code: patched, map: null };
+      }
 
-        // If no version found
-        if (!moduleVersion) {
-          console.warn(
-            `No 'package.json' version found for module ${moduleName} at ${moduleDetails.basedir}. Skipping transformation.`,
-          );
-          return null;
-        }
-
-        // Try to get a transformer for this file
-        const transformer = instrumentationMatcher.getTransformer(
-          moduleName,
-          moduleVersion,
-          normalizedModulePath,
+      // If no version found
+      if (!moduleVersion) {
+        console.warn(
+          `No 'package.json' version found for module ${moduleName} at ${moduleDetails.basedir}. Skipping transformation.`,
         );
+        return null;
+      }
 
-        if (!transformer) {
-          // No instrumentations match this file
-          return null;
-        }
+      // Try to get a transformer for this file
+      const transformer = instrumentationMatcher.getTransformer(
+        moduleName,
+        moduleVersion,
+        normalizedModulePath,
+      );
 
-        try {
-          // Transform the code
-          const moduleType = isModule ? "esm" : "cjs";
-          const result = transformer.transform(code, moduleType);
-          const transformedCode = result.code.replace(
-            /const \{tracingChannel: ([A-Za-z_$][\w$]*)\} = ([A-Za-z_$][\w$]*);/g,
-            "const $1 = $2.tracingChannel;",
-          );
+      if (!transformer) {
+        // No instrumentations match this file
+        return null;
+      }
 
-          return {
-            code: transformedCode,
-            map: result.map,
-          };
-        } catch (error) {
-          // If transformation fails, warn and return original code
-          console.warn(`Code transformation failed for ${id}: ${error}`);
-          return null;
-        }
-      },
-    };
-  },
-);
+      try {
+        // Transform the code
+        const moduleType = isModule ? "esm" : "cjs";
+        const result = transformer.transform(code, moduleType);
+        return {
+          code: result.code,
+          map: result.map,
+        };
+      } catch (error) {
+        // If transformation fails, warn and return original code
+        console.warn(`Code transformation failed for ${id}: ${error}`);
+        return null;
+      }
+    },
+  };
+});

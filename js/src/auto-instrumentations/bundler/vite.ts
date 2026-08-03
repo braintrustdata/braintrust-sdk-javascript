@@ -1,27 +1,18 @@
 import type { VitePlugin } from "unplugin";
-import {
-  BundlerPluginOptions,
-  unplugin,
-  type LegacyBundlerPluginOptions,
-} from "./plugin";
+import { BundlerPluginOptions, unplugin } from "./plugin";
 export type { InstrumentationConfig } from "../orchestrion-js";
 
 export function braintrustVitePlugin(
   options: BundlerPluginOptions = {},
 ): VitePlugin | VitePlugin[] {
-  const { useDiagnosticChannelCompatShim = false, ...pluginOptions } = options;
-  const normalizedOptions = {
-    ...pluginOptions,
-    browser: useDiagnosticChannelCompatShim,
-  };
-  const transformPlugin = unplugin.vite(normalizedOptions);
+  const transformPlugin = unplugin.vite(options);
   const optimizeDepsPlugin: VitePlugin = {
     name: "braintrust:optimize-deps",
     config() {
       return {
         optimizeDeps: {
           esbuildOptions: {
-            plugins: [unplugin.esbuild(normalizedOptions)],
+            plugins: [unplugin.esbuild(options)],
           },
         },
       };
@@ -36,7 +27,7 @@ export function braintrustVitePlugin(
       return {
         optimizeDeps: {
           esbuildOptions: {
-            plugins: [unplugin.esbuild(normalizedOptions)],
+            plugins: [unplugin.esbuild(options)],
           },
         },
       };
@@ -49,7 +40,7 @@ export function braintrustVitePlugin(
   ];
 }
 
-export type VitePluginOptions = LegacyBundlerPluginOptions;
+export type VitePluginOptions = BundlerPluginOptions;
 
 /**
  * @deprecated Use {@link braintrustVitePlugin} instead.

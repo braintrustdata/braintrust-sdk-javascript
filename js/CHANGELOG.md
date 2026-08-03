@@ -1,5 +1,19 @@
 # braintrust
 
+## 3.25.0
+
+### Minor Changes
+
+- feat: Bump auto instrumentation of Pi Coding Agent SDK to current release 0.81.1 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2268)
+
+### Patch Changes
+
+- feat: Support `@openrouter/sdk` v1 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2270)
+- fix: Fix eval hanging until configured timeout resolves (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2272)
+- feat: Record instrumentation name as part of span provenance (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2269)
+- deps: Bump deps (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2265)
+- fix(ai-sdk): Preserve HarnessAgent trace context across suspended turns. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2262)
+
 ## 3.24.0
 
 ### Minor Changes

@@ -26,7 +26,8 @@ import { extname, join, sep } from "path";
 import { readFileSync } from "fs";
 import moduleDetailsFromPath from "module-details-from-path";
 import { getDefaultInstrumentationConfigs } from "../configs/all";
-import { type LegacyBundlerPluginOptions } from "./plugin";
+import { type BundlerPluginOptions } from "./plugin";
+import { applySpecialCasePatch } from "../loader/special-case-patches";
 import { getPackageName } from "../loader/get-package-version";
 
 /**
@@ -55,12 +56,11 @@ const matcherCache = new Map<string, Matcher>();
 /**
  * Get or create a matcher instance, caching by config hash
  */
-function getMatcher(options: LegacyBundlerPluginOptions): Matcher {
+function getMatcher(options: BundlerPluginOptions): Matcher {
   const allInstrumentations = getDefaultInstrumentationConfigs({
     additionalInstrumentations: options.instrumentations,
   });
-  const dcModule = options.browser ? "dc-browser" : undefined;
-  const configHash = JSON.stringify({ allInstrumentations, dcModule });
+  const configHash = JSON.stringify({ allInstrumentations });
 
   if (matcherCache.has(configHash)) {
     return matcherCache.get(configHash)!;
@@ -72,7 +72,7 @@ function getMatcher(options: LegacyBundlerPluginOptions): Matcher {
     }
   }
 
-  const matcher = create(allInstrumentations, dcModule ?? null);
+  const matcher = create(allInstrumentations);
   matcherCache.set(configHash, matcher);
   return matcher;
 }
@@ -85,7 +85,7 @@ process.on("exit", () => {
 /**
  * Webpack loader that instruments JavaScript code using code-transformer.
  *
- * Accepts the same options as the legacy webpack plugin.
+ * Accepts the same options as the Braintrust bundler plugins.
  */
 function codeTransformerLoader(
   this: any,
@@ -93,7 +93,7 @@ function codeTransformerLoader(
   inputSourceMap?: any,
 ): void {
   const callback = this.async();
-  const options: LegacyBundlerPluginOptions = this.getOptions() ?? {};
+  const options: BundlerPluginOptions = this.getOptions() ?? {};
   const resourcePath: string = this.resourcePath;
 
   // Skip virtual modules (e.g. Next.js loaders pass query-string URLs with no real path)
@@ -122,14 +122,24 @@ function codeTransformerLoader(
 
   const moduleName =
     getPackageName(moduleDetails.basedir) ?? moduleDetails.name;
-  const moduleVersion = getModuleVersion(moduleDetails.basedir);
+  // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
+  const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
 
+  const patched = applySpecialCasePatch({
+    packageName: moduleName,
+    modulePath: normalizedModulePath,
+    source: code,
+    format: isModule ? "esm" : "cjs",
+    browser: options.browser ?? options.useDiagnosticChannelCompatShim ?? false,
+  });
+  if (patched !== null) {
+    return callback(null, patched);
+  }
+
+  const moduleVersion = getModuleVersion(moduleDetails.basedir);
   if (!moduleVersion) {
     return callback(null, code, inputSourceMap);
   }
-
-  // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
-  const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
 
   const matcher = getMatcher(options);
   const transformer = matcher.getTransformer(
@@ -157,7 +167,7 @@ function codeTransformerLoader(
 
 // Attach Options type to the loader function
 namespace codeTransformerLoader {
-  export type Options = LegacyBundlerPluginOptions;
+  export type Options = BundlerPluginOptions;
 }
 
 export = codeTransformerLoader;
