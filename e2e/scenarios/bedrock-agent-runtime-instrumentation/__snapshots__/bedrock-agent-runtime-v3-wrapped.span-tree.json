@@ -15,8 +15,10 @@
                   "name": "bedrockAgent.modelInvocation",
                   "type": "llm",
                   "children": [],
-                  "input": "<bedrock-agent-model-prompt>",
-                  "output": "<bedrock-agent-model-output>",
+                  "input": "deterministic Bedrock agent model prompt",
+                  "output": {
+                    "action": "get_weather"
+                  },
                   "metadata": {
                     "agentAliasId": "alias-1",
                     "agentId": "<agentId:1>",
@@ -100,8 +102,10 @@
                   "name": "bedrockAgent.modelInvocation",
                   "type": "llm",
                   "children": [],
-                  "input": "<bedrock-agent-model-prompt>",
-                  "output": "<bedrock-agent-model-output>",
+                  "input": "deterministic Bedrock agent model prompt",
+                  "output": {
+                    "answer": "INLINE_OK"
+                  },
                   "metadata": {
                     "agentAliasId": "alias-1",
                     "agentId": "<agentId:1>",

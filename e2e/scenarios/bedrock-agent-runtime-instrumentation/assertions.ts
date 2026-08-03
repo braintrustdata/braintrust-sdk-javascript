@@ -5,11 +5,7 @@ import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
-import {
-  matchSpanTreeSnapshot,
-  spanTreeFields,
-  type SpanTreeEntry,
-} from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import {
   findChildSpans,
   findLatestSpan,
@@ -85,11 +81,9 @@ function findAgentSpan(events: CapturedLogEvent[]) {
   );
 }
 
-function spanTreeEvents(
-  events: CapturedLogEvent[],
-): Array<CapturedLogEvent | SpanTreeEntry> {
+function spanTreeEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
   const root = findLatestSpan(events, ROOT_NAME);
-  const items: Array<CapturedLogEvent | SpanTreeEntry> = root ? [root] : [];
+  const items: CapturedLogEvent[] = root ? [root] : [];
 
   for (const definition of OPERATIONS) {
     const operation = findLatestSpan(events, definition.operationName);
@@ -109,20 +103,7 @@ function spanTreeEvents(
           childName,
           instrumentationSpan.span.id,
         )) {
-          items.push({
-            event: child,
-            fields: {
-              ...spanTreeFields(child),
-              input:
-                child.span.type === "llm"
-                  ? "<bedrock-agent-model-prompt>"
-                  : child.input,
-              output:
-                child.span.type === "llm"
-                  ? "<bedrock-agent-model-output>"
-                  : child.output,
-            },
-          });
+          items.push(child);
         }
       }
     }
