@@ -1,5 +1,22 @@
 # braintrust
 
+## 3.26.0
+
+### Minor Changes
+
+- feat: Add `agents` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2257)
+- feat: Add `@cloudflare/ai-chat` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2256)
+- feat: Add instrumentation for `@huggingface/transformers` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2271)
+
+### Patch Changes
+
+- fix: Capture system prompt in Strands agent model span input (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2311)
+- fix(google-gen-ai): Fix output token counting for interactions API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2307)
+- fix(google-gen-ai): Fix output token counting for generate content API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2308)
+- ref: Replace diagnostic channels with proprietary global hooks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2275)
+- fix(google-adk): Fix token count in google adk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2312)
+- fix(ai-sdk): Fix type compat by returning any from `braintrustAISDKTelemetry` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2309)
+
 ## 3.25.0
 
 ### Minor Changes
