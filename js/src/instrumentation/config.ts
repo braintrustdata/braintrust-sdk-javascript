@@ -9,6 +9,7 @@ export interface InstrumentationIntegrationsConfig {
   huggingface?: boolean;
   claudeAgentSDK?: boolean;
   cloudflareAIChat?: boolean;
+  cloudflareThink?: boolean;
   cursor?: boolean;
   cursorSDK?: boolean;
   flue?: boolean;
@@ -74,6 +75,7 @@ const envIntegrationAliases: Record<
   cloudflareaichat: "cloudflareAIChat",
   "cloudflare-ai-chat": "cloudflareAIChat",
   "@cloudflare/ai-chat": "cloudflareAIChat",
+  cloudflarethink: "cloudflareThink",
   cursor: "cursor",
   "cursor-sdk": "cursorSDK",
   cursorsdk: "cursorSDK",
@@ -134,6 +136,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     huggingface: true,
     claudeAgentSDK: true,
     cloudflareAIChat: true,
+    cloudflareThink: true,
     cursor: true,
     cursorSDK: true,
     flue: true,

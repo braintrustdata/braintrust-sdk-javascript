@@ -11,6 +11,7 @@ import {
 import { claudeAgentSDKChannels } from "./claude-agent-sdk-channels";
 import { cloudflareAIChatChannels } from "./cloudflare-ai-chat-channels";
 import { cloudflareAgentsChannels } from "./cloudflare-agents-channels";
+import { cloudflareThinkChannels } from "./cloudflare-think-channels";
 import { cohereChannels } from "./cohere-channels";
 import { cursorSDKChannels } from "./cursor-sdk-channels";
 import { flueChannels } from "./flue-channels";
@@ -48,6 +49,10 @@ describe("built-in instrumentation provenance names", () => {
     [
       cloudflareAgentsChannels.runAgentTool,
       INSTRUMENTATION_NAMES.CLOUDFLARE_AGENTS,
+    ],
+    [
+      cloudflareThinkChannels.runInferenceLoop,
+      INSTRUMENTATION_NAMES.CLOUDFLARE_THINK,
     ],
     [cohereChannels.chat, INSTRUMENTATION_NAMES.COHERE],
     [cursorSDKChannels.create, INSTRUMENTATION_NAMES.CURSOR_SDK],

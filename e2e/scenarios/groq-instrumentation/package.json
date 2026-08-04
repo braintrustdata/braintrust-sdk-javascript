@@ -13,6 +13,6 @@
   },
   "dependencies": {
     "groq-sdk-v1": "npm:groq-sdk@1.1.2",
-    "groq-sdk-v1-latest": "npm:groq-sdk@1.3.0"
+    "groq-sdk-v1-latest": "npm:groq-sdk@1.5.0"
   }
 }

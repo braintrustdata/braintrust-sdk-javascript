@@ -1,9 +1,6 @@
 import { BasePlugin, toLoggedError } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
-import iso, {
-  type IsoAsyncLocalStorage,
-  type IsoChannelHandlers,
-} from "../../isomorph";
+import iso, { type IsoAsyncLocalStorage } from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
 import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
@@ -15,7 +12,6 @@ import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
 import {
-  bindAutoInstrumentationSuppressionToStart,
   enterAutoInstrumentationAllowed,
   runWithAutoInstrumentationSuppressed,
 } from "../auto-instrumentation-suppression";
@@ -52,15 +48,9 @@ type PiPromptState = {
   metadata: Record<string, unknown>;
   output?: unknown;
   promptCallEnded: boolean;
-  promptText?: string;
-  queued: boolean;
-  restorePromptContext?: () => void;
-  sawStreamFn: boolean;
   span: Span;
   startTime: number;
-  streamPatchState: PiStreamPatchState;
   turnEnded: boolean;
-  unsubscribeAgent?: () => void;
 };
 
 type PiLlmSpanState = {
@@ -76,34 +66,22 @@ type PiToolSpanState = {
   span: Span;
 };
 
-type PiStreamPatchState = {
-  activePromptStates: Set<PiPromptState>;
-  agent: PiAgent;
-  eventPromptState?: PiPromptState;
+type PiAgentPatchState = {
   originalStreamFn: PiStreamFn;
-  queuedPromptStates: PiPromptState[];
   wrappedStreamFn: PiStreamFn;
 };
 
-type PiPromptContextFrame = {
-  id: symbol;
-  state: PiPromptState;
-};
-
-type PiPromptContextState = {
-  frames: PiPromptContextFrame[];
-};
-
-const piStreamPatchStates = new WeakMap<PiAgent, PiStreamPatchState>();
+const piAgentPatchStates = new WeakMap<PiAgent, PiAgentPatchState>();
+const piAgentEventSubscriptions = new WeakSet<PiAgent>();
 let piPromptContextStore:
-  | IsoAsyncLocalStorage<PiPromptContextState | undefined>
+  | IsoAsyncLocalStorage<PiPromptState | undefined>
   | undefined;
 
 export class PiCodingAgentPlugin extends BasePlugin {
   private readonly activePromptStates = new Set<PiPromptState>();
 
   protected onEnable(): void {
-    this.subscribeToPrompt();
+    this.interceptPrompt();
   }
 
   protected onDisable(): void {
@@ -113,68 +91,70 @@ export class PiCodingAgentPlugin extends BasePlugin {
     this.unsubscribers = [];
 
     for (const state of [...this.activePromptStates]) {
-      void finalizePiPromptRun(state).catch((error) => {
-        logInstrumentationError("Pi Coding Agent disable cleanup", error);
-      });
+      finishPiPromptRun(state);
     }
   }
 
-  private subscribeToPrompt(): void {
-    const channel = piCodingAgentChannels.prompt.tracingChannel();
-    const states = new WeakMap<object, PiPromptState>();
-    const unbindAutoInstrumentationSuppression =
-      bindAutoInstrumentationSuppressionToStart(channel);
-
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof piCodingAgentChannels.prompt>
-    > = {
-      start: (event) => {
-        const state = startPiPromptRun(event, (state) => {
-          this.activePromptStates.delete(state);
-        });
-        if (state) {
-          this.activePromptStates.add(state);
-          states.set(event, state);
-        }
-      },
-      asyncEnd: async (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
-        states.delete(event);
-        state.promptCallEnded = true;
-        if (
-          !state.finalized &&
-          state.deferCompletionUntilTurnEnd &&
-          !state.turnEnded
-        ) {
-          if (!state.sawStreamFn) {
-            state.queued = true;
-            if (!state.streamPatchState.queuedPromptStates.includes(state)) {
-              state.streamPatchState.queuedPromptStates.push(state);
-            }
+  private interceptPrompt(): void {
+    this.unsubscribers.push(
+      piCodingAgentChannels.prompt.intercept(
+        (target, thisArg, args, additional) => {
+          const invokeTarget = () => Reflect.apply(target, thisArg, args);
+          let state: PiPromptState | undefined;
+          try {
+            state = startPiPromptRun(
+              {
+                ...additional,
+                arguments: args,
+                self: thisArg,
+              },
+              (finalizedState) => {
+                this.activePromptStates.delete(finalizedState);
+              },
+            );
+          } catch (error) {
+            logInstrumentationError("Pi Coding Agent prompt start", error);
           }
-          return;
-        }
-        await finalizePiPromptRun(state);
-      },
-      error: async (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
-        states.delete(event);
-        await finalizePiPromptRun(state, event.error);
-      },
-    };
 
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindAutoInstrumentationSuppression?.();
-      channel.unsubscribe(handlers);
-    });
+          if (!state) {
+            return runWithAutoInstrumentationSuppressed(invokeTarget);
+          }
+          this.activePromptStates.add(state);
+
+          return promptContextStore().run(state, () =>
+            runWithAutoInstrumentationSuppressed(() => {
+              let result: PromiseLike<void>;
+              try {
+                result = invokeTarget();
+              } catch (error) {
+                finishPiPromptRun(state, error);
+                throw error;
+              }
+
+              return Promise.resolve(result).then(
+                (value) => {
+                  finishPiPromptCall(state);
+                  return value;
+                },
+                (error) => {
+                  finishPiPromptRun(state, error);
+                  throw error;
+                },
+              );
+            }),
+          );
+        },
+      ),
+    );
   }
+}
+
+function finishPiPromptCall(state: PiPromptState): void {
+  state.promptCallEnded = true;
+  if (state.deferCompletionUntilTurnEnd && !state.turnEnded) {
+    return;
+  }
+  finishPiPromptRun(state);
 }
 
 function startPiPromptRun(
@@ -186,6 +166,7 @@ function startPiPromptRun(
   if (!session || !isPiAgent(agent)) {
     return undefined;
   }
+  installPiAgentInstrumentation(agent);
 
   const metadata = {
     ...extractSessionMetadata(session),
@@ -212,9 +193,7 @@ function startPiPromptRun(
       INSTRUMENTATION_NAMES.PI_CODING_AGENT,
     ),
   );
-  const streamPatchState = installPiStreamPatch(agent);
   const options = event.arguments[1];
-  const promptText = event.arguments[0];
 
   const state: PiPromptState = {
     activeLlmSpans: new Set(),
@@ -229,30 +208,10 @@ function startPiPromptRun(
     metrics: {},
     onFinalize,
     promptCallEnded: false,
-    ...(typeof promptText === "string" ? { promptText } : {}),
-    queued: false,
     span,
-    sawStreamFn: false,
     startTime: getCurrentUnixTimestamp(),
-    streamPatchState,
     turnEnded: false,
   };
-  state.restorePromptContext = enterPiPromptContext(state);
-  streamPatchState.activePromptStates.add(state);
-
-  try {
-    state.unsubscribeAgent = agent.subscribe(async (agentEvent) => {
-      try {
-        await runWithAutoInstrumentationSuppressed(() =>
-          handlePiAgentEvent(state, agentEvent),
-        );
-      } catch (error) {
-        logInstrumentationError("Pi Coding Agent event", error);
-      }
-    });
-  } catch (error) {
-    logInstrumentationError("Pi Coding Agent event subscription", error);
-  }
 
   return state;
 }
@@ -274,125 +233,58 @@ function isPiAgent(value: unknown): value is PiAgent {
   );
 }
 
-function promptContextStore(): IsoAsyncLocalStorage<
-  PiPromptContextState | undefined
-> {
+function promptContextStore(): IsoAsyncLocalStorage<PiPromptState | undefined> {
   piPromptContextStore ??= iso.newAsyncLocalStorage<
-    PiPromptContextState | undefined
+    PiPromptState | undefined
   >();
   return piPromptContextStore;
 }
 
-function currentPromptContextFrames(): PiPromptContextFrame[] {
-  return promptContextStore().getStore()?.frames ?? [];
-}
-
 function currentPiPromptState(): PiPromptState | undefined {
-  const frames = currentPromptContextFrames();
-  return frames[frames.length - 1]?.state;
+  return promptContextStore().getStore();
 }
 
-function enterPiPromptContext(state: PiPromptState): () => void {
-  const frame = {
-    id: Symbol("braintrust.pi-coding-agent.prompt"),
-    state,
-  };
-  // TODO(luca): Replace ALS.enterWith() with ALS.run()
-  // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
-  promptContextStore().enterWith({
-    frames: [...currentPromptContextFrames(), frame],
-  });
-
-  return () => {
-    const frames = currentPromptContextFrames().filter(
-      (candidate) => candidate.id !== frame.id,
+function installPiAgentInstrumentation(agent: PiAgent): void {
+  const existing = piAgentPatchStates.get(agent);
+  if (!existing || agent.streamFn !== existing.wrappedStreamFn) {
+    const patchState = {
+      originalStreamFn: agent.streamFn,
+      wrappedStreamFn: agent.streamFn,
+    } satisfies PiAgentPatchState;
+    patchState.wrappedStreamFn = makeInstrumentedStreamFn(
+      agent,
+      patchState.originalStreamFn,
     );
-    // TODO(luca): Replace ALS.enterWith() with ALS.run()
-    // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
-    promptContextStore().enterWith(frames.length > 0 ? { frames } : undefined);
-  };
-}
-
-function installPiStreamPatch(agent: PiAgent): PiStreamPatchState {
-  const existing = piStreamPatchStates.get(agent);
-  if (existing) {
-    if (agent.streamFn !== existing.wrappedStreamFn) {
-      debugLogger.debug(
-        "Pi Coding Agent streamFn changed while Braintrust instrumentation was active; preserving existing patch state.",
-      );
-    }
-    return existing;
+    agent.streamFn = patchState.wrappedStreamFn;
+    piAgentPatchStates.set(agent, patchState);
   }
 
-  const patchState = {
-    activePromptStates: new Set<PiPromptState>(),
-    agent,
-    originalStreamFn: agent.streamFn,
-    queuedPromptStates: [],
-    wrappedStreamFn: agent.streamFn,
-  } satisfies PiStreamPatchState;
-  patchState.wrappedStreamFn = makeSharedInstrumentedStreamFn(patchState);
-  agent.streamFn = patchState.wrappedStreamFn;
-  piStreamPatchStates.set(agent, patchState);
-  return patchState;
-}
-
-function resolveStreamPromptState(
-  patchState: PiStreamPatchState,
-  context: PiContext,
-): PiPromptState | undefined {
-  let lastUserText: string | undefined;
-  if (Array.isArray(context.messages)) {
-    for (let i = context.messages.length - 1; i >= 0; i--) {
-      const message = context.messages[i];
-      if (isPiUserMessage(message)) {
-        if (typeof message.content === "string") {
-          lastUserText = message.content;
-        } else {
-          lastUserText = message.content
-            .flatMap((part) => (part.type === "text" ? [part.text] : []))
-            .join("");
-        }
-        break;
+  if (piAgentEventSubscriptions.has(agent)) {
+    return;
+  }
+  try {
+    agent.subscribe(async (event) => {
+      const state = currentPiPromptState();
+      if (!state || state.agent !== agent || state.finalized) {
+        return;
       }
-    }
+      try {
+        await runWithAutoInstrumentationSuppressed(() =>
+          handlePiAgentEvent(state, event),
+        );
+      } catch (error) {
+        logInstrumentationError("Pi Coding Agent event", error);
+      }
+    });
+    piAgentEventSubscriptions.add(agent);
+  } catch (error) {
+    logInstrumentationError("Pi Coding Agent event subscription", error);
   }
-
-  if (lastUserText !== undefined) {
-    const queuedMatch = patchState.queuedPromptStates.find(
-      (state) => state.promptText === lastUserText,
-    );
-    if (queuedMatch) {
-      return queuedMatch;
-    }
-
-    const matches = [...patchState.activePromptStates].filter(
-      (state) => state.promptText === lastUserText,
-    );
-    if (matches.length === 1) {
-      return matches[0];
-    }
-  }
-
-  const contextState = currentPiPromptState();
-  if (
-    contextState &&
-    patchState.activePromptStates.has(contextState) &&
-    (!contextState.queued ||
-      (lastUserText !== undefined && contextState.promptText === lastUserText))
-  ) {
-    return contextState;
-  }
-
-  if (patchState.activePromptStates.size === 1) {
-    return [...patchState.activePromptStates][0];
-  }
-
-  return undefined;
 }
 
-function makeSharedInstrumentedStreamFn(
-  patchState: PiStreamPatchState,
+function makeInstrumentedStreamFn(
+  agent: PiAgent,
+  originalStreamFn: PiStreamFn,
 ): PiStreamFn {
   return async function instrumentedPiStreamFn(
     this: unknown,
@@ -400,31 +292,16 @@ function makeSharedInstrumentedStreamFn(
     context: PiContext,
     options?: PiSimpleStreamOptions,
   ) {
-    const state = resolveStreamPromptState(patchState, context);
-    if (!state) {
-      const invokeOriginal = () =>
-        Reflect.apply(patchState.originalStreamFn, this, [
-          model,
-          context,
-          options,
-        ]);
-      return patchState.activePromptStates.size > 0
-        ? runWithAutoInstrumentationSuppressed(invokeOriginal)
-        : invokeOriginal();
+    const invokeOriginal = () =>
+      Reflect.apply(originalStreamFn, this, [model, context, options]);
+    const state = currentPiPromptState();
+    if (!state || state.agent !== agent || state.finalized) {
+      return invokeOriginal();
     }
 
-    state.sawStreamFn = true;
-    removeQueuedPromptState(state);
-    state.streamPatchState.eventPromptState = state;
     const llmState = await startPiLlmSpan(state, model, context, options);
     try {
-      const stream = await runWithAutoInstrumentationSuppressed(() =>
-        Reflect.apply(patchState.originalStreamFn, this, [
-          model,
-          context,
-          options,
-        ]),
-      );
+      const stream = await runWithAutoInstrumentationSuppressed(invokeOriginal);
       return patchAssistantMessageStream(stream, state, llmState);
     } catch (error) {
       finishPiLlmSpan(state, llmState, undefined, error);
@@ -613,18 +490,6 @@ async function handlePiAgentEvent(
   if (state.finalized) {
     return;
   }
-  const eventPromptState = state.streamPatchState.eventPromptState;
-  if (eventPromptState && eventPromptState !== state) {
-    return;
-  }
-  if (
-    !eventPromptState &&
-    (state.queued ||
-      (state.streamPatchState.activePromptStates.size > 1 &&
-        currentPiPromptState() !== state))
-  ) {
-    return;
-  }
 
   switch (event.type) {
     case "message_end":
@@ -640,11 +505,8 @@ async function handlePiAgentEvent(
           addMetrics(state.metrics, extractUsageMetrics(event.message.usage));
         }
       }
-      if (state.streamPatchState.eventPromptState === state) {
-        state.streamPatchState.eventPromptState = undefined;
-      }
       if (state.promptCallEnded && state.deferCompletionUntilTurnEnd) {
-        await finalizePiPromptRun(state);
+        finishPiPromptRun(state);
       }
       return;
     case "tool_execution_start":
@@ -728,24 +590,13 @@ function finishPiToolSpan(
   }
 }
 
-async function finalizePiPromptRun(
-  state: PiPromptState,
-  error?: unknown,
-): Promise<void> {
+function finishPiPromptRun(state: PiPromptState, error?: unknown): void {
   if (state.finalized) {
     return;
   }
   state.finalized = true;
   state.onFinalize?.(state);
-  restorePiStreamFn(state);
-
-  try {
-    state.unsubscribeAgent?.();
-  } catch (unsubscribeError) {
-    logInstrumentationError("Pi Coding Agent unsubscribe", unsubscribeError);
-  }
-
-  await finishOpenLlmSpans(state, error);
+  finishOpenLlmSpans(state, error);
   finishOpenToolSpans(state, error);
 
   const metadata = {
@@ -763,42 +614,15 @@ async function finalizePiPromptRun(
       output: state.output,
     });
   } finally {
-    state.span.end();
+    try {
+      state.span.end();
+    } catch (endError) {
+      logInstrumentationError("Pi Coding Agent prompt end", endError);
+    }
   }
 }
 
-function restorePiStreamFn(state: PiPromptState): void {
-  const patchState = state.streamPatchState;
-  patchState.activePromptStates.delete(state);
-  removeQueuedPromptState(state);
-  if (patchState.eventPromptState === state) {
-    patchState.eventPromptState = undefined;
-  }
-  state.restorePromptContext?.();
-
-  if (patchState.activePromptStates.size > 0) {
-    return;
-  }
-
-  if (patchState.agent.streamFn === patchState.wrappedStreamFn) {
-    patchState.agent.streamFn = patchState.originalStreamFn;
-  }
-  piStreamPatchStates.delete(patchState.agent);
-}
-
-function removeQueuedPromptState(state: PiPromptState): void {
-  state.queued = false;
-  const queuedPromptStates = state.streamPatchState.queuedPromptStates;
-  const index = queuedPromptStates.indexOf(state);
-  if (index >= 0) {
-    queuedPromptStates.splice(index, 1);
-  }
-}
-
-async function finishOpenLlmSpans(
-  state: PiPromptState,
-  error?: unknown,
-): Promise<void> {
+function finishOpenLlmSpans(state: PiPromptState, error?: unknown): void {
   for (const llmState of [...state.activeLlmSpans]) {
     finishPiLlmSpan(state, llmState, undefined, error);
   }

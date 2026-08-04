@@ -31,6 +31,8 @@ Use the normal Orchestrion config plus plugin/channel path by default. Special-c
 
 Instrumentation patches generally do not need to be removed during teardown. Prefer leaving behavior-preserving patches installed when they are idempotent; do not add unpatching machinery by default.
 
+Span names should generally remain stable across calls and versions. Do not include dynamic values such as model names in span names; record those values in metadata instead.
+
 ## Testing
 
 Uses Vitest. Prefer running the **narrowest relevant test** rather than the full suite.

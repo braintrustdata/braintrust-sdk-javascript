@@ -114,6 +114,21 @@
     ]
   },
   {
+    "scenarioDirName": "cloudflare-think-instrumentation",
+    "label": "Cloudflare Think Instrumentation",
+    "metadataScenario": "cloudflare-think-instrumentation",
+    "variants": [
+      {
+        "variantKey": "cloudflare-think-v0",
+        "label": "v0.13 pinned"
+      },
+      {
+        "variantKey": "cloudflare-think-v0-latest",
+        "label": "v0.13 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "openai-agents-instrumentation",
     "label": "OpenAI Agents Instrumentation",
     "metadataScenario": "openai-agents-instrumentation",
@@ -572,11 +587,27 @@
     "variants": [
       {
         "variantKey": "flue-v0-8-0",
-        "label": "v0.8.0"
+        "label": "v0.8 pinned"
+      },
+      {
+        "variantKey": "flue-v0-8-latest",
+        "label": "v0.8 latest"
       },
       {
         "variantKey": "flue-v1-0-0-beta-3",
-        "label": "v1.0.0-beta.3"
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "flue-v1-latest",
+        "label": "v1 latest"
+      },
+      {
+        "variantKey": "flue-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "flue-v2-latest",
+        "label": "v2 latest"
       }
     ]
   },
@@ -609,6 +640,36 @@
       {
         "variantKey": "github-copilot-v0-latest-auto",
         "label": "v0 latest auto-hook"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "nextjs-instrumentation",
+    "label": "Next.js Instrumentation",
+    "metadataScenario": "nextjs-instrumentation",
+    "variants": [
+      {
+        "variantKey": "nextjs-v14",
+        "label": "v14 pinned"
+      },
+      {
+        "variantKey": "nextjs-v14-latest",
+        "label": "v14 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "test-framework-evals-jest",
+    "label": "Jest Test Framework Evals",
+    "metadataScenario": "test-framework-evals-jest",
+    "variants": [
+      {
+        "variantKey": "jest-v29",
+        "label": "v29 pinned"
+      },
+      {
+        "variantKey": "jest-v29-latest",
+        "label": "v29 latest"
       }
     ]
   },

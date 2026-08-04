@@ -28,6 +28,7 @@ import moduleDetailsFromPath from "module-details-from-path";
 import { getDefaultInstrumentationConfigs } from "../configs/all";
 import { type BundlerPluginOptions } from "./plugin";
 import { applySpecialCasePatch } from "../loader/special-case-patches";
+import { getPackageName } from "../loader/get-package-version";
 
 /**
  * Helper function to get module version from package.json
@@ -119,7 +120,8 @@ function codeTransformerLoader(
     return callback(null, code, inputSourceMap);
   }
 
-  const moduleName = moduleDetails.name;
+  const moduleName =
+    getPackageName(moduleDetails.basedir) ?? moduleDetails.name;
   // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
   const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
 

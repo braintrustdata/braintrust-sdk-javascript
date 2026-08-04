@@ -15,6 +15,7 @@ export const INSTRUMENTATION_NAMES = {
   CLAUDE_AGENT_SDK: "claude-agent-sdk",
   CLOUDFLARE_AI_CHAT: "cloudflare-ai-chat",
   CLOUDFLARE_AGENTS: "cloudflare-agents",
+  CLOUDFLARE_THINK: "cloudflare-think",
   COHERE: "cohere",
   CURSOR_SDK: "cursor-sdk",
   EVE: "eve",
