@@ -1,0 +1,325 @@
+{
+  "span_tree": [
+    {
+      "name": "openrouter-agent-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "openrouter-agent-call-model-operation",
+          "children": [
+            {
+              "name": "openrouter.callModel",
+              "type": "task",
+              "children": [
+                {
+                  "name": "openrouter.beta.responses.send",
+                  "type": "llm",
+                  "children": [],
+                  "input": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
+                  "output": [
+                    {
+                      "arguments": "{\"city\":\"Vienna\"}",
+                      "callId": "tool_lookup_weather_AyS9NILbVO5fDMxhE1us",
+                      "id": "<span:1>",
+                      "name": "lookup_weather",
+                      "status": "completed",
+                      "type": "function_call"
+                    }
+                  ],
+                  "metadata": {
+                    "background": false,
+                    "completedAt": 1785813189,
+                    "createdAt": 1785813189,
+                    "error": null,
+                    "frequencyPenalty": 0,
+                    "id": "<span:1>",
+                    "incompleteDetails": null,
+                    "instructions": null,
+                    "is_byok": false,
+                    "maxOutputTokens": 16,
+                    "maxToolCalls": null,
+                    "metadata": {},
+                    "model": "gemini-2.5-flash-lite",
+                    "object": "response",
+                    "parallelToolCalls": true,
+                    "presencePenalty": 0,
+                    "previousResponseId": null,
+                    "promptCacheKey": null,
+                    "provider": "google",
+                    "reasoning": null,
+                    "safetyIdentifier": null,
+                    "serviceTier": "default",
+                    "status": "completed",
+                    "step": 1,
+                    "step_type": "initial",
+                    "store": false,
+                    "stream": true,
+                    "temperature": 0,
+                    "text": {
+                      "format": {
+                        "type": "text"
+                      }
+                    },
+                    "toolChoice": "auto",
+                    "tools": [
+                      {
+                        "description": "Look up the weather forecast for a city.",
+                        "name": "lookup_weather",
+                        "parameters": {
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "additionalProperties": false,
+                          "properties": {
+                            "city": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "city"
+                          ],
+                          "type": "object"
+                        },
+                        "strict": null,
+                        "type": "function"
+                      }
+                    ],
+                    "topLogprobs": 0,
+                    "topP": 1,
+                    "truncation": "disabled"
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 5,
+                    "cost": 0.0000054,
+                    "cost_upstream_inference_cost": 0.0000054,
+                    "cost_upstream_inference_input_cost": 0.0000034,
+                    "cost_upstream_inference_output_cost": 0.000002,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 34,
+                    "tokens": 39
+                  }
+                },
+                {
+                  "name": "lookup_weather",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "city": "Vienna"
+                  },
+                  "output": {
+                    "forecast": "Sunny in Vienna"
+                  },
+                  "metadata": {
+                    "provider": "openrouter",
+                    "tool_name": "lookup_weather"
+                  }
+                },
+                {
+                  "name": "openrouter.beta.responses.send",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
+                    {
+                      "arguments": "{\"city\":\"Vienna\"}",
+                      "callId": "tool_lookup_weather_AyS9NILbVO5fDMxhE1us",
+                      "id": "<span:1>",
+                      "name": "lookup_weather",
+                      "status": "completed",
+                      "type": "function_call"
+                    },
+                    {
+                      "callId": "tool_lookup_weather_AyS9NILbVO5fDMxhE1us",
+                      "id": "<span:2>",
+                      "output": "{\"forecast\":\"Sunny in Vienna\"}",
+                      "type": "function_call_output"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "content": [
+                        {
+                          "annotations": [],
+                          "logprobs": [],
+                          "text": "Sunny in Vienna.",
+                          "type": "output_text"
+                        }
+                      ],
+                      "id": "<span:1>",
+                      "role": "assistant",
+                      "status": "completed",
+                      "type": "message"
+                    }
+                  ],
+                  "metadata": {
+                    "background": false,
+                    "completedAt": 1785813190,
+                    "createdAt": 1785813189,
+                    "error": null,
+                    "frequencyPenalty": 0,
+                    "id": "<span:1>",
+                    "incompleteDetails": null,
+                    "instructions": null,
+                    "is_byok": false,
+                    "maxOutputTokens": 16,
+                    "maxToolCalls": null,
+                    "metadata": {},
+                    "model": "gemini-2.5-flash-lite",
+                    "object": "response",
+                    "parallelToolCalls": true,
+                    "presencePenalty": 0,
+                    "previousResponseId": null,
+                    "promptCacheKey": null,
+                    "provider": "google",
+                    "reasoning": null,
+                    "safetyIdentifier": null,
+                    "serviceTier": "default",
+                    "status": "completed",
+                    "step": 2,
+                    "step_type": "continue",
+                    "store": false,
+                    "stream": false,
+                    "temperature": 0,
+                    "text": {
+                      "format": {
+                        "type": "text"
+                      }
+                    },
+                    "toolChoice": "auto",
+                    "tools": [
+                      {
+                        "description": "Look up the weather forecast for a city.",
+                        "name": "lookup_weather",
+                        "parameters": {
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "additionalProperties": false,
+                          "properties": {
+                            "city": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "city"
+                          ],
+                          "type": "object"
+                        },
+                        "strict": null,
+                        "type": "function"
+                      }
+                    ],
+                    "topLogprobs": 0,
+                    "topP": 1,
+                    "truncation": "disabled"
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 4,
+                    "cost": 0.0000062,
+                    "cost_upstream_inference_cost": 0.0000062,
+                    "cost_upstream_inference_input_cost": 0.0000046,
+                    "cost_upstream_inference_output_cost": 0.0000016,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 46,
+                    "tokens": 50
+                  }
+                }
+              ],
+              "input": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
+              "output": [
+                {
+                  "content": [
+                    {
+                      "annotations": [],
+                      "logprobs": [],
+                      "text": "Sunny in Vienna.",
+                      "type": "output_text"
+                    }
+                  ],
+                  "id": "<span:1>",
+                  "role": "assistant",
+                  "status": "completed",
+                  "type": "message"
+                }
+              ],
+              "metadata": {
+                "background": false,
+                "completedAt": 1785813190,
+                "createdAt": 1785813189,
+                "error": null,
+                "frequencyPenalty": 0,
+                "id": "<span:1>",
+                "incompleteDetails": null,
+                "instructions": null,
+                "is_byok": false,
+                "maxOutputTokens": 16,
+                "maxToolCalls": null,
+                "metadata": {},
+                "model": "gemini-2.5-flash-lite",
+                "object": "response",
+                "parallelToolCalls": true,
+                "presencePenalty": 0,
+                "previousResponseId": null,
+                "promptCacheKey": null,
+                "provider": "google",
+                "reasoning": null,
+                "safetyIdentifier": null,
+                "serviceTier": "default",
+                "status": "completed",
+                "store": false,
+                "temperature": 0,
+                "text": {
+                  "format": {
+                    "type": "text"
+                  }
+                },
+                "toolChoice": "auto",
+                "tools": [
+                  {
+                    "description": "Look up the weather forecast for a city.",
+                    "name": "lookup_weather",
+                    "parameters": {
+                      "$schema": "http://json-schema.org/draft-07/schema#",
+                      "additionalProperties": false,
+                      "properties": {
+                        "city": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "city"
+                      ],
+                      "type": "object"
+                    },
+                    "strict": null,
+                    "type": "function"
+                  }
+                ],
+                "topLogprobs": 0,
+                "topP": 1,
+                "truncation": "disabled",
+                "turn_count": 2
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "call-model",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "openrouter-agent-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+        "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
+      }
+    }
+  ]
+}
