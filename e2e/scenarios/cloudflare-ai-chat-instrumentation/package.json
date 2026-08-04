@@ -12,7 +12,7 @@
     "cloudflare-ai-chat-v0-latest": "npm:@cloudflare/ai-chat@0.9.4",
     "dc-browser": "1.0.4",
     "react": "19.2.4",
-    "vite": "^8.0.16",
+    "vite": "^8.2.0",
     "wrangler": "^4.103.0",
     "zod": "4.3.6"
   },
