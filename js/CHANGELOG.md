@@ -1,5 +1,18 @@
 # braintrust
 
+## 3.27.0
+
+### Minor Changes
+
+- feat: Add instrumentation for `anthropic.beta.sessions` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2333)
+- feat: Add `@cloudflare/think` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2258)
+- feat: Add `ollama` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2315)
+- feat(vitest-evals): Add `meta.eval.input` Thanks @aislinnnnn! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2318)
+
+### Patch Changes
+
+- feat: Add support for flue v2 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2327)
+
 ## 3.26.0
 
 ### Minor Changes
