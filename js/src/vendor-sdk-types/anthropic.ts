@@ -15,6 +15,7 @@ export interface AnthropicClient {
 
 export interface AnthropicBeta {
   messages: AnthropicBetaMessages;
+  sessions?: AnthropicBetaSessions;
 }
 
 export interface AnthropicMessages {
@@ -29,6 +30,29 @@ export interface AnthropicBetaMessages extends AnthropicMessages {
   ) => AnthropicToolRunner<unknown>;
 }
 
+export interface AnthropicBetaSessions {
+  events: AnthropicBetaSessionEvents;
+  threads?: AnthropicBetaSessionThreads;
+}
+
+export interface AnthropicBetaSessionEvents {
+  stream: (
+    sessionId: string,
+    params?: AnthropicSessionEventStreamParams,
+  ) => AnthropicAPIPromise<AnthropicSessionEventStream>;
+}
+
+export interface AnthropicBetaSessionThreads {
+  events: AnthropicBetaSessionThreadEvents;
+}
+
+export interface AnthropicBetaSessionThreadEvents {
+  stream: (
+    threadId: string,
+    params: AnthropicSessionThreadEventStreamParams,
+  ) => AnthropicAPIPromise<AnthropicSessionEventStream>;
+}
+
 export interface AnthropicAPIPromise<T> extends Promise<T> {
   withResponse(): Promise<AnthropicWithResponse<T>>;
 }
@@ -39,6 +63,10 @@ interface AnthropicWithResponse<T> {
 
 export interface AnthropicMessageStream extends AsyncIterable<AnthropicStreamEvent> {
   finalMessage?: () => Promise<AnthropicMessage>;
+  abort?: () => void;
+}
+
+export interface AnthropicSessionEventStream extends AsyncIterable<AnthropicSessionEvent> {
   abort?: () => void;
 }
 
@@ -67,6 +95,15 @@ export interface AnthropicToolRunnerTool {
   name?: string;
   run?: (...args: unknown[]) => unknown;
   [key: string]: unknown;
+}
+
+export interface AnthropicSessionEventStreamParams {
+  event_deltas?: string[];
+  [key: string]: unknown;
+}
+
+export interface AnthropicSessionThreadEventStreamParams extends AnthropicSessionEventStreamParams {
+  session_id: string;
 }
 
 export interface AnthropicInputMessage {
@@ -191,3 +228,104 @@ export type AnthropicStreamEvent =
       usage?: AnthropicUsage;
     }
   | { type: "message_stop" };
+
+export interface AnthropicSessionContentBlock {
+  type: string;
+  text?: string;
+  [key: string]: unknown;
+}
+
+export interface AnthropicSessionEventBase {
+  id?: string;
+  processed_at?: string | null;
+  type: string;
+  [key: string]: unknown;
+}
+
+export interface AnthropicSessionMessageEvent extends AnthropicSessionEventBase {
+  content: AnthropicSessionContentBlock[];
+  type: "agent.message" | "system.message" | "user.message";
+}
+
+export interface AnthropicSessionModelRequestStartEvent extends AnthropicSessionEventBase {
+  id: string;
+  type: "span.model_request_start";
+}
+
+export interface AnthropicSessionModelUsage {
+  cache_creation_input_tokens: number;
+  cache_read_input_tokens: number;
+  input_tokens: number;
+  output_tokens: number;
+}
+
+export interface AnthropicSessionModelRequestEndEvent extends AnthropicSessionEventBase {
+  is_error?: boolean | null;
+  model_request_start_id: string;
+  model_usage: AnthropicSessionModelUsage;
+  type: "span.model_request_end";
+}
+
+export interface AnthropicSessionToolUseEvent extends AnthropicSessionEventBase {
+  evaluated_permission?: "allow" | "ask" | "deny" | null;
+  id: string;
+  input: Record<string, unknown>;
+  name: string;
+  type: "agent.custom_tool_use" | "agent.mcp_tool_use" | "agent.tool_use";
+}
+
+export interface AnthropicSessionToolResultEvent extends AnthropicSessionEventBase {
+  content?: AnthropicSessionContentBlock[];
+  custom_tool_use_id?: string;
+  is_error?: boolean | null;
+  mcp_tool_use_id?: string;
+  tool_use_id?: string;
+  type:
+    | "agent.mcp_tool_result"
+    | "agent.tool_result"
+    | "user.custom_tool_result"
+    | "user.tool_result";
+}
+
+export interface AnthropicSessionToolConfirmationEvent extends AnthropicSessionEventBase {
+  result: "allow" | "deny";
+  tool_use_id: string;
+  type: "user.tool_confirmation";
+}
+
+export interface AnthropicSessionEventDelta extends AnthropicSessionEventBase {
+  delta?: {
+    content?: AnthropicSessionContentBlock;
+    index?: number;
+    type?: string;
+  };
+  event_id?: string;
+  type: "event_delta";
+}
+
+export interface AnthropicSessionStatusEvent extends AnthropicSessionEventBase {
+  error?: unknown;
+  stop_reason?: {
+    type?: "end_turn" | "requires_action" | "retries_exhausted" | string;
+  };
+  type:
+    | "session.deleted"
+    | "session.error"
+    | "session.status_idle"
+    | "session.status_running"
+    | "session.status_terminated"
+    | "session.thread_status_idle"
+    | "session.thread_status_running"
+    | "session.thread_status_terminated";
+}
+
+export type AnthropicSessionEvent =
+  | AnthropicSessionEventDelta
+  | AnthropicSessionMessageEvent
+  | AnthropicSessionModelRequestEndEvent
+  | AnthropicSessionModelRequestStartEvent
+  | AnthropicSessionStatusEvent
+  | AnthropicSessionToolConfirmationEvent
+  | AnthropicSessionToolResultEvent
+  | AnthropicSessionToolUseEvent
+  | AnthropicSessionEventBase;

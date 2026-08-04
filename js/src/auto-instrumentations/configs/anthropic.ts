@@ -129,4 +129,39 @@ export const anthropicConfigs: InstrumentationConfig[] = [
       kind: "Sync",
     },
   },
+
+  // Managed Agents Sessions event streams are discovered automatically, but
+  // remain passive until the user calls collectAnthropicSession() on the
+  // returned stream.
+  ...["mjs", "js"].map(
+    (extension): InstrumentationConfig => ({
+      channelName: anthropicChannels.betaSessionsEventsStream.channelName,
+      module: {
+        name: "@anthropic-ai/sdk",
+        versionRange: ">=0.86.0",
+        filePath: `resources/beta/sessions/events.${extension}`,
+      },
+      functionQuery: {
+        className: "Events",
+        methodName: "stream",
+        kind: "Async",
+      },
+    }),
+  ),
+  ...["mjs", "js"].map(
+    (extension): InstrumentationConfig => ({
+      channelName:
+        anthropicChannels.betaSessionsThreadsEventsStream.channelName,
+      module: {
+        name: "@anthropic-ai/sdk",
+        versionRange: ">=0.86.0",
+        filePath: `resources/beta/sessions/threads/events.${extension}`,
+      },
+      functionQuery: {
+        className: "Events",
+        methodName: "stream",
+        kind: "Async",
+      },
+    }),
+  ),
 ];

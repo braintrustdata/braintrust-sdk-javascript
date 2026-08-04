@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
-import { startSpan, wrapAnthropic } from "braintrust";
+import { createServer } from "node:http";
+import { collectAnthropicSession, startSpan, wrapAnthropic } from "braintrust";
 import {
   collectAsync,
   runOperation,
@@ -35,6 +36,7 @@ async function runAnthropicInstrumentationScenario(
     decorateClient,
     useBetaMessages = true,
     supportsBetaToolRunner = true,
+    supportsSessions = true,
     supportsThinking = false,
     supportsServerToolUse = true,
   } = {},
@@ -376,6 +378,57 @@ async function runAnthropicInstrumentationScenario(
             },
           );
         }
+
+        if (supportsSessions) {
+          await withManagedAgentsSessionServer(async (baseURL) => {
+            const sessionsBaseClient = new Anthropic({
+              apiKey: "anthropic-session-test-key",
+              baseURL,
+            });
+            const sessionsClient = decorateClient
+              ? decorateClient(sessionsBaseClient)
+              : sessionsBaseClient;
+            const sessions = sessionsClient.beta.sessions;
+
+            await runOperation(
+              "anthropic-sessions-turn-operation",
+              "sessions-turn",
+              async () => {
+                const stream = collectAnthropicSession(
+                  await sessions.events.stream("sesn_test", {
+                    event_deltas: ["agent.message"],
+                  }),
+                );
+                await collectAsync(stream);
+              },
+            );
+
+            await runOperation(
+              "anthropic-sessions-uncollected-operation",
+              "sessions-uncollected",
+              async () => {
+                const stream = await sessions.events.stream(
+                  "sesn_uncollected",
+                  { event_deltas: ["agent.message"] },
+                );
+                await collectAsync(stream);
+              },
+            );
+
+            await runOperation(
+              "anthropic-sessions-thread-turn-operation",
+              "sessions-thread-turn",
+              async () => {
+                const stream = collectAnthropicSession(
+                  await sessions.threads.events.stream("sthr_test", {
+                    session_id: "sesn_test",
+                  }),
+                );
+                await collectAsync(stream);
+              },
+            );
+          });
+        }
       }
     },
     metadata: {
@@ -385,6 +438,138 @@ async function runAnthropicInstrumentationScenario(
     rootName: ROOT_NAME,
   });
 }
+
+async function withManagedAgentsSessionServer(callback) {
+  const server = createServer((request, response) => {
+    response.writeHead(200, {
+      "cache-control": "no-cache",
+      "content-type": "text/event-stream",
+    });
+    const events = request.url?.includes("/threads/")
+      ? MANAGED_AGENTS_THREAD_EVENTS
+      : MANAGED_AGENTS_EVENTS;
+    for (const event of events) {
+      response.write(`event: ${event.type}\n`);
+      response.write(`data: ${JSON.stringify(event)}\n\n`);
+    }
+    response.end();
+  });
+
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    server.close();
+    throw new Error("Managed Agents test server did not bind to a TCP port");
+  }
+
+  try {
+    await callback(`http://127.0.0.1:${address.port}`);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+}
+
+const MANAGED_AGENTS_EVENTS = [
+  {
+    id: "sevt_user",
+    processed_at: "2026-08-03T00:00:00Z",
+    type: "user.message",
+    content: [{ type: "text", text: "Check the weather in Paris." }],
+  },
+  {
+    id: "sevt_running",
+    processed_at: "2026-08-03T00:00:01Z",
+    type: "session.status_running",
+  },
+  {
+    id: "sevt_model_start_1",
+    processed_at: "2026-08-03T00:00:02Z",
+    type: "span.model_request_start",
+  },
+  {
+    id: "sevt_tool_use",
+    processed_at: "2026-08-03T00:00:03Z",
+    type: "agent.tool_use",
+    name: "get_weather",
+    input: { city: "Paris" },
+    evaluated_permission: "allow",
+  },
+  {
+    id: "sevt_model_end_1",
+    processed_at: "2026-08-03T00:00:04Z",
+    type: "span.model_request_end",
+    model_request_start_id: "sevt_model_start_1",
+    model_usage: {
+      cache_creation_input_tokens: 1,
+      cache_read_input_tokens: 2,
+      input_tokens: 10,
+      output_tokens: 3,
+    },
+    is_error: false,
+  },
+  {
+    id: "sevt_tool_result",
+    processed_at: "2026-08-03T00:00:05Z",
+    type: "agent.tool_result",
+    tool_use_id: "sevt_tool_use",
+    content: [{ type: "text", text: "18C and sunny" }],
+    is_error: false,
+  },
+  {
+    id: "sevt_model_start_2",
+    processed_at: "2026-08-03T00:00:06Z",
+    type: "span.model_request_start",
+  },
+  {
+    type: "event_delta",
+    event_id: "sevt_message",
+    delta: {
+      type: "content_delta",
+      index: 0,
+      content: { type: "text", text: "It is" },
+    },
+  },
+  {
+    id: "sevt_message",
+    processed_at: "2026-08-03T00:00:07Z",
+    type: "agent.message",
+    content: [{ type: "text", text: "It is 18C and sunny." }],
+  },
+  {
+    id: "sevt_model_end_2",
+    processed_at: "2026-08-03T00:00:08Z",
+    type: "span.model_request_end",
+    model_request_start_id: "sevt_model_start_2",
+    model_usage: {
+      cache_creation_input_tokens: 0,
+      cache_read_input_tokens: 0,
+      input_tokens: 20,
+      output_tokens: 4,
+    },
+    is_error: false,
+  },
+  {
+    id: "sevt_idle",
+    processed_at: "2026-08-03T00:00:09Z",
+    type: "session.status_idle",
+    stop_reason: { type: "end_turn" },
+  },
+];
+
+const MANAGED_AGENTS_THREAD_EVENTS = MANAGED_AGENTS_EVENTS.map((event) => {
+  if (event.type === "session.status_running") {
+    return { ...event, type: "session.thread_status_running" };
+  }
+  if (event.type === "session.status_idle") {
+    return { ...event, type: "session.thread_status_idle" };
+  }
+  return event;
+});
 
 export async function runWrappedAnthropicInstrumentation(Anthropic, options) {
   await runAnthropicInstrumentationScenario(Anthropic, {
