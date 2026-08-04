@@ -59,11 +59,8 @@ describe("Stagehand capture contract", () => {
   it("captures observe instructions but not runtime options", () => {
     expect(
       extractInstructionInput([
-        {
-          instruction: "find the login button",
-          model: "model-name",
-          variableNames: [SECRET],
-        },
+        "find the login button",
+        { model: "model-name", variableNames: [SECRET] },
       ]),
     ).toEqual({ instruction: "find the login button" });
   });

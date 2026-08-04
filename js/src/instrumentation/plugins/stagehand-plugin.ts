@@ -60,11 +60,24 @@ export class StagehandPlugin extends BasePlugin {
         extractMetadata: extractAgentResultMetadata,
         extractMetrics: extractAgentMetrics,
         patchResult: ({ result, span }) => {
-          if (!isObject(result) || !isPromiseLike(result.result)) {
+          let finalResult: unknown;
+          try {
+            if (!isObject(result)) {
+              return false;
+            }
+            finalResult = Reflect.get(result, "result");
+            if (!isPromiseLike(finalResult)) {
+              return false;
+            }
+          } catch (error) {
+            debugLogger.error(
+              "Error inspecting streaming Stagehand agent result:",
+              error,
+            );
             return false;
           }
 
-          void Promise.resolve(result.result)
+          void Promise.resolve(finalResult)
             .then(
               (finalResult) => {
                 try {
@@ -132,14 +145,8 @@ export function extractActInput(args: unknown[]): unknown {
   if (!isObject(first)) {
     return undefined;
   }
-  if (typeof first.instruction === "string") {
-    return { instruction: first.instruction };
-  }
   if (typeof first.method === "string" && "selector" in first) {
     return { action: { method: first.method } };
-  }
-  if (isObject(first.action) && typeof first.action.method === "string") {
-    return { action: { method: first.action.method } };
   }
   return undefined;
 }
@@ -149,9 +156,7 @@ export function extractInstructionInput(args: unknown[]): unknown {
   if (typeof first === "string") {
     return { instruction: first };
   }
-  return isObject(first) && typeof first.instruction === "string"
-    ? { instruction: first.instruction }
-    : undefined;
+  return undefined;
 }
 
 export function extractExtractInput(args: unknown[]): unknown {
@@ -160,13 +165,7 @@ export function extractExtractInput(args: unknown[]): unknown {
     return undefined;
   }
 
-  const first = args[0];
-  const options = isObject(first) ? first : isObject(args[1]) ? args[1] : {};
-  const schemaCandidate =
-    typeof first === "string" && isZodSchema(args[1])
-      ? args[1]
-      : options.schema;
-  const schema = extractJsonSchema(schemaCandidate);
+  const schema = extractJsonSchema(args[1]);
   return schema ? { ...input, schema } : input;
 }
 
@@ -215,9 +214,7 @@ export function extractAgentInput(args: unknown[]): unknown {
       : typeof options.instruction === "string"
         ? options.instruction
         : undefined;
-  const outputSchema = extractJsonSchema(
-    options.output ?? options.outputSchema ?? options.schema,
-  );
+  const outputSchema = extractJsonSchema(options.output);
   if (instruction === undefined && outputSchema === undefined) {
     return undefined;
   }
@@ -246,15 +243,9 @@ export function extractAgentOutput(result: unknown): unknown {
       const taskCompleted =
         typeof action.taskCompleted === "boolean"
           ? action.taskCompleted
-          : typeof action.task_completed === "boolean"
-            ? action.task_completed
-            : undefined;
+          : undefined;
       const timeMs =
-        typeof action.timeMs === "number"
-          ? action.timeMs
-          : typeof action.time_ms === "number"
-            ? action.time_ms
-            : undefined;
+        typeof action.timeMs === "number" ? action.timeMs : undefined;
       return {
         ...(type !== undefined ? { type } : {}),
         ...(taskCompleted !== undefined
@@ -371,10 +362,7 @@ function normalizeCacheStatus(value: unknown): "hit" | "miss" | undefined {
 }
 
 function hasExtractInstruction(args: readonly unknown[]): boolean {
-  return (
-    typeof args[0] === "string" ||
-    (isObject(args[0]) && typeof args[0].instruction === "string")
-  );
+  return typeof args[0] === "string";
 }
 
 function isZodSchema(value: unknown): boolean {

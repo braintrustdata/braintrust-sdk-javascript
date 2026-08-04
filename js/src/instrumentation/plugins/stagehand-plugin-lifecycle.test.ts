@@ -7,6 +7,7 @@ const { mockStartSpan, tracingChannels } = vi.hoisted(() => ({
 
 vi.mock("../../isomorph", () => ({
   default: {
+    getEnv: vi.fn(() => undefined),
     newAsyncLocalStorage: vi.fn(() => ({
       getStore: vi.fn(() => undefined),
       run: vi.fn((_store: unknown, callback: () => unknown) => callback()),
@@ -143,6 +144,29 @@ describe("StagehandPlugin lifecycle", () => {
     expect(spans[0].end).toHaveBeenCalledTimes(1);
   });
 
+  it("contains errors while inspecting a streamed result", () => {
+    const plugin = new StagehandPlugin();
+    plugin.enable();
+    const handlers = tracingChannels.get(
+      "orchestrion:@browserbasehq/stagehand:Agent.execute",
+    );
+    const event: any = {
+      agentConfig: { stream: true },
+      arguments: [{ instruction: "complete the task" }],
+      self: {},
+    };
+
+    handlers.start(event);
+    event.result = Object.defineProperty({}, "result", {
+      get() {
+        throw new Error("unreadable result");
+      },
+    });
+
+    expect(() => handlers.asyncEnd(event)).not.toThrow();
+    expect(spans[0].end).toHaveBeenCalledTimes(1);
+  });
+
   it("instruments the mutable agent returned by the synchronous factory", async () => {
     const plugin = new StagehandPlugin();
     plugin.enable();
@@ -164,5 +188,29 @@ describe("StagehandPlugin lifecycle", () => {
     expect(agent.execute).toBe(wrappedExecute);
     await expect(agent.execute()).resolves.toBe("complete");
     expect(originalExecute).toHaveBeenCalledTimes(1);
+  });
+
+  it("contains errors while inspecting an agent execute descriptor", () => {
+    const plugin = new StagehandPlugin();
+    plugin.enable();
+    const handlers = tracingChannels.get(
+      "orchestrion:@browserbasehq/stagehand:Stagehand.agent",
+    );
+    const agent = new Proxy(
+      { execute: async () => "complete" },
+      {
+        getOwnPropertyDescriptor() {
+          throw new Error("unreadable descriptor");
+        },
+      },
+    );
+
+    expect(() =>
+      handlers.end({
+        arguments: [{ model: "browser-model" }],
+        result: agent,
+        self: { llmClient: { modelName: "fallback-model" } },
+      }),
+    ).not.toThrow();
   });
 });

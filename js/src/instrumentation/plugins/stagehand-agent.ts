@@ -1,55 +1,64 @@
 import { debugLogger } from "../../debug-logger";
 import { isObject } from "../../util";
 import { stagehandChannels } from "./stagehand-channels";
-import type { StagehandAgent } from "../../vendor-sdk-types/stagehand";
+import type {
+  StagehandAgent,
+  StagehandAgentConfig,
+  StagehandAgentExecuteArguments,
+  StagehandInstance,
+} from "../../vendor-sdk-types/stagehand";
 
 const instrumentedAgents = new WeakSet<object>();
 
 /** Instruments the mutable object returned by Stagehand.agent(). */
 export function instrumentStagehandAgent(
   value: unknown,
-  agentConfig: unknown,
-  stagehand: unknown,
+  agentConfig: StagehandAgentConfig | undefined,
+  stagehand: StagehandInstance | undefined,
 ): unknown {
   if (!isObject(value) || instrumentedAgents.has(value)) {
     return value;
   }
 
+  const agent = value as StagehandAgent;
+  let descriptor: PropertyDescriptor | undefined;
   let execute: unknown;
   try {
-    execute = value.execute;
+    execute = agent.execute;
+    descriptor = Object.getOwnPropertyDescriptor(agent, "execute");
   } catch (error) {
-    debugLogger.error("Error reading Stagehand agent execute method:", error);
+    debugLogger.error(
+      "Error inspecting Stagehand agent execute method:",
+      error,
+    );
     return value;
   }
   if (typeof execute !== "function") {
     return value;
   }
 
-  const descriptor = Object.getOwnPropertyDescriptor(value, "execute");
   const wrappedExecute = function (
-    this: StagehandAgent,
-    ...args: unknown[]
-  ): Promise<unknown> {
+    ...args: StagehandAgentExecuteArguments
+  ): ReturnType<StagehandAgent["execute"]> {
     return stagehandChannels.agentExecute.tracePromise(
-      () => Reflect.apply(execute, value, args),
+      () => Reflect.apply(execute, agent, args),
       {
         agentConfig,
         arguments: args,
-        self: value,
+        self: agent,
         stagehand,
       },
-    ) as Promise<unknown>;
+    );
   };
 
   try {
-    Object.defineProperty(value, "execute", {
+    Object.defineProperty(agent, "execute", {
       configurable: descriptor?.configurable ?? true,
       enumerable: descriptor?.enumerable ?? true,
       value: wrappedExecute,
       writable: descriptor?.writable ?? true,
     });
-    instrumentedAgents.add(value);
+    instrumentedAgents.add(agent);
   } catch (error) {
     debugLogger.error(
       "Error instrumenting Stagehand agent execute method:",

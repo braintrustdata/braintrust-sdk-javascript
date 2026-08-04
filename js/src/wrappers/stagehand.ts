@@ -1,9 +1,13 @@
 import { stagehandChannels } from "../instrumentation/plugins/stagehand-channels";
 import { instrumentStagehandAgent } from "../instrumentation/plugins/stagehand-agent";
 import type {
+  StagehandActArguments,
+  StagehandAgentConfig,
   StagehandConstructor,
+  StagehandExtractArguments,
   StagehandInstance,
   StagehandModule,
+  StagehandObserveArguments,
 } from "../vendor-sdk-types/stagehand";
 
 const WRAPPED_CLASS = Symbol.for("braintrust.stagehand.wrapped-class");
@@ -107,7 +111,7 @@ function wrapStagehandInstance(
     return stagehand;
   }
 
-  const methodCache = new Map<PropertyKey, (...args: unknown[]) => unknown>();
+  const methodCache = new Map<PropertyKey, unknown>();
   const proxy = new Proxy(stagehand, {
     get(target, prop) {
       if (prop === WRAPPED_INSTANCE) {
@@ -123,21 +127,41 @@ function wrapStagehandInstance(
         return cached;
       }
 
-      let wrapped: (...args: unknown[]) => unknown;
-      if (prop === "act" || prop === "extract" || prop === "observe") {
-        const channel = stagehandChannels[prop];
-        wrapped = (...args: unknown[]) =>
-          channel.tracePromise(
-            () => Reflect.apply(value, target, args) as PromiseLike<unknown>,
-            {
-              arguments: args,
-              self: target,
-            },
+      let wrapped: unknown;
+      if (prop === "act") {
+        wrapped = (...args: StagehandActArguments) =>
+          stagehandChannels.act.tracePromise(
+            () =>
+              Reflect.apply(value, target, args) as ReturnType<
+                StagehandInstance["act"]
+              >,
+            { arguments: args, self: target },
+          );
+      } else if (prop === "extract") {
+        wrapped = (...args: StagehandExtractArguments) =>
+          stagehandChannels.extract.tracePromise(
+            () =>
+              Reflect.apply(value, target, args) as ReturnType<
+                StagehandInstance["extract"]
+              >,
+            { arguments: args, self: target },
+          );
+      } else if (prop === "observe") {
+        wrapped = (...args: StagehandObserveArguments) =>
+          stagehandChannels.observe.tracePromise(
+            () =>
+              Reflect.apply(value, target, args) as ReturnType<
+                StagehandInstance["observe"]
+              >,
+            { arguments: args, self: target },
           );
       } else if (prop === "agent") {
-        wrapped = (...args: unknown[]) => {
+        wrapped = (...args: [config?: StagehandAgentConfig]) => {
           const agent = stagehandChannels.agent.traceSync(
-            () => Reflect.apply(value, target, args),
+            () =>
+              Reflect.apply(value, target, args) as ReturnType<
+                StagehandInstance["agent"]
+              >,
             { arguments: args, self: target },
           );
           return instrumentStagehandAgent(agent, args[0], target);
