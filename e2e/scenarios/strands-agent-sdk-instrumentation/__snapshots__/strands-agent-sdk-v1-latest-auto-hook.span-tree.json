@@ -15,6 +15,20 @@
                   "name": "Strands model: gpt-4o-mini-2024-07-18",
                   "type": "llm",
                   "children": [],
+                  "input": [
+                    {
+                      "content": "You are a deterministic test agent. Always call lookup_weather exactly once for Vienna, then answer exactly STRANDS_AGENT_TOOL_OK.",
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather for Vienna, then answer exactly STRANDS_AGENT_TOOL_OK."
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
                   "metadata": {
                     "model": "gpt-4o-mini-2024-07-18",
                     "provider": "openai",
@@ -64,6 +78,61 @@
                   "name": "Strands model: gpt-4o-mini-2024-07-18",
                   "type": "llm",
                   "children": [],
+                  "input": [
+                    {
+                      "content": "You are a deterministic test agent. Always call lookup_weather exactly once for Vienna, then answer exactly STRANDS_AGENT_TOOL_OK.",
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather for Vienna, then answer exactly STRANDS_AGENT_TOOL_OK."
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    {
+                      "content": [
+                        {
+                          "toolUse": {
+                            "input": {
+                              "city": "Vienna"
+                            },
+                            "name": "lookup_weather",
+                            "toolUseId": "<tool-call-id>"
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "usage": {
+                          "inputTokens": 86,
+                          "outputTokens": 15,
+                          "totalTokens": 101
+                        }
+                      },
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "toolResult": {
+                            "content": [
+                              {
+                                "json": {
+                                  "city": "Vienna",
+                                  "forecast": "sunny",
+                                  "marker": "STRANDS_TOOL_OK"
+                                }
+                              }
+                            ],
+                            "status": "success",
+                            "toolUseId": "<tool-call-id>"
+                          }
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
                   "metadata": {
                     "model": "gpt-4o-mini-2024-07-18",
                     "provider": "openai",
@@ -125,6 +194,34 @@
                   "name": "Strands model: gpt-4o-mini-2024-07-18",
                   "type": "llm",
                   "children": [],
+                  "input": [
+                    {
+                      "content": "Reply exactly STRANDS_DOCUMENT_OK.",
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "document": {
+                            "format": "pdf",
+                            "name": "strands-regression.pdf",
+                            "source": {
+                              "bytes": {
+                                "content_type": "application/pdf",
+                                "filename": "strands-regression.pdf",
+                                "key": "<uuid:1>",
+                                "type": "braintrust_attachment"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "text": "Reply exactly STRANDS_DOCUMENT_OK."
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
                   "metadata": {
                     "model": "gpt-4o-mini-2024-07-18",
                     "provider": "openai",
@@ -204,6 +301,33 @@
                   "name": "Strands model: gpt-4o-mini-2024-07-18",
                   "type": "llm",
                   "children": [],
+                  "input": [
+                    {
+                      "content": "Reply exactly STRANDS_IMAGE_OK.",
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "image": {
+                            "format": "png",
+                            "source": {
+                              "bytes": {
+                                "content_type": "image/png",
+                                "filename": "image.png",
+                                "key": "<uuid:1>",
+                                "type": "braintrust_attachment"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "text": "Reply exactly STRANDS_IMAGE_OK."
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
                   "metadata": {
                     "model": "gpt-4o-mini-2024-07-18",
                     "provider": "openai",
@@ -282,6 +406,20 @@
                   "name": "Strands model: gpt-4o-mini-2024-07-18",
                   "type": "llm",
                   "children": [],
+                  "input": [
+                    {
+                      "content": "Reply exactly STRANDS_AGENT_STREAM_OK.",
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Reply exactly STRANDS_AGENT_STREAM_OK."
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
                   "metadata": {
                     "model": "gpt-4o-mini-2024-07-18",
                     "provider": "openai",
@@ -351,6 +489,20 @@
                           "name": "Strands model: gpt-4o-mini-2024-07-18",
                           "type": "llm",
                           "children": [],
+                          "input": [
+                            {
+                              "content": "Reply exactly GRAPH_RESEARCH_DONE.",
+                              "role": "system"
+                            },
+                            {
+                              "content": [
+                                {
+                                  "text": "Have the first node finish, then have the writer answer exactly STRANDS_GRAPH_OK."
+                                }
+                              ],
+                              "role": "user"
+                            }
+                          ],
                           "metadata": {
                             "model": "gpt-4o-mini-2024-07-18",
                             "provider": "openai",
@@ -425,6 +577,26 @@
                           "name": "Strands model: gpt-4o-mini-2024-07-18",
                           "type": "llm",
                           "children": [],
+                          "input": [
+                            {
+                              "content": "Reply exactly STRANDS_GRAPH_OK.",
+                              "role": "system"
+                            },
+                            {
+                              "content": [
+                                {
+                                  "text": "Have the first node finish, then have the writer answer exactly STRANDS_GRAPH_OK."
+                                },
+                                {
+                                  "text": "[node: graph-researcher]"
+                                },
+                                {
+                                  "text": "GRAPH_RESEARCH_DONE"
+                                }
+                              ],
+                              "role": "user"
+                            }
+                          ],
                           "metadata": {
                             "model": "gpt-4o-mini-2024-07-18",
                             "provider": "openai",
@@ -545,6 +717,20 @@
                           "name": "Strands model: gpt-4o-mini-2024-07-18",
                           "type": "llm",
                           "children": [],
+                          "input": [
+                            {
+                              "content": "Use the structured output schema. Hand off to swarm-finisher with message finish with STRANDS_SWARM_OK.",
+                              "role": "system"
+                            },
+                            {
+                              "content": [
+                                {
+                                  "text": "Route to the finisher, then finish exactly STRANDS_SWARM_OK."
+                                }
+                              ],
+                              "role": "user"
+                            }
+                          ],
                           "metadata": {
                             "model": "gpt-4o-mini-2024-07-18",
                             "provider": "openai",
@@ -611,6 +797,20 @@
                           "name": "Strands model: gpt-4o-mini-2024-07-18",
                           "type": "llm",
                           "children": [],
+                          "input": [
+                            {
+                              "content": "Use the structured output schema. Do not hand off. Set the final message to exactly STRANDS_SWARM_OK.",
+                              "role": "system"
+                            },
+                            {
+                              "content": [
+                                {
+                                  "text": "finish with STRANDS_SWARM_OK"
+                                }
+                              ],
+                              "role": "user"
+                            }
+                          ],
                           "metadata": {
                             "model": "gpt-4o-mini-2024-07-18",
                             "provider": "openai",

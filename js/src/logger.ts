@@ -275,10 +275,15 @@ const INITIAL_SPAN_WRITE_AS_MERGE = Symbol(
 const RESUME_SPAN_WITHOUT_INITIAL_WRITE = Symbol(
   "braintrust.resume-span-without-initial-write",
 );
+const INTERNAL_SPAN_CONTEXT = Symbol("braintrust.internal-span-context");
 
 type InitialSpanWriteAsMergeArg = {
   readonly [INITIAL_SPAN_WRITE_AS_MERGE]?: true;
   readonly [RESUME_SPAN_WITHOUT_INITIAL_WRITE]?: true;
+};
+
+type InternalSpanContextArg = {
+  readonly [INTERNAL_SPAN_CONTEXT]?: Record<string, unknown>;
 };
 
 export type StartSpanArgs = {
@@ -505,7 +510,7 @@ export const BRAINTRUST_CURRENT_SPAN_STORE = Symbol.for(
  * - Default (`BraintrustContextManager`): stores a `Span`
  * - OTEL compat (`OtelContextManager`): stores an OTEL `Context` object
  *
- * TracingChannel's `bindStore` transform (via `wrapSpanForStore`) produces the
+ * The global hook's `bindStore` transform (via `wrapSpanForStore`) produces the
  * correct value type for whichever mode is active.
  */
 export type CurrentSpanStore = IsoAsyncLocalStorage<unknown>;
@@ -516,7 +521,7 @@ export abstract class ContextManager {
   abstract getCurrentSpan(): Span | undefined;
 
   /**
-   * Returns the value to store in the ALS bound to a TracingChannel's start event.
+   * Returns the value to store in the ALS bound to a global hook's start event.
    * In default mode this is the Span itself; in OTEL mode it is the OTEL Context
    * containing the span so that OTEL's own ALS stores a proper Context object.
    */
@@ -6358,6 +6363,19 @@ export function _internalStartSpanWithInitialMerge<
     InitialSpanWriteAsMergeArg).span;
 }
 
+/** @internal Start a span with SDK-controlled context fields. */
+export function _internalStartSpanWithContext<
+  IsAsyncFlush extends boolean = true,
+>(
+  args: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg,
+  context: Record<string, unknown>,
+): Span {
+  return startSpanAndIsLogger({
+    ...args,
+    [INTERNAL_SPAN_CONTEXT]: context,
+  }).span;
+}
+
 /**
  * Flush any pending rows to the server.
  */
@@ -6377,7 +6395,10 @@ export function setFetch(fetch: typeof globalThis.fetch): void {
 }
 
 function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
-  args?: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg,
+  args?: StartSpanArgs &
+    AsyncFlushArg<IsAsyncFlush> &
+    OptionalStateArg &
+    InternalSpanContextArg,
 ): { span: Span; isSyncFlushLogger: boolean } {
   const state = args?.state ?? _globalState;
 
@@ -7651,7 +7672,8 @@ export class SpanImpl implements Span {
       spanId?: string;
       propagatedState?: PropagatedState | undefined;
     } & Omit<StartSpanArgs, "parent"> &
-      InitialSpanWriteAsMergeArg,
+      InitialSpanWriteAsMergeArg &
+      InternalSpanContextArg,
   ) {
     this._state = args.state;
     this._propagatedState = args.propagatedState;
@@ -7698,7 +7720,7 @@ export class SpanImpl implements Span {
         start: args.startTime ?? getCurrentUnixTimestamp(),
       },
       context: mergeSpanOriginContext(
-        { ...callerLocation },
+        { ...callerLocation, ...args[INTERNAL_SPAN_CONTEXT] },
         instrumentationName,
         this._state.spanOriginEnvironment,
       ),

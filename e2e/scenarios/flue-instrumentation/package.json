@@ -5,5 +5,15 @@
   "dependencies": {
     "@flue/cli": "0.8.0",
     "@flue/runtime": "0.8.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@hono/node-server@>=2.0.0 <2.0.10": "^2.0.10",
+      "fast-uri@<3.1.4": "^3.1.4",
+      "hono@>=4.0.0 <4.12.27": "^4.12.27",
+      "brace-expansion@>=3.0.0 <5.0.8": "^5.0.8",
+      "postcss@<8.5.18": "^8.5.18",
+      "valibot@<1.4.2": "^1.4.2"
+    }
   }
 }

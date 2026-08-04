@@ -76,7 +76,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 19,
-                "completion_tokens": 1,
+                "completion_tokens": 20,
                 "duration": 0,
                 "prompt_tokens": 6,
                 "tokens": 26
@@ -162,7 +162,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 57,
-                "completion_tokens": 3,
+                "completion_tokens": 60,
                 "duration": 0,
                 "prompt_tokens": 19,
                 "tokens": 79
@@ -269,7 +269,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 57,
-                "completion_tokens": 3,
+                "completion_tokens": 60,
                 "duration": 0,
                 "prompt_tokens": 28,
                 "tokens": 88
@@ -381,7 +381,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 7,
-                "completion_tokens": 1,
+                "completion_tokens": 8,
                 "duration": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 7,
@@ -467,7 +467,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 12,
-                "completion_tokens": 10,
+                "completion_tokens": 22,
                 "duration": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 16,
@@ -551,7 +551,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 6,
-                "completion_tokens": 18,
+                "completion_tokens": 24,
                 "duration": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 8,
@@ -635,7 +635,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 18,
-                "completion_tokens": 2,
+                "completion_tokens": 20,
                 "duration": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 39,
@@ -749,7 +749,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 42,
-                "completion_tokens": 2,
+                "completion_tokens": 44,
                 "duration": 0,
                 "prompt_tokens": 268,
                 "tokens": 312
@@ -846,7 +846,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 19,
-                "completion_tokens": 1,
+                "completion_tokens": 20,
                 "duration": 0,
                 "prompt_tokens": 7,
                 "time_to_first_token": 0,
@@ -961,9 +961,9 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 295,
-                "completion_tokens": 36,
+                "completion_tokens": 331,
                 "duration": 0,
-                "prompt_tokens": 21,
+                "prompt_tokens": 121,
                 "tokens": 452
               }
             }
@@ -1147,10 +1147,10 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 86,
-                "completion_tokens": 53,
+                "completion_tokens": 139,
                 "duration": 0,
                 "prompt_cached_tokens": 8,
-                "prompt_tokens": 19,
+                "prompt_tokens": 88,
                 "time_to_first_token": 0,
                 "tokens": 227
               }
@@ -1277,7 +1277,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 87,
-                "completion_tokens": 17,
+                "completion_tokens": 104,
                 "duration": 0,
                 "prompt_tokens": 65,
                 "tokens": 169
@@ -1431,7 +1431,7 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 64,
-                "completion_tokens": 33,
+                "completion_tokens": 97,
                 "duration": 0,
                 "prompt_tokens": 110,
                 "tokens": 207

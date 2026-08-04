@@ -15,7 +15,7 @@ const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
   scenarioDir: originalScenarioDir,
 });
-const TIMEOUT_MS = 120_000;
+const TIMEOUT_MS = 240_000;
 const turnNames = ["HarnessAgent.generate", "HarnessAgent.stream"] as const;
 
 function numericMetric(

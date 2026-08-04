@@ -1,7 +1,7 @@
 /**
  * @braintrust/auto-instrumentations
  *
- * Auto-instrumentation for AI SDKs using orchestrion-js and diagnostics_channel.
+ * Auto-instrumentation for AI SDKs using orchestrion-js and global hooks.
  *
  * This package provides:
  * - Instrumentation configs for orchestrion-js
@@ -34,6 +34,8 @@ export { anthropicConfigs } from "./configs/anthropic";
 export { bedrockRuntimeConfigs } from "./configs/bedrock-runtime";
 export { aiSDKConfigs } from "./configs/ai-sdk";
 export { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk";
+export { cloudflareAgentsConfigs } from "./configs/cloudflare-agents";
+export { cloudflareThinkConfigs } from "./configs/cloudflare-think";
 export { cursorSDKConfigs } from "./configs/cursor-sdk";
 export { openAIAgentsCoreConfigs } from "./configs/openai-agents";
 export { googleGenAIConfigs } from "./configs/google-genai";
@@ -42,6 +44,7 @@ export { openRouterAgentConfigs } from "./configs/openrouter-agent";
 export { openRouterConfigs } from "./configs/openrouter";
 export { mistralConfigs } from "./configs/mistral";
 export { googleADKConfigs } from "./configs/google-adk";
+export { cloudflareAIChatConfigs } from "./configs/cloudflare-ai-chat";
 export { cohereConfigs } from "./configs/cohere";
 export { groqConfigs } from "./configs/groq";
 export { genkitConfigs } from "./configs/genkit";

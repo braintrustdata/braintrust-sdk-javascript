@@ -1,5 +1,5 @@
 /**
- * Utilities for diagnostics_channel naming and management.
+ * Utilities for instrumentation hook naming and management.
  */
 
 /**

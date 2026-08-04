@@ -1,22 +1,14 @@
 import type { RollupPlugin } from "unplugin";
-import {
-  BundlerPluginOptions,
-  unplugin,
-  type LegacyBundlerPluginOptions,
-} from "./plugin";
+import { BundlerPluginOptions, unplugin } from "./plugin";
 export type { InstrumentationConfig } from "../orchestrion-js";
 
 export function braintrustRollupPlugin(
   options: BundlerPluginOptions = {},
 ): RollupPlugin | RollupPlugin[] {
-  const { useDiagnosticChannelCompatShim = false, ...pluginOptions } = options;
-  return unplugin.rollup({
-    ...pluginOptions,
-    browser: useDiagnosticChannelCompatShim,
-  });
+  return unplugin.rollup(options);
 }
 
-export type RollupPluginOptions = LegacyBundlerPluginOptions;
+export type RollupPluginOptions = BundlerPluginOptions;
 
 /**
  * @deprecated Use {@link braintrustRollupPlugin} instead.

@@ -141,4 +141,14 @@ export interface GoogleADKUsageMetadata {
   totalTokenCount?: number;
   cachedContentTokenCount?: number;
   thoughtsTokenCount?: number;
+  toolUsePromptTokenCount?: number;
+  promptTokensDetails?: GoogleADKModalityTokenCount[];
+  cacheTokensDetails?: GoogleADKModalityTokenCount[];
+  candidatesTokensDetails?: GoogleADKModalityTokenCount[];
+  toolUsePromptTokensDetails?: GoogleADKModalityTokenCount[];
+}
+
+export interface GoogleADKModalityTokenCount {
+  modality?: string;
+  tokenCount?: number;
 }

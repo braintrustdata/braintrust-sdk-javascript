@@ -5,9 +5,11 @@ import { OpenAICodexPlugin } from "./plugins/openai-codex-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
+import { CloudflareThinkPlugin } from "./plugins/cloudflare-think-plugin";
 import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
+import { HuggingFaceTransformersPlugin } from "./plugins/huggingface-transformers-plugin";
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
@@ -18,6 +20,8 @@ import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
+import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
+import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
 
 function createPluginClassMock() {
   return vi.fn(function MockPlugin(this: {
@@ -59,6 +63,10 @@ vi.mock("./plugins/claude-agent-sdk-plugin", () => ({
   ClaudeAgentSDKPlugin: createPluginClassMock(),
 }));
 
+vi.mock("./plugins/cloudflare-think-plugin", () => ({
+  CloudflareThinkPlugin: createPluginClassMock(),
+}));
+
 vi.mock("./plugins/openai-agents-plugin", () => ({
   OpenAIAgentsPlugin: createPluginClassMock(),
 }));
@@ -69,6 +77,10 @@ vi.mock("./plugins/google-genai-plugin", () => ({
 
 vi.mock("./plugins/huggingface-plugin", () => ({
   HuggingFacePlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/huggingface-transformers-plugin", () => ({
+  HuggingFaceTransformersPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/openrouter-plugin", () => ({
@@ -109,6 +121,14 @@ vi.mock("./plugins/pi-coding-agent-plugin", () => ({
 
 vi.mock("./plugins/strands-agent-sdk-plugin", () => ({
   StrandsAgentSDKPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/cloudflare-ai-chat-plugin", () => ({
+  CloudflareAIChatPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/cloudflare-agents-plugin", () => ({
+  CloudflareAgentsPlugin: createPluginClassMock(),
 }));
 
 describe("BraintrustPlugin", () => {
@@ -163,6 +183,16 @@ describe("BraintrustPlugin", () => {
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
+    it("should create and enable Cloudflare Think plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(CloudflareThinkPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(CloudflareThinkPlugin).mock.results[0]
+        .value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
     it("should create and enable OpenAI Agents plugin by default", () => {
       const plugin = new BraintrustPlugin();
       plugin.enable();
@@ -188,6 +218,10 @@ describe("BraintrustPlugin", () => {
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       const mockInstance = vi.mocked(HuggingFacePlugin).mock.results[0].value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+      expect(HuggingFaceTransformersPlugin).toHaveBeenCalledTimes(1);
+      const transformersMockInstance = vi.mocked(HuggingFaceTransformersPlugin)
+        .mock.results[0].value;
+      expect(transformersMockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
     it("should create and enable OpenRouter plugin by default", () => {
@@ -261,6 +295,26 @@ describe("BraintrustPlugin", () => {
 
       expect(StrandsAgentSDKPlugin).toHaveBeenCalledTimes(1);
       const mockInstance = vi.mocked(StrandsAgentSDKPlugin).mock.results[0]
+        .value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable Cloudflare AI Chat plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(CloudflareAIChatPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(CloudflareAIChatPlugin).mock.results[0]
+        .value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable Cloudflare Agents plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(CloudflareAgentsPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(CloudflareAgentsPlugin).mock.results[0]
         .value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
@@ -418,6 +472,16 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
+    it("should not create Cloudflare Think plugin when cloudflareThink: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { cloudflareThink: false },
+      });
+      plugin.enable();
+
+      expect(CloudflareThinkPlugin).not.toHaveBeenCalled();
+      expect(AISDKPlugin).toHaveBeenCalledTimes(1);
+    });
+
     it("should not create OpenAI Agents plugin when openAIAgents: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { openAIAgents: false },
@@ -443,6 +507,7 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(HuggingFacePlugin).not.toHaveBeenCalled();
+      expect(HuggingFaceTransformersPlugin).not.toHaveBeenCalled();
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
       expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
       expect(AISDKPlugin).toHaveBeenCalledTimes(1);
@@ -602,6 +667,7 @@ describe("BraintrustPlugin", () => {
           anthropic: false,
           aisdk: false,
           claudeAgentSDK: false,
+          cloudflareThink: false,
           openAIAgents: false,
           googleGenAI: false,
           huggingface: false,
@@ -615,6 +681,8 @@ describe("BraintrustPlugin", () => {
           langsmith: false,
           piCodingAgent: false,
           strandsAgentSDK: false,
+          cloudflareAIChat: false,
+          cloudflareAgents: false,
         },
       });
       plugin.enable();
@@ -624,6 +692,7 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).not.toHaveBeenCalled();
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(CloudflareThinkPlugin).not.toHaveBeenCalled();
       expect(OpenAIAgentsPlugin).not.toHaveBeenCalled();
       expect(GoogleGenAIPlugin).not.toHaveBeenCalled();
       expect(HuggingFacePlugin).not.toHaveBeenCalled();
@@ -637,6 +706,8 @@ describe("BraintrustPlugin", () => {
       expect(LangSmithPlugin).not.toHaveBeenCalled();
       expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
       expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(CloudflareAIChatPlugin).not.toHaveBeenCalled();
+      expect(CloudflareAgentsPlugin).not.toHaveBeenCalled();
     });
 
     it("should not create Pi Coding Agent plugin when piCodingAgent: false", () => {
@@ -657,6 +728,26 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(StrandsAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create Cloudflare AI Chat plugin when cloudflareAIChat: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { cloudflareAIChat: false },
+      });
+      plugin.enable();
+
+      expect(CloudflareAIChatPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create Cloudflare Agents plugin when cloudflareAgents: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { cloudflareAgents: false },
+      });
+      plugin.enable();
+
+      expect(CloudflareAgentsPlugin).not.toHaveBeenCalled();
       expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
     });
 
@@ -810,6 +901,9 @@ describe("BraintrustPlugin", () => {
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
       const huggingFaceMock =
         vi.mocked(HuggingFacePlugin).mock.results[0].value;
+      const huggingFaceTransformersMock = vi.mocked(
+        HuggingFaceTransformersPlugin,
+      ).mock.results[0].value;
       const openRouterMock = vi.mocked(OpenRouterPlugin).mock.results[0].value;
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
@@ -819,6 +913,8 @@ describe("BraintrustPlugin", () => {
       const piCodingAgentMock =
         vi.mocked(PiCodingAgentPlugin).mock.results[0].value;
       const strandsAgentSDKMock = vi.mocked(StrandsAgentSDKPlugin).mock
+        .results[0].value;
+      const cloudflareAgentsMock = vi.mocked(CloudflareAgentsPlugin).mock
         .results[0].value;
       const langChainMock = vi.mocked(LangChainPlugin).mock.results[0].value;
 
@@ -830,6 +926,7 @@ describe("BraintrustPlugin", () => {
       expect(openAIAgentsMock.enable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.enable).toHaveBeenCalledTimes(1);
       expect(huggingFaceMock.enable).toHaveBeenCalledTimes(1);
+      expect(huggingFaceTransformersMock.enable).toHaveBeenCalledTimes(1);
       expect(openRouterMock.enable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.enable).toHaveBeenCalledTimes(1);
       expect(mistralMock.enable).toHaveBeenCalledTimes(1);
@@ -837,6 +934,7 @@ describe("BraintrustPlugin", () => {
       expect(groqMock.enable).toHaveBeenCalledTimes(1);
       expect(piCodingAgentMock.enable).toHaveBeenCalledTimes(1);
       expect(strandsAgentSDKMock.enable).toHaveBeenCalledTimes(1);
+      expect(cloudflareAgentsMock.enable).toHaveBeenCalledTimes(1);
       expect(langChainMock.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -857,6 +955,9 @@ describe("BraintrustPlugin", () => {
         vi.mocked(GoogleGenAIPlugin).mock.results[0].value;
       const huggingFaceMock =
         vi.mocked(HuggingFacePlugin).mock.results[0].value;
+      const huggingFaceTransformersMock = vi.mocked(
+        HuggingFaceTransformersPlugin,
+      ).mock.results[0].value;
       const openRouterMock = vi.mocked(OpenRouterPlugin).mock.results[0].value;
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
@@ -866,6 +967,8 @@ describe("BraintrustPlugin", () => {
       const piCodingAgentMock =
         vi.mocked(PiCodingAgentPlugin).mock.results[0].value;
       const strandsAgentSDKMock = vi.mocked(StrandsAgentSDKPlugin).mock
+        .results[0].value;
+      const cloudflareAgentsMock = vi.mocked(CloudflareAgentsPlugin).mock
         .results[0].value;
       const langChainMock = vi.mocked(LangChainPlugin).mock.results[0].value;
 
@@ -879,6 +982,7 @@ describe("BraintrustPlugin", () => {
       expect(openAIAgentsMock.disable).toHaveBeenCalledTimes(1);
       expect(googleGenAIMock.disable).toHaveBeenCalledTimes(1);
       expect(huggingFaceMock.disable).toHaveBeenCalledTimes(1);
+      expect(huggingFaceTransformersMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(mistralMock.disable).toHaveBeenCalledTimes(1);
@@ -886,6 +990,7 @@ describe("BraintrustPlugin", () => {
       expect(groqMock.disable).toHaveBeenCalledTimes(1);
       expect(piCodingAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(strandsAgentSDKMock.disable).toHaveBeenCalledTimes(1);
+      expect(cloudflareAgentsMock.disable).toHaveBeenCalledTimes(1);
       expect(langChainMock.disable).toHaveBeenCalledTimes(1);
     });
 

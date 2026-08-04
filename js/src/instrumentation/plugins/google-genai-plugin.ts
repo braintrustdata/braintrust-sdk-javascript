@@ -1146,11 +1146,19 @@ function populateUsageMetrics(
   metrics: Record<string, number>,
   usage: GoogleGenAIUsageMetadata,
 ): void {
-  if (usage.promptTokenCount !== undefined) {
-    metrics.prompt_tokens = usage.promptTokenCount;
+  if (
+    usage.promptTokenCount !== undefined ||
+    usage.toolUsePromptTokenCount !== undefined
+  ) {
+    metrics.prompt_tokens =
+      (usage.promptTokenCount ?? 0) + (usage.toolUsePromptTokenCount ?? 0);
   }
-  if (usage.candidatesTokenCount !== undefined) {
-    metrics.completion_tokens = usage.candidatesTokenCount;
+  if (
+    usage.candidatesTokenCount !== undefined ||
+    usage.thoughtsTokenCount !== undefined
+  ) {
+    metrics.completion_tokens =
+      (usage.candidatesTokenCount ?? 0) + (usage.thoughtsTokenCount ?? 0);
   }
   if (usage.totalTokenCount !== undefined) {
     metrics.tokens = usage.totalTokenCount;
@@ -1160,6 +1168,22 @@ function populateUsageMetrics(
   }
   if (usage.thoughtsTokenCount !== undefined) {
     metrics.completion_reasoning_tokens = usage.thoughtsTokenCount;
+  }
+  for (const detail of usage.promptTokensDetails ?? []) {
+    if (detail.modality === "AUDIO" && detail.tokenCount !== undefined) {
+      metrics.prompt_audio_tokens =
+        (metrics.prompt_audio_tokens ?? 0) + detail.tokenCount;
+    }
+  }
+  for (const detail of usage.candidatesTokensDetails ?? []) {
+    if (detail.modality === "AUDIO" && detail.tokenCount !== undefined) {
+      metrics.completion_audio_tokens =
+        (metrics.completion_audio_tokens ?? 0) + detail.tokenCount;
+    }
+    if (detail.modality === "IMAGE" && detail.tokenCount !== undefined) {
+      metrics.completion_image_tokens =
+        (metrics.completion_image_tokens ?? 0) + detail.tokenCount;
+    }
   }
 }
 
@@ -1171,7 +1195,11 @@ function populateInteractionUsageMetrics(
     metrics.prompt_tokens = usage.total_input_tokens;
   }
   if (typeof usage.total_output_tokens === "number") {
-    metrics.completion_tokens = usage.total_output_tokens;
+    metrics.completion_tokens =
+      usage.total_output_tokens +
+      (typeof usage.total_thought_tokens === "number"
+        ? usage.total_thought_tokens
+        : 0);
   }
   if (typeof usage.total_tokens === "number") {
     metrics.tokens = usage.total_tokens;
@@ -1181,6 +1209,41 @@ function populateInteractionUsageMetrics(
   }
   if (typeof usage.total_thought_tokens === "number") {
     metrics.completion_reasoning_tokens = usage.total_thought_tokens;
+  }
+
+  for (const detail of Array.isArray(usage.input_tokens_by_modality)
+    ? usage.input_tokens_by_modality
+    : []) {
+    if (
+      typeof detail?.modality === "string" &&
+      detail.modality.toLowerCase() === "audio" &&
+      typeof detail.tokens === "number"
+    ) {
+      metrics.prompt_audio_tokens =
+        (metrics.prompt_audio_tokens ?? 0) + detail.tokens;
+    }
+  }
+
+  for (const detail of Array.isArray(usage.output_tokens_by_modality)
+    ? usage.output_tokens_by_modality
+    : []) {
+    if (
+      typeof detail?.modality !== "string" ||
+      typeof detail.tokens !== "number"
+    ) {
+      continue;
+    }
+
+    switch (detail.modality.toLowerCase()) {
+      case "audio":
+        metrics.completion_audio_tokens =
+          (metrics.completion_audio_tokens ?? 0) + detail.tokens;
+        break;
+      case "image":
+        metrics.completion_image_tokens =
+          (metrics.completion_image_tokens ?? 0) + detail.tokens;
+        break;
+    }
   }
 }
 

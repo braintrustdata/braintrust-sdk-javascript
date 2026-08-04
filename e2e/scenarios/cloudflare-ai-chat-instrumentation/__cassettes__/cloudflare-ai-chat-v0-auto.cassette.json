@@ -1,0 +1,404 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "59ffe088275bf9a2",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-07-20T14:51:35.158Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "Call lookup_weather exactly once with city Vienna. After the tool returns, reply with exactly CLOUDFLARE_AI_CHAT_TOOL_OK and no other text.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Look up the weather in Vienna.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 32,
+            "model": "gpt-4.1-nano",
+            "temperature": 0,
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "description": "Return deterministic weather for one city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["city"],
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1784559095,
+            "created_at": 1784559094,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_04f551d05edd0796006a5e35f6997481a399c711c8638fdb40",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 32,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4.1-nano-2025-04-14",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "arguments": "{\"city\":\"Vienna\"}",
+                "call_id": "call_860XAul7n7AYZnjcgUVUIZTK",
+                "id": "fc_04f551d05edd0796006a5e35f70de881a391c54f9817f9c7bf",
+                "name": "lookup_weather",
+                "status": "completed",
+                "type": "function_call"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [
+              {
+                "description": "Return deterministic weather for one city.",
+                "name": "lookup_weather",
+                "output_schema": null,
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["city"],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 80,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 0
+              },
+              "output_tokens": 32,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 112
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1e2c8e4c9be4f16-IAD",
+          "connection": "keep-alive",
+          "content-encoding": "br",
+          "content-type": "application/json",
+          "date": "Mon, 20 Jul 2026 14:51:35 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "567",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999702",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_3e2c1053a33e4ba2ab8cbd8cdec33073"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "fa7acbee43b3436b",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-07-20T14:51:35.790Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": "Call lookup_weather exactly once with city Vienna. After the tool returns, reply with exactly CLOUDFLARE_AI_CHAT_TOOL_OK and no other text.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Look up the weather in Vienna.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "id": "fc_04f551d05edd0796006a5e35f70de881a391c54f9817f9c7bf",
+                "type": "item_reference"
+              },
+              {
+                "call_id": "call_860XAul7n7AYZnjcgUVUIZTK",
+                "output": "{\"city\":\"Vienna\",\"condition\":\"sunny\",\"marker\":\"WEATHER_TOOL_EXECUTED\"}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 32,
+            "model": "gpt-4.1-nano",
+            "temperature": 0,
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "description": "Return deterministic weather for one city.",
+                "name": "lookup_weather",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["city"],
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1784559095,
+            "created_at": 1784559095,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_04f551d05edd0796006a5e35f73a7481a38b73e055da234629",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 32,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4.1-nano-2025-04-14",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "content": [
+                  {
+                    "annotations": [],
+                    "logprobs": [],
+                    "text": "CLOUDFLARE_AI_CHAT_TOOL_OK",
+                    "type": "output_text"
+                  }
+                ],
+                "id": "msg_04f551d05edd0796006a5e35f7929481a391455c80ed8d4a17",
+                "role": "assistant",
+                "status": "completed",
+                "type": "message"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [
+              {
+                "description": "Return deterministic weather for one city.",
+                "name": "lookup_weather",
+                "output_schema": null,
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "city": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["city"],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 121,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 0
+              },
+              "output_tokens": 12,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 133
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a1e2c8e8e90c4f16-IAD",
+          "connection": "keep-alive",
+          "content-encoding": "br",
+          "content-type": "application/json",
+          "date": "Mon, 20 Jul 2026 14:51:35 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "570",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999662",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_3a466c7e215047499b11d5706bec92c5"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-07-20T14:51:37.897Z"
+  }
+}
