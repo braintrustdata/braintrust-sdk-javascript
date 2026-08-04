@@ -5,29 +5,17 @@
  * Braintrust SDK does not take a runtime or type dependency on Stagehand.
  */
 
-export type StagehandAction = {
-  method?: unknown;
-};
-
 export type StagehandActResult = {
   success?: unknown;
   actions?: unknown;
   cacheStatus?: unknown;
 };
 
-export type StagehandAgentUsage = {
+type StagehandAgentUsage = {
   input_tokens?: unknown;
   output_tokens?: unknown;
   reasoning_tokens?: unknown;
   cached_input_tokens?: unknown;
-};
-
-export type StagehandAgentAction = {
-  type?: unknown;
-  taskCompleted?: unknown;
-  task_completed?: unknown;
-  timeMs?: unknown;
-  time_ms?: unknown;
 };
 
 export type StagehandAgentResult = {
@@ -37,11 +25,7 @@ export type StagehandAgentResult = {
   output?: unknown;
   actions?: unknown;
   metadata?: unknown;
-  usage?: StagehandAgentUsage | unknown;
-};
-
-export type StagehandAgentStreamResult = {
-  result?: unknown;
+  usage?: StagehandAgentUsage;
 };
 
 export type StagehandAgent = {
