@@ -1,11 +1,16 @@
-import { createAgent, Type } from "@flue/runtime";
-import { local } from "@flue/runtime/node";
 import { traced } from "braintrust";
 import {
   FLUE_MODEL,
   FLUE_REASONING_MODEL,
   SCENARIO_NAME,
 } from "../../constants.mjs";
+
+const runtimePackageName =
+  process.env.FLUE_RUNTIME_PACKAGE_NAME ?? "@flue/runtime";
+const [{ createAgent, Type }, { local }] = await Promise.all([
+  import(runtimePackageName),
+  import(`${runtimePackageName}/node`),
+]);
 
 function flueModel() {
   return process.env.FLUE_E2E_MODEL ?? FLUE_MODEL;

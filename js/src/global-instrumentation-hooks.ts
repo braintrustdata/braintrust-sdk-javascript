@@ -11,9 +11,12 @@ export const GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND =
   "braintrust.global-instrumentation-hooks.registry";
 export const GLOBAL_INSTRUMENTATION_HOOK_BRAND =
   "braintrust.global-instrumentation-hooks.hook";
+export const GLOBAL_INVOCATION_HOOK_BRAND =
+  "braintrust.global-instrumentation-hooks.invocation-hook";
 
 const registryBrand = Symbol.for(GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND);
 const hookBrand = Symbol.for(GLOBAL_INSTRUMENTATION_HOOK_BRAND);
+const invocationHookBrand = Symbol.for(GLOBAL_INVOCATION_HOOK_BRAND);
 
 export interface GlobalHookAsyncLocalStorage<T> {
   enterWith(store: T): void;
@@ -66,9 +69,33 @@ export interface GlobalHookHandlers<M = any> {
   error?: (context: M, name: string) => void;
 }
 
-export interface GlobalTracingChannel<
-  M = any,
-> extends GlobalTracingChannelCollection<M> {
+type GlobalInvocationTarget = (this: any, ...args: any[]) => any;
+
+export type GlobalInvocationInterceptor<A = any> = (
+  target: GlobalInvocationTarget,
+  thisArg: any,
+  args: any[],
+  additional: A,
+) => any;
+
+export interface GlobalInvocationHook<A = any> {
+  readonly hasInterceptors: boolean;
+  intercept(interceptor: GlobalInvocationInterceptor<A>): () => void;
+  invoke<F extends GlobalInvocationTarget>(
+    target: F,
+    thisArg: ThisParameterType<F>,
+    args: Parameters<F>,
+    additional: A,
+  ): ReturnType<F>;
+}
+
+export type GlobalTraceOperator =
+  | "traceCallback"
+  | "tracePromise"
+  | "traceSync";
+
+export interface GlobalTracingChannel<M = any, A = any>
+  extends GlobalTracingChannelCollection<M>, GlobalInvocationHook<A> {
   readonly start: GlobalHookChannel<M>;
   readonly end: GlobalHookChannel<M>;
   readonly asyncStart: GlobalHookChannel<M>;
@@ -95,6 +122,14 @@ export interface GlobalTracingChannel<
     message?: M,
     thisArg?: ThisParameterType<F>,
     ...args: Parameters<F>
+  ): ReturnType<F>;
+  traceInvocation<F extends GlobalInvocationTarget>(
+    operator: GlobalTraceOperator,
+    target: F,
+    thisArg: ThisParameterType<F>,
+    args: Parameters<F>,
+    additional: A,
+    callbackIndex?: number,
   ): ReturnType<F>;
 }
 
@@ -291,15 +326,99 @@ const traceEvents = [
   "error",
 ] as const;
 
+function traceInvocation<F extends GlobalInvocationTarget>(
+  hook: GlobalTracingChannel,
+  operator: GlobalTraceOperator,
+  target: F,
+  thisArg: ThisParameterType<F>,
+  args: Parameters<F>,
+  additional: unknown,
+  callbackIndex = -1,
+): ReturnType<F> {
+  const context = {
+    ...(additional as object),
+    arguments: args,
+    self: thisArg,
+  };
+  const invoke = () => hook.invoke(target, thisArg, args, additional);
+
+  if (operator === "traceCallback") {
+    return hook.traceCallback(invoke, callbackIndex, context) as ReturnType<F>;
+  }
+  if (operator === "tracePromise") {
+    return hook.tracePromise(invoke, context) as ReturnType<F>;
+  }
+  return hook.traceSync(invoke, context) as ReturnType<F>;
+}
+
+class InvocationHook<A = any> implements GlobalInvocationHook<A> {
+  private interceptors: GlobalInvocationInterceptor<A>[] = [];
+
+  get hasInterceptors(): boolean {
+    return this.interceptors.length > 0;
+  }
+
+  intercept(interceptor: GlobalInvocationInterceptor<A>): () => void {
+    if (typeof interceptor !== "function") {
+      throw new TypeError("interceptor must be a function");
+    }
+    this.interceptors = [...this.interceptors, interceptor];
+
+    let active = true;
+    return () => {
+      if (!active) {
+        return;
+      }
+      active = false;
+      const index = this.interceptors.indexOf(interceptor);
+      if (index !== -1) {
+        this.interceptors = [
+          ...this.interceptors.slice(0, index),
+          ...this.interceptors.slice(index + 1),
+        ];
+      }
+    };
+  }
+
+  invoke<F extends GlobalInvocationTarget>(
+    target: F,
+    thisArg: ThisParameterType<F>,
+    args: Parameters<F>,
+    additional: A,
+  ): ReturnType<F> {
+    const interceptors = this.interceptors;
+    if (interceptors.length === 0) {
+      return Reflect.apply(target, thisArg, args) as ReturnType<F>;
+    }
+
+    let next: GlobalInvocationTarget = target;
+    for (let index = interceptors.length - 1; index >= 0; index -= 1) {
+      const interceptor = interceptors[index];
+      const downstream = next;
+      next = function (this: unknown, ...nextArgs: any[]) {
+        return interceptor(downstream, this, nextArgs, additional);
+      };
+    }
+    return Reflect.apply(next, thisArg, args) as ReturnType<F>;
+  }
+}
+
 class TracingHook<M> implements GlobalTracingChannel<M> {
   readonly start: GlobalHookChannel<M>;
   readonly end: GlobalHookChannel<M>;
   readonly asyncStart: GlobalHookChannel<M>;
   readonly asyncEnd: GlobalHookChannel<M>;
   readonly error: GlobalHookChannel<M>;
+  private readonly invocationHook = new InvocationHook();
 
   constructor(nameOrChannels: string | GlobalTracingChannelCollection<M>) {
     Object.defineProperty(this, hookBrand, {
+      configurable: false,
+      enumerable: false,
+      value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+      writable: false,
+    });
+    Object.defineProperty(this, invocationHookBrand, {
       configurable: false,
       enumerable: false,
       value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
@@ -331,6 +450,42 @@ class TracingHook<M> implements GlobalTracingChannel<M> {
       this.asyncStart.hasSubscribers ||
       this.asyncEnd.hasSubscribers ||
       this.error.hasSubscribers
+    );
+  }
+
+  get hasInterceptors(): boolean {
+    return this.invocationHook.hasInterceptors;
+  }
+
+  intercept(interceptor: GlobalInvocationInterceptor): () => void {
+    return this.invocationHook.intercept(interceptor);
+  }
+
+  invoke<F extends GlobalInvocationTarget>(
+    target: F,
+    thisArg: ThisParameterType<F>,
+    args: Parameters<F>,
+    additional: unknown,
+  ): ReturnType<F> {
+    return this.invocationHook.invoke(target, thisArg, args, additional);
+  }
+
+  traceInvocation<F extends GlobalInvocationTarget>(
+    operator: GlobalTraceOperator,
+    target: F,
+    thisArg: ThisParameterType<F>,
+    args: Parameters<F>,
+    additional: unknown,
+    callbackIndex = -1,
+  ): ReturnType<F> {
+    return traceInvocation(
+      this,
+      operator,
+      target,
+      thisArg,
+      args,
+      additional,
+      callbackIndex,
     );
   }
 
@@ -637,6 +792,74 @@ function hasTracingHookShape(
   }
 }
 
+function hasInvocationHookShape(
+  value: unknown,
+): value is GlobalInvocationHook<any> {
+  if (
+    (typeof value !== "object" && typeof value !== "function") ||
+    value === null
+  ) {
+    return false;
+  }
+
+  try {
+    const hook = value as GlobalInvocationHook<any>;
+    return (
+      (value as Record<symbol, unknown>)[invocationHookBrand] ===
+        GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION &&
+      typeof hook.hasInterceptors === "boolean" &&
+      typeof hook.intercept === "function" &&
+      typeof hook.invoke === "function"
+    );
+  } catch {
+    return false;
+  }
+}
+
+function installInvocationHook(value: GlobalTracingChannel<any>): void {
+  const hasInvocationHook = hasInvocationHookShape(value);
+  const invocationHook = new InvocationHook();
+  try {
+    if (!hasInvocationHook) {
+      Object.defineProperties(value, {
+        [invocationHookBrand]: {
+          configurable: false,
+          enumerable: false,
+          value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+          writable: false,
+        },
+        hasInterceptors: {
+          configurable: false,
+          enumerable: false,
+          get: () => invocationHook.hasInterceptors,
+        },
+        intercept: {
+          configurable: false,
+          enumerable: false,
+          value: invocationHook.intercept.bind(invocationHook),
+          writable: false,
+        },
+        invoke: {
+          configurable: false,
+          enumerable: false,
+          value: invocationHook.invoke.bind(invocationHook),
+          writable: false,
+        },
+      });
+    }
+    if (typeof value.traceInvocation !== "function") {
+      Object.defineProperty(value, "traceInvocation", {
+        configurable: false,
+        enumerable: false,
+        value: traceInvocation.bind(undefined, value),
+        writable: false,
+      });
+    }
+  } catch (error) {
+    reportError(error);
+  }
+}
+
 function isCompatibleTracingHook(
   value: unknown,
 ): value is GlobalTracingChannel<any> {
@@ -748,6 +971,7 @@ export function newGlobalTracingChannel<M = any>(
     return inertTracingHook as GlobalTracingChannel<M>;
   }
   if (isCompatibleTracingHook(existing)) {
+    installInvocationHook(existing);
     return existing as GlobalTracingChannel<M>;
   }
   if (existing !== undefined) {

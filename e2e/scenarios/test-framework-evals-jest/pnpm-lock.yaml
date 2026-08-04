@@ -11,9 +11,12 @@ importers:
 
   .:
     dependencies:
-      jest:
-        specifier: 29.7.0
-        version: 29.7.0(@types/node@25.5.0)
+      jest-v29:
+        specifier: npm:jest@29.7.0
+        version: jest@29.7.0(@types/node@25.5.0)
+      jest-v29-latest:
+        specifier: npm:jest@29.7.0
+        version: jest@29.7.0(@types/node@25.5.0)
 
 packages:
 

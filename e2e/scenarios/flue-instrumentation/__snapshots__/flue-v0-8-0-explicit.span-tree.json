@@ -9,7 +9,7 @@
           "type": "task",
           "children": [
             {
-              "name": "llm:claude-sonnet-4-5-20250929",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -93,7 +93,7 @@
               }
             },
             {
-              "name": "llm:claude-sonnet-4-5-20250929",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -213,7 +213,7 @@
               }
             },
             {
-              "name": "llm:claude-sonnet-4-5-20250929",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -366,7 +366,7 @@
               }
             },
             {
-              "name": "llm:claude-sonnet-4-5-20250929",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -544,7 +544,7 @@
           "type": "task",
           "children": [
             {
-              "name": "llm:claude-sonnet-4-5-20250929",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -622,7 +622,7 @@
               "error": "{\"content\":[{\"type\":\"text\",\"text\":\"ENOENT: no such file or directory, open '<repo>/e2e/scenarios/flue-instrumentation/.agents/e2e-flue-skill.md'\"}],\"details\":{}}"
             },
             {
-              "name": "llm:claude-sonnet-4-5-20250929",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -728,7 +728,7 @@
               }
             },
             {
-              "name": "llm:claude-sonnet-4-5-20250929",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -859,7 +859,7 @@
               }
             },
             {
-              "name": "llm:claude-sonnet-4-5-20250929",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -1015,7 +1015,7 @@
               }
             },
             {
-              "name": "llm:claude-sonnet-4-5-20250929",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -1195,7 +1195,7 @@
               }
             },
             {
-              "name": "llm:claude-sonnet-4-5-20250929",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -1394,7 +1394,7 @@
           "type": "task",
           "children": [
             {
-              "name": "llm:gpt-4o-mini",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -1458,7 +1458,7 @@
               "type": "task",
               "children": [
                 {
-                  "name": "llm:gpt-4o-mini",
+                  "name": "flue.turn",
                   "type": "llm",
                   "children": [],
                   "input": [

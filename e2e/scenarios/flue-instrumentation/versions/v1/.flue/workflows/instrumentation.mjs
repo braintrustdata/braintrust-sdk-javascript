@@ -1,5 +1,3 @@
-import { defineAgent, defineTool, defineWorkflow } from "@flue/runtime";
-import { local } from "@flue/runtime/node";
 import { traced } from "braintrust";
 import * as v from "valibot";
 import {
@@ -7,6 +5,14 @@ import {
   FLUE_REASONING_MODEL,
   SCENARIO_NAME,
 } from "../../constants.mjs";
+
+const runtimePackageName =
+  process.env.FLUE_RUNTIME_PACKAGE_NAME ?? "flue-runtime-v1";
+const [{ defineAgent, defineTool, defineWorkflow }, { local }] =
+  await Promise.all([
+    import(runtimePackageName),
+    import(`${runtimePackageName}/node`),
+  ]);
 
 function flueModel() {
   return process.env.FLUE_E2E_MODEL ?? FLUE_MODEL;
@@ -69,11 +75,11 @@ const lookupTool = defineTool({
       },
     );
 
-    return JSON.stringify({
+    return {
       id: "flue-session-2026",
       query: input.query,
       topic: "session instrumentation",
-    });
+    };
   },
 });
 
@@ -85,17 +91,16 @@ const webSearchTool = defineTool({
     query: v.string(),
   }),
   name: "web_search",
-  run: async ({ input }) =>
-    JSON.stringify({
-      lookupId: input.lookupId,
-      query: input.query,
-      results: [
-        {
-          title: "Flue reasoning stream instrumentation",
-          url: "https://example.test/flue/reasoning-streams",
-        },
-      ],
-    }),
+  run: async ({ input }) => ({
+    lookupId: input.lookupId,
+    query: input.query,
+    results: [
+      {
+        title: "Flue reasoning stream instrumentation",
+        url: "https://example.test/flue/reasoning-streams",
+      },
+    ],
+  }),
 });
 
 const summarizeSourceTool = defineTool({
@@ -105,12 +110,11 @@ const summarizeSourceTool = defineTool({
     url: v.string(),
   }),
   name: "summarize_source",
-  run: async ({ input }) =>
-    JSON.stringify({
-      summary:
-        "Flue emits reasoning, tool execution, and LLM turn events separately.",
-      url: input.url,
-    }),
+  run: async ({ input }) => ({
+    summary:
+      "Flue emits reasoning, tool execution, and LLM turn events separately.",
+    url: input.url,
+  }),
 });
 
 export async function route(_ctx, next) {

@@ -18,7 +18,7 @@
                   "input": "Braintrust SDK JavaScript",
                   "metadata": {
                     "gen_ai.tool.name": "web_search",
-                    "openai_codex.item_id": "ws_0e7a99be48bae168016a5f265bbed081a3b5cf61cfe5566660",
+                    "openai_codex.item_id": "ws_000dccc20a01ee65016a7068c8dba0819cafbe37f45a2d4a97",
                     "openai_codex.item_type": "web_search"
                   }
                 },
@@ -31,9 +31,9 @@
                     "message": "OPENAI_CODEX_RUN_OK"
                   },
                   "metadata": {
-                    "model": "gpt-5.1-codex-mini",
+                    "model": "gpt-5.3-codex",
                     "openai_codex.llm_sequence": 1,
-                    "openai_codex.model": "gpt-5.1-codex-mini",
+                    "openai_codex.model": "gpt-5.3-codex",
                     "openai_codex.model_reasoning_effort": "low",
                     "openai_codex.operation": "Thread.run",
                     "provider": "openai"
@@ -43,25 +43,25 @@
               "input": "You are running inside an SDK instrumentation test. Use web search once for the exact query \"Braintrust SDK JavaScript\". Do not run shell commands or inspect local files. After the web search completes, reply with exactly this marker and no extra text: OPENAI_CODEX_RUN_OK",
               "output": "OPENAI_CODEX_RUN_OK",
               "metadata": {
-                "model": "gpt-5.1-codex-mini",
+                "model": "gpt-5.3-codex",
                 "openai_codex.approval_policy": "never",
-                "openai_codex.model": "gpt-5.1-codex-mini",
+                "openai_codex.model": "gpt-5.3-codex",
                 "openai_codex.model_reasoning_effort": "low",
                 "openai_codex.network_access_enabled": false,
                 "openai_codex.operation": "Thread.run",
                 "openai_codex.sandbox_mode": "read-only",
                 "openai_codex.skip_git_repo_check": true,
-                "openai_codex.version": "0.144.5",
+                "openai_codex.version": "0.146.0",
                 "openai_codex.web_search_mode": "live",
                 "openai_codex.working_directory": "<tmp>/braintrust-codex-e2e/run",
                 "provider": "openai"
               },
               "metrics": {
-                "completion_reasoning_tokens": 0,
-                "completion_tokens": 80,
+                "completion_reasoning_tokens": 55,
+                "completion_tokens": 65,
                 "duration": 0,
-                "prompt_cached_tokens": 5888,
-                "prompt_tokens": 17662
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 15683
               }
             }
           ],
@@ -78,13 +78,31 @@
               "type": "task",
               "children": [
                 {
+                  "name": "OpenAI Codex LLM",
+                  "type": "llm",
+                  "children": [],
+                  "input": "You are running inside an SDK instrumentation test. Use web search once for the exact query \"Braintrust SDK JavaScript\". Do not run shell commands or inspect local files. After the web search completes, reply with exactly this marker and no extra text: OPENAI_CODEX_STREAM_OK",
+                  "output": {
+                    "reasoning": "**Preparing exact web search query**"
+                  },
+                  "metadata": {
+                    "model": "gpt-5.3-codex",
+                    "openai_codex.llm_sequence": 1,
+                    "openai_codex.model": "gpt-5.3-codex",
+                    "openai_codex.model_reasoning_effort": "low",
+                    "openai_codex.operation": "Thread.runStreamed",
+                    "openai_codex.thread_id": "<uuid:1>",
+                    "provider": "openai"
+                  }
+                },
+                {
                   "name": "tool: web_search",
                   "type": "tool",
                   "children": [],
                   "input": "",
                   "metadata": {
                     "gen_ai.tool.name": "web_search",
-                    "openai_codex.item_id": "ws_0ee35f7e666c0b89016a5f26616ea081a0916cd2f2ec2d2ab2",
+                    "openai_codex.item_id": "ws_071dcb17a7bfa5ef016a7068d150588191ac2a8e6df94555b0",
                     "openai_codex.item_type": "web_search"
                   }
                 },
@@ -92,14 +110,13 @@
                   "name": "OpenAI Codex LLM",
                   "type": "llm",
                   "children": [],
-                  "input": "You are running inside an SDK instrumentation test. Use web search once for the exact query \"Braintrust SDK JavaScript\". Do not run shell commands or inspect local files. After the web search completes, reply with exactly this marker and no extra text: OPENAI_CODEX_STREAM_OK",
                   "output": {
                     "message": "OPENAI_CODEX_STREAM_OK"
                   },
                   "metadata": {
-                    "model": "gpt-5.1-codex-mini",
-                    "openai_codex.llm_sequence": 1,
-                    "openai_codex.model": "gpt-5.1-codex-mini",
+                    "model": "gpt-5.3-codex",
+                    "openai_codex.llm_sequence": 2,
+                    "openai_codex.model": "gpt-5.3-codex",
                     "openai_codex.model_reasoning_effort": "low",
                     "openai_codex.operation": "Thread.runStreamed",
                     "openai_codex.thread_id": "<uuid:1>",
@@ -110,26 +127,26 @@
               "input": "You are running inside an SDK instrumentation test. Use web search once for the exact query \"Braintrust SDK JavaScript\". Do not run shell commands or inspect local files. After the web search completes, reply with exactly this marker and no extra text: OPENAI_CODEX_STREAM_OK",
               "output": "OPENAI_CODEX_STREAM_OK",
               "metadata": {
-                "model": "gpt-5.1-codex-mini",
+                "model": "gpt-5.3-codex",
                 "openai_codex.approval_policy": "never",
-                "openai_codex.model": "gpt-5.1-codex-mini",
+                "openai_codex.model": "gpt-5.3-codex",
                 "openai_codex.model_reasoning_effort": "low",
                 "openai_codex.network_access_enabled": false,
                 "openai_codex.operation": "Thread.runStreamed",
                 "openai_codex.sandbox_mode": "read-only",
                 "openai_codex.skip_git_repo_check": true,
                 "openai_codex.thread_id": "<uuid:1>",
-                "openai_codex.version": "0.144.5",
+                "openai_codex.version": "0.146.0",
                 "openai_codex.web_search_mode": "live",
                 "openai_codex.working_directory": "<tmp>/braintrust-codex-e2e/stream",
                 "provider": "openai"
               },
               "metrics": {
-                "completion_reasoning_tokens": 0,
-                "completion_tokens": 104,
+                "completion_reasoning_tokens": 89,
+                "completion_tokens": 99,
                 "duration": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 19636
+                "prompt_cached_tokens": 9856,
+                "prompt_tokens": 15712
               }
             }
           ],

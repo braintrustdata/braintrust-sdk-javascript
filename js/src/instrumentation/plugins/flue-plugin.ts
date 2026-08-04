@@ -1,4 +1,5 @@
 import { BasePlugin, toLoggedError } from "../core";
+import { debugLogger } from "../../debug-logger";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
 import {
@@ -57,6 +58,7 @@ type FlueAutoState = {
 };
 
 type SpanState = {
+  latestAgentOutput?: unknown;
   loggedInput?: boolean;
   metadata: Record<string, unknown>;
   span: Span;
@@ -615,7 +617,8 @@ class FlueObserveBridge {
     const state =
       this.operationsById.get(event.operationId) ??
       this.startSyntheticOperation(event);
-    const output = operationOutput(event);
+    const output =
+      operationOutput(event) ?? outputFromAgentTurn(state.latestAgentOutput);
     const metadata = {
       ...state.metadata,
       ...extractEventMetadata(event),
@@ -627,7 +630,9 @@ class FlueObserveBridge {
 
     this.finishPendingChildrenForOperation(event, output);
     safeLog(state.span, {
-      ...(event.isError ? { error: toLoggedError(event.error) } : {}),
+      ...(event.isError
+        ? { error: toLoggedError(event.errorInfo ?? event.error) }
+        : {}),
       metadata,
       metrics: durationMetrics(event.durationMs),
       output,
@@ -662,7 +667,7 @@ class FlueObserveBridge {
     };
     const parent = this.parentSpanForTurn(event);
     const span = startFlueSpan(parent, {
-      name: `llm:${model ?? event.purpose ?? "unknown"}`,
+      name: "flue.turn",
       spanAttributes: { type: SpanTypeAttribute.LLM },
       startTime: eventTime(event.timestamp),
       event: {
@@ -712,6 +717,12 @@ class FlueObserveBridge {
       },
       output,
     });
+    if (event.purpose === "agent" && event.operationId) {
+      const operation = this.operationsById.get(event.operationId);
+      if (operation) {
+        operation.latestAgentOutput = output;
+      }
+    }
     safeEnd(state.span, eventTime(event.timestamp));
     this.turnsByKey.delete(key);
   }
@@ -803,7 +814,9 @@ class FlueObserveBridge {
     }
 
     safeLog(state.span, {
-      ...(event.isError ? { error: toLoggedError(event.result) } : {}),
+      ...(event.isError
+        ? { error: toLoggedError(event.errorInfo ?? event.result) }
+        : {}),
       metadata: {
         ...state.metadata,
         ...extractEventMetadata(event),
@@ -858,6 +871,9 @@ class FlueObserveBridge {
     };
 
     safeLog(state.span, {
+      ...(event.isError
+        ? { error: toLoggedError(event.errorInfo ?? event.error) }
+        : {}),
       metadata,
       metrics: {
         ...durationMetrics(event.durationMs),
@@ -978,7 +994,7 @@ class FlueObserveBridge {
       ...(event.purpose ? { "flue.turn_purpose": event.purpose } : {}),
     };
     const span = startFlueSpan(this.parentSpanForEvent(event), {
-      name: `llm:${model ?? event.purpose ?? "unknown"}`,
+      name: "flue.turn",
       spanAttributes: { type: SpanTypeAttribute.LLM },
       startTime: eventTime(event.timestamp),
       event: { metadata },
@@ -1140,7 +1156,12 @@ function extractEventMetadata(
   return {
     ...(event.runId ? { "flue.run_id": event.runId } : {}),
     ...(event.instanceId ? { "flue.instance_id": event.instanceId } : {}),
+    ...(event.submissionId ? { "flue.submission_id": event.submissionId } : {}),
     ...(event.dispatchId ? { "flue.dispatch_id": event.dispatchId } : {}),
+    ...(event.agentName ? { "flue.agent_name": event.agentName } : {}),
+    ...(event.conversationId
+      ? { "flue.conversation_id": event.conversationId }
+      : {}),
     ...(typeof event.eventIndex === "number"
       ? { "flue.event_index": event.eventIndex }
       : {}),
@@ -1181,7 +1202,7 @@ function flueTurnRequestInput(
 }
 
 function flueTurnRequestModel(event: FlueTurnRequestEvent): string | undefined {
-  return event.request?.model ?? event.model;
+  return event.request?.requestedModel ?? event.request?.model ?? event.model;
 }
 
 function flueTurnRequestProvider(
@@ -1199,11 +1220,18 @@ function flueTurnRequestApi(event: FlueTurnRequestEvent): string | undefined {
 function flueTurnRequestReasoning(
   event: FlueTurnRequestEvent,
 ): string | undefined {
-  return event.request?.reasoning ?? event.reasoning;
+  return (
+    event.request?.reasoningLevel ?? event.request?.reasoning ?? event.reasoning
+  );
 }
 
 function flueTurnModel(event: FlueTurnEvent): string | undefined {
-  return event.request?.model ?? event.model;
+  return (
+    event.response?.responseModel ??
+    event.request?.requestedModel ??
+    event.request?.model ??
+    event.model
+  );
 }
 
 function flueTurnProvider(event: FlueTurnEvent): string | undefined {
@@ -1225,7 +1253,11 @@ function flueTurnOutput(event: FlueTurnEvent): unknown {
 }
 
 function flueTurnStopReason(event: FlueTurnEvent): string | undefined {
-  return event.response?.stopReason ?? event.stopReason;
+  return (
+    event.response?.finishReason ??
+    event.response?.stopReason ??
+    event.stopReason
+  );
 }
 
 function flueTurnError(event: FlueTurnEvent): unknown {
@@ -1245,6 +1277,9 @@ function flueToolInput(event: FlueToolStartEvent): unknown {
 }
 
 function flueToolOutput(event: FlueToolCallEvent): unknown {
+  if (Object.hasOwn(event, "effectiveResult")) {
+    return event.effectiveResult;
+  }
   return event.output !== undefined ? event.output : event.result;
 }
 
@@ -1254,12 +1289,45 @@ function flueToolError(event: FlueToolCallEvent): unknown {
 
 function operationOutput(event: FlueOperationEvent): unknown {
   if (event.operationKind === "prompt" || event.operationKind === "skill") {
-    return llmResultFromOperationResult(event.result);
+    return (
+      outputFromAgentInvocation(event.agentOutput) ??
+      llmResultFromOperationResult(event.result)
+    );
   }
   return (
     event.result ??
     (event.operationKind === "compact" ? { completed: true } : undefined)
   );
+}
+
+function outputFromAgentInvocation(
+  output: FlueOperationEvent["agentOutput"],
+): unknown {
+  if (output?.type === "text") {
+    return output.text;
+  }
+  if (output?.type === "data") {
+    return output.data;
+  }
+  return undefined;
+}
+
+function outputFromAgentTurn(output: unknown): unknown {
+  if (!isObjectLike(output)) {
+    return output;
+  }
+  const content = Reflect.get(output, "content");
+  if (!Array.isArray(content)) {
+    return output;
+  }
+  const text = content.flatMap((part) => {
+    if (!isObjectLike(part) || Reflect.get(part, "type") !== "text") {
+      return [];
+    }
+    const value = Reflect.get(part, "text");
+    return typeof value === "string" ? [value] : [];
+  });
+  return text.length > 0 ? text.join("") : output;
 }
 
 function llmResultFromOperationResult(result: unknown): unknown {
@@ -1390,6 +1458,5 @@ function safeEnd(span: Span, endTime: number | undefined): void {
 }
 
 function logInstrumentationError(label: string, error: unknown): void {
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.error(`Error in ${label} instrumentation:`, error);
+  debugLogger.debug(`Error in ${label} instrumentation:`, error);
 }
