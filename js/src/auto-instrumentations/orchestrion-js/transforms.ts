@@ -45,7 +45,6 @@ export const transforms: Record<string, TransformFn> = {
     const {
       channelName,
       module: { name },
-      operator,
     } = state;
     const channelVariable = formatChannelVariable(channelName);
     const channelGetter = formatChannelGetter(channelName);
@@ -65,7 +64,7 @@ export const transforms: Record<string, TransformFn> = {
     const sharedHookLookup = hasSharedHookLookup
       ? ""
       : `
-      const ${SHARED_HOOK_LOOKUP} = (__bt$hookName, __bt$operator) => {
+      const ${SHARED_HOOK_LOOKUP} = (__bt$hookName) => {
         try {
           const __bt$hooks = globalThis[${JSON.stringify(
             GLOBAL_INSTRUMENTATION_HOOKS_KEY,
@@ -87,8 +86,7 @@ export const transforms: Record<string, TransformFn> = {
             __bt$hook[Symbol.for(${JSON.stringify(
               GLOBAL_INSTRUMENTATION_HOOK_BRAND,
             )})] !== ${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION} ||
-            typeof __bt$hook.hasSubscribers !== "boolean" ||
-            typeof __bt$hook[__bt$operator] !== "function"
+            typeof __bt$hook.traceInvocation !== "function"
           ) return undefined;
           return __bt$hook;
         } catch {
@@ -101,8 +99,7 @@ export const transforms: Record<string, TransformFn> = {
       let ${channelVariable};
       const ${channelGetter} = () =>
         ${channelVariable} ??= ${SHARED_HOOK_LOOKUP}(
-          ${JSON.stringify(`orchestrion:${name}:${channelName}`)},
-          ${JSON.stringify(operator)}
+          ${JSON.stringify(`orchestrion:${name}:${channelName}`)}
         );
     `;
 
@@ -230,37 +227,21 @@ function traceInstanceMethod(
 }
 
 function wrap(state: TransformState, node: AnyNode): AnyNode {
-  const { operator, moduleVersion } = state;
-
-  const wrapper =
-    operator === "traceCallback"
-      ? wrapCallback(state)
-      : operator === "tracePromise"
-        ? wrapPromise(state)
-        : wrapSync(state);
+  const wrapper = wrapInvocation(state);
 
   const block = wrapper.body[0].body;
   const common = parse(
     node.type === "ArrowFunctionExpression"
       ? `
-    const __bt$ctx = {
-      arguments,
-      moduleVersion: ${JSON.stringify(moduleVersion)}
-    };
-    const __bt$traced = () => {
+    const __bt$target = (...__bt$args) => {
       const __bt$wrapped = () => {};
-      return __bt$wrapped(...arguments);
+      return __bt$wrapped(...__bt$args);
     };
   `
       : `
-    const __bt$ctx = {
-      arguments,
-      self: this,
-      moduleVersion: ${JSON.stringify(moduleVersion)}
-    };
-    const __bt$traced = () => {
+    const __bt$target = function (...__bt$args) {
       const __bt$wrapped = () => {};
-      return __bt$wrapped.apply(this, arguments);
+      return __bt$wrapped.apply(this, __bt$args);
     };
   `,
   ).body;
@@ -320,51 +301,23 @@ function wrapSuper(node: AnyNode): void {
   }
 }
 
-function wrapCallback(state: TransformState): AnyNode {
-  const {
-    channelName,
-    functionQuery: { callbackIndex = -1 },
-  } = state;
+function wrapInvocation(state: TransformState): AnyNode {
+  const { channelName, moduleVersion, operator, functionQuery } = state;
   const channelGetter = formatChannelGetter(channelName);
+  const callbackIndex = functionQuery.callbackIndex ?? -1;
 
   return parse(`
     function wrapper () {
       const __bt$hook = ${channelGetter}();
-      if (!__bt$hook?.hasSubscribers) return __bt$traced();
-      __bt$ctx.self ??= this;
-      return __bt$hook.traceCallback(
-        __bt$traced,
-        ${callbackIndex},
-        __bt$ctx
+      if (!__bt$hook) return __bt$target.apply(this, arguments);
+      return __bt$hook.traceInvocation(
+        ${JSON.stringify(operator)},
+        __bt$target,
+        this,
+        arguments,
+        { moduleVersion: ${JSON.stringify(moduleVersion)} },
+        ${callbackIndex}
       );
-    }
-  `);
-}
-
-function wrapPromise(state: TransformState): AnyNode {
-  const { channelName } = state;
-  const channelGetter = formatChannelGetter(channelName);
-
-  return parse(`
-    function wrapper () {
-      const __bt$hook = ${channelGetter}();
-      if (!__bt$hook?.hasSubscribers) return __bt$traced();
-      __bt$ctx.self ??= this;
-      return __bt$hook.tracePromise(__bt$traced, __bt$ctx);
-    }
-  `);
-}
-
-function wrapSync(state: TransformState): AnyNode {
-  const { channelName } = state;
-  const channelGetter = formatChannelGetter(channelName);
-
-  return parse(`
-    function wrapper () {
-      const __bt$hook = ${channelGetter}();
-      if (!__bt$hook?.hasSubscribers) return __bt$traced();
-      __bt$ctx.self ??= this;
-      return __bt$hook.traceSync(__bt$traced, __bt$ctx);
     }
   `);
 }

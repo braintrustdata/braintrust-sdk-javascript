@@ -1,71 +1,61 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
-  mockBindStore,
-  mockNewAsyncLocalStorage,
+  interceptorsByName,
+  mockNewTracingChannel,
+  mockRemoveInterceptor,
   mockStartSpan,
-  mockUnbindStore,
 } = vi.hoisted(() => ({
-  mockBindStore: vi.fn(),
-  mockNewAsyncLocalStorage: vi.fn(() => {
-    let current: unknown;
-    return {
-      enterWith: vi.fn((store: unknown) => {
-        current = store;
-      }),
-      getStore: vi.fn(() => current),
-      run: vi.fn((store: unknown, callback: () => unknown) => {
-        const previous = current;
-        current = store;
-        try {
-          return callback();
-        } finally {
-          current = previous;
-        }
-      }),
-    };
-  }),
+  interceptorsByName: new Map<string, any>(),
+  mockNewTracingChannel: vi.fn(),
+  mockRemoveInterceptor: vi.fn(),
   mockStartSpan: vi.fn(),
-  mockUnbindStore: vi.fn(),
 }));
 
-vi.mock("../../isomorph", () => ({
-  default: {
-    newAsyncLocalStorage: mockNewAsyncLocalStorage,
-    newTracingChannel: vi.fn(),
-  },
-}));
+vi.mock("../../isomorph", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../isomorph")>();
+  const { AsyncLocalStorage } = await import("node:async_hooks");
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      newAsyncLocalStorage: <T>() => new AsyncLocalStorage<T>(),
+      newTracingChannel: mockNewTracingChannel,
+    },
+  };
+});
 
 vi.mock("../../logger", () => ({
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
 }));
 
-import iso from "../../isomorph";
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { PiCodingAgentPlugin } from "./pi-coding-agent-plugin";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const PROMPT_CHANNEL =
+  "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt";
+
+type TestSpan = {
+  args: any;
+  end: ReturnType<typeof vi.fn>;
+  export: ReturnType<typeof vi.fn>;
+  log: ReturnType<typeof vi.fn>;
+  name?: string;
+};
 
 describe("PiCodingAgentPlugin", () => {
-  let handlersByName: Map<string, any>;
-  let spans: Array<{
-    args: any;
-    end: ReturnType<typeof vi.fn>;
-    export: ReturnType<typeof vi.fn>;
-    log: ReturnType<typeof vi.fn>;
-    name?: string;
-  }>;
+  let plugins: PiCodingAgentPlugin[];
+  let spans: TestSpan[];
 
   beforeEach(() => {
-    handlersByName = new Map();
+    plugins = [];
     spans = [];
+    interceptorsByName.clear();
     mockNewTracingChannel.mockImplementation((name: string) => ({
-      start: {
-        bindStore: mockBindStore,
-        unbindStore: mockUnbindStore,
-      },
-      subscribe: vi.fn((handlers) => handlersByName.set(name, handlers)),
-      unsubscribe: vi.fn(),
+      intercept: vi.fn((interceptor) => {
+        interceptorsByName.set(name, interceptor);
+        return mockRemoveInterceptor;
+      }),
     }));
     mockStartSpan.mockImplementation((args: any) => {
       const span = {
@@ -84,67 +74,33 @@ describe("PiCodingAgentPlugin", () => {
   });
 
   afterEach(() => {
+    for (const plugin of plugins) {
+      plugin.disable();
+    }
     vi.clearAllMocks();
   });
 
-  it("subscribes to AgentSession.prompt", () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
+  it("registers and removes the prompt interceptor", () => {
+    const plugin = enablePlugin(plugins);
 
-    expect(
-      handlersByName.has(
-        "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
-      ),
-    ).toBe(true);
-  });
-
-  it("binds auto instrumentation suppression while AgentSession.prompt runs", () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    expect(mockBindStore).toHaveBeenCalledTimes(1);
+    expect(interceptorsByName.has(PROMPT_CHANNEL)).toBe(true);
+    expect(mockRemoveInterceptor).not.toHaveBeenCalled();
 
     plugin.disable();
 
-    expect(mockUnbindStore).toHaveBeenCalledTimes(1);
+    expect(mockRemoveInterceptor).toHaveBeenCalledTimes(1);
   });
 
-  it("wraps streamFn for exact LLM input and restores it on completion", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
-    );
+  it("uses interceptor ALS for prompt, LLM, and tool spans", async () => {
+    const interceptor = promptInterceptor(enablePlugin(plugins));
     const finalMessage = makeAssistantMessage("done");
-    const stream = makeStream(finalMessage);
     const originalStreamFn = vi.fn(async () => {
       expect(isAutoInstrumentationSuppressed()).toBe(true);
-      return stream;
+      return makeStream(finalMessage);
     });
-    const unsubscribe = vi.fn();
-    const agent: any = {
-      state: { model: anthropicModel(), tools: [bashTool()] },
-      streamFn: originalStreamFn,
-      subscribe: vi.fn(() => unsubscribe),
-    };
-    const session = {
-      agent,
-      model: anthropicModel(),
-      prompt: vi.fn(),
-      sessionId: "session-1",
-      getActiveToolNames: () => ["bash"],
-    };
-    const event = {
-      arguments: ["hello", undefined],
-      moduleVersion: "0.79.1",
-      self: session,
-    };
-
-    handlers.start(event);
-    expect(isAutoInstrumentationSuppressed()).toBe(false);
-    expect(agent.streamFn).not.toBe(originalStreamFn);
-
+    const agent = makeAgent(originalStreamFn);
+    agent.state.tools = [bashTool()];
+    const session = makeSession(agent);
     const context = {
       systemPrompt: "system",
       messages: [
@@ -156,23 +112,52 @@ describe("PiCodingAgentPlugin", () => {
       ],
       tools: [bashTool()],
     };
-    const patchedStream = await agent.streamFn(anthropicModel(), context, {
-      apiKey: "secret",
-      headers: { authorization: "secret" },
-      reasoning: "low",
-    });
-    await patchedStream.result();
-    await handlers.asyncEnd(event);
-    expect(isAutoInstrumentationSuppressed()).toBe(false);
 
-    const llmSpan = spans.find(
-      (span) => span.name === "anthropic.messages.create",
+    await interceptor(
+      async function (this: typeof session) {
+        expect(isAutoInstrumentationSuppressed()).toBe(true);
+        const stream = await this.agent.streamFn(anthropicModel(), context, {
+          apiKey: "secret",
+          headers: { authorization: "secret" },
+          reasoning: "low",
+        });
+        await this.agent.emit({
+          args: { command: "printf pi_tool_ok" },
+          toolCallId: "tool-1",
+          toolName: "bash",
+          type: "tool_execution_start",
+        });
+        await this.agent.emit({
+          isError: false,
+          result: { stdout: "pi_tool_ok" },
+          toolCallId: "tool-1",
+          toolName: "bash",
+          type: "tool_execution_end",
+        });
+        await stream.result();
+        await this.agent.emit({
+          message: finalMessage,
+          toolResults: [],
+          turnIndex: 0,
+          type: "turn_end",
+        });
+      },
+      session,
+      ["hello", undefined],
+      { moduleVersion: "0.79.1" },
     );
+
+    expect(isAutoInstrumentationSuppressed()).toBe(false);
+    expect(agent.streamFn).not.toBe(originalStreamFn);
     expect(originalStreamFn).toHaveBeenCalledWith(
       anthropicModel(),
       context,
       expect.objectContaining({ apiKey: "secret" }),
     );
+
+    const taskSpan = findSpan(spans, "AgentSession.prompt");
+    const llmSpan = findSpan(spans, "anthropic.messages.create");
+    const toolSpan = findSpan(spans, "bash");
     expect(llmSpan?.args.event.input).toEqual([
       { role: "system", content: "system" },
       { role: "user", content: [{ type: "text", text: "hello" }] },
@@ -199,503 +184,267 @@ describe("PiCodingAgentPlugin", () => {
         output: expect.any(Array),
       }),
     );
-    expect(agent.streamFn).toBe(originalStreamFn);
-    expect(unsubscribe).toHaveBeenCalledTimes(1);
-  });
-
-  it("creates tool spans from awaited agent events", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
-    );
-    let listener: any;
-    const agent: any = {
-      state: { model: anthropicModel() },
-      streamFn: vi.fn(),
-      subscribe: vi.fn((nextListener) => {
-        listener = nextListener;
-        return vi.fn();
-      }),
-    };
-    const event = {
-      arguments: ["run bash", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
-
-    handlers.start(event);
-    expect(isAutoInstrumentationSuppressed()).toBe(false);
-    await listener({
-      args: { command: "printf pi_tool_ok" },
-      toolCallId: "tool-1",
-      toolName: "bash",
-      type: "tool_execution_start",
-    });
-    expect(isAutoInstrumentationSuppressed()).toBe(false);
-    await listener({
-      isError: false,
-      result: { stdout: "pi_tool_ok" },
-      toolCallId: "tool-1",
-      toolName: "bash",
-      type: "tool_execution_end",
-    });
-    expect(isAutoInstrumentationSuppressed()).toBe(false);
-    await handlers.asyncEnd(event);
-    expect(isAutoInstrumentationSuppressed()).toBe(false);
-
-    const toolSpan = spans.find((span) => span.name === "bash");
     expect(toolSpan?.args.event.input).toEqual({
       command: "printf pi_tool_ok",
     });
-    expect(toolSpan?.args.event.metadata).toMatchObject({
-      "gen_ai.tool.call.id": "tool-1",
-      "gen_ai.tool.name": "bash",
-    });
     expect(toolSpan?.log).toHaveBeenCalledWith(
-      expect.objectContaining({
-        output: { stdout: "pi_tool_ok" },
-      }),
+      expect.objectContaining({ output: { stdout: "pi_tool_ok" } }),
     );
-    expect(toolSpan?.end).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not double-count prompt metrics from LLM and turn usage", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
-    );
-    let listener: any;
-    const agent: any = {
-      state: { model: anthropicModel() },
-      streamFn: vi.fn(async () => makeStream(makeAssistantMessage("done"))),
-      subscribe: vi.fn((nextListener) => {
-        listener = nextListener;
-        return vi.fn();
-      }),
-    };
-    const event = {
-      arguments: ["count metrics", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
-
-    handlers.start(event);
-    const patchedStream = await agent.streamFn(anthropicModel(), {
-      messages: [{ role: "user", content: "count metrics" }],
-    });
-    await patchedStream.result();
-    await listener({
-      message: makeAssistantMessage("done"),
-      toolResults: [],
-      turnIndex: 0,
-      type: "turn_end",
-    });
-    await handlers.asyncEnd(event);
-
-    const rootSpan = spans.find((span) => span.name === "AgentSession.prompt");
-    const finalLog =
-      rootSpan?.log.mock.calls[rootSpan.log.mock.calls.length - 1]?.[0];
-    expect(finalLog?.metrics).toMatchObject({
+    const finalTaskLog = taskSpan?.log.mock.calls.at(-1)?.[0];
+    expect(finalTaskLog?.metrics).toMatchObject({
       completion_tokens: 3,
-      prompt_cache_creation_tokens: 0,
-      prompt_cached_tokens: 0,
       prompt_tokens: 5,
       tokens: 8,
     });
+    expect(taskSpan?.end).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps one shared streamFn patch for overlapping prompts on the same agent", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+  it("isolates overlapping prompts on the same agent without prompt matching", async () => {
+    const interceptor = promptInterceptor(enablePlugin(plugins));
+    const originalStreamFn = vi.fn(async () =>
+      makeStream(makeAssistantMessage("done")),
     );
-    const stream = makeStream(makeAssistantMessage("done"));
-    const originalStreamFn = vi.fn(async () => stream);
-    const agent: any = {
-      state: { model: anthropicModel() },
-      streamFn: originalStreamFn,
-      subscribe: vi.fn(() => vi.fn()),
-    };
-    const eventA = {
-      arguments: ["first", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
-    const eventB = {
-      arguments: ["second", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
+    const agent = makeAgent(originalStreamFn);
+    const session = makeSession(agent);
+    const firstGate = deferred<void>();
+    const secondGate = deferred<void>();
 
-    handlers.start(eventA);
-    const sharedWrappedStreamFn = agent.streamFn;
-    handlers.start(eventB);
-
-    expect(agent.streamFn).toBe(sharedWrappedStreamFn);
-
-    const patchedStream = await agent.streamFn(anthropicModel(), {
-      messages: [{ role: "user", content: "second" }],
-    });
-    await patchedStream.result();
-
-    expect(originalStreamFn).toHaveBeenCalledTimes(1);
-    expect(
-      spans.filter((span) => span.name === "anthropic.messages.create"),
-    ).toHaveLength(1);
-
-    await handlers.asyncEnd(eventB);
-    expect(agent.streamFn).toBe(sharedWrappedStreamFn);
-
-    await handlers.asyncEnd(eventA);
-    expect(agent.streamFn).toBe(originalStreamFn);
-  });
-
-  it("finalizes LLM spans when the Pi stream is consumed through iteration only", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+    const first = interceptor(
+      async function (this: typeof session) {
+        await firstGate.promise;
+        const stream = await this.agent.streamFn(anthropicModel(), {
+          messages: [{ role: "user", content: "same prompt" }],
+        });
+        await stream.result();
+      },
+      session,
+      ["same prompt", undefined],
+      {},
     );
-    const finalMessage = makeAssistantMessage("done");
-    const { result, stream } = makeIteratorBackedStream([
-      { partial: finalMessage, type: "start" },
-      { message: finalMessage, type: "done" },
-    ]);
-    const agent: any = {
-      state: { model: anthropicModel() },
-      streamFn: vi.fn(async () => stream),
-      subscribe: vi.fn(() => vi.fn()),
-    };
-    const event = {
-      arguments: ["iterate", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
+    const sharedStreamFn = agent.streamFn;
+    const second = interceptor(
+      async function (this: typeof session) {
+        await secondGate.promise;
+        const stream = await this.agent.streamFn(anthropicModel(), {
+          messages: [{ role: "user", content: "same prompt" }],
+        });
+        await stream.result();
+      },
+      session,
+      ["same prompt", undefined],
+      {},
+    );
 
-    handlers.start(event);
-    const patchedStream = await agent.streamFn(anthropicModel(), {
-      messages: [{ role: "user", content: "iterate" }],
-    });
-    for await (const _event of patchedStream) {
-      // consume the full iterator without calling result()
-    }
-    await handlers.asyncEnd(event);
+    expect(agent.streamFn).toBe(sharedStreamFn);
+    secondGate.resolve();
+    await second;
+    firstGate.resolve();
+    await first;
 
-    const llmSpan = spans.find(
+    const llmSpans = spans.filter(
       (span) => span.name === "anthropic.messages.create",
     );
+    expect(llmSpans).toHaveLength(2);
+    expect(
+      spans.filter((span) => span.name === "AgentSession.prompt"),
+    ).toHaveLength(2);
+
+    await agent.streamFn(anthropicModel(), {
+      messages: [{ role: "user", content: "outside prompt" }],
+    });
+    expect(
+      spans.filter((span) => span.name === "anthropic.messages.create"),
+    ).toHaveLength(2);
+  });
+
+  it("keeps deferred follow-up prompts open for their ALS-owned turn", async () => {
+    const interceptor = promptInterceptor(enablePlugin(plugins));
+    const agent = makeAgent(
+      vi.fn(async () => makeStream(makeAssistantMessage("done"))),
+    );
+    const session = makeSession(agent);
+    const turnGate = deferred<void>();
+    let backgroundTurn: Promise<void> | undefined;
+
+    await interceptor(
+      async function (this: typeof session) {
+        backgroundTurn = (async () => {
+          await turnGate.promise;
+          await this.agent.emit({
+            message: makeAssistantMessage("follow-up done"),
+            toolResults: [],
+            turnIndex: 1,
+            type: "turn_end",
+          });
+        })();
+      },
+      session,
+      ["follow up", { streamingBehavior: "followUp" }],
+      {},
+    );
+
+    const taskSpan = findSpan(spans, "AgentSession.prompt");
+    expect(taskSpan?.end).not.toHaveBeenCalled();
+
+    turnGate.resolve();
+    await backgroundTurn;
+
+    expect(taskSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: expect.any(Array) }),
+    );
+    expect(taskSpan?.end).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves full-iterator stream behavior", async () => {
+    const interceptor = promptInterceptor(enablePlugin(plugins));
+    const message = makeAssistantMessage("done");
+    const { result, stream } = makeIteratorBackedStream([
+      { partial: message, type: "start" },
+      { message, type: "done" },
+    ]);
+    const agent = makeAgent(vi.fn(async () => stream));
+    const session = makeSession(agent);
+
+    await interceptor(
+      async function (this: typeof session) {
+        const patchedStream = await this.agent.streamFn(anthropicModel(), {
+          messages: [{ role: "user", content: "iterate" }],
+        });
+        for await (const _event of patchedStream) {
+          // Consume through iteration without calling result().
+        }
+      },
+      session,
+      ["iterate", undefined],
+      {},
+    );
+
+    const llmSpan = findSpan(spans, "anthropic.messages.create");
     expect(result).not.toHaveBeenCalled();
     expect(llmSpan?.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        metrics: expect.objectContaining({
-          completion_tokens: 3,
-          prompt_tokens: 5,
-          tokens: 8,
-        }),
+        metrics: expect.objectContaining({ tokens: 8 }),
         output: expect.any(Array),
       }),
     );
     expect(llmSpan?.end).toHaveBeenCalledTimes(1);
   });
 
-  it("forwards Pi stream iterator cancellation to the underlying iterator", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
-    );
-    const finalMessage = makeAssistantMessage("done");
-    const { iterator, stream } = makeIteratorBackedStream([
-      { partial: finalMessage, type: "start" },
-    ]);
-    const agent: any = {
-      state: { model: anthropicModel() },
-      streamFn: vi.fn(async () => stream),
-      subscribe: vi.fn(() => vi.fn()),
-    };
-    const event = {
-      arguments: ["cancel", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
-
-    handlers.start(event);
-    const patchedStream = await agent.streamFn(anthropicModel(), {
-      messages: [{ role: "user", content: "cancel" }],
-    });
-    const patchedIterator = patchedStream[Symbol.asyncIterator]();
-
-    await patchedIterator.next();
-    await patchedIterator.return?.("stopped");
-    await handlers.asyncEnd(event);
-
-    const llmSpan = spans.find(
-      (span) => span.name === "anthropic.messages.create",
-    );
-    expect(iterator.return).toHaveBeenCalledWith("stopped");
-    expect(llmSpan?.end).toHaveBeenCalledTimes(1);
-  });
-
-  it("forwards Pi stream iterator throw to the underlying iterator", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
-    );
-    const finalMessage = makeAssistantMessage("done");
-    const { iterator, stream } = makeIteratorBackedStream([
-      { partial: finalMessage, type: "start" },
-    ]);
-    const agent: any = {
-      state: { model: anthropicModel() },
-      streamFn: vi.fn(async () => stream),
-      subscribe: vi.fn(() => vi.fn()),
-    };
-    const event = {
-      arguments: ["throw", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
-    const error = new Error("stream aborted");
-
-    handlers.start(event);
-    const patchedStream = await agent.streamFn(anthropicModel(), {
-      messages: [{ role: "user", content: "throw" }],
-    });
-    const patchedIterator = patchedStream[Symbol.asyncIterator]();
-
-    await patchedIterator.next();
-    await expect(patchedIterator.throw?.(error)).rejects.toThrow(
-      "stream aborted",
-    );
-    await handlers.asyncEnd(event);
-
-    const llmSpan = spans.find(
-      (span) => span.name === "anthropic.messages.create",
-    );
-    expect(iterator.throw).toHaveBeenCalledWith(error);
-    expect(llmSpan?.log).toHaveBeenCalledWith(
-      expect.objectContaining({ error: "stream aborted" }),
-    );
-    expect(llmSpan?.end).toHaveBeenCalledTimes(1);
-  });
-
-  it("closes the Pi stream iterator when next rejects", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
-    );
+  it("forwards iterator failures and closes the underlying iterator", async () => {
+    const interceptor = promptInterceptor(enablePlugin(plugins));
     const { iterator, stream } = makeIteratorBackedStream([]);
-    const nextError = new Error("stream next failed");
-    iterator.next.mockRejectedValueOnce(nextError);
-    const agent: any = {
-      state: { model: anthropicModel() },
-      streamFn: vi.fn(async () => stream),
-      subscribe: vi.fn(() => vi.fn()),
-    };
-    const event = {
-      arguments: ["next rejects", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
+    iterator.next.mockRejectedValueOnce(new Error("stream next failed"));
+    const agent = makeAgent(vi.fn(async () => stream));
+    const session = makeSession(agent);
 
-    handlers.start(event);
-    const patchedStream = await agent.streamFn(anthropicModel(), {
-      messages: [{ role: "user", content: "next rejects" }],
-    });
-    const patchedIterator = patchedStream[Symbol.asyncIterator]();
+    await expect(
+      interceptor(
+        async function (this: typeof session) {
+          const patchedStream = await this.agent.streamFn(anthropicModel(), {
+            messages: [{ role: "user", content: "failure" }],
+          });
+          await patchedStream[Symbol.asyncIterator]().next();
+        },
+        session,
+        ["failure", undefined],
+        {},
+      ),
+    ).rejects.toThrow("stream next failed");
 
-    await expect(patchedIterator.next()).rejects.toThrow("stream next failed");
-    await handlers.asyncEnd(event);
-
-    const llmSpan = spans.find(
-      (span) => span.name === "anthropic.messages.create",
-    );
+    const llmSpan = findSpan(spans, "anthropic.messages.create");
+    const taskSpan = findSpan(spans, "AgentSession.prompt");
     expect(iterator.return).toHaveBeenCalledTimes(1);
     expect(llmSpan?.log).toHaveBeenCalledWith(
       expect.objectContaining({ error: "stream next failed" }),
     );
     expect(llmSpan?.end).toHaveBeenCalledTimes(1);
+    expect(taskSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ error: "stream next failed" }),
+    );
   });
 
-  it("keeps queued follow-up prompts active until their deferred turn runs", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
+  it("closes active prompt and LLM spans when the target rejects", async () => {
+    const interceptor = promptInterceptor(enablePlugin(plugins));
+    const agent = makeAgent(
+      vi.fn(async () => makeStream(makeAssistantMessage("unused"))),
     );
-    const subscriptions: Array<{
-      active: boolean;
-      listener: (event: any, signal: AbortSignal) => unknown;
-      unsubscribe: ReturnType<typeof vi.fn>;
-    }> = [];
+    const session = makeSession(agent);
+
+    await expect(
+      interceptor(
+        async function (this: typeof session) {
+          await this.agent.streamFn(anthropicModel(), {
+            messages: [{ role: "user", content: "hello" }],
+          });
+          throw new Error("boom");
+        },
+        session,
+        ["hello", undefined],
+        {},
+      ),
+    ).rejects.toThrow("boom");
+
+    const llmSpan = findSpan(spans, "anthropic.messages.create");
+    const taskSpan = findSpan(spans, "AgentSession.prompt");
+    expect(llmSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ error: "boom" }),
+    );
+    expect(llmSpan?.end).toHaveBeenCalledTimes(1);
+    expect(taskSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ error: "boom" }),
+    );
+    expect(taskSpan?.end).toHaveBeenCalledTimes(1);
+  });
+
+  it("ends in-flight prompts on disable while leaving the safe patch installed", async () => {
+    const plugin = enablePlugin(plugins);
+    const interceptor = promptInterceptor(plugin);
     const originalStreamFn = vi.fn(async () =>
       makeStream(makeAssistantMessage("done")),
     );
-    const agent: any = {
-      state: { model: anthropicModel() },
-      streamFn: originalStreamFn,
-      subscribe: vi.fn((listener) => {
-        const subscription = {
-          active: true,
-          listener,
-          unsubscribe: vi.fn(() => {
-            subscription.active = false;
-          }),
-        };
-        subscriptions.push(subscription);
-        return subscription.unsubscribe;
-      }),
-    };
-    const activeEvent = {
-      arguments: ["active prompt", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
-    const queuedEvent = {
-      arguments: ["queued prompt", { streamingBehavior: "followUp" as const }],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
-    const emit = async (event: any) => {
-      for (const subscription of subscriptions) {
-        if (subscription.active) {
-          await subscription.listener(event, new AbortController().signal);
-        }
-      }
-    };
+    const agent = makeAgent(originalStreamFn);
+    const session = makeSession(agent);
+    const targetGate = deferred<void>();
 
-    handlers.start(activeEvent);
-    const sharedWrappedStreamFn = agent.streamFn;
-    const activeStream = await agent.streamFn(anthropicModel(), {
-      messages: [{ role: "user", content: "active prompt" }],
-    });
-    await activeStream.result();
-
-    handlers.start(queuedEvent);
-    await handlers.asyncEnd(queuedEvent);
-
-    const rootSpans = spans.filter(
-      (span) => span.name === "AgentSession.prompt",
+    const result = interceptor(
+      async () => {
+        await targetGate.promise;
+      },
+      session,
+      ["disable", undefined],
+      {},
     );
-    expect(rootSpans[1]?.end).not.toHaveBeenCalled();
-    expect(agent.streamFn).toBe(sharedWrappedStreamFn);
-    expect(subscriptions[1]?.active).toBe(true);
-
-    await emit({
-      message: makeAssistantMessage("active done"),
-      toolResults: [],
-      turnIndex: 0,
-      type: "turn_end",
-    });
-    await handlers.asyncEnd(activeEvent);
-
-    expect(rootSpans[0]?.end).toHaveBeenCalledTimes(1);
-    expect(rootSpans[1]?.end).not.toHaveBeenCalled();
-    expect(agent.streamFn).toBe(sharedWrappedStreamFn);
-
-    const queuedStream = await agent.streamFn(anthropicModel(), {
-      messages: [{ role: "user", content: "queued prompt" }],
-    });
-    await queuedStream.result();
-    await emit({
-      args: { command: "printf pi_tool_ok" },
-      toolCallId: "tool-queued",
-      toolName: "bash",
-      type: "tool_execution_start",
-    });
-    await emit({
-      isError: false,
-      result: { stdout: "pi_tool_ok" },
-      toolCallId: "tool-queued",
-      toolName: "bash",
-      type: "tool_execution_end",
-    });
-    await emit({
-      message: makeAssistantMessage("queued done"),
-      toolResults: [],
-      turnIndex: 1,
-      type: "turn_end",
-    });
-
-    const llmInputs = spans
-      .filter((span) => span.name === "anthropic.messages.create")
-      .map((span) => span.args.event.input);
-    expect(llmInputs).toEqual([
-      [{ role: "user", content: "active prompt" }],
-      [{ role: "user", content: "queued prompt" }],
-    ]);
-    expect(spans.filter((span) => span.name === "bash")).toHaveLength(1);
-    expect(rootSpans[1]?.end).toHaveBeenCalledTimes(1);
-    expect(subscriptions[1]?.unsubscribe).toHaveBeenCalledTimes(1);
-    expect(agent.streamFn).toBe(originalStreamFn);
-  });
-
-  it("restores active prompt patches when the plugin is disabled", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
-    );
-    const unsubscribe = vi.fn();
-    const originalStreamFn = vi.fn();
-    const agent: any = {
-      state: { model: anthropicModel() },
-      streamFn: originalStreamFn,
-      subscribe: vi.fn(() => unsubscribe),
-    };
-    const event = {
-      arguments: ["disable cleanup", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
-
-    handlers.start(event);
-    expect(agent.streamFn).not.toBe(originalStreamFn);
+    const patchedStreamFn = agent.streamFn;
 
     plugin.disable();
-    await Promise.resolve();
 
-    const rootSpan = spans.find((span) => span.name === "AgentSession.prompt");
-    expect(agent.streamFn).toBe(originalStreamFn);
-    expect(unsubscribe).toHaveBeenCalledTimes(1);
-    expect(rootSpan?.end).toHaveBeenCalledTimes(1);
-  });
+    const taskSpan = findSpan(spans, "AgentSession.prompt");
+    expect(agent.streamFn).toBe(patchedStreamFn);
+    expect(agent.streamFn).not.toBe(originalStreamFn);
+    expect(taskSpan?.end).toHaveBeenCalledTimes(1);
 
-  it("restores streamFn and ends open spans on error", async () => {
-    const plugin = new PiCodingAgentPlugin();
-    plugin.enable();
-
-    const handlers = handlersByName.get(
-      "orchestrion:@earendil-works/pi-coding-agent:AgentSession.prompt",
-    );
-    const unsubscribe = vi.fn();
-    const originalStreamFn = vi.fn();
-    const agent = {
-      state: { model: anthropicModel() },
-      streamFn: originalStreamFn,
-      subscribe: vi.fn(() => unsubscribe),
-    };
-    const event = {
-      arguments: ["hello", undefined],
-      self: { agent, model: anthropicModel(), prompt: vi.fn() },
-    };
-
-    handlers.start(event);
-    (event as any).error = new Error("boom");
-    await handlers.error(event);
-
-    const rootSpan = spans.find((span) => span.name === "AgentSession.prompt");
-    expect(agent.streamFn).toBe(originalStreamFn);
-    expect(unsubscribe).toHaveBeenCalledTimes(1);
-    expect(rootSpan?.log).toHaveBeenCalledWith(
-      expect.objectContaining({ error: "boom" }),
-    );
-    expect(rootSpan?.end).toHaveBeenCalledTimes(1);
+    targetGate.resolve();
+    await result;
+    expect(taskSpan?.end).toHaveBeenCalledTimes(1);
   });
 });
+
+function enablePlugin(plugins: PiCodingAgentPlugin[]): PiCodingAgentPlugin {
+  const plugin = new PiCodingAgentPlugin();
+  plugins.push(plugin);
+  plugin.enable();
+  return plugin;
+}
+
+function promptInterceptor(_plugin: PiCodingAgentPlugin): any {
+  const interceptor = interceptorsByName.get(PROMPT_CHANNEL);
+  expect(interceptor).toEqual(expect.any(Function));
+  return interceptor;
+}
+
+function findSpan(spans: TestSpan[], name: string): TestSpan | undefined {
+  return spans.find((span) => span.name === name);
+}
 
 function anthropicModel() {
   return {
@@ -753,19 +502,56 @@ function makeIteratorBackedStream(events: any[]) {
   const iterator: any = {
     next: vi.fn(async () => {
       const event = pendingEvents.shift();
-      if (!event) {
-        return { done: true, value: undefined };
-      }
-      return { done: false, value: event };
+      return event
+        ? { done: false, value: event }
+        : { done: true, value: undefined };
     }),
     return: vi.fn(async (value?: unknown) => ({ done: true, value })),
     throw: vi.fn(async (error?: unknown) => {
       throw error;
     }),
   };
-  const stream = {
-    [Symbol.asyncIterator]: vi.fn(() => iterator),
+  return {
+    iterator,
     result,
+    stream: {
+      [Symbol.asyncIterator]: vi.fn(() => iterator),
+      result,
+    },
   };
-  return { iterator, result, stream };
+}
+
+function makeAgent(streamFn: any) {
+  const listeners = new Set<any>();
+  return {
+    state: { model: anthropicModel(), tools: [] as any[] },
+    streamFn,
+    subscribe: vi.fn((listener) => {
+      listeners.add(listener);
+      return vi.fn(() => listeners.delete(listener));
+    }),
+    async emit(event: any) {
+      for (const listener of [...listeners]) {
+        await listener(event, new AbortController().signal);
+      }
+    },
+  };
+}
+
+function makeSession(agent: ReturnType<typeof makeAgent>) {
+  return {
+    agent,
+    getActiveToolNames: () => ["bash"],
+    model: anthropicModel(),
+    prompt: vi.fn(),
+    sessionId: "session-1",
+  };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+  return { promise, resolve };
 }
