@@ -124,7 +124,7 @@ export type ChannelMessage<TChannel extends AnyChannelSpec> =
     Partial<{ result: ResultOf<TChannel> }> &
     Partial<Pick<ErrorOf<TChannel>, "error">>;
 
-export type InvocationAdditionalOf<TChannel extends AnyChannelSpec> =
+type InvocationAdditionalOf<TChannel extends AnyChannelSpec> =
   ExtraOf<TChannel> & { moduleVersion?: string };
 
 type InvocationResultOf<TChannel extends AnyChannelSpec> =
@@ -132,7 +132,7 @@ type InvocationResultOf<TChannel extends AnyChannelSpec> =
     ? PromiseLike<ResultOf<TChannel>>
     : ResultOf<TChannel>;
 
-export type ChannelInterceptor<TChannel extends AnyChannelSpec> = (
+type ChannelInterceptor<TChannel extends AnyChannelSpec> = (
   target: (
     this: unknown,
     ...args: ArgsOf<TChannel>
