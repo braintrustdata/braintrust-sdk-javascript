@@ -5,9 +5,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SCENARIO_NAME } from "./constants.mjs";
 
+const flueCliPackageName = process.env.FLUE_CLI_PACKAGE_NAME ?? "@flue/cli";
 const flueCliPath = path.join(
   path.dirname(
-    path.dirname(fileURLToPath(import.meta.resolve("@flue/cli/config"))),
+    path.dirname(
+      fileURLToPath(import.meta.resolve(`${flueCliPackageName}/config`)),
+    ),
   ),
   "bin",
   "flue.mjs",

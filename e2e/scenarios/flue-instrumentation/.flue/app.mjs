@@ -1,7 +1,12 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { configureProvider, flue, observe } from "@flue/runtime/app";
 import { flush, initLogger } from "braintrust";
+
+const runtimePackageName =
+  process.env.FLUE_RUNTIME_PACKAGE_NAME ?? "@flue/runtime";
+const { configureProvider, flue, observe } = await import(
+  `${runtimePackageName}/app`
+);
 
 function projectName() {
   const configured = process.env.BRAINTRUST_E2E_PROJECT_NAME;
