@@ -29,6 +29,39 @@ const SHOP_HTML = `<!doctype html>
   </body>
 </html>`;
 
+const STABLE_ACCESSIBILITY_TREE = `[0-2] RootWebArea: Trail Supply
+  [0-4] scrollable, html
+    [0-9] main
+      [0-10] heading: Trail Backpack
+      [0-12] paragraph
+        [0-13] StaticText: $129.00
+      [0-14] button: Add to cart
+      [0-16] region: Shopping cart
+        [0-17] paragraph
+          [0-18] StaticText: Cart is empty
+        [0-19] button: Checkout`;
+
+export function stabilizeStagehandActMessages(messages) {
+  let liveElementId;
+  const normalizedMessages = messages.map((message) => {
+    if (!message || typeof message.content !== "string") {
+      return message;
+    }
+    liveElementId ??= message.content.match(
+      /^\s*\[(\d+-\d+)\]\s+button: Add to cart\s*$/m,
+    )?.[1];
+    return {
+      ...message,
+      content: message.content.replace(
+        /Accessibility Tree:\s*[\s\S]*$/,
+        `Accessibility Tree: \n${STABLE_ACCESSIBILITY_TREE}\n`,
+      ),
+    };
+  });
+
+  return { liveElementId, messages: normalizedMessages };
+}
+
 async function startShopServer() {
   const server = createServer((_request, response) => {
     response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
@@ -85,15 +118,39 @@ async function createStagehandSession(Stagehand, instrumentedAI) {
         "Expected Stagehand act to request a structured response",
       );
     }
+    // Chromium's accessibility node IDs vary across browser versions. Keep the
+    // deterministic fixture prompt stable for cassette replay, then translate
+    // the model's fixture ID back to the live page before Stagehand acts on it.
+    const { liveElementId, messages } = stabilizeStagehandActMessages(
+      options.messages,
+    );
+    if (!liveElementId) {
+      throw new Error("Expected Stagehand to observe the add-to-cart button");
+    }
     const response = await instrumentedAI.generateObject({
       allowSystemInMessages: true,
-      messages: options.messages,
+      messages,
       model: languageModel,
       schema: options.response_model.schema,
       temperature: options.temperature,
     });
+    let data = response.object;
+    if (data && typeof data === "object") {
+      if ("elementId" in data) {
+        data = { ...data, elementId: liveElementId };
+      } else if (
+        "action" in data &&
+        data.action &&
+        typeof data.action === "object"
+      ) {
+        data = {
+          ...data,
+          action: { ...data.action, elementId: liveElementId },
+        };
+      }
+    }
     return {
-      data: response.object,
+      data,
       usage: {
         cached_input_tokens: response.usage.cachedInputTokens ?? 0,
         completion_tokens: response.usage.outputTokens ?? 0,

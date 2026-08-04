@@ -1,10 +1,11 @@
-import { describe } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
 import { defineStagehandInstrumentationAssertions } from "./assertions";
+import { stabilizeStagehandActMessages } from "./scenario.impl.mjs";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
@@ -26,6 +27,27 @@ const scenarios = await Promise.all(
     ),
   })),
 );
+
+test("stabilizes Chromium accessibility IDs for cassette replay", () => {
+  const result = stabilizeStagehandActMessages([
+    {
+      content: `instruction: Add the Trail Backpack to the cart
+Accessibility Tree:
+[7-20] RootWebArea: Trail Supply
+  [7-42] button: Add to cart`,
+      role: "user",
+    },
+  ]);
+
+  expect(result.liveElementId).toBe("7-42");
+  expect(result.messages).toEqual([
+    {
+      content: expect.stringContaining("[0-14] button: Add to cart"),
+      role: "user",
+    },
+  ]);
+  expect(result.messages[0]?.content).not.toContain("[7-42]");
+});
 
 describe.sequential("variants", () => {
   for (const scenario of scenarios) {
