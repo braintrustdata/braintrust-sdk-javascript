@@ -14,6 +14,6 @@
   "dependencies": {
     "zod": "4.1.11",
     "openrouter-agent-v0": "npm:@openrouter/agent@0.1.2",
-    "openrouter-agent-v0-latest": "npm:@openrouter/agent@0.7.2"
+    "openrouter-agent-v0-latest": "npm:@openrouter/agent@0.8.0"
   }
 }

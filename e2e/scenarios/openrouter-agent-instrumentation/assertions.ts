@@ -1,9 +1,11 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
+import { matchSpanTreeSnapshot, spanTreeFields } from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import { CHAT_MODEL, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
@@ -53,8 +55,14 @@ function findOpenRouterSpan(
 export function defineOpenRouterAgentTraceAssertions(options: {
   name: string;
   runScenario: RunOpenRouterAgentScenario;
+  snapshotName: string;
+  testFileUrl: string;
   timeoutMs: number;
 }): void {
+  const spanSnapshotPath = resolveFileSnapshotPath(
+    options.testFileUrl,
+    `${options.snapshotName}.span-tree.json`,
+  );
   const testConfig = {
     timeout: options.timeoutMs,
   };
@@ -135,5 +143,18 @@ export function defineOpenRouterAgentTraceAssertions(options: {
         });
       },
     );
+
+    test("matches span tree snapshot", testConfig, async () => {
+      await matchSpanTreeSnapshot(
+        events.map((event) => ({
+          event,
+          fields: {
+            ...spanTreeFields(event),
+            context: event.context,
+          },
+        })),
+        spanSnapshotPath,
+      );
+    });
   });
 }
