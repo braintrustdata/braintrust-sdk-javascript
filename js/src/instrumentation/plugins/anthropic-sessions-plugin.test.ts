@@ -27,6 +27,7 @@ vi.mock("../../logger", async (importOriginal) => {
 });
 
 import iso from "../../isomorph";
+import { collectAnthropicSession } from "../../wrappers/anthropic-session-collector";
 import { AnthropicPlugin } from "./anthropic-plugin";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
@@ -156,6 +157,8 @@ describe("AnthropicPlugin Sessions instrumentation", () => {
     handlers.start(context);
     handlers.asyncEnd(Object.assign(context, { result: stream }));
     expect(context.result).toBe(stream);
+    expect(spans).toEqual([]);
+    expect(collectAnthropicSession(stream)).toBe(stream);
     for await (const _event of stream) {
       // Consume the real stream exactly as user code would.
     }
@@ -258,6 +261,30 @@ describe("AnthropicPlugin Sessions instrumentation", () => {
     expect(turn.end).toHaveBeenCalledTimes(1);
   });
 
+  it("does not record an uncollected session stream", async () => {
+    new AnthropicPlugin().enable();
+    const handlers = handlersByName.get(
+      "orchestrion:@anthropic-ai/sdk:beta.sessions.events.stream",
+    );
+    const stream = sessionStream([
+      { id: "running", type: "session.status_running" },
+      {
+        id: "idle",
+        type: "session.status_idle",
+        stop_reason: { type: "end_turn" },
+      },
+    ]);
+    const context = { arguments: ["session-1"] };
+
+    handlers.start(context);
+    handlers.asyncEnd(Object.assign(context, { result: stream }));
+    for await (const _event of stream) {
+      // Consume the stream without opting into collection.
+    }
+
+    expect(spans).toEqual([]);
+  });
+
   it("uses a distinct task name for thread streams and records denials", async () => {
     new AnthropicPlugin().enable();
     const handlers = handlersByName.get(
@@ -290,6 +317,7 @@ describe("AnthropicPlugin Sessions instrumentation", () => {
 
     handlers.start(context);
     handlers.asyncEnd(Object.assign(context, { result: stream }));
+    expect(collectAnthropicSession(stream)).toBe(stream);
     for await (const _event of stream) {
       // Consume the stream.
     }

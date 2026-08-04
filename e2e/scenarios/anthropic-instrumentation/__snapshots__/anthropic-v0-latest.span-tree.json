@@ -1227,6 +1227,14 @@
           }
         },
         {
+          "name": "anthropic-sessions-uncollected-operation",
+          "children": [],
+          "metadata": {
+            "operation": "sessions-uncollected",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "anthropic-sessions-thread-turn-operation",
           "children": [
             {

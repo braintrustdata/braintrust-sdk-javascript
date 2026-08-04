@@ -1063,15 +1063,337 @@
         },
         {
           "name": "anthropic-sessions-turn-operation",
-          "children": [],
+          "children": [
+            {
+              "name": "anthropic.beta.sessions.turn",
+              "type": "task",
+              "children": [
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "id": "<span:1>",
+                        "input": {
+                          "city": "Paris"
+                        },
+                        "name": "get_weather",
+                        "type": "tool_use"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 3,
+                    "prompt_cache_creation_tokens": 1,
+                    "prompt_cached_tokens": 2,
+                    "prompt_tokens": 13,
+                    "tokens": 16
+                  }
+                },
+                {
+                  "name": "get_weather",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "city": "Paris"
+                  },
+                  "output": [
+                    {
+                      "text": "18C and sunny",
+                      "type": "text"
+                    }
+                  ],
+                  "metadata": {
+                    "tool_approval": "approved"
+                  }
+                },
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    {
+                      "content": [
+                        {
+                          "id": "<span:1>",
+                          "input": {
+                            "city": "Paris"
+                          },
+                          "name": "get_weather",
+                          "type": "tool_use"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "content": [
+                            {
+                              "text": "18C and sunny",
+                              "type": "text"
+                            }
+                          ],
+                          "tool_use_id": "sevt_tool_use",
+                          "type": "tool_result"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "text": "It is 18C and sunny.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 4,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 20,
+                    "time_to_first_token": 0,
+                    "tokens": 24
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Check the weather in Paris.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "It is 18C and sunny.",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "provider": "anthropic"
+              },
+              "metrics": {
+                "completion_tokens": 7,
+                "prompt_cache_creation_tokens": 1,
+                "prompt_cached_tokens": 2,
+                "prompt_tokens": 33,
+                "tokens": 40
+              }
+            }
+          ],
           "metadata": {
             "operation": "sessions-turn",
             "testRunId": "<run:1>"
           }
         },
         {
-          "name": "anthropic-sessions-thread-turn-operation",
+          "name": "anthropic-sessions-uncollected-operation",
           "children": [],
+          "metadata": {
+            "operation": "sessions-uncollected",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-sessions-thread-turn-operation",
+          "children": [
+            {
+              "name": "anthropic.beta.sessions.thread.turn",
+              "type": "task",
+              "children": [
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "id": "<span:1>",
+                        "input": {
+                          "city": "Paris"
+                        },
+                        "name": "get_weather",
+                        "type": "tool_use"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 3,
+                    "prompt_cache_creation_tokens": 1,
+                    "prompt_cached_tokens": 2,
+                    "prompt_tokens": 13,
+                    "tokens": 16
+                  }
+                },
+                {
+                  "name": "get_weather",
+                  "type": "tool",
+                  "children": [],
+                  "input": {
+                    "city": "Paris"
+                  },
+                  "output": [
+                    {
+                      "text": "18C and sunny",
+                      "type": "text"
+                    }
+                  ],
+                  "metadata": {
+                    "tool_approval": "approved"
+                  }
+                },
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    {
+                      "content": [
+                        {
+                          "id": "<span:1>",
+                          "input": {
+                            "city": "Paris"
+                          },
+                          "name": "get_weather",
+                          "type": "tool_use"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "content": [
+                            {
+                              "text": "18C and sunny",
+                              "type": "text"
+                            }
+                          ],
+                          "tool_use_id": "sevt_tool_use",
+                          "type": "tool_result"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "text": "It is 18C and sunny.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 4,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 20,
+                    "time_to_first_token": 0,
+                    "tokens": 24
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Check the weather in Paris.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "It is 18C and sunny.",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "provider": "anthropic"
+              },
+              "metrics": {
+                "completion_tokens": 7,
+                "prompt_cache_creation_tokens": 1,
+                "prompt_cached_tokens": 2,
+                "prompt_tokens": 33,
+                "tokens": 40
+              }
+            }
+          ],
           "metadata": {
             "operation": "sessions-thread-turn",
             "testRunId": "<run:1>"

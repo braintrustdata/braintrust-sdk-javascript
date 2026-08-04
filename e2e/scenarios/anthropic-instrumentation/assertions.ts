@@ -953,6 +953,15 @@ export function defineAnthropicInstrumentationAssertions(options: {
           const tools = findAnthropicSpans(events, turn?.span.id, [
             "get_weather",
           ]);
+          const uncollectedOperation = findLatestSpan(
+            events,
+            "anthropic-sessions-uncollected-operation",
+          );
+          const uncollectedTurns = findAnthropicSpans(
+            events,
+            uncollectedOperation?.span.id,
+            ["anthropic.beta.sessions.turn"],
+          );
           const threadOperation = findLatestSpan(
             events,
             "anthropic-sessions-thread-turn-operation",
@@ -1002,6 +1011,8 @@ export function defineAnthropicInstrumentationAssertions(options: {
           expect(tools[0]?.row.metadata).toMatchObject({
             tool_approval: "approved",
           });
+          expect(uncollectedOperation).toBeDefined();
+          expect(uncollectedTurns).toHaveLength(0);
           expect(threadOperation?.span.parentIds).toEqual([
             root?.span.id ?? "",
           ]);

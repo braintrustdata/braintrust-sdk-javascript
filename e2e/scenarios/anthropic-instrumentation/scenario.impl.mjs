@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
-import { startSpan, wrapAnthropic, wrapAnthropicSessions } from "braintrust";
+import { collectAnthropicSession, startSpan, wrapAnthropic } from "braintrust";
 import {
   collectAsync,
   runOperation,
@@ -34,7 +34,6 @@ async function runAnthropicInstrumentationScenario(
   Anthropic,
   {
     decorateClient,
-    decorateSessions,
     useBetaMessages = true,
     supportsBetaToolRunner = true,
     supportsSessions = true,
@@ -386,17 +385,32 @@ async function runAnthropicInstrumentationScenario(
               apiKey: "anthropic-session-test-key",
               baseURL,
             });
-            const sessions = decorateSessions
-              ? decorateSessions(sessionsBaseClient.beta.sessions)
-              : sessionsBaseClient.beta.sessions;
+            const sessionsClient = decorateClient
+              ? decorateClient(sessionsBaseClient)
+              : sessionsBaseClient;
+            const sessions = sessionsClient.beta.sessions;
 
             await runOperation(
               "anthropic-sessions-turn-operation",
               "sessions-turn",
               async () => {
-                const stream = await sessions.events.stream("sesn_test", {
-                  event_deltas: ["agent.message"],
-                });
+                const stream = collectAnthropicSession(
+                  await sessions.events.stream("sesn_test", {
+                    event_deltas: ["agent.message"],
+                  }),
+                );
+                await collectAsync(stream);
+              },
+            );
+
+            await runOperation(
+              "anthropic-sessions-uncollected-operation",
+              "sessions-uncollected",
+              async () => {
+                const stream = await sessions.events.stream(
+                  "sesn_uncollected",
+                  { event_deltas: ["agent.message"] },
+                );
                 await collectAsync(stream);
               },
             );
@@ -405,9 +419,10 @@ async function runAnthropicInstrumentationScenario(
               "anthropic-sessions-thread-turn-operation",
               "sessions-thread-turn",
               async () => {
-                const stream = await sessions.threads.events.stream(
-                  "sthr_test",
-                  { session_id: "sesn_test" },
+                const stream = collectAnthropicSession(
+                  await sessions.threads.events.stream("sthr_test", {
+                    session_id: "sesn_test",
+                  }),
                 );
                 await collectAsync(stream);
               },
@@ -559,7 +574,6 @@ const MANAGED_AGENTS_THREAD_EVENTS = MANAGED_AGENTS_EVENTS.map((event) => {
 export async function runWrappedAnthropicInstrumentation(Anthropic, options) {
   await runAnthropicInstrumentationScenario(Anthropic, {
     decorateClient: wrapAnthropic,
-    decorateSessions: wrapAnthropicSessions,
     ...options,
   });
 }

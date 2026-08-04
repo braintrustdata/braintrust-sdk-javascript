@@ -61,7 +61,9 @@ describe.concurrent("variants", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
+        snapshotName: scenario.supportsSessions
+          ? `${scenario.snapshotName}-wrapped`
+          : scenario.snapshotName,
         supportsBetaMessages: scenario.supportsBetaMessages,
         supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
         supportsSessions: scenario.supportsSessions,
@@ -86,12 +88,10 @@ describe.concurrent("variants", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.supportsSessions
-          ? `${scenario.snapshotName}-auto`
-          : scenario.snapshotName,
+        snapshotName: scenario.snapshotName,
         supportsBetaMessages: scenario.supportsBetaMessages,
         supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
-        supportsSessions: false,
+        supportsSessions: scenario.supportsSessions,
         supportsServerToolUse: scenario.supportsServerToolUse ?? true,
         supportsThinking: scenario.supportsThinking,
         testFileUrl: import.meta.url,

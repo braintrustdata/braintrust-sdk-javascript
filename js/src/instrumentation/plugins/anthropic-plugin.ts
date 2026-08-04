@@ -22,6 +22,7 @@ import {
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { filterFrom, getCurrentUnixTimestamp } from "../../util";
 import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
+import { registerAnthropicSessionStreamCollector } from "../../wrappers/anthropic-session-collector";
 import { anthropicChannels } from "./anthropic-channels";
 import type {
   AnthropicBase64Source,
@@ -294,7 +295,9 @@ export class AnthropicPlugin extends BasePlugin {
         if (!isAsyncIterable(stream)) {
           return;
         }
-        wrapAnthropicSessionEventStream(stream, isThread);
+        registerAnthropicSessionStreamCollector(stream, () => {
+          wrapAnthropicSessionEventStream(stream, isThread);
+        });
       },
       error: (event) => {
         pending.delete(event as object);

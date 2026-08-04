@@ -1,5 +1,6 @@
 import { test, expect, vi } from "vitest";
-import { wrapAnthropic, wrapAnthropicSessions } from "./anthropic";
+import { collectAnthropicSession } from "./anthropic-session-collector";
+import { wrapAnthropic } from "./anthropic";
 
 test("wrapAnthropic works even if not installed", () => {
   expect(wrapAnthropic).toBeDefined();
@@ -16,23 +17,7 @@ test("wrapAnthropic works even if not installed", () => {
   }
 });
 
-test("wrapAnthropic leaves beta.sessions untouched", () => {
-  const sessions = {
-    events: { stream: vi.fn() },
-    threads: { events: { stream: vi.fn() } },
-  };
-  const anthropic = {
-    beta: {
-      messages: { create: vi.fn(), toolRunner: vi.fn() },
-      sessions,
-    },
-    messages: { create: vi.fn() },
-  };
-
-  expect(wrapAnthropic(anthropic).beta.sessions).toBe(sessions);
-});
-
-test("wrapAnthropicSessions wraps session and thread event streams", async () => {
+test("wrapAnthropic passively wraps beta.sessions streams", async () => {
   const sessionStream = { kind: "session" };
   const threadStream = { kind: "thread" };
   const sessionEventsStream = vi.fn(
@@ -46,16 +31,26 @@ test("wrapAnthropicSessions wraps session and thread event streams", async () =>
     events: { stream: sessionEventsStream },
     threads: { events: { stream: threadEventsStream } },
   };
+  const anthropic = {
+    beta: {
+      messages: { create: vi.fn(), toolRunner: vi.fn() },
+      sessions,
+    },
+    messages: { create: vi.fn() },
+  };
 
-  const wrapped = wrapAnthropicSessions(sessions);
+  const wrappedSessions = wrapAnthropic(anthropic).beta.sessions;
 
+  expect(wrappedSessions).not.toBe(sessions);
   await expect(
-    wrapped.events.stream("sesn_test", {
+    wrappedSessions.events.stream("sesn_test", {
       event_deltas: ["agent.message"],
     }),
   ).resolves.toBe(sessionStream);
   await expect(
-    wrapped.threads.events.stream("sthr_test", { session_id: "sesn_test" }),
+    wrappedSessions.threads.events.stream("sthr_test", {
+      session_id: "sesn_test",
+    }),
   ).resolves.toBe(threadStream);
   expect(sessionEventsStream).toHaveBeenCalledWith("sesn_test", {
     event_deltas: ["agent.message"],
@@ -65,14 +60,12 @@ test("wrapAnthropicSessions wraps session and thread event streams", async () =>
   });
 });
 
-test("wrapAnthropicSessions returns unsupported resources unchanged", () => {
-  const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-  const sessions = { events: {} };
+test("collectAnthropicSession returns an unregistered stream unchanged", () => {
+  const stream = {
+    async *[Symbol.asyncIterator]() {
+      yield { type: "session.status_idle" };
+    },
+  };
 
-  expect(wrapAnthropicSessions(sessions)).toBe(sessions);
-  expect(warnSpy).toHaveBeenCalledWith(
-    "Unsupported Anthropic Sessions API. Not wrapping.",
-  );
-
-  warnSpy.mockRestore();
+  expect(collectAnthropicSession(stream)).toBe(stream);
 });

@@ -15,9 +15,9 @@ import type {
  * Wrap an `Anthropic` object (created with `new Anthropic(...)`) so calls emit
  * tracing-channel events that Braintrust plugins can consume.
  *
- * Currently, this only supports the `v4` API.
- * `anthropic.beta.sessions` is intentionally not included; wrap it explicitly
- * with `wrapAnthropicSessions()`.
+ * Currently, this only supports the `v4` API. Sessions streams are eligible
+ * for collection only after being passed to `collectAnthropicSession()`;
+ * wrapping and consuming a Sessions stream alone does not emit spans.
  *
  * @param anthropic
  * @returns The wrapped `Anthropic` object.
@@ -38,38 +38,6 @@ export function wrapAnthropic<T extends object>(anthropic: T): T {
   // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.warn("Unsupported Anthropic library. Not wrapping.");
   return anthropic;
-}
-
-/**
- * Wrap `anthropic.beta.sessions` so its session and thread event streams emit
- * tracing-channel events that Braintrust plugins can consume.
- *
- * @example
- * ```ts
- * const sessions = wrapAnthropicSessions(anthropic.beta.sessions);
- * const events = await sessions.events.stream(sessionId);
- * ```
- *
- * @param sessions The `anthropic.beta.sessions` resource to wrap.
- * @returns The wrapped Sessions resource.
- */
-export function wrapAnthropicSessions<T extends object>(sessions: T): T {
-  const value: unknown = sessions;
-  if (
-    value &&
-    typeof value === "object" &&
-    "events" in value &&
-    value.events &&
-    typeof value.events === "object" &&
-    "stream" in value.events &&
-    typeof value.events.stream === "function"
-  ) {
-    return wrapBetaSessions(value as AnthropicBetaSessions) as T;
-  }
-
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Anthropic Sessions API. Not wrapping.");
-  return sessions;
 }
 
 function anthropicProxy(anthropic: AnthropicClient): AnthropicClient {
@@ -99,23 +67,29 @@ function betaProxy(
         return betaMessagesProxy(target.messages, anthropic);
       }
 
+      if (prop === "sessions") {
+        return target.sessions
+          ? betaSessionsProxy(target.sessions)
+          : target.sessions;
+      }
+
       return Reflect.get(target, prop, receiver);
     },
   });
 }
 
-function wrapBetaSessions(
+function betaSessionsProxy(
   sessions: AnthropicBetaSessions,
 ): AnthropicBetaSessions {
   return new Proxy(sessions, {
     get(target, prop, receiver) {
       if (prop === "events") {
-        return wrapBetaSessionEvents(target.events);
+        return betaSessionEventsProxy(target.events);
       }
 
       if (prop === "threads") {
         return target.threads
-          ? wrapBetaSessionThreads(target.threads)
+          ? betaSessionThreadsProxy(target.threads)
           : target.threads;
       }
 
@@ -124,7 +98,7 @@ function wrapBetaSessions(
   });
 }
 
-function wrapBetaSessionEvents(
+function betaSessionEventsProxy(
   events: AnthropicBetaSessionEvents,
 ): AnthropicBetaSessionEvents {
   return new Proxy(events, {
@@ -145,13 +119,13 @@ function wrapBetaSessionEvents(
   });
 }
 
-function wrapBetaSessionThreads(
+function betaSessionThreadsProxy(
   threads: AnthropicBetaSessionThreads,
 ): AnthropicBetaSessionThreads {
   return new Proxy(threads, {
     get(target, prop, receiver) {
       if (prop === "events") {
-        return wrapBetaSessionThreadEvents(target.events);
+        return betaSessionThreadEventsProxy(target.events);
       }
 
       return Reflect.get(target, prop, receiver);
@@ -159,7 +133,7 @@ function wrapBetaSessionThreads(
   });
 }
 
-function wrapBetaSessionThreadEvents(
+function betaSessionThreadEventsProxy(
   events: AnthropicBetaSessionThreadEvents,
 ): AnthropicBetaSessionThreadEvents {
   return new Proxy(events, {
