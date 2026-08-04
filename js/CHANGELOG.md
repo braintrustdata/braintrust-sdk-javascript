@@ -12,7 +12,6 @@
 ### Patch Changes
 
 - feat: Add support for flue v2 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2327)
-- ref: Add simple wrapper to orchestrion transform (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2336)
 
 ## 3.26.0
 
