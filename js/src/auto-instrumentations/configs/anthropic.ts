@@ -130,37 +130,8 @@ export const anthropicConfigs: InstrumentationConfig[] = [
     },
   },
 
-  // Managed Agents Sessions event streams. These expose the model/tool event
-  // lifecycle for a session turn while preserving the SDK's SSE stream.
-  ...["mjs", "js"].map(
-    (extension): InstrumentationConfig => ({
-      channelName: anthropicChannels.betaSessionsEventsStream.channelName,
-      module: {
-        name: "@anthropic-ai/sdk",
-        versionRange: ">=0.86.0",
-        filePath: `resources/beta/sessions/events.${extension}`,
-      },
-      functionQuery: {
-        className: "Events",
-        methodName: "stream",
-        kind: "Async",
-      },
-    }),
-  ),
-  ...["mjs", "js"].map(
-    (extension): InstrumentationConfig => ({
-      channelName:
-        anthropicChannels.betaSessionsThreadsEventsStream.channelName,
-      module: {
-        name: "@anthropic-ai/sdk",
-        versionRange: ">=0.86.0",
-        filePath: `resources/beta/sessions/threads/events.${extension}`,
-      },
-      functionQuery: {
-        className: "Events",
-        methodName: "stream",
-        kind: "Async",
-      },
-    }),
-  ),
+  // Managed Agents Sessions require an explicit wrapAnthropicSessions() call;
+  // wrapAnthropic() deliberately leaves them untouched. The focused wrapper
+  // observes the complete returned event stream, so patching Anthropic's
+  // internal Sessions resource files is unnecessary.
 ];

@@ -276,53 +276,52 @@ export class AnthropicPlugin extends BasePlugin {
     >;
     const tracingChannel =
       channel.tracingChannel() as IsoTracingChannel<SessionChannelMessage>;
-    const states = new WeakMap<object, AnthropicSessionStreamState>();
+    const pending = new WeakSet<object>();
 
     const handlers: IsoChannelHandlers<SessionChannelMessage> = {
       start: (event) => {
         if (isAutoInstrumentationSuppressed()) {
           return;
         }
-        states.set(event as object, {
-          history: [],
-          isThread,
-          pendingInput: [],
-          seenEventIds: new Set(),
-        });
+        pending.add(event as object);
       },
       asyncEnd: (event) => {
-        const state = states.get(event as object);
-        if (!state) {
+        if (!pending.delete(event as object)) {
           return;
         }
 
         const stream = event.result as AnthropicSessionEventStream;
         if (!isAsyncIterable(stream)) {
-          states.delete(event as object);
           return;
         }
-
-        patchStreamIfNeeded<AnthropicSessionEvent>(stream, {
-          onChunk: (streamEvent) =>
-            handleAnthropicSessionEvent(state, streamEvent),
-          onComplete: () => {
-            finalizeAnthropicSessionTurn(state);
-            states.delete(event as object);
-          },
-          onError: (error) => {
-            finalizeAnthropicSessionTurn(state, error);
-            states.delete(event as object);
-          },
-        });
+        wrapAnthropicSessionEventStream(stream, isThread);
       },
       error: (event) => {
-        states.delete(event as object);
+        pending.delete(event as object);
       },
     };
 
     tracingChannel.subscribe(handlers);
     this.unsubscribers.push(() => tracingChannel.unsubscribe(handlers));
   }
+}
+
+function wrapAnthropicSessionEventStream(
+  stream: AnthropicSessionEventStream,
+  isThread: boolean,
+): AnthropicSessionEventStream {
+  const state: AnthropicSessionStreamState = {
+    history: [],
+    isThread,
+    pendingInput: [],
+    seenEventIds: new Set(),
+  };
+  patchStreamIfNeeded<AnthropicSessionEvent>(stream, {
+    onChunk: (event) => handleAnthropicSessionEvent(state, event),
+    onComplete: () => finalizeAnthropicSessionTurn(state),
+    onError: (error) => finalizeAnthropicSessionTurn(state, error),
+  });
+  return stream;
 }
 
 function handleAnthropicSessionEvent(

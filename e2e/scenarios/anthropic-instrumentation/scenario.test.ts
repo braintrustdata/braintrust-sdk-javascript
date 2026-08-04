@@ -64,7 +64,7 @@ describe.concurrent("variants", () => {
         snapshotName: scenario.snapshotName,
         supportsBetaMessages: scenario.supportsBetaMessages,
         supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
-        supportsSessions: scenario.supportsSessions ?? true,
+        supportsSessions: scenario.supportsSessions,
         supportsServerToolUse: scenario.supportsServerToolUse ?? true,
         supportsThinking: scenario.supportsThinking,
         testFileUrl: import.meta.url,
@@ -86,10 +86,12 @@ describe.concurrent("variants", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.snapshotName,
+        snapshotName: scenario.supportsSessions
+          ? `${scenario.snapshotName}-auto`
+          : scenario.snapshotName,
         supportsBetaMessages: scenario.supportsBetaMessages,
         supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
-        supportsSessions: scenario.supportsSessions ?? true,
+        supportsSessions: false,
         supportsServerToolUse: scenario.supportsServerToolUse ?? true,
         supportsThinking: scenario.supportsThinking,
         testFileUrl: import.meta.url,

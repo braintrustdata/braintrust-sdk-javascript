@@ -200,7 +200,7 @@ export {
   braintrustEveHook,
   braintrustEveInstrumentation,
 } from "./instrumentation/plugins/eve-plugin";
-export { wrapAnthropic } from "./wrappers/anthropic";
+export { wrapAnthropic, wrapAnthropicSessions } from "./wrappers/anthropic";
 export {
   BraintrustObservabilityExporter,
   wrapMastraAgent,

@@ -1,0 +1,1087 @@
+{
+  "span_tree": [
+    {
+      "name": "anthropic-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "anthropic-create-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly OK.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "OK",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 24,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 12,
+                "time_to_first_token": 0,
+                "tokens": 16
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "create",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-system-blocks-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "translate to english",
+                      "type": "text"
+                    },
+                    {
+                      "text": "remove all punctuation",
+                      "type": "text"
+                    },
+                    {
+                      "text": "only the answer no other text",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "system"
+                },
+                {
+                  "content": "Bonjour mon ami!",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "Hello my friend",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 24,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 6,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 30,
+                "time_to_first_token": 0,
+                "tokens": 36
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "system-blocks",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-create-with-response-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly WITH_RESPONSE.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "WITH_RESPONSE",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 24,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 7,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 15,
+                "time_to_first_token": 0,
+                "tokens": 22
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "create-with-response",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-attachment-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Describe the attached image in one short sentence.",
+                      "type": "text"
+                    },
+                    {
+                      "source": {
+                        "data": {
+                          "content_type": "image/png",
+                          "filename": "image.png",
+                          "key": "<uuid:1>",
+                          "type": "braintrust_attachment"
+                        },
+                        "media_type": "image/png",
+                        "type": "base64"
+                      },
+                      "type": "image"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "A majestic sailing ship battles through towering waves and lightning-filled storm clouds in this dramatic seascape.",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 32,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 27,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 1389,
+                "time_to_first_token": 0,
+                "tokens": 1416
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "attachment",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-stream-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Count from 1 to 3 and include the words one two three.",
+                  "role": "user"
+                }
+              ],
+              "output": "1 one\n2 two\n3 three",
+              "metadata": {
+                "max_tokens": 32,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_details": null,
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "stream": true,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 15,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 24,
+                "time_to_first_token": 0,
+                "tokens": 39
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-stream-with-response-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Count from 1 to 3 and include the words one two three.",
+                  "role": "user"
+                }
+              ],
+              "output": "1 one\n2 two\n3 three",
+              "metadata": {
+                "max_tokens": 32,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_details": null,
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "stream": true,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 15,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 24,
+                "time_to_first_token": 0,
+                "tokens": 39
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-with-response",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-stream-tool-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "id": "<span:1>",
+                    "input": {
+                      "location": "Paris, France"
+                    },
+                    "name": "get_weather",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 128,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_details": null,
+                "stop_reason": "tool_use",
+                "stop_sequence": null,
+                "stream": true,
+                "temperature": 0,
+                "tool_choice": {
+                  "disable_parallel_tool_use": true,
+                  "name": "get_weather",
+                  "type": "tool"
+                },
+                "tools": [
+                  {
+                    "description": "Get the current weather in a given location",
+                    "input_schema": {
+                      "properties": {
+                        "location": {
+                          "description": "The city and state or city and country",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "location"
+                      ],
+                      "type": "object"
+                    },
+                    "name": "get_weather"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 26,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 687,
+                "time_to_first_token": 0,
+                "tokens": 713
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-tool-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "caller": {
+                      "type": "direct"
+                    },
+                    "id": "<span:1>",
+                    "input": {
+                      "location": "Paris, France"
+                    },
+                    "name": "get_weather",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 128,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_reason": "tool_use",
+                "stop_sequence": null,
+                "temperature": 0,
+                "tools": [
+                  {
+                    "description": "Get the current weather in a given location",
+                    "input_schema": {
+                      "properties": {
+                        "location": {
+                          "description": "The city and state or city and country",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "location"
+                      ],
+                      "type": "object"
+                    },
+                    "name": "get_weather"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 56,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 589,
+                "time_to_first_token": 0,
+                "tokens": 645
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-server-tool-use-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use web_search to find one recent AI SDK release headline and return one short sentence.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "id": "<span:1>",
+                    "input": {
+                      "query": "AI SDK release 2026"
+                    },
+                    "name": "web_search",
+                    "type": "server_tool_use"
+                  },
+                  {
+                    "caller": {
+                      "type": "direct"
+                    },
+                    "content": [
+                      {
+                        "encrypted_content": "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",
+                        "page_age": null,
+                        "title": "Releases · vercel/ai",
+                        "type": "web_search_result",
+                        "url": "https://github.com/vercel/ai/releases"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": "4 days ago",
+                        "title": "Vercel AI SDK Updates by Vercel - July 2026 - Releasebot",
+                        "type": "web_search_result",
+                        "url": "https://releasebot.io/updates/vercel/vercel-ai"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": "1 month ago",
+                        "title": "AI SDK 7 is now available - Vercel",
+                        "type": "web_search_result",
+                        "url": "https://vercel.com/changelog/ai-sdk-7"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": null,
+                        "title": "Release Notes | SAP Cloud SDK for AI",
+                        "type": "web_search_result",
+                        "url": "https://sap.github.io/ai-sdk/docs/js/release-notes"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": "<timestamp>",
+                        "title": "The next evolution of the Agents SDK | OpenAI",
+                        "type": "web_search_result",
+                        "url": "https://openai.com/index/the-next-evolution-of-the-agents-sdk/"
+                      },
+                      {
+                        "encrypted_content": "EoYhCioIERgCIiQyNzc5NjY2OC03MzUxLTQwYWMtYWNjNC0wMjRhZWU4OTk1YTUSDDuZfQdPC+Prp8a8gxoMNxaRo6ofdv6/WRWgIjDzEvwf3Uq0JuV09XwutqDBYHkKQfTMhApTKIs56gARJKkvPL/QAwqkAglkJfrUR30qiSBsLBBzd3FuRhGpeL/wpwvV7xFlqT+meh45QAp2k0VTQKU6s63gCCPZs0l8ZPSLV+8dqi9g+9gWmqaqmzkWg8Wy1k3qyS1FwqHFphg76Jlam0vI8XtK8GOgWaE7BM5JsxTMgK/GVw18S13TfUVBI89dmBU5cGXzruMlPIGcvBBgpuV47zGaA+hKTYKGyWtmIexShAUJ551IwASay02Srcyjo6bYHV2evDEXZWp3kIPYHG9zXo1UT1HylF7WQCxOJ8ojAdCwZTfgAezZmG+XIw0iOlYIZtO+t4nJ2DF363mAyRVWUJ+7FbX/dftt1te/6lf0lCxPbsuJ5H9BcOtKrjGXWXZsNk91PhYJ4XofH0fy8MAvSkD7TVJxy4sd9Gke7BIC/Aw+PI44AIr6OaOws7N2DO3r5Ru0Ujh5iHj62aYv4uHrZb/a+63d2YCIuJKzAjGvAPO6xZZ0em7BLcf/fmA6MdwXOnZ4D8RdxzVu+rHsrp+5BXC+70qwpbCNnW59HVk+OcvbrGQiAVz/rOHz5MbOX3UNh66iPfQdZq9C7y8zZaKv3VSD+4GdapD0pyPak+JvzvDUGbOlubPaO3LgC4rEo/CMmyufvIRwpN6l+kVXanJQxulQ2MmLxINH2CEqF1firapFA9WBtvvLYUHry5XYktS9ynCo1mDigs5c3FkBTcz8pgKdAz6sCIQDlrCz1jsSxo9xO6j+ANAakeL7yIDBdCtyM0CmQintf4eR1j27PMPjW35+pUjfrnB/JfbyHekZlyXRlITAdu9SKR6uxokJ5ckZC9NOzKJDZ6fjsy1OjuMvi3AzN/9kSFZnHxghBj3zkGOoDhMCrceouszXMmtgUs2hCSQXARrdKcnaZAcOXM3g227LAB0Z5OsGORE1jFvx/RzCog05V13zuJkHYrXKrSXi7qWa9FJ9x0Y5CM2WMyp0oape3gkQSkzJJhbI/Q9jIqG5BzKCThhAzkEOV2GVC82vZ+fl+JO0rbwClMseLXfnBFcdV8RreOnpL3162XyVkmvWJT5mbRXVKnT3Wc/zSzUK/SXKTZkN9ir5JVttbDPFW5lrwpgXRNohw+KWKdT6ipSme6GJVst9uKEt1g1XFfZAQiDpMtktyaRfLjpUbvmPIUvJXoMvL69LobZjTtJHo3hgrV49Mk2op4fJk9CyKp4NRLm+Zhg+wjdEbYWxiOei409IbqBRpkKRremQo8mBrKzm2mROQZz9FPqRpAIVDID4xcMDI0E0quKBGzNCRm6FMGvVDDtcri3Lpn2vD18TH0SjvwyIiaoj/BcMJSi+TLcfGa8XbBqZ4IpnTaK/GKti3wjc7aPUm63l6Dt1QhX4jnZJXH4tIcZtNi7IfKiD1N2Cb9hgxwJrF/6D3DzYRSBZN3Rg3ld9XzuY2Fw/MQ9GNvxepw0Ist1SDQ7JXWgN58Q2iJwFbfKCvSvASKBkiVDbt0KVuWH0woibPoRq/pyPqPcSYcIErh1j6A7vEMmahSIHzcUBe5o4Lfn9mkVTzG6frAh16v70eqSXEA5Ou/hNz8TOlEUE7W8C9SBQksfL1lH682pHYm8NRAJsSv2d/4uzpPSO7PRM6uWfKAhS88AqoO+VIHE2NO/+DQjzpiLksOUOudcc+Xy8swQKhSeOCfE5LqQGJUFk6PHV5v4NhN2WHF6urkB40oXde71gdILeknJBXzTq7VhtlDabTQQa6WkgxWPdQsd9LptNwiM1lm2P+8ZRLpDOdyTc7TsS0rJkOG5tq9/b0srVz41vC2esySZsGsyb7bgS4uDQBJSf7yKfvjx9cRlF9IWccwF+ShoAMSgkLBsUw5tDYAPvavwCnWbKxaebh2ozcPhnAfELKqgntAW4j7I9bjauz8IX0a1cId7R8sGWOUg4hh/16UjMw9gLFrgsjYTEdaTFJRnTcyCBf6BXUDx4ARqJP1LWL79yxlo0eJdiTxs4EHB2ViFukTHTxL7NFe5xrLjHdB4u3aq7BAlseygfPIeYGoO43kWENi1R/1dI9sjrPyUOrlxGJR4N/LhRXMn0e1RVhNydjq2uOpT4LPCd4IfiHDpI7Zlt3gxiTShxR0w0vSg29TLvBvU+Dr/t3uAgLdCJ3eNij68CqNR02KdctVpXOLdgblccj0bxiABknjgc1S9zL/eJhIZoJ78CK0TOET31ZymicbVeUy6IToXSlv/jcCVE3jV1cbsjZWTk84LaXHghRliO6LfJLkGlpH7W+bUrubPDr36K64qQpAZkrYpP3NLOKWKl2XyEfilzP8bsmqrDXZBv+sLF0ckPuFup7DZ/7Oa52uyzByWXgXTXu1s22Xf3TXSY3g1BB7XFDkus7HR8SRro9KFHMJqi8rRrXq1NxW0nkgTkv5YSwrfoK9MaUWgKj6t1wLgUKcqyFY1/oiMZwASp1cWeYfceCVu2KgkMYOaC54KHNYpWlzxp6528z6TiE/OB4GN6SyzW7kbdRvdcomuss3pXXHctK27gNyRhsJJQznNo2XXKI9hGtWlHAJ0xfn4XiJAChLwZJ87bh29HOvWoOs15FjFi3EvQM1jliI0WTGsQA76l3SuTHOyWfDyyNIroSzTaYmISgYyklOyCj6l1ok3LTGYcvwesX+PmMLKlaePtBmANZTrDjb1B6GDFxLECIInC5Og5MBl1EBdTNhrOdjxlNh0ejDvQgU9jor+8mzTA1Gh6zOz8eCQOn4IWxSQb+UPYokgafB7ddAcwzbBs0PkZX4eXuIA4oPq5QcayIevyvtY8o7uMDtG6wFaU0U+3LjpIA4eFZ99LUika8vDWjQVttpdOPxy9Pqk68Zo9Q1R7/qxmcrTKbUKQ9KMemSEBtlg3dK2P0mIiISUq6Jf6FAGWy1nhhI+Vub5BWOffpT54AKRe01JaudEYEgVKnRL0vwteyjx/z9Azsw+U1pc66kUzNpTARgcxqopABongbrHDZBRACQ98dz/m5s72qhUmOa1RE9nRaiLSpb5F8TG67wn+fTFhcDROmOTNmPW4Vy7bgfjy5AZRSeA/kqJz4LfSUqqijB1VSCWnp/IVYGEv8spom/wTq5kPNGeOteedCv/rx4ONTfss1cF8iX58coL3loAq74Y2g6zeFEPF6lykdmVKftfiy6kiB0CV/AywtD0F19YEhyHPmYSm73SqCUDaoQ39l8GpRbq/lJN2Lj8eMLDNXfZwFDcYXkfML0xNme+zl0/vNxXlBV6FuNbpnzmkB7zHW40tdnW8O/aRS9inXp7LKRh8WtINiOYjWaDPn4zw0klewxk9Je2F/G+5p0wce/9rEDVyxzNv8cDRnUnXVS5ABsJxEOMToAH+UL32muQ/gS/WbWTCLmGTOcIAGF2Uqeh8WpclaNL5YiY4Pp3CNAxMrtKkmHzXq5rvF9jNHgjU/lL1P9vQy7z+iFyNLQcs/DTD5deiY5kFVn+eyi72+i1OfQC3xrMzWgGubsKvJaV1BzFIcKKLwGrVh8fYY9KpV/rmkhjoGJXYalLqokJzlIyTeG7uwor0I73KqYVCpBho5/1MSaw3P3a681CRcyGaNmGK5FMwkETJggItPgSiq6MF4TD8VMPUxqEIx5l9tdQZxS+DrPec4V5USeeitpHHKQya6bm57IjTLZWIeu76EFWQCu3w7PN/ZmQuvUWKPN5HBf88gCoTzMIhuBrQ5n4pJNWiLkCGRrkMgH79HnPATjhSzLp9igfPLPvaNKfohE7ayjf4KJzM+TSkqbR/mKQ05svHmCUm+VYKymH9f1H/E9yTlIa0hJ37BJqJbxis8BQutZg699yptm4vfi36HUpBM+V9PsvXMx83TSVLLa+QaRMWRVmxU2sg0MbBkbmcqXYPw7L0DdUPd3UpDnv1JamZfxSfnScQtzt5Mg27LqnGGO8qXVkTnkNOATvAUQMNCFW1oKur5dfSML35P6zm/lf5uT39YjuEdm5hwGQ5BBMKAfj3Xmxtii1RDnZzF8umTQ6Cih+lxS9s5kQuWpD1m97UdFgdyxRJse/CQvYDaV2bKHltViXjPdCn7v/bkY0qqHEUOCc/4Ad1mWbhoR7eOtbWmamog1ap3c9JGwiKk/sDILl1DRVXZb3ty6+3r49LYnivZ4gVr1RfK1WFhxRqOBrIkZ2RLJaaRENzvlGi2Y/TljxKHYL4kPO9rvWozXaXUsiiwVN47YJlIn+5WvWkBwQhQD+4mJ7o2KvJKO2BgEjblFfej734AHju8Nr5fdh4SitXjhj4RFA8q7/BBWbYi0ilNUn03eA4i3Mz9TVZ98nwLwOmvhp7Go0FNadk8o0Re0+0WPYW1WoBMpdUp0h477tcY+xWbbYkhOriOG4oVxFl2+T2aEZAIyxtkZnEHd7qZveWZU2/SI6qobOwD/3R3dbXvG1DeHiyoW0HGbq/uh/zDhrBPo3ePG+7COJQ5JUloJt6bAwRnsbgegDapahENc9FVrI4U0Nc1Jur2SCt7vMwzVuQmoQct7QxEBAgCHOD63zM1AI9AjYQki7XjhhG43uYhRKN8nibkElZE+8dVM/4XHi1qp3pS115w7tViLTVmVm5o4tTpIlCg93S0TQb1+I0eQwKVQl+hLI2qQbd78cu0asZIbfv7GqAvU5rC9UpxhgZvodWvho9DOrwbKnU6GK7U7TGGq14D+m7674f+c41ctrmqSNb/2yPPMDK4HhKEtcnZImfQm3aaui+UjLufk+6rZKpHWJ2X2pouC5U3wI8TQK0oGWdkn2Kvo6Cb1oxl0ukuL7mfpKm9r2e+yDSt+JfHhFztPOrbnuQ4ddRxB/Fkyi9pUZjTRanSf7YsiD6Ce4bGBxLXdAmIaO3YAn2GorW43M60tQz2GZ/V/tBdZYdRiFgK9JwF6a9cj+MAvGEgLS6KuxGmmbiyzpOLzWUk178sh7Erm7ujeNnRbu+JC8IFJd9+9KlRV5wSyYtPRPPOTo1FWvCqt2N62mERt5LnKXgcgoe/U6ydMab4EQDZlf4O/BbyELzFMy6Ht9u2kW2Ii/rq7OGJlfis+kX7eS2zmKoHcMiEF4FduuJAaM16W10yTZ2xTUcM9j73RtO+vKORC0kRwEhBiK94obbxfI9a+0JHV7qtiYpZkeZRKaZ3KTX2zfjTA8HB4WdtaC7satQFHdk0Fc10/QSoD9Yf55EwCofcRkc2Y+QmV84sz+BUseF0k/cZNJBfvH+UXhBHUXEX36dQnCEzN1RjVmXjAv3C4bnRv6b1c84XNSkFLjZALNwfBYvOxzXrIaXB+f2UNSwD7PbQF0cmkULmT9qBsN6P8hvHHtxgG6xQWCS8ogf/fyLds2XYnpON4PgYcwf/lBBkUA9tt/XD9Vl6OKcD9P3uYFE7qZig7/XHIMsdyUSYFf20KN7P30s9xfpH4pfI9kOlTZNQ2MeVbLp/UqSs2C1gsj3t9Neb/jeufOnP+HbJRIyA5mwDMAtHQcaQzNlleJvQPZMSy4VOUNR1JeDabTVrckpPhoCi85y/fZ7GAM=",
+                        "page_age": null,
+                        "title": "AI SDK 5 - Vercel",
+                        "type": "web_search_result",
+                        "url": "https://vercel.com/blog/ai-sdk-5"
+                      },
+                      {
+                        "encrypted_content": "EsoBCioIERgCIiQyNzc5NjY2OC03MzUxLTQwYWMtYWNjNC0wMjRhZWU4OTk1YTUSDEYIcybB5yShTxEYfBoMQy2Jhq9m8J8xYqoZIjA7rPJlxhyceqPlai0FvyVcUOL2tobd+YtPb7qyUp77+f8pDid8wawpT1jZDSGzTeMqTlWK8FslgHYVt+QRy9slINQJXCV58XjXZvg74fV9Fiyk3jJrDDYe9SRBXRX7DNVSWbiHaa60iyjAqy1RzXijjNVJiBckuPBrsA5Wq5ur7hgD",
+                        "page_age": null,
+                        "title": "AI SDK",
+                        "type": "web_search_result",
+                        "url": "https://ai-sdk.dev/"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": "<timestamp>",
+                        "title": "AI Agent Frameworks (2026 Update): 8 SDKs Compared + the Claude Agent SDK Primitive Reference",
+                        "type": "web_search_result",
+                        "url": "https://www.morphllm.com/ai-agent-framework"
+                      },
+                      {
+                        "encrypted_content": "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",
+                        "page_age": "<timestamp>",
+                        "title": "Apple Outlines Major AI and Developer Tool Updates at 2026 Platforms State of the Union - MacRumors",
+                        "type": "web_search_result",
+                        "url": "https://www.macrumors.com/<timestamp>/apple-outlines-major-ai-and-developer-tool-updates/"
+                      },
+                      {
+                        "encrypted_content": "EpcCCioIERgCIiQyNzc5NjY2OC03MzUxLTQwYWMtYWNjNC0wMjRhZWU4OTk1YTUSDGBZuv3cVMR3nfMmdhoMK9qnrf1i2jiIj2uHIjBIjiNTGv4sR11ums3ewW/2o3md9jfpRHD9MxLRfMGIUhJfu1FR830nZTLD4dQulqoqmgEfCUZkjORkpuPR9y3t4rKsMqJ4iRbG5Bm9p2C4kg7Gsp4H/5gJsXgu1sfgi6KngP8cwfLiUzQfTCC/u+4Qeqc9UN7z0HFRvdsEUFeSJ+y4vmNwXrvqZfr4OC+3BfIQUIsux8fhhscBwWyiYCvFOIBGWEVOr0aUOY+wrPclolRrqrKzNfQuOt9R0QDVK7Ddf5ETs1smHwcK7XqVGAM=",
+                        "page_age": "<timestamp>",
+                        "title": "Snapdragon Game AI SDK Launch at GDC 2026 | On-Device AI Gaming",
+                        "type": "web_search_result",
+                        "url": "https://www.qualcomm.com/developer/blog/2026/03/snapdragon-game-ai-sdk-launch-on-device-ai-in-gaming"
+                      }
+                    ],
+                    "tool_use_id": "srvtoolu_01JtvuXwfsUFQRHbsZYPM1n3",
+                    "type": "web_search_tool_result"
+                  },
+                  {
+                    "citations": [
+                      {
+                        "cited_text": "Last updated: <timestamp> · Get this feed: RSS Email CLI MCP API Slack n8n · AI Agent Frameworks · <timestamp> · Date parsed from source: Jul 16, 20...",
+                        "encrypted_index": "Eo8BCioIERgCIiQyNzc5NjY2OC03MzUxLTQwYWMtYWNjNC0wMjRhZWU4OTk1YTUSDBlU2yvOVdQaS4rdyxoMsLJSkIL8ngugMQp0IjBHn5wZWsJCxDeki7AMe0Y2Tevcl3gfv4ijm+adaHABvaKpUCXHX3kNqzf9QwyTCC8qEwNsI8kge0PQ//kM8mR8zdRHk6wYBA==",
+                        "title": "Vercel AI SDK Updates by Vercel - July 2026 - Releasebot",
+                        "type": "web_search_result_location",
+                        "url": "https://releasebot.io/updates/vercel/vercel-ai"
+                      }
+                    ],
+                    "text": "Vercel AI SDK adds end-user identifiers for xAI video generation and editing.",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 256,
+                "model": "claude-sonnet-4-5-20250929",
+                "provider": "anthropic",
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "temperature": 0,
+                "tool_choice": {
+                  "name": "web_search",
+                  "type": "tool"
+                },
+                "tools": [
+                  {
+                    "max_uses": 1,
+                    "name": "web_search",
+                    "type": "web_search_20250305"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 77,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 17662,
+                "server_tool_use_web_fetch_requests": 0,
+                "server_tool_use_web_search_requests": 1,
+                "time_to_first_token": 0,
+                "tokens": 17739
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "server-tool-use",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-stream-thinking-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "What is 2+2? Reply with the number only.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "signature": "",
+                    "thinking": "The user is asking for 2+2 and wants only the number as a reply.\n\n2+2 = 4\n\nI should reply with just \"4\".",
+                    "type": "thinking"
+                  },
+                  {
+                    "text": "4",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 2048,
+                "model": "claude-sonnet-4-5-20250929",
+                "provider": "anthropic",
+                "stop_details": null,
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "stream": true,
+                "temperature": 1,
+                "thinking": {
+                  "budget_tokens": 1024,
+                  "type": "enabled"
+                }
+              },
+              "metrics": {
+                "completion_tokens": 48,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 49,
+                "time_to_first_token": 0,
+                "tokens": 97
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-thinking",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-beta-create-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with exactly BETA.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "BETA",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 24,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 5,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 13,
+                "time_to_first_token": 0,
+                "tokens": 18
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "beta-create",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-beta-stream-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Count from 1 to 3 and include the words one two three.",
+                  "role": "user"
+                }
+              ],
+              "output": "1 one\n2 two\n3 three",
+              "metadata": {
+                "max_tokens": 32,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_details": null,
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "stream": true,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 15,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 24,
+                "time_to_first_token": 0,
+                "tokens": 39
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "beta-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-beta-messages-stream-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Count from 1 to 3 and include the words one two three.",
+                  "role": "user"
+                }
+              ],
+              "output": "1 one\n2 two\n3 three",
+              "metadata": {
+                "max_tokens": 32,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_details": null,
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "stream": true,
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 15,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 24,
+                "time_to_first_token": 0,
+                "tokens": 39
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "beta-messages-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-beta-stream-tool-operation",
+          "children": [
+            {
+              "name": "anthropic.messages.create",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "id": "<span:1>",
+                    "input": {
+                      "location": "Paris, France"
+                    },
+                    "name": "get_weather",
+                    "type": "tool_use"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "max_tokens": 128,
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic",
+                "stop_details": null,
+                "stop_reason": "tool_use",
+                "stop_sequence": null,
+                "stream": true,
+                "temperature": 0,
+                "tool_choice": {
+                  "disable_parallel_tool_use": true,
+                  "name": "get_weather",
+                  "type": "tool"
+                },
+                "tools": [
+                  {
+                    "description": "Get the current weather in a given location",
+                    "input_schema": {
+                      "properties": {
+                        "location": {
+                          "description": "The city and state or city and country",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "location"
+                      ],
+                      "type": "object"
+                    },
+                    "name": "get_weather"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 26,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 687,
+                "time_to_first_token": 0,
+                "tokens": 713
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "beta-stream-tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-beta-tool-runner-operation",
+          "children": [
+            {
+              "name": "anthropic.beta.messages.toolRunner",
+              "type": "task",
+              "children": [
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "Use the get_weather tool exactly once for Paris, France. After you receive the tool result, reply with exactly that tool result text and do not call any tools again.",
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "caller": {
+                          "type": "direct"
+                        },
+                        "id": "<span:1>",
+                        "input": {
+                          "location": "Paris, France"
+                        },
+                        "name": "get_weather",
+                        "type": "tool_use"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "max_tokens": 128,
+                    "model": "claude-haiku-4-5",
+                    "provider": "anthropic",
+                    "stop_reason": "tool_use",
+                    "stop_sequence": null,
+                    "stream": false,
+                    "temperature": 0,
+                    "tools": [
+                      {
+                        "description": "Get the current weather in a given location",
+                        "input_schema": {
+                          "properties": {
+                            "location": {
+                              "description": "The city and state or city and country",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "location"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "get_weather"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_tokens": 56,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 607,
+                    "time_to_first_token": 0,
+                    "tokens": 663
+                  }
+                },
+                {
+                  "name": "tool: get_weather",
+                  "type": "tool",
+                  "children": [
+                    {
+                      "name": "get_weather.lookup",
+                      "children": []
+                    }
+                  ],
+                  "input": {
+                    "location": "Paris, France"
+                  },
+                  "output": "The weather in Paris, France is 18C and sunny.",
+                  "metadata": {
+                    "gen_ai.tool.name": "get_weather",
+                    "provider": "anthropic"
+                  }
+                },
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "Use the get_weather tool exactly once for Paris, France. After you receive the tool result, reply with exactly that tool result text and do not call any tools again.",
+                      "role": "user"
+                    },
+                    {
+                      "content": [
+                        {
+                          "caller": {
+                            "type": "direct"
+                          },
+                          "id": "<span:1>",
+                          "input": {
+                            "location": "Paris, France"
+                          },
+                          "name": "get_weather",
+                          "type": "tool_use"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                      "content": [
+                        {
+                          "content": "The weather in Paris, France is 18C and sunny.",
+                          "tool_use_id": "toolu_018BdrVwHzfyGw4bMcVaU7Ht",
+                          "type": "tool_result"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": {
+                    "content": [
+                      {
+                        "text": "The weather in Paris, France is 18C and sunny.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "assistant"
+                  },
+                  "metadata": {
+                    "max_tokens": 128,
+                    "model": "claude-haiku-4-5",
+                    "provider": "anthropic",
+                    "stop_reason": "end_turn",
+                    "stop_sequence": null,
+                    "stream": false,
+                    "temperature": 0,
+                    "tools": [
+                      {
+                        "description": "Get the current weather in a given location",
+                        "input_schema": {
+                          "properties": {
+                            "location": {
+                              "description": "The city and state or city and country",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "location"
+                          ],
+                          "type": "object"
+                        },
+                        "name": "get_weather"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_tokens": 16,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 687,
+                    "time_to_first_token": 0,
+                    "tokens": 703
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": "Use the get_weather tool exactly once for Paris, France. After you receive the tool result, reply with exactly that tool result text and do not call any tools again.",
+                  "role": "user"
+                }
+              ],
+              "output": {
+                "content": [
+                  {
+                    "text": "The weather in Paris, France is 18C and sunny.",
+                    "type": "text"
+                  }
+                ],
+                "role": "assistant"
+              },
+              "metadata": {
+                "anthropic_tool_runner_iterations": 2,
+                "max_iterations": 3,
+                "max_tokens": 128,
+                "model": "claude-haiku-4-5",
+                "operation": "toolRunner",
+                "provider": "anthropic",
+                "stop_reason": "end_turn",
+                "stop_sequence": null,
+                "temperature": 0,
+                "tool_names": [
+                  "get_weather"
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 72,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 1294,
+                "time_to_first_token": 0,
+                "tokens": 1366
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "beta-tool-runner",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-sessions-turn-operation",
+          "children": [],
+          "metadata": {
+            "operation": "sessions-turn",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "anthropic-sessions-thread-turn-operation",
+          "children": [],
+          "metadata": {
+            "operation": "sessions-thread-turn",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "anthropic-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

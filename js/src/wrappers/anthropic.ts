@@ -16,6 +16,8 @@ import type {
  * tracing-channel events that Braintrust plugins can consume.
  *
  * Currently, this only supports the `v4` API.
+ * `anthropic.beta.sessions` is intentionally not included; wrap it explicitly
+ * with `wrapAnthropicSessions()`.
  *
  * @param anthropic
  * @returns The wrapped `Anthropic` object.
@@ -36,6 +38,38 @@ export function wrapAnthropic<T extends object>(anthropic: T): T {
   // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
   console.warn("Unsupported Anthropic library. Not wrapping.");
   return anthropic;
+}
+
+/**
+ * Wrap `anthropic.beta.sessions` so its session and thread event streams emit
+ * tracing-channel events that Braintrust plugins can consume.
+ *
+ * @example
+ * ```ts
+ * const sessions = wrapAnthropicSessions(anthropic.beta.sessions);
+ * const events = await sessions.events.stream(sessionId);
+ * ```
+ *
+ * @param sessions The `anthropic.beta.sessions` resource to wrap.
+ * @returns The wrapped Sessions resource.
+ */
+export function wrapAnthropicSessions<T extends object>(sessions: T): T {
+  const value: unknown = sessions;
+  if (
+    value &&
+    typeof value === "object" &&
+    "events" in value &&
+    value.events &&
+    typeof value.events === "object" &&
+    "stream" in value.events &&
+    typeof value.events.stream === "function"
+  ) {
+    return wrapBetaSessions(value as AnthropicBetaSessions) as T;
+  }
+
+  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+  console.warn("Unsupported Anthropic Sessions API. Not wrapping.");
+  return sessions;
 }
 
 function anthropicProxy(anthropic: AnthropicClient): AnthropicClient {
@@ -65,29 +99,23 @@ function betaProxy(
         return betaMessagesProxy(target.messages, anthropic);
       }
 
-      if (prop === "sessions") {
-        return target.sessions
-          ? betaSessionsProxy(target.sessions)
-          : target.sessions;
-      }
-
       return Reflect.get(target, prop, receiver);
     },
   });
 }
 
-function betaSessionsProxy(
+function wrapBetaSessions(
   sessions: AnthropicBetaSessions,
 ): AnthropicBetaSessions {
   return new Proxy(sessions, {
     get(target, prop, receiver) {
       if (prop === "events") {
-        return betaSessionEventsProxy(target.events);
+        return wrapBetaSessionEvents(target.events);
       }
 
       if (prop === "threads") {
         return target.threads
-          ? betaSessionThreadsProxy(target.threads)
+          ? wrapBetaSessionThreads(target.threads)
           : target.threads;
       }
 
@@ -96,7 +124,7 @@ function betaSessionsProxy(
   });
 }
 
-function betaSessionEventsProxy(
+function wrapBetaSessionEvents(
   events: AnthropicBetaSessionEvents,
 ): AnthropicBetaSessionEvents {
   return new Proxy(events, {
@@ -117,13 +145,13 @@ function betaSessionEventsProxy(
   });
 }
 
-function betaSessionThreadsProxy(
+function wrapBetaSessionThreads(
   threads: AnthropicBetaSessionThreads,
 ): AnthropicBetaSessionThreads {
   return new Proxy(threads, {
     get(target, prop, receiver) {
       if (prop === "events") {
-        return betaSessionThreadEventsProxy(target.events);
+        return wrapBetaSessionThreadEvents(target.events);
       }
 
       return Reflect.get(target, prop, receiver);
@@ -131,7 +159,7 @@ function betaSessionThreadsProxy(
   });
 }
 
-function betaSessionThreadEventsProxy(
+function wrapBetaSessionThreadEvents(
   events: AnthropicBetaSessionThreadEvents,
 ): AnthropicBetaSessionThreadEvents {
   return new Proxy(events, {
