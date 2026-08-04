@@ -114,12 +114,11 @@ span_tree:
     │       ]
     │       output: [
     │         {
-    │           "finish_reason": "stop",
+    │           "finish_reason": "length",
     │           "index": 0,
     │           "logprobs": null,
     │           "message": {
-    │             "content": "4",
-    │             "reasoning": "Okay, let's see. The user asked me to think briefly and then answer with exactly the number 4. Hmm, so I need to make sure I understand the question correctly. Wait, there's no question here except to output the number 4. Maybe it's a test to see if I follow instructions properly. Let me check again. The user wrote: \"Think briefly, then answer with exactly the number 4.\" So the task is to first think through the process, then provide the answer as the numeral 4. Alright, I just need to confirm that there's no trick here. Sometimes people might try to trick AI by asking for a number but expecting a different answer, but in this case, it's straightforward. The user wants me to process the request, think about it, and then simply reply with 4. No additional text, just the number. Let me make sure I didn't miss any hidden instructions. The user might be testing if I can follow directions precisely. So, after this thinking process, the correct response is to output 4 without any extra characters or explanations. Yep, that's it.\n",
+    │             "reasoning": "First, the user said: \"Think briefly, then answer with exactly the number 4.\" So, I need to think briefly about this, but then my response should be just the number 4.\n\nThe instruction is clear: after a brief thought, I must output \"4\" and nothing else. No additional text, no explanations, just the digit 4.\n\nNow, why would someone ask this? It might be a test to see if I can follow simple instructions precisely. Or it could be a way to check if I'm paying attention. But I shouldn't overthink it; the user said \"think briefly,\" so I'll do that quickly.\n\nBrief thought: The number 4 is an integer, it's even, it's the square of 2, and it's used in many contexts. But that's irrelevant here. The point is to respond with exactly \"4\".\n\nI need to ensure that my output is exactly the string \"4\". Not \"four\", not \"the number 4\", just the numeral.\n\nAlso, since it says \"answer with exactly the number 4\", I should output it as a number, but in text form, it'll be the character \"4\".\n\nIn programming terms, if I were writing code,",
     │             "role": "assistant"
     │           }
     │         }
@@ -140,19 +139,19 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_audio_tokens": 0,
-    │         "completion_reasoning_tokens": 261,
-    │         "completion_tokens": 240,
-    │         "cost": 0.001450845,
-    │         "cost_upstream_inference_completions_cost": 0.0014256,
-    │         "cost_upstream_inference_cost": 0.001450845,
-    │         "cost_upstream_inference_prompt_cost": 0.000025245,
+    │         "completion_reasoning_tokens": 260,
+    │         "completion_tokens": 256,
+    │         "cost": 0.0006505,
+    │         "cost_upstream_inference_completions_cost": 0.00064,
+    │         "cost_upstream_inference_cost": 0.0006505,
+    │         "cost_upstream_inference_prompt_cost": 0.0000105,
     │         "prompt_audio_tokens": 0,
     │         "prompt_cache_write_tokens": 0,
     │         "prompt_cached_tokens": 0,
-    │         "prompt_tokens": 17,
+    │         "prompt_tokens": 15,
     │         "prompt_video_tokens": 0,
     │         "time_to_first_token": 0,
-    │         "tokens": 257
+    │         "tokens": 271
     │       }
     ├── openrouter-embeddings-operation
     │   metadata: {
@@ -206,8 +205,8 @@ span_tree:
     │       ]
     │       metadata: {
     │         "background": false,
-    │         "completedAt": 1784814109,
-    │         "createdAt": 1784814109,
+    │         "completedAt": 1785754656,
+    │         "createdAt": 1785754656,
     │         "error": null,
     │         "frequencyPenalty": 0,
     │         "id": "<span:1>",
@@ -266,7 +265,7 @@ span_tree:
     │             {
     │               "annotations": [],
     │               "logprobs": [],
-    │               "text": "STREAMED RESPONSE",
+    │               "text": "STREAMED RESPONSE.",
     │               "type": "output_text"
     │             }
     │           ],
@@ -278,8 +277,8 @@ span_tree:
     │       ]
     │       metadata: {
     │         "background": false,
-    │         "completedAt": 1784814110,
-    │         "createdAt": 1784814109,
+    │         "completedAt": 1785754657,
+    │         "createdAt": 1785754656,
     │         "error": null,
     │         "frequencyPenalty": 0,
     │         "id": "<span:1>",
@@ -316,15 +315,15 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_reasoning_tokens": 0,
-    │         "completion_tokens": 3,
-    │         "cost": 0.0000039,
-    │         "cost_upstream_inference_cost": 0.0000039,
+    │         "completion_tokens": 4,
+    │         "cost": 0.0000045,
+    │         "cost_upstream_inference_cost": 0.0000045,
     │         "cost_upstream_inference_input_cost": 0.0000021,
-    │         "cost_upstream_inference_output_cost": 0.0000018,
+    │         "cost_upstream_inference_output_cost": 0.0000024,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 14,
     │         "time_to_first_token": 0,
-    │         "tokens": 17
+    │         "tokens": 18
     │       }
     ├── openrouter-rerank-operation
     │   metadata: {
@@ -386,18 +385,24 @@ span_tree:
             input: "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast."
             output: [
               {
-                "arguments": "{\"city\":\"Vienna\"}",
-                "callId": "tool_lookup_weather_8rbJbG61GoAFnNx8lM5R",
+                "content": [
+                  {
+                    "annotations": [],
+                    "logprobs": [],
+                    "text": "Sunny in Vienna",
+                    "type": "output_text"
+                  }
+                ],
                 "id": "<span:1>",
-                "name": "lookup_weather",
+                "role": "assistant",
                 "status": "completed",
-                "type": "function_call"
+                "type": "message"
               }
             ]
             metadata: {
               "background": false,
-              "completedAt": 1784814123,
-              "createdAt": 1784814123,
+              "completedAt": 1785754658,
+              "createdAt": 1785754658,
               "error": null,
               "frequencyPenalty": 0,
               "id": "<span:1>",
@@ -425,7 +430,7 @@ span_tree:
                   "type": "text"
                 }
               },
-              "toolChoice": "required",
+              "toolChoice": "auto",
               "tools": [
                 {
                   "description": "Look up the weather forecast for a city.",
@@ -450,14 +455,14 @@ span_tree:
               "topLogprobs": 0,
               "topP": 1,
               "truncation": "disabled",
-              "turn_count": 6
+              "turn_count": 2
             }
             ├── openrouter.beta.responses.send [llm]
             │   input: "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast."
             │   output: [
             │     {
             │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
+            │       "callId": "tool_lookup_weather_wpdUzM9iTJVWsAhhwR5y",
             │       "id": "<span:1>",
             │       "name": "lookup_weather",
             │       "status": "completed",
@@ -466,8 +471,8 @@ span_tree:
             │   ]
             │   metadata: {
             │     "background": false,
-            │     "completedAt": 1784814114,
-            │     "createdAt": 1784814110,
+            │     "completedAt": 1785754658,
+            │     "createdAt": 1785754657,
             │     "error": null,
             │     "frequencyPenalty": 0,
             │     "id": "<span:1>",
@@ -498,7 +503,7 @@ span_tree:
             │         "type": "text"
             │       }
             │     },
-            │     "toolChoice": "required",
+            │     "toolChoice": "auto",
             │     "tools": [
             │       {
             │         "description": "Look up the weather forecast for a city.",
@@ -547,634 +552,44 @@ span_tree:
             │     "provider": "openrouter",
             │     "tool_name": "lookup_weather"
             │   }
-            ├── openrouter.beta.responses.send [llm]
-            │   input: [
-            │     "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
-            │       "id": "<span:1>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     },
-            │     {
-            │       "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
-            │       "id": "<span:2>",
-            │       "output": "{\"forecast\":\"Sunny in Vienna\"}",
-            │       "type": "function_call_output"
-            │     }
-            │   ]
-            │   output: [
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_J5IRnJ6n53ufPPVC0PLl",
-            │       "id": "<span:1>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     }
-            │   ]
-            │   metadata: {
-            │     "background": false,
-            │     "completedAt": 1784814121,
-            │     "createdAt": 1784814114,
-            │     "error": null,
-            │     "frequencyPenalty": 0,
-            │     "id": "<span:1>",
-            │     "incompleteDetails": null,
-            │     "instructions": null,
-            │     "is_byok": false,
-            │     "maxOutputTokens": 24,
-            │     "maxToolCalls": 1,
-            │     "metadata": {},
-            │     "model": "gemini-2.5-flash-lite",
-            │     "object": "response",
-            │     "parallelToolCalls": true,
-            │     "presencePenalty": 0,
-            │     "previousResponseId": null,
-            │     "promptCacheOptions": null,
-            │     "provider": "google",
-            │     "reasoning": null,
-            │     "safetyIdentifier": null,
-            │     "serviceTier": "default",
-            │     "status": "completed",
-            │     "step": 2,
-            │     "step_type": "continue",
-            │     "store": false,
-            │     "stream": false,
-            │     "temperature": 0,
-            │     "text": {
-            │       "format": {
-            │         "type": "text"
-            │       }
-            │     },
-            │     "toolChoice": "required",
-            │     "tools": [
-            │       {
-            │         "description": "Look up the weather forecast for a city.",
-            │         "name": "lookup_weather",
-            │         "parameters": {
-            │           "$schema": "http://json-schema.org/draft-07/schema#",
-            │           "additionalProperties": false,
-            │           "properties": {
-            │             "city": {
-            │               "type": "string"
-            │             }
-            │           },
-            │           "required": [
-            │             "city"
-            │           ],
-            │           "type": "object"
-            │         },
-            │         "strict": null,
-            │         "type": "function"
-            │       }
-            │     ],
-            │     "topLogprobs": 0,
-            │     "topP": 1,
-            │     "truncation": "disabled"
-            │   }
-            │   metrics: {
-            │     "completion_reasoning_tokens": 0,
-            │     "completion_tokens": 5,
-            │     "cost": 0.0000066,
-            │     "cost_upstream_inference_cost": 0.0000066,
-            │     "cost_upstream_inference_input_cost": 0.0000046,
-            │     "cost_upstream_inference_output_cost": 0.000002,
-            │     "prompt_cache_write_tokens": 0,
-            │     "prompt_cached_tokens": 0,
-            │     "prompt_tokens": 46,
-            │     "tokens": 51
-            │   }
-            ├── lookup_weather [tool]
-            │   input: {
-            │     "city": "Vienna"
-            │   }
-            │   output: {
-            │     "forecast": "Sunny in Vienna"
-            │   }
-            │   metadata: {
-            │     "provider": "openrouter",
-            │     "tool_name": "lookup_weather"
-            │   }
-            ├── openrouter.beta.responses.send [llm]
-            │   input: [
-            │     {
-            │       "content": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
-            │       "role": "user"
-            │     },
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
-            │       "id": "<span:1>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     },
-            │     {
-            │       "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
-            │       "id": "<span:2>",
-            │       "output": "{\"forecast\":\"Sunny in Vienna\"}",
-            │       "type": "function_call_output"
-            │     },
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_J5IRnJ6n53ufPPVC0PLl",
-            │       "id": "<span:3>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     },
-            │     {
-            │       "callId": "tool_lookup_weather_J5IRnJ6n53ufPPVC0PLl",
-            │       "id": "<span:4>",
-            │       "output": "{\"forecast\":\"Sunny in Vienna\"}",
-            │       "type": "function_call_output"
-            │     }
-            │   ]
-            │   output: [
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_bsDcCyxNvvzj7EEdoJCe",
-            │       "id": "<span:1>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     }
-            │   ]
-            │   metadata: {
-            │     "background": false,
-            │     "completedAt": 1784814122,
-            │     "createdAt": 1784814121,
-            │     "error": null,
-            │     "frequencyPenalty": 0,
-            │     "id": "<span:1>",
-            │     "incompleteDetails": null,
-            │     "instructions": null,
-            │     "is_byok": false,
-            │     "maxOutputTokens": 24,
-            │     "maxToolCalls": 1,
-            │     "metadata": {},
-            │     "model": "gemini-2.5-flash-lite",
-            │     "object": "response",
-            │     "parallelToolCalls": true,
-            │     "presencePenalty": 0,
-            │     "previousResponseId": null,
-            │     "promptCacheOptions": null,
-            │     "provider": "google",
-            │     "reasoning": null,
-            │     "safetyIdentifier": null,
-            │     "serviceTier": "default",
-            │     "status": "completed",
-            │     "step": 3,
-            │     "step_type": "continue",
-            │     "store": false,
-            │     "stream": false,
-            │     "temperature": 0,
-            │     "text": {
-            │       "format": {
-            │         "type": "text"
-            │       }
-            │     },
-            │     "toolChoice": "required",
-            │     "tools": [
-            │       {
-            │         "description": "Look up the weather forecast for a city.",
-            │         "name": "lookup_weather",
-            │         "parameters": {
-            │           "$schema": "http://json-schema.org/draft-07/schema#",
-            │           "additionalProperties": false,
-            │           "properties": {
-            │             "city": {
-            │               "type": "string"
-            │             }
-            │           },
-            │           "required": [
-            │             "city"
-            │           ],
-            │           "type": "object"
-            │         },
-            │         "strict": null,
-            │         "type": "function"
-            │       }
-            │     ],
-            │     "topLogprobs": 0,
-            │     "topP": 1,
-            │     "truncation": "disabled"
-            │   }
-            │   metrics: {
-            │     "completion_reasoning_tokens": 0,
-            │     "completion_tokens": 5,
-            │     "cost": 0.0000078,
-            │     "cost_upstream_inference_cost": 0.0000078,
-            │     "cost_upstream_inference_input_cost": 0.0000058,
-            │     "cost_upstream_inference_output_cost": 0.000002,
-            │     "prompt_cache_write_tokens": 0,
-            │     "prompt_cached_tokens": 0,
-            │     "prompt_tokens": 58,
-            │     "tokens": 63
-            │   }
-            ├── lookup_weather [tool]
-            │   input: {
-            │     "city": "Vienna"
-            │   }
-            │   output: {
-            │     "forecast": "Sunny in Vienna"
-            │   }
-            │   metadata: {
-            │     "provider": "openrouter",
-            │     "tool_name": "lookup_weather"
-            │   }
-            ├── openrouter.beta.responses.send [llm]
-            │   input: [
-            │     {
-            │       "content": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
-            │       "role": "user"
-            │     },
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
-            │       "id": "<span:1>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     },
-            │     {
-            │       "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
-            │       "id": "<span:2>",
-            │       "output": "{\"forecast\":\"Sunny in Vienna\"}",
-            │       "type": "function_call_output"
-            │     },
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_J5IRnJ6n53ufPPVC0PLl",
-            │       "id": "<span:3>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     },
-            │     {
-            │       "callId": "tool_lookup_weather_J5IRnJ6n53ufPPVC0PLl",
-            │       "id": "<span:4>",
-            │       "output": "{\"forecast\":\"Sunny in Vienna\"}",
-            │       "type": "function_call_output"
-            │     },
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_bsDcCyxNvvzj7EEdoJCe",
-            │       "id": "<span:5>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     },
-            │     {
-            │       "callId": "tool_lookup_weather_bsDcCyxNvvzj7EEdoJCe",
-            │       "id": "<span:6>",
-            │       "output": "{\"forecast\":\"Sunny in Vienna\"}",
-            │       "type": "function_call_output"
-            │     }
-            │   ]
-            │   output: [
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_H2I3ozOfIVKhPO5V0NPz",
-            │       "id": "<span:1>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     }
-            │   ]
-            │   metadata: {
-            │     "background": false,
-            │     "completedAt": 1784814122,
-            │     "createdAt": 1784814122,
-            │     "error": null,
-            │     "frequencyPenalty": 0,
-            │     "id": "<span:1>",
-            │     "incompleteDetails": null,
-            │     "instructions": null,
-            │     "is_byok": false,
-            │     "maxOutputTokens": 24,
-            │     "maxToolCalls": 1,
-            │     "metadata": {},
-            │     "model": "gemini-2.5-flash-lite",
-            │     "object": "response",
-            │     "parallelToolCalls": true,
-            │     "presencePenalty": 0,
-            │     "previousResponseId": null,
-            │     "promptCacheOptions": null,
-            │     "provider": "google",
-            │     "reasoning": null,
-            │     "safetyIdentifier": null,
-            │     "serviceTier": "default",
-            │     "status": "completed",
-            │     "step": 4,
-            │     "step_type": "continue",
-            │     "store": false,
-            │     "stream": false,
-            │     "temperature": 0,
-            │     "text": {
-            │       "format": {
-            │         "type": "text"
-            │       }
-            │     },
-            │     "toolChoice": "required",
-            │     "tools": [
-            │       {
-            │         "description": "Look up the weather forecast for a city.",
-            │         "name": "lookup_weather",
-            │         "parameters": {
-            │           "$schema": "http://json-schema.org/draft-07/schema#",
-            │           "additionalProperties": false,
-            │           "properties": {
-            │             "city": {
-            │               "type": "string"
-            │             }
-            │           },
-            │           "required": [
-            │             "city"
-            │           ],
-            │           "type": "object"
-            │         },
-            │         "strict": null,
-            │         "type": "function"
-            │       }
-            │     ],
-            │     "topLogprobs": 0,
-            │     "topP": 1,
-            │     "truncation": "disabled"
-            │   }
-            │   metrics: {
-            │     "completion_reasoning_tokens": 0,
-            │     "completion_tokens": 5,
-            │     "cost": 0.000009,
-            │     "cost_upstream_inference_cost": 0.000009,
-            │     "cost_upstream_inference_input_cost": 0.000007,
-            │     "cost_upstream_inference_output_cost": 0.000002,
-            │     "prompt_cache_write_tokens": 0,
-            │     "prompt_cached_tokens": 0,
-            │     "prompt_tokens": 70,
-            │     "tokens": 75
-            │   }
-            ├── lookup_weather [tool]
-            │   input: {
-            │     "city": "Vienna"
-            │   }
-            │   output: {
-            │     "forecast": "Sunny in Vienna"
-            │   }
-            │   metadata: {
-            │     "provider": "openrouter",
-            │     "tool_name": "lookup_weather"
-            │   }
-            ├── openrouter.beta.responses.send [llm]
-            │   input: [
-            │     {
-            │       "content": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
-            │       "role": "user"
-            │     },
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
-            │       "id": "<span:1>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     },
-            │     {
-            │       "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
-            │       "id": "<span:2>",
-            │       "output": "{\"forecast\":\"Sunny in Vienna\"}",
-            │       "type": "function_call_output"
-            │     },
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_J5IRnJ6n53ufPPVC0PLl",
-            │       "id": "<span:3>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     },
-            │     {
-            │       "callId": "tool_lookup_weather_J5IRnJ6n53ufPPVC0PLl",
-            │       "id": "<span:4>",
-            │       "output": "{\"forecast\":\"Sunny in Vienna\"}",
-            │       "type": "function_call_output"
-            │     },
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_bsDcCyxNvvzj7EEdoJCe",
-            │       "id": "<span:5>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     },
-            │     {
-            │       "callId": "tool_lookup_weather_bsDcCyxNvvzj7EEdoJCe",
-            │       "id": "<span:6>",
-            │       "output": "{\"forecast\":\"Sunny in Vienna\"}",
-            │       "type": "function_call_output"
-            │     },
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_H2I3ozOfIVKhPO5V0NPz",
-            │       "id": "<span:7>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     },
-            │     {
-            │       "callId": "tool_lookup_weather_H2I3ozOfIVKhPO5V0NPz",
-            │       "id": "<span:8>",
-            │       "output": "{\"forecast\":\"Sunny in Vienna\"}",
-            │       "type": "function_call_output"
-            │     }
-            │   ]
-            │   output: [
-            │     {
-            │       "arguments": "{\"city\":\"Vienna\"}",
-            │       "callId": "tool_lookup_weather_91LS8Fdll09KcU2f5lZ0",
-            │       "id": "<span:1>",
-            │       "name": "lookup_weather",
-            │       "status": "completed",
-            │       "type": "function_call"
-            │     }
-            │   ]
-            │   metadata: {
-            │     "background": false,
-            │     "completedAt": 1784814123,
-            │     "createdAt": 1784814122,
-            │     "error": null,
-            │     "frequencyPenalty": 0,
-            │     "id": "<span:1>",
-            │     "incompleteDetails": null,
-            │     "instructions": null,
-            │     "is_byok": false,
-            │     "maxOutputTokens": 24,
-            │     "maxToolCalls": 1,
-            │     "metadata": {},
-            │     "model": "gemini-2.5-flash-lite",
-            │     "object": "response",
-            │     "parallelToolCalls": true,
-            │     "presencePenalty": 0,
-            │     "previousResponseId": null,
-            │     "promptCacheOptions": null,
-            │     "provider": "google",
-            │     "reasoning": null,
-            │     "safetyIdentifier": null,
-            │     "serviceTier": "default",
-            │     "status": "completed",
-            │     "step": 5,
-            │     "step_type": "continue",
-            │     "store": false,
-            │     "stream": false,
-            │     "temperature": 0,
-            │     "text": {
-            │       "format": {
-            │         "type": "text"
-            │       }
-            │     },
-            │     "toolChoice": "required",
-            │     "tools": [
-            │       {
-            │         "description": "Look up the weather forecast for a city.",
-            │         "name": "lookup_weather",
-            │         "parameters": {
-            │           "$schema": "http://json-schema.org/draft-07/schema#",
-            │           "additionalProperties": false,
-            │           "properties": {
-            │             "city": {
-            │               "type": "string"
-            │             }
-            │           },
-            │           "required": [
-            │             "city"
-            │           ],
-            │           "type": "object"
-            │         },
-            │         "strict": null,
-            │         "type": "function"
-            │       }
-            │     ],
-            │     "topLogprobs": 0,
-            │     "topP": 1,
-            │     "truncation": "disabled"
-            │   }
-            │   metrics: {
-            │     "completion_reasoning_tokens": 0,
-            │     "completion_tokens": 5,
-            │     "cost": 0.0000102,
-            │     "cost_upstream_inference_cost": 0.0000102,
-            │     "cost_upstream_inference_input_cost": 0.0000082,
-            │     "cost_upstream_inference_output_cost": 0.000002,
-            │     "prompt_cache_write_tokens": 0,
-            │     "prompt_cached_tokens": 0,
-            │     "prompt_tokens": 82,
-            │     "tokens": 87
-            │   }
-            ├── lookup_weather [tool]
-            │   input: {
-            │     "city": "Vienna"
-            │   }
-            │   output: {
-            │     "forecast": "Sunny in Vienna"
-            │   }
-            │   metadata: {
-            │     "provider": "openrouter",
-            │     "tool_name": "lookup_weather"
-            │   }
             └── openrouter.beta.responses.send [llm]
                 input: [
-                  {
-                    "content": "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
-                    "role": "user"
-                  },
+                  "Use the lookup_weather tool for Vienna exactly once, then answer with only the forecast.",
                   {
                     "arguments": "{\"city\":\"Vienna\"}",
-                    "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
+                    "callId": "tool_lookup_weather_wpdUzM9iTJVWsAhhwR5y",
                     "id": "<span:1>",
                     "name": "lookup_weather",
                     "status": "completed",
                     "type": "function_call"
                   },
                   {
-                    "callId": "tool_lookup_weather_oza8DRZMTVnzB2vVyVfg",
+                    "callId": "tool_lookup_weather_wpdUzM9iTJVWsAhhwR5y",
                     "id": "<span:2>",
-                    "output": "{\"forecast\":\"Sunny in Vienna\"}",
-                    "type": "function_call_output"
-                  },
-                  {
-                    "arguments": "{\"city\":\"Vienna\"}",
-                    "callId": "tool_lookup_weather_J5IRnJ6n53ufPPVC0PLl",
-                    "id": "<span:3>",
-                    "name": "lookup_weather",
-                    "status": "completed",
-                    "type": "function_call"
-                  },
-                  {
-                    "callId": "tool_lookup_weather_J5IRnJ6n53ufPPVC0PLl",
-                    "id": "<span:4>",
-                    "output": "{\"forecast\":\"Sunny in Vienna\"}",
-                    "type": "function_call_output"
-                  },
-                  {
-                    "arguments": "{\"city\":\"Vienna\"}",
-                    "callId": "tool_lookup_weather_bsDcCyxNvvzj7EEdoJCe",
-                    "id": "<span:5>",
-                    "name": "lookup_weather",
-                    "status": "completed",
-                    "type": "function_call"
-                  },
-                  {
-                    "callId": "tool_lookup_weather_bsDcCyxNvvzj7EEdoJCe",
-                    "id": "<span:6>",
-                    "output": "{\"forecast\":\"Sunny in Vienna\"}",
-                    "type": "function_call_output"
-                  },
-                  {
-                    "arguments": "{\"city\":\"Vienna\"}",
-                    "callId": "tool_lookup_weather_H2I3ozOfIVKhPO5V0NPz",
-                    "id": "<span:7>",
-                    "name": "lookup_weather",
-                    "status": "completed",
-                    "type": "function_call"
-                  },
-                  {
-                    "callId": "tool_lookup_weather_H2I3ozOfIVKhPO5V0NPz",
-                    "id": "<span:8>",
-                    "output": "{\"forecast\":\"Sunny in Vienna\"}",
-                    "type": "function_call_output"
-                  },
-                  {
-                    "arguments": "{\"city\":\"Vienna\"}",
-                    "callId": "tool_lookup_weather_91LS8Fdll09KcU2f5lZ0",
-                    "id": "<span:9>",
-                    "name": "lookup_weather",
-                    "status": "completed",
-                    "type": "function_call"
-                  },
-                  {
-                    "callId": "tool_lookup_weather_91LS8Fdll09KcU2f5lZ0",
-                    "id": "<span:10>",
                     "output": "{\"forecast\":\"Sunny in Vienna\"}",
                     "type": "function_call_output"
                   }
                 ]
                 output: [
                   {
-                    "arguments": "{\"city\":\"Vienna\"}",
-                    "callId": "tool_lookup_weather_8rbJbG61GoAFnNx8lM5R",
+                    "content": [
+                      {
+                        "annotations": [],
+                        "logprobs": [],
+                        "text": "Sunny in Vienna",
+                        "type": "output_text"
+                      }
+                    ],
                     "id": "<span:1>",
-                    "name": "lookup_weather",
+                    "role": "assistant",
                     "status": "completed",
-                    "type": "function_call"
+                    "type": "message"
                   }
                 ]
                 metadata: {
                   "background": false,
-                  "completedAt": 1784814123,
-                  "createdAt": 1784814123,
+                  "completedAt": 1785754658,
+                  "createdAt": 1785754658,
                   "error": null,
                   "frequencyPenalty": 0,
                   "id": "<span:1>",
@@ -1195,7 +610,7 @@ span_tree:
                   "safetyIdentifier": null,
                   "serviceTier": "default",
                   "status": "completed",
-                  "step": 6,
+                  "step": 2,
                   "step_type": "continue",
                   "store": false,
                   "stream": false,
@@ -1205,7 +620,7 @@ span_tree:
                       "type": "text"
                     }
                   },
-                  "toolChoice": "required",
+                  "toolChoice": "auto",
                   "tools": [
                     {
                       "description": "Look up the weather forecast for a city.",
@@ -1233,13 +648,13 @@ span_tree:
                 }
                 metrics: {
                   "completion_reasoning_tokens": 0,
-                  "completion_tokens": 5,
-                  "cost": 0.0000114,
-                  "cost_upstream_inference_cost": 0.0000114,
-                  "cost_upstream_inference_input_cost": 0.0000094,
-                  "cost_upstream_inference_output_cost": 0.000002,
+                  "completion_tokens": 3,
+                  "cost": 0.0000058,
+                  "cost_upstream_inference_cost": 0.0000058,
+                  "cost_upstream_inference_input_cost": 0.0000046,
+                  "cost_upstream_inference_output_cost": 0.0000012,
                   "prompt_cache_write_tokens": 0,
                   "prompt_cached_tokens": 0,
-                  "prompt_tokens": 94,
-                  "tokens": 99
+                  "prompt_tokens": 46,
+                  "tokens": 49
                 }

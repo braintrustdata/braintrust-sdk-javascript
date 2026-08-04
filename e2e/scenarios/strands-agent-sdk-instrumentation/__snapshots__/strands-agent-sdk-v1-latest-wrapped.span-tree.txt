@@ -22,7 +22,8 @@ span_tree:
     │             "totalTokens": 133
     │           }
     │         },
-    │         "role": "assistant"
+    │         "role": "assistant",
+    │         "trackingId": "<uuid:1>"
     │       }
     │       metadata: {
     │         "model": "gpt-4o-mini-2024-07-18",
@@ -198,7 +199,8 @@ span_tree:
     │             "totalTokens": 252
     │           }
     │         },
-    │         "role": "assistant"
+    │         "role": "assistant",
+    │         "trackingId": "<uuid:1>"
     │       }
     │       metadata: {
     │         "model": "gpt-4o-mini-2024-07-18",
@@ -291,7 +293,8 @@ span_tree:
     │             "totalTokens": 8530
     │           }
     │         },
-    │         "role": "assistant"
+    │         "role": "assistant",
+    │         "trackingId": "<uuid:1>"
     │       }
     │       metadata: {
     │         "model": "gpt-4o-mini-2024-07-18",
@@ -366,7 +369,8 @@ span_tree:
     │             "totalTokens": 33
     │           }
     │         },
-    │         "role": "assistant"
+    │         "role": "assistant",
+    │         "trackingId": "<uuid:1>"
     │       }
     │       metadata: {
     │         "model": "gpt-4o-mini-2024-07-18",
@@ -467,7 +471,8 @@ span_tree:
     │       │             "totalTokens": 39
     │       │           }
     │       │         },
-    │       │         "role": "assistant"
+    │       │         "role": "assistant",
+    │       │         "trackingId": "<uuid:1>"
     │       │       }
     │       │       metadata: {
     │       │         "model": "gpt-4o-mini-2024-07-18",
@@ -551,7 +556,8 @@ span_tree:
     │                     "totalTokens": 50
     │                   }
     │                 },
-    │                 "role": "assistant"
+    │                 "role": "assistant",
+    │                 "trackingId": "<uuid:1>"
     │               }
     │               metadata: {
     │                 "model": "gpt-4o-mini-2024-07-18",

@@ -59,6 +59,20 @@ export const openRouterConfigs: InstrumentationConfig[] = [
   },
 
   {
+    channelName: openRouterChannels.betaResponsesSend.channelName,
+    module: {
+      name: "@openrouter/sdk",
+      versionRange: ">=1.1.2 <2.0.0",
+      filePath: "esm/sdk/betaresponses.js",
+    },
+    functionQuery: {
+      className: "BetaResponses",
+      methodName: "send",
+      kind: "Async",
+    },
+  },
+
+  {
     channelName: openRouterChannels.callModel.channelName,
     module: {
       name: "@openrouter/sdk",
