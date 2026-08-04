@@ -38,16 +38,27 @@ describe("DurableEval", () => {
           return output === expected ? 1 : 0;
         },
       ],
-    }).start({
-      runId: "local-run",
-      noSendLogs: true,
-    });
+    }).start({ noSendLogs: true });
 
     expect(result).toMatchObject({
       status: "completed",
       summary: { scores: { exact: { score: 1 } } },
     });
     expect(task).toHaveBeenCalledTimes(2);
+  });
+
+  test("generates a new run id for every start", async () => {
+    const durable = DurableEval("generated-runs", {
+      store: new MemoryStore(),
+      data: [{ input: 1 }],
+      task: (input) => input,
+      scores: [() => 1],
+    });
+
+    const first = await durable.start({ noSendLogs: true });
+    const second = await durable.start({ noSendLogs: true });
+
+    expect(first.runId).not.toBe(second.runId);
   });
 
   test("polls each existing task and scorer sub-batch once", async () => {
@@ -118,21 +129,18 @@ describe("DurableEval", () => {
       task,
       scores: [scorer],
     });
-    const options = {
-      runId: "polling-run",
-      noSendLogs: true,
-    };
-
-    await expect(durable.start(options)).resolves.toEqual({
+    const waiting = await durable.start({ noSendLogs: true });
+    expect(waiting).toMatchObject({
       status: "waiting",
-      runId: "polling-run",
+      runId: expect.any(String),
       pending: { poll: 2, webhook: 0 },
     });
+    const options = { runId: waiting.runId };
     expect(taskJobs.size).toBe(2);
     expect(scoreJobs.size).toBe(0);
     await expect(durable.status(options)).resolves.toEqual({
       status: "waiting",
-      runId: "polling-run",
+      runId: waiting.runId,
       pending: { poll: 2, webhook: 0 },
     });
     expect(taskJobs.size).toBe(2);
@@ -140,7 +148,7 @@ describe("DurableEval", () => {
 
     await expect(durable.poll(options)).resolves.toEqual({
       status: "waiting",
-      runId: "polling-run",
+      runId: waiting.runId,
       pending: { poll: 2, webhook: 0 },
     });
     expect(scoreJobs.size).toBe(2);
@@ -231,30 +239,24 @@ describe("DurableEval", () => {
       scores: [scorer],
     });
 
-    await expect(
-      durable.start({ runId: "webhook-run", noSendLogs: true }),
-    ).resolves.toEqual({
+    const waiting = await durable.start({ noSendLogs: true });
+    expect(waiting).toMatchObject({
       status: "waiting",
-      runId: "webhook-run",
+      runId: expect.any(String),
       pending: { poll: 0, webhook: 2 },
     });
     expect(taskJobs.size).toBe(2);
-
-    await expect(
-      durable.start({ runId: "webhook-run", noSendLogs: true }),
-    ).resolves.toEqual({
-      status: "waiting",
-      runId: "webhook-run",
-      pending: { poll: 0, webhook: 2 },
-    });
-    expect(taskJobs.size).toBe(2);
+    const runId = waiting.runId;
 
     const taskIds = [...taskJobs.keys()];
+    await expect(
+      durable.processBatchResult({
+        runId: "missing-run",
+        externalId: taskIds[0],
+      }),
+    ).rejects.toThrow("DurableEval run missing-run is missing");
     for (const [index, externalId] of taskIds.entries()) {
-      const result = await durable.processBatchResult(
-        { externalId },
-        { noSendLogs: true },
-      );
+      const result = await durable.processBatchResult({ runId, externalId });
       expect(result).toMatchObject({
         status: "waiting",
         pending: { poll: 0, webhook: index === 0 ? 1 : 2 },
@@ -265,10 +267,7 @@ describe("DurableEval", () => {
     const scoreIds = [...scoreJobs.keys()];
     let result;
     for (const externalId of scoreIds) {
-      result = await durable.processBatchResult(
-        { externalId },
-        { noSendLogs: true },
-      );
+      result = await durable.processBatchResult({ runId, externalId });
     }
     expect(result).toMatchObject({
       status: "completed",
@@ -402,14 +401,11 @@ describe("DurableEval", () => {
       task,
       scores: [scorer],
     });
-    const options = {
-      runId: "workflow-run",
-      noSendLogs: true,
-    };
-
-    await expect(durable.start(options)).resolves.toMatchObject({
+    const waiting = await durable.start({ noSendLogs: true });
+    expect(waiting).toMatchObject({
       status: "waiting",
     });
+    const options = { runId: waiting.runId };
     await expect(durable.poll(options)).resolves.toMatchObject({
       status: "waiting",
     });
@@ -433,7 +429,18 @@ describe("DurableEval", () => {
       DurableEval("missing-ids", {
         store: new MemoryStore(),
         data: [{ input: "hello" }],
-        task: (input) => input,
+        task: BatchTask({
+          async submit() {
+            return { id: "unused" };
+          },
+          completion: {
+            mode: "webhook",
+            externalId: (handle) => handle.id,
+          },
+          async collect() {
+            return [];
+          },
+        }),
         scores: [],
       }).start({ noSendLogs: true }),
     ).rejects.toThrow("requires id, upsert_id, or caseId");

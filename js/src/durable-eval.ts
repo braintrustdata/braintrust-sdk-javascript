@@ -1,23 +1,40 @@
-import { type Score, SpanTypeAttribute } from "../util/index";
-import { type EvalParameters, type InferParameters } from "./eval-parameters";
+import { makeScorerPropagatedEvent, SpanTypeAttribute } from "../util/index";
 import {
-  type EvalData,
-  type EvalHooks,
+  type EvalParameters,
+  type InferParameters,
+  validateParameters,
+} from "./eval-parameters";
+import {
+  _internalInitEvaluatorExperiment,
+  _internalPrepareEvaluatorClassification,
+  _internalPrepareEvaluatorScore,
+  _internalResolveEvaluatorData,
+  _internalRunEvaluatorTask,
+  buildLocalSummary as buildEvaluatorLocalSummary,
+  callEvaluatorData,
+  classifierName,
+  type EvalClassifier,
+  type Evaluator,
+  type EvaluatorDef,
+  type EvalResult,
   type EvalScorer,
   type EvalScorerArgs,
   type EvalTask,
   type OneOrMoreScores,
+  runEvaluator,
 } from "./framework";
 import iso from "./isomorph";
 import {
   type BaseMetadata,
-  type BraintrustState,
   type DefaultMetadataType,
   type EvalCase,
   type Experiment,
   type ExperimentSummary,
   NOOP_SPAN,
-  init as initExperiment,
+  type Span,
+  _internalResumeSpan,
+  _internalStartSpanWithInitialMerge,
+  logError as logSpanError,
   newId,
 } from "./logger";
 
@@ -394,9 +411,11 @@ export type DurableEvaluator<
   Expected = void,
   Metadata extends BaseMetadata = DefaultMetadataType,
   Parameters extends EvalParameters = EvalParameters,
-> = {
+> = Omit<
+  Evaluator<Input, Output, Expected, Metadata, Parameters>,
+  "task" | "scores" | "timeout" | "signal" | "maxConcurrency" | "update"
+> & {
   store: DurableEvalStore;
-  data: EvalData<Input, Expected, Metadata>;
   caseId?: (
     datum: EvalCase<Input, Expected, Metadata>,
   ) => string | Promise<string>;
@@ -410,26 +429,21 @@ export type DurableEvaluator<
         Parameters,
         JsonValue
       >;
-  scores: Array<
+  scores?: Array<
     | EvalScorer<Input, Output, Expected, Metadata>
     | DurableBatchScorer<Input, Output, Expected, Metadata, JsonValue>
   >;
-  parameters?: InferParameters<Parameters>;
-  experimentName?: string;
-  description?: string;
-  metadata?: Record<string, unknown>;
-  tags?: string[];
-  trialCount?: number;
-  projectId?: string;
-  state?: BraintrustState;
 };
 
-export interface DurableEvalRuntimeOptions {
-  runId?: string;
+export interface DurableEvalStartOptions<
+  Parameters extends EvalParameters = EvalParameters,
+> {
+  parameters?: InferParameters<Parameters>;
   noSendLogs?: boolean;
 }
 
 export type DurableBatchResult = {
+  runId: string;
   batchId?: string;
   externalId?: string;
 };
@@ -469,17 +483,12 @@ export interface DurableEvalDefinition<
     Metadata,
     Parameters
   >;
-  start(options?: DurableEvalRuntimeOptions): Promise<DurableEvalResult>;
-  status(
-    options: DurableEvalRuntimeOptions & { runId: string },
+  start(
+    options?: DurableEvalStartOptions<Parameters>,
   ): Promise<DurableEvalResult>;
-  poll(
-    options: DurableEvalRuntimeOptions & { runId: string },
-  ): Promise<DurableEvalResult>;
-  processBatchResult(
-    result: DurableBatchResult,
-    options?: Omit<DurableEvalRuntimeOptions, "runId">,
-  ): Promise<DurableEvalResult>;
+  status(options: { runId: string }): Promise<DurableEvalResult>;
+  poll(options: { runId: string }): Promise<DurableEvalResult>;
+  processBatchResult(result: DurableBatchResult): Promise<DurableEvalResult>;
 }
 
 type DurableCaseRecord = {
@@ -490,10 +499,15 @@ type DurableCaseRecord = {
   metadata: JsonValue;
   tags?: string[];
   taskComplete: boolean;
+  taskLogged: boolean;
   output?: JsonValue;
+  rootSpan?: string;
   taskNodeOutputs: Record<string, JsonValue>;
   scores: Record<string, JsonValue>;
+  loggedScores: Record<string, boolean>;
   scoreNodeOutputs: Record<string, Record<string, JsonValue>>;
+  classifications: Record<string, JsonValue>;
+  loggedClassifications: Record<string, boolean>;
 };
 
 type DurableBatchRecord = {
@@ -513,15 +527,12 @@ type DurableRunState = {
   projectName: string;
   evalName: string;
   experimentName: string;
+  noSendLogs: boolean;
+  parameters: JsonValue;
   status: "running" | "completed";
   summary?: ExperimentSummary;
   cases: DurableCaseRecord[];
   batches: DurableBatchRecord[];
-};
-
-type DurableBatchLocator = {
-  runKey: string;
-  batchId: string;
 };
 
 class DurableEvalDefinitionImpl<
@@ -552,27 +563,22 @@ class DurableEvalDefinitionImpl<
     this.evalName = evaluator.experimentName ?? projectName;
   }
 
-  start(options: DurableEvalRuntimeOptions = {}): Promise<DurableEvalResult> {
+  start(
+    options: DurableEvalStartOptions<Parameters> = {},
+  ): Promise<DurableEvalResult> {
     return startDurableEval(this, options);
   }
 
-  status(
-    options: DurableEvalRuntimeOptions & { runId: string },
-  ): Promise<DurableEvalResult> {
+  status(options: { runId: string }): Promise<DurableEvalResult> {
     return getDurableEvalStatus(this, options);
   }
 
-  poll(
-    options: DurableEvalRuntimeOptions & { runId: string },
-  ): Promise<DurableEvalResult> {
+  poll(options: { runId: string }): Promise<DurableEvalResult> {
     return pollDurableEval(this, options);
   }
 
-  processBatchResult(
-    result: DurableBatchResult,
-    options: Omit<DurableEvalRuntimeOptions, "runId"> = {},
-  ): Promise<DurableEvalResult> {
-    return processDurableBatchResult(this, result, options);
+  processBatchResult(result: DurableBatchResult): Promise<DurableEvalResult> {
+    return processDurableBatchResult(this, result);
   }
 }
 
@@ -603,28 +609,94 @@ async function startDurableEval<
     Metadata,
     Parameters
   >,
-  options: DurableEvalRuntimeOptions,
+  options: DurableEvalStartOptions<Parameters>,
 ): Promise<DurableEvalResult> {
   const store = definition.evaluator.store;
-  const runId = options.runId ?? newId();
+  const runId = newId();
   const key = runKey(definition.projectName, definition.evalName, runId);
-  let state = await readJson<DurableRunState>(store, key);
-  if (!state) {
-    state = {
+  const { data } = callEvaluatorData(definition.evaluator.data);
+  const parameters = await validateParameters(
+    options.parameters ?? {},
+    definition.evaluator.parameters,
+  );
+  const experimentName =
+    definition.evaluator.experimentName ?? `${definition.evalName}-${runId}`;
+  const experiment = await _internalInitEvaluatorExperiment(
+    definition.projectName,
+    { ...definition.evaluator, data } as unknown as Evaluator<
+      Input,
+      Output,
+      Expected,
+      Metadata,
+      Parameters
+    >,
+    data,
+    {
+      disabled: options.noSendLogs ?? false,
+      experimentName,
+      update: true,
+    },
+  );
+  if (
+    !isBatchTask(definition.evaluator.task) &&
+    !(definition.evaluator.scores ?? []).some(isBatchScorer)
+  ) {
+    const result = await runEvaluator(
+      experiment,
+      {
+        ...definition.evaluator,
+        projectName: definition.projectName,
+        evalName: definition.evalName,
+        data,
+      } as unknown as EvaluatorDef<
+        Input,
+        Output,
+        Expected,
+        Metadata,
+        Parameters
+      >,
+      {
+        start: () => undefined,
+        stop: () => undefined,
+        increment: () => undefined,
+      },
+      [],
+      undefined,
+      parameters,
+      true,
+      true,
+    );
+    const state: DurableRunState = {
       schemaVersion: CHECKPOINT_VERSION,
       runId,
       projectName: definition.projectName,
       evalName: definition.evalName,
-      experimentName:
-        definition.evaluator.experimentName ??
-        `${definition.evalName}-${runId}`,
-      status: "running",
-      cases: await materializeCases(definition.evaluator),
+      experimentName,
+      noSendLogs: options.noSendLogs ?? false,
+      parameters: assertJsonValue(parameters, "eval parameters"),
+      status: "completed",
+      summary: result.summary,
+      cases: [],
       batches: [],
     };
+    await experiment?.flush();
     await writeJson(store, key, state);
+    return currentStatus(definition, state);
   }
-  return advanceDurableEval(definition, state, store, key, options);
+  const state: DurableRunState = {
+    schemaVersion: CHECKPOINT_VERSION,
+    runId,
+    projectName: definition.projectName,
+    evalName: definition.evalName,
+    experimentName,
+    noSendLogs: options.noSendLogs ?? false,
+    parameters: assertJsonValue(parameters, "eval parameters"),
+    status: "running",
+    cases: await materializeCases(definition, data, experiment),
+    batches: [],
+  };
+  await writeJson(store, key, state);
+  return advanceDurableEval(definition, state, store, key, experiment);
 }
 
 async function getDurableEvalStatus<
@@ -641,7 +713,7 @@ async function getDurableEvalStatus<
     Metadata,
     Parameters
   >,
-  options: DurableEvalRuntimeOptions & { runId: string },
+  options: { runId: string },
 ): Promise<DurableEvalResult> {
   const store = definition.evaluator.store;
   const state = await readJson<DurableRunState>(
@@ -667,34 +739,33 @@ async function processDurableBatchResult<
     Parameters
   >,
   result: DurableBatchResult,
-  options: Omit<DurableEvalRuntimeOptions, "runId">,
 ): Promise<DurableEvalResult> {
   if (!result.batchId && !result.externalId) {
     throw new Error("Batch results require batchId or externalId");
   }
   const store = definition.evaluator.store;
-  const locator = await locateBatch(
-    store,
-    definition.projectName,
-    definition.evalName,
-    result,
-  );
-  if (!locator) {
-    throw new Error("No submitted batch matches this result");
+  const key = runKey(definition.projectName, definition.evalName, result.runId);
+  const state = await readJson<DurableRunState>(store, key);
+  if (!state) throw new Error(`DurableEval run ${result.runId} is missing`);
+  const byBatch = result.batchId
+    ? state.batches.find((candidate) => candidate.id === result.batchId)
+    : undefined;
+  const byExternal = result.externalId
+    ? state.batches.find(
+        (candidate) => candidate.externalId === result.externalId,
+      )
+    : undefined;
+  if (byBatch && byExternal && byBatch.id !== byExternal.id) {
+    throw new Error("batchId and externalId identify different batches");
   }
-  const state = await readJson<DurableRunState>(store, locator.runKey);
-  if (!state)
-    throw new Error(`DurableEval run for batch ${locator.batchId} is missing`);
-  const batch = state.batches.find(
-    (candidate) => candidate.id === locator.batchId,
-  );
-  if (!batch) throw new Error(`Batch ${locator.batchId} is missing`);
+  const batch = byBatch ?? byExternal;
+  if (!batch) throw new Error("No submitted batch matches this result");
   if (batch.status !== "complete") {
     await collectBatch(definition, state, batch);
     batch.status = "complete";
-    await writeJson(store, locator.runKey, state);
+    await writeJson(store, key, state);
   }
-  return advanceDurableEval(definition, state, store, locator.runKey, options);
+  return advanceDurableEval(definition, state, store, key);
 }
 
 async function pollDurableEval<
@@ -711,7 +782,7 @@ async function pollDurableEval<
     Metadata,
     Parameters
   >,
-  options: DurableEvalRuntimeOptions & { runId: string },
+  options: { runId: string },
 ): Promise<DurableEvalResult> {
   const store = definition.evaluator.store;
   const key = runKey(
@@ -747,7 +818,30 @@ async function pollDurableEval<
     batch.status = "complete";
     await writeJson(store, key, state);
   }
-  return advanceDurableEval(definition, state, store, key, options);
+  return advanceDurableEval(definition, state, store, key);
+}
+
+async function openDurableExperiment(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  state: DurableRunState,
+) {
+  const data: EvalCase<unknown, unknown, BaseMetadata>[] = [];
+  return await _internalInitEvaluatorExperiment(
+    definition.projectName,
+    { ...definition.evaluator, data } as unknown as Evaluator<
+      unknown,
+      unknown,
+      unknown,
+      BaseMetadata,
+      EvalParameters
+    >,
+    data,
+    {
+      disabled: state.noSendLogs,
+      experimentName: state.experimentName,
+      update: true,
+    },
+  );
 }
 
 async function advanceDurableEval<
@@ -767,16 +861,21 @@ async function advanceDurableEval<
   state: DurableRunState,
   store: DurableEvalStore,
   key: string,
-  options: Omit<DurableEvalRuntimeOptions, "runId">,
+  existingExperiment?: Experiment | null,
 ): Promise<DurableEvalResult> {
   if (state.status === "completed") return currentStatus(definition, state);
-  await runTaskStage(definition, state, store, key);
+  const experiment =
+    existingExperiment === undefined
+      ? await openDurableExperiment(definition, state)
+      : existingExperiment;
+  await runTaskStage(definition, state, store, key, experiment);
+  await logCompletedTasks(definition, state, store, key, experiment);
   if (state.cases.some((record) => !record.taskComplete)) {
     return currentStatus(definition, state);
   }
 
-  await runScoreStages(definition, state, store, key);
-  const scorerNames = resolveScorers(definition.evaluator.scores).map(
+  await runScoreStages(definition, state, store, key, experiment);
+  const scorerNames = resolveScorers(definition.evaluator.scores ?? []).map(
     ({ name }) => name,
   );
   if (
@@ -787,7 +886,7 @@ async function advanceDurableEval<
     return currentStatus(definition, state);
   }
 
-  state.summary = await finishExperiment(definition, state, options.noSendLogs);
+  state.summary = await finishExperiment(definition, state, experiment);
   state.status = "completed";
   await writeJson(store, key, state);
   return currentStatus(definition, state);
@@ -816,6 +915,112 @@ function currentStatus(
   return { status: "waiting", runId: state.runId, pending };
 }
 
+async function startCaseRoot(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  state: DurableRunState,
+  record: DurableCaseRecord,
+  experiment: Experiment | null,
+): Promise<Span> {
+  if (!experiment) return NOOP_SPAN;
+  const datum = record.datum as EvalCase<unknown, unknown, BaseMetadata>;
+  return _internalStartSpanWithInitialMerge({
+    ...(definition.evaluator.state
+      ? { state: definition.evaluator.state }
+      : {}),
+    parent: await experiment.export(),
+    name: "eval",
+    spanId: deterministicId(`${state.runId}:${record.id}:span`),
+    spanAttributes: { type: SpanTypeAttribute.EVAL },
+    event: {
+      id: deterministicId(`${state.runId}:${record.id}:row`),
+      input: datum.input,
+      expected: "expected" in datum ? datum.expected : undefined,
+      tags: datum.tags,
+      origin: datum.origin,
+    },
+  });
+}
+
+async function logTaskResult(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  state: DurableRunState,
+  record: DurableCaseRecord,
+  experiment: Experiment | null,
+  task?: EvalTask<any, any, any, any, any>,
+) {
+  const datum = record.datum as EvalCase<unknown, unknown, BaseMetadata>;
+  const root = await startCaseRoot(definition, state, record, experiment);
+  try {
+    if (task) {
+      const result = await root.traced(
+        (span) =>
+          _internalRunEvaluatorTask(
+            task,
+            datum,
+            record.trialIndex,
+            state.parameters as Record<string, unknown>,
+            span,
+          ),
+        {
+          name: "task",
+          spanId: deterministicId(`${state.runId}:${record.id}:task`),
+          spanAttributes: { type: SpanTypeAttribute.TASK },
+          event: { input: datum.input },
+        },
+      );
+      record.output = assertJsonValue(
+        result.output,
+        `task output for ${record.caseId}`,
+      );
+      record.metadata = assertJsonValue(result.metadata, "task metadata");
+      record.tags = result.tags;
+      record.taskComplete = true;
+    } else {
+      await root.traced((span) => span.log({ output: record.output }), {
+        name: "task",
+        spanId: deterministicId(`${state.runId}:${record.id}:task`),
+        spanAttributes: { type: SpanTypeAttribute.TASK },
+        event: { input: datum.input },
+      });
+    }
+    root.log({
+      output: record.output,
+      expected: "expected" in datum ? datum.expected : undefined,
+      metadata: {
+        ...(record.metadata as Record<string, unknown>),
+        durable_eval: {
+          run_id: state.runId,
+          case_id: record.caseId,
+          trial_index: record.trialIndex,
+        },
+      },
+      tags: record.tags,
+    });
+    record.rootSpan = await root.export();
+    record.taskLogged = true;
+  } catch (error) {
+    logSpanError(root, error);
+    throw error;
+  } finally {
+    root.end();
+    await experiment?.flush();
+  }
+}
+
+async function logCompletedTasks(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  state: DurableRunState,
+  store: DurableEvalStore,
+  key: string,
+  experiment: Experiment | null,
+) {
+  for (const record of state.cases) {
+    if (!record.taskComplete || record.taskLogged) continue;
+    await logTaskResult(definition, state, record, experiment);
+    await writeJson(store, key, state);
+  }
+}
+
 async function runTaskStage<
   Input,
   Output,
@@ -833,6 +1038,7 @@ async function runTaskStage<
   state: DurableRunState,
   store: DurableEvalStore,
   key: string,
+  experiment: Experiment | null,
 ) {
   if (isBatchTask(definition.evaluator.task)) {
     await ensureWorkflowBatches(definition, state, store, key, "task");
@@ -848,32 +1054,7 @@ async function runTaskStage<
   >;
   for (const record of state.cases) {
     if (record.taskComplete) continue;
-    const datum = record.datum as EvalCase<Input, Expected, Metadata>;
-    const metadata = { ...(record.metadata as Record<string, unknown>) };
-    const hooks: EvalHooks<Expected, Metadata, Parameters> = {
-      meta(value) {
-        Object.assign(metadata, value);
-      },
-      metadata: metadata as EvalHooks<
-        Expected,
-        Metadata,
-        Parameters
-      >["metadata"],
-      expected: ("expected" in datum ? datum.expected : undefined) as Expected,
-      span: NOOP_SPAN,
-      parameters: (definition.evaluator.parameters ??
-        {}) as InferParameters<Parameters>,
-      reportProgress: () => undefined,
-      trialIndex: record.trialIndex,
-      tags: record.tags,
-    };
-    record.output = assertJsonValue(
-      await task(datum.input, hooks),
-      `task output for ${record.caseId}`,
-    );
-    record.metadata = assertJsonValue(hooks.metadata, "task metadata");
-    record.tags = hooks.tags;
-    record.taskComplete = true;
+    await logTaskResult(definition, state, record, experiment, task);
     await writeJson(store, key, state);
   }
 }
@@ -895,34 +1076,181 @@ async function runScoreStages<
   state: DurableRunState,
   store: DurableEvalStore,
   key: string,
+  experiment: Experiment | null,
 ) {
-  const scorers = resolveScorers(definition.evaluator.scores);
+  const scorers = resolveScorers(definition.evaluator.scores ?? []);
   for (const { name, scorer } of scorers) {
     if (isBatchScorer(scorer)) {
+      for (const record of state.cases) {
+        if (name in record.scores && !record.loggedScores[name]) {
+          await evaluateAndLogScore(
+            definition,
+            state,
+            record,
+            name,
+            experiment,
+          );
+          await writeJson(store, key, state);
+        }
+      }
       await ensureWorkflowBatches(definition, state, store, key, "score", name);
       continue;
     }
     for (const record of state.cases) {
-      if (name in record.scores) continue;
-      const datum = record.datum as EvalCase<Input, Expected, Metadata>;
-      const value = await (
-        scorer as EvalScorer<Input, Output, Expected, Metadata>
-      )({
-        input: datum.input,
-        ...(datum.tags ? { tags: datum.tags } : {}),
-        ...(datum.id ? { id: datum.id } : {}),
-        ...(datum.upsert_id ? { upsert_id: datum.upsert_id } : {}),
-        ...(datum.trialCount ? { trialCount: datum.trialCount } : {}),
-        ...("expected" in datum ? { expected: datum.expected } : {}),
-        metadata: record.metadata as Metadata,
-        output: record.output as Output,
-      } as unknown as EvalScorerArgs<Input, Output, Expected, Metadata>);
-      record.scores[name] = assertJsonValue(
-        normalizeScores(value, name),
-        `scorer ${name} output`,
+      if (record.loggedScores[name]) continue;
+      await evaluateAndLogScore(
+        definition,
+        state,
+        record,
+        name,
+        experiment,
+        scorer,
       );
       await writeJson(store, key, state);
     }
+  }
+
+  for (const [index, classifier] of (
+    definition.evaluator.classifiers ?? []
+  ).entries()) {
+    const name = classifierName(classifier, index);
+    for (const record of state.cases) {
+      if (record.loggedClassifications[name]) continue;
+      await evaluateAndLogClassification(
+        definition,
+        state,
+        record,
+        name,
+        classifier,
+        experiment,
+      );
+      await writeJson(store, key, state);
+    }
+  }
+}
+
+function scorerArgs(record: DurableCaseRecord) {
+  const datum = record.datum as EvalCase<unknown, unknown, BaseMetadata>;
+  return {
+    ...datum,
+    metadata: record.metadata,
+    output: record.output,
+  } as EvalScorerArgs<unknown, unknown, unknown, BaseMetadata>;
+}
+
+function resumeCaseRoot(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  record: DurableCaseRecord,
+  experiment: Experiment | null,
+) {
+  if (!experiment) return NOOP_SPAN;
+  if (!record.rootSpan) {
+    throw new Error(`Durable eval case ${record.caseId} has no root span`);
+  }
+  return _internalResumeSpan({
+    exported: record.rootSpan,
+    state: definition.evaluator.state,
+  });
+}
+
+async function evaluateAndLogScore(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  state: DurableRunState,
+  record: DurableCaseRecord,
+  name: string,
+  experiment: Experiment | null,
+  scorer?: EvalScorer<any, any, any, any>,
+) {
+  const root = resumeCaseRoot(definition, record, experiment);
+  try {
+    const rootExport = await root.export();
+    const prepared = await root.traced(
+      async (span) => {
+        const value = scorer
+          ? await scorer(scorerArgs(record))
+          : (record.scores[name] as OneOrMoreScores);
+        if (scorer) {
+          record.scores[name] = assertJsonValue(value, `scorer ${name} output`);
+        }
+        const result = _internalPrepareEvaluatorScore(value, name);
+        if (result.results !== null) {
+          span.log({
+            output: result.output,
+            metadata: result.metadata,
+            scores: result.scores,
+          });
+        }
+        return result;
+      },
+      {
+        name,
+        spanId: deterministicId(`${state.runId}:${record.id}:score:${name}`),
+        spanAttributes: {
+          type: SpanTypeAttribute.SCORE,
+          purpose: "scorer",
+        },
+        propagatedEvent: makeScorerPropagatedEvent(rootExport || undefined),
+        event: { input: scorerArgs(record) },
+      },
+    );
+    if (prepared.scores) root.log({ scores: prepared.scores });
+    record.loggedScores[name] = true;
+  } catch (error) {
+    logSpanError(root, error);
+    throw error;
+  } finally {
+    root.end();
+    await experiment?.flush();
+  }
+}
+
+async function evaluateAndLogClassification(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  state: DurableRunState,
+  record: DurableCaseRecord,
+  name: string,
+  classifier: EvalClassifier<any, any, any, any>,
+  experiment: Experiment | null,
+) {
+  const root = resumeCaseRoot(definition, record, experiment);
+  try {
+    const rootExport = await root.export();
+    const prepared = await root.traced(
+      async (span) => {
+        const value = await classifier(scorerArgs(record));
+        record.classifications[name] = assertJsonValue(
+          value,
+          `classifier ${name} output`,
+        );
+        const result = _internalPrepareEvaluatorClassification(value, name);
+        if (result.results !== null) {
+          span.log({ output: result.output, metadata: result.metadata });
+        }
+        return result;
+      },
+      {
+        name,
+        spanId: deterministicId(
+          `${state.runId}:${record.id}:classification:${name}`,
+        ),
+        spanAttributes: {
+          type: SpanTypeAttribute.CLASSIFIER,
+          purpose: "scorer",
+        },
+        propagatedEvent: makeScorerPropagatedEvent(rootExport || undefined),
+        event: { input: scorerArgs(record) },
+      },
+    );
+    if (prepared.classifications) {
+      root.log({ classifications: prepared.classifications });
+    }
+    record.loggedClassifications[name] = true;
+  } catch (error) {
+    logSpanError(root, error);
+    throw error;
+  } finally {
+    root.end();
+    await experiment?.flush();
   }
 }
 
@@ -965,7 +1293,7 @@ async function ensureWorkflowBatches(
       const batchId = newId();
       const context = { runId: state.runId, batchId };
       const items = records.map((record) =>
-        itemForNode(definition, record, kind, scorerName, node),
+        itemForNode(state.parameters, record, kind, scorerName, node),
       );
       const handle = assertJsonValue(
         await node.processor.submit(items, context),
@@ -990,7 +1318,6 @@ async function ensureWorkflowBatches(
       };
       state.batches.push(batch);
       await writeJson(store, key, state);
-      await indexBatch(store, definition, batch, key);
     }
   }
 }
@@ -1047,7 +1374,7 @@ async function collectBatch(
       record.taskComplete = true;
     } else {
       record.scores[batch.scorerName!] = assertJsonValue(
-        normalizeScores(output as OneOrMoreScores, batch.scorerName!),
+        output,
         `score for ${id}`,
       );
     }
@@ -1090,7 +1417,7 @@ function workflowForStage(
     }
     stage = definition.evaluator.task;
   } else {
-    const scorer = resolveScorers(definition.evaluator.scores).find(
+    const scorer = resolveScorers(definition.evaluator.scores ?? []).find(
       ({ name }) => name === scorerName,
     )?.scorer;
     if (!isBatchScorer(scorer)) {
@@ -1124,7 +1451,7 @@ function workflowForStage(
 }
 
 function itemForNode(
-  definition: DurableEvalDefinition<any, any, any, any, any>,
+  parameters: JsonValue,
   record: DurableCaseRecord,
   kind: "task" | "score",
   scorerName: string | undefined,
@@ -1132,7 +1459,7 @@ function itemForNode(
 ) {
   const rootItem =
     kind === "task"
-      ? taskBatchItem(record, definition.evaluator.parameters ?? {})
+      ? taskBatchItem(record, parameters)
       : scorerBatchItem(record);
   const outputs = nodeOutputsFor(record, kind, scorerName);
   return node.item(
@@ -1156,25 +1483,42 @@ function nodeOutputsFor(
   return (record.scoreNodeOutputs[scorerName!] ??= {});
 }
 
-async function materializeCases(
-  evaluator: DurableEvaluator<any, any, any, any, any>,
+async function materializeCases<
+  Input,
+  Output,
+  Expected,
+  Metadata extends BaseMetadata,
+  Parameters extends EvalParameters,
+>(
+  definition: DurableEvalDefinition<
+    Input,
+    Output,
+    Expected,
+    Metadata,
+    Parameters
+  >,
+  data: Evaluator<Input, Output, Expected, Metadata, Parameters>["data"],
+  experiment: Experiment | null,
 ): Promise<DurableCaseRecord[]> {
-  const raw =
-    typeof evaluator.data === "function" ? evaluator.data() : evaluator.data;
-  const data = raw instanceof Promise ? await raw : raw;
-  if (typeof data === "object" && data !== null && "_type" in data) {
-    throw new Error("DurableEval does not support BaseExperiment data sources");
-  }
-  if (!isIterable(data) && !isAsyncIterable(data)) {
-    throw new Error("DurableEval data must be iterable");
-  }
+  const evaluator = definition.evaluator;
+  const iterable = await _internalResolveEvaluatorData(
+    {
+      data,
+      projectName: definition.projectName,
+      projectId: evaluator.projectId,
+      state: evaluator.state,
+    },
+    experiment,
+  );
   const records: DurableCaseRecord[] = [];
   const seen = new Set<string>();
-  for await (const datum of toAsyncIterable(data)) {
+  for await (const datum of iterable) {
     const caseId =
       datum.id ??
       datum.upsert_id ??
-      (evaluator.caseId ? await evaluator.caseId(datum) : undefined);
+      (evaluator.caseId
+        ? await evaluator.caseId(datum as EvalCase<Input, Expected, Metadata>)
+        : undefined);
     if (!caseId) {
       throw new Error(
         "Every DurableEval case requires id, upsert_id, or caseId",
@@ -1199,9 +1543,13 @@ async function materializeCases(
         ),
         tags: datum.tags,
         taskComplete: false,
+        taskLogged: false,
         taskNodeOutputs: {},
         scores: {},
+        loggedScores: {},
         scoreNodeOutputs: {},
+        classifications: {},
+        loggedClassifications: {},
       });
     }
   }
@@ -1237,107 +1585,64 @@ function scorerBatchItem(record: DurableCaseRecord) {
 async function finishExperiment(
   definition: DurableEvalDefinition<any, any, any, any, any>,
   state: DurableRunState,
-  noSendLogs = false,
+  experiment: Experiment | null,
 ) {
-  const scorerNames = resolveScorers(definition.evaluator.scores).map(
+  const scorerNames = resolveScorers(definition.evaluator.scores ?? []).map(
     ({ name }) => name,
   );
-  if (noSendLogs) {
-    return buildLocalSummary(
-      state,
-      definition.projectName,
-      state.experimentName,
-      scorerNames,
+  const results = state.cases.map((record) => {
+    const datum = record.datum as EvalCase<unknown, unknown, BaseMetadata>;
+    const scores = Object.assign(
+      {},
+      ...scorerNames.map(
+        (name) =>
+          _internalPrepareEvaluatorScore(
+            record.scores[name] as OneOrMoreScores,
+            name,
+          ).scores ?? {},
+      ),
+    );
+    const classifications = Object.assign(
+      {},
+      ...Object.entries(record.classifications).map(
+        ([name, value]) =>
+          _internalPrepareEvaluatorClassification(value as never, name)
+            .classifications ?? {},
+      ),
+    );
+    return {
+      ...datum,
+      output: record.output,
+      metadata: record.metadata,
+      tags: record.tags,
+      scores,
+      error: undefined,
+      ...(Object.keys(classifications).length > 0 ? { classifications } : {}),
+    } as EvalResult<unknown, unknown, unknown, BaseMetadata>;
+  });
+  if (!experiment) {
+    return buildEvaluatorLocalSummary(
+      {
+        ...definition.evaluator,
+        projectName: definition.projectName,
+        evalName: state.experimentName,
+      } as unknown as EvaluatorDef<unknown, unknown, unknown, BaseMetadata>,
+      results,
     );
   }
-  const experiment = initExperiment({
-    state: definition.evaluator.state,
-    ...(definition.evaluator.projectId
-      ? { projectId: definition.evaluator.projectId }
-      : { project: definition.projectName }),
-    experiment: state.experimentName,
-    update: true,
-    description: definition.evaluator.description,
-    metadata: definition.evaluator.metadata,
-    tags: definition.evaluator.tags,
-    setCurrent: false,
-  });
-  for (const record of state.cases) {
-    logCase(experiment, state.runId, record, scorerNames);
-  }
   await experiment.flush();
-  return await experiment.summarize();
-}
-
-function logCase(
-  experiment: Experiment,
-  runId: string,
-  record: DurableCaseRecord,
-  scorerNames: string[],
-) {
-  const datum = record.datum as EvalCase<unknown, unknown, BaseMetadata>;
-  const scores = Object.assign(
-    {},
-    ...scorerNames.map((name) => record.scores[name] ?? {}),
-  ) as Record<string, number | null>;
-  const span = experiment.startSpan({
-    name: "eval",
-    spanId: deterministicId(`${runId}:${record.id}:span`),
-    spanAttributes: { type: SpanTypeAttribute.EVAL },
-    event: {
-      id: deterministicId(`${runId}:${record.id}:row`),
-      input: datum.input,
-      expected: "expected" in datum ? datum.expected : undefined,
-      output: record.output,
-      scores,
-      metadata: {
-        ...(record.metadata as Record<string, unknown>),
-        durable_eval: {
-          run_id: runId,
-          case_id: record.caseId,
-          trial_index: record.trialIndex,
-        },
-      },
-      tags: record.tags,
-    },
-  });
-  span.end();
-}
-
-function buildLocalSummary(
-  state: DurableRunState,
-  projectName: string,
-  experimentName: string,
-  scorerNames: string[],
-): ExperimentSummary {
-  const totals: Record<string, { total: number; count: number }> = {};
-  for (const record of state.cases) {
-    for (const scorerName of scorerNames) {
-      const scores = record.scores[scorerName] as Record<string, number | null>;
-      for (const [name, score] of Object.entries(scores)) {
-        if (score === null) continue;
-        const total = totals[name] ?? { total: 0, count: 0 };
-        total.total += score;
-        total.count++;
-        totals[name] = total;
-      }
+  let comparisonExperimentId = definition.evaluator.baseExperimentId;
+  if (!comparisonExperimentId) {
+    try {
+      comparisonExperimentId = await experiment._getBaseExperimentId();
+    } catch {
+      comparisonExperimentId = undefined;
     }
   }
-  return {
-    projectName,
-    experimentName,
-    scores: Object.fromEntries(
-      Object.entries(totals).map(([name, value]) => [
-        name,
-        {
-          name,
-          score: value.total / value.count,
-          improvements: 0,
-          regressions: 0,
-        },
-      ]),
-    ),
-  };
+  return await experiment.summarize({
+    summarizeScores: definition.evaluator.summarizeScores,
+    ...(comparisonExperimentId ? { comparisonExperimentId } : {}),
+  });
 }
 
 function resolveScorers(
@@ -1354,86 +1659,8 @@ function resolveScorers(
   }));
 }
 
-function normalizeScores(value: OneOrMoreScores, defaultName: string) {
-  if (value === null) return { [defaultName]: null };
-  if (typeof value === "number") return { [defaultName]: value };
-  const values = Array.isArray(value) ? value : [value];
-  return Object.fromEntries(
-    values.map((score: Score) => [score.name ?? defaultName, score.score]),
-  );
-}
-
-async function indexBatch(
-  store: DurableEvalStore,
-  definition: DurableEvalDefinition<any, any, any, any, any>,
-  batch: DurableBatchRecord,
-  key: string,
-) {
-  const locator = { runKey: key, batchId: batch.id };
-  await writeJson(
-    store,
-    batchIndexKey(
-      definition.projectName,
-      definition.evalName,
-      "batch",
-      batch.id,
-    ),
-    locator,
-  );
-  if (batch.externalId) {
-    await writeJson(
-      store,
-      batchIndexKey(
-        definition.projectName,
-        definition.evalName,
-        "external",
-        batch.externalId,
-      ),
-      locator,
-    );
-  }
-}
-
-async function locateBatch(
-  store: DurableEvalStore,
-  projectName: string,
-  evalName: string,
-  result: DurableBatchResult,
-) {
-  const byBatch = result.batchId
-    ? await readJson<DurableBatchLocator>(
-        store,
-        batchIndexKey(projectName, evalName, "batch", result.batchId),
-      )
-    : undefined;
-  const byExternal = result.externalId
-    ? await readJson<DurableBatchLocator>(
-        store,
-        batchIndexKey(projectName, evalName, "external", result.externalId),
-      )
-    : undefined;
-  if (
-    byBatch &&
-    byExternal &&
-    (byBatch.runKey !== byExternal.runKey ||
-      byBatch.batchId !== byExternal.batchId)
-  ) {
-    throw new Error("batchId and externalId identify different batches");
-  }
-  return byBatch ?? byExternal;
-}
-
 function runKey(projectName: string, evalName: string, runId: string) {
   return `durable-eval/v2/runs/${contentVersion(encoder.encode(`${projectName}\0${evalName}\0${runId}`))}`;
-}
-
-function batchIndexKey(
-  projectName: string,
-  evalName: string,
-  type: "batch" | "external",
-  id: string,
-) {
-  return `durable-eval/v2/index/${contentVersion(encoder.encode(`${projectName}\0${evalName}`))}/${type}/${contentVersion(encoder.encode(id))}`;
 }
 
 function deterministicId(value: string) {
@@ -1518,26 +1745,6 @@ function isBatchScorer(
     "kind" in value &&
     value.kind === BATCH_SCORER_KIND
   );
-}
-
-function isIterable<T>(value: unknown): value is Iterable<T> {
-  return (
-    typeof value === "object" && value !== null && Symbol.iterator in value
-  );
-}
-
-function isAsyncIterable<T>(value: unknown): value is AsyncIterable<T> {
-  return (
-    typeof value === "object" && value !== null && Symbol.asyncIterator in value
-  );
-}
-
-async function* toAsyncIterable<T>(value: Iterable<T> | AsyncIterable<T>) {
-  if (isAsyncIterable<T>(value)) {
-    for await (const item of value) yield item;
-  } else {
-    for (const item of value) yield item;
-  }
 }
 
 function asError(error: unknown) {

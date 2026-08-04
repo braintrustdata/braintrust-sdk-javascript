@@ -272,9 +272,13 @@ type StartSpanEventArgs = ExperimentLogPartialArgs & Partial<IdField>;
 const INITIAL_SPAN_WRITE_AS_MERGE = Symbol(
   "braintrust.initial-span-write-as-merge",
 );
+const RESUME_SPAN_WITHOUT_INITIAL_WRITE = Symbol(
+  "braintrust.resume-span-without-initial-write",
+);
 
 type InitialSpanWriteAsMergeArg = {
   readonly [INITIAL_SPAN_WRITE_AS_MERGE]?: true;
+  readonly [RESUME_SPAN_WITHOUT_INITIAL_WRITE]?: true;
 };
 
 export type StartSpanArgs = {
@@ -2201,6 +2205,37 @@ export function updateSpan({
     root_span_id: components.data.root_span_id,
     span_id: components.data.span_id,
     event,
+  });
+}
+
+/** @internal Rehydrate an exported root span so work can continue in another process. */
+export function _internalResumeSpan({
+  exported,
+  state,
+}: {
+  exported: string;
+  state?: BraintrustState;
+}): Span {
+  const resolvedState = state ?? _globalState;
+  const components = SpanComponentsV4.fromStr(exported);
+  const { row_id, root_span_id, span_id } = components.data;
+  if (!row_id || !root_span_id || !span_id) {
+    throw new Error("Only exported root spans can be resumed");
+  }
+  return new SpanImpl({
+    state: resolvedState,
+    parentObjectType: components.data.object_type,
+    parentObjectId: new LazyValue(
+      spanComponentsToObjectIdLambda(resolvedState, components),
+    ),
+    parentComputeObjectMetadataArgs: undefined,
+    parentSpanIds: { parentSpanIds: [], rootSpanId: root_span_id },
+    spanId: span_id,
+    event: { id: row_id },
+    propagatedEvent: (components.data.propagated_event ?? undefined) as
+      | StartSpanEventArgs
+      | undefined,
+    [RESUME_SPAN_WITHOUT_INITIAL_WRITE]: true,
   });
 }
 
@@ -7694,7 +7729,9 @@ export class SpanImpl implements Span {
     // Deterministic spans can be initialized concurrently by separate
     // workflow executions, so their first write must not replace later merges.
     this.isMerge = args[INITIAL_SPAN_WRITE_AS_MERGE] === true;
-    this.logInternal({ event, internalData });
+    if (!args[RESUME_SPAN_WITHOUT_INITIAL_WRITE]) {
+      this.logInternal({ event, internalData });
+    }
     this.isMerge = true;
   }
 

@@ -87,15 +87,26 @@ async function main() {
       task,
       scores: [
         function exact({ output, expected }) {
-          return output === expected ? 1 : 0;
+          return {
+            name: "exact",
+            score: output === expected ? 1 : 0,
+            metadata: { method: "shared-eval-runtime" },
+          };
+        },
+      ],
+      classifiers: [
+        function quality({ output, expected }) {
+          return {
+            name: "quality",
+            id: output === expected ? "pass" : "fail",
+            label: output === expected ? "Pass" : "Fail",
+          };
         },
       ],
     },
   );
 
-  const waiting = await definition.start({
-    runId: `durable-${testRunId}`,
-  });
+  const waiting = await definition.start();
   if (waiting.status !== "waiting" || jobs.size !== 2) {
     throw new Error("Durable eval did not pause with two webhook batches");
   }
@@ -107,6 +118,7 @@ async function main() {
     if (!externalId) throw new Error("Durable eval stopped before completion");
     completedJobs.add(externalId);
     processed = await definition.processBatchResult({
+      runId: waiting.runId,
       externalId,
     });
   }

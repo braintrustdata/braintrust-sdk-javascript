@@ -75,7 +75,10 @@ const supportEval = DurableEval("Support bot", {
     async submit(items, context) {
       const batch = await provider.submit({
         idempotencyKey: context.batchId,
-        metadata: { durableBatchId: context.batchId },
+        metadata: {
+          durableRunId: context.runId,
+          durableBatchId: context.batchId,
+        },
         items,
       });
       return { id: batch.id };
@@ -102,9 +105,8 @@ const supportEval = DurableEval("Support bot", {
   ],
 });
 
-const result = await supportEval.start({
-  runId: "release-2026-07-27",
-});
+const result = await supportEval.start();
+const { runId } = result;
 ```
 
 `start()` initializes the run, submits every ready task sub-batch, and returns.
@@ -136,7 +138,7 @@ results, submits newly ready work, and returns without sleeping:
 
 ```typescript
 const result = await supportEval.poll({
-  runId: "release-2026-07-27",
+  runId,
 });
 
 if (result.status === "waiting" && result.pending.poll > 0) {
@@ -151,7 +153,7 @@ mode:
 ```typescript
 {
   status: "waiting",
-  runId: "release-2026-07-27",
+  runId,
   pending: { poll: 2, webhook: 1 },
 }
 ```
@@ -161,7 +163,7 @@ collecting results, or advancing the workflow:
 
 ```typescript
 const status = await supportEval.status({
-  runId: "release-2026-07-27",
+  runId,
 });
 ```
 
@@ -210,8 +212,11 @@ store its results through `processBatchResult()`:
 app.post("/webhooks/provider", async (request, response) => {
   const event = request.body;
   const batch = await provider.getBatch(event.batchId);
+  const runId = batch.metadata.durableRunId;
 
   const result = await supportEval.processBatchResult({
+    // Returned by start() and saved alongside the provider job.
+    runId,
     // The provider's batch ID. DurableEval saved it from submit()'s handle.
     externalId: batch.id,
     // The SDK-generated ID passed to submit(); include it in provider metadata
