@@ -46,23 +46,20 @@ main().catch(console.error);
 
 ## Durable evaluations
 
-`DurableEval` is an additive evaluation API for work that must survive process
-restarts or run through asynchronous provider batch jobs. It checkpoints cases,
-task outputs, scores, provider job handles, and attempts outside Braintrust,
-while completed results are incrementally merged into a normal Braintrust
-experiment.
+`DurableEval` runs tasks and scorers through asynchronous provider batch APIs.
+`batchSize` splits a dataset into provider-sized sub-batches. A small external
+store connects submitted jobs with later webhook callbacks; it is required on
+the eval definition so every invocation uses the same persistence authority.
+No Braintrust backend changes are required.
 
-Every case needs a stable `id` (or a `caseId` function). Reusing a `runId`
-resumes the same input snapshot and never reruns successful work.
+Every case needs a stable `id` (or a `caseId` function).
 
 ```typescript
 import { BatchTask, DurableEval, type DurableEvalStore } from "braintrust";
 
 const store: DurableEvalStore = checkpointStore;
 const supportEval = DurableEval("Support bot", {
-  // Records which eval definition produced each checkpointed result. Update it
-  // when eval-level data or orchestration changes; completed cases stay reused.
-  revision: process.env.GIT_SHA ?? "local",
+  store,
   data: [
     {
       id: "password-reset",
@@ -71,17 +68,10 @@ const supportEval = DurableEval("Support bot", {
     },
   ],
   task: BatchTask({
-    // Batch stages have their own revision so results retain the version of the
-    // prompt, model, and task code that produced them.
-    revision: "generation-v1",
-
-    // Each provider job contains at most 500 eval cases. Up to four jobs may
-    // be in flight for this task stage at once.
+    // Each provider job contains at most 500 eval cases.
     batchSize: 500,
-    maxConcurrentBatches: 4,
 
-    // Upload/submit an asynchronous provider batch and return a
-    // JSON-serializable handle.
+    // Submit one sub-batch and return a JSON-serializable provider handle.
     async submit(items, context) {
       const batch = await provider.submit({
         idempotencyKey: context.batchId,
@@ -91,23 +81,18 @@ const supportEval = DurableEval("Support bot", {
       return { id: batch.id };
     },
 
-    // Completion controls how DurableEval learns that the asynchronous job is
-    // ready. "webhook" pauses until processBatchResult receives an event;
-    // "poll" calls a supplied poll function. Webhooks may also define a
-    // pollFallback for delayed or missing events.
     completion: {
+      // "webhook" waits for processBatchResult(). Use "poll" with a poll()
+      // callback when the provider does not send completion events.
       mode: "webhook",
-      source: "provider",
       externalId: (handle) => handle.id,
     },
 
-    async *collect(handle) {
-      for await (const item of provider.results(handle.id)) {
-        yield {
-          id: item.id,
-          output: item.output,
-        };
-      }
+    async collect(handle) {
+      return (await provider.results(handle.id)).map((item) => ({
+        id: item.id,
+        output: item.output,
+      }));
     },
   }),
   scores: [
@@ -117,115 +102,131 @@ const supportEval = DurableEval("Support bot", {
   ],
 });
 
-const result = await supportEval.run({
+const result = await supportEval.start({
   runId: "release-2026-07-27",
-  store,
-  deadlineMs: 30 * 60 * 1000,
+});
+```
+
+`start()` initializes the run, submits every ready task sub-batch, and returns.
+It never waits in a polling loop. When all task results are available, scoring
+begins. `BatchScorer` uses the same `batchSize`, `submit`, `completion`, and
+array-returning `collect` contract.
+
+### Polling
+
+Polling adapters report the provider's current status through `completion`:
+
+```typescript
+completion: {
+  mode: "poll",
+  async poll(handle) {
+    const batch = await provider.getBatch(handle.id);
+    if (batch.status === "completed") return { status: "complete" };
+    if (batch.status === "failed") {
+      return { status: "failed", error: batch.error };
+    }
+    return { status: "pending" };
+  },
+},
+```
+
+Call `poll()` from a cron, queue worker, or another short-lived invocation. It
+checks every previously submitted polling batch once, collects completed
+results, submits newly ready work, and returns without sleeping:
+
+```typescript
+const result = await supportEval.poll({
+  runId: "release-2026-07-27",
 });
 
-if (result.status === "paused") {
-  await result.resume({ deadlineMs: 30 * 60 * 1000 });
+if (result.status === "waiting" && result.pending.poll > 0) {
+  scheduleAnotherPoll();
 }
 ```
 
-Use `BatchScorer` for asynchronous batch scoring. Existing per-item tasks and
-scorers are also supported and gain checkpointing and retries. Supply a
-compare-and-set-capable `DurableEvalStore`; distributed workers must share the
-same store. Launch fixed shards through the API or the existing CLI:
+`start()`, `poll()`, and `processBatchResult()` return the current eval status.
+A waiting result includes the number of submitted batches using each completion
+mode:
 
-```bash
-npx braintrust eval evaluation.eval.ts \
-  --run-id release-2026-07-27 \
-  --shard 0/8 \
-  --deadline 6h
+```typescript
+{
+  status: "waiting",
+  runId: "release-2026-07-27",
+  pending: { poll: 2, webhook: 1 },
+}
 ```
 
-An error thrown from `submit` is considered ambiguous, because the provider may
-have created a job before the connection failed. The run pauses instead of
-risking duplicate charges. Implement `recover` to look up a prior submission
-using `context.batchId`.
+Use `status()` to read the same information without polling providers,
+collecting results, or advancing the workflow:
 
-The `submit`/`completion`/`collect` split is designed for provider-managed batch
-APIs, including OpenAI's Batch API. A polling adapter uses
-`completion: { mode: "poll", poll }`. A webhook adapter returns while the job is
-pending and resumes through `processBatchResult`. `collect` then fetches and
-stores the item results before the eval advances to scoring. Every provider
-result must carry the durable item `id`. Batch tasks and batch scorers use the
-same contract.
+```typescript
+const status = await supportEval.status({
+  runId: "release-2026-07-27",
+});
+```
+
+Completed statuses have zero pending batches and include the saved experiment
+summary. They can be read repeatedly without logging the eval again.
+
+### Multi-stage workflows
+
+The direct `BatchTask({ submit, completion, collect })` form remains the
+one-batch shorthand. Use `workflow` when a task or scorer requires multiple
+provider batch operations:
+
+```typescript
+task: BatchTask({
+  workflow(workflow) {
+    const draft = workflow.batch("draft", {
+      input: ({ input }) => ({ prompt: input }),
+      batchSize: 500,
+      submit: submitDraftBatch,
+      completion: draftCompletion,
+      collect: collectDraftBatch,
+    });
+
+    return workflow.batch("revise", {
+      needs: { draft },
+      input: ({ input }, { draft }) => ({ original: input, draft }),
+      batchSize: 500,
+      submit: submitRevisionBatch,
+      completion: revisionCompletion,
+      collect: collectRevisionBatch,
+    });
+  },
+}),
+```
+
+Every named batch is a persisted workflow node. `needs` can express sequential
+operations, parallel branches, and joins. The returned node supplies the final
+task output or scorer result.
 
 ### Webhook processing
 
-Pass a provider batch's terminal state to the durable eval definition:
+When the provider reports that any task or scorer batch completed, fetch and
+store its results through `processBatchResult()`:
 
 ```typescript
 app.post("/webhooks/provider", async (request, response) => {
   const event = request.body;
   const batch = await provider.getBatch(event.batchId);
 
-  const result = await supportEval.processBatchResult(
-    {
-      // Uniquely identifies this webhook event so repeated delivery is safe.
-      eventId: event.id,
-      // Namespaces provider job IDs when multiple webhook sources share a store.
-      source: "provider",
-      // Matches the event to the provider job handle saved during submission.
-      externalId: batch.id,
-      // Matches events that arrive before the provider handle is checkpointed.
-      batchId: batch.metadata?.durableBatchId,
-      // Supplies the provider handle when recovering an early or ambiguous event.
-      handle: { id: batch.id },
-      outcome:
-        batch.status === "completed"
-          ? { status: "complete" }
-          : {
-              status: "failed",
-              error: { status: batch.status },
-              // false makes this failure terminal; true requeues its items until
-              // the batch stage reaches maxAttempts.
-              retryable: false,
-            },
-      // Optional JSON payloads are checkpointed with the deduplicated event.
-      payload: { type: event.type },
-    },
-    {
-      // Web workers and eval workers must use the same durable store.
-      store,
-    },
-  );
+  const result = await supportEval.processBatchResult({
+    // The provider's batch ID. DurableEval saved it from submit()'s handle.
+    externalId: batch.id,
+    // The SDK-generated ID passed to submit(); include it in provider metadata
+    // when the webhook cannot provide the external ID used by the handle.
+    batchId: batch.metadata?.durableBatchId,
+  });
 
-  response.status(result.status === "pending" ? 202 : 200).end();
+  response.status(result.status === "waiting" ? 202 : 200).end();
 });
 ```
 
-`eventId` makes delivery idempotent. The SDK indexes a job by its internal
-`batchId` before calling `submit`, then adds the provider `externalId` after the
-handle is known. An early event is stored in an inbox and attached when that
-second index appears. If a worker dies after the provider accepted a batch but
-before its handle was checkpointed, include both the internal `batchId` and a
-JSON-serializable `handle` in the event to resolve the ambiguous submission.
-Without a handle or a successful `recover` callback, the run pauses safely.
-
-Pure webhook stages return
-`{ status: "paused", reason: "waiting_for_webhook" }` instead of holding a
-process open. A webhook completion may also define `pollFallback` with
-`afterMs`, `poll`, and an optional `intervalMs`.
-
-All orchestration state lives in the configured `DurableEvalStore`; this API
-does not require a Braintrust backend change.
-
-The definition object exposes `run`, `status`, `retryFailed`,
-`resubmitUnknown`, `cancel`, and `processBatchResult`. The corresponding
-lifecycle operations are also available through the CLI:
-
-```bash
-npx braintrust eval evaluation.eval.ts --run-id release-2026-07-27 --status
-npx braintrust eval evaluation.eval.ts --run-id release-2026-07-27 --retry-failed
-npx braintrust eval evaluation.eval.ts --run-id release-2026-07-27 --resubmit-unknown
-npx braintrust eval evaluation.eval.ts --run-id release-2026-07-27 --cancel
-```
-
-`--resubmit-unknown` is intentionally explicit because the original provider
-job may exist and resubmitting it can duplicate work and cost.
+The method accepts either `externalId` or `batchId`. The stored batch locator
+identifies the task or scorer workflow node, whose `collect()` results are
+stored before the eval advances. Webhook idempotency and provider failure
+handling remain application responsibilities for now.
 
 ## Auto-Instrumentation
 

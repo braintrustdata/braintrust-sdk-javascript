@@ -26,7 +26,6 @@ export function loadModule({
       prompts: [],
       parameters: [],
       evaluators: {},
-      durableEvaluators: {},
       reporters: {},
     };
     globalThis._lazy_load = true;

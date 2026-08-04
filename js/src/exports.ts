@@ -264,12 +264,7 @@ export {
 
 export type { DurableEvalStore } from "./durable-eval";
 
-export {
-  BatchScorer,
-  BatchTask,
-  DurableEval,
-  DurableEvalNotSubmittedError,
-} from "./durable-eval";
+export { BatchScorer, BatchTask, DurableEval } from "./durable-eval";
 
 export { agentAssertionScorer } from "./agent-assertions";
 

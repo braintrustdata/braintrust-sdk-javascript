@@ -32,13 +32,5 @@ test("durable eval collects webhook sub-batches and logs completed rows", async 
       expect.objectContaining({ run_id: expect.any(String) }),
       expect.objectContaining({ run_id: expect.any(String) }),
     ]);
-
-    const shardedSpans = evalSpans.filter(
-      (event) => event.metadata?.kind === "sharded",
-    );
-    expect(shardedSpans).toHaveLength(4);
-    expect(new Set(shardedSpans.map((event) => event.experimentId)).size).toBe(
-      1,
-    );
   });
 });

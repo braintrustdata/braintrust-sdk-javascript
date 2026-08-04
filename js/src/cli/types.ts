@@ -2,7 +2,6 @@ import type * as esbuild from "esbuild";
 import type { BaseMetadata } from "../logger";
 import type { EvaluatorDef, EvaluatorFile } from "../framework";
 import type { ReporterDef } from "../reporters/types";
-import type { DurableEvalDefinition } from "../durable-eval";
 
 export interface BuildSuccess {
   type: "success";
@@ -34,12 +33,6 @@ export interface EvaluatorState {
     sourceFile: string;
     evaluator: EvaluatorDef<unknown, unknown, unknown, BaseMetadata>;
     reporter: string | ReporterDef<unknown> | undefined;
-  }[];
-  durableEvaluators: {
-    sourceFile: string;
-    // Runtime registration has already passed the public generic boundary.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    definition: DurableEvalDefinition<any, any, any, any, any>;
   }[];
   reporters: {
     [reporter: string]: ReporterDef<unknown>;

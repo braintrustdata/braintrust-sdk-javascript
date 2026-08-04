@@ -33,14 +33,6 @@ export interface RunArgs extends CommonArgs, AuthArgs, CompileArgs {
   dev_host: string;
   dev_port: number;
   dev_org_name?: string;
-  run_id?: string;
-  shard?: string;
-  deadline?: string;
-  checkpoint_dir?: string;
-  status?: boolean;
-  retry_failed?: boolean;
-  resubmit_unknown?: boolean;
-  cancel?: boolean;
 }
 
 export interface BundleArgs extends CommonArgs, AuthArgs, CompileArgs {
