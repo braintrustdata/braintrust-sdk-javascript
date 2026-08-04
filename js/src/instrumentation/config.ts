@@ -18,6 +18,7 @@ export interface InstrumentationIntegrationsConfig {
   openrouter?: boolean;
   openrouterAgent?: boolean;
   mistral?: boolean;
+  ollama?: boolean;
   cohere?: boolean;
   groq?: boolean;
   bedrock?: boolean;
@@ -95,6 +96,7 @@ const envIntegrationAliases: Record<
   openrouteragent: "openrouterAgent",
   "openrouter-agent": "openrouterAgent",
   mistral: "mistral",
+  ollama: "ollama",
   googleadk: "googleADK",
   "google-adk": "googleADK",
   cohere: "cohere",
@@ -143,6 +145,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     openrouter: true,
     openrouterAgent: true,
     mistral: true,
+    ollama: true,
     cohere: true,
     groq: true,
     bedrock: true,

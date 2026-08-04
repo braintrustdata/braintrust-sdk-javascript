@@ -105,6 +105,7 @@ Provider credentials are only required when recording or explicitly running live
 - `CURSOR_API_KEY`
 - `OPENROUTER_API_KEY`
 - `MISTRAL_API_KEY`
+- `OLLAMA_API_KEY`
 - `HUGGINGFACE_API_KEY`
 - `COHERE_API_KEY`
 - `GROQ_API_KEY`
@@ -167,7 +168,7 @@ pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record -- <name>
 ANTHROPIC_API_KEY=... AWS_BEARER_TOKEN_BEDROCK=... \
 OPENAI_API_KEY=... GEMINI_API_KEY=... \
 COHERE_API_KEY=... GROQ_API_KEY=... HUGGINGFACE_API_KEY=... \
-MISTRAL_API_KEY=... OPENROUTER_API_KEY=... \
+MISTRAL_API_KEY=... OLLAMA_API_KEY=... OPENROUTER_API_KEY=... \
 CURSOR_API_KEY=... \
   pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record
 ```
@@ -175,7 +176,7 @@ CURSOR_API_KEY=... \
 After recording, run again **without any provider keys** to confirm the cassette is sufficient:
 
 ```bash
-unset ANTHROPIC_API_KEY AWS_BEARER_TOKEN_BEDROCK OPENAI_API_KEY GEMINI_API_KEY GOOGLE_API_KEY GOOGLE_GENAI_API_KEY COHERE_API_KEY GROQ_API_KEY HUGGINGFACE_API_KEY MISTRAL_API_KEY OPENROUTER_API_KEY CURSOR_API_KEY
+unset ANTHROPIC_API_KEY AWS_BEARER_TOKEN_BEDROCK OPENAI_API_KEY GEMINI_API_KEY GOOGLE_API_KEY GOOGLE_GENAI_API_KEY COHERE_API_KEY GROQ_API_KEY HUGGINGFACE_API_KEY MISTRAL_API_KEY OLLAMA_API_KEY OPENROUTER_API_KEY CURSOR_API_KEY
 pnpm --filter=@braintrust/js-e2e-tests run test:e2e
 ```
 
@@ -187,7 +188,7 @@ After any successful record run, stale cassette variants are cleaned only inside
 
 These scenarios have cassette wiring in place and will use cassettes once they're recorded:
 
-`anthropic-bedrock-instrumentation`, `anthropic-instrumentation`, `openai-instrumentation`, `openai-codex-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `cursor-sdk-instrumentation`, `github-copilot-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`, `wrap-langchain-js-traces`.
+`anthropic-bedrock-instrumentation`, `anthropic-instrumentation`, `openai-instrumentation`, `openai-codex-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `cursor-sdk-instrumentation`, `github-copilot-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `ollama-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`, `wrap-langchain-js-traces`.
 
 ### Cassette format
 

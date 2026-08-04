@@ -6,6 +6,8 @@
  * even though they cannot replace return values.
  */
 
+import { debugLogger } from "../../debug-logger";
+
 /**
  * Check if a value is an async iterable (stream).
  */
@@ -35,6 +37,12 @@ interface StreamPatchOptions<TChunk = unknown, TFinal = unknown> {
    * Receives all collected chunks.
    */
   onComplete: (chunks: TChunk[]) => TFinal | void | Promise<TFinal | void>;
+
+  /**
+   * Called when the consumer cancels the stream before it completes.
+   * Falls back to onComplete when omitted.
+   */
+  onCancel?: (chunks: TChunk[]) => void | Promise<void>;
 
   /**
    * Called if the stream errors.
@@ -142,6 +150,42 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
     return stream;
   }
 
+  const chunks: TChunk[] = [];
+  let completed = false;
+  const notifyCancellation = async () => {
+    try {
+      await (options.onCancel ?? options.onComplete)(chunks);
+    } catch (error) {
+      debugLogger.error("Error in stream cancellation handler:", error);
+    }
+  };
+  const patchAbortIfPresent = () => {
+    try {
+      if (
+        "abort" in stream &&
+        typeof (stream as { abort?: unknown }).abort === "function"
+      ) {
+        const originalAbort = (
+          stream as { abort: (...args: unknown[]) => unknown }
+        ).abort.bind(stream);
+        (stream as { abort: (...args: unknown[]) => unknown }).abort = (
+          ...args
+        ) => {
+          try {
+            return originalAbort(...args);
+          } finally {
+            if (!completed) {
+              completed = true;
+              void notifyCancellation();
+            }
+          }
+        };
+      }
+    } catch (error) {
+      debugLogger.warn("Failed to patch stream abort method:", error);
+    }
+  };
+
   // Only patch iterator methods directly when the stream is its own iterator.
   // Some SDKs expose a separate iterator from Symbol.asyncIterator(); patching
   // stream.next in those cases is a no-op because consumers never call it.
@@ -156,8 +200,6 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
         typeof stream.return === "function" ? stream.return.bind(stream) : null;
       const originalThrow =
         typeof stream.throw === "function" ? stream.throw.bind(stream) : null;
-      const chunks: TChunk[] = [];
-      let completed = false;
 
       stream.next = async (...args: [] | [undefined]) => {
         try {
@@ -219,12 +261,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
         stream.return = async (...args: [unknown?]) => {
           if (!completed) {
             completed = true;
-            try {
-              await options.onComplete(chunks);
-            } catch (error) {
-              // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-              console.error("Error in stream onComplete handler:", error);
-            }
+            await notifyCancellation();
           }
           return originalReturn(...args);
         };
@@ -256,6 +293,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
         value: true,
       });
 
+      patchAbortIfPresent();
       return stream;
     } catch (error) {
       // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
@@ -278,8 +316,6 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
     const patchedIteratorFn = function (this: any) {
       const iterator = originalIteratorFn.call(this);
       const originalNext = iterator.next.bind(iterator);
-      const chunks: TChunk[] = [];
-      let completed = false;
 
       // Patch the next() method
       iterator.next = async function (...args: [] | [undefined]) {
@@ -350,13 +386,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
         iterator.return = async function (...args: any[]) {
           if (!completed) {
             completed = true;
-            // Stream was cancelled/returned early
-            try {
-              await options.onComplete(chunks);
-            } catch (error) {
-              // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-              console.error("Error in stream onComplete handler:", error);
-            }
+            await notifyCancellation();
           }
           return originalReturn(...args);
         };
@@ -397,6 +427,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
     // Replace the Symbol.asyncIterator method
     (stream as any)[Symbol.asyncIterator] = patchedIteratorFn;
 
+    patchAbortIfPresent();
     return stream;
   } catch (error) {
     // If patching fails for any reason, log warning and return original

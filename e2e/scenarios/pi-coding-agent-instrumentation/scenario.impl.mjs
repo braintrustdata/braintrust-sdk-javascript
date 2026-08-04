@@ -9,8 +9,13 @@ export const SCENARIO_NAME = "pi-coding-agent-instrumentation";
 
 async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
   const instrumentedSDK = decorateSDK ? decorateSDK(sdk) : sdk;
-  const { AuthStorage, ModelRegistry, SessionManager, createAgentSession } =
-    instrumentedSDK;
+  const {
+    AuthStorage,
+    DefaultResourceLoader,
+    ModelRegistry,
+    SessionManager,
+    createAgentSession,
+  } = instrumentedSDK;
 
   const authStorage = AuthStorage.inMemory();
   authStorage.setRuntimeApiKey("anthropic", process.env.ANTHROPIC_API_KEY);
@@ -22,6 +27,13 @@ async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
   if (!model) {
     throw new Error("Expected Pi Coding Agent Anthropic model");
   }
+  const cwd = process.cwd();
+  const resourceLoader = new DefaultResourceLoader({
+    agentDir: cwd,
+    cwd,
+    noContextFiles: true,
+  });
+  await resourceLoader.reload();
 
   let session;
   await runTracedScenario({
@@ -32,10 +44,11 @@ async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
         async () => {
           const result = await createAgentSession({
             authStorage,
-            cwd: process.cwd(),
+            cwd,
             model,
             modelRegistry,
-            sessionManager: SessionManager.inMemory(process.cwd()),
+            resourceLoader,
+            sessionManager: SessionManager.inMemory(cwd),
             thinkingLevel: "off",
             tools: ["bash"],
           });
