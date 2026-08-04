@@ -1,4 +1,6 @@
 const aiPackageName = process.env.AI_SDK_PACKAGE_NAME ?? "ai-sdk-v7-latest";
+const anthropicPackageName =
+  process.env.AI_SDK_ANTHROPIC_PACKAGE_NAME ?? "ai-sdk-anthropic-v7-latest";
 const coherePackageName =
   process.env.AI_SDK_COHERE_PACKAGE_NAME ?? "ai-sdk-cohere-v7-latest";
 const openaiPackageName =
@@ -8,6 +10,7 @@ const workflowAIPackageName = process.env.AI_SDK_WORKFLOW_AI_PACKAGE_NAME;
 import * as pinnedWorkflowAI from "ai";
 import * as pinnedWorkflow from "ai-sdk-workflow-v1";
 const ai = await import(aiPackageName);
+const { anthropic, createAnthropic } = await import(anthropicPackageName);
 const { cohere, createCohere } = await import(coherePackageName);
 const { createOpenAI, openai } = await import(openaiPackageName);
 const workflow = workflowPackageName
@@ -26,6 +29,8 @@ import { runAutoAISDKInstrumentationOrExit } from "./scenario.impl.mjs";
 runAutoAISDKInstrumentationOrExit({
   agentClassExport: "ToolLoopAgent",
   ai,
+  anthropic,
+  createAnthropic,
   cohere,
   createCohere,
   createOpenAI,
@@ -38,7 +43,7 @@ runAutoAISDKInstrumentationOrExit({
   supportsGenerateObject: true,
   supportsOpenAICacheScenario: false,
   supportsOutputObjectScenario: true,
-  supportsProviderCacheAssertions: false,
+  supportsProviderCacheAssertions: true,
   supportsStreamObject: true,
   supportsToolExecution: true,
   ...(workflow && workflowPackageName

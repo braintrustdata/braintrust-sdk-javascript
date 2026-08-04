@@ -17,7 +17,7 @@ export default defineConfig({
       JSON.stringify(instrumentationMode),
   },
   plugins: [
-    cloudflare(),
+    cloudflare({ inspectorPort: 0 }),
     ...(Array.isArray(braintrustPlugins)
       ? braintrustPlugins
       : [braintrustPlugins]),

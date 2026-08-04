@@ -2463,6 +2463,825 @@
           }
         },
         {
+          "name": "generateText",
+          "type": "function",
+          "children": [
+            {
+              "name": "doGenerate",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "maxOutputTokens": 24,
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix\n\nReply with exactly CACHE_OK and nothing else.",
+                        "type": "text"
+                      }
+                    ],
+                    "providerOptions": {
+                      "anthropic": {
+                        "cacheControl": {
+                          "type": "ephemeral"
+                        }
+                      }
+                    },
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "claude-haiku-4-5",
+                  "provider": "anthropic.messages"
+                },
+                "temperature": 0
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": "CACHE_OK",
+                    "type": "text"
+                  }
+                ],
+                "finishReason": "stop",
+                "response": {},
+                "usage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 4516,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 3
+                  },
+                  "inputTokens": 4519,
+                  "outputTokenDetails": {},
+                  "outputTokens": 7,
+                  "raw": {
+                    "cache_creation": {
+                      "ephemeral_1h_input_tokens": 0,
+                      "ephemeral_5m_input_tokens": 0
+                    },
+                    "cache_creation_input_tokens": 0,
+                    "cache_read_input_tokens": 4516,
+                    "inference_geo": "not_available",
+                    "input_tokens": 3,
+                    "output_tokens": 7,
+                    "service_tier": "standard"
+                  },
+                  "totalTokens": 4526
+                }
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic.messages"
+              },
+              "metrics": {
+                "completion_tokens": 7,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 4516,
+                "prompt_tokens": 4519,
+                "tokens": 4526
+              }
+            }
+          ],
+          "input": {
+            "maxOutputTokens": 24,
+            "maxRetries": 2,
+            "messages": [
+              {
+                "content": [
+                  {
+                    "text": "braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix\n\nReply with exactly CACHE_OK and nothing else.",
+                    "type": "text"
+                  }
+                ],
+                "providerOptions": {
+                  "anthropic": {
+                    "cacheControl": {
+                      "type": "ephemeral"
+                    }
+                  }
+                },
+                "role": "user"
+              }
+            ],
+            "model": {
+              "modelId": "claude-haiku-4-5",
+              "provider": "anthropic.messages"
+            },
+            "temperature": 0
+          },
+          "output": {
+            "content": [
+              {
+                "text": "CACHE_OK",
+                "type": "text"
+              }
+            ],
+            "finishReason": "stop",
+            "providerMetadata": {
+              "anthropic": {
+                "container": null,
+                "contextManagement": null,
+                "iterations": null,
+                "stopSequence": null,
+                "usage": {
+                  "cache_creation": {
+                    "ephemeral_1h_input_tokens": 0,
+                    "ephemeral_5m_input_tokens": 0
+                  },
+                  "cache_creation_input_tokens": 0,
+                  "cache_read_input_tokens": 4516,
+                  "inference_geo": "not_available",
+                  "input_tokens": 3,
+                  "output_tokens": 7,
+                  "service_tier": "standard"
+                }
+              }
+            },
+            "response": {
+              "messages": [
+                {
+                  "content": [
+                    {
+                      "text": "CACHE_OK",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "assistant"
+                }
+              ],
+              "modelId": "claude-haiku-4-5-20251001",
+              "timestamp": "<timestamp>"
+            },
+            "responseMessages": "<omitted>",
+            "steps": [
+              {
+                "callId": "<callId:1>",
+                "content": [
+                  {
+                    "text": "CACHE_OK",
+                    "type": "text"
+                  }
+                ],
+                "finishReason": "stop",
+                "model": {
+                  "modelId": "claude-haiku-4-5",
+                  "provider": "anthropic.messages"
+                },
+                "providerMetadata": {
+                  "anthropic": {
+                    "container": null,
+                    "contextManagement": null,
+                    "iterations": null,
+                    "stopSequence": null,
+                    "usage": {
+                      "cache_creation": {
+                        "ephemeral_1h_input_tokens": 0,
+                        "ephemeral_5m_input_tokens": 0
+                      },
+                      "cache_creation_input_tokens": 0,
+                      "cache_read_input_tokens": 4516,
+                      "inference_geo": "not_available",
+                      "input_tokens": 3,
+                      "output_tokens": 7,
+                      "service_tier": "standard"
+                    }
+                  }
+                },
+                "rawFinishReason": "end_turn",
+                "response": {
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "text": "CACHE_OK",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "assistant"
+                    }
+                  ],
+                  "modelId": "claude-haiku-4-5-20251001",
+                  "timestamp": "<timestamp>"
+                },
+                "runtimeContext": {},
+                "stepNumber": 0,
+                "toolsContext": {},
+                "usage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 4516,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 3
+                  },
+                  "inputTokens": 4519,
+                  "outputTokenDetails": {},
+                  "outputTokens": 7,
+                  "raw": {
+                    "cache_creation": {
+                      "ephemeral_1h_input_tokens": 0,
+                      "ephemeral_5m_input_tokens": 0
+                    },
+                    "cache_creation_input_tokens": 0,
+                    "cache_read_input_tokens": 4516,
+                    "inference_geo": "not_available",
+                    "input_tokens": 3,
+                    "output_tokens": 7,
+                    "service_tier": "standard"
+                  },
+                  "totalTokens": 4526
+                },
+                "warnings": []
+              }
+            ],
+            "text": "CACHE_OK",
+            "toolCalls": [],
+            "toolResults": [],
+            "totalUsage": {
+              "inputTokenDetails": {
+                "cacheReadTokens": 4516,
+                "cacheWriteTokens": 0,
+                "noCacheTokens": 3
+              },
+              "inputTokens": 4519,
+              "outputTokenDetails": {},
+              "outputTokens": 7,
+              "totalTokens": 4526
+            },
+            "usage": {
+              "inputTokenDetails": {
+                "cacheReadTokens": 4516,
+                "cacheWriteTokens": 0,
+                "noCacheTokens": 3
+              },
+              "inputTokens": 4519,
+              "outputTokenDetails": {},
+              "outputTokens": 7,
+              "totalTokens": 4526
+            },
+            "warnings": []
+          },
+          "metadata": {
+            "braintrust": {
+              "integration_name": "ai-sdk",
+              "sdk_language": "typescript"
+            },
+            "model": "claude-haiku-4-5",
+            "provider": "anthropic.messages"
+          }
+        },
+        {
+          "name": "ai-sdk-anthropic-cache-operation",
+          "children": [
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 24,
+                    "messages": [
+                      {
+                        "content": [
+                          {
+                            "text": "braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix\n\nReply with exactly CACHE_OK and nothing else.",
+                            "type": "text"
+                          }
+                        ],
+                        "providerOptions": {
+                          "anthropic": {
+                            "cacheControl": {
+                              "type": "ephemeral"
+                            }
+                          }
+                        },
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "claude-haiku-4-5",
+                      "provider": "anthropic.messages"
+                    },
+                    "temperature": 0
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "text": "CACHE_OK",
+                        "type": "text"
+                      }
+                    ],
+                    "finishReason": "stop",
+                    "response": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 4516,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 3
+                      },
+                      "inputTokens": 4519,
+                      "outputTokenDetails": {},
+                      "outputTokens": 7,
+                      "raw": {
+                        "cache_creation": {
+                          "ephemeral_1h_input_tokens": 0,
+                          "ephemeral_5m_input_tokens": 0
+                        },
+                        "cache_creation_input_tokens": 0,
+                        "cache_read_input_tokens": 4516,
+                        "inference_geo": "not_available",
+                        "input_tokens": 3,
+                        "output_tokens": 7,
+                        "service_tier": "standard"
+                      },
+                      "totalTokens": 4526
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "claude-haiku-4-5",
+                    "provider": "anthropic.messages"
+                  },
+                  "metrics": {
+                    "completion_tokens": 7,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 4516,
+                    "prompt_tokens": 4519,
+                    "tokens": 4526
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 24,
+                "maxRetries": 2,
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix\n\nReply with exactly CACHE_OK and nothing else.",
+                        "type": "text"
+                      }
+                    ],
+                    "providerOptions": {
+                      "anthropic": {
+                        "cacheControl": {
+                          "type": "ephemeral"
+                        }
+                      }
+                    },
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "claude-haiku-4-5",
+                  "provider": "anthropic.messages"
+                },
+                "temperature": 0
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": "CACHE_OK",
+                    "type": "text"
+                  }
+                ],
+                "finishReason": "stop",
+                "providerMetadata": {
+                  "anthropic": {
+                    "container": null,
+                    "contextManagement": null,
+                    "iterations": null,
+                    "stopSequence": null,
+                    "usage": {
+                      "cache_creation": {
+                        "ephemeral_1h_input_tokens": 0,
+                        "ephemeral_5m_input_tokens": 0
+                      },
+                      "cache_creation_input_tokens": 0,
+                      "cache_read_input_tokens": 4516,
+                      "inference_geo": "not_available",
+                      "input_tokens": 3,
+                      "output_tokens": 7,
+                      "service_tier": "standard"
+                    }
+                  }
+                },
+                "response": {
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "text": "CACHE_OK",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "assistant"
+                    }
+                  ],
+                  "modelId": "claude-haiku-4-5-20251001",
+                  "timestamp": "<timestamp>"
+                },
+                "responseMessages": "<omitted>",
+                "steps": [
+                  {
+                    "callId": "<callId:1>",
+                    "content": [
+                      {
+                        "text": "CACHE_OK",
+                        "type": "text"
+                      }
+                    ],
+                    "finishReason": "stop",
+                    "model": {
+                      "modelId": "claude-haiku-4-5",
+                      "provider": "anthropic.messages"
+                    },
+                    "providerMetadata": {
+                      "anthropic": {
+                        "container": null,
+                        "contextManagement": null,
+                        "iterations": null,
+                        "stopSequence": null,
+                        "usage": {
+                          "cache_creation": {
+                            "ephemeral_1h_input_tokens": 0,
+                            "ephemeral_5m_input_tokens": 0
+                          },
+                          "cache_creation_input_tokens": 0,
+                          "cache_read_input_tokens": 4516,
+                          "inference_geo": "not_available",
+                          "input_tokens": 3,
+                          "output_tokens": 7,
+                          "service_tier": "standard"
+                        }
+                      }
+                    },
+                    "rawFinishReason": "end_turn",
+                    "response": {
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "text": "CACHE_OK",
+                              "type": "text"
+                            }
+                          ],
+                          "role": "assistant"
+                        }
+                      ],
+                      "modelId": "claude-haiku-4-5-20251001",
+                      "timestamp": "<timestamp>"
+                    },
+                    "runtimeContext": {},
+                    "stepNumber": 0,
+                    "toolsContext": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 4516,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 3
+                      },
+                      "inputTokens": 4519,
+                      "outputTokenDetails": {},
+                      "outputTokens": 7,
+                      "raw": {
+                        "cache_creation": {
+                          "ephemeral_1h_input_tokens": 0,
+                          "ephemeral_5m_input_tokens": 0
+                        },
+                        "cache_creation_input_tokens": 0,
+                        "cache_read_input_tokens": 4516,
+                        "inference_geo": "not_available",
+                        "input_tokens": 3,
+                        "output_tokens": 7,
+                        "service_tier": "standard"
+                      },
+                      "totalTokens": 4526
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "CACHE_OK",
+                "toolCalls": [],
+                "toolResults": [],
+                "totalUsage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 4516,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 3
+                  },
+                  "inputTokens": 4519,
+                  "outputTokenDetails": {},
+                  "outputTokens": 7,
+                  "totalTokens": 4526
+                },
+                "usage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 4516,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 3
+                  },
+                  "inputTokens": 4519,
+                  "outputTokenDetails": {},
+                  "outputTokens": 7,
+                  "totalTokens": 4526
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic.messages"
+              }
+            },
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 24,
+                    "messages": [
+                      {
+                        "content": [
+                          {
+                            "text": "braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix\n\nReply with exactly CACHE_OK and nothing else.",
+                            "type": "text"
+                          }
+                        ],
+                        "providerOptions": {
+                          "anthropic": {
+                            "cacheControl": {
+                              "type": "ephemeral"
+                            }
+                          }
+                        },
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "modelId": "claude-haiku-4-5",
+                      "provider": "anthropic.messages"
+                    },
+                    "temperature": 0
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "text": "CACHE_OK",
+                        "type": "text"
+                      }
+                    ],
+                    "finishReason": "stop",
+                    "response": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 4516,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 3
+                      },
+                      "inputTokens": 4519,
+                      "outputTokenDetails": {},
+                      "outputTokens": 7,
+                      "raw": {
+                        "cache_creation": {
+                          "ephemeral_1h_input_tokens": 0,
+                          "ephemeral_5m_input_tokens": 0
+                        },
+                        "cache_creation_input_tokens": 0,
+                        "cache_read_input_tokens": 4516,
+                        "inference_geo": "not_available",
+                        "input_tokens": 3,
+                        "output_tokens": 7,
+                        "service_tier": "standard"
+                      },
+                      "totalTokens": 4526
+                    }
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "claude-haiku-4-5",
+                    "provider": "anthropic.messages"
+                  },
+                  "metrics": {
+                    "completion_tokens": 7,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 4516,
+                    "prompt_tokens": 4519,
+                    "tokens": 4526
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 24,
+                "maxRetries": 2,
+                "messages": [
+                  {
+                    "content": [
+                      {
+                        "text": "braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix braintrust cache prefix\n\nReply with exactly CACHE_OK and nothing else.",
+                        "type": "text"
+                      }
+                    ],
+                    "providerOptions": {
+                      "anthropic": {
+                        "cacheControl": {
+                          "type": "ephemeral"
+                        }
+                      }
+                    },
+                    "role": "user"
+                  }
+                ],
+                "model": {
+                  "modelId": "claude-haiku-4-5",
+                  "provider": "anthropic.messages"
+                },
+                "temperature": 0
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": "CACHE_OK",
+                    "type": "text"
+                  }
+                ],
+                "finishReason": "stop",
+                "providerMetadata": {
+                  "anthropic": {
+                    "container": null,
+                    "contextManagement": null,
+                    "iterations": null,
+                    "stopSequence": null,
+                    "usage": {
+                      "cache_creation": {
+                        "ephemeral_1h_input_tokens": 0,
+                        "ephemeral_5m_input_tokens": 0
+                      },
+                      "cache_creation_input_tokens": 0,
+                      "cache_read_input_tokens": 4516,
+                      "inference_geo": "not_available",
+                      "input_tokens": 3,
+                      "output_tokens": 7,
+                      "service_tier": "standard"
+                    }
+                  }
+                },
+                "response": {
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "text": "CACHE_OK",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "assistant"
+                    }
+                  ],
+                  "modelId": "claude-haiku-4-5-20251001",
+                  "timestamp": "<timestamp>"
+                },
+                "responseMessages": "<omitted>",
+                "steps": [
+                  {
+                    "callId": "<callId:1>",
+                    "content": [
+                      {
+                        "text": "CACHE_OK",
+                        "type": "text"
+                      }
+                    ],
+                    "finishReason": "stop",
+                    "model": {
+                      "modelId": "claude-haiku-4-5",
+                      "provider": "anthropic.messages"
+                    },
+                    "providerMetadata": {
+                      "anthropic": {
+                        "container": null,
+                        "contextManagement": null,
+                        "iterations": null,
+                        "stopSequence": null,
+                        "usage": {
+                          "cache_creation": {
+                            "ephemeral_1h_input_tokens": 0,
+                            "ephemeral_5m_input_tokens": 0
+                          },
+                          "cache_creation_input_tokens": 0,
+                          "cache_read_input_tokens": 4516,
+                          "inference_geo": "not_available",
+                          "input_tokens": 3,
+                          "output_tokens": 7,
+                          "service_tier": "standard"
+                        }
+                      }
+                    },
+                    "rawFinishReason": "end_turn",
+                    "response": {
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "text": "CACHE_OK",
+                              "type": "text"
+                            }
+                          ],
+                          "role": "assistant"
+                        }
+                      ],
+                      "modelId": "claude-haiku-4-5-20251001",
+                      "timestamp": "<timestamp>"
+                    },
+                    "runtimeContext": {},
+                    "stepNumber": 0,
+                    "toolsContext": {},
+                    "usage": {
+                      "inputTokenDetails": {
+                        "cacheReadTokens": 4516,
+                        "cacheWriteTokens": 0,
+                        "noCacheTokens": 3
+                      },
+                      "inputTokens": 4519,
+                      "outputTokenDetails": {},
+                      "outputTokens": 7,
+                      "raw": {
+                        "cache_creation": {
+                          "ephemeral_1h_input_tokens": 0,
+                          "ephemeral_5m_input_tokens": 0
+                        },
+                        "cache_creation_input_tokens": 0,
+                        "cache_read_input_tokens": 4516,
+                        "inference_geo": "not_available",
+                        "input_tokens": 3,
+                        "output_tokens": 7,
+                        "service_tier": "standard"
+                      },
+                      "totalTokens": 4526
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "CACHE_OK",
+                "toolCalls": [],
+                "toolResults": [],
+                "totalUsage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 4516,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 3
+                  },
+                  "inputTokens": 4519,
+                  "outputTokenDetails": {},
+                  "outputTokens": 7,
+                  "totalTokens": 4526
+                },
+                "usage": {
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 4516,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 3
+                  },
+                  "inputTokens": 4519,
+                  "outputTokenDetails": {},
+                  "outputTokens": 7,
+                  "totalTokens": 4526
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "claude-haiku-4-5",
+                "provider": "anthropic.messages"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "anthropic-cache",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "ai-sdk-generate-object-operation",
           "children": [
             {

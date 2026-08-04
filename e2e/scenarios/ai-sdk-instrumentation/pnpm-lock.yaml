@@ -30,6 +30,12 @@ importers:
       ai-sdk-anthropic-v6-latest:
         specifier: npm:@ai-sdk/anthropic@3.0.98
         version: '@ai-sdk/anthropic@3.0.98(zod@3.25.76)'
+      ai-sdk-anthropic-v7:
+        specifier: npm:@ai-sdk/anthropic@4.0.0
+        version: '@ai-sdk/anthropic@4.0.0(zod@3.25.76)'
+      ai-sdk-anthropic-v7-latest:
+        specifier: npm:@ai-sdk/anthropic@4.0.25
+        version: '@ai-sdk/anthropic@4.0.25(zod@3.25.76)'
       ai-sdk-cohere-v5:
         specifier: npm:@ai-sdk/cohere@2.0.7
         version: '@ai-sdk/cohere@2.0.7(zod@3.25.76)'
@@ -138,6 +144,18 @@ packages:
   '@ai-sdk/anthropic@3.0.98':
     resolution: {integrity: sha512-JSHw0m15tXsdZWaV64UOjbHFKHGsPVUi9jYApNaz2QOBm987vl+l9aUFnlN1OWmFvDNMIhAPVOYRsFwjK0by/w==}
     engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/anthropic@4.0.0':
+    resolution: {integrity: sha512-N0lT1g6/5DEIZvalpkpwYRCdu7n5qb8qPN3PcTem6k4VkPBLC2+T2LAAyx1GS0eNOxavVa0CP7n2kCiye0yyfw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/anthropic@4.0.25':
+    resolution: {integrity: sha512-cU61cAdOfgiuJngCPq61FI9pD7KB+gTQm1KQRIwvsf09gGJmliTR8UQdw9x9UWOOqvEYaeuE6NrtXUUCLOjsbQ==}
+    engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
@@ -872,6 +890,18 @@ snapshots:
     dependencies:
       '@ai-sdk/provider': 3.0.14
       '@ai-sdk/provider-utils': 4.0.40(zod@3.25.76)
+      zod: 3.25.76
+
+  '@ai-sdk/anthropic@4.0.0(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.0
+      '@ai-sdk/provider-utils': 5.0.0(zod@3.25.76)
+      zod: 3.25.76
+
+  '@ai-sdk/anthropic@4.0.25(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.4
+      '@ai-sdk/provider-utils': 5.0.16(zod@3.25.76)
       zod: 3.25.76
 
   '@ai-sdk/cohere@2.0.34(zod@3.25.76)':
