@@ -1,6 +1,8 @@
 const aiPackageName = process.env.AI_SDK_PACKAGE_NAME ?? "ai-sdk-v7-latest";
 const anthropicPackageName =
   process.env.AI_SDK_ANTHROPIC_PACKAGE_NAME ?? "ai-sdk-anthropic-v7-latest";
+const coherePackageName =
+  process.env.AI_SDK_COHERE_PACKAGE_NAME ?? "ai-sdk-cohere-v7-latest";
 const openaiPackageName =
   process.env.AI_SDK_OPENAI_PACKAGE_NAME ?? "ai-sdk-openai-v7-latest";
 const workflowPackageName = process.env.AI_SDK_WORKFLOW_PACKAGE_NAME;
@@ -17,6 +19,7 @@ import { runAutoAISDKInstrumentation } from "./scenario.impl.mjs";
 runMain(async () => {
   const ai = await import(aiPackageName);
   const { anthropic, createAnthropic } = await import(anthropicPackageName);
+  const { cohere, createCohere } = await import(coherePackageName);
   const { createOpenAI, openai } = await import(openaiPackageName);
   const workflow = workflowPackageName
     ? workflowPackageName === "ai-sdk-workflow-v1"
@@ -36,6 +39,8 @@ runMain(async () => {
     ai,
     anthropic,
     createAnthropic,
+    cohere,
+    createCohere,
     createOpenAI,
     maxTokensKey: "maxOutputTokens",
     openai,
@@ -50,7 +55,6 @@ runMain(async () => {
     supportsOpenAICacheScenario: false,
     supportsOutputObjectScenario: true,
     supportsProviderCacheAssertions: true,
-    supportsRerank: false,
     supportsStreamObject: true,
     supportsToolExecution: true,
     ...(workflow && workflowPackageName

@@ -48,6 +48,12 @@ importers:
       ai-sdk-cohere-v6-latest:
         specifier: npm:@ai-sdk/cohere@3.0.49
         version: '@ai-sdk/cohere@3.0.49(zod@3.25.76)'
+      ai-sdk-cohere-v7:
+        specifier: npm:@ai-sdk/cohere@4.0.0
+        version: '@ai-sdk/cohere@4.0.0(zod@3.25.76)'
+      ai-sdk-cohere-v7-latest:
+        specifier: npm:@ai-sdk/cohere@4.0.16
+        version: '@ai-sdk/cohere@4.0.16(zod@3.25.76)'
       ai-sdk-openai-v3:
         specifier: npm:@ai-sdk/openai@0.0.62
         version: '@ai-sdk/openai@0.0.62(zod@3.25.76)'
@@ -174,6 +180,18 @@ packages:
   '@ai-sdk/cohere@3.0.7':
     resolution: {integrity: sha512-/MlCqeW6RT5qOdQyEJDCgeDCW3IKH8Cj6fcKDINre1gPmiTxmxn0WkWnBXa++OVmiArjCuoJYifjq9T1IjaQqw==}
     engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/cohere@4.0.0':
+    resolution: {integrity: sha512-yaUMuKbll4lZ+fU78Ci6h12bzxZUX1L7p97HkSyQZDYk7SHX4YdzIhzrkMXIUEccpTe45AHcZbwzBmdWydI7qQ==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/cohere@4.0.16':
+    resolution: {integrity: sha512-qc1uGesoSnN4YiR8/XPgEPMQ1B4N2M+icJhfAELeKW9pNNhqFb2LN22lGuDlOzY9+LXWz+fsRp//iui/c2sXiQ==}
+    engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
@@ -908,6 +926,18 @@ snapshots:
     dependencies:
       '@ai-sdk/provider': 3.0.3
       '@ai-sdk/provider-utils': 4.0.7(zod@3.25.76)
+      zod: 3.25.76
+
+  '@ai-sdk/cohere@4.0.0(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.0
+      '@ai-sdk/provider-utils': 5.0.0(zod@3.25.76)
+      zod: 3.25.76
+
+  '@ai-sdk/cohere@4.0.16(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.4
+      '@ai-sdk/provider-utils': 5.0.16(zod@3.25.76)
       zod: 3.25.76
 
   '@ai-sdk/gateway@2.0.115(zod@3.25.76)':

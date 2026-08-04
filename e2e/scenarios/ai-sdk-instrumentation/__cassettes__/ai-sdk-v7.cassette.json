@@ -4486,6 +4486,75 @@
         "status": 200,
         "statusText": "OK"
       }
+    },
+    {
+      "callIndex": 0,
+      "id": "064d11f1077567e7",
+      "matchKey": "POST api.cohere.com/v2/rerank",
+      "recordedAt": "2026-08-03T11:56:26.194Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "documents": [
+              "Athens is in Greece.",
+              "Paris is in France.",
+              "Lima is in Peru."
+            ],
+            "model": "rerank-v3.5",
+            "query": "Which document is about France?",
+            "top_n": 2
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.cohere.com/v2/rerank"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "id": "42b8d590-8594-488a-9b31-6d68f60ccb6c",
+            "meta": {
+              "api_version": {
+                "version": "2"
+              },
+              "billed_units": {
+                "search_units": 1
+              }
+            },
+            "results": [
+              {
+                "index": 1,
+                "relevance_score": 0.06657539
+              },
+              {
+                "index": 0,
+                "relevance_score": 0.015062517
+              }
+            ]
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Debug-Trace-ID",
+          "alt-svc": "h3=\":443\"; ma=2592000",
+          "cache-control": "no-cache, no-store, no-transform, must-revalidate, private, max-age=0",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Mon, 03 Aug 2026 11:56:26 GMT",
+          "expires": "Thu, 01 Jan 1970 00:00:00 GMT",
+          "pragma": "no-cache",
+          "server": "envoy",
+          "transfer-encoding": "chunked",
+          "vary": "Origin,Accept-Encoding",
+          "via": "1.1 google",
+          "x-accel-expires": "0",
+          "x-debug-trace-id": "454d4e41ac982f6df3cdf7a38dd09d48",
+          "x-envoy-upstream-service-time": "78"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
     }
   ],
   "meta": {

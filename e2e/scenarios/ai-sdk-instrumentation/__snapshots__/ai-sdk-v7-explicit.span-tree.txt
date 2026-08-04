@@ -866,6 +866,71 @@ span_tree:
     │           metrics: {
     │             "tokens": 16
     │           }
+    ├── ai-sdk-rerank-operation
+    │   metadata: {
+    │     "operation": "rerank",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── rerank [function]
+    │       input: {
+    │         "documents": [
+    │           "Athens is in Greece.",
+    │           "Paris is in France.",
+    │           "Lima is in Peru."
+    │         ],
+    │         "model": {
+    │           "modelId": "rerank-v3.5",
+    │           "provider": "cohere.reranking"
+    │         },
+    │         "query": "Which document is about France?",
+    │         "topN": 2
+    │       }
+    │       output: [
+    │         {
+    │           "index": 1,
+    │           "relevance_score": 0.06657539
+    │         },
+    │         {
+    │           "index": 0,
+    │           "relevance_score": 0.015062517
+    │         }
+    │       ]
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "rerank-v3.5",
+    │         "provider": "cohere.reranking"
+    │       }
+    │       └── doRerank [llm]
+    │           input: {
+    │             "documents": [
+    │               "Athens is in Greece.",
+    │               "Paris is in France.",
+    │               "Lima is in Peru."
+    │             ],
+    │             "query": "Which document is about France?",
+    │             "topN": 2
+    │           }
+    │           output: [
+    │             {
+    │               "index": 1,
+    │               "relevance_score": 0.06657539
+    │             },
+    │             {
+    │               "index": 0,
+    │               "relevance_score": 0.015062517
+    │             }
+    │           ]
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "model": "rerank-v3.5",
+    │             "provider": "cohere.reranking"
+    │           }
     ├── ai-sdk-tool-operation
     │   metadata: {
     │     "operation": "tool",
