@@ -2,8 +2,19 @@
   "name": "@braintrust/e2e-test-framework-evals-jest",
   "private": true,
   "type": "commonjs",
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "jest-v29-latest": {
+          "package": "jest",
+          "range": "29"
+        }
+      }
+    }
+  },
   "dependencies": {
-    "jest": "29.7.0"
+    "jest-v29": "npm:jest@29.7.0",
+    "jest-v29-latest": "npm:jest@29.7.0"
   },
   "pnpm": {
     "overrides": {

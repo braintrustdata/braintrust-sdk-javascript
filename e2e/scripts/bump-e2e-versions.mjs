@@ -138,12 +138,26 @@ async function bumpScenarioDependencies(scenarios) {
   const metadataCache = new Map();
 
   for (const scenario of scenarios) {
-    const dependencies = scenario.manifest.dependencies ?? {};
     const rules = scenario.manifest.braintrustScenario.bump.dependencies;
-    const updates = [];
+    const targetManifests = new Map([
+      [
+        scenario.manifestPath,
+        {
+          dir: scenario.dir,
+          manifest: scenario.manifest,
+          manifestPath: scenario.manifestPath,
+          updates: [],
+        },
+      ],
+    ]);
 
     for (const [dependencyName, rawRule] of Object.entries(rules)) {
-      const rule = normalizeBumpRule(dependencyName, rawRule, scenario.name);
+      const rule = normalizeBumpRule(
+        dependencyName,
+        rawRule,
+        scenario.dir,
+        scenario.name,
+      );
       let metadata = metadataCache.get(rule.package);
       if (!metadata) {
         metadata = await fetchPackageMetadata(rule.package);
@@ -157,48 +171,76 @@ async function bumpScenarioDependencies(scenarios) {
         policy,
         range: rule.range,
       });
-      const nextSpec = packageSpecifier(dependencyName, rule.package, version);
-      if (dependencies[dependencyName] !== nextSpec) {
-        updates.push({
-          dependencyName,
-          from: dependencies[dependencyName] ?? "<missing>",
+      let targetManifest = targetManifests.get(rule.targetManifestPath);
+      if (!targetManifest) {
+        const manifest = JSON.parse(
+          await readFile(rule.targetManifestPath, "utf8"),
+        );
+        targetManifest = {
+          dir: path.dirname(rule.targetManifestPath),
+          manifest,
+          manifestPath: rule.targetManifestPath,
+          updates: [],
+        };
+        targetManifests.set(rule.targetManifestPath, targetManifest);
+      }
+
+      const dependencies = targetManifest.manifest.dependencies ?? {};
+      const nextSpec = packageSpecifier(
+        rule.targetDependency,
+        rule.package,
+        version,
+      );
+      if (dependencies[rule.targetDependency] !== nextSpec) {
+        targetManifest.updates.push({
+          dependencyName: rule.targetDependency,
+          from: dependencies[rule.targetDependency] ?? "<missing>",
           to: nextSpec,
         });
-        dependencies[dependencyName] = nextSpec;
+        dependencies[rule.targetDependency] = nextSpec;
+        targetManifest.manifest.dependencies = dependencies;
       }
     }
 
-    if (updates.length === 0) {
+    const changedManifests = [...targetManifests.values()].filter(
+      (target) => target.updates.length > 0,
+    );
+    if (changedManifests.length === 0) {
       console.error(`[bump] ${scenario.name}: already up to date`);
       continue;
     }
 
-    scenario.manifest.dependencies = dependencies;
-    await writeFile(
-      scenario.manifestPath,
-      `${JSON.stringify(scenario.manifest, null, 2)}\n`,
-    );
-    for (const update of updates) {
-      console.error(
-        `[bump] ${scenario.name}: ${update.dependencyName} ${update.from} -> ${update.to}`,
+    for (const target of changedManifests) {
+      await writeFile(
+        target.manifestPath,
+        `${JSON.stringify(target.manifest, null, 2)}\n`,
+      );
+      for (const update of target.updates) {
+        const relativeManifestPath = path.relative(
+          scenario.dir,
+          target.manifestPath,
+        );
+        console.error(
+          `[bump] ${scenario.name}/${relativeManifestPath}: ${update.dependencyName} ${update.from} -> ${update.to}`,
+        );
+      }
+      await runCommand(
+        PNPM_COMMAND,
+        [
+          "install",
+          "--dir",
+          target.dir,
+          "--ignore-workspace",
+          "--lockfile-only",
+          "--strict-peer-dependencies=false",
+        ],
+        { env: installEnv() },
       );
     }
-    await runCommand(
-      PNPM_COMMAND,
-      [
-        "install",
-        "--dir",
-        scenario.dir,
-        "--ignore-workspace",
-        "--lockfile-only",
-        "--strict-peer-dependencies=false",
-      ],
-      { env: installEnv() },
-    );
   }
 }
 
-function normalizeBumpRule(dependencyName, rawRule, scenarioName) {
+function normalizeBumpRule(dependencyName, rawRule, scenarioDir, scenarioName) {
   if (!dependencyName.endsWith("-latest")) {
     throw new Error(
       `${scenarioName} has a bump rule for ${dependencyName}, but bump rules may only target latest lane aliases ending in "-latest".`,
@@ -221,10 +263,38 @@ function normalizeBumpRule(dependencyName, rawRule, scenarioName) {
     );
   }
 
+  const targetDependency = rawRule.targetDependency ?? dependencyName;
+  if (typeof targetDependency !== "string" || targetDependency.length === 0) {
+    throw new Error(
+      `${scenarioName} has an invalid targetDependency for ${dependencyName}; expected a dependency name.`,
+    );
+  }
+
+  const targetManifest = rawRule.targetManifest ?? "package.json";
+  if (typeof targetManifest !== "string" || targetManifest.length === 0) {
+    throw new Error(
+      `${scenarioName} has an invalid targetManifest for ${dependencyName}; expected a relative package.json path.`,
+    );
+  }
+  const targetManifestPath = path.resolve(scenarioDir, targetManifest);
+  const relativeTargetManifest = path.relative(scenarioDir, targetManifestPath);
+  if (
+    path.isAbsolute(targetManifest) ||
+    relativeTargetManifest.startsWith(`..${path.sep}`) ||
+    relativeTargetManifest === ".." ||
+    path.basename(targetManifestPath) !== "package.json"
+  ) {
+    throw new Error(
+      `${scenarioName} has an invalid targetManifest for ${dependencyName}; expected a package.json inside the scenario directory.`,
+    );
+  }
+
   return {
     allowPrerelease: rawRule.allowPrerelease === true,
     package: rawRule.package,
     range: rawRule.range,
+    targetDependency,
+    targetManifestPath,
   };
 }
 

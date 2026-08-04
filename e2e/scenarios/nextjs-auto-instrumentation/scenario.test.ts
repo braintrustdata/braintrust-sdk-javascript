@@ -18,14 +18,30 @@ const nextVersionScenarios = [
   {
     bundlers: ["webpack"],
     generatedDirName: "nextjs-auto-instrumentation-next-14",
-    label: "Next 14",
+    label: "Next 14 pinned",
     versionDir: "next-14",
+    variantKey: "next-14",
+  },
+  {
+    bundlers: ["webpack"],
+    generatedDirName: "nextjs-auto-instrumentation-next-14-latest",
+    label: "Next 14 latest",
+    versionDir: "next-14-latest",
+    variantKey: "next-14-latest",
   },
   {
     bundlers: ["webpack", "turbopack"],
     generatedDirName: "nextjs-auto-instrumentation-next-16",
-    label: "Next 16",
+    label: "Next 16 pinned",
     versionDir: "next-16",
+    variantKey: "next-16",
+  },
+  {
+    bundlers: ["webpack", "turbopack"],
+    generatedDirName: "nextjs-auto-instrumentation-next-16-latest",
+    label: "Next 16 latest",
+    versionDir: "next-16-latest",
+    variantKey: "next-16-latest",
   },
 ] as const;
 
@@ -79,7 +95,7 @@ for (const scenario of preparedScenarios) {
               },
               runContext: {
                 cassette: false,
-                variantKey: `${scenario.versionDir}-${bundler}`,
+                variantKey: `${scenario.variantKey}-${bundler}`,
               },
               scenarioDir: scenario.scenarioDir,
               timeoutMs: TIMEOUT_MS,

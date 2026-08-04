@@ -1,25 +1,13 @@
 {
-  "name": "@braintrust/e2e-nextjs-instrumentation",
+  "name": "@braintrust/e2e-nextjs-instrumentation-next-14-latest",
   "private": true,
-  "braintrustScenario": {
-    "bump": {
-      "dependencies": {
-        "next-v14-latest": {
-          "package": "next",
-          "range": "14",
-          "targetDependency": "next",
-          "targetManifest": "versions/next-14-latest/package.json"
-        }
-      }
-    }
-  },
   "dependencies": {
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/core": "2.0.0",
     "@opentelemetry/exporter-trace-otlp-http": "0.200.0",
     "@opentelemetry/sdk-trace-base": "2.0.0",
     "@vercel/otel": "2.1.0",
-    "next": "14.2.34",
+    "next": "14.2.35",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },

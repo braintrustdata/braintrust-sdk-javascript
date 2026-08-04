@@ -613,6 +613,36 @@
     ]
   },
   {
+    "scenarioDirName": "nextjs-instrumentation",
+    "label": "Next.js Instrumentation",
+    "metadataScenario": "nextjs-instrumentation",
+    "variants": [
+      {
+        "variantKey": "nextjs-v14",
+        "label": "v14 pinned"
+      },
+      {
+        "variantKey": "nextjs-v14-latest",
+        "label": "v14 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "test-framework-evals-jest",
+    "label": "Jest Test Framework Evals",
+    "metadataScenario": "test-framework-evals-jest",
+    "variants": [
+      {
+        "variantKey": "jest-v29",
+        "label": "v29 pinned"
+      },
+      {
+        "variantKey": "jest-v29-latest",
+        "label": "v29 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "test-framework-evals-vitest",
     "label": "Vitest Test Framework Evals",
     "metadataScenario": "test-framework-evals-vitest",
