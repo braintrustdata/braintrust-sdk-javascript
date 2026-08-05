@@ -88,7 +88,8 @@
           "org_member",
           "project_log",
           "org_project",
-          "org_audit_logs"
+          "org_audit_logs",
+          "project_group"
         ],
         "description": "The object type that the ACL applies to"
       },
@@ -4559,6 +4560,9 @@
                 "required": ["event_type", "action"]
               },
               {
+                "$ref": "#/components/schemas/WindowedAutomationConfig"
+              },
+              {
                 "$ref": "#/components/schemas/TopicAutomationConfig"
               },
               {
@@ -7090,6 +7094,224 @@
           }
         ],
         "description": "Options for the view in the app"
+      },
+      "WindowedAutomationConfig": {
+        "type": "object",
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "enum": ["windowed"],
+            "description": "The type of automation."
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutomationStatus"
+          },
+          "threshold": {
+            "type": "object",
+            "properties": {
+              "calculation": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["btql"]
+                      },
+                      "btql_query": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A project-scoped BTQL or SQL query without runtime-owned evaluation time bounds"
+                      },
+                      "output": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": ["scalar"]
+                          },
+                          "value_column": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "The numeric result column produced by the query"
+                          }
+                        },
+                        "required": ["type", "value_column"]
+                      }
+                    },
+                    "required": ["type", "btql_query", "output"]
+                  }
+                ],
+                "description": "The calculation evaluated for each window"
+              },
+              "policy": {
+                "type": "object",
+                "properties": {
+                  "condition": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["threshold"]
+                      },
+                      "operator": {
+                        "type": "string",
+                        "enum": ["lt", "lte", "gt", "gte", "eq", "neq"]
+                      },
+                      "threshold": {
+                        "type": "number"
+                      }
+                    },
+                    "required": ["type", "operator", "threshold"]
+                  },
+                  "pending_seconds": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2592000,
+                    "description": "How long the condition must remain breached before firing"
+                  },
+                  "no_data_behavior": {
+                    "type": "string",
+                    "enum": ["keep_last", "resolve", "alert"],
+                    "description": "How the lifecycle changes when the calculation returns no data"
+                  },
+                  "renotify_interval_seconds": {
+                    "type": ["integer", "null"],
+                    "minimum": 1,
+                    "maximum": 2592000,
+                    "description": "Optional reminder interval while the automation is firing"
+                  },
+                  "notify_on_recovery": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to deliver actions when a firing automation recovers"
+                  }
+                },
+                "required": [
+                  "condition",
+                  "pending_seconds",
+                  "no_data_behavior"
+                ],
+                "description": "The lifecycle policy applied to each calculation result"
+              }
+            },
+            "required": ["calculation", "policy"],
+            "description": "Optional calculation and lifecycle policy that gate scheduled delivery"
+          },
+          "window": {
+            "type": "object",
+            "properties": {
+              "window_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2592000,
+                "description": "How much recent data each scheduled run covers"
+              },
+              "schedule": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["interval"]
+                      },
+                      "evaluation_interval_seconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 2592000,
+                        "description": "How often the automation runs"
+                      }
+                    },
+                    "required": ["type", "evaluation_interval_seconds"]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["cron"]
+                      },
+                      "cron_expression": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A standard five-field cron expression (minute hour day-of-month month day-of-week) controlling when the automation runs"
+                      },
+                      "timezone": {
+                        "type": ["string", "null"],
+                        "minLength": 1,
+                        "description": "IANA timezone used to interpret the cron expression (defaults to UTC)"
+                      }
+                    },
+                    "required": ["type", "cron_expression"]
+                  }
+                ],
+                "description": "How often the windowed automation runs: at a fixed interval or on a cron schedule"
+              },
+              "evaluation_delay_seconds": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2592000,
+                "description": "How far behind the present each evaluation window ends"
+              }
+            },
+            "required": [
+              "window_seconds",
+              "schedule",
+              "evaluation_delay_seconds"
+            ]
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["webhook"],
+                      "description": "The type of action to take"
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "The webhook URL to send the request to"
+                    }
+                  },
+                  "required": ["type", "url"]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["slack"],
+                      "description": "The type of action to take"
+                    },
+                    "workspace_id": {
+                      "type": "string",
+                      "description": "The Slack workspace ID to post to"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "description": "The Slack channel ID to post to"
+                    },
+                    "message_template": {
+                      "type": "string",
+                      "description": "Custom message template for the alert"
+                    }
+                  },
+                  "required": ["type", "workspace_id", "channel"]
+                }
+              ],
+              "description": "A delivery action available to an automation"
+            },
+            "minItems": 1,
+            "maxItems": 20,
+            "description": "The delivery actions to run on each schedule or threshold lifecycle transition"
+          }
+        },
+        "required": ["event_type", "window", "actions"]
       }
     },
     "parameters": {}
