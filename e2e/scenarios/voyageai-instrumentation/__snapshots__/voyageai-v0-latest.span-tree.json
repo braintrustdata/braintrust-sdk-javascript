@@ -1,0 +1,159 @@
+{
+  "span_tree": [
+    {
+      "name": "voyageai-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "voyageai-embed-operation",
+          "children": [
+            {
+              "name": "voyageai.embed",
+              "type": "llm",
+              "children": [],
+              "input": [
+                "Braintrust tracing"
+              ],
+              "output": {
+                "embedding_count": 1,
+                "embedding_length": 3
+              },
+              "metadata": {
+                "inputType": "document",
+                "model": "voyage-4",
+                "outputDimension": 3,
+                "provider": "voyage"
+              },
+              "metrics": {
+                "tokens": 4
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embed",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "voyageai-multimodal-embed-operation",
+          "children": [
+            {
+              "name": "voyageai.multimodalEmbed",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "A yellow banana.",
+                      "type": "text"
+                    },
+                    {
+                      "imageUrl": "https://example.com/banana.jpg",
+                      "type": "image_url"
+                    }
+                  ]
+                }
+              ],
+              "output": {
+                "embedding_count": 1,
+                "embedding_length": 2
+              },
+              "metadata": {
+                "inputType": "document",
+                "model": "voyage-multimodal-3.5",
+                "provider": "voyage"
+              },
+              "metrics": {
+                "tokens": 6
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "multimodal-embed",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "voyageai-rerank-operation",
+          "children": [
+            {
+              "name": "voyageai.rerank",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "documents": [
+                  "Vienna is in Austria.",
+                  "Paris is in France."
+                ],
+                "query": "Which document is about France?"
+              },
+              "output": [
+                {
+                  "index": 1,
+                  "relevance_score": 0.97
+                },
+                {
+                  "index": 0,
+                  "relevance_score": 0.21
+                }
+              ],
+              "metadata": {
+                "document_count": 2,
+                "model": "rerank-2.5",
+                "provider": "voyage",
+                "returnDocuments": true,
+                "topK": 2
+              },
+              "metrics": {
+                "tokens": 11
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "rerank",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "voyageai-contextualized-embed-operation",
+          "children": [
+            {
+              "name": "voyageai.contextualizedEmbed",
+              "type": "llm",
+              "children": [],
+              "input": [
+                [
+                  "Paris is a city.",
+                  "It is the capital of France."
+                ]
+              ],
+              "output": {
+                "document_count": 1,
+                "embedding_count": 2,
+                "embedding_length": 4
+              },
+              "metadata": {
+                "inputType": "document",
+                "model": "voyage-context-3",
+                "outputDimension": 4,
+                "provider": "voyage"
+              },
+              "metrics": {
+                "tokens": 8
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "contextualized-embed",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "voyageai-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

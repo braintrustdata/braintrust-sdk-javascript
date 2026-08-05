@@ -32,6 +32,7 @@ import { openRouterConfigs } from "./openrouter";
 import { openRouterAgentConfigs } from "./openrouter-agent";
 import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
+import { voyageAIConfigs } from "./voyageai";
 
 interface InstrumentationConfigGroup {
   integrations: readonly (keyof InstrumentationIntegrationsConfig)[];
@@ -117,6 +118,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["flue"],
       configs: flueConfigs,
+    },
+    {
+      integrations: ["voyageai"],
+      configs: voyageAIConfigs,
     },
     // Note: `@mastra/core` is not listed here because its instrumentation
     // doesn't go through the AST `code-transformer` matcher — Mastra's

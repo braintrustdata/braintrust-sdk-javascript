@@ -21,6 +21,7 @@ import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
+import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
 import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
 
@@ -126,6 +127,10 @@ vi.mock("./plugins/pi-coding-agent-plugin", () => ({
 
 vi.mock("./plugins/strands-agent-sdk-plugin", () => ({
   StrandsAgentSDKPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/voyageai-plugin", () => ({
+  VoyageAIPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/cloudflare-ai-chat-plugin", () => ({
@@ -264,6 +269,15 @@ describe("BraintrustPlugin", () => {
 
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       const mockInstance = vi.mocked(CoherePlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable Voyage AI plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(VoyageAIPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(VoyageAIPlugin).mock.results[0].value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -1144,6 +1158,15 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).not.toHaveBeenCalled();
       expect(OllamaPlugin).not.toHaveBeenCalled();
       expect(CoherePlugin).not.toHaveBeenCalled();
+    });
+
+    it("should not create Voyage AI plugin when voyageai: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { voyageai: false },
+      });
+      plugin.enable();
+
+      expect(VoyageAIPlugin).not.toHaveBeenCalled();
     });
   });
 });

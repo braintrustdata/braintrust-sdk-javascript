@@ -1,0 +1,119 @@
+span_tree:
+└── voyageai-instrumentation-root [task]
+    metadata: {
+      "scenario": "voyageai-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── voyageai-embed-operation
+    │   metadata: {
+    │     "operation": "embed",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── voyageai.embed [llm]
+    │       input: [
+    │         "Braintrust tracing"
+    │       ]
+    │       output: {
+    │         "embedding_count": 1,
+    │         "embedding_length": 3
+    │       }
+    │       metadata: {
+    │         "inputType": "document",
+    │         "model": "voyage-4",
+    │         "outputDimension": 3,
+    │         "provider": "voyage"
+    │       }
+    │       metrics: {
+    │         "tokens": 4
+    │       }
+    ├── voyageai-multimodal-embed-operation
+    │   metadata: {
+    │     "operation": "multimodal-embed",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── voyageai.multimodalEmbed [llm]
+    │       input: [
+    │         {
+    │           "content": [
+    │             {
+    │               "text": "A yellow banana.",
+    │               "type": "text"
+    │             },
+    │             {
+    │               "imageUrl": "https://example.com/banana.jpg",
+    │               "type": "image_url"
+    │             }
+    │           ]
+    │         }
+    │       ]
+    │       output: {
+    │         "embedding_count": 1,
+    │         "embedding_length": 2
+    │       }
+    │       metadata: {
+    │         "inputType": "document",
+    │         "model": "voyage-multimodal-3.5",
+    │         "provider": "voyage"
+    │       }
+    │       metrics: {
+    │         "tokens": 6
+    │       }
+    ├── voyageai-rerank-operation
+    │   metadata: {
+    │     "operation": "rerank",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── voyageai.rerank [llm]
+    │       input: {
+    │         "documents": [
+    │           "Vienna is in Austria.",
+    │           "Paris is in France."
+    │         ],
+    │         "query": "Which document is about France?"
+    │       }
+    │       output: [
+    │         {
+    │           "index": 1,
+    │           "relevance_score": 0.97
+    │         },
+    │         {
+    │           "index": 0,
+    │           "relevance_score": 0.21
+    │         }
+    │       ]
+    │       metadata: {
+    │         "document_count": 2,
+    │         "model": "rerank-2.5",
+    │         "provider": "voyage",
+    │         "returnDocuments": true,
+    │         "topK": 2
+    │       }
+    │       metrics: {
+    │         "tokens": 11
+    │       }
+    └── voyageai-contextualized-embed-operation
+        metadata: {
+          "operation": "contextualized-embed",
+          "testRunId": "<run:1>"
+        }
+        └── voyageai.contextualizedEmbed [llm]
+            input: [
+              [
+                "Paris is a city.",
+                "It is the capital of France."
+              ]
+            ]
+            output: {
+              "document_count": 1,
+              "embedding_count": 2,
+              "embedding_length": 4
+            }
+            metadata: {
+              "inputType": "document",
+              "model": "voyage-context-3",
+              "outputDimension": 4,
+              "provider": "voyage"
+            }
+            metrics: {
+              "tokens": 8
+            }
