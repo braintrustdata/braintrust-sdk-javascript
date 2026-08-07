@@ -1,5 +1,11 @@
 # braintrust
 
+## 3.27.1
+
+### Patch Changes
+
+- fix(dataset): Enforce `_internal_btql.limit` across paginated fetches (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2344)
+
 ## 3.27.0
 
 ### Minor Changes
