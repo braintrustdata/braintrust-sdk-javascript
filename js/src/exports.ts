@@ -214,6 +214,7 @@ export { wrapCursorSDK } from "./wrappers/cursor-sdk";
 export { wrapPiCodingAgentSDK } from "./wrappers/pi-coding-agent";
 export { wrapCloudflareAgent } from "./wrappers/cloudflare-agent";
 export { wrapStrandsAgentSDK } from "./wrappers/strands-agent-sdk";
+export { wrapStagehand } from "./wrappers/stagehand";
 export { wrapCloudflareAIChat } from "./wrappers/cloudflare-ai-chat";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";
 export { wrapGoogleADK } from "./wrappers/google-adk";

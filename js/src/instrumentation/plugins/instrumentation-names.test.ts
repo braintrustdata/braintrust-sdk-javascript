@@ -32,6 +32,7 @@ import { openRouterAgentChannels } from "./openrouter-agent-channels";
 import { openRouterChannels } from "./openrouter-channels";
 import { piCodingAgentChannels } from "./pi-coding-agent-channels";
 import { strandsAgentSDKChannels } from "./strands-agent-sdk-channels";
+import { stagehandChannels } from "./stagehand-channels";
 
 describe("built-in instrumentation provenance names", () => {
   it.each([
@@ -81,6 +82,7 @@ describe("built-in instrumentation provenance names", () => {
       strandsAgentSDKChannels.agentStream,
       INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK,
     ],
+    [stagehandChannels.act, INSTRUMENTATION_NAMES.STAGEHAND],
   ])("uses %s for its canonical channel group", (channel, expected) => {
     expect(channel.instrumentationName).toBe(expected);
   });

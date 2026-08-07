@@ -29,6 +29,7 @@ export interface InstrumentationIntegrationsConfig {
   openaiCodexSDK?: boolean;
   piCodingAgent?: boolean;
   strandsAgentSDK?: boolean;
+  stagehand?: boolean;
   cloudflareAgents?: boolean;
   langchain?: boolean;
   langgraph?: boolean;
@@ -62,6 +63,9 @@ const envIntegrationAliases: Record<
   strandsagentsdk: "strandsAgentSDK",
   "strands-agent-sdk": "strandsAgentSDK",
   "@strands-agents/sdk": "strandsAgentSDK",
+  stagehand: "stagehand",
+  "browserbase-stagehand": "stagehand",
+  "@browserbasehq/stagehand": "stagehand",
   agents: "cloudflareAgents",
   "cloudflare-agents": "cloudflareAgents",
   cloudflareagents: "cloudflareAgents",
@@ -158,6 +162,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     langsmith: true,
     piCodingAgent: true,
     strandsAgentSDK: true,
+    stagehand: true,
     cloudflareAgents: true,
   };
 }

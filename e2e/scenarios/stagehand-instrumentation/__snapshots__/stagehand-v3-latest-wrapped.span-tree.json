@@ -1,0 +1,322 @@
+{
+  "span_tree": [
+    {
+      "name": "stagehand-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "stagehand-act-operation",
+          "children": [
+            {
+              "name": "stagehand.act",
+              "type": "task",
+              "children": [
+                {
+                  "name": "generateObject",
+                  "type": "function",
+                  "children": [],
+                  "input": {
+                    "allowSystemInMessages": true,
+                    "messages": [
+                      {
+                        "content": " You are helping the user automate the browser by finding elements based on what action the user wants to take on the page You will be given: 1. a user defined instruction about what action to take 2. a hierarchical accessibility tree showing the semantic structure of the page. The tree is a hybrid of the DOM and the accessibility tree. Return the element that matches the instruction if it exists. If no element on the page matches the instruction, set `action` to null. Do not fabricate or guess an element — empty strings or placeholder values for elementId/description/method are not acceptable.",
+                        "role": "system"
+                      },
+                      {
+                        "content": "instruction: Find the most relevant element to perform an action on given the following action: Add the Trail Backpack to the cart.  \n  IF AND ONLY IF the action EXPLICITLY includes the word 'dropdown' and implies choosing/selecting an option from a dropdown, ignore the 'General Instructions' section, and follow the 'Dropdown Specific Instructions' section carefully.\n  \n  General Instructions: \n    Provide an action for this element such as click, fill, type, press, scrollTo, nextChunk, prevChunk, selectOptionFromDropdown, hover, doubleClick, dragAndDrop. Remember that to users, buttons and links look the same in most cases.\n    When choosing non-left click actions, provide right or middle as the argument\n    If the action is completely unrelated to a potential action to be taken on the page, or no matching element exists, set `action` to null. Do not fabricate or guess an element.\n    ONLY return one action. If multiple actions are relevant, return the most relevant one.\n    If the user is asking to scroll to a position on the page, e.g., 'halfway' or 0.75, etc, you must return the argument formatted as the correct percentage, e.g., '50%' or '75%', etc.\n    If the user is asking to scroll to the next chunk/previous chunk, choose the nextChunk/prevChunk method. No arguments are required here.\n    If the action implies a key press, e.g., 'press enter', 'press a', 'press space', etc., always choose the press method with the appropriate key as argument — e.g. 'a', 'Enter', 'Space'. Do not choose a click action on an on-screen keyboard. Capitalize the first character like 'Enter', 'Tab', 'Escape' only for special keys. \n  \n  Dropdown Specific Instructions:\n    For interacting with dropdowns, there are two specific cases that you need to handle. \n    \n    CASE 1: the element is a 'select' element. \n      - choose the selectOptionFromDropdown method,\n      - set the argument to the exact text of the option that should be selected,\n      - set twoStep to false.\n    CASE 2: the element is NOT a 'select' element:\n      - do not attempt to directly choose the element from the dropdown. You will need to click to expand the dropdown first. You will achieve this by following these instructions:\n        - choose the node that most closely corresponds to the given instruction EVEN if it is a 'StaticText' element, or otherwise does not appear to be interactable.  \n        - choose the 'click' method\n        - set twoStep to true.\n   The user has provided the following variables to be used in the action: %customerEmail% \n\n    Note that these are the variable names/keys, and not the actual variable values. \n\n    To use the variables in the action, you must respond with the variable name inside the 'arguments' array. The variable name must be wrapped in percentage signs (eg, %variableNameHere%) so that it can be replaced with the actual variable value before the action is taken. \n\nAccessibility Tree: \n[0-2] RootWebArea: Trail Supply\n  [0-4] scrollable, html\n    [0-9] main\n      [0-10] heading: Trail Backpack\n      [0-12] paragraph\n        [0-13] StaticText: $129.00\n      [0-14] button: Add to cart\n      [0-16] region: Shopping cart\n        [0-17] paragraph\n          [0-18] StaticText: Cart is empty\n        [0-19] button: Checkout\n",
+                        "role": "user"
+                      }
+                    ],
+                    "model": {
+                      "config": {
+                        "fileIdPrefixes": [
+                          "file-"
+                        ],
+                        "provider": "openai.responses"
+                      },
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "specificationVersion": "v2",
+                      "supportedUrls": {
+                        "application/pdf": [
+                          {}
+                        ],
+                        "image/*": [
+                          {}
+                        ]
+                      }
+                    },
+                    "schema": {
+                      "$schema": "http://json-schema.org/draft-07/schema#",
+                      "additionalProperties": false,
+                      "properties": {
+                        "action": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "properties": {
+                                "arguments": {
+                                  "items": "[Object]",
+                                  "type": "array"
+                                },
+                                "description": {
+                                  "description": "a description of the accessible element and its purpose",
+                                  "type": "string"
+                                },
+                                "elementId": {
+                                  "description": "the ID string associated with the element. Never include surrounding square brackets. This field must follow the format of 'number-number'. for example, '0-76' or '16-21'",
+                                  "pattern": "^\\d+-\\d+$",
+                                  "type": "string"
+                                },
+                                "method": {
+                                  "description": "the candidate method/action to interact with the element. Select one of the available Understudy interaction methods.",
+                                  "enum": "[Object]",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "elementId",
+                                "description",
+                                "method",
+                                "arguments"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "The element to act on. Return null if no element on the page matches the instruction — do NOT fabricate or guess an element, and never emit empty strings or placeholder values."
+                        },
+                        "twoStep": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "twoStep"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "output": {
+                    "finishReason": "stop",
+                    "object": {
+                      "action": {
+                        "arguments": [],
+                        "description": "button to add the Trail Backpack to the cart",
+                        "elementId": "0-14",
+                        "method": "click"
+                      },
+                      "twoStep": false
+                    },
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<span:1>",
+                        "serviceTier": "default",
+                        "usage": {
+                          "cacheWriteTokens": 0
+                        }
+                      }
+                    },
+                    "response": {
+                      "body": "<omitted>",
+                      "id": "<span:1>",
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "usage": {
+                      "cachedInputTokens": 0,
+                      "inputTokens": 1162,
+                      "outputTokens": 36,
+                      "reasoningTokens": 0,
+                      "totalTokens": 1198
+                    },
+                    "warnings": []
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  }
+                }
+              ],
+              "input": {
+                "instruction": "Add the Trail Backpack to the cart"
+              },
+              "output": {
+                "action_count": 1,
+                "methods": [
+                  "click"
+                ],
+                "success": true
+              },
+              "metadata": {
+                "model": "gpt-4o-mini-2024-07-18"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "act",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "stagehand-extract-operation",
+          "children": [
+            {
+              "name": "stagehand.extract",
+              "type": "task",
+              "children": [],
+              "input": {
+                "instruction": "Extract the cart item, quantity, and total",
+                "schema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "item": {
+                      "type": "string"
+                    },
+                    "quantity": {
+                      "type": "number"
+                    },
+                    "total": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "item",
+                    "quantity",
+                    "total"
+                  ],
+                  "type": "object"
+                }
+              },
+              "output": {
+                "item": "Trail Backpack",
+                "quantity": 1,
+                "total": "$129.00"
+              },
+              "metadata": {
+                "model": "gpt-4o-mini-2024-07-18",
+                "stagehand.cache_status": "miss"
+              }
+            },
+            {
+              "name": "stagehand.extract",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "model": "gpt-4o-mini-2024-07-18"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "extract",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "stagehand-observe-operation",
+          "children": [
+            {
+              "name": "stagehand.observe",
+              "type": "task",
+              "children": [],
+              "input": {
+                "instruction": "Find the checkout button"
+              },
+              "output": {
+                "action_count": 1,
+                "methods": [
+                  "click"
+                ]
+              },
+              "metadata": {
+                "model": "gpt-4o-mini-2024-07-18"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "observe",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "stagehand-agent-operation",
+          "children": [
+            {
+              "name": "stagehand.agent.execute",
+              "type": "task",
+              "children": [],
+              "input": {
+                "instruction": "Review the cart and prepare to check out. Stop before submitting payment."
+              },
+              "output": {
+                "actions": [
+                  {
+                    "task_completed": true,
+                    "time_ms": 0,
+                    "type": "observe"
+                  }
+                ],
+                "completed": true,
+                "message": "Cart reviewed; checkout is ready for customer confirmation.",
+                "output": {
+                  "checkoutReady": true,
+                  "itemCount": 1
+                },
+                "success": true
+              },
+              "metadata": {
+                "model": "openai/gpt-4o-mini-2024-07-18",
+                "stagehand.cache_status": "hit",
+                "stagehand.max_steps": 6,
+                "stagehand.mode": "dom",
+                "stagehand.streaming": false
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 2,
+                "completion_tokens": 5,
+                "prompt_cached_tokens": 3,
+                "prompt_tokens": 11,
+                "tokens": 16
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "agent",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "stagehand-error-operation",
+          "children": [
+            {
+              "name": "stagehand.act",
+              "type": "task",
+              "children": [],
+              "input": {
+                "instruction": "Apply the expired coupon code"
+              },
+              "metadata": {
+                "model": "gpt-4o-mini-2024-07-18"
+              },
+              "error": "STAGEHAND_COUPON_NOT_FOUND"
+            }
+          ],
+          "metadata": {
+            "operation": "error",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "stagehand-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}
