@@ -268,6 +268,10 @@ export {
   defaultErrorScoreHandler,
 } from "./framework";
 
+export type { DurableEvalStore } from "./durable-eval";
+
+export { BatchScorer, BatchTask, DurableEval } from "./durable-eval";
+
 export { agentAssertionScorer } from "./agent-assertions";
 
 export { DatasetPipeline } from "./dataset-pipeline";

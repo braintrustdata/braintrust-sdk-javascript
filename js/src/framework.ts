@@ -498,6 +498,38 @@ async function getExperimentParametersRef(
   };
 }
 
+export async function _internalInitEvaluatorExperiment(
+  projectName: string,
+  evaluator: Evaluator<any, any, any, any, any>,
+  data: EvalData<any, any, any>,
+  options: {
+    disabled?: boolean;
+    experimentName?: string;
+    update?: boolean;
+  } = {},
+): Promise<Experiment | null> {
+  if (options.disabled) return null;
+  const { baseExperiment } = callEvaluatorData(data);
+  const parameters = await getExperimentParametersRef(evaluator.parameters);
+  return initExperiment(evaluator.state, {
+    ...(evaluator.projectId
+      ? { projectId: evaluator.projectId }
+      : { project: projectName }),
+    experiment: options.experimentName ?? evaluator.experimentName,
+    description: evaluator.description,
+    metadata: evaluator.metadata,
+    tags: evaluator.tags,
+    isPublic: evaluator.isPublic,
+    update: options.update ?? evaluator.update,
+    baseExperiment: evaluator.baseExperimentName ?? baseExperiment,
+    baseExperimentId: evaluator.baseExperimentId,
+    gitMetadataSettings: evaluator.gitMetadataSettings,
+    repoInfo: evaluator.repoInfo,
+    dataset: Dataset.isDataset(data) ? data : undefined,
+    parameters,
+  });
+}
+
 export function callEvaluatorData<
   Input,
   Expected,
@@ -543,6 +575,65 @@ function isIterable<T>(value: unknown): value is Iterable<T> {
     value !== null &&
     Symbol.iterator in value &&
     typeof value[Symbol.iterator] === "function"
+  );
+}
+
+export async function _internalResolveEvaluatorData(
+  evaluator: Pick<
+    EvaluatorDef<any, any, any, any, any>,
+    "data" | "projectName" | "projectId" | "state"
+  >,
+  experiment: Experiment | null,
+): Promise<AsyncIterable<EvalCase<any, any, any>>> {
+  if (typeof evaluator.data === "string") {
+    throw new Error("Unimplemented: string data paths");
+  }
+  let dataResult =
+    typeof evaluator.data === "function" ? evaluator.data() : evaluator.data;
+
+  if ("_type" in dataResult) {
+    if (dataResult._type !== "BaseExperiment") {
+      throw new Error("Invalid _type");
+    }
+    if (!experiment) {
+      throw new Error(
+        "Cannot use BaseExperiment() without connecting to Braintrust (you most likely set --no-send-logs)",
+      );
+    }
+    let name = dataResult.name;
+    if (isEmpty(name)) {
+      const baseExperiment = await experiment.fetchBaseExperiment();
+      if (!baseExperiment) {
+        throw new Error("BaseExperiment() failed to fetch base experiment");
+      }
+      name = baseExperiment.name;
+    }
+
+    dataResult = initExperiment(evaluator.state, {
+      ...(evaluator.projectId
+        ? { projectId: evaluator.projectId }
+        : { project: evaluator.projectName }),
+      experiment: name,
+      open: true,
+    }).asDataset();
+  }
+
+  const resolvedDataResult =
+    dataResult instanceof Promise ? await dataResult : dataResult;
+  if (isAsyncIterable<EvalCase<any, any, any>>(resolvedDataResult)) {
+    return resolvedDataResult;
+  }
+  if (
+    Array.isArray(resolvedDataResult) ||
+    isIterable<EvalCase<any, any, any>>(resolvedDataResult)
+  ) {
+    const iterable = resolvedDataResult as Iterable<EvalCase<any, any, any>>;
+    return (async function* () {
+      for (const datum of iterable) yield datum;
+    })();
+  }
+  throw new Error(
+    "Evaluator data must be an array, iterable, or async iterable",
   );
 }
 
@@ -716,33 +807,13 @@ export async function Eval<
 
   const resolvedReporter = options.reporter || defaultReporter;
   try {
-    const { data, baseExperiment: defaultBaseExperiment } = callEvaluatorData(
-      evaluator.data,
+    const { data } = callEvaluatorData(evaluator.data);
+    const experiment = await _internalInitEvaluatorExperiment(
+      name,
+      evaluator,
+      data,
+      { disabled: Boolean(options.parent || options.noSendLogs) },
     );
-    const parameters = await getExperimentParametersRef(evaluator.parameters);
-    // NOTE: This code is duplicated with initExperiment in js/src/cli.ts. Make sure
-    // to update that if you change this.
-    const experiment =
-      options.parent || options.noSendLogs
-        ? null
-        : initExperiment(evaluator.state, {
-            ...(evaluator.projectId
-              ? { projectId: evaluator.projectId }
-              : { project: name }),
-            experiment: evaluator.experimentName,
-            description: evaluator.description,
-            metadata: evaluator.metadata,
-            tags: evaluator.tags,
-            isPublic: evaluator.isPublic,
-            update: evaluator.update,
-            baseExperiment:
-              evaluator.baseExperimentName ?? defaultBaseExperiment,
-            baseExperimentId: evaluator.baseExperimentId,
-            gitMetadataSettings: evaluator.gitMetadataSettings,
-            repoInfo: evaluator.repoInfo,
-            dataset: Dataset.isDataset(data) ? data : undefined,
-            parameters,
-          });
 
     // Ensure experiment ID is resolved before tasks start for OTEL parent attribute support
     // The Experiment constructor starts resolution (fire-and-forget), but we await here to ensure completion
@@ -905,6 +976,42 @@ export function classifierName(
   return classifier.name || `classifier_${classifier_idx}`;
 }
 
+export async function _internalRunEvaluatorTask(
+  task: EvalTask<any, any, any, any, any>,
+  datum: EvalCase<any, any, any>,
+  trialIndex: number,
+  parameters: Record<string, unknown>,
+  span: Span,
+  reportProgress: (event: TaskProgressEvent) => void = () => undefined,
+): Promise<{
+  output: unknown;
+  metadata: Record<string, unknown>;
+  tags: string[];
+}> {
+  const metadata: Record<string, unknown> = {
+    ...("metadata" in datum ? datum.metadata : {}),
+  };
+  const hooks: EvalHooks<unknown, Record<string, unknown>, EvalParameters> = {
+    meta(value) {
+      Object.assign(metadata, value);
+    },
+    metadata,
+    expected: "expected" in datum ? datum.expected : undefined,
+    span,
+    parameters,
+    reportProgress,
+    trialIndex,
+    tags: [...(datum.tags ?? [])],
+  };
+  const output = await task(datum.input, hooks);
+  span.log({ output });
+  return {
+    output,
+    metadata: hooks.metadata,
+    tags: hooks.tags ?? [],
+  };
+}
+
 function buildSpanMetadata(
   results: Array<{ name: string; metadata?: Record<string, unknown> }>,
 ) {
@@ -928,6 +1035,50 @@ function buildSpanScores(
     {},
   );
   return { resultMetadata: buildSpanMetadata(results), scoresRecord };
+}
+
+export function _internalPrepareEvaluatorScore(
+  scoreValue: OneOrMoreScores,
+  name: string,
+): {
+  results: Score[] | null;
+  output?: unknown;
+  metadata?: Record<string, unknown>;
+  scores?: Record<string, number | null>;
+} {
+  if (scoreValue === null) return { results: null };
+  if (Array.isArray(scoreValue)) {
+    for (const score of scoreValue) {
+      if (!(typeof score === "object" && !isEmpty(score))) {
+        throw new Error(
+          `When returning an array of scores, each score must be a non-empty object. Got: ${JSON.stringify(score)}`,
+        );
+      }
+    }
+  }
+  const results: Score[] = Array.isArray(scoreValue)
+    ? scoreValue
+    : typeof scoreValue === "object" && !isEmpty(scoreValue)
+      ? [scoreValue]
+      : [{ name, score: scoreValue }];
+  const { resultMetadata, scoresRecord } = buildSpanScores(results);
+  const fields = (score: Score) => {
+    const { metadata: _metadata, name: _name, ...rest } = score;
+    return rest;
+  };
+  return {
+    results,
+    output:
+      results.length === 1
+        ? fields(results[0])
+        : results.reduce(
+            (previous, score) =>
+              mergeDicts(previous, { [score.name ?? name]: fields(score) }),
+            {},
+          ),
+    metadata: resultMetadata,
+    scores: scoresRecord,
+  };
 }
 
 async function runInScorerSpan<T>(
@@ -993,6 +1144,40 @@ function toClassificationItem(c: Classification): ClassificationItem {
     id: c.id,
     label: c.label ?? c.id,
     ...(c.metadata !== undefined ? { metadata: c.metadata } : {}),
+  };
+}
+
+export function _internalPrepareEvaluatorClassification(
+  value: OneOrMoreClassifications,
+  name: string,
+): {
+  results: Classification[] | null;
+  output?: unknown;
+  metadata?: Record<string, unknown>;
+  classifications?: Record<string, ClassificationItem[]>;
+} {
+  if (value === null) return { results: null };
+  const results = (Array.isArray(value) ? value : [value]).map((result) =>
+    validateClassificationResult(result, name),
+  );
+  const classifications: Record<string, ClassificationItem[]> = {};
+  for (const result of results) {
+    (classifications[result.name] ??= []).push(toClassificationItem(result));
+  }
+  return {
+    results,
+    output:
+      results.length === 1
+        ? toClassificationItem(results[0])
+        : results.reduce(
+            (previous, result) =>
+              mergeDicts(previous, {
+                [result.name]: toClassificationItem(result),
+              }),
+            {},
+          ),
+    metadata: buildSpanMetadata(results),
+    classifications,
   };
 }
 
@@ -1076,69 +1261,14 @@ async function runEvaluatorInternal(
     (evaluator.state ?? _internalGetGlobalState())?.spanCache?.start();
   }
   try {
-    if (typeof evaluator.data === "string") {
-      throw new Error("Unimplemented: string data paths");
-    }
-    let dataResult =
-      typeof evaluator.data === "function" ? evaluator.data() : evaluator.data;
-
     parameters = await validateParameters(
       parameters ?? {},
       evaluator.parameters,
     );
-
-    if ("_type" in dataResult) {
-      if (dataResult._type !== "BaseExperiment") {
-        // For some reason, the typesystem won't let me check if dataResult._type === "BaseExperiment"
-        throw new Error("Invalid _type");
-      }
-      if (!experiment) {
-        throw new Error(
-          "Cannot use BaseExperiment() without connecting to Braintrust (you most likely set --no-send-logs)",
-        );
-      }
-      let name = dataResult.name;
-      if (isEmpty(name)) {
-        const baseExperiment = await experiment.fetchBaseExperiment();
-        if (!baseExperiment) {
-          throw new Error("BaseExperiment() failed to fetch base experiment");
-        }
-        name = baseExperiment.name;
-      }
-
-      dataResult = initExperiment(evaluator.state, {
-        ...(evaluator.projectId
-          ? { projectId: evaluator.projectId }
-          : { project: evaluator.projectName }),
-        experiment: name,
-        open: true,
-      }).asDataset();
-    }
-
-    const resolvedDataResult =
-      dataResult instanceof Promise ? await dataResult : dataResult;
-
-    const dataIterable: AsyncIterable<EvalCase<any, any, any>> = (() => {
-      if (isAsyncIterable<EvalCase<any, any, any>>(resolvedDataResult)) {
-        return resolvedDataResult;
-      }
-      if (
-        Array.isArray(resolvedDataResult) ||
-        isIterable<EvalCase<any, any, any>>(resolvedDataResult)
-      ) {
-        const iterable = resolvedDataResult as Iterable<
-          EvalCase<any, any, any>
-        >;
-        return (async function* () {
-          for (const datum of iterable) {
-            yield datum;
-          }
-        })();
-      }
-      throw new Error(
-        "Evaluator data must be an array, iterable, or async iterable",
-      );
-    })();
+    const dataIterable = await _internalResolveEvaluatorData(
+      evaluator,
+      experiment,
+    );
 
     progressReporter.start(evaluator.evalName, 0);
 
@@ -1252,13 +1382,11 @@ async function runEvaluatorInternal(
               })
             : undefined;
 
-          let metadata: Record<string, unknown> = {
-            ...("metadata" in datum ? datum.metadata : {}),
-          };
+          let metadata: Record<string, unknown> = {};
           const expected = "expected" in datum ? datum.expected : undefined;
           let output: unknown = undefined;
           let error: unknown | undefined = undefined;
-          let tags: string[] = [...(datum.tags ?? [])];
+          let tags: string[] = [];
           const scores: Record<string, number | null> = {};
           const classifications: Record<string, ClassificationItem[]> = {};
           const scorerNames = (evaluator.scores ?? []).map(scorerName);
@@ -1267,22 +1395,15 @@ async function runEvaluatorInternal(
           );
           let unhandledScores: string[] | null = scorerNames;
           try {
-            const meta = (o: Record<string, unknown>) =>
-              (metadata = { ...metadata, ...o });
-
-            await rootSpan.traced(
-              async (span: Span) => {
-                const hooksForTask: EvalHooks<
-                  unknown,
-                  Record<string, unknown>,
-                  EvalParameters
-                > = {
-                  meta,
-                  metadata,
-                  expected,
+            const taskResult = await rootSpan.traced(
+              (span: Span) =>
+                _internalRunEvaluatorTask(
+                  evaluator.task,
+                  datum,
+                  trialIndex,
+                  parameters ?? {},
                   span,
-                  parameters: parameters ?? {},
-                  reportProgress: (event: TaskProgressEvent) => {
+                  (event) => {
                     stream?.({
                       ...event,
                       id: rootSpan.id,
@@ -1291,27 +1412,16 @@ async function runEvaluatorInternal(
                       object_type: "task",
                     });
                   },
-                  trialIndex,
-                  tags,
-                };
-
-                const outputResult = evaluator.task(datum.input, hooksForTask);
-                if (outputResult instanceof Promise) {
-                  output = await outputResult;
-                } else {
-                  output = outputResult;
-                }
-
-                tags = hooksForTask.tags ?? [];
-
-                span.log({ output });
-              },
+                ),
               {
                 name: "task",
                 spanAttributes: { type: SpanTypeAttribute.TASK },
                 event: { input: datum.input },
               },
             );
+            output = taskResult.output;
+            metadata = taskResult.metadata;
+            tags = taskResult.tags;
             if (tags.length) {
               rootSpan.log({ output, metadata, expected, tags });
             } else {
@@ -1334,11 +1444,6 @@ async function runEvaluatorInternal(
               await rootSpan.export(),
             );
 
-            const getOtherFields = (s: Score) => {
-              const { metadata: _metadata, name: _name, ...rest } = s;
-              return rest;
-            };
-
             const [scoreResults, classificationResults] = await Promise.all([
               Promise.all(
                 (evaluator.scores ?? []).map((score, score_idx) =>
@@ -1352,44 +1457,17 @@ async function runEvaluatorInternal(
                       const scoreValue = await Promise.resolve(
                         score(scoringArgs),
                       );
-                      if (scoreValue === null) return null;
-                      if (Array.isArray(scoreValue)) {
-                        for (const s of scoreValue) {
-                          if (!(typeof s === "object" && !isEmpty(s))) {
-                            throw new Error(
-                              `When returning an array of scores, each score must be a non-empty object. Got: ${JSON.stringify(s)}`,
-                            );
-                          }
-                        }
-                      }
-                      const results: Score[] = Array.isArray(scoreValue)
-                        ? scoreValue
-                        : typeof scoreValue === "object" && !isEmpty(scoreValue)
-                          ? [scoreValue]
-                          : [
-                              {
-                                name: scorerNames[score_idx],
-                                score: scoreValue,
-                              },
-                            ];
-                      const { resultMetadata, scoresRecord } =
-                        buildSpanScores(results);
-                      const resultOutput =
-                        results.length === 1
-                          ? getOtherFields(results[0])
-                          : results.reduce(
-                              (prev, s) =>
-                                mergeDicts(prev, {
-                                  [s.name]: getOtherFields(s),
-                                }),
-                              {},
-                            );
+                      const prepared = _internalPrepareEvaluatorScore(
+                        scoreValue,
+                        scorerNames[score_idx],
+                      );
+                      if (prepared.results === null) return null;
                       span.log({
-                        output: resultOutput,
-                        metadata: resultMetadata,
-                        scores: scoresRecord,
+                        output: prepared.output,
+                        metadata: prepared.metadata,
+                        scores: prepared.scores,
                       });
-                      return results;
+                      return prepared.results;
                     },
                   ),
                 ),
@@ -1406,32 +1484,16 @@ async function runEvaluatorInternal(
                       const classifierValue = await Promise.resolve(
                         classifier(scoringArgs),
                       );
-                      if (classifierValue === null) return null;
-                      const rawResults = (
-                        Array.isArray(classifierValue)
-                          ? classifierValue
-                          : [classifierValue]
-                      ).map((result) =>
-                        validateClassificationResult(
-                          result,
-                          classifierNames[idx],
-                        ),
+                      const prepared = _internalPrepareEvaluatorClassification(
+                        classifierValue,
+                        classifierNames[idx],
                       );
-                      const resultOutput =
-                        rawResults.length === 1
-                          ? toClassificationItem(rawResults[0])
-                          : rawResults.reduce(
-                              (prev, r) =>
-                                mergeDicts(prev, {
-                                  [r.name]: toClassificationItem(r),
-                                }),
-                              {},
-                            );
+                      if (prepared.results === null) return null;
                       span.log({
-                        output: resultOutput,
-                        metadata: buildSpanMetadata(rawResults),
+                        output: prepared.output,
+                        metadata: prepared.metadata,
                       });
-                      return rawResults;
+                      return prepared.results;
                     },
                   ),
                 ),

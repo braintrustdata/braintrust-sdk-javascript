@@ -44,6 +44,195 @@ async function main() {
 main().catch(console.error);
 ```
 
+## Durable evaluations
+
+`DurableEval` runs tasks and scorers through asynchronous provider batch APIs.
+`batchSize` splits a dataset into provider-sized sub-batches. A small external
+store connects submitted jobs with later webhook callbacks; it is required on
+the eval definition so every invocation uses the same persistence authority.
+No Braintrust backend changes are required.
+
+Every case needs a stable `id` (or a `caseId` function).
+
+```typescript
+import { BatchTask, DurableEval, type DurableEvalStore } from "braintrust";
+
+const store: DurableEvalStore = checkpointStore;
+const supportEval = DurableEval("Support bot", {
+  store,
+  data: [
+    {
+      id: "password-reset",
+      input: "How do I reset my password?",
+      expected: "Open account settings...",
+    },
+  ],
+  task: BatchTask({
+    // Each provider job contains at most 500 eval cases.
+    batchSize: 500,
+
+    // Submit one sub-batch and return a JSON-serializable provider handle.
+    async submit(items, context) {
+      const batch = await provider.submit({
+        idempotencyKey: context.batchId,
+        metadata: {
+          durableRunId: context.runId,
+          durableBatchId: context.batchId,
+        },
+        items,
+      });
+      return { id: batch.id };
+    },
+
+    completion: {
+      // "webhook" waits for processBatchResult(). Use "poll" with a poll()
+      // callback when the provider does not send completion events.
+      mode: "webhook",
+      externalId: (handle) => handle.id,
+    },
+
+    async collect(handle) {
+      return (await provider.results(handle.id)).map((item) => ({
+        id: item.id,
+        output: item.output,
+      }));
+    },
+  }),
+  scores: [
+    function exact({ output, expected }) {
+      return output === expected ? 1 : 0;
+    },
+  ],
+});
+
+const result = await supportEval.start();
+const { runId } = result;
+```
+
+`start()` initializes the run, submits every ready task sub-batch, and returns.
+It never waits in a polling loop. When all task results are available, scoring
+begins. `BatchScorer` uses the same `batchSize`, `submit`, `completion`, and
+array-returning `collect` contract.
+
+### Polling
+
+Polling adapters report the provider's current status through `completion`:
+
+```typescript
+completion: {
+  mode: "poll",
+  async poll(handle) {
+    const batch = await provider.getBatch(handle.id);
+    if (batch.status === "completed") return { status: "complete" };
+    if (batch.status === "failed") {
+      return { status: "failed", error: batch.error };
+    }
+    return { status: "pending" };
+  },
+},
+```
+
+Call `poll()` from a cron, queue worker, or another short-lived invocation. It
+checks every previously submitted polling batch once, collects completed
+results, submits newly ready work, and returns without sleeping:
+
+```typescript
+const result = await supportEval.poll({
+  runId,
+});
+
+if (result.status === "waiting" && result.pending.poll > 0) {
+  scheduleAnotherPoll();
+}
+```
+
+`start()`, `poll()`, and `processBatchResult()` return the current eval status.
+A waiting result includes the number of submitted batches using each completion
+mode:
+
+```typescript
+{
+  status: "waiting",
+  runId,
+  pending: { poll: 2, webhook: 1 },
+}
+```
+
+Use `status()` to read the same information without polling providers,
+collecting results, or advancing the workflow:
+
+```typescript
+const status = await supportEval.status({
+  runId,
+});
+```
+
+Completed statuses have zero pending batches and include the saved experiment
+summary. They can be read repeatedly without logging the eval again.
+
+### Multi-stage workflows
+
+The direct `BatchTask({ submit, completion, collect })` form remains the
+one-batch shorthand. Use `workflow` when a task or scorer requires multiple
+provider batch operations:
+
+```typescript
+task: BatchTask({
+  workflow(workflow) {
+    const draft = workflow.batch("draft", {
+      input: ({ input }) => ({ prompt: input }),
+      batchSize: 500,
+      submit: submitDraftBatch,
+      completion: draftCompletion,
+      collect: collectDraftBatch,
+    });
+
+    return workflow.batch("revise", {
+      needs: { draft },
+      input: ({ input }, { draft }) => ({ original: input, draft }),
+      batchSize: 500,
+      submit: submitRevisionBatch,
+      completion: revisionCompletion,
+      collect: collectRevisionBatch,
+    });
+  },
+}),
+```
+
+Every named batch is a persisted workflow node. `needs` can express sequential
+operations, parallel branches, and joins. The returned node supplies the final
+task output or scorer result.
+
+### Webhook processing
+
+When the provider reports that any task or scorer batch completed, fetch and
+store its results through `processBatchResult()`:
+
+```typescript
+app.post("/webhooks/provider", async (request, response) => {
+  const event = request.body;
+  const batch = await provider.getBatch(event.batchId);
+  const runId = batch.metadata.durableRunId;
+
+  const result = await supportEval.processBatchResult({
+    // Returned by start() and saved alongside the provider job.
+    runId,
+    // The provider's batch ID. DurableEval saved it from submit()'s handle.
+    externalId: batch.id,
+    // The SDK-generated ID passed to submit(); include it in provider metadata
+    // when the webhook cannot provide the external ID used by the handle.
+    batchId: batch.metadata?.durableBatchId,
+  });
+
+  response.status(result.status === "waiting" ? 202 : 200).end();
+});
+```
+
+The method accepts either `externalId` or `batchId`. The stored batch locator
+identifies the task or scorer workflow node, whose `collect()` results are
+stored before the eval advances. Webhook idempotency and provider failure
+handling remain application responsibilities for now.
+
 ## Auto-Instrumentation
 
 Braintrust can automatically instrument popular AI SDKs (OpenAI, Anthropic, Vercel AI SDK, and others) to log calls without manual wrapper code.
