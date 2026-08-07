@@ -44,6 +44,7 @@
       "ignoreDependencies": ["openai", "openai-v4", "openai-v5"],
     },
     "js": {
+      "ignore": ["promptDefinitionToMustache"],
       "entry": [
         "src/node/index.ts",
         "src/browser/index.ts",
