@@ -35,6 +35,7 @@ import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
 
 interface InstrumentationConfigGroup {
   integrations: readonly (keyof InstrumentationIntegrationsConfig)[];
+  anyIntegrations?: readonly (keyof InstrumentationIntegrationsConfig)[];
   configs: readonly InstrumentationConfig[];
 }
 
@@ -47,7 +48,8 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     },
     { integrations: ["anthropic"], configs: anthropicConfigs },
     {
-      integrations: ["bedrock", "awsBedrock", "awsBedrockRuntime"],
+      integrations: ["bedrock", "awsBedrock"],
+      anyIntegrations: ["awsBedrockRuntime", "awsBedrockAgentRuntime"],
       configs: bedrockRuntimeConfigs,
     },
     {
@@ -146,10 +148,21 @@ export function getDefaultInstrumentationConfigs({
 
   return [
     ...defaultInstrumentationConfigGroups.flatMap(
-      ({ configs, integrations }) =>
-        isInstrumentationIntegrationDisabled(disabledConfig, ...integrations)
-          ? []
-          : configs,
+      ({ anyIntegrations, configs, integrations }) => {
+        if (
+          isInstrumentationIntegrationDisabled(disabledConfig, ...integrations)
+        ) {
+          return [];
+        }
+        if (
+          anyIntegrations?.every(
+            (integration) => disabledConfig?.[integration] === false,
+          )
+        ) {
+          return [];
+        }
+        return configs;
+      },
     ),
     ...(additionalInstrumentations ?? []),
   ];

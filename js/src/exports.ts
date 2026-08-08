@@ -226,6 +226,7 @@ export { wrapMistral } from "./wrappers/mistral";
 export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapGroq } from "./wrappers/groq";
+export { wrapBedrockAgentRuntime } from "./wrappers/bedrock-agent-runtime";
 export { wrapBedrockRuntime } from "./wrappers/bedrock-runtime";
 export { wrapCopilotClient } from "./wrappers/github-copilot";
 export {

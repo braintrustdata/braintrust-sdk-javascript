@@ -1,0 +1,18 @@
+{
+  "name": "@braintrust/e2e-bedrock-agent-runtime-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "bedrock-agent-runtime-sdk-v3-latest": {
+          "package": "@aws-sdk/client-bedrock-agent-runtime",
+          "range": "3"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "bedrock-agent-runtime-sdk-v3": "npm:@aws-sdk/client-bedrock-agent-runtime@3.1048.0",
+    "bedrock-agent-runtime-sdk-v3-latest": "npm:@aws-sdk/client-bedrock-agent-runtime@3.1098.0"
+  }
+}

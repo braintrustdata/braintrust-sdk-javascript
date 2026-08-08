@@ -23,6 +23,7 @@ export interface InstrumentationIntegrationsConfig {
   groq?: boolean;
   bedrock?: boolean;
   awsBedrock?: boolean;
+  awsBedrockAgentRuntime?: boolean;
   awsBedrockRuntime?: boolean;
   genkit?: boolean;
   gitHubCopilot?: boolean;
@@ -108,6 +109,9 @@ const envIntegrationAliases: Record<
   "aws-bedrock-runtime": "awsBedrockRuntime",
   awsbedrockruntime: "awsBedrockRuntime",
   "@aws-sdk/client-bedrock-runtime": "awsBedrockRuntime",
+  "aws-bedrock-agent-runtime": "awsBedrockAgentRuntime",
+  awsbedrockagentruntime: "awsBedrockAgentRuntime",
+  "@aws-sdk/client-bedrock-agent-runtime": "awsBedrockAgentRuntime",
   genkit: "genkit",
   "firebase-genkit": "genkit",
   githubcopilot: "gitHubCopilot",
@@ -150,6 +154,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     groq: true,
     bedrock: true,
     awsBedrock: true,
+    awsBedrockAgentRuntime: true,
     awsBedrockRuntime: true,
     genkit: true,
     gitHubCopilot: true,
