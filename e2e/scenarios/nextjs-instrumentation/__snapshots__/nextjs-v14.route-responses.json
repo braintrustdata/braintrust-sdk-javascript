@@ -1,0 +1,30 @@
+[
+  {
+    "body": {
+      "instrumentationRegistered": true,
+      "loggerSpanName": "nextjs edge logger span",
+      "otelSpanName": "nextjs edge otel span",
+      "projectName": "<project_name>",
+      "route": "/api/smoke-test/edge",
+      "runtime": "edge",
+      "success": true,
+      "testRunId": "<run:1>"
+    },
+    "runtime": "edge",
+    "status": 200
+  },
+  {
+    "body": {
+      "instrumentationRegistered": false,
+      "loggerSpanName": "nextjs nodejs logger span",
+      "otelSpanName": "nextjs nodejs otel span",
+      "projectName": "<project_name>",
+      "route": "/api/smoke-test/node",
+      "runtime": "nodejs",
+      "success": true,
+      "testRunId": "<run:1>"
+    },
+    "runtime": "nodejs",
+    "status": 200
+  }
+]

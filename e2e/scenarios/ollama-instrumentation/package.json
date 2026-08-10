@@ -1,0 +1,18 @@
+{
+  "name": "@braintrust/e2e-ollama-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "ollama-v0-6-latest": {
+          "package": "ollama",
+          "range": "0.6"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "ollama-v0-6": "npm:ollama@0.6.3",
+    "ollama-v0-6-latest": "npm:ollama@0.6.3"
+  }
+}

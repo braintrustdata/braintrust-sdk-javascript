@@ -2,27 +2,50 @@
  * ORCHESTRION TRANSFORMATION TESTS
  *
  * These tests verify that the internal Orchestrion-JS fork correctly
- * transforms code to inject tracingChannel calls at build time.
+ * transforms code to invoke global instrumentation hooks at build time.
  *
  * IMPORTANT: Tests use a mock OpenAI package structure in test/fixtures/node_modules/openai.
- * IMPORTANT: dc-browser is now an npm package dependency.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import * as esbuild from "esbuild";
 import { build as viteBuild } from "vite";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { runInNewContext } from "node:vm";
 import {
   create,
   type InstrumentationConfig,
 } from "../../src/auto-instrumentations/orchestrion-js";
+import {
+  GLOBAL_INSTRUMENTATION_HOOKS_KEY,
+  GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
+  GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
+  newGlobalTracingChannel,
+} from "../../src/global-instrumentation-hooks";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
 const outputDir = path.join(__dirname, "output-transformation");
 const nodeModulesDir = path.join(fixturesDir, "node_modules");
+const mastraFixtureDir = path.join(outputDir, "mastra-fixture");
+const mastraPackageDir = path.join(
+  mastraFixtureDir,
+  "node_modules",
+  "@mastra",
+  "core",
+);
+const mastraEntryPoint = path.join(mastraFixtureDir, "mastra-app.js");
+const openAIPromisePackageDir = path.join(
+  mastraFixtureDir,
+  "node_modules",
+  "openai",
+);
+const openAIPromiseEntryPoint = path.join(
+  mastraFixtureDir,
+  "openai-api-promise-app.js",
+);
 
 function testConfig(
   functionQuery: InstrumentationConfig["functionQuery"],
@@ -58,14 +81,72 @@ function transformTestCode(
   return transformer!.transform(code, moduleType);
 }
 
+function expectGlobalHookTransform(output: string): void {
+  expect(output).toContain("__braintrust_instrumentation_hooks");
+  expect(output).toContain("braintrust.global-instrumentation-hooks.registry");
+  expect(output).toContain("braintrust.global-instrumentation-hooks.hook");
+  expect(output).toContain("orchestrion:openai:chat.completions.create");
+  expect(output).toContain("__bt$hook.traceInvocation");
+  expect(output).not.toContain("__bt$hook.hasSubscribers");
+  expect(output).not.toContain("__bt$hook.hasInterceptors");
+  expect(output).not.toContain("__bt$hook.invoke");
+  expect(output).not.toContain("__bt$hook.tracePromise");
+  expect(output).not.toContain("__apm$");
+  expect(output).not.toContain("tr_ch_apm$");
+  expect(output).not.toContain("diagnostics_channel");
+  expect(output).not.toContain("dc-browser");
+}
+
 describe("Orchestrion Transformation Tests", () => {
   beforeAll(() => {
     // Create output directory
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-
-    // Note: dc-browser is now an npm package, no symlinks needed
+    fs.mkdirSync(path.join(mastraPackageDir, "dist"), { recursive: true });
+    fs.writeFileSync(
+      path.join(mastraPackageDir, "package.json"),
+      JSON.stringify({
+        name: "@mastra/core",
+        version: "1.0.0",
+        type: "module",
+        exports: { ".": "./dist/index.js" },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(mastraPackageDir, "dist", "index.js"),
+      `export { Mastra } from "./chunk-BROWSER-SAFE.js";`,
+    );
+    fs.writeFileSync(
+      path.join(mastraPackageDir, "dist", "chunk-BROWSER-SAFE.js"),
+      "export class Mastra {}",
+    );
+    fs.writeFileSync(
+      mastraEntryPoint,
+      `export { Mastra } from "@mastra/core";`,
+    );
+    fs.mkdirSync(path.join(openAIPromisePackageDir, "core"), {
+      recursive: true,
+    });
+    fs.writeFileSync(
+      path.join(openAIPromisePackageDir, "package.json"),
+      JSON.stringify({
+        name: "openai",
+        version: "5.0.0",
+        type: "module",
+        exports: {
+          "./core/api-promise": "./core/api-promise.mjs",
+        },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(openAIPromisePackageDir, "core", "api-promise.mjs"),
+      "export class APIPromise extends Promise {}",
+    );
+    fs.writeFileSync(
+      openAIPromiseEntryPoint,
+      `export { APIPromise } from "openai/core/api-promise";`,
+    );
   });
 
   afterAll(() => {
@@ -89,7 +170,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+      expect(result.code).toContain("__bt$hook.traceInvocation");
     });
 
     it("supports method-only configs", () => {
@@ -105,7 +186,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+      expect(result.code).toContain("__bt$hook.traceInvocation");
     });
 
     it("supports function declaration configs", () => {
@@ -119,7 +200,48 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+      expect(result.code).toContain("__bt$hook.traceInvocation");
+    });
+
+    it("ignores malformed global hook entries at runtime", () => {
+      const result = transformTestCode(
+        { functionName: "query", kind: "Sync" },
+        `
+          let calls = 0;
+          function query(input) {
+            calls += 1;
+            return input;
+          }
+          module.exports = { query, getCalls: () => calls };
+        `,
+        "cjs",
+      );
+      const registry = new Map<string, unknown>([
+        ["orchestrion:test-sdk:test", { hasSubscribers: true }],
+      ]);
+      Object.defineProperty(
+        registry,
+        Symbol.for(GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND),
+        { value: GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION },
+      );
+      const module = {
+        exports: {} as {
+          getCalls(): number;
+          query(input: string): string;
+        },
+      };
+
+      runInNewContext(result.code, {
+        globalThis: {
+          [GLOBAL_INSTRUMENTATION_HOOKS_KEY]: registry,
+        },
+        Map,
+        module,
+        Symbol,
+      });
+
+      expect(module.exports.query("result")).toBe("result");
+      expect(module.exports.getCalls()).toBe(1);
     });
 
     it("supports export-alias function configs", () => {
@@ -134,7 +256,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+      expect(result.code).toContain("__bt$hook.traceInvocation");
     });
 
     it("supports export-alias class method configs", () => {
@@ -156,7 +278,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+      expect(result.code).toContain("__bt$hook.traceInvocation");
     });
 
     it("supports private class method configs", () => {
@@ -178,7 +300,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+      expect(result.code).toContain("__bt$hook.traceInvocation");
     });
 
     it("supports object/property configs", () => {
@@ -196,7 +318,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+      expect(result.code).toContain("__bt$hook.traceInvocation");
     });
 
     it("supports callback configs", () => {
@@ -210,8 +332,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("Array.prototype.splice.call");
-      expect(result.code).toContain("tr_ch_apm$test.asyncStart.runStores");
+      expect(result.code).toContain("__bt$hook.traceInvocation");
     });
 
     it("supports raw AST query configs", () => {
@@ -227,7 +348,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("tr_ch_apm$test.start.runStores");
+      expect(result.code).toContain("__bt$hook.traceInvocation");
     });
 
     it("supports index selection", () => {
@@ -248,12 +369,57 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       const wrapperCount = result.code.match(
-        /tr_ch_apm\$test\.start\.runStores/g,
+        /return __bt\$hook\.traceInvocation/g,
       );
       expect(wrapperCount).toHaveLength(1);
       expect(result.code.indexOf("secondCreate")).toBeLessThan(
-        result.code.indexOf("tr_ch_apm$test.start.runStores"),
+        result.code.indexOf("return __bt$hook.traceInvocation"),
       );
+    });
+
+    it("injects one shared global hook lookup for multiple channels", () => {
+      const matcher = create([
+        {
+          ...testConfig({ functionName: "first", kind: "Sync" }),
+          channelName: "first",
+        },
+        {
+          ...testConfig({ functionName: "second", kind: "Async" }),
+          channelName: "second",
+        },
+      ]);
+      const transformer = matcher.getTransformer(
+        "test-sdk",
+        "1.0.0",
+        "index.mjs",
+      );
+
+      expect(transformer).toBeDefined();
+      const result = transformer!.transform(
+        `
+          export function first() {
+            return "first";
+          }
+          export async function second() {
+            return "second";
+          }
+        `,
+        "esm",
+      );
+
+      expect(result.code.match(/const tr_ch_bt\$get_hook =/g)).toHaveLength(1);
+      expect(
+        result.code.match(
+          /braintrust\.global-instrumentation-hooks\.registry/g,
+        ),
+      ).toHaveLength(1);
+      expect(result.code).toContain("orchestrion:test-sdk:first");
+      expect(result.code).toContain("orchestrion:test-sdk:second");
+      expect(
+        result.code.match(/return __bt\$hook\.traceInvocation/g),
+      ).toHaveLength(2);
+      expect(result.code).toContain('"traceSync"');
+      expect(result.code).toContain('"tracePromise"');
     });
 
     it("generates source maps", () => {
@@ -272,10 +438,169 @@ describe("Orchestrion Transformation Tests", () => {
         file: "test-sdk/index.mjs",
       });
     });
+
+    it("observes hooks registered after the transformed module loads", () => {
+      const result = transformTestCode(
+        { functionName: "query", kind: "Sync" },
+        `
+          function query(input) {
+            return input;
+          }
+          module.exports = { query };
+        `,
+        "cjs",
+      );
+      const loadedModule = {
+        exports: {} as { query: (input: string) => string },
+      };
+      Function(
+        "module",
+        "exports",
+        result.code,
+      )(loadedModule, loadedModule.exports);
+
+      expect(loadedModule.exports.query("before")).toBe("before");
+
+      const events: unknown[] = [];
+      const hook = newGlobalTracingChannel("orchestrion:test-sdk:test");
+      const handlers = { start: (event: unknown) => events.push(event) };
+      hook.subscribe(handlers);
+
+      expect(loadedModule.exports.query("after")).toBe("after");
+      expect(events).toHaveLength(1);
+      hook.unsubscribe(handlers);
+    });
+
+    it("invokes generic interceptors inside tracing hooks", () => {
+      const result = transformTestCode(
+        { className: "Client", methodName: "query", kind: "Sync" },
+        `
+          class Client {
+            constructor(prefix) {
+              this.prefix = prefix;
+            }
+            query(input) {
+              return this.prefix + ":" + input;
+            }
+          }
+          module.exports = Client;
+        `,
+        "cjs",
+      );
+      const loadedModule = {
+        exports: undefined as unknown as new (prefix: string) => {
+          query(input: string): string;
+        },
+      };
+      Function(
+        "module",
+        "exports",
+        result.code,
+      )(loadedModule, loadedModule.exports);
+
+      const hook = newGlobalTracingChannel<Record<string, unknown>>(
+        "orchestrion:test-sdk:test",
+      );
+      const lifecycle: string[] = [];
+      const handlers = {
+        start: (event: Record<string, unknown>) =>
+          lifecycle.push(
+            `start:${Array.from(event.arguments as ArrayLike<unknown>)[0]}`,
+          ),
+        end: (event: Record<string, unknown>) =>
+          lifecycle.push(`end:${event.result}`),
+      };
+      hook.subscribe(handlers);
+      const removeInterceptor = hook.intercept(
+        (target, _thisArg, args, additional: { moduleVersion: string }) => {
+          lifecycle.push(`intercept:${additional.moduleVersion}`);
+          return `${target.apply({ prefix: "patched" }, [
+            String(args[0]).toUpperCase(),
+          ])}!`;
+        },
+      );
+
+      const client = new loadedModule.exports("original");
+      expect(client.query("value")).toBe("patched:VALUE!");
+      expect(lifecycle).toEqual([
+        "start:value",
+        "intercept:1.0.0",
+        "end:patched:VALUE!",
+      ]);
+
+      removeInterceptor();
+      hook.unsubscribe(handlers);
+    });
+
+    it("supports asynchronous invocation interceptors", async () => {
+      const result = transformTestCode(
+        { functionName: "query", kind: "Async" },
+        `
+          async function query(input) {
+            await Promise.resolve();
+            return input;
+          }
+          module.exports = { query };
+        `,
+        "cjs",
+      );
+      const loadedModule = {
+        exports: {} as { query(input: string): Promise<string> },
+      };
+      Function(
+        "module",
+        "exports",
+        result.code,
+      )(loadedModule, loadedModule.exports);
+      const hook = newGlobalTracingChannel("orchestrion:test-sdk:test");
+      const removeInterceptor = hook.intercept(async (target, thisArg, args) =>
+        String(await target.apply(thisArg, [String(args[0]).toUpperCase()])),
+      );
+
+      await expect(loadedModule.exports.query("value")).resolves.toBe("VALUE");
+      removeInterceptor();
+    });
+
+    it("supports callback invocation interceptors", () => {
+      const result = transformTestCode(
+        { functionName: "query", kind: "Callback", callbackIndex: 1 },
+        `
+          function query(input, callback) {
+            callback(null, input);
+            return "called";
+          }
+          module.exports = { query };
+        `,
+        "cjs",
+      );
+      const loadedModule = {
+        exports: {} as {
+          query(
+            input: string,
+            callback: (error: unknown, value: string) => void,
+          ): string;
+        },
+      };
+      Function(
+        "module",
+        "exports",
+        result.code,
+      )(loadedModule, loadedModule.exports);
+      const hook = newGlobalTracingChannel("orchestrion:test-sdk:test");
+      const removeInterceptor = hook.intercept((target, thisArg, args) => {
+        const callback = args[1] as (error: unknown, value: string) => void;
+        return target.apply(thisArg, [String(args[0]).toUpperCase(), callback]);
+      });
+      const callback = vi.fn();
+
+      expect(loadedModule.exports.query("value", callback)).toBe("called");
+      expect(callback).toHaveBeenCalledWith(null, "VALUE");
+      removeInterceptor();
+    });
   });
 
   describe("esbuild", () => {
-    it("should transform OpenAI SDK code with tracingChannel", async () => {
+    it("should transform OpenAI SDK code with global hooks", async () => {
       const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
@@ -292,7 +617,7 @@ describe("Orchestrion Transformation Tests", () => {
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true, // CRITICAL: Don't dereference symlinks!
-        platform: "node", // Allow Node.js built-ins like diagnostics_channel
+        platform: "node",
       });
 
       expect(result.errors).toHaveLength(0);
@@ -300,52 +625,48 @@ describe("Orchestrion Transformation Tests", () => {
 
       const output = fs.readFileSync(outfile, "utf-8");
 
-      // Verify orchestrion transformed the code
-      expect(output).toContain("tracingChannel");
-      expect(output).toContain("orchestrion:openai:chat.completions.create");
-      expect(output).not.toContain("TracingChannel");
+      expectGlobalHookTransform(output);
     });
 
-    it("should bundle dc-browser module when useDiagnosticChannelCompatShim is true", async () => {
-      const { braintrustEsbuildPlugin } =
-        await import("../../src/auto-instrumentations/bundler/esbuild.js");
+    it.each([
+      ["browser", "browser", { browser: true }],
+      ["legacy-browser", "browser", { useDiagnosticChannelCompatShim: true }],
+      ["edge", "neutral", { browser: true }],
+    ] as const)(
+      "should keep Mastra %s bundles free of Node-only patches",
+      async (runtime, platform, pluginOptions) => {
+        const { braintrustEsbuildPlugin } =
+          await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
-      const entryPoint = path.join(fixturesDir, "test-app.js");
-      const outfile = path.join(outputDir, "esbuild-browser-bundle.js");
+        const outfile = path.join(
+          outputDir,
+          `esbuild-mastra-${runtime}-bundle.js`,
+        );
 
-      const result = await esbuild.build({
-        entryPoints: [entryPoint],
-        bundle: true,
-        write: true,
-        outfile,
-        format: "esm",
-        plugins: [
-          braintrustEsbuildPlugin({ useDiagnosticChannelCompatShim: true }),
-        ],
-        logLevel: "error",
-        absWorkingDir: fixturesDir,
-        preserveSymlinks: true,
-        platform: "browser",
-      });
+        const result = await esbuild.build({
+          entryPoints: [mastraEntryPoint],
+          bundle: true,
+          write: true,
+          outfile,
+          format: "esm",
+          plugins: [braintrustEsbuildPlugin(pluginOptions)],
+          logLevel: "error",
+          absWorkingDir: mastraFixtureDir,
+          preserveSymlinks: true,
+          platform,
+        });
 
-      expect(result.errors).toHaveLength(0);
-      expect(fs.existsSync(outfile)).toBe(true);
-
-      const output = fs.readFileSync(outfile, "utf-8");
-
-      // Verify orchestrion transformed the code
-      expect(output).toContain("tracingChannel");
-      expect(output).toContain("orchestrion:openai:chat.completions.create");
-
-      // Verify dc-browser module is bundled (should contain TracingChannel class implementation)
-      expect(output).toContain("TracingChannel");
-      // Should NOT import from external diagnostics_channel
-      expect(output).not.toMatch(/from\s+["']diagnostics_channel["']/);
-    });
+        expect(result.errors).toHaveLength(0);
+        const output = fs.readFileSync(outfile, "utf-8");
+        expect(output).toContain("Mastra = class");
+        expect(output).not.toContain("node:module");
+        expect(output).not.toContain("__braintrustCreateRequire");
+      },
+    );
   });
 
   describe("vite", () => {
-    it("should transform OpenAI SDK code with tracingChannel", async () => {
+    it("should transform OpenAI SDK code with global hooks", async () => {
       const { braintrustVitePlugin } =
         await import("../../src/auto-instrumentations/bundler/vite.js");
 
@@ -363,9 +684,6 @@ describe("Orchestrion Transformation Tests", () => {
           outDir,
           emptyOutDir: true,
           minify: false,
-          rollupOptions: {
-            external: ["diagnostics_channel"], // Mark Node built-ins as external, don't try to bundle them
-          },
         },
         plugins: [braintrustVitePlugin()],
         logLevel: "error",
@@ -379,13 +697,10 @@ describe("Orchestrion Transformation Tests", () => {
 
       const output = fs.readFileSync(bundlePath, "utf-8");
 
-      // Verify orchestrion transformed the code
-      expect(output).toContain("tracingChannel");
-      expect(output).toContain("orchestrion:openai:chat.completions.create");
-      expect(output).not.toContain("TracingChannel");
+      expectGlobalHookTransform(output);
     });
 
-    it("should bundle dc-browser module when useDiagnosticChannelCompatShim is true", async () => {
+    it("should use global hooks for browser builds", async () => {
       const { braintrustVitePlugin } =
         await import("../../src/auto-instrumentations/bundler/vite.js");
 
@@ -404,9 +719,7 @@ describe("Orchestrion Transformation Tests", () => {
           emptyOutDir: true,
           minify: false,
         },
-        plugins: [
-          braintrustVitePlugin({ useDiagnosticChannelCompatShim: true }),
-        ],
+        plugins: [braintrustVitePlugin({ browser: true })],
         logLevel: "error",
         resolve: {
           preserveSymlinks: true,
@@ -418,14 +731,7 @@ describe("Orchestrion Transformation Tests", () => {
 
       const output = fs.readFileSync(bundlePath, "utf-8");
 
-      // Verify orchestrion transformed the code
-      expect(output).toContain("tracingChannel");
-      expect(output).toContain("orchestrion:openai:chat.completions.create");
-
-      // Verify dc-browser module is bundled (should contain TracingChannel class implementation)
-      expect(output).toContain("TracingChannel");
-      // Should NOT import from external diagnostics_channel
-      expect(output).not.toMatch(/from\s+["']diagnostics_channel["']/);
+      expectGlobalHookTransform(output);
     });
   });
 
@@ -456,7 +762,7 @@ describe("Orchestrion Transformation Tests", () => {
       });
     }
 
-    it("should transform OpenAI SDK code with tracingChannel", async () => {
+    it("should transform OpenAI SDK code with global hooks", async () => {
       const { braintrustWebpackPlugin } =
         await import("../../src/auto-instrumentations/bundler/webpack.js");
 
@@ -470,17 +776,14 @@ describe("Orchestrion Transformation Tests", () => {
         experiments: { outputModule: true },
         mode: "development",
         resolve: { modules: [nodeModulesDir, "node_modules"] },
-        externals: { diagnostics_channel: "module diagnostics_channel" },
         plugins: [braintrustWebpackPlugin()],
       });
 
       expect(errors).toHaveLength(0);
-      expect(output).toContain("tracingChannel");
-      expect(output).toContain("orchestrion:openai:chat.completions.create");
-      expect(output).not.toContain("TracingChannel");
+      expectGlobalHookTransform(output);
     });
 
-    it("should bundle dc-browser module when useDiagnosticChannelCompatShim is true", async () => {
+    it("should use global hooks for browser builds", async () => {
       const { braintrustWebpackPlugin } =
         await import("../../src/auto-instrumentations/bundler/webpack.js");
 
@@ -494,16 +797,11 @@ describe("Orchestrion Transformation Tests", () => {
         experiments: { outputModule: true },
         mode: "development",
         resolve: { modules: [nodeModulesDir, "node_modules"] },
-        plugins: [
-          braintrustWebpackPlugin({ useDiagnosticChannelCompatShim: true }),
-        ],
+        plugins: [braintrustWebpackPlugin({ browser: true })],
       });
 
       expect(errors).toHaveLength(0);
-      expect(output).toContain("tracingChannel");
-      expect(output).toContain("orchestrion:openai:chat.completions.create");
-      expect(output).toContain("TracingChannel");
-      expect(output).not.toMatch(/require\(["']diagnostics_channel["']\)/);
+      expectGlobalHookTransform(output);
     });
   });
 
@@ -538,7 +836,7 @@ describe("Orchestrion Transformation Tests", () => {
       });
     }
 
-    it("should transform OpenAI SDK code with tracingChannel (turbopack loader-only mode)", async () => {
+    it("should transform OpenAI SDK code with global hooks (turbopack loader-only mode)", async () => {
       const { errors, output } = await runWebpackWithLoader({
         entry: path.join(fixturesDir, "test-app.js"),
         output: {
@@ -549,7 +847,6 @@ describe("Orchestrion Transformation Tests", () => {
         experiments: { outputModule: true },
         mode: "development",
         resolve: { modules: [nodeModulesDir, "node_modules"] },
-        externals: { diagnostics_channel: "module diagnostics_channel" },
         // No plugins — only the loader, mirroring turbopack's constraint
         module: {
           rules: [
@@ -566,11 +863,10 @@ describe("Orchestrion Transformation Tests", () => {
       });
 
       expect(errors).toHaveLength(0);
-      expect(output).toContain("tracingChannel");
-      expect(output).toContain("orchestrion:openai:chat.completions.create");
+      expectGlobalHookTransform(output);
     });
 
-    it("should bundle dc-browser polyfill when browser: true (turbopack loader-only mode)", async () => {
+    it("should use global hooks when browser mode is true (turbopack loader-only mode)", async () => {
       const { errors, output } = await runWebpackWithLoader({
         entry: path.join(fixturesDir, "test-app.js"),
         output: {
@@ -597,15 +893,90 @@ describe("Orchestrion Transformation Tests", () => {
       });
 
       expect(errors).toHaveLength(0);
-      expect(output).toContain("tracingChannel");
-      expect(output).toContain("orchestrion:openai:chat.completions.create");
-      expect(output).toContain("TracingChannel");
-      expect(output).not.toMatch(/require\(["']diagnostics_channel["']\)/);
+      expectGlobalHookTransform(output);
+    });
+
+    it.each([
+      [
+        "skip",
+        "legacy browser",
+        "web",
+        { useDiagnosticChannelCompatShim: true },
+        false,
+      ],
+      ["skip", "browser", "web", { browser: true }, false],
+      ["apply", "node", "node", { browser: false }, true],
+    ] as const)(
+      "should %s special-case patches for %s turbopack loader targets",
+      async (_action, runtime, target, options, shouldPatch) => {
+        const { errors, output } = await runWebpackWithLoader({
+          entry: mastraEntryPoint,
+          output: {
+            path: outputDir,
+            filename: `turbopack-mastra-${runtime}-bundle.js`,
+            library: { type: "module" },
+          },
+          experiments: { outputModule: true },
+          mode: "development",
+          target,
+          module: {
+            rules: [
+              {
+                use: [
+                  {
+                    loader: webpackLoaderPath,
+                    options,
+                  },
+                ],
+              },
+            ],
+          },
+        });
+
+        expect(errors).toHaveLength(0);
+        if (shouldPatch) {
+          expect(output).toContain("__braintrustObservabilityClass");
+          expect(output).toContain("@mastra/observability");
+        } else {
+          expect(output).not.toContain("__braintrustObservabilityClass");
+          expect(output).not.toContain("node:module");
+        }
+      },
+    );
+
+    it("should apply the OpenAI APIPromise patch in turbopack loader-only mode", async () => {
+      const { errors, output } = await runWebpackWithLoader({
+        entry: openAIPromiseEntryPoint,
+        output: {
+          path: outputDir,
+          filename: "turbopack-openai-api-promise-bundle.js",
+          library: { type: "module" },
+        },
+        experiments: { outputModule: true },
+        mode: "development",
+        target: "web",
+        module: {
+          rules: [
+            {
+              use: [
+                {
+                  loader: webpackLoaderPath,
+                  options: { browser: true },
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      expect(errors).toHaveLength(0);
+      expect(output).toContain("__btPatchAPIPromise");
+      expect(output).toContain("__btParsePatched");
     });
   });
 
   describe("rollup", () => {
-    it("should transform OpenAI SDK code with tracingChannel", async () => {
+    it("should transform OpenAI SDK code with global hooks", async () => {
       const { rollup } = await import("rollup");
       const { braintrustRollupPlugin } =
         await import("../../src/auto-instrumentations/bundler/rollup.js");
@@ -645,13 +1016,10 @@ describe("Orchestrion Transformation Tests", () => {
 
       const output = fs.readFileSync(outfile, "utf-8");
 
-      // Verify orchestrion transformed the code
-      expect(output).toContain("tracingChannel");
-      expect(output).toContain("orchestrion:openai:chat.completions.create");
-      expect(output).not.toContain("TracingChannel");
+      expectGlobalHookTransform(output);
     });
 
-    it("should bundle dc-browser module when useDiagnosticChannelCompatShim is true", async () => {
+    it("should use global hooks for browser builds", async () => {
       const { rollup } = await import("rollup");
       const { braintrustRollupPlugin } =
         await import("../../src/auto-instrumentations/bundler/rollup.js");
@@ -669,25 +1037,13 @@ describe("Orchestrion Transformation Tests", () => {
               .resolve(fixturesDir, "node_modules", source)
               .replace(/\\/g, "/");
           }
-          if (source === "dc-browser") {
-            // Bundler resolveId always returns posix-style paths
-            return path
-              .resolve(
-                __dirname,
-                "../../node_modules/dc-browser/dist/index.mjs",
-              )
-              .replace(/\\/g, "/");
-          }
           return null;
         },
       };
 
       const bundle = await rollup({
         input: entryPoint,
-        plugins: [
-          resolverPlugin,
-          braintrustRollupPlugin({ useDiagnosticChannelCompatShim: true }),
-        ],
+        plugins: [resolverPlugin, braintrustRollupPlugin({ browser: true })],
         external: [],
         preserveSymlinks: true,
       });
@@ -703,14 +1059,7 @@ describe("Orchestrion Transformation Tests", () => {
 
       const output = fs.readFileSync(outfile, "utf-8");
 
-      // Verify orchestrion transformed the code
-      expect(output).toContain("tracingChannel");
-      expect(output).toContain("orchestrion:openai:chat.completions.create");
-
-      // Verify dc-browser module is bundled (should contain TracingChannel class implementation)
-      expect(output).toContain("TracingChannel");
-      // Should NOT import from external diagnostics_channel
-      expect(output).not.toMatch(/from\s+["']diagnostics_channel["']/);
+      expectGlobalHookTransform(output);
     });
   });
 });

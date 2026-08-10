@@ -9,5 +9,7 @@ const result = fetch("https://example.com");
 assert.equal(result, 42);
 assert.deepStrictEqual(context, {
   start: true,
-  end: 42,
+  end: true,
+  asyncStart: 42,
+  asyncEnd: 42,
 });

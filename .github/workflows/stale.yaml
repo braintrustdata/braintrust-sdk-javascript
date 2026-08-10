@@ -12,7 +12,7 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f # v10.2.0
+      - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
         with:
           days-before-stale: 30
           days-before-pr-stale: 14
@@ -20,6 +20,7 @@ jobs:
           days-before-pr-close: 7
           stale-issue-label: stale
           stale-pr-label: stale
+          exempt-issue-labels: never-stale
           stale-issue-message: >
             This issue has been automatically marked as stale because it has not
             had recent activity. If this issue is still relevant, please leave a

@@ -200,6 +200,7 @@ export {
   braintrustEveHook,
   braintrustEveInstrumentation,
 } from "./instrumentation/plugins/eve-plugin";
+export { collectAnthropicSession } from "./wrappers/anthropic-session-collector";
 export { wrapAnthropic } from "./wrappers/anthropic";
 export {
   BraintrustObservabilityExporter,
@@ -207,6 +208,7 @@ export {
 } from "./wrappers/mastra";
 export type { MastraObservabilityExporter } from "./wrappers/mastra";
 export { wrapClaudeAgentSDK } from "./wrappers/claude-agent-sdk/claude-agent-sdk";
+export { wrapCloudflareThink } from "./wrappers/cloudflare-think";
 export { wrapOpenAICodexSDK } from "./wrappers/openai-codex";
 export { wrapCursorSDK } from "./wrappers/cursor-sdk";
 export { wrapPiCodingAgentSDK } from "./wrappers/pi-coding-agent";
@@ -221,6 +223,7 @@ export { wrapHuggingFaceTransformers } from "./wrappers/huggingface-transformers
 export { wrapOpenRouterAgent } from "./wrappers/openrouter-agent";
 export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
+export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapVoyageAI } from "./wrappers/voyageai";
 export { wrapGroq } from "./wrappers/groq";

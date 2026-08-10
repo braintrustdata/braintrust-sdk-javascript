@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "59ffe088275bf9a2",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-20T14:51:42.209Z",
+      "recordedAt": "2026-08-03T10:58:39.244Z",
       "request": {
         "body": {
           "kind": "json",
@@ -60,11 +60,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1784559101,
-            "created_at": 1784559101,
+            "completed_at": 1785754719,
+            "created_at": 1785754716,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0b3de81cd59d852f006a5e35fd606c81a2a0c4dd439eb49ad4",
+            "id": "resp_03679ecbc14f5e6c006a70745cb394819f87ce503c3c1b2697",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 32,
@@ -76,8 +76,8 @@
             "output": [
               {
                 "arguments": "{\"city\":\"Vienna\"}",
-                "call_id": "call_5aUWoaFaaTr1bcWcgG89CL8K",
-                "id": "fc_0b3de81cd59d852f006a5e35fdedc081a29ad13fc7f718c2af",
+                "call_id": "call_yUEHX2Q9qgeKr2BeAPijRNLp",
+                "id": "fc_03679ecbc14f5e6c006a70745f12a8819f8352fee902925815",
                 "name": "lookup_weather",
                 "status": "completed",
                 "type": "function_call"
@@ -165,13 +165,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e2c90eac9adda5-IAD",
+          "cf-ray": "a254cee31d03c975-IAD",
           "connection": "keep-alive",
           "content-encoding": "br",
           "content-type": "application/json",
-          "date": "Mon, 20 Jul 2026 14:51:42 GMT",
+          "date": "Mon, 03 Aug 2026 10:58:39 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "900",
+          "openai-processing-ms": "2577",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -185,7 +185,7 @@
           "x-ratelimit-remaining-tokens": "149999702",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_b02ae31c18d94c13aa04c3d8f74a90c6"
+          "x-request-id": "req_32f05e1e8f6a44a298d93f0dcdd85cdf"
         },
         "status": 200,
         "statusText": "OK"
@@ -193,9 +193,9 @@
     },
     {
       "callIndex": 1,
-      "id": "827dc22627e1d436",
+      "id": "186c4e55b18cc3ae",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-20T14:51:42.842Z",
+      "recordedAt": "2026-08-03T10:58:40.647Z",
       "request": {
         "body": {
           "kind": "json",
@@ -215,11 +215,11 @@
                 "role": "user"
               },
               {
-                "id": "fc_0b3de81cd59d852f006a5e35fdedc081a29ad13fc7f718c2af",
+                "id": "fc_03679ecbc14f5e6c006a70745f12a8819f8352fee902925815",
                 "type": "item_reference"
               },
               {
-                "call_id": "call_5aUWoaFaaTr1bcWcgG89CL8K",
+                "call_id": "call_yUEHX2Q9qgeKr2BeAPijRNLp",
                 "output": "{\"city\":\"Vienna\",\"condition\":\"sunny\",\"marker\":\"WEATHER_TOOL_EXECUTED\"}",
                 "type": "function_call_output"
               }
@@ -260,11 +260,11 @@
             "billing": {
               "payer": "developer"
             },
-            "completed_at": 1784559102,
-            "created_at": 1784559102,
+            "completed_at": 1785754720,
+            "created_at": 1785754719,
             "error": null,
             "frequency_penalty": 0,
-            "id": "resp_0b3de81cd59d852f006a5e35fe4d1c81a29a26b2d6aa8c45cb",
+            "id": "resp_03679ecbc14f5e6c006a70745f55f8819f96fe0e8222e69fe6",
             "incomplete_details": null,
             "instructions": null,
             "max_output_tokens": 32,
@@ -283,7 +283,7 @@
                     "type": "output_text"
                   }
                 ],
-                "id": "msg_0b3de81cd59d852f006a5e35fe9f0881a28dd4013633012ebc",
+                "id": "msg_03679ecbc14f5e6c006a7074602d18819f919ecd86920fab79",
                 "role": "assistant",
                 "status": "completed",
                 "type": "message"
@@ -371,13 +371,13 @@
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e2c914fa05dda5-IAD",
+          "cf-ray": "a254cef39968c975-IAD",
           "connection": "keep-alive",
           "content-encoding": "br",
           "content-type": "application/json",
-          "date": "Mon, 20 Jul 2026 14:51:42 GMT",
+          "date": "Mon, 03 Aug 2026 10:58:40 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "574",
+          "openai-processing-ms": "1345",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -391,7 +391,7 @@
           "x-ratelimit-remaining-tokens": "149999662",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "0s",
-          "x-request-id": "req_39d0609c871441cf8f52b1309ae1e5a5"
+          "x-request-id": "req_3c958d0d61bd4505826b9de689724dec"
         },
         "status": 200,
         "statusText": "OK"

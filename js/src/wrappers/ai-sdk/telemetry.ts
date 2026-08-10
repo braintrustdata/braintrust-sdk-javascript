@@ -68,7 +68,10 @@ type EmbedSpanState = CallSpanState & {
  * Creates a Braintrust telemetry integration for AI SDK v7's
  * `registerTelemetry()` API.
  */
-export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
+// The public return type is intentionally `any` because AI SDK telemetry event
+// types vary between versions and are invariant under `strictFunctionTypes`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function braintrustAISDKTelemetry(): any {
   const operations = new Map<string, OperationState>();
   const operationKeysByCallId = new Map<string, string[]>();
   const workflowOperationKeyStore = iso.newAsyncLocalStorage<
@@ -942,7 +945,7 @@ export function braintrustAISDKTelemetry(): AISDKV7Telemetry {
       const state = toolSpans.get(toolCallId);
       return state ? withCurrent(state.span, () => execute()) : execute();
     },
-  };
+  } satisfies AISDKV7Telemetry;
 }
 
 function shouldRecordInputs(event: AISDKV7TelemetryOptions): boolean {

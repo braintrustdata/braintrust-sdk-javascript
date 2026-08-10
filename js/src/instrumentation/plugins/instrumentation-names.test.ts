@@ -11,6 +11,7 @@ import {
 import { claudeAgentSDKChannels } from "./claude-agent-sdk-channels";
 import { cloudflareAIChatChannels } from "./cloudflare-ai-chat-channels";
 import { cloudflareAgentsChannels } from "./cloudflare-agents-channels";
+import { cloudflareThinkChannels } from "./cloudflare-think-channels";
 import { cohereChannels } from "./cohere-channels";
 import { cursorSDKChannels } from "./cursor-sdk-channels";
 import { flueChannels } from "./flue-channels";
@@ -23,6 +24,7 @@ import { huggingFaceChannels } from "./huggingface-channels";
 import { langChainChannels } from "./langchain-channels";
 import { langSmithChannels } from "./langsmith-channels";
 import { mistralChannels } from "./mistral-channels";
+import { ollamaChannels } from "./ollama-channels";
 import { openAIAgentsCoreChannels } from "./openai-agents-channels";
 import { openAIChannels } from "./openai-channels";
 import { openAICodexChannels } from "./openai-codex-channels";
@@ -49,6 +51,10 @@ describe("built-in instrumentation provenance names", () => {
       cloudflareAgentsChannels.runAgentTool,
       INSTRUMENTATION_NAMES.CLOUDFLARE_AGENTS,
     ],
+    [
+      cloudflareThinkChannels.runInferenceLoop,
+      INSTRUMENTATION_NAMES.CLOUDFLARE_THINK,
+    ],
     [cohereChannels.chat, INSTRUMENTATION_NAMES.COHERE],
     [cursorSDKChannels.create, INSTRUMENTATION_NAMES.CURSOR_SDK],
     [flueChannels.createContext, INSTRUMENTATION_NAMES.FLUE],
@@ -62,6 +68,7 @@ describe("built-in instrumentation provenance names", () => {
     [langChainChannels.configure, INSTRUMENTATION_NAMES.LANGCHAIN],
     [langSmithChannels.createRun, INSTRUMENTATION_NAMES.LANGSMITH],
     [mistralChannels.chatComplete, INSTRUMENTATION_NAMES.MISTRAL],
+    [ollamaChannels.chat, INSTRUMENTATION_NAMES.OLLAMA],
     [
       openAIAgentsCoreChannels.onTraceStart,
       INSTRUMENTATION_NAMES.OPENAI_AGENTS,

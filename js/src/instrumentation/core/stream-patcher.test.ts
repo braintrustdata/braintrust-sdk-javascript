@@ -258,6 +258,78 @@ describe("patchStreamIfNeeded", () => {
     expect(onComplete).toHaveBeenCalledWith([1, 2]);
   });
 
+  it("should cancel an abortable stream when abort() is called", async () => {
+    const iterator = {
+      values: [1, 2, 3],
+      index: 0,
+      async next() {
+        const value = this.values[this.index++];
+        return value === undefined
+          ? { done: true as const, value: undefined }
+          : { done: false as const, value };
+      },
+    };
+    const abort = vi.fn(() => "aborted");
+    const stream = {
+      abort,
+      [Symbol.asyncIterator]() {
+        return iterator;
+      },
+    };
+    const onComplete = vi.fn();
+    const onCancel = vi.fn();
+    const patched = patchStreamIfNeeded(stream, {
+      onCancel,
+      onComplete,
+    }) as typeof stream;
+    const patchedIterator = patched[Symbol.asyncIterator]();
+
+    await patchedIterator.next();
+    await patchedIterator.next();
+
+    expect(patched.abort()).toBe("aborted");
+    expect(abort).toHaveBeenCalledOnce();
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(onCancel).toHaveBeenCalledWith([1, 2]);
+    expect(onComplete).not.toHaveBeenCalled();
+
+    patched.abort();
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+
+  it("should complete an abortable self-iterator when abort() is called", async () => {
+    const abort = vi.fn(() => "aborted");
+    const stream = {
+      values: [1, 2, 3],
+      index: 0,
+      abort,
+      async next() {
+        const value = this.values[this.index++];
+        return value === undefined
+          ? { done: true as const, value: undefined }
+          : { done: false as const, value };
+      },
+      [Symbol.asyncIterator]() {
+        return this;
+      },
+    };
+    const onComplete = vi.fn();
+    const patched = patchStreamIfNeeded(stream, {
+      onComplete,
+    }) as typeof stream;
+
+    await patched.next();
+    await patched.next();
+
+    expect(patched.abort()).toBe("aborted");
+    expect(abort).toHaveBeenCalledOnce();
+    expect(onComplete).toHaveBeenCalledOnce();
+    expect(onComplete).toHaveBeenCalledWith([1, 2]);
+
+    patched.abort();
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
+
   it("should handle error injection via throw()", async () => {
     const stream = {
       async *[Symbol.asyncIterator]() {

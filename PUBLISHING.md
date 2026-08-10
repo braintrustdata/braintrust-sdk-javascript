@@ -11,7 +11,7 @@ All package publishing happens in GitHub Actions. Do not publish from your local
   - Review the generated prepare release PR.
   - Run **Publish Stable Release** with the `release_sha` shown in the prepare workflow summary.
   - Approve the `npm-publish` environment.
-  - The publish workflow publishes from the exact commit SHA, creates tags and GitHub Releases for that commit, and comments on issues closed by released PRs.
+  - The publish workflow builds, packs, and attests the packages _before_ the gate, then (after approval) publishes from the exact commit SHA, creates tags and GitHub Releases for that commit, and comments on issues closed by released PRs.
   - Merge the prepare release PR after publishing succeeds.
 - For a prerelease from a branch:
   - Run **Publish Prerelease Snapshot** with `ref=<branch, tag, or SHA>`.
@@ -60,13 +60,14 @@ This is the normal production release flow.
 
 The stable publish workflow checks out `release_sha` exactly. It accepts any full commit SHA with a parent, does not resolve the prepare release PR, and does not publish from the current tip of `main`.
 
-The workflow then:
+The workflow runs in stages, and the `npm-publish` approval gate sits _after_ the build so nothing is published until a reviewer approves:
 
-- detects packages whose versions changed between the release commit and its first parent
-- publishes any of those package versions that are not already on npm
-- pushes Changesets-style release tags for the release commit
-- creates GitHub Releases
-- comments on issues closed by PRs included in the release
+1. **Build & pack (before the gate).** Detects packages whose versions changed between the release commit and its first parent, builds them, packs the tarballs, generates an SBOM per package, and attests build provenance for the tarballs. If no package versions changed, there is no work to approve.
+2. **Attest SBOMs.** Produces a signed attestation for each package's SBOM.
+3. **Request approval.** Posts the release (SHA + package list) for review and waits on the `npm-publish` environment gate.
+4. **Publish (after approval).** Publishes the prebuilt tarballs to the npm `latest` dist-tag (skipping versions already on npm), pushes Changesets-style release tags for the release commit, creates GitHub Releases with the SBOM assets attached, and comments on issues closed by PRs included in the release.
+
+The build/attest, approval, publish, and GitHub-release steps run through the shared release actions in [`braintrustdata/sdk-actions`](https://github.com/braintrustdata/sdk-actions) (pinned by commit SHA).
 
 If publishing succeeds but the prepare release PR cannot be merged cleanly afterward, the release is still published. Repair or recreate the prepare release PR manually afterward.
 

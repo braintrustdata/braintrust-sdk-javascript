@@ -14,7 +14,7 @@ const VITEST_COMMAND = path.join(
   ".bin",
   process.platform === "win32" ? "vitest.cmd" : "vitest",
 );
-const DEFAULT_OPENAI_CODEX_E2E_MODEL = "gpt-5.1-codex-mini";
+const DEFAULT_OPENAI_CODEX_E2E_MODEL = "gpt-5.3-codex";
 
 const rawArgs = process.argv.slice(2).filter((arg) => arg !== "--");
 const updateSnapshots = rawArgs.includes("--update");

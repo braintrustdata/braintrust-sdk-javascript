@@ -9,6 +9,7 @@ export interface InstrumentationIntegrationsConfig {
   huggingface?: boolean;
   claudeAgentSDK?: boolean;
   cloudflareAIChat?: boolean;
+  cloudflareThink?: boolean;
   cursor?: boolean;
   cursorSDK?: boolean;
   flue?: boolean;
@@ -17,6 +18,7 @@ export interface InstrumentationIntegrationsConfig {
   openrouter?: boolean;
   openrouterAgent?: boolean;
   mistral?: boolean;
+  ollama?: boolean;
   cohere?: boolean;
   groq?: boolean;
   bedrock?: boolean;
@@ -74,6 +76,7 @@ const envIntegrationAliases: Record<
   cloudflareaichat: "cloudflareAIChat",
   "cloudflare-ai-chat": "cloudflareAIChat",
   "@cloudflare/ai-chat": "cloudflareAIChat",
+  cloudflarethink: "cloudflareThink",
   cursor: "cursor",
   "cursor-sdk": "cursorSDK",
   cursorsdk: "cursorSDK",
@@ -94,6 +97,7 @@ const envIntegrationAliases: Record<
   openrouteragent: "openrouterAgent",
   "openrouter-agent": "openrouterAgent",
   mistral: "mistral",
+  ollama: "ollama",
   googleadk: "googleADK",
   "google-adk": "googleADK",
   cohere: "cohere",
@@ -136,6 +140,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     huggingface: true,
     claudeAgentSDK: true,
     cloudflareAIChat: true,
+    cloudflareThink: true,
     cursor: true,
     cursorSDK: true,
     flue: true,
@@ -144,6 +149,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     openrouter: true,
     openrouterAgent: true,
     mistral: true,
+    ollama: true,
     cohere: true,
     groq: true,
     bedrock: true,

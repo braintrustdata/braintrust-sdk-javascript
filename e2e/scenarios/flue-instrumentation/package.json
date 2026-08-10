@@ -2,18 +2,62 @@
   "name": "flue-instrumentation-scenario",
   "private": true,
   "type": "module",
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "flue-cli-v0-8-latest": {
+          "package": "@flue/cli",
+          "range": ">=0.8.0 <0.9.0"
+        },
+        "flue-cli-v1-latest": {
+          "package": "@flue/cli",
+          "range": ">=1.0.0-beta.3 <2.0.0-0",
+          "allowPrerelease": true
+        },
+        "flue-runtime-v0-8-latest": {
+          "package": "@flue/runtime",
+          "range": ">=0.8.0 <0.9.0"
+        },
+        "flue-runtime-v1-latest": {
+          "package": "@flue/runtime",
+          "range": ">=1.0.0-beta.3 <2.0.0-0",
+          "allowPrerelease": true
+        },
+        "flue-runtime-v2-latest": {
+          "package": "@flue/runtime",
+          "range": ">=2.0.0 <3.0.0"
+        }
+      }
+    }
+  },
   "dependencies": {
     "@flue/cli": "0.8.0",
-    "@flue/runtime": "0.8.0"
+    "@flue/runtime": "0.8.0",
+    "flue-cli-v0-8-latest": "npm:@flue/cli@0.8.1",
+    "flue-cli-v1": "npm:@flue/cli@1.0.0-beta.3",
+    "flue-cli-v1-latest": "npm:@flue/cli@1.0.0-beta.9",
+    "flue-runtime-v0-8-latest": "npm:@flue/runtime@0.8.1",
+    "flue-runtime-v1": "npm:@flue/runtime@1.0.0-beta.3",
+    "flue-runtime-v1-latest": "npm:@flue/runtime@1.0.0-beta.9",
+    "flue-runtime-v2": "npm:@flue/runtime@2.0.0",
+    "flue-runtime-v2-latest": "npm:@flue/runtime@2.0.1",
+    "pi-ai-v2": "npm:@earendil-works/pi-ai@0.83.0",
+    "valibot": "1.4.2"
   },
   "pnpm": {
     "overrides": {
+      "@flue/runtime@0.8.0>@earendil-works/pi-agent-core": "0.75.4",
+      "@flue/runtime@0.8.0>@earendil-works/pi-ai": "0.75.4",
+      "@flue/runtime@0.8.1>@earendil-works/pi-agent-core": "0.75.4",
+      "@flue/runtime@0.8.1>@earendil-works/pi-ai": "0.75.4",
       "@hono/node-server@>=2.0.0 <2.0.10": "^2.0.10",
-      "fast-uri@<3.1.4": "^3.1.4",
+      "fast-uri@<3.1.5": "^3.1.5",
       "hono@>=4.0.0 <4.12.27": "^4.12.27",
-      "brace-expansion@>=3.0.0 <5.0.8": "^5.0.8",
+      "brace-expansion@>=3.0.0 <5.0.9": "^5.0.9",
       "postcss@<8.5.18": "^8.5.18",
-      "valibot@<1.4.2": "^1.4.2"
+      "valibot@<1.4.2": "^1.4.2",
+      "ip-address@<10.2.2": "^10.2.2",
+      "undici@<7.29.0": "^7.29.0"
     }
   }
 }

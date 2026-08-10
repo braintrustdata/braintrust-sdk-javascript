@@ -4,6 +4,7 @@ import { OpenAICodexPlugin } from "./plugins/openai-codex-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
+import { CloudflareThinkPlugin } from "./plugins/cloudflare-think-plugin";
 import { CursorSDKPlugin } from "./plugins/cursor-sdk-plugin";
 import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
@@ -12,6 +13,7 @@ import { HuggingFaceTransformersPlugin } from "./plugins/huggingface-transformer
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
+import { OllamaPlugin } from "./plugins/ollama-plugin";
 import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
@@ -44,6 +46,7 @@ export interface BraintrustPluginConfig {
  * - HuggingFace Inference SDK
  * - LangChain.js and LangGraph
  * - Mistral SDK
+ * - Ollama SDK
  * - Cohere SDK
  * - Voyage AI SDK
  *
@@ -57,6 +60,7 @@ export class BraintrustPlugin extends BasePlugin {
   private anthropicPlugin: AnthropicPlugin | null = null;
   private aiSDKPlugin: AISDKPlugin | null = null;
   private claudeAgentSDKPlugin: ClaudeAgentSDKPlugin | null = null;
+  private cloudflareThinkPlugin: CloudflareThinkPlugin | null = null;
   private cursorSDKPlugin: CursorSDKPlugin | null = null;
   private openAIAgentsPlugin: OpenAIAgentsPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
@@ -66,6 +70,7 @@ export class BraintrustPlugin extends BasePlugin {
   private openRouterPlugin: OpenRouterPlugin | null = null;
   private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
   private mistralPlugin: MistralPlugin | null = null;
+  private ollamaPlugin: OllamaPlugin | null = null;
   private googleADKPlugin: GoogleADKPlugin | null = null;
   private coherePlugin: CoherePlugin | null = null;
   private groqPlugin: GroqPlugin | null = null;
@@ -119,6 +124,11 @@ export class BraintrustPlugin extends BasePlugin {
       this.claudeAgentSDKPlugin.enable();
     }
 
+    if (integrations.cloudflareThink !== false) {
+      this.cloudflareThinkPlugin = new CloudflareThinkPlugin();
+      this.cloudflareThinkPlugin.enable();
+    }
+
     if (integrations.cursorSDK !== false && integrations.cursor !== false) {
       this.cursorSDKPlugin = new CursorSDKPlugin();
       this.cursorSDKPlugin.enable();
@@ -157,6 +167,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.mistral !== false) {
       this.mistralPlugin = new MistralPlugin();
       this.mistralPlugin.enable();
+    }
+
+    if (integrations.ollama !== false) {
+      this.ollamaPlugin = new OllamaPlugin();
+      this.ollamaPlugin.enable();
     }
 
     // Enable Google ADK integration (default: true)
@@ -240,7 +255,7 @@ export class BraintrustPlugin extends BasePlugin {
     // ObservabilityExporter contract, and `BraintrustObservabilityExporter`
     // (wrappers/mastra.ts) is auto-installed by the loader patch in
     // `auto-instrumentations/loader/mastra-observability-patch.ts` rather than
-    // by a BasePlugin / tracingChannel subscription.
+    // by a BasePlugin / global hook subscription.
   }
 
   protected onDisable(): void {
@@ -267,6 +282,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.claudeAgentSDKPlugin) {
       this.claudeAgentSDKPlugin.disable();
       this.claudeAgentSDKPlugin = null;
+    }
+
+    if (this.cloudflareThinkPlugin) {
+      this.cloudflareThinkPlugin.disable();
+      this.cloudflareThinkPlugin = null;
     }
 
     if (this.cursorSDKPlugin) {
@@ -307,6 +327,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.mistralPlugin) {
       this.mistralPlugin.disable();
       this.mistralPlugin = null;
+    }
+
+    if (this.ollamaPlugin) {
+      this.ollamaPlugin.disable();
+      this.ollamaPlugin = null;
     }
 
     if (this.googleADKPlugin) {

@@ -5,6 +5,7 @@ import { OpenAICodexPlugin } from "./plugins/openai-codex-plugin";
 import { AnthropicPlugin } from "./plugins/anthropic-plugin";
 import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
+import { CloudflareThinkPlugin } from "./plugins/cloudflare-think-plugin";
 import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
@@ -12,6 +13,7 @@ import { HuggingFaceTransformersPlugin } from "./plugins/huggingface-transformer
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
+import { OllamaPlugin } from "./plugins/ollama-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
@@ -63,6 +65,10 @@ vi.mock("./plugins/claude-agent-sdk-plugin", () => ({
   ClaudeAgentSDKPlugin: createPluginClassMock(),
 }));
 
+vi.mock("./plugins/cloudflare-think-plugin", () => ({
+  CloudflareThinkPlugin: createPluginClassMock(),
+}));
+
 vi.mock("./plugins/openai-agents-plugin", () => ({
   OpenAIAgentsPlugin: createPluginClassMock(),
 }));
@@ -89,6 +95,10 @@ vi.mock("./plugins/openrouter-agent-plugin", () => ({
 
 vi.mock("./plugins/mistral-plugin", () => ({
   MistralPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/ollama-plugin", () => ({
+  OllamaPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/cohere-plugin", () => ({
@@ -180,6 +190,16 @@ describe("BraintrustPlugin", () => {
       expect(ClaudeAgentSDKPlugin).toHaveBeenCalledTimes(1);
       const mockInstance =
         vi.mocked(ClaudeAgentSDKPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable Cloudflare Think plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(CloudflareThinkPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(CloudflareThinkPlugin).mock.results[0]
+        .value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -471,6 +491,16 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
+    it("should not create Cloudflare Think plugin when cloudflareThink: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { cloudflareThink: false },
+      });
+      plugin.enable();
+
+      expect(CloudflareThinkPlugin).not.toHaveBeenCalled();
+      expect(AISDKPlugin).toHaveBeenCalledTimes(1);
+    });
+
     it("should not create OpenAI Agents plugin when openAIAgents: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { openAIAgents: false },
@@ -555,6 +585,18 @@ describe("BraintrustPlugin", () => {
       expect(GoogleGenAIPlugin).toHaveBeenCalledTimes(1);
       expect(HuggingFacePlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not create Ollama plugin when ollama: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { ollama: false },
+      });
+      plugin.enable();
+
+      expect(OllamaPlugin).not.toHaveBeenCalled();
+      expect(OpenAIPlugin).toHaveBeenCalledTimes(1);
+      expect(AnthropicPlugin).toHaveBeenCalledTimes(1);
+      expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
     it("should not create Cohere plugin when cohere: false", () => {
@@ -656,12 +698,14 @@ describe("BraintrustPlugin", () => {
           anthropic: false,
           aisdk: false,
           claudeAgentSDK: false,
+          cloudflareThink: false,
           openAIAgents: false,
           googleGenAI: false,
           huggingface: false,
           openrouter: false,
           openrouterAgent: false,
           mistral: false,
+          ollama: false,
           cohere: false,
           groq: false,
           gitHubCopilot: false,
@@ -680,12 +724,14 @@ describe("BraintrustPlugin", () => {
       expect(AnthropicPlugin).not.toHaveBeenCalled();
       expect(AISDKPlugin).not.toHaveBeenCalled();
       expect(ClaudeAgentSDKPlugin).not.toHaveBeenCalled();
+      expect(CloudflareThinkPlugin).not.toHaveBeenCalled();
       expect(OpenAIAgentsPlugin).not.toHaveBeenCalled();
       expect(GoogleGenAIPlugin).not.toHaveBeenCalled();
       expect(HuggingFacePlugin).not.toHaveBeenCalled();
       expect(OpenRouterPlugin).not.toHaveBeenCalled();
       expect(OpenRouterAgentPlugin).not.toHaveBeenCalled();
       expect(MistralPlugin).not.toHaveBeenCalled();
+      expect(OllamaPlugin).not.toHaveBeenCalled();
       expect(CoherePlugin).not.toHaveBeenCalled();
       expect(GroqPlugin).not.toHaveBeenCalled();
       expect(GitHubCopilotPlugin).not.toHaveBeenCalled();
@@ -895,6 +941,7 @@ describe("BraintrustPlugin", () => {
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
       const mistralMock = vi.mocked(MistralPlugin).mock.results[0].value;
+      const ollamaMock = vi.mocked(OllamaPlugin).mock.results[0].value;
       const cohereMock = vi.mocked(CoherePlugin).mock.results[0].value;
       const groqMock = vi.mocked(GroqPlugin).mock.results[0].value;
       const piCodingAgentMock =
@@ -917,6 +964,7 @@ describe("BraintrustPlugin", () => {
       expect(openRouterMock.enable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.enable).toHaveBeenCalledTimes(1);
       expect(mistralMock.enable).toHaveBeenCalledTimes(1);
+      expect(ollamaMock.enable).toHaveBeenCalledTimes(1);
       expect(cohereMock.enable).toHaveBeenCalledTimes(1);
       expect(groqMock.enable).toHaveBeenCalledTimes(1);
       expect(piCodingAgentMock.enable).toHaveBeenCalledTimes(1);
@@ -949,6 +997,7 @@ describe("BraintrustPlugin", () => {
       const openRouterAgentMock = vi.mocked(OpenRouterAgentPlugin).mock
         .results[0].value;
       const mistralMock = vi.mocked(MistralPlugin).mock.results[0].value;
+      const ollamaMock = vi.mocked(OllamaPlugin).mock.results[0].value;
       const cohereMock = vi.mocked(CoherePlugin).mock.results[0].value;
       const groqMock = vi.mocked(GroqPlugin).mock.results[0].value;
       const piCodingAgentMock =
@@ -973,6 +1022,7 @@ describe("BraintrustPlugin", () => {
       expect(openRouterMock.disable).toHaveBeenCalledTimes(1);
       expect(openRouterAgentMock.disable).toHaveBeenCalledTimes(1);
       expect(mistralMock.disable).toHaveBeenCalledTimes(1);
+      expect(ollamaMock.disable).toHaveBeenCalledTimes(1);
       expect(cohereMock.disable).toHaveBeenCalledTimes(1);
       expect(groqMock.disable).toHaveBeenCalledTimes(1);
       expect(piCodingAgentMock.disable).toHaveBeenCalledTimes(1);
@@ -1023,6 +1073,7 @@ describe("BraintrustPlugin", () => {
       expect(OpenRouterPlugin).not.toHaveBeenCalled();
       expect(OpenRouterAgentPlugin).not.toHaveBeenCalled();
       expect(MistralPlugin).not.toHaveBeenCalled();
+      expect(OllamaPlugin).not.toHaveBeenCalled();
       expect(CoherePlugin).not.toHaveBeenCalled();
       expect(GroqPlugin).not.toHaveBeenCalled();
       expect(PiCodingAgentPlugin).not.toHaveBeenCalled();
@@ -1049,6 +1100,7 @@ describe("BraintrustPlugin", () => {
       expect(OpenRouterPlugin).toHaveBeenCalledTimes(1);
       expect(OpenRouterAgentPlugin).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
+      expect(OllamaPlugin).toHaveBeenCalledTimes(1);
       expect(CoherePlugin).toHaveBeenCalledTimes(1);
       expect(GroqPlugin).toHaveBeenCalledTimes(1);
       expect(PiCodingAgentPlugin).toHaveBeenCalledTimes(1);
@@ -1070,6 +1122,7 @@ describe("BraintrustPlugin", () => {
           openrouter: true,
           openrouterAgent: true,
           mistral: false,
+          ollama: false,
           cohere: false,
           groq: true,
           langchain: true,
@@ -1103,6 +1156,7 @@ describe("BraintrustPlugin", () => {
       expect(groqMock.disable).toHaveBeenCalledTimes(1);
       expect(langChainMock.disable).toHaveBeenCalledTimes(1);
       expect(MistralPlugin).not.toHaveBeenCalled();
+      expect(OllamaPlugin).not.toHaveBeenCalled();
       expect(CoherePlugin).not.toHaveBeenCalled();
     });
 

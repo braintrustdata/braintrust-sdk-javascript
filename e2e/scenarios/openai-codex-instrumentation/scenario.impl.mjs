@@ -136,7 +136,7 @@ async function isolateCodexExecutable(client, root) {
 function startThread(client, workingDirectory) {
   return client.startThread({
     approvalPolicy: "never",
-    model: process.env.OPENAI_CODEX_E2E_MODEL ?? "gpt-5.1-codex-mini",
+    model: process.env.OPENAI_CODEX_E2E_MODEL ?? "gpt-5.3-codex",
     modelReasoningEffort: "low",
     networkAccessEnabled: false,
     sandboxMode: "read-only",

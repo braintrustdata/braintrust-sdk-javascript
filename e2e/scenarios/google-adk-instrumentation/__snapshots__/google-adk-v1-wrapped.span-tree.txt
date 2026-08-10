@@ -65,71 +65,120 @@ span_tree:
     │               metrics: {
     │                 "duration": 0
     │               }
-    └── adk-sequential-run-operation
+    ├── adk-sequential-run-operation
+    │   metadata: {
+    │     "operation": "sequential-run",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── Google ADK Runner [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Hello.",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       output: {
+    │         "author": "farewell",
+    │         "content": "Goodbye.",
+    │         "role": "model"
+    │       }
+    │       metadata: {
+    │         "google_adk.session_id": "test-session-sequential",
+    │         "google_adk.user_id": "test-user",
+    │         "provider": "google-adk"
+    │       }
+    │       metrics: {
+    │         "duration": 0
+    │       }
+    │       └── Agent: sequential_workflow [task]
+    │           output: {
+    │             "author": "farewell",
+    │             "content": "Goodbye.",
+    │             "role": "model"
+    │           }
+    │           metadata: {
+    │             "google_adk.agent_name": "sequential_workflow",
+    │             "provider": "google-adk"
+    │           }
+    │           metrics: {
+    │             "duration": 0
+    │           }
+    │           ├── Agent: greeter [task]
+    │           │   output: {
+    │           │     "author": "greeter",
+    │           │     "content": "Hello.",
+    │           │     "role": "model"
+    │           │   }
+    │           │   metadata: {
+    │           │     "google_adk.agent_name": "greeter",
+    │           │     "model": "gemini-2.5-flash-lite",
+    │           │     "provider": "google-adk"
+    │           │   }
+    │           │   metrics: {
+    │           │     "duration": 0
+    │           │   }
+    │           └── Agent: farewell [task]
+    │               output: {
+    │                 "author": "farewell",
+    │                 "content": "Goodbye.",
+    │                 "role": "model"
+    │               }
+    │               metadata: {
+    │                 "google_adk.agent_name": "farewell",
+    │                 "model": "gemini-2.5-flash-lite",
+    │                 "provider": "google-adk"
+    │               }
+    │               metrics: {
+    │                 "duration": 0
+    │               }
+    └── adk-usage-run-operation
         metadata: {
-          "operation": "sequential-run",
+          "operation": "usage-run",
           "testRunId": "<run:1>"
         }
         └── Google ADK Runner [task]
             input: {
               "messages": [
                 {
-                  "content": "Hello.",
+                  "content": "Return the usage fixture.",
                   "role": "user"
                 }
               ]
             }
             output: {
-              "author": "farewell",
-              "content": "Goodbye.",
+              "author": "usage_agent",
+              "content": "Usage response.",
               "role": "model"
             }
             metadata: {
-              "google_adk.session_id": "test-session-sequential",
+              "google_adk.session_id": "test-session-usage",
               "google_adk.user_id": "test-user",
               "provider": "google-adk"
             }
             metrics: {
-              "duration": 0
+              "completion_audio_tokens": 2,
+              "completion_image_tokens": 3,
+              "completion_reasoning_tokens": 5,
+              "completion_tokens": 8,
+              "duration": 0,
+              "prompt_audio_tokens": 1,
+              "prompt_cached_tokens": 4,
+              "prompt_tokens": 12,
+              "tokens": 20
             }
-            └── Agent: sequential_workflow [task]
+            └── Agent: usage_agent [task]
                 output: {
-                  "author": "farewell",
-                  "content": "Goodbye.",
+                  "author": "usage_agent",
+                  "content": "Usage response.",
                   "role": "model"
                 }
                 metadata: {
-                  "google_adk.agent_name": "sequential_workflow",
+                  "google_adk.agent_name": "usage_agent",
+                  "model": "gemini-2.5-flash-lite",
                   "provider": "google-adk"
                 }
                 metrics: {
                   "duration": 0
                 }
-                ├── Agent: greeter [task]
-                │   output: {
-                │     "author": "greeter",
-                │     "content": "Hello.",
-                │     "role": "model"
-                │   }
-                │   metadata: {
-                │     "google_adk.agent_name": "greeter",
-                │     "model": "gemini-2.5-flash-lite",
-                │     "provider": "google-adk"
-                │   }
-                │   metrics: {
-                │     "duration": 0
-                │   }
-                └── Agent: farewell [task]
-                    output: {
-                      "author": "farewell",
-                      "content": "Goodbye.",
-                      "role": "model"
-                    }
-                    metadata: {
-                      "google_adk.agent_name": "farewell",
-                      "model": "gemini-2.5-flash-lite",
-                      "provider": "google-adk"
-                    }
-                    metrics: {
-                      "duration": 0
-                    }

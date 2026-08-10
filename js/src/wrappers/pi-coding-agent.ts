@@ -10,7 +10,7 @@ const WRAPPED_PROMPT = Symbol.for("braintrust.pi-coding-agent.wrapped-prompt");
 
 /**
  * Wraps the Pi Coding Agent SDK with Braintrust tracing. The wrapper emits
- * diagnostics-channel events; the Pi Coding Agent plugin owns span lifecycle.
+ * instrumentation hook calls; the Pi Coding Agent plugin owns span lifecycle.
  */
 export function wrapPiCodingAgentSDK<T>(sdk: T): T {
   if (!sdk || typeof sdk !== "object") {
@@ -53,14 +53,9 @@ function patchAgentSessionClass(AgentSession: PiAgentSessionClass): void {
       options?: PiPromptOptions,
     ) {
       const args = [text, options] as [string, PiPromptOptions | undefined];
-      return piCodingAgentChannels.prompt.tracePromise(
-        () => Reflect.apply(originalPrompt, this, args),
-        {
-          arguments: args,
-          self: this,
-          session: this,
-        },
-      );
+      return piCodingAgentChannels.prompt.invoke(originalPrompt, this, args, {
+        session: this,
+      });
     },
   });
 

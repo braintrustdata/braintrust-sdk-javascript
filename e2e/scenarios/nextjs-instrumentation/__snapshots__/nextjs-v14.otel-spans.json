@@ -1,0 +1,20 @@
+[
+  {
+    "attributes": {
+      "runtime": "nodejs",
+      "scenario": "nextjs-instrumentation",
+      "testRunId": "<run:1>"
+    },
+    "hasParent": false,
+    "name": "nextjs nodejs otel span"
+  },
+  {
+    "attributes": {
+      "runtime": "edge",
+      "scenario": "nextjs-instrumentation",
+      "testRunId": "<run:1>"
+    },
+    "hasParent": true,
+    "name": "nextjs edge otel span"
+  }
+]

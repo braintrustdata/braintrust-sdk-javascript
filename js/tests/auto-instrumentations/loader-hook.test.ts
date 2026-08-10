@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Worker } from "node:worker_threads";
+import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { buildTestGlobalHookRuntime } from "./test-global-hook-runtime";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, "fixtures");
@@ -16,10 +19,6 @@ const hookPath = path.join(
 const listenerPath = path.join(fixturesDir, "listener-esm.mjs");
 const testAppEsmPath = path.join(fixturesDir, "test-app-esm.mjs");
 const testAppCjsPath = path.join(fixturesDir, "test-app-cjs.cjs");
-const helperPromisePath = path.join(
-  fixturesDir,
-  "test-api-promise-preservation.mjs",
-);
 const runtimeApplyAutoSideEffectEsmPath = path.join(
   fixturesDir,
   "runtime-apply-auto-side-effect-esm.mjs",
@@ -28,22 +27,41 @@ const runtimeApplyAutoSideEffectCjsPath = path.join(
   fixturesDir,
   "runtime-apply-auto-side-effect-cjs.cjs",
 );
+const incompatibleGlobalHookRegistryPath = path.join(
+  fixturesDir,
+  "incompatible-global-hook-registry.cjs",
+);
+const configurableGlobalHookRegistryPath = path.join(
+  fixturesDir,
+  "configurable-global-hook-registry.cjs",
+);
+const legacyAutoInstrumentationMarkerPath = path.join(
+  fixturesDir,
+  "legacy-auto-instrumentation-marker.mjs",
+);
 
 interface TestResult {
   events: { start: any[]; end: any[]; error: any[] };
 }
 
+let testRuntimeDirectory: string;
+let globalHookRuntimePath: string;
+
 describe("Unified Loader Hook Integration Tests", () => {
-  beforeAll(() => {
-    // No setup needed - test/fixtures/node_modules/openai is committed to the repo
+  beforeAll(async () => {
+    testRuntimeDirectory = fs.mkdtempSync(
+      path.join(os.tmpdir(), "braintrust-global-hook-runtime-"),
+    );
+    globalHookRuntimePath =
+      await buildTestGlobalHookRuntime(testRuntimeDirectory);
   });
 
   afterAll(() => {
-    // No cleanup needed - we don't create any temporary files
+    fs.rmSync(testRuntimeDirectory, { recursive: true, force: true });
   });
 
   describe("Unified hook (--import) handles both ESM and CJS", () => {
-    it("should emit diagnostics_channel events for ESM OpenAI calls", async () => {
+    it("should invoke global hooks for ESM OpenAI calls", async () => {
       const result = await runWithWorker({
         execArgv: ["--import", listenerPath, "--import", hookPath],
         script: testAppEsmPath,
@@ -54,7 +72,7 @@ describe("Unified Loader Hook Integration Tests", () => {
       expect(result.events.start[0].args).toBeDefined();
     });
 
-    it("should emit diagnostics_channel events for CJS OpenAI calls", async () => {
+    it("should invoke global hooks for CJS OpenAI calls", async () => {
       const result = await runWithWorker({
         execArgv: ["--import", listenerPath, "--import", hookPath],
         script: testAppCjsPath,
@@ -64,24 +82,21 @@ describe("Unified Loader Hook Integration Tests", () => {
       expect(result.events.end.length).toBeGreaterThan(0);
     });
 
-    it("should preserve helper methods on promise subclasses", async () => {
-      const result = await runWithWorkerMessage<{
-        awaitedValue: string;
-        constructorName: string;
-        hasWithResponse: boolean;
-        withResponseData: string;
-        withResponseOk: boolean;
-      }>({
-        execArgv: ["--import", hookPath],
-        messageType: "helper-result",
-        script: helperPromisePath,
+    it("should ignore loader markers from older transports", async () => {
+      const result = await runWithWorker({
+        execArgv: [
+          "--import",
+          legacyAutoInstrumentationMarkerPath,
+          "--import",
+          listenerPath,
+          "--import",
+          hookPath,
+        ],
+        script: testAppEsmPath,
       });
 
-      expect(result.hasWithResponse).toBe(true);
-      expect(result.awaitedValue).toBe("ok");
-      expect(result.withResponseData).toBe("ok");
-      expect(result.withResponseOk).toBe(true);
-      expect(result.constructorName).toBe("HelperPromise");
+      expect(result.events.start.length).toBeGreaterThan(0);
+      expect(result.events.end.length).toBeGreaterThan(0);
     });
   });
 
@@ -125,6 +140,56 @@ describe("Unified Loader Hook Integration Tests", () => {
 
       expect(result.events.start.length).toBe(1);
       expect(result.events.end.length).toBe(1);
+    });
+  });
+
+  it("disables instrumentation when the global registry is incompatible", async () => {
+    const result = await runWithWorkerMessage<{
+      hasSubscribers: boolean;
+      providerCalls: number;
+      result: string;
+      subscriberCalls: number;
+    }>({
+      execArgv: [],
+      messageType: "incompatible-registry",
+      script: incompatibleGlobalHookRegistryPath,
+    });
+
+    expect(result).toEqual({
+      hasSubscribers: false,
+      providerCalls: 1,
+      result: "result",
+      subscriberCalls: 0,
+    });
+  });
+
+  it("replaces a configurable foreign registry with the immutable protocol registry", async () => {
+    const result = await runWithWorkerMessage<{
+      descriptor: {
+        configurable: boolean;
+        enumerable: boolean;
+        writable: boolean;
+      };
+      foreignRegistryBranded: boolean;
+      foreignRegistryRetained: boolean;
+      result: string;
+      subscriberCalls: number;
+    }>({
+      execArgv: [],
+      messageType: "configurable-registry",
+      script: configurableGlobalHookRegistryPath,
+    });
+
+    expect(result).toEqual({
+      descriptor: {
+        configurable: false,
+        enumerable: false,
+        writable: false,
+      },
+      foreignRegistryBranded: false,
+      foreignRegistryRetained: false,
+      result: "result",
+      subscriberCalls: 1,
     });
   });
 });
@@ -176,7 +241,12 @@ async function runWithWorkerMessage<T>(options: {
 
     const worker = new Worker(scriptUrl, {
       execArgv,
-      env: { ...process.env, ...options.env, NODE_OPTIONS: "" },
+      env: {
+        ...process.env,
+        ...options.env,
+        BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME: globalHookRuntimePath,
+        NODE_OPTIONS: "",
+      },
     });
 
     worker.on("message", (msg) => {

@@ -1086,10 +1086,14 @@ export function defineAISDKInstrumentationAssertions(options: {
         if (Array.isArray(input?.documents)) {
           expect(input.documents.length).toBeGreaterThanOrEqual(2);
         }
-        expect(trace.parent?.row.metadata).toMatchObject({
-          document_count: expect.any(Number),
-          topN: 2,
-        });
+        if (options.sdkMajorVersion >= 7) {
+          expect(input?.topN).toBe(2);
+        } else {
+          expect(trace.parent?.row.metadata).toMatchObject({
+            document_count: expect.any(Number),
+            topN: 2,
+          });
+        }
         expect(Array.isArray(trace.parent?.output)).toBe(true);
         expect(
           (trace.parent?.output as Array<Record<string, unknown>>)?.[0],

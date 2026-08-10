@@ -506,7 +506,7 @@ export const BRAINTRUST_CURRENT_SPAN_STORE = Symbol.for(
  * - Default (`BraintrustContextManager`): stores a `Span`
  * - OTEL compat (`OtelContextManager`): stores an OTEL `Context` object
  *
- * TracingChannel's `bindStore` transform (via `wrapSpanForStore`) produces the
+ * The global hook's `bindStore` transform (via `wrapSpanForStore`) produces the
  * correct value type for whichever mode is active.
  */
 export type CurrentSpanStore = IsoAsyncLocalStorage<unknown>;
@@ -517,7 +517,7 @@ export abstract class ContextManager {
   abstract getCurrentSpan(): Span | undefined;
 
   /**
-   * Returns the value to store in the ALS bound to a TracingChannel's start event.
+   * Returns the value to store in the ALS bound to a global hook's start event.
    * In default mode this is the Span itself; in OTEL mode it is the OTEL Context
    * containing the span so that OTEL's own ALS stores a proper Context object.
    */
@@ -6927,8 +6927,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     const objectId = await this.id;
     const batchLimit = batchSize ?? DEFAULT_FETCH_BATCH_SIZE;
     const internalLimit = getInternalBtqlLimit(this._internal_btql);
-    const limit =
-      batchSize !== undefined ? batchSize : (internalLimit ?? batchLimit);
+    let remainingLimit = internalLimit;
     const internalBtqlWithoutReservedQueryKeys = Object.fromEntries(
       Object.entries(this._internal_btql ?? {}).filter(
         ([key]) =>
@@ -6941,6 +6940,13 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     let cursor = undefined;
     let iterations = 0;
     while (true) {
+      if (remainingLimit !== undefined && remainingLimit <= 0) {
+        return;
+      }
+      const limit =
+        remainingLimit === undefined
+          ? batchLimit
+          : Math.min(batchLimit, remainingLimit);
       const resp = await state.apiConn().post(
         `btql`,
         {
@@ -6982,9 +6988,16 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
       const respJson = await resp.json();
       const mutate = this.mutateRecord;
       for (const record of respJson.data ?? []) {
-        yield mutate
+        if (remainingLimit !== undefined && remainingLimit <= 0) {
+          return;
+        }
+        const mutatedRecord = mutate
           ? mutate(record)
           : (record as WithTransactionId<RecordType>);
+        if (remainingLimit !== undefined) {
+          remainingLimit--;
+        }
+        yield mutatedRecord;
       }
       if (!respJson.cursor) {
         break;

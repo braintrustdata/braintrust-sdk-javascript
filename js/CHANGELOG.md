@@ -1,5 +1,49 @@
 # braintrust
 
+## 3.27.0
+
+### Minor Changes
+
+- feat: Add instrumentation for `anthropic.beta.sessions` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2333)
+- feat: Add `@cloudflare/think` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2258)
+- feat: Add `ollama` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2315)
+- feat(vitest-evals): Add `meta.eval.input` Thanks @aislinnnnn! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2318)
+
+### Patch Changes
+
+- feat: Add support for flue v2 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2327)
+
+## 3.26.0
+
+### Minor Changes
+
+- feat: Add `agents` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2257)
+- feat: Add `@cloudflare/ai-chat` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2256)
+- feat: Add instrumentation for `@huggingface/transformers` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2271)
+
+### Patch Changes
+
+- fix: Capture system prompt in Strands agent model span input (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2311)
+- fix(google-gen-ai): Fix output token counting for interactions API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2307)
+- fix(google-gen-ai): Fix output token counting for generate content API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2308)
+- ref: Replace diagnostic channels with proprietary global hooks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2275)
+- fix(google-adk): Fix token count in google adk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2312)
+- fix(ai-sdk): Fix type compat by returning any from `braintrustAISDKTelemetry` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2309)
+
+## 3.25.0
+
+### Minor Changes
+
+- feat: Bump auto instrumentation of Pi Coding Agent SDK to current release 0.81.1 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2268)
+
+### Patch Changes
+
+- feat: Support `@openrouter/sdk` v1 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2270)
+- fix: Fix eval hanging until configured timeout resolves (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2272)
+- feat: Record instrumentation name as part of span provenance (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2269)
+- deps: Bump deps (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2265)
+- fix(ai-sdk): Preserve HarnessAgent trace context across suspended turns. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2262)
+
 ## 3.24.0
 
 ### Minor Changes

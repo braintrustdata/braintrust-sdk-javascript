@@ -252,6 +252,68 @@
             "operation": "sequential-run",
             "testRunId": "<run:1>"
           }
+        },
+        {
+          "name": "adk-usage-run-operation",
+          "children": [
+            {
+              "name": "Google ADK Runner",
+              "type": "task",
+              "children": [
+                {
+                  "name": "Agent: usage_agent",
+                  "type": "task",
+                  "children": [],
+                  "output": {
+                    "author": "usage_agent",
+                    "content": "Usage response.",
+                    "role": "model"
+                  },
+                  "metadata": {
+                    "google_adk.agent_name": "usage_agent",
+                    "model": "gemini-2.5-flash-lite",
+                    "provider": "google-adk"
+                  },
+                  "metrics": {
+                    "duration": 0
+                  }
+                }
+              ],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Return the usage fixture.",
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "author": "usage_agent",
+                "content": "Usage response.",
+                "role": "model"
+              },
+              "metadata": {
+                "google_adk.session_id": "test-session-usage",
+                "google_adk.user_id": "test-user",
+                "provider": "google-adk"
+              },
+              "metrics": {
+                "completion_audio_tokens": 2,
+                "completion_image_tokens": 3,
+                "completion_reasoning_tokens": 5,
+                "completion_tokens": 8,
+                "duration": 0,
+                "prompt_audio_tokens": 1,
+                "prompt_cached_tokens": 4,
+                "prompt_tokens": 12,
+                "tokens": 20
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "usage-run",
+            "testRunId": "<run:1>"
+          }
         }
       ],
       "metadata": {

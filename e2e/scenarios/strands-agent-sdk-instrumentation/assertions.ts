@@ -135,9 +135,7 @@ function snapshotFields(event: CapturedLogEvent) {
   return {
     span_attributes: fields.span_attributes,
     input:
-      event.span.type === "llm" || event.span.type === undefined
-        ? undefined
-        : normalizeValue(fields.input),
+      event.span.type === undefined ? undefined : normalizeValue(fields.input),
     output:
       event.span.type === "llm" || event.span.type === undefined
         ? undefined
@@ -340,6 +338,54 @@ export function defineStrandsAgentSDKInstrumentationAssertions(options: {
       );
       expect(streamModels.length).toBeGreaterThanOrEqual(1);
     });
+
+    test(
+      "captures the system prompt in every model span input",
+      testConfig,
+      () => {
+        expect(setupError).toBeUndefined();
+        const systemPromptsByAgentName = new Map([
+          [
+            "Agent: weather-agent",
+            "You are a deterministic test agent. Always call lookup_weather exactly once for Vienna, then answer exactly STRANDS_AGENT_TOOL_OK.",
+          ],
+          ["Agent: document-agent", "Reply exactly STRANDS_DOCUMENT_OK."],
+          ["Agent: image-agent", "Reply exactly STRANDS_IMAGE_OK."],
+          ["Agent: stream-agent", "Reply exactly STRANDS_AGENT_STREAM_OK."],
+          ["Agent: graph-researcher", "Reply exactly GRAPH_RESEARCH_DONE."],
+          ["Agent: graph-writer", "Reply exactly STRANDS_GRAPH_OK."],
+          [
+            "Agent: swarm-router",
+            "Use the structured output schema. Hand off to swarm-finisher with message finish with STRANDS_SWARM_OK.",
+          ],
+          [
+            "Agent: swarm-finisher",
+            "Use the structured output schema. Do not hand off. Set the final message to exactly STRANDS_SWARM_OK.",
+          ],
+        ]);
+
+        for (const [agentName, systemPrompt] of systemPromptsByAgentName) {
+          const agents = latestEventsPerSpan(events).filter(
+            (event) => event.span.name === agentName,
+          );
+          expect(agents.length, agentName).toBeGreaterThanOrEqual(1);
+
+          for (const agent of agents) {
+            const modelSpans = findChildSpans(
+              events,
+              `Strands model: ${MODEL_NAME}`,
+              agent.span.id,
+            );
+            expect(modelSpans.length, agentName).toBeGreaterThanOrEqual(1);
+            for (const modelSpan of modelSpans) {
+              expect(
+                Array.isArray(modelSpan.input) ? modelSpan.input[0] : undefined,
+              ).toEqual({ role: "system", content: systemPrompt });
+            }
+          }
+        }
+      },
+    );
 
     test("captures document bytes as attachments", testConfig, () => {
       expect(setupError).toBeUndefined();

@@ -13,6 +13,7 @@ import {
 } from "../../span-origin";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
+import { debugLogger } from "../../debug-logger";
 import {
   SpanTypeAttribute,
   isObject,
@@ -21,6 +22,7 @@ import {
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { filterFrom, getCurrentUnixTimestamp } from "../../util";
 import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
+import { registerAnthropicSessionStreamCollector } from "../../wrappers/anthropic-session-collector";
 import { anthropicChannels } from "./anthropic-channels";
 import type {
   AnthropicBase64Source,
@@ -30,6 +32,14 @@ import type {
   AnthropicMessage,
   AnthropicMessageStream,
   AnthropicOutputContentBlock,
+  AnthropicSessionContentBlock,
+  AnthropicSessionEvent,
+  AnthropicSessionEventStream,
+  AnthropicSessionMessageEvent,
+  AnthropicSessionModelRequestEndEvent,
+  AnthropicSessionModelUsage,
+  AnthropicSessionToolResultEvent,
+  AnthropicSessionToolUseEvent,
   AnthropicStreamEvent,
   AnthropicToolRunner,
   AnthropicToolRunnerParams,
@@ -46,6 +56,36 @@ type AnthropicToolRunnerState = {
   seenMessages: WeakSet<object>;
   span: Span;
   startTime: number;
+};
+
+type AnthropicSessionModelState = {
+  firstTokenTime?: number;
+  output: AnthropicOutputContentBlock[];
+  span: Span;
+  startEventId: string;
+  startTime: number;
+};
+
+type AnthropicSessionToolState = {
+  approval?: "approved" | "denied";
+  span: Span;
+};
+
+type AnthropicSessionTurnState = {
+  activeModel?: AnthropicSessionModelState;
+  activeTools: Map<string, AnthropicSessionToolState>;
+  input: AnthropicInputMessage[];
+  lastOutput?: { role: "assistant"; content: AnthropicOutputContentBlock[] };
+  metrics: Record<string, number>;
+  span: Span;
+};
+
+type AnthropicSessionStreamState = {
+  activeTurn?: AnthropicSessionTurnState;
+  history: AnthropicInputMessage[];
+  isThread: boolean;
+  pendingInput: AnthropicInputMessage[];
+  seenEventIds: Set<string>;
 };
 
 const ANTHROPIC_TOOL_RUNNER_TOOL_WRAPPED = Symbol.for(
@@ -70,6 +110,7 @@ export class AnthropicPlugin extends BasePlugin {
   protected onEnable(): void {
     this.subscribeToAnthropicChannels();
     this.subscribeToAnthropicToolRunner();
+    this.subscribeToAnthropicSessionStreams();
   }
 
   protected onDisable(): void {
@@ -212,6 +253,550 @@ export class AnthropicPlugin extends BasePlugin {
     this.unsubscribers.push(() => {
       tracingChannel.unsubscribe(handlers);
     });
+  }
+
+  private subscribeToAnthropicSessionStreams(): void {
+    this.subscribeToAnthropicSessionStream(
+      anthropicChannels.betaSessionsEventsStream,
+      false,
+    );
+    this.subscribeToAnthropicSessionStream(
+      anthropicChannels.betaSessionsThreadsEventsStream,
+      true,
+    );
+  }
+
+  private subscribeToAnthropicSessionStream(
+    channel:
+      | typeof anthropicChannels.betaSessionsEventsStream
+      | typeof anthropicChannels.betaSessionsThreadsEventsStream,
+    isThread: boolean,
+  ): void {
+    type SessionChannelMessage = ChannelMessage<
+      typeof anthropicChannels.betaSessionsEventsStream
+    >;
+    const tracingChannel =
+      channel.tracingChannel() as IsoTracingChannel<SessionChannelMessage>;
+    const pending = new WeakSet<object>();
+
+    const handlers: IsoChannelHandlers<SessionChannelMessage> = {
+      start: (event) => {
+        if (isAutoInstrumentationSuppressed()) {
+          return;
+        }
+        pending.add(event as object);
+      },
+      asyncEnd: (event) => {
+        if (!pending.delete(event as object)) {
+          return;
+        }
+
+        const stream = event.result as AnthropicSessionEventStream;
+        if (!isAsyncIterable(stream)) {
+          return;
+        }
+        registerAnthropicSessionStreamCollector(stream, () => {
+          wrapAnthropicSessionEventStream(stream, isThread);
+        });
+      },
+      error: (event) => {
+        pending.delete(event as object);
+      },
+    };
+
+    tracingChannel.subscribe(handlers);
+    this.unsubscribers.push(() => tracingChannel.unsubscribe(handlers));
+  }
+}
+
+function wrapAnthropicSessionEventStream(
+  stream: AnthropicSessionEventStream,
+  isThread: boolean,
+): AnthropicSessionEventStream {
+  const state: AnthropicSessionStreamState = {
+    history: [],
+    isThread,
+    pendingInput: [],
+    seenEventIds: new Set(),
+  };
+  patchStreamIfNeeded<AnthropicSessionEvent>(stream, {
+    onChunk: (event) => handleAnthropicSessionEvent(state, event),
+    onComplete: () => finalizeAnthropicSessionTurn(state),
+    onError: (error) => finalizeAnthropicSessionTurn(state, error),
+  });
+  return stream;
+}
+
+function handleAnthropicSessionEvent(
+  state: AnthropicSessionStreamState,
+  event: AnthropicSessionEvent,
+): void {
+  try {
+    if (
+      typeof event.id === "string" &&
+      event.type !== "event_delta" &&
+      state.seenEventIds.has(event.id)
+    ) {
+      return;
+    }
+    if (typeof event.id === "string" && event.type !== "event_delta") {
+      state.seenEventIds.add(event.id);
+    }
+
+    switch (event.type) {
+      case "user.message":
+      case "system.message":
+        recordAnthropicSessionInput(
+          state,
+          event as AnthropicSessionMessageEvent,
+        );
+        break;
+      case "session.status_running":
+        if (!state.isThread) {
+          ensureAnthropicSessionTurn(state);
+        }
+        break;
+      case "session.thread_status_running":
+        if (state.isThread) {
+          ensureAnthropicSessionTurn(state);
+        }
+        break;
+      case "span.model_request_start":
+        if (typeof event.id === "string") {
+          startAnthropicSessionModel(state, event.id);
+        }
+        break;
+      case "event_delta":
+        recordAnthropicSessionFirstToken(state, event);
+        break;
+      case "agent.message":
+        recordAnthropicSessionMessage(
+          state,
+          event as AnthropicSessionMessageEvent,
+        );
+        break;
+      case "agent.custom_tool_use":
+      case "agent.mcp_tool_use":
+      case "agent.tool_use":
+        startAnthropicSessionTool(state, event as AnthropicSessionToolUseEvent);
+        break;
+      case "user.tool_confirmation":
+        recordAnthropicSessionToolConfirmation(state, event);
+        break;
+      case "agent.mcp_tool_result":
+      case "agent.tool_result":
+      case "user.custom_tool_result":
+      case "user.tool_result":
+        finalizeAnthropicSessionTool(
+          state,
+          event as AnthropicSessionToolResultEvent,
+        );
+        break;
+      case "span.model_request_end":
+        finalizeAnthropicSessionModel(
+          state,
+          event as AnthropicSessionModelRequestEndEvent,
+        );
+        break;
+      case "session.status_idle":
+      case "session.thread_status_idle": {
+        if (
+          (event.type === "session.status_idle" && state.isThread) ||
+          (event.type === "session.thread_status_idle" && !state.isThread)
+        ) {
+          break;
+        }
+        const stopReason = isObject(event.stop_reason)
+          ? event.stop_reason.type
+          : undefined;
+        if (stopReason === "end_turn") {
+          finalizeAnthropicSessionTurn(state);
+        } else if (stopReason === "retries_exhausted") {
+          finalizeAnthropicSessionTurn(
+            state,
+            "Anthropic session retries exhausted",
+          );
+        }
+        break;
+      }
+      case "session.error":
+        finalizeAnthropicSessionTurn(state, event.error);
+        break;
+      case "session.deleted":
+      case "session.status_terminated":
+      case "session.thread_status_terminated":
+        if (
+          event.type === "session.deleted" ||
+          (event.type === "session.status_terminated" && !state.isThread) ||
+          (event.type === "session.thread_status_terminated" && state.isThread)
+        ) {
+          finalizeAnthropicSessionTurn(state);
+        }
+        break;
+      default:
+        break;
+    }
+  } catch (error) {
+    debugLogger.debug("Error processing Anthropic Sessions event:", error);
+  }
+}
+
+function ensureAnthropicSessionTurn(
+  state: AnthropicSessionStreamState,
+): AnthropicSessionTurnState {
+  if (state.activeTurn) {
+    return state.activeTurn;
+  }
+
+  const input = state.pendingInput;
+  state.pendingInput = [];
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        event: {
+          ...(input.length > 0 ? { input } : {}),
+          metadata: { provider: "anthropic" },
+        },
+        name: state.isThread
+          ? "anthropic.beta.sessions.thread.turn"
+          : "anthropic.beta.sessions.turn",
+        spanAttributes: { type: SpanTypeAttribute.TASK },
+      },
+      INSTRUMENTATION_NAMES.ANTHROPIC,
+    ),
+  );
+
+  state.activeTurn = {
+    activeTools: new Map(),
+    input: input.slice(),
+    metrics: {},
+    span,
+  };
+  return state.activeTurn;
+}
+
+function recordAnthropicSessionInput(
+  state: AnthropicSessionStreamState,
+  event: AnthropicSessionMessageEvent,
+): void {
+  const content = processAttachmentsInInput(event.content) as
+    | string
+    | AnthropicSessionContentBlock[];
+  const message = {
+    role: event.type === "system.message" ? "system" : "user",
+    content,
+  } as AnthropicInputMessage;
+
+  state.history.push(message);
+  if (state.activeTurn) {
+    state.activeTurn.input.push(message);
+  } else {
+    state.pendingInput.push(message);
+  }
+}
+
+function startAnthropicSessionModel(
+  state: AnthropicSessionStreamState,
+  startEventId: string,
+): void {
+  const turn = ensureAnthropicSessionTurn(state);
+  if (turn.activeModel) {
+    finalizeAnthropicSessionModelState(state, turn);
+  }
+
+  const span = withCurrent(turn.span, () =>
+    startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          event: {
+            ...(state.history.length > 0
+              ? { input: state.history.slice() }
+              : {}),
+            metadata: { provider: "anthropic" },
+          },
+          name: "anthropic.messages.create",
+          spanAttributes: { type: SpanTypeAttribute.LLM },
+        },
+        INSTRUMENTATION_NAMES.ANTHROPIC,
+      ),
+    ),
+  );
+
+  turn.activeModel = {
+    output: [],
+    span,
+    startEventId,
+    startTime: getCurrentUnixTimestamp(),
+  };
+}
+
+function recordAnthropicSessionFirstToken(
+  state: AnthropicSessionStreamState,
+  event: AnthropicSessionEvent,
+): void {
+  const model = state.activeTurn?.activeModel;
+  if (
+    !model ||
+    model.firstTokenTime !== undefined ||
+    !isObject(event.delta) ||
+    !isObject(event.delta.content) ||
+    typeof event.delta.content.text !== "string"
+  ) {
+    return;
+  }
+  model.firstTokenTime = getCurrentUnixTimestamp();
+}
+
+function recordAnthropicSessionMessage(
+  state: AnthropicSessionStreamState,
+  event: AnthropicSessionMessageEvent,
+): void {
+  const turn = ensureAnthropicSessionTurn(state);
+  const content = processAttachmentsInInput(
+    event.content,
+  ) as AnthropicOutputContentBlock[];
+  if (turn.activeModel) {
+    turn.activeModel.output.push(...content);
+  } else {
+    const output = { role: "assistant" as const, content };
+    turn.lastOutput = output;
+    state.history.push(output as AnthropicInputMessage);
+  }
+}
+
+function startAnthropicSessionTool(
+  state: AnthropicSessionStreamState,
+  event: AnthropicSessionToolUseEvent,
+): void {
+  const turn = ensureAnthropicSessionTurn(state);
+  if (turn.activeModel) {
+    turn.activeModel.output.push({
+      type: "tool_use",
+      id: event.id,
+      name: event.name,
+      input: event.input,
+    });
+  }
+
+  const existing = turn.activeTools.get(event.id);
+  if (existing) {
+    existing.span.end();
+    turn.activeTools.delete(event.id);
+  }
+
+  const span = withCurrent(turn.span, () =>
+    startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          event: { input: event.input },
+          name: event.name,
+          spanAttributes: { type: SpanTypeAttribute.TOOL },
+        },
+        INSTRUMENTATION_NAMES.ANTHROPIC,
+      ),
+    ),
+  );
+  const toolState: AnthropicSessionToolState = {
+    approval:
+      event.evaluated_permission === "allow"
+        ? "approved"
+        : event.evaluated_permission === "deny"
+          ? "denied"
+          : undefined,
+    span,
+  };
+  turn.activeTools.set(event.id, toolState);
+
+  if (toolState.approval === "denied") {
+    finalizeAnthropicSessionToolState(toolState);
+    turn.activeTools.delete(event.id);
+  }
+}
+
+function recordAnthropicSessionToolConfirmation(
+  state: AnthropicSessionStreamState,
+  event: AnthropicSessionEvent,
+): void {
+  if (
+    typeof event.tool_use_id !== "string" ||
+    (event.result !== "allow" && event.result !== "deny")
+  ) {
+    return;
+  }
+  const turn = state.activeTurn;
+  const tool = turn?.activeTools.get(event.tool_use_id);
+  if (!turn || !tool) {
+    return;
+  }
+  tool.approval = event.result === "allow" ? "approved" : "denied";
+  if (tool.approval === "denied") {
+    finalizeAnthropicSessionToolState(tool);
+    turn.activeTools.delete(event.tool_use_id);
+  }
+}
+
+function finalizeAnthropicSessionTool(
+  state: AnthropicSessionStreamState,
+  event: AnthropicSessionToolResultEvent,
+): void {
+  const toolUseId =
+    event.tool_use_id ?? event.mcp_tool_use_id ?? event.custom_tool_use_id;
+  if (!toolUseId) {
+    return;
+  }
+  const content = processAttachmentsInInput(event.content) as
+    | AnthropicSessionContentBlock[]
+    | undefined;
+
+  const turn = state.activeTurn;
+  const tool = turn?.activeTools.get(toolUseId);
+  if (turn && tool) {
+    finalizeAnthropicSessionToolState(tool, event, content);
+    turn.activeTools.delete(toolUseId);
+  }
+
+  const toolResult = {
+    type: "tool_result",
+    tool_use_id: toolUseId,
+    ...(content !== undefined ? { content } : {}),
+    ...(event.is_error === true ? { is_error: true } : {}),
+  };
+  state.history.push({
+    role: "user",
+    content: [toolResult],
+  } as AnthropicInputMessage);
+}
+
+function finalizeAnthropicSessionToolState(
+  state: AnthropicSessionToolState,
+  event?: AnthropicSessionToolResultEvent,
+  content = event?.content,
+): void {
+  safeAnthropicSessionLog(state.span, {
+    ...(event?.is_error === true
+      ? {
+          error: content ?? "Anthropic session tool execution failed",
+        }
+      : {}),
+    ...(state.approval ? { metadata: { tool_approval: state.approval } } : {}),
+    ...(content !== undefined ? { output: content } : {}),
+  });
+  state.span.end();
+}
+
+function finalizeAnthropicSessionModel(
+  state: AnthropicSessionStreamState,
+  event: AnthropicSessionModelRequestEndEvent,
+): void {
+  const turn = state.activeTurn;
+  const model = turn?.activeModel;
+  if (!turn || !model || model.startEventId !== event.model_request_start_id) {
+    return;
+  }
+
+  finalizeAnthropicSessionModelState(state, turn, event);
+}
+
+function finalizeAnthropicSessionModelState(
+  state: AnthropicSessionStreamState,
+  turn: AnthropicSessionTurnState,
+  event?: AnthropicSessionModelRequestEndEvent,
+): void {
+  const model = turn.activeModel;
+  if (!model) {
+    return;
+  }
+  turn.activeModel = undefined;
+
+  const metrics = event
+    ? parseAnthropicSessionModelUsage(event.model_usage)
+    : {};
+  if (model.firstTokenTime !== undefined) {
+    metrics.time_to_first_token = model.firstTokenTime - model.startTime;
+  }
+  const output =
+    model.output.length > 0
+      ? { role: "assistant" as const, content: model.output }
+      : undefined;
+
+  safeAnthropicSessionLog(model.span, {
+    ...(event?.is_error
+      ? { error: "Anthropic session model request failed" }
+      : {}),
+    ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
+    ...(output ? { output } : {}),
+  });
+  model.span.end();
+
+  if (output) {
+    turn.lastOutput = output;
+    state.history.push(output as AnthropicInputMessage);
+  }
+  for (const key of [
+    "prompt_tokens",
+    "completion_tokens",
+    "tokens",
+    "prompt_cached_tokens",
+    "prompt_cache_creation_tokens",
+  ]) {
+    const value = metrics[key];
+    if (typeof value === "number") {
+      turn.metrics[key] = (turn.metrics[key] ?? 0) + value;
+    }
+  }
+}
+
+function parseAnthropicSessionModelUsage(
+  usage: AnthropicSessionModelUsage,
+): Record<string, number> {
+  const finalized = finalizeAnthropicTokens({
+    completion_tokens: usage.output_tokens,
+    prompt_cache_creation_tokens: usage.cache_creation_input_tokens,
+    prompt_cached_tokens: usage.cache_read_input_tokens,
+    prompt_tokens: usage.input_tokens,
+  });
+  return Object.fromEntries(
+    Object.entries(finalized).filter(
+      (entry): entry is [string, number] => entry[1] !== undefined,
+    ),
+  );
+}
+
+function finalizeAnthropicSessionTurn(
+  state: AnthropicSessionStreamState,
+  error?: unknown,
+): void {
+  const turn = state.activeTurn;
+  if (!turn) {
+    return;
+  }
+  state.activeTurn = undefined;
+
+  finalizeAnthropicSessionModelState(state, turn);
+  for (const tool of turn.activeTools.values()) {
+    finalizeAnthropicSessionToolState(tool);
+  }
+  turn.activeTools.clear();
+
+  safeAnthropicSessionLog(turn.span, {
+    ...(error !== undefined
+      ? { error: error instanceof Error ? error : toLoggedError(error) }
+      : {}),
+    ...(turn.input.length > 0 ? { input: turn.input } : {}),
+    ...(turn.lastOutput ? { output: turn.lastOutput } : {}),
+    ...(Object.keys(turn.metrics).length > 0 ? { metrics: turn.metrics } : {}),
+  });
+  turn.span.end();
+}
+
+function safeAnthropicSessionLog(
+  span: Span,
+  event: Parameters<Span["log"]>[0],
+): void {
+  try {
+    span.log(event);
+  } catch (error) {
+    debugLogger.debug("Error logging Anthropic Sessions span:", error);
   }
 }
 

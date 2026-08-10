@@ -10,6 +10,7 @@ import { bedrockRuntimeConfigs } from "./bedrock-runtime";
 import { claudeAgentSDKConfigs } from "./claude-agent-sdk";
 import { cloudflareAIChatConfigs } from "./cloudflare-ai-chat";
 import { cloudflareAgentsConfigs } from "./cloudflare-agents";
+import { cloudflareThinkConfigs } from "./cloudflare-think";
 import { cohereConfigs } from "./cohere";
 import { cursorSDKConfigs } from "./cursor-sdk";
 import { flueConfigs } from "./flue";
@@ -23,6 +24,7 @@ import { huggingFaceTransformersConfigs } from "./huggingface-transformers";
 import { langchainConfigs } from "./langchain";
 import { langSmithConfigs } from "./langsmith";
 import { mistralConfigs } from "./mistral";
+import { ollamaConfigs } from "./ollama";
 import { openAIAgentsCoreConfigs } from "./openai-agents";
 import { openaiConfigs } from "./openai";
 import { openAICodexConfigs } from "./openai-codex";
@@ -65,6 +67,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       integrations: ["cloudflareAgents"],
       configs: cloudflareAgentsConfigs,
     },
+    {
+      integrations: ["cloudflareThink"],
+      configs: cloudflareThinkConfigs,
+    },
     { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
     {
       integrations: ["openAIAgents"],
@@ -89,6 +95,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: openRouterAgentConfigs,
     },
     { integrations: ["mistral"], configs: mistralConfigs },
+    { integrations: ["ollama"], configs: ollamaConfigs },
     { integrations: ["googleADK"], configs: googleADKConfigs },
     { integrations: ["cohere"], configs: cohereConfigs },
     { integrations: ["groq"], configs: groqConfigs },

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
+  mockDebugLog,
   mockCurrentParentSpan,
   mockCurrentSpanStoreSymbol,
   mockCurrentSpanStore,
@@ -10,6 +11,7 @@ const {
   const currentParentSpan = { current: undefined as any };
   const currentSpanStoreSymbol = Symbol.for("braintrust.currentSpanStore");
   return {
+    mockDebugLog: vi.fn(),
     mockCurrentParentSpan: currentParentSpan,
     mockCurrentSpanStoreSymbol: currentSpanStoreSymbol,
     mockCurrentSpanStore: {
@@ -28,6 +30,12 @@ const {
     mockStartSpan: vi.fn(),
   };
 });
+
+vi.mock("../../debug-logger", () => ({
+  debugLogger: {
+    debug: (...args: unknown[]) => mockDebugLog(...args),
+  },
+}));
 
 const { mockNewTracingChannel, mockTracingChannels } = vi.hoisted(() => {
   const tracingChannels = new Map<string, any>();
@@ -395,7 +403,7 @@ describe("Flue observe instrumentation", () => {
 
     const workflowSpan = findSpan("workflow:research");
     const operationSpan = findSpan("flue.prompt");
-    const turnSpan = findSpan("llm:claude-test");
+    const turnSpan = findSpan("flue.turn");
     const toolSpan = findSpan("tool:lookup");
     const taskSpan = findSpan("task:worker");
     const compactionSpan = findSpan("compaction:manual");
@@ -586,7 +594,7 @@ describe("Flue observe instrumentation", () => {
     });
 
     const workflowSpan = findSpan("workflow:research");
-    const turnSpan = findSpan("llm:claude-test");
+    const turnSpan = findSpan("flue.turn");
     const toolSpan = findSpan("tool:lookup");
     const operationSpan = findSpan("flue.prompt");
 
@@ -619,6 +627,131 @@ describe("Flue observe instrumentation", () => {
     );
     expect(operationSpan?.log).toHaveBeenCalledWith(
       expect.objectContaining({ output: "PROMPT_DONE" }),
+    );
+  });
+
+  it("maps released Flue 2.0 observations and retains the final agent output", () => {
+    const emit = observeEvents();
+    const usage = flueUsage();
+
+    emit({
+      agentName: "ResearchAgent",
+      conversationId: "conversation-1",
+      instanceId: "instance-1",
+      operationId: "op-1",
+      operationKind: "prompt",
+      submissionId: "submission-1",
+      type: "operation_start",
+      v: 3,
+    });
+    emit({
+      agentName: "ResearchAgent",
+      conversationId: "conversation-1",
+      instanceId: "instance-1",
+      operationId: "op-1",
+      purpose: "agent",
+      request: {
+        api: "faux-stream",
+        input: {
+          messages: [{ content: "Research Flue 2", role: "user" }],
+        },
+        providerId: "test-provider",
+        reasoningLevel: "medium",
+        requestedModel: "instrumented",
+      },
+      submissionId: "submission-1",
+      turnId: "turn-1",
+      type: "turn_request",
+      v: 3,
+    });
+    emit({
+      args: { query: "Flue 2" },
+      operationId: "op-1",
+      toolCallId: "tool-1",
+      toolName: "lookup",
+      turnId: "turn-1",
+      type: "tool_start",
+      v: 3,
+    });
+    emit({
+      effectiveResult: { version: 2 },
+      isError: false,
+      operationId: "op-1",
+      result: { output: { version: 2 } },
+      toolCallId: "tool-1",
+      toolName: "lookup",
+      turnId: "turn-1",
+      type: "tool",
+      v: 3,
+    });
+    emit({
+      durationMs: 12,
+      isError: false,
+      operationId: "op-1",
+      purpose: "agent",
+      request: {
+        api: "faux-stream",
+        providerId: "test-provider",
+        requestedModel: "instrumented",
+      },
+      response: {
+        finishReason: "stop",
+        output: {
+          content: [{ text: "PROMPT_DONE", type: "text" }],
+          role: "assistant",
+        },
+        responseModel: "instrumented",
+        usage,
+      },
+      turnId: "turn-1",
+      type: "turn",
+      v: 3,
+    });
+    emit({
+      agentInput: { text: "Research Flue 2" },
+      agentName: "ResearchAgent",
+      conversationId: "conversation-1",
+      durationMs: 50,
+      instanceId: "instance-1",
+      isError: false,
+      operationId: "op-1",
+      operationKind: "prompt",
+      submissionId: "submission-1",
+      type: "operation",
+      v: 3,
+    });
+
+    const operationSpan = findSpan("flue.prompt");
+    const turnSpan = findSpan("flue.turn");
+    const toolSpan = findSpan("tool:lookup");
+
+    expect(operationSpan?.args.event.metadata).toMatchObject({
+      "flue.agent_name": "ResearchAgent",
+      "flue.conversation_id": "conversation-1",
+      "flue.submission_id": "submission-1",
+    });
+    expect(operationSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: "PROMPT_DONE" }),
+    );
+    expect(turnSpan?.args.event).toMatchObject({
+      metadata: {
+        "flue.api": "faux-stream",
+        "flue.model": "instrumented",
+        "flue.provider": "test-provider",
+        model: "instrumented",
+        provider: "test-provider",
+        reasoning: "medium",
+      },
+    });
+    expect(turnSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          "flue.stop_reason": "stop",
+        }),
+      }),
+    );
+    expect(toolSpan?.log).toHaveBeenCalledWith(
+      expect.objectContaining({ output: { version: 2 } }),
     );
   });
 
@@ -693,7 +826,7 @@ describe("Flue observe instrumentation", () => {
     });
 
     const operationSpan = findSpan("flue.prompt");
-    const turnSpan = findSpan("llm:claude-test");
+    const turnSpan = findSpan("flue.turn");
     const toolSpan = findSpan("tool:read");
 
     expect(operationSpan?.log).toHaveBeenCalledWith(
@@ -764,7 +897,7 @@ describe("Flue observe instrumentation", () => {
 
     const operationSpan = findSpan("flue.compact");
     const compactionSpan = findSpan("compaction:manual");
-    const turnSpan = findSpan("llm:gpt-test");
+    const turnSpan = findSpan("flue.turn");
 
     expect(turnSpan?.end).toHaveBeenCalledWith({
       endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
@@ -862,7 +995,6 @@ describe("Flue observe instrumentation", () => {
 
   it("contains observer failures so Flue calls are not affected", () => {
     const emit = observeEvents();
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockStartSpan.mockImplementationOnce(() => {
       throw new Error("start failed");
     });
@@ -874,7 +1006,7 @@ describe("Flue observe instrumentation", () => {
         workflowName: "broken",
       }),
     ).not.toThrow();
-    expect(errorSpy).toHaveBeenCalledWith(
+    expect(mockDebugLog).toHaveBeenCalledWith(
       "Error in Flue observe instrumentation:",
       expect.any(Error),
     );
@@ -1054,7 +1186,7 @@ describe("Flue observe instrumentation", () => {
     });
 
     const operationSpan = findSpan("flue.prompt");
-    const turnSpan = findSpan("llm:claude-test");
+    const turnSpan = findSpan("flue.turn");
     const taskSpan = findSpan("flue.task");
     const agentAppSpan = await braintrustFlueObserver.interceptor(
       { operationId: "op-prompt", operationKind: "prompt", type: "agent" },
