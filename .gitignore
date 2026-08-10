@@ -12,7 +12,6 @@ dist
 !.aiderignore
 .pnpm-store
 **/.bt-tmp
-**/.braintrust/evals
 
 docker-compose.override.yml
 Dockerfile.local

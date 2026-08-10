@@ -1,6 +1,5 @@
 import {
   makeScorerPropagatedEvent,
-  mergeDicts,
   Classification,
   ClassificationItem,
   Score,
@@ -1017,9 +1016,8 @@ function buildSpanMetadata(
 ) {
   return results.length === 1
     ? results[0].metadata
-    : results.reduce(
-        (prev, s) => mergeDicts(prev, { [s.name]: s.metadata }),
-        {},
+    : Object.fromEntries(
+        results.map((result) => [result.name, result.metadata]),
       );
 }
 
@@ -1030,9 +1028,8 @@ function buildSpanScores(
     metadata?: Record<string, unknown>;
   }>,
 ) {
-  const scoresRecord = results.reduce(
-    (prev, s) => mergeDicts(prev, { [s.name]: s.score }),
-    {},
+  const scoresRecord = Object.fromEntries(
+    results.map((result) => [result.name, result.score]),
   );
   return { resultMetadata: buildSpanMetadata(results), scoresRecord };
 }
@@ -1056,11 +1053,14 @@ export function _internalPrepareEvaluatorScore(
       }
     }
   }
-  const results: Score[] = Array.isArray(scoreValue)
-    ? scoreValue
-    : typeof scoreValue === "object" && !isEmpty(scoreValue)
-      ? [scoreValue]
-      : [{ name, score: scoreValue }];
+  let results: Score[];
+  if (Array.isArray(scoreValue)) {
+    results = scoreValue;
+  } else if (typeof scoreValue === "object" && !isEmpty(scoreValue)) {
+    results = [scoreValue];
+  } else {
+    results = [{ name, score: scoreValue }];
+  }
   const { resultMetadata, scoresRecord } = buildSpanScores(results);
   const fields = (score: Score) => {
     const { metadata: _metadata, name: _name, ...rest } = score;
@@ -1071,10 +1071,8 @@ export function _internalPrepareEvaluatorScore(
     output:
       results.length === 1
         ? fields(results[0])
-        : results.reduce(
-            (previous, score) =>
-              mergeDicts(previous, { [score.name ?? name]: fields(score) }),
-            {},
+        : Object.fromEntries(
+            results.map((score) => [score.name ?? name, fields(score)]),
           ),
     metadata: resultMetadata,
     scores: scoresRecord,
@@ -1160,7 +1158,8 @@ export function _internalPrepareEvaluatorClassification(
   const results = (Array.isArray(value) ? value : [value]).map((result) =>
     validateClassificationResult(result, name),
   );
-  const classifications: Record<string, ClassificationItem[]> = {};
+  const classifications: Record<string, ClassificationItem[]> =
+    Object.create(null);
   for (const result of results) {
     (classifications[result.name] ??= []).push(toClassificationItem(result));
   }
@@ -1169,12 +1168,11 @@ export function _internalPrepareEvaluatorClassification(
     output:
       results.length === 1
         ? toClassificationItem(results[0])
-        : results.reduce(
-            (previous, result) =>
-              mergeDicts(previous, {
-                [result.name]: toClassificationItem(result),
-              }),
-            {},
+        : Object.fromEntries(
+            results.map((result) => [
+              result.name,
+              toClassificationItem(result),
+            ]),
           ),
     metadata: buildSpanMetadata(results),
     classifications,
@@ -1387,8 +1385,9 @@ async function runEvaluatorInternal(
           let output: unknown = undefined;
           let error: unknown | undefined = undefined;
           let tags: string[] = [];
-          const scores: Record<string, number | null> = {};
-          const classifications: Record<string, ClassificationItem[]> = {};
+          const scores: Record<string, number | null> = Object.create(null);
+          const classifications: Record<string, ClassificationItem[]> =
+            Object.create(null);
           const scorerNames = (evaluator.scores ?? []).map(scorerName);
           const classifierNames = (evaluator.classifiers ?? []).map(
             classifierName,
@@ -1795,7 +1794,7 @@ function ensureScoreAccumulator(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   results: EvalResult<any, any, any, any>[],
 ) {
-  const accumulator: ScoreAccumulator = {};
+  const accumulator: ScoreAccumulator = Object.create(null);
   for (const result of results) {
     accumulateScores(accumulator, result.scores);
   }

@@ -14,6 +14,10 @@ async function main() {
   const testRunId = getTestRunId();
   const store = new DurableEvalMemoryStore();
   const jobs = new Map<string, unknown[]>();
+  const webhookCompletion = {
+    mode: "webhook" as const,
+    externalId: (handle: { id: string }) => handle.id,
+  };
   const task = BatchTask<
     number,
     number,
@@ -30,10 +34,7 @@ async function main() {
           jobs.set(id, items);
           return { id };
         },
-        completion: {
-          mode: "webhook",
-          externalId: (handle) => handle.id,
-        },
+        completion: webhookCompletion,
         async collect(handle) {
           const items = (jobs.get(handle.id) ?? []) as Array<{
             id: string;
@@ -54,10 +55,7 @@ async function main() {
           jobs.set(id, items);
           return { id };
         },
-        completion: {
-          mode: "webhook",
-          externalId: (handle) => handle.id,
-        },
+        completion: webhookCompletion,
         async collect(handle) {
           const items = (jobs.get(handle.id) ?? []) as Array<{
             id: string;
@@ -85,10 +83,7 @@ async function main() {
       jobs.set(id, items);
       return { id };
     },
-    completion: {
-      mode: "webhook",
-      externalId: (handle) => handle.id,
-    },
+    completion: webhookCompletion,
     async collect(handle) {
       const items = (jobs.get(handle.id) ?? []) as Array<{
         id: string;

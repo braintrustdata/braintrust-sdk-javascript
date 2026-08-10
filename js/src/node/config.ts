@@ -120,7 +120,6 @@ export function configureNode() {
   iso.writeFile = fs.writeFile;
   iso.readFile = fs.readFile;
   iso.readdir = fs.readdir;
-  iso.rename = fs.rename;
   iso.stat = fs.stat;
   iso.statSync = fsSync.statSync;
   iso.utimes = fs.utimes;

@@ -8,6 +8,7 @@ import {
   DurableEvalRedisStore,
   type DurableBatchScorerItem,
   type DurableBatchTaskItem,
+  type DurableEvalStore,
 } from "./durable-eval";
 
 configureNode();
@@ -25,6 +26,14 @@ describe("durable eval stores", () => {
     firstRead![1] = 9;
     expect(await store.read("run")).toEqual(new Uint8Array([1, 2, 3]));
     expect(await store.read("missing")).toBeUndefined();
+
+    const [first, second] = await Promise.all([
+      store.getOrSet("claim", new Uint8Array([1])),
+      store.getOrSet("claim", new Uint8Array([2])),
+    ]);
+    expect([first.created, second.created]).toEqual([true, false]);
+    expect(first.value).toEqual(new Uint8Array([1]));
+    expect(second.value).toEqual(new Uint8Array([1]));
   });
 
   test("redis store uses prefixed string operations", async () => {
@@ -53,6 +62,84 @@ describe("durable eval stores", () => {
         set: async () => "OK",
       }).read("invalid"),
     ).rejects.toThrow("expected GET to return a string");
+  });
+
+  test("redis store uses node-redis atomic SET options", async () => {
+    const values = new Map<string, string>();
+    const client = {
+      get: vi.fn(async (key: string) => values.get(key) ?? null),
+      set: vi.fn(
+        async (
+          key: string,
+          value: string,
+          options?: { NX?: boolean; GET?: boolean },
+        ) => {
+          expect(options).toEqual({ NX: true, GET: true });
+          const existing = values.get(key) ?? null;
+          if (existing === null) values.set(key, value);
+          return existing;
+        },
+      ),
+      sendCommand: vi.fn(),
+    };
+    const store = new DurableEvalRedisStore(client);
+
+    await expect(store.getOrSet("claim", new Uint8Array([1]))).resolves.toEqual(
+      { value: new Uint8Array([1]), created: true },
+    );
+    await expect(store.getOrSet("claim", new Uint8Array([2]))).resolves.toEqual(
+      { value: new Uint8Array([1]), created: false },
+    );
+  });
+
+  test("redis store uses ioredis atomic SET arguments", async () => {
+    const values = new Map<string, string>();
+    const client = {
+      get: vi.fn(async (key: string) => values.get(key) ?? null),
+      set: vi.fn(async (key: string, value: string, ...options: string[]) => {
+        expect(options).toEqual(["NX", "GET"]);
+        const existing = values.get(key) ?? null;
+        if (existing === null) values.set(key, value);
+        return existing;
+      }),
+      defineCommand: vi.fn(),
+    };
+    const store = new DurableEvalRedisStore(client);
+
+    await expect(store.getOrSet("claim", new Uint8Array([1]))).resolves.toEqual(
+      { value: new Uint8Array([1]), created: true },
+    );
+    await expect(store.getOrSet("claim", new Uint8Array([2]))).resolves.toEqual(
+      { value: new Uint8Array([1]), created: false },
+    );
+  });
+
+  test("redis store uses Upstash atomic SET options", async () => {
+    const values = new Map<string, string>();
+    const client = {
+      get: vi.fn(async (key: string) => values.get(key) ?? null),
+      set: vi.fn(
+        async (
+          key: string,
+          value: string,
+          options?: { nx?: boolean; get?: boolean },
+        ) => {
+          expect(options).toEqual({ nx: true, get: true });
+          const existing = values.get(key) ?? null;
+          if (existing === null) values.set(key, value);
+          return existing;
+        },
+      ),
+      createScript: vi.fn(),
+    };
+    const store = new DurableEvalRedisStore(client);
+
+    await expect(store.getOrSet("claim", new Uint8Array([1]))).resolves.toEqual(
+      { value: new Uint8Array([1]), created: true },
+    );
+    await expect(store.getOrSet("claim", new Uint8Array([2]))).resolves.toEqual(
+      { value: new Uint8Array([1]), created: false },
+    );
   });
 });
 
@@ -92,6 +179,83 @@ describe("defineDurableEval", () => {
     const second = await durable.start({ noSendLogs: true });
 
     expect(first.runId).not.toBe(second.runId);
+  });
+
+  test("stores run, case, and batch records separately", async () => {
+    const values = new Map<string, Uint8Array>();
+    const store: DurableEvalStore = {
+      async read(key) {
+        return values.get(key);
+      },
+      async write(key, value) {
+        values.set(key, value);
+      },
+      async getOrSet(key, value) {
+        const existing = values.get(key);
+        if (existing) return { value: existing, created: false };
+        values.set(key, value);
+        return { value, created: true };
+      },
+    };
+    const task = BatchTask<
+      number,
+      number,
+      void,
+      void,
+      Record<string, never>,
+      { id: string }
+    >({
+      async submit() {
+        return { id: "provider-job" };
+      },
+      completion: {
+        mode: "poll",
+        async poll() {
+          return { status: "pending" };
+        },
+      },
+      async collect() {
+        return [];
+      },
+    });
+
+    await defineDurableEval("normalized-store", {
+      store,
+      data: [
+        { id: "one", input: 1 },
+        { id: "two", input: 2 },
+      ],
+      task,
+    }).start({ noSendLogs: true });
+
+    const decoder = new TextDecoder();
+    const records = [...values]
+      .filter(([key]) => !key.includes("/claims/"))
+      .map(
+        ([key, value]) =>
+          [
+            key,
+            JSON.parse(decoder.decode(value)) as Record<string, unknown>,
+          ] as const,
+      );
+    const run = records.find(
+      ([key]) => !key.includes("/cases/") && !key.includes("/batches/"),
+    )?.[1];
+    expect(run).toMatchObject({
+      schemaVersion: 4,
+      status: "running",
+      caseIds: ["one:trial:0", "two:trial:0"],
+    });
+    expect(run).not.toHaveProperty("cases");
+    expect(run).not.toHaveProperty("batches");
+    expect(run).not.toHaveProperty("batchIds");
+    expect(records.filter(([key]) => key.includes("/cases/"))).toHaveLength(2);
+    expect(records.filter(([key]) => key.includes("/batches/"))).toHaveLength(
+      1,
+    );
+    expect(
+      [...values.keys()].filter((key) => key.includes("/claims/")),
+    ).toHaveLength(1);
   });
 
   test("polls each existing task and scorer sub-batch once", async () => {
@@ -217,6 +381,11 @@ describe("defineDurableEval", () => {
       string,
       DurableBatchScorerItem<number, number, number, void>[]
     >();
+    let taskCollectCount = 0;
+    let releaseTaskCollect!: () => void;
+    const taskBatchesCollecting = new Promise<void>((resolve) => {
+      releaseTaskCollect = resolve;
+    });
     const task = BatchTask<
       number,
       number,
@@ -236,6 +405,9 @@ describe("defineDurableEval", () => {
         externalId: (handle) => handle.id,
       },
       async collect(handle) {
+        taskCollectCount++;
+        if (taskCollectCount === 2) releaseTaskCollect();
+        await taskBatchesCollecting;
         return (taskJobs.get(handle.id) ?? []).map((item) => ({
           id: item.id,
           output: item.input * 2,
@@ -288,14 +460,16 @@ describe("defineDurableEval", () => {
         externalId: taskIds[0],
       }),
     ).rejects.toThrow("Durable eval run missing-run is missing");
-    for (const [index, externalId] of taskIds.entries()) {
-      const result = await durable.processBatchResult({ runId, externalId });
-      expect(result).toMatchObject({
-        status: "waiting",
-        pending: { poll: 0, webhook: index === 0 ? 1 : 2 },
-      });
-    }
+    await Promise.all(
+      taskIds.map((externalId) =>
+        durable.processBatchResult({ runId, externalId }),
+      ),
+    );
     expect(scoreJobs.size).toBe(2);
+    await expect(durable.status({ runId })).resolves.toMatchObject({
+      status: "waiting",
+      pending: { poll: 0, webhook: 2 },
+    });
 
     const scoreIds = [...scoreJobs.keys()];
     let result;
@@ -307,6 +481,182 @@ describe("defineDurableEval", () => {
       pending: { poll: 0, webhook: 0 },
       summary: { scores: { exact: { score: 1 } } },
     });
+  });
+
+  test("claims downstream work once across concurrent webhook deliveries", async () => {
+    let taskItems: DurableBatchTaskItem<
+      number,
+      number,
+      void,
+      Record<string, never>
+    >[] = [];
+    let collectCount = 0;
+    let releaseCollect!: () => void;
+    const bothCollecting = new Promise<void>((resolve) => {
+      releaseCollect = resolve;
+    });
+    const task = BatchTask<
+      number,
+      number,
+      number,
+      void,
+      Record<string, never>,
+      { id: string }
+    >({
+      async submit(items) {
+        taskItems = items;
+        return { id: "task-provider" };
+      },
+      completion: {
+        mode: "webhook",
+        externalId: (handle) => handle.id,
+      },
+      async collect() {
+        collectCount++;
+        if (collectCount === 2) releaseCollect();
+        await bothCollecting;
+        return taskItems.map((item) => ({
+          id: item.id,
+          output: item.input * 2,
+        }));
+      },
+    });
+    const scoreSubmit = vi.fn(async () => ({ id: "score-provider" }));
+    const scorer = BatchScorer<number, number, number, void, { id: string }>({
+      name: "exact",
+      submit: scoreSubmit,
+      completion: {
+        mode: "webhook",
+        externalId: (handle) => handle.id,
+      },
+      async collect() {
+        return [];
+      },
+    });
+    const durable = defineDurableEval("concurrent-webhooks", {
+      store: new DurableEvalMemoryStore(),
+      data: [{ id: "one", input: 2, expected: 4 }],
+      task,
+      scores: [scorer],
+    });
+    const waiting = await durable.start({ noSendLogs: true });
+
+    await Promise.all([
+      durable.processBatchResult({
+        runId: waiting.runId,
+        externalId: "task-provider",
+      }),
+      durable.processBatchResult({
+        runId: waiting.runId,
+        externalId: "task-provider",
+      }),
+    ]);
+
+    expect(scoreSubmit).toHaveBeenCalledTimes(1);
+    await expect(
+      durable.status({ runId: waiting.runId }),
+    ).resolves.toMatchObject({
+      status: "waiting",
+      pending: { poll: 0, webhook: 1 },
+    });
+  });
+
+  test("preserves parallel workflow outputs from concurrent webhooks", async () => {
+    const jobs = new Map<string, Array<{ id: string; input: unknown }>>();
+    let collectCount = 0;
+    let releaseCollect!: () => void;
+    const bothCollecting = new Promise<void>((resolve) => {
+      releaseCollect = resolve;
+    });
+    const joinSubmit = vi.fn(
+      async (items: Array<{ id: string; input: unknown }>) => {
+        jobs.set("join", items);
+        return { id: "join" };
+      },
+    );
+    const completion = {
+      mode: "webhook" as const,
+      externalId: (handle: { id: string }) => handle.id,
+    };
+    const task = BatchTask<number, number, void, void, Record<string, never>>({
+      workflow(workflow) {
+        const doubled = workflow.batch("double", {
+          input: (item) => item.input,
+          async submit(items) {
+            jobs.set("double", items);
+            return { id: "double" };
+          },
+          completion,
+          async collect() {
+            collectCount++;
+            if (collectCount === 2) releaseCollect();
+            await bothCollecting;
+            return (jobs.get("double") ?? []).map((item) => ({
+              id: item.id,
+              output: (item.input as number) * 2,
+            }));
+          },
+        });
+        const incremented = workflow.batch("increment", {
+          input: (item) => item.input,
+          async submit(items) {
+            jobs.set("increment", items);
+            return { id: "increment" };
+          },
+          completion,
+          async collect() {
+            collectCount++;
+            if (collectCount === 2) releaseCollect();
+            await bothCollecting;
+            return (jobs.get("increment") ?? []).map((item) => ({
+              id: item.id,
+              output: (item.input as number) + 1,
+            }));
+          },
+        });
+        return workflow.batch("join", {
+          needs: { doubled, incremented },
+          input: (_item, outputs) => outputs,
+          submit: joinSubmit,
+          completion,
+          async collect() {
+            return (jobs.get("join") ?? []).map((item) => {
+              const input = item.input as {
+                doubled: number;
+                incremented: number;
+              };
+              return {
+                id: item.id,
+                output: input.doubled + input.incremented,
+              };
+            });
+          },
+        });
+      },
+    });
+    const durable = defineDurableEval("parallel-webhooks", {
+      store: new DurableEvalMemoryStore(),
+      data: [{ id: "one", input: 2 }],
+      task,
+    });
+    const waiting = await durable.start({ noSendLogs: true });
+
+    await Promise.all(
+      ["double", "increment"].map((externalId) =>
+        durable.processBatchResult({
+          runId: waiting.runId,
+          externalId,
+        }),
+      ),
+    );
+
+    expect(joinSubmit).toHaveBeenCalledTimes(1);
+    await expect(
+      durable.processBatchResult({
+        runId: waiting.runId,
+        externalId: "join",
+      }),
+    ).resolves.toMatchObject({ status: "completed" });
   });
 
   test("runs multi-stage task and scorer workflows", async () => {
@@ -455,6 +805,71 @@ describe("defineDurableEval", () => {
       status: "completed",
       summary: { scores: { exact: { score: 1 } } },
     });
+  });
+
+  test("supports workflow and scorer names inherited from Object.prototype", async () => {
+    const jobs = new Map<
+      string,
+      Array<{ id: string; input: number; expected?: number; output?: number }>
+    >();
+    const completion = {
+      mode: "poll" as const,
+      async poll() {
+        return { status: "complete" as const };
+      },
+    };
+    const task = BatchTask<number, number, number, void, Record<string, never>>(
+      {
+        workflow(workflow) {
+          return workflow.batch("constructor", {
+            input: (item) => item.input,
+            async submit(items) {
+              jobs.set("task", items);
+              return { id: "task" };
+            },
+            completion,
+            async collect() {
+              return (jobs.get("task") ?? []).map((item) => ({
+                id: item.id,
+                output: item.input * 2,
+              }));
+            },
+          });
+        },
+      },
+    );
+    const scorer = BatchScorer<number, number, number, void, { id: string }>({
+      name: "__proto__",
+      async submit(items) {
+        jobs.set("score", items);
+        return { id: "score" };
+      },
+      completion,
+      async collect() {
+        return (jobs.get("score") ?? []).map((item) => ({
+          id: item.id,
+          score: item.output === item.expected ? 1 : 0,
+        }));
+      },
+    });
+    const durable = defineDurableEval("prototype-names", {
+      store: new DurableEvalMemoryStore(),
+      data: [{ id: "one", input: 2, expected: 4 }],
+      task,
+      scores: [scorer],
+    });
+
+    const waiting = await durable.start({ noSendLogs: true });
+    await expect(durable.poll({ runId: waiting.runId })).resolves.toMatchObject(
+      {
+        status: "waiting",
+      },
+    );
+    const result = await durable.poll({ runId: waiting.runId });
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") throw new Error("Eval did not complete");
+    expect(Object.hasOwn(result.summary.scores, "__proto__")).toBe(true);
+    expect(result.summary.scores.__proto__?.score).toBe(1);
   });
 
   test("requires stable case ids", async () => {

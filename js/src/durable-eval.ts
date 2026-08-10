@@ -47,7 +47,7 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const BATCH_TASK_KIND = "braintrust.durable.batch-task";
 const BATCH_SCORER_KIND = "braintrust.durable.batch-scorer";
-const CHECKPOINT_VERSION = 2;
+const CHECKPOINT_VERSION = 4;
 const DEFAULT_BATCH_SIZE = 1_000;
 
 type JsonPrimitive = string | number | boolean | null;
@@ -55,13 +55,19 @@ type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 /**
  * Minimal persistence used to reconnect provider webhooks with submitted
- * batches. Durable evaluations do not require any Braintrust backend changes.
+ * batches. Each run, case, and batch is stored under its own key. Durable
+ * evaluations do not require any Braintrust backend changes.
  *
  * @experimental - The API for this interface is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
  */
 export interface DurableEvalStore {
   read(key: string): Promise<Uint8Array | undefined>;
   write(key: string, value: Uint8Array): Promise<void>;
+  /** Atomically stores `value` when `key` is absent and returns its stored value. */
+  getOrSet(
+    key: string,
+    value: Uint8Array,
+  ): Promise<{ value: Uint8Array; created: boolean }>;
 }
 
 /**
@@ -80,14 +86,20 @@ export class DurableEvalMemoryStore implements DurableEvalStore {
   async write(key: string, value: Uint8Array): Promise<void> {
     this.values.set(key, value.slice());
   }
+
+  async getOrSet(key: string, value: Uint8Array) {
+    const existing = this.values.get(key);
+    if (existing) return { value: existing.slice(), created: false };
+    this.values.set(key, value.slice());
+    return { value: value.slice(), created: true };
+  }
 }
 
 /**
  * Stores durable evaluation state in Redis using an existing Redis client.
  * Values are base64 encoded so only string `GET` and `SET` operations are
  * required from the client. Clients from `redis` (node-redis), `ioredis`, and
- * `@upstash/redis` can be passed directly; other clients with compatible async
- * `get` and `set` methods are also supported.
+ * `@upstash/redis` can be passed directly.
  *
  * @experimental - The API for this class is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
  */
@@ -115,6 +127,39 @@ export class DurableEvalRedisStore implements DurableEvalStore {
 
   async write(key: string, value: Uint8Array): Promise<void> {
     await this.client.set(`${this.keyPrefix}${key}`, uint8ArrayToBase64(value));
+  }
+
+  async getOrSet(key: string, value: Uint8Array) {
+    const redisKey = `${this.keyPrefix}${key}`;
+    const encoded = uint8ArrayToBase64(value);
+    const client = this.client as typeof this.client & {
+      createScript?: unknown;
+      defineCommand?: unknown;
+      sendCommand?: unknown;
+    };
+    const set = client.set as unknown as (
+      ...args: unknown[]
+    ) => Promise<unknown>;
+    let setOptions: unknown[];
+    if (typeof client.defineCommand === "function") {
+      setOptions = ["NX", "GET"];
+    } else if (typeof client.sendCommand === "function") {
+      setOptions = [{ NX: true, GET: true }];
+    } else if (typeof client.createScript === "function") {
+      setOptions = [{ nx: true, get: true }];
+    } else {
+      throw new Error(
+        "DurableEvalRedisStore getOrSet requires a node-redis, ioredis, or @upstash/redis client",
+      );
+    }
+    const existing = await set.call(client, redisKey, encoded, ...setOptions);
+    if (existing === null) return { value: value.slice(), created: true };
+    if (typeof existing !== "string") {
+      throw new Error(
+        "DurableEvalRedisStore expected atomic SET to return a string or null",
+      );
+    }
+    return { value: base64ToUint8Array(existing), created: false };
   }
 }
 
@@ -575,6 +620,20 @@ type DurableCaseRecord = {
   loggedClassifications: Record<string, boolean>;
 };
 
+type DurableCaseBaseRecord = Pick<
+  DurableCaseRecord,
+  "id" | "caseId" | "trialIndex" | "datum" | "metadata" | "tags"
+>;
+
+type DurableTaskResultRecord = Pick<
+  DurableCaseRecord,
+  "output" | "metadata" | "tags"
+> & { taskComplete: true };
+
+type DurableTaskLogRecord = Pick<DurableCaseRecord, "rootSpan"> & {
+  taskLogged: true;
+};
+
 type DurableBatchRecord = {
   id: string;
   kind: "task" | "score";
@@ -598,6 +657,10 @@ type DurableRunState = {
   summary?: ExperimentSummary;
   cases: DurableCaseRecord[];
   batches: DurableBatchRecord[];
+};
+
+type DurableRunRecord = Omit<DurableRunState, "cases" | "batches"> & {
+  caseIds: string[];
 };
 
 class DurableEvalDefinitionImpl<
@@ -997,7 +1060,7 @@ async function startDurableEval<
       batches: [],
     };
     await experiment?.flush();
-    await writeJson(store, key, state);
+    await writeRunRecord(store, key, state);
     return currentStatus(definition, state);
   }
   const state: DurableRunState = {
@@ -1012,7 +1075,8 @@ async function startDurableEval<
     cases: await materializeCases(definition, data, experiment),
     batches: [],
   };
-  await writeJson(store, key, state);
+  await writeCaseBaseRecords(store, key, state.cases);
+  await writeRunRecord(store, key, state);
   return advanceDurableEval(definition, state, store, key, experiment);
 }
 
@@ -1033,7 +1097,8 @@ async function getDurableEvalStatus<
   options: { runId: string },
 ): Promise<DurableEvalResult> {
   const store = definition.evaluator.store;
-  const state = await readJson<DurableRunState>(
+  const state = await readRunState(
+    definition,
     store,
     runKey(definition.projectName, definition.evalName, options.runId),
   );
@@ -1062,7 +1127,7 @@ async function processDurableBatchResult<
   }
   const store = definition.evaluator.store;
   const key = runKey(definition.projectName, definition.evalName, result.runId);
-  const state = await readJson<DurableRunState>(store, key);
+  const state = await readRunState(definition, store, key);
   if (!state) throw new Error(`Durable eval run ${result.runId} is missing`);
   const byBatch = result.batchId
     ? state.batches.find((candidate) => candidate.id === result.batchId)
@@ -1078,11 +1143,17 @@ async function processDurableBatchResult<
   const batch = byBatch ?? byExternal;
   if (!batch) throw new Error("No submitted batch matches this result");
   if (batch.status !== "complete") {
-    await collectBatch(definition, state, batch);
+    const records = await collectBatch(definition, state, batch);
     batch.status = "complete";
-    await writeJson(store, key, state);
+    await writeCaseRecords(store, key, records);
+    await writeBatchRecords(store, key, [batch]);
   }
-  return advanceDurableEval(definition, state, store, key);
+  return advanceDurableEval(
+    definition,
+    (await readRunState(definition, store, key))!,
+    store,
+    key,
+  );
 }
 
 async function pollDurableEval<
@@ -1107,7 +1178,7 @@ async function pollDurableEval<
     definition.evalName,
     options.runId,
   );
-  const state = await readJson<DurableRunState>(store, key);
+  const state = await readRunState(definition, store, key);
   if (!state) throw new Error(`Durable eval run ${options.runId} is missing`);
 
   const batches = state.batches.filter((batch) => {
@@ -1128,14 +1199,26 @@ async function pollDurableEval<
       }),
     })),
   );
+  const changedCases = new Map<string, DurableCaseRecord>();
+  const changedBatches: DurableBatchRecord[] = [];
   for (const { batch, result } of results) {
     if (result.status === "failed") throw asError(result.error);
     if (result.status !== "complete") continue;
-    await collectBatch(definition, state, batch);
+    for (const record of await collectBatch(definition, state, batch)) {
+      changedCases.set(record.id, record);
+    }
     batch.status = "complete";
-    await writeJson(store, key, state);
+    changedBatches.push(batch);
   }
-  return advanceDurableEval(definition, state, store, key);
+  if (changedBatches.length > 0) {
+    await writeCaseRecords(store, key, [...changedCases.values()]);
+    await writeBatchRecords(store, key, changedBatches);
+  }
+  const currentState =
+    changedBatches.length > 0
+      ? (await readRunState(definition, store, key))!
+      : state;
+  return advanceDurableEval(definition, currentState, store, key);
 }
 
 async function openDurableExperiment(
@@ -1187,25 +1270,44 @@ async function advanceDurableEval<
       : existingExperiment;
   await runTaskStage(definition, state, store, key, experiment);
   await logCompletedTasks(definition, state, store, key, experiment);
-  if (state.cases.some((record) => !record.taskComplete)) {
+  state = (await readRunState(definition, store, key)) ?? state;
+  if (
+    state.cases.some((record) => !record.taskComplete || !record.taskLogged)
+  ) {
     return currentStatus(definition, state);
   }
 
   await runScoreStages(definition, state, store, key, experiment);
+  state = (await readRunState(definition, store, key)) ?? state;
   const scorerNames = resolveScorers(definition.evaluator.scores ?? []).map(
     ({ name }) => name,
   );
+  const classifierNames = (definition.evaluator.classifiers ?? []).map(
+    classifierName,
+  );
   if (
-    state.cases.some((record) =>
-      scorerNames.some((name) => !(name in record.scores)),
+    state.cases.some(
+      (record) =>
+        scorerNames.some(
+          (name) =>
+            !Object.hasOwn(record.scores, name) ||
+            !Object.hasOwn(record.loggedScores, name),
+        ) ||
+        classifierNames.some(
+          (name) => !Object.hasOwn(record.loggedClassifications, name),
+        ),
     )
   ) {
     return currentStatus(definition, state);
   }
 
+  if (!(await claimAction(store, key, "finish"))) {
+    const latest = await readRunState(definition, store, key);
+    return currentStatus(definition, latest ?? state);
+  }
   state.summary = await finishExperiment(definition, state, experiment);
   state.status = "completed";
-  await writeJson(store, key, state);
+  await writeRunRecord(store, key, state);
   return currentStatus(definition, state);
 }
 
@@ -1320,7 +1422,6 @@ async function logTaskResult(
     throw error;
   } finally {
     root.end();
-    await experiment?.flush();
   }
 }
 
@@ -1331,10 +1432,16 @@ async function logCompletedTasks(
   key: string,
   experiment: Experiment | null,
 ) {
+  const changed: DurableCaseRecord[] = [];
   for (const record of state.cases) {
     if (!record.taskComplete || record.taskLogged) continue;
+    if (!(await claimAction(store, key, "task-log", record.id))) continue;
     await logTaskResult(definition, state, record, experiment);
-    await writeJson(store, key, state);
+    changed.push(record);
+  }
+  if (changed.length > 0) {
+    await experiment?.flush();
+    await writeCaseRecords(store, key, changed);
   }
 }
 
@@ -1369,10 +1476,16 @@ async function runTaskStage<
     Metadata,
     Parameters
   >;
+  const changed: DurableCaseRecord[] = [];
   for (const record of state.cases) {
     if (record.taskComplete) continue;
+    if (!(await claimAction(store, key, "task", record.id))) continue;
     await logTaskResult(definition, state, record, experiment, task);
-    await writeJson(store, key, state);
+    changed.push(record);
+  }
+  if (changed.length > 0) {
+    await experiment?.flush();
+    await writeCaseRecords(store, key, changed);
   }
 }
 
@@ -1396,10 +1509,23 @@ async function runScoreStages<
   experiment: Experiment | null,
 ) {
   const scorers = resolveScorers(definition.evaluator.scores ?? []);
+  const changed = new Map<string, DurableCaseRecord>();
+  const persistChangedCases = async () => {
+    if (changed.size === 0) return;
+    await experiment?.flush();
+    await writeCaseRecords(store, key, [...changed.values()]);
+    changed.clear();
+  };
   for (const { name, scorer } of scorers) {
     if (isBatchScorer(scorer)) {
       for (const record of state.cases) {
-        if (name in record.scores && !record.loggedScores[name]) {
+        if (
+          Object.hasOwn(record.scores, name) &&
+          !Object.hasOwn(record.loggedScores, name)
+        ) {
+          if (!(await claimAction(store, key, "score-log", record.id, name))) {
+            continue;
+          }
           await evaluateAndLogScore(
             definition,
             state,
@@ -1407,14 +1533,16 @@ async function runScoreStages<
             name,
             experiment,
           );
-          await writeJson(store, key, state);
+          changed.set(record.id, record);
         }
       }
+      await persistChangedCases();
       await ensureWorkflowBatches(definition, state, store, key, "score", name);
       continue;
     }
     for (const record of state.cases) {
-      if (record.loggedScores[name]) continue;
+      if (Object.hasOwn(record.loggedScores, name)) continue;
+      if (!(await claimAction(store, key, "score", record.id, name))) continue;
       await evaluateAndLogScore(
         definition,
         state,
@@ -1423,7 +1551,7 @@ async function runScoreStages<
         experiment,
         scorer,
       );
-      await writeJson(store, key, state);
+      changed.set(record.id, record);
     }
   }
 
@@ -1432,7 +1560,10 @@ async function runScoreStages<
   ).entries()) {
     const name = classifierName(classifier, index);
     for (const record of state.cases) {
-      if (record.loggedClassifications[name]) continue;
+      if (Object.hasOwn(record.loggedClassifications, name)) continue;
+      if (!(await claimAction(store, key, "classification", record.id, name))) {
+        continue;
+      }
       await evaluateAndLogClassification(
         definition,
         state,
@@ -1441,9 +1572,10 @@ async function runScoreStages<
         classifier,
         experiment,
       );
-      await writeJson(store, key, state);
+      changed.set(record.id, record);
     }
   }
+  await persistChangedCases();
 }
 
 function scorerArgs(record: DurableCaseRecord) {
@@ -1517,7 +1649,6 @@ async function evaluateAndLogScore(
     throw error;
   } finally {
     root.end();
-    await experiment?.flush();
   }
 }
 
@@ -1567,7 +1698,6 @@ async function evaluateAndLogClassification(
     throw error;
   } finally {
     root.end();
-    await experiment?.flush();
   }
 }
 
@@ -1580,34 +1710,38 @@ async function ensureWorkflowBatches(
   scorerName?: string,
 ) {
   const workflow = workflowForStage(definition, kind, scorerName);
+  const plans = plannedBatches(
+    definition,
+    state.runId,
+    state.cases.map(({ id }) => id),
+  );
+  const casesById = new Map(state.cases.map((record) => [record.id, record]));
   for (const node of workflow.nodes) {
-    const batchSize = node.processor.batchSize ?? DEFAULT_BATCH_SIZE;
-    if (!Number.isInteger(batchSize) || batchSize < 1) {
-      throw new Error(
-        `Invalid batchSize for ${scorerName ? `${scorerName}.${node.name}` : node.name}`,
-      );
-    }
-    const assigned = new Set(
-      state.batches
-        .filter(
-          (batch) =>
-            batch.kind === kind &&
-            batch.scorerName === scorerName &&
-            batch.nodeName === node.name,
-        )
-        .flatMap((batch) => batch.itemIds),
+    const nodePlans = plans.filter(
+      (plan) =>
+        plan.kind === kind &&
+        plan.scorerName === scorerName &&
+        plan.nodeName === node.name,
     );
-    const eligible = state.cases.filter((record) => {
-      const outputs = nodeOutputsFor(record, kind, scorerName);
-      return (
-        !assigned.has(record.id) &&
-        !(node.name in outputs) &&
-        Object.values(node.needs).every((dependency) => dependency in outputs)
+    for (const plan of nodePlans) {
+      if (state.batches.some(({ id }) => id === plan.id)) continue;
+      const records = plan.itemIds.map((id) => casesById.get(id)!);
+      const ready = records.every((record) => {
+        const outputs = nodeOutputsFor(record, kind, scorerName);
+        return (
+          !Object.hasOwn(outputs, node.name) &&
+          Object.values(node.needs).every((dependency) =>
+            Object.hasOwn(outputs, dependency),
+          )
+        );
+      });
+      if (!ready) continue;
+      const batchId = plan.id;
+      const claim = await store.getOrSet(
+        claimRecordKey(key, "batch", batchId),
+        encoder.encode(batchId),
       );
-    });
-    for (let offset = 0; offset < eligible.length; offset += batchSize) {
-      const records = eligible.slice(offset, offset + batchSize);
-      const batchId = newId();
+      if (!claim.created) continue;
       const context = { runId: state.runId, batchId };
       const items = records.map((record) =>
         itemForNode(state.parameters, record, kind, scorerName, node),
@@ -1634,7 +1768,7 @@ async function ensureWorkflowBatches(
         status: "submitted",
       };
       state.batches.push(batch);
-      await writeJson(store, key, state);
+      await writeBatchRecords(store, key, [batch]);
     }
   }
 }
@@ -1660,6 +1794,7 @@ async function collectBatch(
   }
   const expectedIds = new Set(batch.itemIds);
   const seen = new Set<string>();
+  const records: DurableCaseRecord[] = [];
   for (const result of results) {
     const id = resultItemId(result);
     if (!expectedIds.has(id)) {
@@ -1671,6 +1806,7 @@ async function collectBatch(
     seen.add(id);
     if ("error" in result) throw asError(result.error);
     const record = state.cases.find((candidate) => candidate.id === id)!;
+    records.push(record);
     const output = assertJsonValue(
       node.result(result),
       `output for ${batch.nodeName} item ${id}`,
@@ -1702,6 +1838,7 @@ async function collectBatch(
       `Batch ${batch.id} did not return results for: ${missing.join(", ")}`,
     );
   }
+  return records;
 }
 
 function processorForBatch(
@@ -1797,7 +1934,7 @@ function nodeOutputsFor(
   scorerName?: string,
 ) {
   if (kind === "task") return record.taskNodeOutputs;
-  return (record.scoreNodeOutputs[scorerName!] ??= {});
+  return (record.scoreNodeOutputs[scorerName!] ??= Object.create(null));
 }
 
 async function materializeCases<
@@ -1861,12 +1998,12 @@ async function materializeCases<
         tags: datum.tags,
         taskComplete: false,
         taskLogged: false,
-        taskNodeOutputs: {},
-        scores: {},
-        loggedScores: {},
-        scoreNodeOutputs: {},
-        classifications: {},
-        loggedClassifications: {},
+        taskNodeOutputs: Object.create(null),
+        scores: Object.create(null),
+        loggedScores: Object.create(null),
+        scoreNodeOutputs: Object.create(null),
+        classifications: Object.create(null),
+        loggedClassifications: Object.create(null),
       });
     }
   }
@@ -1909,22 +2046,22 @@ async function finishExperiment(
   );
   const results = state.cases.map((record) => {
     const datum = record.datum as EvalCase<unknown, unknown, BaseMetadata>;
-    const scores = Object.assign(
-      {},
-      ...scorerNames.map(
-        (name) =>
+    const scores = Object.fromEntries(
+      scorerNames.flatMap((name) =>
+        Object.entries(
           _internalPrepareEvaluatorScore(
             record.scores[name] as OneOrMoreScores,
             name,
           ).scores ?? {},
+        ),
       ),
     );
-    const classifications = Object.assign(
-      {},
-      ...Object.entries(record.classifications).map(
-        ([name, value]) =>
+    const classifications = Object.fromEntries(
+      Object.entries(record.classifications).flatMap(([name, value]) =>
+        Object.entries(
           _internalPrepareEvaluatorClassification(value as never, name)
             .classifications ?? {},
+        ),
       ),
     );
     return {
@@ -1977,7 +2114,391 @@ function resolveScorers(
 }
 
 function runKey(projectName: string, evalName: string, runId: string) {
-  return `durable-eval/v2/runs/${contentVersion(encoder.encode(`${projectName}\0${evalName}\0${runId}`))}`;
+  return `durable-eval/v4/runs/${contentVersion(encoder.encode(`${projectName}\0${evalName}\0${runId}`))}`;
+}
+
+function encodedKeyPart(value: string) {
+  return uint8ArrayToBase64(encoder.encode(value))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replace(/=+$/, "");
+}
+
+function caseRecordKey(
+  key: string,
+  caseId: string,
+  kind:
+    | "base"
+    | "task"
+    | "task-log"
+    | "task-node"
+    | "score"
+    | "score-log"
+    | "score-node"
+    | "classification"
+    | "classification-log",
+  ...names: string[]
+) {
+  const suffix = names.map(encodedKeyPart).join("/");
+  return `${key}/cases/${encodedKeyPart(caseId)}/${kind}${suffix ? `/${suffix}` : ""}`;
+}
+
+function batchRecordKey(key: string, batchId: string) {
+  return `${key}/batches/${encodedKeyPart(batchId)}`;
+}
+
+function claimRecordKey(key: string, kind: string, ...parts: string[]) {
+  const identity = stableStringify([kind, parts]);
+  return `${key}/claims/${contentVersion(encoder.encode(identity))}`;
+}
+
+async function claimAction(
+  store: DurableEvalStore,
+  key: string,
+  kind: string,
+  ...parts: string[]
+) {
+  return (
+    await store.getOrSet(
+      claimRecordKey(key, kind, ...parts),
+      encoder.encode("claimed"),
+    )
+  ).created;
+}
+
+type DurableBatchPlan = Omit<
+  DurableBatchRecord,
+  "handle" | "externalId" | "status"
+>;
+
+function plannedBatches(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  runId: string,
+  caseIds: string[],
+) {
+  const stages: Array<{ kind: "task" | "score"; scorerName?: string }> = [];
+  if (isBatchTask(definition.evaluator.task)) stages.push({ kind: "task" });
+  for (const { name, scorer } of resolveScorers(
+    definition.evaluator.scores ?? [],
+  )) {
+    if (isBatchScorer(scorer)) {
+      stages.push({ kind: "score", scorerName: name });
+    }
+  }
+  const plans: DurableBatchPlan[] = [];
+  for (const { kind, scorerName } of stages) {
+    const workflow = workflowForStage(definition, kind, scorerName);
+    for (const node of workflow.nodes) {
+      const batchSize = node.processor.batchSize ?? DEFAULT_BATCH_SIZE;
+      if (!Number.isInteger(batchSize) || batchSize < 1) {
+        throw new Error(
+          `Invalid batchSize for ${scorerName ? `${scorerName}.${node.name}` : node.name}`,
+        );
+      }
+      for (let offset = 0; offset < caseIds.length; offset += batchSize) {
+        const itemIds = caseIds.slice(offset, offset + batchSize);
+        plans.push({
+          id: deterministicId(
+            stableStringify([runId, kind, scorerName, node.name, itemIds]),
+          ),
+          kind,
+          scorerName,
+          nodeName: node.name,
+          itemIds,
+        });
+      }
+    }
+  }
+  return plans;
+}
+
+async function readCaseRecord(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  store: DurableEvalStore,
+  key: string,
+  id: string,
+) {
+  const scorers = resolveScorers(definition.evaluator.scores ?? []);
+  const classifiers = (definition.evaluator.classifiers ?? []).map(
+    classifierName,
+  );
+  const taskNodes = isBatchTask(definition.evaluator.task)
+    ? workflowForStage(definition, "task").nodes
+    : [];
+  const scoreNodes = scorers.flatMap(({ name, scorer }) =>
+    isBatchScorer(scorer)
+      ? workflowForStage(definition, "score", name).nodes.map((node) => ({
+          scorerName: name,
+          nodeName: node.name,
+        }))
+      : [],
+  );
+  const [
+    base,
+    task,
+    taskLog,
+    taskNodeValues,
+    scoreValues,
+    scoreLogValues,
+    scoreNodeValues,
+    classificationValues,
+    classificationLogValues,
+  ] = await Promise.all([
+    readJson<DurableCaseBaseRecord>(store, caseRecordKey(key, id, "base")),
+    readJson<DurableTaskResultRecord>(store, caseRecordKey(key, id, "task")),
+    readJson<DurableTaskLogRecord>(store, caseRecordKey(key, id, "task-log")),
+    Promise.all(
+      taskNodes.map(async ({ name }) => ({
+        name,
+        value: await readJson<JsonValue>(
+          store,
+          caseRecordKey(key, id, "task-node", name),
+        ),
+      })),
+    ),
+    Promise.all(
+      scorers.map(async ({ name }) => ({
+        name,
+        value: await readJson<JsonValue>(
+          store,
+          caseRecordKey(key, id, "score", name),
+        ),
+      })),
+    ),
+    Promise.all(
+      scorers.map(async ({ name }) => ({
+        name,
+        value: await readJson<true>(
+          store,
+          caseRecordKey(key, id, "score-log", name),
+        ),
+      })),
+    ),
+    Promise.all(
+      scoreNodes.map(async ({ scorerName, nodeName }) => ({
+        scorerName,
+        nodeName,
+        value: await readJson<JsonValue>(
+          store,
+          caseRecordKey(key, id, "score-node", scorerName, nodeName),
+        ),
+      })),
+    ),
+    Promise.all(
+      classifiers.map(async (name) => ({
+        name,
+        value: await readJson<JsonValue>(
+          store,
+          caseRecordKey(key, id, "classification", name),
+        ),
+      })),
+    ),
+    Promise.all(
+      classifiers.map(async (name) => ({
+        name,
+        value: await readJson<true>(
+          store,
+          caseRecordKey(key, id, "classification-log", name),
+        ),
+      })),
+    ),
+  ]);
+  if (!base) throw new Error(`Durable eval case ${id} is missing`);
+  const taskNodeOutputs: Record<string, JsonValue> = Object.create(null);
+  for (const { name, value } of taskNodeValues) {
+    if (value !== undefined) taskNodeOutputs[name] = value;
+  }
+  const scores: Record<string, JsonValue> = Object.create(null);
+  for (const { name, value } of scoreValues) {
+    if (value !== undefined) scores[name] = value;
+  }
+  const loggedScores: Record<string, boolean> = Object.create(null);
+  for (const { name, value } of scoreLogValues) {
+    if (value) loggedScores[name] = true;
+  }
+  const scoreNodeOutputs: Record<
+    string,
+    Record<string, JsonValue>
+  > = Object.create(null);
+  for (const { scorerName, nodeName, value } of scoreNodeValues) {
+    if (value === undefined) continue;
+    const outputs = (scoreNodeOutputs[scorerName] ??= Object.create(null));
+    outputs[nodeName] = value;
+  }
+  const classifications: Record<string, JsonValue> = Object.create(null);
+  for (const { name, value } of classificationValues) {
+    if (value !== undefined) classifications[name] = value;
+  }
+  const loggedClassifications: Record<string, boolean> = Object.create(null);
+  for (const { name, value } of classificationLogValues) {
+    if (value) loggedClassifications[name] = true;
+  }
+  return {
+    ...base,
+    metadata: task?.metadata ?? base.metadata,
+    tags: task ? task.tags : base.tags,
+    taskComplete: task !== undefined,
+    taskLogged: taskLog !== undefined,
+    output: task?.output,
+    rootSpan: taskLog?.rootSpan,
+    taskNodeOutputs,
+    scores,
+    loggedScores,
+    scoreNodeOutputs,
+    classifications,
+    loggedClassifications,
+  } satisfies DurableCaseRecord;
+}
+
+async function readRunState(
+  definition: DurableEvalDefinition<any, any, any, any, any>,
+  store: DurableEvalStore,
+  key: string,
+) {
+  const record = await readJson<DurableRunRecord>(store, key);
+  if (!record) return undefined;
+  const plans = plannedBatches(definition, record.runId, record.caseIds);
+  const [cases, batchRecords] = await Promise.all([
+    Promise.all(
+      record.caseIds.map((id) => readCaseRecord(definition, store, key, id)),
+    ),
+    Promise.all(
+      plans.map(async ({ id }) => {
+        return readJson<DurableBatchRecord>(store, batchRecordKey(key, id));
+      }),
+    ),
+  ]);
+  const batches = batchRecords.filter(
+    (value): value is DurableBatchRecord => value !== undefined,
+  );
+  const { caseIds: _caseIds, ...state } = record;
+  return { ...state, cases, batches };
+}
+
+async function writeRunRecord(
+  store: DurableEvalStore,
+  key: string,
+  state: DurableRunState,
+) {
+  const { cases, batches: _batches, ...record } = state;
+  await writeJson(store, key, {
+    ...record,
+    caseIds: cases.map(({ id }) => id),
+  } satisfies DurableRunRecord);
+}
+
+async function writeCaseBaseRecords(
+  store: DurableEvalStore,
+  key: string,
+  records: DurableCaseRecord[],
+) {
+  await Promise.all(
+    records.map(({ id, caseId, trialIndex, datum, metadata, tags }) =>
+      writeJson(store, caseRecordKey(key, id, "base"), {
+        id,
+        caseId,
+        trialIndex,
+        datum,
+        metadata,
+        tags,
+      } satisfies DurableCaseBaseRecord),
+    ),
+  );
+}
+
+async function writeCaseRecords(
+  store: DurableEvalStore,
+  key: string,
+  records: DurableCaseRecord[],
+) {
+  const writes: Promise<void>[] = [];
+  for (const record of records) {
+    if (record.taskComplete) {
+      writes.push(
+        writeJson(store, caseRecordKey(key, record.id, "task"), {
+          output: record.output,
+          metadata: record.metadata,
+          tags: record.tags,
+          taskComplete: true,
+        } satisfies DurableTaskResultRecord),
+      );
+    }
+    if (record.taskLogged) {
+      writes.push(
+        writeJson(store, caseRecordKey(key, record.id, "task-log"), {
+          rootSpan: record.rootSpan,
+          taskLogged: true,
+        } satisfies DurableTaskLogRecord),
+      );
+    }
+    for (const [name, value] of Object.entries(record.taskNodeOutputs)) {
+      writes.push(
+        writeJson(
+          store,
+          caseRecordKey(key, record.id, "task-node", name),
+          value,
+        ),
+      );
+    }
+    for (const [name, value] of Object.entries(record.scores)) {
+      writes.push(
+        writeJson(store, caseRecordKey(key, record.id, "score", name), value),
+      );
+    }
+    for (const name of Object.keys(record.loggedScores)) {
+      writes.push(
+        writeJson(
+          store,
+          caseRecordKey(key, record.id, "score-log", name),
+          true,
+        ),
+      );
+    }
+    for (const [scorerName, outputs] of Object.entries(
+      record.scoreNodeOutputs,
+    )) {
+      for (const [nodeName, value] of Object.entries(outputs)) {
+        writes.push(
+          writeJson(
+            store,
+            caseRecordKey(key, record.id, "score-node", scorerName, nodeName),
+            value,
+          ),
+        );
+      }
+    }
+    for (const [name, value] of Object.entries(record.classifications)) {
+      writes.push(
+        writeJson(
+          store,
+          caseRecordKey(key, record.id, "classification", name),
+          value,
+        ),
+      );
+    }
+    for (const name of Object.keys(record.loggedClassifications)) {
+      writes.push(
+        writeJson(
+          store,
+          caseRecordKey(key, record.id, "classification-log", name),
+          true,
+        ),
+      );
+    }
+  }
+  await Promise.all(writes);
+}
+
+async function writeBatchRecords(
+  store: DurableEvalStore,
+  key: string,
+  records: DurableBatchRecord[],
+) {
+  await Promise.all(
+    records.map((record) =>
+      writeJson(store, batchRecordKey(key, record.id), record),
+    ),
+  );
 }
 
 function deterministicId(value: string) {
