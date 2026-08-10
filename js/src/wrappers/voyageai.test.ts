@@ -139,6 +139,29 @@ describe("Voyage AI wrapper", () => {
     expect(await backgroundLogger.drain()).toHaveLength(1);
   });
 
+  it("preserves the client receiver and request options", async () => {
+    const options = { timeoutInSeconds: 5 };
+    const client = {
+      marker: "voyage-client",
+      embed: vi.fn(function (
+        this: { marker: string },
+        _request: unknown,
+        callOptions: unknown,
+      ) {
+        expect(this).toBe(client);
+        expect(callOptions).toBe(options);
+        return Promise.resolve({
+          data: [{ embedding: [0.1], index: 0 }],
+          model: "voyage-4",
+          usage: { totalTokens: 1 },
+        });
+      }),
+    };
+    const wrapped = wrapVoyageAI(client);
+
+    await wrapped.embed({ input: "hello", model: "voyage-4" }, options);
+  });
+
   it("preserves provider errors", async () => {
     const providerError = new Error("Voyage request failed");
     const client = wrapVoyageAI({

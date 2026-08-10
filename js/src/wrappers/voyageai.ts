@@ -2,18 +2,14 @@ import { voyageAIChannels } from "../instrumentation/plugins/voyageai-channels";
 import type {
   VoyageAIClient,
   VoyageAIContextualizedEmbedRequest,
-  VoyageAIContextualizedResult,
-  VoyageAIEmbeddingResponse,
   VoyageAIEmbedRequest,
   VoyageAIMultimodalEmbedRequest,
   VoyageAIRerankRequest,
-  VoyageAIRerankResponse,
-  VoyageAIResponsePromise,
 } from "../vendor-sdk-types/voyageai";
 
 /**
- * Wrap a Voyage AI client so method calls emit diagnostics-channel events that
- * Braintrust plugins can consume.
+ * Wrap a Voyage AI client so method calls pass through the Braintrust
+ * instrumentation hooks.
  */
 export function wrapVoyageAI<T>(client: T): T {
   if (!isSupportedVoyageAIClient(client)) {
@@ -58,21 +54,52 @@ function voyageAIProxy(client: VoyageAIClient): VoyageAIClient {
     get(target, prop, receiver) {
       switch (prop) {
         case "embed":
-          return typeof target.embed === "function"
-            ? wrapEmbed(target.embed.bind(target))
-            : target.embed;
+          if (typeof target.embed !== "function") {
+            return target.embed;
+          }
+          return (request: VoyageAIEmbedRequest, options?: unknown) =>
+            voyageAIChannels.embed.invoke(
+              target.embed!,
+              target,
+              [request, options],
+              {},
+            );
         case "multimodalEmbed":
-          return typeof target.multimodalEmbed === "function"
-            ? wrapMultimodalEmbed(target.multimodalEmbed.bind(target))
-            : target.multimodalEmbed;
+          if (typeof target.multimodalEmbed !== "function") {
+            return target.multimodalEmbed;
+          }
+          return (request: VoyageAIMultimodalEmbedRequest, options?: unknown) =>
+            voyageAIChannels.multimodalEmbed.invoke(
+              target.multimodalEmbed!,
+              target,
+              [request, options],
+              {},
+            );
         case "rerank":
-          return typeof target.rerank === "function"
-            ? wrapRerank(target.rerank.bind(target))
-            : target.rerank;
+          if (typeof target.rerank !== "function") {
+            return target.rerank;
+          }
+          return (request: VoyageAIRerankRequest, options?: unknown) =>
+            voyageAIChannels.rerank.invoke(
+              target.rerank!,
+              target,
+              [request, options],
+              {},
+            );
         case "contextualizedEmbed":
-          return typeof target.contextualizedEmbed === "function"
-            ? wrapContextualizedEmbed(target.contextualizedEmbed.bind(target))
-            : target.contextualizedEmbed;
+          if (typeof target.contextualizedEmbed !== "function") {
+            return target.contextualizedEmbed;
+          }
+          return (
+            request: VoyageAIContextualizedEmbedRequest,
+            options?: unknown,
+          ) =>
+            voyageAIChannels.contextualizedEmbed.invoke(
+              target.contextualizedEmbed!,
+              target,
+              [request, options],
+              {},
+            );
         default:
           return Reflect.get(target, prop, receiver);
       }
@@ -81,58 +108,4 @@ function voyageAIProxy(client: VoyageAIClient): VoyageAIClient {
 
   voyageAIProxyCache.set(client, proxy);
   return proxy;
-}
-
-function wrapEmbed(
-  embed: (
-    request: VoyageAIEmbedRequest,
-    options?: unknown,
-  ) => VoyageAIResponsePromise<VoyageAIEmbeddingResponse>,
-): NonNullable<VoyageAIClient["embed"]> {
-  return (request, options) =>
-    voyageAIChannels.embed.tracePromise(() => embed(request, options), {
-      arguments: [request],
-    });
-}
-
-function wrapMultimodalEmbed(
-  multimodalEmbed: (
-    request: VoyageAIMultimodalEmbedRequest,
-    options?: unknown,
-  ) => VoyageAIResponsePromise<VoyageAIEmbeddingResponse>,
-): NonNullable<VoyageAIClient["multimodalEmbed"]> {
-  return (request, options) =>
-    voyageAIChannels.multimodalEmbed.tracePromise(
-      () => multimodalEmbed(request, options),
-      {
-        arguments: [request],
-      },
-    );
-}
-
-function wrapRerank(
-  rerank: (
-    request: VoyageAIRerankRequest,
-    options?: unknown,
-  ) => VoyageAIResponsePromise<VoyageAIRerankResponse>,
-): NonNullable<VoyageAIClient["rerank"]> {
-  return (request, options) =>
-    voyageAIChannels.rerank.tracePromise(() => rerank(request, options), {
-      arguments: [request],
-    });
-}
-
-function wrapContextualizedEmbed(
-  contextualizedEmbed: (
-    request: VoyageAIContextualizedEmbedRequest,
-    options?: unknown,
-  ) => VoyageAIResponsePromise<VoyageAIContextualizedResult>,
-): NonNullable<VoyageAIClient["contextualizedEmbed"]> {
-  return (request, options) =>
-    voyageAIChannels.contextualizedEmbed.tracePromise(
-      () => contextualizedEmbed(request, options),
-      {
-        arguments: [request],
-      },
-    );
 }

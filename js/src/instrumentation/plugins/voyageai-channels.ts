@@ -13,26 +13,32 @@ import type {
 export const voyageAIChannels = defineChannels(
   "voyageai",
   {
-    embed: channel<[VoyageAIEmbedRequest], VoyageAIEmbeddingResponse>({
+    embed: channel<
+      [VoyageAIEmbedRequest, options?: unknown],
+      VoyageAIEmbeddingResponse
+    >({
       channelName: "embed",
       kind: "async",
     }),
 
     multimodalEmbed: channel<
-      [VoyageAIMultimodalEmbedRequest],
+      [VoyageAIMultimodalEmbedRequest, options?: unknown],
       VoyageAIEmbeddingResponse
     >({
       channelName: "multimodalEmbed",
       kind: "async",
     }),
 
-    rerank: channel<[VoyageAIRerankRequest], VoyageAIRerankResponse>({
+    rerank: channel<
+      [VoyageAIRerankRequest, options?: unknown],
+      VoyageAIRerankResponse
+    >({
       channelName: "rerank",
       kind: "async",
     }),
 
     contextualizedEmbed: channel<
-      [VoyageAIContextualizedEmbedRequest],
+      [VoyageAIContextualizedEmbedRequest, options?: unknown],
       VoyageAIContextualizedResult
     >({
       channelName: "contextualizedEmbed",

@@ -1,4 +1,11 @@
 import { SpanTypeAttribute, isObject } from "../../../util/index";
+import { debugLogger } from "../../debug-logger";
+import { startSpan, withCurrent } from "../../logger";
+import type { Span } from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
 import type {
   VoyageAIContextualizedResult,
@@ -6,8 +13,12 @@ import type {
   VoyageAIRerankResponse,
   VoyageAIUsage,
 } from "../../vendor-sdk-types/voyageai";
+import {
+  isAutoInstrumentationSuppressed,
+  runWithAutoInstrumentationSuppressed,
+} from "../auto-instrumentation-suppression";
 import { BasePlugin } from "../core";
-import { traceAsyncChannel, unsubscribeAll } from "../core/channel-tracing";
+import { unsubscribeAll } from "../core/channel-tracing";
 import { voyageAIChannels } from "./voyageai-channels";
 
 const EMBED_METADATA_ALLOWLIST = new Set([
@@ -43,55 +54,137 @@ const CONTEXTUALIZED_EMBED_METADATA_ALLOWLIST = new Set([
 export class VoyageAIPlugin extends BasePlugin {
   protected onEnable(): void {
     this.unsubscribers.push(
-      traceAsyncChannel(voyageAIChannels.embed, {
-        name: "voyageai.embed",
-        type: SpanTypeAttribute.LLM,
-        extractInput: (args) =>
+      interceptVoyageAICall(
+        voyageAIChannels.embed,
+        "voyageai.embed",
+        (args) =>
           extractEmbeddingInput(args, "input", EMBED_METADATA_ALLOWLIST),
-        extractOutput: summarizeEmbeddingOutput,
-        extractMetadata: extractResponseMetadata,
-        extractMetrics: extractUsageMetrics,
-      }),
-      traceAsyncChannel(voyageAIChannels.multimodalEmbed, {
-        name: "voyageai.multimodalEmbed",
-        type: SpanTypeAttribute.LLM,
-        extractInput: (args) =>
+        summarizeEmbeddingOutput,
+      ),
+      interceptVoyageAICall(
+        voyageAIChannels.multimodalEmbed,
+        "voyageai.multimodalEmbed",
+        (args) =>
           extractEmbeddingInput(
             args,
             "inputs",
             MULTIMODAL_EMBED_METADATA_ALLOWLIST,
             true,
           ),
-        extractOutput: summarizeEmbeddingOutput,
-        extractMetadata: extractResponseMetadata,
-        extractMetrics: extractUsageMetrics,
-      }),
-      traceAsyncChannel(voyageAIChannels.rerank, {
-        name: "voyageai.rerank",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractRerankInput,
-        extractOutput: summarizeRerankOutput,
-        extractMetadata: extractResponseMetadata,
-        extractMetrics: extractUsageMetrics,
-      }),
-      traceAsyncChannel(voyageAIChannels.contextualizedEmbed, {
-        name: "voyageai.contextualizedEmbed",
-        type: SpanTypeAttribute.LLM,
-        extractInput: (args) =>
+        summarizeEmbeddingOutput,
+      ),
+      interceptVoyageAICall(
+        voyageAIChannels.rerank,
+        "voyageai.rerank",
+        extractRerankInput,
+        summarizeRerankOutput,
+      ),
+      interceptVoyageAICall(
+        voyageAIChannels.contextualizedEmbed,
+        "voyageai.contextualizedEmbed",
+        (args) =>
           extractEmbeddingInput(
             args,
             "inputs",
             CONTEXTUALIZED_EMBED_METADATA_ALLOWLIST,
           ),
-        extractOutput: summarizeContextualizedEmbeddingOutput,
-        extractMetadata: extractResponseMetadata,
-        extractMetrics: extractUsageMetrics,
-      }),
+        summarizeContextualizedEmbeddingOutput,
+      ),
     );
   }
 
   protected onDisable(): void {
     this.unsubscribers = unsubscribeAll(this.unsubscribers);
+  }
+}
+
+type VoyageAIResult =
+  | VoyageAIEmbeddingResponse
+  | VoyageAIRerankResponse
+  | VoyageAIContextualizedResult;
+
+type VoyageAIChannel<TArgs extends unknown[], TResult> = {
+  intercept(
+    interceptor: (
+      target: (this: unknown, ...args: TArgs) => PromiseLike<TResult>,
+      thisArg: unknown,
+      args: TArgs,
+    ) => PromiseLike<TResult>,
+  ): () => void;
+};
+
+function interceptVoyageAICall<
+  TArgs extends unknown[],
+  TResult extends VoyageAIResult,
+>(
+  channel: VoyageAIChannel<TArgs, TResult>,
+  name: string,
+  extractInput: (args: TArgs) => {
+    input: unknown;
+    metadata: Record<string, unknown>;
+  },
+  extractOutput: (result: TResult) => unknown,
+): () => void {
+  return channel.intercept((target, thisArg, args) => {
+    const invokeTarget = () => Reflect.apply(target, thisArg, args);
+    if (isAutoInstrumentationSuppressed()) {
+      return invokeTarget();
+    }
+
+    let span: Span;
+    try {
+      const { input, metadata } = extractInput(args);
+      span = startSpan(
+        withSpanInstrumentationName(
+          {
+            event: { input, metadata },
+            name,
+            spanAttributes: { type: SpanTypeAttribute.LLM },
+          },
+          INSTRUMENTATION_NAMES.VOYAGEAI,
+        ),
+      );
+    } catch (error) {
+      debugLogger.error(`Error starting span for ${name}:`, error);
+      return invokeTarget();
+    }
+
+    let result: PromiseLike<TResult>;
+    try {
+      result = withCurrent(span, () =>
+        runWithAutoInstrumentationSuppressed(invokeTarget),
+      );
+    } catch (error) {
+      finishVoyageAISpan(span, name, () => span.log({ error }));
+      throw error;
+    }
+
+    void Promise.resolve(result).then(
+      (value) =>
+        finishVoyageAISpan(span, name, () => {
+          const metadata = extractResponseMetadata(value);
+          span.log({
+            output: extractOutput(value),
+            ...(metadata ? { metadata } : {}),
+            metrics: extractUsageMetrics(value),
+          });
+        }),
+      (error) => finishVoyageAISpan(span, name, () => span.log({ error })),
+    );
+    return result;
+  });
+}
+
+function finishVoyageAISpan(span: Span, name: string, log: () => void): void {
+  try {
+    log();
+  } catch (error) {
+    debugLogger.error(`Error logging span for ${name}:`, error);
+  }
+  try {
+    span.end();
+  } catch (error) {
+    debugLogger.error(`Error ending span for ${name}:`, error);
   }
 }
 
@@ -169,7 +262,7 @@ function extractRerankInput(args: unknown): {
 }
 
 function extractResponseMetadata(
-  result: VoyageAIEmbeddingResponse | VoyageAIRerankResponse,
+  result: VoyageAIResult,
 ): Record<string, unknown> | undefined {
   if (!isObject(result)) {
     return undefined;
@@ -264,12 +357,7 @@ function summarizeContextualizedEmbeddingOutput(
   };
 }
 
-function extractUsageMetrics(
-  result:
-    | VoyageAIEmbeddingResponse
-    | VoyageAIRerankResponse
-    | VoyageAIContextualizedResult,
-): Record<string, number> {
+function extractUsageMetrics(result: VoyageAIResult): Record<string, number> {
   if (!isObject(result)) {
     return {};
   }

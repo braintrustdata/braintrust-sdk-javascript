@@ -31,25 +31,25 @@ describe("VoyageAIPlugin", () => {
   });
 
   it("captures embedding and reranking operations", async () => {
-    await voyageAIChannels.embed.tracePromise(
+    await voyageAIChannels.embed.invoke(
       async () => ({
         data: [{ embedding: [0.1, 0.2, 0.3], index: 0 }],
         model: "voyage-4",
         usage: { totalTokens: 4 },
       }),
-      {
-        arguments: [
-          {
-            input: ["Braintrust tracing"],
-            inputType: "document",
-            model: "voyage-4",
-            outputDimension: 3,
-          },
-        ],
-      },
+      undefined,
+      [
+        {
+          input: ["Braintrust tracing"],
+          inputType: "document",
+          model: "voyage-4",
+          outputDimension: 3,
+        },
+      ],
+      {},
     );
 
-    await voyageAIChannels.rerank.tracePromise(
+    await voyageAIChannels.rerank.invoke(
       async () => ({
         data: [
           { index: 1, relevanceScore: 0.95 },
@@ -58,16 +58,16 @@ describe("VoyageAIPlugin", () => {
         model: "rerank-2.5",
         usage: { totalTokens: 9 },
       }),
-      {
-        arguments: [
-          {
-            documents: ["Vienna", "Paris"],
-            model: "rerank-2.5",
-            query: "capital of France",
-            topK: 2,
-          },
-        ],
-      },
+      undefined,
+      [
+        {
+          documents: ["Vienna", "Paris"],
+          model: "rerank-2.5",
+          query: "capital of France",
+          topK: 2,
+        },
+      ],
+      {},
     );
 
     const spans = await backgroundLogger.drain();
@@ -112,33 +112,33 @@ describe("VoyageAIPlugin", () => {
   });
 
   it("normalizes multimodal and contextualized embedding summaries", async () => {
-    await voyageAIChannels.multimodalEmbed.tracePromise(
+    await voyageAIChannels.multimodalEmbed.invoke(
       async () => ({
         data: [{ embedding: [0.1, 0.2], index: 0 }],
         model: "voyage-multimodal-3.5",
         usage: { totalTokens: 5 },
       }),
-      {
-        arguments: [
-          {
-            inputs: [
-              {
-                content: [
-                  { type: "text", text: "A banana" },
-                  {
-                    type: "image_url",
-                    image_url: "https://example.com/banana.jpg",
-                  },
-                ],
-              },
-            ],
-            model: "voyage-multimodal-3.5",
-          },
-        ],
-      },
+      undefined,
+      [
+        {
+          inputs: [
+            {
+              content: [
+                { type: "text", text: "A banana" },
+                {
+                  type: "image_url",
+                  image_url: "https://example.com/banana.jpg",
+                },
+              ],
+            },
+          ],
+          model: "voyage-multimodal-3.5",
+        },
+      ],
+      {},
     );
 
-    await voyageAIChannels.contextualizedEmbed.tracePromise(
+    await voyageAIChannels.contextualizedEmbed.invoke(
       async () => ({
         results: [
           {
@@ -154,14 +154,14 @@ describe("VoyageAIPlugin", () => {
           model: "voyage-context-3",
         },
       }),
-      {
-        arguments: [
-          {
-            inputs: [["First chunk", "Second chunk"]],
-            model: "voyage-context-3",
-          },
-        ],
-      },
+      undefined,
+      [
+        {
+          inputs: [["First chunk", "Second chunk"]],
+          model: "voyage-context-3",
+        },
+      ],
+      {},
     );
 
     const spans = await backgroundLogger.drain();
@@ -192,29 +192,29 @@ describe("VoyageAIPlugin", () => {
   });
 
   it("converts Voyage base64 media inputs to attachments", async () => {
-    await voyageAIChannels.multimodalEmbed.tracePromise(
+    await voyageAIChannels.multimodalEmbed.invoke(
       async () => ({
         data: [{ embedding: [0.1, 0.2], index: 0 }],
         model: "voyage-multimodal-3.5",
         usage: { totalTokens: 5 },
       }),
-      {
-        arguments: [
-          {
-            inputs: [
-              {
-                content: [
-                  {
-                    imageBase64: "data:image/png;base64,aGVsbG8=",
-                    type: "image_base64",
-                  },
-                ],
-              },
-            ],
-            model: "voyage-multimodal-3.5",
-          },
-        ],
-      },
+      undefined,
+      [
+        {
+          inputs: [
+            {
+              content: [
+                {
+                  imageBase64: "data:image/png;base64,aGVsbG8=",
+                  type: "image_base64",
+                },
+              ],
+            },
+          ],
+          model: "voyage-multimodal-3.5",
+        },
+      ],
+      {},
     );
 
     const spans = await backgroundLogger.drain();
@@ -230,5 +230,34 @@ describe("VoyageAIPlugin", () => {
       filename: "image.png",
       type: "braintrust_attachment",
     });
+  });
+
+  it("suppresses nested auto-instrumentation invocations", async () => {
+    const request = { input: "hello", model: "voyage-4" };
+
+    await voyageAIChannels.embed.invoke(
+      function (innerRequest, options) {
+        return voyageAIChannels.embed.invoke(
+          async () => ({
+            data: [{ embedding: [0.1], index: 0 }],
+            model: "voyage-4",
+            usage: { totalTokens: 1 },
+          }),
+          this,
+          [innerRequest, options],
+          {},
+        );
+      },
+      undefined,
+      [request],
+      {},
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(
+      spans.filter(
+        (span: any) => span.span_attributes?.name === "voyageai.embed",
+      ),
+    ).toHaveLength(1);
   });
 });
