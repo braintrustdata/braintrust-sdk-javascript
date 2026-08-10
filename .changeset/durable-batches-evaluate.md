@@ -2,4 +2,4 @@
 "braintrust": minor
 ---
 
-feat: Add batch/durable evals api
+feat: Add experimental batch/durable evals API

@@ -10,7 +10,7 @@ const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
 
-test("durable eval collects webhook sub-batches and logs completed rows", async () => {
+test("durable eval collects task and scorer webhook sub-batches", async () => {
   await withScenarioHarness(
     async ({ events, runScenarioDir, testRunEvents }) => {
       await runScenarioDir({ scenarioDir });
@@ -29,7 +29,11 @@ test("durable eval collects webhook sub-batches and logs completed rows", async 
           .sort((left, right) =>
             JSON.stringify(left).localeCompare(JSON.stringify(right)),
           ),
-      ).toEqual([{ exact: 1 }, { exact: 1 }, { exact: 1 }]);
+      ).toEqual([
+        { batch_exact: 1, exact: 1 },
+        { batch_exact: 1, exact: 1 },
+        { batch_exact: 1, exact: 1 },
+      ]);
       expect(webhookSpans.map((event) => event.metadata?.durable_eval)).toEqual(
         [
           expect.objectContaining({ run_id: expect.any(String) }),
@@ -42,17 +46,30 @@ test("durable eval collects webhook sub-batches and logs completed rows", async 
       expect(taskSpans).toHaveLength(3);
       expect(taskSpans.map((event) => event.output).sort()).toEqual([2, 4, 6]);
 
-      const scoreSpans = findAllSpans(events(), "exact");
-      expect(scoreSpans).toHaveLength(3);
-      expect(scoreSpans.map((event) => event.scores)).toEqual([
+      const exactScoreSpans = findAllSpans(events(), "exact");
+      expect(exactScoreSpans).toHaveLength(3);
+      expect(exactScoreSpans.map((event) => event.scores)).toEqual([
         { exact: 1 },
         { exact: 1 },
         { exact: 1 },
       ]);
-      expect(scoreSpans.map((event) => event.metadata?.method)).toEqual([
+      expect(exactScoreSpans.map((event) => event.metadata?.method)).toEqual([
         "shared-eval-runtime",
         "shared-eval-runtime",
         "shared-eval-runtime",
+      ]);
+
+      const batchScoreSpans = findAllSpans(events(), "batch_exact");
+      expect(batchScoreSpans).toHaveLength(3);
+      expect(batchScoreSpans.map((event) => event.scores)).toEqual([
+        { batch_exact: 1 },
+        { batch_exact: 1 },
+        { batch_exact: 1 },
+      ]);
+      expect(batchScoreSpans.map((event) => event.metadata?.method)).toEqual([
+        "batch-provider",
+        "batch-provider",
+        "batch-provider",
       ]);
 
       const classifierSpans = findAllSpans(events(), "quality");

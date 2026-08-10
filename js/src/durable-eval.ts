@@ -1,4 +1,9 @@
-import { makeScorerPropagatedEvent, SpanTypeAttribute } from "../util/index";
+import {
+  base64ToUint8Array,
+  makeScorerPropagatedEvent,
+  SpanTypeAttribute,
+  uint8ArrayToBase64,
+} from "../util/index";
 import {
   type EvalParameters,
   type InferParameters,
@@ -46,31 +51,84 @@ const CHECKPOINT_VERSION = 2;
 const DEFAULT_BATCH_SIZE = 1_000;
 
 type JsonPrimitive = string | number | boolean | null;
-export type JsonValue =
-  | JsonPrimitive
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 /**
  * Minimal persistence used to reconnect provider webhooks with submitted
- * batches. DurableEval does not require any Braintrust backend changes.
+ * batches. Durable evaluations do not require any Braintrust backend changes.
+ *
+ * @experimental - The API for this interface is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
  */
 export interface DurableEvalStore {
   read(key: string): Promise<Uint8Array | undefined>;
   write(key: string, value: Uint8Array): Promise<void>;
 }
 
-export interface DurableBatchContext {
+/**
+ * Stores durable evaluation state in memory. State is lost when the current
+ * JavaScript process exits.
+ *
+ * @experimental - The API for this class is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
+ */
+export class DurableEvalMemoryStore implements DurableEvalStore {
+  private readonly values = new Map<string, Uint8Array>();
+
+  async read(key: string): Promise<Uint8Array | undefined> {
+    return this.values.get(key)?.slice();
+  }
+
+  async write(key: string, value: Uint8Array): Promise<void> {
+    this.values.set(key, value.slice());
+  }
+}
+
+/**
+ * Stores durable evaluation state in Redis using an existing Redis client.
+ * Values are base64 encoded so only string `GET` and `SET` operations are
+ * required from the client. Clients from `redis` (node-redis), `ioredis`, and
+ * `@upstash/redis` can be passed directly; other clients with compatible async
+ * `get` and `set` methods are also supported.
+ *
+ * @experimental - The API for this class is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
+ */
+export class DurableEvalRedisStore implements DurableEvalStore {
+  private readonly keyPrefix: string;
+
+  constructor(
+    private readonly client: {
+      get(key: string): Promise<unknown>;
+      set(key: string, value: string): Promise<unknown>;
+    },
+    options: { keyPrefix?: string } = {},
+  ) {
+    this.keyPrefix = options.keyPrefix ?? "braintrust:";
+  }
+
+  async read(key: string): Promise<Uint8Array | undefined> {
+    const value = await this.client.get(`${this.keyPrefix}${key}`);
+    if (value == null) return undefined;
+    if (typeof value !== "string") {
+      throw new Error("DurableEvalRedisStore expected GET to return a string");
+    }
+    return base64ToUint8Array(value);
+  }
+
+  async write(key: string, value: Uint8Array): Promise<void> {
+    await this.client.set(`${this.keyPrefix}${key}`, uint8ArrayToBase64(value));
+  }
+}
+
+interface DurableBatchContext {
   runId: string;
   batchId: string;
 }
 
-export type DurableBatchPoll =
+type DurableBatchPoll =
   | { status: "pending" }
   | { status: "complete" }
   | { status: "failed"; error: unknown };
 
-export type DurableBatchCompletion<Handle extends JsonValue> =
+type DurableBatchCompletion<Handle extends JsonValue> =
   | {
       mode: "poll";
       poll(
@@ -98,7 +156,7 @@ export interface DurableBatchTaskItem<
   trialIndex: number;
 }
 
-export type DurableBatchTaskResult<Output, Metadata extends BaseMetadata> =
+type DurableBatchTaskResult<Output, Metadata extends BaseMetadata> =
   | {
       id: string;
       output: Output;
@@ -117,23 +175,23 @@ export type DurableBatchScorerItem<
   trialIndex: number;
 };
 
-export type DurableBatchScorerResult =
+type DurableBatchScorerResult =
   | { id: string; score: OneOrMoreScores }
   | { id: string; error: unknown };
 
-export interface DurableBatchProcessor<Item, Result, Handle extends JsonValue> {
+interface DurableBatchProcessor<Item, Result, Handle extends JsonValue> {
   batchSize?: number;
   submit(items: Item[], context: DurableBatchContext): Promise<Handle>;
   completion: DurableBatchCompletion<Handle>;
   collect(handle: Handle, context: DurableBatchContext): Promise<Result[]>;
 }
 
-export interface DurableWorkflowBatchItem<Input> {
+interface DurableWorkflowBatchItem<Input> {
   id: string;
   input: Input;
 }
 
-export type DurableWorkflowBatchResult<Output, Metadata extends BaseMetadata> =
+type DurableWorkflowBatchResult<Output, Metadata extends BaseMetadata> =
   | {
       id: string;
       output: Output;
@@ -144,7 +202,7 @@ export type DurableWorkflowBatchResult<Output, Metadata extends BaseMetadata> =
 
 const WORKFLOW_NODE_OUTPUT: unique symbol = Symbol("DurableWorkflowNodeOutput");
 
-export interface DurableWorkflowNode<Output> {
+interface DurableWorkflowNode<Output> {
   readonly [WORKFLOW_NODE_OUTPUT]: Output;
 }
 
@@ -156,10 +214,7 @@ type DurableWorkflowNodeOutputs<Nodes extends DurableWorkflowNodeMap> = {
     : never;
 };
 
-export interface DurableWorkflowBuilder<
-  RootItem,
-  Metadata extends BaseMetadata,
-> {
+interface DurableWorkflowBuilder<RootItem, Metadata extends BaseMetadata> {
   batch<
     Output,
     Needs extends DurableWorkflowNodeMap = Record<string, never>,
@@ -198,7 +253,7 @@ type DurableWorkflowDefinition = {
   outputNode: string;
 };
 
-export interface DurableBatchTask<
+interface DurableBatchTask<
   Input,
   Output,
   Expected,
@@ -215,7 +270,7 @@ export interface DurableBatchTask<
   readonly workflow?: DurableWorkflowDefinition;
 }
 
-export interface DurableBatchScorer<
+interface DurableBatchScorer<
   Input,
   Output,
   Expected,
@@ -232,6 +287,11 @@ export interface DurableBatchScorer<
   readonly workflow?: DurableWorkflowDefinition;
 }
 
+/**
+ * Defines a task that runs through asynchronous provider batch operations.
+ *
+ * @experimental - The API for this function is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
+ */
 export function BatchTask<
   Input,
   Output,
@@ -291,6 +351,11 @@ export function BatchTask(
   >;
 }
 
+/**
+ * Defines a scorer that runs through asynchronous provider batch operations.
+ *
+ * @experimental - The API for this function is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
+ */
 export function BatchScorer<
   Input,
   Output,
@@ -405,7 +470,7 @@ function buildWorkflow<RootItem, Metadata extends BaseMetadata, Output>(
   return { nodes, outputNode };
 }
 
-export type DurableEvaluator<
+type DurableEvaluator<
   Input,
   Output,
   Expected = void,
@@ -435,20 +500,20 @@ export type DurableEvaluator<
   >;
 };
 
-export interface DurableEvalStartOptions<
+interface DurableEvalStartOptions<
   Parameters extends EvalParameters = EvalParameters,
 > {
   parameters?: InferParameters<Parameters>;
   noSendLogs?: boolean;
 }
 
-export type DurableBatchResult = {
+type DurableBatchResult = {
   runId: string;
   batchId?: string;
   externalId?: string;
 };
 
-export type DurableEvalResult =
+type DurableEvalResult =
   | {
       status: "waiting";
       runId: string;
@@ -467,7 +532,7 @@ export type DurableEvalResult =
       summary: ExperimentSummary;
     };
 
-export interface DurableEvalDefinition<
+interface DurableEvalDefinition<
   Input,
   Output,
   Expected = void,
@@ -582,7 +647,259 @@ class DurableEvalDefinitionImpl<
   }
 }
 
-export function DurableEval<
+/*
+ * Internal usage notes. Keep these out of the public README while
+ * defineDurableEval() is experimental.
+ *
+ * ## Durable evaluations
+ *
+ * `defineDurableEval()` runs tasks and scorers through asynchronous provider
+ * batch APIs.
+ * `batchSize` splits a dataset into provider-sized sub-batches. A small external
+ * store connects submitted jobs with later webhook callbacks; it is required on
+ * the eval definition so every invocation uses the same persistence authority.
+ * No Braintrust backend changes are required.
+ *
+ * Every case needs a stable `id` (or a `caseId` function).
+ *
+ * For local or single-process runs, use the built-in memory store. For durable
+ * deployments, the Redis adapter accepts any existing client with asynchronous
+ * `get(key)` and `set(key, value)` methods. The adapter itself adds no Redis
+ * dependency, so install and configure whichever client your application already
+ * uses.
+ *
+ * The following popular clients can be passed directly to
+ * `DurableEvalRedisStore`:
+ *
+ * - [`redis`](https://github.com/redis/node-redis) (node-redis), including the
+ *   lower-level `@redis/client` package
+ * - [`ioredis`](https://github.com/redis/ioredis)
+ * - [`@upstash/redis`](https://upstash.com/docs/redis/sdks/ts/deployment),
+ *   including its platform-specific entrypoints
+ *
+ * Choose the example for your client:
+ *
+ * node-redis (`redis` or `@redis/client`):
+ *
+ * ```typescript
+ * import { createClient } from "redis";
+ * import { DurableEvalRedisStore } from "braintrust";
+ *
+ * const nodeRedis = await createClient({ url: process.env.REDIS_URL! }).connect();
+ * const redisStore = new DurableEvalRedisStore(nodeRedis);
+ * ```
+ *
+ * ioredis:
+ *
+ * ```typescript
+ * import Redis from "ioredis";
+ * import { DurableEvalRedisStore } from "braintrust";
+ *
+ * const ioRedis = new Redis(process.env.REDIS_URL!);
+ * const redisStore = new DurableEvalRedisStore(ioRedis);
+ * ```
+ *
+ * Upstash:
+ *
+ * ```typescript
+ * import { Redis } from "@upstash/redis";
+ * import { DurableEvalRedisStore } from "braintrust";
+ *
+ * const upstashRedis = Redis.fromEnv();
+ * const redisStore = new DurableEvalRedisStore(upstashRedis);
+ * ```
+ *
+ * Other clients are compatible when `get(key)` resolves to a string, `null`, or
+ * `undefined`, and `set(key, value)` accepts a string value. For local testing,
+ * `new DurableEvalMemoryStore()` requires no external client, but is process-local
+ * and loses its state when the process exits, so it should not be used to
+ * reconnect webhooks across serverless invocations.
+ *
+ * ```typescript
+ * import { BatchTask, defineDurableEval } from "braintrust";
+ *
+ * const supportEval = defineDurableEval("Support bot", {
+ *   store: redisStore,
+ *   data: [
+ *     {
+ *       id: "password-reset",
+ *       input: "How do I reset my password?",
+ *       expected: "Open account settings...",
+ *     },
+ *   ],
+ *   task: BatchTask({
+ *     // Each provider job contains at most 500 eval cases.
+ *     batchSize: 500,
+ *
+ *     // Submit one sub-batch and return a JSON-serializable provider handle.
+ *     async submit(items, context) {
+ *       const batch = await provider.submit({
+ *         idempotencyKey: context.batchId,
+ *         metadata: {
+ *           durableRunId: context.runId,
+ *           durableBatchId: context.batchId,
+ *         },
+ *         items,
+ *       });
+ *       return { id: batch.id };
+ *     },
+ *
+ *     completion: {
+ *       // "webhook" waits for processBatchResult(). Use "poll" with a poll()
+ *       // callback when the provider does not send completion events.
+ *       mode: "webhook",
+ *       externalId: (handle) => handle.id,
+ *     },
+ *
+ *     async collect(handle) {
+ *       return (await provider.results(handle.id)).map((item) => ({
+ *         id: item.id,
+ *         output: item.output,
+ *       }));
+ *     },
+ *   }),
+ *   scores: [
+ *     function exact({ output, expected }) {
+ *       return output === expected ? 1 : 0;
+ *     },
+ *   ],
+ * });
+ *
+ * const result = await supportEval.start();
+ * const { runId } = result;
+ * ```
+ *
+ * `start()` initializes the run, submits every ready task sub-batch, and returns.
+ * It never waits in a polling loop. When all task results are available, scoring
+ * begins. `BatchScorer` uses the same `batchSize`, `submit`, `completion`, and
+ * array-returning `collect` contract.
+ *
+ * ### Polling
+ *
+ * Polling adapters report the provider's current status through `completion`:
+ *
+ * ```typescript
+ * completion: {
+ *   mode: "poll",
+ *   async poll(handle) {
+ *     const batch = await provider.getBatch(handle.id);
+ *     if (batch.status === "completed") return { status: "complete" };
+ *     if (batch.status === "failed") {
+ *       return { status: "failed", error: batch.error };
+ *     }
+ *     return { status: "pending" };
+ *   },
+ * },
+ * ```
+ *
+ * Call `poll()` from a cron, queue worker, or another short-lived invocation. It
+ * checks every previously submitted polling batch once, collects completed
+ * results, submits newly ready work, and returns without sleeping:
+ *
+ * ```typescript
+ * const result = await supportEval.poll({
+ *   runId,
+ * });
+ *
+ * if (result.status === "waiting" && result.pending.poll > 0) {
+ *   scheduleAnotherPoll();
+ * }
+ * ```
+ *
+ * `start()`, `poll()`, and `processBatchResult()` return the current eval status.
+ * A waiting result includes the number of submitted batches using each completion
+ * mode:
+ *
+ * ```typescript
+ * {
+ *   status: "waiting",
+ *   runId,
+ *   pending: { poll: 2, webhook: 1 },
+ * }
+ * ```
+ *
+ * Use `status()` to read the same information without polling providers,
+ * collecting results, or advancing the workflow:
+ *
+ * ```typescript
+ * const status = await supportEval.status({
+ *   runId,
+ * });
+ * ```
+ *
+ * Completed statuses have zero pending batches and include the saved experiment
+ * summary. They can be read repeatedly without logging the eval again.
+ *
+ * ### Multi-stage workflows
+ *
+ * The direct `BatchTask({ submit, completion, collect })` form remains the
+ * one-batch shorthand. Use `workflow` when a task or scorer requires multiple
+ * provider batch operations:
+ *
+ * ```typescript
+ * task: BatchTask({
+ *   workflow(workflow) {
+ *     const draft = workflow.batch("draft", {
+ *       input: ({ input }) => ({ prompt: input }),
+ *       batchSize: 500,
+ *       submit: submitDraftBatch,
+ *       completion: draftCompletion,
+ *       collect: collectDraftBatch,
+ *     });
+ *
+ *     return workflow.batch("revise", {
+ *       needs: { draft },
+ *       input: ({ input }, { draft }) => ({ original: input, draft }),
+ *       batchSize: 500,
+ *       submit: submitRevisionBatch,
+ *       completion: revisionCompletion,
+ *       collect: collectRevisionBatch,
+ *     });
+ *   },
+ * }),
+ * ```
+ *
+ * Every named batch is a persisted workflow node. `needs` can express sequential
+ * operations, parallel branches, and joins. The returned node supplies the final
+ * task output or scorer result.
+ *
+ * ### Webhook processing
+ *
+ * When the provider reports that any task or scorer batch completed, fetch and
+ * store its results through `processBatchResult()`:
+ *
+ * ```typescript
+ * app.post("/webhooks/provider", async (request, response) => {
+ *   const event = request.body;
+ *   const batch = await provider.getBatch(event.batchId);
+ *   const runId = batch.metadata.durableRunId;
+ *
+ *   const result = await supportEval.processBatchResult({
+ *     // Returned by start() and saved alongside the provider job.
+ *     runId,
+ *     // The provider's batch ID. The durable eval saved it from submit()'s handle.
+ *     externalId: batch.id,
+ *     // The SDK-generated ID passed to submit(); include it in provider metadata
+ *     // when the webhook cannot provide the external ID used by the handle.
+ *     batchId: batch.metadata?.durableBatchId,
+ *   });
+ *
+ *   response.status(result.status === "waiting" ? 202 : 200).end();
+ * });
+ * ```
+ *
+ * The method accepts either `externalId` or `batchId`. The stored batch locator
+ * identifies the task or scorer workflow node, whose `collect()` results are
+ * stored before the eval advances. Webhook idempotency and provider failure
+ * handling remain application responsibilities for now.
+ */
+
+/**
+ * Defines a durable evaluation backed by a user-provided store.
+ *
+ * @experimental - The API for this function is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
+ */
+export function defineDurableEval<
   Input,
   Output,
   Expected = void,
@@ -720,7 +1037,7 @@ async function getDurableEvalStatus<
     store,
     runKey(definition.projectName, definition.evalName, options.runId),
   );
-  if (!state) throw new Error(`DurableEval run ${options.runId} is missing`);
+  if (!state) throw new Error(`Durable eval run ${options.runId} is missing`);
   return currentStatus(definition, state);
 }
 
@@ -746,7 +1063,7 @@ async function processDurableBatchResult<
   const store = definition.evaluator.store;
   const key = runKey(definition.projectName, definition.evalName, result.runId);
   const state = await readJson<DurableRunState>(store, key);
-  if (!state) throw new Error(`DurableEval run ${result.runId} is missing`);
+  if (!state) throw new Error(`Durable eval run ${result.runId} is missing`);
   const byBatch = result.batchId
     ? state.batches.find((candidate) => candidate.id === result.batchId)
     : undefined;
@@ -791,7 +1108,7 @@ async function pollDurableEval<
     options.runId,
   );
   const state = await readJson<DurableRunState>(store, key);
-  if (!state) throw new Error(`DurableEval run ${options.runId} is missing`);
+  if (!state) throw new Error(`Durable eval run ${options.runId} is missing`);
 
   const batches = state.batches.filter((batch) => {
     if (batch.status === "complete") return false;
@@ -898,7 +1215,7 @@ function currentStatus(
 ): DurableEvalResult {
   if (state.status === "completed") {
     if (!state.summary) {
-      throw new Error(`DurableEval run ${state.runId} has no saved summary`);
+      throw new Error(`Durable eval run ${state.runId} has no saved summary`);
     }
     return {
       status: "completed",
@@ -1521,15 +1838,15 @@ async function materializeCases<
         : undefined);
     if (!caseId) {
       throw new Error(
-        "Every DurableEval case requires id, upsert_id, or caseId",
+        "Every durable eval case requires id, upsert_id, or caseId",
       );
     }
     if (seen.has(caseId))
-      throw new Error(`Duplicate DurableEval case id: ${caseId}`);
+      throw new Error(`Duplicate durable eval case id: ${caseId}`);
     seen.add(caseId);
     const trialCount = datum.trialCount ?? evaluator.trialCount ?? 1;
     if (!Number.isInteger(trialCount) || trialCount < 1) {
-      throw new Error(`Invalid trialCount for DurableEval case ${caseId}`);
+      throw new Error(`Invalid trialCount for durable eval case ${caseId}`);
     }
     for (let trialIndex = 0; trialIndex < trialCount; trialIndex++) {
       records.push({

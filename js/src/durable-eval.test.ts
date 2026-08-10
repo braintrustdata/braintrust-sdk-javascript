@@ -3,31 +3,64 @@ import { configureNode } from "./node/config";
 import {
   BatchScorer,
   BatchTask,
-  DurableEval,
+  defineDurableEval,
+  DurableEvalMemoryStore,
+  DurableEvalRedisStore,
   type DurableBatchScorerItem,
   type DurableBatchTaskItem,
-  type DurableEvalStore,
 } from "./durable-eval";
 
 configureNode();
 
-class MemoryStore implements DurableEvalStore {
-  private readonly values = new Map<string, Uint8Array>();
+describe("durable eval stores", () => {
+  test("memory store copies values on read and write", async () => {
+    const store = new DurableEvalMemoryStore();
+    const value = new Uint8Array([1, 2, 3]);
 
-  async read(key: string) {
-    return this.values.get(key)?.slice();
-  }
+    await store.write("run", value);
+    value[0] = 9;
 
-  async write(key: string, value: Uint8Array) {
-    this.values.set(key, value.slice());
-  }
-}
+    const firstRead = await store.read("run");
+    expect(firstRead).toEqual(new Uint8Array([1, 2, 3]));
+    firstRead![1] = 9;
+    expect(await store.read("run")).toEqual(new Uint8Array([1, 2, 3]));
+    expect(await store.read("missing")).toBeUndefined();
+  });
 
-describe("DurableEval", () => {
+  test("redis store uses prefixed string operations", async () => {
+    const values = new Map<string, string>();
+    const client = {
+      get: vi.fn(async (key: string) => values.get(key) ?? null),
+      set: vi.fn(async (key: string, value: string) => {
+        values.set(key, value);
+        return "OK";
+      }),
+    };
+    const store = new DurableEvalRedisStore(client, {
+      keyPrefix: "evals:",
+    });
+
+    await store.write("run", new Uint8Array([0, 255, 1]));
+
+    expect(client.set).toHaveBeenCalledWith("evals:run", "AP8B");
+    expect(await store.read("run")).toEqual(new Uint8Array([0, 255, 1]));
+    expect(client.get).toHaveBeenCalledWith("evals:run");
+    expect(await store.read("missing")).toBeUndefined();
+
+    await expect(
+      new DurableEvalRedisStore({
+        get: async () => 42,
+        set: async () => "OK",
+      }).read("invalid"),
+    ).rejects.toThrow("expected GET to return a string");
+  });
+});
+
+describe("defineDurableEval", () => {
   test("runs ordinary tasks and scorers", async () => {
     const task = vi.fn((input: number) => input * 2);
-    const result = await DurableEval("local", {
-      store: new MemoryStore(),
+    const result = await defineDurableEval("local", {
+      store: new DurableEvalMemoryStore(),
       data: [
         { id: "one", input: 1, expected: 2 },
         { id: "two", input: 2, expected: 4 },
@@ -48,8 +81,8 @@ describe("DurableEval", () => {
   });
 
   test("generates a new run id for every start", async () => {
-    const durable = DurableEval("generated-runs", {
-      store: new MemoryStore(),
+    const durable = defineDurableEval("generated-runs", {
+      store: new DurableEvalMemoryStore(),
       data: [{ input: 1 }],
       task: (input) => input,
       scores: [() => 1],
@@ -118,8 +151,8 @@ describe("DurableEval", () => {
       },
     });
 
-    const store = new MemoryStore();
-    const durable = DurableEval("polling-batches", {
+    const store = new DurableEvalMemoryStore();
+    const durable = defineDurableEval("polling-batches", {
       store,
       data: [1, 2, 3].map((input) => ({
         id: `case-${input}`,
@@ -175,7 +208,7 @@ describe("DurableEval", () => {
   });
 
   test("processes task and scorer webhook batches through one method", async () => {
-    const store = new MemoryStore();
+    const store = new DurableEvalMemoryStore();
     const taskJobs = new Map<
       string,
       DurableBatchTaskItem<number, number, void, Record<string, never>>[]
@@ -228,7 +261,7 @@ describe("DurableEval", () => {
         }));
       },
     });
-    const durable = DurableEval("webhook-batches", {
+    const durable = defineDurableEval("webhook-batches", {
       store,
       data: [1, 2, 3].map((input) => ({
         id: `case-${input}`,
@@ -254,7 +287,7 @@ describe("DurableEval", () => {
         runId: "missing-run",
         externalId: taskIds[0],
       }),
-    ).rejects.toThrow("DurableEval run missing-run is missing");
+    ).rejects.toThrow("Durable eval run missing-run is missing");
     for (const [index, externalId] of taskIds.entries()) {
       const result = await durable.processBatchResult({ runId, externalId });
       expect(result).toMatchObject({
@@ -390,8 +423,8 @@ describe("DurableEval", () => {
         });
       },
     });
-    const store = new MemoryStore();
-    const durable = DurableEval("workflow", {
+    const store = new DurableEvalMemoryStore();
+    const durable = defineDurableEval("workflow", {
       store,
       data: [1, 2, 3].map((input) => ({
         id: `case-${input}`,
@@ -426,8 +459,8 @@ describe("DurableEval", () => {
 
   test("requires stable case ids", async () => {
     await expect(
-      DurableEval("missing-ids", {
-        store: new MemoryStore(),
+      defineDurableEval("missing-ids", {
+        store: new DurableEvalMemoryStore(),
         data: [{ input: "hello" }],
         task: BatchTask({
           async submit() {

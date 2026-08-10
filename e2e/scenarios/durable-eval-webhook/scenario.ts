@@ -1,26 +1,19 @@
-import { BatchTask, DurableEval, type DurableEvalStore } from "braintrust";
+import {
+  BatchScorer,
+  BatchTask,
+  defineDurableEval,
+  DurableEvalMemoryStore,
+} from "braintrust";
 import {
   getTestRunId,
   runMain,
   scopedName,
 } from "../../helpers/scenario-runtime";
 
-class MemoryStore implements DurableEvalStore {
-  private readonly values = new Map<string, Uint8Array>();
-
-  async read(key: string) {
-    return this.values.get(key)?.slice();
-  }
-
-  async write(key: string, value: Uint8Array) {
-    this.values.set(key, value.slice());
-  }
-}
-
 async function main() {
   const testRunId = getTestRunId();
-  const store = new MemoryStore();
-  const jobs = new Map<string, Array<{ id: string; input: number }>>();
+  const store = new DurableEvalMemoryStore();
+  const jobs = new Map<string, unknown[]>();
   const task = BatchTask<
     number,
     number,
@@ -42,7 +35,11 @@ async function main() {
           externalId: (handle) => handle.id,
         },
         async collect(handle) {
-          return (jobs.get(handle.id) ?? []).map((item) => ({
+          const items = (jobs.get(handle.id) ?? []) as Array<{
+            id: string;
+            input: number;
+          }>;
+          return items.map((item) => ({
             id: item.id,
             output: item.input * 2,
           }));
@@ -62,7 +59,11 @@ async function main() {
           externalId: (handle) => handle.id,
         },
         async collect(handle) {
-          return (jobs.get(handle.id) ?? []).map((item) => ({
+          const items = (jobs.get(handle.id) ?? []) as Array<{
+            id: string;
+            input: number;
+          }>;
+          return items.map((item) => ({
             id: item.id,
             output: item.input,
           }));
@@ -70,7 +71,41 @@ async function main() {
       });
     },
   });
-  const definition = DurableEval(
+  const scorer = BatchScorer<
+    number,
+    number,
+    number,
+    { testRunId: string; kind: string },
+    { id: string }
+  >({
+    name: "batch_exact",
+    batchSize: 2,
+    async submit(items) {
+      const id = `score-${jobs.size + 1}`;
+      jobs.set(id, items);
+      return { id };
+    },
+    completion: {
+      mode: "webhook",
+      externalId: (handle) => handle.id,
+    },
+    async collect(handle) {
+      const items = (jobs.get(handle.id) ?? []) as Array<{
+        id: string;
+        output: number;
+        expected: number;
+      }>;
+      return items.map((item) => ({
+        id: item.id,
+        score: {
+          name: "batch_exact",
+          score: item.output === item.expected ? 1 : 0,
+          metadata: { method: "batch-provider" },
+        },
+      }));
+    },
+  });
+  const definition = defineDurableEval(
     scopedName("e2e-durable-eval-webhook-project", testRunId),
     {
       store,
@@ -93,6 +128,7 @@ async function main() {
             metadata: { method: "shared-eval-runtime" },
           };
         },
+        scorer,
       ],
       classifiers: [
         function quality({ output, expected }) {
@@ -111,16 +147,20 @@ async function main() {
     throw new Error("Durable eval did not pause with two webhook batches");
   }
 
-  let processed = waiting;
+  let completed = false;
   const completedJobs = new Set<string>();
-  while (completedJobs.size < jobs.size || processed.status !== "completed") {
+  while (completedJobs.size < jobs.size || !completed) {
     const externalId = [...jobs.keys()].find((id) => !completedJobs.has(id));
     if (!externalId) throw new Error("Durable eval stopped before completion");
     completedJobs.add(externalId);
-    processed = await definition.processBatchResult({
+    const processed = await definition.processBatchResult({
       runId: waiting.runId,
       externalId,
     });
+    completed = processed.status === "completed";
+  }
+  if ([...jobs.keys()].filter((id) => id.startsWith("score-")).length !== 2) {
+    throw new Error("Batch scorer did not split three cases into two batches");
   }
 }
 
