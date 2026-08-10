@@ -194,7 +194,18 @@ export interface AnthropicUsage {
   output_tokens: number;
   cache_read_input_tokens?: number;
   cache_creation_input_tokens?: number;
+  cache_creation?: AnthropicCacheCreationUsage | null;
   server_tool_use?: AnthropicServerToolUseUsage;
+  [key: string]: unknown;
+}
+
+/**
+ * Per-TTL breakdown of cache-write tokens. Only recent Anthropic SDK versions
+ * report this; older ones expose just `cache_creation_input_tokens`.
+ */
+export interface AnthropicCacheCreationUsage {
+  ephemeral_5m_input_tokens?: number;
+  ephemeral_1h_input_tokens?: number;
   [key: string]: unknown;
 }
 

@@ -1,7 +1,8 @@
 import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
-import type { IsoChannelHandlers } from "../../isomorph";
+import iso, { type IsoChannelHandlers } from "../../isomorph";
+import { debugLogger } from "../../debug-logger";
 import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
 import {
@@ -13,6 +14,8 @@ import { getCurrentUnixTimestamp } from "../../util";
 import {
   extractAnthropicCacheTokens,
   finalizeAnthropicTokens,
+  toNumericMetrics,
+  type AnthropicTokenMetrics,
 } from "../../wrappers/anthropic-tokens-util";
 import { claudeAgentSDKChannels } from "./claude-agent-sdk-channels";
 import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "./claude-agent-sdk-instrumentation-constants";
@@ -33,6 +36,7 @@ import type {
   ClaudeAgentSDKMessage,
   ClaudeAgentSDKQueryOptions,
   ClaudeAgentSDKQueryParams,
+  ClaudeAgentSDKUsage,
 } from "../../vendor-sdk-types/claude-agent-sdk";
 
 type ClaudeConversationMessage = { content: unknown; role: string };
@@ -48,7 +52,18 @@ type ParentSpanResolver = (
 ) => Promise<string>;
 type LLMSpanResult = {
   finalMessage: ClaudeConversationMessage | undefined;
+  span: Span;
   spanExport: string;
+};
+type PendingLLMUsage = {
+  messageId: string;
+  span: Span;
+  usage: ClaudeAgentSDKUsage;
+};
+type TranscriptUsageState = {
+  pendingLlmUsageByContextKey: Map<string, PendingLLMUsage>;
+  rootTranscriptPath?: string;
+  subagentTranscriptPathByToolUseId: Map<string, string>;
 };
 type SubAgentDetails = {
   agentId?: string;
@@ -69,6 +84,13 @@ type SubAgentPromptSource = keyof typeof SUB_AGENT_PROMPT_SOURCE_PRIORITY;
 
 function llmParentKey(parentToolUseId: string | null): string {
   return parentToolUseId ?? ROOT_LLM_PARENT_KEY;
+}
+
+function llmUsageContextKey(
+  parentToolUseId: string | null,
+  messageId: string,
+): string {
+  return JSON.stringify([llmParentKey(parentToolUseId), messageId]);
 }
 
 function isSubAgentDelegationToolName(toolName: string): boolean {
@@ -211,20 +233,335 @@ function seedTaskToolUseIdMapping(
   }
 }
 
-function extractUsageFromMessage(
-  message: ClaudeAgentSDKMessage,
-): Record<string, number> {
-  const metrics: Record<string, number> = {};
+function tokenCount(value: unknown): number | undefined {
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    Number.isInteger(value) &&
+    value >= 0
+    ? value
+    : undefined;
+}
 
-  let usage: unknown;
-  if (message.type === "assistant") {
-    usage = message.message?.usage;
-  } else if (message.type === "result") {
-    usage = message.usage;
+/**
+ * Snapshots the token fields we understand out of a provider usage object.
+ *
+ * Fields degrade individually: Bedrock, Vertex, and gateway-backed runs report
+ * `null` for cache fields they do not populate, and one unusable field must
+ * only cost that metric rather than the whole usage object.
+ */
+function copyUsage(
+  usage: unknown,
+  requireInputAndOutput = false,
+): ClaudeAgentSDKUsage | undefined {
+  if (!usage || typeof usage !== "object") {
+    return undefined;
   }
 
-  if (!usage || typeof usage !== "object") {
-    return metrics;
+  const copy: ClaudeAgentSDKUsage = {};
+  for (const key of [
+    "input_tokens",
+    "output_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+  ] as const) {
+    const value = tokenCount(Reflect.get(usage, key));
+    if (value !== undefined) {
+      copy[key] = value;
+    }
+  }
+
+  const cacheCreation = Reflect.get(usage, "cache_creation");
+  if (cacheCreation && typeof cacheCreation === "object") {
+    const cacheCreationCopy: NonNullable<
+      ClaudeAgentSDKUsage["cache_creation"]
+    > = {};
+    for (const key of [
+      "ephemeral_5m_input_tokens",
+      "ephemeral_1h_input_tokens",
+    ] as const) {
+      const value = tokenCount(Reflect.get(cacheCreation, key));
+      if (value !== undefined) {
+        cacheCreationCopy[key] = value;
+      }
+    }
+    if (Object.keys(cacheCreationCopy).length > 0) {
+      copy.cache_creation = cacheCreationCopy;
+    }
+  }
+
+  if (
+    requireInputAndOutput &&
+    (copy.input_tokens === undefined || copy.output_tokens === undefined)
+  ) {
+    return undefined;
+  }
+
+  return Object.keys(copy).length > 0 ? copy : undefined;
+}
+
+/** Layers a newer usage snapshot over an older one, field by field. */
+function mergeUsage(
+  base: ClaudeAgentSDKUsage | undefined,
+  override: ClaudeAgentSDKUsage | undefined,
+): ClaudeAgentSDKUsage | undefined {
+  if (!base || !override) {
+    return override ?? base;
+  }
+
+  const cacheCreation =
+    base.cache_creation || override.cache_creation
+      ? { ...base.cache_creation, ...override.cache_creation }
+      : undefined;
+  return {
+    ...base,
+    ...override,
+    ...(cacheCreation && { cache_creation: cacheCreation }),
+  };
+}
+
+function parseTranscriptRowUsage(
+  line: string,
+  messageId: string,
+): ClaudeAgentSDKUsage | undefined {
+  let row: unknown;
+  try {
+    row = JSON.parse(line);
+  } catch {
+    return undefined;
+  }
+
+  if (!row || typeof row !== "object") {
+    return undefined;
+  }
+  if (getStringProperty(row, "type") !== "assistant") {
+    return undefined;
+  }
+
+  const message = Reflect.get(row, "message");
+  if (!message || typeof message !== "object") {
+    return undefined;
+  }
+  if (getStringProperty(message, "id") !== messageId) {
+    return undefined;
+  }
+
+  return copyUsage(Reflect.get(message, "usage"), true);
+}
+
+function parseTranscriptUsage(
+  bytes: Uint8Array,
+  messageIds: Set<string>,
+): Map<string, ClaudeAgentSDKUsage> {
+  const finalUsageByMessageId = new Map<string, ClaudeAgentSDKUsage>();
+  if (messageIds.size === 0) {
+    return finalUsageByMessageId;
+  }
+
+  const text = new TextDecoder().decode(bytes);
+  for (const messageId of messageIds) {
+    // Transcripts for `continue`/`resume` sessions routinely reach tens of
+    // megabytes, so seek the rows we actually need instead of parsing every
+    // row in the session on each query completion.
+    let searchTo = text.length;
+    while (searchTo >= 0) {
+      const match = text.lastIndexOf(messageId, searchTo);
+      if (match < 0) {
+        break;
+      }
+
+      const lineStart = text.lastIndexOf("\n", match) + 1;
+      const lineEnd = text.indexOf("\n", match);
+      // Transcript rows for one provider request are successive snapshots, not
+      // separate model calls. The last valid row contains the final usage.
+      const usage = parseTranscriptRowUsage(
+        text.slice(lineStart, lineEnd < 0 ? text.length : lineEnd),
+        messageId,
+      );
+      if (usage) {
+        finalUsageByMessageId.set(messageId, usage);
+        break;
+      }
+
+      searchTo = lineStart - 1;
+    }
+  }
+
+  return finalUsageByMessageId;
+}
+
+function recoveredUsage(
+  pendingUsage: ClaudeAgentSDKUsage,
+  transcriptUsage: ClaudeAgentSDKUsage,
+): ClaudeAgentSDKUsage | undefined {
+  const inputTokens = tokenCount(
+    transcriptUsage.input_tokens ?? pendingUsage.input_tokens,
+  );
+  const outputTokens = tokenCount(transcriptUsage.output_tokens);
+  const cacheReadTokens = tokenCount(
+    transcriptUsage.cache_read_input_tokens ??
+      pendingUsage.cache_read_input_tokens ??
+      0,
+  );
+  const cacheCreationTokens = tokenCount(
+    transcriptUsage.cache_creation_input_tokens ??
+      pendingUsage.cache_creation_input_tokens ??
+      0,
+  );
+
+  if (
+    inputTokens === undefined ||
+    outputTokens === undefined ||
+    cacheReadTokens === undefined ||
+    cacheCreationTokens === undefined
+  ) {
+    return undefined;
+  }
+
+  const cacheCreation =
+    transcriptUsage.cache_creation ?? pendingUsage.cache_creation;
+
+  return {
+    cache_creation_input_tokens: cacheCreationTokens,
+    cache_read_input_tokens: cacheReadTokens,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    ...(cacheCreation && { cache_creation: { ...cacheCreation } }),
+  };
+}
+
+async function recoverUsageFromTranscript(
+  state: TranscriptUsageState,
+): Promise<void> {
+  const readFile = iso.readFile;
+  if (!readFile || state.pendingLlmUsageByContextKey.size === 0) {
+    return;
+  }
+
+  const pendingMessageIds = new Set<string>();
+  for (const pending of state.pendingLlmUsageByContextKey.values()) {
+    pendingMessageIds.add(pending.messageId);
+  }
+
+  const parentToolUseIdsByTranscriptPath = new Map<
+    string,
+    Set<string | null>
+  >();
+  const addTranscriptPath = (
+    transcriptPath: string,
+    parentToolUseId: string | null,
+  ) => {
+    const parentToolUseIds =
+      parentToolUseIdsByTranscriptPath.get(transcriptPath) ?? new Set();
+    parentToolUseIds.add(parentToolUseId);
+    parentToolUseIdsByTranscriptPath.set(transcriptPath, parentToolUseIds);
+  };
+
+  if (state.rootTranscriptPath) {
+    addTranscriptPath(state.rootTranscriptPath, null);
+  }
+  for (const [
+    toolUseId,
+    transcriptPath,
+  ] of state.subagentTranscriptPathByToolUseId) {
+    addTranscriptPath(transcriptPath, toolUseId);
+  }
+
+  const transcriptUsages = await Promise.all(
+    Array.from(
+      parentToolUseIdsByTranscriptPath,
+      async ([transcriptPath, parentToolUseIds]) => {
+        try {
+          return {
+            parentToolUseIds,
+            usageByMessageId: parseTranscriptUsage(
+              await readFile(transcriptPath),
+              pendingMessageIds,
+            ),
+          };
+        } catch (error) {
+          debugLogger.debug(
+            "Could not recover Claude Agent SDK transcript usage",
+            error,
+          );
+          return undefined;
+        }
+      },
+    ),
+  );
+
+  for (const transcriptUsage of transcriptUsages) {
+    if (!transcriptUsage) {
+      continue;
+    }
+
+    for (const parentToolUseId of transcriptUsage.parentToolUseIds) {
+      for (const [
+        messageId,
+        usageFromTranscript,
+      ] of transcriptUsage.usageByMessageId) {
+        const contextKey = llmUsageContextKey(parentToolUseId, messageId);
+        const pending = state.pendingLlmUsageByContextKey.get(contextKey);
+        if (!pending) {
+          continue;
+        }
+
+        const usage = recoveredUsage(pending.usage, usageFromTranscript);
+        if (!usage) {
+          continue;
+        }
+
+        try {
+          pending.span.log({ metrics: extractUsage(usage, true) });
+          state.pendingLlmUsageByContextKey.delete(contextKey);
+        } catch (error) {
+          debugLogger.debug(
+            "Could not update Claude Agent SDK span with transcript usage",
+            error,
+          );
+        }
+      }
+    }
+  }
+}
+
+// The CLI appends the final assistant row around the time the query stream
+// completes, so give a transcript that is still missing rows a couple of very
+// short chances to catch up before giving up on those spans' output tokens.
+const TRANSCRIPT_RECOVERY_ATTEMPTS = 3;
+const TRANSCRIPT_RECOVERY_RETRY_MS = 25;
+
+async function recoverUsageWithRetries(
+  state: TranscriptUsageState,
+): Promise<void> {
+  for (let attempt = 0; attempt < TRANSCRIPT_RECOVERY_ATTEMPTS; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, TRANSCRIPT_RECOVERY_RETRY_MS),
+      );
+    }
+
+    await recoverUsageFromTranscript(state);
+    if (state.pendingLlmUsageByContextKey.size === 0) {
+      return;
+    }
+    if (
+      state.rootTranscriptPath === undefined &&
+      state.subagentTranscriptPathByToolUseId.size === 0
+    ) {
+      // No transcript to wait on, so retrying cannot resolve anything.
+      return;
+    }
+  }
+}
+
+function extractUsage(
+  usage: ClaudeAgentSDKUsage | undefined,
+  includeOutput: boolean,
+  omitLegacyCacheCreationMetric = false,
+): Record<string, number> {
+  const metrics: AnthropicTokenMetrics = {};
+  if (!usage) {
+    return {};
   }
 
   const inputTokens = getNumberProperty(usage, "input_tokens");
@@ -232,28 +569,56 @@ function extractUsageFromMessage(
     metrics.prompt_tokens = inputTokens;
   }
 
-  const outputTokens = getNumberProperty(usage, "output_tokens");
-  if (outputTokens !== undefined) {
-    metrics.completion_tokens = outputTokens;
+  if (includeOutput) {
+    const outputTokens = getNumberProperty(usage, "output_tokens");
+    if (outputTokens !== undefined) {
+      metrics.completion_tokens = outputTokens;
+    }
   }
 
   const cacheReadTokens =
     getNumberProperty(usage, "cache_read_input_tokens") || 0;
   const cacheCreationTokens =
     getNumberProperty(usage, "cache_creation_input_tokens") || 0;
+  Object.assign(
+    metrics,
+    extractAnthropicCacheTokens(cacheReadTokens, cacheCreationTokens),
+  );
 
-  if (cacheReadTokens > 0 || cacheCreationTokens > 0) {
-    Object.assign(
-      metrics,
-      extractAnthropicCacheTokens(cacheReadTokens, cacheCreationTokens),
-    );
+  const cacheCreation5mTokens = getNumberProperty(
+    usage.cache_creation,
+    "ephemeral_5m_input_tokens",
+  );
+  const cacheCreation1hTokens = getNumberProperty(
+    usage.cache_creation,
+    "ephemeral_1h_input_tokens",
+  );
+  if (cacheCreation5mTokens !== undefined) {
+    metrics.prompt_cache_creation_5m_tokens = cacheCreation5mTokens;
+  }
+  if (cacheCreation1hTokens !== undefined) {
+    metrics.prompt_cache_creation_1h_tokens = cacheCreation1hTokens;
   }
 
-  if (Object.keys(metrics).length > 0) {
-    Object.assign(metrics, finalizeAnthropicTokens(metrics));
+  if (Object.keys(metrics).length === 0) {
+    return {};
   }
 
-  return metrics;
+  // `finalizeAnthropicTokens` drops the aggregate cache-creation metric when the
+  // per-TTL breakdown is present, so the finalized object replaces `metrics`
+  // rather than being merged back over it.
+  const finalized = finalizeAnthropicTokens(metrics);
+  if (metrics.completion_tokens === undefined) {
+    // A total is only meaningful once both halves are known.
+    delete finalized.tokens;
+  }
+  if (omitLegacyCacheCreationMetric) {
+    // Span metrics can only be added, never removed, so hold the aggregate back
+    // until we know a per-TTL breakdown will not arrive from the transcript.
+    delete finalized.prompt_cache_creation_tokens;
+  }
+
+  return toNumericMetrics(finalized);
 }
 
 function buildLLMInput(
@@ -325,6 +690,8 @@ async function createLLMSpanForMessages(
   options: ClaudeAgentSDKQueryOptions,
   startTime: number,
   parentSpan: string,
+  usage: ClaudeAgentSDKUsage | undefined,
+  hasFinalOutputUsage: boolean,
   existingSpan?: Span,
 ): Promise<LLMSpanResult | undefined> {
   if (messages.length === 0) {
@@ -332,12 +699,18 @@ async function createLLMSpanForMessages(
   }
 
   const lastMessage = messages[messages.length - 1];
-  if (lastMessage.type !== "assistant" || !lastMessage.message?.usage) {
+  // Every assistant message is one provider request and must produce one `llm`
+  // span. Unusable usage costs metrics, never the span or its payloads.
+  if (lastMessage.type !== "assistant") {
     return undefined;
   }
 
-  const model = lastMessage.message.model || options.model;
-  const usage = extractUsageFromMessage(lastMessage);
+  const model = lastMessage.message?.model || options.model;
+  const metrics = extractUsage(
+    usage,
+    hasFinalOutputUsage,
+    !hasFinalOutputUsage,
+  );
   const input = buildLLMInput(promptMessages, conversationHistory);
   const outputs = messages
     .map((m) =>
@@ -368,8 +741,8 @@ async function createLLMSpanForMessages(
 
   span.log({
     input,
-    metadata: model ? { model } : undefined,
-    metrics: usage,
+    metadata: { ...(model && { model }), provider: "anthropic" },
+    ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
     output: outputs,
   });
 
@@ -383,6 +756,7 @@ async function createLLMSpanForMessages(
 
   return {
     finalMessage,
+    span,
     spanExport,
   };
 }
@@ -500,6 +874,8 @@ function createToolTracingHooks(
   subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   subAgentSpans: Map<string, Span>,
   endedSubAgentSpans: Set<string>,
+  transcriptUsageState: TranscriptUsageState,
+  taskIdToToolUseId: Map<string, string>,
 ): {
   postToolUse: ClaudeAgentSDKHookCallback;
   postToolUseFailure: ClaudeAgentSDKHookCallback;
@@ -749,6 +1125,14 @@ function createToolTracingHooks(
         toolUseId: toolUseID,
       },
     );
+    if (input.agent_transcript_path) {
+      const parentToolUseId =
+        taskIdToToolUseId.get(input.agent_id) ?? toolUseID;
+      transcriptUsageState.subagentTranscriptPathByToolUseId.set(
+        parentToolUseId,
+        input.agent_transcript_path,
+      );
+    }
     const subAgentSpan = subAgentSpans.get(toolUseID);
     if (!subAgentSpan || endedSubAgentSpans.has(toolUseID)) {
       return {};
@@ -756,9 +1140,6 @@ function createToolTracingHooks(
 
     const metadata = {
       ...subAgentDetailsToMetadata(details),
-      ...(input.agent_transcript_path && {
-        "claude_agent_sdk.agent_transcript_path": input.agent_transcript_path,
-      }),
       "claude_agent_sdk.stop_hook_active": input.stop_hook_active,
     };
 
@@ -793,6 +1174,8 @@ function injectTracingHooks(
   subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   subAgentSpans: Map<string, Span>,
   endedSubAgentSpans: Set<string>,
+  transcriptUsageState: TranscriptUsageState,
+  taskIdToToolUseId: Map<string, string>,
 ): ClaudeAgentSDKQueryOptions {
   const {
     preToolUse,
@@ -809,7 +1192,26 @@ function injectTracingHooks(
     subAgentDetailsByToolUseId,
     subAgentSpans,
     endedSubAgentSpans,
+    transcriptUsageState,
+    taskIdToToolUseId,
   );
+  // SessionStart can occur before programmatic hooks are registered in the
+  // supported SDK versions. UserPromptSubmit carries the same base hook fields
+  // after registration, while SessionEnd remains a useful final fallback.
+  const captureRootTranscriptPath: ClaudeAgentSDKHookCallback = async (
+    input,
+  ) => {
+    if (
+      (input.hook_event_name === "SessionStart" ||
+        input.hook_event_name === "SessionEnd" ||
+        input.hook_event_name === "UserPromptSubmit") &&
+      input.agent_id === undefined &&
+      typeof input.transcript_path === "string"
+    ) {
+      transcriptUsageState.rootTranscriptPath = input.transcript_path;
+    }
+    return {};
+  };
 
   const existingHooks = options.hooks ?? {};
 
@@ -817,6 +1219,24 @@ function injectTracingHooks(
     ...options,
     hooks: {
       ...existingHooks,
+      SessionStart: [
+        ...(existingHooks.SessionStart ?? []),
+        {
+          hooks: [captureRootTranscriptPath],
+        } satisfies ClaudeAgentSDKHookCallbackMatcher,
+      ],
+      SessionEnd: [
+        ...(existingHooks.SessionEnd ?? []),
+        {
+          hooks: [captureRootTranscriptPath],
+        } satisfies ClaudeAgentSDKHookCallbackMatcher,
+      ],
+      UserPromptSubmit: [
+        ...(existingHooks.UserPromptSubmit ?? []),
+        {
+          hooks: [captureRootTranscriptPath],
+        } satisfies ClaudeAgentSDKHookCallbackMatcher,
+      ],
       PostToolUse: [
         ...(existingHooks.PostToolUse ?? []),
         { hooks: [postToolUse] } satisfies ClaudeAgentSDKHookCallbackMatcher,
@@ -848,8 +1268,8 @@ function injectTracingHooks(
 }
 
 type QueryState = {
-  accumulatedOutputTokens: number;
   activeLlmSpansByParentToolUse: Map<string, Span>;
+  activePartialMessageIdByParentKey: Map<string, string>;
   activeToolSpans: Map<string, Span>;
   conversationHistoryByParentKey: Map<string, ClaudeConversationMessage[]>;
   capturedPromptMessages: ClaudeAgentSDKMessage[] | undefined;
@@ -857,6 +1277,7 @@ type QueryState = {
   currentMessageStartTime: number;
   currentMessages: ClaudeAgentSDKMessage[];
   endedSubAgentSpans: Set<string>;
+  finalOutputUsageMessageIds: Set<string>;
   finalResults: ClaudeConversationMessage[];
   options: ClaudeAgentSDKQueryOptions;
   originalPrompt: string | AsyncIterable<ClaudeAgentSDKMessage> | undefined;
@@ -872,6 +1293,8 @@ type QueryState = {
   latestLlmParentBySubAgentToolUse: Map<string, string>;
   latestRootLlmParentRef: { value: string | undefined };
   toolUseToParent: Map<string, string | null>;
+  transcriptUsageState: TranscriptUsageState;
+  usageByMessageId: Map<string, ClaudeAgentSDKUsage>;
   localToolContext: ClaudeAgentSDKLocalToolContext;
 };
 
@@ -931,6 +1354,17 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
     }
   }
   const existingLlmSpan = state.activeLlmSpansByParentToolUse.get(parentKey);
+  const lastMessage = state.currentMessages[state.currentMessages.length - 1];
+  const messageId = lastMessage?.message?.id;
+  // Stream events carry the freshest counts, but they can be partial (a
+  // `message_delta` reports only `output_tokens`), so layer them over the
+  // assistant message's own usage rather than replacing it.
+  const usage = mergeUsage(
+    copyUsage(lastMessage?.message?.usage),
+    messageId ? state.usageByMessageId.get(messageId) : undefined,
+  );
+  const hasFinalOutputUsage =
+    messageId !== undefined && state.finalOutputUsageMessageIds.has(messageId);
 
   const llmSpanResult = await createLLMSpanForMessages(
     state.currentMessages,
@@ -939,6 +1373,8 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
     state.options,
     state.currentMessageStartTime,
     parentSpan,
+    usage,
+    hasFinalOutputUsage,
     existingLlmSpan,
   );
 
@@ -956,6 +1392,17 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
       conversationHistory.push(llmSpanResult.finalMessage);
       state.finalResults.push(llmSpanResult.finalMessage);
     }
+
+    if (messageId && !hasFinalOutputUsage && usage) {
+      state.transcriptUsageState.pendingLlmUsageByContextKey.set(
+        llmUsageContextKey(parentToolUseId, messageId),
+        {
+          messageId,
+          span: llmSpanResult.span,
+          usage,
+        },
+      );
+    }
   }
 
   // Keep the active LLM parent visible until the finalized exported parent
@@ -963,10 +1410,17 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
   // fall back to the broader sub-agent task span instead of the LLM span.
   state.activeLlmSpansByParentToolUse.delete(parentKey);
 
-  const lastMessage = state.currentMessages[state.currentMessages.length - 1];
-  if (lastMessage?.message?.usage) {
-    state.accumulatedOutputTokens +=
-      getNumberProperty(lastMessage.message.usage, "output_tokens") || 0;
+  if (messageId) {
+    state.usageByMessageId.delete(messageId);
+    state.finalOutputUsageMessageIds.delete(messageId);
+    for (const [
+      parent,
+      activeMessageId,
+    ] of state.activePartialMessageIdByParentKey) {
+      if (activeMessageId === messageId) {
+        state.activePartialMessageIdByParentKey.delete(parent);
+      }
+    }
   }
 
   state.currentMessages.length = 0;
@@ -1255,10 +1709,62 @@ async function maybeHandleTaskLifecycleMessage(
   return true;
 }
 
+function handlePartialUsageMessage(
+  state: QueryState,
+  message: ClaudeAgentSDKMessage,
+): boolean {
+  if (message.type !== "stream_event") {
+    return false;
+  }
+
+  const event = message.event;
+  if (!event || typeof event !== "object") {
+    return true;
+  }
+
+  const parentKey = llmParentKey(message.parent_tool_use_id ?? null);
+  if (event.type === "message_start") {
+    const messageId = event.message?.id;
+    const usage = copyUsage(event.message?.usage);
+    if (messageId) {
+      state.activePartialMessageIdByParentKey.set(parentKey, messageId);
+      if (usage) {
+        state.usageByMessageId.set(messageId, usage);
+      }
+    }
+    return true;
+  }
+
+  const messageId = state.activePartialMessageIdByParentKey.get(parentKey);
+  if (!messageId) {
+    return true;
+  }
+
+  if (event.type === "message_delta") {
+    const update = copyUsage(event.usage);
+    if (update) {
+      const usage = state.usageByMessageId.get(messageId) ?? {};
+      Object.assign(usage, update);
+      state.usageByMessageId.set(messageId, usage);
+      if (update.output_tokens !== undefined) {
+        state.finalOutputUsageMessageIds.add(messageId);
+      }
+    }
+  } else if (event.type === "message_stop") {
+    state.activePartialMessageIdByParentKey.delete(parentKey);
+  }
+
+  return true;
+}
+
 async function handleStreamMessage(
   state: QueryState,
   message: ClaudeAgentSDKMessage,
 ): Promise<void> {
+  if (handlePartialUsageMessage(state, message)) {
+    return;
+  }
+
   maybeTrackToolUseContext(state, message);
   if (await maybeHandleTaskLifecycleMessage(state, message)) {
     return;
@@ -1317,43 +1823,8 @@ async function handleStreamMessage(
     state.currentMessages.push(message);
   }
 
-  if (message.type !== "result" || !message.usage) {
+  if (message.type !== "result") {
     return;
-  }
-
-  const finalUsageMetrics = extractUsageFromMessage(message);
-  if (
-    state.currentMessages.length > 0 &&
-    finalUsageMetrics.completion_tokens !== undefined
-  ) {
-    const lastMessage = state.currentMessages[state.currentMessages.length - 1];
-    if (lastMessage?.message?.usage) {
-      const adjustedTokens =
-        finalUsageMetrics.completion_tokens - state.accumulatedOutputTokens;
-      if (adjustedTokens >= 0) {
-        lastMessage.message.usage.output_tokens = adjustedTokens;
-      }
-
-      const resultUsage = message.usage;
-      if (resultUsage && typeof resultUsage === "object") {
-        const cacheReadTokens = getNumberProperty(
-          resultUsage,
-          "cache_read_input_tokens",
-        );
-        if (cacheReadTokens !== undefined) {
-          lastMessage.message.usage.cache_read_input_tokens = cacheReadTokens;
-        }
-
-        const cacheCreationTokens = getNumberProperty(
-          resultUsage,
-          "cache_creation_input_tokens",
-        );
-        if (cacheCreationTokens !== undefined) {
-          lastMessage.message.usage.cache_creation_input_tokens =
-            cacheCreationTokens;
-        }
-      }
-    }
   }
 
   const metadata: Record<string, unknown> = {};
@@ -1371,6 +1842,39 @@ async function handleStreamMessage(
 async function finalizeQuerySpan(state: QueryState): Promise<void> {
   try {
     await finalizeCurrentMessageGroup(state);
+
+    try {
+      await recoverUsageWithRetries(state.transcriptUsageState);
+    } catch (error) {
+      debugLogger.debug(
+        "Could not recover Claude Agent SDK transcript usage",
+        error,
+      );
+    }
+    for (const pending of state.transcriptUsageState.pendingLlmUsageByContextKey.values()) {
+      const cacheCreationTokens = pending.usage.cache_creation_input_tokens;
+      const hasCacheCreationBreakdown =
+        pending.usage.cache_creation?.ephemeral_5m_input_tokens !== undefined ||
+        pending.usage.cache_creation?.ephemeral_1h_input_tokens !== undefined;
+      if (
+        hasCacheCreationBreakdown ||
+        cacheCreationTokens === undefined ||
+        cacheCreationTokens === 0
+      ) {
+        continue;
+      }
+
+      try {
+        pending.span.log({
+          metrics: extractAnthropicCacheTokens(0, cacheCreationTokens),
+        });
+      } catch (error) {
+        debugLogger.debug(
+          "Could not finalize Claude Agent SDK fallback cache usage",
+          error,
+        );
+      }
+    }
 
     state.span.log({
       output:
@@ -1394,6 +1898,12 @@ async function finalizeQuerySpan(state: QueryState): Promise<void> {
       llmSpan.end();
     }
     state.activeLlmSpansByParentToolUse.clear();
+    state.activePartialMessageIdByParentKey.clear();
+    state.finalOutputUsageMessageIds.clear();
+    state.usageByMessageId.clear();
+    state.transcriptUsageState.pendingLlmUsageByContextKey.clear();
+    state.transcriptUsageState.subagentTranscriptPathByToolUseId.clear();
+    state.transcriptUsageState.rootTranscriptPath = undefined;
 
     for (const toolSpan of state.activeToolSpans.values()) {
       toolSpan.end();
@@ -1509,6 +2019,10 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         >();
         const promptSourcePriorityByParentKey = new Map<string, number>();
         const localToolContext = createClaudeLocalToolContext();
+        const transcriptUsageState: TranscriptUsageState = {
+          pendingLlmUsageByContextKey: new Map(),
+          subagentTranscriptPathByToolUseId: new Map(),
+        };
         const { hasLocalToolHandlers, localToolHookNames } =
           prepareLocalToolHandlersInMcpServers(options.mcpServers);
         const skipLocalToolHooks =
@@ -1570,14 +2084,16 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           subAgentDetailsByToolUseId,
           subAgentSpans,
           endedSubAgentSpans,
+          transcriptUsageState,
+          taskIdToToolUseId,
         );
 
         params.options = optionsWithHooks;
         event.arguments[0] = params;
 
         spans.set(event, {
-          accumulatedOutputTokens: 0,
           activeLlmSpansByParentToolUse,
+          activePartialMessageIdByParentKey: new Map(),
           activeToolSpans,
           conversationHistoryByParentKey,
           capturedPromptMessages,
@@ -1585,6 +2101,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           currentMessageStartTime: startTime,
           currentMessages: [],
           endedSubAgentSpans,
+          finalOutputUsageMessageIds: new Set(),
           finalResults: [],
           options: optionsWithHooks,
           originalPrompt,
@@ -1600,6 +2117,8 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           latestLlmParentBySubAgentToolUse,
           latestRootLlmParentRef,
           toolUseToParent,
+          transcriptUsageState,
+          usageByMessageId: new Map(),
           localToolContext,
         });
       },

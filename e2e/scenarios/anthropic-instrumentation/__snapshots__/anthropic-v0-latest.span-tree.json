@@ -36,7 +36,8 @@
               },
               "metrics": {
                 "completion_tokens": 4,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 12,
                 "time_to_first_token": 0,
@@ -98,7 +99,8 @@
               },
               "metrics": {
                 "completion_tokens": 6,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 30,
                 "time_to_first_token": 0,
@@ -143,7 +145,8 @@
               },
               "metrics": {
                 "completion_tokens": 7,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 15,
                 "time_to_first_token": 0,
@@ -206,7 +209,8 @@
               },
               "metrics": {
                 "completion_tokens": 27,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 1389,
                 "time_to_first_token": 0,
@@ -245,7 +249,8 @@
               },
               "metrics": {
                 "completion_tokens": 15,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 24,
                 "time_to_first_token": 0,
@@ -284,7 +289,8 @@
               },
               "metrics": {
                 "completion_tokens": 15,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 24,
                 "time_to_first_token": 0,
@@ -358,7 +364,8 @@
               },
               "metrics": {
                 "completion_tokens": 26,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 687,
                 "time_to_first_token": 0,
@@ -428,7 +435,8 @@
               },
               "metrics": {
                 "completion_tokens": 56,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 589,
                 "time_to_first_token": 0,
@@ -580,7 +588,8 @@
               },
               "metrics": {
                 "completion_tokens": 77,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 17662,
                 "server_tool_use_web_fetch_requests": 0,
@@ -638,7 +647,8 @@
               },
               "metrics": {
                 "completion_tokens": 48,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 49,
                 "time_to_first_token": 0,
@@ -683,7 +693,8 @@
               },
               "metrics": {
                 "completion_tokens": 5,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 13,
                 "time_to_first_token": 0,
@@ -722,7 +733,8 @@
               },
               "metrics": {
                 "completion_tokens": 15,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 24,
                 "time_to_first_token": 0,
@@ -761,7 +773,8 @@
               },
               "metrics": {
                 "completion_tokens": 15,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 24,
                 "time_to_first_token": 0,
@@ -835,7 +848,8 @@
               },
               "metrics": {
                 "completion_tokens": 26,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 687,
                 "time_to_first_token": 0,
@@ -910,7 +924,8 @@
                   },
                   "metrics": {
                     "completion_tokens": 56,
-                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cache_creation_1h_tokens": 0,
+                    "prompt_cache_creation_5m_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 607,
                     "time_to_first_token": 0,
@@ -1009,7 +1024,8 @@
                   },
                   "metrics": {
                     "completion_tokens": 16,
-                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cache_creation_1h_tokens": 0,
+                    "prompt_cache_creation_5m_tokens": 0,
                     "prompt_cached_tokens": 0,
                     "prompt_tokens": 687,
                     "time_to_first_token": 0,
@@ -1048,7 +1064,8 @@
               },
               "metrics": {
                 "completion_tokens": 72,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 1294,
                 "time_to_first_token": 0,
