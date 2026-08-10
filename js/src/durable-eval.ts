@@ -47,7 +47,7 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const BATCH_TASK_KIND = "braintrust.durable.batch-task";
 const BATCH_SCORER_KIND = "braintrust.durable.batch-scorer";
-const CHECKPOINT_VERSION = 4;
+const CHECKPOINT_VERSION = 1;
 const DEFAULT_BATCH_SIZE = 1_000;
 
 type JsonPrimitive = string | number | boolean | null;
@@ -231,73 +231,6 @@ interface DurableBatchProcessor<Item, Result, Handle extends JsonValue> {
   collect(handle: Handle, context: DurableBatchContext): Promise<Result[]>;
 }
 
-interface DurableWorkflowBatchItem<Input> {
-  id: string;
-  input: Input;
-}
-
-type DurableWorkflowBatchResult<Output, Metadata extends BaseMetadata> =
-  | {
-      id: string;
-      output: Output;
-      metadata?: Metadata;
-      tags?: string[];
-    }
-  | { id: string; error: unknown };
-
-const WORKFLOW_NODE_OUTPUT: unique symbol = Symbol("DurableWorkflowNodeOutput");
-
-interface DurableWorkflowNode<Output> {
-  readonly [WORKFLOW_NODE_OUTPUT]: Output;
-}
-
-type DurableWorkflowNodeMap = Record<string, DurableWorkflowNode<unknown>>;
-
-type DurableWorkflowNodeOutputs<Nodes extends DurableWorkflowNodeMap> = {
-  [Name in keyof Nodes]: Nodes[Name] extends DurableWorkflowNode<infer Output>
-    ? Output
-    : never;
-};
-
-interface DurableWorkflowBuilder<RootItem, Metadata extends BaseMetadata> {
-  batch<
-    Output,
-    Needs extends DurableWorkflowNodeMap = Record<string, never>,
-    Input = RootItem,
-    Handle extends JsonValue = JsonValue,
-  >(
-    name: string,
-    processor: DurableBatchProcessor<
-      DurableWorkflowBatchItem<Input>,
-      DurableWorkflowBatchResult<Output, Metadata>,
-      Handle
-    > & {
-      needs?: Needs;
-      input?: (
-        item: RootItem,
-        outputs: DurableWorkflowNodeOutputs<Needs>,
-      ) => Input;
-    },
-  ): DurableWorkflowNode<Output>;
-}
-
-type DurableWorkflowNodeDefinition = {
-  name: string;
-  needs: Record<string, string>;
-  item: (
-    rootItem: unknown,
-    outputs: Record<string, unknown>,
-    id: string,
-  ) => unknown;
-  processor: DurableBatchProcessor<any, any, JsonValue>;
-  result: (result: any) => unknown;
-};
-
-type DurableWorkflowDefinition = {
-  nodes: DurableWorkflowNodeDefinition[];
-  outputNode: string;
-};
-
 interface DurableBatchTask<
   Input,
   Output,
@@ -307,12 +240,11 @@ interface DurableBatchTask<
   Handle extends JsonValue,
 > {
   readonly kind: typeof BATCH_TASK_KIND;
-  readonly processor?: DurableBatchProcessor<
+  readonly processor: DurableBatchProcessor<
     DurableBatchTaskItem<Input, Expected, Metadata, Parameters>,
     DurableBatchTaskResult<Output, Metadata>,
     Handle
   >;
-  readonly workflow?: DurableWorkflowDefinition;
 }
 
 interface DurableBatchScorer<
@@ -324,12 +256,11 @@ interface DurableBatchScorer<
 > {
   readonly kind: typeof BATCH_SCORER_KIND;
   name: string;
-  readonly processor?: DurableBatchProcessor<
+  readonly processor: DurableBatchProcessor<
     DurableBatchScorerItem<Input, Output, Expected, Metadata>,
     DurableBatchScorerResult,
     Handle
   >;
-  readonly workflow?: DurableWorkflowDefinition;
 }
 
 /**
@@ -350,50 +281,8 @@ export function BatchTask<
     DurableBatchTaskResult<Output, Metadata>,
     Handle
   >,
-): DurableBatchTask<Input, Output, Expected, Metadata, Parameters, Handle>;
-export function BatchTask<
-  Input,
-  Output,
-  Expected = void,
-  Metadata extends BaseMetadata = DefaultMetadataType,
-  Parameters extends EvalParameters = EvalParameters,
->(config: {
-  workflow(
-    builder: DurableWorkflowBuilder<
-      DurableBatchTaskItem<Input, Expected, Metadata, Parameters>,
-      Metadata
-    >,
-  ): DurableWorkflowNode<Output>;
-}): DurableBatchTask<Input, Output, Expected, Metadata, Parameters, JsonValue>;
-export function BatchTask(
-  config:
-    | DurableBatchProcessor<unknown, unknown, JsonValue>
-    | {
-        workflow(
-          builder: DurableWorkflowBuilder<unknown, BaseMetadata>,
-        ): DurableWorkflowNode<unknown>;
-      },
-): DurableBatchTask<
-  unknown,
-  unknown,
-  unknown,
-  BaseMetadata,
-  EvalParameters,
-  JsonValue
-> {
-  return {
-    kind: BATCH_TASK_KIND,
-    ...("workflow" in config
-      ? { workflow: buildWorkflow(config.workflow) }
-      : { processor: config }),
-  } as DurableBatchTask<
-    unknown,
-    unknown,
-    unknown,
-    BaseMetadata,
-    EvalParameters,
-    JsonValue
-  >;
+): DurableBatchTask<Input, Output, Expected, Metadata, Parameters, Handle> {
+  return { kind: BATCH_TASK_KIND, processor };
 }
 
 /**
@@ -413,106 +302,12 @@ export function BatchScorer<
     DurableBatchScorerResult,
     Handle
   > & { name: string },
-): DurableBatchScorer<Input, Output, Expected, Metadata, Handle>;
-export function BatchScorer<
-  Input,
-  Output,
-  Expected = void,
-  Metadata extends BaseMetadata = DefaultMetadataType,
->(config: {
-  name: string;
-  workflow(
-    builder: DurableWorkflowBuilder<
-      DurableBatchScorerItem<Input, Output, Expected, Metadata>,
-      Metadata
-    >,
-  ): DurableWorkflowNode<OneOrMoreScores>;
-}): DurableBatchScorer<Input, Output, Expected, Metadata, JsonValue>;
-export function BatchScorer(
-  config:
-    | (DurableBatchProcessor<unknown, unknown, JsonValue> & { name: string })
-    | {
-        name: string;
-        workflow(
-          builder: DurableWorkflowBuilder<unknown, BaseMetadata>,
-        ): DurableWorkflowNode<OneOrMoreScores>;
-      },
-): DurableBatchScorer<unknown, unknown, unknown, BaseMetadata, JsonValue> {
+): DurableBatchScorer<Input, Output, Expected, Metadata, Handle> {
   return {
     kind: BATCH_SCORER_KIND,
-    name: config.name,
-    ...("workflow" in config
-      ? { workflow: buildWorkflow(config.workflow) }
-      : { processor: config }),
-  } as DurableBatchScorer<unknown, unknown, unknown, BaseMetadata, JsonValue>;
-}
-
-function buildWorkflow<RootItem, Metadata extends BaseMetadata, Output>(
-  define: (
-    builder: DurableWorkflowBuilder<RootItem, Metadata>,
-  ) => DurableWorkflowNode<Output>,
-): DurableWorkflowDefinition {
-  const nodes: DurableWorkflowNodeDefinition[] = [];
-  const nodeNames = new Map<DurableWorkflowNode<unknown>, string>();
-  const builder: DurableWorkflowBuilder<RootItem, Metadata> = {
-    batch(name, config) {
-      if (!name.trim()) throw new Error("Workflow batch names cannot be empty");
-      if (nodes.some((node) => node.name === name)) {
-        throw new Error(`Duplicate workflow batch name: ${name}`);
-      }
-      const needs = Object.fromEntries(
-        Object.entries(config.needs ?? {}).map(([alias, dependency]) => {
-          const dependencyName = nodeNames.get(dependency);
-          if (!dependencyName) {
-            throw new Error(
-              `Workflow batch ${name} depends on an unknown or later batch`,
-            );
-          }
-          return [alias, dependencyName];
-        }),
-      );
-      const { input, needs: _needs, ...processor } = config;
-      const handle = {} as DurableWorkflowNode<unknown>;
-      nodeNames.set(handle, name);
-      nodes.push({
-        name,
-        needs,
-        item(rootItem, outputs, id) {
-          return {
-            id,
-            input: input
-              ? input(rootItem as RootItem, outputs as never)
-              : rootItem,
-          };
-        },
-        processor: processor as DurableBatchProcessor<any, any, JsonValue>,
-        result: (result) => result.output,
-      });
-      return handle as never;
-    },
+    name: processor.name,
+    processor,
   };
-  const output = define(builder);
-  const outputNode = nodeNames.get(output);
-  if (!outputNode) {
-    throw new Error("A batch workflow must return one of its batch nodes");
-  }
-  const reachable = new Set<string>();
-  const visit = (name: string) => {
-    if (reachable.has(name)) return;
-    reachable.add(name);
-    const node = nodes.find((candidate) => candidate.name === name)!;
-    Object.values(node.needs).forEach(visit);
-  };
-  visit(outputNode);
-  const unused = nodes.filter((node) => !reachable.has(node.name));
-  if (unused.length > 0) {
-    throw new Error(
-      `Batch workflow contains nodes that do not contribute to its output: ${unused
-        .map((node) => node.name)
-        .join(", ")}`,
-    );
-  }
-  return { nodes, outputNode };
 }
 
 type DurableEvaluator<
@@ -612,10 +407,8 @@ type DurableCaseRecord = {
   taskLogged: boolean;
   output?: JsonValue;
   rootSpan?: string;
-  taskNodeOutputs: Record<string, JsonValue>;
   scores: Record<string, JsonValue>;
   loggedScores: Record<string, boolean>;
-  scoreNodeOutputs: Record<string, Record<string, JsonValue>>;
   classifications: Record<string, JsonValue>;
   loggedClassifications: Record<string, boolean>;
 };
@@ -638,7 +431,6 @@ type DurableBatchRecord = {
   id: string;
   kind: "task" | "score";
   scorerName?: string;
-  nodeName: string;
   itemIds: string[];
   handle: JsonValue;
   externalId?: string;
@@ -882,7 +674,7 @@ class DurableEvalDefinitionImpl<
  * ```
  *
  * Use `status()` to read the same information without polling providers,
- * collecting results, or advancing the workflow:
+ * collecting results, or advancing the evaluation:
  *
  * ```typescript
  * const status = await supportEval.status({
@@ -892,39 +684,6 @@ class DurableEvalDefinitionImpl<
  *
  * Completed statuses have zero pending batches and include the saved experiment
  * summary. They can be read repeatedly without logging the eval again.
- *
- * ### Multi-stage workflows
- *
- * The direct `BatchTask({ submit, completion, collect })` form remains the
- * one-batch shorthand. Use `workflow` when a task or scorer requires multiple
- * provider batch operations:
- *
- * ```typescript
- * task: BatchTask({
- *   workflow(workflow) {
- *     const draft = workflow.batch("draft", {
- *       input: ({ input }) => ({ prompt: input }),
- *       batchSize: 500,
- *       submit: submitDraftBatch,
- *       completion: draftCompletion,
- *       collect: collectDraftBatch,
- *     });
- *
- *     return workflow.batch("revise", {
- *       needs: { draft },
- *       input: ({ input }, { draft }) => ({ original: input, draft }),
- *       batchSize: 500,
- *       submit: submitRevisionBatch,
- *       completion: revisionCompletion,
- *       collect: collectRevisionBatch,
- *     });
- *   },
- * }),
- * ```
- *
- * Every named batch is a persisted workflow node. `needs` can express sequential
- * operations, parallel branches, and joins. The returned node supplies the final
- * task output or scorer result.
  *
  * ### Webhook processing
  *
@@ -952,9 +711,9 @@ class DurableEvalDefinitionImpl<
  * ```
  *
  * The method accepts either `externalId` or `batchId`. The stored batch locator
- * identifies the task or scorer workflow node, whose `collect()` results are
- * stored before the eval advances. Webhook idempotency and provider failure
- * handling remain application responsibilities for now.
+ * identifies the task or scorer batch, whose `collect()` results are stored
+ * before the eval advances. Provider failure handling remains the application's
+ * responsibility for now.
  */
 
 /**
@@ -1183,13 +942,17 @@ async function pollDurableEval<
 
   const batches = state.batches.filter((batch) => {
     if (batch.status === "complete") return false;
-    return processorForBatch(definition, batch).completion.mode === "poll";
+    return (
+      processorForStage(definition, batch.kind, batch.scorerName).completion
+        .mode === "poll"
+    );
   });
   const results = await Promise.all(
     batches.map(async (batch) => ({
       batch,
       result: await (
-        processorForBatch(definition, batch).completion as Extract<
+        processorForStage(definition, batch.kind, batch.scorerName)
+          .completion as Extract<
           DurableBatchCompletion<JsonValue>,
           { mode: "poll" }
         >
@@ -1329,7 +1092,10 @@ function currentStatus(
   const pending = { poll: 0, webhook: 0 };
   for (const batch of state.batches) {
     if (batch.status === "complete") continue;
-    pending[processorForBatch(definition, batch).completion.mode]++;
+    pending[
+      processorForStage(definition, batch.kind, batch.scorerName).completion
+        .mode
+    ]++;
   }
   return { status: "waiting", runId: state.runId, pending };
 }
@@ -1465,7 +1231,7 @@ async function runTaskStage<
   experiment: Experiment | null,
 ) {
   if (isBatchTask(definition.evaluator.task)) {
-    await ensureWorkflowBatches(definition, state, store, key, "task");
+    await ensureBatches(definition, state, store, key, "task");
     return;
   }
 
@@ -1537,7 +1303,7 @@ async function runScoreStages<
         }
       }
       await persistChangedCases();
-      await ensureWorkflowBatches(definition, state, store, key, "score", name);
+      await ensureBatches(definition, state, store, key, "score", name);
       continue;
     }
     for (const record of state.cases) {
@@ -1701,7 +1467,7 @@ async function evaluateAndLogClassification(
   }
 }
 
-async function ensureWorkflowBatches(
+async function ensureBatches(
   definition: DurableEvalDefinition<any, any, any, any, any>,
   state: DurableRunState,
   store: DurableEvalStore,
@@ -1709,67 +1475,57 @@ async function ensureWorkflowBatches(
   kind: "task" | "score",
   scorerName?: string,
 ) {
-  const workflow = workflowForStage(definition, kind, scorerName);
+  const processor = processorForStage(definition, kind, scorerName);
   const plans = plannedBatches(
     definition,
     state.runId,
     state.cases.map(({ id }) => id),
   );
   const casesById = new Map(state.cases.map((record) => [record.id, record]));
-  for (const node of workflow.nodes) {
-    const nodePlans = plans.filter(
-      (plan) =>
-        plan.kind === kind &&
-        plan.scorerName === scorerName &&
-        plan.nodeName === node.name,
+  for (const plan of plans) {
+    if (plan.kind !== kind || plan.scorerName !== scorerName) continue;
+    if (state.batches.some(({ id }) => id === plan.id)) continue;
+    const records = plan.itemIds.map((id) => casesById.get(id)!);
+    const ready = records.every((record) =>
+      kind === "task"
+        ? !record.taskComplete
+        : !Object.hasOwn(record.scores, scorerName!),
     );
-    for (const plan of nodePlans) {
-      if (state.batches.some(({ id }) => id === plan.id)) continue;
-      const records = plan.itemIds.map((id) => casesById.get(id)!);
-      const ready = records.every((record) => {
-        const outputs = nodeOutputsFor(record, kind, scorerName);
-        return (
-          !Object.hasOwn(outputs, node.name) &&
-          Object.values(node.needs).every((dependency) =>
-            Object.hasOwn(outputs, dependency),
-          )
-        );
-      });
-      if (!ready) continue;
-      const batchId = plan.id;
-      const claim = await store.getOrSet(
-        claimRecordKey(key, "batch", batchId),
-        encoder.encode(batchId),
-      );
-      if (!claim.created) continue;
-      const context = { runId: state.runId, batchId };
-      const items = records.map((record) =>
-        itemForNode(state.parameters, record, kind, scorerName, node),
-      );
-      const handle = assertJsonValue(
-        await node.processor.submit(items, context),
-        `handle for batch ${batchId}`,
-      );
-      const externalId =
-        node.processor.completion.mode === "webhook"
-          ? node.processor.completion.externalId(handle, context)
-          : undefined;
-      if (externalId !== undefined && !externalId.trim()) {
-        throw new Error(`Batch ${batchId} produced an empty externalId`);
-      }
-      const batch: DurableBatchRecord = {
-        id: batchId,
-        kind,
-        scorerName,
-        nodeName: node.name,
-        itemIds: records.map((record) => record.id),
-        handle,
-        externalId,
-        status: "submitted",
-      };
-      state.batches.push(batch);
-      await writeBatchRecords(store, key, [batch]);
+    if (!ready) continue;
+    const batchId = plan.id;
+    const claim = await store.getOrSet(
+      claimRecordKey(key, "batch", batchId),
+      encoder.encode(batchId),
+    );
+    if (!claim.created) continue;
+    const context = { runId: state.runId, batchId };
+    const items = records.map((record) =>
+      kind === "task"
+        ? taskBatchItem(record, state.parameters)
+        : scorerBatchItem(record),
+    );
+    const handle = assertJsonValue(
+      await processor.submit(items, context),
+      `handle for batch ${batchId}`,
+    );
+    const externalId =
+      processor.completion.mode === "webhook"
+        ? processor.completion.externalId(handle, context)
+        : undefined;
+    if (externalId !== undefined && !externalId.trim()) {
+      throw new Error(`Batch ${batchId} produced an empty externalId`);
     }
+    const batch: DurableBatchRecord = {
+      id: batchId,
+      kind,
+      scorerName,
+      itemIds: records.map((record) => record.id),
+      handle,
+      externalId,
+      status: "submitted",
+    };
+    state.batches.push(batch);
+    await writeBatchRecords(store, key, [batch]);
   }
 }
 
@@ -1778,15 +1534,7 @@ async function collectBatch(
   state: DurableRunState,
   batch: DurableBatchRecord,
 ) {
-  const workflow = workflowForStage(definition, batch.kind, batch.scorerName);
-  const node = workflow.nodes.find(
-    (candidate) => candidate.name === batch.nodeName,
-  );
-  if (!node)
-    throw new Error(
-      `Definition no longer contains batch node ${batch.nodeName}`,
-    );
-  const processor = node.processor;
+  const processor = processorForStage(definition, batch.kind, batch.scorerName);
   const context = { runId: state.runId, batchId: batch.id };
   const results = await processor.collect(batch.handle, context);
   if (!Array.isArray(results)) {
@@ -1807,15 +1555,11 @@ async function collectBatch(
     if ("error" in result) throw asError(result.error);
     const record = state.cases.find((candidate) => candidate.id === id)!;
     records.push(record);
-    const output = assertJsonValue(
-      node.result(result),
-      `output for ${batch.nodeName} item ${id}`,
-    );
-    nodeOutputsFor(record, batch.kind, batch.scorerName)[batch.nodeName] =
-      output;
-    if (batch.nodeName !== workflow.outputNode) continue;
     if (batch.kind === "task") {
-      record.output = output;
+      record.output = assertJsonValue(
+        result.output,
+        `task output for item ${id}`,
+      );
       if ("metadata" in result && result.metadata !== undefined) {
         record.metadata = assertJsonValue(
           result.metadata,
@@ -1827,8 +1571,8 @@ async function collectBatch(
       record.taskComplete = true;
     } else {
       record.scores[batch.scorerName!] = assertJsonValue(
-        output,
-        `score for ${id}`,
+        result.score,
+        `score output for item ${id}`,
       );
     }
   }
@@ -1841,100 +1585,28 @@ async function collectBatch(
   return records;
 }
 
-function processorForBatch(
-  definition: DurableEvalDefinition<any, any, any, any, any>,
-  batch: DurableBatchRecord,
-): DurableBatchProcessor<any, any, JsonValue> {
-  const node = workflowForStage(
-    definition,
-    batch.kind,
-    batch.scorerName,
-  ).nodes.find((candidate) => candidate.name === batch.nodeName);
-  if (!node)
-    throw new Error(
-      `Definition no longer contains batch node ${batch.nodeName}`,
-    );
-  return node.processor;
-}
-
-function workflowForStage(
+function processorForStage(
   definition: DurableEvalDefinition<any, any, any, any, any>,
   kind: "task" | "score",
   scorerName?: string,
-): DurableWorkflowDefinition {
-  let stage:
-    | DurableBatchTask<any, any, any, any, any, JsonValue>
-    | DurableBatchScorer<any, any, any, any, JsonValue>;
+): DurableBatchProcessor<any, any, JsonValue> {
   if (kind === "task") {
     if (!isBatchTask(definition.evaluator.task)) {
       throw new Error("Definition no longer contains the batch task");
     }
-    stage = definition.evaluator.task;
-  } else {
-    const scorer = resolveScorers(definition.evaluator.scores ?? []).find(
-      ({ name }) => name === scorerName,
-    )?.scorer;
-    if (!isBatchScorer(scorer)) {
-      throw new Error(`Definition no longer contains scorer ${scorerName}`);
-    }
-    stage = scorer;
+    return definition.evaluator.task.processor as DurableBatchProcessor<
+      any,
+      any,
+      JsonValue
+    >;
   }
-  if (stage.workflow) return stage.workflow;
-  if (!stage.processor) {
-    throw new Error("Batch definition has neither a processor nor a workflow");
+  const scorer = resolveScorers(definition.evaluator.scores ?? []).find(
+    ({ name }) => name === scorerName,
+  )?.scorer;
+  if (!isBatchScorer(scorer)) {
+    throw new Error(`Definition no longer contains scorer ${scorerName}`);
   }
-  return {
-    outputNode: "$batch",
-    nodes: [
-      {
-        name: "$batch",
-        needs: {},
-        item: (rootItem) => rootItem,
-        processor: stage.processor as DurableBatchProcessor<
-          any,
-          any,
-          JsonValue
-        >,
-        result:
-          kind === "task"
-            ? (result) => result.output
-            : (result) => result.score,
-      },
-    ],
-  };
-}
-
-function itemForNode(
-  parameters: JsonValue,
-  record: DurableCaseRecord,
-  kind: "task" | "score",
-  scorerName: string | undefined,
-  node: DurableWorkflowNodeDefinition,
-) {
-  const rootItem =
-    kind === "task"
-      ? taskBatchItem(record, parameters)
-      : scorerBatchItem(record);
-  const outputs = nodeOutputsFor(record, kind, scorerName);
-  return node.item(
-    rootItem,
-    Object.fromEntries(
-      Object.entries(node.needs).map(([alias, dependency]) => [
-        alias,
-        outputs[dependency],
-      ]),
-    ),
-    record.id,
-  );
-}
-
-function nodeOutputsFor(
-  record: DurableCaseRecord,
-  kind: "task" | "score",
-  scorerName?: string,
-) {
-  if (kind === "task") return record.taskNodeOutputs;
-  return (record.scoreNodeOutputs[scorerName!] ??= Object.create(null));
+  return scorer.processor as DurableBatchProcessor<any, any, JsonValue>;
 }
 
 async function materializeCases<
@@ -1998,10 +1670,8 @@ async function materializeCases<
         tags: datum.tags,
         taskComplete: false,
         taskLogged: false,
-        taskNodeOutputs: Object.create(null),
         scores: Object.create(null),
         loggedScores: Object.create(null),
-        scoreNodeOutputs: Object.create(null),
         classifications: Object.create(null),
         loggedClassifications: Object.create(null),
       });
@@ -2114,7 +1784,7 @@ function resolveScorers(
 }
 
 function runKey(projectName: string, evalName: string, runId: string) {
-  return `durable-eval/v4/runs/${contentVersion(encoder.encode(`${projectName}\0${evalName}\0${runId}`))}`;
+  return `durable-eval/v1/runs/${contentVersion(encoder.encode(`${projectName}\0${evalName}\0${runId}`))}`;
 }
 
 function encodedKeyPart(value: string) {
@@ -2131,10 +1801,8 @@ function caseRecordKey(
     | "base"
     | "task"
     | "task-log"
-    | "task-node"
     | "score"
     | "score-log"
-    | "score-node"
     | "classification"
     | "classification-log",
   ...names: string[]
@@ -2187,26 +1855,24 @@ function plannedBatches(
   }
   const plans: DurableBatchPlan[] = [];
   for (const { kind, scorerName } of stages) {
-    const workflow = workflowForStage(definition, kind, scorerName);
-    for (const node of workflow.nodes) {
-      const batchSize = node.processor.batchSize ?? DEFAULT_BATCH_SIZE;
-      if (!Number.isInteger(batchSize) || batchSize < 1) {
-        throw new Error(
-          `Invalid batchSize for ${scorerName ? `${scorerName}.${node.name}` : node.name}`,
-        );
-      }
-      for (let offset = 0; offset < caseIds.length; offset += batchSize) {
-        const itemIds = caseIds.slice(offset, offset + batchSize);
-        plans.push({
-          id: deterministicId(
-            stableStringify([runId, kind, scorerName, node.name, itemIds]),
-          ),
-          kind,
-          scorerName,
-          nodeName: node.name,
-          itemIds,
-        });
-      }
+    const batchSize =
+      processorForStage(definition, kind, scorerName).batchSize ??
+      DEFAULT_BATCH_SIZE;
+    if (!Number.isInteger(batchSize) || batchSize < 1) {
+      throw new Error(
+        `Invalid batchSize for ${scorerName ?? "task"}: ${batchSize}`,
+      );
+    }
+    for (let offset = 0; offset < caseIds.length; offset += batchSize) {
+      const itemIds = caseIds.slice(offset, offset + batchSize);
+      plans.push({
+        id: deterministicId(
+          stableStringify([runId, kind, scorerName, itemIds]),
+        ),
+        kind,
+        scorerName,
+        itemIds,
+      });
     }
   }
   return plans;
@@ -2222,40 +1888,18 @@ async function readCaseRecord(
   const classifiers = (definition.evaluator.classifiers ?? []).map(
     classifierName,
   );
-  const taskNodes = isBatchTask(definition.evaluator.task)
-    ? workflowForStage(definition, "task").nodes
-    : [];
-  const scoreNodes = scorers.flatMap(({ name, scorer }) =>
-    isBatchScorer(scorer)
-      ? workflowForStage(definition, "score", name).nodes.map((node) => ({
-          scorerName: name,
-          nodeName: node.name,
-        }))
-      : [],
-  );
   const [
     base,
     task,
     taskLog,
-    taskNodeValues,
     scoreValues,
     scoreLogValues,
-    scoreNodeValues,
     classificationValues,
     classificationLogValues,
   ] = await Promise.all([
     readJson<DurableCaseBaseRecord>(store, caseRecordKey(key, id, "base")),
     readJson<DurableTaskResultRecord>(store, caseRecordKey(key, id, "task")),
     readJson<DurableTaskLogRecord>(store, caseRecordKey(key, id, "task-log")),
-    Promise.all(
-      taskNodes.map(async ({ name }) => ({
-        name,
-        value: await readJson<JsonValue>(
-          store,
-          caseRecordKey(key, id, "task-node", name),
-        ),
-      })),
-    ),
     Promise.all(
       scorers.map(async ({ name }) => ({
         name,
@@ -2271,16 +1915,6 @@ async function readCaseRecord(
         value: await readJson<true>(
           store,
           caseRecordKey(key, id, "score-log", name),
-        ),
-      })),
-    ),
-    Promise.all(
-      scoreNodes.map(async ({ scorerName, nodeName }) => ({
-        scorerName,
-        nodeName,
-        value: await readJson<JsonValue>(
-          store,
-          caseRecordKey(key, id, "score-node", scorerName, nodeName),
         ),
       })),
     ),
@@ -2304,10 +1938,6 @@ async function readCaseRecord(
     ),
   ]);
   if (!base) throw new Error(`Durable eval case ${id} is missing`);
-  const taskNodeOutputs: Record<string, JsonValue> = Object.create(null);
-  for (const { name, value } of taskNodeValues) {
-    if (value !== undefined) taskNodeOutputs[name] = value;
-  }
   const scores: Record<string, JsonValue> = Object.create(null);
   for (const { name, value } of scoreValues) {
     if (value !== undefined) scores[name] = value;
@@ -2315,15 +1945,6 @@ async function readCaseRecord(
   const loggedScores: Record<string, boolean> = Object.create(null);
   for (const { name, value } of scoreLogValues) {
     if (value) loggedScores[name] = true;
-  }
-  const scoreNodeOutputs: Record<
-    string,
-    Record<string, JsonValue>
-  > = Object.create(null);
-  for (const { scorerName, nodeName, value } of scoreNodeValues) {
-    if (value === undefined) continue;
-    const outputs = (scoreNodeOutputs[scorerName] ??= Object.create(null));
-    outputs[nodeName] = value;
   }
   const classifications: Record<string, JsonValue> = Object.create(null);
   for (const { name, value } of classificationValues) {
@@ -2341,10 +1962,8 @@ async function readCaseRecord(
     taskLogged: taskLog !== undefined,
     output: task?.output,
     rootSpan: taskLog?.rootSpan,
-    taskNodeOutputs,
     scores,
     loggedScores,
-    scoreNodeOutputs,
     classifications,
     loggedClassifications,
   } satisfies DurableCaseRecord;
@@ -2431,15 +2050,6 @@ async function writeCaseRecords(
         } satisfies DurableTaskLogRecord),
       );
     }
-    for (const [name, value] of Object.entries(record.taskNodeOutputs)) {
-      writes.push(
-        writeJson(
-          store,
-          caseRecordKey(key, record.id, "task-node", name),
-          value,
-        ),
-      );
-    }
     for (const [name, value] of Object.entries(record.scores)) {
       writes.push(
         writeJson(store, caseRecordKey(key, record.id, "score", name), value),
@@ -2453,19 +2063,6 @@ async function writeCaseRecords(
           true,
         ),
       );
-    }
-    for (const [scorerName, outputs] of Object.entries(
-      record.scoreNodeOutputs,
-    )) {
-      for (const [nodeName, value] of Object.entries(outputs)) {
-        writes.push(
-          writeJson(
-            store,
-            caseRecordKey(key, record.id, "score-node", scorerName, nodeName),
-            value,
-          ),
-        );
-      }
     }
     for (const [name, value] of Object.entries(record.classifications)) {
       writes.push(

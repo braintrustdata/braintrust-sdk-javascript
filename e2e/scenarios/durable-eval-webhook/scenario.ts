@@ -25,48 +25,22 @@ async function main() {
     { testRunId: string; kind: string },
     Record<string, never>
   >({
-    workflow(workflow) {
-      const generated = workflow.batch("generate", {
-        batchSize: 2,
-        input: (item) => item.input,
-        async submit(items) {
-          const id = `generate-${jobs.size + 1}`;
-          jobs.set(id, items);
-          return { id };
-        },
-        completion: webhookCompletion,
-        async collect(handle) {
-          const items = (jobs.get(handle.id) ?? []) as Array<{
-            id: string;
-            input: number;
-          }>;
-          return items.map((item) => ({
-            id: item.id,
-            output: item.input * 2,
-          }));
-        },
-      });
-      return workflow.batch("finalize", {
-        needs: { generated },
-        input: (_item, { generated }) => generated,
-        batchSize: 2,
-        async submit(items) {
-          const id = `finalize-${jobs.size + 1}`;
-          jobs.set(id, items);
-          return { id };
-        },
-        completion: webhookCompletion,
-        async collect(handle) {
-          const items = (jobs.get(handle.id) ?? []) as Array<{
-            id: string;
-            input: number;
-          }>;
-          return items.map((item) => ({
-            id: item.id,
-            output: item.input,
-          }));
-        },
-      });
+    batchSize: 2,
+    async submit(items) {
+      const id = `task-${jobs.size + 1}`;
+      jobs.set(id, items);
+      return { id };
+    },
+    completion: webhookCompletion,
+    async collect(handle) {
+      const items = (jobs.get(handle.id) ?? []) as Array<{
+        id: string;
+        input: number;
+      }>;
+      return items.map((item) => ({
+        id: item.id,
+        output: item.input * 2,
+      }));
     },
   });
   const scorer = BatchScorer<

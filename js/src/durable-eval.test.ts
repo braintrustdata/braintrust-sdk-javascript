@@ -242,7 +242,7 @@ describe("defineDurableEval", () => {
       ([key]) => !key.includes("/cases/") && !key.includes("/batches/"),
     )?.[1];
     expect(run).toMatchObject({
-      schemaVersion: 4,
+      schemaVersion: 1,
       status: "running",
       caseIds: ["one:trial:0", "two:trial:0"],
     });
@@ -561,253 +561,7 @@ describe("defineDurableEval", () => {
     });
   });
 
-  test("preserves parallel workflow outputs from concurrent webhooks", async () => {
-    const jobs = new Map<string, Array<{ id: string; input: unknown }>>();
-    let collectCount = 0;
-    let releaseCollect!: () => void;
-    const bothCollecting = new Promise<void>((resolve) => {
-      releaseCollect = resolve;
-    });
-    const joinSubmit = vi.fn(
-      async (items: Array<{ id: string; input: unknown }>) => {
-        jobs.set("join", items);
-        return { id: "join" };
-      },
-    );
-    const completion = {
-      mode: "webhook" as const,
-      externalId: (handle: { id: string }) => handle.id,
-    };
-    const task = BatchTask<number, number, void, void, Record<string, never>>({
-      workflow(workflow) {
-        const doubled = workflow.batch("double", {
-          input: (item) => item.input,
-          async submit(items) {
-            jobs.set("double", items);
-            return { id: "double" };
-          },
-          completion,
-          async collect() {
-            collectCount++;
-            if (collectCount === 2) releaseCollect();
-            await bothCollecting;
-            return (jobs.get("double") ?? []).map((item) => ({
-              id: item.id,
-              output: (item.input as number) * 2,
-            }));
-          },
-        });
-        const incremented = workflow.batch("increment", {
-          input: (item) => item.input,
-          async submit(items) {
-            jobs.set("increment", items);
-            return { id: "increment" };
-          },
-          completion,
-          async collect() {
-            collectCount++;
-            if (collectCount === 2) releaseCollect();
-            await bothCollecting;
-            return (jobs.get("increment") ?? []).map((item) => ({
-              id: item.id,
-              output: (item.input as number) + 1,
-            }));
-          },
-        });
-        return workflow.batch("join", {
-          needs: { doubled, incremented },
-          input: (_item, outputs) => outputs,
-          submit: joinSubmit,
-          completion,
-          async collect() {
-            return (jobs.get("join") ?? []).map((item) => {
-              const input = item.input as {
-                doubled: number;
-                incremented: number;
-              };
-              return {
-                id: item.id,
-                output: input.doubled + input.incremented,
-              };
-            });
-          },
-        });
-      },
-    });
-    const durable = defineDurableEval("parallel-webhooks", {
-      store: new DurableEvalMemoryStore(),
-      data: [{ id: "one", input: 2 }],
-      task,
-    });
-    const waiting = await durable.start({ noSendLogs: true });
-
-    await Promise.all(
-      ["double", "increment"].map((externalId) =>
-        durable.processBatchResult({
-          runId: waiting.runId,
-          externalId,
-        }),
-      ),
-    );
-
-    expect(joinSubmit).toHaveBeenCalledTimes(1);
-    await expect(
-      durable.processBatchResult({
-        runId: waiting.runId,
-        externalId: "join",
-      }),
-    ).resolves.toMatchObject({ status: "completed" });
-  });
-
-  test("runs multi-stage task and scorer workflows", async () => {
-    const jobs = new Map<string, Array<{ id: string; input: unknown }>>();
-    const submit = async (
-      prefix: string,
-      items: Array<{ id: string; input: unknown }>,
-    ) => {
-      const id = `${prefix}-${jobs.size + 1}`;
-      jobs.set(id, items);
-      return { id };
-    };
-    const completion = {
-      mode: "poll" as const,
-      async poll() {
-        return { status: "complete" as const };
-      },
-    };
-
-    const task = BatchTask<number, number, number, void, Record<string, never>>(
-      {
-        workflow(w) {
-          const doubled = w.batch("double", {
-            batchSize: 2,
-            input: (item) => item.input,
-            submit: (items) => submit("double", items),
-            completion,
-            async collect(handle) {
-              return (jobs.get(handle.id) ?? []).map((item) => ({
-                id: item.id,
-                output: (item.input as number) * 2,
-              }));
-            },
-          });
-          const incremented = w.batch("increment", {
-            needs: { doubled },
-            input: (_item, outputs) => outputs.doubled,
-            submit: (items) => submit("increment", items),
-            completion,
-            async collect(handle) {
-              return (jobs.get(handle.id) ?? []).map((item) => ({
-                id: item.id,
-                output: (item.input as number) + 1,
-              }));
-            },
-          });
-          const decremented = w.batch("decrement", {
-            needs: { doubled },
-            input: (_item, outputs) => outputs.doubled,
-            submit: (items) => submit("decrement", items),
-            completion,
-            async collect(handle) {
-              return (jobs.get(handle.id) ?? []).map((item) => ({
-                id: item.id,
-                output: (item.input as number) - 1,
-              }));
-            },
-          });
-          return w.batch("combine", {
-            needs: { incremented, decremented },
-            input: (_item, outputs) => outputs,
-            submit: (items) => submit("combine", items),
-            completion,
-            async collect(handle) {
-              return (jobs.get(handle.id) ?? []).map((item) => {
-                const value = item.input as {
-                  incremented: number;
-                  decremented: number;
-                };
-                return {
-                  id: item.id,
-                  output: (value.incremented + value.decremented) / 2,
-                };
-              });
-            },
-          });
-        },
-      },
-    );
-    const scorer = BatchScorer<number, number, number, void>({
-      name: "exact",
-      workflow(w) {
-        const comparison = w.batch("compare", {
-          input: (item) => ({
-            output: item.output,
-            expected: item.expected,
-          }),
-          submit: (items) => submit("compare", items),
-          completion,
-          async collect(handle) {
-            return (jobs.get(handle.id) ?? []).map((item) => {
-              const value = item.input as {
-                output: number;
-                expected: number;
-              };
-              return {
-                id: item.id,
-                output: value.output === value.expected,
-              };
-            });
-          },
-        });
-        return w.batch("score", {
-          needs: { comparison },
-          input: (_item, outputs) => outputs.comparison,
-          submit: (items) => submit("score", items),
-          completion,
-          async collect(handle) {
-            return (jobs.get(handle.id) ?? []).map((item) => ({
-              id: item.id,
-              output: item.input ? 1 : 0,
-            }));
-          },
-        });
-      },
-    });
-    const store = new DurableEvalMemoryStore();
-    const durable = defineDurableEval("workflow", {
-      store,
-      data: [1, 2, 3].map((input) => ({
-        id: `case-${input}`,
-        input,
-        expected: input * 2,
-      })),
-      task,
-      scores: [scorer],
-    });
-    const waiting = await durable.start({ noSendLogs: true });
-    expect(waiting).toMatchObject({
-      status: "waiting",
-    });
-    const options = { runId: waiting.runId };
-    await expect(durable.poll(options)).resolves.toMatchObject({
-      status: "waiting",
-    });
-    await expect(durable.poll(options)).resolves.toMatchObject({
-      status: "waiting",
-    });
-    await expect(durable.poll(options)).resolves.toMatchObject({
-      status: "waiting",
-    });
-    await expect(durable.poll(options)).resolves.toMatchObject({
-      status: "waiting",
-    });
-    await expect(durable.poll(options)).resolves.toMatchObject({
-      status: "completed",
-      summary: { scores: { exact: { score: 1 } } },
-    });
-  });
-
-  test("supports workflow and scorer names inherited from Object.prototype", async () => {
+  test("supports scorer names inherited from Object.prototype", async () => {
     const jobs = new Map<
       string,
       Array<{ id: string; input: number; expected?: number; output?: number }>
@@ -820,21 +574,16 @@ describe("defineDurableEval", () => {
     };
     const task = BatchTask<number, number, number, void, Record<string, never>>(
       {
-        workflow(workflow) {
-          return workflow.batch("constructor", {
-            input: (item) => item.input,
-            async submit(items) {
-              jobs.set("task", items);
-              return { id: "task" };
-            },
-            completion,
-            async collect() {
-              return (jobs.get("task") ?? []).map((item) => ({
-                id: item.id,
-                output: item.input * 2,
-              }));
-            },
-          });
+        async submit(items) {
+          jobs.set("task", items);
+          return { id: "task" };
+        },
+        completion,
+        async collect() {
+          return (jobs.get("task") ?? []).map((item) => ({
+            id: item.id,
+            output: item.input * 2,
+          }));
         },
       },
     );
