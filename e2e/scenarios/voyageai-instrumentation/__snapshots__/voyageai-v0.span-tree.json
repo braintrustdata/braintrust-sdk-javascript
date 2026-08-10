@@ -11,20 +11,23 @@
               "name": "voyageai.embed",
               "type": "llm",
               "children": [],
-              "input": [
-                "Braintrust tracing"
-              ],
+              "input": {
+                "inputs": [
+                  {
+                    "content": "Braintrust tracing"
+                  }
+                ],
+                "output_dimensions": 3
+              },
               "output": {
-                "embedding_count": 1,
-                "embedding_length": 3
+                "count": 1
               },
               "metadata": {
-                "inputType": "document",
                 "model": "voyage-4",
-                "outputDimension": 3,
                 "provider": "voyage"
               },
               "metrics": {
+                "prompt_tokens": 4,
                 "tokens": 4
               }
             }
@@ -41,30 +44,33 @@
               "name": "voyageai.multimodalEmbed",
               "type": "llm",
               "children": [],
-              "input": [
-                {
-                  "content": [
-                    {
-                      "text": "A yellow banana.",
-                      "type": "text"
-                    },
-                    {
-                      "imageUrl": "https://example.com/banana.jpg",
-                      "type": "image_url"
-                    }
-                  ]
-                }
-              ],
+              "input": {
+                "inputs": [
+                  {
+                    "content": [
+                      {
+                        "text": "A yellow banana.",
+                        "type": "text"
+                      },
+                      {
+                        "image_url": {
+                          "url": "https://example.com/banana.jpg"
+                        },
+                        "type": "image_url"
+                      }
+                    ]
+                  }
+                ]
+              },
               "output": {
-                "embedding_count": 1,
-                "embedding_length": 2
+                "count": 1
               },
               "metadata": {
-                "inputType": "document",
                 "model": "voyage-multimodal-3.5",
                 "provider": "voyage"
               },
               "metrics": {
+                "prompt_tokens": 6,
                 "tokens": 6
               }
             }
@@ -122,24 +128,26 @@
               "name": "voyageai.contextualizedEmbed",
               "type": "llm",
               "children": [],
-              "input": [
-                [
-                  "Paris is a city.",
-                  "It is the capital of France."
-                ]
-              ],
+              "input": {
+                "inputs": [
+                  {
+                    "content": "Paris is a city."
+                  },
+                  {
+                    "content": "It is the capital of France."
+                  }
+                ],
+                "output_dimensions": 4
+              },
               "output": {
-                "document_count": 1,
-                "embedding_count": 2,
-                "embedding_length": 4
+                "count": 2
               },
               "metadata": {
-                "inputType": "document",
                 "model": "voyage-context-3",
-                "outputDimension": 4,
                 "provider": "voyage"
               },
               "metrics": {
+                "prompt_tokens": 8,
                 "tokens": 8
               }
             }

@@ -79,18 +79,16 @@ describe("VoyageAIPlugin", () => {
     ) as Record<string, any> | undefined;
 
     expect(embedSpan).toMatchObject({
-      input: ["Braintrust tracing"],
+      input: {
+        inputs: [{ content: "Braintrust tracing" }],
+        output_dimensions: 3,
+      },
       metadata: {
-        inputType: "document",
         model: "voyage-4",
-        outputDimension: 3,
         provider: "voyage",
       },
-      metrics: { tokens: 4 },
-      output: {
-        embedding_count: 1,
-        embedding_length: 3,
-      },
+      metrics: { prompt_tokens: 4, tokens: 4 },
+      output: { count: 1 },
     });
     expect(rerankSpan).toMatchObject({
       input: {
@@ -159,6 +157,7 @@ describe("VoyageAIPlugin", () => {
         {
           inputs: [["First chunk", "Second chunk"]],
           model: "voyage-context-3",
+          outputDimension: 3,
         },
       ],
       {},
@@ -173,21 +172,38 @@ describe("VoyageAIPlugin", () => {
         span.span_attributes?.name === "voyageai.contextualizedEmbed",
     ) as Record<string, any> | undefined;
 
-    expect(multimodalSpan?.output).toEqual({
-      embedding_count: 1,
-      embedding_length: 2,
+    expect(multimodalSpan).toMatchObject({
+      input: {
+        inputs: [
+          {
+            content: [
+              { type: "text", text: "A banana" },
+              {
+                type: "image_url",
+                image_url: { url: "https://example.com/banana.jpg" },
+              },
+            ],
+          },
+        ],
+      },
+      metadata: {
+        model: "voyage-multimodal-3.5",
+        provider: "voyage",
+      },
+      metrics: { prompt_tokens: 5, tokens: 5 },
+      output: { count: 1 },
     });
     expect(contextualizedSpan).toMatchObject({
+      input: {
+        inputs: [{ content: "First chunk" }, { content: "Second chunk" }],
+        output_dimensions: 3,
+      },
       metadata: {
         model: "voyage-context-3",
         provider: "voyage",
       },
-      metrics: { tokens: 7 },
-      output: {
-        document_count: 1,
-        embedding_count: 2,
-        embedding_length: 3,
-      },
+      metrics: { prompt_tokens: 7, tokens: 7 },
+      output: { count: 2 },
     });
   });
 
@@ -222,7 +238,7 @@ describe("VoyageAIPlugin", () => {
       (candidate: any) =>
         candidate.span_attributes?.name === "voyageai.multimodalEmbed",
     ) as Record<string, any> | undefined;
-    const attachment = span?.input?.[0]?.content?.[0]?.imageBase64;
+    const attachment = span?.input?.inputs?.[0]?.content?.[0]?.image_url?.url;
 
     expect(attachment).toBeInstanceOf(Attachment);
     expect(attachment.reference).toMatchObject({
@@ -230,6 +246,71 @@ describe("VoyageAIPlugin", () => {
       filename: "image.png",
       type: "braintrust_attachment",
     });
+  });
+
+  it("falls back to the complete canonical input when attachment conversion fails", async () => {
+    const validDataUrl = "data:image/png;base64,aGVsbG8=";
+    const invalidDataUrl = "data:image/png;base64,%%%";
+    await voyageAIChannels.multimodalEmbed.invoke(
+      async () => ({
+        data: [{ embedding: [0.1], index: 0 }],
+        model: "voyage-multimodal-3.5",
+      }),
+      undefined,
+      [
+        {
+          inputs: [
+            {
+              content: [
+                { imageBase64: validDataUrl, type: "image_base64" },
+                { imageBase64: invalidDataUrl, type: "image_base64" },
+              ],
+            },
+          ],
+          model: "voyage-multimodal-3.5",
+        },
+      ],
+      {},
+    );
+
+    const spans = await backgroundLogger.drain();
+    const span = spans.find(
+      (candidate: any) =>
+        candidate.span_attributes?.name === "voyageai.multimodalEmbed",
+    ) as Record<string, any> | undefined;
+
+    expect(span?.input).toEqual({
+      inputs: [
+        {
+          content: [
+            { image_url: { url: validDataUrl }, type: "image_url" },
+            { image_url: { url: invalidDataUrl }, type: "image_url" },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("omits unavailable embedding usage metrics", async () => {
+    await voyageAIChannels.embed.invoke(
+      async () => ({
+        data: [{ embedding: [0.1], index: 0 }],
+        model: "voyage-4",
+      }),
+      undefined,
+      [{ input: "hello", model: "voyage-4" }],
+      {},
+    );
+
+    const spans = await backgroundLogger.drain();
+    const span = spans.find(
+      (candidate: any) => candidate.span_attributes?.name === "voyageai.embed",
+    ) as Record<string, any> | undefined;
+
+    expect(span?.input).toEqual({ inputs: [{ content: "hello" }] });
+    expect(span?.output).toEqual({ count: 1 });
+    expect(span?.metrics).not.toHaveProperty("prompt_tokens");
+    expect(span?.metrics).not.toHaveProperty("tokens");
   });
 
   it("suppresses nested auto-instrumentation invocations", async () => {

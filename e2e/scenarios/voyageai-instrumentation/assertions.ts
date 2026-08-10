@@ -31,38 +31,34 @@ type RunVoyageAIScenario = (harness: {
 const OPERATIONS = [
   {
     model: "voyage-4",
+    metrics: { prompt_tokens: 4, tokens: 4 },
     operationName: "voyageai-embed-operation",
-    output: { embedding_count: 1, embedding_length: 3 },
+    output: { count: 1 },
     spanName: "voyageai.embed",
-    tokens: 4,
   },
   {
     model: "voyage-multimodal-3.5",
+    metrics: { prompt_tokens: 6, tokens: 6 },
     operationName: "voyageai-multimodal-embed-operation",
-    output: { embedding_count: 1, embedding_length: 2 },
+    output: { count: 1 },
     spanName: "voyageai.multimodalEmbed",
-    tokens: 6,
   },
   {
     model: "rerank-2.5",
+    metrics: { tokens: 11 },
     operationName: "voyageai-rerank-operation",
     output: [
       { index: 1, relevance_score: 0.97 },
       { index: 0, relevance_score: 0.21 },
     ],
     spanName: "voyageai.rerank",
-    tokens: 11,
   },
   {
     model: "voyage-context-3",
+    metrics: { prompt_tokens: 8, tokens: 8 },
     operationName: "voyageai-contextualized-embed-operation",
-    output: {
-      document_count: 1,
-      embedding_count: 2,
-      embedding_length: 4,
-    },
+    output: { count: 2 },
     spanName: "voyageai.contextualizedEmbed",
-    tokens: 8,
   },
 ] as const;
 
@@ -110,7 +106,7 @@ export function defineVoyageAIInstrumentationAssertions(options: {
 
     test.each(OPERATIONS)(
       "captures $spanName",
-      ({ model, operationName, output, spanName, tokens }) => {
+      ({ metrics, model, operationName, output, spanName }) => {
         const operation = findLatestSpan(events, operationName);
         const span = findLatestChildSpan(events, spanName, operation?.span.id);
 
@@ -121,7 +117,7 @@ export function defineVoyageAIInstrumentationAssertions(options: {
           model,
           provider: "voyage",
         });
-        expect(span?.metrics).toMatchObject({ tokens });
+        expect(span?.metrics).toMatchObject(metrics);
         expect(span?.output).toEqual(output);
       },
     );

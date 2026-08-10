@@ -21,34 +21,11 @@ import { BasePlugin } from "../core";
 import { unsubscribeAll } from "../core/channel-tracing";
 import { voyageAIChannels } from "./voyageai-channels";
 
-const EMBED_METADATA_ALLOWLIST = new Set([
-  "encodingFormat",
-  "inputType",
-  "model",
-  "outputDimension",
-  "outputDtype",
-  "truncation",
-]);
-
-const MULTIMODAL_EMBED_METADATA_ALLOWLIST = new Set([
-  "encodingFormat",
-  "inputType",
-  "model",
-  "truncation",
-]);
-
 const RERANK_METADATA_ALLOWLIST = new Set([
   "model",
   "returnDocuments",
   "topK",
   "truncation",
-]);
-
-const CONTEXTUALIZED_EMBED_METADATA_ALLOWLIST = new Set([
-  "inputType",
-  "model",
-  "outputDimension",
-  "outputDtype",
 ]);
 
 export class VoyageAIPlugin extends BasePlugin {
@@ -57,21 +34,16 @@ export class VoyageAIPlugin extends BasePlugin {
       interceptVoyageAICall(
         voyageAIChannels.embed,
         "voyageai.embed",
-        (args) =>
-          extractEmbeddingInput(args, "input", EMBED_METADATA_ALLOWLIST),
+        extractTextEmbeddingInput,
         summarizeEmbeddingOutput,
+        extractEmbeddingUsageMetrics,
       ),
       interceptVoyageAICall(
         voyageAIChannels.multimodalEmbed,
         "voyageai.multimodalEmbed",
-        (args) =>
-          extractEmbeddingInput(
-            args,
-            "inputs",
-            MULTIMODAL_EMBED_METADATA_ALLOWLIST,
-            true,
-          ),
+        extractMultimodalEmbeddingInput,
         summarizeEmbeddingOutput,
+        extractEmbeddingUsageMetrics,
       ),
       interceptVoyageAICall(
         voyageAIChannels.rerank,
@@ -82,13 +54,9 @@ export class VoyageAIPlugin extends BasePlugin {
       interceptVoyageAICall(
         voyageAIChannels.contextualizedEmbed,
         "voyageai.contextualizedEmbed",
-        (args) =>
-          extractEmbeddingInput(
-            args,
-            "inputs",
-            CONTEXTUALIZED_EMBED_METADATA_ALLOWLIST,
-          ),
+        extractContextualizedEmbeddingInput,
         summarizeContextualizedEmbeddingOutput,
+        extractEmbeddingUsageMetrics,
       ),
     );
   }
@@ -124,6 +92,9 @@ function interceptVoyageAICall<
     metadata: Record<string, unknown>;
   },
   extractOutput: (result: TResult) => unknown,
+  extractMetrics: (
+    result: TResult,
+  ) => Record<string, number> = extractUsageMetrics,
 ): () => void {
   return channel.intercept((target, thisArg, args) => {
     const invokeTarget = () => Reflect.apply(target, thisArg, args);
@@ -166,7 +137,7 @@ function interceptVoyageAICall<
           span.log({
             output: extractOutput(value),
             ...(metadata ? { metadata } : {}),
-            metrics: extractUsageMetrics(value),
+            metrics: extractMetrics(value),
           });
         }),
       (error) => finishVoyageAISpan(span, name, () => span.log({ error })),
@@ -224,22 +195,148 @@ function pickMetadata(
   };
 }
 
-function extractEmbeddingInput(
-  args: unknown,
-  inputKey: "input" | "inputs",
-  metadataAllowlist: ReadonlySet<string>,
-  processAttachments = false,
-): {
-  input: unknown;
+type EmbeddingContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: unknown } }
+  | { type: "file"; file: { file_data: unknown } };
+
+type EmbeddingInput = {
+  inputs: Array<{ content: string | EmbeddingContentPart[] }>;
+  output_dimensions?: number;
+};
+
+function buildEmbeddingInput(
+  inputs: EmbeddingInput["inputs"],
+  request: Record<string, unknown> | undefined,
+): EmbeddingInput {
+  const outputDimensions = request?.outputDimension;
+  return {
+    inputs,
+    ...(typeof outputDimensions === "number" &&
+    Number.isFinite(outputDimensions)
+      ? { output_dimensions: outputDimensions }
+      : {}),
+  };
+}
+
+function embeddingMetadata(
+  request: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  return {
+    ...(typeof request?.model === "string" ? { model: request.model } : {}),
+    provider: "voyage",
+  };
+}
+
+function extractTextEmbeddingInput(args: unknown): {
+  input: EmbeddingInput;
   metadata: Record<string, unknown>;
 } {
   const request = getRequestArg(args);
-  const input = request?.[inputKey];
+  const rawInput = request?.input;
+  const values = Array.isArray(rawInput) ? rawInput : [rawInput];
 
   return {
-    input: processAttachments ? processInputAttachments(input) : input,
-    metadata: pickMetadata(request, metadataAllowlist),
+    input: buildEmbeddingInput(
+      values.flatMap((value) =>
+        typeof value === "string" ? [{ content: value }] : [],
+      ),
+      request,
+    ),
+    metadata: embeddingMetadata(request),
   };
+}
+
+function extractContextualizedEmbeddingInput(args: unknown): {
+  input: EmbeddingInput;
+  metadata: Record<string, unknown>;
+} {
+  const request = getRequestArg(args);
+  const rawInputs = request?.inputs;
+  const values = Array.isArray(rawInputs)
+    ? rawInputs.flatMap((value) => (Array.isArray(value) ? value : [value]))
+    : [];
+
+  return {
+    input: buildEmbeddingInput(
+      values.flatMap((value) =>
+        typeof value === "string" ? [{ content: value }] : [],
+      ),
+      request,
+    ),
+    metadata: embeddingMetadata(request),
+  };
+}
+
+function extractMultimodalEmbeddingInput(args: unknown): {
+  input: EmbeddingInput;
+  metadata: Record<string, unknown>;
+} {
+  const request = getRequestArg(args);
+  const rawInputs = request?.inputs;
+  const inputs = Array.isArray(rawInputs)
+    ? rawInputs.map((rawInput) => {
+        const rawContent = isObject(rawInput) ? rawInput.content : undefined;
+        return {
+          content: Array.isArray(rawContent)
+            ? rawContent.flatMap(normalizeMultimodalContentPart)
+            : [],
+        };
+      })
+    : [];
+  const input = buildEmbeddingInput(inputs, request);
+  const processedInput = processInputAttachments(input);
+
+  return {
+    input: hasInlineEmbeddingMedia(processedInput) ? input : processedInput,
+    metadata: embeddingMetadata(request),
+  };
+}
+
+function normalizeMultimodalContentPart(part: unknown): EmbeddingContentPart[] {
+  if (!isObject(part) || typeof part.type !== "string") {
+    return [];
+  }
+  if (part.type === "text") {
+    return typeof part.text === "string"
+      ? [{ type: "text", text: part.text }]
+      : [];
+  }
+
+  const camelCaseField: Record<string, string> = {
+    image_base64: "imageBase64",
+    image_url: "imageUrl",
+    video_base64: "videoBase64",
+    video_url: "videoUrl",
+  };
+  const field = camelCaseField[part.type];
+  if (!field) {
+    return [];
+  }
+  const data = typeof part[field] === "string" ? part[field] : part[part.type];
+  if (typeof data !== "string") {
+    return [];
+  }
+
+  return part.type.startsWith("image_")
+    ? [{ type: "image_url", image_url: { url: data } }]
+    : [{ type: "file", file: { file_data: data } }];
+}
+
+function hasInlineEmbeddingMedia(input: EmbeddingInput): boolean {
+  return input.inputs.some(({ content }) =>
+    Array.isArray(content)
+      ? content.some((part) => {
+          const value =
+            part.type === "image_url"
+              ? part.image_url.url
+              : part.type === "file"
+                ? part.file.file_data
+                : undefined;
+          return typeof value === "string" && value.startsWith("data:");
+        })
+      : false,
+  );
 }
 
 function extractRerankInput(args: unknown): {
@@ -281,21 +378,12 @@ function extractResponseMetadata(
   return model ? { model } : undefined;
 }
 
-function summarizeEmbeddingOutput(
-  result: VoyageAIEmbeddingResponse,
-): Record<string, number> | undefined {
-  if (!isObject(result) || !Array.isArray(result.data)) {
-    return undefined;
-  }
-
-  const firstEmbedding =
-    isObject(result.data[0]) && Array.isArray(result.data[0].embedding)
-      ? result.data[0].embedding
-      : undefined;
-
+function summarizeEmbeddingOutput(result: VoyageAIEmbeddingResponse): {
+  count: number;
+} {
   return {
-    embedding_count: result.data.length,
-    ...(firstEmbedding ? { embedding_length: firstEmbedding.length } : {}),
+    count:
+      isObject(result) && Array.isArray(result.data) ? result.data.length : 0,
   };
 }
 
@@ -318,43 +406,45 @@ function summarizeRerankOutput(
 
 function summarizeContextualizedEmbeddingOutput(
   result: VoyageAIContextualizedResult,
-): Record<string, number> | undefined {
+): { count: number } {
   if (!isObject(result)) {
-    return undefined;
+    return { count: 0 };
   }
 
   if (Array.isArray(result.results)) {
-    const embeddings = result.results.flatMap((item) =>
-      isObject(item) && Array.isArray(item.embeddings) ? item.embeddings : [],
-    );
-    const firstEmbedding = Array.isArray(embeddings[0])
-      ? embeddings[0]
-      : undefined;
-
     return {
-      document_count: result.results.length,
-      embedding_count: embeddings.length,
-      ...(firstEmbedding ? { embedding_length: firstEmbedding.length } : {}),
+      count: result.results.reduce(
+        (count, item) =>
+          count +
+          (isObject(item) && Array.isArray(item.embeddings)
+            ? item.embeddings.length
+            : 0),
+        0,
+      ),
     };
   }
 
   if (!Array.isArray(result.data)) {
-    return undefined;
+    return { count: 0 };
   }
 
-  const embeddings = result.data.flatMap((item) =>
-    isObject(item) && Array.isArray(item.data) ? item.data : [],
-  );
-  const firstEmbedding =
-    isObject(embeddings[0]) && Array.isArray(embeddings[0].embedding)
-      ? embeddings[0].embedding
-      : undefined;
-
   return {
-    document_count: result.data.length,
-    embedding_count: embeddings.length,
-    ...(firstEmbedding ? { embedding_length: firstEmbedding.length } : {}),
+    count: result.data.reduce(
+      (count, item) =>
+        count +
+        (isObject(item) && Array.isArray(item.data) ? item.data.length : 0),
+      0,
+    ),
   };
+}
+
+function extractEmbeddingUsageMetrics(
+  result: VoyageAIResult,
+): Record<string, number> {
+  const metrics = extractUsageMetrics(result);
+  return typeof metrics.tokens === "number"
+    ? { prompt_tokens: metrics.tokens, tokens: metrics.tokens }
+    : {};
 }
 
 function extractUsageMetrics(result: VoyageAIResult): Record<string, number> {
