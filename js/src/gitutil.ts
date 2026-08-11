@@ -3,25 +3,9 @@ import {
   type RepoInfoType as RepoInfo,
 } from "./generated_types";
 import { debugLogger } from "./debug-logger";
-import { simpleGit } from "simple-git";
+import { runGitCommand } from "./git-command";
 
 const COMMON_BASE_BRANCHES = ["main", "master", "develop"];
-
-/**
- * Information about the current HEAD of the repo.
- */
-export async function currentRepo() {
-  try {
-    const git = simpleGit();
-    if (await git.checkIsRepo()) {
-      return git;
-    } else {
-      return null;
-    }
-  } catch {
-    return null;
-  }
-}
 
 let _baseBranch: {
   remote: string;
@@ -30,12 +14,15 @@ let _baseBranch: {
 
 async function getBaseBranch(remote: string | undefined = undefined) {
   if (_baseBranch === null) {
-    const git = await currentRepo();
-    if (git === null) {
+    const repoPath = await currentRepoPath();
+    if (!repoPath) {
       throw new Error("Not in a git repo");
     }
 
-    const remoteName = remote ?? (await git.getRemotes())[0]?.name;
+    const runGit = async (args: string[]) =>
+      await runGitCommand(args, { cwd: repoPath });
+    const remoteName =
+      remote ?? (await runGit(["remote"])).trim().split(/\r?\n/)[0];
     if (!remoteName) {
       throw new Error("No remote found");
     }
@@ -47,7 +34,17 @@ async function getBaseBranch(remote: string | undefined = undefined) {
 
     // To speed this up in the short term, we pick from a list of common names
     // and only fall back to the remote origin if required.
-    const repoBranches = new Set((await git.branchLocal()).all);
+    const repoBranches = new Set(
+      (
+        await runGit([
+          "for-each-ref",
+          "--format=%(refname:short)",
+          "refs/heads/",
+        ])
+      )
+        .trim()
+        .split(/\r?\n/),
+    );
     const matchingBaseBranches = COMMON_BASE_BRANCHES.filter((b) =>
       repoBranches.has(b),
     );
@@ -55,7 +52,7 @@ async function getBaseBranch(remote: string | undefined = undefined) {
       branch = matchingBaseBranches[0];
     } else {
       try {
-        const remoteInfo = await git.remote(["show", remoteName]);
+        const remoteInfo = await runGit(["remote", "show", remoteName]);
         if (!remoteInfo) {
           throw new Error(`Could not find remote ${remoteName}`);
         }
@@ -76,23 +73,27 @@ async function getBaseBranch(remote: string | undefined = undefined) {
 }
 
 async function getBaseBranchAncestor(remote: string | undefined = undefined) {
-  const git = await currentRepo();
-  if (git === null) {
+  const repoPath = await currentRepoPath();
+  if (!repoPath) {
     throw new Error("Not in a git repo");
   }
 
   const { remote: remoteName, branch: baseBranch } =
     await getBaseBranch(remote);
 
-  const isDirty = (await git.diffSummary()).files.length > 0;
+  const isDirty =
+    (
+      await runGitCommand(["diff", "--name-only"], {
+        cwd: repoPath,
+      })
+    ).trim().length > 0;
   const head = isDirty ? "HEAD" : "HEAD^";
 
   try {
-    const ancestor = await git.raw([
-      "merge-base",
-      head,
-      `${remoteName}/${baseBranch}`,
-    ]);
+    const ancestor = await runGitCommand(
+      ["merge-base", head, `${remoteName}/${baseBranch}`],
+      { cwd: repoPath },
+    );
     return ancestor.trim();
   } catch {
     /*
@@ -108,8 +109,8 @@ export async function getPastNAncestors(
   n: number = 1000,
   remote: string | undefined = undefined,
 ) {
-  const git = await currentRepo();
-  if (git === null) {
+  const repoPath = await currentRepoPath();
+  if (!repoPath) {
     return [];
   }
 
@@ -125,8 +126,12 @@ export async function getPastNAncestors(
   if (!ancestor) {
     return [];
   }
-  const commits = await git.log({ from: ancestor, to: "HEAD", maxCount: n });
-  return commits.all.slice(0, n).map((c) => c.hash);
+  const commits = (
+    await runGitCommand(["rev-list", `--max-count=${n}`, `${ancestor}..HEAD`], {
+      cwd: repoPath,
+    })
+  ).trim();
+  return commits ? commits.split(/\r?\n/).slice(0, n) : [];
 }
 
 async function attempt<T>(fn: () => Promise<T>): Promise<T | undefined> {
@@ -166,9 +171,15 @@ export async function getRepoInfo(settings?: GitMetadataSettings) {
   return sanitized;
 }
 
+export async function currentRepoPath(): Promise<string | undefined> {
+  return await attempt(async () =>
+    (await runGitCommand(["rev-parse", "--show-toplevel"])).trim(),
+  );
+}
+
 async function repoInfo() {
-  const git = await currentRepo();
-  if (git === null) {
+  const repoPath = await currentRepoPath();
+  if (!repoPath) {
     return undefined;
   }
 
@@ -181,32 +192,36 @@ async function repoInfo() {
   let branch = undefined;
   let git_diff = undefined;
 
-  const dirty = (await git.diffSummary()).files.length > 0;
+  const runGit = async (args: string[]) =>
+    await runGitCommand(args, { cwd: repoPath });
+  const dirty = (await runGit(["diff", "--name-only"])).trim().length > 0;
 
-  commit = await attempt(async () => await git.revparse(["HEAD"]));
+  commit = await attempt(async () =>
+    (await runGit(["rev-parse", "HEAD"])).trim(),
+  );
   commit_message = await attempt(async () =>
-    (await git.raw(["log", "-1", "--pretty=%B"])).trim(),
+    (await runGit(["log", "-1", "--pretty=%B"])).trim(),
   );
   commit_time = await attempt(async () =>
-    (await git.raw(["log", "-1", "--pretty=%cI"])).trim(),
+    (await runGit(["log", "-1", "--pretty=%cI"])).trim(),
   );
   author_name = await attempt(async () =>
-    (await git.raw(["log", "-1", "--pretty=%aN"])).trim(),
+    (await runGit(["log", "-1", "--pretty=%aN"])).trim(),
   );
   author_email = await attempt(async () =>
-    (await git.raw(["log", "-1", "--pretty=%aE"])).trim(),
+    (await runGit(["log", "-1", "--pretty=%aE"])).trim(),
   );
   tag = await attempt(async () =>
-    (await git.raw(["describe", "--tags", "--exact-match", "--always"])).trim(),
+    (await runGit(["describe", "--tags", "--exact-match", "--always"])).trim(),
   );
 
   branch = await attempt(async () =>
-    (await git.raw(["rev-parse", "--abbrev-ref", "HEAD"])).trim(),
+    (await runGit(["rev-parse", "--abbrev-ref", "HEAD"])).trim(),
   );
 
   if (dirty) {
     git_diff = await attempt(async () =>
-      truncateToByteLimit(await git.raw(["--no-ext-diff", "diff", "HEAD"])),
+      truncateToByteLimit(await runGit(["diff", "--no-ext-diff", "HEAD"])),
     );
   }
 
