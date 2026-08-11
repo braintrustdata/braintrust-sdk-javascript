@@ -27,6 +27,7 @@ import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
+import { StagehandPlugin } from "./plugins/stagehand-plugin";
 import type { InstrumentationIntegrationsConfig } from "./config";
 
 export interface BraintrustPluginConfig {
@@ -82,6 +83,7 @@ export class BraintrustPlugin extends BasePlugin {
   private strandsAgentSDKPlugin: StrandsAgentSDKPlugin | null = null;
   private cloudflareAIChatPlugin: CloudflareAIChatPlugin | null = null;
   private cloudflareAgentsPlugin: CloudflareAgentsPlugin | null = null;
+  private stagehandPlugin: StagehandPlugin | null = null;
 
   constructor(config: BraintrustPluginConfig = {}) {
     super();
@@ -214,6 +216,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.strandsAgentSDK !== false) {
       this.strandsAgentSDKPlugin = new StrandsAgentSDKPlugin();
       this.strandsAgentSDKPlugin.enable();
+    }
+
+    if (integrations.stagehand !== false) {
+      this.stagehandPlugin = new StagehandPlugin();
+      this.stagehandPlugin.enable();
     }
 
     if (integrations.cloudflareAIChat !== false) {
@@ -364,6 +371,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.strandsAgentSDKPlugin) {
       this.strandsAgentSDKPlugin.disable();
       this.strandsAgentSDKPlugin = null;
+    }
+
+    if (this.stagehandPlugin) {
+      this.stagehandPlugin.disable();
+      this.stagehandPlugin = null;
     }
 
     if (this.cloudflareAIChatPlugin) {

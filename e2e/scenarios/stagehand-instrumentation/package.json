@@ -1,0 +1,21 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@ai-sdk/openai": "2.0.117",
+    "ai": "5.0.225",
+    "stagehand-v3": "npm:@browserbasehq/stagehand@3.0.0",
+    "stagehand-v3-latest": "npm:@browserbasehq/stagehand@3.7.1",
+    "zod": "3.25.76"
+  },
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "stagehand-v3-latest": {
+          "package": "@browserbasehq/stagehand",
+          "range": "3"
+        }
+      }
+    }
+  }
+}

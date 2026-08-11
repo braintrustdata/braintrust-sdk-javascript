@@ -1,0 +1,246 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "0854b19ef5286997",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-08-03T14:07:51.071Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": " You are helping the user automate the browser by finding elements based on what action the user wants to take on the page You will be given: 1. a user defined instruction about what action to take 2. a hierarchical accessibility tree showing the semantic structure of the page. The tree is a hybrid of the DOM and the accessibility tree. Return the element that matches the instruction if it exists. Otherwise, return an empty object.",
+                "role": "system"
+              },
+              {
+                "content": [
+                  {
+                    "text": "instruction: Find the most relevant element to perform an action on given the following action: Add the Trail Backpack to the cart.  \n  IF AND ONLY IF the action EXPLICITLY includes the word 'dropdown' and implies choosing/selecting an option from a dropdown, ignore the 'General Instructions' section, and follow the 'Dropdown Specific Instructions' section carefully.\n  \n  General Instructions: \n    Provide an action for this element such as click, fill, type, press, scrollTo, nextChunk, prevChunk, selectOptionFromDropdown. Remember that to users, buttons and links look the same in most cases.\n    If the action is completely unrelated to a potential action to be taken on the page, return an empty object. \n    ONLY return one action. If multiple actions are relevant, return the most relevant one. \n    If the user is asking to scroll to a position on the page, e.g., 'halfway' or 0.75, etc, you must return the argument formatted as the correct percentage, e.g., '50%' or '75%', etc.\n    If the user is asking to scroll to the next chunk/previous chunk, choose the nextChunk/prevChunk method. No arguments are required here.\n    If the action implies a key press, e.g., 'press enter', 'press a', 'press space', etc., always choose the press method with the appropriate key as argument — e.g. 'a', 'Enter', 'Space'. Do not choose a click action on an on-screen keyboard. Capitalize the first character like 'Enter', 'Tab', 'Escape' only for special keys. \n  \n  Dropdown Specific Instructions:\n    For interacting with dropdowns, there are two specific cases that you need to handle. \n    \n    CASE 1: the element is a 'select' element. \n      - choose the selectOptionFromDropdown method,\n      - set the argument to the exact text of the option that should be selected,\n      - set twoStep to false.\n    CASE 2: the element is NOT a 'select' element:\n      - do not attempt to directly choose the element from the dropdown. You will need to click to expand the dropdown first. You will achieve this by following these instructions:\n        - choose the node that most closely corresponds to the given instruction EVEN if it is a 'StaticText' element, or otherwise does not appear to be interactable.  \n        - choose the 'click' method\n        - set twoStep to true.\n   The following variables are available to use in the action: %customerEmail%. Fill the argument variables with the variable name.\nAccessibility Tree: \n[0-2] RootWebArea: Trail Supply\n  [0-4] scrollable, html\n    [0-9] main\n      [0-10] heading: Trail Backpack\n      [0-12] paragraph\n        [0-13] StaticText: $129.00\n      [0-14] button: Add to cart\n      [0-16] region: Shopping cart\n        [0-17] paragraph\n          [0-18] StaticText: Cart is empty\n        [0-19] button: Checkout\n",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "model": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.1,
+            "text": {
+              "format": {
+                "name": "response",
+                "schema": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {
+                    "arguments": {
+                      "items": {
+                        "description": "the arguments to pass to the method. For example, for a click, the arguments are empty, but for a fill, the arguments are the value to fill in.",
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "description": {
+                      "description": "a description of the accessible element and its purpose",
+                      "type": "string"
+                    },
+                    "elementId": {
+                      "description": "the ID string associated with the element. Never include surrounding square brackets. This field must follow the format of 'number-number'.",
+                      "type": "string"
+                    },
+                    "method": {
+                      "description": "the candidate method/action to interact with the element. Select one of the available Playwright interaction methods.",
+                      "type": "string"
+                    },
+                    "twoStep": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "elementId",
+                    "description",
+                    "method",
+                    "arguments",
+                    "twoStep"
+                  ],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "json_schema"
+              }
+            }
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1785766070,
+            "created_at": 1785766070,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_0741c1774d736e56006a70a0b620f8819d8a7b2a5c6fe45876",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": null,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "content": [
+                  {
+                    "annotations": [],
+                    "logprobs": [],
+                    "text": "{\"elementId\":\"0-14\",\"description\":\"Button to add the Trail Backpack to the cart\",\"method\":\"click\",\"arguments\":[],\"twoStep\":false}",
+                    "type": "output_text"
+                  }
+                ],
+                "id": "msg_0741c1774d736e56006a70a0b699a0819d9ec2bccb9c598159",
+                "role": "assistant",
+                "status": "completed",
+                "type": "message"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": true,
+            "temperature": 0.1,
+            "text": {
+              "format": {
+                "description": null,
+                "name": "response",
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "arguments": {
+                      "items": {
+                        "description": "the arguments to pass to the method. For example, for a click, the arguments are empty, but for a fill, the arguments are the value to fill in.",
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "description": {
+                      "description": "a description of the accessible element and its purpose",
+                      "type": "string"
+                    },
+                    "elementId": {
+                      "description": "the ID string associated with the element. Never include surrounding square brackets. This field must follow the format of 'number-number'.",
+                      "type": "string"
+                    },
+                    "method": {
+                      "description": "the candidate method/action to interact with the element. Select one of the available Playwright interaction methods.",
+                      "type": "string"
+                    },
+                    "twoStep": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "elementId",
+                    "description",
+                    "method",
+                    "arguments",
+                    "twoStep"
+                  ],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "json_schema"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "auto",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 910,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 0
+              },
+              "output_tokens": 33,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 943
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a255e4114eda5263-IAD",
+          "connection": "keep-alive",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Mon, 03 Aug 2026 14:07:51 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "928",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999070",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_0502db1677e744cbbda4707a49873e62"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-08-03T13:15:20.364Z"
+  }
+}
