@@ -497,6 +497,9 @@ function createToolTracingHooks(
   mcpServers: ClaudeAgentSDKMcpServersConfig | undefined,
   localToolHookNames: Set<string>,
   skipLocalToolHooks: boolean,
+  taskIdToToolUseId: Map<string, string>,
+  toolUseToParent: Map<string, string | null>,
+  pendingSubAgentToolUseIds: string[],
   subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   subAgentSpans: Map<string, Span>,
   endedSubAgentSpans: Set<string>,
@@ -510,6 +513,27 @@ function createToolTracingHooks(
   const preToolUse: ClaudeAgentSDKHookCallback = async (input, toolUseID) => {
     if (input.hook_event_name !== "PreToolUse" || !toolUseID) {
       return {};
+    }
+
+    if (isSubAgentDelegationToolName(input.tool_name)) {
+      upsertSubAgentDetails(subAgentDetailsByToolUseId, toolUseID, {
+        agentType: getStringProperty(input.tool_input, "subagent_type"),
+        description: getStringProperty(input.tool_input, "description"),
+        toolUseId: toolUseID,
+      });
+      if (!pendingSubAgentToolUseIds.includes(toolUseID)) {
+        pendingSubAgentToolUseIds.push(toolUseID);
+      }
+    }
+
+    // Local handlers can run before the application consumes the assistant
+    // chunk carrying this relationship. PreToolUse still runs first, so record
+    // the parent here before returning early for locally instrumented tools.
+    if (input.agent_id) {
+      const parentToolUseId = taskIdToToolUseId.get(input.agent_id);
+      if (parentToolUseId) {
+        toolUseToParent.set(toolUseID, parentToolUseId);
+      }
     }
 
     if (
@@ -553,6 +577,11 @@ function createToolTracingHooks(
   const postToolUse: ClaudeAgentSDKHookCallback = async (input, toolUseID) => {
     if (input.hook_event_name !== "PostToolUse" || !toolUseID) {
       return {};
+    }
+
+    const pendingIndex = pendingSubAgentToolUseIds.indexOf(toolUseID);
+    if (pendingIndex !== -1) {
+      pendingSubAgentToolUseIds.splice(pendingIndex, 1);
     }
 
     if (
@@ -633,6 +662,11 @@ function createToolTracingHooks(
       return {};
     }
 
+    const pendingIndex = pendingSubAgentToolUseIds.indexOf(toolUseID);
+    if (pendingIndex !== -1) {
+      pendingSubAgentToolUseIds.splice(pendingIndex, 1);
+    }
+
     if (
       skipLocalToolHooks &&
       (isLocalToolUse(input.tool_name, mcpServers) ||
@@ -711,7 +745,31 @@ function createToolTracingHooks(
     input,
     toolUseID,
   ) => {
-    if (input.hook_event_name !== "SubagentStart" || !toolUseID) {
+    if (input.hook_event_name !== "SubagentStart") {
+      return {};
+    }
+
+    // The SDK passes a hook request UUID here rather than the delegation's
+    // tool-use ID. Pair this lifecycle event with the earlier Agent/Task
+    // PreToolUse hook, which carries the real ID even when the stream has not
+    // been consumed yet.
+    const pendingIndex = pendingSubAgentToolUseIds.findIndex(
+      (pendingToolUseId) =>
+        subAgentDetailsByToolUseId.get(pendingToolUseId)?.agentType ===
+        input.agent_type,
+    );
+    const delegationToolUseId =
+      pendingIndex !== -1
+        ? pendingSubAgentToolUseIds.splice(pendingIndex, 1)[0]
+        : toolUseID && activeToolSpans.has(toolUseID)
+          ? toolUseID
+          : undefined;
+    if (!delegationToolUseId) {
+      return {};
+    }
+
+    taskIdToToolUseId.set(input.agent_id, delegationToolUseId);
+    if (!toolUseID) {
       return {};
     }
 
@@ -790,6 +848,9 @@ function injectTracingHooks(
   activeToolSpans: Map<string, Span>,
   localToolHookNames: Set<string>,
   skipLocalToolHooks: boolean,
+  taskIdToToolUseId: Map<string, string>,
+  toolUseToParent: Map<string, string | null>,
+  pendingSubAgentToolUseIds: string[],
   subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   subAgentSpans: Map<string, Span>,
   endedSubAgentSpans: Set<string>,
@@ -806,6 +867,9 @@ function injectTracingHooks(
     options.mcpServers,
     localToolHookNames,
     skipLocalToolHooks,
+    taskIdToToolUseId,
+    toolUseToParent,
+    pendingSubAgentToolUseIds,
     subAgentDetailsByToolUseId,
     subAgentSpans,
     endedSubAgentSpans,
@@ -1503,6 +1567,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         };
         const subAgentDetailsByToolUseId = new Map<string, SubAgentDetails>();
         const taskIdToToolUseId = new Map<string, string>();
+        const pendingSubAgentToolUseIds: string[] = [];
         const promptMessagesByParentKey = new Map<
           string,
           ClaudeConversationMessage[]
@@ -1567,6 +1632,9 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           activeToolSpans,
           localToolHookNames,
           skipLocalToolHooks,
+          taskIdToToolUseId,
+          toolUseToParent,
+          pendingSubAgentToolUseIds,
           subAgentDetailsByToolUseId,
           subAgentSpans,
           endedSubAgentSpans,
