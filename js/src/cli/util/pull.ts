@@ -13,7 +13,8 @@ import fs from "node:fs/promises";
 import util from "node:util";
 import { slugify } from "../../../util/string_util";
 import path from "node:path";
-import { currentRepo } from "../../gitutil";
+import { runGitCommand } from "../../git-command";
+import { currentRepoPath } from "../../gitutil";
 import { isEmpty, loadPrettyXact, prettifyXact } from "../../../util/index";
 import {
   ProjectNameIdMap,
@@ -71,16 +72,17 @@ export async function pullCommand(args: PullArgs) {
   const outputDir = args.output_dir ?? "./braintrust";
   await fs.mkdir(outputDir, { recursive: true });
 
-  const git = await currentRepo();
-  const diffSummary = await git?.diffSummary("HEAD");
-
-  // Get the root directory of the Git repository
-  const repoRoot = await git?.revparse(["--show-toplevel"]);
-
+  const repoRoot = await currentRepoPath();
+  const dirtyFileOutput = repoRoot
+    ? await runGitCommand(["diff", "--name-only", "-z", "HEAD"], {
+        cwd: repoRoot,
+      })
+    : "";
   const dirtyFiles = new Set(
-    (diffSummary?.files ?? []).map((f) =>
-      path.resolve(repoRoot ?? ".", f.file),
-    ),
+    dirtyFileOutput
+      .split("\0")
+      .filter(Boolean)
+      .map((file) => path.resolve(repoRoot ?? ".", file)),
   );
 
   for (const projectName of Object.keys(projectNameToFunctions)) {
@@ -111,7 +113,7 @@ export async function pullCommand(args: PullArgs) {
       );
       continue;
     } else if (fileExists) {
-      if (!git) {
+      if (!repoRoot) {
         // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
         console.warn(
           warning(

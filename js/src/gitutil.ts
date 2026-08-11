@@ -4,25 +4,8 @@ import {
 } from "./generated_types";
 import { debugLogger } from "./debug-logger";
 import { runGitCommand } from "./git-command";
-import { simpleGit } from "simple-git";
 
 const COMMON_BASE_BRANCHES = ["main", "master", "develop"];
-
-/**
- * Information about the current HEAD of the repo.
- */
-export async function currentRepo() {
-  try {
-    const git = simpleGit();
-    if (await git.checkIsRepo()) {
-      return git;
-    } else {
-      return null;
-    }
-  } catch {
-    return null;
-  }
-}
 
 let _baseBranch: {
   remote: string;
@@ -188,7 +171,7 @@ export async function getRepoInfo(settings?: GitMetadataSettings) {
   return sanitized;
 }
 
-async function currentRepoPath(): Promise<string | undefined> {
+export async function currentRepoPath(): Promise<string | undefined> {
   return await attempt(async () =>
     (await runGitCommand(["rev-parse", "--show-toplevel"])).trim(),
   );
