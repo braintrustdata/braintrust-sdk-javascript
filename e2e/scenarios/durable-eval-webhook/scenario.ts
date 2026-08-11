@@ -12,13 +12,14 @@ import {
 
 async function main() {
   const testRunId = getTestRunId();
+  const scenario = "durable-eval-webhook";
   const store = new DurableEvalMemoryStore();
   const jobs = new Map<string, unknown[]>();
   const webhookCompletion = {
     mode: "webhook" as const,
-    externalId: (handle: { id: string }) => handle.id,
+    externalId: (submission: { id: string }) => submission.id,
   };
-  const task = BatchTask<
+  const task = new BatchTask<
     number,
     number,
     number,
@@ -32,8 +33,8 @@ async function main() {
       return { id };
     },
     completion: webhookCompletion,
-    async collect(handle) {
-      const items = (jobs.get(handle.id) ?? []) as Array<{
+    async collect(submission) {
+      const items = (jobs.get(submission.id) ?? []) as Array<{
         id: string;
         input: number;
       }>;
@@ -43,7 +44,7 @@ async function main() {
       }));
     },
   });
-  const scorer = BatchScorer<
+  const scorer = new BatchScorer<
     number,
     number,
     number,
@@ -58,8 +59,8 @@ async function main() {
       return { id };
     },
     completion: webhookCompletion,
-    async collect(handle) {
-      const items = (jobs.get(handle.id) ?? []) as Array<{
+    async collect(submission) {
+      const items = (jobs.get(submission.id) ?? []) as Array<{
         id: string;
         output: number;
         expected: number;
@@ -78,15 +79,12 @@ async function main() {
     scopedName("e2e-durable-eval-webhook-project", testRunId),
     {
       store,
-      experimentName: scopedName(
-        "e2e-durable-eval-webhook-experiment",
-        testRunId,
-      ),
+      experimentName: `${scenario}-${testRunId}`,
       data: [1, 2, 3].map((input) => ({
         id: `case-${input}`,
         input,
         expected: input * 2,
-        metadata: { testRunId, kind: "webhook" },
+        metadata: { scenario, testRunId, kind: "webhook" },
       })),
       task,
       scores: [

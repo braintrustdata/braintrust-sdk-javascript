@@ -613,6 +613,17 @@
     ]
   },
   {
+    "scenarioDirName": "durable-eval-webhook",
+    "label": "Durable Eval Webhook",
+    "metadataScenario": "durable-eval-webhook",
+    "evals": [
+      {
+        "experimentNameTemplate": "durable-eval-webhook-{testRunId}",
+        "label": "webhook"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "test-framework-evals-vitest",
     "label": "Vitest Test Framework Evals",
     "metadataScenario": "test-framework-evals-vitest",

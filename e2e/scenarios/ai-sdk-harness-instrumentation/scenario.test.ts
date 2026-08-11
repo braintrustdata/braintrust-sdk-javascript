@@ -245,16 +245,7 @@ describe.sequential("HarnessAgent instrumentation variants", () => {
             );
             const harnessSpans = findAllSpans(events, "harness");
             expect(harnessSpans).toHaveLength(4);
-            // The harness may issue additional bash calls while coordinating a
-            // suspended turn. Assert only the two commands requested from the
-            // agent; coordination calls are not part of this contract.
-            const bashSpans = findAllSpans(events, "bash").filter((span) => {
-              const input = String(span.input);
-              return (
-                input.includes("printf GENERATE_OK") ||
-                input.includes("printf STREAM_OK")
-              );
-            });
+            const bashSpans = findAllSpans(events, "bash");
             expect(bashSpans).toHaveLength(2);
             for (const bashSpan of bashSpans) {
               expect(bashSpan.span.type).toBe("tool");
