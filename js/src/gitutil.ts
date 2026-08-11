@@ -3,6 +3,7 @@ import {
   type RepoInfoType as RepoInfo,
 } from "./generated_types";
 import { debugLogger } from "./debug-logger";
+import { runGitCommand } from "./git-command";
 import { simpleGit } from "simple-git";
 
 const COMMON_BASE_BRANCHES = ["main", "master", "develop"];
@@ -166,9 +167,15 @@ export async function getRepoInfo(settings?: GitMetadataSettings) {
   return sanitized;
 }
 
+async function currentRepoPath(): Promise<string | undefined> {
+  return await attempt(async () =>
+    (await runGitCommand(["rev-parse", "--show-toplevel"])).trim(),
+  );
+}
+
 async function repoInfo() {
-  const git = await currentRepo();
-  if (git === null) {
+  const repoPath = await currentRepoPath();
+  if (!repoPath) {
     return undefined;
   }
 
@@ -181,32 +188,36 @@ async function repoInfo() {
   let branch = undefined;
   let git_diff = undefined;
 
-  const dirty = (await git.diffSummary()).files.length > 0;
+  const runGit = async (args: string[]) =>
+    await runGitCommand(args, { cwd: repoPath });
+  const dirty = (await runGit(["diff", "--name-only"])).trim().length > 0;
 
-  commit = await attempt(async () => await git.revparse(["HEAD"]));
+  commit = await attempt(async () =>
+    (await runGit(["rev-parse", "HEAD"])).trim(),
+  );
   commit_message = await attempt(async () =>
-    (await git.raw(["log", "-1", "--pretty=%B"])).trim(),
+    (await runGit(["log", "-1", "--pretty=%B"])).trim(),
   );
   commit_time = await attempt(async () =>
-    (await git.raw(["log", "-1", "--pretty=%cI"])).trim(),
+    (await runGit(["log", "-1", "--pretty=%cI"])).trim(),
   );
   author_name = await attempt(async () =>
-    (await git.raw(["log", "-1", "--pretty=%aN"])).trim(),
+    (await runGit(["log", "-1", "--pretty=%aN"])).trim(),
   );
   author_email = await attempt(async () =>
-    (await git.raw(["log", "-1", "--pretty=%aE"])).trim(),
+    (await runGit(["log", "-1", "--pretty=%aE"])).trim(),
   );
   tag = await attempt(async () =>
-    (await git.raw(["describe", "--tags", "--exact-match", "--always"])).trim(),
+    (await runGit(["describe", "--tags", "--exact-match", "--always"])).trim(),
   );
 
   branch = await attempt(async () =>
-    (await git.raw(["rev-parse", "--abbrev-ref", "HEAD"])).trim(),
+    (await runGit(["rev-parse", "--abbrev-ref", "HEAD"])).trim(),
   );
 
   if (dirty) {
     git_diff = await attempt(async () =>
-      truncateToByteLimit(await git.raw(["--no-ext-diff", "diff", "HEAD"])),
+      truncateToByteLimit(await runGit(["diff", "--no-ext-diff", "HEAD"])),
     );
   }
 
