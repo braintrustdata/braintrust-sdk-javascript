@@ -200,6 +200,7 @@ export {
   braintrustEveHook,
   braintrustEveInstrumentation,
 } from "./instrumentation/plugins/eve-plugin";
+export { collectAnthropicSession } from "./wrappers/anthropic-session-collector";
 export { wrapAnthropic } from "./wrappers/anthropic";
 export {
   BraintrustObservabilityExporter,
@@ -222,6 +223,7 @@ export { wrapHuggingFaceTransformers } from "./wrappers/huggingface-transformers
 export { wrapOpenRouterAgent } from "./wrappers/openrouter-agent";
 export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
+export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapGroq } from "./wrappers/groq";
 export { wrapBedrockRuntime } from "./wrappers/bedrock-runtime";

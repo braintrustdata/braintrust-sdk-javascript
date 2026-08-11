@@ -21,5 +21,11 @@
     "huggingface-transformers-v3-latest": "npm:@huggingface/transformers@3.8.1",
     "huggingface-transformers-v4": "npm:@huggingface/transformers@4.0.0",
     "huggingface-transformers-v4-latest": "npm:@huggingface/transformers@4.2.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "sharp@<0.35.0": "^0.35.3",
+      "adm-zip@<0.6.0": "^0.6.0"
+    }
   }
 }

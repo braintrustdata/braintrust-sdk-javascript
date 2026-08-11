@@ -7,6 +7,7 @@ runMain(async () => {
   const { default: Anthropic } = await import(anthropicPackageName);
   await runWrappedAnthropicInstrumentation(Anthropic, {
     supportsServerToolUse: false,
+    supportsSessions: false,
     useBetaMessages: false,
   });
 });

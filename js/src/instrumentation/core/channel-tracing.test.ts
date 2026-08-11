@@ -314,4 +314,48 @@ describe("traceAsyncChannel current span binding", () => {
     expect(onError).toHaveBeenCalledTimes(1);
     expect(end).toHaveBeenCalledTimes(2);
   });
+
+  it("records stream cancellation as an error", async () => {
+    const onError = vi.fn();
+    const child = {
+      end: vi.fn(),
+      log: vi.fn(),
+    } as unknown as Span;
+    const unsubscribe = traceStreamingChannel(testChannels.streamingCall, {
+      name: "streaming-channel-test",
+      startSpan: () => child,
+      type: "function",
+      extractInput: () => ({ input: "input", metadata: undefined }),
+      extractOutput: (result) => result,
+      extractMetrics: () => ({}),
+      onError,
+    });
+    const stream = {
+      abort: vi.fn(),
+      async *[Symbol.asyncIterator]() {
+        yield { ok: true };
+      },
+    };
+
+    try {
+      const patched = await testChannels.streamingCall.tracePromise(
+        async () => stream as any,
+        { arguments: [{}] } as any,
+      );
+      (patched as unknown as typeof stream).abort();
+      await Promise.resolve();
+    } finally {
+      unsubscribe();
+    }
+
+    const cancellationError = expect.objectContaining({
+      message: "Stream cancelled before completion",
+      name: "AbortError",
+    });
+    expect(child.log).toHaveBeenLastCalledWith({ error: cancellationError });
+    expect(child.end).toHaveBeenCalledOnce();
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({ error: cancellationError }),
+    );
+  });
 });

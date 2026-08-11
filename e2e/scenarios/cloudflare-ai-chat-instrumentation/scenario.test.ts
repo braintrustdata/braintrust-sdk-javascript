@@ -45,10 +45,7 @@ describe.sequential("Cloudflare AI Chat variants", () => {
               },
               runContext: {
                 cassette: {
-                  variantKey:
-                    mode === "manual"
-                      ? scenario.variantKey
-                      : `${scenario.variantKey}-auto`,
+                  variantKey: scenario.variantKey,
                 },
                 originalScenarioDir,
                 variantKey: scenario.variantKey,

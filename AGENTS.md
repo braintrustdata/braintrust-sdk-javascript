@@ -31,6 +31,8 @@ Use the normal Orchestrion config plus plugin/channel path by default. Special-c
 
 Instrumentation patches generally do not need to be removed during teardown. Prefer leaving behavior-preserving patches installed when they are idempotent; do not add unpatching machinery by default.
 
+Span names should generally remain stable across calls and versions. Do not include dynamic values such as model names in span names; record those values in metadata instead.
+
 ## Testing
 
 Uses Vitest. Prefer running the **narrowest relevant test** rather than the full suite.
@@ -54,6 +56,8 @@ pnpm run test:e2e:record          # Re-record provider cassettes and update snap
 ```
 
 When adding or modifying e2e tests, run the relevant e2e verification twice before stopping so flakes are caught proactively. After running `pnpm run test:e2e:update` or `pnpm run test:e2e:record`, always run the normal e2e tests afterward to verify there is no snapshot drift or unstable output.
+
+New instrumentation e2e coverage must test both a pinned SDK dependency and a separately named latest dependency alias for every supported version line. Only the latest alias should participate in `test:e2e:bump`; add pinned and latest variants to the CI e2e summary.
 
 Span-tree snapshots are paired: `*.span-tree.json` is the structural contract, and `*.span-tree.txt` is the human-readable ASCII tree generated from the same normalized spans. Both files are asserted and should be updated together through `pnpm run test:e2e:update` or `pnpm run test:e2e:record`; do not hand-edit only one side of the pair.
 

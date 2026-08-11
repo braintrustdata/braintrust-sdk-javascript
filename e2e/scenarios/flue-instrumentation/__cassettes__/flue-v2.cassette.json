@@ -1,0 +1,315 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "7c0e162d6794cf5d",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-08-03T08:49:42.864Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "include": ["reasoning.encrypted_content"],
+            "input": [
+              {
+                "content": "Call the lookup tool exactly once with query Flue 2 instrumentation. Then reply with exactly PROMPT_DONE.\n\n## Available Agents\n\nNone. No subagents are currently declared, so the `task` tool has no valid `agent` value — do not call it unless an agent is introduced later in the conversation.\n\nDate: Mon, Aug 3, 2026",
+                "role": "developer"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Exercise Flue 2 tool-use instrumentation and finish with PROMPT_DONE.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 128000,
+            "model": "gpt-5.6-luna",
+            "prompt_cache_key": "[REDACTED]",
+            "reasoning": {
+              "effort": "low",
+              "summary": "auto"
+            },
+            "store": false,
+            "stream": true,
+            "tools": [
+              {
+                "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \"Available Agents\" in the system prompt.",
+                "name": "task",
+                "parameters": {
+                  "properties": {
+                    "agent": {
+                      "description": "Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "attachments": {
+                      "description": "Images from this conversation to include in the child agent prompt",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "description": "Attachment ID shown in the current conversation",
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "cwd": {
+                      "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Short human-readable label for the delegated work",
+                      "type": "string"
+                    },
+                    "prompt": {
+                      "description": "Focused instructions for the child agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["prompt", "agent"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              },
+              {
+                "description": "Return the deterministic Flue instrumentation result.",
+                "name": "lookup",
+                "parameters": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["query"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_001d159cf9fa77e0016a705625c62881a2abf118a2e23c0482\",\"object\":\"response\",\"created_at\":1785746981,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5.6-luna\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"aff_01KZ3D0ZPQCMGJ66Q0WJV4G057\",\"prompt_cache_retention\":\"24h\",\"reasoning\":{\"context\":\"all_turns\",\"effort\":\"low\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \\\"Available Agents\\\" in the system prompt.\",\"name\":\"task\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"prompt\",\"agent\"],\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Short human-readable label for the delegated work\"},\"prompt\":{\"type\":\"string\",\"description\":\"Focused instructions for the child agent\"},\"agent\":{\"type\":\"string\",\"minLength\":1,\"description\":\"Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).\"},\"cwd\":{\"type\":\"string\",\"description\":\"Working directory for the child agent. AGENTS.md and skills are discovered from here.\"},\"attachments\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Attachment ID shown in the current conversation\"}}},\"description\":\"Images from this conversation to include in the child agent prompt\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Return the deterministic Flue instrumentation result.\",\"name\":\"lookup\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]},\"strict\":false}],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_001d159cf9fa77e0016a705625c62881a2abf118a2e23c0482\",\"object\":\"response\",\"created_at\":1785746981,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5.6-luna\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"aff_01KZ3D0ZPQCMGJ66Q0WJV4G057\",\"prompt_cache_retention\":\"24h\",\"reasoning\":{\"context\":\"all_turns\",\"effort\":\"low\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \\\"Available Agents\\\" in the system prompt.\",\"name\":\"task\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"prompt\",\"agent\"],\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Short human-readable label for the delegated work\"},\"prompt\":{\"type\":\"string\",\"description\":\"Focused instructions for the child agent\"},\"agent\":{\"type\":\"string\",\"minLength\":1,\"description\":\"Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).\"},\"cwd\":{\"type\":\"string\",\"description\":\"Working directory for the child agent. AGENTS.md and skills are discovered from here.\"},\"attachments\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Attachment ID shown in the current conversation\"}}},\"description\":\"Images from this conversation to include in the child agent prompt\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Return the deterministic Flue instrumentation result.\",\"name\":\"lookup\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]},\"strict\":false}],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"type\":\"function_call\",\"status\":\"in_progress\",\"arguments\":\"\",\"call_id\":\"call_koz49K93RTRMsfa8Vk2YeP41\",\"name\":\"lookup\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"{\\\"\",\"item_id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"obfuscation\":\"z2qv7ISz2rrvNU\",\"output_index\":0,\"sequence_number\":3}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"query\",\"item_id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"obfuscation\":\"QPWTnyaNzEi\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"\\\":\\\"\",\"item_id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"obfuscation\":\"aaC3GSXYH2wNu\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"Fl\",\"item_id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"obfuscation\":\"aQoGUljJjnUApJ\",\"output_index\":0,\"sequence_number\":6}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"ue\",\"item_id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"obfuscation\":\"CYDgDeBXcCH1Hr\",\"output_index\":0,\"sequence_number\":7}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\" \",\"item_id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"obfuscation\":\"O5T9znJitrItIHo\",\"output_index\":0,\"sequence_number\":8}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"2\",\"item_id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"obfuscation\":\"5P6R9CmlcXS0MQ0\",\"output_index\":0,\"sequence_number\":9}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\" instrumentation\",\"item_id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"obfuscation\":\"\",\"output_index\":0,\"sequence_number\":10}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"\\\"}\",\"item_id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"obfuscation\":\"2poHy5wrSmxKBI\",\"output_index\":0,\"sequence_number\":11}",
+            "event: response.function_call_arguments.done\ndata: {\"type\":\"response.function_call_arguments.done\",\"arguments\":\"{\\\"query\\\":\\\"Flue 2 instrumentation\\\"}\",\"item_id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"output_index\":0,\"sequence_number\":12}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"type\":\"function_call\",\"status\":\"completed\",\"arguments\":\"{\\\"query\\\":\\\"Flue 2 instrumentation\\\"}\",\"call_id\":\"call_koz49K93RTRMsfa8Vk2YeP41\",\"name\":\"lookup\"},\"output_index\":0,\"sequence_number\":13}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_001d159cf9fa77e0016a705625c62881a2abf118a2e23c0482\",\"object\":\"response\",\"created_at\":1785746981,\"status\":\"completed\",\"background\":false,\"completed_at\":1785746982,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5.6-luna\",\"moderation\":null,\"output\":[{\"id\":\"fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7\",\"type\":\"function_call\",\"status\":\"completed\",\"arguments\":\"{\\\"query\\\":\\\"Flue 2 instrumentation\\\"}\",\"call_id\":\"call_koz49K93RTRMsfa8Vk2YeP41\",\"name\":\"lookup\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"aff_01KZ3D0ZPQCMGJ66Q0WJV4G057\",\"prompt_cache_retention\":\"24h\",\"reasoning\":{\"context\":\"all_turns\",\"effort\":\"low\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \\\"Available Agents\\\" in the system prompt.\",\"name\":\"task\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"prompt\",\"agent\"],\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Short human-readable label for the delegated work\"},\"prompt\":{\"type\":\"string\",\"description\":\"Focused instructions for the child agent\"},\"agent\":{\"type\":\"string\",\"minLength\":1,\"description\":\"Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).\"},\"cwd\":{\"type\":\"string\",\"description\":\"Working directory for the child agent. AGENTS.md and skills are discovered from here.\"},\"attachments\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Attachment ID shown in the current conversation\"}}},\"description\":\"Images from this conversation to include in the child agent prompt\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Return the deterministic Flue instrumentation result.\",\"name\":\"lookup\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]},\"strict\":false}],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":339,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":21,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":360},\"user\":null,\"metadata\":{}},\"sequence_number\":14}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a2541206dea6e5f3-IAD",
+          "connection": "keep-alive",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Mon, 03 Aug 2026 08:49:42 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "457",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999226",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_2be32764cfab409bb25520ca21c50292"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "f12aff3913439248",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-08-03T08:49:43.681Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "include": ["reasoning.encrypted_content"],
+            "input": [
+              {
+                "content": "Call the lookup tool exactly once with query Flue 2 instrumentation. Then reply with exactly PROMPT_DONE.\n\n## Available Agents\n\nNone. No subagents are currently declared, so the `task` tool has no valid `agent` value — do not call it unless an agent is introduced later in the conversation.\n\nDate: Mon, Aug 3, 2026",
+                "role": "developer"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Exercise Flue 2 tool-use instrumentation and finish with PROMPT_DONE.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "arguments": "{\"query\":\"Flue 2 instrumentation\"}",
+                "call_id": "call_koz49K93RTRMsfa8Vk2YeP41",
+                "id": "fc_001d159cf9fa77e0016a705626b64481a2bfd304a97fb1bbc7",
+                "name": "lookup",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_koz49K93RTRMsfa8Vk2YeP41",
+                "output": "{\"framework\":\"flue\",\"query\":\"Flue 2 instrumentation\",\"version\":2}",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 128000,
+            "model": "gpt-5.6-luna",
+            "prompt_cache_key": "[REDACTED]",
+            "reasoning": {
+              "effort": "low",
+              "summary": "auto"
+            },
+            "store": false,
+            "stream": true,
+            "tools": [
+              {
+                "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \"Available Agents\" in the system prompt.",
+                "name": "task",
+                "parameters": {
+                  "properties": {
+                    "agent": {
+                      "description": "Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "attachments": {
+                      "description": "Images from this conversation to include in the child agent prompt",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "description": "Attachment ID shown in the current conversation",
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "cwd": {
+                      "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Short human-readable label for the delegated work",
+                      "type": "string"
+                    },
+                    "prompt": {
+                      "description": "Focused instructions for the child agent",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["prompt", "agent"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              },
+              {
+                "description": "Return the deterministic Flue instrumentation result.",
+                "name": "lookup",
+                "parameters": {
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["query"],
+                  "type": "object"
+                },
+                "strict": false,
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_001d159cf9fa77e0016a705626f8d481a292dbb15f39a06045\",\"object\":\"response\",\"created_at\":1785746983,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5.6-luna\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"aff_01KZ3D0ZPQCMGJ66Q0WJV4G057\",\"prompt_cache_retention\":\"24h\",\"reasoning\":{\"context\":\"all_turns\",\"effort\":\"low\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \\\"Available Agents\\\" in the system prompt.\",\"name\":\"task\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"prompt\",\"agent\"],\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Short human-readable label for the delegated work\"},\"prompt\":{\"type\":\"string\",\"description\":\"Focused instructions for the child agent\"},\"agent\":{\"type\":\"string\",\"minLength\":1,\"description\":\"Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).\"},\"cwd\":{\"type\":\"string\",\"description\":\"Working directory for the child agent. AGENTS.md and skills are discovered from here.\"},\"attachments\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Attachment ID shown in the current conversation\"}}},\"description\":\"Images from this conversation to include in the child agent prompt\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Return the deterministic Flue instrumentation result.\",\"name\":\"lookup\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]},\"strict\":false}],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_001d159cf9fa77e0016a705626f8d481a292dbb15f39a06045\",\"object\":\"response\",\"created_at\":1785746983,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5.6-luna\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"aff_01KZ3D0ZPQCMGJ66Q0WJV4G057\",\"prompt_cache_retention\":\"24h\",\"reasoning\":{\"context\":\"all_turns\",\"effort\":\"low\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \\\"Available Agents\\\" in the system prompt.\",\"name\":\"task\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"prompt\",\"agent\"],\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Short human-readable label for the delegated work\"},\"prompt\":{\"type\":\"string\",\"description\":\"Focused instructions for the child agent\"},\"agent\":{\"type\":\"string\",\"minLength\":1,\"description\":\"Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).\"},\"cwd\":{\"type\":\"string\",\"description\":\"Working directory for the child agent. AGENTS.md and skills are discovered from here.\"},\"attachments\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Attachment ID shown in the current conversation\"}}},\"description\":\"Images from this conversation to include in the child agent prompt\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Return the deterministic Flue instrumentation result.\",\"name\":\"lookup\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]},\"strict\":false}],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_001d159cf9fa77e0016a705627928c81a29022feff2d34c6c9\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"phase\":\"final_answer\",\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_001d159cf9fa77e0016a705627928c81a29022feff2d34c6c9\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":3}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"PROM\",\"item_id\":\"msg_001d159cf9fa77e0016a705627928c81a29022feff2d34c6c9\",\"logprobs\":[],\"obfuscation\":\"tP2MdYGWLuYO\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"PT\",\"item_id\":\"msg_001d159cf9fa77e0016a705627928c81a29022feff2d34c6c9\",\"logprobs\":[],\"obfuscation\":\"klE1UCodzjpdZX\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"_DONE\",\"item_id\":\"msg_001d159cf9fa77e0016a705627928c81a29022feff2d34c6c9\",\"logprobs\":[],\"obfuscation\":\"Bh6pw7IvwwZ\",\"output_index\":0,\"sequence_number\":6}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_001d159cf9fa77e0016a705627928c81a29022feff2d34c6c9\",\"logprobs\":[],\"output_index\":0,\"sequence_number\":7,\"text\":\"PROMPT_DONE\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_001d159cf9fa77e0016a705627928c81a29022feff2d34c6c9\",\"output_index\":0,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"PROMPT_DONE\"},\"sequence_number\":8}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_001d159cf9fa77e0016a705627928c81a29022feff2d34c6c9\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"PROMPT_DONE\"}],\"phase\":\"final_answer\",\"role\":\"assistant\"},\"output_index\":0,\"sequence_number\":9}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_001d159cf9fa77e0016a705626f8d481a292dbb15f39a06045\",\"object\":\"response\",\"created_at\":1785746983,\"status\":\"completed\",\"background\":false,\"completed_at\":1785746983,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5.6-luna\",\"moderation\":null,\"output\":[{\"id\":\"msg_001d159cf9fa77e0016a705627928c81a29022feff2d34c6c9\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"PROMPT_DONE\"}],\"phase\":\"final_answer\",\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"aff_01KZ3D0ZPQCMGJ66Q0WJV4G057\",\"prompt_cache_retention\":\"24h\",\"reasoning\":{\"context\":\"all_turns\",\"effort\":\"low\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \\\"Available Agents\\\" in the system prompt.\",\"name\":\"task\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"prompt\",\"agent\"],\"properties\":{\"description\":{\"type\":\"string\",\"description\":\"Short human-readable label for the delegated work\"},\"prompt\":{\"type\":\"string\",\"description\":\"Focused instructions for the child agent\"},\"agent\":{\"type\":\"string\",\"minLength\":1,\"description\":\"Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).\"},\"cwd\":{\"type\":\"string\",\"description\":\"Working directory for the child agent. AGENTS.md and skills are discovered from here.\"},\"attachments\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"type\":\"string\",\"description\":\"Attachment ID shown in the current conversation\"}}},\"description\":\"Images from this conversation to include in the child agent prompt\"}}},\"strict\":false},{\"type\":\"function\",\"description\":\"Return the deterministic Flue instrumentation result.\",\"name\":\"lookup\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}},\"required\":[\"query\"]},\"strict\":false}],\"top_logprobs\":0,\"top_p\":0.98,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":388,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":7,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":395},\"user\":null,\"metadata\":{}},\"sequence_number\":10}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a25412132dede5f3-IAD",
+          "connection": "keep-alive",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Mon, 03 Aug 2026 08:49:43 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "305",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999178",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_16af217a4efa41dda5a576c10775ec82"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-08-03T08:49:43.733Z"
+  }
+}

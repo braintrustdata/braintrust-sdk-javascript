@@ -1,4 +1,4 @@
-// Auto-generated file (content hash ecb294cff7f76552) -- do not modify
+// Auto-generated file (content hash 7d0333cc2dc03e50) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -16,6 +16,7 @@ export const AclObjectType = z.union([
     "project_log",
     "org_project",
     "org_audit_logs",
+    "project_group",
   ]),
   z.null(),
 ]);
@@ -1630,6 +1631,65 @@ export const Project = z.object({
   settings: ProjectSettings.optional(),
 });
 export type ProjectType = z.infer<typeof Project>;
+export const WindowedAutomationConfig = z.object({
+  event_type: z.literal("windowed"),
+  status: AutomationStatus.optional(),
+  threshold: z
+    .object({
+      calculation: z.object({
+        type: z.literal("btql"),
+        btql_query: z.string().min(1),
+        output: z.object({
+          type: z.literal("scalar"),
+          value_column: z.string().min(1),
+        }),
+      }),
+      policy: z.object({
+        condition: z.object({
+          type: z.literal("threshold"),
+          operator: z.enum(["lt", "lte", "gt", "gte", "eq", "neq"]),
+          threshold: z.number(),
+        }),
+        pending_seconds: z.number().int().gte(0).lte(2592000),
+        no_data_behavior: z.enum(["keep_last", "resolve", "alert"]),
+        renotify_interval_seconds: z.union([z.number(), z.null()]).optional(),
+        notify_on_recovery: z.boolean().optional().default(true),
+      }),
+    })
+    .optional(),
+  window: z.object({
+    window_seconds: z.number().int().gte(1).lte(2592000),
+    schedule: z.union([
+      z.object({
+        type: z.literal("interval"),
+        evaluation_interval_seconds: z.number().int().gte(1).lte(2592000),
+      }),
+      z.object({
+        type: z.literal("cron"),
+        cron_expression: z.string().min(1),
+        timezone: z.union([z.string(), z.null()]).optional(),
+      }),
+    ]),
+    evaluation_delay_seconds: z.number().int().gte(0).lte(2592000),
+  }),
+  actions: z
+    .array(
+      z.union([
+        z.object({ type: z.literal("webhook"), url: z.string() }),
+        z.object({
+          type: z.literal("slack"),
+          workspace_id: z.string(),
+          channel: z.string(),
+          message_template: z.string().optional(),
+        }),
+      ]),
+    )
+    .min(1)
+    .max(20),
+});
+export type WindowedAutomationConfigType = z.infer<
+  typeof WindowedAutomationConfig
+>;
 export const TopicAutomationFacetModel = z.union([
   z.enum(["brain-facet-latest", "brain-facet-1", "brain-facet-2"]),
   z.null(),
@@ -1776,6 +1836,7 @@ export const ProjectAutomation = z.object({
         }),
       ]),
     }),
+    WindowedAutomationConfig,
     TopicAutomationConfig,
     TopicDigestAutomationConfig,
   ]),

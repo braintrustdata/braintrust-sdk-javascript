@@ -6962,8 +6962,7 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     const objectId = await this.id;
     const batchLimit = batchSize ?? DEFAULT_FETCH_BATCH_SIZE;
     const internalLimit = getInternalBtqlLimit(this._internal_btql);
-    const limit =
-      batchSize !== undefined ? batchSize : (internalLimit ?? batchLimit);
+    let remainingLimit = internalLimit;
     const internalBtqlWithoutReservedQueryKeys = Object.fromEntries(
       Object.entries(this._internal_btql ?? {}).filter(
         ([key]) =>
@@ -6976,6 +6975,13 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
     let cursor = undefined;
     let iterations = 0;
     while (true) {
+      if (remainingLimit !== undefined && remainingLimit <= 0) {
+        return;
+      }
+      const limit =
+        remainingLimit === undefined
+          ? batchLimit
+          : Math.min(batchLimit, remainingLimit);
       const resp = await state.apiConn().post(
         `btql`,
         {
@@ -7017,9 +7023,16 @@ export class ObjectFetcher<RecordType> implements AsyncIterable<
       const respJson = await resp.json();
       const mutate = this.mutateRecord;
       for (const record of respJson.data ?? []) {
-        yield mutate
+        if (remainingLimit !== undefined && remainingLimit <= 0) {
+          return;
+        }
+        const mutatedRecord = mutate
           ? mutate(record)
           : (record as WithTransactionId<RecordType>);
+        if (remainingLimit !== undefined) {
+          remainingLimit--;
+        }
+        yield mutatedRecord;
       }
       if (!respJson.cursor) {
         break;

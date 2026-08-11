@@ -202,7 +202,7 @@ async function runOpenRouterInstrumentationScenario(
             maxToolCalls: 1,
             model: CALL_MODEL,
             temperature: 0,
-            toolChoice: "required",
+            toolChoice: "auto",
             tools: [createWeatherTool()],
           });
 

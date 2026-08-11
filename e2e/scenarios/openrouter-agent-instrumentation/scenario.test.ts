@@ -47,6 +47,8 @@ describe.concurrent("variants", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
+        snapshotName: `${scenario.variantKey}-wrapped`,
+        testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });
 
@@ -65,6 +67,8 @@ describe.concurrent("variants", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
+        snapshotName: `${scenario.variantKey}-auto`,
+        testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });
     });

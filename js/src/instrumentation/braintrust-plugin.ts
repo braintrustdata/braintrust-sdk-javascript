@@ -13,6 +13,7 @@ import { HuggingFaceTransformersPlugin } from "./plugins/huggingface-transformer
 import { OpenRouterAgentPlugin } from "./plugins/openrouter-agent-plugin";
 import { OpenRouterPlugin } from "./plugins/openrouter-plugin";
 import { MistralPlugin } from "./plugins/mistral-plugin";
+import { OllamaPlugin } from "./plugins/ollama-plugin";
 import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
@@ -44,6 +45,7 @@ export interface BraintrustPluginConfig {
  * - HuggingFace Inference SDK
  * - LangChain.js and LangGraph
  * - Mistral SDK
+ * - Ollama SDK
  * - Cohere SDK
  *
  * The plugin is automatically enabled when the Braintrust library is loaded.
@@ -66,6 +68,7 @@ export class BraintrustPlugin extends BasePlugin {
   private openRouterPlugin: OpenRouterPlugin | null = null;
   private openRouterAgentPlugin: OpenRouterAgentPlugin | null = null;
   private mistralPlugin: MistralPlugin | null = null;
+  private ollamaPlugin: OllamaPlugin | null = null;
   private googleADKPlugin: GoogleADKPlugin | null = null;
   private coherePlugin: CoherePlugin | null = null;
   private groqPlugin: GroqPlugin | null = null;
@@ -161,6 +164,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.mistral !== false) {
       this.mistralPlugin = new MistralPlugin();
       this.mistralPlugin.enable();
+    }
+
+    if (integrations.ollama !== false) {
+      this.ollamaPlugin = new OllamaPlugin();
+      this.ollamaPlugin.enable();
     }
 
     // Enable Google ADK integration (default: true)
@@ -311,6 +319,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.mistralPlugin) {
       this.mistralPlugin.disable();
       this.mistralPlugin = null;
+    }
+
+    if (this.ollamaPlugin) {
+      this.ollamaPlugin.disable();
+      this.ollamaPlugin = null;
     }
 
     if (this.googleADKPlugin) {

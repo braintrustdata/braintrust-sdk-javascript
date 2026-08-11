@@ -24,6 +24,7 @@ import { huggingFaceChannels } from "./huggingface-channels";
 import { langChainChannels } from "./langchain-channels";
 import { langSmithChannels } from "./langsmith-channels";
 import { mistralChannels } from "./mistral-channels";
+import { ollamaChannels } from "./ollama-channels";
 import { openAIAgentsCoreChannels } from "./openai-agents-channels";
 import { openAIChannels } from "./openai-channels";
 import { openAICodexChannels } from "./openai-codex-channels";
@@ -66,6 +67,7 @@ describe("built-in instrumentation provenance names", () => {
     [langChainChannels.configure, INSTRUMENTATION_NAMES.LANGCHAIN],
     [langSmithChannels.createRun, INSTRUMENTATION_NAMES.LANGSMITH],
     [mistralChannels.chatComplete, INSTRUMENTATION_NAMES.MISTRAL],
+    [ollamaChannels.chat, INSTRUMENTATION_NAMES.OLLAMA],
     [
       openAIAgentsCoreChannels.onTraceStart,
       INSTRUMENTATION_NAMES.OPENAI_AGENTS,

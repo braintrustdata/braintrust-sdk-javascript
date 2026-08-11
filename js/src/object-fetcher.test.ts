@@ -119,16 +119,6 @@ describe("ObjectFetcher internal BTQL limit handling", () => {
     expect(query.limit).toBe(17);
   });
 
-  test("explicit batchSize overrides _internal_btql.limit", async () => {
-    const postMock = createPostMock();
-    const fetcher = new TestObjectFetcher(postMock, { limit: 100 });
-
-    await triggerFetch(fetcher, { batchSize: 25 });
-
-    const query = getBtqlQuery(postMock);
-    expect(query.limit).toBe(25);
-  });
-
   test("does not allow _internal_btql cursor to override pagination cursor", async () => {
     const postMock = vi
       .fn()
@@ -146,7 +136,7 @@ describe("ObjectFetcher internal BTQL limit handling", () => {
       );
     const fetcher = new TestObjectFetcher(postMock, {
       cursor: "stale-cursor",
-      limit: 1,
+      limit: 2,
     });
 
     await triggerFetch(fetcher);
@@ -156,6 +146,58 @@ describe("ObjectFetcher internal BTQL limit handling", () => {
     const secondQuery = getBtqlQuery(postMock, 1);
     expect(firstQuery.cursor).toBeUndefined();
     expect(secondQuery.cursor).toBe("next-page-cursor");
+  });
+
+  test("stops pagination once the cumulative _internal_btql limit is reached", async () => {
+    const postMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        createPostResponse({
+          data: [{ id: "record-1" }],
+          cursor: "next-page-cursor",
+        }),
+      )
+      .mockResolvedValueOnce(
+        createPostResponse({
+          data: [{ id: "record-2" }],
+          cursor: null,
+        }),
+      );
+    const fetcher = new TestObjectFetcher(postMock, { limit: 1 });
+
+    const records = await fetcher.fetchedData();
+
+    expect(records).toEqual([{ id: "record-1" }]);
+    expect(postMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("combines batchSize with the cumulative _internal_btql limit", async () => {
+    const postMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        createPostResponse({
+          data: [{ id: "record-1" }, { id: "record-2" }],
+          cursor: "next-page-cursor",
+        }),
+      )
+      .mockResolvedValueOnce(
+        createPostResponse({
+          data: [{ id: "record-3" }, { id: "record-4" }],
+          cursor: null,
+        }),
+      );
+    const fetcher = new TestObjectFetcher(postMock, { limit: 3 });
+
+    const records = await fetcher.fetchedData({ batchSize: 2 });
+
+    expect(records).toEqual([
+      { id: "record-1" },
+      { id: "record-2" },
+      { id: "record-3" },
+    ]);
+    expect(postMock).toHaveBeenCalledTimes(2);
+    expect(getBtqlQuery(postMock, 0).limit).toBe(2);
+    expect(getBtqlQuery(postMock, 1).limit).toBe(1);
   });
 
   test("does not allow _internal_btql select/from to override base object query", async () => {

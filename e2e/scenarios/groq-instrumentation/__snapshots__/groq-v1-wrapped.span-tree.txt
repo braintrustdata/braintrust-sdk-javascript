@@ -34,14 +34,14 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_time": 0.008207114,
+    │         "completion_time": 0.0072439,
     │         "completion_tokens": 2,
-    │         "prompt_time": 0.002191425,
+    │         "prompt_time": 0.001728151,
     │         "prompt_tokens": 40,
-    │         "queue_time": 0.05190801,
+    │         "queue_time": 0.054452998,
     │         "time_to_first_token": 0,
     │         "tokens": 42,
-    │         "total_time": 0.010398539
+    │         "total_time": 0.008972051
     │       }
     ├── groq-stream-operation
     │   metadata: {
@@ -73,14 +73,14 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_time": 0.007154731,
+    │         "completion_time": 0.006718869,
     │         "completion_tokens": 2,
-    │         "prompt_time": 0.001665917,
+    │         "prompt_time": 0.003972294,
     │         "prompt_tokens": 40,
-    │         "queue_time": 0.047459398,
+    │         "queue_time": 0.095351581,
     │         "time_to_first_token": 0,
     │         "tokens": 42,
-    │         "total_time": 0.008820648
+    │         "total_time": 0.010691163
     │       }
     ├── groq-reasoning-stream-operation
     │   metadata: {
@@ -101,29 +101,29 @@ span_tree:
     │           "logprobs": null,
     │           "message": {
     │             "content": "14",
-    │             "reasoning": "Okay, let's see. So the problem is about Elena having some marbles and doing some operations. Let me break it down step by step. First, she has 3 boxes with 4 marbles each. So, each box has 4 marbles, and there are 3 boxes. To find the total marbles she starts with, I should multiply the number of boxes by the marbles per box. That would be 3 times 4. Let me calculate that: 3*4 equals 12 marbles. So, she starts with 12 marbles.\n\nNext, she gives away 5 marbles. So, if she had 12 and gives away 5, we need to subtract 5 from 12. Let me do that: 12 minus 5 is 7. Now she has 7 marbles left after giving some away.\n\nThen, the problem says she doubles what remains. So, doubling means multiplying by 2. So, taking the 7 marbles she has after giving away 5 and doubling it would be 7 times 2. Let me compute that: 7*2 equals 14. So, after doubling, she has 14 marbles. \n\nWait, let me make sure I didn't skip any steps. Starting with 3 boxes of 4 marbles each: 3*4=12. Then subtract 5: 12-5=7. Then double that amount: 7*2=14. Yeah, that seems right. I don't think I made any mistakes here. Let me just confirm each operation. Multiplication first, then subtraction, then multiplication again. The order of operations here is straightforward because it's a sequence of actions: starting amount, giving away, then doubling. So yes, 14 is the final number.\n",
+    │             "reasoning": "The problem: \"Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number.\"\n\nWe need to compute: She has 3 boxes with 4 marbles each, so 3*4 = 12 marbles. She gives away 5 marbles, so remaining = 12 - 5 = 7. Then doubles what remains: 7 * 2 = 14. So final number is 14. The answer should just be the number. So output \"14\".\n\nCheck if any nuance: \"doubles what remains\" means double the number of marbles remaining after giving away 5. Yes. So final answer 14.\n\nThus respond with \"14\".",
     │             "role": "assistant"
     │           }
     │         }
     │       ]
     │       metadata: {
     │         "max_completion_tokens": 512,
-    │         "model": "qwen/qwen3-32b",
+    │         "model": "openai/gpt-oss-20b",
     │         "provider": "groq",
     │         "reasoning_format": "parsed",
     │         "stream": true,
     │         "temperature": 0.6
     │       }
     │       metrics: {
-    │         "completion_reasoning_tokens": 385,
-    │         "completion_time": 0.71020218,
-    │         "completion_tokens": 392,
-    │         "prompt_time": 0.002383977,
-    │         "prompt_tokens": 46,
-    │         "queue_time": 0.562942222,
+    │         "completion_reasoning_tokens": 158,
+    │         "completion_time": 0.270633239,
+    │         "completion_tokens": 168,
+    │         "prompt_time": 0.005148062,
+    │         "prompt_tokens": 108,
+    │         "queue_time": 0.103912089,
     │         "time_to_first_token": 0,
-    │         "tokens": 438,
-    │         "total_time": 0.712586157
+    │         "tokens": 276,
+    │         "total_time": 0.275781301
     │       }
     └── groq-tool-operation
         metadata: {
@@ -190,12 +190,12 @@ span_tree:
               ]
             }
             metrics: {
-              "completion_time": 0.036754475,
+              "completion_time": 0.039504246,
               "completion_tokens": 11,
-              "prompt_time": 0.014626775,
+              "prompt_time": 0.020812356,
               "prompt_tokens": 246,
-              "queue_time": 0.051886972,
+              "queue_time": 0.091778475,
               "time_to_first_token": 0,
               "tokens": 257,
-              "total_time": 0.05138125
+              "total_time": 0.060316602
             }

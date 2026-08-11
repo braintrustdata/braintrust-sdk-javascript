@@ -183,7 +183,7 @@ jobs:
           name: stable-release-packages
           path: release-artifacts
       - name: Attest package SBOM
-        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
         with:
           subject-path: release-artifacts/${{ matrix.package.tarball_asset }}
           sbom-path: release-artifacts/${{ matrix.package.sbom_asset }}
@@ -359,7 +359,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Post to Slack on failure
-        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}

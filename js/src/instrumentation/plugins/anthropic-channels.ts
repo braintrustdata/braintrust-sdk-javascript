@@ -4,6 +4,10 @@ import type {
   AnthropicCreateParams,
   AnthropicMessage,
   AnthropicMessageStream,
+  AnthropicSessionEvent,
+  AnthropicSessionEventStream,
+  AnthropicSessionEventStreamParams,
+  AnthropicSessionThreadEventStreamParams,
   AnthropicStreamEvent,
   AnthropicToolRunner,
   AnthropicToolRunnerParams,
@@ -38,6 +42,24 @@ export const anthropicChannels = defineChannels(
     >({
       channelName: "beta.messages.toolRunner",
       kind: "sync-stream",
+    }),
+    betaSessionsEventsStream: channel<
+      [string, AnthropicSessionEventStreamParams?],
+      AnthropicSessionEventStream,
+      Record<string, unknown>,
+      AnthropicSessionEvent
+    >({
+      channelName: "beta.sessions.events.stream",
+      kind: "async",
+    }),
+    betaSessionsThreadsEventsStream: channel<
+      [string, AnthropicSessionThreadEventStreamParams],
+      AnthropicSessionEventStream,
+      Record<string, unknown>,
+      AnthropicSessionEvent
+    >({
+      channelName: "beta.sessions.threads.events.stream",
+      kind: "async",
     }),
   },
   { instrumentationName: INSTRUMENTATION_NAMES.ANTHROPIC },

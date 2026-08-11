@@ -17,7 +17,7 @@
           "type": "task",
           "children": [
             {
-              "name": "llm:agent",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -55,9 +55,12 @@
               },
               "metadata": {
                 "flue.api": "anthropic-messages",
+                "flue.model": "claude-sonnet-4-5-20250929",
                 "flue.provider": "anthropic",
                 "flue.session": "main",
+                "flue.stop_reason": "toolUse",
                 "flue.turn_purpose": "agent",
+                "model": "claude-sonnet-4-5-20250929",
                 "provider": "anthropic"
               },
               "metrics": {
@@ -87,16 +90,9 @@
                 "query": "flue instrumentation"
               },
               "output": {
-                "content": [
-                  {
-                    "text": "\"{\\\"id\\\":\\\"flue-session-2026\\\",\\\"query\\\":\\\"flue instrumentation\\\",\\\"topic\\\":\\\"session instrumentation\\\"}\"",
-                    "type": "text"
-                  }
-                ],
-                "details": {
-                  "customTool": "lookup",
-                  "output": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}"
-                }
+                "id": "<span:1>",
+                "query": "flue instrumentation",
+                "topic": "session instrumentation"
               },
               "metadata": {
                 "flue.session": "main",
@@ -108,7 +104,7 @@
               }
             },
             {
-              "name": "llm:agent",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -146,7 +142,7 @@
                 {
                   "content": [
                     {
-                      "text": "\"{\\\"id\\\":\\\"flue-session-2026\\\",\\\"query\\\":\\\"flue instrumentation\\\",\\\"topic\\\":\\\"session instrumentation\\\"}\"",
+                      "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
                       "type": "text"
                     }
                   ],
@@ -181,9 +177,12 @@
               },
               "metadata": {
                 "flue.api": "anthropic-messages",
+                "flue.model": "claude-sonnet-4-5-20250929",
                 "flue.provider": "anthropic",
                 "flue.session": "main",
+                "flue.stop_reason": "toolUse",
                 "flue.turn_purpose": "agent",
+                "model": "claude-sonnet-4-5-20250929",
                 "provider": "anthropic"
               },
               "metrics": {
@@ -205,16 +204,14 @@
                 "query": "Braintrust Flue reasoning stream instrumentation"
               },
               "output": {
-                "content": [
+                "lookupId": "flue-session-2026",
+                "query": "Braintrust Flue reasoning stream instrumentation",
+                "results": [
                   {
-                    "text": "\"{\\\"lookupId\\\":\\\"flue-session-2026\\\",\\\"query\\\":\\\"Braintrust Flue reasoning stream instrumentation\\\",\\\"results\\\":[{\\\"title\\\":\\\"Flue reasoning stream instrumentation\\\",\\\"url\\\":\\\"https://example.test/flue/reasoning-streams\\\"}]}\"",
-                    "type": "text"
+                    "title": "Flue reasoning stream instrumentation",
+                    "url": "https://example.test/flue/reasoning-streams"
                   }
-                ],
-                "details": {
-                  "customTool": "web_search",
-                  "output": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}"
-                }
+                ]
               },
               "metadata": {
                 "flue.session": "main",
@@ -226,7 +223,7 @@
               }
             },
             {
-              "name": "llm:agent",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -264,7 +261,7 @@
                 {
                   "content": [
                     {
-                      "text": "\"{\\\"id\\\":\\\"flue-session-2026\\\",\\\"query\\\":\\\"flue instrumentation\\\",\\\"topic\\\":\\\"session instrumentation\\\"}\"",
+                      "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
                       "type": "text"
                     }
                   ],
@@ -299,7 +296,7 @@
                 {
                   "content": [
                     {
-                      "text": "\"{\\\"lookupId\\\":\\\"flue-session-2026\\\",\\\"query\\\":\\\"Braintrust Flue reasoning stream instrumentation\\\",\\\"results\\\":[{\\\"title\\\":\\\"Flue reasoning stream instrumentation\\\",\\\"url\\\":\\\"https://example.test/flue/reasoning-streams\\\"}]}\"",
+                      "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
                       "type": "text"
                     }
                   ],
@@ -333,9 +330,12 @@
               },
               "metadata": {
                 "flue.api": "anthropic-messages",
+                "flue.model": "claude-sonnet-4-5-20250929",
                 "flue.provider": "anthropic",
                 "flue.session": "main",
+                "flue.stop_reason": "toolUse",
                 "flue.turn_purpose": "agent",
+                "model": "claude-sonnet-4-5-20250929",
                 "provider": "anthropic"
               },
               "metrics": {
@@ -356,16 +356,8 @@
                 "url": "https://example.test/flue/reasoning-streams"
               },
               "output": {
-                "content": [
-                  {
-                    "text": "\"{\\\"summary\\\":\\\"Flue emits reasoning, tool execution, and LLM turn events separately.\\\",\\\"url\\\":\\\"https://example.test/flue/reasoning-streams\\\"}\"",
-                    "type": "text"
-                  }
-                ],
-                "details": {
-                  "customTool": "summarize_source",
-                  "output": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}"
-                }
+                "summary": "Flue emits reasoning, tool execution, and LLM turn events separately.",
+                "url": "https://example.test/flue/reasoning-streams"
               },
               "metadata": {
                 "flue.session": "main",
@@ -377,7 +369,7 @@
               }
             },
             {
-              "name": "llm:agent",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -415,7 +407,7 @@
                 {
                   "content": [
                     {
-                      "text": "\"{\\\"id\\\":\\\"flue-session-2026\\\",\\\"query\\\":\\\"flue instrumentation\\\",\\\"topic\\\":\\\"session instrumentation\\\"}\"",
+                      "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
                       "type": "text"
                     }
                   ],
@@ -450,7 +442,7 @@
                 {
                   "content": [
                     {
-                      "text": "\"{\\\"lookupId\\\":\\\"flue-session-2026\\\",\\\"query\\\":\\\"Braintrust Flue reasoning stream instrumentation\\\",\\\"results\\\":[{\\\"title\\\":\\\"Flue reasoning stream instrumentation\\\",\\\"url\\\":\\\"https://example.test/flue/reasoning-streams\\\"}]}\"",
+                      "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
                       "type": "text"
                     }
                   ],
@@ -484,7 +476,7 @@
                 {
                   "content": [
                     {
-                      "text": "\"{\\\"summary\\\":\\\"Flue emits reasoning, tool execution, and LLM turn events separately.\\\",\\\"url\\\":\\\"https://example.test/flue/reasoning-streams\\\"}\"",
+                      "text": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
                       "type": "text"
                     }
                   ],
@@ -510,9 +502,12 @@
               },
               "metadata": {
                 "flue.api": "anthropic-messages",
+                "flue.model": "claude-sonnet-4-5-20250929",
                 "flue.provider": "anthropic",
                 "flue.session": "main",
+                "flue.stop_reason": "stop",
                 "flue.turn_purpose": "agent",
+                "model": "claude-sonnet-4-5-20250929",
                 "provider": "anthropic"
               },
               "metrics": {
@@ -552,7 +547,7 @@
           "type": "task",
           "children": [
             {
-              "name": "llm:agent",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -585,9 +580,12 @@
               },
               "metadata": {
                 "flue.api": "anthropic-messages",
+                "flue.model": "claude-sonnet-4-5-20250929",
                 "flue.provider": "anthropic",
                 "flue.session": "skill",
+                "flue.stop_reason": "toolUse",
                 "flue.turn_purpose": "agent",
+                "model": "claude-sonnet-4-5-20250929",
                 "provider": "anthropic"
               },
               "metrics": {
@@ -607,17 +605,7 @@
               "input": {
                 "name": "e2e-flue-skill"
               },
-              "output": {
-                "content": [
-                  {
-                    "text": "Run the skill named \"e2e-flue-skill\".\n\n<skill_instructions>\nReturn the marker from the provided args exactly once. Output no other text.\n</skill_instructions>\n\nSupporting skill resources are available relative to this workspace skill directory but are not loaded into context unless needed:\n<skill_resources>\n- Base directory: <repo>/e2e/scenarios/flue-v1-0-0-beta-3/.agents/skills/e2e-flue-skill\n- Resolve relative resource paths from this directory and read only the files you need.\n</skill_resources>",
-                    "type": "text"
-                  }
-                ],
-                "details": {
-                  "skill": "e2e-flue-skill"
-                }
-              },
+              "output": "Run the skill named \"e2e-flue-skill\".\n\n<skill_instructions>\nReturn the marker from the provided args exactly once. Output no other text.\n</skill_instructions>\n\nSupporting skill resources are available relative to this workspace skill directory but are not loaded into context unless needed:\n<skill_resources>\n- Base directory: <repo>/e2e/scenarios/flue-v1/.agents/skills/e2e-flue-skill\n- Resolve relative resource paths from this directory and read only the files you need.\n</skill_resources>",
               "metadata": {
                 "flue.session": "skill",
                 "flue.tool_name": "activate_skill",
@@ -628,7 +616,7 @@
               }
             },
             {
-              "name": "llm:agent",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -661,7 +649,7 @@
                 {
                   "content": [
                     {
-                      "text": "Run the skill named \"e2e-flue-skill\".\n\n<skill_instructions>\nReturn the marker from the provided args exactly once. Output no other text.\n</skill_instructions>\n\nSupporting skill resources are available relative to this workspace skill directory but are not loaded into context unless needed:\n<skill_resources>\n- Base directory: <repo>/e2e/scenarios/flue-v1-0-0-beta-3/.agents/skills/e2e-flue-skill\n- Resolve relative resource paths from this directory and read only the files you need.\n</skill_resources>",
+                      "text": "Run the skill named \"e2e-flue-skill\".\n\n<skill_instructions>\nReturn the marker from the provided args exactly once. Output no other text.\n</skill_instructions>\n\nSupporting skill resources are available relative to this workspace skill directory but are not loaded into context unless needed:\n<skill_resources>\n- Base directory: <repo>/e2e/scenarios/flue-v1/.agents/skills/e2e-flue-skill\n- Resolve relative resource paths from this directory and read only the files you need.\n</skill_resources>",
                       "type": "text"
                     }
                   ],
@@ -682,9 +670,12 @@
               },
               "metadata": {
                 "flue.api": "anthropic-messages",
+                "flue.model": "claude-sonnet-4-5-20250929",
                 "flue.provider": "anthropic",
                 "flue.session": "skill",
+                "flue.stop_reason": "stop",
                 "flue.turn_purpose": "agent",
+                "model": "claude-sonnet-4-5-20250929",
                 "provider": "anthropic"
               },
               "metrics": {
@@ -724,7 +715,7 @@
           "type": "task",
           "children": [
             {
-              "name": "llm:agent",
+              "name": "flue.turn",
               "type": "llm",
               "children": [],
               "input": [
@@ -750,9 +741,12 @@
               },
               "metadata": {
                 "flue.api": "openai-responses",
+                "flue.model": "gpt-4o-mini",
                 "flue.provider": "openai",
                 "flue.session": "task:task:<uuid:1>",
+                "flue.stop_reason": "stop",
                 "flue.turn_purpose": "agent",
+                "model": "gpt-4o-mini",
                 "provider": "openai"
               },
               "metrics": {
@@ -785,14 +779,14 @@
               "type": "task",
               "children": [
                 {
-                  "name": "llm:compaction_prefix",
+                  "name": "flue.turn",
                   "type": "llm",
                   "children": [],
                   "input": [
                     {
                       "content": [
                         {
-                          "text": "<conversation>\n[User]: Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.\n\n[Assistant thinking]: The user wants me to complete an instrumented research flow with specific steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Use the lookup result id to call web_search with query \"Braintrust Flue reasoning stream instrumentation\"\n3. Use the first web_search result url to call summarize_source\n4. After that, reply with exactly \"PROMPT_DONE\" and no other text\n\nI need to call exactly one tool per turn and wait for each result. Let me start with step 1.\n\n[Assistant]: I'll complete this instrumented research flow step by step. Starting with step 1:\n\n[Assistant tool calls]: lookup(query=\"flue instrumentation\")\n\n[Tool result]: \"{\\\"id\\\":\\\"flue-session-2026\\\",\\\"query\\\":\\\"flue instrumentation\\\",\\\"topic\\\":\\\"session instrumentation\\\"}\"\n\n[Assistant thinking]: Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to step 2 and call web_search using this id as lookupId and the query \"Braintrust Flue reasoning stream instrumentation\".\n\n[Assistant]: Now proceeding to step 2:\n\n[Assistant tool calls]: web_search(lookupId=\"flue-session-2026\", query=\"Braintrust Flue reasoning stream instrumentation\")\n\n[Tool result]: \"{\\\"lookupId\\\":\\\"flue-session-2026\\\",\\\"query\\\":\\\"Braintrust Flue reasoning stream instrumentation\\\",\\\"results\\\":[{\\\"title\\\":\\\"Flue reasoning stream instrumentation\\\",\\\"url\\\":\\\"https://example.test/flue/reasoning-streams\\\"}]}\"\n\n[Assistant thinking]: Perfect! I got the web_search results. There is one result with the URL \"https://example.test/flue/reasoning-streams\". Now I need to proceed to step 3 and call summarize_source with this URL.\n\n[Assistant]: Now proceeding to step 3:\n\n[Assistant tool calls]: summarize_source(url=\"https://example.test/flue/reasoning-streams\")\n\n[Tool result]: \"{\\\"summary\\\":\\\"Flue emits reasoning, tool execution, and LLM turn events separately.\\\",\\\"url\\\":\\\"https://example.test/flue/reasoning-streams\\\"}\"\n</conversation>\n\nThis is the PREFIX of a turn that was too large to keep. The SUFFIX (recent work) is retained.\n\nSummarize the prefix to provide context for the retained suffix:\n\n## Original Request\n[What did the user ask for in this turn?]\n\n## Early Progress\n- [Key decisions and work done in the prefix]\n\n## Context for Suffix\n- [Information needed to understand the retained recent work]\n\nBe concise. Focus on what's needed to understand the kept suffix.",
+                          "text": "<conversation>\n[User]: Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.\n\n[Assistant thinking]: The user wants me to complete an instrumented research flow with specific steps:\n1. Call lookup with query \"flue instrumentation\"\n2. Use the lookup result id to call web_search with query \"Braintrust Flue reasoning stream instrumentation\"\n3. Use the first web_search result url to call summarize_source\n4. After that, reply with exactly \"PROMPT_DONE\" and no other text\n\nI need to call exactly one tool per turn and wait for each result. Let me start with step 1.\n\n[Assistant]: I'll complete this instrumented research flow step by step. Starting with step 1:\n\n[Assistant tool calls]: lookup(query=\"flue instrumentation\")\n\n[Tool result]: {\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}\n\n[Assistant thinking]: Good, I got the lookup result with id \"flue-session-2026\". Now I need to proceed to step 2 and call web_search using this id as lookupId and the query \"Braintrust Flue reasoning stream instrumentation\".\n\n[Assistant]: Now proceeding to step 2:\n\n[Assistant tool calls]: web_search(lookupId=\"flue-session-2026\", query=\"Braintrust Flue reasoning stream instrumentation\")\n\n[Tool result]: {\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}\n\n[Assistant thinking]: Perfect! I got the web_search results. There is one result with the URL \"https://example.test/flue/reasoning-streams\". Now I need to proceed to step 3 and call summarize_source with this URL.\n\n[Assistant]: Now proceeding to step 3:\n\n[Assistant tool calls]: summarize_source(url=\"https://example.test/flue/reasoning-streams\")\n\n[Tool result]: {\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}\n</conversation>\n\nThis is the PREFIX of a turn that was too large to keep. The SUFFIX (recent work) is retained.\n\nSummarize the prefix to provide context for the retained suffix:\n\n## Original Request\n[What did the user ask for in this turn?]\n\n## Early Progress\n- [Key decisions and work done in the prefix]\n\n## Context for Suffix\n- [Information needed to understand the retained recent work]\n\nBe concise. Focus on what's needed to understand the kept suffix.",
                           "type": "text"
                         }
                       ],
@@ -811,9 +805,12 @@
                   },
                   "metadata": {
                     "flue.api": "openai-responses",
+                    "flue.model": "gpt-4o-mini",
                     "flue.provider": "openai",
                     "flue.session": "main",
+                    "flue.stop_reason": "stop",
                     "flue.turn_purpose": "compaction_prefix",
+                    "model": "gpt-4o-mini",
                     "provider": "openai"
                   },
                   "metrics": {
