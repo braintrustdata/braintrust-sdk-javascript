@@ -38,6 +38,7 @@ export const INSTRUMENTATION_NAMES = {
   OPENROUTER_AGENT: "openrouter-agent",
   PI_CODING_AGENT: "pi-coding-agent",
   STRANDS_AGENT_SDK: "strands-agent-sdk",
+  VOYAGEAI: "voyageai",
 } as const;
 
 export type SpanInstrumentationName =

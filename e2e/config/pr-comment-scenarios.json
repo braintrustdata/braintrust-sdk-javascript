@@ -451,6 +451,21 @@
     ]
   },
   {
+    "scenarioDirName": "voyageai-instrumentation",
+    "label": "Voyage AI Instrumentation",
+    "metadataScenario": "voyageai-instrumentation",
+    "variants": [
+      {
+        "variantKey": "voyageai-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "voyageai-v0-latest",
+        "label": "v0 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "openrouter-instrumentation",
     "label": "OpenRouter Instrumentation",
     "metadataScenario": "openrouter-instrumentation",

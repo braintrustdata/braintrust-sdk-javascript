@@ -33,6 +33,7 @@ export interface InstrumentationIntegrationsConfig {
   langchain?: boolean;
   langgraph?: boolean;
   langsmith?: boolean;
+  voyageai?: boolean;
 }
 
 export interface InstrumentationConfig {
@@ -118,6 +119,9 @@ const envIntegrationAliases: Record<
   "@langchain": "langchain",
   langgraph: "langgraph",
   langsmith: "langsmith",
+  voyage: "voyageai",
+  "voyage-ai": "voyageai",
+  voyageai: "voyageai",
 };
 
 export function getDefaultInstrumentationIntegrations(): Record<
@@ -156,6 +160,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     langchain: true,
     langgraph: true,
     langsmith: true,
+    voyageai: true,
     piCodingAgent: true,
     strandsAgentSDK: true,
     cloudflareAgents: true,
