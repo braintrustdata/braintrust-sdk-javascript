@@ -17,7 +17,7 @@ async function main() {
   const jobs = new Map<string, unknown[]>();
   const webhookCompletion = {
     mode: "webhook" as const,
-    externalId: (submission: { id: string }) => submission.id,
+    getExternalId: (submissionData: { id: string }) => submissionData.id,
   };
   const task = new BatchTask<
     number,
@@ -33,8 +33,8 @@ async function main() {
       return { id };
     },
     completion: webhookCompletion,
-    async collect(submission) {
-      const items = (jobs.get(submission.id) ?? []) as Array<{
+    async collect(submissionData) {
+      const items = (jobs.get(submissionData.id) ?? []) as Array<{
         id: string;
         input: number;
       }>;
@@ -59,8 +59,8 @@ async function main() {
       return { id };
     },
     completion: webhookCompletion,
-    async collect(submission) {
-      const items = (jobs.get(submission.id) ?? []) as Array<{
+    async collect(submissionData) {
+      const items = (jobs.get(submissionData.id) ?? []) as Array<{
         id: string;
         output: number;
         expected: number;

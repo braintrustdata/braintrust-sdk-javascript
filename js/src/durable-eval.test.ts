@@ -352,8 +352,8 @@ describe("defineDurableEval", () => {
         mode: "poll",
         poll: taskPoll,
       },
-      async collect(submission) {
-        return (taskJobs.get(submission.id) ?? []).map((item) => ({
+      async collect(submissionData) {
+        return (taskJobs.get(submissionData.id) ?? []).map((item) => ({
           id: item.id,
           output: item.input * 2,
         }));
@@ -377,8 +377,8 @@ describe("defineDurableEval", () => {
         mode: "poll",
         poll: scorePoll,
       },
-      async collect(submission) {
-        return (scoreJobs.get(submission.id) ?? []).map((item) => ({
+      async collect(submissionData) {
+        return (scoreJobs.get(submissionData.id) ?? []).map((item) => ({
           id: item.id,
           score: item.output === item.expected ? 1 : 0,
         }));
@@ -472,13 +472,13 @@ describe("defineDurableEval", () => {
       },
       completion: {
         mode: "webhook",
-        externalId: (submission) => submission.id,
+        getExternalId: (submissionData) => submissionData.id,
       },
-      async collect(submission) {
+      async collect(submissionData) {
         taskCollectCount++;
         if (taskCollectCount === 2) releaseTaskCollect();
         await taskBatchesCollecting;
-        return (taskJobs.get(submission.id) ?? []).map((item) => ({
+        return (taskJobs.get(submissionData.id) ?? []).map((item) => ({
           id: item.id,
           output: item.input * 2,
         }));
@@ -500,10 +500,10 @@ describe("defineDurableEval", () => {
       },
       completion: {
         mode: "webhook",
-        externalId: (submission) => submission.id,
+        getExternalId: (submissionData) => submissionData.id,
       },
-      async collect(submission) {
-        return (scoreJobs.get(submission.id) ?? []).map((item) => ({
+      async collect(submissionData) {
+        return (scoreJobs.get(submissionData.id) ?? []).map((item) => ({
           id: item.id,
           score: item.output === item.expected ? 1 : 0,
         }));
@@ -585,7 +585,7 @@ describe("defineDurableEval", () => {
       },
       completion: {
         mode: "webhook",
-        externalId: (submission) => submission.id,
+        getExternalId: (submissionData) => submissionData.id,
       },
       async collect() {
         collectCount++;
@@ -609,7 +609,7 @@ describe("defineDurableEval", () => {
       submit: scoreSubmit,
       completion: {
         mode: "webhook",
-        externalId: (submission) => submission.id,
+        getExternalId: (submissionData) => submissionData.id,
       },
       async collect() {
         return [];
@@ -724,7 +724,7 @@ describe("defineDurableEval", () => {
           },
           completion: {
             mode: "webhook",
-            externalId: (submission) => submission.id,
+            getExternalId: (submissionData) => submissionData.id,
           },
           async collect() {
             return [];

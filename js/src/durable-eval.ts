@@ -206,19 +206,22 @@ type DurableBatchPoll =
   | { status: "complete" }
   | { status: "failed"; error: unknown };
 
-type DurableBatchCompletion<Submission extends JsonValue> =
+type DurableBatchCompletion<SubmissionData extends JsonValue> =
   | {
       mode: "poll";
       /** Checks whether the submitted provider batch is ready to collect. */
       poll(
-        submission: Submission,
+        submissionData: SubmissionData,
         context: DurableBatchContext,
       ): Promise<DurableBatchPoll>;
     }
   | {
       mode: "webhook";
       /** Returns the provider ID used to match an incoming webhook to this batch. */
-      externalId(submission: Submission, context: DurableBatchContext): string;
+      getExternalId(
+        submissionData: SubmissionData,
+        context: DurableBatchContext,
+      ): string;
     };
 
 export interface DurableBatchTaskItem<
@@ -273,16 +276,20 @@ type DurableBatchScorerResult = {
   score: OneOrMoreScores;
 };
 
-interface DurableBatchProcessor<Item, Result, Submission extends JsonValue> {
+interface DurableBatchProcessor<
+  Item,
+  Result,
+  SubmissionData extends JsonValue,
+> {
   /** Maximum items submitted in one provider batch. Defaults to 1,000. */
   batchSize?: number;
-  /** Submits a batch and returns the provider-specific submission value. */
-  submit(items: Item[], context: DurableBatchContext): Promise<Submission>;
+  /** Submits a batch and returns the provider-specific submission data. */
+  submit(items: Item[], context: DurableBatchContext): Promise<SubmissionData>;
   /** Configures how the SDK learns that the submitted batch completed. */
-  completion: DurableBatchCompletion<Submission>;
+  completion: DurableBatchCompletion<SubmissionData>;
   /** Collects one result for every item in a completed provider batch. */
   collect(
-    submission: Submission,
+    submissionData: SubmissionData,
     context: DurableBatchContext,
   ): Promise<Result[]>;
 }
@@ -293,13 +300,13 @@ interface DurableBatchTask<
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
-  Submission extends JsonValue,
+  SubmissionData extends JsonValue,
 > {
   readonly kind: typeof BATCH_TASK_KIND;
   readonly processor: DurableBatchProcessor<
     DurableBatchTaskItem<Input, Expected, Metadata, Parameters>,
     DurableBatchTaskResult<Output, Metadata>,
-    Submission
+    SubmissionData
   >;
 }
 
@@ -308,14 +315,14 @@ interface DurableBatchScorer<
   Output,
   Expected,
   Metadata extends BaseMetadata,
-  Submission extends JsonValue,
+  SubmissionData extends JsonValue,
 > {
   readonly kind: typeof BATCH_SCORER_KIND;
   name: string;
   readonly processor: DurableBatchProcessor<
     DurableBatchScorerItem<Input, Output, Expected, Metadata>,
     DurableBatchScorerResult,
-    Submission
+    SubmissionData
   >;
 }
 
@@ -330,14 +337,14 @@ export class BatchTask<
   Expected = void,
   Metadata extends BaseMetadata = DefaultMetadataType,
   Parameters extends EvalParameters = EvalParameters,
-  Submission extends JsonValue = JsonValue,
+  SubmissionData extends JsonValue = JsonValue,
 > implements DurableBatchTask<
   Input,
   Output,
   Expected,
   Metadata,
   Parameters,
-  Submission
+  SubmissionData
 > {
   readonly kind: typeof BATCH_TASK_KIND = BATCH_TASK_KIND;
 
@@ -345,7 +352,7 @@ export class BatchTask<
     readonly processor: DurableBatchProcessor<
       DurableBatchTaskItem<Input, Expected, Metadata, Parameters>,
       DurableBatchTaskResult<Output, Metadata>,
-      Submission
+      SubmissionData
     >,
   ) {}
 }
@@ -360,8 +367,14 @@ export class BatchScorer<
   Output,
   Expected = void,
   Metadata extends BaseMetadata = DefaultMetadataType,
-  Submission extends JsonValue = JsonValue,
-> implements DurableBatchScorer<Input, Output, Expected, Metadata, Submission> {
+  SubmissionData extends JsonValue = JsonValue,
+> implements DurableBatchScorer<
+  Input,
+  Output,
+  Expected,
+  Metadata,
+  SubmissionData
+> {
   readonly kind: typeof BATCH_SCORER_KIND = BATCH_SCORER_KIND;
   readonly name: string;
 
@@ -369,7 +382,7 @@ export class BatchScorer<
     readonly processor: DurableBatchProcessor<
       DurableBatchScorerItem<Input, Output, Expected, Metadata>,
       DurableBatchScorerResult,
-      Submission
+      SubmissionData
     > & { name: string },
   ) {
     this.name = processor.name;
@@ -505,7 +518,7 @@ type DurableBatchRecord = {
   kind: "task" | "score";
   scorerName?: string;
   itemIds: string[];
-  submission: JsonValue;
+  submissionData: JsonValue;
   externalId?: string;
   status: "submitted" | "complete";
 };
@@ -609,7 +622,7 @@ type DurableRunRecord = Omit<DurableRunState, "cases" | "batches"> & {
  *     // Each provider job contains at most 500 eval cases.
  *     batchSize: 500,
  *
- *     // Submit one sub-batch and return a JSON-serializable submission value.
+ *     // Submit one sub-batch and return JSON-serializable submission data.
  *     async submit(items, context) {
  *       const batch = await provider.submit({
  *         idempotencyKey: context.batchId,
@@ -626,11 +639,11 @@ type DurableRunRecord = Omit<DurableRunState, "cases" | "batches"> & {
  *       // "webhook" waits for processBatchResult(). Use "poll" with a poll()
  *       // callback when the provider does not send completion events.
  *       mode: "webhook",
- *       externalId: (submission) => submission.id,
+ *       getExternalId: (submissionData) => submissionData.id,
  *     },
  *
- *     async collect(submission) {
- *       return (await provider.results(submission.id)).map((item) => ({
+ *     async collect(submissionData) {
+ *       return (await provider.results(submissionData.id)).map((item) => ({
  *         id: item.id,
  *         output: item.output,
  *       }));
@@ -659,8 +672,8 @@ type DurableRunRecord = Omit<DurableRunState, "cases" | "batches"> & {
  * ```typescript
  * completion: {
  *   mode: "poll",
- *   async poll(submission) {
- *     const batch = await provider.getBatch(submission.id);
+ *   async poll(submissionData) {
+ *     const batch = await provider.getBatch(submissionData.id);
  *     if (batch.status === "completed") return { status: "complete" };
  *     if (batch.status === "failed") {
  *       return { status: "failed", error: batch.error };
@@ -725,7 +738,7 @@ type DurableRunRecord = Omit<DurableRunState, "cases" | "batches"> & {
  *     // The provider's batch ID. The durable eval saved it from submit()'s result.
  *     externalId: batch.id,
  *     // The SDK-generated ID passed to submit(); include it in provider metadata
- *     // when the webhook cannot provide the external ID used by the submission.
+ *     // when the webhook cannot provide the external ID used by the submission data.
  *     batchId: batch.metadata?.durableBatchId,
  *   });
  *
@@ -990,7 +1003,7 @@ async function pollDurableEval<
           DurableBatchCompletion<JsonValue>,
           { mode: "poll" }
         >
-      ).poll(batch.submission, {
+      ).poll(batch.submissionData, {
         runId: state.runId,
         batchId: batch.id,
       }),
@@ -1538,13 +1551,13 @@ async function ensureBatches(
         ? taskBatchItem(record, state.parameters)
         : scorerBatchItem(record),
     );
-    const submission = assertJsonValue(
+    const submissionData = assertJsonValue(
       await processor.submit(items, context),
-      `submission for batch ${batchId}`,
+      `submission data for batch ${batchId}`,
     );
     const externalId =
       processor.completion.mode === "webhook"
-        ? processor.completion.externalId(submission, context)
+        ? processor.completion.getExternalId(submissionData, context)
         : undefined;
     if (externalId !== undefined && !externalId.trim()) {
       throw new Error(`Batch ${batchId} produced an empty externalId`);
@@ -1554,7 +1567,7 @@ async function ensureBatches(
       kind,
       scorerName,
       itemIds: records.map((record) => record.id),
-      submission,
+      submissionData,
       externalId,
       status: "submitted",
     };
@@ -1570,7 +1583,7 @@ async function collectBatch(
 ) {
   const processor = processorForStage(definition, batch.kind, batch.scorerName);
   const context = { runId: state.runId, batchId: batch.id };
-  const results = await processor.collect(batch.submission, context);
+  const results = await processor.collect(batch.submissionData, context);
   if (!Array.isArray(results)) {
     throw new Error(`collect for batch ${batch.id} must return an array`);
   }
@@ -1872,7 +1885,7 @@ async function claimAction(
 
 type DurableBatchPlan = Omit<
   DurableBatchRecord,
-  "submission" | "externalId" | "status"
+  "submissionData" | "externalId" | "status"
 >;
 
 function plannedBatches(
