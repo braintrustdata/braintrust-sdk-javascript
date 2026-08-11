@@ -31,12 +31,15 @@ let _baseBranch: {
 
 async function getBaseBranch(remote: string | undefined = undefined) {
   if (_baseBranch === null) {
-    const git = await currentRepo();
-    if (git === null) {
+    const repoPath = await currentRepoPath();
+    if (!repoPath) {
       throw new Error("Not in a git repo");
     }
 
-    const remoteName = remote ?? (await git.getRemotes())[0]?.name;
+    const runGit = async (args: string[]) =>
+      await runGitCommand(args, { cwd: repoPath });
+    const remoteName =
+      remote ?? (await runGit(["remote"])).trim().split(/\r?\n/)[0];
     if (!remoteName) {
       throw new Error("No remote found");
     }
@@ -48,7 +51,17 @@ async function getBaseBranch(remote: string | undefined = undefined) {
 
     // To speed this up in the short term, we pick from a list of common names
     // and only fall back to the remote origin if required.
-    const repoBranches = new Set((await git.branchLocal()).all);
+    const repoBranches = new Set(
+      (
+        await runGit([
+          "for-each-ref",
+          "--format=%(refname:short)",
+          "refs/heads/",
+        ])
+      )
+        .trim()
+        .split(/\r?\n/),
+    );
     const matchingBaseBranches = COMMON_BASE_BRANCHES.filter((b) =>
       repoBranches.has(b),
     );
@@ -56,7 +69,7 @@ async function getBaseBranch(remote: string | undefined = undefined) {
       branch = matchingBaseBranches[0];
     } else {
       try {
-        const remoteInfo = await git.remote(["show", remoteName]);
+        const remoteInfo = await runGit(["remote", "show", remoteName]);
         if (!remoteInfo) {
           throw new Error(`Could not find remote ${remoteName}`);
         }
@@ -77,23 +90,27 @@ async function getBaseBranch(remote: string | undefined = undefined) {
 }
 
 async function getBaseBranchAncestor(remote: string | undefined = undefined) {
-  const git = await currentRepo();
-  if (git === null) {
+  const repoPath = await currentRepoPath();
+  if (!repoPath) {
     throw new Error("Not in a git repo");
   }
 
   const { remote: remoteName, branch: baseBranch } =
     await getBaseBranch(remote);
 
-  const isDirty = (await git.diffSummary()).files.length > 0;
+  const isDirty =
+    (
+      await runGitCommand(["diff", "--name-only"], {
+        cwd: repoPath,
+      })
+    ).trim().length > 0;
   const head = isDirty ? "HEAD" : "HEAD^";
 
   try {
-    const ancestor = await git.raw([
-      "merge-base",
-      head,
-      `${remoteName}/${baseBranch}`,
-    ]);
+    const ancestor = await runGitCommand(
+      ["merge-base", head, `${remoteName}/${baseBranch}`],
+      { cwd: repoPath },
+    );
     return ancestor.trim();
   } catch {
     /*
@@ -109,8 +126,8 @@ export async function getPastNAncestors(
   n: number = 1000,
   remote: string | undefined = undefined,
 ) {
-  const git = await currentRepo();
-  if (git === null) {
+  const repoPath = await currentRepoPath();
+  if (!repoPath) {
     return [];
   }
 
@@ -126,8 +143,12 @@ export async function getPastNAncestors(
   if (!ancestor) {
     return [];
   }
-  const commits = await git.log({ from: ancestor, to: "HEAD", maxCount: n });
-  return commits.all.slice(0, n).map((c) => c.hash);
+  const commits = (
+    await runGitCommand(["rev-list", `--max-count=${n}`, `${ancestor}..HEAD`], {
+      cwd: repoPath,
+    })
+  ).trim();
+  return commits ? commits.split(/\r?\n/).slice(0, n) : [];
 }
 
 async function attempt<T>(fn: () => Promise<T>): Promise<T | undefined> {
