@@ -36,6 +36,7 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
+    │         "cached_tokens": 0,
     │         "completion_tokens": 2,
     │         "prompt_tokens": 40,
     │         "tokens": 42
@@ -74,6 +75,7 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
+    │         "cached_tokens": 0,
     │         "completion_tokens": 2,
     │         "prompt_tokens": 40,
     │         "time_to_first_token": 0,
@@ -145,6 +147,7 @@ span_tree:
     │         ]
     │       }
     │       metrics: {
+    │         "cached_tokens": 0,
     │         "completion_tokens": 18,
     │         "prompt_tokens": 203,
     │         "time_to_first_token": 0,
@@ -158,7 +161,7 @@ span_tree:
     │   └── huggingface.text_generation [llm]
     │       input: "The capital of France is"
     │       output: {
-    │         "generated_text": " a city that is"
+    │         "generated_text": " a city with a"
     │       }
     │       metadata: {
     │         "model": "meta-llama/Llama-3.1-8B",
@@ -178,7 +181,7 @@ span_tree:
     │       input: "The capital of France is"
     │       output: {
     │         "finish_reason": "length",
-    │         "generated_text": " a city that is"
+    │         "generated_text": " a city of many"
     │       }
     │       metadata: {
     │         "finish_reason": "length",
@@ -191,10 +194,11 @@ span_tree:
     │         "provider": "featherless-ai"
     │       }
     │       metrics: {
+    │         "cached_tokens": 0,
     │         "completion_tokens": 4,
-    │         "prompt_tokens": 5,
+    │         "prompt_tokens": 6,
     │         "time_to_first_token": 0,
-    │         "tokens": 9
+    │         "tokens": 10
     │       }
     └── huggingface-feature-extraction-operation
         metadata: {

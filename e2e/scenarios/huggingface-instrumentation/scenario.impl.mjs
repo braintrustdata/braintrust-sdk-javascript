@@ -123,16 +123,36 @@ function rewriteHuggingFaceUrl(value) {
   return value;
 }
 
-function createHuggingFaceFetch() {
+function createHuggingFaceFetch({
+  normalizeLegacyChatCompletion = false,
+} = {}) {
   if (!process.env.BRAINTRUST_E2E_CASSETTE_SERVER_URL) {
     return undefined;
   }
 
-  return (input, init) => {
-    if (input instanceof Request) {
-      return fetch(new Request(rewriteHuggingFaceUrl(input.url), input), init);
+  return async (input, init) => {
+    const request =
+      input instanceof Request
+        ? new Request(rewriteHuggingFaceUrl(input.url), input)
+        : rewriteHuggingFaceUrl(String(input));
+    const response = await fetch(request, init);
+    if (!normalizeLegacyChatCompletion) {
+      return response;
     }
-    return fetch(rewriteHuggingFaceUrl(String(input)), init);
+
+    const body = await response.clone().json();
+    if (
+      body &&
+      typeof body === "object" &&
+      Array.isArray(body.choices) &&
+      typeof body.system_fingerprint !== "string"
+    ) {
+      return new Response(
+        JSON.stringify({ ...body, system_fingerprint: "" }),
+        response,
+      );
+    }
+    return response;
   };
 }
 
@@ -142,7 +162,16 @@ const HUGGINGFACE_REQUEST_OPTIONS = HUGGINGFACE_FETCH
   : undefined;
 
 function createClient(Client, apiKey, options) {
-  const client = new Client(apiKey, HUGGINGFACE_REQUEST_OPTIONS);
+  const client = new Client(
+    apiKey,
+    options.supportsLiveTextGeneration === false
+      ? {
+          fetch: createHuggingFaceFetch({
+            normalizeLegacyChatCompletion: true,
+          }),
+        }
+      : HUGGINGFACE_REQUEST_OPTIONS,
+  );
 
   if (options.supportsLiveTextGeneration === false) {
     if (typeof client.endpoint !== "function") {

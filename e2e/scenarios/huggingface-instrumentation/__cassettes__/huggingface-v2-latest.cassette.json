@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "2bb2abdc43ebde9d",
       "matchKey": "POST router.huggingface.co/v1/chat/completions",
-      "recordedAt": "2026-07-07T13:52:24.945Z",
+      "recordedAt": "2026-08-12T03:36:35.571Z",
       "request": {
         "body": {
           "kind": "json",
@@ -30,47 +30,25 @@
           "value": {
             "choices": [
               {
-                "content_filter_results": {
-                  "hate": {
-                    "filtered": false
-                  },
-                  "jailbreak": {
-                    "detected": false,
-                    "filtered": false
-                  },
-                  "profanity": {
-                    "detected": false,
-                    "filtered": false
-                  },
-                  "self_harm": {
-                    "filtered": false
-                  },
-                  "sexual": {
-                    "filtered": false
-                  },
-                  "violence": {
-                    "filtered": false
-                  }
-                },
                 "finish_reason": "stop",
                 "index": 0,
                 "message": {
-                  "content": "OK.",
+                  "content": "OK",
                   "role": "assistant"
                 }
               }
             ],
-            "created": 1783432344,
-            "id": "fe2323fab28ae8bc8119a3913397f153",
-            "model": "meta-llama/llama-3.1-8b-instruct",
+            "created": 1786505795,
+            "id": "chatcmpl-RK2npXm5oHBuKRjBh2Ql3aKi",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
             "object": "chat.completion",
+            "service_tier": "default",
             "system_fingerprint": "",
             "usage": {
-              "completion_tokens": 3,
-              "completion_tokens_details": null,
-              "prompt_tokens": 40,
-              "prompt_tokens_details": null,
-              "total_tokens": 43
+              "completion_tokens": 2,
+              "estimated_cost": 3.7999999999999996e-7,
+              "prompt_tokens": 15,
+              "total_tokens": 17
             }
           }
         },
@@ -78,28 +56,21 @@
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash",
           "connection": "keep-alive",
-          "content-length": "620",
+          "content-length": "471",
           "content-type": "application/json",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Tue, 07 Jul 2026 13:52:24 GMT",
-          "inference-id": "0-019f3cd9-f333-7492-874c-81a2a8ff1dde",
+          "date": "Wed, 12 Aug 2026 03:36:35 GMT",
           "referrer-policy": "strict-origin-when-cross-origin",
+          "server": "uvicorn",
           "vary": "Origin",
-          "via": "1.1 a40452b50d020fed241266888afec252.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "d1qb4eDVttffqmJgRiiXgxILhD4ThOcduUznI9EBI9KBCARVoWqJDA==",
-          "x-amz-cf-pop": "VIE50-P4",
+          "via": "1.1 bc330e83c319e99d19922ed79166586a.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "IMxjRHjGj-wzNvkYoslwl_UhwDDH7Ygae-QlJec-h8PNdc2lxsGdXQ==",
+          "x-amz-cf-pop": "IAD61-P1",
           "x-cache": "Miss from cloudfront",
-          "x-inference-provider": "novita",
+          "x-inference-provider": "deepinfra",
           "x-powered-by": "huggingface-moon",
-          "x-ratelimit-limit-requests": "6000",
-          "x-ratelimit-limit-tokens": "50000000",
-          "x-ratelimit-remaining-requests": "5969",
-          "x-ratelimit-remaining-tokens": "49976055",
-          "x-ratelimit-reset-requests": "310ms",
-          "x-ratelimit-reset-tokens": "29ms",
-          "x-request-id": "Root=1-6a4d0498-70ee0b04125ca7676a7d7234",
-          "x-robots-tag": "none",
-          "x-trace-id": "fe2323fab28ae8bc8119a3913397f153"
+          "x-request-id": "RK2npXm5oHBuKRjBh2Ql3aKi",
+          "x-robots-tag": "noindex"
         },
         "status": 200,
         "statusText": "OK"

@@ -137,9 +137,7 @@ function snapshotFields(event: CapturedLogEvent) {
     input:
       event.span.type === undefined ? undefined : normalizeValue(fields.input),
     output:
-      event.span.type === "llm" || event.span.type === undefined
-        ? undefined
-        : normalizeValue(fields.output),
+      event.span.type === undefined ? undefined : normalizeValue(fields.output),
     metadata: normalizeValue(pickSnapshotMetadata(fields.metadata)),
     metrics: normalizeSnapshotMetrics(fields.metrics),
     error: fields.error,
@@ -315,6 +313,12 @@ export function defineStrandsAgentSDKInstrumentationAssertions(options: {
 
       expect(invokeModels.length).toBeGreaterThanOrEqual(1);
       expect(invokeModels[0]?.span.type).toBe("llm");
+      expect(
+        invokeModels.every((modelSpan) => modelSpan.output !== undefined),
+      ).toBe(true);
+      expect(
+        JSON.stringify(invokeModels.map((modelSpan) => modelSpan.output)),
+      ).toContain("STRANDS_AGENT_TOOL_OK");
       expect(invokeModels[0]?.row.metadata).toMatchObject({
         model: MODEL_NAME,
         provider: "openai",
@@ -337,6 +341,12 @@ export function defineStrandsAgentSDKInstrumentationAssertions(options: {
         "STRANDS_AGENT_STREAM_OK",
       );
       expect(streamModels.length).toBeGreaterThanOrEqual(1);
+      expect(
+        streamModels.every((modelSpan) => modelSpan.output !== undefined),
+      ).toBe(true);
+      expect(
+        JSON.stringify(streamModels.map((modelSpan) => modelSpan.output)),
+      ).toContain("STRANDS_AGENT_STREAM_OK");
     });
 
     test(

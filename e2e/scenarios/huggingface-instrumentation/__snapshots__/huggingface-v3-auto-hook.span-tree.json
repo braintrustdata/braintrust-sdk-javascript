@@ -37,9 +37,10 @@
                 "temperature": 0
               },
               "metrics": {
+                "cached_tokens": 0,
                 "completion_tokens": 2,
-                "prompt_tokens": 15,
-                "tokens": 17
+                "prompt_tokens": 40,
+                "tokens": 42
               }
             }
           ],
@@ -83,10 +84,11 @@
                 "temperature": 0
               },
               "metrics": {
+                "cached_tokens": 0,
                 "completion_tokens": 2,
-                "prompt_tokens": 15,
+                "prompt_tokens": 40,
                 "time_to_first_token": 0,
-                "tokens": 17
+                "tokens": 42
               }
             }
           ],
@@ -162,6 +164,7 @@
                 ]
               },
               "metrics": {
+                "cached_tokens": 0,
                 "completion_tokens": 18,
                 "prompt_tokens": 203,
                 "time_to_first_token": 0,
@@ -183,7 +186,7 @@
               "children": [],
               "input": "The capital of France is",
               "output": {
-                "generated_text": " a city that is"
+                "generated_text": " the city of Paris"
               },
               "metadata": {
                 "model": "meta-llama/Llama-3.1-8B",
@@ -211,7 +214,7 @@
               "input": "The capital of France is",
               "output": {
                 "finish_reason": "length",
-                "generated_text": " a city that is"
+                "generated_text": " a city of great"
               },
               "metadata": {
                 "finish_reason": "length",
@@ -224,10 +227,11 @@
                 "provider": "featherless-ai"
               },
               "metrics": {
+                "cached_tokens": 0,
                 "completion_tokens": 4,
-                "prompt_tokens": 5,
+                "prompt_tokens": 6,
                 "time_to_first_token": 0,
-                "tokens": 9
+                "tokens": 10
               }
             }
           ],
