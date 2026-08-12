@@ -28,6 +28,11 @@ span_tree:
     metrics: {
       "duration_ms": 0
     }
+    context: {
+      "caller_filename": "<node-internal>",
+      "caller_functionname": "<node-internal>",
+      "caller_lineno": 0
+    }
     ├── flue.turn [llm]
     │   input: [
     │     {
@@ -59,6 +64,7 @@ span_tree:
     │     "flue.conversation_id": "<flue.conversation_id:2>",
     │     "flue.event_index": 15,
     │     "flue.harness": "default",
+    │     "flue.input_mode": "full",
     │     "flue.instance_id": "braintrust-e2e",
     │     "flue.is_error": false,
     │     "flue.model": "gpt-5.6-luna",
@@ -167,15 +173,6 @@ span_tree:
     │     {
     │       "content": [
     │         {
-    │           "text": "Exercise Flue 2 tool-use instrumentation and finish with PROMPT_DONE.",
-    │           "type": "text"
-    │         }
-    │       ],
-    │       "role": "user"
-    │     },
-    │     {
-    │       "content": [
-    │         {
     │           "arguments": {
     │             "query": "Flue 2 instrumentation"
     │           },
@@ -215,6 +212,8 @@ span_tree:
     │     "flue.conversation_id": "<flue.conversation_id:2>",
     │     "flue.event_index": 28,
     │     "flue.harness": "default",
+    │     "flue.input_message_offset": 1,
+    │     "flue.input_mode": "delta",
     │     "flue.instance_id": "braintrust-e2e",
     │     "flue.is_error": false,
     │     "flue.model": "gpt-5.6-luna",
@@ -223,86 +222,11 @@ span_tree:
     │     "flue.session": "default",
     │     "flue.stop_reason": "stop",
     │     "flue.submission_id": "<flue.submission_id:1>",
-    │     "flue.system_prompt": "Call the lookup tool exactly once with query Flue 2 instrumentation. Then reply with exactly PROMPT_DONE.\n\n## Available Agents\n\nNone. No subagents are currently declared, so the `task` tool has no valid `agent` value — do not call it unless an agent is introduced later in the conversation.\n\nDate: <timestamp>",
     │     "flue.turn_id": "<flue.turn_id:4>",
     │     "flue.turn_purpose": "agent",
     │     "model": "gpt-5.6-luna",
     │     "provider": "openai",
-    │     "reasoning": "low",
-    │     "tools": [
-    │       {
-    │         "description": "Delegate a focused task to a detached child agent with its own context. Use this for independent research, file exploration, or parallel work. Pass attachment IDs shown in the conversation to include those images. The task returns only its final answer to this conversation. Agents available for delegation are listed under \"Available Agents\" in the system prompt.",
-    │         "name": "task",
-    │         "parameters": {
-    │           "properties": {
-    │             "agent": {
-    │               "description": "Subagent to run the task with, from the list of currently available agents. Agents that have been removed from the list are no longer usable (until re-introduced, if ever).",
-    │               "minLength": 1,
-    │               "type": "string",
-    │               "~kind": "String"
-    │             },
-    │             "attachments": {
-    │               "description": "Images from this conversation to include in the child agent prompt",
-    │               "items": {
-    │                 "properties": {
-    │                   "id": {
-    │                     "description": "Attachment ID shown in the current conversation",
-    │                     "type": "string",
-    │                     "~kind": "String"
-    │                   }
-    │                 },
-    │                 "required": [
-    │                   "id"
-    │                 ],
-    │                 "type": "object",
-    │                 "~kind": "Object"
-    │               },
-    │               "type": "array",
-    │               "~kind": "Array",
-    │               "~optional": true
-    │             },
-    │             "cwd": {
-    │               "description": "Working directory for the child agent. AGENTS.md and skills are discovered from here.",
-    │               "type": "string",
-    │               "~kind": "String",
-    │               "~optional": true
-    │             },
-    │             "description": {
-    │               "description": "Short human-readable label for the delegated work",
-    │               "type": "string",
-    │               "~kind": "String",
-    │               "~optional": true
-    │             },
-    │             "prompt": {
-    │               "description": "Focused instructions for the child agent",
-    │               "type": "string",
-    │               "~kind": "String"
-    │             }
-    │           },
-    │           "required": [
-    │             "prompt",
-    │             "agent"
-    │           ],
-    │           "type": "object",
-    │           "~kind": "Object"
-    │         }
-    │       },
-    │       {
-    │         "description": "Return the deterministic Flue instrumentation result.",
-    │         "name": "lookup",
-    │         "parameters": {
-    │           "properties": {
-    │             "query": {
-    │               "type": "string"
-    │             }
-    │           },
-    │           "required": [
-    │             "query"
-    │           ],
-    │           "type": "object"
-    │         }
-    │       }
-    │     ]
+    │     "reasoning": "low"
     │   }
     │   metrics: {
     │     "completion_tokens": 7,

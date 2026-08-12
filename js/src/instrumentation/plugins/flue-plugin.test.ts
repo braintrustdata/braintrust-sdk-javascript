@@ -76,11 +76,17 @@ const { mockNewTracingChannel, mockTracingChannels } = vi.hoisted(() => {
 
 vi.mock("../../logger", () => ({
   BRAINTRUST_CURRENT_SPAN_STORE: mockCurrentSpanStoreSymbol,
+  NOOP_SPAN: {},
   flush: (...args: unknown[]) => mockFlush(...args),
   _internalGetGlobalState: () => ({
     contextManager: {
       [mockCurrentSpanStoreSymbol]: mockCurrentSpanStore,
       wrapSpanForStore: (span: unknown) => span,
+    },
+    idGenerator: {
+      getSpanId: () => "root-span-id",
+      getTraceId: () => "root-trace-id",
+      shareRootSpanId: () => false,
     },
   }),
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
@@ -427,7 +433,8 @@ describe("Flue observe instrumentation", () => {
       },
       startTime: Date.parse(startedAt) / 1000,
     });
-    expect(operationSpan?.spanParents).toEqual([workflowSpan?.spanId]);
+    expect(operationSpan?.spanParents).toEqual([]);
+    expect(operationSpan?.rootSpanId).not.toBe(workflowSpan?.rootSpanId);
     expect(turnSpan?.spanParents).toEqual([operationSpan?.spanId]);
     expect(toolSpan?.spanParents).toEqual([operationSpan?.spanId]);
     expect(taskSpan?.spanParents).toEqual([operationSpan?.spanId]);
@@ -755,6 +762,133 @@ describe("Flue observe instrumentation", () => {
     );
   });
 
+  it("creates a user-turn trace with incremental LLM inputs", () => {
+    const emit = observeEvents();
+    const previousUser = { content: "Earlier request", role: "user" };
+    const previousAssistant = { content: "Earlier answer", role: "assistant" };
+    const currentUser = { content: "Research Flue", role: "user" };
+    const toolCall = {
+      content: [{ id: "tool-1", name: "lookup", type: "toolCall" }],
+      role: "assistant",
+    };
+    const toolResult = {
+      content: [{ text: "Flue result", type: "text" }],
+      role: "toolResult",
+      toolCallId: "tool-1",
+    };
+
+    emit({
+      input: { metadata: { scenario: "flue-instrumentation" } },
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-1",
+      operationKind: "prompt",
+      runId: "run-1",
+      type: "operation_start",
+    });
+    emit({
+      input: {
+        messages: [previousUser, previousAssistant, currentUser],
+        systemPrompt: "Be precise",
+        tools: [{ name: "lookup" }],
+      },
+      operationId: "op-1",
+      purpose: "agent",
+      runId: "run-1",
+      turnId: "turn-1",
+      type: "turn_request",
+    });
+    emit({
+      operationId: "op-1",
+      output: toolCall,
+      purpose: "agent",
+      runId: "run-1",
+      turnId: "turn-1",
+      type: "turn",
+    });
+    emit({
+      input: {
+        messages: [
+          previousUser,
+          previousAssistant,
+          currentUser,
+          toolCall,
+          toolResult,
+        ],
+        systemPrompt: "Be precise",
+        tools: [{ name: "lookup" }],
+      },
+      operationId: "op-1",
+      purpose: "agent",
+      runId: "run-1",
+      turnId: "turn-1",
+      type: "turn_request",
+    });
+    emit({
+      operationId: "op-1",
+      output: { content: "done", role: "assistant" },
+      purpose: "agent",
+      runId: "run-1",
+      turnId: "turn-1",
+      type: "turn",
+    });
+    emit({
+      input: {
+        messages: [currentUser],
+        systemPrompt: "Use compacted context",
+        tools: [{ name: "search" }],
+      },
+      operationId: "op-1",
+      purpose: "agent",
+      runId: "run-1",
+      turnId: "turn-1",
+      type: "turn_request",
+    });
+
+    const workflowSpan = findSpan("workflow:research");
+    const operationSpan = findSpan("flue.prompt");
+    const turnSpans = spans.filter((span) => span.name === "flue.turn");
+
+    expect(operationSpan?.spanParents).toEqual([]);
+    expect(operationSpan?.rootSpanId).not.toBe(workflowSpan?.rootSpanId);
+    expect(operationSpan?.args.event.metadata).toMatchObject({
+      scenario: "flue-instrumentation",
+    });
+    expect(operationSpan?.log).toHaveBeenCalledWith({ input: [currentUser] });
+    expect(turnSpans).toHaveLength(3);
+    expect(turnSpans[0]?.args.event).toMatchObject({
+      input: [previousUser, previousAssistant, currentUser],
+      metadata: {
+        "flue.input_mode": "full",
+        "flue.system_prompt": "Be precise",
+        tools: [{ name: "lookup" }],
+      },
+    });
+    expect(turnSpans[1]?.args.event).toMatchObject({
+      input: [toolCall, toolResult],
+      metadata: {
+        "flue.input_message_offset": 3,
+        "flue.input_mode": "delta",
+      },
+    });
+    expect(turnSpans[1]?.args.event.metadata).not.toHaveProperty(
+      "flue.system_prompt",
+    );
+    expect(turnSpans[1]?.args.event.metadata).not.toHaveProperty("tools");
+    expect(turnSpans[2]?.args.event).toMatchObject({
+      input: [currentUser],
+      metadata: {
+        "flue.input_mode": "reset",
+        "flue.system_prompt": "Use compacted context",
+        tools: [{ name: "search" }],
+      },
+    });
+    expect(mockFlush).not.toHaveBeenCalled();
+  });
+
   it("flushes without awaiting when a run ends", () => {
     const emit = observeEvents();
     const pendingFlush = new Promise<void>(() => {});
@@ -962,6 +1096,14 @@ describe("Flue observe instrumentation", () => {
       type: "task_start",
     });
     emit({
+      operationId: "op-task-prompt",
+      operationKind: "prompt",
+      runId: "run-1",
+      session: "task:task-1",
+      taskId: "task-1",
+      type: "operation_start",
+    });
+    emit({
       durationMs: 5,
       isError: false,
       operationId: "op-task",
@@ -982,9 +1124,11 @@ describe("Flue observe instrumentation", () => {
 
     const workflowSpan = findSpan("workflow:research");
     const taskSpans = spans.filter((span) => span.name === "flue.task");
+    const nestedPromptSpan = findSpan("flue.prompt");
 
     expect(taskSpans).toHaveLength(1);
     expect(taskSpans[0]?.spanParents).toEqual([workflowSpan?.spanId]);
+    expect(nestedPromptSpan?.spanParents).toEqual([taskSpans[0]?.spanId]);
     expect(taskSpans[0]?.args.event.input).toBe("Reply with TASK_DONE");
     expect(taskSpans[0]?.log).toHaveBeenCalledWith(
       expect.objectContaining({

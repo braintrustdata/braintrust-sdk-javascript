@@ -13,471 +13,6 @@
           }
         },
         {
-          "name": "flue.prompt",
-          "type": "task",
-          "children": [
-            {
-              "name": "flue.turn",
-              "type": "llm",
-              "children": [],
-              "input": [
-                {
-                  "content": [
-                    {
-                      "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
-                      "type": "text"
-                    }
-                  ],
-                  "role": "user"
-                }
-              ],
-              "output": {
-                "content": [
-                  {
-                    "thinking": "",
-                    "thinkingSignature": "{\"id\":\"rs_0f853fd4725c6abf016a705b77390081a288d115472f015631\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABqcFt3puS3Bq2NJT6919lM43Dt2mcGVnW8d9pkTbZRTb0BpEdGQq-D__0GELauHW3Nv0KIYSHYvz7MJ5rd7sDesAFdfBjIzg6WheoB_qvcv9YJCQlG5rbRnQUOo8EeNn3xpVU2TnKQX2bFX-hqDIEr8gzeHzbzlyRkJ_As84geW8IgU7NEIDA0z_Up0Ud5WVPHgtnzkZ5PQiPdf0MBUX-PQ4r53y30Jg9dJulRqQR9nOZvp_okxIyD9I9mCwFeImbvLFpx2bs8ozMh346RUg-e-hub9xXbe7OeXvZ1XUWW5Q7RjCPTdbJ15dRBPogZ4iuqhN7sYeBei0AqYSKeA3vVchAaKM1Wpprub60TM_VPirl9SI2m1atxgGyy2BzPnswV4xGDhkx9XS_eN1eufO4pNRsBmNxg2ULSY001V7KU8FxjxN8ATRNOAbI7SqwDK5UUz55lCvowH4CX5gn8dRHuU9tVJHWdVe2NHiurWmnWWTtfGb_baV7qJJfWE71g-LaJjgTGqUR8DaF7Sz3jr82FCo4A14mvLuZTaeRQ5mj4fUwdMjwruaoOmpoUMnZ-HhduddsiMUF5TVl9VFFAs8yLun5oRBRpUvbgqix8J-erBApMtcsi_DzQkq24k7k7HXGIp1h9CC0RTrJ-R1ji_OuEbEL64xdqfndSGwh5tr5zmsvgNLOqvghow3NU7ZQl5_AUzi-0BrHrq0SowgNmZxoVoNfRHpnUZ5nUkW-Yp1Juz-0nI5WXZiPlSFalsQOb46NPLlXUtY98YmHP6telw_BJL6_EYBhB12GaiERBSrmzArZO0Tbf6oyl6W_ug8w45bQ_vduXuMPOLqfBHiIizO2Xv_7YTTeyosQUV9u25ooudI4v03pHJHLLVmmf_ld8R91-SkIP5iPHQXjIGpEczgWPxafev4PgsDTb-L5zEnuQoALfwK0CJAzUHORGJIttRIK63JoDvt6jaUNZJ0uSwYWu2JrR5u4RrIOW7fH4tpsOQ4MflVUNrWtSacG_QKqNIC9tz7nbCwC0VIdmSloCt8XUo5uOpA==\",\"summary\":[]}",
-                    "type": "thinking"
-                  },
-                  {
-                    "arguments": {
-                      "query": "flue instrumentation"
-                    },
-                    "id": "<span:1>",
-                    "name": "lookup",
-                    "type": "toolCall"
-                  }
-                ],
-                "role": "assistant"
-              },
-              "metadata": {
-                "flue.api": "openai-responses",
-                "flue.model": "gpt-5.4-nano",
-                "flue.provider": "openai",
-                "flue.session": "main",
-                "flue.stop_reason": "toolUse",
-                "flue.turn_purpose": "agent",
-                "model": "gpt-5.4-nano",
-                "provider": "openai"
-              },
-              "metrics": {
-                "completion_tokens": 41,
-                "duration_ms": 0,
-                "estimated_cost": 0.00026885000000000006,
-                "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 1088,
-                "tokens": 1129
-              }
-            },
-            {
-              "name": "tool:lookup",
-              "type": "tool",
-              "children": [
-                {
-                  "name": "flue.toolCurrentProbe",
-                  "children": [],
-                  "output": "lookup-active",
-                  "metadata": {
-                    "scenario": "flue-instrumentation"
-                  }
-                }
-              ],
-              "input": {
-                "query": "flue instrumentation"
-              },
-              "output": {
-                "id": "<span:1>",
-                "query": "flue instrumentation",
-                "topic": "session instrumentation"
-              },
-              "metadata": {
-                "flue.session": "main",
-                "flue.tool_name": "lookup",
-                "provider": "flue"
-              },
-              "metrics": {
-                "duration_ms": 0
-              }
-            },
-            {
-              "name": "flue.turn",
-              "type": "llm",
-              "children": [],
-              "input": [
-                {
-                  "content": [
-                    {
-                      "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
-                      "type": "text"
-                    }
-                  ],
-                  "role": "user"
-                },
-                {
-                  "content": [
-                    {
-                      "thinking": "",
-                      "thinkingSignature": "{\"id\":\"rs_0f853fd4725c6abf016a705b77390081a288d115472f015631\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABqcFt3puS3Bq2NJT6919lM43Dt2mcGVnW8d9pkTbZRTb0BpEdGQq-D__0GELauHW3Nv0KIYSHYvz7MJ5rd7sDesAFdfBjIzg6WheoB_qvcv9YJCQlG5rbRnQUOo8EeNn3xpVU2TnKQX2bFX-hqDIEr8gzeHzbzlyRkJ_As84geW8IgU7NEIDA0z_Up0Ud5WVPHgtnzkZ5PQiPdf0MBUX-PQ4r53y30Jg9dJulRqQR9nOZvp_okxIyD9I9mCwFeImbvLFpx2bs8ozMh346RUg-e-hub9xXbe7OeXvZ1XUWW5Q7RjCPTdbJ15dRBPogZ4iuqhN7sYeBei0AqYSKeA3vVchAaKM1Wpprub60TM_VPirl9SI2m1atxgGyy2BzPnswV4xGDhkx9XS_eN1eufO4pNRsBmNxg2ULSY001V7KU8FxjxN8ATRNOAbI7SqwDK5UUz55lCvowH4CX5gn8dRHuU9tVJHWdVe2NHiurWmnWWTtfGb_baV7qJJfWE71g-LaJjgTGqUR8DaF7Sz3jr82FCo4A14mvLuZTaeRQ5mj4fUwdMjwruaoOmpoUMnZ-HhduddsiMUF5TVl9VFFAs8yLun5oRBRpUvbgqix8J-erBApMtcsi_DzQkq24k7k7HXGIp1h9CC0RTrJ-R1ji_OuEbEL64xdqfndSGwh5tr5zmsvgNLOqvghow3NU7ZQl5_AUzi-0BrHrq0SowgNmZxoVoNfRHpnUZ5nUkW-Yp1Juz-0nI5WXZiPlSFalsQOb46NPLlXUtY98YmHP6telw_BJL6_EYBhB12GaiERBSrmzArZO0Tbf6oyl6W_ug8w45bQ_vduXuMPOLqfBHiIizO2Xv_7YTTeyosQUV9u25ooudI4v03pHJHLLVmmf_ld8R91-SkIP5iPHQXjIGpEczgWPxafev4PgsDTb-L5zEnuQoALfwK0CJAzUHORGJIttRIK63JoDvt6jaUNZJ0uSwYWu2JrR5u4RrIOW7fH4tpsOQ4MflVUNrWtSacG_QKqNIC9tz7nbCwC0VIdmSloCt8XUo5uOpA==\",\"summary\":[]}",
-                      "type": "thinking"
-                    },
-                    {
-                      "arguments": {
-                        "query": "flue instrumentation"
-                      },
-                      "id": "<span:1>",
-                      "name": "lookup",
-                      "type": "toolCall"
-                    }
-                  ],
-                  "role": "assistant"
-                },
-                {
-                  "content": [
-                    {
-                      "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
-                      "type": "text"
-                    }
-                  ],
-                  "isError": false,
-                  "role": "toolResult",
-                  "toolCallId": "<span:1>",
-                  "toolName": "lookup"
-                }
-              ],
-              "output": {
-                "content": [
-                  {
-                    "arguments": {
-                      "lookupId": "flue-session-2026",
-                      "query": "Braintrust Flue reasoning stream instrumentation"
-                    },
-                    "id": "<span:1>",
-                    "name": "web_search",
-                    "type": "toolCall"
-                  }
-                ],
-                "role": "assistant"
-              },
-              "metadata": {
-                "flue.api": "openai-responses",
-                "flue.model": "gpt-5.4-nano",
-                "flue.provider": "openai",
-                "flue.session": "main",
-                "flue.stop_reason": "toolUse",
-                "flue.turn_purpose": "agent",
-                "model": "gpt-5.4-nano",
-                "provider": "openai"
-              },
-              "metrics": {
-                "completion_tokens": 34,
-                "duration_ms": 0,
-                "estimated_cost": 0.0002749,
-                "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 1162,
-                "tokens": 1196
-              }
-            },
-            {
-              "name": "tool:web_search",
-              "type": "tool",
-              "children": [],
-              "input": {
-                "lookupId": "flue-session-2026",
-                "query": "Braintrust Flue reasoning stream instrumentation"
-              },
-              "output": {
-                "lookupId": "flue-session-2026",
-                "query": "Braintrust Flue reasoning stream instrumentation",
-                "results": [
-                  {
-                    "title": "Flue reasoning stream instrumentation",
-                    "url": "https://example.test/flue/reasoning-streams"
-                  }
-                ]
-              },
-              "metadata": {
-                "flue.session": "main",
-                "flue.tool_name": "web_search",
-                "provider": "flue"
-              },
-              "metrics": {
-                "duration_ms": 0
-              }
-            },
-            {
-              "name": "flue.turn",
-              "type": "llm",
-              "children": [],
-              "input": [
-                {
-                  "content": [
-                    {
-                      "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
-                      "type": "text"
-                    }
-                  ],
-                  "role": "user"
-                },
-                {
-                  "content": [
-                    {
-                      "thinking": "",
-                      "thinkingSignature": "{\"id\":\"rs_0f853fd4725c6abf016a705b77390081a288d115472f015631\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABqcFt3puS3Bq2NJT6919lM43Dt2mcGVnW8d9pkTbZRTb0BpEdGQq-D__0GELauHW3Nv0KIYSHYvz7MJ5rd7sDesAFdfBjIzg6WheoB_qvcv9YJCQlG5rbRnQUOo8EeNn3xpVU2TnKQX2bFX-hqDIEr8gzeHzbzlyRkJ_As84geW8IgU7NEIDA0z_Up0Ud5WVPHgtnzkZ5PQiPdf0MBUX-PQ4r53y30Jg9dJulRqQR9nOZvp_okxIyD9I9mCwFeImbvLFpx2bs8ozMh346RUg-e-hub9xXbe7OeXvZ1XUWW5Q7RjCPTdbJ15dRBPogZ4iuqhN7sYeBei0AqYSKeA3vVchAaKM1Wpprub60TM_VPirl9SI2m1atxgGyy2BzPnswV4xGDhkx9XS_eN1eufO4pNRsBmNxg2ULSY001V7KU8FxjxN8ATRNOAbI7SqwDK5UUz55lCvowH4CX5gn8dRHuU9tVJHWdVe2NHiurWmnWWTtfGb_baV7qJJfWE71g-LaJjgTGqUR8DaF7Sz3jr82FCo4A14mvLuZTaeRQ5mj4fUwdMjwruaoOmpoUMnZ-HhduddsiMUF5TVl9VFFAs8yLun5oRBRpUvbgqix8J-erBApMtcsi_DzQkq24k7k7HXGIp1h9CC0RTrJ-R1ji_OuEbEL64xdqfndSGwh5tr5zmsvgNLOqvghow3NU7ZQl5_AUzi-0BrHrq0SowgNmZxoVoNfRHpnUZ5nUkW-Yp1Juz-0nI5WXZiPlSFalsQOb46NPLlXUtY98YmHP6telw_BJL6_EYBhB12GaiERBSrmzArZO0Tbf6oyl6W_ug8w45bQ_vduXuMPOLqfBHiIizO2Xv_7YTTeyosQUV9u25ooudI4v03pHJHLLVmmf_ld8R91-SkIP5iPHQXjIGpEczgWPxafev4PgsDTb-L5zEnuQoALfwK0CJAzUHORGJIttRIK63JoDvt6jaUNZJ0uSwYWu2JrR5u4RrIOW7fH4tpsOQ4MflVUNrWtSacG_QKqNIC9tz7nbCwC0VIdmSloCt8XUo5uOpA==\",\"summary\":[]}",
-                      "type": "thinking"
-                    },
-                    {
-                      "arguments": {
-                        "query": "flue instrumentation"
-                      },
-                      "id": "<span:1>",
-                      "name": "lookup",
-                      "type": "toolCall"
-                    }
-                  ],
-                  "role": "assistant"
-                },
-                {
-                  "content": [
-                    {
-                      "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
-                      "type": "text"
-                    }
-                  ],
-                  "isError": false,
-                  "role": "toolResult",
-                  "toolCallId": "<span:1>",
-                  "toolName": "lookup"
-                },
-                {
-                  "content": [
-                    {
-                      "arguments": {
-                        "lookupId": "flue-session-2026",
-                        "query": "Braintrust Flue reasoning stream instrumentation"
-                      },
-                      "id": "<span:2>",
-                      "name": "web_search",
-                      "type": "toolCall"
-                    }
-                  ],
-                  "role": "assistant"
-                },
-                {
-                  "content": [
-                    {
-                      "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
-                      "type": "text"
-                    }
-                  ],
-                  "isError": false,
-                  "role": "toolResult",
-                  "toolCallId": "<span:2>",
-                  "toolName": "web_search"
-                }
-              ],
-              "output": {
-                "content": [
-                  {
-                    "arguments": {
-                      "url": "https://example.test/flue/reasoning-streams"
-                    },
-                    "id": "<span:1>",
-                    "name": "summarize_source",
-                    "type": "toolCall"
-                  }
-                ],
-                "role": "assistant"
-              },
-              "metadata": {
-                "flue.api": "openai-responses",
-                "flue.model": "gpt-5.4-nano",
-                "flue.provider": "openai",
-                "flue.session": "main",
-                "flue.stop_reason": "toolUse",
-                "flue.turn_purpose": "agent",
-                "model": "gpt-5.4-nano",
-                "provider": "openai"
-              },
-              "metrics": {
-                "completion_tokens": 30,
-                "duration_ms": 0,
-                "estimated_cost": 0.00028890000000000003,
-                "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 1257,
-                "tokens": 1287
-              }
-            },
-            {
-              "name": "tool:summarize_source",
-              "type": "tool",
-              "children": [],
-              "input": {
-                "url": "https://example.test/flue/reasoning-streams"
-              },
-              "output": {
-                "summary": "Flue emits reasoning, tool execution, and LLM turn events separately.",
-                "url": "https://example.test/flue/reasoning-streams"
-              },
-              "metadata": {
-                "flue.session": "main",
-                "flue.tool_name": "summarize_source",
-                "provider": "flue"
-              },
-              "metrics": {
-                "duration_ms": 0
-              }
-            },
-            {
-              "name": "flue.turn",
-              "type": "llm",
-              "children": [],
-              "input": [
-                {
-                  "content": [
-                    {
-                      "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
-                      "type": "text"
-                    }
-                  ],
-                  "role": "user"
-                },
-                {
-                  "content": [
-                    {
-                      "thinking": "",
-                      "thinkingSignature": "{\"id\":\"rs_0f853fd4725c6abf016a705b77390081a288d115472f015631\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABqcFt3puS3Bq2NJT6919lM43Dt2mcGVnW8d9pkTbZRTb0BpEdGQq-D__0GELauHW3Nv0KIYSHYvz7MJ5rd7sDesAFdfBjIzg6WheoB_qvcv9YJCQlG5rbRnQUOo8EeNn3xpVU2TnKQX2bFX-hqDIEr8gzeHzbzlyRkJ_As84geW8IgU7NEIDA0z_Up0Ud5WVPHgtnzkZ5PQiPdf0MBUX-PQ4r53y30Jg9dJulRqQR9nOZvp_okxIyD9I9mCwFeImbvLFpx2bs8ozMh346RUg-e-hub9xXbe7OeXvZ1XUWW5Q7RjCPTdbJ15dRBPogZ4iuqhN7sYeBei0AqYSKeA3vVchAaKM1Wpprub60TM_VPirl9SI2m1atxgGyy2BzPnswV4xGDhkx9XS_eN1eufO4pNRsBmNxg2ULSY001V7KU8FxjxN8ATRNOAbI7SqwDK5UUz55lCvowH4CX5gn8dRHuU9tVJHWdVe2NHiurWmnWWTtfGb_baV7qJJfWE71g-LaJjgTGqUR8DaF7Sz3jr82FCo4A14mvLuZTaeRQ5mj4fUwdMjwruaoOmpoUMnZ-HhduddsiMUF5TVl9VFFAs8yLun5oRBRpUvbgqix8J-erBApMtcsi_DzQkq24k7k7HXGIp1h9CC0RTrJ-R1ji_OuEbEL64xdqfndSGwh5tr5zmsvgNLOqvghow3NU7ZQl5_AUzi-0BrHrq0SowgNmZxoVoNfRHpnUZ5nUkW-Yp1Juz-0nI5WXZiPlSFalsQOb46NPLlXUtY98YmHP6telw_BJL6_EYBhB12GaiERBSrmzArZO0Tbf6oyl6W_ug8w45bQ_vduXuMPOLqfBHiIizO2Xv_7YTTeyosQUV9u25ooudI4v03pHJHLLVmmf_ld8R91-SkIP5iPHQXjIGpEczgWPxafev4PgsDTb-L5zEnuQoALfwK0CJAzUHORGJIttRIK63JoDvt6jaUNZJ0uSwYWu2JrR5u4RrIOW7fH4tpsOQ4MflVUNrWtSacG_QKqNIC9tz7nbCwC0VIdmSloCt8XUo5uOpA==\",\"summary\":[]}",
-                      "type": "thinking"
-                    },
-                    {
-                      "arguments": {
-                        "query": "flue instrumentation"
-                      },
-                      "id": "<span:1>",
-                      "name": "lookup",
-                      "type": "toolCall"
-                    }
-                  ],
-                  "role": "assistant"
-                },
-                {
-                  "content": [
-                    {
-                      "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
-                      "type": "text"
-                    }
-                  ],
-                  "isError": false,
-                  "role": "toolResult",
-                  "toolCallId": "<span:1>",
-                  "toolName": "lookup"
-                },
-                {
-                  "content": [
-                    {
-                      "arguments": {
-                        "lookupId": "flue-session-2026",
-                        "query": "Braintrust Flue reasoning stream instrumentation"
-                      },
-                      "id": "<span:2>",
-                      "name": "web_search",
-                      "type": "toolCall"
-                    }
-                  ],
-                  "role": "assistant"
-                },
-                {
-                  "content": [
-                    {
-                      "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
-                      "type": "text"
-                    }
-                  ],
-                  "isError": false,
-                  "role": "toolResult",
-                  "toolCallId": "<span:2>",
-                  "toolName": "web_search"
-                },
-                {
-                  "content": [
-                    {
-                      "arguments": {
-                        "url": "https://example.test/flue/reasoning-streams"
-                      },
-                      "id": "<span:3>",
-                      "name": "summarize_source",
-                      "type": "toolCall"
-                    }
-                  ],
-                  "role": "assistant"
-                },
-                {
-                  "content": [
-                    {
-                      "text": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
-                      "type": "text"
-                    }
-                  ],
-                  "isError": false,
-                  "role": "toolResult",
-                  "toolCallId": "<span:3>",
-                  "toolName": "summarize_source"
-                }
-              ],
-              "output": {
-                "content": [
-                  {
-                    "text": "PROMPT_DONE",
-                    "textSignature": "{\"v\":1,\"id\":\"msg_0f853fd4725c6abf016a705b79c4b881a286d3e4b2799b2c66\",\"phase\":\"final_answer\"}",
-                    "type": "text"
-                  }
-                ],
-                "role": "assistant"
-              },
-              "metadata": {
-                "flue.api": "openai-responses",
-                "flue.model": "gpt-5.4-nano",
-                "flue.provider": "openai",
-                "flue.session": "main",
-                "flue.stop_reason": "stop",
-                "flue.turn_purpose": "agent",
-                "model": "gpt-5.4-nano",
-                "provider": "openai"
-              },
-              "metrics": {
-                "completion_tokens": 7,
-                "duration_ms": 0,
-                "estimated_cost": 0.00027595000000000007,
-                "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 1336,
-                "tokens": 1343
-              }
-            }
-          ],
-          "input": [
-            {
-              "content": [
-                {
-                  "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
-                  "type": "text"
-                }
-              ],
-              "role": "user"
-            }
-          ],
-          "output": "PROMPT_DONE",
-          "metadata": {
-            "flue.operation": "prompt",
-            "flue.session": "main",
-            "provider": "flue"
-          },
-          "metrics": {
-            "duration_ms": 0
-          }
-        },
-        {
           "name": "flue.skill",
           "type": "task",
           "children": [
@@ -632,7 +167,9 @@
           "metadata": {
             "flue.operation": "skill",
             "flue.session": "skill",
-            "provider": "flue"
+            "flue.workflow_name": "instrumentation",
+            "provider": "flue",
+            "scenario": "flue-instrumentation"
           },
           "metrics": {
             "duration_ms": 0
@@ -669,6 +206,7 @@
               },
               "metadata": {
                 "flue.api": "openai-responses",
+                "flue.input_mode": "full",
                 "flue.model": "gpt-4o-mini",
                 "flue.provider": "openai",
                 "flue.session": "task:task:<uuid:1>",
@@ -782,7 +320,9 @@
           "metadata": {
             "flue.operation": "compact",
             "flue.session": "main",
-            "provider": "flue"
+            "flue.workflow_name": "instrumentation",
+            "provider": "flue",
+            "scenario": "flue-instrumentation"
           },
           "metrics": {
             "duration_ms": 0
@@ -801,6 +341,367 @@
         "status": "done"
       },
       "metadata": {
+        "flue.workflow_name": "instrumentation",
+        "provider": "flue",
+        "scenario": "flue-instrumentation"
+      },
+      "metrics": {
+        "duration_ms": 0
+      }
+    },
+    {
+      "name": "flue.prompt",
+      "type": "task",
+      "children": [
+        {
+          "name": "flue.turn",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": [
+                {
+                  "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+                  "type": "text"
+                }
+              ],
+              "role": "user"
+            }
+          ],
+          "output": {
+            "content": [
+              {
+                "thinking": "",
+                "thinkingSignature": "{\"id\":\"rs_0f853fd4725c6abf016a705b77390081a288d115472f015631\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABqcFt3puS3Bq2NJT6919lM43Dt2mcGVnW8d9pkTbZRTb0BpEdGQq-D__0GELauHW3Nv0KIYSHYvz7MJ5rd7sDesAFdfBjIzg6WheoB_qvcv9YJCQlG5rbRnQUOo8EeNn3xpVU2TnKQX2bFX-hqDIEr8gzeHzbzlyRkJ_As84geW8IgU7NEIDA0z_Up0Ud5WVPHgtnzkZ5PQiPdf0MBUX-PQ4r53y30Jg9dJulRqQR9nOZvp_okxIyD9I9mCwFeImbvLFpx2bs8ozMh346RUg-e-hub9xXbe7OeXvZ1XUWW5Q7RjCPTdbJ15dRBPogZ4iuqhN7sYeBei0AqYSKeA3vVchAaKM1Wpprub60TM_VPirl9SI2m1atxgGyy2BzPnswV4xGDhkx9XS_eN1eufO4pNRsBmNxg2ULSY001V7KU8FxjxN8ATRNOAbI7SqwDK5UUz55lCvowH4CX5gn8dRHuU9tVJHWdVe2NHiurWmnWWTtfGb_baV7qJJfWE71g-LaJjgTGqUR8DaF7Sz3jr82FCo4A14mvLuZTaeRQ5mj4fUwdMjwruaoOmpoUMnZ-HhduddsiMUF5TVl9VFFAs8yLun5oRBRpUvbgqix8J-erBApMtcsi_DzQkq24k7k7HXGIp1h9CC0RTrJ-R1ji_OuEbEL64xdqfndSGwh5tr5zmsvgNLOqvghow3NU7ZQl5_AUzi-0BrHrq0SowgNmZxoVoNfRHpnUZ5nUkW-Yp1Juz-0nI5WXZiPlSFalsQOb46NPLlXUtY98YmHP6telw_BJL6_EYBhB12GaiERBSrmzArZO0Tbf6oyl6W_ug8w45bQ_vduXuMPOLqfBHiIizO2Xv_7YTTeyosQUV9u25ooudI4v03pHJHLLVmmf_ld8R91-SkIP5iPHQXjIGpEczgWPxafev4PgsDTb-L5zEnuQoALfwK0CJAzUHORGJIttRIK63JoDvt6jaUNZJ0uSwYWu2JrR5u4RrIOW7fH4tpsOQ4MflVUNrWtSacG_QKqNIC9tz7nbCwC0VIdmSloCt8XUo5uOpA==\",\"summary\":[]}",
+                "type": "thinking"
+              },
+              {
+                "arguments": {
+                  "query": "flue instrumentation"
+                },
+                "id": "<span:1>",
+                "name": "lookup",
+                "type": "toolCall"
+              }
+            ],
+            "role": "assistant"
+          },
+          "metadata": {
+            "flue.api": "openai-responses",
+            "flue.input_mode": "full",
+            "flue.model": "gpt-5.4-nano",
+            "flue.provider": "openai",
+            "flue.session": "main",
+            "flue.stop_reason": "toolUse",
+            "flue.turn_purpose": "agent",
+            "model": "gpt-5.4-nano",
+            "provider": "openai"
+          },
+          "metrics": {
+            "completion_tokens": 41,
+            "duration_ms": 0,
+            "estimated_cost": 0.00026885000000000006,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 1088,
+            "tokens": 1129
+          }
+        },
+        {
+          "name": "tool:lookup",
+          "type": "tool",
+          "children": [
+            {
+              "name": "flue.toolCurrentProbe",
+              "children": [],
+              "output": "lookup-active",
+              "metadata": {
+                "scenario": "flue-instrumentation"
+              }
+            }
+          ],
+          "input": {
+            "query": "flue instrumentation"
+          },
+          "output": {
+            "id": "<span:1>",
+            "query": "flue instrumentation",
+            "topic": "session instrumentation"
+          },
+          "metadata": {
+            "flue.session": "main",
+            "flue.tool_name": "lookup",
+            "provider": "flue"
+          },
+          "metrics": {
+            "duration_ms": 0
+          }
+        },
+        {
+          "name": "flue.turn",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": [
+                {
+                  "thinking": "",
+                  "thinkingSignature": "{\"id\":\"rs_0f853fd4725c6abf016a705b77390081a288d115472f015631\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABqcFt3puS3Bq2NJT6919lM43Dt2mcGVnW8d9pkTbZRTb0BpEdGQq-D__0GELauHW3Nv0KIYSHYvz7MJ5rd7sDesAFdfBjIzg6WheoB_qvcv9YJCQlG5rbRnQUOo8EeNn3xpVU2TnKQX2bFX-hqDIEr8gzeHzbzlyRkJ_As84geW8IgU7NEIDA0z_Up0Ud5WVPHgtnzkZ5PQiPdf0MBUX-PQ4r53y30Jg9dJulRqQR9nOZvp_okxIyD9I9mCwFeImbvLFpx2bs8ozMh346RUg-e-hub9xXbe7OeXvZ1XUWW5Q7RjCPTdbJ15dRBPogZ4iuqhN7sYeBei0AqYSKeA3vVchAaKM1Wpprub60TM_VPirl9SI2m1atxgGyy2BzPnswV4xGDhkx9XS_eN1eufO4pNRsBmNxg2ULSY001V7KU8FxjxN8ATRNOAbI7SqwDK5UUz55lCvowH4CX5gn8dRHuU9tVJHWdVe2NHiurWmnWWTtfGb_baV7qJJfWE71g-LaJjgTGqUR8DaF7Sz3jr82FCo4A14mvLuZTaeRQ5mj4fUwdMjwruaoOmpoUMnZ-HhduddsiMUF5TVl9VFFAs8yLun5oRBRpUvbgqix8J-erBApMtcsi_DzQkq24k7k7HXGIp1h9CC0RTrJ-R1ji_OuEbEL64xdqfndSGwh5tr5zmsvgNLOqvghow3NU7ZQl5_AUzi-0BrHrq0SowgNmZxoVoNfRHpnUZ5nUkW-Yp1Juz-0nI5WXZiPlSFalsQOb46NPLlXUtY98YmHP6telw_BJL6_EYBhB12GaiERBSrmzArZO0Tbf6oyl6W_ug8w45bQ_vduXuMPOLqfBHiIizO2Xv_7YTTeyosQUV9u25ooudI4v03pHJHLLVmmf_ld8R91-SkIP5iPHQXjIGpEczgWPxafev4PgsDTb-L5zEnuQoALfwK0CJAzUHORGJIttRIK63JoDvt6jaUNZJ0uSwYWu2JrR5u4RrIOW7fH4tpsOQ4MflVUNrWtSacG_QKqNIC9tz7nbCwC0VIdmSloCt8XUo5uOpA==\",\"summary\":[]}",
+                  "type": "thinking"
+                },
+                {
+                  "arguments": {
+                    "query": "flue instrumentation"
+                  },
+                  "id": "<span:1>",
+                  "name": "lookup",
+                  "type": "toolCall"
+                }
+              ],
+              "role": "assistant"
+            },
+            {
+              "content": [
+                {
+                  "text": "{\"id\":\"flue-session-2026\",\"query\":\"flue instrumentation\",\"topic\":\"session instrumentation\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false,
+              "role": "toolResult",
+              "toolCallId": "<span:1>",
+              "toolName": "lookup"
+            }
+          ],
+          "output": {
+            "content": [
+              {
+                "arguments": {
+                  "lookupId": "flue-session-2026",
+                  "query": "Braintrust Flue reasoning stream instrumentation"
+                },
+                "id": "<span:1>",
+                "name": "web_search",
+                "type": "toolCall"
+              }
+            ],
+            "role": "assistant"
+          },
+          "metadata": {
+            "flue.api": "openai-responses",
+            "flue.input_message_offset": 1,
+            "flue.input_mode": "delta",
+            "flue.model": "gpt-5.4-nano",
+            "flue.provider": "openai",
+            "flue.session": "main",
+            "flue.stop_reason": "toolUse",
+            "flue.turn_purpose": "agent",
+            "model": "gpt-5.4-nano",
+            "provider": "openai"
+          },
+          "metrics": {
+            "completion_tokens": 34,
+            "duration_ms": 0,
+            "estimated_cost": 0.0002749,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 1162,
+            "tokens": 1196
+          }
+        },
+        {
+          "name": "tool:web_search",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "lookupId": "flue-session-2026",
+            "query": "Braintrust Flue reasoning stream instrumentation"
+          },
+          "output": {
+            "lookupId": "flue-session-2026",
+            "query": "Braintrust Flue reasoning stream instrumentation",
+            "results": [
+              {
+                "title": "Flue reasoning stream instrumentation",
+                "url": "https://example.test/flue/reasoning-streams"
+              }
+            ]
+          },
+          "metadata": {
+            "flue.session": "main",
+            "flue.tool_name": "web_search",
+            "provider": "flue"
+          },
+          "metrics": {
+            "duration_ms": 0
+          }
+        },
+        {
+          "name": "flue.turn",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": [
+                {
+                  "arguments": {
+                    "lookupId": "flue-session-2026",
+                    "query": "Braintrust Flue reasoning stream instrumentation"
+                  },
+                  "id": "<span:1>",
+                  "name": "web_search",
+                  "type": "toolCall"
+                }
+              ],
+              "role": "assistant"
+            },
+            {
+              "content": [
+                {
+                  "text": "{\"lookupId\":\"flue-session-2026\",\"query\":\"Braintrust Flue reasoning stream instrumentation\",\"results\":[{\"title\":\"Flue reasoning stream instrumentation\",\"url\":\"https://example.test/flue/reasoning-streams\"}]}",
+                  "type": "text"
+                }
+              ],
+              "isError": false,
+              "role": "toolResult",
+              "toolCallId": "<span:1>",
+              "toolName": "web_search"
+            }
+          ],
+          "output": {
+            "content": [
+              {
+                "arguments": {
+                  "url": "https://example.test/flue/reasoning-streams"
+                },
+                "id": "<span:1>",
+                "name": "summarize_source",
+                "type": "toolCall"
+              }
+            ],
+            "role": "assistant"
+          },
+          "metadata": {
+            "flue.api": "openai-responses",
+            "flue.input_message_offset": 3,
+            "flue.input_mode": "delta",
+            "flue.model": "gpt-5.4-nano",
+            "flue.provider": "openai",
+            "flue.session": "main",
+            "flue.stop_reason": "toolUse",
+            "flue.turn_purpose": "agent",
+            "model": "gpt-5.4-nano",
+            "provider": "openai"
+          },
+          "metrics": {
+            "completion_tokens": 30,
+            "duration_ms": 0,
+            "estimated_cost": 0.00028890000000000003,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 1257,
+            "tokens": 1287
+          }
+        },
+        {
+          "name": "tool:summarize_source",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "url": "https://example.test/flue/reasoning-streams"
+          },
+          "output": {
+            "summary": "Flue emits reasoning, tool execution, and LLM turn events separately.",
+            "url": "https://example.test/flue/reasoning-streams"
+          },
+          "metadata": {
+            "flue.session": "main",
+            "flue.tool_name": "summarize_source",
+            "provider": "flue"
+          },
+          "metrics": {
+            "duration_ms": 0
+          }
+        },
+        {
+          "name": "flue.turn",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": [
+                {
+                  "arguments": {
+                    "url": "https://example.test/flue/reasoning-streams"
+                  },
+                  "id": "<span:1>",
+                  "name": "summarize_source",
+                  "type": "toolCall"
+                }
+              ],
+              "role": "assistant"
+            },
+            {
+              "content": [
+                {
+                  "text": "{\"summary\":\"Flue emits reasoning, tool execution, and LLM turn events separately.\",\"url\":\"https://example.test/flue/reasoning-streams\"}",
+                  "type": "text"
+                }
+              ],
+              "isError": false,
+              "role": "toolResult",
+              "toolCallId": "<span:1>",
+              "toolName": "summarize_source"
+            }
+          ],
+          "output": {
+            "content": [
+              {
+                "text": "PROMPT_DONE",
+                "textSignature": "{\"v\":1,\"id\":\"msg_0f853fd4725c6abf016a705b79c4b881a286d3e4b2799b2c66\",\"phase\":\"final_answer\"}",
+                "type": "text"
+              }
+            ],
+            "role": "assistant"
+          },
+          "metadata": {
+            "flue.api": "openai-responses",
+            "flue.input_message_offset": 5,
+            "flue.input_mode": "delta",
+            "flue.model": "gpt-5.4-nano",
+            "flue.provider": "openai",
+            "flue.session": "main",
+            "flue.stop_reason": "stop",
+            "flue.turn_purpose": "agent",
+            "model": "gpt-5.4-nano",
+            "provider": "openai"
+          },
+          "metrics": {
+            "completion_tokens": 7,
+            "duration_ms": 0,
+            "estimated_cost": 0.00027595000000000007,
+            "prompt_cache_creation_tokens": 0,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 1336,
+            "tokens": 1343
+          }
+        }
+      ],
+      "input": [
+        {
+          "content": [
+            {
+              "text": "Complete this instrumented research flow. Call exactly one tool per turn and wait for each tool result before choosing the next tool. Step 1: call lookup with query \"flue instrumentation\". Step 2: use the lookup result id as lookupId and call web_search with query \"Braintrust Flue reasoning stream instrumentation\". Step 3: use the first web_search result url and call summarize_source. After summarize_source returns, reply with exactly PROMPT_DONE and no other text.",
+              "type": "text"
+            }
+          ],
+          "role": "user"
+        }
+      ],
+      "output": "PROMPT_DONE",
+      "metadata": {
+        "flue.operation": "prompt",
+        "flue.session": "main",
         "flue.workflow_name": "instrumentation",
         "provider": "flue",
         "scenario": "flue-instrumentation"

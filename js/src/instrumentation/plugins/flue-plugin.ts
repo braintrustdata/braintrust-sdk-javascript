@@ -4,6 +4,7 @@ import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
 import {
   BRAINTRUST_CURRENT_SPAN_STORE,
+  NOOP_SPAN,
   flush,
   _internalGetGlobalState,
   startSpan as startBaseSpan,
@@ -62,6 +63,14 @@ type SpanState = {
   loggedInput?: boolean;
   metadata: Record<string, unknown>;
   span: Span;
+  turnInputState?: FlueTurnInputState;
+};
+
+type FlueTurnInputState = {
+  boundaryFingerprint?: string;
+  messageCount: number;
+  systemPromptFingerprint?: string;
+  toolsFingerprint?: string;
 };
 
 const FLUE_AUTO_STATE = Symbol.for("braintrust.flue.auto-state");
@@ -594,17 +603,25 @@ class FlueObserveBridge {
     }
 
     const metadata = {
+      ...(event.runId ? this.runsById.get(event.runId)?.metadata : {}),
       ...extractEventMetadata(event),
       "flue.operation": event.operationKind,
       provider: "flue",
     };
     const parent = this.parentSpanForEvent(event);
-    const span = startFlueSpan(parent, {
+    const args = {
       name: `flue.${event.operationKind}`,
       spanAttributes: { type: SpanTypeAttribute.TASK },
       startTime: eventTime(event.timestamp),
       event: { metadata },
-    });
+    } satisfies StartSpanArgs;
+    const runSpan = event.runId
+      ? this.runsById.get(event.runId)?.span
+      : undefined;
+    const span =
+      event.operationKind === "prompt" && (!parent || parent === runSpan)
+        ? startFlueRootSpan(args)
+        : startFlueSpan(parent, args);
 
     this.operationsById.set(event.operationId, { metadata, span });
   }
@@ -628,6 +645,11 @@ class FlueObserveBridge {
       ...(event.usage ? { "flue.usage": event.usage } : {}),
     };
 
+    const input = flueOperationInput(event);
+    if (!state.loggedInput && input !== undefined) {
+      safeLog(state.span, { input });
+      state.loggedInput = true;
+    }
     this.finishPendingChildrenForOperation(event, output);
     safeLog(state.span, {
       ...(event.isError
@@ -648,6 +670,10 @@ class FlueObserveBridge {
     }
 
     const input = flueTurnRequestInput(event);
+    const operation = event.operationId
+      ? this.operationsById.get(event.operationId)
+      : undefined;
+    const turnInput = prepareFlueTurnInput(event, input, operation);
     const model = flueTurnRequestModel(event);
     const provider = flueTurnRequestProvider(event);
     const api = flueTurnRequestApi(event);
@@ -660,10 +686,7 @@ class FlueObserveBridge {
       ...(provider ? { "flue.provider": provider } : {}),
       ...(event.purpose ? { "flue.turn_purpose": event.purpose } : {}),
       ...(reasoning ? { reasoning } : {}),
-      ...(input?.systemPrompt
-        ? { "flue.system_prompt": input.systemPrompt }
-        : {}),
-      ...(input?.tools ? { tools: input.tools } : {}),
+      ...turnInput.metadata,
     };
     const parent = this.parentSpanForTurn(event);
     const span = startFlueSpan(parent, {
@@ -671,12 +694,15 @@ class FlueObserveBridge {
       spanAttributes: { type: SpanTypeAttribute.LLM },
       startTime: eventTime(event.timestamp),
       event: {
-        input: input?.messages,
+        input: turnInput.messages,
         metadata,
       },
     });
 
-    this.logOperationInput(event.operationId, input?.messages ?? input);
+    this.logOperationInput(
+      event.operationId,
+      latestUserMessageInput(input?.messages),
+    );
     this.turnsByKey.set(key, { metadata, span });
   }
 
@@ -968,16 +994,25 @@ class FlueObserveBridge {
 
   private startSyntheticOperation(event: FlueOperationEvent): SpanState {
     const metadata = {
+      ...(event.runId ? this.runsById.get(event.runId)?.metadata : {}),
       ...extractEventMetadata(event),
       "flue.operation": event.operationKind,
       provider: "flue",
     };
-    const span = startFlueSpan(this.parentSpanForEvent(event), {
+    const args = {
       name: `flue.${event.operationKind}`,
       spanAttributes: { type: SpanTypeAttribute.TASK },
       startTime: eventTime(event.timestamp),
       event: { metadata },
-    });
+    } satisfies StartSpanArgs;
+    const parent = this.parentSpanForEvent(event);
+    const runSpan = event.runId
+      ? this.runsById.get(event.runId)?.span
+      : undefined;
+    const span =
+      event.operationKind === "prompt" && (!parent || parent === runSpan)
+        ? startFlueRootSpan(args)
+        : startFlueSpan(parent, args);
     return { metadata, span };
   }
 
@@ -1201,6 +1236,117 @@ function flueTurnRequestInput(
   return event.request?.input ?? event.input;
 }
 
+function prepareFlueTurnInput(
+  event: FlueTurnRequestEvent,
+  input: FlueTurnRequestEvent["input"],
+  operation: SpanState | undefined,
+): { messages: unknown[] | undefined; metadata: Record<string, unknown> } {
+  const messages = input?.messages;
+  const tracksUserTurn =
+    event.purpose === "agent" &&
+    operation?.metadata["flue.operation"] === "prompt" &&
+    Array.isArray(messages);
+  if (!tracksUserTurn) {
+    return {
+      messages,
+      metadata: {
+        ...(input?.systemPrompt
+          ? { "flue.system_prompt": input.systemPrompt }
+          : {}),
+        ...(input?.tools ? { tools: input.tools } : {}),
+      },
+    };
+  }
+
+  const previous = operation.turnInputState;
+  const previousMessageCount = previous?.messageCount ?? 0;
+  const boundaryFingerprint =
+    messages.length > 0
+      ? fingerprintJsonValue(messages[messages.length - 1])
+      : undefined;
+  const continuesPreviousInput =
+    previous !== undefined &&
+    messages.length >= previousMessageCount &&
+    (previousMessageCount === 0 ||
+      (previous.boundaryFingerprint !== undefined &&
+        previous.boundaryFingerprint ===
+          fingerprintJsonValue(messages[previousMessageCount - 1])));
+  const inputMode =
+    previous === undefined
+      ? "full"
+      : continuesPreviousInput
+        ? "delta"
+        : "reset";
+  const systemPromptFingerprint = fingerprintJsonValue(input?.systemPrompt);
+  const toolsFingerprint = fingerprintJsonValue(input?.tools);
+
+  operation.turnInputState = {
+    ...(boundaryFingerprint !== undefined ? { boundaryFingerprint } : {}),
+    messageCount: messages.length,
+    ...(systemPromptFingerprint !== undefined
+      ? { systemPromptFingerprint }
+      : {}),
+    ...(toolsFingerprint !== undefined ? { toolsFingerprint } : {}),
+  };
+
+  return {
+    messages: continuesPreviousInput
+      ? messages.slice(previousMessageCount)
+      : messages,
+    metadata: {
+      "flue.input_mode": inputMode,
+      ...(continuesPreviousInput
+        ? { "flue.input_message_offset": previousMessageCount }
+        : {}),
+      ...(input?.systemPrompt &&
+      (!continuesPreviousInput ||
+        systemPromptFingerprint !== previous?.systemPromptFingerprint)
+        ? { "flue.system_prompt": input.systemPrompt }
+        : {}),
+      ...(input?.tools &&
+      (!continuesPreviousInput ||
+        toolsFingerprint !== previous?.toolsFingerprint)
+        ? { tools: input.tools }
+        : {}),
+    },
+  };
+}
+
+function fingerprintJsonValue(value: unknown): string | undefined {
+  try {
+    const serialized = JSON.stringify(value);
+    if (serialized === undefined) {
+      return undefined;
+    }
+    let hash = 2166136261;
+    for (let i = 0; i < serialized.length; i++) {
+      hash = Math.imul(hash ^ serialized.charCodeAt(i), 16777619);
+    }
+    return `${serialized.length}:${hash >>> 0}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function latestUserMessageInput(messages: unknown[] | undefined): unknown {
+  if (!messages) {
+    return undefined;
+  }
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (isObjectLike(message) && Reflect.get(message, "role") === "user") {
+      return [message];
+    }
+  }
+  return undefined;
+}
+
+function flueOperationInput(event: FlueOperationEvent): unknown {
+  return typeof event.agentInput?.text === "string"
+    ? [{ content: event.agentInput.text, role: "user" }]
+    : undefined;
+}
+
 function flueTurnRequestModel(event: FlueTurnRequestEvent): string | undefined {
   return event.request?.requestedModel ?? event.request?.model ?? event.model;
 }
@@ -1419,6 +1565,26 @@ function startFlueSpan(parent: Span | undefined, args: StartSpanArgs): Span {
     : startBaseSpan(
         withSpanInstrumentationName(args, INSTRUMENTATION_NAMES.FLUE),
       );
+}
+
+function startFlueRootSpan(args: StartSpanArgs): Span {
+  const state = _internalGetGlobalState();
+  const spanId = state.idGenerator.getSpanId();
+  const rootSpanId = state.idGenerator.shareRootSpanId()
+    ? spanId
+    : state.idGenerator.getTraceId();
+
+  return withCurrent(
+    NOOP_SPAN,
+    () =>
+      startBaseSpan({
+        ...withSpanInstrumentationName(args, INSTRUMENTATION_NAMES.FLUE),
+        parentSpanIds: { parentSpanIds: [], rootSpanId },
+        spanId,
+        state,
+      }),
+    state,
+  );
 }
 
 function runWithCurrentSpanStore<T>(

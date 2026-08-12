@@ -95,6 +95,22 @@ export function defineFlueV2InstrumentationAssertions(options: {
           tokens: expect.any(Number),
         });
       }
+      expect(llmSpans[0]?.metadata).toMatchObject({
+        "flue.input_mode": "full",
+      });
+      expect(llmSpans[1]?.input).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ role: "assistant" }),
+          expect.objectContaining({ role: "toolResult" }),
+        ]),
+      );
+      expect(llmSpans[1]?.input).toHaveLength(2);
+      expect(llmSpans[1]?.metadata).toMatchObject({
+        "flue.input_message_offset": 1,
+        "flue.input_mode": "delta",
+      });
+      expect(llmSpans[1]?.metadata).not.toHaveProperty("flue.system_prompt");
+      expect(llmSpans[1]?.metadata).not.toHaveProperty("tools");
 
       expect(tool?.span.parentIds).toEqual([operation?.span.id]);
       expect(tool?.input).toEqual({ query: "Flue 2 instrumentation" });
