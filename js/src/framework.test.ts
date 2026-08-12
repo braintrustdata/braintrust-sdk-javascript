@@ -150,6 +150,43 @@ test("expected (read/write) is passed to task", async () => {
   });
 });
 
+test("EvalCase id and tags are passed to scorers", async () => {
+  let scorerArgs: { id?: string; tags?: string[] } | undefined;
+
+  await runEvaluator(
+    null,
+    {
+      projectName: "proj",
+      evalName: "eval",
+      data: [
+        {
+          id: "dataset-row-id",
+          input: 1,
+          expected: 2,
+          tags: ["dataset-tag"],
+        },
+      ],
+      task: async (input: number) => input * 2,
+      scores: [
+        ({ id, tags }) => {
+          scorerArgs = { id, tags };
+          return 1;
+        },
+      ],
+    },
+    new NoopProgressReporter(),
+    [],
+    undefined,
+    undefined,
+    true,
+  );
+
+  expect(scorerArgs).toEqual({
+    id: "dataset-row-id",
+    tags: ["dataset-tag"],
+  });
+});
+
 function makeTestScorer(
   name: string,
   willError?: boolean,

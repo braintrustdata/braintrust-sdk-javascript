@@ -1323,10 +1323,12 @@ async function runEvaluatorInternal(
             }
 
             const scoringArgs = {
+              id: datum.id,
               input: datum.input,
               expected: "expected" in datum ? datum.expected : undefined,
               metadata,
               output,
+              tags,
               trace,
             };
             const { trace: _trace, ...scoringArgsForLogging } = scoringArgs;
