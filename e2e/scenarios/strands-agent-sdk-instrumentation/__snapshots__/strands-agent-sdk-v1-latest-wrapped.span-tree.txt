@@ -54,6 +54,28 @@ span_tree:
     │       │       "role": "user"
     │       │     }
     │       │   ]
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "toolUse": {
+    │       │           "input": {
+    │       │             "city": "Vienna"
+    │       │           },
+    │       │           "name": "lookup_weather",
+    │       │           "toolUseId": "<tool-call-id>"
+    │       │         }
+    │       │       }
+    │       │     ],
+    │       │     "metadata": {
+    │       │       "usage": {
+    │       │         "inputTokens": 86,
+    │       │         "outputTokens": 15,
+    │       │         "totalTokens": 101
+    │       │       }
+    │       │     },
+    │       │     "role": "assistant",
+    │       │     "trackingId": "<uuid:1>"
+    │       │   }
     │       │   metadata: {
     │       │     "model": "gpt-4o-mini-2024-07-18",
     │       │     "provider": "openai",
@@ -150,6 +172,22 @@ span_tree:
     │               "role": "user"
     │             }
     │           ]
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "text": "STRANDS_AGENT_TOOL_OK"
+    │               }
+    │             ],
+    │             "metadata": {
+    │               "usage": {
+    │                 "inputTokens": 127,
+    │                 "outputTokens": 6,
+    │                 "totalTokens": 133
+    │               }
+    │             },
+    │             "role": "assistant",
+    │             "trackingId": "<uuid:1>"
+    │           }
     │           metadata: {
     │             "model": "gpt-4o-mini-2024-07-18",
     │             "provider": "openai",
@@ -245,6 +283,22 @@ span_tree:
     │               "role": "user"
     │             }
     │           ]
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "text": "STRANDS_DOCUMENT_OK."
+    │               }
+    │             ],
+    │             "metadata": {
+    │               "usage": {
+    │                 "inputTokens": 247,
+    │                 "outputTokens": 5,
+    │                 "totalTokens": 252
+    │               }
+    │             },
+    │             "role": "assistant",
+    │             "trackingId": "<uuid:1>"
+    │           }
     │           metadata: {
     │             "model": "gpt-4o-mini-2024-07-18",
     │             "provider": "openai",
@@ -338,6 +392,22 @@ span_tree:
     │               "role": "user"
     │             }
     │           ]
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "text": "STRANDS_IMAGE_OK."
+    │               }
+    │             ],
+    │             "metadata": {
+    │               "usage": {
+    │                 "inputTokens": 8525,
+    │                 "outputTokens": 5,
+    │                 "totalTokens": 8530
+    │               }
+    │             },
+    │             "role": "assistant",
+    │             "trackingId": "<uuid:1>"
+    │           }
     │           metadata: {
     │             "model": "gpt-4o-mini-2024-07-18",
     │             "provider": "openai",
@@ -401,6 +471,22 @@ span_tree:
     │               "role": "user"
     │             }
     │           ]
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "text": "STRANDS_AGENT_STREAM_OK."
+    │               }
+    │             ],
+    │             "metadata": {
+    │               "usage": {
+    │                 "inputTokens": 27,
+    │                 "outputTokens": 6,
+    │                 "totalTokens": 33
+    │               }
+    │             },
+    │             "role": "assistant",
+    │             "trackingId": "<uuid:1>"
+    │           }
     │           metadata: {
     │             "model": "gpt-4o-mini-2024-07-18",
     │             "provider": "openai",
@@ -503,6 +589,22 @@ span_tree:
     │       │               "role": "user"
     │       │             }
     │       │           ]
+    │       │           output: {
+    │       │             "content": [
+    │       │               {
+    │       │                 "text": "GRAPH_RESEARCH_DONE"
+    │       │               }
+    │       │             ],
+    │       │             "metadata": {
+    │       │               "usage": {
+    │       │                 "inputTokens": 35,
+    │       │                 "outputTokens": 4,
+    │       │                 "totalTokens": 39
+    │       │               }
+    │       │             },
+    │       │             "role": "assistant",
+    │       │             "trackingId": "<uuid:1>"
+    │       │           }
     │       │           metadata: {
     │       │             "model": "gpt-4o-mini-2024-07-18",
     │       │             "provider": "openai",
@@ -594,6 +696,22 @@ span_tree:
     │                       "role": "user"
     │                     }
     │                   ]
+    │                   output: {
+    │                     "content": [
+    │                       {
+    │                         "text": "STRANDS_GRAPH_OK"
+    │                       }
+    │                     ],
+    │                     "metadata": {
+    │                       "usage": {
+    │                         "inputTokens": 46,
+    │                         "outputTokens": 4,
+    │                         "totalTokens": 50
+    │                       }
+    │                     },
+    │                     "role": "assistant",
+    │                     "trackingId": "<uuid:1>"
+    │                   }
     │                   metadata: {
     │                     "model": "gpt-4o-mini-2024-07-18",
     │                     "provider": "openai",
@@ -752,6 +870,29 @@ span_tree:
             │               "role": "user"
             │             }
             │           ]
+            │           output: {
+            │             "content": [
+            │               {
+            │                 "toolUse": {
+            │                   "input": {
+            │                     "agentId": "<agentId:1>",
+            │                     "message": "finish with STRANDS_SWARM_OK"
+            │                   },
+            │                   "name": "strands_structured_output",
+            │                   "toolUseId": "<tool-call-id>"
+            │                 }
+            │               }
+            │             ],
+            │             "metadata": {
+            │               "usage": {
+            │                 "inputTokens": 198,
+            │                 "outputTokens": 31,
+            │                 "totalTokens": 229
+            │               }
+            │             },
+            │             "role": "assistant",
+            │             "trackingId": "<uuid:2>"
+            │           }
             │           metadata: {
             │             "model": "gpt-4o-mini-2024-07-18",
             │             "provider": "openai",
@@ -820,6 +961,28 @@ span_tree:
                             "role": "user"
                           }
                         ]
+                        output: {
+                          "content": [
+                            {
+                              "toolUse": {
+                                "input": {
+                                  "message": "STRANDS_SWARM_OK"
+                                },
+                                "name": "strands_structured_output",
+                                "toolUseId": "<tool-call-id>"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "usage": {
+                              "inputTokens": 191,
+                              "outputTokens": 21,
+                              "totalTokens": 212
+                            }
+                          },
+                          "role": "assistant",
+                          "trackingId": "<uuid:1>"
+                        }
                         metadata: {
                           "model": "gpt-4o-mini-2024-07-18",
                           "provider": "openai",

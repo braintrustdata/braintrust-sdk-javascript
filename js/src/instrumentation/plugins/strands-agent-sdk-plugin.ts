@@ -268,9 +268,6 @@ function startAgentStream(
     ...extractModelMetadata(model),
     "strands.operation": "Agent.stream",
     provider: extractProvider(model),
-    ...(event.moduleVersion
-      ? { "strands_agent_sdk.version": event.moduleVersion }
-      : {}),
   };
   const parentSpan = agent
     ? getOnlyChildParent(activeChildParents, agent)
@@ -330,9 +327,6 @@ function startMultiAgentStream(
     "strands.operation": operation,
     provider: "strands",
     ...(orchestrator?.id ? { "strands.orchestrator.id": orchestrator.id } : {}),
-    ...(event.moduleVersion
-      ? { "strands_agent_sdk.version": event.moduleVersion }
-      : {}),
   };
   const parentSpan = orchestrator
     ? getOnlyChildParent(activeChildParents, orchestrator)
