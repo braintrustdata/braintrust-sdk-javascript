@@ -20,7 +20,7 @@ export default defineConfig([
     },
     format: ["cjs", "esm"],
     outDir: "dist",
-    external: ["zod"],
+    external: ["node:module", "zod"],
     removeNodeProtocol: false,
     dts: {
       // Split DTS generation to reduce memory usage
@@ -86,7 +86,7 @@ export default defineConfig([
     },
     format: ["cjs", "esm"],
     outDir: "dist",
-    external: ["zod"],
+    external: ["node:module", "zod"],
     removeNodeProtocol: false,
     platform: "browser",
     splitting: false,
@@ -98,7 +98,7 @@ export default defineConfig([
     entry: ["src/instrumentation/index.ts"],
     format: ["cjs", "esm"],
     outDir: "dist/instrumentation",
-    external: ["@braintrust/instrumentation-core", "zod"],
+    external: ["@braintrust/instrumentation-core", "node:module", "zod"],
     dts: {
       compilerOptions: {
         skipLibCheck: true,

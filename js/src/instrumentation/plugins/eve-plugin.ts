@@ -1,8 +1,10 @@
+import { createRequire } from "node:module";
 import { debugLogger } from "../../debug-logger";
 import {
   NOOP_SPAN,
   _internalStartSpanWithInitialMerge,
   flush,
+  initLogger,
   updateSpan,
   withCurrent,
 } from "../../logger";
@@ -14,6 +16,7 @@ import {
 } from "../../span-origin";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
+import { braintrustEveProvider } from "./eve-provider";
 import type {
   EveAssistantStepFinishReason,
   EveActionResultError,
@@ -119,27 +122,34 @@ type CapturedEveModelMessage = {
 
 type CapturedEveModelInput = readonly CapturedEveModelMessage[];
 
-/** Manual hook instrumentation for eve runtime stream events. */
-export function braintrustEveHook(options: {
+type EveInstrumentationOptions = {
+  defineState: EveDefineState;
+  recordInputs?: boolean;
+  recordOutputs?: boolean;
+  setup?: EveInstrumentationDefinition["setup"];
+};
+
+type EveHookOptions = {
   defineState: EveDefineState;
   metadata?: Record<string, unknown>;
-}): EveHookDefinition {
-  const state = options.defineState(EVE_TRACE_STATE_KEY, emptyEveTraceState);
-  const bridge = new EveBridge(state);
-  return {
-    events: {
-      "*": async (event: EveHandleMessageStreamEvent, ctx: EveHookContext) => {
-        await bridge.handle(event, ctx, options.metadata);
-      },
-    },
-  };
+};
+
+function defaultSetup({ agentName }: { agentName: string }): void {
+  initLogger({
+    projectName: agentName,
+    apiKey: process.env.BRAINTRUST_API_KEY,
+  });
 }
 
-/** Eve instrumentation helper for logger setup and durable LLM input capture. */
-export function braintrustEveInstrumentation(options: {
-  defineState: EveDefineState;
-  setup?: EveInstrumentationDefinition["setup"];
-}): EveInstrumentationDefinition {
+function resolveSetup(
+  setup: EveInstrumentationOptions["setup"],
+): NonNullable<EveInstrumentationOptions["setup"]> {
+  return setup ?? defaultSetup;
+}
+
+function legacyEveInstrumentation(
+  options: EveInstrumentationOptions,
+): EveInstrumentationDefinition {
   const state = options.defineState(EVE_TRACE_STATE_KEY, emptyEveTraceState);
   return {
     events: {
@@ -151,10 +161,79 @@ export function braintrustEveInstrumentation(options: {
         }
       },
     },
-    recordInputs: false,
-    recordOutputs: false,
-    setup: options.setup,
+    recordInputs: options.recordInputs === true,
+    recordOutputs: options.recordOutputs === true,
+    setup: resolveSetup(options.setup),
   };
+}
+
+function legacyEveHook(options: EveHookOptions): EveHookDefinition {
+  const state = options.defineState(EVE_TRACE_STATE_KEY, emptyEveTraceState);
+  const bridge = new EveBridge(state);
+  return {
+    events: {
+      "*": async (event: EveHandleMessageStreamEvent, ctx: EveHookContext) => {
+        await bridge.handle(event, ctx, options.metadata);
+      },
+    },
+  };
+}
+
+let cachedEveVersion: string | undefined | null = undefined;
+
+function detectEveVersion(): string | undefined {
+  if (cachedEveVersion !== undefined) {
+    return cachedEveVersion === null ? undefined : cachedEveVersion;
+  }
+  try {
+    const req = createRequire(`file://${process.cwd()}/`);
+    cachedEveVersion = req("eve/package.json").version as string;
+  } catch {
+    cachedEveVersion = null;
+  }
+  return cachedEveVersion === null ? undefined : cachedEveVersion;
+}
+
+function eveSupportsInstrumentationProviders(): boolean {
+  const version = detectEveVersion();
+  if (!version) return false;
+  const [major, minor] = version.split(".").map(Number);
+  return major > 0 || (major === 0 && minor >= 34);
+}
+
+let braintrustEveInstrumentationImpl: (
+  options: EveInstrumentationOptions,
+) => EveInstrumentationDefinition;
+
+let braintrustEveHookImpl: (options: EveHookOptions) => EveHookDefinition;
+
+if (eveSupportsInstrumentationProviders()) {
+  braintrustEveInstrumentationImpl = (options) =>
+    braintrustEveProvider({
+      recordInputs: options.recordInputs,
+      recordOutputs: options.recordOutputs,
+      setup: resolveSetup(options.setup),
+    }) as unknown as EveInstrumentationDefinition;
+  braintrustEveHookImpl = () => ({ events: {} });
+} else {
+  braintrustEveInstrumentationImpl = legacyEveInstrumentation;
+  braintrustEveHookImpl = legacyEveHook;
+}
+
+export function braintrustEveHook(options: {
+  defineState: EveDefineState;
+  metadata?: Record<string, unknown>;
+}): EveHookDefinition {
+  return braintrustEveHookImpl(options);
+}
+
+export function braintrustEveInstrumentation(options: {
+  defineState: EveDefineState;
+  recordInputs?: boolean;
+  recordOutputs?: boolean;
+  setup?: EveInstrumentationDefinition["setup"];
+}): EveInstrumentationDefinition {
+  return braintrustEveInstrumentationImpl(options);
 }
 
 function isEveHandleMessageStreamEvent(

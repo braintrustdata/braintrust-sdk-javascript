@@ -18,8 +18,8 @@ importers:
         specifier: npm:eve@0.22.1
         version: eve@0.22.1(ai@7.0.34(zod@4.3.6))
       eve-v0-latest:
-        specifier: npm:eve@0.27.6
-        version: eve@0.27.6(ai@7.0.34(zod@4.3.6))
+        specifier: npm:eve@0.36.0
+        version: eve@0.36.0(ai@7.0.34(zod@4.3.6))
       zod:
         specifier: 4.3.6
         version: 4.3.6
@@ -257,13 +257,13 @@ packages:
       microsandbox:
         optional: true
 
-  eve@0.27.6:
-    resolution: {integrity: sha512-t2Xr/nlVGc0+Fy9fav8p/CJrwMSQM0zyuOGY1F1XapN0UFssGYBGa6Ml/Q5OnowvWwsGH4m0Tf2QAccayVCvtw==}
+  eve@0.36.0:
+    resolution: {integrity: sha512-dkUR2mg/FmIR84vvavx4XYsrMuGPi+EO3r0k94KSMHjoUi6G/DmJaNtm62dbD6FGDnRViO7uwSYOdVp5+mJhYQ==}
     engines: {node: '>=24'}
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.0.0
-      ai: ^7.0.34
+      ai: ^7.0.58
       braintrust: ^3.0.0
       just-bash: ^3.0.0
       microsandbox: ^0.5.0
@@ -364,6 +364,10 @@ packages:
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
+
+  undici@8.9.0:
+    resolution: {integrity: sha512-aWZpUj7XoGonMClx4gdDRfgBjqeA+F473aDmROQQbM9n6PRfK/u1q/a0X4wMTgcHfT8H6fpbt98PFuDUwFg2YA==}
+    engines: {node: '>=22.19.0'}
 
   unenv@2.0.0-rc.24:
     resolution: {integrity: sha512-i7qRCmY42zmCwnYlh9H2SvLEypEFGye5iRmEMKjcGi7zk9UquigRjFtTLz0TYqr0ZGLZhaMHl/foy1bZR+Cwlw==}
@@ -624,10 +628,11 @@ snapshots:
       - xml2js
       - zephyr-agent
 
-  eve@0.27.6(ai@7.0.34(zod@4.3.6)):
+  eve@0.36.0(ai@7.0.34(zod@4.3.6)):
     dependencies:
       ai: 7.0.34(zod@4.3.6)
       nitro: 3.0.260610-beta
+      undici: 8.9.0
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -772,6 +777,8 @@ snapshots:
 
   tslib@2.8.1:
     optional: true
+
+  undici@8.9.0: {}
 
   unenv@2.0.0-rc.24:
     dependencies:

@@ -1,6 +1,6 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { once } from "node:events";
-import { readFile, symlink, unlink } from "node:fs/promises";
+import { readFile, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import net from "node:net";
 import path from "node:path";
 import { runMain } from "../../helpers/scenario-runtime";
@@ -14,7 +14,7 @@ async function main() {
   );
   const evePackage = JSON.parse(
     await readFile(path.join(evePackageDir, "package.json"), "utf8"),
-  ) as { bin?: string | Record<string, string> };
+  ) as { bin?: string | Record<string, string>; version: string };
   const eveBinPath =
     typeof evePackage.bin === "string" ? evePackage.bin : evePackage.bin?.eve;
   if (!eveBinPath) {
@@ -32,6 +32,31 @@ async function main() {
   await symlink(evePackageDir, eveModuleDir, "dir");
 
   const eveBin = path.join(evePackageDir, eveBinPath);
+  const agentDir = path.join(process.cwd(), "agent");
+  const [eveMajor, eveMinor] = evePackage.version.split(".").map(Number);
+  const usesProviders = eveMajor > 0 || (eveMajor === 0 && eveMinor >= 34);
+
+  if (usesProviders) {
+    // New eve: use the directory layout + experimental flag
+    await rm(path.join(agentDir, "instrumentation.ts"), { force: true });
+    const agentPath = path.join(agentDir, "agent.ts");
+    const agentSrc = await readFile(agentPath, "utf8");
+    if (!agentSrc.includes("instrumentationProviders")) {
+      await writeFile(
+        agentPath,
+        agentSrc.replace(
+          "export default defineAgent({",
+          "export default defineAgent({\n  experimental: { instrumentationProviders: true },",
+        ),
+      );
+    }
+  } else {
+    // Old eve: use the single-file layout, no experimental flag
+    await rm(path.join(agentDir, "instrumentation"), {
+      recursive: true,
+      force: true,
+    });
+  }
 
   await runProcess(process.execPath, [eveBin, "build"], 90_000);
 

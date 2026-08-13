@@ -200,6 +200,11 @@ export {
   braintrustEveHook,
   braintrustEveInstrumentation,
 } from "./instrumentation/plugins/eve-plugin";
+export {
+  braintrustEveProvider,
+  type EveProviderDefinition,
+  type EveContentOptions,
+} from "./instrumentation/plugins/eve-provider";
 export { collectAnthropicSession } from "./wrappers/anthropic-session-collector";
 export { wrapAnthropic } from "./wrappers/anthropic";
 export {
