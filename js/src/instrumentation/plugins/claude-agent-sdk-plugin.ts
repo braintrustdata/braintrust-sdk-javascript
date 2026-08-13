@@ -493,6 +493,8 @@ function prepareLocalToolHandlersInMcpServers(
 
 function createToolTracingHooks(
   resolveParentSpan: ParentSpanResolver,
+  taskIdToToolUseId: Map<string, string>,
+  toolUseToParent: Map<string, string | null>,
   activeToolSpans: Map<string, Span>,
   mcpServers: ClaudeAgentSDKMcpServersConfig | undefined,
   localToolHookNames: Set<string>,
@@ -510,6 +512,16 @@ function createToolTracingHooks(
   const preToolUse: ClaudeAgentSDKHookCallback = async (input, toolUseID) => {
     if (input.hook_event_name !== "PreToolUse" || !toolUseID) {
       return {};
+    }
+
+    if (!toolUseToParent.has(toolUseID) && input.agent_id) {
+      // Subagent hook inputs identify the same task that lifecycle messages
+      // expose as task_id, so this correlation is available before the SDK
+      // yields the assistant tool_use block to the application.
+      const parentToolUseId = taskIdToToolUseId.get(input.agent_id);
+      if (parentToolUseId) {
+        toolUseToParent.set(toolUseID, parentToolUseId);
+      }
     }
 
     if (
@@ -787,6 +799,8 @@ function createToolTracingHooks(
 function injectTracingHooks(
   options: ClaudeAgentSDKQueryOptions,
   resolveParentSpan: ParentSpanResolver,
+  taskIdToToolUseId: Map<string, string>,
+  toolUseToParent: Map<string, string | null>,
   activeToolSpans: Map<string, Span>,
   localToolHookNames: Set<string>,
   skipLocalToolHooks: boolean,
@@ -802,6 +816,8 @@ function injectTracingHooks(
     subagentStop,
   } = createToolTracingHooks(
     resolveParentSpan,
+    taskIdToToolUseId,
+    toolUseToParent,
     activeToolSpans,
     options.mcpServers,
     localToolHookNames,
@@ -1564,6 +1580,8 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         const optionsWithHooks = injectTracingHooks(
           options,
           resolveToolUseParentSpan,
+          taskIdToToolUseId,
+          toolUseToParent,
           activeToolSpans,
           localToolHookNames,
           skipLocalToolHooks,

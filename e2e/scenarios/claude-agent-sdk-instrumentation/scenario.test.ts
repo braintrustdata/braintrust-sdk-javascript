@@ -46,8 +46,8 @@ describe.concurrent("wrapped instrumentation", () => {
         assertLocalToolHandlerParenting: true,
         expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
         name: "scenario",
-        runScenario: async ({ runScenarioDir }) => {
-          await runScenarioDir({
+        runScenario: ({ runScenarioDir }) =>
+          runScenarioDir({
             entry: scenario.wrapperEntry,
             env: { CLAUDE_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
@@ -56,8 +56,7 @@ describe.concurrent("wrapped instrumentation", () => {
             },
             scenarioDir,
             timeoutMs: TIMEOUT_MS,
-          });
-        },
+          }),
         snapshotName: `${scenario.snapshotName}-wrapped`,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
@@ -73,8 +72,8 @@ describe.concurrent("auto-hook instrumentation", () => {
         assertLocalToolHandlerParenting: true,
         expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
         name: "scenario",
-        runScenario: async ({ runNodeScenarioDir }) => {
-          await runNodeScenarioDir({
+        runScenario: ({ runNodeScenarioDir }) =>
+          runNodeScenarioDir({
             entry: scenario.autoEntry,
             env: { CLAUDE_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
@@ -84,8 +83,7 @@ describe.concurrent("auto-hook instrumentation", () => {
             },
             scenarioDir,
             timeoutMs: TIMEOUT_MS,
-          });
-        },
+          }),
         snapshotName: `${scenario.snapshotName}-auto-hook`,
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
