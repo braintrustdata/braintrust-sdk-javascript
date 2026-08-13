@@ -16,28 +16,20 @@
     "start:proc": "mise run server"
   },
   "dependencies": {
-    "@ai-sdk/mcp": "^1.0.0",
     "@ai-sdk/openai": "^3.0.0",
-    "@ai-sdk/provider": "^3.0.0",
     "@braintrust/temporal": "file:../../braintrust-temporal-0.1.2.tgz",
-    "@modelcontextprotocol/sdk": "^1.10.2",
     "@temporalio/activity": "^1.14.1",
-    "@temporalio/ai-sdk": "^1.14.1",
     "@temporalio/client": "^1.14.1",
     "@temporalio/common": "^1.14.1",
-    "@temporalio/envconfig": "^1.14.1",
     "@temporalio/worker": "^1.14.1",
     "@temporalio/workflow": "^1.14.1",
     "ai": "^6.0.0",
     "braintrust": "file:../../../../js/braintrust-2.2.0.tgz",
     "nanoid": "^3.3.4",
-    "uuid": "^11.1.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/uuid": "^11.0.0",
-    "ts-node": "^10.9.0",
     "tsx": "^3.12.0",
     "typescript": "^5.0.0"
   }
