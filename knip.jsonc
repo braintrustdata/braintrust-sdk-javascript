@@ -9,7 +9,7 @@
     "integrations/val.town/vals/tutorial/code.ts",
   ],
   "ignoreIssues": {
-    "**/generated_types.ts": ["exports", "types"],
+    "**/generated*_types.ts": ["files", "exports", "types"],
   },
   "workspaces": {
     "dev-packages/seinfeld": {
