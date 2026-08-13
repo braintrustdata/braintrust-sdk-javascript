@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 7d0333cc2dc03e50) -- do not modify
+// Auto-generated file (content hash 776b6c295e852681) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -172,6 +172,9 @@ export const AsyncScoringState = z.union([
     triggered_functions: z
       .union([z.record(TriggeredFunctionState), z.null()])
       .optional(),
+    last_triggered_xact_id: z
+      .union([z.string(), z.number(), z.null()])
+      .optional(),
   }),
   z.object({ status: z.literal("disabled") }),
   z.null(),
@@ -255,7 +258,7 @@ export const FunctionTypeEnum = z.enum([
   "sandbox",
 ]);
 export type FunctionTypeEnumType = z.infer<typeof FunctionTypeEnum>;
-export const NullableSavedFunctionId = z.union([
+export const FacetPreprocessorId = z.union([
   z.object({
     type: z.literal("function"),
     id: z.string(),
@@ -266,13 +269,12 @@ export const NullableSavedFunctionId = z.union([
     name: z.string(),
     function_type: FunctionTypeEnum.optional().default("scorer"),
   }),
+  z.object({ type: z.literal("inline"), code: z.string().min(1) }),
   z.null(),
 ]);
-export type NullableSavedFunctionIdType = z.infer<
-  typeof NullableSavedFunctionId
->;
+export type FacetPreprocessorIdType = z.infer<typeof FacetPreprocessorId>;
 export const TopicMapGenerationSettings = z.object({
-  algorithm: z.enum(["hdbscan", "kmeans"]),
+  algorithm: z.enum(["hdbscan", "kmeans", "community"]),
   dimension_reduction: z.enum(["umap", "pca", "none"]),
   sample_size: z.number().int().gt(0).optional(),
   n_clusters: z.number().int().gt(0).optional(),
@@ -301,7 +303,7 @@ export const TopicMapData = z.object({
 export type TopicMapDataType = z.infer<typeof TopicMapData>;
 export const BatchedFacetData = z.object({
   type: z.literal("batched_facet"),
-  preprocessor: NullableSavedFunctionId.and(z.unknown()).optional(),
+  preprocessor: FacetPreprocessorId.optional(),
   facets: z.array(
     z.object({
       name: z.string(),
@@ -918,7 +920,7 @@ export type ExtendedSavedFunctionIdType = z.infer<
 >;
 export const FacetData = z.object({
   type: z.literal("facet"),
-  preprocessor: NullableSavedFunctionId.and(z.unknown()).optional(),
+  preprocessor: FacetPreprocessorId.optional(),
   prompt: z.string(),
   model: z.string().optional(),
   embedding_model: z.string().optional(),
@@ -1517,6 +1519,22 @@ export const MessageRole = z.enum([
   "developer",
 ]);
 export type MessageRoleType = z.infer<typeof MessageRole>;
+export const NullableSavedFunctionId = z.union([
+  z.object({
+    type: z.literal("function"),
+    id: z.string(),
+    version: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal("global"),
+    name: z.string(),
+    function_type: FunctionTypeEnum.optional().default("scorer"),
+  }),
+  z.null(),
+]);
+export type NullableSavedFunctionIdType = z.infer<
+  typeof NullableSavedFunctionId
+>;
 export const ObjectReference = z.object({
   object_type: z.enum([
     "project_logs",
@@ -1541,6 +1559,7 @@ export const TraceScope = z.object({
 export type TraceScopeType = z.infer<typeof TraceScope>;
 export const OnlineScoreConfig = z.union([
   z.object({
+    status: AutomationStatus.optional(),
     sampling_rate: z.number().gte(0).lte(1),
     scorers: z.array(SavedFunctionId),
     btql_filter: z.union([z.string(), z.null()]).optional(),
@@ -1633,6 +1652,7 @@ export const Project = z.object({
 export type ProjectType = z.infer<typeof Project>;
 export const WindowedAutomationConfig = z.object({
   event_type: z.literal("windowed"),
+  product_origin: z.union([z.literal("patterns"), z.null()]).optional(),
   status: AutomationStatus.optional(),
   threshold: z
     .object({
@@ -1672,20 +1692,39 @@ export const WindowedAutomationConfig = z.object({
     ]),
     evaluation_delay_seconds: z.number().int().gte(0).lte(2592000),
   }),
+  loop: z
+    .object({
+      prompt: z.string().min(1).max(10000),
+      include_trigger_input: z.boolean().optional().default(false),
+      agent_slug: z.string().min(1),
+      auto_approve_tools: z.array(z.string().min(1)).optional().default([]),
+      harness: z.enum(["native", "codex", "claude-code"]).optional(),
+      model: z.string().min(1).optional(),
+      reasoning_effort: z
+        .enum(["none", "minimal", "low", "medium", "high", "xhigh", "max"])
+        .optional(),
+    })
+    .optional(),
   actions: z
     .array(
       z.union([
-        z.object({ type: z.literal("webhook"), url: z.string() }),
+        z.object({
+          type: z.literal("webhook"),
+          url: z.string(),
+          formatting_prompt: z.string().min(1).max(10000).optional(),
+        }),
         z.object({
           type: z.literal("slack"),
           workspace_id: z.string(),
           channel: z.string(),
           message_template: z.string().optional(),
+          formatting_prompt: z.string().min(1).max(10000).optional(),
         }),
       ]),
     )
-    .min(1)
-    .max(20),
+    .max(20)
+    .optional()
+    .default([]),
 });
 export type WindowedAutomationConfigType = z.infer<
   typeof WindowedAutomationConfig
@@ -1750,6 +1789,7 @@ export const TopicDigestAutomationConfig = z.object({
     workspace_id: z.string(),
     channel: z.string(),
     message_template: z.string().optional(),
+    formatting_prompt: z.string().min(1).max(10000).optional(),
   }),
   topic_map_function_ids: z.array(z.string()).max(10).optional(),
 });
@@ -1766,15 +1806,21 @@ export const ProjectAutomation = z.object({
   config: z.union([
     z.object({
       event_type: z.literal("logs"),
+      status: AutomationStatus.optional(),
       btql_filter: z.string(),
       interval_seconds: z.number().gte(1).lte(2592000),
       action: z.union([
-        z.object({ type: z.literal("webhook"), url: z.string() }),
+        z.object({
+          type: z.literal("webhook"),
+          url: z.string(),
+          formatting_prompt: z.string().min(1).max(10000).optional(),
+        }),
         z.object({
           type: z.literal("slack"),
           workspace_id: z.string(),
           channel: z.string(),
           message_template: z.string().optional(),
+          formatting_prompt: z.string().min(1).max(10000).optional(),
         }),
       ]),
     }),
@@ -1825,14 +1871,20 @@ export const ProjectAutomation = z.object({
     }),
     z.object({
       event_type: z.literal("environment_update"),
+      status: AutomationStatus.optional(),
       environment_filter: z.array(z.string()).optional(),
       action: z.union([
-        z.object({ type: z.literal("webhook"), url: z.string() }),
+        z.object({
+          type: z.literal("webhook"),
+          url: z.string(),
+          formatting_prompt: z.string().min(1).max(10000).optional(),
+        }),
         z.object({
           type: z.literal("slack"),
           workspace_id: z.string(),
           channel: z.string(),
           message_template: z.string().optional(),
+          formatting_prompt: z.string().min(1).max(10000).optional(),
         }),
       ]),
     }),
@@ -1842,6 +1894,17 @@ export const ProjectAutomation = z.object({
   ]),
 });
 export type ProjectAutomationType = z.infer<typeof ProjectAutomation>;
+export const ProjectGroup = z.object({
+  id: z.string().uuid(),
+  org_id: z.string().uuid(),
+  user_id: z.union([z.string(), z.null()]).optional(),
+  created: z.union([z.string(), z.null()]).optional(),
+  name: z.string(),
+  description: z.union([z.string(), z.null()]).optional(),
+  deleted_at: z.union([z.string(), z.null()]).optional(),
+  member_projects: z.array(z.string().uuid()).max(10000),
+});
+export type ProjectGroupType = z.infer<typeof ProjectGroup>;
 export const ProjectLogsEvent = z.object({
   id: z.string(),
   _xact_id: z.string(),
@@ -2329,7 +2392,9 @@ export const View = z.object({
     "for_review_datasets",
   ]),
   name: z.string(),
+  description: z.union([z.string(), z.null()]).optional(),
   created: z.union([z.string(), z.null()]).optional(),
+  updated_at: z.union([z.string(), z.null()]).optional(),
   view_data: ViewData.optional(),
   options: ViewOptions.optional(),
   user_id: z.union([z.string(), z.null()]).optional(),

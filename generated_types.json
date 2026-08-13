@@ -534,6 +534,20 @@
                 "additionalProperties": {
                   "$ref": "#/components/schemas/TriggeredFunctionState"
                 }
+              },
+              "last_triggered_xact_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The xact_id of the last non-score change to this row (excludes scorer score merges)"
               }
             },
             "required": ["status", "token", "function_ids"]
@@ -599,14 +613,7 @@
             "enum": ["batched_facet"]
           },
           "preprocessor": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NullableSavedFunctionId"
-              },
-              {
-                "description": "The preprocessor function to use for facet extraction. If not provided, the project default preprocessor will be used, falling back to the global 'thread' preprocessor."
-              }
-            ]
+            "$ref": "#/components/schemas/FacetPreprocessorId"
           },
           "facets": {
             "type": "array",
@@ -2428,14 +2435,7 @@
             "enum": ["facet"]
           },
           "preprocessor": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NullableSavedFunctionId"
-              },
-              {
-                "description": "The preprocessor function to use for facet extraction. If not provided, the project default preprocessor will be used, falling back to the global 'thread' preprocessor."
-              }
-            ]
+            "$ref": "#/components/schemas/FacetPreprocessorId"
           },
           "prompt": {
             "type": "string",
@@ -2456,6 +2456,65 @@
         },
         "required": ["type", "prompt"],
         "title": "facet"
+      },
+      "FacetPreprocessorId": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["function"]
+              },
+              "id": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string",
+                "description": "The version of the function"
+              }
+            },
+            "required": ["type", "id"],
+            "title": "function"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["global"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "function_type": {
+                "$ref": "#/components/schemas/FunctionTypeEnum"
+              }
+            },
+            "required": ["type", "name"],
+            "title": "global"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["inline"]
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The complete JavaScript preprocessor implementation, including its handler."
+              }
+            },
+            "required": ["type", "code"],
+            "title": "preprocessor_inline"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The saved, global, or inline preprocessor to use for facet extraction. If not provided, the project default preprocessor will be used, falling back to the global 'thread' preprocessor."
       },
       "Function": {
         "type": "object",
@@ -3944,6 +4003,9 @@
       "OnlineScoreConfig": {
         "type": ["object", "null"],
         "properties": {
+          "status": {
+            "$ref": "#/components/schemas/AutomationStatus"
+          },
           "sampling_rate": {
             "type": "number",
             "minimum": 0,
@@ -4231,6 +4293,9 @@
                     "enum": ["logs"],
                     "description": "The type of automation."
                   },
+                  "status": {
+                    "$ref": "#/components/schemas/AutomationStatus"
+                  },
                   "btql_filter": {
                     "type": "string",
                     "description": "BTQL filter to identify rows for the automation rule"
@@ -4254,6 +4319,12 @@
                           "url": {
                             "type": "string",
                             "description": "The webhook URL to send the request to"
+                          },
+                          "formatting_prompt": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 10000,
+                            "description": "Instructions for Loop to format content sent to this destination"
                           }
                         },
                         "required": ["type", "url"]
@@ -4277,6 +4348,12 @@
                           "message_template": {
                             "type": "string",
                             "description": "Custom message template for the alert"
+                          },
+                          "formatting_prompt": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 10000,
+                            "description": "Instructions for Loop to format content sent to this destination"
                           }
                         },
                         "required": ["type", "workspace_id", "channel"]
@@ -4506,6 +4583,9 @@
                     "enum": ["environment_update"],
                     "description": "The type of automation."
                   },
+                  "status": {
+                    "$ref": "#/components/schemas/AutomationStatus"
+                  },
                   "environment_filter": {
                     "type": "array",
                     "items": {
@@ -4526,6 +4606,12 @@
                           "url": {
                             "type": "string",
                             "description": "The webhook URL to send the request to"
+                          },
+                          "formatting_prompt": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 10000,
+                            "description": "Instructions for Loop to format content sent to this destination"
                           }
                         },
                         "required": ["type", "url"]
@@ -4549,6 +4635,12 @@
                           "message_template": {
                             "type": "string",
                             "description": "Custom message template for the alert"
+                          },
+                          "formatting_prompt": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 10000,
+                            "description": "Instructions for Loop to format content sent to this destination"
                           }
                         },
                         "required": ["type", "workspace_id", "channel"]
@@ -4573,6 +4665,55 @@
           }
         },
         "required": ["id", "project_id", "name", "config"]
+      },
+      "ProjectGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the project group"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique id for the organization that the project group belongs under\n\nIt is forbidden to change the org after creating a project group"
+          },
+          "user_id": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "Identifies the user who created the project group"
+          },
+          "created": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date of project group creation"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the project group"
+          },
+          "description": {
+            "type": ["string", "null"],
+            "description": "Textual description of the project group"
+          },
+          "deleted_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date of project group deletion, or null if the project group is still active"
+          },
+          "member_projects": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 10000,
+            "description": "Sorted ids of active projects in this project group"
+          }
+        },
+        "required": ["id", "org_id", "name", "member_projects"],
+        "description": "A project group is a collection of projects which can inherit access from project-group ACLs"
       },
       "ProjectLogsEvent": {
         "type": "object",
@@ -6523,6 +6664,12 @@
               "message_template": {
                 "type": "string",
                 "description": "Custom message template for the alert"
+              },
+              "formatting_prompt": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10000,
+                "description": "Instructions for Loop to format content sent to this destination"
               }
             },
             "required": ["type", "workspace_id", "channel"],
@@ -6621,7 +6768,7 @@
         "properties": {
           "algorithm": {
             "type": "string",
-            "enum": ["hdbscan", "kmeans"]
+            "enum": ["hdbscan", "kmeans", "community"]
           },
           "dimension_reduction": {
             "type": "string",
@@ -6820,10 +6967,19 @@
             "type": "string",
             "description": "Name of the view"
           },
+          "description": {
+            "type": ["string", "null"],
+            "description": "Textual description of the view"
+          },
           "created": {
             "type": ["string", "null"],
             "format": "date-time",
             "description": "Date of view creation"
+          },
+          "updated_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Date of last view update"
           },
           "view_data": {
             "$ref": "#/components/schemas/ViewData"
@@ -7103,6 +7259,11 @@
             "enum": ["windowed"],
             "description": "The type of automation."
           },
+          "product_origin": {
+            "type": ["string", "null"],
+            "enum": ["patterns"],
+            "description": "The product surface that created and manages the automation"
+          },
           "status": {
             "$ref": "#/components/schemas/AutomationStatus"
           },
@@ -7261,6 +7422,58 @@
               "evaluation_delay_seconds"
             ]
           },
+          "loop": {
+            "type": "object",
+            "properties": {
+              "prompt": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10000,
+                "description": "Instructions for the Loop agent"
+              },
+              "include_trigger_input": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether to include the automation trigger payload as input"
+              },
+              "agent_slug": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The Loop agent to run"
+              },
+              "auto_approve_tools": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": [],
+                "description": "Write tools that may run without interactive approval"
+              },
+              "harness": {
+                "type": "string",
+                "enum": ["native", "codex", "claude-code"]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reasoning_effort": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "minimal",
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ]
+              }
+            },
+            "required": ["prompt", "agent_slug"],
+            "description": "Optional Loop agent to run for each triggered window"
+          },
           "actions": {
             "type": "array",
             "items": {
@@ -7276,6 +7489,12 @@
                     "url": {
                       "type": "string",
                       "description": "The webhook URL to send the request to"
+                    },
+                    "formatting_prompt": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 10000,
+                      "description": "Instructions for Loop to format content sent to this destination"
                     }
                   },
                   "required": ["type", "url"]
@@ -7299,6 +7518,12 @@
                     "message_template": {
                       "type": "string",
                       "description": "Custom message template for the alert"
+                    },
+                    "formatting_prompt": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 10000,
+                      "description": "Instructions for Loop to format content sent to this destination"
                     }
                   },
                   "required": ["type", "workspace_id", "channel"]
@@ -7306,12 +7531,12 @@
               ],
               "description": "A delivery action available to an automation"
             },
-            "minItems": 1,
             "maxItems": 20,
-            "description": "The delivery actions to run on each schedule or threshold lifecycle transition"
+            "default": [],
+            "description": "Delivery actions exposed to Loop as tools, or run directly when Loop is not configured"
           }
         },
-        "required": ["event_type", "window", "actions"]
+        "required": ["event_type", "window"]
       }
     },
     "parameters": {}
