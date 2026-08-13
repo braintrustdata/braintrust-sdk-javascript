@@ -160,8 +160,11 @@ export function getDefaultInstrumentationConfigs({
   ];
 }
 
-export function getDefaultAutoInstrumentationConfigs(): InstrumentationConfig[] {
+export function getDefaultAutoInstrumentationConfigs(
+  additionalInstrumentations?: readonly InstrumentationConfig[],
+): InstrumentationConfig[] {
   return getDefaultInstrumentationConfigs({
+    additionalInstrumentations,
     disabledIntegrationConfig: readDisabledInstrumentationEnvConfig(
       process.env.BRAINTRUST_DISABLE_INSTRUMENTATION,
     ).integrations,

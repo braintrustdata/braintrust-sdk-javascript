@@ -57,10 +57,9 @@ function getModuleVersion(basedir: string): string | undefined {
 export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
   const browser =
     options.browser ?? options.useDiagnosticChannelCompatShim ?? false;
-  const allInstrumentations = [
-    ...getDefaultAutoInstrumentationConfigs(),
-    ...(options.instrumentations ?? []),
-  ];
+  const allInstrumentations = getDefaultAutoInstrumentationConfigs(
+    options.instrumentations,
+  );
 
   // Create the code transformer instrumentor
   const instrumentationMatcher = create(allInstrumentations);

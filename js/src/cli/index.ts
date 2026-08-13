@@ -379,12 +379,11 @@ async function initFile({
           fileName: inFile,
           outFile: bundleFile,
           tsconfig,
-          plugins,
+          plugins: [],
           externalPackages,
         }),
         external: ["fsevents", "chokidar"],
         write: true,
-        plugins: [],
         minify: true,
         sourcemap: true,
       };
