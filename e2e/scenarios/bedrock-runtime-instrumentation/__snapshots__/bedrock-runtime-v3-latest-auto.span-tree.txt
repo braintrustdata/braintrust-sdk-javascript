@@ -85,7 +85,7 @@ span_tree:
     │       output: {
     │         "content": [
     │           {
-    │             "text": "Sorry, I can't respond in a way that might reveal internal information."
+    │             "text": "STREAM"
     │           }
     │         ],
     │         "role": "assistant"
@@ -96,18 +96,18 @@ span_tree:
     │         "model": "us.amazon.nova-lite-v1:0",
     │         "operation": "converseStream",
     │         "provider": "aws-bedrock",
-    │         "stopReason": "max_tokens",
+    │         "stopReason": "end_turn",
     │         "temperature": 0,
     │         "topP": 0.9
     │       }
     │       metrics: {
-    │         "completion_tokens": 16,
+    │         "completion_tokens": 3,
     │         "latency_ms": 0,
     │         "prompt_cache_creation_tokens": 0,
     │         "prompt_cached_tokens": 14922,
     │         "prompt_tokens": 6,
     │         "time_to_first_token": 0,
-    │         "tokens": 14944
+    │         "tokens": 14931
     │       }
     ├── bedrock-invoke-model-operation
     │   metadata: {
