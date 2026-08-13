@@ -25,6 +25,7 @@ function makePromptMessage(content) {
 async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
   const instrumentedSDK = decorateSDK ? decorateSDK(sdk) : sdk;
   const { createSdkMcpServer, query, tool } = instrumentedSDK;
+  let subagentRacedToolUseId = null;
   const calculator = tool(
     "calculator",
     "Performs basic arithmetic operations",
@@ -52,9 +53,7 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
               throw new Error(`unsupported operation: ${args.operation}`);
           }
         },
-        {
-          name: `calculator-local-handler-${args.operation}`,
-        },
+        { name: `calculator-local-handler-${args.operation}` },
       );
 
       return {
@@ -115,28 +114,62 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
         "claude-agent-subagent-operation",
         "subagent",
         async () => {
-          await collectAsync(
-            query({
-              prompt:
-                "Spawn a math-expert subagent to add 15 and 27 using the calculator tool. Report the result. Do not solve it yourself.",
-              options: {
-                agents: {
-                  "math-expert": {
-                    description: "Math specialist",
-                    model: CLAUDE_AGENT_MODEL,
-                    prompt:
-                      "You are a math expert. Use the calculator tool for calculations. Be concise.",
-                  },
+          const consumedToolUseIds = new Set();
+          const result = query({
+            prompt:
+              "Spawn a math-expert subagent to add 15 and 27 using the calculator tool. Report the result. Do not solve it yourself.",
+            options: {
+              agents: {
+                "math-expert": {
+                  description: "Math specialist",
+                  model: CLAUDE_AGENT_MODEL,
+                  prompt:
+                    "You are a math expert. Use the calculator tool for calculations. Be concise.",
                 },
-                allowedTools: ["Task"],
-                mcpServers: {
-                  calculator: calculatorServer,
-                },
-                model: CLAUDE_AGENT_MODEL,
-                permissionMode: "bypassPermissions",
               },
-            }),
-          );
+              allowedTools: ["Task"],
+              hooks: {
+                PreToolUse: [
+                  {
+                    hooks: [
+                      async (input, toolUseId) => {
+                        if (
+                          input.tool_name === "mcp__calculator__calculator" &&
+                          input.tool_input?.operation === "add" &&
+                          typeof toolUseId === "string" &&
+                          !consumedToolUseIds.has(toolUseId)
+                        ) {
+                          subagentRacedToolUseId = toolUseId;
+                        }
+                        return {};
+                      },
+                    ],
+                  },
+                ],
+              },
+              mcpServers: {
+                calculator: calculatorServer,
+              },
+              model: CLAUDE_AGENT_MODEL,
+              permissionMode: "bypassPermissions",
+            },
+          });
+
+          for await (const record of result) {
+            if (
+              record.type === "assistant" &&
+              Array.isArray(record.message?.content)
+            ) {
+              for (const block of record.message.content) {
+                if (
+                  block?.type === "tool_use" &&
+                  typeof block.id === "string"
+                ) {
+                  consumedToolUseIds.add(block.id);
+                }
+              }
+            }
+          }
         },
       );
 
@@ -193,6 +226,10 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
     projectNameBase: "e2e-claude-agent-sdk-instrumentation",
     rootName: ROOT_NAME,
   });
+
+  process.stdout.write(
+    `CLAUDE_AGENT_E2E_RESULT=${JSON.stringify({ subagentRacedToolUseId })}\n`,
+  );
 }
 
 export async function runWrappedClaudeAgentSDKInstrumentation(sdk) {

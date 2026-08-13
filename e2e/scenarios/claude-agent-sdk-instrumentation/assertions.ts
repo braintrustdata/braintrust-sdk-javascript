@@ -23,19 +23,45 @@ import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 
 type RunClaudeAgentSDKScenario = (harness: {
   runNodeScenarioDir: (options: {
-    entry: string;
-    nodeArgs: string[];
+    entry?: string;
+    env?: Record<string, string>;
+    nodeArgs?: string[];
     runContext?: ScenarioRunContext;
     scenarioDir: string;
-    timeoutMs: number;
-  }) => Promise<unknown>;
+    timeoutMs?: number;
+  }) => Promise<{ stdout: string }>;
   runScenarioDir: (options: {
-    entry: string;
+    entry?: string;
+    env?: Record<string, string>;
     runContext?: ScenarioRunContext;
     scenarioDir: string;
-    timeoutMs: number;
-  }) => Promise<unknown>;
-}) => Promise<void>;
+    timeoutMs?: number;
+  }) => Promise<{ stdout: string }>;
+}) => Promise<{ stdout: string }>;
+
+function parseScenarioResult(stdout: string): {
+  subagentRacedToolUseId: string;
+} {
+  const prefix = "CLAUDE_AGENT_E2E_RESULT=";
+  const resultLine = stdout.split("\n").find((line) => line.startsWith(prefix));
+  if (!resultLine) {
+    throw new Error("Claude Agent SDK scenario did not report its e2e result");
+  }
+
+  const result: unknown = JSON.parse(resultLine.slice(prefix.length));
+  if (
+    !result ||
+    typeof result !== "object" ||
+    !("subagentRacedToolUseId" in result) ||
+    typeof result.subagentRacedToolUseId !== "string"
+  ) {
+    throw new Error(
+      "Claude Agent SDK scenario did not race local tool execution with stream consumption",
+    );
+  }
+
+  return { subagentRacedToolUseId: result.subagentRacedToolUseId };
+}
 
 const SNAPSHOT_METADATA_KEYS = [
   "provider",
@@ -437,10 +463,12 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
 
   describe(options.name, () => {
     let events: CapturedLogEvent[] = [];
+    let scenarioResult: ReturnType<typeof parseScenarioResult>;
 
     beforeAll(async () => {
       await withScenarioHarness(async (harness) => {
-        await options.runScenario(harness);
+        const result = await options.runScenario(harness);
+        scenarioResult = parseScenarioResult(result.stdout);
         events = harness.events();
       });
     }, timeoutMs);
@@ -650,6 +678,25 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       expect(toolParent?.span.id).toBe(nestedTask?.span.id);
       expect(tool?.span.parentIds).not.toContain(nestedTaskLlm?.span.id ?? "");
     });
+
+    test(
+      "parents a local subagent tool when execution races stream consumption",
+      testConfig,
+      () => {
+        const taskRoot = findOperationTaskRoot(
+          events,
+          "claude-agent-subagent-operation",
+        );
+        const nestedTask = findSubAgentTaskSpan(events, taskRoot?.span.id);
+        const tool = findAllSpans(events, "tool: calculator/calculator").find(
+          (event) =>
+            event.row.metadata?.["gen_ai.tool.call.id"] ===
+            scenarioResult.subagentRacedToolUseId,
+        );
+        expect(tool).toBeDefined();
+        expect(tool?.span.parentIds).toEqual([nestedTask?.span.id ?? ""]);
+      },
+    );
 
     if (options.expectTaskLifecycleDetails) {
       test(
