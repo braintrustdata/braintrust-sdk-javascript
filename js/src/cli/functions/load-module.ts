@@ -33,6 +33,12 @@ export function loadModule({
     (globalThis as any)[Symbol.for("braintrust-state")] = state;
     const __filename = inFile;
     const __dirname = dirname(__filename);
+    try {
+      require("braintrust/apply-auto-instrumentation");
+    } catch {
+      // The bundler transform still covers inlined dependencies when the
+      // runtime hook is unavailable, such as when running from source.
+    }
     new Function("require", "module", "__filename", "__dirname", moduleText)(
       require,
       module,
