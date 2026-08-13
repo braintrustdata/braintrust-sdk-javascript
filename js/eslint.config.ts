@@ -31,6 +31,7 @@ export default [
       "node_modules/**",
       "vendor/**",
       "examples/**",
+      "**/generated*_types.ts",
       "scripts/**",
       ".turbo/**",
       "docs/**",
