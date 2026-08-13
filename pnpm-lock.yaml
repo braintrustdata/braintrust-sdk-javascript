@@ -197,12 +197,6 @@ importers:
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(@swc/core@1.15.8)(jiti@2.6.1)(postcss@8.5.19)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.9.0)
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
-      typedoc:
-        specifier: ^0.25.13
-        version: 0.25.13(typescript@5.9.3)
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
@@ -8201,14 +8195,6 @@ snapshots:
       minimatch: 9.0.9
       shiki: 0.14.7
       typescript: 5.4.4
-
-  typedoc@0.25.13(typescript@5.9.3):
-    dependencies:
-      lunr: 2.3.9
-      marked: 4.3.0
-      minimatch: 9.0.9
-      shiki: 0.14.7
-      typescript: 5.9.3
 
   typedoc@0.28.15(typescript@5.5.4):
     dependencies:
