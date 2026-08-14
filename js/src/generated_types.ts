@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 776b6c295e852681) -- do not modify
+// Auto-generated file (content hash e392acbca346c32a) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -273,6 +273,19 @@ export const FacetPreprocessorId = z.union([
   z.null(),
 ]);
 export type FacetPreprocessorIdType = z.infer<typeof FacetPreprocessorId>;
+export const SavedFunctionId = z.union([
+  z.object({
+    type: z.literal("function"),
+    id: z.string(),
+    version: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal("global"),
+    name: z.string(),
+    function_type: FunctionTypeEnum.optional().default("scorer"),
+  }),
+]);
+export type SavedFunctionIdType = z.infer<typeof SavedFunctionId>;
 export const TopicMapGenerationSettings = z.object({
   algorithm: z.enum(["hdbscan", "kmeans", "community"]),
   dimension_reduction: z.enum(["umap", "pca", "none"]),
@@ -289,6 +302,7 @@ export type TopicMapGenerationSettingsType = z.infer<
 export const TopicMapData = z.object({
   type: z.literal("topic_map"),
   source_facet: z.string(),
+  source_facet_function: SavedFunctionId.and(z.unknown()).optional(),
   embedding_model: z.string(),
   bundle_key: z.string().optional(),
   report_key: z.string().optional(),
@@ -629,19 +643,6 @@ export const ObjectReferenceNullish = z.union([
   z.null(),
 ]);
 export type ObjectReferenceNullishType = z.infer<typeof ObjectReferenceNullish>;
-export const SavedFunctionId = z.union([
-  z.object({
-    type: z.literal("function"),
-    id: z.string(),
-    version: z.string().optional(),
-  }),
-  z.object({
-    type: z.literal("global"),
-    name: z.string(),
-    function_type: FunctionTypeEnum.optional().default("scorer"),
-  }),
-]);
-export type SavedFunctionIdType = z.infer<typeof SavedFunctionId>;
 export const DatasetEvent = z.object({
   id: z.string(),
   _xact_id: z.string(),
@@ -2170,6 +2171,7 @@ export const RunEval = z.object({
         .optional(),
     }),
     z.object({ data: z.array(z.unknown()) }),
+    z.object({ experiment_name: z.string() }),
   ]),
   name: z.string().optional(),
   parameters: z.object({}).partial().passthrough().optional(),
