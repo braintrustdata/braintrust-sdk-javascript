@@ -467,6 +467,49 @@ function aggregateChatLogprobs(
   return aggregated;
 }
 
+type AggregatedChatChoice = {
+  index: number;
+  role: string | undefined;
+  content: string | undefined;
+  refusal: string | undefined;
+  tool_calls: OpenAIChatChoice["message"]["tool_calls"] | undefined;
+  logprobs: OpenAIChatLogprobs | null | undefined;
+  finish_reason: string | null | undefined;
+};
+
+function getStreamingChoiceIndex(
+  choice: NonNullable<OpenAIChatCompletionChunk["choices"]>[number],
+  position: number,
+): number {
+  return typeof choice.index === "number" ? choice.index : position;
+}
+
+function createAggregatedChatChoice(index: number): AggregatedChatChoice {
+  return {
+    index,
+    role: undefined,
+    content: undefined,
+    refusal: undefined,
+    tool_calls: undefined,
+    logprobs: undefined,
+    finish_reason: undefined,
+  };
+}
+
+function toChatChoice(choice: AggregatedChatChoice): OpenAIChatChoice {
+  return {
+    index: choice.index,
+    message: {
+      role: choice.role,
+      content: choice.content,
+      ...(choice.refusal !== undefined ? { refusal: choice.refusal } : {}),
+      tool_calls: choice.tool_calls,
+    },
+    logprobs: choice.logprobs ?? null,
+    finish_reason: choice.finish_reason,
+  };
+}
+
 /**
  * Aggregate chat completion chunks into a single response.
  * Combines role (first), content (concatenated), tool_calls (by id),
@@ -480,12 +523,7 @@ export function aggregateChatCompletionChunks(
   output: OpenAIChatChoice[];
   metrics: Record<string, number>;
 } {
-  let role = undefined;
-  let content = undefined;
-  let refusal = undefined;
-  let tool_calls = undefined;
-  let logprobs: OpenAIChatLogprobs | null | undefined = undefined;
-  let finish_reason = undefined;
+  const choicesByIndex = new Map<number, AggregatedChatChoice>();
   let metrics: Record<string, number> = {};
 
   for (const chunk of chunks) {
@@ -496,76 +534,87 @@ export function aggregateChatCompletionChunks(
       };
     }
 
-    const choice = chunk.choices?.[0];
-    if (!choice) {
+    const choices = chunk.choices;
+    if (!choices?.length) {
       continue;
     }
 
-    if (choice.finish_reason) {
-      finish_reason = choice.finish_reason;
-    }
+    for (const [position, choice] of choices.entries()) {
+      const choiceIndex = getStreamingChoiceIndex(choice, position);
+      let aggregatedChoice = choicesByIndex.get(choiceIndex);
+      if (!aggregatedChoice) {
+        aggregatedChoice = createAggregatedChatChoice(choiceIndex);
+        choicesByIndex.set(choiceIndex, aggregatedChoice);
+      }
 
-    logprobs = aggregateChatLogprobs(logprobs, choice.logprobs);
+      if (choice.finish_reason) {
+        aggregatedChoice.finish_reason = choice.finish_reason;
+      }
 
-    const delta = choice.delta;
-    if (!delta) {
-      continue;
-    }
+      aggregatedChoice.logprobs = aggregateChatLogprobs(
+        aggregatedChoice.logprobs,
+        choice.logprobs,
+      );
 
-    if (delta.finish_reason) {
-      finish_reason = delta.finish_reason;
-    }
+      const delta = choice.delta;
+      if (!delta) {
+        continue;
+      }
 
-    if (!role && delta.role) {
-      role = delta.role;
-    }
+      if (delta.finish_reason) {
+        aggregatedChoice.finish_reason = delta.finish_reason;
+      }
 
-    if (delta.content) {
-      content = (content || "") + delta.content;
-    }
+      if (!aggregatedChoice.role && delta.role) {
+        aggregatedChoice.role = delta.role;
+      }
 
-    if (delta.refusal) {
-      refusal = (refusal || "") + delta.refusal;
-    }
+      if (delta.content) {
+        aggregatedChoice.content =
+          (aggregatedChoice.content || "") + delta.content;
+      }
 
-    if (delta.tool_calls) {
-      const toolDelta = delta.tool_calls[0];
-      if (
-        !tool_calls ||
-        (toolDelta.id && tool_calls[tool_calls.length - 1].id !== toolDelta.id)
-      ) {
-        tool_calls = [
-          ...(tool_calls || []),
-          {
-            id: toolDelta.id,
-            type: toolDelta.type,
-            function: toolDelta.function,
-          },
-        ];
-      } else {
-        tool_calls[tool_calls.length - 1].function.arguments +=
-          toolDelta.function.arguments;
+      if (delta.refusal) {
+        aggregatedChoice.refusal =
+          (aggregatedChoice.refusal || "") + delta.refusal;
+      }
+
+      if (delta.tool_calls) {
+        const toolDelta = delta.tool_calls[0];
+        if (
+          !aggregatedChoice.tool_calls ||
+          (toolDelta.id &&
+            aggregatedChoice.tool_calls[aggregatedChoice.tool_calls.length - 1]
+              .id !== toolDelta.id)
+        ) {
+          aggregatedChoice.tool_calls = [
+            ...(aggregatedChoice.tool_calls || []),
+            {
+              id: toolDelta.id,
+              type: toolDelta.type,
+              function: toolDelta.function,
+            },
+          ];
+        } else {
+          aggregatedChoice.tool_calls[
+            aggregatedChoice.tool_calls.length - 1
+          ].function.arguments += toolDelta.function.arguments;
+        }
       }
     }
   }
 
   metrics = withCachedMetric(metrics, streamResult, endEvent);
+  const output = Array.from(choicesByIndex.values())
+    .sort((left, right) => left.index - right.index)
+    .map(toChatChoice);
 
   return {
     metrics,
-    output: [
-      {
-        index: 0,
-        message: {
-          role,
-          content,
-          ...(refusal !== undefined ? { refusal } : {}),
-          tool_calls,
-        },
-        logprobs: logprobs ?? null,
-        finish_reason,
-      },
-    ],
+    output:
+      output.length > 0
+        ? output
+        : [toChatChoice(createAggregatedChatChoice(0))],
   };
 }
 

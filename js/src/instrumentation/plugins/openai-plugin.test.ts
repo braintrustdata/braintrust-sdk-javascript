@@ -328,6 +328,62 @@ describe("aggregateChatCompletionChunks", () => {
       expect(result.metrics).toEqual({});
     });
 
+    it("should aggregate multiple streamed choices by index", () => {
+      const chunks = [
+        {
+          choices: [
+            {
+              index: 0,
+              delta: { role: "assistant", content: "Hel" },
+            },
+            {
+              index: 1,
+              delta: { role: "assistant", content: "Bon" },
+            },
+          ],
+        },
+        {
+          choices: [
+            {
+              index: 1,
+              delta: { content: "jour" },
+              finish_reason: "stop",
+            },
+            {
+              index: 0,
+              delta: { content: "lo" },
+              finish_reason: "length",
+            },
+          ],
+        },
+      ];
+
+      const result = aggregateChatCompletionChunks(chunks);
+
+      expect(result.output).toEqual([
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: "Hello",
+            tool_calls: undefined,
+          },
+          logprobs: null,
+          finish_reason: "length",
+        },
+        {
+          index: 1,
+          message: {
+            role: "assistant",
+            content: "Bonjour",
+            tool_calls: undefined,
+          },
+          logprobs: null,
+          finish_reason: "stop",
+        },
+      ]);
+    });
+
     it("should handle empty chunks array", () => {
       const result = aggregateChatCompletionChunks([]);
 
