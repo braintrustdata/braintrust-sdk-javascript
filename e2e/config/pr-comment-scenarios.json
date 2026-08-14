@@ -659,6 +659,17 @@
     ]
   },
   {
+    "scenarioDirName": "durable-eval-webhook",
+    "label": "Durable Eval Webhook",
+    "metadataScenario": "durable-eval-webhook",
+    "evals": [
+      {
+        "experimentNameTemplate": "durable-eval-webhook-{testRunId}",
+        "label": "webhook"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "nextjs-instrumentation",
     "label": "Next.js Instrumentation",
     "metadataScenario": "nextjs-instrumentation",
