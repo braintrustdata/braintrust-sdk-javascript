@@ -76,7 +76,7 @@ interface Common {
     path: string,
     opts?: { recursive?: boolean },
   ) => Promise<string | undefined>;
-  writeFile?: (filename: string, data: string) => Promise<void>;
+  writeFile?: (filename: string, data: string | Uint8Array) => Promise<void>;
   readFile?: (filename: string) => Promise<Uint8Array>;
   readdir?: (path: string) => Promise<string[]>;
   utimes?: (path: string, atime: Date, mtime: Date) => Promise<void>;
