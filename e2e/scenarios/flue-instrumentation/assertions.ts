@@ -43,6 +43,8 @@ const SNAPSHOT_METADATA_KEYS = [
   "scenario",
   "flue.api",
   "flue.compaction_reason",
+  "flue.input_message_offset",
+  "flue.input_mode",
   "flue.model",
   "flue.operation",
   "flue.provider",
@@ -75,8 +77,15 @@ function snapshotFields(event: CapturedLogEvent): SpanTreeFields {
 }
 
 function findFlueOperation(events: CapturedLogEvent[], flueSpanName: string) {
-  const workflow = findLatestSpanByPrefix(events, "workflow:");
-  return findLatestChildSpan(events, flueSpanName, workflow?.span.id);
+  if (flueSpanName === "flue.prompt") {
+    return [...events]
+      .reverse()
+      .find(
+        (event) =>
+          event.span.name === flueSpanName && event.span.parentIds.length === 0,
+      );
+  }
+  return findLatestSpan(events, flueSpanName);
 }
 
 function findLatestSpanByPrefix(
@@ -306,6 +315,15 @@ export function defineFlueInstrumentationAssertions(options: {
       expect(findFlueOperation(events, "flue.prompt")?.output).toBe(
         "PROMPT_DONE",
       );
+      expect(findFlueOperation(events, "flue.prompt")?.span.parentIds).toEqual(
+        [],
+      );
+      expect(
+        findFlueOperation(events, "flue.prompt")?.row.metadata,
+      ).toMatchObject({
+        scenario: SCENARIO_NAME,
+        testRunId: expect.any(String),
+      });
       expect(findFlueOperation(events, "flue.skill")?.output).toBe(
         "SKILL_DONE",
       );
