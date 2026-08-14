@@ -1,5 +1,21 @@
 # braintrust
 
+## 3.28.0
+
+### Minor Changes
+
+- feat: Add experimental batch/durable evals API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2297)
+- feat: Add voyage instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2296)
+
+### Patch Changes
+
+- fix(claude-agent-sdk): Correctly parent subagent tool spans (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2362)
+- fix(dataset): Enforce `_internal_btql.limit` across paginated fetches (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2344)
+- deps: Bump deps (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2338)
+- Remove the `simple-git` dependency by collecting Git metadata through the Git CLI. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2351)
+- fix: Pass id and tags to scorer (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2357)
+- fix: Reduce flue instrumentation memory footprint (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2356)
+
 ## 3.27.0
 
 ### Minor Changes
