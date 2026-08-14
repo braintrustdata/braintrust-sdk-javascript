@@ -6,7 +6,6 @@ import {
   Context,
   diag,
   trace,
-  TraceFlags,
   propagation,
   Span,
 } from "@opentelemetry/api";
@@ -714,7 +713,7 @@ export function contextFromSpanExport(exportStr: string): unknown {
     traceId: traceIdHex,
     spanId: spanIdHex,
     isRemote: true,
-    traceFlags: TraceFlags?.SAMPLED ?? 1, // SAMPLED flag
+    traceFlags: parseInt(components.data.trace_flags ?? "01", 16),
   };
 
   // Create NonRecordingSpan using wrapSpanContext and set in context
@@ -1177,11 +1176,13 @@ export function parentFromHeaders(
       row_id: string;
       span_id: string;
       root_span_id: string;
+      trace_flags?: string;
     } = {
       object_type: objectType,
       row_id: "otel", // Dummy row_id to enable span_id/root_span_id fields
       span_id: spanIdHex,
       root_span_id: traceIdHex,
+      trace_flags: spanContext.traceFlags.toString(16).padStart(2, "0"),
     };
 
     // Add either object_id or compute_object_metadata_args, not both

@@ -426,6 +426,84 @@ test("verify MemoryBackgroundLogger intercepts logs", async () => {
   _exportsForTestingOnly.clearTestBackgroundLogger(); // can go back to normal
 });
 
+describe("native trace sampling", () => {
+  beforeEach(() => {
+    _exportsForTestingOnly.simulateLoginForTests();
+  });
+
+  afterEach(() => {
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+  });
+
+  test("creates a real, non-recording context carrier at rate zero", async () => {
+    const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    const logger = initLogger({
+      projectName: "sampling",
+      projectId: "sampling-project",
+      sampleRate: 0,
+    });
+
+    const span = logger.startSpan({ name: "dropped" });
+    const child = span.startSpan({ name: "also-dropped", sampleRate: 1 });
+    span.log({ input: { ignored: true } });
+    child.end();
+    span.end();
+
+    expect(span.isRecording()).toBe(false);
+    expect(child.isRecording()).toBe(false);
+    expect(span.id).not.toBe("");
+    expect(span.inject().traceparent).toMatch(/-00$/);
+    await memoryLogger.flush();
+    expect(await memoryLogger.drain()).toHaveLength(0);
+  });
+
+  test("allows a root override without changing the logger policy", async () => {
+    const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    const logger = initLogger({
+      projectName: "sampling",
+      projectId: "sampling-project",
+      sampleRate: 0,
+    });
+
+    const recorded = logger.startSpan({ name: "kept", sampleRate: 1 });
+    const dropped = logger.startSpan({ name: "dropped" });
+    recorded.end();
+    dropped.end();
+
+    expect(logger.sampleRate).toBe(0);
+    expect(recorded.isRecording()).toBe(true);
+    expect(dropped.isRecording()).toBe(false);
+    await memoryLogger.flush();
+    expect(await memoryLogger.drain()).toHaveLength(1);
+  });
+
+  test("inherits the parent decision over a local logger rate", () => {
+    const logger = initLogger({
+      projectName: "sampling",
+      projectId: "sampling-project",
+      sampleRate: 0,
+    });
+
+    logger.traced((parent) => {
+      expect(parent.isRecording()).toBe(false);
+      const child = logger.startSpan({ name: "child", sampleRate: 1 });
+      expect(child.isRecording()).toBe(false);
+    });
+  });
+
+  test.each([null, "0.5", NaN, Infinity, -0.1, 1.1])(
+    "rejects invalid logger sample rate %j",
+    (sampleRate) => {
+      expect(() =>
+        initLogger({
+          projectName: "sampling",
+          sampleRate: sampleRate as number,
+        }),
+      ).toThrow(RangeError);
+    },
+  );
+});
+
 test("init validation", () => {
   expect(() => init({})).toThrow(
     "Must specify at least one of project or projectId",
