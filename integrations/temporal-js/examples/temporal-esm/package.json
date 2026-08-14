@@ -23,9 +23,6 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/uuid": "^11.0.0",
-    "ts-node": "^10.9.0",
-    "tsconfig-paths": "^4.2.0",
     "tsx": "^3.12.0",
     "typescript": "^5.0.0"
   }

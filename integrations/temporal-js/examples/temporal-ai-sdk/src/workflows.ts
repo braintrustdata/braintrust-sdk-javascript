@@ -1,5 +1,5 @@
 import { proxyActivities } from "@temporalio/workflow";
-import type * as activities from "./activities";
+import type * as activities from "./activities.js";
 
 /**
  * Proxy the activities for use in workflows
