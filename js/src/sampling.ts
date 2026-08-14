@@ -72,9 +72,3 @@ export function normalizeTraceFlags(
 export function isTraceFlagsSampled(traceFlags: string): boolean {
   return (parseInt(traceFlags, 16) & 0x01) !== 0;
 }
-
-/** Test-only reset for warn-once state. */
-export function _resetSamplingWarningsForTests(): void {
-  warnedInvalidTraceId = false;
-  warnedInvalidTraceFlags = false;
-}
