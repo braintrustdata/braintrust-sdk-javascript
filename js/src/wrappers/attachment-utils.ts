@@ -141,6 +141,40 @@ export function processInputAttachments(input: any): any {
       }
     }
 
+    // Voyage AI multimodal image_base64/video_base64 content format
+    const voyageBase64Key =
+      node.type === "image_base64"
+        ? Object.hasOwn(node, "imageBase64")
+          ? "imageBase64"
+          : "image_base64"
+        : node.type === "video_base64"
+          ? Object.hasOwn(node, "videoBase64")
+            ? "videoBase64"
+            : "video_base64"
+          : undefined;
+    const voyageBase64Value = voyageBase64Key
+      ? node[voyageBase64Key]
+      : undefined;
+    if (
+      voyageBase64Key &&
+      typeof voyageBase64Value === "string" &&
+      voyageBase64Value.startsWith("data:")
+    ) {
+      const mediaType = inferMediaTypeFromDataUrl(
+        voyageBase64Value,
+        node.type === "video_base64" ? "video/mp4" : "image/png",
+      );
+      const filename = `${node.type === "video_base64" ? "video" : "image"}.${getExtensionFromMediaType(mediaType)}`;
+      const attachment = toAttachment(voyageBase64Value, mediaType, filename);
+
+      if (attachment) {
+        return {
+          ...node,
+          [voyageBase64Key]: attachment,
+        };
+      }
+    }
+
     // OpenAI chat file content format
     if (
       node.type === "file" &&

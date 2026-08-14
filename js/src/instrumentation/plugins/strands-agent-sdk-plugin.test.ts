@@ -258,6 +258,13 @@ describe("StrandsAgentSDKPlugin", () => {
         }),
       }),
     );
+    expect(rootSpan?.log).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          "strands_agent_sdk.version": expect.anything(),
+        }),
+      }),
+    );
     expect(modelSpan?.args.parentSpanIds).toEqual({
       rootSpanId: rootSpan?.rootSpanId,
       spanId: rootSpan?.spanId,

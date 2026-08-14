@@ -1,0 +1,18 @@
+{
+  "name": "@braintrust/e2e-voyageai-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "voyageai-sdk-v0-latest": {
+          "package": "voyageai",
+          "range": "0"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "voyageai-sdk-v0": "npm:voyageai@0.2.1",
+    "voyageai-sdk-v0-latest": "npm:voyageai@0.4.0"
+  }
+}

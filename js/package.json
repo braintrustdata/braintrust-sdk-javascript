@@ -236,7 +236,6 @@
     "mustache": "^4.2.0",
     "pluralize": "^8.0.0",
     "semifies": "^1.0.0",
-    "simple-git": "^3.36.0",
     "source-map": "^0.7.4",
     "termi-link": "^1.0.1",
     "unplugin": "^2.3.5",

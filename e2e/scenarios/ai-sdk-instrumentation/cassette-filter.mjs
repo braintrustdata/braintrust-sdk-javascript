@@ -10,6 +10,7 @@ export const filter = [
       "messages.*.id",
       "messages.*.experimental_messageId",
       "input.*.id",
+      "input.*.call_id",
       "input.*.experimental_messageId",
       // OpenAI Responses API fields added as defaults in newer client versions.
       // These don't affect request semantics but change between SDK releases.

@@ -69,12 +69,13 @@ function assertNoPartialMessages(messages) {
   }
 }
 
-async function collectAsyncAndAssertMessagesUnchanged(records) {
+async function collectAsyncAndAssertMessagesUnchanged(records, onMessage) {
   const messages = [];
   const originalMessages = [];
   for await (const message of records) {
     messages.push(message);
     originalMessages.push(JSON.stringify(message));
+    onMessage?.(message);
   }
 
   for (const [index, message] of messages.entries()) {
@@ -89,6 +90,7 @@ async function collectAsyncAndAssertMessagesUnchanged(records) {
 async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
   const instrumentedSDK = decorateSDK ? decorateSDK(sdk) : sdk;
   const { createSdkMcpServer, query, tool } = instrumentedSDK;
+  let subagentRacedToolUseId = null;
   const calculator = tool(
     "calculator",
     "Performs basic arithmetic operations",
@@ -116,9 +118,7 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
               throw new Error(`unsupported operation: ${args.operation}`);
           }
         },
-        {
-          name: `calculator-local-handler-${args.operation}`,
-        },
+        { name: `calculator-local-handler-${args.operation}` },
       );
 
       return {
@@ -189,6 +189,7 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
         "claude-agent-subagent-operation",
         "subagent",
         async () => {
+          const consumedToolUseIds = new Set();
           const messages = await collectAsyncAndAssertMessagesUnchanged(
             query({
               prompt:
@@ -203,6 +204,25 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
                   },
                 },
                 allowedTools: ["Task"],
+                hooks: {
+                  PreToolUse: [
+                    {
+                      hooks: [
+                        async (input, toolUseId) => {
+                          if (
+                            input.tool_name === "mcp__calculator__calculator" &&
+                            input.tool_input?.operation === "add" &&
+                            typeof toolUseId === "string" &&
+                            !consumedToolUseIds.has(toolUseId)
+                          ) {
+                            subagentRacedToolUseId = toolUseId;
+                          }
+                          return {};
+                        },
+                      ],
+                    },
+                  ],
+                },
                 mcpServers: {
                   calculator: calculatorServer,
                 },
@@ -210,6 +230,21 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
                 permissionMode: "bypassPermissions",
               },
             }),
+            (record) => {
+              if (
+                record.type === "assistant" &&
+                Array.isArray(record.message?.content)
+              ) {
+                for (const block of record.message.content) {
+                  if (
+                    block?.type === "tool_use" &&
+                    typeof block.id === "string"
+                  ) {
+                    consumedToolUseIds.add(block.id);
+                  }
+                }
+              }
+            },
           );
           assertNoPartialMessages(messages);
         },
@@ -270,6 +305,10 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
     projectNameBase: "e2e-claude-agent-sdk-instrumentation",
     rootName: ROOT_NAME,
   });
+
+  process.stdout.write(
+    `CLAUDE_AGENT_E2E_RESULT=${JSON.stringify({ subagentRacedToolUseId })}\n`,
+  );
 }
 
 export async function runWrappedClaudeAgentSDKInstrumentation(sdk) {

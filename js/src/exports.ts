@@ -225,6 +225,7 @@ export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
 export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
+export { wrapVoyageAI } from "./wrappers/voyageai";
 export { wrapGroq } from "./wrappers/groq";
 export { wrapBedrockRuntime } from "./wrappers/bedrock-runtime";
 export { wrapCopilotClient } from "./wrappers/github-copilot";
@@ -267,6 +268,16 @@ export {
   runEvaluator,
   defaultErrorScoreHandler,
 } from "./framework";
+
+export type { DurableEvalStore } from "./durable-eval";
+
+export {
+  BatchScorer,
+  BatchTask,
+  defineDurableEval,
+  DurableEvalMemoryStore,
+  DurableEvalRedisStore,
+} from "./durable-eval";
 
 export { agentAssertionScorer } from "./agent-assertions";
 
