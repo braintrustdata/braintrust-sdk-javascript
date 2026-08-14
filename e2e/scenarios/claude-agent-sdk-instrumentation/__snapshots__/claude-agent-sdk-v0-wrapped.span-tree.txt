@@ -191,6 +191,14 @@ span_tree:
     │         "permissionMode": "bypassPermissions",
     │         "session_id": "<uuid:1>"
     │       }
+    │       metrics: {
+    │         "completion_tokens": 190,
+    │         "prompt_cache_creation_1h_tokens": 0,
+    │         "prompt_cache_creation_5m_tokens": 184,
+    │         "prompt_cached_tokens": 18650,
+    │         "prompt_tokens": 18844,
+    │         "tokens": 19034
+    │       }
     │       ├── anthropic.messages.create [llm]
     │       │   input: [
     │       │     {
@@ -226,13 +234,6 @@ span_tree:
     │       │   metadata: {
     │       │     "model": "claude-haiku-4-5-20251001",
     │       │     "provider": "anthropic"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_tokens": 171,
-    │       │     "prompt_cache_creation_1h_tokens": 0,
-    │       │     "prompt_cache_creation_5m_tokens": 18650,
-    │       │     "prompt_tokens": 18660,
-    │       │     "tokens": 18831
     │       │   }
     │       └── anthropic.messages.create [llm]
     │           input: [
@@ -279,14 +280,6 @@ span_tree:
     │             "model": "claude-haiku-4-5-20251001",
     │             "provider": "anthropic"
     │           }
-    │           metrics: {
-    │             "completion_tokens": 190,
-    │             "prompt_cache_creation_1h_tokens": 0,
-    │             "prompt_cache_creation_5m_tokens": 184,
-    │             "prompt_cached_tokens": 18650,
-    │             "prompt_tokens": 18844,
-    │             "tokens": 19034
-    │           }
     ├── claude-agent-subagent-operation
     │   metadata: {
     │     "operation": "subagent",
@@ -311,6 +304,14 @@ span_tree:
     │         "num_turns": 2,
     │         "permissionMode": "bypassPermissions",
     │         "session_id": "<uuid:1>"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 297,
+    │         "prompt_cache_creation_1h_tokens": 0,
+    │         "prompt_cache_creation_5m_tokens": 19118,
+    │         "prompt_cached_tokens": 18811,
+    │         "prompt_tokens": 37947,
+    │         "tokens": 38244
     │       }
     │       ├── anthropic.messages.create [llm]
     │       │   input: [
@@ -352,13 +353,6 @@ span_tree:
     │       │   metadata: {
     │       │     "model": "claude-haiku-4-5-20251001",
     │       │     "provider": "anthropic"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_tokens": 215,
-    │       │     "prompt_cache_creation_1h_tokens": 0,
-    │       │     "prompt_cache_creation_5m_tokens": 18811,
-    │       │     "prompt_tokens": 18821,
-    │       │     "tokens": 19036
     │       │   }
     │       ├── tool: Agent [tool]
     │       │   input: {
@@ -461,13 +455,6 @@ span_tree:
     │       │       │     "model": "claude-haiku-4-5-20251001",
     │       │       │     "provider": "anthropic"
     │       │       │   }
-    │       │       │   metrics: {
-    │       │       │     "completion_tokens": 106,
-    │       │       │     "prompt_cache_creation_1h_tokens": 0,
-    │       │       │     "prompt_cache_creation_5m_tokens": 26759,
-    │       │       │     "prompt_tokens": 26762,
-    │       │       │     "tokens": 26868
-    │       │       │   }
     │       │       └── tool: calculator/calculator [tool]
     │       │           input: {
     │       │             "a": 15,
@@ -539,14 +526,6 @@ span_tree:
     │             "model": "claude-haiku-4-5-20251001",
     │             "provider": "anthropic"
     │           }
-    │           metrics: {
-    │             "completion_tokens": 82,
-    │             "prompt_cache_creation_1h_tokens": 0,
-    │             "prompt_cache_creation_5m_tokens": 307,
-    │             "prompt_cached_tokens": 18811,
-    │             "prompt_tokens": 19126,
-    │             "tokens": 19208
-    │           }
     ├── claude-agent-subagent-built-in-tool-operation
     │   metadata: {
     │     "operation": "subagent-built-in-tool",
@@ -572,6 +551,14 @@ span_tree:
     │         "num_turns": 2,
     │         "permissionMode": "bypassPermissions",
     │         "session_id": "<uuid:1>"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 335,
+    │         "prompt_cache_creation_1h_tokens": 0,
+    │         "prompt_cache_creation_5m_tokens": 18961,
+    │         "prompt_cached_tokens": 18711,
+    │         "prompt_tokens": 37690,
+    │         "tokens": 38025
     │       }
     │       ├── anthropic.messages.create [llm]
     │       │   input: [
@@ -613,13 +600,6 @@ span_tree:
     │       │   metadata: {
     │       │     "model": "claude-sonnet-4-5-20250929",
     │       │     "provider": "anthropic"
-    │       │   }
-    │       │   metrics: {
-    │       │     "completion_tokens": 169,
-    │       │     "prompt_cache_creation_1h_tokens": 0,
-    │       │     "prompt_cache_creation_5m_tokens": 18711,
-    │       │     "prompt_tokens": 18721,
-    │       │     "tokens": 18890
     │       │   }
     │       ├── tool: Agent [tool]
     │       │   input: {
@@ -721,13 +701,6 @@ span_tree:
     │       │       │     "model": "claude-haiku-4-5-20251001",
     │       │       │     "provider": "anthropic"
     │       │       │   }
-    │       │       │   metrics: {
-    │       │       │     "completion_tokens": 76,
-    │       │       │     "prompt_cache_creation_1h_tokens": 0,
-    │       │       │     "prompt_cache_creation_5m_tokens": 17229,
-    │       │       │     "prompt_tokens": 17232,
-    │       │       │     "tokens": 17308
-    │       │       │   }
     │       │       └── tool: Bash [tool]
     │       │           input: {
     │       │             "command": "echo hello",
@@ -797,14 +770,6 @@ span_tree:
     │             "model": "claude-sonnet-4-5-20250929",
     │             "provider": "anthropic"
     │           }
-    │           metrics: {
-    │             "completion_tokens": 166,
-    │             "prompt_cache_creation_1h_tokens": 0,
-    │             "prompt_cache_creation_5m_tokens": 250,
-    │             "prompt_cached_tokens": 18711,
-    │             "prompt_tokens": 18969,
-    │             "tokens": 19135
-    │           }
     └── claude-agent-failure-operation
         metadata: {
           "operation": "failure",
@@ -826,6 +791,14 @@ span_tree:
               "num_turns": 2,
               "permissionMode": "bypassPermissions",
               "session_id": "<uuid:1>"
+            }
+            metrics: {
+              "completion_tokens": 233,
+              "prompt_cache_creation_1h_tokens": 0,
+              "prompt_cache_creation_5m_tokens": 199,
+              "prompt_cached_tokens": 37568,
+              "prompt_tokens": 37785,
+              "tokens": 38018
             }
             ├── anthropic.messages.create [llm]
             │   input: [
@@ -867,12 +840,6 @@ span_tree:
             │   metadata: {
             │     "model": "claude-haiku-4-5-20251001",
             │     "provider": "anthropic"
-            │   }
-            │   metrics: {
-            │     "prompt_cache_creation_1h_tokens": 0,
-            │     "prompt_cache_creation_5m_tokens": 0,
-            │     "prompt_cached_tokens": 18784,
-            │     "prompt_tokens": 18794
             │   }
             ├── tool: calculator/calculator [tool]
             │   input: {
@@ -938,10 +905,4 @@ span_tree:
                 metadata: {
                   "model": "claude-haiku-4-5-20251001",
                   "provider": "anthropic"
-                }
-                metrics: {
-                  "prompt_cache_creation_1h_tokens": 0,
-                  "prompt_cache_creation_5m_tokens": 199,
-                  "prompt_cached_tokens": 18784,
-                  "prompt_tokens": 18991
                 }

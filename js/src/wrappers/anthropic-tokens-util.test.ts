@@ -24,7 +24,7 @@ describe("finalizeAnthropicTokens", () => {
       completion_tokens: 48,
       prompt_cache_creation_1h_tokens: 0,
       prompt_cache_creation_5m_tokens: 199,
-      prompt_cache_creation_tokens: 999,
+      prompt_cache_creation_tokens: 199,
       prompt_cached_tokens: 24_243,
       prompt_tokens: 8,
     });
@@ -36,7 +36,24 @@ describe("finalizeAnthropicTokens", () => {
     expect(metrics.prompt_cache_creation_tokens).toBeUndefined();
   });
 
-  it("drops the aggregate for callers that keep the returned object", () => {
+  it("keeps the aggregate when the TTL cache creation breakdown is partial", () => {
+    expect(
+      finalizeAnthropicTokens({
+        completion_tokens: 48,
+        prompt_cache_creation_5m_tokens: 199,
+        prompt_cache_creation_tokens: 999,
+        prompt_cached_tokens: 24_243,
+        prompt_tokens: 8,
+      }),
+    ).toMatchObject({
+      prompt_cache_creation_5m_tokens: 199,
+      prompt_cache_creation_tokens: 999,
+      prompt_tokens: 25_250,
+      tokens: 25_298,
+    });
+  });
+
+  it("drops a fully represented aggregate for callers that keep the returned object", () => {
     const raw = {
       completion_tokens: 48,
       prompt_cache_creation_5m_tokens: 199,

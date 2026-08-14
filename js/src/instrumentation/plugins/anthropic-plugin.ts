@@ -828,8 +828,8 @@ export function parseMetricsFromUsage(
   // The 5m and 1h cache-write tiers are billed at different rates, so surface
   // the per-TTL breakdown whenever the response carries it. It is an
   // alternative representation of `cache_creation_input_tokens` rather than
-  // additional tokens; `finalizeAnthropicTokens` drops the aggregate so the
-  // span keeps a single representation.
+  // additional tokens. `finalizeAnthropicTokens` retains the aggregate as a
+  // fallback if the breakdown is partial.
   if (isObject(usage.cache_creation)) {
     const cacheCreation = usage.cache_creation;
     for (const [source, target] of [

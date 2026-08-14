@@ -123,15 +123,6 @@ export interface ClaudeAgentSDKModule {
 export type ClaudeAgentSDKHookCallback = (
   input:
     | (BaseHookInput & {
-        hook_event_name: "SessionStart";
-      })
-    | (BaseHookInput & {
-        hook_event_name: "SessionEnd";
-      })
-    | (BaseHookInput & {
-        hook_event_name: "UserPromptSubmit";
-      })
-    | (BaseHookInput & {
         hook_event_name: "PreToolUse";
         tool_name: string;
         tool_input: unknown;

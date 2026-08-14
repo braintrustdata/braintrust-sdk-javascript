@@ -13,16 +13,6 @@ const streamPatcherMock = vi.hoisted(() => ({
 vi.mock("../../isomorph", () => ({
   default: {
     newTracingChannel: vi.fn(),
-    readFile: vi.fn(),
-  },
-}));
-
-vi.mock("../../debug-logger", () => ({
-  debugLogger: {
-    debug: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
   },
 }));
 
@@ -366,7 +356,7 @@ describe("ClaudeAgentSDKPlugin", () => {
         expect(true).toBe(true);
       });
 
-      it("recovers final usage from the transcript without changing query behavior", async () => {
+      it("keeps transcript hooks untouched and logs usage only on the task span when partial messages are disabled", async () => {
         const userSessionStart = vi.fn(async (..._args: unknown[]) => ({}));
         const userSessionStartMatcher = { hooks: [userSessionStart] };
         const startEvent = {
@@ -386,74 +376,9 @@ describe("ClaudeAgentSDKPlugin", () => {
         const options = startEvent.arguments[0].options as any;
         expect(options.includePartialMessages).toBe(false);
         expect(options.hooks.SessionStart[0]).toBe(userSessionStartMatcher);
-        expect(options.hooks.SessionStart).toHaveLength(2);
-        expect(options.hooks.SessionEnd).toHaveLength(1);
-        expect(options.hooks.UserPromptSubmit).toHaveLength(1);
-
-        const sessionStartInput = {
-          cwd: "/tmp",
-          hook_event_name: "SessionStart",
-          session_id: "session_1",
-          transcript_path: "/tmp/session.jsonl",
-        };
-        await options.hooks.SessionStart[0].hooks[0](
-          sessionStartInput,
-          undefined,
-          { signal: new AbortController().signal },
-        );
-        await options.hooks.SessionStart[1].hooks[0](
-          sessionStartInput,
-          undefined,
-          { signal: new AbortController().signal },
-        );
-        expect(userSessionStart).toHaveBeenCalledOnce();
-
-        vi.mocked(iso.readFile!).mockResolvedValue(
-          new TextEncoder().encode(
-            [
-              "not json",
-              JSON.stringify({
-                type: "assistant",
-                message: {
-                  id: "msg_1",
-                  usage: {
-                    cache_creation: {
-                      ephemeral_1h_input_tokens: 0,
-                      ephemeral_5m_input_tokens: 3,
-                    },
-                    cache_creation_input_tokens: 3,
-                    cache_read_input_tokens: 20,
-                    input_tokens: 10,
-                    output_tokens: 1,
-                  },
-                },
-              }),
-              JSON.stringify({
-                type: "assistant",
-                message: {
-                  id: "msg_1",
-                  usage: {
-                    cache_creation: {
-                      ephemeral_1h_input_tokens: 0,
-                      ephemeral_5m_input_tokens: 3,
-                    },
-                    cache_creation_input_tokens: 3,
-                    cache_read_input_tokens: 20,
-                    input_tokens: 10,
-                    output_tokens: 40,
-                  },
-                },
-              }),
-              JSON.stringify({
-                type: "assistant",
-                message: {
-                  id: "msg_1",
-                  usage: { input_tokens: 10, output_tokens: -1 },
-                },
-              }),
-            ].join("\n"),
-          ),
-        );
+        expect(options.hooks.SessionStart).toHaveLength(1);
+        expect(options.hooks.SessionEnd).toBeUndefined();
+        expect(options.hooks.UserPromptSubmit).toBeUndefined();
 
         const stream = {
           async *[Symbol.asyncIterator]() {
@@ -485,16 +410,18 @@ describe("ClaudeAgentSDKPlugin", () => {
           session_id: "session_1",
           type: "result",
           usage: {
-            cache_creation_input_tokens: 999,
-            cache_read_input_tokens: 999,
-            input_tokens: 999,
-            output_tokens: 999,
+            cache_creation: {
+              ephemeral_5m_input_tokens: 3,
+            },
+            cache_creation_input_tokens: 4,
+            cache_read_input_tokens: 30,
+            input_tokens: 20,
+            output_tokens: 40,
           },
         });
         await streamPatcherMock.options?.onComplete();
 
         expect(JSON.stringify(assistantMessage)).toBe(originalAssistantMessage);
-        expect(iso.readFile).toHaveBeenCalledWith("/tmp/session.jsonl");
 
         const llmSpanCallIndex = vi
           .mocked(startSpan)
@@ -508,53 +435,41 @@ describe("ClaudeAgentSDKPlugin", () => {
         expect(llmSpanCallIndex).toBeGreaterThan(-1);
         const llmSpan =
           vi.mocked(startSpan).mock.results[llmSpanCallIndex]?.value;
-        expect(llmSpan?.log).toHaveBeenCalledWith(
-          expect.objectContaining({
-            metrics: {
-              prompt_cached_tokens: 20,
-              prompt_tokens: 33,
-            },
-          }),
-        );
-        expect(llmSpan?.log).toHaveBeenLastCalledWith({
+        expect(
+          vi
+            .mocked(llmSpan!.log)
+            .mock.calls.some((call: any[]) => call[0].metrics !== undefined),
+        ).toBe(false);
+        const taskSpan = vi.mocked(startSpan).mock.results[0]?.value;
+        expect(taskSpan?.log).toHaveBeenCalledWith({
+          metadata: { num_turns: 1, session_id: "session_1" },
           metrics: {
             completion_tokens: 40,
-            prompt_cache_creation_1h_tokens: 0,
             prompt_cache_creation_5m_tokens: 3,
-            prompt_cached_tokens: 20,
-            prompt_tokens: 33,
-            tokens: 73,
+            prompt_cache_creation_tokens: 4,
+            prompt_cached_tokens: 30,
+            prompt_tokens: 54,
+            tokens: 94,
           },
         });
       });
 
-      it("omits invalid partial completion usage when the transcript is unavailable", async () => {
+      it("omits invalid partial completion usage", async () => {
         const startEvent = {
           arguments: [
             {
               prompt: "Test",
-              options: { model: "claude-3-5-sonnet-20241022" },
+              options: {
+                includePartialMessages: true,
+                model: "claude-3-5-sonnet-20241022",
+              },
             },
           ],
         };
         handlers.start(startEvent);
-        expect(
-          "includePartialMessages" in startEvent.arguments[0].options,
-        ).toBe(false);
-
-        const internalSessionStart = (startEvent.arguments[0].options as any)
-          .hooks.SessionStart[0].hooks[0];
-        await internalSessionStart(
-          {
-            cwd: "/tmp",
-            hook_event_name: "SessionStart",
-            session_id: "session_1",
-            transcript_path: "/tmp/missing.jsonl",
-          },
-          undefined,
-          { signal: new AbortController().signal },
+        expect(startEvent.arguments[0].options.includePartialMessages).toBe(
+          true,
         );
-        vi.mocked(iso.readFile!).mockRejectedValue(new Error("missing"));
 
         const stream = {
           async *[Symbol.asyncIterator]() {
@@ -623,16 +538,14 @@ describe("ClaudeAgentSDKPlugin", () => {
           .filter(Boolean);
         expect(metricLogs).toEqual([
           {
+            prompt_cache_creation_tokens: 3,
             prompt_cached_tokens: 20,
             prompt_tokens: 33,
-          },
-          {
-            prompt_cache_creation_tokens: 3,
           },
         ]);
       });
 
-      it("keeps the LLM span when individual usage fields are unusable", async () => {
+      it("keeps the LLM span without usage when partial messages are disabled", async () => {
         const startEvent = {
           arguments: [
             {
@@ -642,7 +555,6 @@ describe("ClaudeAgentSDKPlugin", () => {
           ],
         };
         handlers.start(startEvent);
-        vi.mocked(iso.readFile!).mockRejectedValue(new Error("missing"));
 
         const stream = {
           async *[Symbol.asyncIterator]() {
@@ -690,7 +602,6 @@ describe("ClaudeAgentSDKPlugin", () => {
               model: "claude-3-5-sonnet-20241022",
               provider: "anthropic",
             },
-            metrics: { prompt_tokens: 10 },
             output: [
               {
                 content: [{ text: "Response", type: "text" }],
@@ -699,6 +610,11 @@ describe("ClaudeAgentSDKPlugin", () => {
             ],
           }),
         );
+        expect(
+          vi
+            .mocked(llmSpan!.log)
+            .mock.calls.some((call: any[]) => call[0].metrics !== undefined),
+        ).toBe(false);
       });
 
       it("layers partial stream usage over the assistant message usage", async () => {
@@ -751,7 +667,15 @@ describe("ClaudeAgentSDKPlugin", () => {
           },
           parent_tool_use_id: null,
         });
-        await streamPatcherMock.options?.onChunk?.({ type: "result" });
+        await streamPatcherMock.options?.onChunk?.({
+          type: "result",
+          usage: {
+            cache_creation_input_tokens: 3,
+            cache_read_input_tokens: 20,
+            input_tokens: 10,
+            output_tokens: 40,
+          },
+        });
         await streamPatcherMock.options?.onComplete();
 
         const llmSpanCallIndex = vi
@@ -776,6 +700,12 @@ describe("ClaudeAgentSDKPlugin", () => {
             },
           }),
         );
+        const taskSpan = vi.mocked(startSpan).mock.results[0]?.value;
+        expect(
+          vi
+            .mocked(taskSpan!.log)
+            .mock.calls.some((call: any[]) => call[0].metrics !== undefined),
+        ).toBe(false);
       });
     });
 

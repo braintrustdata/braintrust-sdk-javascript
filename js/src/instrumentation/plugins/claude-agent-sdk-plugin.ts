@@ -1,8 +1,7 @@
 import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
-import iso, { type IsoChannelHandlers } from "../../isomorph";
-import { debugLogger } from "../../debug-logger";
+import type { IsoChannelHandlers } from "../../isomorph";
 import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
 import {
@@ -52,18 +51,7 @@ type ParentSpanResolver = (
 ) => Promise<string>;
 type LLMSpanResult = {
   finalMessage: ClaudeConversationMessage | undefined;
-  span: Span;
   spanExport: string;
-};
-type PendingLLMUsage = {
-  messageId: string;
-  span: Span;
-  usage: ClaudeAgentSDKUsage;
-};
-type TranscriptUsageState = {
-  pendingLlmUsageByContextKey: Map<string, PendingLLMUsage>;
-  rootTranscriptPath?: string;
-  subagentTranscriptPathByToolUseId: Map<string, string>;
 };
 type SubAgentDetails = {
   agentId?: string;
@@ -84,13 +72,6 @@ type SubAgentPromptSource = keyof typeof SUB_AGENT_PROMPT_SOURCE_PRIORITY;
 
 function llmParentKey(parentToolUseId: string | null): string {
   return parentToolUseId ?? ROOT_LLM_PARENT_KEY;
-}
-
-function llmUsageContextKey(
-  parentToolUseId: string | null,
-  messageId: string,
-): string {
-  return JSON.stringify([llmParentKey(parentToolUseId), messageId]);
 }
 
 function isSubAgentDelegationToolName(toolName: string): boolean {
@@ -249,10 +230,7 @@ function tokenCount(value: unknown): number | undefined {
  * `null` for cache fields they do not populate, and one unusable field must
  * only cost that metric rather than the whole usage object.
  */
-function copyUsage(
-  usage: unknown,
-  requireInputAndOutput = false,
-): ClaudeAgentSDKUsage | undefined {
+function copyUsage(usage: unknown): ClaudeAgentSDKUsage | undefined {
   if (!usage || typeof usage !== "object") {
     return undefined;
   }
@@ -289,13 +267,6 @@ function copyUsage(
     }
   }
 
-  if (
-    requireInputAndOutput &&
-    (copy.input_tokens === undefined || copy.output_tokens === undefined)
-  ) {
-    return undefined;
-  }
-
   return Object.keys(copy).length > 0 ? copy : undefined;
 }
 
@@ -319,245 +290,9 @@ function mergeUsage(
   };
 }
 
-function parseTranscriptRowUsage(
-  line: string,
-  messageId: string,
-): ClaudeAgentSDKUsage | undefined {
-  let row: unknown;
-  try {
-    row = JSON.parse(line);
-  } catch {
-    return undefined;
-  }
-
-  if (!row || typeof row !== "object") {
-    return undefined;
-  }
-  if (getStringProperty(row, "type") !== "assistant") {
-    return undefined;
-  }
-
-  const message = Reflect.get(row, "message");
-  if (!message || typeof message !== "object") {
-    return undefined;
-  }
-  if (getStringProperty(message, "id") !== messageId) {
-    return undefined;
-  }
-
-  return copyUsage(Reflect.get(message, "usage"), true);
-}
-
-function parseTranscriptUsage(
-  bytes: Uint8Array,
-  messageIds: Set<string>,
-): Map<string, ClaudeAgentSDKUsage> {
-  const finalUsageByMessageId = new Map<string, ClaudeAgentSDKUsage>();
-  if (messageIds.size === 0) {
-    return finalUsageByMessageId;
-  }
-
-  const text = new TextDecoder().decode(bytes);
-  for (const messageId of messageIds) {
-    // Transcripts for `continue`/`resume` sessions routinely reach tens of
-    // megabytes, so seek the rows we actually need instead of parsing every
-    // row in the session on each query completion.
-    let searchTo = text.length;
-    while (searchTo >= 0) {
-      const match = text.lastIndexOf(messageId, searchTo);
-      if (match < 0) {
-        break;
-      }
-
-      const lineStart = text.lastIndexOf("\n", match) + 1;
-      const lineEnd = text.indexOf("\n", match);
-      // Transcript rows for one provider request are successive snapshots, not
-      // separate model calls. The last valid row contains the final usage.
-      const usage = parseTranscriptRowUsage(
-        text.slice(lineStart, lineEnd < 0 ? text.length : lineEnd),
-        messageId,
-      );
-      if (usage) {
-        finalUsageByMessageId.set(messageId, usage);
-        break;
-      }
-
-      searchTo = lineStart - 1;
-    }
-  }
-
-  return finalUsageByMessageId;
-}
-
-function recoveredUsage(
-  pendingUsage: ClaudeAgentSDKUsage,
-  transcriptUsage: ClaudeAgentSDKUsage,
-): ClaudeAgentSDKUsage | undefined {
-  const inputTokens = tokenCount(
-    transcriptUsage.input_tokens ?? pendingUsage.input_tokens,
-  );
-  const outputTokens = tokenCount(transcriptUsage.output_tokens);
-  const cacheReadTokens = tokenCount(
-    transcriptUsage.cache_read_input_tokens ??
-      pendingUsage.cache_read_input_tokens ??
-      0,
-  );
-  const cacheCreationTokens = tokenCount(
-    transcriptUsage.cache_creation_input_tokens ??
-      pendingUsage.cache_creation_input_tokens ??
-      0,
-  );
-
-  if (
-    inputTokens === undefined ||
-    outputTokens === undefined ||
-    cacheReadTokens === undefined ||
-    cacheCreationTokens === undefined
-  ) {
-    return undefined;
-  }
-
-  const cacheCreation =
-    transcriptUsage.cache_creation ?? pendingUsage.cache_creation;
-
-  return {
-    cache_creation_input_tokens: cacheCreationTokens,
-    cache_read_input_tokens: cacheReadTokens,
-    input_tokens: inputTokens,
-    output_tokens: outputTokens,
-    ...(cacheCreation && { cache_creation: { ...cacheCreation } }),
-  };
-}
-
-async function recoverUsageFromTranscript(
-  state: TranscriptUsageState,
-): Promise<void> {
-  const readFile = iso.readFile;
-  if (!readFile || state.pendingLlmUsageByContextKey.size === 0) {
-    return;
-  }
-
-  const pendingMessageIds = new Set<string>();
-  for (const pending of state.pendingLlmUsageByContextKey.values()) {
-    pendingMessageIds.add(pending.messageId);
-  }
-
-  const parentToolUseIdsByTranscriptPath = new Map<
-    string,
-    Set<string | null>
-  >();
-  const addTranscriptPath = (
-    transcriptPath: string,
-    parentToolUseId: string | null,
-  ) => {
-    const parentToolUseIds =
-      parentToolUseIdsByTranscriptPath.get(transcriptPath) ?? new Set();
-    parentToolUseIds.add(parentToolUseId);
-    parentToolUseIdsByTranscriptPath.set(transcriptPath, parentToolUseIds);
-  };
-
-  if (state.rootTranscriptPath) {
-    addTranscriptPath(state.rootTranscriptPath, null);
-  }
-  for (const [
-    toolUseId,
-    transcriptPath,
-  ] of state.subagentTranscriptPathByToolUseId) {
-    addTranscriptPath(transcriptPath, toolUseId);
-  }
-
-  const transcriptUsages = await Promise.all(
-    Array.from(
-      parentToolUseIdsByTranscriptPath,
-      async ([transcriptPath, parentToolUseIds]) => {
-        try {
-          return {
-            parentToolUseIds,
-            usageByMessageId: parseTranscriptUsage(
-              await readFile(transcriptPath),
-              pendingMessageIds,
-            ),
-          };
-        } catch (error) {
-          debugLogger.debug(
-            "Could not recover Claude Agent SDK transcript usage",
-            error,
-          );
-          return undefined;
-        }
-      },
-    ),
-  );
-
-  for (const transcriptUsage of transcriptUsages) {
-    if (!transcriptUsage) {
-      continue;
-    }
-
-    for (const parentToolUseId of transcriptUsage.parentToolUseIds) {
-      for (const [
-        messageId,
-        usageFromTranscript,
-      ] of transcriptUsage.usageByMessageId) {
-        const contextKey = llmUsageContextKey(parentToolUseId, messageId);
-        const pending = state.pendingLlmUsageByContextKey.get(contextKey);
-        if (!pending) {
-          continue;
-        }
-
-        const usage = recoveredUsage(pending.usage, usageFromTranscript);
-        if (!usage) {
-          continue;
-        }
-
-        try {
-          pending.span.log({ metrics: extractUsage(usage, true) });
-          state.pendingLlmUsageByContextKey.delete(contextKey);
-        } catch (error) {
-          debugLogger.debug(
-            "Could not update Claude Agent SDK span with transcript usage",
-            error,
-          );
-        }
-      }
-    }
-  }
-}
-
-// The CLI appends the final assistant row around the time the query stream
-// completes, so give a transcript that is still missing rows a couple of very
-// short chances to catch up before giving up on those spans' output tokens.
-const TRANSCRIPT_RECOVERY_ATTEMPTS = 3;
-const TRANSCRIPT_RECOVERY_RETRY_MS = 25;
-
-async function recoverUsageWithRetries(
-  state: TranscriptUsageState,
-): Promise<void> {
-  for (let attempt = 0; attempt < TRANSCRIPT_RECOVERY_ATTEMPTS; attempt++) {
-    if (attempt > 0) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, TRANSCRIPT_RECOVERY_RETRY_MS),
-      );
-    }
-
-    await recoverUsageFromTranscript(state);
-    if (state.pendingLlmUsageByContextKey.size === 0) {
-      return;
-    }
-    if (
-      state.rootTranscriptPath === undefined &&
-      state.subagentTranscriptPathByToolUseId.size === 0
-    ) {
-      // No transcript to wait on, so retrying cannot resolve anything.
-      return;
-    }
-  }
-}
-
 function extractUsage(
   usage: ClaudeAgentSDKUsage | undefined,
   includeOutput: boolean,
-  omitLegacyCacheCreationMetric = false,
 ): Record<string, number> {
   const metrics: AnthropicTokenMetrics = {};
   if (!usage) {
@@ -604,20 +339,11 @@ function extractUsage(
     return {};
   }
 
-  // `finalizeAnthropicTokens` drops the aggregate cache-creation metric when the
-  // per-TTL breakdown is present, so the finalized object replaces `metrics`
-  // rather than being merged back over it.
   const finalized = finalizeAnthropicTokens(metrics);
   if (metrics.completion_tokens === undefined) {
     // A total is only meaningful once both halves are known.
     delete finalized.tokens;
   }
-  if (omitLegacyCacheCreationMetric) {
-    // Span metrics can only be added, never removed, so hold the aggregate back
-    // until we know a per-TTL breakdown will not arrive from the transcript.
-    delete finalized.prompt_cache_creation_tokens;
-  }
-
   return toNumericMetrics(finalized);
 }
 
@@ -700,17 +426,16 @@ async function createLLMSpanForMessages(
 
   const lastMessage = messages[messages.length - 1];
   // Every assistant message is one provider request and must produce one `llm`
-  // span. Unusable usage costs metrics, never the span or its payloads.
+  // span. Per-call metrics are attached only when partial messages are enabled;
+  // otherwise the terminal aggregate belongs exclusively to the task span.
   if (lastMessage.type !== "assistant") {
     return undefined;
   }
 
   const model = lastMessage.message?.model || options.model;
-  const metrics = extractUsage(
-    usage,
-    hasFinalOutputUsage,
-    !hasFinalOutputUsage,
-  );
+  const metrics = options.includePartialMessages
+    ? extractUsage(usage, hasFinalOutputUsage)
+    : {};
   const input = buildLLMInput(promptMessages, conversationHistory);
   const outputs = messages
     .map((m) =>
@@ -756,7 +481,6 @@ async function createLLMSpanForMessages(
 
   return {
     finalMessage,
-    span,
     spanExport,
   };
 }
@@ -874,8 +598,6 @@ function createToolTracingHooks(
   subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   subAgentSpans: Map<string, Span>,
   endedSubAgentSpans: Set<string>,
-  transcriptUsageState: TranscriptUsageState,
-  taskIdToToolUseId: Map<string, string>,
 ): {
   postToolUse: ClaudeAgentSDKHookCallback;
   postToolUseFailure: ClaudeAgentSDKHookCallback;
@@ -1125,14 +847,6 @@ function createToolTracingHooks(
         toolUseId: toolUseID,
       },
     );
-    if (input.agent_transcript_path) {
-      const parentToolUseId =
-        taskIdToToolUseId.get(input.agent_id) ?? toolUseID;
-      transcriptUsageState.subagentTranscriptPathByToolUseId.set(
-        parentToolUseId,
-        input.agent_transcript_path,
-      );
-    }
     const subAgentSpan = subAgentSpans.get(toolUseID);
     if (!subAgentSpan || endedSubAgentSpans.has(toolUseID)) {
       return {};
@@ -1174,8 +888,6 @@ function injectTracingHooks(
   subAgentDetailsByToolUseId: Map<string, SubAgentDetails>,
   subAgentSpans: Map<string, Span>,
   endedSubAgentSpans: Set<string>,
-  transcriptUsageState: TranscriptUsageState,
-  taskIdToToolUseId: Map<string, string>,
 ): ClaudeAgentSDKQueryOptions {
   const {
     preToolUse,
@@ -1192,26 +904,7 @@ function injectTracingHooks(
     subAgentDetailsByToolUseId,
     subAgentSpans,
     endedSubAgentSpans,
-    transcriptUsageState,
-    taskIdToToolUseId,
   );
-  // SessionStart can occur before programmatic hooks are registered in the
-  // supported SDK versions. UserPromptSubmit carries the same base hook fields
-  // after registration, while SessionEnd remains a useful final fallback.
-  const captureRootTranscriptPath: ClaudeAgentSDKHookCallback = async (
-    input,
-  ) => {
-    if (
-      (input.hook_event_name === "SessionStart" ||
-        input.hook_event_name === "SessionEnd" ||
-        input.hook_event_name === "UserPromptSubmit") &&
-      input.agent_id === undefined &&
-      typeof input.transcript_path === "string"
-    ) {
-      transcriptUsageState.rootTranscriptPath = input.transcript_path;
-    }
-    return {};
-  };
 
   const existingHooks = options.hooks ?? {};
 
@@ -1219,24 +912,6 @@ function injectTracingHooks(
     ...options,
     hooks: {
       ...existingHooks,
-      SessionStart: [
-        ...(existingHooks.SessionStart ?? []),
-        {
-          hooks: [captureRootTranscriptPath],
-        } satisfies ClaudeAgentSDKHookCallbackMatcher,
-      ],
-      SessionEnd: [
-        ...(existingHooks.SessionEnd ?? []),
-        {
-          hooks: [captureRootTranscriptPath],
-        } satisfies ClaudeAgentSDKHookCallbackMatcher,
-      ],
-      UserPromptSubmit: [
-        ...(existingHooks.UserPromptSubmit ?? []),
-        {
-          hooks: [captureRootTranscriptPath],
-        } satisfies ClaudeAgentSDKHookCallbackMatcher,
-      ],
       PostToolUse: [
         ...(existingHooks.PostToolUse ?? []),
         { hooks: [postToolUse] } satisfies ClaudeAgentSDKHookCallbackMatcher,
@@ -1293,7 +968,6 @@ type QueryState = {
   latestLlmParentBySubAgentToolUse: Map<string, string>;
   latestRootLlmParentRef: { value: string | undefined };
   toolUseToParent: Map<string, string | null>;
-  transcriptUsageState: TranscriptUsageState;
   usageByMessageId: Map<string, ClaudeAgentSDKUsage>;
   localToolContext: ClaudeAgentSDKLocalToolContext;
 };
@@ -1356,13 +1030,15 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
   const existingLlmSpan = state.activeLlmSpansByParentToolUse.get(parentKey);
   const lastMessage = state.currentMessages[state.currentMessages.length - 1];
   const messageId = lastMessage?.message?.id;
-  // Stream events carry the freshest counts, but they can be partial (a
-  // `message_delta` reports only `output_tokens`), so layer them over the
-  // assistant message's own usage rather than replacing it.
-  const usage = mergeUsage(
-    copyUsage(lastMessage?.message?.usage),
-    messageId ? state.usageByMessageId.get(messageId) : undefined,
-  );
+  // When partial messages are enabled, stream events carry the freshest
+  // per-call counts. They can be partial, so layer them over the assistant
+  // message's usage rather than replacing it.
+  const usage = state.options.includePartialMessages
+    ? mergeUsage(
+        copyUsage(lastMessage?.message?.usage),
+        messageId ? state.usageByMessageId.get(messageId) : undefined,
+      )
+    : undefined;
   const hasFinalOutputUsage =
     messageId !== undefined && state.finalOutputUsageMessageIds.has(messageId);
 
@@ -1391,17 +1067,6 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
     if (llmSpanResult.finalMessage) {
       conversationHistory.push(llmSpanResult.finalMessage);
       state.finalResults.push(llmSpanResult.finalMessage);
-    }
-
-    if (messageId && !hasFinalOutputUsage && usage) {
-      state.transcriptUsageState.pendingLlmUsageByContextKey.set(
-        llmUsageContextKey(parentToolUseId, messageId),
-        {
-          messageId,
-          span: llmSpanResult.span,
-          usage,
-        },
-      );
     }
   }
 
@@ -1834,47 +1499,20 @@ async function handleStreamMessage(
   if (message.session_id !== undefined) {
     metadata.session_id = message.session_id;
   }
-  if (Object.keys(metadata).length > 0) {
-    state.span.log({ metadata });
+  const metrics = state.options.includePartialMessages
+    ? {}
+    : extractUsage(copyUsage(message.usage), true);
+  if (Object.keys(metadata).length > 0 || Object.keys(metrics).length > 0) {
+    state.span.log({
+      ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+      ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
+    });
   }
 }
 
 async function finalizeQuerySpan(state: QueryState): Promise<void> {
   try {
     await finalizeCurrentMessageGroup(state);
-
-    try {
-      await recoverUsageWithRetries(state.transcriptUsageState);
-    } catch (error) {
-      debugLogger.debug(
-        "Could not recover Claude Agent SDK transcript usage",
-        error,
-      );
-    }
-    for (const pending of state.transcriptUsageState.pendingLlmUsageByContextKey.values()) {
-      const cacheCreationTokens = pending.usage.cache_creation_input_tokens;
-      const hasCacheCreationBreakdown =
-        pending.usage.cache_creation?.ephemeral_5m_input_tokens !== undefined ||
-        pending.usage.cache_creation?.ephemeral_1h_input_tokens !== undefined;
-      if (
-        hasCacheCreationBreakdown ||
-        cacheCreationTokens === undefined ||
-        cacheCreationTokens === 0
-      ) {
-        continue;
-      }
-
-      try {
-        pending.span.log({
-          metrics: extractAnthropicCacheTokens(0, cacheCreationTokens),
-        });
-      } catch (error) {
-        debugLogger.debug(
-          "Could not finalize Claude Agent SDK fallback cache usage",
-          error,
-        );
-      }
-    }
 
     state.span.log({
       output:
@@ -1901,9 +1539,6 @@ async function finalizeQuerySpan(state: QueryState): Promise<void> {
     state.activePartialMessageIdByParentKey.clear();
     state.finalOutputUsageMessageIds.clear();
     state.usageByMessageId.clear();
-    state.transcriptUsageState.pendingLlmUsageByContextKey.clear();
-    state.transcriptUsageState.subagentTranscriptPathByToolUseId.clear();
-    state.transcriptUsageState.rootTranscriptPath = undefined;
 
     for (const toolSpan of state.activeToolSpans.values()) {
       toolSpan.end();
@@ -2019,10 +1654,6 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         >();
         const promptSourcePriorityByParentKey = new Map<string, number>();
         const localToolContext = createClaudeLocalToolContext();
-        const transcriptUsageState: TranscriptUsageState = {
-          pendingLlmUsageByContextKey: new Map(),
-          subagentTranscriptPathByToolUseId: new Map(),
-        };
         const { hasLocalToolHandlers, localToolHookNames } =
           prepareLocalToolHandlersInMcpServers(options.mcpServers);
         const skipLocalToolHooks =
@@ -2084,8 +1715,6 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           subAgentDetailsByToolUseId,
           subAgentSpans,
           endedSubAgentSpans,
-          transcriptUsageState,
-          taskIdToToolUseId,
         );
 
         params.options = optionsWithHooks;
@@ -2117,7 +1746,6 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           latestLlmParentBySubAgentToolUse,
           latestRootLlmParentRef,
           toolUseToParent,
-          transcriptUsageState,
           usageByMessageId: new Map(),
           localToolContext,
         });

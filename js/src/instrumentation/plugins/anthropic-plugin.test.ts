@@ -125,8 +125,8 @@ describe("parseMetricsFromUsage", () => {
 
     const result = parseMetricsFromUsageForTest(usage);
 
-    // The aggregate is still parsed here; `finalizeAnthropicTokens` is what
-    // reduces the span to the per-TTL representation.
+    // The aggregate is still parsed here; `finalizeAnthropicTokens` removes it
+    // only when the per-TTL representation accounts for the full total.
     expect(result).toEqual({
       prompt_tokens: 100,
       completion_tokens: 50,
