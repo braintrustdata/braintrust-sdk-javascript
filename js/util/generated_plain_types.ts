@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 776b6c295e852681) -- do not modify
+// Auto-generated file (content hash e392acbca346c32a) -- do not modify
 
 export type AclObjectTypeType =
   /**
@@ -773,6 +773,26 @@ export type FacetPreprocessorIdType =
       code: string;
     }
   | null;
+export type SavedFunctionIdType =
+  | {
+      /**
+       * @enum function
+       */
+      type: "function";
+      id: string;
+      version?: /**
+         * The version of the function
+         */
+        string | undefined;
+    }
+  | {
+      /**
+       * @enum global
+       */
+      type: "global";
+      name: string;
+      function_type: FunctionTypeEnumType;
+    };
 export type TopicMapGenerationSettingsType = {
   /**
    * @enum hdbscan, kmeans, community
@@ -795,9 +815,15 @@ export type TopicMapDataType = {
    */
   type: "topic_map";
   /**
-   * The facet field name to use as input for classification
+   * Materialized facet field name used when source_facet_function is absent
    */
   source_facet: string;
+  source_facet_function?:
+    | (SavedFunctionIdType &
+        /**
+         * The stable function reference for the source facet
+         */ unknown)
+    | undefined;
   /**
    * The embedding model to use for embedding facet values
    */
@@ -1517,26 +1543,6 @@ export type ObjectReferenceNullishType =
    * Indicates the event was copied from another object.
    */
   | null;
-export type SavedFunctionIdType =
-  | {
-      /**
-       * @enum function
-       */
-      type: "function";
-      id: string;
-      version?: /**
-         * The version of the function
-         */
-        string | undefined;
-    }
-  | {
-      /**
-       * @enum global
-       */
-      type: "global";
-      name: string;
-      function_type: FunctionTypeEnumType;
-    };
 export type DatasetEventType = {
   /**
    * A unique identifier for the dataset event. If you don't provide one, Braintrust will generate one for you
@@ -2748,7 +2754,7 @@ export type PromptParserNullishType = {
 } | null;
 export type PreprocessorSavedFunctionIdType =
   /**
-   * For prompt-backed scorers: the preprocessor function to use for trace template variables. Set to null to disable preprocessing. If omitted, the traced project's default preprocessor will be used, falling back to the global 'thread' preprocessor.
+   * For prompt-backed functions: the preprocessor function to use for trace template variables. Set to null to disable preprocessing. If omitted, the traced project's default preprocessor will be used, falling back to the global 'thread' preprocessor.
    */
   | {
       /**
@@ -4946,7 +4952,7 @@ export type TopicAutomationConfigType = {
   topic_map_functions: Array<TopicMapFunctionAutomationType>;
   scope?:
     | /**
-     * Execution scope for topic automation. Defaults to span-level execution.
+     * Execution scope for topic automation.
      */
     (SpanScopeType | TraceScopeType | GroupScopeType | null)
     | undefined;
@@ -6393,6 +6399,12 @@ export type RunEvalType = {
      */
     | {
         data: Array<unknown>;
+      }
+    /**
+     * Experiment whose inputs and outputs should be used as dataset inputs and expected values
+     */
+    | {
+        experiment_name: string;
       };
   name?: /**
      * The name of the eval to run when multiple evals available

@@ -4208,7 +4208,7 @@
             "type": "null"
           }
         ],
-        "description": "For prompt-backed scorers: the preprocessor function to use for trace template variables. Set to null to disable preprocessing. If omitted, the traced project's default preprocessor will be used, falling back to the global 'thread' preprocessor."
+        "description": "For prompt-backed functions: the preprocessor function to use for trace template variables. Set to null to disable preprocessing. If omitted, the traced project's default preprocessor will be used, falling back to the global 'thread' preprocessor."
       },
       "Project": {
         "type": "object",
@@ -6057,6 +6057,17 @@
                 "required": ["data"],
                 "description": "Dataset rows",
                 "title": "dataset_rows"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "experiment_name": {
+                    "type": "string"
+                  }
+                },
+                "required": ["experiment_name"],
+                "description": "Experiment whose inputs and outputs should be used as dataset inputs and expected values",
+                "title": "experiment_name"
               }
             ],
             "description": "The dataset to use"
@@ -6525,7 +6536,7 @@
                 "type": "null"
               }
             ],
-            "description": "Execution scope for topic automation. Defaults to span-level execution."
+            "description": "Execution scope for topic automation."
           },
           "data_scope": {
             "$ref": "#/components/schemas/TopicAutomationDataScope"
@@ -6695,7 +6706,17 @@
           },
           "source_facet": {
             "type": "string",
-            "description": "The facet field name to use as input for classification"
+            "description": "Materialized facet field name used when source_facet_function is absent"
+          },
+          "source_facet_function": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SavedFunctionId"
+              },
+              {
+                "description": "The stable function reference for the source facet"
+              }
+            ]
           },
           "embedding_model": {
             "type": "string",

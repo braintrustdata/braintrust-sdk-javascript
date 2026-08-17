@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import {
+  BaseExperiment,
   callEvaluatorData,
   Eval,
   EvalData,
@@ -335,6 +336,8 @@ async function getDataset(
       environment: data.dataset_environment ?? undefined,
       _internal_btql: data._internal_btql ?? undefined,
     });
+  } else if ("experiment_name" in data) {
+    return BaseExperiment({ name: data.experiment_name });
   } else {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return data.data as EvalCase<unknown, unknown, BaseMetadata>[];
@@ -398,3 +401,7 @@ function makeScorer(
 
   return ret;
 }
+
+export const _exportsForTestingOnly = {
+  getDataset,
+};
