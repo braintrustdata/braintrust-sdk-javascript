@@ -25,7 +25,7 @@ import { create } from "../orchestrion-js";
 import { extname, join, sep } from "path";
 import { readFileSync } from "fs";
 import moduleDetailsFromPath from "module-details-from-path";
-import { getDefaultInstrumentationConfigs } from "../configs/all";
+import { getDefaultAutoInstrumentationConfigs } from "../configs/all";
 import { type BundlerPluginOptions } from "./plugin";
 import { applySpecialCasePatch } from "../loader/special-case-patches";
 import { getPackageName } from "../loader/get-package-version";
@@ -57,9 +57,9 @@ const matcherCache = new Map<string, Matcher>();
  * Get or create a matcher instance, caching by config hash
  */
 function getMatcher(options: BundlerPluginOptions): Matcher {
-  const allInstrumentations = getDefaultInstrumentationConfigs({
-    additionalInstrumentations: options.instrumentations,
-  });
+  const allInstrumentations = getDefaultAutoInstrumentationConfigs(
+    options.instrumentations,
+  );
   const configHash = JSON.stringify({ allInstrumentations });
 
   if (matcherCache.has(configHash)) {

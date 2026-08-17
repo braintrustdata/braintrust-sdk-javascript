@@ -866,6 +866,42 @@ describe("Orchestrion Transformation Tests", () => {
       expectGlobalHookTransform(output);
     });
 
+    it("should respect instrumentation opt-outs in loader-only mode", async () => {
+      vi.stubEnv("BRAINTRUST_DISABLE_INSTRUMENTATION", "openai");
+      try {
+        const { errors, output } = await runWebpackWithLoader({
+          entry: path.join(fixturesDir, "test-app.js"),
+          output: {
+            path: outputDir,
+            filename: "turbopack-opt-out-bundle.js",
+            library: { type: "module" },
+          },
+          experiments: { outputModule: true },
+          mode: "development",
+          resolve: { modules: [nodeModulesDir, "node_modules"] },
+          module: {
+            rules: [
+              {
+                use: [
+                  {
+                    loader: webpackLoaderPath,
+                    options: { browser: false },
+                  },
+                ],
+              },
+            ],
+          },
+        });
+
+        expect(errors).toHaveLength(0);
+        expect(output).not.toContain(
+          "orchestrion:openai:chat.completions.create",
+        );
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
     it("should use global hooks when browser mode is true (turbopack loader-only mode)", async () => {
       const { errors, output } = await runWebpackWithLoader({
         entry: path.join(fixturesDir, "test-app.js"),

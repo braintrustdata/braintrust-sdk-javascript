@@ -61,6 +61,7 @@ import {
 } from "./util/debug-logging";
 import { pullCommand } from "./util/pull";
 import { runDevServer } from "../../dev/server";
+import { braintrustEsbuildPlugin } from "../auto-instrumentations/bundler/esbuild";
 
 // This requires require
 // https://stackoverflow.com/questions/50822310/how-to-import-package-json-in-typescript
@@ -378,12 +379,11 @@ async function initFile({
           fileName: inFile,
           outFile: bundleFile,
           tsconfig,
-          plugins,
+          plugins: [],
           externalPackages,
         }),
         external: ["fsevents", "chokidar"],
         write: true,
-        plugins: [],
         minify: true,
         sourcemap: true,
       };
@@ -828,6 +828,7 @@ function buildOpts({
   externalPackages?: string[];
 }): esbuild.BuildOptions {
   const plugins = [
+    braintrustEsbuildPlugin(),
     nativeNodeModulesPlugin,
     createMarkKnownPackagesExternalPlugin(externalPackages),
     ...(argPlugins || []).map((fn) => fn(fileName)),
@@ -1188,4 +1189,6 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  void main();
+}
