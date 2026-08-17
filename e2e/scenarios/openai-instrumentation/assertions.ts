@@ -2,7 +2,6 @@ import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, test } from "vitest";
-import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
@@ -45,7 +44,9 @@ type RelevantEvent = {
 
 type OperationSpec = {
   childNames: readonly string[];
+  nestedChildNames?: readonly string[];
   expectsOutput: boolean;
+  expectsModel?: boolean;
   expectsTimeToFirstToken: boolean;
   minOpenAIMajorVersion?: number;
   name: string;
@@ -54,6 +55,12 @@ type OperationSpec = {
   testName: string;
   validate?: (span: CapturedLogEvent | undefined) => void;
 };
+
+const EXPECTED_BATCH_OUTPUTS = new Map<string, string | undefined>([
+  ["Reply with exactly ALPHA.", "ALPHA"],
+  ["Reply with exactly BRAVO.", "BRAVO"],
+  ["Reply with exactly CHARLIE.", undefined],
+]);
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -234,6 +241,20 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     },
   },
   {
+    childNames: ["openai.batch"],
+    nestedChildNames: ["Chat Completion"],
+    expectsModel: false,
+    expectsOutput: false,
+    expectsTimeToFirstToken: false,
+    name: "openai-batch-operation",
+    operation: "batch",
+    testName: "captures resumable OpenAI Batch task and LLM spans",
+    validate: (span) => {
+      expect(span?.input).toBeUndefined();
+      expect(span?.output).toBeUndefined();
+    },
+  },
+  {
     childNames: ["openai.responses.create"],
     expectsOutput: true,
     expectsTimeToFirstToken: false,
@@ -320,244 +341,6 @@ function getOperationSpecs(version: string): OperationSpec[] {
   );
 }
 
-function pickMetadata(
-  metadata: Record<string, unknown> | undefined,
-  keys: string[],
-): Json {
-  if (!metadata) {
-    return null;
-  }
-
-  const picked = Object.fromEntries(
-    keys.flatMap((key) => {
-      const value = metadata[key];
-      if (value === undefined) {
-        return [];
-      }
-
-      return [
-        [
-          key,
-          key === "openaiSdkVersion" && typeof value === "string"
-            ? "<openai-sdk-version>"
-            : (value as Json),
-        ],
-      ];
-    }),
-  );
-
-  return Object.keys(picked).length > 0 ? (picked as Json) : null;
-}
-
-function isRecord(value: Json | undefined): value is Record<string, Json> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function summarizeMetricPresence(metrics: Json): Json {
-  if (!isRecord(metrics)) {
-    return null;
-  }
-
-  return {
-    has_time_to_first_token: typeof metrics.time_to_first_token === "number",
-  } satisfies Json;
-}
-
-function jsonKeysFromText(value: unknown): string[] {
-  if (typeof value !== "string") {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    if (
-      typeof parsed !== "object" ||
-      parsed === null ||
-      Array.isArray(parsed)
-    ) {
-      return [];
-    }
-
-    return Object.keys(parsed).sort();
-  } catch {
-    return [];
-  }
-}
-
-function summarizeInput(input: Json): Json {
-  if (typeof input === "string") {
-    return {
-      kind: "text",
-    } satisfies Json;
-  }
-
-  if (!Array.isArray(input)) {
-    return input === null ? null : ({ kind: typeof input } satisfies Json);
-  }
-
-  return input.map((message) => {
-    if (!isRecord(message as Json)) {
-      return { kind: typeof message } satisfies Json;
-    }
-
-    return {
-      content_kind: Array.isArray(message.content)
-        ? "blocks"
-        : typeof message.content,
-      role: message.role ?? null,
-    } satisfies Json;
-  }) satisfies Json;
-}
-
-function summarizeChatOutput(output: Json): Json {
-  if (!Array.isArray(output)) {
-    return null;
-  }
-
-  return output.map((choice) => {
-    if (!isRecord(choice as Json) || !isRecord(choice.message as Json)) {
-      return null;
-    }
-
-    return {
-      json_keys: jsonKeysFromText(choice.message.content),
-      role: choice.message.role ?? null,
-    } satisfies Json;
-  }) satisfies Json;
-}
-
-function summarizeResponsesOutput(
-  output: Json,
-  options?: {
-    // For normalization across SDK versions
-    dropEmptyOutputTextMessages?: boolean;
-  },
-): Json {
-  if (!Array.isArray(output)) {
-    return null;
-  }
-
-  const summaries = output.map((item) => {
-    if (!isRecord(item as Json)) {
-      return null;
-    }
-
-    const content = Array.isArray(item.content) ? item.content : [];
-    const contentTypes = content.flatMap((entry) =>
-      isRecord(entry as Json) && typeof entry.type === "string"
-        ? [entry.type]
-        : [],
-    );
-    const jsonKeys = content.flatMap((entry) =>
-      isRecord(entry as Json) ? jsonKeysFromText(entry.text) : [],
-    );
-
-    return {
-      content_types: contentTypes,
-      json_keys: [...new Set(jsonKeys)].sort(),
-      role: item.role ?? null,
-      status: item.status ?? null,
-      type: item.type ?? null,
-    } satisfies Json;
-  });
-
-  const filtered = options?.dropEmptyOutputTextMessages
-    ? summaries.filter((item) => {
-        if (!isRecord(item as Json)) {
-          return true;
-        }
-
-        return !(
-          item.role === "assistant" &&
-          item.status === "completed" &&
-          item.type === "message" &&
-          Array.isArray(item.content_types) &&
-          item.content_types.length === 1 &&
-          item.content_types[0] === "output_text" &&
-          Array.isArray(item.json_keys) &&
-          item.json_keys.length === 0
-        );
-      })
-    : summaries;
-
-  // Deduplicate identical items — the Responses API occasionally returns
-  // duplicate output entries (e.g., two identical "message" items when
-  // streaming), which would cause non-deterministic snapshot failures.
-  const seen = new Set<string>();
-  const deduped: Json[] = [];
-
-  for (const summarized of filtered) {
-    const key = JSON.stringify(summarized);
-    if (!seen.has(key)) {
-      seen.add(key);
-      deduped.push(summarized);
-    }
-  }
-
-  return deduped;
-}
-
-function summarizeOutput(name: string, output: Json): Json {
-  if (name === "Chat Completion") {
-    return summarizeChatOutput(output);
-  }
-
-  if (name === "Embedding") {
-    return isRecord(output)
-      ? ({
-          embedding_length: output.embedding_length ?? null,
-        } satisfies Json)
-      : null;
-  }
-
-  if (name === "Moderation") {
-    return Array.isArray(output)
-      ? ({
-          flagged_count: output.filter(
-            (entry) => isRecord(entry as Json) && entry.flagged === true,
-          ).length,
-          result_count: output.length,
-        } satisfies Json)
-      : null;
-  }
-
-  if (
-    name === "openai.responses.create" ||
-    name === "openai.responses.compact"
-  ) {
-    return summarizeResponsesOutput(output);
-  }
-
-  if (name === "openai.responses.parse") {
-    return summarizeResponsesOutput(output, {
-      dropEmptyOutputTextMessages: true,
-    });
-  }
-
-  return output === null || output === undefined
-    ? null
-    : ({ kind: typeof output } satisfies Json);
-}
-
-function summarizeOpenAIPayload(
-  event: CapturedLogEvent,
-  summaryName: string | undefined,
-): Json {
-  const name = summaryName ?? event.span.name ?? "";
-
-  return {
-    input: summarizeInput(event.input as Json),
-    metadata: pickMetadata(
-      event.row.metadata as Record<string, unknown> | undefined,
-      ["model", "openaiSdkVersion", "operation", "provider", "scenario"],
-    ),
-    metrics: summarizeMetricPresence(event.metrics as Json),
-    name: name || null,
-    output: summarizeOutput(name, event.output as Json),
-    type: event.span.type ?? null,
-  } satisfies Json;
-}
-
 function findOpenAISpan(
   events: CapturedLogEvent[],
   parentId: string | undefined,
@@ -573,6 +356,27 @@ function findOpenAISpan(
   return undefined;
 }
 
+function findOpenAISpans(
+  events: CapturedLogEvent[],
+  parentId: string | undefined,
+  names: readonly string[],
+) {
+  for (const name of names) {
+    const spans = findChildSpans(events, name, parentId);
+    if (spans.length > 0) {
+      return spans;
+    }
+  }
+
+  return [];
+}
+
+function batchPrompt(span: CapturedLogEvent): string {
+  const firstMessage = Array.isArray(span.input) ? span.input[0] : undefined;
+  const content = asRecord(firstMessage)?.content;
+  return typeof content === "string" ? content : "";
+}
+
 function buildRelevantEvents(
   events: CapturedLogEvent[],
   operationSpecs: OperationSpec[],
@@ -584,10 +388,27 @@ function buildRelevantEvents(
   for (const spec of operationSpecs) {
     const operation = findLatestSpan(events, spec.name)!;
     relevantEvents.push({ event: operation });
+    const providerSpan = findOpenAISpan(
+      events,
+      operation.span.id,
+      spec.childNames,
+    )!;
     relevantEvents.push({
-      event: findOpenAISpan(events, operation.span.id, spec.childNames)!,
+      event: providerSpan,
       summaryName: spec.childNames[0],
     });
+    if (spec.nestedChildNames) {
+      relevantEvents.push(
+        ...findOpenAISpans(events, providerSpan.span.id, spec.nestedChildNames)
+          .sort((left, right) =>
+            batchPrompt(left).localeCompare(batchPrompt(right)),
+          )
+          .map((event) => ({
+            event,
+            summaryName: spec.nestedChildNames?.[0],
+          })),
+      );
+    }
   }
 
   return relevantEvents;
@@ -599,22 +420,13 @@ function buildSpanTree(
 ): SpanTreeEntry[] {
   return buildRelevantEvents(events, operationSpecs).map(
     ({ event, summaryName }) => {
-      const summary = summarizeOpenAIPayload(event, summaryName) as Record<
-        string,
-        Json
-      >;
-      const { name: _name, type: _type, ...fields } = summary;
-
       return {
         event,
         fields: {
-          span_attributes: spanTreeFields(event).span_attributes,
-          ...fields,
+          ...spanTreeFields(event),
+          context: event.context,
         },
-        name:
-          typeof summary.name === "string"
-            ? summary.name
-            : (summaryName ?? event.span.name),
+        name: summaryName ?? event.span.name,
       };
     },
   );
@@ -688,6 +500,17 @@ export function defineOpenAIInstrumentationAssertions(options: {
           spec.childNames,
         );
         expect(spanInstrumentationName(span)).toBe("openai");
+        if (spec.nestedChildNames) {
+          const nested = findOpenAISpans(
+            events,
+            span?.span.id,
+            spec.nestedChildNames,
+          );
+          expect(nested).toHaveLength(EXPECTED_BATCH_OUTPUTS.size);
+          for (const child of nested) {
+            expect(spanInstrumentationName(child)).toBe("openai");
+          }
+        }
       }
     });
 
@@ -724,9 +547,12 @@ export function defineOpenAIInstrumentationAssertions(options: {
         expect(span?.row.metadata).toMatchObject({
           provider: "openai",
         });
-        expect(
-          typeof (span?.row.metadata as { model?: unknown } | undefined)?.model,
-        ).toBe("string");
+        if (spec.expectsModel !== false) {
+          expect(
+            typeof (span?.row.metadata as { model?: unknown } | undefined)
+              ?.model,
+          ).toBe("string");
+        }
 
         if (spec.expectsOutput) {
           expect(span?.output).toBeDefined();
@@ -742,6 +568,41 @@ export function defineOpenAIInstrumentationAssertions(options: {
           expect(span?.metrics?.time_to_first_token).toEqual(
             expect.any(Number),
           );
+        }
+
+        if (spec.nestedChildNames) {
+          const nested = findOpenAISpans(
+            events,
+            span?.span.id,
+            spec.nestedChildNames,
+          );
+          expect(nested).toHaveLength(EXPECTED_BATCH_OUTPUTS.size);
+          expect(span?.span.parentIds).toEqual([operation?.span.id ?? ""]);
+          expect(nested.map(batchPrompt).sort()).toEqual(
+            [...EXPECTED_BATCH_OUTPUTS.keys()].sort(),
+          );
+          for (const child of nested) {
+            const prompt = batchPrompt(child);
+            const firstChoice = Array.isArray(child.output)
+              ? asRecord(child.output[0])
+              : undefined;
+            const message = asRecord(firstChoice?.message);
+
+            expect(child.span.parentIds).toEqual([span?.span.id ?? ""]);
+            expect(child.row.metadata).toMatchObject({
+              model: expect.any(String),
+              provider: "openai",
+            });
+            const expectedOutput = EXPECTED_BATCH_OUTPUTS.get(prompt);
+            if (expectedOutput) {
+              expect(message?.content).toBe(expectedOutput);
+              expect(child.row.error).toBeUndefined();
+            } else {
+              expect(child.output).toBeUndefined();
+              expect(child.row.error).toContain("Batch fixture request failed");
+            }
+            expect(child.metrics?.time_to_first_token).toBeUndefined();
+          }
         }
 
         spec.validate?.(span);

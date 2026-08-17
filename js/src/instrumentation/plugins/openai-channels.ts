@@ -17,6 +17,11 @@ import type {
   OpenAIResponseCreateParams,
   OpenAIResponseStreamEvent,
 } from "../../vendor-sdk-types/openai";
+import type {
+  CompleteOpenAIBatchArgs,
+  CreateOpenAIBatchArgs,
+  OpenAIBatchLike,
+} from "../../openai-batch-types";
 
 type OpenAIChatSpanInfo = NonNullable<CompiledPrompt<"chat">["span_info"]>;
 
@@ -31,6 +36,24 @@ type OpenAIResponsesChannelExtras = OpenAIChannelExtras;
 export const openAIChannels = defineChannels(
   "openai",
   {
+    batchesCreate: channel<
+      [CreateOpenAIBatchArgs<OpenAIBatchLike>],
+      OpenAIBatchLike,
+      OpenAIChannelExtras
+    >({
+      channelName: "batches.create-resumable",
+      kind: "async",
+    }),
+
+    batchesComplete: channel<
+      [CompleteOpenAIBatchArgs<OpenAIBatchLike>],
+      OpenAIBatchLike,
+      OpenAIChannelExtras
+    >({
+      channelName: "batches.complete",
+      kind: "async",
+    }),
+
     chatCompletionsCreate: channel<
       [OpenAIChatCreateParams],
       OpenAIChatCompletion | OpenAIChatStream,

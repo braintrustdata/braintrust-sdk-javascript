@@ -129,6 +129,8 @@ export {
 
 export { registerSandbox } from "./sandbox";
 
+export { completeOpenAIBatch, createOpenAIBatch } from "./openai-batch";
+
 // Internal isomorph layer for platform-specific implementations
 import _internalIso from "./isomorph";
 export { _internalIso };

@@ -11,6 +11,7 @@ import {
   createLazyAPIPromise,
   EnhancedResponse,
   splitSpanInfo,
+  tracePromiseAsResponse,
   tracePromiseWithResponse,
 } from "./openai-promise-utils";
 
@@ -78,6 +79,12 @@ function wrapResponsesAsync<
 
     let executionPromise: Promise<EnhancedResponse<ResultOf<TChannel>>> | null =
       null;
+    let apiPromise: APIPromise<ResultOf<TChannel>> | null = null;
+
+    const getAPIPromise = () => {
+      apiPromise ??= target(params, options);
+      return apiPromise;
+    };
 
     const ensureExecuted = (): Promise<
       EnhancedResponse<ResultOf<TChannel>>
@@ -85,15 +92,27 @@ function wrapResponsesAsync<
       if (!executionPromise) {
         executionPromise = (async () => {
           const traceContext = createChannelContext(channel, params, span_info);
-          const apiPromise = target(params, options);
-          return tracePromiseWithResponse(channel, traceContext, apiPromise);
+          return tracePromiseWithResponse(
+            channel,
+            traceContext,
+            getAPIPromise(),
+          );
         })();
       }
 
       return executionPromise;
     };
 
-    return createLazyAPIPromise(ensureExecuted);
+    return createLazyAPIPromise(
+      ensureExecuted,
+      () =>
+        tracePromiseAsResponse(
+          channel,
+          createChannelContext(channel, params, span_info),
+          getAPIPromise(),
+        ),
+      getAPIPromise,
+    );
   };
 }
 
