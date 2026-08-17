@@ -15,8 +15,8 @@ import {
   processImagesInOutput,
 } from "./openai-span-data";
 import {
-  interceptOpenAIBatchComplete,
-  interceptOpenAIBatchCreate,
+  interceptOpenAIBatchTraceComplete,
+  interceptOpenAIBatchTraceStart,
 } from "./openai-batch-instrumentation";
 import {
   BRAINTRUST_CACHED_STREAM_METRIC,
@@ -47,8 +47,12 @@ export class OpenAIPlugin extends BasePlugin {
 
   protected onEnable(): void {
     this.unsubscribers.push(
-      openAIChannels.batchesCreate.intercept(interceptOpenAIBatchCreate),
-      openAIChannels.batchesComplete.intercept(interceptOpenAIBatchComplete),
+      openAIChannels.batchesStartTrace.intercept(
+        interceptOpenAIBatchTraceStart,
+      ),
+      openAIChannels.batchesCompleteTrace.intercept(
+        interceptOpenAIBatchTraceComplete,
+      ),
     );
 
     // Chat Completions - supports streaming

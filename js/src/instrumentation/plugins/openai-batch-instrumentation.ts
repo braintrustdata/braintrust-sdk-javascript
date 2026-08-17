@@ -20,11 +20,11 @@ import {
   type SpanComponentsV4Data,
 } from "../../../util/span_identifier_v4";
 import type {
-  CompleteOpenAIBatchArgs,
-  CreateOpenAIBatchArgs,
+  CompleteOpenAIBatchTraceArgs,
   OpenAIBatchCreateParams,
   OpenAIBatchJSONL,
   OpenAIBatchLike,
+  StartOpenAIBatchTraceArgs,
 } from "../../openai-batch-types";
 import { BRAINTRUST_OPENAI_BATCH_CONTEXT_KEY } from "./openai-batch-constants";
 import { openAIChannels } from "./openai-channels";
@@ -67,7 +67,7 @@ type BatchInputRecord = {
 };
 
 type OpenAIBatchResultFile =
-  CompleteOpenAIBatchArgs<OpenAIBatchLike>["outputFile"];
+  CompleteOpenAIBatchTraceArgs<OpenAIBatchLike>["outputFile"];
 
 type PreparedBatch = {
   context: BatchContext;
@@ -279,7 +279,7 @@ async function exportMinimalParent(
 }
 
 async function prepareCreateParams(
-  args: CreateOpenAIBatchArgs<OpenAIBatchLike>,
+  args: StartOpenAIBatchTraceArgs<OpenAIBatchLike>,
   parent: ReturnType<typeof getSpanParentObject>,
   startTime: number,
 ): Promise<PreparedBatch | undefined> {
@@ -674,8 +674,8 @@ async function startPreparedBatch(
   }
 }
 
-export const interceptOpenAIBatchCreate: Parameters<
-  typeof openAIChannels.batchesCreate.intercept
+export const interceptOpenAIBatchTraceStart: Parameters<
+  typeof openAIChannels.batchesStartTrace.intercept
 >[0] = async (target, thisArg, args) => {
   const parent = getSpanParentObject();
   const startTime = getCurrentUnixTimestamp();
@@ -997,7 +997,7 @@ function terminalEndTime(
 }
 
 async function completeBatch(
-  args: CompleteOpenAIBatchArgs<OpenAIBatchLike>,
+  args: CompleteOpenAIBatchTraceArgs<OpenAIBatchLike>,
 ): Promise<void> {
   const { batch, webhook } = args;
   const batchId = read(batch, "id");
@@ -1107,8 +1107,8 @@ async function completeBatch(
   task.end({ endTime });
 }
 
-export const interceptOpenAIBatchComplete: Parameters<
-  typeof openAIChannels.batchesComplete.intercept
+export const interceptOpenAIBatchTraceComplete: Parameters<
+  typeof openAIChannels.batchesCompleteTrace.intercept
 >[0] = (target, thisArg, args) =>
   Promise.resolve(Reflect.apply(target, thisArg, args)).then(async (batch) => {
     try {

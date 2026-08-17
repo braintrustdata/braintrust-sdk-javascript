@@ -7,7 +7,10 @@ import {
   withCurrent,
 } from "../../logger";
 import { configureNode } from "../../node/config";
-import { completeOpenAIBatch, createOpenAIBatch } from "../../openai-batch";
+import {
+  completeOpenAIBatchTrace,
+  startOpenAIBatchTrace,
+} from "../../openai-batch";
 import type {
   OpenAIBatchCreateInputParams,
   OpenAIBatchJSONL,
@@ -44,12 +47,12 @@ const chatInput = [
   },
 ];
 
-async function createTestBatch(args: {
+async function startTestBatchTrace(args: {
   input: OpenAIBatchJSONL;
   inputFile: OpenAIFileLike;
   params: OpenAIBatchCreateInputParams;
 }) {
-  return await createOpenAIBatch({
+  return await startOpenAIBatchTrace({
     ...args,
     client: {
       batches: {
@@ -130,7 +133,7 @@ describe("OpenAI Batch instrumentation", () => {
       completion_window: "24h" as const,
       metadata: { user: "value" },
     };
-    const params = await createTestBatch({
+    const params = await startTestBatchTrace({
       inputFile,
       input: input.map((record) => JSON.stringify(record)).join("\n"),
       params: sourceParams,
@@ -181,7 +184,7 @@ describe("OpenAI Batch instrumentation", () => {
   });
 
   it("does not start spans when OpenAI returns a different batch context", async () => {
-    const batch = await createOpenAIBatch({
+    const batch = await startOpenAIBatchTrace({
       inputFile: { id: "file_mismatched_response" },
       input: [chatInput[0]],
       params: {
@@ -214,11 +217,11 @@ describe("OpenAI Batch instrumentation", () => {
       },
     };
 
-    const first = await createTestBatch(args);
+    const first = await startTestBatchTrace(args);
     const firstRows = (await backgroundLogger.drain()) as Array<
       Record<string, any>
     >;
-    const second = await createTestBatch(args);
+    const second = await startTestBatchTrace(args);
     const secondRows = (await backgroundLogger.drain()) as Array<
       Record<string, any>
     >;
@@ -233,7 +236,7 @@ describe("OpenAI Batch instrumentation", () => {
   });
 
   it("signs and verifies batch context with WebCrypto", async () => {
-    const params = await createTestBatch({
+    const params = await startTestBatchTrace({
       inputFile: { id: "file_webcrypto" },
       input: [chatInput[0]],
       params: {
@@ -244,7 +247,7 @@ describe("OpenAI Batch instrumentation", () => {
     expect(params.metadata).toHaveProperty(BRAINTRUST_OPENAI_BATCH_CONTEXT_KEY);
     await backgroundLogger.drain();
 
-    await completeOpenAIBatch({
+    await completeOpenAIBatchTrace({
       batch: {
         id: "batch_webcrypto",
         endpoint: params.endpoint,
@@ -273,7 +276,7 @@ describe("OpenAI Batch instrumentation", () => {
       propagatedEvent: { metadata: { secret: "do-not-send" } },
     });
     const batch = await withCurrent(parent, () =>
-      createTestBatch({
+      startTestBatchTrace({
         inputFile: { id: "file_minimal_parent" },
         input: [chatInput[0]],
         params: {
@@ -302,7 +305,7 @@ describe("OpenAI Batch instrumentation", () => {
     };
 
     await expect(
-      completeOpenAIBatch({
+      completeOpenAIBatchTrace({
         batch,
         input: chatInput,
         outputFile: Promise.reject(new Error("output unavailable")),
@@ -314,7 +317,7 @@ describe("OpenAI Batch instrumentation", () => {
   });
 
   it("completes successful and failed spans from resumable files", async () => {
-    const params = await createTestBatch({
+    const params = await startTestBatchTrace({
       inputFile: { id: "file_input" },
       input: chatInput,
       params: {
@@ -381,7 +384,7 @@ describe("OpenAI Batch instrumentation", () => {
     batch.completed_at = completedAt;
 
     await expect(
-      completeOpenAIBatch({
+      completeOpenAIBatchTrace({
         batch,
         input: chatInput,
         outputFile: Promise.resolve(outputResponse),
@@ -420,7 +423,7 @@ describe("OpenAI Batch instrumentation", () => {
       "failed",
     );
 
-    await completeOpenAIBatch({
+    await completeOpenAIBatchTrace({
       batch,
       input: chatInput,
       outputFile: Promise.resolve(chunkedJSONLResponse(outputRecords)),
@@ -433,7 +436,7 @@ describe("OpenAI Batch instrumentation", () => {
   });
 
   it("leaves a completed batch pending until all results are available", async () => {
-    const batch = await createTestBatch({
+    const batch = await startTestBatchTrace({
       inputFile: { id: "file_incomplete" },
       input: chatInput,
       params: {
@@ -443,7 +446,7 @@ describe("OpenAI Batch instrumentation", () => {
     });
     await backgroundLogger.drain();
 
-    await completeOpenAIBatch({
+    await completeOpenAIBatchTrace({
       batch: {
         ...batch,
         status: "completed",
@@ -471,7 +474,7 @@ describe("OpenAI Batch instrumentation", () => {
   });
 
   it("rejects completion input that does not match the signed batch input", async () => {
-    const params = await createTestBatch({
+    const params = await startTestBatchTrace({
       inputFile: { id: "file_mismatched" },
       input: chatInput,
       params: {
@@ -481,7 +484,7 @@ describe("OpenAI Batch instrumentation", () => {
     });
     await backgroundLogger.drain();
 
-    await completeOpenAIBatch({
+    await completeOpenAIBatchTrace({
       batch: {
         id: "batch_mismatched",
         endpoint: params.endpoint,
@@ -514,7 +517,7 @@ describe("OpenAI Batch instrumentation", () => {
   });
 
   it("falls back from invalid provider terminal timestamps", async () => {
-    const params = await createTestBatch({
+    const params = await startTestBatchTrace({
       inputFile: { id: "file_invalid_timestamp" },
       input: [chatInput[0]],
       params: {
@@ -525,7 +528,7 @@ describe("OpenAI Batch instrumentation", () => {
     await backgroundLogger.drain();
     const beforeCompletion = Date.now() / 1000;
 
-    await completeOpenAIBatch({
+    await completeOpenAIBatchTrace({
       batch: {
         id: "batch_invalid_timestamp",
         endpoint: params.endpoint,
@@ -568,7 +571,7 @@ describe("OpenAI Batch instrumentation", () => {
         body: { model: "gpt-test", input: "hello" },
       };
     }
-    const params = await createTestBatch({
+    const params = await startTestBatchTrace({
       inputFile: { id: "file_responses" },
       input: input(),
       params: { endpoint: "/v1/responses", completion_window: "24h" },
@@ -600,7 +603,7 @@ describe("OpenAI Batch instrumentation", () => {
     const completedAt = Date.now() / 1000 + 60;
     batch.completed_at = completedAt;
 
-    await completeOpenAIBatch({
+    await completeOpenAIBatchTrace({
       batch,
       input: input(),
       outputFile,
@@ -629,7 +632,7 @@ describe("OpenAI Batch instrumentation", () => {
     });
     expect(responseSpan?.metrics).not.toHaveProperty("time_to_first_token");
 
-    await completeOpenAIBatch({
+    await completeOpenAIBatchTrace({
       batch,
       input: input(),
       outputFile,
@@ -639,7 +642,7 @@ describe("OpenAI Batch instrumentation", () => {
   });
 
   it("ends a result span when output processing throws", async () => {
-    const params = await createTestBatch({
+    const params = await startTestBatchTrace({
       inputFile: { id: "file_invalid_output" },
       input: [
         {
@@ -662,7 +665,7 @@ describe("OpenAI Batch instrumentation", () => {
       },
     });
     const completedAt = Date.now() / 1000 + 60;
-    await completeOpenAIBatch({
+    await completeOpenAIBatchTrace({
       batch: {
         id: "batch_invalid_output",
         endpoint: params.endpoint,
@@ -704,7 +707,7 @@ describe("OpenAI Batch instrumentation", () => {
       inputReads++;
       yield* chatInput;
     }
-    const params = await createTestBatch({
+    const params = await startTestBatchTrace({
       inputFile: { id: "file_input" },
       input: input(),
       params: {

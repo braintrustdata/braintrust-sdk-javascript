@@ -800,7 +800,7 @@ span_tree:
     │             {
     │               "annotations": [],
     │               "logprobs": [],
-    │               "text": "PARIS.",
+    │               "text": "PARIS",
     │               "type": "output_text"
     │             }
     │           ],
@@ -828,7 +828,7 @@ span_tree:
     │         "model": "gpt-4o-mini-2024-07-18",
     │         "moderation": null,
     │         "object": "response",
-    │         "output_text": "PARIS.",
+    │         "output_text": "PARIS",
     │         "parallel_tool_calls": true,
     │         "presence_penalty": 0,
     │         "previous_response_id": null,
@@ -877,12 +877,12 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_reasoning_tokens": 0,
-    │         "completion_tokens": 4,
+    │         "completion_tokens": 3,
     │         "prompt_cache_write_tokens": 0,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 13,
     │         "time_to_first_token": 0,
-    │         "tokens": 17
+    │         "tokens": 16
     │       }
     ├── openai-responses-with-response-operation
     │   metadata: {
@@ -1299,7 +1299,7 @@ span_tree:
                   {
                     "annotations": [],
                     "logprobs": [],
-                    "text": "{\"reasoning\":\"Adding 20 and 4 gives 24.\",\"value\":24}",
+                    "text": "{\"reasoning\":\"Adding 20 and 4 gives a total of 24.\",\"value\":24}",
                     "type": "output_text"
                   }
                 ],
@@ -1327,7 +1327,7 @@ span_tree:
               "model": "gpt-4o-mini-2024-07-18",
               "moderation": null,
               "object": "response",
-              "output_text": "{\"reasoning\":\"Adding 20 and 4 gives 24.\",\"value\":24}",
+              "output_text": "{\"reasoning\":\"Adding 20 and 4 gives a total of 24.\",\"value\":24}",
               "parallel_tool_calls": true,
               "presence_penalty": 0,
               "previous_response_id": null,
@@ -1395,10 +1395,10 @@ span_tree:
             }
             metrics: {
               "completion_reasoning_tokens": 0,
-              "completion_tokens": 19,
+              "completion_tokens": 22,
               "prompt_cache_write_tokens": 0,
               "prompt_cached_tokens": 0,
               "prompt_tokens": 46,
               "time_to_first_token": 0,
-              "tokens": 65
+              "tokens": 68
             }

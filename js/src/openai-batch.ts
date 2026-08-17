@@ -1,19 +1,19 @@
 import { openAIChannels } from "./instrumentation/plugins/openai-channels";
 import type {
-  CompleteOpenAIBatchArgs,
-  CreateOpenAIBatchArgs,
+  CompleteOpenAIBatchTraceArgs,
   OpenAIBatchLike,
+  StartOpenAIBatchTraceArgs,
 } from "./openai-batch-types";
 
 /**
- * Create an OpenAI Batch and start pending Braintrust spans for its requests.
+ * Start a trace for a new OpenAI Batch, with pending spans for its requests.
  *
  * Supported endpoints are `/v1/chat/completions` and `/v1/responses`.
  */
-export async function createOpenAIBatch<TBatch extends OpenAIBatchLike>(
-  args: CreateOpenAIBatchArgs<TBatch>,
+export async function startOpenAIBatchTrace<TBatch extends OpenAIBatchLike>(
+  args: StartOpenAIBatchTraceArgs<TBatch>,
 ): Promise<TBatch> {
-  const batch = await openAIChannels.batchesCreate.invoke(
+  const batch = await openAIChannels.batchesStartTrace.invoke(
     async (input) =>
       await input.client.batches.create({
         ...input.params,
@@ -28,14 +28,14 @@ export async function createOpenAIBatch<TBatch extends OpenAIBatchLike>(
 }
 
 /**
- * Complete pending OpenAI Batch spans from caller-supplied Batch API data.
+ * Complete an OpenAI Batch trace from caller-supplied Batch API data.
  *
  * This helper performs no OpenAI API requests. Pass the Responses or promises
  * returned by `client.files.content()` for the input and result files, JSONL
  * strings, or iterables of parsed records.
  */
-export async function completeOpenAIBatch<TBatch extends OpenAIBatchLike>(
-  args: CompleteOpenAIBatchArgs<TBatch>,
+export async function completeOpenAIBatchTrace<TBatch extends OpenAIBatchLike>(
+  args: CompleteOpenAIBatchTraceArgs<TBatch>,
 ): Promise<TBatch> {
   const input = Promise.resolve(args.input);
   const outputFile =
@@ -52,7 +52,7 @@ export async function completeOpenAIBatch<TBatch extends OpenAIBatchLike>(
   void outputFile?.catch(() => undefined);
   void errorFile?.catch(() => undefined);
 
-  const batch = await openAIChannels.batchesComplete.invoke(
+  const batch = await openAIChannels.batchesCompleteTrace.invoke(
     async (input) => input.batch,
     undefined,
     [{ ...args, input, outputFile, errorFile }],

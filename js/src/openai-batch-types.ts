@@ -66,14 +66,14 @@ export interface OpenAIBatchWebhookEvent {
   [key: string]: unknown;
 }
 
-export interface CreateOpenAIBatchArgs<TBatch extends OpenAIBatchLike> {
+export interface StartOpenAIBatchTraceArgs<TBatch extends OpenAIBatchLike> {
   client: OpenAIBatchClientLike<TBatch>;
   inputFile: OpenAIFileLike;
   input: OpenAIBatchJSONL;
   params: OpenAIBatchCreateInputParams;
 }
 
-export interface CompleteOpenAIBatchArgs<TBatch extends OpenAIBatchLike> {
+export interface CompleteOpenAIBatchTraceArgs<TBatch extends OpenAIBatchLike> {
   batch: TBatch;
   input: OpenAIBatchResultFile;
   outputFile?: OpenAIBatchResultFile;

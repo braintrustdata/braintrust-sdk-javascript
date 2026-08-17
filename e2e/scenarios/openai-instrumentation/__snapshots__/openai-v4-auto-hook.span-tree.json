@@ -899,7 +899,7 @@
                     {
                       "annotations": [],
                       "logprobs": [],
-                      "text": "PARIS",
+                      "text": "PARIS.",
                       "type": "output_text"
                     }
                   ],
@@ -927,7 +927,7 @@
                 "model": "gpt-4o-mini-2024-07-18",
                 "moderation": null,
                 "object": "response",
-                "output_text": "PARIS",
+                "output_text": "PARIS.",
                 "parallel_tool_calls": true,
                 "presence_penalty": 0,
                 "previous_response_id": null,
@@ -976,12 +976,12 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 3,
+                "completion_tokens": 4,
                 "prompt_cache_write_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 13,
                 "time_to_first_token": 0,
-                "tokens": 16
+                "tokens": 17
               }
             }
           ],
@@ -1438,7 +1438,7 @@
                     {
                       "annotations": [],
                       "logprobs": [],
-                      "text": "{\"reasoning\":\"Adding 20 and 4 gives 24, since you combine the two numbers together.\",\"value\":24}",
+                      "text": "{\"reasoning\":\"Twenty plus four equals twenty-four.\",\"value\":24}",
                       "type": "output_text"
                     }
                   ],
@@ -1466,7 +1466,7 @@
                 "model": "gpt-4o-mini-2024-07-18",
                 "moderation": null,
                 "object": "response",
-                "output_text": "{\"reasoning\":\"Adding 20 and 4 gives 24, since you combine the two numbers together.\",\"value\":24}",
+                "output_text": "{\"reasoning\":\"Twenty plus four equals twenty-four.\",\"value\":24}",
                 "parallel_tool_calls": true,
                 "presence_penalty": 0,
                 "previous_response_id": null,
@@ -1534,12 +1534,12 @@
               },
               "metrics": {
                 "completion_reasoning_tokens": 0,
-                "completion_tokens": 27,
+                "completion_tokens": 16,
                 "prompt_cache_write_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 46,
                 "time_to_first_token": 0,
-                "tokens": 73
+                "tokens": 62
               }
             }
           ],

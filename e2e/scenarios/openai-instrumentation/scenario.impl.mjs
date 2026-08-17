@@ -7,7 +7,7 @@ import {
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
-import { completeOpenAIBatch, createOpenAIBatch } from "braintrust";
+import { completeOpenAIBatchTrace, startOpenAIBatchTrace } from "braintrust";
 
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
 const EMBEDDING_MODEL = "text-embedding-3-small";
@@ -650,7 +650,7 @@ export async function runOpenAIInstrumentationScenario(options) {
             }),
           )
           .join("\n");
-        const created = await createOpenAIBatch({
+        const created = await startOpenAIBatchTrace({
           client: batchFixtureClient,
           inputFile: { id: "file_batch_e2e_fixture" },
           input,
@@ -712,7 +712,7 @@ export async function runOpenAIInstrumentationScenario(options) {
             }),
           ),
         );
-        await completeOpenAIBatch({
+        await completeOpenAIBatchTrace({
           batch: completed,
           input,
           // Batch results are not guaranteed to preserve input order.
