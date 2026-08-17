@@ -111,6 +111,54 @@ describe("parseMetricsFromUsage", () => {
     });
   });
 
+  it("should surface the per-TTL cache creation breakdown", () => {
+    const usage = {
+      input_tokens: 100,
+      output_tokens: 50,
+      cache_read_input_tokens: 25,
+      cache_creation_input_tokens: 30,
+      cache_creation: {
+        ephemeral_1h_input_tokens: 10,
+        ephemeral_5m_input_tokens: 20,
+      },
+    };
+
+    const result = parseMetricsFromUsageForTest(usage);
+
+    // The aggregate is still parsed here; `finalizeAnthropicTokens` removes it
+    // only when the per-TTL representation accounts for the full total.
+    expect(result).toEqual({
+      prompt_tokens: 100,
+      completion_tokens: 50,
+      prompt_cached_tokens: 25,
+      prompt_cache_creation_tokens: 30,
+      prompt_cache_creation_1h_tokens: 10,
+      prompt_cache_creation_5m_tokens: 20,
+    });
+  });
+
+  it("should ignore a null or partial cache creation breakdown", () => {
+    expect(
+      parseMetricsFromUsageForTest({
+        input_tokens: 100,
+        output_tokens: 50,
+        cache_creation: null,
+      }),
+    ).toEqual({ prompt_tokens: 100, completion_tokens: 50 });
+
+    expect(
+      parseMetricsFromUsageForTest({
+        input_tokens: 100,
+        output_tokens: 50,
+        cache_creation: { ephemeral_5m_input_tokens: 20 },
+      }),
+    ).toEqual({
+      prompt_tokens: 100,
+      completion_tokens: 50,
+      prompt_cache_creation_5m_tokens: 20,
+    });
+  });
+
   it("should ignore non-number token values", () => {
     const usage = {
       input_tokens: "not a number",

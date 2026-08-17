@@ -39,7 +39,7 @@ export function extractMetricsFromUsage(usage: GitHubCopilotUsageData): {
   metrics: AnthropicTokenMetrics;
   metadata: Record<string, unknown>;
 } {
-  const metrics: AnthropicTokenMetrics = {
+  const rawMetrics: AnthropicTokenMetrics = {
     prompt_tokens: usage.inputTokens,
     completion_tokens: usage.outputTokens,
     ...extractAnthropicCacheTokens(
@@ -49,11 +49,13 @@ export function extractMetricsFromUsage(usage: GitHubCopilotUsageData): {
   };
 
   if (usage.reasoningTokens !== undefined) {
-    metrics.completion_reasoning_tokens = usage.reasoningTokens;
-    metrics.reasoning_tokens = usage.reasoningTokens;
+    rawMetrics.completion_reasoning_tokens = usage.reasoningTokens;
+    rawMetrics.reasoning_tokens = usage.reasoningTokens;
   }
 
-  Object.assign(metrics, finalizeAnthropicTokens(metrics));
+  // Use the returned object: finalization can drop cache-creation metrics, and
+  // merging it back over `rawMetrics` would keep them.
+  const metrics = finalizeAnthropicTokens(rawMetrics);
 
   const metadata: Record<string, unknown> = {
     model: usage.model,

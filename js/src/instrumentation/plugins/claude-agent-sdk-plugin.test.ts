@@ -1,10 +1,33 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock iso's newTracingChannel - must be before any imports that use it
+const streamPatcherMock = vi.hoisted(() => ({
+  options: undefined as
+    | {
+        onChunk?: (chunk: unknown) => void | Promise<void>;
+        onComplete: () => void | Promise<void>;
+      }
+    | undefined,
+}));
+
 vi.mock("../../isomorph", () => ({
   default: {
     newTracingChannel: vi.fn(),
   },
+}));
+
+vi.mock("../core/stream-patcher", () => ({
+  isAsyncIterable: vi.fn(
+    (val: unknown) =>
+      val !== null &&
+      typeof val === "object" &&
+      Symbol.asyncIterator in val &&
+      typeof (val as any)[Symbol.asyncIterator] === "function",
+  ),
+  patchStreamIfNeeded: vi.fn((stream, options) => {
+    streamPatcherMock.options = options;
+    return stream;
+  }),
 }));
 
 import { ClaudeAgentSDKPlugin } from "./claude-agent-sdk-plugin";
@@ -45,16 +68,9 @@ vi.mock("../../wrappers/attachment-utils", () => ({
   processInputAttachments: vi.fn((input) => input),
 }));
 
-vi.mock("../../wrappers/anthropic-tokens-util", () => ({
-  extractAnthropicCacheTokens: vi.fn((read, creation) => ({
-    prompt_cache_read_tokens: read,
-    prompt_cache_creation_tokens: creation,
-  })),
-  finalizeAnthropicTokens: vi.fn((metrics) => ({
-    ...metrics,
-    tokens: (metrics.prompt_tokens || 0) + (metrics.completion_tokens || 0),
-  })),
-}));
+// `anthropic-tokens-util` is pure and owns the cache-creation representation
+// rules, so these tests run the real implementation rather than a stand-in that
+// could drift from it.
 
 vi.mock("../core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../core")>();
@@ -109,6 +125,7 @@ describe("ClaudeAgentSDKPlugin", () => {
   let mockUnsubscribe: any;
 
   beforeEach(() => {
+    streamPatcherMock.options = undefined;
     mockUnsubscribe = vi.fn();
     mockChannel = {
       subscribe: vi.fn(),
@@ -337,6 +354,358 @@ describe("ClaudeAgentSDKPlugin", () => {
 
         // Should not throw
         expect(true).toBe(true);
+      });
+
+      it("keeps transcript hooks untouched and logs usage only on the task span when partial messages are disabled", async () => {
+        const userSessionStart = vi.fn(async (..._args: unknown[]) => ({}));
+        const userSessionStartMatcher = { hooks: [userSessionStart] };
+        const startEvent = {
+          arguments: [
+            {
+              prompt: "Test",
+              options: {
+                hooks: { SessionStart: [userSessionStartMatcher] },
+                includePartialMessages: false,
+                model: "claude-3-5-sonnet-20241022",
+              },
+            },
+          ],
+        };
+        handlers.start(startEvent);
+
+        const options = startEvent.arguments[0].options as any;
+        expect(options.includePartialMessages).toBe(false);
+        expect(options.hooks.SessionStart[0]).toBe(userSessionStartMatcher);
+        expect(options.hooks.SessionStart).toHaveLength(1);
+        expect(options.hooks.SessionEnd).toBeUndefined();
+        expect(options.hooks.UserPromptSubmit).toBeUndefined();
+
+        const stream = {
+          async *[Symbol.asyncIterator]() {
+            // The patcher is mocked; messages are delivered below.
+          },
+        };
+        handlers.end(Object.assign(startEvent, { result: stream }));
+
+        const assistantMessage = {
+          type: "assistant",
+          message: {
+            content: [{ text: "Response", type: "text" }],
+            id: "msg_1",
+            model: "claude-3-5-sonnet-20241022",
+            role: "assistant",
+            usage: {
+              cache_creation_input_tokens: 3,
+              cache_read_input_tokens: 20,
+              input_tokens: 10,
+              output_tokens: 1,
+            },
+          },
+          parent_tool_use_id: null,
+        };
+        const originalAssistantMessage = JSON.stringify(assistantMessage);
+        await streamPatcherMock.options?.onChunk?.(assistantMessage);
+        await streamPatcherMock.options?.onChunk?.({
+          num_turns: 1,
+          session_id: "session_1",
+          type: "result",
+          usage: {
+            cache_creation: {
+              ephemeral_5m_input_tokens: 3,
+            },
+            cache_creation_input_tokens: 4,
+            cache_read_input_tokens: 30,
+            input_tokens: 20,
+            output_tokens: 40,
+          },
+        });
+        await streamPatcherMock.options?.onComplete();
+
+        expect(JSON.stringify(assistantMessage)).toBe(originalAssistantMessage);
+
+        const llmSpanCallIndex = vi
+          .mocked(startSpan)
+          .mock.calls.findIndex(
+            ([args]) =>
+              args &&
+              typeof args === "object" &&
+              "name" in args &&
+              args.name === "anthropic.messages.create",
+          );
+        expect(llmSpanCallIndex).toBeGreaterThan(-1);
+        const llmSpan =
+          vi.mocked(startSpan).mock.results[llmSpanCallIndex]?.value;
+        expect(
+          vi
+            .mocked(llmSpan!.log)
+            .mock.calls.some((call: any[]) => call[0].metrics !== undefined),
+        ).toBe(false);
+        const taskSpan = vi.mocked(startSpan).mock.results[0]?.value;
+        expect(taskSpan?.log).toHaveBeenCalledWith({
+          metadata: { num_turns: 1, session_id: "session_1" },
+          metrics: {
+            completion_tokens: 40,
+            prompt_cache_creation_5m_tokens: 3,
+            prompt_cache_creation_tokens: 4,
+            prompt_cached_tokens: 30,
+            prompt_tokens: 54,
+            tokens: 94,
+          },
+        });
+      });
+
+      it("omits invalid partial completion usage", async () => {
+        const startEvent = {
+          arguments: [
+            {
+              prompt: "Test",
+              options: {
+                includePartialMessages: true,
+                model: "claude-3-5-sonnet-20241022",
+              },
+            },
+          ],
+        };
+        handlers.start(startEvent);
+        expect(startEvent.arguments[0].options.includePartialMessages).toBe(
+          true,
+        );
+
+        const stream = {
+          async *[Symbol.asyncIterator]() {
+            // The patcher is mocked; messages are delivered below.
+          },
+        };
+        handlers.end(Object.assign(startEvent, { result: stream }));
+        await streamPatcherMock.options?.onChunk?.({
+          type: "stream_event",
+          event: {
+            type: "message_start",
+            message: {
+              id: "msg_missing",
+              usage: {
+                cache_creation_input_tokens: 3,
+                cache_read_input_tokens: 20,
+                input_tokens: 10,
+                output_tokens: 1,
+              },
+            },
+          },
+          parent_tool_use_id: null,
+        });
+        await streamPatcherMock.options?.onChunk?.({
+          type: "stream_event",
+          event: {
+            type: "message_delta",
+            usage: { output_tokens: -1 },
+          },
+          parent_tool_use_id: null,
+        });
+        await streamPatcherMock.options?.onChunk?.({
+          type: "assistant",
+          message: {
+            content: [{ text: "Response", type: "text" }],
+            id: "msg_missing",
+            role: "assistant",
+            usage: {
+              cache_creation_input_tokens: 3,
+              cache_read_input_tokens: 20,
+              input_tokens: 10,
+              output_tokens: 1,
+            },
+          },
+          parent_tool_use_id: null,
+        });
+        await streamPatcherMock.options?.onChunk?.({ type: "result" });
+        await expect(
+          streamPatcherMock.options?.onComplete(),
+        ).resolves.toBeUndefined();
+
+        const llmSpanCallIndex = vi
+          .mocked(startSpan)
+          .mock.calls.findIndex(
+            ([args]) =>
+              args &&
+              typeof args === "object" &&
+              "name" in args &&
+              args.name === "anthropic.messages.create",
+          );
+        const llmSpan =
+          vi.mocked(startSpan).mock.results[llmSpanCallIndex]?.value;
+        const metricLogs = vi
+          .mocked(llmSpan!.log)
+          .mock.calls.map((call: any[]) => call[0].metrics)
+          .filter(Boolean);
+        expect(metricLogs).toEqual([
+          {
+            prompt_cache_creation_tokens: 3,
+            prompt_cached_tokens: 20,
+            prompt_tokens: 33,
+          },
+        ]);
+      });
+
+      it("keeps the LLM span without usage when partial messages are disabled", async () => {
+        const startEvent = {
+          arguments: [
+            {
+              prompt: "Test",
+              options: { model: "claude-3-5-sonnet-20241022" },
+            },
+          ],
+        };
+        handlers.start(startEvent);
+
+        const stream = {
+          async *[Symbol.asyncIterator]() {
+            // The patcher is mocked; messages are delivered below.
+          },
+        };
+        handlers.end(Object.assign(startEvent, { result: stream }));
+        await streamPatcherMock.options?.onChunk?.({
+          type: "assistant",
+          message: {
+            content: [{ text: "Response", type: "text" }],
+            id: "msg_null_cache",
+            model: "claude-3-5-sonnet-20241022",
+            role: "assistant",
+            // Bedrock, Vertex, and gateway-backed runs report `null` for the
+            // cache fields they do not populate.
+            usage: {
+              cache_creation: null,
+              cache_creation_input_tokens: null,
+              cache_read_input_tokens: null,
+              input_tokens: 10,
+              output_tokens: 40,
+            },
+          },
+          parent_tool_use_id: null,
+        });
+        await streamPatcherMock.options?.onChunk?.({ type: "result" });
+        await streamPatcherMock.options?.onComplete();
+
+        const llmSpanCallIndex = vi
+          .mocked(startSpan)
+          .mock.calls.findIndex(
+            ([args]) =>
+              args &&
+              typeof args === "object" &&
+              "name" in args &&
+              args.name === "anthropic.messages.create",
+          );
+        expect(llmSpanCallIndex).toBeGreaterThan(-1);
+        const llmSpan =
+          vi.mocked(startSpan).mock.results[llmSpanCallIndex]?.value;
+        expect(llmSpan?.log).toHaveBeenCalledWith(
+          expect.objectContaining({
+            metadata: {
+              model: "claude-3-5-sonnet-20241022",
+              provider: "anthropic",
+            },
+            output: [
+              {
+                content: [{ text: "Response", type: "text" }],
+                role: "assistant",
+              },
+            ],
+          }),
+        );
+        expect(
+          vi
+            .mocked(llmSpan!.log)
+            .mock.calls.some((call: any[]) => call[0].metrics !== undefined),
+        ).toBe(false);
+      });
+
+      it("layers partial stream usage over the assistant message usage", async () => {
+        const startEvent = {
+          arguments: [
+            {
+              prompt: "Test",
+              options: {
+                includePartialMessages: true,
+                model: "claude-3-5-sonnet-20241022",
+              },
+            },
+          ],
+        };
+        handlers.start(startEvent);
+
+        const stream = {
+          async *[Symbol.asyncIterator]() {
+            // The patcher is mocked; messages are delivered below.
+          },
+        };
+        handlers.end(Object.assign(startEvent, { result: stream }));
+        await streamPatcherMock.options?.onChunk?.({
+          type: "stream_event",
+          event: {
+            type: "message_start",
+            // No usable counts here, so the prompt-side totals must come from
+            // the assistant message rather than defaulting to zero.
+            message: { id: "msg_partial", usage: { input_tokens: null } },
+          },
+          parent_tool_use_id: null,
+        });
+        await streamPatcherMock.options?.onChunk?.({
+          type: "stream_event",
+          event: { type: "message_delta", usage: { output_tokens: 40 } },
+          parent_tool_use_id: null,
+        });
+        await streamPatcherMock.options?.onChunk?.({
+          type: "assistant",
+          message: {
+            content: [{ text: "Response", type: "text" }],
+            id: "msg_partial",
+            role: "assistant",
+            usage: {
+              cache_creation_input_tokens: 3,
+              cache_read_input_tokens: 20,
+              input_tokens: 10,
+              output_tokens: 40,
+            },
+          },
+          parent_tool_use_id: null,
+        });
+        await streamPatcherMock.options?.onChunk?.({
+          type: "result",
+          usage: {
+            cache_creation_input_tokens: 3,
+            cache_read_input_tokens: 20,
+            input_tokens: 10,
+            output_tokens: 40,
+          },
+        });
+        await streamPatcherMock.options?.onComplete();
+
+        const llmSpanCallIndex = vi
+          .mocked(startSpan)
+          .mock.calls.findIndex(
+            ([args]) =>
+              args &&
+              typeof args === "object" &&
+              "name" in args &&
+              args.name === "anthropic.messages.create",
+          );
+        const llmSpan =
+          vi.mocked(startSpan).mock.results[llmSpanCallIndex]?.value;
+        expect(llmSpan?.log).toHaveBeenCalledWith(
+          expect.objectContaining({
+            metrics: {
+              completion_tokens: 40,
+              prompt_cache_creation_tokens: 3,
+              prompt_cached_tokens: 20,
+              prompt_tokens: 33,
+              tokens: 73,
+            },
+          }),
+        );
+        const taskSpan = vi.mocked(startSpan).mock.results[0]?.value;
+        expect(
+          vi
+            .mocked(taskSpan!.log)
+            .mock.calls.some((call: any[]) => call[0].metrics !== undefined),
+        ).toBe(false);
       });
     });
 

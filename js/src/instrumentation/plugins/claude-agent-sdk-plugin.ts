@@ -13,6 +13,8 @@ import { getCurrentUnixTimestamp } from "../../util";
 import {
   extractAnthropicCacheTokens,
   finalizeAnthropicTokens,
+  toNumericMetrics,
+  type AnthropicTokenMetrics,
 } from "../../wrappers/anthropic-tokens-util";
 import { claudeAgentSDKChannels } from "./claude-agent-sdk-channels";
 import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "./claude-agent-sdk-instrumentation-constants";
@@ -33,6 +35,7 @@ import type {
   ClaudeAgentSDKMessage,
   ClaudeAgentSDKQueryOptions,
   ClaudeAgentSDKQueryParams,
+  ClaudeAgentSDKUsage,
 } from "../../vendor-sdk-types/claude-agent-sdk";
 
 type ClaudeConversationMessage = { content: unknown; role: string };
@@ -211,20 +214,89 @@ function seedTaskToolUseIdMapping(
   }
 }
 
-function extractUsageFromMessage(
-  message: ClaudeAgentSDKMessage,
-): Record<string, number> {
-  const metrics: Record<string, number> = {};
+function tokenCount(value: unknown): number | undefined {
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    Number.isInteger(value) &&
+    value >= 0
+    ? value
+    : undefined;
+}
 
-  let usage: unknown;
-  if (message.type === "assistant") {
-    usage = message.message?.usage;
-  } else if (message.type === "result") {
-    usage = message.usage;
+/**
+ * Snapshots the token fields we understand out of a provider usage object.
+ *
+ * Fields degrade individually: Bedrock, Vertex, and gateway-backed runs report
+ * `null` for cache fields they do not populate, and one unusable field must
+ * only cost that metric rather than the whole usage object.
+ */
+function copyUsage(usage: unknown): ClaudeAgentSDKUsage | undefined {
+  if (!usage || typeof usage !== "object") {
+    return undefined;
   }
 
-  if (!usage || typeof usage !== "object") {
-    return metrics;
+  const copy: ClaudeAgentSDKUsage = {};
+  for (const key of [
+    "input_tokens",
+    "output_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+  ] as const) {
+    const value = tokenCount(Reflect.get(usage, key));
+    if (value !== undefined) {
+      copy[key] = value;
+    }
+  }
+
+  const cacheCreation = Reflect.get(usage, "cache_creation");
+  if (cacheCreation && typeof cacheCreation === "object") {
+    const cacheCreationCopy: NonNullable<
+      ClaudeAgentSDKUsage["cache_creation"]
+    > = {};
+    for (const key of [
+      "ephemeral_5m_input_tokens",
+      "ephemeral_1h_input_tokens",
+    ] as const) {
+      const value = tokenCount(Reflect.get(cacheCreation, key));
+      if (value !== undefined) {
+        cacheCreationCopy[key] = value;
+      }
+    }
+    if (Object.keys(cacheCreationCopy).length > 0) {
+      copy.cache_creation = cacheCreationCopy;
+    }
+  }
+
+  return Object.keys(copy).length > 0 ? copy : undefined;
+}
+
+/** Layers a newer usage snapshot over an older one, field by field. */
+function mergeUsage(
+  base: ClaudeAgentSDKUsage | undefined,
+  override: ClaudeAgentSDKUsage | undefined,
+): ClaudeAgentSDKUsage | undefined {
+  if (!base || !override) {
+    return override ?? base;
+  }
+
+  const cacheCreation =
+    base.cache_creation || override.cache_creation
+      ? { ...base.cache_creation, ...override.cache_creation }
+      : undefined;
+  return {
+    ...base,
+    ...override,
+    ...(cacheCreation && { cache_creation: cacheCreation }),
+  };
+}
+
+function extractUsage(
+  usage: ClaudeAgentSDKUsage | undefined,
+  includeOutput: boolean,
+): Record<string, number> {
+  const metrics: AnthropicTokenMetrics = {};
+  if (!usage) {
+    return {};
   }
 
   const inputTokens = getNumberProperty(usage, "input_tokens");
@@ -232,28 +304,47 @@ function extractUsageFromMessage(
     metrics.prompt_tokens = inputTokens;
   }
 
-  const outputTokens = getNumberProperty(usage, "output_tokens");
-  if (outputTokens !== undefined) {
-    metrics.completion_tokens = outputTokens;
+  if (includeOutput) {
+    const outputTokens = getNumberProperty(usage, "output_tokens");
+    if (outputTokens !== undefined) {
+      metrics.completion_tokens = outputTokens;
+    }
   }
 
   const cacheReadTokens =
     getNumberProperty(usage, "cache_read_input_tokens") || 0;
   const cacheCreationTokens =
     getNumberProperty(usage, "cache_creation_input_tokens") || 0;
+  Object.assign(
+    metrics,
+    extractAnthropicCacheTokens(cacheReadTokens, cacheCreationTokens),
+  );
 
-  if (cacheReadTokens > 0 || cacheCreationTokens > 0) {
-    Object.assign(
-      metrics,
-      extractAnthropicCacheTokens(cacheReadTokens, cacheCreationTokens),
-    );
+  const cacheCreation5mTokens = getNumberProperty(
+    usage.cache_creation,
+    "ephemeral_5m_input_tokens",
+  );
+  const cacheCreation1hTokens = getNumberProperty(
+    usage.cache_creation,
+    "ephemeral_1h_input_tokens",
+  );
+  if (cacheCreation5mTokens !== undefined) {
+    metrics.prompt_cache_creation_5m_tokens = cacheCreation5mTokens;
+  }
+  if (cacheCreation1hTokens !== undefined) {
+    metrics.prompt_cache_creation_1h_tokens = cacheCreation1hTokens;
   }
 
-  if (Object.keys(metrics).length > 0) {
-    Object.assign(metrics, finalizeAnthropicTokens(metrics));
+  if (Object.keys(metrics).length === 0) {
+    return {};
   }
 
-  return metrics;
+  const finalized = finalizeAnthropicTokens(metrics);
+  if (metrics.completion_tokens === undefined) {
+    // A total is only meaningful once both halves are known.
+    delete finalized.tokens;
+  }
+  return toNumericMetrics(finalized);
 }
 
 function buildLLMInput(
@@ -325,6 +416,8 @@ async function createLLMSpanForMessages(
   options: ClaudeAgentSDKQueryOptions,
   startTime: number,
   parentSpan: string,
+  usage: ClaudeAgentSDKUsage | undefined,
+  hasFinalOutputUsage: boolean,
   existingSpan?: Span,
 ): Promise<LLMSpanResult | undefined> {
   if (messages.length === 0) {
@@ -332,12 +425,17 @@ async function createLLMSpanForMessages(
   }
 
   const lastMessage = messages[messages.length - 1];
-  if (lastMessage.type !== "assistant" || !lastMessage.message?.usage) {
+  // Every assistant message is one provider request and must produce one `llm`
+  // span. Per-call metrics are attached only when partial messages are enabled;
+  // otherwise the terminal aggregate belongs exclusively to the task span.
+  if (lastMessage.type !== "assistant") {
     return undefined;
   }
 
-  const model = lastMessage.message.model || options.model;
-  const usage = extractUsageFromMessage(lastMessage);
+  const model = lastMessage.message?.model || options.model;
+  const metrics = options.includePartialMessages
+    ? extractUsage(usage, hasFinalOutputUsage)
+    : {};
   const input = buildLLMInput(promptMessages, conversationHistory);
   const outputs = messages
     .map((m) =>
@@ -368,8 +466,8 @@ async function createLLMSpanForMessages(
 
   span.log({
     input,
-    metadata: model ? { model } : undefined,
-    metrics: usage,
+    metadata: { ...(model && { model }), provider: "anthropic" },
+    ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
     output: outputs,
   });
 
@@ -768,9 +866,6 @@ function createToolTracingHooks(
 
     const metadata = {
       ...subAgentDetailsToMetadata(details),
-      ...(input.agent_transcript_path && {
-        "claude_agent_sdk.agent_transcript_path": input.agent_transcript_path,
-      }),
       "claude_agent_sdk.stop_hook_active": input.stop_hook_active,
     };
 
@@ -864,8 +959,8 @@ function injectTracingHooks(
 }
 
 type QueryState = {
-  accumulatedOutputTokens: number;
   activeLlmSpansByParentToolUse: Map<string, Span>;
+  activePartialMessageIdByParentKey: Map<string, string>;
   activeToolSpans: Map<string, Span>;
   conversationHistoryByParentKey: Map<string, ClaudeConversationMessage[]>;
   capturedPromptMessages: ClaudeAgentSDKMessage[] | undefined;
@@ -873,6 +968,7 @@ type QueryState = {
   currentMessageStartTime: number;
   currentMessages: ClaudeAgentSDKMessage[];
   endedSubAgentSpans: Set<string>;
+  finalOutputUsageMessageIds: Set<string>;
   finalResults: ClaudeConversationMessage[];
   options: ClaudeAgentSDKQueryOptions;
   originalPrompt: string | AsyncIterable<ClaudeAgentSDKMessage> | undefined;
@@ -888,6 +984,7 @@ type QueryState = {
   latestLlmParentBySubAgentToolUse: Map<string, string>;
   latestRootLlmParentRef: { value: string | undefined };
   toolUseToParent: Map<string, string | null>;
+  usageByMessageId: Map<string, ClaudeAgentSDKUsage>;
   localToolContext: ClaudeAgentSDKLocalToolContext;
 };
 
@@ -947,6 +1044,19 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
     }
   }
   const existingLlmSpan = state.activeLlmSpansByParentToolUse.get(parentKey);
+  const lastMessage = state.currentMessages[state.currentMessages.length - 1];
+  const messageId = lastMessage?.message?.id;
+  // When partial messages are enabled, stream events carry the freshest
+  // per-call counts. They can be partial, so layer them over the assistant
+  // message's usage rather than replacing it.
+  const usage = state.options.includePartialMessages
+    ? mergeUsage(
+        copyUsage(lastMessage?.message?.usage),
+        messageId ? state.usageByMessageId.get(messageId) : undefined,
+      )
+    : undefined;
+  const hasFinalOutputUsage =
+    messageId !== undefined && state.finalOutputUsageMessageIds.has(messageId);
 
   const llmSpanResult = await createLLMSpanForMessages(
     state.currentMessages,
@@ -955,6 +1065,8 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
     state.options,
     state.currentMessageStartTime,
     parentSpan,
+    usage,
+    hasFinalOutputUsage,
     existingLlmSpan,
   );
 
@@ -979,10 +1091,17 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
   // fall back to the broader sub-agent task span instead of the LLM span.
   state.activeLlmSpansByParentToolUse.delete(parentKey);
 
-  const lastMessage = state.currentMessages[state.currentMessages.length - 1];
-  if (lastMessage?.message?.usage) {
-    state.accumulatedOutputTokens +=
-      getNumberProperty(lastMessage.message.usage, "output_tokens") || 0;
+  if (messageId) {
+    state.usageByMessageId.delete(messageId);
+    state.finalOutputUsageMessageIds.delete(messageId);
+    for (const [
+      parent,
+      activeMessageId,
+    ] of state.activePartialMessageIdByParentKey) {
+      if (activeMessageId === messageId) {
+        state.activePartialMessageIdByParentKey.delete(parent);
+      }
+    }
   }
 
   state.currentMessages.length = 0;
@@ -1128,6 +1247,13 @@ async function ensureActiveLlmSpanForParentToolUse(
     llmParentSpan = await subAgentSpan.export();
   }
 
+  // Parent resolution above can yield while a stream message and a tool hook
+  // race to materialize the same placeholder span. Recheck before creating it.
+  const racedLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
+  if (racedLlmSpan) {
+    return racedLlmSpan;
+  }
+
   const llmSpan = startBaseSpan(
     withSpanInstrumentationName(
       {
@@ -1271,10 +1397,62 @@ async function maybeHandleTaskLifecycleMessage(
   return true;
 }
 
+function handlePartialUsageMessage(
+  state: QueryState,
+  message: ClaudeAgentSDKMessage,
+): boolean {
+  if (message.type !== "stream_event") {
+    return false;
+  }
+
+  const event = message.event;
+  if (!event || typeof event !== "object") {
+    return true;
+  }
+
+  const parentKey = llmParentKey(message.parent_tool_use_id ?? null);
+  if (event.type === "message_start") {
+    const messageId = event.message?.id;
+    const usage = copyUsage(event.message?.usage);
+    if (messageId) {
+      state.activePartialMessageIdByParentKey.set(parentKey, messageId);
+      if (usage) {
+        state.usageByMessageId.set(messageId, usage);
+      }
+    }
+    return true;
+  }
+
+  const messageId = state.activePartialMessageIdByParentKey.get(parentKey);
+  if (!messageId) {
+    return true;
+  }
+
+  if (event.type === "message_delta") {
+    const update = copyUsage(event.usage);
+    if (update) {
+      const usage = state.usageByMessageId.get(messageId) ?? {};
+      Object.assign(usage, update);
+      state.usageByMessageId.set(messageId, usage);
+      if (update.output_tokens !== undefined) {
+        state.finalOutputUsageMessageIds.add(messageId);
+      }
+    }
+  } else if (event.type === "message_stop") {
+    state.activePartialMessageIdByParentKey.delete(parentKey);
+  }
+
+  return true;
+}
+
 async function handleStreamMessage(
   state: QueryState,
   message: ClaudeAgentSDKMessage,
 ): Promise<void> {
+  if (handlePartialUsageMessage(state, message)) {
+    return;
+  }
+
   maybeTrackToolUseContext(state, message);
   if (await maybeHandleTaskLifecycleMessage(state, message)) {
     return;
@@ -1333,43 +1511,8 @@ async function handleStreamMessage(
     state.currentMessages.push(message);
   }
 
-  if (message.type !== "result" || !message.usage) {
+  if (message.type !== "result") {
     return;
-  }
-
-  const finalUsageMetrics = extractUsageFromMessage(message);
-  if (
-    state.currentMessages.length > 0 &&
-    finalUsageMetrics.completion_tokens !== undefined
-  ) {
-    const lastMessage = state.currentMessages[state.currentMessages.length - 1];
-    if (lastMessage?.message?.usage) {
-      const adjustedTokens =
-        finalUsageMetrics.completion_tokens - state.accumulatedOutputTokens;
-      if (adjustedTokens >= 0) {
-        lastMessage.message.usage.output_tokens = adjustedTokens;
-      }
-
-      const resultUsage = message.usage;
-      if (resultUsage && typeof resultUsage === "object") {
-        const cacheReadTokens = getNumberProperty(
-          resultUsage,
-          "cache_read_input_tokens",
-        );
-        if (cacheReadTokens !== undefined) {
-          lastMessage.message.usage.cache_read_input_tokens = cacheReadTokens;
-        }
-
-        const cacheCreationTokens = getNumberProperty(
-          resultUsage,
-          "cache_creation_input_tokens",
-        );
-        if (cacheCreationTokens !== undefined) {
-          lastMessage.message.usage.cache_creation_input_tokens =
-            cacheCreationTokens;
-        }
-      }
-    }
   }
 
   const metadata: Record<string, unknown> = {};
@@ -1379,8 +1522,14 @@ async function handleStreamMessage(
   if (message.session_id !== undefined) {
     metadata.session_id = message.session_id;
   }
-  if (Object.keys(metadata).length > 0) {
-    state.span.log({ metadata });
+  const metrics = state.options.includePartialMessages
+    ? {}
+    : extractUsage(copyUsage(message.usage), true);
+  if (Object.keys(metadata).length > 0 || Object.keys(metrics).length > 0) {
+    state.span.log({
+      ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+      ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
+    });
   }
 }
 
@@ -1410,6 +1559,9 @@ async function finalizeQuerySpan(state: QueryState): Promise<void> {
       llmSpan.end();
     }
     state.activeLlmSpansByParentToolUse.clear();
+    state.activePartialMessageIdByParentKey.clear();
+    state.finalOutputUsageMessageIds.clear();
+    state.usageByMessageId.clear();
 
     for (const toolSpan of state.activeToolSpans.values()) {
       toolSpan.end();
@@ -1594,8 +1746,8 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         event.arguments[0] = params;
 
         spans.set(event, {
-          accumulatedOutputTokens: 0,
           activeLlmSpansByParentToolUse,
+          activePartialMessageIdByParentKey: new Map(),
           activeToolSpans,
           conversationHistoryByParentKey,
           capturedPromptMessages,
@@ -1603,6 +1755,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           currentMessageStartTime: startTime,
           currentMessages: [],
           endedSubAgentSpans,
+          finalOutputUsageMessageIds: new Set(),
           finalResults: [],
           options: optionsWithHooks,
           originalPrompt,
@@ -1618,6 +1771,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           latestLlmParentBySubAgentToolUse,
           latestRootLlmParentRef,
           toolUseToParent,
+          usageByMessageId: new Map(),
           localToolContext,
         });
       },

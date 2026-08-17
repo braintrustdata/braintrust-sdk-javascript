@@ -5,11 +5,24 @@
  */
 
 // Shared usage shape used in message and result
-interface Usage {
+export interface ClaudeAgentSDKUsage {
   input_tokens?: number;
   output_tokens?: number;
   cache_read_input_tokens?: number;
   cache_creation_input_tokens?: number;
+  cache_creation?: {
+    ephemeral_5m_input_tokens?: number;
+    ephemeral_1h_input_tokens?: number;
+  };
+}
+
+interface ClaudeAgentSDKRawStreamEvent {
+  type?: string;
+  message?: {
+    id?: string;
+    usage?: ClaudeAgentSDKUsage;
+  };
+  usage?: ClaudeAgentSDKUsage;
 }
 
 interface TaskUsage {
@@ -37,10 +50,11 @@ export interface ClaudeAgentSDKMessage {
     role?: string;
     content?: unknown;
     model?: string;
-    usage?: Usage;
+    usage?: ClaudeAgentSDKUsage;
   };
+  event?: ClaudeAgentSDKRawStreamEvent;
   parent_tool_use_id?: string | null;
-  usage?: Usage | TaskUsage;
+  usage?: ClaudeAgentSDKUsage | TaskUsage;
   num_turns?: number;
   session_id?: string;
   task_id?: string;
@@ -75,6 +89,7 @@ export interface ClaudeAgentSDKQueryOptions {
   debug?: boolean;
   agentName?: string;
   instructions?: string;
+  includePartialMessages?: boolean;
   mcpServers?: ClaudeAgentSDKMcpServersConfig;
   hooks?: Record<string, ClaudeAgentSDKHookCallbackMatcher[]>;
   [key: string]: unknown;

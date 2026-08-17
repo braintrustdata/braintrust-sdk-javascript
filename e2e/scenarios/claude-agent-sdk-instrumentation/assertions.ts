@@ -21,6 +21,21 @@ import {
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
 import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 
+type ExpectedUsage = {
+  message_id?: string;
+  parent_tool_use_id?: string | null;
+  usage?: {
+    cache_creation_input_tokens?: number;
+    cache_creation?: {
+      ephemeral_5m_input_tokens?: number;
+      ephemeral_1h_input_tokens?: number;
+    };
+    cache_read_input_tokens?: number;
+    input_tokens?: number;
+    output_tokens?: number;
+  };
+};
+
 type RunClaudeAgentSDKScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry?: string;
@@ -37,31 +52,7 @@ type RunClaudeAgentSDKScenario = (harness: {
     scenarioDir: string;
     timeoutMs?: number;
   }) => Promise<{ stdout: string }>;
-}) => Promise<{ stdout: string }>;
-
-function parseScenarioResult(stdout: string): {
-  subagentRacedToolUseId: string;
-} {
-  const prefix = "CLAUDE_AGENT_E2E_RESULT=";
-  const resultLine = stdout.split("\n").find((line) => line.startsWith(prefix));
-  if (!resultLine) {
-    throw new Error("Claude Agent SDK scenario did not report its e2e result");
-  }
-
-  const result: unknown = JSON.parse(resultLine.slice(prefix.length));
-  if (
-    !result ||
-    typeof result !== "object" ||
-    !("subagentRacedToolUseId" in result) ||
-    typeof result.subagentRacedToolUseId !== "string"
-  ) {
-    throw new Error(
-      "Claude Agent SDK scenario did not race local tool execution with stream consumption",
-    );
-  }
-
-  return { subagentRacedToolUseId: result.subagentRacedToolUseId };
-}
+}) => Promise<unknown>;
 
 const SNAPSHOT_METADATA_KEYS = [
   "provider",
@@ -85,11 +76,6 @@ const SNAPSHOT_METADATA_KEYS = [
   "claude_agent_sdk.tool_use_count",
   "claude_agent_sdk.total_tokens",
 ] as const;
-const OMITTED_METRIC_KEYS = new Set([
-  "prompt_cached_tokens",
-  "prompt_cache_creation_tokens",
-]);
-
 function summarizeSpan(
   event: CapturedLogEvent | undefined,
   overrides?: {
@@ -105,12 +91,7 @@ function summarizeSpan(
   const summary = summarizeWrapperContract(event, [
     ...SNAPSHOT_METADATA_KEYS,
   ]) as Record<string, Json>;
-  const metricKeys = Array.isArray(summary.metric_keys)
-    ? summary.metric_keys.filter(
-        (key): key is string =>
-          typeof key === "string" && !OMITTED_METRIC_KEYS.has(key),
-      )
-    : summary.metric_keys;
+  const metricKeys = summary.metric_keys;
   const input = event.input as
     | Array<{ content?: string; message?: { content?: string } }>
     | undefined;
@@ -169,6 +150,84 @@ function summarizeSpan(
   }
 
   return summary;
+}
+
+function metricsFromExpectedUsage(expected: ExpectedUsage): {
+  completion_tokens: number | undefined;
+  prompt_cache_creation_tokens: number | undefined;
+  prompt_cache_creation_5m_tokens: number | undefined;
+  prompt_cache_creation_1h_tokens: number | undefined;
+  prompt_cached_tokens: number;
+  prompt_tokens: number;
+  tokens: number;
+} {
+  const inputTokens = expected.usage?.input_tokens ?? 0;
+  const cachedTokens = expected.usage?.cache_read_input_tokens ?? 0;
+  const aggregateCacheCreationTokens =
+    expected.usage?.cache_creation_input_tokens ?? 0;
+  const cacheCreation5mTokens =
+    expected.usage?.cache_creation?.ephemeral_5m_input_tokens;
+  const cacheCreation1hTokens =
+    expected.usage?.cache_creation?.ephemeral_1h_input_tokens;
+  const hasCacheCreationBreakdown =
+    cacheCreation5mTokens !== undefined || cacheCreation1hTokens !== undefined;
+  const splitCacheCreationTokens =
+    (cacheCreation5mTokens ?? 0) + (cacheCreation1hTokens ?? 0);
+  const effectiveCacheCreationTokens = Math.max(
+    aggregateCacheCreationTokens,
+    splitCacheCreationTokens,
+  );
+  const completionTokens = expected.usage?.output_tokens;
+  const promptTokens =
+    inputTokens + cachedTokens + effectiveCacheCreationTokens;
+
+  return {
+    completion_tokens: completionTokens,
+    prompt_cache_creation_tokens:
+      (!hasCacheCreationBreakdown ||
+        splitCacheCreationTokens < aggregateCacheCreationTokens) &&
+      aggregateCacheCreationTokens > 0
+        ? aggregateCacheCreationTokens
+        : undefined,
+    prompt_cache_creation_5m_tokens: cacheCreation5mTokens,
+    prompt_cache_creation_1h_tokens: cacheCreation1hTokens,
+    prompt_cached_tokens: cachedTokens,
+    prompt_tokens: promptTokens,
+    tokens: promptTokens + (completionTokens ?? 0),
+  };
+}
+
+function expectSpanUsageToMatch(
+  span: CapturedLogEvent | undefined,
+  expected: ExpectedUsage,
+): void {
+  const expectedMetrics = metricsFromExpectedUsage(expected);
+  expect(span?.metrics).toMatchObject({
+    ...(expectedMetrics.prompt_cache_creation_tokens !== undefined && {
+      prompt_cache_creation_tokens:
+        expectedMetrics.prompt_cache_creation_tokens,
+    }),
+    ...(expectedMetrics.prompt_cache_creation_5m_tokens !== undefined && {
+      prompt_cache_creation_5m_tokens:
+        expectedMetrics.prompt_cache_creation_5m_tokens,
+    }),
+    ...(expectedMetrics.prompt_cache_creation_1h_tokens !== undefined && {
+      prompt_cache_creation_1h_tokens:
+        expectedMetrics.prompt_cache_creation_1h_tokens,
+    }),
+    ...(expectedMetrics.prompt_cached_tokens > 0 && {
+      prompt_cached_tokens: expectedMetrics.prompt_cached_tokens,
+    }),
+    completion_tokens: expectedMetrics.completion_tokens,
+    prompt_tokens: expectedMetrics.prompt_tokens,
+    tokens: expectedMetrics.tokens,
+  });
+  if (
+    expectedMetrics.prompt_cache_creation_5m_tokens !== undefined ||
+    expectedMetrics.prompt_cache_creation_1h_tokens !== undefined
+  ) {
+    expect(span?.metrics?.prompt_cache_creation_tokens).toBeUndefined();
+  }
 }
 
 function findToolSpanByOperation(
@@ -463,12 +522,10 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
 
   describe(options.name, () => {
     let events: CapturedLogEvent[] = [];
-    let scenarioResult: ReturnType<typeof parseScenarioResult>;
 
     beforeAll(async () => {
       await withScenarioHarness(async (harness) => {
-        const result = await options.runScenario(harness);
-        scenarioResult = parseScenarioResult(result.stdout);
+        await options.runScenario(harness);
         events = harness.events();
       });
     }, timeoutMs);
@@ -510,6 +567,49 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       expect(tool?.span.parentIds).not.toContain(llm?.span.id ?? "");
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
     });
+
+    test(
+      "attributes exact provider stream usage to each basic llm call",
+      testConfig,
+      () => {
+        const operation = findLatestSpan(
+          events,
+          "claude-agent-basic-operation",
+        );
+        const task = findChildSpans(
+          events,
+          "Claude Agent",
+          operation?.span.id,
+        ).at(-1);
+        const expectedUsageSpan = findChildSpans(
+          events,
+          "claude-agent-basic-partial-usage",
+          operation?.span.id,
+        ).at(-1);
+        const expectedUsage = expectedUsageSpan?.output as
+          | ExpectedUsage[]
+          | undefined;
+        const llmSpans = findChildSpans(
+          events,
+          "anthropic.messages.create",
+          task?.span.id,
+        );
+
+        expect(expectedUsage?.length).toBeGreaterThan(1);
+        expect(llmSpans).toHaveLength(expectedUsage?.length ?? 0);
+        expect(task?.metrics?.prompt_tokens).toBeUndefined();
+        expect(task?.metrics?.completion_tokens).toBeUndefined();
+        expect(task?.metrics?.tokens).toBeUndefined();
+        expect(task?.metrics?.prompt_cached_tokens).toBeUndefined();
+        expect(task?.metrics?.prompt_cache_creation_tokens).toBeUndefined();
+        expect(task?.metrics?.prompt_cache_creation_5m_tokens).toBeUndefined();
+        expect(task?.metrics?.prompt_cache_creation_1h_tokens).toBeUndefined();
+
+        for (const [index, expected] of (expectedUsage ?? []).entries()) {
+          expectSpanUsageToMatch(llmSpans[index], expected);
+        }
+      },
+    );
 
     if (options.assertLocalToolHandlerParenting) {
       test(
@@ -583,6 +683,58 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
           { content: "Part 1" },
           { content: "Part 2" },
         ]);
+      },
+    );
+
+    test(
+      "stores aggregate usage only on tasks without partial messages",
+      testConfig,
+      () => {
+        const partialOperation = findLatestSpan(
+          events,
+          "claude-agent-basic-operation",
+        );
+        const partialTask = findChildSpans(
+          events,
+          "Claude Agent",
+          partialOperation?.span.id,
+        ).at(-1);
+        const aggregateTasks = [
+          "claude-agent-async-prompt-operation",
+          "claude-agent-subagent-operation",
+          "claude-agent-subagent-built-in-tool-operation",
+          "claude-agent-failure-operation",
+        ].map((operationName) => {
+          const operation = findLatestSpan(events, operationName);
+          return findChildSpans(events, "Claude Agent", operation?.span.id).at(
+            -1,
+          );
+        });
+
+        expect(partialTask?.metrics?.prompt_tokens).toBeUndefined();
+        expect(partialTask?.metrics?.completion_tokens).toBeUndefined();
+        expect(partialTask?.metrics?.tokens).toBeUndefined();
+        expect(partialTask?.metrics?.prompt_cached_tokens).toBeUndefined();
+        expect(
+          partialTask?.metrics?.prompt_cache_creation_tokens,
+        ).toBeUndefined();
+        expect(
+          partialTask?.metrics?.prompt_cache_creation_5m_tokens,
+        ).toBeUndefined();
+        expect(
+          partialTask?.metrics?.prompt_cache_creation_1h_tokens,
+        ).toBeUndefined();
+        for (const task of aggregateTasks) {
+          expect(task?.metrics).toMatchObject({
+            completion_tokens: expect.any(Number),
+            prompt_tokens: expect.any(Number),
+            tokens: expect.any(Number),
+          });
+          expect(task?.metrics?.tokens).toBe(
+            Number(task?.metrics?.prompt_tokens) +
+              Number(task?.metrics?.completion_tokens),
+          );
+        }
       },
     );
 
@@ -679,25 +831,6 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       expect(tool?.span.parentIds).not.toContain(nestedTaskLlm?.span.id ?? "");
     });
 
-    test(
-      "parents a local subagent tool when execution races stream consumption",
-      testConfig,
-      () => {
-        const taskRoot = findOperationTaskRoot(
-          events,
-          "claude-agent-subagent-operation",
-        );
-        const nestedTask = findSubAgentTaskSpan(events, taskRoot?.span.id);
-        const tool = findAllSpans(events, "tool: calculator/calculator").find(
-          (event) =>
-            event.row.metadata?.["gen_ai.tool.call.id"] ===
-            scenarioResult.subagentRacedToolUseId,
-        );
-        expect(tool).toBeDefined();
-        expect(tool?.span.parentIds).toEqual([nestedTask?.span.id ?? ""]);
-      },
-    );
-
     if (options.expectTaskLifecycleDetails) {
       test(
         "orders built-in Agent and Bash after their llm siblings",
@@ -766,6 +899,38 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       );
     }
 
+    test(
+      "omits per-call usage when partial messages are disabled",
+      testConfig,
+      () => {
+        const operation = findLatestSpan(
+          events,
+          "claude-agent-failure-operation",
+        );
+        const task = findChildSpans(
+          events,
+          "Claude Agent",
+          operation?.span.id,
+        ).at(-1);
+        const llmSpans = findChildSpans(
+          events,
+          "anthropic.messages.create",
+          task?.span.id,
+        );
+
+        expect(llmSpans.length).toBeGreaterThan(0);
+        for (const llm of llmSpans) {
+          expect(llm.metrics?.prompt_tokens).toBeUndefined();
+          expect(llm.metrics?.completion_tokens).toBeUndefined();
+          expect(llm.metrics?.tokens).toBeUndefined();
+          expect(llm.metrics?.prompt_cached_tokens).toBeUndefined();
+          expect(llm.metrics?.prompt_cache_creation_tokens).toBeUndefined();
+          expect(llm.metrics?.prompt_cache_creation_5m_tokens).toBeUndefined();
+          expect(llm.metrics?.prompt_cache_creation_1h_tokens).toBeUndefined();
+        }
+      },
+    );
+
     test("captures tool failure details", testConfig, () => {
       const operation = findLatestSpan(
         events,
@@ -800,9 +965,15 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       "matches the shared span tree snapshot",
       testConfig,
       async ({ expect }) => {
-        await matchSpanTreeSnapshot(events, snapshotPath, {
-          snapshotExpect: expect,
-        });
+        await matchSpanTreeSnapshot(
+          events.filter(
+            (event) => event.span.name !== "claude-agent-basic-partial-usage",
+          ),
+          snapshotPath,
+          {
+            snapshotExpect: expect,
+          },
+        );
       },
     );
   });

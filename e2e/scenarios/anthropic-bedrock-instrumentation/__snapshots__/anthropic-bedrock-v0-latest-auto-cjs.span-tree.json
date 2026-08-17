@@ -36,7 +36,8 @@
               },
               "metrics": {
                 "completion_tokens": 4,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 12,
                 "time_to_first_token": 0,
@@ -75,7 +76,8 @@
               },
               "metrics": {
                 "completion_tokens": 18,
-                "prompt_cache_creation_tokens": 0,
+                "prompt_cache_creation_1h_tokens": 0,
+                "prompt_cache_creation_5m_tokens": 0,
                 "prompt_cached_tokens": 0,
                 "prompt_tokens": 24,
                 "time_to_first_token": 0,

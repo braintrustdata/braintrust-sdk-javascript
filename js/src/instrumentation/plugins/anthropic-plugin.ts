@@ -825,6 +825,24 @@ export function parseMetricsFromUsage(
   saveIfExistsTo("cache_read_input_tokens", "prompt_cached_tokens");
   saveIfExistsTo("cache_creation_input_tokens", "prompt_cache_creation_tokens");
 
+  // The 5m and 1h cache-write tiers are billed at different rates, so surface
+  // the per-TTL breakdown whenever the response carries it. It is an
+  // alternative representation of `cache_creation_input_tokens` rather than
+  // additional tokens. `finalizeAnthropicTokens` retains the aggregate as a
+  // fallback if the breakdown is partial.
+  if (isObject(usage.cache_creation)) {
+    const cacheCreation = usage.cache_creation;
+    for (const [source, target] of [
+      ["ephemeral_5m_input_tokens", "prompt_cache_creation_5m_tokens"],
+      ["ephemeral_1h_input_tokens", "prompt_cache_creation_1h_tokens"],
+    ] as const) {
+      const value = cacheCreation[source];
+      if (typeof value === "number") {
+        metrics[target] = value;
+      }
+    }
+  }
+
   if (isObject(usage.server_tool_use)) {
     for (const [name, value] of Object.entries(usage.server_tool_use)) {
       if (typeof value === "number") {

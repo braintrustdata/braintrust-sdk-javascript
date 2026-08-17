@@ -9,6 +9,7 @@ import {
 import {
   extractAnthropicCacheTokens,
   finalizeAnthropicTokens,
+  toNumericMetrics,
 } from "../../anthropic-tokens-util";
 import { processInputAttachments } from "../../attachment-utils";
 
@@ -129,7 +130,9 @@ function normalizeUsageMetrics(
       );
       Object.assign(metrics, cacheTokens);
 
-      Object.assign(metrics, finalizeAnthropicTokens(metrics));
+      // Use the returned object: finalization can drop cache-creation metrics,
+      // and merging it back over `metrics` would keep them.
+      return toNumericMetrics(finalizeAnthropicTokens(metrics));
     }
   }
 

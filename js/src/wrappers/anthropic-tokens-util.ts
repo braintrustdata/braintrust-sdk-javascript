@@ -9,23 +9,65 @@ export interface AnthropicTokenMetrics {
   completion_tokens?: number;
   prompt_cached_tokens?: number;
   prompt_cache_creation_tokens?: number;
+  prompt_cache_creation_5m_tokens?: number;
+  prompt_cache_creation_1h_tokens?: number;
   tokens?: number;
   [key: string]: number | undefined;
 }
 
+/**
+ * Rolls cache tokens back into `prompt_tokens`/`tokens` and removes the
+ * aggregate cache-creation metric only when the per-TTL breakdown accounts for
+ * all reported cache-write tokens.
+ *
+ * Callers MUST use the returned object rather than `Object.assign`-ing it back
+ * over the input because finalization may drop
+ * `prompt_cache_creation_tokens`.
+ */
 export function finalizeAnthropicTokens(
   metrics: AnthropicTokenMetrics,
 ): AnthropicTokenMetrics {
+  const hasSplitCacheCreationTokens =
+    metrics.prompt_cache_creation_5m_tokens !== undefined ||
+    metrics.prompt_cache_creation_1h_tokens !== undefined;
+  const splitCacheCreationTokens =
+    (metrics.prompt_cache_creation_5m_tokens || 0) +
+    (metrics.prompt_cache_creation_1h_tokens || 0);
+  const aggregateCacheCreationTokens =
+    metrics.prompt_cache_creation_tokens || 0;
+  const effectiveCacheCreationTokens = Math.max(
+    aggregateCacheCreationTokens,
+    splitCacheCreationTokens,
+  );
   const prompt_tokens =
     (metrics.prompt_tokens || 0) +
     (metrics.prompt_cached_tokens || 0) +
-    (metrics.prompt_cache_creation_tokens || 0);
+    effectiveCacheCreationTokens;
 
-  return {
+  const finalized = {
     ...metrics,
     prompt_tokens,
     tokens: prompt_tokens + (metrics.completion_tokens || 0),
   };
+  // Keep the aggregate as a pricing fallback when the split is partial.
+  if (
+    hasSplitCacheCreationTokens &&
+    splitCacheCreationTokens >= aggregateCacheCreationTokens
+  ) {
+    delete finalized.prompt_cache_creation_tokens;
+  }
+  return finalized;
+}
+
+/** Drops unset metrics so the result can be logged as span metrics. */
+export function toNumericMetrics(
+  metrics: AnthropicTokenMetrics,
+): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(metrics).filter(
+      (entry): entry is [string, number] => entry[1] !== undefined,
+    ),
+  );
 }
 
 export function extractAnthropicCacheTokens(
