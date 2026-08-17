@@ -1,0 +1,3 @@
+- insert:
+    - id: braintrust
+      name: "@braintrust/deepseek-harness"
