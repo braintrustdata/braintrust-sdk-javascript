@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   parseMetricsFromUsage,
-  processImagesInOutput,
   aggregateChatCompletionChunks,
 } from "./openai-plugin";
+import { processImagesInOutput } from "./openai-span-data";
 import { Attachment } from "../../logger";
 
 describe("parseMetricsFromUsage", () => {

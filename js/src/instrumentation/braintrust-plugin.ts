@@ -393,9 +393,9 @@ export class BraintrustPlugin extends BasePlugin {
   }
 }
 
-// Re-export utility functions from OpenAIPlugin for backward compatibility
+// Re-export OpenAI instrumentation utilities from their canonical modules.
 export {
   parseMetricsFromUsage,
-  processImagesInOutput,
   aggregateChatCompletionChunks,
 } from "./plugins/openai-plugin";
+export { processImagesInOutput } from "./plugins/openai-span-data";

@@ -7,6 +7,7 @@ import {
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
+import { completeOpenAIBatch, createOpenAIBatch } from "braintrust";
 
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
 const EMBEDDING_MODEL = "text-embedding-3-small";
@@ -104,6 +105,40 @@ function createMockStreamingClient(options) {
     : baseClient;
 }
 
+function createMockBatchClient(options) {
+  const baseClient = new options.OpenAI({
+    apiKey: process.env.OPENAI_API_KEY ?? "test-openai-key",
+    baseURL: "https://example.test/v1",
+    fetch: async (_url, init) => {
+      const params = JSON.parse(String(init?.body));
+      return new Response(
+        JSON.stringify({
+          id: "batch_e2e_fixture",
+          object: "batch",
+          endpoint: params.endpoint,
+          input_file_id: params.input_file_id,
+          completion_window: params.completion_window,
+          status: "validating",
+          created_at: 1_740_000_000,
+          metadata: params.metadata,
+          request_counts: { completed: 0, failed: 0, total: 0 },
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+            "x-request-id": "req_batch_e2e_fixture",
+          },
+          status: 200,
+        },
+      );
+    },
+  });
+
+  return options.decorateClient
+    ? options.decorateClient(baseClient)
+    : baseClient;
+}
+
 export async function runOpenAIInstrumentationScenario(options) {
   const baseClient = new options.OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -113,6 +148,7 @@ export async function runOpenAIInstrumentationScenario(options) {
     ? options.decorateClient(baseClient)
     : baseClient;
   const streamFixtureClient = createMockStreamingClient(options);
+  const batchFixtureClient = createMockBatchClient(options);
   const openAIMajorVersion = parseMajorVersion(options.openaiSdkVersion);
   const shouldCheckPrivateFieldMethods =
     typeof options.decorateClient === "function" &&
@@ -582,6 +618,116 @@ export async function runOpenAIInstrumentationScenario(options) {
           },
         );
       }
+
+      await runOperation("openai-batch-operation", "batch", async () => {
+        const batchItems = [
+          {
+            customId: "batch_chat_alpha",
+            prompt: "Reply with exactly ALPHA.",
+            response: "ALPHA",
+          },
+          {
+            customId: "batch_chat_bravo",
+            prompt: "Reply with exactly BRAVO.",
+            response: "BRAVO",
+          },
+          {
+            customId: "batch_chat_charlie",
+            prompt: "Reply with exactly CHARLIE.",
+            response: "CHARLIE",
+          },
+        ];
+        const input = batchItems
+          .map((item) =>
+            JSON.stringify({
+              custom_id: item.customId,
+              method: "POST",
+              url: "/v1/chat/completions",
+              body: {
+                model: OPENAI_MODEL,
+                messages: [{ role: "user", content: item.prompt }],
+              },
+            }),
+          )
+          .join("\n");
+        const created = await createOpenAIBatch({
+          client: batchFixtureClient,
+          inputFile: { id: "file_batch_e2e_fixture" },
+          input,
+          params: {
+            completion_window: "24h",
+            endpoint: "/v1/chat/completions",
+          },
+        });
+
+        const completedAt = Date.now() / 1000 + 60;
+        const completed = {
+          ...created,
+          status: "completed",
+          in_progress_at: 1_740_000_010,
+          completed_at: completedAt,
+          request_counts: { completed: 2, failed: 1, total: 3 },
+        };
+        // Start both content requests before awaiting either one. These promises
+        // model the APIPromise<Response> values returned by files.content().
+        const outputFile = Promise.resolve(
+          new Response(
+            [batchItems[1], batchItems[0]]
+              .map((item, index) =>
+                JSON.stringify({
+                  custom_id: item.customId,
+                  response: {
+                    status_code: 200,
+                    body: {
+                      choices: [
+                        {
+                          index: 0,
+                          finish_reason: "stop",
+                          message: {
+                            role: "assistant",
+                            content: item.response,
+                          },
+                        },
+                      ],
+                      usage: {
+                        prompt_tokens: 8 + index,
+                        completion_tokens: 1,
+                        total_tokens: 9 + index,
+                      },
+                    },
+                  },
+                }),
+              )
+              .join("\n"),
+          ),
+        );
+        const errorFile = Promise.resolve(
+          new Response(
+            JSON.stringify({
+              custom_id: batchItems[2].customId,
+              error: {
+                code: "fixture_error",
+                message: "Batch fixture request failed",
+              },
+            }),
+          ),
+        );
+        await completeOpenAIBatch({
+          batch: completed,
+          input,
+          // Batch results are not guaranteed to preserve input order.
+          outputFile,
+          errorFile,
+          webhook: {
+            type: "batch.completed",
+            created_at: completedAt,
+            data: { id: completed.id },
+          },
+        });
+        if ((await outputFile).bodyUsed || (await errorFile).bodyUsed) {
+          throw new Error("Expected batch result responses to remain unread");
+        }
+      });
     },
     metadata: {
       openaiSdkVersion: options.openaiSdkVersion,

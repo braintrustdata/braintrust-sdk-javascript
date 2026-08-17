@@ -11,10 +11,12 @@ import type {
 export type EnhancedResponse<T> = {
   response: Response;
   data: T;
+  request_id?: string | null;
 };
 
 export interface APIPromise<T> extends Promise<T> {
   withResponse(): Promise<EnhancedResponse<T>>;
+  asResponse(): Promise<Response>;
 }
 
 type ChannelContext<TChannel extends OpenAIAsyncChannel> =
@@ -71,19 +73,78 @@ export async function tracePromiseWithResponse<
     throw new Error("Expected withResponse() to provide response");
   }
 
-  return { data, response: enhancedResponse.response };
+  return {
+    data,
+    response: enhancedResponse.response,
+    request_id: enhancedResponse.request_id,
+  };
+}
+
+export async function tracePromiseAsResponse<
+  TChannel extends OpenAIAsyncChannel,
+  TResult extends ResultOf<TChannel>,
+>(
+  channel: TChannel,
+  traceContext: ChannelContext<TChannel>,
+  apiPromise: APIPromise<TResult>,
+): Promise<Response> {
+  const tracePromise =
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    channel.tracePromise as unknown as (
+      fn: () => Promise<TResult | undefined>,
+      context: ChannelContext<TChannel>,
+    ) => Promise<TResult | undefined>;
+
+  let response: Response | undefined;
+  await tracePromise(async () => {
+    response = await apiPromise.asResponse();
+    traceContext.response = response;
+    return undefined;
+  }, traceContext);
+
+  if (!response) {
+    throw new Error("Expected asResponse() to provide response");
+  }
+  return response;
 }
 
 export function createLazyAPIPromise<TResult>(
   ensureExecuted: () => Promise<EnhancedResponse<TResult>>,
+  ensureResponse: () => Promise<Response>,
+  getAPIPromise: () => APIPromise<TResult>,
 ): APIPromise<TResult> {
-  let dataPromise: Promise<TResult> | null = null;
+  let firstConsumption: "data" | "response" | undefined;
+  let enhancedResponsePromise: Promise<EnhancedResponse<TResult>> | undefined;
+  let dataPromise: Promise<TResult> | undefined;
+  let responsePromise: Promise<Response> | undefined;
+
+  const withResponse = () => {
+    firstConsumption ??= "data";
+    enhancedResponsePromise ??=
+      firstConsumption === "data"
+        ? ensureExecuted()
+        : getAPIPromise().withResponse();
+    return enhancedResponsePromise;
+  };
+
+  const asResponse = () => {
+    firstConsumption ??= "response";
+    responsePromise ??=
+      firstConsumption === "response"
+        ? ensureResponse()
+        : getAPIPromise().asResponse();
+    return responsePromise;
+  };
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return new Proxy({} as APIPromise<TResult>, {
     get(target, prop, receiver) {
       if (prop === "withResponse") {
-        return () => ensureExecuted();
+        return withResponse;
+      }
+
+      if (prop === "asResponse") {
+        return asResponse;
       }
 
       if (
@@ -92,9 +153,7 @@ export function createLazyAPIPromise<TResult>(
         prop === "finally" ||
         prop in Promise.prototype
       ) {
-        if (!dataPromise) {
-          dataPromise = ensureExecuted().then((result) => result.data);
-        }
+        dataPromise ??= withResponse().then((result) => result.data);
         const value = Reflect.get(dataPromise, prop, receiver);
         return typeof value === "function" ? value.bind(dataPromise) : value;
       }
