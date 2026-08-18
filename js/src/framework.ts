@@ -404,7 +404,7 @@ export class EvalResultWithSummary<
   }
 }
 
-export type { ReporterBody, ReporterDef } from "./reporters/types";
+export type { ReporterBody } from "./reporters/types";
 
 async function getPersistedBaseExperimentId(
   experiment: Experiment,
@@ -903,7 +903,7 @@ export function Reporter<EvalReport>(
   return ret;
 }
 
-export interface Filter {
+interface Filter {
   path: string[];
   pattern: RegExp;
 }
@@ -914,34 +914,6 @@ function serializeJSONWithPlainString(v: unknown) {
   } else {
     return JSON.stringify(v);
   }
-}
-
-function deserializePlainStringAsJSON(s: string) {
-  try {
-    return { value: JSON.parse(s), error: undefined };
-  } catch (e) {
-    return { value: s, error: e };
-  }
-}
-
-export function parseFilters(filters: string[]): Filter[] {
-  const result: Filter[] = [];
-  for (const f of filters) {
-    const equalsIdx = f.indexOf("=");
-    if (equalsIdx === -1) {
-      throw new Error(`Invalid filter ${f}`);
-    }
-    const [path, value] = [f.slice(0, equalsIdx), f.slice(equalsIdx + 1)];
-    let deserializedValue = deserializePlainStringAsJSON(value).value;
-    if (typeof deserializedValue !== "string") {
-      deserializedValue = value; // Just fall back to the original input
-    }
-    result.push({
-      path: path.split("."),
-      pattern: new RegExp(deserializedValue),
-    });
-  }
-  return result;
 }
 
 function evaluateFilter(object: unknown, filter: Filter) {
@@ -1756,10 +1728,9 @@ async function runEvaluatorInternal(
   }
 }
 
-export const error = (text: string) => `Error: ${text}`;
-export const warning = (text: string) => `Warning: ${text}`;
+const warning = (text: string) => `Warning: ${text}`;
 
-export function logError(e: unknown, verbose: boolean) {
+function logError(e: unknown, verbose: boolean) {
   if (!verbose) {
     // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error(`${e}`);
