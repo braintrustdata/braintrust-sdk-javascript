@@ -7,7 +7,9 @@ import {
   initDataset,
   initLogger,
   Prompt,
+  RemoteEvalParameters,
   BraintrustState,
+  FailedHTTPResponse,
   loadPrompt,
   loadParameters,
   wrapTraced,
@@ -23,11 +25,22 @@ import {
 
 import { configureNode } from "./node/config";
 import { type GitMetadataSettingsType as GitMetadataSettings } from "./generated_types";
-import { writeFile, unlink } from "node:fs/promises";
+import { rm, writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { SpanComponentsV4 } from "../util/span_identifier_v4";
 import { SpanCache } from "./span-cache";
+import {
+  PromptCache,
+  type PromptDiskCacheEntry,
+  type PromptMemoryCacheEntry,
+} from "./prompt-cache/prompt-cache";
+import {
+  ParametersCache,
+  type ParametersMemoryCacheEntry,
+} from "./prompt-cache/parameters-cache";
+import { DiskCache } from "./prompt-cache/disk-cache";
+import { LRUCache } from "./lru-cache";
 
 configureNode();
 
@@ -1842,7 +1855,7 @@ test("init surfaces dataset environment lookup errors instead of falling back to
   vi.restoreAllMocks();
 });
 
-describe("loader version precedence", () => {
+describe("prompt and parameters loaders", () => {
   let state: BraintrustState;
   let getJson: ReturnType<typeof vi.spyOn>;
   const promptRow = {
@@ -1918,6 +1931,45 @@ describe("loader version precedence", () => {
     };
   };
 
+  function jsonResponse(data: unknown): Response {
+    return new Response(JSON.stringify(data), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  function loginResponse(
+    ...organizations: Array<{
+      id: string;
+      name: string;
+      apiUrl: string;
+    }>
+  ): Response {
+    return jsonResponse({
+      org_info: organizations.map(({ id, name, apiUrl }) => ({
+        id,
+        name,
+        api_url: apiUrl,
+        proxy_url: apiUrl,
+      })),
+    });
+  }
+
+  function serverErrorResponse(): Response {
+    return new Response("Server error", {
+      status: 500,
+      statusText: "Internal Server Error",
+    });
+  }
+
+  function unreadableResponse(init?: ResponseInit): Response {
+    const body = new ReadableStream({
+      start(controller) {
+        controller.error(new TypeError("Response body disconnected"));
+      },
+    });
+    return new Response(body, init);
+  }
+
   beforeEach(async () => {
     state = await _exportsForTestingOnly.simulateLoginForTests();
     vi.spyOn(state, "login").mockResolvedValue(state as any);
@@ -1963,6 +2015,726 @@ describe("loader version precedence", () => {
 
     expect(getJson).toHaveBeenCalledWith(`v1/prompt/${promptRow.id}`, {
       version: "v1",
+    });
+  });
+
+  describe("credential and cache isolation", () => {
+    test("loadPrompt uses an explicit API key without changing the existing login", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "prompt-org-id",
+            name: "test-org-name",
+            apiUrl: "https://prompt-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }))
+        .mockResolvedValueOnce(serverErrorResponse());
+      const globalCacheGet = vi.spyOn(state.promptCache, "get");
+      const globalCacheSet = vi.spyOn(state.promptCache, "set");
+
+      const options = {
+        projectName: "test-project",
+        slug: "saved-prompt",
+        apiKey: "prompt-api-key",
+        fetch: fetchMock,
+      };
+
+      await loadPrompt(options);
+      const cachedPrompt = await loadPrompt(options);
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        "https://braintrust.dev/api/apikey/login",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer prompt-api-key",
+          }),
+        }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        expect.stringMatching(/^https:\/\/prompt-api\.test\/v1\/prompt\?/),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer prompt-api-key",
+          }),
+        }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
+        expect.stringMatching(/^https:\/\/prompt-api\.test\/v1\/prompt\?/),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer prompt-api-key",
+          }),
+        }),
+      );
+      expect(
+        fetchMock.mock.calls.filter(([url]) =>
+          String(url).endsWith("/api/apikey/login"),
+        ),
+      ).toHaveLength(1);
+      expect(cachedPrompt.id).toBe(promptRow.id);
+      expect(getJson).not.toHaveBeenCalled();
+      expect(globalCacheGet).not.toHaveBeenCalled();
+      expect(globalCacheSet).not.toHaveBeenCalled();
+      expect(state.loginToken).toBe("___TEST_API_KEY__THIS_IS_NOT_REAL___");
+    });
+
+    test("loadPrompt falls back when the response body stream fails", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "prompt-org-id",
+            name: "test-org-name",
+            apiUrl: "https://prompt-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }))
+        .mockResolvedValueOnce(
+          unreadableResponse({
+            headers: { "Content-Type": "application/json" },
+          }),
+        )
+        .mockResolvedValueOnce(
+          new Response("not JSON", {
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      const options = {
+        projectName: "test-project",
+        slug: "saved-prompt",
+        apiKey: "prompt-api-key",
+        fetch: fetchMock,
+        state,
+      };
+
+      await loadPrompt(options);
+
+      expect((await loadPrompt(options)).id).toBe(promptRow.id);
+      await expect(loadPrompt(options)).rejects.toBeInstanceOf(SyntaxError);
+    });
+
+    test("logged-in loadPrompt falls back on transport failures", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }))
+        .mockRejectedValueOnce(new TypeError("Network unavailable"))
+        .mockResolvedValueOnce(
+          unreadableResponse({
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      state.setFetch(fetchMock as unknown as typeof globalThis.fetch);
+      const options = {
+        projectName: "test-project",
+        slug: "saved-prompt",
+        state,
+      };
+
+      await loadPrompt(options);
+
+      expect((await loadPrompt(options)).id).toBe(promptRow.id);
+      expect((await loadPrompt(options)).id).toBe(promptRow.id);
+    });
+
+    test("loadPrompt preserves authentication failures when the error body stream fails", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "prompt-org-id",
+            name: "test-org-name",
+            apiUrl: "https://prompt-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }))
+        .mockResolvedValueOnce(
+          unreadableResponse({
+            status: 401,
+            statusText: "Unauthorized",
+          }),
+        );
+      const options = {
+        projectName: "test-project",
+        slug: "saved-prompt",
+        apiKey: "prompt-api-key",
+        fetch: fetchMock,
+        state,
+      };
+
+      await loadPrompt(options);
+
+      await expect(loadPrompt(options)).rejects.toMatchObject({
+        status: 401,
+        text: "Unauthorized",
+        data: "Unable to read response body",
+        cause: expect.any(TypeError),
+      });
+    });
+
+    test("loader credential sessions only retain the authenticated connection", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        loginResponse({
+          id: "prompt-org-id",
+          name: "test-org-name",
+          apiUrl: "https://prompt-api.test",
+        }),
+      );
+      const options = await state._internalResolveLoaderLoginOptions({
+        apiKey: "prompt-api-key",
+        fetch: fetchMock as unknown as typeof globalThis.fetch,
+      });
+
+      const requestState = await state._internalGetLoaderState(options);
+
+      expect(requestState).not.toBeInstanceOf(BraintrustState);
+      expect(requestState).toEqual(
+        expect.objectContaining({
+          appUrl: "https://braintrust.dev",
+          orgId: "prompt-org-id",
+          apiConn: expect.any(Function),
+        }),
+      );
+      expect(requestState).not.toHaveProperty("promptCache");
+      expect(requestState).not.toHaveProperty("spanCache");
+    });
+
+    test("loadPrompt keeps explicit API key caches isolated", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "prompt-org-id",
+            name: "test-org-name",
+            apiUrl: "https://prompt-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }))
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "prompt-org-id",
+            name: "test-org-name",
+            apiUrl: "https://prompt-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(serverErrorResponse());
+
+      await loadPrompt({
+        projectName: "test-project",
+        slug: "saved-prompt",
+        apiKey: "first-prompt-api-key",
+        fetch: fetchMock,
+      });
+
+      await expect(
+        loadPrompt({
+          projectName: "test-project",
+          slug: "saved-prompt",
+          apiKey: "second-prompt-api-key",
+          fetch: fetchMock,
+        }),
+      ).rejects.toThrow("not found on server or in local cache");
+    });
+
+    test("loadPrompt resolves explicit credentials against state login defaults", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          loginResponse(
+            {
+              id: "other-org-id",
+              name: "other-org",
+              apiUrl: "https://other-api.test",
+            },
+            {
+              id: "self-hosted-org-id",
+              name: "self-hosted-org",
+              apiUrl: "https://api.self-hosted.test",
+            },
+          ),
+        )
+        .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }));
+      const selfHostedState = new BraintrustState({
+        appUrl: "https://app.self-hosted.test",
+        orgName: "self-hosted-org",
+        fetch: fetchMock as unknown as typeof globalThis.fetch,
+        noExitFlush: true,
+      });
+
+      expect(selfHostedState.appUrl).toBeNull();
+      await loadPrompt({
+        projectName: "test-project",
+        slug: "saved-prompt",
+        apiKey: "self-hosted-api-key",
+        state: selfHostedState,
+      });
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        "https://app.self-hosted.test/api/apikey/login",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer self-hosted-api-key",
+          }),
+        }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        expect.stringMatching(
+          /^https:\/\/api\.self-hosted\.test\/v1\/prompt\?/,
+        ),
+        expect.any(Object),
+      );
+    });
+
+    test("loader credential overrides reuse connection defaults without inheriting the active organization", async () => {
+      const activeFetch = vi.fn();
+      const loggedInState = BraintrustState.deserialize(
+        {
+          appUrl: "https://active-app.test",
+          appPublicUrl: "https://active-app.test",
+          orgName: "active-org",
+          orgId: "active-org-id",
+          apiUrl: "https://active-api.test",
+          proxyUrl: "https://active-api.test",
+          loginToken: "active-api-key",
+        },
+        {
+          fetch: activeFetch as unknown as typeof globalThis.fetch,
+          noExitFlush: true,
+        },
+      );
+
+      const apiKeyOverride =
+        await loggedInState._internalResolveLoaderLoginOptions({
+          apiKey: "request-api-key",
+        });
+      expect(apiKeyOverride).toEqual(
+        expect.objectContaining({
+          apiKey: "request-api-key",
+          appUrl: "https://active-app.test",
+          fetch: activeFetch,
+        }),
+      );
+      expect(apiKeyOverride.orgName).toBeUndefined();
+      expect(apiKeyOverride.existingState).toBeUndefined();
+
+      activeFetch
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "request-org-id",
+            name: "request-org",
+            apiUrl: "https://request-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }));
+      await loadPrompt({
+        projectName: "test-project",
+        slug: "saved-prompt",
+        apiKey: "request-api-key",
+        state: loggedInState,
+      });
+
+      const appUrlOverride =
+        await loggedInState._internalResolveLoaderLoginOptions({
+          appUrl: "https://request-app.test",
+        });
+      expect(appUrlOverride).toEqual(
+        expect.objectContaining({
+          apiKey: "active-api-key",
+          appUrl: "https://request-app.test",
+          orgName: "active-org",
+          fetch: activeFetch,
+        }),
+      );
+      expect(appUrlOverride.existingState).toBeUndefined();
+
+      const replacementFetch = vi.fn().mockResolvedValue(
+        loginResponse({
+          id: "replacement-org-id",
+          name: "replacement-org",
+          apiUrl: "https://replacement-api.test",
+        }),
+      );
+      await loggedInState.login({
+        apiKey: "replacement-api-key",
+        fetch: replacementFetch as unknown as typeof globalThis.fetch,
+        forceLogin: true,
+      });
+
+      const overrideAfterRelogin =
+        await loggedInState._internalResolveLoaderLoginOptions({
+          apiKey: "another-request-api-key",
+        });
+      expect(overrideAfterRelogin.fetch).toBe(replacementFetch);
+    });
+
+    test("loader cache namespaces follow the active login organization selector", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        loginResponse({
+          id: "second-org-id",
+          name: "second-org",
+          apiUrl: "https://second-api.test",
+        }),
+      );
+      const switchingState = new BraintrustState({
+        apiKey: "shared-api-key",
+        orgName: "first-org",
+        fetch: fetchMock as unknown as typeof globalThis.fetch,
+        noExitFlush: true,
+      });
+
+      await switchingState.login({
+        orgName: "second-org",
+        forceLogin: true,
+      });
+      const options = await switchingState._internalResolveLoaderLoginOptions(
+        {},
+      );
+
+      expect(options.orgName).toBe("second-org");
+      expect(options.credentialCacheNamespace).toBe(
+        JSON.stringify([
+          "loader-credential",
+          "https://www.braintrust.dev",
+          "second-org",
+          "shared-api-key",
+        ]),
+      );
+    });
+
+    test("loadPrompt uses the persistent credential cache after a transient login failure", async () => {
+      const cacheDir = join(
+        tmpdir(),
+        `load-prompt-login-fallback-${Date.now()}-${Math.random()}`,
+      );
+      const onlineFetch = vi
+        .fn()
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "prompt-org-id",
+            name: "prompt-org-name",
+            apiUrl: "https://prompt-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }));
+
+      try {
+        const onlineState = new BraintrustState({
+          appUrl: "https://braintrust.test",
+          apiKey: "prompt-api-key",
+          fetch: onlineFetch as unknown as typeof globalThis.fetch,
+          noExitFlush: true,
+        });
+        const onlineDiskCache = new DiskCache<PromptDiskCacheEntry>({
+          cacheDir,
+          logWarnings: false,
+        });
+        const diskCacheSet = vi.spyOn(onlineDiskCache, "set");
+        onlineState.promptCache = new PromptCache({
+          diskCache: onlineDiskCache,
+        });
+        await onlineState.login({});
+        await loadPrompt({
+          projectName: "test-project",
+          slug: "saved-prompt",
+          state: onlineState,
+        });
+        expect(diskCacheSet).toHaveBeenCalledOnce();
+        expect(diskCacheSet.mock.calls[0][1].resolvedOrgIdentity).toBe(
+          JSON.stringify([
+            "loader-org",
+            "https://braintrust.test",
+            "prompt-org-id",
+          ]),
+        );
+        expect(diskCacheSet.mock.calls[0][1].resolvedOrgIdentity).not.toContain(
+          "prompt-api-key",
+        );
+
+        const offlineFetch = vi
+          .fn()
+          .mockRejectedValue(new TypeError("Network unavailable"));
+        const offlineState = new BraintrustState({
+          appUrl: "https://braintrust.test",
+          fetch: offlineFetch as unknown as typeof globalThis.fetch,
+          noExitFlush: true,
+        });
+        offlineState.promptCache = new PromptCache({
+          diskCache: new DiskCache({ cacheDir, logWarnings: false }),
+        });
+
+        const cachedPrompt = await loadPrompt({
+          projectName: "test-project",
+          slug: "saved-prompt",
+          apiKey: "prompt-api-key",
+          state: offlineState,
+        });
+
+        expect(cachedPrompt.id).toBe(promptRow.id);
+        expect(offlineFetch).toHaveBeenCalledOnce();
+
+        const rejectedFetch = vi.fn().mockResolvedValue(
+          new Response("Invalid API key", {
+            status: 401,
+            statusText: "Unauthorized",
+          }),
+        );
+        const rejectedState = new BraintrustState({
+          appUrl: "https://braintrust.test",
+          fetch: rejectedFetch as unknown as typeof globalThis.fetch,
+          noExitFlush: true,
+        });
+        rejectedState.promptCache = new PromptCache({
+          diskCache: new DiskCache({ cacheDir, logWarnings: false }),
+        });
+
+        await expect(
+          loadPrompt({
+            projectName: "test-project",
+            slug: "saved-prompt",
+            apiKey: "prompt-api-key",
+            state: rejectedState,
+          }),
+        ).rejects.toThrow("401: Unauthorized");
+      } finally {
+        await rm(cacheDir, { recursive: true, force: true });
+      }
+    });
+
+    test("loadPrompt isolates ambient caches after forceLogin switches organizations", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "first-org-id",
+            name: "first-org",
+            apiUrl: "https://first-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }))
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "second-org-id",
+            name: "second-org",
+            apiUrl: "https://second-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(serverErrorResponse());
+      const switchingState = new BraintrustState({
+        apiKey: "first-api-key",
+        fetch: fetchMock as unknown as typeof globalThis.fetch,
+        noExitFlush: true,
+      });
+      switchingState.promptCache = new PromptCache({
+        memoryCache: new LRUCache<string, PromptMemoryCacheEntry>({ max: 10 }),
+      });
+
+      await switchingState.login({});
+      await loadPrompt({
+        projectName: "test-project",
+        slug: "saved-prompt",
+        state: switchingState,
+      });
+      await switchingState.login({
+        apiKey: "second-api-key",
+        forceLogin: true,
+      });
+
+      await expect(
+        loadPrompt({
+          projectName: "test-project",
+          slug: "saved-prompt",
+          state: switchingState,
+        }),
+      ).rejects.toThrow("not found on server or in local cache");
+    });
+
+    test("loadPrompt does not read legacy unnamespaced cache entries", async () => {
+      state.promptCache = new PromptCache({
+        memoryCache: new LRUCache<string, PromptMemoryCacheEntry>({ max: 10 }),
+      });
+      await state.promptCache.set(
+        {
+          projectName: "test-project",
+          slug: "saved-prompt",
+          version: "latest",
+        },
+        new Prompt(promptRow, {}, false),
+      );
+      getJson.mockRejectedValue(
+        new FailedHTTPResponse(500, "Internal Server Error", "Unavailable"),
+      );
+
+      await expect(
+        loadPrompt({
+          projectName: "test-project",
+          slug: "saved-prompt",
+          state,
+        }),
+      ).rejects.toThrow("not found on server or in local cache");
+    });
+
+    test("loadPrompt never falls back on ambient authentication rejection", async () => {
+      getJson
+        .mockResolvedValueOnce({ objects: [promptRow] })
+        .mockRejectedValueOnce(
+          Object.assign(new Error("401: Unauthorized (Invalid API key)"), {
+            status: 401,
+          }),
+        );
+
+      await loadPrompt({
+        projectName: "test-project",
+        slug: "saved-prompt",
+        state,
+      });
+
+      await expect(
+        loadPrompt({
+          projectName: "test-project",
+          slug: "saved-prompt",
+          state,
+        }),
+      ).rejects.toThrow("401: Unauthorized");
+    });
+
+    test("loadPrompt never falls back when the requested organization is unavailable", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "prompt-org-id",
+            name: "prompt-org-name",
+            apiUrl: "https://prompt-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ objects: [promptRow] }))
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "other-org-id",
+            name: "other-org-name",
+            apiUrl: "https://other-api.test",
+          }),
+        );
+      const scopedState = new BraintrustState({
+        apiKey: "prompt-api-key",
+        orgName: "prompt-org-name",
+        fetch: fetchMock as unknown as typeof globalThis.fetch,
+        noExitFlush: true,
+      });
+
+      await loadPrompt({
+        projectName: "test-project",
+        slug: "saved-prompt",
+        state: scopedState,
+      });
+
+      await expect(
+        loadPrompt({
+          projectName: "test-project",
+          slug: "saved-prompt",
+          forceLogin: true,
+          state: scopedState,
+        }),
+      ).rejects.toThrow(
+        "Organization prompt-org-name not found. Must be one of other-org-name",
+      );
+    });
+
+    test("loadParameters uses request-local credentials and isolated caches", async () => {
+      state.parametersCache = new ParametersCache({
+        memoryCache: new LRUCache<string, ParametersMemoryCacheEntry>({
+          max: 10,
+        }),
+      });
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "parameters-org-id",
+            name: "test-org-name",
+            apiUrl: "https://parameters-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ objects: [parametersRow] }))
+        .mockResolvedValueOnce(
+          loginResponse({
+            id: "parameters-org-id",
+            name: "test-org-name",
+            apiUrl: "https://parameters-api.test",
+          }),
+        )
+        .mockResolvedValueOnce(serverErrorResponse());
+
+      await loadParameters({
+        projectName: "test-project",
+        slug: "saved-parameters",
+        apiKey: "first-parameters-api-key",
+        fetch: fetchMock,
+        state,
+      });
+
+      await expect(
+        loadParameters({
+          projectName: "test-project",
+          slug: "saved-parameters",
+          apiKey: "second-parameters-api-key",
+          fetch: fetchMock,
+          state,
+        }),
+      ).rejects.toThrow("not found on server or in local cache");
+      expect(state.loginToken).toBe("___TEST_API_KEY__THIS_IS_NOT_REAL___");
+    });
+
+    test("loadParameters never falls back on ambient authentication rejection", async () => {
+      getJson
+        .mockResolvedValueOnce({ objects: [parametersRow] })
+        .mockRejectedValueOnce(
+          new FailedHTTPResponse(403, "Forbidden", "Revoked API key"),
+        );
+
+      await loadParameters({
+        projectName: "test-project",
+        slug: "saved-parameters",
+        state,
+      });
+
+      await expect(
+        loadParameters({
+          projectName: "test-project",
+          slug: "saved-parameters",
+          state,
+        }),
+      ).rejects.toThrow("403: Forbidden");
+    });
+
+    test("resolved parameter caches validate the organization identity", async () => {
+      const cache = new ParametersCache({
+        memoryCache: new LRUCache<string, ParametersMemoryCacheEntry>({
+          max: 10,
+        }),
+      });
+      const parameters = new RemoteEvalParameters(parametersRow);
+      const key = {
+        projectName: "test-project",
+        slug: "saved-parameters",
+        version: "latest",
+      };
+
+      await cache.withNamespace("credential", "first-org").set(key, parameters);
+
+      expect(
+        await cache.withNamespace("credential", "first-org").get(key),
+      ).toBe(parameters);
+      expect(await cache.withNamespace("credential").get(key)).toBe(parameters);
+      expect(
+        await cache.withNamespace("credential", "second-org").get(key),
+      ).toBeUndefined();
     });
   });
 
@@ -2214,6 +2986,17 @@ describe("HTTPConnection POST retries", () => {
       state.apiConn().post("btql", {}, { signal: controller.signal }, 3),
     ).rejects.toBe(controller.signal.reason);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("preserves POST transport failures", async () => {
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+    const transportError = new TypeError("Network unavailable");
+    const fetchMock = vi.fn().mockRejectedValue(transportError);
+    state.setFetch(fetchMock as unknown as typeof globalThis.fetch);
+
+    await expect(state.apiConn().post("write", {})).rejects.toBe(
+      transportError,
+    );
   });
 });
 

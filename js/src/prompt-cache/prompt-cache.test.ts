@@ -1,6 +1,10 @@
 import * as fs from "fs/promises";
 import * as path from "path";
-import { PromptCache } from "./prompt-cache";
+import {
+  PromptCache,
+  type PromptDiskCacheEntry,
+  type PromptMemoryCacheEntry,
+} from "./prompt-cache";
 import { Prompt } from "../logger";
 import { tmpdir } from "os";
 import { beforeEach, describe, it, afterEach, expect } from "vitest";
@@ -43,8 +47,8 @@ describe("PromptCache", () => {
     // Create a unique temporary directory for each test.
     cacheDir = path.join(tmpdir(), `prompt-cache-test-${Date.now()}`);
     cache = new PromptCache({
-      memoryCache: new LRUCache<string, Prompt>({ max: 2 }),
-      diskCache: new DiskCache<Prompt>({
+      memoryCache: new LRUCache<string, PromptMemoryCacheEntry>({ max: 2 }),
+      diskCache: new DiskCache<PromptDiskCacheEntry>({
         cacheDir,
         max: 5,
         logWarnings: false,
@@ -83,6 +87,7 @@ describe("PromptCache", () => {
       // Original prompt should now be on disk but not in memory.
       const result = await cache.get(testKey);
       expect(result).toEqual(testPrompt);
+      expect(result).toBeInstanceOf(Prompt);
     });
 
     it("should return undefined for non-existent prompts", async () => {
@@ -121,6 +126,43 @@ describe("PromptCache", () => {
 
       expect(result1?.projectId).toBe(testKey.projectId);
       expect(result2?.projectId).toBe("different-project");
+    });
+
+    it("should isolate entries in different namespaces", async () => {
+      const firstCache = cache.withNamespace("first-api-key");
+      const secondCache = cache.withNamespace("second-api-key");
+
+      await firstCache.set(testKey, testPrompt);
+
+      expect(await firstCache.get(testKey)).toEqual(testPrompt);
+      expect(await secondCache.get(testKey)).toBeUndefined();
+      expect(await cache.get(testKey)).toBeUndefined();
+    });
+
+    it("should validate resolved identities within a credential namespace", async () => {
+      const firstCache = cache.withNamespace("credential", "first-org");
+      const secondCache = cache.withNamespace("credential", "second-org");
+
+      await firstCache.set(testKey, testPrompt);
+
+      expect(await firstCache.get(testKey)).toEqual(testPrompt);
+      expect(await cache.withNamespace("credential").get(testKey)).toEqual(
+        testPrompt,
+      );
+      expect(await secondCache.get(testKey)).toBeUndefined();
+    });
+
+    it("should retain a scoped entry when the cache size is one", async () => {
+      const singleEntryCache = new PromptCache({
+        memoryCache: new LRUCache<string, PromptMemoryCacheEntry>({ max: 1 }),
+      }).withNamespace("credential", "first-org");
+
+      await singleEntryCache.set(testKey, testPrompt);
+
+      expect(await singleEntryCache.get(testKey)).toBe(testPrompt);
+      expect(
+        await singleEntryCache.withNamespace("credential").get(testKey),
+      ).toBe(testPrompt);
     });
 
     it("should throw error if neither projectId nor projectName is provided", async () => {
@@ -238,7 +280,7 @@ describe("PromptCache", () => {
       );
       const brokenCache = new PromptCache({
         memoryCache: new LRUCache({ max: 2 }),
-        diskCache: new DiskCache<Prompt>({
+        diskCache: new DiskCache<PromptDiskCacheEntry>({
           cacheDir: nonExistentDir,
           max: 5,
           mkdir: false,
@@ -260,7 +302,7 @@ describe("PromptCache", () => {
       // Create a new cache instance with empty memory cache.
       const newCache = new PromptCache({
         memoryCache: new LRUCache({ max: 2 }),
-        diskCache: new DiskCache<Prompt>({
+        diskCache: new DiskCache<PromptDiskCacheEntry>({
           cacheDir,
           max: 5,
           logWarnings: false,
@@ -296,7 +338,7 @@ describe("PromptCache", () => {
       // Create a new cache instance (empty memory cache).
       const newCache = new PromptCache({
         memoryCache: new LRUCache({ max: 2 }),
-        diskCache: new DiskCache<Prompt>({
+        diskCache: new DiskCache<PromptDiskCacheEntry>({
           cacheDir,
           max: 5,
           logWarnings: false,
