@@ -23,6 +23,7 @@ To override the defaults, add the following entry to the profile's
 ```yaml
 - id: braintrust
   config:
+    apiKey: <your-api-key>
     projectName: DeepSeek Harness
 ```
 
