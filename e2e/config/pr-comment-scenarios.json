@@ -632,6 +632,7 @@
     "metadataScenario": "eve-instrumentation",
     "variants": [
       { "variantKey": "eve-v0", "label": "v0 pinned" },
+      { "variantKey": "eve-v0-provider", "label": "v0 provider minimum" },
       { "variantKey": "eve-v0-latest", "label": "v0 latest" }
     ]
   },

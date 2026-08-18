@@ -29,6 +29,7 @@ import type {
   EveRuntimeActionResult,
   EveRuntimeToolCallActionRequest,
   EveRuntimeToolResultActionResult,
+  EveSystemModelMessage,
 } from "../../vendor-sdk-types/eve";
 
 type SpanState = {
@@ -82,7 +83,10 @@ type EveStateHandle<T> = {
   update(fn: (current: T) => T): void;
 };
 
-type EveDefineState = <T>(name: string, initial: () => T) => EveStateHandle<T>;
+export type EveDefineState = <T>(
+  name: string,
+  initial: () => T,
+) => EveStateHandle<T>;
 
 type EveTraceState = {
   metadata: Record<string, unknown>;
@@ -135,8 +139,8 @@ export function braintrustEveHook(options: {
   };
 }
 
-/** Eve instrumentation helper for logger setup and durable LLM input capture. */
-export function braintrustEveInstrumentation(options: {
+/** Legacy Eve instrumentation helper for durable LLM input capture. */
+export function createLegacyEveInstrumentation(options: {
   defineState: EveDefineState;
   setup?: EveInstrumentationDefinition["setup"];
 }): EveInstrumentationDefinition {
@@ -1953,15 +1957,17 @@ function consumeCapturedEveModelInput(
   }
 }
 
-function capturedModelInput(
+export function capturedModelInput(
   modelInput: EveInstrumentationModelInput,
 ): CapturedEveModelInput | undefined {
   const { instructions, messages } = modelInput;
   const value: CapturedEveModelMessage[] = [];
   if (typeof instructions === "string") {
     value.push({ content: instructions, role: "system" });
-  } else if (instructions) {
+  } else if (Array.isArray(instructions)) {
     value.push(...instructions.map(capturedEveModelMessage));
+  } else if (instructions) {
+    value.push(capturedEveModelMessage(instructions as EveSystemModelMessage));
   }
   value.push(...messages.map(capturedEveModelMessage));
 
@@ -2288,7 +2294,7 @@ function toolKey(sessionId: string, callId: string): string {
   return `${sessionId}:${callId}`;
 }
 
-async function generateEveIds(
+export async function generateEveIds(
   kind: EveEntityKind,
   ...parts: string[]
 ): Promise<{ rowId: string; spanId: string }> {
