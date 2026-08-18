@@ -9,7 +9,22 @@ export interface HarnessContentBlock {
   readonly toolCallId?: string;
   readonly content?: readonly HarnessContentBlock[];
   readonly isError?: boolean;
-  readonly attachment?: unknown;
+  readonly attachment?: HarnessImageAttachmentRef;
+}
+
+export interface HarnessImageAttachmentRef {
+  readonly attachmentId: string;
+  readonly mediaType: "image/png" | "image/jpeg" | "image/webp" | "image/gif";
+  readonly bytes: number;
+  readonly width: number;
+  readonly height: number;
+  readonly name?: string;
+}
+
+export interface HarnessAttachmentStore {
+  readImage(
+    ref: HarnessImageAttachmentRef,
+  ): Promise<{ ref: HarnessImageAttachmentRef; data: Uint8Array }>;
 }
 
 export interface HarnessMessage {

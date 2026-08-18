@@ -2,7 +2,20 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mock = vi.hoisted(() => {
   let nextId = 0;
+  const attachments: MockAttachment[] = [];
   const spans: MockSpan[] = [];
+
+  class MockAttachment {
+    constructor(
+      readonly params: {
+        data: ArrayBuffer;
+        filename: string;
+        contentType: string;
+      },
+    ) {
+      attachments.push(this);
+    }
+  }
 
   class MockSpan {
     readonly id = `span-${++nextId}`;
@@ -38,10 +51,13 @@ const mock = vi.hoisted(() => {
   const initLogger = vi.fn(() => logger);
 
   return {
+    Attachment: MockAttachment,
+    attachments,
     initLogger,
     logger,
     reset() {
       nextId = 0;
+      attachments.length = 0;
       spans.length = 0;
       initLogger.mockClear();
       logger.flush.mockClear();
@@ -51,6 +67,7 @@ const mock = vi.hoisted(() => {
 });
 
 vi.mock("braintrust", () => ({
+  Attachment: mock.Attachment,
   initLogger: mock.initLogger,
   NOOP_SPAN: {},
   withCurrent: <R>(_span: unknown, callback: () => R): R => callback(),
@@ -65,7 +82,18 @@ function createContext(config: Config = {}) {
   const listeners = new Map<string, Listener>();
   let cleanup: (() => Promise<void>) | undefined;
   const warnings: string[] = [];
+  const readImage = vi.fn(
+    async (ref: {
+      attachmentId: string;
+      mediaType: string;
+      bytes: number;
+      width: number;
+      height: number;
+      name?: string;
+    }) => ({ ref, data: new Uint8Array([1, 2, 3]) }),
+  );
   const ctx = {
+    attachments: { readImage },
     logger: { warn: (message: string) => warnings.push(message) },
     on(event: string, listener: Listener) {
       listeners.set(event, listener);
@@ -83,6 +111,7 @@ function createContext(config: Config = {}) {
       if (!listener) throw new Error(`Missing listener for ${event}`);
       return listener;
     },
+    readImage,
     warnings,
   };
 }
@@ -117,6 +146,182 @@ describe("DeepSeek Harness plugin", () => {
       setCurrent: false,
     });
     expect(ConfigSchema.dict?.apiKey?.meta.role).toBe("secret");
+  });
+
+  test("only logs the supported tool definition fields", async () => {
+    const harness = createContext();
+    const stream = harness.listener("llm/stream")(
+      {
+        provider: "replay",
+        model: "replay-model",
+        messages: [],
+        tools: [
+          {
+            name: "lookup",
+            description: "Look something up",
+            parameters: { type: "object" },
+            handler: () => "must not be logged",
+          },
+        ],
+      },
+      () =>
+        (async function* () {
+          yield { type: "finish", reason: { kind: "stop" } };
+        })(),
+    );
+    await consume(stream);
+
+    expect(mock.spans[0]?.args).toMatchObject({
+      event: {
+        metadata: {
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "lookup",
+                description: "Look something up",
+                parameters: { type: "object" },
+              },
+            },
+          ],
+        },
+      },
+    });
+    expect(
+      (
+        mock.spans[0]?.args.event as {
+          metadata: { tools: { function: Record<string, unknown> }[] };
+        }
+      ).metadata.tools[0]?.function,
+    ).not.toHaveProperty("handler");
+  });
+
+  test("converts Harness image references to Braintrust attachments", async () => {
+    const harness = createContext();
+    const currentSession = session();
+    const image = {
+      attachmentId: "image-1",
+      mediaType: "image/png",
+      bytes: 3,
+      width: 1,
+      height: 1,
+      name: "diagram.png",
+    };
+    const message = {
+      role: "user",
+      content: [
+        { type: "text", text: "describe this" },
+        { type: "image", attachment: image },
+      ],
+      source: { kind: "user" },
+    };
+
+    harness.listener("session/event")(currentSession, {
+      type: "turn/start",
+      data: { turn: 1 },
+    });
+    harness.listener("session/event")(currentSession, {
+      type: "user/message",
+      data: message,
+    });
+    await consume(
+      harness.listener("llm/stream")(
+        {
+          provider: "replay",
+          model: "replay-model",
+          messages: [message],
+          sessionId: currentSession.id,
+        },
+        () =>
+          (async function* () {
+            yield { type: "finish", reason: { kind: "stop" } };
+          })(),
+      ),
+    );
+    await harness.listener("session/flush")(currentSession);
+
+    expect(harness.readImage).toHaveBeenCalledOnce();
+    expect(harness.readImage).toHaveBeenCalledWith(image);
+    expect(mock.attachments).toHaveLength(1);
+    expect(mock.attachments[0]?.params).toMatchObject({
+      filename: "diagram.png",
+      contentType: "image/png",
+    });
+    expect(new Uint8Array(mock.attachments[0]?.params.data ?? [])).toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+
+    const expectedImagePart = {
+      type: "image_url",
+      image_url: { url: mock.attachments[0] },
+    };
+    const turn = mock.spans.find(
+      (span) => span.args.name === "deepseek_harness.turn",
+    );
+    const model = mock.spans.find(
+      (span) => span.args.name === "deepseek_harness.step",
+    );
+    expect(turn?.logs).toContainEqual({
+      input: [
+        {
+          role: "user",
+          content: [{ type: "text", text: "describe this" }, expectedImagePart],
+        },
+      ],
+    });
+    expect(model?.logs).toContainEqual({
+      input: [
+        {
+          role: "user",
+          content: [{ type: "text", text: "describe this" }, expectedImagePart],
+        },
+      ],
+    });
+  });
+
+  test("preserves Harness image references when attachment conversion fails", async () => {
+    const harness = createContext();
+    const image = {
+      attachmentId: "image-1",
+      mediaType: "image/png",
+      bytes: 3,
+      width: 1,
+      height: 1,
+    };
+    harness.readImage.mockRejectedValueOnce(new Error("storage unavailable"));
+
+    await consume(
+      harness.listener("llm/stream")(
+        {
+          provider: "replay",
+          model: "replay-model",
+          messages: [
+            {
+              role: "user",
+              content: [{ type: "image", attachment: image }],
+              source: { kind: "user" },
+            },
+          ],
+        },
+        () =>
+          (async function* () {
+            yield { type: "finish", reason: { kind: "stop" } };
+          })(),
+      ),
+    );
+    await harness.listener("session/flush")(session());
+
+    expect(mock.spans[0]?.logs).toContainEqual({
+      input: [
+        {
+          role: "user",
+          content: [{ type: "image", attachment: image }],
+        },
+      ],
+    });
+    expect(harness.warnings).toContainEqual(
+      "Braintrust could not convert a Harness image attachment: Error: storage unavailable",
+    );
   });
 
   test("creates a separate root trace for each user turn", async () => {

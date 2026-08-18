@@ -1,14 +1,24 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import type { Context } from "@deepseek-ai/cordis";
+// Load the Harness packages' compile-time Cordis event augmentations.
 import type {} from "@deepseek-ai/dsh-llm";
 import type {} from "@deepseek-ai/dsh-session";
 import type {} from "@deepseek-ai/dsh-tools";
 import z from "@deepseek-ai/schemastery";
-import { initLogger, NOOP_SPAN, withCurrent } from "braintrust";
+import {
+  Attachment,
+  initLogger,
+  NOOP_SPAN,
+  withCurrent,
+  type Span,
+  type StartSpanArgs,
+} from "braintrust";
 import type {
+  HarnessAttachmentStore,
   HarnessContentBlock,
   HarnessGenerateOptions,
+  HarnessImageAttachmentRef,
   HarnessMessage,
   HarnessSession,
   HarnessSessionEvent,
@@ -46,35 +56,6 @@ export const Config: z<Config> = z.object({
   appUrl: z.string(),
 });
 
-interface BraintrustEvent {
-  input?: unknown;
-  output?: unknown;
-  error?: unknown;
-  metadata?: Record<string, unknown>;
-  metrics?: Record<string, unknown>;
-}
-
-interface BraintrustStartSpanArgs {
-  name?: string;
-  type?: "task" | "llm" | "tool";
-  event?: BraintrustEvent;
-  spanId?: string;
-  parentSpanIds?:
-    | { rootSpanId: string; spanId: string }
-    | { rootSpanId: string; parentSpanIds: string[] };
-}
-
-interface BraintrustSpan {
-  startSpan(args: BraintrustStartSpanArgs): BraintrustSpan;
-  log(event: BraintrustEvent): void;
-  end(): number;
-}
-
-interface BraintrustLogger {
-  startSpan(args: BraintrustStartSpanArgs): BraintrustSpan;
-  flush(): Promise<void>;
-}
-
 type TokenMetrics = Record<string, number> & {
   tokens: number;
   prompt_tokens: number;
@@ -87,14 +68,14 @@ type TokenMetrics = Record<string, number> & {
 interface TurnState {
   readonly sessionId: string;
   readonly turn: number;
-  readonly span: BraintrustSpan;
-  readonly input: unknown[];
+  readonly span: Span;
+  readonly input: Promise<Record<string, unknown>>[];
   metrics: TokenMetrics;
   output?: string;
 }
 
 interface ToolState {
-  readonly span: BraintrustSpan;
+  readonly span: Span;
   readonly turn?: TurnState;
 }
 
@@ -111,7 +92,7 @@ interface AssistantAccumulator {
   failure?: string;
 }
 
-function spanArgs(args: BraintrustStartSpanArgs): BraintrustStartSpanArgs {
+function spanArgs(args: StartSpanArgs): StartSpanArgs {
   return Object.assign(args, {
     [INSTRUMENTATION_SYMBOL]: INSTRUMENTATION_NAME,
   });
@@ -124,40 +105,58 @@ function contentText(blocks: readonly HarnessContentBlock[]): string {
     .join("");
 }
 
-function normalizeBlocks(blocks: readonly HarnessContentBlock[]): unknown {
+async function normalizeBlocks(
+  blocks: readonly HarnessContentBlock[],
+  resolveImage: (
+    ref: HarnessImageAttachmentRef,
+  ) => Promise<Attachment | undefined>,
+): Promise<unknown> {
   if (blocks.length === 0) return "";
   if (blocks.every((block) => block.type === "text")) {
     return contentText(blocks);
   }
-  return blocks.map((block) => {
-    switch (block.type) {
-      case "text":
-        return { type: "text", text: block.text ?? "" };
-      case "reasoning":
-        return { type: "reasoning", text: block.text ?? "" };
-      case "tool-call":
-        return {
-          type: "tool_call",
-          id: block.id,
-          name: block.name,
-          arguments: block.arguments,
-        };
-      case "tool-result":
-        return {
-          type: "tool_result",
-          tool_call_id: block.toolCallId,
-          content: normalizeBlocks(block.content ?? []),
-          ...(block.isError ? { is_error: true } : {}),
-        };
-      case "image":
-        return { type: "image", attachment: block.attachment };
-      default:
-        return { type: block.type };
-    }
-  });
+  return Promise.all(
+    blocks.map(async (block) => {
+      switch (block.type) {
+        case "text":
+          return { type: "text", text: block.text ?? "" };
+        case "reasoning":
+          return { type: "reasoning", text: block.text ?? "" };
+        case "tool-call":
+          return {
+            type: "tool_call",
+            id: block.id,
+            name: block.name,
+            arguments: block.arguments,
+          };
+        case "tool-result":
+          return {
+            type: "tool_result",
+            tool_call_id: block.toolCallId,
+            content: await normalizeBlocks(block.content ?? [], resolveImage),
+            ...(block.isError ? { is_error: true } : {}),
+          };
+        case "image": {
+          const attachment = block.attachment
+            ? await resolveImage(block.attachment)
+            : undefined;
+          return attachment
+            ? { type: "image_url", image_url: { url: attachment } }
+            : { type: "image", attachment: block.attachment };
+        }
+        default:
+          return { type: block.type };
+      }
+    }),
+  );
 }
 
-function normalizeMessage(message: HarnessMessage): Record<string, unknown> {
+async function normalizeMessage(
+  message: HarnessMessage,
+  resolveImage: (
+    ref: HarnessImageAttachmentRef,
+  ) => Promise<Attachment | undefined>,
+): Promise<Record<string, unknown>> {
   const toolResult = message.content.find(
     (block) => block.type === "tool-result",
   );
@@ -165,7 +164,7 @@ function normalizeMessage(message: HarnessMessage): Record<string, unknown> {
     return {
       role: "tool",
       tool_call_id: toolResult.toolCallId ?? message.source?.callId,
-      content: normalizeBlocks(toolResult.content ?? []),
+      content: await normalizeBlocks(toolResult.content ?? [], resolveImage),
     };
   }
 
@@ -188,15 +187,24 @@ function normalizeMessage(message: HarnessMessage): Record<string, unknown> {
       }));
     if (calls.length > 0) normalized.tool_calls = calls;
   } else {
-    normalized.content = normalizeBlocks(message.content);
+    normalized.content = await normalizeBlocks(message.content, resolveImage);
   }
   return normalized;
 }
 
-function normalizeInput(options: HarnessGenerateOptions): unknown[] {
+async function normalizeInput(
+  options: HarnessGenerateOptions,
+  resolveImage: (
+    ref: HarnessImageAttachmentRef,
+  ) => Promise<Attachment | undefined>,
+): Promise<unknown[]> {
   return [
     ...(options.system ? [{ role: "system", content: options.system }] : []),
-    ...options.messages.map(normalizeMessage),
+    ...(await Promise.all(
+      options.messages.map((message) =>
+        normalizeMessage(message, resolveImage),
+      ),
+    )),
   ];
 }
 
@@ -363,12 +371,14 @@ export function apply(ctx: Context, config: Config = {}): void {
     ...(config.orgName ? { orgName: config.orgName } : {}),
     ...(config.appUrl ? { appUrl: config.appUrl } : {}),
     setCurrent: false,
-  }) as BraintrustLogger;
+  });
   const turns = new Map<string, Map<number, TurnState>>();
   const activeTurns = new Map<string, TurnState>();
-  const childParents = new Map<string, BraintrustSpan>();
-  const toolSpans = new Map<symbol, BraintrustSpan>();
+  const childParents = new Map<string, Span>();
+  const toolSpans = new Map<symbol, Span>();
   const toolContext = new AsyncLocalStorage<ToolState>();
+  const attachmentCache = new Map<string, Promise<Attachment>>();
+  const pendingLogs = new Set<Promise<void>>();
 
   const warn = (message: string, error: unknown): void => {
     try {
@@ -378,10 +388,55 @@ export function apply(ctx: Context, config: Config = {}): void {
     }
   };
 
-  const startChild = (
-    parent: BraintrustSpan | undefined,
-    args: BraintrustStartSpanArgs,
-  ): BraintrustSpan => {
+  const resolveImage = async (
+    ref: HarnessImageAttachmentRef,
+  ): Promise<Attachment | undefined> => {
+    const attachmentStore = (
+      ctx as Context & { attachments?: HarnessAttachmentStore }
+    ).attachments;
+    if (!attachmentStore) {
+      warn(
+        "Braintrust could not convert a Harness image attachment",
+        new Error("Harness attachment service is unavailable"),
+      );
+      return undefined;
+    }
+    const key = String(ref.attachmentId);
+    let pending = attachmentCache.get(key);
+    if (!pending) {
+      pending = attachmentStore.readImage(ref).then((stored) => {
+        const mediaType = stored.ref.mediaType;
+        return new Attachment({
+          data: new Uint8Array(stored.data).buffer,
+          filename:
+            stored.ref.name ??
+            `attachment.${mediaType === "image/jpeg" ? "jpg" : mediaType.slice("image/".length)}`,
+          contentType: mediaType,
+        });
+      });
+      attachmentCache.set(key, pending);
+    }
+    try {
+      return await pending;
+    } catch (error) {
+      attachmentCache.delete(key);
+      warn("Braintrust could not convert a Harness image attachment", error);
+      return undefined;
+    }
+  };
+
+  const trackPendingLog = (pending: Promise<void>): void => {
+    pendingLogs.add(pending);
+    void pending.finally(() => pendingLogs.delete(pending));
+  };
+
+  const flushPendingLogs = async (): Promise<void> => {
+    while (pendingLogs.size > 0) {
+      await Promise.allSettled([...pendingLogs]);
+    }
+  };
+
+  const startChild = (parent: Span | undefined, args: StartSpanArgs): Span => {
     if (parent) return parent.startSpan(spanArgs(args));
     const spanId = randomUUID();
     return withCurrent(NOOP_SPAN, () =>
@@ -462,8 +517,16 @@ export function apply(ctx: Context, config: Config = {}): void {
       if (event.type === "user/message") {
         const message = eventMessage(event.data);
         if (message) {
-          state.input.push(normalizeMessage(message));
-          state.span.log({ input: state.input });
+          state.input.push(normalizeMessage(message, resolveImage));
+          const pending = Promise.all(state.input)
+            .then((input) => state.span.log({ input }))
+            .catch((error) =>
+              warn(
+                "Braintrust could not normalize a Harness turn input",
+                error,
+              ),
+            );
+          trackPendingLog(pending);
         }
       } else if (event.type === "assistant/message") {
         const message = eventMessage(event.data);
@@ -497,9 +560,14 @@ export function apply(ctx: Context, config: Config = {}): void {
     }
   });
 
+  ctx.on("session/flush", async () => {
+    await flushPendingLogs();
+    attachmentCache.clear();
+  });
+
   ctx.on("llm/stream", (rawOptions, next) => {
     const options = rawOptions as unknown as HarnessGenerateOptions;
-    let span: BraintrustSpan | undefined;
+    let span: Span | undefined;
     let turn: TurnState | undefined;
     try {
       turn = options.sessionId
@@ -515,11 +583,15 @@ export function apply(ctx: Context, config: Config = {}): void {
           ? { max_tokens: options.maxTokens }
           : {}),
         ...(options.stop !== undefined ? { stop: options.stop } : {}),
-        ...(options.tools !== undefined
+        ...(options.tools && options.tools.length > 0
           ? {
               tools: options.tools.map((tool) => ({
                 type: "function",
-                function: tool,
+                function: {
+                  name: tool.name,
+                  description: tool.description,
+                  parameters: tool.parameters,
+                },
               })),
             }
           : {}),
@@ -533,8 +605,15 @@ export function apply(ctx: Context, config: Config = {}): void {
       span = startChild(turn?.span, {
         name: "deepseek_harness.step",
         type: "llm",
-        event: { input: normalizeInput(options), metadata },
+        event: { metadata },
       });
+      const modelSpan = span;
+      const pending = normalizeInput(options, resolveImage)
+        .then((input) => modelSpan.log({ input }))
+        .catch((error) =>
+          warn("Braintrust could not normalize a Harness model input", error),
+        );
+      trackPendingLog(pending);
     } catch (error) {
       warn("Braintrust could not start a Harness model span", error);
     }
@@ -614,7 +693,7 @@ export function apply(ctx: Context, config: Config = {}): void {
 
   ctx.on("tools/execute", async (rawExec, next) => {
     const exec = rawExec as unknown as HarnessToolExecution;
-    let span: BraintrustSpan | undefined;
+    let span: Span | undefined;
     let turn: TurnState | undefined;
     try {
       const sessionId = exec.agent?.session.id;
@@ -644,21 +723,35 @@ export function apply(ctx: Context, config: Config = {}): void {
         : next());
       if (span) {
         const normalized = result as unknown as HarnessToolResult;
-        span.log({
-          output:
-            normalized.value !== undefined
-              ? normalized.value
-              : normalizeBlocks(normalized.content ?? []),
-          ...(normalized.isError
-            ? {
-                error: new Error(
-                  normalized.error?.message ||
-                    contentText(normalized.content ?? []) ||
-                    "Harness tool failed",
-                ),
-              }
-            : {}),
-        });
+        const error = normalized.isError
+          ? new Error(
+              normalized.error?.message ||
+                contentText(normalized.content ?? []) ||
+                "Harness tool failed",
+            )
+          : undefined;
+        if (normalized.value !== undefined) {
+          span.log({
+            output: normalized.value,
+            ...(error ? { error } : {}),
+          });
+        } else {
+          const toolSpan = span;
+          const pending = normalizeBlocks(
+            normalized.content ?? [],
+            resolveImage,
+          )
+            .then((output) =>
+              toolSpan.log({ output, ...(error ? { error } : {}) }),
+            )
+            .catch((loggingError) =>
+              warn(
+                "Braintrust could not normalize a Harness tool output",
+                loggingError,
+              ),
+            );
+          trackPendingLog(pending);
+        }
       }
       return result;
     } catch (error) {
@@ -699,6 +792,8 @@ export function apply(ctx: Context, config: Config = {}): void {
       childParents.clear();
       toolSpans.clear();
       try {
+        await flushPendingLogs();
+        attachmentCache.clear();
         await logger.flush();
       } catch (error) {
         warn("Braintrust could not flush Harness traces", error);
