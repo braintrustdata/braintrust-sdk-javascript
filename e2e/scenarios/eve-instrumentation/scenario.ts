@@ -1,6 +1,13 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { once } from "node:events";
-import { readFile, symlink, unlink } from "node:fs/promises";
+import {
+  copyFile,
+  mkdir,
+  readFile,
+  rm,
+  symlink,
+  unlink,
+} from "node:fs/promises";
 import net from "node:net";
 import path from "node:path";
 import { runMain } from "../../helpers/scenario-runtime";
@@ -30,6 +37,31 @@ async function main() {
     }
   }
   await symlink(evePackageDir, eveModuleDir, "dir");
+
+  const agentDir = path.join(process.cwd(), "agent");
+  await rm(path.join(agentDir, "instrumentation.ts"), { force: true });
+  await rm(path.join(agentDir, "instrumentation"), {
+    force: true,
+    recursive: true,
+  });
+  await rm(path.join(agentDir, "channels", "eve.ts"), { force: true });
+  if (process.env.EVE_INSTRUMENTATION_PROVIDER === "1") {
+    await mkdir(path.join(agentDir, "instrumentation"), { recursive: true });
+    await mkdir(path.join(agentDir, "channels"), { recursive: true });
+    await copyFile(
+      path.join(process.cwd(), "config", "provider-instrumentation.ts"),
+      path.join(agentDir, "instrumentation", "braintrust.ts"),
+    );
+    await copyFile(
+      path.join(process.cwd(), "config", "provider-eve-channel.ts"),
+      path.join(agentDir, "channels", "eve.ts"),
+    );
+  } else {
+    await copyFile(
+      path.join(process.cwd(), "config", "legacy-instrumentation.ts"),
+      path.join(agentDir, "instrumentation.ts"),
+    );
+  }
 
   const eveBin = path.join(evePackageDir, eveBinPath);
 
@@ -68,10 +100,8 @@ async function main() {
       continuationToken?: string;
       sessionId?: string;
     };
-    if (!body.sessionId || !body.continuationToken) {
-      throw new Error(
-        `Eve session create did not return a sessionId and continuationToken`,
-      );
+    if (!body.sessionId) {
+      throw new Error(`Eve session create did not return a sessionId`);
     }
 
     const seenSessionIds = new Set([body.sessionId]);
@@ -81,11 +111,16 @@ async function main() {
       seenSessionIds,
       "session.waiting",
     );
+    // Eve can publish the waiting boundary just before the completed turn's
+    // model history becomes visible to a follow-up request.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     const followUp = await fetch(
       `${baseUrl}/eve/v1/session/${body.sessionId}`,
       {
         body: JSON.stringify({
-          continuationToken: body.continuationToken,
+          ...(body.continuationToken
+            ? { continuationToken: body.continuationToken }
+            : {}),
           message: "Run the Braintrust Eve instrumentation e2e scenario again",
         }),
         headers: { "content-type": "application/json" },

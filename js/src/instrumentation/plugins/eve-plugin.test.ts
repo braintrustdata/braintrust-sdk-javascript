@@ -17,7 +17,8 @@ import {
   withCurrent,
 } from "../../logger";
 import * as instrumentationExports from "../index";
-import { braintrustEveHook, braintrustEveInstrumentation } from "./eve-plugin";
+import { braintrustEveInstrumentation } from "./eve-instrumentation";
+import { braintrustEveHook } from "./eve-plugin";
 import type {
   EveHandleMessageStreamEvent,
   EveHookContext,
@@ -99,6 +100,9 @@ describe("braintrustEveHook", () => {
       recordOutputs: false,
       setup,
     });
+    expect(
+      Reflect.get(instrumentation, Symbol.for("eve.instrumentation.provider")),
+    ).toBe(true);
     expect(typeof instrumentation.events?.["step.started"]).toBe("function");
   });
 
