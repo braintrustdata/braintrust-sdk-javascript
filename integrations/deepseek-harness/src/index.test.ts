@@ -35,12 +35,15 @@ const mock = vi.hoisted(() => {
     startSpan: (args: Record<PropertyKey, unknown>) => new MockSpan(args),
     flush: vi.fn(async () => undefined),
   };
+  const initLogger = vi.fn(() => logger);
 
   return {
+    initLogger,
     logger,
     reset() {
       nextId = 0;
       spans.length = 0;
+      initLogger.mockClear();
       logger.flush.mockClear();
     },
     spans,
@@ -48,17 +51,17 @@ const mock = vi.hoisted(() => {
 });
 
 vi.mock("braintrust", () => ({
-  initLogger: vi.fn(() => mock.logger),
+  initLogger: mock.initLogger,
   NOOP_SPAN: {},
   withCurrent: <R>(_span: unknown, callback: () => R): R => callback(),
 }));
 
 import type { Context } from "@deepseek-ai/cordis";
-import { apply } from "./index";
+import { apply, Config as ConfigSchema, type Config } from "./index";
 
 type Listener = (...args: any[]) => any;
 
-function createContext() {
+function createContext(config: Config = {}) {
   const listeners = new Map<string, Listener>();
   let cleanup: (() => Promise<void>) | undefined;
   const warnings: string[] = [];
@@ -72,7 +75,7 @@ function createContext() {
       return () => undefined;
     },
   };
-  apply(ctx as unknown as Context);
+  apply(ctx as unknown as Context, config);
   return {
     cleanup: () => cleanup?.(),
     listener: (event: string) => {
@@ -104,6 +107,17 @@ async function consume(iterable: AsyncIterable<unknown>): Promise<unknown[]> {
 
 describe("DeepSeek Harness plugin", () => {
   beforeEach(() => mock.reset());
+
+  test("accepts an API key as a secret plugin setting", () => {
+    createContext({ apiKey: "secret-key" });
+
+    expect(mock.initLogger).toHaveBeenCalledWith({
+      apiKey: "secret-key",
+      projectName: "DeepSeek Harness",
+      setCurrent: false,
+    });
+    expect(ConfigSchema.dict?.apiKey?.meta.role).toBe("secret");
+  });
 
   test("creates a separate root trace for each user turn", async () => {
     const harness = createContext();

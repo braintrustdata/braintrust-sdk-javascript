@@ -29,6 +29,8 @@ export const name = "braintrust";
 export const inject = ["sessions", "llm", "tools"];
 
 export interface Config {
+  /** Braintrust API key. Falls back to BRAINTRUST_API_KEY when omitted. */
+  apiKey?: string;
   /** Braintrust project receiving Harness traces. */
   projectName?: string;
   /** Optional Braintrust organization name. */
@@ -38,6 +40,7 @@ export interface Config {
 }
 
 export const Config: z<Config> = z.object({
+  apiKey: z.string().role("secret"),
   projectName: z.string().default(DEFAULT_PROJECT_NAME),
   orgName: z.string(),
   appUrl: z.string(),
@@ -355,6 +358,7 @@ function eventMessage(
 /** Install Braintrust tracing into a DeepSeek Harness Cordis context. */
 export function apply(ctx: Context, config: Config = {}): void {
   const logger = initLogger({
+    ...(config.apiKey ? { apiKey: config.apiKey } : {}),
     projectName: config.projectName ?? DEFAULT_PROJECT_NAME,
     ...(config.orgName ? { orgName: config.orgName } : {}),
     ...(config.appUrl ? { appUrl: config.appUrl } : {}),

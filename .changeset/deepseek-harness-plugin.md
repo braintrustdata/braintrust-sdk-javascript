@@ -1,5 +1,5 @@
 ---
-"@braintrust/deepseek-harness": minor
+"@braintrust/deepseek-harness": major
 "braintrust": minor
 ---
 

@@ -7,20 +7,27 @@ multiple turns belong to the same Harness session.
 ## Install
 
 ```bash
-npm install @braintrust/deepseek-harness
+export BRAINTRUST_API_KEY=<your-api-key>
+dsh plugin --profile web add @braintrust/deepseek-harness
 ```
 
-Set `BRAINTRUST_API_KEY`, then add the plugin to your Harness profile patch:
+The command installs the package and activates its bundled Cordis patch for the
+`web` profile. Replace `web` with the Harness profile you want to instrument.
+The plugin reads `BRAINTRUST_API_KEY` when no API key is configured in Harness.
+
+## Configure
+
+To override the defaults, add the following entry to the profile's
+`cordis.patch.yml`:
 
 ```yaml
-- insert:
-    - id: braintrust
-      name: "@braintrust/deepseek-harness"
-      config:
-        projectName: DeepSeek Harness
+- id: braintrust
+  config:
+    projectName: DeepSeek Harness
 ```
 
-The optional configuration fields are `projectName`, `orgName`, and `appUrl`.
-`projectName` defaults to `DeepSeek Harness`. Authentication always uses the
-standard Braintrust environment configuration; API keys are not accepted in
-the YAML configuration.
+The optional configuration fields are `apiKey`, `projectName`, `orgName`, and
+`appUrl`. `projectName` defaults to `DeepSeek Harness`. You can set `apiKey`
+under **Settings > Plugins** in Harness; it is declared as a secret field so
+the settings UI handles it as a credential. A configured `apiKey` takes
+precedence over the `BRAINTRUST_API_KEY` environment variable.
