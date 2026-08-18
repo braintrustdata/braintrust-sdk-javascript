@@ -55,7 +55,7 @@ function parsePositiveIntegerEnv(envVar: string, defaultValue: number): number {
   return Number.isInteger(value) && value > 0 ? value : defaultValue;
 }
 
-export function createCacheLayers<T>({
+export function createCacheLayers<MemoryEntry, DiskEntry = MemoryEntry>({
   memoryMaxEnvVar,
   diskCacheDirEnvVar,
   diskMaxEnvVar,
@@ -66,13 +66,13 @@ export function createCacheLayers<T>({
   diskMaxEnvVar: string;
   getDefaultDiskCacheDir: () => string;
 }): {
-  memoryCache?: LRUCache<string, T>;
-  diskCache?: DiskCache<T>;
+  memoryCache?: LRUCache<string, MemoryEntry>;
+  diskCache?: DiskCache<DiskEntry>;
 } {
   const mode = parseCacheMode();
   const memoryCache =
     mode === "mixed" || mode === "memory"
-      ? new LRUCache<string, T>({
+      ? new LRUCache<string, MemoryEntry>({
           max: parsePositiveIntegerEnv(
             memoryMaxEnvVar,
             DEFAULT_CACHE_MEMORY_MAX,
@@ -80,10 +80,10 @@ export function createCacheLayers<T>({
         })
       : undefined;
 
-  let diskCache: DiskCache<T> | undefined;
+  let diskCache: DiskCache<DiskEntry> | undefined;
   if (mode === "mixed" || mode === "disk") {
     if (canUseDiskCache()) {
-      diskCache = new DiskCache<T>({
+      diskCache = new DiskCache<DiskEntry>({
         cacheDir: iso.getEnv(diskCacheDirEnvVar) ?? getDefaultDiskCacheDir(),
         max: parsePositiveIntegerEnv(diskMaxEnvVar, DEFAULT_CACHE_DISK_MAX),
       });
