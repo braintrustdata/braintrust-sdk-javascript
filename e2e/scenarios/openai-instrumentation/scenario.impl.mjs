@@ -650,8 +650,7 @@ export async function runOpenAIInstrumentationScenario(options) {
             }),
           )
           .join("\n");
-        const created = await startOpenAIBatchTrace({
-          client: batchFixtureClient,
+        const batchParams = await startOpenAIBatchTrace({
           inputFile: { id: "file_batch_e2e_fixture" },
           input,
           params: {
@@ -659,6 +658,7 @@ export async function runOpenAIInstrumentationScenario(options) {
             endpoint: "/v1/chat/completions",
           },
         });
+        const created = await batchFixtureClient.batches.create(batchParams);
 
         const completedAt = Date.now() / 1000 + 60;
         const completed = {
@@ -714,7 +714,7 @@ export async function runOpenAIInstrumentationScenario(options) {
         );
         await completeOpenAIBatchTrace({
           batch: completed,
-          input,
+          inputFile: input,
           // Batch results are not guaranteed to preserve input order.
           outputFile,
           errorFile,
@@ -724,8 +724,8 @@ export async function runOpenAIInstrumentationScenario(options) {
             data: { id: completed.id },
           },
         });
-        if ((await outputFile).bodyUsed || (await errorFile).bodyUsed) {
-          throw new Error("Expected batch result responses to remain unread");
+        if (!(await outputFile).bodyUsed || !(await errorFile).bodyUsed) {
+          throw new Error("Expected batch result responses to be consumed");
         }
       });
     },

@@ -52,18 +52,12 @@ async function startTestBatchTrace(args: {
   inputFile: OpenAIFileLike;
   params: OpenAIBatchCreateInputParams;
 }) {
-  return await startOpenAIBatchTrace({
-    ...args,
-    client: {
-      batches: {
-        create: async (params) => ({
-          id: `batch_${args.inputFile.id}`,
-          ...params,
-          status: "validating",
-        }),
-      },
-    },
-  });
+  const params = await startOpenAIBatchTrace(args);
+  return {
+    id: `batch_${args.inputFile.id}`,
+    ...params,
+    status: "validating",
+  };
 }
 
 function chunkedJSONLResponse(
@@ -183,28 +177,25 @@ describe("OpenAI Batch instrumentation", () => {
     ).not.toHaveProperty("user");
   });
 
-  it("does not start spans when OpenAI returns a different batch context", async () => {
-    const batch = await startOpenAIBatchTrace({
-      inputFile: { id: "file_mismatched_response" },
+  it("prepares parameters without calling the OpenAI API", async () => {
+    const params = await startOpenAIBatchTrace({
+      inputFile: { id: "file_prepare" },
       input: [chatInput[0]],
       params: {
         endpoint: "/v1/chat/completions",
         completion_window: "24h",
       },
-      client: {
-        batches: {
-          create: async (params) => ({
-            ...params,
-            id: "batch_mismatched_response",
-            endpoint: "/v1/responses",
-            status: "validating",
-          }),
-        },
-      },
     });
 
-    expect(batch.endpoint).toBe("/v1/responses");
-    expect(await backgroundLogger.drain()).toEqual([]);
+    expect(params).toMatchObject({
+      input_file_id: "file_prepare",
+      endpoint: "/v1/chat/completions",
+      completion_window: "24h",
+      metadata: {
+        [BRAINTRUST_OPENAI_BATCH_CONTEXT_KEY]: expect.any(String),
+      },
+    });
+    expect(await backgroundLogger.drain()).toHaveLength(2);
   });
 
   it("keeps separate batch operations distinct when they reuse an input file", async () => {
@@ -256,7 +247,7 @@ describe("OpenAI Batch instrumentation", () => {
         completed_at: 200,
         metadata: params.metadata,
       },
-      input: [chatInput[0]],
+      inputFile: [chatInput[0]],
       outputFile: [
         {
           custom_id: "ok",
@@ -307,7 +298,7 @@ describe("OpenAI Batch instrumentation", () => {
     await expect(
       completeOpenAIBatchTrace({
         batch,
-        input: chatInput,
+        inputFile: chatInput,
         outputFile: Promise.reject(new Error("output unavailable")),
         errorFile: Promise.reject(new Error("errors unavailable")),
       }),
@@ -380,20 +371,22 @@ describe("OpenAI Batch instrumentation", () => {
       errorRecords,
       waitForBothReaders,
     );
+    const inputResponse = chunkedJSONLResponse(chatInput);
     const completedAt = Date.now() / 1000 + 60;
     batch.completed_at = completedAt;
 
     await expect(
       completeOpenAIBatchTrace({
         batch,
-        input: chatInput,
+        inputFile: Promise.resolve(inputResponse),
         outputFile: Promise.resolve(outputResponse),
         errorFile: Promise.resolve(errorResponse),
       }),
     ).resolves.toBe(batch);
     expect(readersStarted).toBe(2);
-    expect(outputResponse.bodyUsed).toBe(false);
-    expect(errorResponse.bodyUsed).toBe(false);
+    expect(inputResponse.bodyUsed).toBe(true);
+    expect(outputResponse.bodyUsed).toBe(true);
+    expect(errorResponse.bodyUsed).toBe(true);
     const rows = (await backgroundLogger.drain()) as Array<Record<string, any>>;
     expect(rows).toHaveLength(3);
     expect(rows.map((row) => row.id).sort()).toEqual(pendingIds);
@@ -425,7 +418,7 @@ describe("OpenAI Batch instrumentation", () => {
 
     await completeOpenAIBatchTrace({
       batch,
-      input: chatInput,
+      inputFile: chatInput,
       outputFile: Promise.resolve(chunkedJSONLResponse(outputRecords)),
       errorFile: Promise.resolve(chunkedJSONLResponse(errorRecords)),
     });
@@ -453,7 +446,7 @@ describe("OpenAI Batch instrumentation", () => {
         completed_at: 400,
         request_counts: { completed: 1, failed: 1, total: 2 },
       },
-      input: chatInput,
+      inputFile: chatInput,
       outputFile: [
         {
           custom_id: "ok",
@@ -494,7 +487,7 @@ describe("OpenAI Batch instrumentation", () => {
         request_counts: { completed: 1, failed: 1, total: 2 },
         metadata: params.metadata,
       },
-      input: chatInput.map((record) => ({
+      inputFile: chatInput.map((record) => ({
         ...record,
         body: {
           ...record.body,
@@ -538,7 +531,7 @@ describe("OpenAI Batch instrumentation", () => {
         request_counts: { completed: 1, failed: 0, total: 1 },
         metadata: params.metadata,
       },
-      input: [chatInput[0]],
+      inputFile: [chatInput[0]],
       outputFile: [
         {
           custom_id: "ok",
@@ -605,7 +598,7 @@ describe("OpenAI Batch instrumentation", () => {
 
     await completeOpenAIBatchTrace({
       batch,
-      input: input(),
+      inputFile: input(),
       outputFile,
       webhook: {
         type: "batch.completed",
@@ -634,7 +627,7 @@ describe("OpenAI Batch instrumentation", () => {
 
     await completeOpenAIBatchTrace({
       batch,
-      input: input(),
+      inputFile: input(),
       outputFile,
       webhook: { type: "batch.completed", data: { id: "another_batch" } },
     });
@@ -674,7 +667,7 @@ describe("OpenAI Batch instrumentation", () => {
         completed_at: completedAt,
         metadata: params.metadata,
       },
-      input: [
+      inputFile: [
         {
           custom_id: "response_1",
           method: "POST",

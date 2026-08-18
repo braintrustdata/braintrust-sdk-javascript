@@ -3,11 +3,11 @@ export type OpenAIBatchJSONL =
   | Iterable<unknown>
   | AsyncIterable<unknown>;
 
-type OpenAIBatchResultFileContent = OpenAIBatchJSONL | Response;
+type OpenAIBatchFileContent = OpenAIBatchJSONL | Response;
 
-type OpenAIBatchResultFile =
-  | OpenAIBatchResultFileContent
-  | PromiseLike<OpenAIBatchResultFileContent>;
+type OpenAIBatchFile =
+  | OpenAIBatchFileContent
+  | PromiseLike<OpenAIBatchFileContent>;
 
 type SupportedOpenAIBatchEndpoint = "/v1/chat/completions" | "/v1/responses";
 
@@ -49,12 +49,6 @@ export interface OpenAIFileLike {
   [key: string]: unknown;
 }
 
-export interface OpenAIBatchClientLike<TBatch extends OpenAIBatchLike> {
-  batches: {
-    create(params: OpenAIBatchCreateParams): PromiseLike<TBatch>;
-  };
-}
-
 export interface OpenAIBatchWebhookEvent {
   type:
     | "batch.completed"
@@ -66,8 +60,7 @@ export interface OpenAIBatchWebhookEvent {
   [key: string]: unknown;
 }
 
-export interface StartOpenAIBatchTraceArgs<TBatch extends OpenAIBatchLike> {
-  client: OpenAIBatchClientLike<TBatch>;
+export interface StartOpenAIBatchTraceArgs {
   inputFile: OpenAIFileLike;
   input: OpenAIBatchJSONL;
   params: OpenAIBatchCreateInputParams;
@@ -75,8 +68,8 @@ export interface StartOpenAIBatchTraceArgs<TBatch extends OpenAIBatchLike> {
 
 export interface CompleteOpenAIBatchTraceArgs<TBatch extends OpenAIBatchLike> {
   batch: TBatch;
-  input: OpenAIBatchResultFile;
-  outputFile?: OpenAIBatchResultFile;
-  errorFile?: OpenAIBatchResultFile;
+  inputFile: OpenAIBatchFile;
+  outputFile?: OpenAIBatchFile;
+  errorFile?: OpenAIBatchFile;
   webhook?: OpenAIBatchWebhookEvent;
 }

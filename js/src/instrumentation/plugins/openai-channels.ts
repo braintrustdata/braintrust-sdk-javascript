@@ -19,6 +19,7 @@ import type {
 } from "../../vendor-sdk-types/openai";
 import type {
   CompleteOpenAIBatchTraceArgs,
+  OpenAIBatchCreateParams,
   OpenAIBatchLike,
   StartOpenAIBatchTraceArgs,
 } from "../../openai-batch-types";
@@ -37,8 +38,8 @@ export const openAIChannels = defineChannels(
   "openai",
   {
     batchesStartTrace: channel<
-      [StartOpenAIBatchTraceArgs<OpenAIBatchLike>],
-      OpenAIBatchLike,
+      [StartOpenAIBatchTraceArgs],
+      OpenAIBatchCreateParams,
       OpenAIChannelExtras
     >({
       channelName: "batches.start-trace",

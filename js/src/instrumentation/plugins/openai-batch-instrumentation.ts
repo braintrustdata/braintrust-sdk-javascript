@@ -66,7 +66,7 @@ type BatchInputRecord = {
   spanData?: ReturnType<typeof extractOpenAIBatchInput>;
 };
 
-type OpenAIBatchResultFile =
+type OpenAIBatchFile =
   CompleteOpenAIBatchTraceArgs<OpenAIBatchLike>["outputFile"];
 
 type PreparedBatch = {
@@ -279,7 +279,7 @@ async function exportMinimalParent(
 }
 
 async function prepareCreateParams(
-  args: StartOpenAIBatchTraceArgs<OpenAIBatchLike>,
+  args: StartOpenAIBatchTraceArgs,
   parent: ReturnType<typeof getSpanParentObject>,
   startTime: number,
 ): Promise<PreparedBatch | undefined> {
@@ -541,7 +541,7 @@ async function startBatchChild(
 }
 
 async function* jsonlRecords(
-  file: OpenAIBatchJSONL | OpenAIBatchResultFile,
+  file: OpenAIBatchJSONL | OpenAIBatchFile,
   onIssue: (error: Error) => void = () => {},
 ): AsyncGenerator<unknown> {
   const resolvedFile = await file;
@@ -549,7 +549,12 @@ async function* jsonlRecords(
     return;
   }
   if (typeof resolvedFile === "string") {
-    for (const line of resolvedFile.split(/\r?\n/)) {
+    let offset = 0;
+    while (offset < resolvedFile.length) {
+      const newline = resolvedFile.indexOf("\n", offset);
+      const end = newline === -1 ? resolvedFile.length : newline;
+      const line = resolvedFile.slice(offset, end).replace(/\r$/, "");
+      offset = newline === -1 ? resolvedFile.length : newline + 1;
       if (!line.trim()) {
         continue;
       }
@@ -563,18 +568,7 @@ async function* jsonlRecords(
     return;
   }
 
-  const clone = read(resolvedFile, "clone");
-  let response = resolvedFile;
-  if (typeof clone === "function") {
-    try {
-      response = Reflect.apply(clone, resolvedFile, []);
-    } catch (error) {
-      logBatchInstrumentationError("could not clone JSONL response", error);
-      onIssue(new Error("OpenAI Batch response could not be cloned"));
-      return;
-    }
-  }
-  const body = read(response, "body");
+  const body = read(resolvedFile, "body");
   const getReader = read(body, "getReader");
   if (isObject(body) && typeof getReader === "function") {
     let reader: unknown;
@@ -686,7 +680,7 @@ export const interceptOpenAIBatchTraceStart: Parameters<
     logBatchInstrumentationError("could not prepare batch", error);
   }
 
-  const batch = await Reflect.apply(target, thisArg, [
+  const params = await Reflect.apply(target, thisArg, [
     prepared
       ? {
           ...args[0],
@@ -696,24 +690,12 @@ export const interceptOpenAIBatchTraceStart: Parameters<
   ]);
   if (prepared) {
     try {
-      const returnedContext = await batchContextFromBatch(batch);
-      if (
-        !returnedContext ||
-        batchContextPayload(returnedContext) !==
-          batchContextPayload(prepared.context)
-      ) {
-        logBatchInstrumentationError(
-          "did not start batch spans",
-          "returned batch context does not match the submitted batch",
-        );
-      } else {
-        await startPreparedBatch(prepared.inputs, prepared.context);
-      }
+      await startPreparedBatch(prepared.inputs, prepared.context);
     } catch (error) {
       logBatchInstrumentationError("could not start batch spans", error);
     }
   }
-  return batch;
+  return params;
 };
 
 function errorFromResult(result: BatchResultRecord): Error | undefined {
@@ -781,7 +763,7 @@ async function completeBatchResult(
 }
 
 async function readBatchInputs(
-  file: OpenAIBatchResultFile,
+  file: OpenAIBatchFile,
   endpoint: string,
 ): Promise<{
   inputDigest: string;
@@ -919,7 +901,7 @@ async function completeResultFile({
 }: {
   context: BatchContext;
   endTime: number;
-  file: OpenAIBatchResultFile;
+  file: OpenAIBatchFile;
   inputs: Map<string, BatchInputRecord>;
   issues: Error[];
   seen: Set<string>;
@@ -1027,7 +1009,7 @@ async function completeBatch(
     webhook?.created_at,
     context.startTime,
   );
-  const inputData = await readBatchInputs(args.input, context.endpoint);
+  const inputData = await readBatchInputs(args.inputFile, context.endpoint);
   const issues = [...inputData.issues];
   if (
     inputData.issues.length === 0 &&
