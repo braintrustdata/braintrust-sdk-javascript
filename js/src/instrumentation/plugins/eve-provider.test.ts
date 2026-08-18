@@ -199,7 +199,7 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
     );
 
     const writes = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
+      Record<string, any> & { id: string }
     >;
     const spans = mergeRowBatch([...writes].reverse());
     const turn = spans.find(
@@ -365,7 +365,7 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
     );
 
     const writes = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
+      Record<string, any> & { id: string }
     >;
     const spans = mergeRowBatch([...writes].reverse());
     const turnForSession = (sessionId: string) =>

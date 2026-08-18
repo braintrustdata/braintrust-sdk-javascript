@@ -29,11 +29,13 @@ type EveProviderInstrumentationOptions = {
  * The result is ready to export directly from the instrumentation module.
  */
 export function braintrustEveInstrumentation(
-  options: LegacyEveInstrumentationOptions,
-): EveInstrumentationDefinition;
-export function braintrustEveInstrumentation(
   options: EveProviderInstrumentationOptions,
 ): EveProviderDefinition;
+// Keep the legacy overload last so utility types retain the existing signature.
+export function braintrustEveInstrumentation(options: {
+  defineState: EveDefineState;
+  setup?: EveInstrumentationDefinition["setup"];
+}): EveInstrumentationDefinition;
 export function braintrustEveInstrumentation(
   options: LegacyEveInstrumentationOptions | EveProviderInstrumentationOptions,
 ): EveInstrumentationDefinition | EveProviderDefinition {
