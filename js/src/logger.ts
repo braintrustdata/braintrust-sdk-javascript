@@ -6658,13 +6658,13 @@ export function wrapTraced<
   if (args?.asyncFlush) {
     return ((...fnArgs: Parameters<F>) =>
       traced((span) => {
-        if (!hasExplicitInput) {
+        if (!args?.noTraceIO && !hasExplicitInput) {
           span.log({ input: fnArgs });
         }
 
         const output = fn(...fnArgs);
 
-        if (!hasExplicitOutput) {
+        if (!args?.noTraceIO && !hasExplicitOutput) {
           if (output instanceof Promise) {
             return (async () => {
               const result = await output;
@@ -6681,7 +6681,7 @@ export function wrapTraced<
   } else {
     return ((...fnArgs: Parameters<F>) =>
       traced(async (span) => {
-        if (!hasExplicitInput) {
+        if (!args?.noTraceIO && !hasExplicitInput) {
           span.log({ input: fnArgs });
         }
 
@@ -6689,7 +6689,7 @@ export function wrapTraced<
 
         const output = await outputResult;
 
-        if (!hasExplicitOutput) {
+        if (!args?.noTraceIO && !hasExplicitOutput) {
           span.log({ output });
         }
 

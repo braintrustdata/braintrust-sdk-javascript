@@ -3278,6 +3278,71 @@ describe("isGeneratorFunction and isAsyncGeneratorFunction utilities", () => {
   });
 });
 
+describe("wrapTraced noTraceIO", () => {
+  let memoryLogger: any;
+
+  beforeEach(async () => {
+    await _exportsForTestingOnly.simulateLoginForTests();
+    memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+  });
+
+  afterEach(() => {
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  });
+
+  test("preserves manually logged input and output for async functions", async () => {
+    initLogger({ projectName: "test", projectId: "test-project-id" });
+
+    const callModel = wrapTraced(
+      async (request: { input: string }) => {
+        const response = { output: "manual output", metadata: "extra" };
+        currentSpan().log({
+          input: request.input,
+          output: response.output,
+        });
+        return response;
+      },
+      { noTraceIO: true },
+    );
+
+    await callModel({ input: "manual input" });
+
+    await memoryLogger.flush();
+    const logs = await memoryLogger.drain();
+    expect(logs).toHaveLength(1);
+    expect(logs[0].input).toBe("manual input");
+    expect(logs[0].output).toBe("manual output");
+  });
+
+  test("preserves manually logged input and output for synchronous functions", async () => {
+    initLogger({ projectName: "test", projectId: "test-project-id" });
+
+    const callModel = wrapTraced(
+      (request: { input: string }) => {
+        const response = { output: "manual output", metadata: "extra" };
+        currentSpan().log({
+          input: request.input,
+          output: response.output,
+        });
+        return response;
+      },
+      { noTraceIO: true, asyncFlush: true },
+    );
+
+    expect(callModel({ input: "manual input" })).toEqual({
+      output: "manual output",
+      metadata: "extra",
+    });
+
+    await memoryLogger.flush();
+    const logs = await memoryLogger.drain();
+    expect(logs).toHaveLength(1);
+    expect(logs[0].input).toBe("manual input");
+    expect(logs[0].output).toBe("manual output");
+  });
+});
+
 describe("wrapTraced generator support", () => {
   let memoryLogger: any;
   let originalEnv: string | undefined;
