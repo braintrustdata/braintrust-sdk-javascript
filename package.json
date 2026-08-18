@@ -22,8 +22,6 @@
     "dotagents:sync": "dotagents sync",
     "changeset": "changeset",
     "playground": "turbo run playground --filter=\"braintrust\"",
-    "playground:cli:push": "turbo run playground:cli:push --filter=\"braintrust\"",
-    "playground:cli:eval": "turbo run playground:cli:eval --filter=\"braintrust\"",
     "formatting": "prettier --check .",
     "lint": "turbo run lint",
     "fix:formatting": "prettier --write .",

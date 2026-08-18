@@ -37,7 +37,7 @@ Eval("Say Hi Bot", {
 Run it:
 
 ```bash
-BRAINTRUST_API_KEY=<YOUR_API_KEY> npx braintrust eval tutorial.eval.ts
+BRAINTRUST_API_KEY=<YOUR_API_KEY> npx bt eval tutorial.eval.ts
 ```
 
 ## Packages

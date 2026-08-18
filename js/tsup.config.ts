@@ -33,17 +33,6 @@ export default defineConfig([
     clean: true,
   },
   {
-    entry: { cli: "src/cli/index.ts" },
-    format: ["cjs"],
-    removeNodeProtocol: false,
-    outDir: "dist",
-    external: ["esbuild", "prettier", "typescript", "zod"],
-    // CLI doesn't need DTS
-    dts: false,
-    define,
-    clean: false,
-  },
-  {
     entry: ["dev/index.ts"],
     format: ["cjs", "esm"],
     outDir: "dev/dist",

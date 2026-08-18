@@ -800,7 +800,7 @@ export async function Eval<
 
   if (typeof options.reporter === "string") {
     throw new Error(
-      "Must specify a reporter object, not a name. Can only specify reporter names when running 'braintrust eval'",
+      "Must specify a reporter object, not a name. Can only specify reporter names when running 'bt eval'",
     );
   }
 

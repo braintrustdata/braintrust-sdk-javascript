@@ -120,7 +120,7 @@ export class Project {
   async publish() {
     if (globalThis._lazy_load) {
       // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-      console.warn("publish() is a no-op when running `braintrust push`.");
+      console.warn("publish() is a no-op when running `bt push`.");
       return;
     }
     await login();
@@ -129,7 +129,7 @@ export class Project {
     if (this._publishableCodeFunctions.length > 0) {
       // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.warn(
-        "Code functions cannot be published directly. Use `braintrust push` instead.",
+        "Code functions cannot be published directly. Use `bt push` instead.",
       );
     }
     if (this._publishablePrompts.length > 0) {
