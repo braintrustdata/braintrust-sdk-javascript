@@ -49,13 +49,7 @@ export interface FlueRunStartEvent extends FlueBaseEvent {
   runId: string;
   startedAt?: string;
   workflowName?: string;
-  owner?: {
-    kind?: string;
-    workflowName?: string;
-    instanceId?: string;
-  };
   input?: unknown;
-  payload?: unknown;
 }
 
 export interface FlueRunResumeEvent extends FlueBaseEvent {
@@ -103,14 +97,6 @@ export interface FlueTurnRequestEvent extends FlueBaseEvent {
   type: "turn_request";
   turnId: string;
   purpose: FlueTurnPurpose;
-  model?: string;
-  provider?: string;
-  api?: string;
-  input?: {
-    systemPrompt?: string;
-    messages?: unknown[];
-    tools?: unknown[];
-  };
   request?: {
     api?: string;
     input?: {
@@ -125,7 +111,6 @@ export interface FlueTurnRequestEvent extends FlueBaseEvent {
     reasoning?: string;
     reasoningLevel?: string;
   };
-  reasoning?: string;
 }
 
 export interface FlueTurnEvent extends FlueBaseEvent {
@@ -133,9 +118,6 @@ export interface FlueTurnEvent extends FlueBaseEvent {
   turnId: string;
   purpose?: FlueTurnPurpose;
   durationMs?: number;
-  model?: string;
-  provider?: string;
-  api?: string;
   request?: {
     api?: string;
     model?: string;
@@ -152,11 +134,7 @@ export interface FlueTurnEvent extends FlueBaseEvent {
     error?: unknown;
     errorInfo?: { type?: string; message?: string };
   };
-  output?: unknown;
-  usage?: FlueUsage;
-  stopReason?: string;
   isError?: boolean;
-  error?: unknown;
 }
 
 export interface FlueToolStartEvent extends FlueBaseEvent {
@@ -171,7 +149,7 @@ export interface FlueToolStartEvent extends FlueBaseEvent {
 }
 
 export interface FlueToolCallEvent extends FlueBaseEvent {
-  type: "tool_call" | "tool";
+  type: "tool";
   toolName?: string;
   toolCallId: string;
   isError?: boolean;
@@ -224,10 +202,6 @@ export interface FlueCompactionEvent extends FlueBaseEvent {
 export interface FlueContext {
   readonly id?: string;
   readonly runId?: string;
-}
-
-export interface FlueObservableContext extends FlueContext {
-  subscribeEvent(callback: (event: unknown) => unknown): () => void;
 }
 
 export type FlueExecutionOperation =

@@ -1,7 +1,5 @@
-import { BasePlugin, toLoggedError } from "../core";
+import { toLoggedError } from "../core";
 import { debugLogger } from "../../debug-logger";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers } from "../../isomorph";
 import {
   BRAINTRUST_CURRENT_SPAN_STORE,
   NOOP_SPAN,
@@ -17,7 +15,6 @@ import {
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { SpanTypeAttribute } from "../../../util/index";
-import { flueChannels } from "./flue-channels";
 import type {
   FlueBaseEvent,
   FlueCompactionEvent,
@@ -28,7 +25,6 @@ import type {
   FlueExecutionInterceptor,
   FlueExecutionOperation,
   FlueInstrumentation,
-  FlueObservableContext,
   FlueOperationEvent,
   FlueOperationKind,
   FlueOperationStartEvent,
@@ -43,20 +39,6 @@ import type {
   FlueTurnEvent,
   FlueTurnRequestEvent,
 } from "../../vendor-sdk-types/flue";
-
-type FlueObserver = (event: unknown, ctx?: unknown) => void;
-type BraintrustFlueObserver = FlueObserver & FlueInstrumentation;
-
-type FlueAutoState = {
-  createContextChannel?: ReturnType<
-    typeof flueChannels.createContext.tracingChannel
-  >;
-  createContextHandlers?: IsoChannelHandlers<
-    ChannelMessage<typeof flueChannels.createContext>
-  >;
-  contexts: WeakSet<object>;
-  refCount: number;
-};
 
 type SpanState = {
   latestAgentOutput?: unknown;
@@ -73,7 +55,6 @@ type FlueTurnInputState = {
   toolsFingerprint?: string;
 };
 
-const FLUE_AUTO_STATE = Symbol.for("braintrust.flue.auto-state");
 const FLUE_INSTRUMENTATION_KEY = Symbol.for("braintrust.flue.instrumentation");
 const FLUE_OBSERVE_BRIDGE = Symbol.for("braintrust.flue.observe-bridge");
 
@@ -88,9 +69,9 @@ const interceptFlueExecution: FlueExecutionInterceptor = (
 ) => getObserveBridge().intercept(operation, ctx, next);
 
 /**
- * Manual instrumentation for flue.
+ * Instrumentation for flue.
  *
- * This should be passed to flue's `instrument()` API if not using auto-instrumentation: `instrument(braintrustFlueInstrumentation())`
+ * Pass this to flue's `instrument()` API: `instrument(braintrustFlueInstrumentation())`
  */
 export function braintrustFlueInstrumentation(): FlueInstrumentation {
   return {
@@ -99,71 +80,6 @@ export function braintrustFlueInstrumentation(): FlueInstrumentation {
     key: FLUE_INSTRUMENTATION_KEY,
     observe: observeFlue,
   };
-}
-
-/**
- * Observer for flue pre version 1.0.0.
- *
- * This observer should be passed to flue's `observe()` API if not using auto-instrumentation.
- */
-export const braintrustFlueObserver: BraintrustFlueObserver = Object.assign(
-  observeFlue,
-  braintrustFlueInstrumentation(),
-);
-
-export class FluePlugin extends BasePlugin {
-  protected onEnable(): void {
-    this.unsubscribers.push(enableFlueAutoInstrumentation());
-  }
-
-  protected onDisable(): void {
-    for (const unsubscribe of this.unsubscribers) {
-      unsubscribe();
-    }
-    this.unsubscribers = [];
-  }
-}
-
-function enableFlueAutoInstrumentation(): () => void {
-  const state = getAutoState();
-  state.refCount += 1;
-
-  if (!state.createContextHandlers) {
-    const createContextChannel = flueChannels.createContext.tracingChannel();
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof flueChannels.createContext>
-    > = {
-      end: (event) => {
-        subscribeToFlueContext(event.result, state);
-      },
-    };
-
-    createContextChannel.subscribe(handlers);
-    state.createContextChannel = createContextChannel;
-    state.createContextHandlers = handlers;
-  }
-
-  let released = false;
-  return () => {
-    if (released) {
-      return;
-    }
-    released = true;
-    releaseAutoState(state);
-  };
-}
-
-function getAutoState(): FlueAutoState {
-  const existing = Reflect.get(globalThis, FLUE_AUTO_STATE);
-  if (isAutoState(existing)) {
-    return existing;
-  }
-  const state: FlueAutoState = {
-    contexts: new WeakSet(),
-    refCount: 0,
-  };
-  Reflect.set(globalThis, FLUE_AUTO_STATE, state);
-  return state;
 }
 
 function getObserveBridge(): FlueObserveBridge {
@@ -184,93 +100,6 @@ function isFlueObserveBridge(value: unknown): value is FlueObserveBridge {
   );
 }
 
-function isAutoState(value: unknown): value is FlueAutoState {
-  return (
-    isObjectLike(value) &&
-    Reflect.get(value, "contexts") instanceof WeakSet &&
-    typeof Reflect.get(value, "refCount") === "number"
-  );
-}
-
-function releaseAutoState(state: FlueAutoState): void {
-  state.refCount -= 1;
-  if (state.refCount > 0) {
-    return;
-  }
-
-  try {
-    if (state.createContextChannel && state.createContextHandlers) {
-      state.createContextChannel.unsubscribe(state.createContextHandlers);
-    }
-  } finally {
-    Reflect.deleteProperty(globalThis, FLUE_AUTO_STATE);
-  }
-}
-
-function subscribeToFlueContext(value: unknown, state: FlueAutoState): void {
-  if (!isObservableFlueContext(value) || state.contexts.has(value)) {
-    return;
-  }
-
-  const ctx = flueContextFromUnknown(value);
-  let released = false;
-  let unsubscribe: (() => void) | undefined;
-  const release = () => {
-    if (released) {
-      return;
-    }
-    released = true;
-    try {
-      unsubscribe?.();
-    } catch (error) {
-      logInstrumentationError("Flue context unsubscribe", error);
-    }
-  };
-
-  try {
-    unsubscribe = value.subscribeEvent((event) => {
-      if (state.refCount <= 0) {
-        release();
-        return;
-      }
-
-      braintrustFlueObserver(event, ctx);
-      if (isAutoContextTerminalEvent(event, ctx)) {
-        release();
-      }
-    });
-    state.contexts.add(value);
-  } catch (error) {
-    logInstrumentationError("Flue context subscription", error);
-  }
-}
-
-function isAutoContextTerminalEvent(
-  event: unknown,
-  ctx: FlueContext | undefined,
-): boolean {
-  if (!isObjectLike(event)) {
-    return false;
-  }
-  const type = Reflect.get(event, "type");
-  if (type === "run_end") {
-    return true;
-  }
-  if (type !== "operation") {
-    return false;
-  }
-  return !ctx?.runId && typeof Reflect.get(event, "runId") !== "string";
-}
-
-function isObservableFlueContext(
-  value: unknown,
-): value is FlueObservableContext {
-  return (
-    isObjectLike(value) &&
-    typeof Reflect.get(value, "subscribeEvent") === "function"
-  );
-}
-
 function isFlueEvent(event: object): event is FlueEvent {
   const type = Reflect.get(event, "type");
   return (
@@ -282,7 +111,6 @@ function isFlueEvent(event: object): event is FlueEvent {
     type === "turn_request" ||
     type === "turn" ||
     type === "tool_start" ||
-    type === "tool_call" ||
     type === "tool" ||
     type === "task_start" ||
     type === "task" ||
@@ -472,7 +300,6 @@ class FlueObserveBridge {
       case "tool_start":
         this.handleToolStart(event);
         return;
-      case "tool_call":
       case "tool":
         this.handleToolCall(event);
         return;
@@ -502,10 +329,8 @@ class FlueObserveBridge {
     }
 
     const workflowName =
-      event.workflowName ??
-      event.owner?.workflowName ??
-      (typeof ctx?.id === "string" ? ctx.id : "unknown");
-    const input = flueRunInput(event);
+      event.workflowName ?? (typeof ctx?.id === "string" ? ctx.id : "unknown");
+    const input = event.input;
     const metadata = {
       ...extractPayloadMetadata(input),
       ...extractEventMetadata(event, ctx),
@@ -1226,19 +1051,13 @@ function extractPayloadMetadata(payload: unknown): Record<string, unknown> {
   return Object.fromEntries(Object.entries(metadata));
 }
 
-function flueRunInput(event: FlueRunStartEvent): unknown {
-  return event.input !== undefined ? event.input : event.payload;
-}
-
-function flueTurnRequestInput(
-  event: FlueTurnRequestEvent,
-): FlueTurnRequestEvent["input"] {
-  return event.request?.input ?? event.input;
+function flueTurnRequestInput(event: FlueTurnRequestEvent) {
+  return event.request?.input;
 }
 
 function prepareFlueTurnInput(
   event: FlueTurnRequestEvent,
-  input: FlueTurnRequestEvent["input"],
+  input: NonNullable<FlueTurnRequestEvent["request"]>["input"],
   operation: SpanState | undefined,
 ): { messages: unknown[] | undefined; metadata: Record<string, unknown> } {
   const messages = input?.messages;
@@ -1348,68 +1167,55 @@ function flueOperationInput(event: FlueOperationEvent): unknown {
 }
 
 function flueTurnRequestModel(event: FlueTurnRequestEvent): string | undefined {
-  return event.request?.requestedModel ?? event.request?.model ?? event.model;
+  return event.request?.requestedModel ?? event.request?.model;
 }
 
 function flueTurnRequestProvider(
   event: FlueTurnRequestEvent,
 ): string | undefined {
-  return (
-    event.request?.providerName ?? event.provider ?? event.request?.providerId
-  );
+  return event.request?.providerName ?? event.request?.providerId;
 }
 
 function flueTurnRequestApi(event: FlueTurnRequestEvent): string | undefined {
-  return event.request?.api ?? event.api;
+  return event.request?.api;
 }
 
 function flueTurnRequestReasoning(
   event: FlueTurnRequestEvent,
 ): string | undefined {
-  return (
-    event.request?.reasoningLevel ?? event.request?.reasoning ?? event.reasoning
-  );
+  return event.request?.reasoningLevel ?? event.request?.reasoning;
 }
 
 function flueTurnModel(event: FlueTurnEvent): string | undefined {
   return (
     event.response?.responseModel ??
     event.request?.requestedModel ??
-    event.request?.model ??
-    event.model
+    event.request?.model
   );
 }
 
 function flueTurnProvider(event: FlueTurnEvent): string | undefined {
-  return (
-    event.request?.providerName ?? event.provider ?? event.request?.providerId
-  );
+  return event.request?.providerName ?? event.request?.providerId;
 }
 
 function flueTurnApi(event: FlueTurnEvent): string | undefined {
-  return event.request?.api ?? event.api;
+  return event.request?.api;
 }
 
 function flueTurnUsage(event: FlueTurnEvent): unknown {
-  return event.response?.usage ?? event.usage;
+  return event.response?.usage;
 }
 
 function flueTurnOutput(event: FlueTurnEvent): unknown {
-  return event.response?.output ?? event.output;
+  return event.response?.output;
 }
 
 function flueTurnStopReason(event: FlueTurnEvent): string | undefined {
-  return (
-    event.response?.finishReason ??
-    event.response?.stopReason ??
-    event.stopReason
-  );
+  return event.response?.finishReason ?? event.response?.stopReason;
 }
 
 function flueTurnError(event: FlueTurnEvent): unknown {
-  return (
-    event.response?.error ?? event.response?.errorInfo?.message ?? event.error
-  );
+  return event.response?.error ?? event.response?.errorInfo?.message;
 }
 
 function flueToolInput(event: FlueToolStartEvent): unknown {

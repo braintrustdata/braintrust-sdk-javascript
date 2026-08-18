@@ -37,43 +37,6 @@ vi.mock("../../debug-logger", () => ({
   },
 }));
 
-const { mockNewTracingChannel, mockTracingChannels } = vi.hoisted(() => {
-  const tracingChannels = new Map<string, any>();
-
-  function tracingChannel(name: string) {
-    const existing = tracingChannels.get(name);
-    if (existing) {
-      return existing;
-    }
-
-    const handlers = new Set<any>();
-    const stores = new Map<any, (message: any) => unknown>();
-    const channel = {
-      __handlers: handlers,
-      __stores: stores,
-      start: {
-        bindStore: vi.fn(
-          (store: unknown, transform: (message: any) => unknown) => {
-            stores.set(store, transform);
-          },
-        ),
-        unbindStore: vi.fn((store: unknown) => stores.delete(store)),
-      },
-      subscribe: vi.fn((handler: any) => {
-        handlers.add(handler);
-      }),
-      unsubscribe: vi.fn((handler: any) => handlers.delete(handler)),
-    };
-    tracingChannels.set(name, channel);
-    return channel;
-  }
-
-  return {
-    mockNewTracingChannel: vi.fn((name: string) => tracingChannel(name)),
-    mockTracingChannels: tracingChannels,
-  };
-});
-
 vi.mock("../../logger", () => ({
   BRAINTRUST_CURRENT_SPAN_STORE: mockCurrentSpanStoreSymbol,
   NOOP_SPAN: {},
@@ -101,22 +64,7 @@ vi.mock("../../logger", () => ({
   },
 }));
 
-vi.mock("../../isomorph", () => ({
-  default: {
-    newTracingChannel: mockNewTracingChannel,
-  },
-}));
-
-import {
-  FluePlugin,
-  braintrustFlueInstrumentation,
-  braintrustFlueObserver,
-} from "./flue-plugin";
-
-type Subscriber = typeof braintrustFlueObserver;
-
-const CREATE_CONTEXT_CHANNEL_NAME =
-  "orchestrion:@flue/runtime:createFlueContext";
+import { braintrustFlueInstrumentation } from "./flue-plugin";
 
 describe("Flue observe instrumentation", () => {
   let spans: Array<{
@@ -161,41 +109,9 @@ describe("Flue observe instrumentation", () => {
 
   afterEach(() => {
     delete (globalThis as Record<symbol, unknown>)[
-      Symbol.for("braintrust.flue.auto-state")
-    ];
-    delete (globalThis as Record<symbol, unknown>)[
       Symbol.for("braintrust.flue.observe-bridge")
     ];
-    for (const channel of mockTracingChannels.values()) {
-      channel.__handlers.clear();
-      channel.__stores.clear();
-    }
     vi.clearAllMocks();
-  });
-
-  it("exports a subscriber that can be passed directly to Flue observe", () => {
-    const subscribers: Subscriber[] = [];
-    const unsubscribe = vi.fn();
-    const observe = vi.fn((subscriber: Subscriber) => {
-      subscribers.push(subscriber);
-      return unsubscribe;
-    });
-
-    const unregister = observe(braintrustFlueObserver);
-
-    expect(observe).toHaveBeenCalledTimes(1);
-    expect(observe).toHaveBeenCalledWith(braintrustFlueObserver);
-    expect(subscribers).toHaveLength(1);
-
-    subscribers[0]?.({
-      runId: "run-1",
-      type: "run_start",
-      workflowName: "research",
-    });
-    expect(findSpan("workflow:research")).toBeDefined();
-
-    unregister();
-    expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
 
   it("exports a Flue 1.0 instrumentation factory", async () => {
@@ -205,7 +121,7 @@ describe("Flue observe instrumentation", () => {
     const registered = instrument(instrumentation);
 
     expect(instrument).toHaveBeenCalledWith(instrumentation);
-    expect(registered.observe).toBe(braintrustFlueObserver);
+    expect(typeof registered.observe).toBe("function");
     expect(registered.key).toBe(Symbol.for("braintrust.flue.instrumentation"));
     expect(typeof registered.interceptor).toBe("function");
     expect(() => registered.dispose()).not.toThrow();
@@ -232,37 +148,7 @@ describe("Flue observe instrumentation", () => {
     expect("enterWith" in mockCurrentSpanStore).toBe(false);
   });
 
-  it("keeps the legacy observer compatible with Flue 1.0 instrumentation", async () => {
-    expect(braintrustFlueObserver.observe).toBe(braintrustFlueObserver);
-    expect(braintrustFlueObserver.key).toBe(
-      Symbol.for("braintrust.flue.instrumentation"),
-    );
-    expect(typeof braintrustFlueObserver.interceptor).toBe("function");
-    expect(() => braintrustFlueObserver.dispose()).not.toThrow();
-
-    const appSpan = await braintrustFlueObserver.interceptor(
-      {
-        phase: "start",
-        runId: "run-1",
-        startedAt: "2026-05-27T05:12:31.000Z",
-        type: "workflow",
-        workflowName: "research",
-      },
-      { eventContext: { id: "ctx-1", runId: "run-1" } },
-      async () => mockStartSpan({ name: "app.phase" }),
-    );
-    const workflowSpan = findSpan("workflow:research");
-
-    expect(workflowSpan).toBeDefined();
-    expect(appSpan.spanParents).toEqual([workflowSpan?.spanId]);
-    expect(mockCurrentSpanStore.run).toHaveBeenCalledWith(
-      workflowSpan,
-      expect.any(Function),
-    );
-    expect("enterWith" in mockCurrentSpanStore).toBe(false);
-  });
-
-  it("maps Flue 0.8 observe events into semantic Braintrust spans", () => {
+  it("maps workflow observations into semantic Braintrust spans", () => {
     const emit = observeEvents();
     const usage = flueUsage();
     const startedAt = "2026-05-27T05:12:31.000Z";
@@ -270,8 +156,7 @@ describe("Flue observe instrumentation", () => {
     emit(
       {
         instanceId: "instance-1",
-        owner: { kind: "workflow", workflowName: "research" },
-        payload: {
+        input: {
           metadata: {
             scenario: "flue-instrumentation",
             testRunId: "e2e-run-1",
@@ -295,17 +180,19 @@ describe("Flue observe instrumentation", () => {
       type: "operation_start",
     });
     emit({
-      api: "responses",
-      input: {
-        messages: [{ content: "Find Flue changes", role: "user" }],
-        systemPrompt: "Be precise",
-        tools: [{ name: "lookup", parameters: {} }],
-      },
-      model: "claude-test",
       operationId: "op-1",
-      provider: "anthropic",
       purpose: "agent",
-      reasoning: "medium",
+      request: {
+        api: "responses",
+        input: {
+          messages: [{ content: "Find Flue changes", role: "user" }],
+          systemPrompt: "Be precise",
+          tools: [{ name: "lookup", parameters: {} }],
+        },
+        model: "claude-test",
+        providerName: "anthropic",
+        reasoning: "medium",
+      },
       runId: "run-1",
       timestamp: "2026-05-27T05:12:33.000Z",
       turnId: "turn-1",
@@ -325,29 +212,36 @@ describe("Flue observe instrumentation", () => {
       durationMs: 4,
       isError: false,
       operationId: "op-1",
-      result: { ok: true },
+      output: { ok: true },
       runId: "run-1",
       timestamp: "2026-05-27T05:12:35.000Z",
       toolCallId: "tool-1",
       toolName: "lookup",
       turnId: "turn-1",
-      type: "tool_call",
+      type: "tool",
     });
     emit({
-      api: "responses",
       durationMs: 12,
       isError: false,
-      model: "claude-test",
       operationId: "op-1",
-      output: { content: [{ text: "done", type: "text" }], role: "assistant" },
-      provider: "anthropic",
       purpose: "agent",
+      request: {
+        api: "responses",
+        model: "claude-test",
+        providerName: "anthropic",
+      },
+      response: {
+        output: {
+          content: [{ text: "done", type: "text" }],
+          role: "assistant",
+        },
+        stopReason: "stop",
+        usage,
+      },
       runId: "run-1",
-      stopReason: "stop",
       timestamp: "2026-05-27T05:12:36.000Z",
       turnId: "turn-1",
       type: "turn",
-      usage,
     });
     emit({
       agent: "worker",
@@ -790,59 +684,65 @@ describe("Flue observe instrumentation", () => {
       type: "operation_start",
     });
     emit({
-      input: {
-        messages: [previousUser, previousAssistant, currentUser],
-        systemPrompt: "Be precise",
-        tools: [{ name: "lookup" }],
-      },
       operationId: "op-1",
       purpose: "agent",
+      request: {
+        input: {
+          messages: [previousUser, previousAssistant, currentUser],
+          systemPrompt: "Be precise",
+          tools: [{ name: "lookup" }],
+        },
+      },
       runId: "run-1",
       turnId: "turn-1",
       type: "turn_request",
     });
     emit({
       operationId: "op-1",
-      output: toolCall,
       purpose: "agent",
+      response: { output: toolCall },
       runId: "run-1",
       turnId: "turn-1",
       type: "turn",
     });
     emit({
-      input: {
-        messages: [
-          previousUser,
-          previousAssistant,
-          currentUser,
-          toolCall,
-          toolResult,
-        ],
-        systemPrompt: "Be precise",
-        tools: [{ name: "lookup" }],
-      },
       operationId: "op-1",
       purpose: "agent",
+      request: {
+        input: {
+          messages: [
+            previousUser,
+            previousAssistant,
+            currentUser,
+            toolCall,
+            toolResult,
+          ],
+          systemPrompt: "Be precise",
+          tools: [{ name: "lookup" }],
+        },
+      },
       runId: "run-1",
       turnId: "turn-1",
       type: "turn_request",
     });
     emit({
       operationId: "op-1",
-      output: { content: "done", role: "assistant" },
       purpose: "agent",
+      response: { output: { content: "done", role: "assistant" } },
       runId: "run-1",
       turnId: "turn-1",
       type: "turn",
     });
     emit({
-      input: {
-        messages: [currentUser],
-        systemPrompt: "Use compacted context",
-        tools: [{ name: "search" }],
-      },
       operationId: "op-1",
       purpose: "agent",
+      request: {
+        input: {
+          messages: [currentUser],
+          systemPrompt: "Use compacted context",
+          tools: [{ name: "search" }],
+        },
+      },
       runId: "run-1",
       turnId: "turn-1",
       type: "turn_request",
@@ -927,13 +827,15 @@ describe("Flue observe instrumentation", () => {
       type: "operation_start",
     });
     emit({
-      input: {
-        messages: [{ content: "finish", role: "user" }],
-      },
-      model: "claude-test",
       operationId: "op-1",
-      provider: "anthropic",
       purpose: "agent",
+      request: {
+        input: {
+          messages: [{ content: "finish", role: "user" }],
+        },
+        model: "claude-test",
+        providerName: "anthropic",
+      },
       runId: "run-1",
       turnId: "turn-1",
       type: "turn_request",
@@ -1008,13 +910,15 @@ describe("Flue observe instrumentation", () => {
       type: "compaction_start",
     });
     emit({
-      input: {
-        messages: [{ content: "summarize", role: "user" }],
-      },
-      model: "gpt-test",
       operationId: "op-compact",
-      provider: "openai",
       purpose: "compaction_prefix",
+      request: {
+        input: {
+          messages: [{ content: "summarize", role: "user" }],
+        },
+        model: "gpt-test",
+        providerName: "openai",
+      },
       runId: "run-1",
       session: "main",
       turnId: "turn-compact",
@@ -1175,7 +1079,7 @@ describe("Flue observe instrumentation", () => {
     emit({
       durationMs: 1,
       isError: false,
-      result: "done",
+      output: "done",
       runId: "run-1",
       type: "run_end",
     });
@@ -1220,7 +1124,7 @@ describe("Flue observe instrumentation", () => {
       runId: "run-1",
       toolCallId: "tool-1",
       toolName: "lookup",
-      type: "tool_call",
+      type: "tool",
     });
 
     expect(mockCurrentParentSpan.current).toBeUndefined();
@@ -1239,7 +1143,7 @@ describe("Flue observe instrumentation", () => {
       { id: "ctx-1", runId: "run-1" },
     );
     const workflowSpan = findSpan("workflow:research");
-    const appSpan = await braintrustFlueObserver.interceptor(
+    const appSpan = await braintrustFlueInstrumentation().interceptor(
       {
         phase: "start",
         runId: "run-1",
@@ -1283,7 +1187,7 @@ describe("Flue observe instrumentation", () => {
     });
 
     const toolSpan = findSpan("tool:lookup");
-    const appSpan = await braintrustFlueObserver.interceptor(
+    const appSpan = await braintrustFlueInstrumentation().interceptor(
       { toolCallId: "tool-1", toolName: "lookup", type: "tool" },
       { operationId: "op-prompt", runId: "run-1" },
       async () => mockStartSpan({ name: "app.tool-phase" }),
@@ -1312,11 +1216,13 @@ describe("Flue observe instrumentation", () => {
       type: "operation_start",
     });
     emit({
-      input: { messages: [{ content: "hello", role: "user" }] },
-      model: "claude-test",
       operationId: "op-prompt",
-      provider: "anthropic",
       purpose: "agent",
+      request: {
+        input: { messages: [{ content: "hello", role: "user" }] },
+        model: "claude-test",
+        providerName: "anthropic",
+      },
       runId: "run-1",
       turnId: "turn-1",
       type: "turn_request",
@@ -1332,17 +1238,17 @@ describe("Flue observe instrumentation", () => {
     const operationSpan = findSpan("flue.prompt");
     const turnSpan = findSpan("flue.turn");
     const taskSpan = findSpan("flue.task");
-    const agentAppSpan = await braintrustFlueObserver.interceptor(
+    const agentAppSpan = await braintrustFlueInstrumentation().interceptor(
       { operationId: "op-prompt", operationKind: "prompt", type: "agent" },
       { operationId: "op-prompt", runId: "run-1" },
       async () => mockStartSpan({ name: "app.agent-phase" }),
     );
-    const modelAppSpan = await braintrustFlueObserver.interceptor(
+    const modelAppSpan = await braintrustFlueInstrumentation().interceptor(
       { turnId: "turn-1", type: "model" },
       { operationId: "op-prompt", runId: "run-1", turnId: "turn-1" },
       async () => mockStartSpan({ name: "app.model-phase" }),
     );
-    const taskAppSpan = await braintrustFlueObserver.interceptor(
+    const taskAppSpan = await braintrustFlueInstrumentation().interceptor(
       { taskId: "task-1", type: "task" },
       { operationId: "op-prompt", runId: "run-1", taskId: "task-1" },
       async () => mockStartSpan({ name: "app.task-phase" }),
@@ -1354,149 +1260,9 @@ describe("Flue observe instrumentation", () => {
     expect(mockCurrentParentSpan.current).toBeUndefined();
   });
 
-  it("subscribes transformed Flue contexts for auto instrumentation", () => {
-    const plugin = new FluePlugin();
-    const contextSubscribers: Array<(event: unknown) => unknown> = [];
-    const unsubscribeContext = vi.fn();
-    const context = {
-      id: "ctx-1",
-      runId: "run-1",
-      subscribeEvent: vi.fn((subscriber: (event: unknown) => unknown) => {
-        contextSubscribers.push(subscriber);
-        return unsubscribeContext;
-      }),
-    };
-
-    plugin.enable();
-    expect(mockNewTracingChannel).toHaveBeenCalledWith(
-      CREATE_CONTEXT_CHANNEL_NAME,
-    );
-    expect(
-      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).subscribe,
-    ).toHaveBeenCalledTimes(1);
-
-    emitCreateContextEnd(context);
-
-    expect(context.subscribeEvent).toHaveBeenCalledTimes(1);
-    contextSubscribers[0]?.({
-      runId: "run-1",
-      type: "run_start",
-      workflowName: "auto-research",
-    });
-
-    expect(
-      findSpan("workflow:auto-research")?.args.event.metadata,
-    ).toMatchObject({
-      "flue.context_id": "ctx-1",
-      "flue.context_run_id": "run-1",
-    });
-    contextSubscribers[0]?.({
-      durationMs: 1,
-      isError: false,
-      result: "done",
-      runId: "run-1",
-      type: "run_end",
-    });
-    expect(unsubscribeContext).toHaveBeenCalledTimes(1);
-
-    plugin.disable();
-
-    expect(
-      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).unsubscribe,
-    ).toHaveBeenCalledTimes(1);
-    expect(unsubscribeContext).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps auto instrumentation idempotent across plugin instances", () => {
-    const first = new FluePlugin();
-    const second = new FluePlugin();
-    const contextSubscribers: Array<(event: unknown) => unknown> = [];
-    const unsubscribeContext = vi.fn();
-    const context = {
-      subscribeEvent: vi.fn((subscriber: (event: unknown) => unknown) => {
-        contextSubscribers.push(subscriber);
-        return unsubscribeContext;
-      }),
-    };
-
-    first.enable();
-    second.enable();
-    emitCreateContextEnd(context);
-    emitCreateContextEnd(context);
-
-    expect(
-      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).subscribe,
-    ).toHaveBeenCalledTimes(1);
-    expect(context.subscribeEvent).toHaveBeenCalledTimes(1);
-
-    first.disable();
-    expect(
-      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).unsubscribe,
-    ).not.toHaveBeenCalled();
-    expect(unsubscribeContext).not.toHaveBeenCalled();
-
-    second.disable();
-    expect(
-      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).unsubscribe,
-    ).toHaveBeenCalledTimes(1);
-
-    contextSubscribers[0]?.({
-      runId: "run-after-disable",
-      type: "run_start",
-      workflowName: "after-disable",
-    });
-    expect(unsubscribeContext).toHaveBeenCalledTimes(1);
-    expect(findSpan("workflow:after-disable")).toBeUndefined();
-  });
-
-  it("unsubscribes direct Flue contexts on terminal operation events", () => {
-    const plugin = new FluePlugin();
-    const contextSubscribers: Array<(event: unknown) => unknown> = [];
-    const unsubscribeContext = vi.fn();
-    const context = {
-      id: "direct-agent-1",
-      subscribeEvent: vi.fn((subscriber: (event: unknown) => unknown) => {
-        contextSubscribers.push(subscriber);
-        return unsubscribeContext;
-      }),
-    };
-
-    plugin.enable();
-    emitCreateContextEnd(context);
-    contextSubscribers[0]?.({
-      durationMs: 2,
-      instanceId: "direct-agent-1",
-      isError: false,
-      operationId: "op-1",
-      operationKind: "prompt",
-      result: "done",
-      type: "operation",
-    });
-
-    expect(unsubscribeContext).toHaveBeenCalledTimes(1);
-    expect(findSpan("flue.prompt")).toBeDefined();
-
-    plugin.disable();
-  });
-
   function observeEvents() {
     return (event: unknown, ctx?: unknown) =>
-      braintrustFlueObserver(event, ctx);
-  }
-
-  function emitCreateContextEnd(result: unknown) {
-    for (const handlers of tracingChannel(CREATE_CONTEXT_CHANNEL_NAME)
-      .__handlers) {
-      handlers.end?.({ result });
-    }
-  }
-
-  function tracingChannel(channelName: string) {
-    const channel = mockTracingChannels.get(channelName);
-    if (!channel) {
-      throw new Error(`Missing mocked tracing channel: ${channelName}`);
-    }
-    return channel;
+      braintrustFlueInstrumentation().observe(event, ctx);
   }
 
   function findSpan(name: string) {

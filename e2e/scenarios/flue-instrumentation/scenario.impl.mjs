@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process";
-import { access, rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,7 +14,6 @@ const flueCliPath = path.join(
   "bin",
   "flue.mjs",
 );
-const braintrustHookNodeOption = "--import=braintrust/hook.mjs";
 
 function workflowPayload() {
   return {
@@ -28,7 +26,7 @@ function workflowPayload() {
 }
 
 export async function runNodeFlueInstrumentationScenario(options) {
-  const env = scenarioEnv(options);
+  const env = { ...process.env };
   const outputDir = path.join(process.cwd(), ".flue-build", options.outputName);
   await runFlueCli(
     [
@@ -96,62 +94,10 @@ export async function runNodeFlueInstrumentationScenario(options) {
   }
 }
 
-export async function runCliFlueInstrumentationScenario() {
-  const flushFile = path.join(process.cwd(), ".flue-build", "cli-flushed");
-  await rm(flushFile, { force: true });
-  await runFlueCli(
-    [
-      "run",
-      "instrumentation",
-      "--target",
-      "node",
-      process.env.FLUE_E2E_INPUT_FLAG ?? "--payload",
-      JSON.stringify(workflowPayload()),
-      "--root",
-      process.cwd(),
-    ],
-    {
-      ...scenarioEnv({ autoHook: true, explicitObserve: false }),
-      FLUE_E2E_FLUSH_FILE: flushFile,
-    },
-  );
-  await waitForFile(flushFile);
-}
-
 export function runExplicitFlueInstrumentation() {
   return runNodeFlueInstrumentationScenario({
-    autoHook: false,
-    explicitObserve: true,
     outputName: "explicit",
   });
-}
-
-export function runAutoFlueInstrumentation() {
-  return runNodeFlueInstrumentationScenario({
-    autoHook: true,
-    explicitObserve: false,
-    outputName: "auto-hook",
-  });
-}
-
-export function runCliFlueInstrumentation() {
-  return runCliFlueInstrumentationScenario();
-}
-
-function scenarioEnv({ autoHook, explicitObserve }) {
-  const env = {
-    ...process.env,
-    FLUE_E2E_EXPLICIT_OBSERVE: explicitObserve ? "1" : "0",
-  };
-  if (!autoHook) {
-    return env;
-  }
-  return {
-    ...env,
-    NODE_OPTIONS: [env.NODE_OPTIONS, braintrustHookNodeOption]
-      .filter(Boolean)
-      .join(" "),
-  };
 }
 
 async function runFlueCli(args, env) {
@@ -244,23 +190,6 @@ async function stopChild(child) {
       }
     }, 5_000).unref();
   });
-}
-
-async function waitForFile(filePath) {
-  const startedAt = Date.now();
-  while (true) {
-    try {
-      await access(filePath);
-      return;
-    } catch {
-      if (Date.now() - startedAt > 30_000) {
-        throw new Error(
-          `timed out waiting for Flue e2e flush marker: ${filePath}`,
-        );
-      }
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-  }
 }
 
 export function runMain(main) {

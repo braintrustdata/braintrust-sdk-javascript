@@ -14,7 +14,6 @@ import { cloudflareAgentsChannels } from "./cloudflare-agents-channels";
 import { cloudflareThinkChannels } from "./cloudflare-think-channels";
 import { cohereChannels } from "./cohere-channels";
 import { cursorSDKChannels } from "./cursor-sdk-channels";
-import { flueChannels } from "./flue-channels";
 import { genkitChannels, genkitCoreChannels } from "./genkit-channels";
 import { gitHubCopilotChannels } from "./github-copilot-channels";
 import { googleADKChannels } from "./google-adk-channels";
@@ -56,7 +55,6 @@ describe("built-in instrumentation provenance names", () => {
     ],
     [cohereChannels.chat, INSTRUMENTATION_NAMES.COHERE],
     [cursorSDKChannels.create, INSTRUMENTATION_NAMES.CURSOR_SDK],
-    [flueChannels.createContext, INSTRUMENTATION_NAMES.FLUE],
     [genkitChannels.generate, INSTRUMENTATION_NAMES.GENKIT],
     [genkitCoreChannels.actionSpan, INSTRUMENTATION_NAMES.GENKIT],
     [gitHubCopilotChannels.createSession, INSTRUMENTATION_NAMES.GITHUB_COPILOT],
