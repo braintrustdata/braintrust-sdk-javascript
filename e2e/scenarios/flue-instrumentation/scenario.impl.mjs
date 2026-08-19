@@ -25,27 +25,23 @@ function workflowPayload() {
   };
 }
 
-export async function runNodeFlueInstrumentationScenario(options) {
-  const env = { ...process.env };
-  const outputDir = path.join(process.cwd(), ".flue-build", options.outputName);
-  await runFlueCli(
-    [
-      "build",
-      "--target",
-      "node",
-      "--root",
-      process.cwd(),
-      "--output",
-      outputDir,
-    ],
-    env,
-  );
+export async function runFlueInstrumentationScenario() {
+  const outputDir = path.join(process.cwd(), ".flue-build", "explicit");
+  await runFlueCli([
+    "build",
+    "--target",
+    "node",
+    "--root",
+    process.cwd(),
+    "--output",
+    outputDir,
+  ]);
 
   const port = await getFreePort();
   const child = spawn(process.execPath, [path.join(outputDir, "server.mjs")], {
     cwd: process.cwd(),
     env: {
-      ...env,
+      ...process.env,
       PORT: String(port),
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -94,17 +90,10 @@ export async function runNodeFlueInstrumentationScenario(options) {
   }
 }
 
-export function runExplicitFlueInstrumentation() {
-  return runNodeFlueInstrumentationScenario({
-    outputName: "explicit",
-  });
-}
-
-async function runFlueCli(args, env) {
+async function runFlueCli(args) {
   await new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [flueCliPath, ...args], {
       cwd: process.cwd(),
-      env,
       stdio: ["ignore", "pipe", "pipe"],
     });
 
@@ -189,12 +178,5 @@ async function stopChild(child) {
         child.kill("SIGKILL");
       }
     }, 5_000).unref();
-  });
-}
-
-export function runMain(main) {
-  void main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
   });
 }

@@ -1,5 +1,5 @@
 /**
- * Vendored types for @flue/runtime observe/instrument-based instrumentation.
+ * Vendored types for @flue/runtime instrumentation.
  *
  * Keep this surface intentionally narrow. These types are not exported to SDK
  * users and should only cover fields we read, correlate, or log.
@@ -16,17 +16,11 @@ export interface FlueUsage {
   cacheWrite?: number;
   totalTokens?: number;
   cost?: {
-    input?: number;
-    output?: number;
-    cacheRead?: number;
-    cacheWrite?: number;
     total?: number;
   };
 }
 
 export interface FlueBaseEvent {
-  type?: string;
-  v?: number;
   runId?: string;
   instanceId?: string;
   submissionId?: string;
@@ -41,7 +35,6 @@ export interface FlueBaseEvent {
   harness?: string;
   operationId?: string;
   turnId?: string;
-  [key: string]: unknown;
 }
 
 export interface FlueRunStartEvent extends FlueBaseEvent {
@@ -85,10 +78,9 @@ export interface FlueOperationEvent extends FlueBaseEvent {
   result?: unknown;
   agentInput?: {
     text?: string;
-    images?: Array<{ mimeType?: string }>;
   };
   agentOutput?:
-    | { type?: "text"; text?: string; finishReason?: string }
+    | { type?: "text"; text?: string }
     | { type?: "data"; data?: unknown };
   usage?: FlueUsage;
 }
@@ -104,11 +96,9 @@ export interface FlueTurnRequestEvent extends FlueBaseEvent {
       messages?: unknown[];
       tools?: unknown[];
     };
-    model?: string;
     requestedModel?: string;
     providerId?: string;
     providerName?: string;
-    reasoning?: string;
     reasoningLevel?: string;
   };
 }
@@ -120,7 +110,6 @@ export interface FlueTurnEvent extends FlueBaseEvent {
   durationMs?: number;
   request?: {
     api?: string;
-    model?: string;
     requestedModel?: string;
     providerId?: string;
     providerName?: string;
@@ -128,11 +117,9 @@ export interface FlueTurnEvent extends FlueBaseEvent {
   response?: {
     output?: unknown;
     usage?: FlueUsage;
-    stopReason?: string;
     finishReason?: string;
     responseModel?: string;
     error?: unknown;
-    errorInfo?: { type?: string; message?: string };
   };
   isError?: boolean;
 }
@@ -142,10 +129,6 @@ export interface FlueToolStartEvent extends FlueBaseEvent {
   toolName?: string;
   toolCallId: string;
   args?: unknown;
-  arguments?: unknown;
-  input?: unknown;
-  origin?: "model" | "caller" | "framework" | "adapter";
-  description?: string;
 }
 
 export interface FlueToolCallEvent extends FlueBaseEvent {
@@ -155,8 +138,6 @@ export interface FlueToolCallEvent extends FlueBaseEvent {
   isError?: boolean;
   result?: unknown;
   effectiveResult?: unknown;
-  output?: unknown;
-  error?: unknown;
   errorInfo?: { type?: string; message?: string };
   durationMs?: number;
 }
@@ -175,9 +156,6 @@ export interface FlueTaskEvent extends FlueBaseEvent {
   agent?: string;
   isError?: boolean;
   result?: unknown;
-  agentOutput?:
-    | { type?: "text"; text?: string; finishReason?: string }
-    | { type?: "data"; data?: unknown };
   errorInfo?: { type?: string; message?: string };
   durationMs?: number;
 }
@@ -200,8 +178,7 @@ export interface FlueCompactionEvent extends FlueBaseEvent {
 }
 
 export interface FlueContext {
-  readonly id?: string;
-  readonly runId?: string;
+  readonly id: string;
 }
 
 export type FlueExecutionOperation =
@@ -218,25 +195,12 @@ export type FlueExecutionOperation =
   | { type: "task"; taskId: string }
   | { type: "coordinator"; phase: "reconcile" };
 
-export interface FlueTraceCarrier {
-  traceparent: string;
-  tracestate?: string;
-}
-
 export interface FlueExecutionContext {
   eventContext?: FlueContext;
   runId?: string;
-  instanceId?: string;
-  submissionId?: string;
-  dispatchId?: string;
-  agentName?: string;
-  conversationId?: string;
-  harness?: string;
-  session?: string;
   operationId?: string;
   turnId?: string;
   taskId?: string;
-  traceCarrier?: FlueTraceCarrier;
 }
 
 export type FlueExecutionInterceptor = <T>(

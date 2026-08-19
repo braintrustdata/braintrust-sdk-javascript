@@ -66,7 +66,7 @@ vi.mock("../../logger", () => ({
 
 import { braintrustFlueInstrumentation } from "./flue-plugin";
 
-describe("Flue observe instrumentation", () => {
+describe("Flue instrumentation", () => {
   let spans: Array<{
     args: any;
     end: ReturnType<typeof vi.fn>;
@@ -114,7 +114,7 @@ describe("Flue observe instrumentation", () => {
     vi.clearAllMocks();
   });
 
-  it("exports a Flue 1.0 instrumentation factory", async () => {
+  it("exports a Flue instrumentation factory", async () => {
     const instrumentation = braintrustFlueInstrumentation();
     const instrument = vi.fn((value: typeof instrumentation) => value);
 
@@ -134,7 +134,7 @@ describe("Flue observe instrumentation", () => {
         type: "workflow",
         workflowName: "research",
       },
-      { eventContext: { id: "ctx-1", runId: "run-1" } },
+      { eventContext: { id: "ctx-1" } },
       async () => mockStartSpan({ name: "app.phase" }),
     );
     const workflowSpan = findSpan("workflow:research");
@@ -148,7 +148,7 @@ describe("Flue observe instrumentation", () => {
     expect("enterWith" in mockCurrentSpanStore).toBe(false);
   });
 
-  it("maps workflow observations into semantic Braintrust spans", () => {
+  it("maps Flue 1 workflow observations into semantic Braintrust spans", () => {
     const emit = observeEvents();
     const usage = flueUsage();
     const startedAt = "2026-05-27T05:12:31.000Z";
@@ -169,7 +169,7 @@ describe("Flue observe instrumentation", () => {
         type: "run_start",
         workflowName: "research",
       },
-      { id: "ctx-1", runId: "run-1" },
+      { id: "ctx-1" },
     );
     emit({
       operationId: "op-1",
@@ -189,9 +189,9 @@ describe("Flue observe instrumentation", () => {
           systemPrompt: "Be precise",
           tools: [{ name: "lookup", parameters: {} }],
         },
-        model: "claude-test",
         providerName: "anthropic",
-        reasoning: "medium",
+        reasoningLevel: "medium",
+        requestedModel: "claude-test",
       },
       runId: "run-1",
       timestamp: "2026-05-27T05:12:33.000Z",
@@ -212,7 +212,7 @@ describe("Flue observe instrumentation", () => {
       durationMs: 4,
       isError: false,
       operationId: "op-1",
-      output: { ok: true },
+      result: { ok: true },
       runId: "run-1",
       timestamp: "2026-05-27T05:12:35.000Z",
       toolCallId: "tool-1",
@@ -227,15 +227,15 @@ describe("Flue observe instrumentation", () => {
       purpose: "agent",
       request: {
         api: "responses",
-        model: "claude-test",
         providerName: "anthropic",
+        requestedModel: "claude-test",
       },
       response: {
         output: {
           content: [{ text: "done", type: "text" }],
           role: "assistant",
         },
-        stopReason: "stop",
+        finishReason: "stop",
         usage,
       },
       runId: "run-1",
@@ -385,150 +385,6 @@ describe("Flue observe instrumentation", () => {
       endTime: Date.parse("2026-05-27T05:12:42.000Z") / 1000,
     });
     expect(mockFlush).toHaveBeenCalledTimes(1);
-  });
-
-  it("maps Flue 1.0 observations into semantic Braintrust spans", () => {
-    const emit = observeEvents();
-    const usage = flueUsage();
-
-    emit(
-      {
-        eventIndex: 0,
-        input: {
-          metadata: { scenario: "flue-v1" },
-          topic: "native instrumentation",
-        },
-        runId: "run-1",
-        timestamp: "2026-05-27T05:12:31.000Z",
-        type: "run_start",
-        v: 3,
-        workflowName: "research",
-      },
-      { id: "ctx-1", runId: "run-1" },
-    );
-    emit({
-      eventIndex: 1,
-      operationId: "op-1",
-      operationKind: "prompt",
-      runId: "run-1",
-      type: "operation_start",
-      v: 3,
-    });
-    emit({
-      eventIndex: 2,
-      operationId: "op-1",
-      purpose: "agent",
-      request: {
-        api: "responses",
-        input: {
-          messages: [{ content: "Find native hooks", role: "user" }],
-          systemPrompt: "Be exact",
-          tools: [{ name: "lookup" }],
-        },
-        model: "claude-test",
-        providerId: "anthropic",
-        providerName: "anthropic",
-        reasoning: "medium",
-      },
-      runId: "run-1",
-      turnId: "turn-1",
-      type: "turn_request",
-      v: 3,
-    });
-    emit({
-      args: { query: "native flue instrumentation" },
-      eventIndex: 3,
-      operationId: "op-1",
-      runId: "run-1",
-      toolCallId: "tool-1",
-      toolName: "lookup",
-      turnId: "turn-1",
-      type: "tool_start",
-      v: 3,
-    });
-    emit({
-      durationMs: 4,
-      eventIndex: 4,
-      isError: false,
-      operationId: "op-1",
-      output: { ok: true },
-      runId: "run-1",
-      toolCallId: "tool-1",
-      toolName: "lookup",
-      turnId: "turn-1",
-      type: "tool",
-      v: 3,
-    });
-    emit({
-      durationMs: 12,
-      eventIndex: 5,
-      isError: false,
-      operationId: "op-1",
-      purpose: "agent",
-      request: {
-        api: "responses",
-        model: "claude-test",
-        providerId: "anthropic",
-        providerName: "anthropic",
-      },
-      response: {
-        output: { content: [{ text: "done", type: "text" }] },
-        stopReason: "stop",
-        usage,
-      },
-      runId: "run-1",
-      turnId: "turn-1",
-      type: "turn",
-      v: 3,
-    });
-    emit({
-      durationMs: 50,
-      eventIndex: 6,
-      isError: false,
-      operationId: "op-1",
-      operationKind: "prompt",
-      result: { text: "PROMPT_DONE", usage },
-      runId: "run-1",
-      type: "operation",
-      usage,
-      v: 3,
-    });
-
-    const workflowSpan = findSpan("workflow:research");
-    const turnSpan = findSpan("flue.turn");
-    const toolSpan = findSpan("tool:lookup");
-    const operationSpan = findSpan("flue.prompt");
-
-    expect(workflowSpan?.args.event.input).toMatchObject({
-      metadata: { scenario: "flue-v1" },
-      topic: "native instrumentation",
-    });
-    expect(turnSpan?.args.event).toMatchObject({
-      input: [{ content: "Find native hooks", role: "user" }],
-      metadata: {
-        "flue.api": "responses",
-        "flue.model": "claude-test",
-        "flue.provider": "anthropic",
-        "flue.system_prompt": "Be exact",
-        provider: "anthropic",
-        reasoning: "medium",
-        tools: [{ name: "lookup" }],
-      },
-    });
-    expect(toolSpan?.log).toHaveBeenCalledWith(
-      expect.objectContaining({ output: { ok: true } }),
-    );
-    expect(turnSpan?.log).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metadata: expect.objectContaining({
-          "flue.stop_reason": "stop",
-        }),
-        output: { content: [{ text: "done", type: "text" }] },
-      }),
-    );
-    expect(operationSpan?.log).toHaveBeenCalledWith(
-      expect.objectContaining({ output: "PROMPT_DONE" }),
-    );
   });
 
   it("maps released Flue 2.0 observations and retains the final agent output", () => {
@@ -833,8 +689,8 @@ describe("Flue observe instrumentation", () => {
         input: {
           messages: [{ content: "finish", role: "user" }],
         },
-        model: "claude-test",
         providerName: "anthropic",
+        requestedModel: "claude-test",
       },
       runId: "run-1",
       turnId: "turn-1",
@@ -916,8 +772,8 @@ describe("Flue observe instrumentation", () => {
         input: {
           messages: [{ content: "summarize", role: "user" }],
         },
-        model: "gpt-test",
         providerName: "openai",
+        requestedModel: "gpt-test",
       },
       runId: "run-1",
       session: "main",
@@ -1079,7 +935,7 @@ describe("Flue observe instrumentation", () => {
     emit({
       durationMs: 1,
       isError: false,
-      output: "done",
+      result: "done",
       runId: "run-1",
       type: "run_end",
     });
@@ -1140,7 +996,7 @@ describe("Flue observe instrumentation", () => {
         type: "run_start",
         workflowName: "research",
       },
-      { id: "ctx-1", runId: "run-1" },
+      { id: "ctx-1" },
     );
     const workflowSpan = findSpan("workflow:research");
     const appSpan = await braintrustFlueInstrumentation().interceptor(
@@ -1151,7 +1007,7 @@ describe("Flue observe instrumentation", () => {
         type: "workflow",
         workflowName: "research",
       },
-      { eventContext: { id: "ctx-1", runId: "run-1" } },
+      { eventContext: { id: "ctx-1" } },
       async () => mockStartSpan({ name: "app.phase" }),
     );
 
@@ -1220,8 +1076,8 @@ describe("Flue observe instrumentation", () => {
       purpose: "agent",
       request: {
         input: { messages: [{ content: "hello", role: "user" }] },
-        model: "claude-test",
         providerName: "anthropic",
+        requestedModel: "claude-test",
       },
       runId: "run-1",
       turnId: "turn-1",

@@ -1,4 +1,4 @@
-import { flush, initLogger } from "braintrust";
+import { braintrustFlueInstrumentation, flush, initLogger } from "braintrust";
 import { Hono } from "hono";
 
 const runtimePackageName =
@@ -19,7 +19,6 @@ function projectName() {
 
 initLogger({ projectName: projectName() });
 
-const { braintrustFlueInstrumentation } = await import("braintrust");
 instrument(braintrustFlueInstrumentation());
 
 const openAIBaseUrl =

@@ -14,14 +14,12 @@ const TIMEOUT_MS = 120_000;
 const flueScenarios = await Promise.all([
   prepareFlueScenario({
     cliPackageName: "@flue/cli",
-    expectAmbientContext: true,
     label: "v1 pinned",
     runtimePackageName: "@flue/runtime",
     variantKey: "flue-v1-0-0-beta-3",
   }),
   prepareFlueScenario({
     cliPackageName: "flue-cli-v1-latest",
-    expectAmbientContext: true,
     label: "v1 latest",
     modelName: "openai/gpt-5.4-nano",
     runtimePackageName: "flue-runtime-v1-latest",
@@ -56,7 +54,6 @@ describe.sequential("flue variants", () => {
   for (const scenario of flueScenarios) {
     describe.sequential(`flue ${scenario.label} (${scenario.version})`, () => {
       defineFlueInstrumentationAssertions({
-        expectAmbientContext: scenario.expectAmbientContext,
         name: "explicit instrumentation",
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
@@ -93,7 +90,6 @@ describe.sequential("flue variants", () => {
 
 async function prepareFlueScenario(options: {
   cliPackageName: string;
-  expectAmbientContext: boolean;
   label: string;
   modelName?: string;
   runtimePackageName: string;
@@ -124,7 +120,6 @@ async function prepareFlueScenario(options: {
     ),
   ]);
   return {
-    ...options,
     env: {
       FLUE_CLI_PACKAGE_NAME: options.cliPackageName,
       FLUE_RUNTIME_PACKAGE_NAME: options.runtimePackageName,
@@ -137,7 +132,9 @@ async function prepareFlueScenario(options: {
           }
         : {}),
     },
+    label: options.label,
     scenarioDir,
+    variantKey: options.variantKey,
     version: await readInstalledPackageVersion(
       scenarioDir,
       options.runtimePackageName,
