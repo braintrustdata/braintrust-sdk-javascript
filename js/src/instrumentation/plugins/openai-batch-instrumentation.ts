@@ -959,23 +959,36 @@ function terminalEndTime(
   webhookCreatedAt: number | undefined,
   startTime: number,
 ): number {
-  const timestamp =
-    batch.status === "completed"
-      ? batch.completed_at
-      : batch.status === "failed"
-        ? batch.failed_at
-        : batch.status === "expired"
-          ? batch.expired_at
-          : batch.cancelled_at;
-  return typeof timestamp === "number" &&
+  let timestamp: number | null | undefined;
+  switch (batch.status) {
+    case "completed":
+      timestamp = batch.completed_at;
+      break;
+    case "failed":
+      timestamp = batch.failed_at;
+      break;
+    case "expired":
+      timestamp = batch.expired_at;
+      break;
+    default:
+      timestamp = batch.cancelled_at;
+  }
+
+  if (
+    typeof timestamp === "number" &&
     Number.isFinite(timestamp) &&
     timestamp >= startTime
-    ? timestamp
-    : typeof webhookCreatedAt === "number" &&
-        Number.isFinite(webhookCreatedAt) &&
-        webhookCreatedAt >= startTime
-      ? webhookCreatedAt
-      : Math.max(getCurrentUnixTimestamp(), startTime);
+  ) {
+    return timestamp;
+  }
+  if (
+    typeof webhookCreatedAt === "number" &&
+    Number.isFinite(webhookCreatedAt) &&
+    webhookCreatedAt >= startTime
+  ) {
+    return webhookCreatedAt;
+  }
+  return Math.max(getCurrentUnixTimestamp(), startTime);
 }
 
 async function completeBatch(
