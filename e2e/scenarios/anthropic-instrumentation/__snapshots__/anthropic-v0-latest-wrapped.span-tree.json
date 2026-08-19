@@ -646,6 +646,7 @@
                 }
               },
               "metrics": {
+                "completion_thinking_tokens": 42,
                 "completion_tokens": 48,
                 "prompt_cache_creation_1h_tokens": 0,
                 "prompt_cache_creation_5m_tokens": 0,

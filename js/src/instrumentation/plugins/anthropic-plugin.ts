@@ -843,6 +843,18 @@ export function parseMetricsFromUsage(
     }
   }
 
+  // Extended and adaptive thinking report the reasoning share of the billed
+  // output tokens. This mirrors the OpenAI plugin, where
+  // `output_tokens_details.reasoning_tokens` becomes
+  // `completion_reasoning_tokens`. The value is a subset of `output_tokens`,
+  // not additional tokens, so it is not rolled into the total.
+  if (isObject(usage.output_tokens_details)) {
+    const thinkingTokens = usage.output_tokens_details.thinking_tokens;
+    if (typeof thinkingTokens === "number") {
+      metrics.completion_thinking_tokens = thinkingTokens;
+    }
+  }
+
   if (isObject(usage.server_tool_use)) {
     for (const [name, value] of Object.entries(usage.server_tool_use)) {
       if (typeof value === "number") {
