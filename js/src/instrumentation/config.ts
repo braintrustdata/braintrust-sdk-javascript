@@ -12,7 +12,6 @@ export interface InstrumentationIntegrationsConfig {
   cloudflareThink?: boolean;
   cursor?: boolean;
   cursorSDK?: boolean;
-  flue?: boolean;
   mastra?: boolean;
   openAIAgents?: boolean;
   openrouter?: boolean;
@@ -80,8 +79,6 @@ const envIntegrationAliases: Record<
   cursor: "cursor",
   "cursor-sdk": "cursorSDK",
   cursorsdk: "cursorSDK",
-  flue: "flue",
-  "flue-runtime": "flue",
   mastra: "mastra",
   "openai-agents": "openAIAgents",
   openaiagents: "openAIAgents",
@@ -143,7 +140,6 @@ export function getDefaultInstrumentationIntegrations(): Record<
     cloudflareThink: true,
     cursor: true,
     cursorSDK: true,
-    flue: true,
     mastra: true,
     openAIAgents: true,
     openrouter: true,

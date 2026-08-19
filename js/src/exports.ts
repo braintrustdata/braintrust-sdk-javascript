@@ -351,8 +351,5 @@ export {
 
 // Auto-instrumentation configuration
 export { configureInstrumentation } from "./instrumentation";
-export {
-  braintrustFlueObserver,
-  braintrustFlueInstrumentation,
-} from "./instrumentation";
+export { braintrustFlueInstrumentation } from "./instrumentation";
 export type { InstrumentationConfig } from "./instrumentation";

@@ -20,7 +20,6 @@ import { GroqPlugin } from "./plugins/groq-plugin";
 import { BedrockRuntimePlugin } from "./plugins/bedrock-runtime-plugin";
 import { GenkitPlugin } from "./plugins/genkit-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
-import { FluePlugin } from "./plugins/flue-plugin";
 import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
@@ -77,7 +76,6 @@ export class BraintrustPlugin extends BasePlugin {
   private bedrockRuntimePlugin: BedrockRuntimePlugin | null = null;
   private genkitPlugin: GenkitPlugin | null = null;
   private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
-  private fluePlugin: FluePlugin | null = null;
   private langChainPlugin: LangChainPlugin | null = null;
   private langSmithPlugin: LangSmithPlugin | null = null;
   private piCodingAgentPlugin: PiCodingAgentPlugin | null = null;
@@ -234,11 +232,6 @@ export class BraintrustPlugin extends BasePlugin {
       this.cloudflareAgentsPlugin.enable();
     }
 
-    if (integrations.flue !== false) {
-      this.fluePlugin = new FluePlugin();
-      this.fluePlugin.enable();
-    }
-
     if (integrations.langchain !== false && integrations.langgraph !== false) {
       this.langChainPlugin = new LangChainPlugin();
       this.langChainPlugin.enable();
@@ -387,11 +380,6 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.cloudflareAgentsPlugin) {
       this.cloudflareAgentsPlugin.disable();
       this.cloudflareAgentsPlugin = null;
-    }
-
-    if (this.fluePlugin) {
-      this.fluePlugin.disable();
-      this.fluePlugin = null;
     }
 
     if (this.langChainPlugin) {
