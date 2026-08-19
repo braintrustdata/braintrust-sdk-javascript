@@ -12,21 +12,18 @@ const tsupConfig = Array.isArray(tsupConfigImport)
   ? tsupConfigImport
   : tsupConfigImport.default || [];
 
-// Extract entry points from tsup config, excluding CLI
-const entryFiles = tsupConfig
-  .flatMap((config) => {
-    const entries = Array.isArray(config.entry)
-      ? config.entry
-      : Object.values(config.entry);
-    return entries;
-  })
-  .filter((entry) => !entry.includes("cli"));
+// Extract entry points from tsup config
+const entryFiles = tsupConfig.flatMap((config) => {
+  const entries = Array.isArray(config.entry)
+    ? config.entry
+    : Object.values(config.entry);
+  return entries;
+});
 
 export default [
   {
     ignores: [
       "dist/**",
-      "dev/dist/**",
       "util/dist/**",
       "node_modules/**",
       "vendor/**",
@@ -162,38 +159,6 @@ export default [
     files: ["src/queue.bench.ts"],
     rules: {
       "no-restricted-properties": "off",
-    },
-  },
-  {
-    files: ["src/**/*.ts", "src/**/*.tsx"],
-    ignores: [
-      "src/cli/**",
-      "src/debug-logger.ts",
-      "src/framework.ts",
-      "src/framework2.ts",
-      "src/isomorph.ts",
-      "src/sandbox.ts",
-      "src/template/**",
-      "src/reporters/**",
-      "src/prompt-cache/**",
-      "src/eval-parameters.ts",
-      "src/wrappers/**",
-      "src/instrumentation/**",
-      "src/auto-instrumentations/**",
-    ],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: ["**/cli", "**/cli/**", "./cli", "./cli/**"],
-              message:
-                "Importing from 'cli' directory is not allowed. CLI code should not be imported by SDK code.",
-            },
-          ],
-        },
-      ],
     },
   },
   {

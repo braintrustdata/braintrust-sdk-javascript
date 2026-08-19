@@ -20,7 +20,7 @@ import type { Options } from "tsup";
  * ## How It Works
  *
  * 1. Downloads the latest published version from npm
- * 2. Extracts the .d.ts files for each entrypoint (main, browser, dev, util)
+ * 2. Extracts the .d.ts files for each entrypoint (main, browser, util)
  * 3. Parses both published and current .d.ts files using TypeScript Compiler API
  * 4. Compares exported symbols (functions, classes, interfaces, types, etc.)
  * 5. Fails if breaking changes are detected in non-major version bumps
@@ -100,7 +100,6 @@ function getEntrypointName(entryFile: string, outDir: string): string {
   if (entryFile.includes("src/browser/index.ts")) return "browser";
   if (entryFile.includes("src/edge-light/index.ts")) return "edge-light";
   if (entryFile.includes("src/workerd/index.ts")) return "workerd";
-  if (entryFile.includes("dev/index.ts")) return "dev";
   if (entryFile.includes("util/index.ts")) return "util";
 
   // Default to basename
@@ -150,6 +149,45 @@ function getVersionBumpType(
   if (current.minor > published.minor) return "minor";
   if (current.patch > published.patch) return "patch";
   return "none";
+}
+
+function getChangesetBumpType(
+  packageName: string,
+): "major" | "minor" | "patch" | null {
+  const changesetDir = path.join(__dirname, "..", "..", "..", ".changeset");
+  if (!fs.existsSync(changesetDir)) {
+    return null;
+  }
+
+  const bumpPriority = { patch: 1, minor: 2, major: 3 } as const;
+  let highestBump: "major" | "minor" | "patch" | null = null;
+  const escapedPackageName = packageName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const packageBumpPattern = new RegExp(
+    `^\\s*["']?${escapedPackageName}["']?\\s*:\\s*(major|minor|patch)\\s*$`,
+    "m",
+  );
+
+  for (const file of fs.readdirSync(changesetDir)) {
+    if (!file.endsWith(".md")) {
+      continue;
+    }
+
+    const contents = fs.readFileSync(path.join(changesetDir, file), "utf8");
+    const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(contents)?.[1];
+    const bump = frontmatter?.match(packageBumpPattern)?.[1] as
+      | "major"
+      | "minor"
+      | "patch"
+      | undefined;
+    if (
+      bump &&
+      (!highestBump || bumpPriority[bump] > bumpPriority[highestBump])
+    ) {
+      highestBump = bump;
+    }
+  }
+
+  return highestBump;
 }
 
 /**
@@ -2857,13 +2895,21 @@ describe("API Compatibility", () => {
     // Determine version bump type
     const publishedVersionInfo = parseVersion(publishedVersion);
     const currentVersionInfo = parseVersion(currentVersion);
-    versionBumpType = getVersionBumpType(
+    const packageVersionBumpType = getVersionBumpType(
       publishedVersionInfo,
       currentVersionInfo,
     );
+    const changesetBumpType = getChangesetBumpType("braintrust");
+    const bumpPriority = { none: 0, patch: 1, minor: 2, major: 3 } as const;
+    versionBumpType =
+      changesetBumpType &&
+      bumpPriority[changesetBumpType] > bumpPriority[packageVersionBumpType]
+        ? changesetBumpType
+        : packageVersionBumpType;
 
     console.log(`Published version: ${publishedVersion}`);
     console.log(`Current version: ${currentVersion}`);
+    console.log(`Changeset bump type: ${changesetBumpType ?? "none"}`);
     console.log(`Version bump type: ${versionBumpType}`);
 
     // Create temp directory for downloaded package
