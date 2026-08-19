@@ -1,7 +1,6 @@
 ---
 "@braintrust/browser": major
 "@braintrust/deepseek-harness": major
-"@braintrust/langchain-js": major
 "@braintrust/otel": major
 "@braintrust/templates-nunjucks-js": major
 "@braintrust/temporal": major
