@@ -33,22 +33,6 @@ export default defineConfig([
     clean: true,
   },
   {
-    entry: ["dev/index.ts"],
-    format: ["cjs", "esm"],
-    outDir: "dev/dist",
-    removeNodeProtocol: false,
-    external: ["esbuild", "prettier", "typescript", "zod"],
-    dts: {
-      // Split DTS generation to reduce memory usage
-      compilerOptions: {
-        skipLibCheck: true,
-      },
-    },
-    splitting: true,
-    define,
-    clean: true,
-  },
-  {
     entry: ["util/index.ts"],
     format: ["cjs", "esm"],
     outDir: "util/dist",

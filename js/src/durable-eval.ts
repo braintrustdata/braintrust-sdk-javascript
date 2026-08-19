@@ -852,7 +852,6 @@ async function startDurableEval<
         stop: () => undefined,
         increment: () => undefined,
       },
-      [],
       undefined,
       parameters,
       true,

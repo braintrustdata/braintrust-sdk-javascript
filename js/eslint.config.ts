@@ -24,7 +24,6 @@ export default [
   {
     ignores: [
       "dist/**",
-      "dev/dist/**",
       "util/dist/**",
       "node_modules/**",
       "vendor/**",

@@ -9,7 +9,6 @@ import {
   type SavedFunctionIdType as SavedFunctionId,
   type PromptBlockDataType as PromptBlockData,
   type PromptDataType as PromptData,
-  ToolFunctionDefinition as toolFunctionDefinitionSchema,
   type ToolFunctionDefinitionType as ToolFunctionDefinition,
   FunctionData as functionDataSchema,
   Project as projectSchema,
@@ -21,7 +20,6 @@ import {
   login,
   Prompt,
   PromptRowWithId,
-  RemoteEvalParameters,
 } from "./logger";
 import type { BaseFnOpts, GenericFunction } from "./framework-types";
 import type { EvalParameters } from "./eval-parameters";
@@ -30,14 +28,12 @@ import {
   type PromptDefinition,
 } from "./prompt-schemas";
 import { zodToJsonSchema } from "./zod/utils";
-import type {
-  ParametersSchema,
-  StaticParametersSchema,
-  SerializedParametersContainer,
-} from "../dev/types";
-
-export { toolFunctionDefinitionSchema };
-// ToolFunctionDefinition exported as type-only from main index to avoid namespace issues
+type ParametersSchema = {
+  type: "object";
+  properties: Record<string, Record<string, unknown>>;
+  required?: string[];
+  additionalProperties?: boolean;
+};
 
 // Safe access to __filename (only exists in Node.js CJS)
 const currentFilename =
@@ -710,53 +706,6 @@ class ParametersBuilder {
   }
 }
 
-export function serializeEvalParametersToStaticParametersSchema(
-  parameters: EvalParameters,
-): StaticParametersSchema {
-  return Object.fromEntries(
-    Object.entries(parameters).map(([name, value]) => {
-      if ("type" in value && value.type === "prompt") {
-        return [
-          name,
-          {
-            type: "prompt",
-            default: value.default
-              ? promptDefinitionToPromptData(value.default)
-              : undefined,
-            description: value.description,
-          },
-        ];
-      } else if ("type" in value && value.type === "model") {
-        return [
-          name,
-          {
-            type: "model",
-            default: value.default,
-            description: value.description,
-          },
-        ];
-      } else {
-        // Since this schema is bundled, it won't pass an instanceof check. For
-        // some reason, aliasing it to `z.ZodSchema` leads to `error TS2589:
-        // Type instantiation is excessively deep and possibly infinite.` So
-        // just using `any` to turn off the typesystem.
-        //
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const schemaObj = zodToJsonSchema(value as unknown as z.ZodType);
-        return [
-          name,
-          {
-            type: "data",
-            schema: schemaObj,
-            default: schemaObj.default,
-            description: schemaObj.description,
-          },
-        ];
-      }
-    }),
-  );
-}
-
 function serializeEvalParameterstoParametersSchema(
   parameters: EvalParameters,
 ): ParametersSchema {
@@ -827,32 +776,7 @@ function getDefaultDataFromParametersSchema(
   );
 }
 
-export function serializeRemoteEvalParametersContainer(
-  parameters: EvalParameters | RemoteEvalParameters<boolean, boolean>,
-): SerializedParametersContainer {
-  if (RemoteEvalParameters.isParameters(parameters)) {
-    return {
-      type: "braintrust.parameters",
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      schema: parameters.schema as ParametersSchema,
-      source: {
-        parametersId: parameters.id,
-        slug: parameters.slug,
-        name: parameters.name,
-        projectId: parameters.projectId,
-        version: parameters.version,
-      },
-    };
-  }
-
-  return {
-    type: "braintrust.staticParameters",
-    schema: serializeEvalParametersToStaticParametersSchema(parameters),
-    source: null,
-  };
-}
-
-export interface FunctionEvent {
+interface FunctionEvent {
   project_id: string;
   slug: string;
   name: string;
@@ -866,7 +790,7 @@ export interface FunctionEvent {
   environments?: { slug: string }[];
 }
 
-export class ProjectNameIdMap {
+class ProjectNameIdMap {
   private nameToId: Record<string, string> = {};
   private idToName: Record<string, string> = {};
 
