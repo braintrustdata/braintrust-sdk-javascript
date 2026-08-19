@@ -171,7 +171,9 @@
       "metadata": {
         "deepseek_harness.session_id": "<deepseek_harness.session_id:1>",
         "deepseek_harness.stop_reason": "completed",
-        "deepseek_harness.turn": 1
+        "deepseek_harness.turn": 1,
+        "scenario": "deepseek-harness-instrumentation",
+        "testRunId": "<run:1>"
       },
       "metrics": {
         "completion_tokens": 25,
@@ -404,7 +406,9 @@
       "metadata": {
         "deepseek_harness.session_id": "<deepseek_harness.session_id:1>",
         "deepseek_harness.stop_reason": "completed",
-        "deepseek_harness.turn": 2
+        "deepseek_harness.turn": 2,
+        "scenario": "deepseek-harness-instrumentation",
+        "testRunId": "<run:1>"
       },
       "metrics": {
         "completion_tokens": 25,

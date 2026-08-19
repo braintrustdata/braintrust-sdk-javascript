@@ -43,6 +43,8 @@ export interface Config {
   apiKey?: string;
   /** Braintrust project receiving Harness traces. */
   projectName?: string;
+  /** Metadata added to every top-level Harness turn trace. */
+  metadata?: Record<string, unknown>;
   /** Optional Braintrust organization name. */
   orgName?: string;
   /** Optional Braintrust deployment URL. */
@@ -52,6 +54,7 @@ export interface Config {
 export const Config: z<Config> = z.object({
   apiKey: z.string().role("secret"),
   projectName: z.string().default(DEFAULT_PROJECT_NAME),
+  metadata: z.dict(z.any()),
   orgName: z.string(),
   appUrl: z.string(),
 });
@@ -483,6 +486,7 @@ export function apply(ctx: Context, config: Config = {}): void {
           type: "task",
           event: {
             metadata: {
+              ...config.metadata,
               "deepseek_harness.session_id": sessionId,
               "deepseek_harness.turn": turn,
               ...(session.header.parentSession

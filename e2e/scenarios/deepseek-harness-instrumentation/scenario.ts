@@ -54,6 +54,10 @@ async function main(): Promise<void> {
       "e2e-deepseek-harness-instrumentation",
       getTestRunId(),
     ),
+    metadata: {
+      scenario: "deepseek-harness-instrumentation",
+      testRunId: getTestRunId(),
+    },
   });
   await new Promise((resolve) => setTimeout(resolve, 25));
 

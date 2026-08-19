@@ -196,6 +196,38 @@ describe("DeepSeek Harness plugin", () => {
     ).not.toHaveProperty("handler");
   });
 
+  test("adds configured metadata to every top-level turn", () => {
+    const harness = createContext({
+      metadata: { scenario: "deepseek-harness", testRunId: "e2e-123" },
+    });
+    const currentSession = session();
+    const onSessionEvent = harness.listener("session/event");
+
+    onSessionEvent(currentSession, {
+      type: "turn/start",
+      data: { turn: 1 },
+    });
+    onSessionEvent(currentSession, {
+      type: "turn/start",
+      data: { turn: 2 },
+    });
+
+    const turns = mock.spans.filter(
+      (span) => span.args.name === "deepseek_harness.turn",
+    );
+    expect(turns).toHaveLength(2);
+    for (const turn of turns) {
+      expect(turn.args).toMatchObject({
+        event: {
+          metadata: {
+            scenario: "deepseek-harness",
+            testRunId: "e2e-123",
+          },
+        },
+      });
+    }
+  });
+
   test("converts Harness image references to Braintrust attachments", async () => {
     const harness = createContext();
     const currentSession = session();

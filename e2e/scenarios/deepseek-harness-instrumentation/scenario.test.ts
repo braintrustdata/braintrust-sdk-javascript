@@ -91,6 +91,14 @@ describe.sequential("DeepSeek Harness instrumentation variants", () => {
         expect(first?.metadata?.["deepseek_harness.session_id"]).toEqual(
           second?.metadata?.["deepseek_harness.session_id"],
         );
+        expect(first?.metadata?.scenario).toBe(
+          "deepseek-harness-instrumentation",
+        );
+        expect(first?.metadata?.testRunId).toMatch(/^e2e-/);
+        expect(second?.metadata?.scenario).toBe(
+          "deepseek-harness-instrumentation",
+        );
+        expect(second?.metadata?.testRunId).toBe(first?.metadata?.testRunId);
         expect(first?.output).toBe("First Harness answer.");
         expect(second?.output).toBe("Second Harness answer.");
 

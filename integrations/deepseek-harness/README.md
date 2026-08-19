@@ -25,10 +25,13 @@ To override the defaults, add the following entry to the profile's
   config:
     apiKey: <your-api-key>
     projectName: DeepSeek Harness
+    metadata:
+      environment: production
 ```
 
-The optional configuration fields are `apiKey`, `projectName`, `orgName`, and
-`appUrl`. `projectName` defaults to `DeepSeek Harness`. You can set `apiKey`
+The optional configuration fields are `apiKey`, `projectName`, `metadata`,
+`orgName`, and `appUrl`. `metadata` is added to every top-level user-turn trace,
+and `projectName` defaults to `DeepSeek Harness`. You can set `apiKey`
 under **Settings > Plugins** in Harness; it is declared as a secret field so
 the settings UI handles it as a credential. A configured `apiKey` takes
 precedence over the `BRAINTRUST_API_KEY` environment variable.
