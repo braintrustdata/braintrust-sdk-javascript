@@ -171,7 +171,7 @@ export async function getRepoInfo(settings?: GitMetadataSettings) {
   return sanitized;
 }
 
-export async function currentRepoPath(): Promise<string | undefined> {
+async function currentRepoPath(): Promise<string | undefined> {
   return await attempt(async () =>
     (await runGitCommand(["rev-parse", "--show-toplevel"])).trim(),
   );

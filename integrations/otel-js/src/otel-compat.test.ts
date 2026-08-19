@@ -12,7 +12,7 @@ import {
   getContextManager,
   BRAINTRUST_CURRENT_SPAN_STORE,
   _exportsForTestingOnly,
-  runEvaluator,
+  Eval,
 } from "braintrust";
 import {
   BasicTracerProvider,
@@ -371,7 +371,7 @@ describe("OTEL compatibility mode", () => {
     expect(trace2Id).not.toBe(trace3Id);
   });
 
-  test("OTEL spans in experiment Eval() inherit experiment_id parent", async () => {
+  test("OTEL spans in Eval() inherit Braintrust parent context", async () => {
     const { tracer, exporter, processor } = setupOtelFixture(
       "experiment-eval-test",
     );
@@ -379,12 +379,11 @@ describe("OTEL compatibility mode", () => {
     // Capture BT span info from inside the task
     const btSpanInfo: Array<{ traceId: string; spanId: string }> = [];
 
-    // Use runEvaluator with null experiment to avoid API calls
-    const result = await runEvaluator(
-      null,
+    // Use the public Eval API without making Braintrust API calls.
+    const result = await Eval(
+      "test-eval-project",
       {
-        projectName: "test-eval-project",
-        evalName: "otel-eval-test",
+        experimentName: "otel-eval-test",
         data: [{ input: 1 }, { input: 2 }],
         task: async (input: number) => {
           // Capture the current BT span info
@@ -408,9 +407,10 @@ describe("OTEL compatibility mode", () => {
         },
         scores: [],
       },
-      new NoopProgressReporter(),
-      [],
-      undefined,
+      {
+        noSendLogs: true,
+        progress: new NoopProgressReporter(),
+      },
     );
 
     // Verify we captured BT span info

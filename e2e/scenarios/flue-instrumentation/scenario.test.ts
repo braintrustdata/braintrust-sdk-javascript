@@ -10,49 +10,19 @@ import { defineFlueInstrumentationAssertions } from "./assertions";
 import { defineFlueV2InstrumentationAssertions } from "./v2-assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
-const generatedScenarioRoot = path.resolve(
-  originalScenarioDir,
-  "../../.bt-tmp/generated-scenarios/flue-instrumentation",
-);
 const TIMEOUT_MS = 120_000;
-const flueV1ScenarioSourceDir = await prepareGeneratedFlueV1ScenarioSource();
 const flueScenarios = await Promise.all([
   prepareFlueScenario({
     cliPackageName: "@flue/cli",
-    expectAmbientContext: false,
-    label: "v0.8 pinned",
-    runtimePackageName: "@flue/runtime",
-    sourceDir: originalScenarioDir,
-    supportsAutoInstrumentation: true,
-    variantKey: "flue-v0-8-0",
-  }),
-  prepareFlueScenario({
-    cliPackageName: "flue-cli-v0-8-latest",
-    expectAmbientContext: false,
-    label: "v0.8 latest",
-    modelName: "openai/gpt-5.4-nano",
-    runtimePackageName: "flue-runtime-v0-8-latest",
-    sourceDir: originalScenarioDir,
-    supportsAutoInstrumentation: true,
-    variantKey: "flue-v0-8-latest",
-  }),
-  prepareFlueScenario({
-    cliPackageName: "flue-cli-v1",
-    expectAmbientContext: true,
     label: "v1 pinned",
-    runtimePackageName: "flue-runtime-v1",
-    sourceDir: flueV1ScenarioSourceDir,
-    supportsAutoInstrumentation: false,
+    runtimePackageName: "@flue/runtime",
     variantKey: "flue-v1-0-0-beta-3",
   }),
   prepareFlueScenario({
     cliPackageName: "flue-cli-v1-latest",
-    expectAmbientContext: true,
     label: "v1 latest",
     modelName: "openai/gpt-5.4-nano",
     runtimePackageName: "flue-runtime-v1-latest",
-    sourceDir: flueV1ScenarioSourceDir,
-    supportsAutoInstrumentation: false,
     variantKey: "flue-v1-latest",
   }),
 ]);
@@ -84,7 +54,6 @@ describe.sequential("flue variants", () => {
   for (const scenario of flueScenarios) {
     describe.sequential(`flue ${scenario.label} (${scenario.version})`, () => {
       defineFlueInstrumentationAssertions({
-        expectAmbientContext: scenario.expectAmbientContext,
         name: "explicit instrumentation",
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
@@ -102,54 +71,6 @@ describe.sequential("flue variants", () => {
         testFileUrl: import.meta.url,
         timeoutMs: TIMEOUT_MS,
       });
-
-      if (scenario.supportsAutoInstrumentation) {
-        defineFlueInstrumentationAssertions({
-          expectAmbientContext: scenario.expectAmbientContext,
-          name: "auto-hook instrumentation",
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: "scenario.mjs",
-              env: scenario.env,
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              runContext: {
-                originalScenarioDir,
-                variantKey: scenario.variantKey,
-              },
-              scenarioDir: scenario.scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.variantKey}-auto-hook`,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
-
-        defineFlueInstrumentationAssertions({
-          expectAmbientContext: scenario.expectAmbientContext,
-          name: "cli instrumentation",
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: "scenario.cli.mjs",
-              env: {
-                ...scenario.env,
-                ...(scenario.inputFlag
-                  ? { FLUE_E2E_INPUT_FLAG: scenario.inputFlag }
-                  : {}),
-              },
-              runContext: {
-                originalScenarioDir,
-                variantKey: scenario.variantKey,
-              },
-              scenarioDir: scenario.scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.variantKey}-cli`,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
-      }
     });
   }
 
@@ -169,17 +90,13 @@ describe.sequential("flue variants", () => {
 
 async function prepareFlueScenario(options: {
   cliPackageName: string;
-  expectAmbientContext: boolean;
-  inputFlag?: string;
   label: string;
   modelName?: string;
   runtimePackageName: string;
-  sourceDir: string;
-  supportsAutoInstrumentation: boolean;
   variantKey: string;
 }) {
   const scenarioDir = await prepareScenarioDir({
-    scenarioDir: options.sourceDir,
+    scenarioDir: originalScenarioDir,
   });
   const [cliPackageDir, runtimePackageDir] = await Promise.all([
     fs.realpath(path.join(scenarioDir, "node_modules", options.cliPackageName)),
@@ -203,7 +120,6 @@ async function prepareFlueScenario(options: {
     ),
   ]);
   return {
-    ...options,
     env: {
       FLUE_CLI_PACKAGE_NAME: options.cliPackageName,
       FLUE_RUNTIME_PACKAGE_NAME: options.runtimePackageName,
@@ -216,39 +132,12 @@ async function prepareFlueScenario(options: {
           }
         : {}),
     },
+    label: options.label,
     scenarioDir,
+    variantKey: options.variantKey,
     version: await readInstalledPackageVersion(
       scenarioDir,
       options.runtimePackageName,
     ),
   };
-}
-
-async function prepareGeneratedFlueV1ScenarioSource() {
-  const sourceDir = path.join(generatedScenarioRoot, "flue-v1");
-  await fs.rm(sourceDir, { force: true, recursive: true });
-  await fs.mkdir(sourceDir, { recursive: true });
-  await fs.cp(originalScenarioDir, sourceDir, {
-    filter(source) {
-      const relative = path.relative(originalScenarioDir, source);
-      return (
-        relative === "" ||
-        !["__cassettes__", "__snapshots__", "node_modules", "versions"].some(
-          (name) =>
-            relative === name || relative.startsWith(`${name}${path.sep}`),
-        )
-      );
-    },
-    recursive: true,
-  });
-  await fs.cp(path.join(originalScenarioDir, "versions", "v1"), sourceDir, {
-    filter(source) {
-      return (
-        source !==
-        path.join(originalScenarioDir, "versions", "v1", "package.json")
-      );
-    },
-    recursive: true,
-  });
-  return sourceDir;
 }

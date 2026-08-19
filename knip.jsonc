@@ -55,7 +55,6 @@
         "scripts/**/*.ts",
         "examples/**/*.{ts,tsx,js,jsx,mjs,cjs}",
         "smoke/**/*.{ts,tsx,js,jsx,mjs,cjs}",
-        "dev/**/*.ts",
         "util/**/*.ts",
       ],
       "project": [
@@ -64,7 +63,6 @@
         "scripts/**/*.ts",
         "examples/**/*.{ts,tsx,js,jsx,mjs,cjs}",
         "smoke/**/*.{ts,tsx,js,jsx,mjs,cjs,d.ts}",
-        "dev/**/*.ts",
         "util/**/*.ts",
       ],
     },

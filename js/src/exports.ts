@@ -250,7 +250,6 @@ export type {
   EvalScorer,
   EvalClassifier,
   EvaluatorDef,
-  EvaluatorFile,
   ReporterBody,
   SpanContext,
 } from "./framework";
@@ -260,9 +259,6 @@ export {
   Eval,
   EvalResultWithSummary,
   Reporter,
-  buildLocalSummary,
-  reportFailures,
-  runEvaluator,
   defaultErrorScoreHandler,
 } from "./framework";
 
@@ -283,7 +279,6 @@ export { DatasetPipeline } from "./dataset-pipeline";
 export type {
   CodeOpts,
   CreateProjectOpts,
-  FunctionEvent,
   PromptOpts,
   ScorerOpts,
 } from "./framework2";
@@ -292,12 +287,10 @@ export {
   CodeFunction,
   CodePrompt,
   Project,
-  ProjectNameIdMap,
   PromptBuilder,
   ScorerBuilder,
   ToolBuilder,
   projects,
-  toolFunctionDefinitionSchema,
 } from "./framework2";
 
 export {
@@ -331,25 +324,9 @@ export { addAzureBlobHeaders, LazyValue } from "./util";
 
 export { AttachmentReference } from "./generated_types";
 
-export type {
-  EvaluatorManifest,
-  EvalParameterSerializedSchema,
-  EvaluatorDefinition,
-  EvaluatorDefinitions,
-  ParametersSource,
-} from "../dev/types";
-
 export type { EvalParameters } from "./eval-parameters";
-
-export {
-  evaluatorDefinitionSchema,
-  evaluatorDefinitionsSchema,
-} from "../dev/types";
 
 // Auto-instrumentation configuration
 export { configureInstrumentation } from "./instrumentation";
-export {
-  braintrustFlueObserver,
-  braintrustFlueInstrumentation,
-} from "./instrumentation";
+export { braintrustFlueInstrumentation } from "./instrumentation";
 export type { InstrumentationConfig } from "./instrumentation";

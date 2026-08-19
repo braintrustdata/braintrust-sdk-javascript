@@ -13,7 +13,6 @@ import { cloudflareAgentsConfigs } from "./cloudflare-agents";
 import { cloudflareThinkConfigs } from "./cloudflare-think";
 import { cohereConfigs } from "./cohere";
 import { cursorSDKConfigs } from "./cursor-sdk";
-import { flueConfigs } from "./flue";
 import { genkitConfigs } from "./genkit";
 import { gitHubCopilotConfigs } from "./github-copilot";
 import { googleADKConfigs } from "./google-adk";
@@ -114,10 +113,6 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["strandsAgentSDK"],
       configs: strandsAgentSDKConfigs,
-    },
-    {
-      integrations: ["flue"],
-      configs: flueConfigs,
     },
     {
       integrations: ["voyageai"],
