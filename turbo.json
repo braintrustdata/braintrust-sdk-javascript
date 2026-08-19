@@ -98,38 +98,6 @@
         "HUGGINGFACE_API_KEY"
       ],
       "dependsOn": ["^build", "build"]
-    },
-    "playground:cli:push": {
-      "cache": false,
-      "passThroughEnv": [
-        "ANTHROPIC_API_KEY",
-        "BRAINTRUST_API_KEY",
-        "GEMINI_API_KEY",
-        "COHERE_API_KEY",
-        "CURSOR_API_KEY",
-        "GROQ_API_KEY",
-        "OPENAI_API_KEY",
-        "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY",
-        "HUGGINGFACE_API_KEY"
-      ],
-      "dependsOn": ["^build", "build"]
-    },
-    "playground:cli:eval": {
-      "cache": false,
-      "passThroughEnv": [
-        "ANTHROPIC_API_KEY",
-        "BRAINTRUST_API_KEY",
-        "GEMINI_API_KEY",
-        "COHERE_API_KEY",
-        "CURSOR_API_KEY",
-        "GROQ_API_KEY",
-        "OPENAI_API_KEY",
-        "OPENROUTER_API_KEY",
-        "MISTRAL_API_KEY",
-        "HUGGINGFACE_API_KEY"
-      ],
-      "dependsOn": ["^build", "build"]
     }
   }
 }

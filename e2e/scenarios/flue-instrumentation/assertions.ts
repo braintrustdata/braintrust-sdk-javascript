@@ -20,14 +20,6 @@ import {
 import { SCENARIO_NAME } from "./constants.mjs";
 
 type RunFlueScenario = (harness: {
-  runNodeScenarioDir: (options: {
-    entry: string;
-    env?: Record<string, string>;
-    nodeArgs?: string[];
-    runContext?: ScenarioRunContext;
-    scenarioDir: string;
-    timeoutMs: number;
-  }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
     env?: Record<string, string>;
@@ -155,40 +147,24 @@ function firstSpanIndex(
   return index === -1 ? Number.MAX_SAFE_INTEGER : index;
 }
 
-function findFlueDescendants(
-  events: CapturedLogEvent[],
-  flueSpan: CapturedLogEvent | undefined,
-  predicate: (event: CapturedLogEvent) => boolean,
-): CapturedLogEvent[] {
-  return findMatchingDescendants(events, flueSpan, predicate);
-}
-
-function isFlueChildSpan(
-  event: CapturedLogEvent,
-  includeAmbientProbeSpans = true,
-): boolean {
+function isFlueChildSpan(event: CapturedLogEvent): boolean {
   return (
     event.span.name === "flue.turn" ||
     event.span.name?.startsWith("tool:") === true ||
     event.span.name?.startsWith("task:") === true ||
     event.span.name?.startsWith("compaction:") === true ||
-    (includeAmbientProbeSpans && event.span.name === "flue.toolCurrentProbe") ||
+    event.span.name === "flue.toolCurrentProbe" ||
     event.span.name === "flue.task"
   );
 }
 
-function buildSpanTree(
-  events: CapturedLogEvent[],
-  includeAmbientProbeSpans: boolean,
-): SpanTreeEntry[] {
+function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
   const workflow = findLatestSpanByPrefix(events, "workflow:");
-  const workflowCurrentProbe = includeAmbientProbeSpans
-    ? findLatestChildSpan(
-        events,
-        "flue.workflowCurrentProbe",
-        workflow?.span.id,
-      )
-    : undefined;
+  const workflowCurrentProbe = findLatestChildSpan(
+    events,
+    "flue.workflowCurrentProbe",
+    workflow?.span.id,
+  );
   const promptSpan = findFlueOperation(events, "flue.prompt");
   const skillSpan = findFlueOperation(events, "flue.skill");
   const taskSpan = findFlueOperation(events, "flue.task");
@@ -198,28 +174,19 @@ function buildSpanTree(
     workflow,
     workflowCurrentProbe,
     promptSpan,
-    ...findFlueDescendants(events, promptSpan, (event) =>
-      isFlueChildSpan(event, includeAmbientProbeSpans),
-    ),
+    ...findMatchingDescendants(events, promptSpan, isFlueChildSpan),
     skillSpan,
-    ...findFlueDescendants(events, skillSpan, (event) =>
-      isFlueChildSpan(event, includeAmbientProbeSpans),
-    ),
+    ...findMatchingDescendants(events, skillSpan, isFlueChildSpan),
     taskSpan,
-    ...findFlueDescendants(events, taskSpan, (event) =>
-      isFlueChildSpan(event, includeAmbientProbeSpans),
-    ),
+    ...findMatchingDescendants(events, taskSpan, isFlueChildSpan),
     compactSpan,
-    ...findFlueDescendants(events, compactSpan, (event) =>
-      isFlueChildSpan(event, includeAmbientProbeSpans),
-    ),
+    ...findMatchingDescendants(events, compactSpan, isFlueChildSpan),
   ].flatMap((event) =>
     event ? [{ event, fields: snapshotFields(event) }] : [],
   );
 }
 
 export function defineFlueInstrumentationAssertions(options: {
-  expectAmbientContext?: boolean;
   name: string;
   runScenario: RunFlueScenario;
   snapshotName: string;
@@ -232,7 +199,6 @@ export function defineFlueInstrumentationAssertions(options: {
   );
   const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = { timeout: timeoutMs };
-  const expectAmbientContext = options.expectAmbientContext ?? true;
 
   describe.sequential(options.name, () => {
     let events: CapturedLogEvent[] = [];
@@ -257,46 +223,42 @@ export function defineFlueInstrumentationAssertions(options: {
       });
     });
 
-    if (expectAmbientContext) {
-      test(
-        "makes the Flue workflow span current for app spans",
-        testConfig,
-        () => {
-          const workflow = findLatestSpanByPrefix(events, "workflow:");
-          const appSpan = findLatestChildSpan(
-            events,
-            "flue.workflowCurrentProbe",
-            workflow?.span.id,
-          );
-
-          expect(appSpan).toBeDefined();
-          expect(appSpan?.span.parentIds).toEqual([workflow?.span.id]);
-          expect(appSpan?.output).toBe("active");
-        },
-      );
-
-      test("makes Flue tool spans current for app spans", testConfig, () => {
+    test(
+      "makes the Flue workflow span current for app spans",
+      testConfig,
+      () => {
         const workflow = findLatestSpanByPrefix(events, "workflow:");
-        const promptSpan = findFlueOperation(events, "flue.prompt");
-        const lookupToolSpan = findFlueDescendants(
-          events,
-          promptSpan,
-          (event) => event.span.name === "tool:lookup",
-        )[0];
         const appSpan = findLatestChildSpan(
           events,
-          "flue.toolCurrentProbe",
-          lookupToolSpan?.span.id,
+          "flue.workflowCurrentProbe",
+          workflow?.span.id,
         );
 
         expect(appSpan).toBeDefined();
-        expect(appSpan?.span.parentIds).toEqual([lookupToolSpan?.span.id]);
-        expect(appSpan?.output).toBe("lookup-active");
-        expect(workflow).toBeDefined();
-      });
-    }
+        expect(appSpan?.span.parentIds).toEqual([workflow?.span.id]);
+        expect(appSpan?.output).toBe("active");
+      },
+    );
 
-    test("captures observe-based Flue operation spans", testConfig, () => {
+    test("makes Flue tool spans current for app spans", testConfig, () => {
+      const promptSpan = findFlueOperation(events, "flue.prompt");
+      const lookupToolSpan = findMatchingDescendants(
+        events,
+        promptSpan,
+        (event) => event.span.name === "tool:lookup",
+      )[0];
+      const appSpan = findLatestChildSpan(
+        events,
+        "flue.toolCurrentProbe",
+        lookupToolSpan?.span.id,
+      );
+
+      expect(appSpan).toBeDefined();
+      expect(appSpan?.span.parentIds).toEqual([lookupToolSpan?.span.id]);
+      expect(appSpan?.output).toBe("lookup-active");
+    });
+
+    test("captures Flue operation spans", testConfig, () => {
       for (const flueSpanName of [
         "flue.prompt",
         "flue.skill",
@@ -334,10 +296,10 @@ export function defineFlueInstrumentationAssertions(options: {
       testConfig,
       () => {
         const promptSpan = findFlueOperation(events, "flue.prompt");
-        const promptChildren = findFlueDescendants(
+        const promptChildren = findMatchingDescendants(
           events,
           promptSpan,
-          (event) => isFlueChildSpan(event, expectAmbientContext),
+          isFlueChildSpan,
         );
         const promptTurns = promptChildren.filter(
           (event) => event.span.name === "flue.turn",
@@ -349,7 +311,7 @@ export function defineFlueInstrumentationAssertions(options: {
         const compactSpan = findFlueOperation(events, "flue.compact");
         const allLlmSpans = [promptSpan, skillSpan, compactSpan].flatMap(
           (span) =>
-            findFlueDescendants(
+            findMatchingDescendants(
               events,
               span,
               (event) => event.span.name === "flue.turn",
@@ -359,12 +321,12 @@ export function defineFlueInstrumentationAssertions(options: {
           (event) => event.span.name === "tool:lookup",
         );
         const taskSpan = findFlueOperation(events, "flue.task");
-        const nestedTaskSpans = findFlueDescendants(
+        const nestedTaskSpans = findMatchingDescendants(
           events,
           taskSpan,
           (event) => event.span.name === "flue.task",
         );
-        const compaction = findFlueDescendants(
+        const compaction = findMatchingDescendants(
           events,
           compactSpan,
           (event) => event.span.name?.startsWith("compaction:") === true,
@@ -414,15 +376,11 @@ export function defineFlueInstrumentationAssertions(options: {
     });
 
     test("matches the span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(
-        buildSpanTree(events, expectAmbientContext),
-        snapshotPath,
-        {
-          normalize: {
-            additionalProviderIdKeys: ["messageId"],
-          },
+      await matchSpanTreeSnapshot(buildSpanTree(events), snapshotPath, {
+        normalize: {
+          additionalProviderIdKeys: ["messageId"],
         },
-      );
+      });
     });
   });
 }

@@ -121,7 +121,7 @@ export type EvalTask<
       hooks: EvalHooks<Expected, Metadata, Parameters>,
     ) => Output);
 
-export type TaskProgressEvent = Omit<
+type TaskProgressEvent = Omit<
   SSEProgressEventData,
   "id" | "origin" | "object_type" | "name"
 >;
@@ -404,7 +404,7 @@ export class EvalResultWithSummary<
   }
 }
 
-export type { ReporterBody, ReporterDef } from "./reporters/types";
+export type { ReporterBody } from "./reporters/types";
 
 async function getPersistedBaseExperimentId(
   experiment: Experiment,
@@ -435,7 +435,7 @@ export type EvaluatorDef<
   evalName: string;
 } & Evaluator<Input, Output, Expected, Metadata, Parameters>;
 
-export type EvaluatorFile = {
+type EvaluatorFile = {
   functions: CodeFunction<
     unknown,
     unknown,
@@ -800,7 +800,7 @@ export async function Eval<
 
   if (typeof options.reporter === "string") {
     throw new Error(
-      "Must specify a reporter object, not a name. Can only specify reporter names when running 'braintrust eval'",
+      "Must specify a reporter object, not a name. Can only specify reporter names when running 'bt eval'",
     );
   }
 
@@ -847,7 +847,6 @@ export async function Eval<
               null,
               evalDef,
               progressReporter,
-              [],
               options.stream,
               options.parameters,
               shouldCollectResults,
@@ -860,7 +859,6 @@ export async function Eval<
           experiment,
           evalDef,
           progressReporter,
-          [],
           options.stream,
           options.parameters,
           shouldCollectResults,
@@ -903,64 +901,7 @@ export function Reporter<EvalReport>(
   return ret;
 }
 
-export interface Filter {
-  path: string[];
-  pattern: RegExp;
-}
-
-function serializeJSONWithPlainString(v: unknown) {
-  if (typeof v === "string") {
-    return v;
-  } else {
-    return JSON.stringify(v);
-  }
-}
-
-function deserializePlainStringAsJSON(s: string) {
-  try {
-    return { value: JSON.parse(s), error: undefined };
-  } catch (e) {
-    return { value: s, error: e };
-  }
-}
-
-export function parseFilters(filters: string[]): Filter[] {
-  const result: Filter[] = [];
-  for (const f of filters) {
-    const equalsIdx = f.indexOf("=");
-    if (equalsIdx === -1) {
-      throw new Error(`Invalid filter ${f}`);
-    }
-    const [path, value] = [f.slice(0, equalsIdx), f.slice(equalsIdx + 1)];
-    let deserializedValue = deserializePlainStringAsJSON(value).value;
-    if (typeof deserializedValue !== "string") {
-      deserializedValue = value; // Just fall back to the original input
-    }
-    result.push({
-      path: path.split("."),
-      pattern: new RegExp(deserializedValue),
-    });
-  }
-  return result;
-}
-
-function evaluateFilter(object: unknown, filter: Filter) {
-  const { path, pattern } = filter;
-  const key = path.reduce(
-    (acc, p) =>
-      typeof acc === "object" && acc !== null
-        ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          (acc as Record<string, unknown>)[p]
-        : undefined,
-    object,
-  );
-  if (key === undefined) {
-    return false;
-  }
-  return pattern.test(serializeJSONWithPlainString(key));
-}
-
-export function scorerName(
+function scorerName(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   scorer: EvalScorer<any, any, any, any>,
   scorer_idx: number,
@@ -1207,7 +1148,6 @@ export async function runEvaluator(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   evaluator: EvaluatorDef<any, any, any, any, any>,
   progressReporter: ProgressReporter,
-  filters: Filter[],
   stream: ((data: SSEProgressEventData) => void) | undefined,
   parameters?: InferParameters<EvalParameters>,
   collectResults = true,
@@ -1223,7 +1163,6 @@ export async function runEvaluator(
     experiment,
     evaluator,
     progressReporter,
-    filters,
     stream,
     parameters,
     collectResults,
@@ -1246,7 +1185,6 @@ async function runEvaluatorInternal(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   evaluator: EvaluatorDef<any, any, any, any>,
   progressReporter: ProgressReporter,
-  filters: Filter[],
   stream: ((data: SSEProgressEventData) => void) | undefined,
   parameters: InferParameters<EvalParameters> | undefined,
   collectResults: boolean,
@@ -1616,9 +1554,6 @@ async function runEvaluatorInternal(
         if (cancelled) {
           break;
         }
-        if (!filters.every((f) => evaluateFilter(datum, f))) {
-          continue;
-        }
         const trialCount = datum.trialCount ?? evaluator.trialCount ?? 1;
         for (let trialIndex = 0; trialIndex < trialCount; trialIndex++) {
           if (cancelled) {
@@ -1756,10 +1691,9 @@ async function runEvaluatorInternal(
   }
 }
 
-export const error = (text: string) => `Error: ${text}`;
-export const warning = (text: string) => `Warning: ${text}`;
+const warning = (text: string) => `Warning: ${text}`;
 
-export function logError(e: unknown, verbose: boolean) {
+function logError(e: unknown, verbose: boolean) {
   if (!verbose) {
     // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error(`${e}`);
@@ -1829,12 +1763,7 @@ export function buildLocalSummary(
   };
 }
 
-export function reportFailures<
-  Input,
-  Output,
-  Expected,
-  Metadata extends BaseMetadata,
->(
+function reportFailures<Input, Output, Expected, Metadata extends BaseMetadata>(
   evaluator: EvaluatorDef<Input, Output, Expected, Metadata>,
   failingResults: EvalResult<Input, Output, Expected, Metadata>[],
   { verbose, jsonl }: ReporterOpts,

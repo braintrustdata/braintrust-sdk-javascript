@@ -19,7 +19,6 @@ import { registerGroqInstrumentation } from "./providers/groq-instrumentation";
 import { registerBedrockRuntimeInstrumentation } from "./providers/bedrock-runtime-instrumentation";
 import { registerGenkitInstrumentation } from "./providers/genkit-instrumentation";
 import { registerGitHubCopilotInstrumentation } from "./providers/github-copilot-instrumentation";
-import { registerFlueInstrumentation } from "./providers/flue-instrumentation";
 import { registerLangChainInstrumentation } from "./providers/langchain-instrumentation";
 import { registerLangSmithInstrumentation } from "./providers/langsmith-instrumentation";
 import { registerPiCodingAgentInstrumentation } from "./providers/pi-coding-agent-instrumentation";
@@ -165,10 +164,6 @@ export function registerInstrumentationConsumers(
 
   if (integrations.cloudflareAgents !== false) {
     registerCloudflareAgentsInstrumentation();
-  }
-
-  if (integrations.flue !== false) {
-    registerFlueInstrumentation();
   }
 
   if (integrations.langchain !== false && integrations.langgraph !== false) {

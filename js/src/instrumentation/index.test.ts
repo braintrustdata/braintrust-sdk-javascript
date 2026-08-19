@@ -8,7 +8,6 @@ describe("instrumentation public API", () => {
       "braintrustEveHook",
       "braintrustEveInstrumentation",
       "braintrustFlueInstrumentation",
-      "braintrustFlueObserver",
       "configureInstrumentation",
     ]);
   });

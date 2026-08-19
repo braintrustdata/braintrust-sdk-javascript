@@ -236,11 +236,10 @@ jobs:
           pnpm install --frozen-lockfile || { echo "Baseline install failed"; git checkout "$CURRENT_REF"; exit 0; }
           pnpm run build || { echo "Baseline build failed"; git checkout "$CURRENT_REF"; exit 0; }
 
-          mkdir -p "$BASELINE_DIR/js/dev" "$BASELINE_DIR/js/util"
+          mkdir -p "$BASELINE_DIR/js/util"
           cp -R js/dist "$BASELINE_DIR/js/"
-          cp -R js/dev/dist "$BASELINE_DIR/js/dev/"
           cp -R js/util/dist "$BASELINE_DIR/js/util/"
-          echo "Copied js/dist, js/dev/dist, and js/util/dist to baseline"
+          echo "Copied js/dist and js/util/dist to baseline"
 
           git checkout "$CURRENT_REF"
 
@@ -473,17 +472,6 @@ jobs:
       - name: Run hermetic tests
         working-directory: ./js
         run: pnpm run test:checks
-      - name: Run zod v3 tests
-        if: matrix.zod-version == '3.25.34'
-        working-directory: ./js
-        run: |
-          pnpm test:zod-v3
-      - name: Run zod v4 tests
-        if: matrix.zod-version == '4.2.1'
-        working-directory: ./js
-        run: |
-          pnpm test:zod-v4
-
   checks-passed:
     name: checks-passed
     needs:

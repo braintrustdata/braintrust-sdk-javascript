@@ -11,7 +11,6 @@ const registrations = vi.hoisted(() => ({
   cloudflareThink: vi.fn(),
   cohere: vi.fn(),
   cursorSDK: vi.fn(),
-  flue: vi.fn(),
   genkit: vi.fn(),
   gitHubCopilot: vi.fn(),
   googleADK: vi.fn(),
@@ -59,9 +58,6 @@ vi.mock("./providers/cohere-instrumentation", () => ({
 }));
 vi.mock("./providers/cursor-sdk-instrumentation", () => ({
   registerCursorSDKInstrumentation: registrations.cursorSDK,
-}));
-vi.mock("./providers/flue-instrumentation", () => ({
-  registerFlueInstrumentation: registrations.flue,
 }));
 vi.mock("./providers/genkit-instrumentation", () => ({
   registerGenkitInstrumentation: registrations.genkit,
@@ -139,7 +135,6 @@ const integrationCases: Array<
   ["cloudflareThink", [registrations.cloudflareThink]],
   ["cohere", [registrations.cohere]],
   ["cursorSDK", [registrations.cursorSDK]],
-  ["flue", [registrations.flue]],
   ["genkit", [registrations.genkit]],
   ["gitHubCopilot", [registrations.gitHubCopilot]],
   ["googleADK", [registrations.googleADK]],
