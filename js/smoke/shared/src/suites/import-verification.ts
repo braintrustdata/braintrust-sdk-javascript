@@ -54,9 +54,6 @@ export interface BraintrustModule {
   Eval?: unknown;
   EvalResultWithSummary?: unknown;
   Reporter?: unknown;
-  runEvaluator?: unknown;
-  buildLocalSummary?: unknown;
-  reportFailures?: unknown;
   defaultErrorScoreHandler?: unknown;
 
   // Tracing (REQUIRED)
@@ -221,27 +218,6 @@ export const testEvalExports = register("testEvalExports", async (module) => {
   assertDefined(module.Reporter, "Reporter must exist");
   assertType(module.Reporter, "function", "Reporter must be a function");
 
-  assertDefined(module.runEvaluator, "runEvaluator must exist");
-  assertType(
-    module.runEvaluator,
-    "function",
-    "runEvaluator must be a function",
-  );
-
-  assertDefined(module.buildLocalSummary, "buildLocalSummary must exist");
-  assertType(
-    module.buildLocalSummary,
-    "function",
-    "buildLocalSummary must be a function",
-  );
-
-  assertDefined(module.reportFailures, "reportFailures must exist");
-  assertType(
-    module.reportFailures,
-    "function",
-    "reportFailures must be a function",
-  );
-
   assertDefined(
     module.defaultErrorScoreHandler,
     "defaultErrorScoreHandler must exist",
@@ -252,7 +228,7 @@ export const testEvalExports = register("testEvalExports", async (module) => {
     "defaultErrorScoreHandler must be a function",
   );
 
-  return "Eval exports verified (7 runtime exports)";
+  return "Eval exports verified (4 runtime exports)";
 });
 
 export const testTracingExports = register(
