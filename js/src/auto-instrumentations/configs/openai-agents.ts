@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { openAIAgentsCoreChannels } from "../../instrumentation/plugins/openai-agents-channels";
+import { openAIAgentsCoreChannels } from "../../instrumentation/providers/openai-agents-channels";
 
 const lifecycleMethods = [
   ["onTraceStart", openAIAgentsCoreChannels.onTraceStart.channelName],

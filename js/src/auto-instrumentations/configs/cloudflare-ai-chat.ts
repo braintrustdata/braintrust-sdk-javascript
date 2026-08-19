@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { cloudflareAIChatChannels } from "../../instrumentation/plugins/cloudflare-ai-chat-channels";
+import { cloudflareAIChatChannels } from "../../instrumentation/providers/cloudflare-ai-chat-channels";
 
 const cloudflareAIChatVersionRange = ">=0.9.0 <0.10.0";
 

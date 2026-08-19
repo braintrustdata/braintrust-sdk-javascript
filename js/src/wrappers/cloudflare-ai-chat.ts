@@ -1,5 +1,5 @@
 import { debugLogger } from "../debug-logger";
-import { instrumentCloudflareAIChatAgent } from "../instrumentation/plugins/cloudflare-ai-chat-instrumentation";
+import { instrumentCloudflareAIChatAgent } from "../instrumentation/providers/cloudflare-ai-chat-instrumentation";
 import type {
   CloudflareAIChatAgent,
   CloudflareAIChatAgentConstructor,

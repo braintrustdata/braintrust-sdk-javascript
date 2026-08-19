@@ -4,7 +4,7 @@ import { SpanTypeAttribute } from "../../../util";
 import {
   aiSDKChannels,
   harnessAgentChannels,
-} from "../../instrumentation/plugins/ai-sdk-channels";
+} from "../../instrumentation/providers/ai-sdk-channels";
 import type {
   AISDK,
   AISDKAgentClass,

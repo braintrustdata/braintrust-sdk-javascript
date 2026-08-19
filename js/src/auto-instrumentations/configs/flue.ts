@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { flueChannels } from "../../instrumentation/plugins/flue-channels";
+import { flueChannels } from "../../instrumentation/providers/flue-channels";
 
 export const flueVersionRange = ">=0.8.0 <1.0.0";
 

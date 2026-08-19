@@ -45,10 +45,10 @@ export function runWithAutoInstrumentationSuppressed<R>(callback: () => R): R {
 
 export function bindAutoInstrumentationSuppressionToStart<T>(
   tracingChannel: Pick<IsoTracingChannel<T>, "start">,
-): (() => void) | undefined {
+): void {
   const startChannel = tracingChannel.start;
   if (!startChannel) {
-    return undefined;
+    return;
   }
 
   const store = suppressionStore();
@@ -61,10 +61,6 @@ export function bindAutoInstrumentationSuppressionToStart<T>(
       },
     ],
   }));
-
-  return () => {
-    startChannel.unbindStore(store);
-  };
 }
 
 export function enterAutoInstrumentationAllowed(): () => void {

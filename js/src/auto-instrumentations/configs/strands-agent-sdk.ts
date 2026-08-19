@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
-import { strandsAgentSDKChannels } from "../../instrumentation/plugins/strands-agent-sdk-channels";
+import { strandsAgentSDKChannels } from "../../instrumentation/providers/strands-agent-sdk-channels";
 
 const strandsAgentSDKVersionRange = ">=1.0.0 <2.0.0";
 

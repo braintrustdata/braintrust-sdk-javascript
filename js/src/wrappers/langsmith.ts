@@ -1,5 +1,5 @@
 import { debugLogger } from "../debug-logger";
-import { langSmithChannels } from "../instrumentation/plugins/langsmith-channels";
+import { langSmithChannels } from "../instrumentation/providers/langsmith-channels";
 import type {
   LangSmithClient,
   LangSmithClientConstructor,

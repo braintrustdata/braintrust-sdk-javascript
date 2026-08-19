@@ -50,7 +50,7 @@ export class ModulePatch {
 
         // Per-package source patches (see loader/special-case-patches.ts).
         // Anti-pattern intentionally isolated in its own module — do not
-        // expand inline here; new integrations belong in the standard plugin
+        // expand inline here; new integrations belong in the standard consumer
         // pipeline.
         const patched = applySpecialCasePatch({
           packageName,
