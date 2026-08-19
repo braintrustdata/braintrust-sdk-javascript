@@ -4,4 +4,4 @@
 "@braintrust/vercel-ai-sdk": patch
 ---
 
-ref: Deprecate `@braintrust/openai-agents` and `@braintrust/vercel-ai-sdk`
+ref: Deprecate `@braintrust/openai-agents`, `@braintrust/langchain-js`, and `@braintrust/vercel-ai-sdk`
