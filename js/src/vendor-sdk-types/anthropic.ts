@@ -195,18 +195,11 @@ export interface AnthropicUsage {
   cache_read_input_tokens?: number;
   cache_creation_input_tokens?: number;
   cache_creation?: AnthropicCacheCreationUsage | null;
-  output_tokens_details?: AnthropicOutputTokensDetails | null;
+  output_tokens_details?: {
+    thinking_tokens?: number;
+    [key: string]: unknown;
+  } | null;
   server_tool_use?: AnthropicServerToolUseUsage;
-  [key: string]: unknown;
-}
-
-/**
- * Breakdown of output tokens by category. Reported when extended or adaptive
- * thinking is active; `output_tokens` stays the authoritative billing total and
- * these are a subset of it.
- */
-export interface AnthropicOutputTokensDetails {
-  thinking_tokens?: number;
   [key: string]: unknown;
 }
 

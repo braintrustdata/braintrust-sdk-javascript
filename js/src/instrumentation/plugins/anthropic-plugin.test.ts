@@ -170,8 +170,6 @@ describe("parseMetricsFromUsage", () => {
 
     const result = parseMetricsFromUsageForTest(usage);
 
-    // Thinking tokens are a subset of `output_tokens`, so `completion_tokens`
-    // stays the inclusive total.
     expect(result).toEqual({
       prompt_tokens: 100,
       completion_tokens: 80,
@@ -321,7 +319,7 @@ describe("aggregateAnthropicStreamChunks", () => {
     });
   });
 
-  it("should carry thinking tokens through from the final message_delta usage", () => {
+  it("should carry thinking tokens through from message_delta without double counting", () => {
     const chunks = [
       {
         type: "message_start",
@@ -351,7 +349,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       prompt_tokens: 10,
       completion_tokens: 80,
       completion_reasoning_tokens: 20,
-      tokens: 90, // thinking tokens are already inside completion_tokens
+      tokens: 90,
     });
   });
 
