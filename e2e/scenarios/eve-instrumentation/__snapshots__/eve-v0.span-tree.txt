@@ -65,6 +65,8 @@ span_tree:
 │   │   ]
 │   │   metadata: {
 │   │     "eve.session_id": "<eve.session_id:1>",
+│   │     "model": "qwen/qwen3-30b-a3b",
+│   │     "provider": "openrouter",
 │   │     "scenario": "eve-instrumentation",
 │   │     "testRunId": "<run:1>"
 │   │   }
@@ -95,8 +97,6 @@ span_tree:
 │   │       output: "Researcher result: {\"title\": \"Eve instrumentation\", \"url\": \"https://eve.dev/docs/guides/instrumentation\"}"
 │   │       metadata: {
 │   │         "eve.session_id": "<eve.session_id:1>",
-│   │         "model": "qwen/qwen3-30b-a3b",
-│   │         "provider": "openrouter",
 │   │         "scenario": "eve-instrumentation",
 │   │         "testRunId": "<run:1>"
 │   │       }
@@ -347,6 +347,8 @@ span_tree:
 │       ]
 │       metadata: {
 │         "eve.session_id": "<eve.session_id:1>",
+│         "model": "qwen/qwen3-30b-a3b",
+│         "provider": "openrouter",
 │         "scenario": "eve-instrumentation",
 │         "testRunId": "<run:1>"
 │       }
@@ -498,6 +500,8 @@ span_tree:
     │   ]
     │   metadata: {
     │     "eve.session_id": "<eve.session_id:1>",
+    │     "model": "qwen/qwen3-30b-a3b",
+    │     "provider": "openrouter",
     │     "scenario": "eve-instrumentation",
     │     "testRunId": "<run:1>"
     │   }
@@ -528,8 +532,6 @@ span_tree:
     │       output: "Researcher result: Eve instrumentation (https://eve.dev/docs/guides/instrumentation)"
     │       metadata: {
     │         "eve.session_id": "<eve.session_id:1>",
-    │         "model": "qwen/qwen3-30b-a3b",
-    │         "provider": "openrouter",
     │         "scenario": "eve-instrumentation",
     │         "testRunId": "<run:1>"
     │       }
@@ -855,6 +857,8 @@ span_tree:
         ]
         metadata: {
           "eve.session_id": "<eve.session_id:1>",
+          "model": "qwen/qwen3-30b-a3b",
+          "provider": "openrouter",
           "scenario": "eve-instrumentation",
           "testRunId": "<run:1>"
         }

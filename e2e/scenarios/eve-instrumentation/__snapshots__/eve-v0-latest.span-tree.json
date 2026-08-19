@@ -53,6 +53,8 @@
           ],
           "metadata": {
             "eve.session_id": "<eve.session_id:1>",
+            "model": "qwen/qwen3-30b-a3b",
+            "provider": "openrouter",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
@@ -233,8 +235,6 @@
               "output": "Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)",
               "metadata": {
                 "eve.session_id": "<eve.session_id:1>",
-                "model": "qwen/qwen3-30b-a3b",
-                "provider": "openrouter",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
@@ -365,6 +365,8 @@
           ],
           "metadata": {
             "eve.session_id": "<eve.session_id:1>",
+            "model": "qwen/qwen3-30b-a3b",
+            "provider": "openrouter",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
@@ -525,6 +527,8 @@
           ],
           "metadata": {
             "eve.session_id": "<eve.session_id:1>",
+            "model": "qwen/qwen3-30b-a3b",
+            "provider": "openrouter",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },
@@ -705,8 +709,6 @@
               "output": "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation",
               "metadata": {
                 "eve.session_id": "<eve.session_id:1>",
-                "model": "qwen/qwen3-30b-a3b",
-                "provider": "openrouter",
                 "scenario": "eve-instrumentation",
                 "testRunId": "<run:1>"
               },
@@ -912,6 +914,8 @@
           ],
           "metadata": {
             "eve.session_id": "<eve.session_id:1>",
+            "model": "qwen/qwen3-30b-a3b",
+            "provider": "openrouter",
             "scenario": "eve-instrumentation",
             "testRunId": "<run:1>"
           },

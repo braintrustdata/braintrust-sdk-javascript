@@ -7,46 +7,38 @@ import {
   it,
   vi,
 } from "vitest";
-import { createHash } from "node:crypto";
 import * as braintrustExports from "../../exports";
 import { configureNode } from "../../node/config";
-import {
-  _exportsForTestingOnly,
-  initLogger,
-  startSpan,
-  withCurrent,
-} from "../../logger";
+import { Attachment, _exportsForTestingOnly, initLogger } from "../../logger";
 import * as instrumentationExports from "../index";
-import { braintrustEveHook, braintrustEveInstrumentation } from "./eve-plugin";
+import { braintrustEveInstrumentation } from "./eve-plugin";
 import type {
-  EveHandleMessageStreamEvent,
-  EveHookContext,
+  EveInstrumentationAttemptScope,
+  EveInstrumentationHandlerContext,
+  EveInstrumentationModelCallCompletedEvent,
+  EveJsonValue,
 } from "../../vendor-sdk-types/eve";
-import { mergeRowBatch } from "../../../util/index";
 
-function deterministicEveIdForTest(...parts: string[]): string {
-  return createHash("sha256")
-    .update(parts.map((part) => `${part.length}:${part}`).join("\0"))
-    .digest("hex")
-    .slice(0, 32)
-    .replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, "$1-$2-$3-$4-$5");
-}
+const ATTEMPT_SCOPE: EveInstrumentationAttemptScope = {
+  attemptId: "attempt-0",
+  attemptIndex: 0,
+  rootSessionId: "session-root",
+  sessionId: "session-root",
+  stepIndex: 0,
+  turnId: "turn-0",
+};
 
-function createFakeDefineState() {
-  const values = new Map<string, unknown>();
+function providerContext(
+  initial?: EveJsonValue,
+): EveInstrumentationHandlerContext {
+  let value = initial;
   return {
-    defineState<T>(name: string, initial: () => T) {
-      return {
-        get: () => (values.has(name) ? (values.get(name) as T) : initial()),
-        update: (fn: (current: T) => T) => {
-          values.set(
-            name,
-            fn(values.has(name) ? (values.get(name) as T) : initial()),
-          );
-        },
-      };
+    state: {
+      get: () => value,
+      set: (next) => {
+        value = next;
+      },
     },
-    values,
   };
 }
 
@@ -56,18 +48,16 @@ try {
   // Best-effort initialization for test environments.
 }
 
-describe("braintrustEveHook", () => {
+describe("braintrustEveInstrumentation", () => {
   let backgroundLogger: ReturnType<
     typeof _exportsForTestingOnly.useTestBackgroundLogger
   >;
-  let defineState: ReturnType<typeof createFakeDefineState>["defineState"];
 
   beforeAll(async () => {
     await _exportsForTestingOnly.simulateLoginForTests();
   });
 
   beforeEach(() => {
-    defineState = createFakeDefineState().defineState;
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
     initLogger({
       projectName: "eve-plugin.test.ts",
@@ -80,517 +70,188 @@ describe("braintrustEveHook", () => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
 
-  it("returns an Eve hook definition", () => {
-    const hook = braintrustEveHook({ defineState });
-
-    expect(Object.keys(hook)).toEqual(["events"]);
-    expect(typeof hook.events?.["*"]).toBe("function");
-  });
-
-  it("returns an Eve instrumentation definition", () => {
+  it("returns an Eve 0.34+ instrumentation provider", () => {
     const setup = vi.fn();
-    const instrumentation = braintrustEveInstrumentation({
-      defineState,
-      setup,
-    });
+    const provider = braintrustEveInstrumentation({ setup });
 
-    expect(instrumentation).toMatchObject({
-      recordInputs: false,
-      recordOutputs: false,
-      setup,
-    });
-    expect(typeof instrumentation.events?.["step.started"]).toBe("function");
+    expect(provider.capture).toBe("content");
+    expect(provider.setup).toBe(setup);
+    expect(typeof provider.flush).toBe("function");
+    expect(Object.keys(provider.events).sort()).toEqual([
+      "action.completed",
+      "action.failed",
+      "action.started",
+      "model.call.completed",
+      "model.call.failed",
+      "model.call.started",
+      "step.attempt.completed",
+      "step.attempt.failed",
+      "turn.cancelled",
+      "turn.completed",
+      "turn.failed",
+      "turn.started",
+    ]);
   });
 
-  it("requires Eve's defineState API", () => {
-    expect(() => braintrustEveHook(undefined as never)).toThrow();
-    expect(() => braintrustEveInstrumentation(undefined as never)).toThrow();
-  });
-
-  it("exports Eve APIs from root and instrumentation entrypoints", () => {
-    expect(braintrustExports.braintrustEveHook).toBe(braintrustEveHook);
+  it("exports only the Eve instrumentation provider API", () => {
     expect(braintrustExports.braintrustEveInstrumentation).toBe(
       braintrustEveInstrumentation,
     );
-    expect(instrumentationExports.braintrustEveHook).toBe(braintrustEveHook);
     expect(instrumentationExports.braintrustEveInstrumentation).toBe(
       braintrustEveInstrumentation,
     );
+    expect(braintrustExports).not.toHaveProperty("braintrustEveHook");
+    expect(instrumentationExports).not.toHaveProperty("braintrustEveHook");
   });
 
-  it("captures stable model input without provider options", async () => {
-    const fakeEve = createFakeDefineState();
-    defineState = fakeEve.defineState;
-    const instrumentation = braintrustEveInstrumentation({ defineState });
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    expect(wildcard).toBeDefined();
-
-    const ctx: EveHookContext = {
-      session: { id: "session-captured-input" },
-    };
-    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
-    const modelInput = {
-      instructions: [
-        {
-          content: "Answer with the relevant Eve instrumentation detail.",
-          providerOptions: {
-            openai: { reasoningEncryptedContent: "system-provider-secret" },
-          },
-          role: "system",
-        },
-        {
-          content: "Keep the answer concise.",
-          role: "system",
-        },
-      ],
-      messages: [
-        {
-          content: [
-            {
-              providerOptions: {
-                openai: {
-                  itemId: "reasoning-item",
-                  reasoningEncryptedContent: "must-not-be-logged",
-                },
-              },
-              text: "Readable reasoning",
-              type: "reasoning",
-            },
-            {
-              input: {
-                providerOptions: { application: "tool-input" },
-                reasoningEncryptedContent: "legitimate-tool-input",
-              },
-              providerOptions: {
-                openai: { reasoningEncryptedContent: "tool-provider-secret" },
-              },
-              toolCallId: "call-1",
-              toolName: "lookup",
-              type: "tool-call",
-            },
-            {
-              output: {
-                providerOptions: {
-                  openai: {
-                    reasoningEncryptedContent: "output-provider-secret",
-                  },
-                },
-                type: "json",
-                value: {
-                  reasoningEncryptedContent: "legitimate-tool-output",
-                },
-              },
-              providerOptions: {
-                openai: {
-                  reasoningEncryptedContent: "result-provider-secret",
-                },
-              },
-              toolCallId: "call-1",
-              toolName: "lookup",
-              type: "tool-result",
-            },
-          ],
-          providerOptions: {
-            openai: { reasoningEncryptedContent: "message-provider-secret" },
-          },
-          role: "assistant",
-        },
-      ],
-    } as const;
-
-    await emit({
-      data: {
-        runtime: {
-          agentId: "agent-captured-input",
-          eveVersion: "0.22.1",
-          modelId: "dynamic:anthropic/claude-sonnet-5",
-        },
-      },
-      type: "session.started",
-    });
-    await emit({
-      data: { sequence: 0, turnId: "turn-captured-input" },
-      type: "turn.started",
-    });
-    instrumentation.events?.["step.started"]?.({
-      modelInput,
-      session: { id: "session-captured-input" },
-      step: { index: 0 },
-      turn: { id: "turn-captured-input", sequence: 0 },
-    });
-    await emit({
-      data: { sequence: 0, stepIndex: 0, turnId: "turn-captured-input" },
-      type: "step.started",
-    });
-    await emit({
-      data: {
-        finishReason: "stop",
-        message: "Capture the model input.",
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-captured-input",
-      },
-      type: "message.completed",
-    });
-    await emit({
-      data: {
-        finishReason: "stop",
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-captured-input",
-      },
-      type: "step.completed",
-    });
-    await emit({
-      data: { sequence: 0, turnId: "turn-captured-input" },
-      type: "turn.completed",
-    });
-
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    const step = spans.find(
-      (span) => span.span_attributes?.name === "eve.step",
-    );
-    const session = spans.find(
-      (span) => span.span_attributes?.name === "eve.session",
-    );
-    const turn = spans.find(
-      (span) => span.span_attributes?.name === "eve.turn",
-    );
-    for (const span of [turn, step]) {
-      expect(span?.context?.span_origin).toMatchObject({
-        instrumentation: { name: "eve" },
-      });
-    }
-    expect(step?.input).toEqual([
-      {
-        content: "Answer with the relevant Eve instrumentation detail.",
-        role: "system",
-      },
-      {
-        content: "Keep the answer concise.",
-        role: "system",
-      },
-      {
-        content: [
-          {
-            text: "Readable reasoning",
-            type: "reasoning",
-          },
-          {
-            input: {
-              providerOptions: { application: "tool-input" },
-              reasoningEncryptedContent: "legitimate-tool-input",
-            },
-            toolCallId: "call-1",
-            toolName: "lookup",
-            type: "tool-call",
-          },
-          {
-            output: {
-              type: "json",
-              value: {
-                reasoningEncryptedContent: "legitimate-tool-output",
-              },
-            },
-            toolCallId: "call-1",
-            toolName: "lookup",
-            type: "tool-result",
-          },
-        ],
-        role: "assistant",
-      },
-    ]);
-    expect(JSON.stringify(step?.input)).not.toContain("provider-secret");
-    expect(JSON.stringify(step?.input)).not.toContain("must-not-be-logged");
-    expect(step?.metadata).toEqual({
-      "eve.session_id": "session-captured-input",
-    });
-    expect(session).toBeUndefined();
-    expect(turn?.metadata).toEqual({
-      "eve.session_id": "session-captured-input",
-    });
-    expect(step?.metadata).not.toHaveProperty("model");
-    expect(step?.metadata).not.toHaveProperty("provider");
-    expect(turn?.metadata).not.toHaveProperty("model");
-    expect(turn?.metadata).not.toHaveProperty("provider");
-    expect(fakeEve.values.get("braintrust.eve.tracing")).toMatchObject({
-      llmInputs: [],
-    });
-  });
-
-  it("skips missing or malformed Eve instrumentation state without throwing", async () => {
-    const instrumentation = braintrustEveInstrumentation({ defineState });
-    expect(() =>
-      instrumentation.events?.["step.started"]?.({ bad: true } as never),
-    ).not.toThrow();
-
-    const fakeEve = createFakeDefineState();
-    defineState = fakeEve.defineState;
-    fakeEve.values.set("braintrust.eve.tracing", {
-      llmInputs: [{ input: { content: "not an array" }, key: "bad" }],
-    });
-    expect(() =>
-      instrumentation.events?.["step.started"]?.({
-        modelInput: {
-          messages: [{ content: "hello", role: "user" }],
-        },
-        session: { id: "session-malformed-state" },
-        step: { index: 0 },
-        turn: { id: "turn-malformed-state", sequence: 0 },
-      }),
-    ).not.toThrow();
-
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    const ctx: EveHookContext = { session: { id: "session-no-state" } };
-    await wildcard?.(
-      {
-        data: { sequence: 0, turnId: "turn-no-state" },
-        type: "turn.started",
-      },
-      ctx,
-    );
-    await wildcard?.(
-      {
-        data: { sequence: 0, stepIndex: 0, turnId: "turn-no-state" },
-        type: "step.started",
-      },
-      ctx,
-    );
-    await wildcard?.(
-      {
-        data: {
-          finishReason: "stop",
-          sequence: 0,
-          stepIndex: 0,
-          turnId: "turn-no-state",
-        },
-        type: "step.completed",
-      },
-      ctx,
-    );
-    await wildcard?.(
-      {
-        data: { sequence: 0, turnId: "turn-no-state" },
-        type: "turn.completed",
-      },
-      ctx,
-    );
-
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    const step = spans.find(
-      (span) => span.span_attributes?.name === "eve.step",
-    );
-    expect(step?.input).toBeUndefined();
-  });
-
-  it("bounds pre-existing durable trace state", async () => {
-    const fakeEve = createFakeDefineState();
-    const oversizedEntryCount = 10_001;
-    fakeEve.values.set("braintrust.eve.tracing", {
-      llmInputs: [],
-      metadata: {},
-      spanReferences: Array.from(
-        { length: oversizedEntryCount },
-        (_, index) => ({
-          exported: `exported-${index}`,
-          rootSpanId: `root-${index}`,
-          rowId: `row-${index}`,
-          spanId: `span-${index}`,
-        }),
-      ),
-      stepStarts: Array.from({ length: oversizedEntryCount }, (_, index) => ({
-        open: false,
-        ordinal: index,
-        stepIndex: index,
-        turnId: `turn-${index}`,
-      })),
-    });
-    const wildcard = braintrustEveHook({
-      defineState: fakeEve.defineState,
-    }).events?.["*"];
-
-    await wildcard?.(
-      {
-        data: {
-          runtime: {
-            agentId: "agent-bounded-state",
-            eveVersion: "0.20.0",
-            modelId: "openai/gpt-5.4-mini",
-          },
-        },
-        type: "session.started",
-      },
-      { session: { id: "session-bounded-state" } },
-    );
-
-    const state = fakeEve.values.get("braintrust.eve.tracing") as {
-      spanReferences: unknown[];
-      stepStarts: unknown[];
-    };
-    expect(state.spanReferences).toHaveLength(10_000);
-    expect(state.stepStarts).toHaveLength(10_000);
-  });
-
-  it("does not emit a span for session lifecycle metadata alone", async () => {
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-
-    await wildcard?.(
-      {
-        data: {
-          runtime: {
-            agentId: "agent-session-only",
-            eveVersion: "0.20.0",
-            modelId: "openai/gpt-5.4-mini",
-          },
-        },
-        type: "session.started",
-      },
-      { session: { id: "session-only" } },
-    );
-
-    expect(await backgroundLogger.drain()).toEqual([]);
-  });
-
-  it("records a flat Eve turn with session model metadata", async () => {
-    const wildcard = braintrustEveHook({
-      defineState,
+  it("records a turn with LLM and action spans", async () => {
+    const provider = braintrustEveInstrumentation({
       metadata: {
         scenario: "eve-plugin-unit",
         testRunId: "test-run-flat-tree",
       },
-    }).events?.["*"];
-    expect(wildcard).toBeDefined();
-
-    const ctx: EveHookContext = {
-      session: { id: "session-flat-tree" },
-    };
-    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
-    const expectedModelMetadata = {
-      model: "braintrust-eve-mock",
-      provider: "eve-mock",
-    };
-
-    await emit({
-      data: {
-        runtime: {
-          agentId: "agent-id",
-          agentName: "eve-test-agent",
-          eveVersion: "0.20.0",
-          modelId: "eve-mock/braintrust-eve-mock",
-        },
-      },
-      meta: { at: "2026-01-01T00:00:00.000Z" },
-      type: "session.started",
     });
-    await emit({
-      data: { sequence: 0, turnId: "turn-flat-tree" },
-      meta: { at: "2026-01-01T00:00:00.010Z" },
-      type: "turn.started",
-    });
-    await emit({
-      data: {
-        message: "Search then read",
+    const turnContext = providerContext();
+    const firstModelContext = providerContext();
+    const actionContext = providerContext();
+    const secondModelContext = providerContext();
+    const scope = ATTEMPT_SCOPE;
+
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-root:turn-0",
+        rootSessionId: "session-root",
         sequence: 0,
-        turnId: "turn-flat-tree",
+        sessionId: "session-root",
+        turnId: "turn-0",
+        type: "turn.started",
       },
-      meta: { at: "2026-01-01T00:00:00.020Z" },
-      type: "message.received",
-    });
-    await emit({
-      data: { sequence: 0, stepIndex: 0, turnId: "turn-flat-tree" },
-      meta: { at: "2026-01-01T00:00:00.030Z" },
-      type: "step.started",
-    });
-    await emit({
-      data: {
-        actions: [
+      turnContext,
+    );
+    await provider.events["model.call.started"](
+      {
+        idempotencyKey: "model:attempt-0:0",
+        input: {
+          instructions: "You are a research agent.",
+          messages: [{ content: "Search then read", role: "user" }],
+        },
+        model: {
+          modelId: "qwen/qwen3-30b-a3b",
+          provider: "openrouter.chat",
+        },
+        scope,
+        type: "model.call.started",
+      },
+      firstModelContext,
+    );
+    await provider.events["model.call.completed"](
+      {
+        content: [
+          { text: "I should search first.", type: "reasoning" },
           {
             callId: "call-search",
             input: { query: "Eve instrumentation" },
-            kind: "tool-call",
             toolName: "search",
+            type: "tool-call",
           },
         ],
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-flat-tree",
-      },
-      meta: { at: "2026-01-01T00:00:00.040Z" },
-      type: "actions.requested",
-    });
-    await emit({
-      data: {
-        error: undefined,
-        result: {
-          callId: "call-search",
-          kind: "tool-result",
-          output: { hits: ["eve.dev/docs"] },
-          toolName: "search",
-        },
-        sequence: 0,
-        status: "completed",
-        stepIndex: 0,
-        turnId: "turn-flat-tree",
-      },
-      meta: { at: "2026-01-01T00:00:00.050Z" },
-      type: "action.result",
-    });
-    await emit({
-      data: {
         finishReason: "tool-calls",
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-flat-tree",
+        idempotencyKey: "model:attempt-0:0",
+        scope,
+        type: "model.call.completed",
         usage: {
-          cacheReadTokens: 3,
-          cacheWriteTokens: 2,
-          costUsd: 0.001,
+          inputTokenDetails: {
+            cacheReadTokens: 3,
+            cacheWriteTokens: 2,
+          },
           inputTokens: 10,
           outputTokens: 5,
         },
       },
-      meta: { at: "2026-01-01T00:00:00.060Z" },
-      type: "step.completed",
-    });
-    await emit({
-      data: { sequence: 0, stepIndex: 1, turnId: "turn-flat-tree" },
-      meta: { at: "2026-01-01T00:00:00.070Z" },
-      type: "step.started",
-    });
-    await emit({
-      data: {
-        finishReason: "stop",
-        message: "Here is the Eve instrumentation guide.",
-        sequence: 0,
-        stepIndex: 1,
-        turnId: "turn-flat-tree",
+      firstModelContext,
+    );
+    await provider.events["action.started"](
+      {
+        callId: "call-search",
+        idempotencyKey: "action:session-root:turn-0:call-search",
+        input: { query: "Eve instrumentation" },
+        name: "search",
+        scope,
+        type: "action.started",
       },
-      meta: { at: "2026-01-01T00:00:00.080Z" },
-      type: "message.completed",
-    });
-    await emit({
-      data: {
+      actionContext,
+    );
+    await provider.events["action.completed"](
+      {
+        idempotencyKey: "action:session-root:turn-0:call-search",
+        output: {
+          output: { hits: ["eve.dev/docs"] },
+          type: "result",
+        },
+        scope,
+        type: "action.completed",
+      },
+      actionContext,
+    );
+    await provider.events["model.call.started"](
+      {
+        idempotencyKey: "model:attempt-1:0",
+        input: {
+          instructions: "You are a research agent.",
+          messages: [
+            { content: "Search then read", role: "user" },
+            {
+              content: [
+                {
+                  input: { query: "Eve instrumentation" },
+                  toolCallId: "call-search",
+                  toolName: "search",
+                  type: "tool-call",
+                },
+              ],
+              role: "assistant",
+            },
+          ],
+        },
+        model: {
+          modelId: "qwen/qwen3-30b-a3b",
+          provider: "openrouter.chat",
+        },
+        scope,
+        type: "model.call.started",
+      },
+      secondModelContext,
+    );
+    await provider.events["model.call.completed"](
+      {
+        content: [
+          {
+            text: "Here is the Eve instrumentation guide.",
+            type: "text",
+          },
+        ],
         finishReason: "stop",
-        sequence: 0,
-        stepIndex: 1,
-        turnId: "turn-flat-tree",
+        idempotencyKey: "model:attempt-1:0",
+        scope,
+        type: "model.call.completed",
         usage: {
           inputTokens: 20,
           outputTokens: 8,
         },
       },
-      meta: { at: "2026-01-01T00:00:00.090Z" },
-      type: "step.completed",
-    });
-    await emit({
-      data: { sequence: 0, turnId: "turn-flat-tree" },
-      meta: { at: "2026-01-01T00:00:00.100Z" },
-      type: "turn.completed",
-    });
+      secondModelContext,
+    );
+    await provider.events["turn.completed"](
+      {
+        idempotencyKey: "turn:session-root:turn-0",
+        rootSessionId: "session-root",
+        sequence: 0,
+        sessionId: "session-root",
+        turnId: "turn-0",
+        type: "turn.completed",
+      },
+      turnContext,
+    );
 
     const spans = (await backgroundLogger.drain()) as Array<
       Record<string, any>
@@ -598,8 +259,8 @@ describe("braintrustEveHook", () => {
     const root = spans.find(
       (span) => span.span_attributes?.name === "eve.turn",
     );
-    const steps = spans.filter((span) =>
-      String(span.span_attributes?.name).startsWith("eve.step"),
+    const steps = spans.filter(
+      (span) => span.span_attributes?.name === "eve.step",
     );
     const tool = spans.find((span) => span.span_attributes?.name === "search");
 
@@ -612,78 +273,58 @@ describe("braintrustEveHook", () => {
     expect(root).toMatchObject({
       input: [{ content: "Search then read", role: "user" }],
       metadata: {
-        ...expectedModelMetadata,
-        "eve.session_id": "session-flat-tree",
+        "eve.session_id": "session-root",
         scenario: "eve-plugin-unit",
         testRunId: "test-run-flat-tree",
       },
+      output: "Here is the Eve instrumentation guide.",
       metrics: {
         completion_tokens: 13,
-        estimated_cost: 0.001,
-        prompt_cached_tokens: 3,
         prompt_cache_creation_tokens: 2,
+        prompt_cached_tokens: 3,
         prompt_tokens: 30,
         tokens: 43,
       },
-      output: "Here is the Eve instrumentation guide.",
       span_attributes: {
         name: "eve.turn",
         type: "task",
       },
-      root_span_id: deterministicEveIdForTest(
-        "eve:root",
-        "session-flat-tree",
-        "turn-flat-tree",
-      ),
       span_parents: [],
     });
+    expect(root?.root_span_id).not.toBe(root?.span_id);
+    expect(root?.metadata).not.toHaveProperty("model");
+    expect(root?.metadata).not.toHaveProperty("provider");
+
     expect(steps).toHaveLength(2);
-    expect(steps.map((span) => span.span_attributes?.name)).toEqual([
-      "eve.step",
-      "eve.step",
-    ]);
-    expect(steps.map((span) => span.span_attributes?.type)).toEqual([
-      "llm",
-      "llm",
-    ]);
-    expect(steps.map((span) => span.span_parents)).toEqual([
-      [root?.span_id],
-      [root?.span_id],
-    ]);
     for (const step of steps) {
-      expect(step.metadata).toEqual({
-        ...expectedModelMetadata,
-        "eve.session_id": "session-flat-tree",
-        scenario: "eve-plugin-unit",
-        testRunId: "test-run-flat-tree",
+      expect(step).toMatchObject({
+        metadata: {
+          "eve.session_id": "session-root",
+          model: "qwen/qwen3-30b-a3b",
+          provider: "openrouter",
+          scenario: "eve-plugin-unit",
+          testRunId: "test-run-flat-tree",
+        },
+        span_attributes: {
+          name: "eve.step",
+          type: "llm",
+        },
+        span_parents: [root?.span_id],
       });
     }
-    expect(steps[0]?.input).toBeUndefined();
-    expect(steps[1]?.input).toBeUndefined();
-    expect(tool).toMatchObject({
-      input: { query: "Eve instrumentation" },
-      metadata: {
-        "eve.session_id": "session-flat-tree",
-        scenario: "eve-plugin-unit",
-        testRunId: "test-run-flat-tree",
-      },
-      output: { hits: ["eve.dev/docs"] },
-      span_attributes: {
-        name: "search",
-        type: "tool",
-      },
-      span_parents: [root?.span_id],
-    });
-    expect(tool?.metadata).not.toHaveProperty("model");
-    expect(tool?.metadata).not.toHaveProperty("provider");
+    expect(steps[0]?.metadata).not.toHaveProperty("tools");
     expect(steps[0]?.output).toMatchObject([
       {
         finish_reason: "tool_calls",
         message: {
+          content: null,
+          reasoning: [{ content: "I should search first." }],
           tool_calls: [
             {
               function: {
-                arguments: JSON.stringify({ query: "Eve instrumentation" }),
+                arguments: JSON.stringify({
+                  query: "Eve instrumentation",
+                }),
                 name: "search",
               },
               id: "call-search",
@@ -702,1518 +343,563 @@ describe("braintrustEveHook", () => {
         },
       },
     ]);
-  });
-
-  it("records each user message as a separate turn in one session", async () => {
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    expect(wildcard).toBeDefined();
-
-    const ctx: EveHookContext = { session: { id: "session-multi-turn" } };
-    for (const [sequence, message] of [
-      [0, "First user message"],
-      [1, "Second user message"],
-    ] as const) {
-      const turnId = `turn-${sequence}`;
-      await wildcard?.(
-        { data: { sequence, turnId }, type: "turn.started" },
-        ctx,
-      );
-      await wildcard?.(
-        { data: { message, sequence, turnId }, type: "message.received" },
-        ctx,
-      );
-      await wildcard?.(
-        { data: { sequence, turnId }, type: "turn.completed" },
-        ctx,
-      );
-    }
-
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    const turns = spans.filter(
-      (span) => span.span_attributes?.name === "eve.turn",
-    );
-
-    expect(
-      spans.some((span) => span.span_attributes?.name === "eve.session"),
-    ).toBe(false);
-    expect(turns).toHaveLength(2);
-    expect(turns.map((turn) => turn.span_parents)).toEqual([[], []]);
-    expect(turns.map((turn) => turn.root_span_id)).toEqual([
-      deterministicEveIdForTest("eve:root", "session-multi-turn", "turn-0"),
-      deterministicEveIdForTest("eve:root", "session-multi-turn", "turn-1"),
-    ]);
-    expect(turns[0]?.root_span_id).not.toBe(turns[1]?.root_span_id);
-    expect(turns.map((turn) => turn.input)).toEqual([
-      [{ content: "First user message", role: "user" }],
-      [{ content: "Second user message", role: "user" }],
-    ]);
-  });
-
-  it("merges incremental tool-call batches without reconstructing later LLM inputs", async () => {
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    expect(wildcard).toBeDefined();
-
-    const ctx: EveHookContext = {
-      session: { id: "session-incremental-tools" },
-    };
-    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
-
-    await emit({
-      data: { sequence: 0, turnId: "turn-incremental-tools" },
-      type: "turn.started",
-    });
-    await emit({
-      data: {
-        message: "Search then read",
-        sequence: 0,
-        turnId: "turn-incremental-tools",
-      },
-      type: "message.received",
-    });
-    await emit({
-      data: { sequence: 0, stepIndex: 0, turnId: "turn-incremental-tools" },
-      type: "step.started",
-    });
-    await emit({
-      data: {
-        actions: [
-          {
-            callId: "call-search",
-            input: { query: "Eve instrumentation" },
-            kind: "tool-call",
-            toolName: "search",
-          },
-        ],
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-incremental-tools",
-      },
-      type: "actions.requested",
-    });
-    await emit({
-      data: {
-        actions: [
-          {
-            callId: "call-search",
-            input: { query: "Updated Eve instrumentation" },
-            kind: "tool-call",
-            toolName: "search",
-          },
-        ],
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-incremental-tools",
-      },
-      type: "actions.requested",
-    });
-    await emit({
-      data: {
-        actions: [
-          {
-            callId: "call-read",
-            input: { url: "https://eve.dev/docs/guides/instrumentation" },
-            kind: "tool-call",
-            toolName: "read",
-          },
-        ],
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-incremental-tools",
-      },
-      type: "actions.requested",
-    });
-    await emit({
-      data: {
-        result: {
-          callId: "call-search",
-          kind: "tool-result",
-          output: { url: "https://eve.dev/docs/guides/instrumentation" },
-          toolName: "search",
-        },
-        sequence: 0,
-        status: "completed",
-        stepIndex: 0,
-        turnId: "turn-incremental-tools",
-      },
-      type: "action.result",
-    });
-    await emit({
-      data: {
-        result: {
-          callId: "call-read",
-          kind: "tool-result",
-          output: { excerpt: "Eve hooks expose runtime stream events." },
-          toolName: "read",
-        },
-        sequence: 0,
-        status: "completed",
-        stepIndex: 0,
-        turnId: "turn-incremental-tools",
-      },
-      type: "action.result",
-    });
-    await emit({
-      data: {
-        finishReason: "tool-calls",
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-incremental-tools",
-      },
-      type: "step.completed",
-    });
-    await emit({
-      data: { sequence: 0, stepIndex: 1, turnId: "turn-incremental-tools" },
-      type: "step.started",
-    });
-    await emit({
-      data: {
-        finishReason: "stop",
-        message: "Done.",
-        sequence: 0,
-        stepIndex: 1,
-        turnId: "turn-incremental-tools",
-      },
-      type: "message.completed",
-    });
-    await emit({
-      data: {
-        finishReason: "stop",
-        sequence: 0,
-        stepIndex: 1,
-        turnId: "turn-incremental-tools",
-      },
-      type: "step.completed",
-    });
-    await emit({
-      data: { sequence: 0, turnId: "turn-incremental-tools" },
-      type: "turn.completed",
-    });
-
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    const steps = spans.filter((span) =>
-      String(span.span_attributes?.name).startsWith("eve.step"),
-    );
-
-    expect(steps[0]?.output).toMatchObject([
-      {
-        finish_reason: "tool_calls",
-        message: {
-          tool_calls: [
-            {
-              function: {
-                arguments: JSON.stringify({
-                  query: "Updated Eve instrumentation",
-                }),
-                name: "search",
-              },
-              id: "call-search",
-              type: "function",
-            },
-            {
-              function: {
-                arguments: JSON.stringify({
-                  url: "https://eve.dev/docs/guides/instrumentation",
-                }),
-                name: "read",
-              },
-              id: "call-read",
-              type: "function",
-            },
-          ],
-        },
-      },
-    ]);
-    expect(steps[1]?.input).toBeUndefined();
-  });
-
-  it("preserves reasoning across tool, text, and structured outputs", async () => {
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    const ctx: EveHookContext = {
-      session: { id: "session-reasoning-outputs" },
-    };
-    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
-    const turnId = "turn-reasoning-outputs";
-
-    await emit({ data: { sequence: 0, turnId }, type: "turn.started" });
-
-    await emit({
-      data: { sequence: 0, stepIndex: 0, turnId },
-      type: "step.started",
-    });
-    await emit({
-      data: {
-        reasoning: "I should inspect the available tools.",
-        sequence: 0,
-        stepIndex: 0,
-        turnId,
-      },
-      meta: { at: "2026-01-01T00:00:00.010Z" },
-      type: "reasoning.completed",
-    });
-    await emit({
-      data: {
-        finishReason: "tool-calls",
-        message: null,
-        sequence: 0,
-        stepIndex: 0,
-        turnId,
-      },
-      type: "message.completed",
-    });
-    await emit({
-      data: {
-        actions: [
-          {
-            callId: "call-reasoning-search",
-            input: { query: "Eve reasoning" },
-            kind: "tool-call",
-            toolName: "search",
-          },
-        ],
-        sequence: 0,
-        stepIndex: 0,
-        turnId,
-      },
-      type: "actions.requested",
-    });
-    await emit({
-      data: { finishReason: "tool-calls", sequence: 0, stepIndex: 0, turnId },
-      type: "step.completed",
-    });
-
-    await emit({
-      data: { sequence: 0, stepIndex: 1, turnId },
-      type: "step.started",
-    });
-    await emit({
-      data: {
-        reasoning: "The tool returned the relevant guide.",
-        sequence: 0,
-        stepIndex: 1,
-        turnId,
-      },
-      meta: { at: "2026-01-01T00:00:00.020Z" },
-      type: "reasoning.completed",
-    });
-    await emit({
-      data: {
-        reasoning: "I can now answer concisely.",
-        sequence: 0,
-        stepIndex: 1,
-        turnId,
-      },
-      meta: { at: "2026-01-01T00:00:00.030Z" },
-      type: "reasoning.completed",
-    });
-    await emit({
-      data: {
-        finishReason: "stop",
-        message: "Eve exposes completed reasoning events.",
-        sequence: 0,
-        stepIndex: 1,
-        turnId,
-      },
-      type: "message.completed",
-    });
-    await emit({
-      data: { finishReason: "stop", sequence: 0, stepIndex: 1, turnId },
-      type: "step.completed",
-    });
-
-    await emit({
-      data: { sequence: 0, stepIndex: 2, turnId },
-      type: "step.started",
-    });
-    await emit({
-      data: {
-        reasoning: "The response must match the requested schema.",
-        sequence: 0,
-        stepIndex: 2,
-        turnId,
-      },
-      meta: { at: "2026-01-01T00:00:00.040Z" },
-      type: "reasoning.completed",
-    });
-    await emit({
-      data: {
-        result: { supported: true },
-        sequence: 0,
-        stepIndex: 2,
-        turnId,
-      },
-      type: "result.completed",
-    });
-    await emit({
-      data: { finishReason: "stop", sequence: 0, stepIndex: 2, turnId },
-      type: "step.completed",
-    });
-    await emit({ data: { sequence: 0, turnId }, type: "turn.completed" });
-
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    const steps = spans.filter(
-      (span) => span.span_attributes?.name === "eve.step",
-    );
-    expect(steps).toHaveLength(3);
-    expect(steps[0]?.output).toMatchObject([
-      {
-        finish_reason: "tool_calls",
-        message: {
-          content: null,
-          reasoning: [{ content: "I should inspect the available tools." }],
-          tool_calls: [
-            {
-              function: { name: "search" },
-              id: "call-reasoning-search",
-              type: "function",
-            },
-          ],
-        },
-      },
-    ]);
-    expect(steps[1]?.output).toMatchObject([
-      {
-        finish_reason: "stop",
-        message: {
-          content: "Eve exposes completed reasoning events.",
-          reasoning: [
-            { content: "The tool returned the relevant guide." },
-            { content: "I can now answer concisely." },
-          ],
-        },
-      },
-    ]);
-    expect(steps[2]?.output).toMatchObject([
-      {
-        finish_reason: "stop",
-        message: {
-          content: { supported: true },
-          reasoning: [
-            { content: "The response must match the requested schema." },
-          ],
-        },
-      },
-    ]);
-  });
-
-  it("rehydrates reasoning idempotently across Vercel Workflow steps", async () => {
-    const eveState = createFakeDefineState();
-    const ctx: EveHookContext = {
-      session: { id: "session-reasoning-replay" },
-    };
-    const turnId = "turn-reasoning-replay";
-    const reasoningEvent = {
-      data: {
-        reasoning: "Use the search tool before answering.",
-        sequence: 0,
-        stepIndex: 0,
-        turnId,
-      },
-      meta: { at: "2026-01-01T00:00:00.020Z" },
-      type: "reasoning.completed",
-    } as const satisfies EveHandleMessageStreamEvent;
-    const initialHook = braintrustEveHook({
-      defineState: eveState.defineState,
-    }).events?.["*"];
-
-    await initialHook?.(
-      {
-        data: { sequence: 0, turnId },
-        meta: { at: "2026-01-01T00:00:00.000Z" },
-        type: "turn.started",
-      },
-      ctx,
-    );
-    await initialHook?.(
-      {
-        data: { sequence: 0, stepIndex: 0, turnId },
-        meta: { at: "2026-01-01T00:00:00.010Z" },
-        type: "step.started",
-      },
-      ctx,
-    );
-    await initialHook?.(reasoningEvent, ctx);
-
-    const initialWrites = (await backgroundLogger.drain()) as Array<
-      Record<string, any> & { id: string }
-    >;
-    expect(
-      initialWrites
-        .filter((span) => span.span_attributes?.name)
-        .every(
-          (span) => span.context?.span_origin?.instrumentation?.name === "eve",
-        ),
-    ).toBe(true);
-    for (const [key, value] of eveState.values) {
-      eveState.values.set(key, JSON.parse(JSON.stringify(value)));
-    }
-
-    const resumedHook = braintrustEveHook({
-      defineState: eveState.defineState,
-    }).events?.["*"];
-    await resumedHook?.(
-      {
-        data: { sequence: 0, turnId },
-        meta: { at: "2026-01-01T00:00:00.000Z" },
-        type: "turn.started",
-      },
-      ctx,
-    );
-    await resumedHook?.(
-      {
-        data: { sequence: 0, stepIndex: 0, turnId },
-        meta: { at: "2026-01-01T00:00:00.010Z" },
-        type: "step.started",
-      },
-      ctx,
-    );
-    const resumedStartWrites = (await backgroundLogger.drain()) as Array<
-      Record<string, any> & { id: string }
-    >;
-    await resumedHook?.(reasoningEvent, ctx);
-    await resumedHook?.(
-      {
-        data: {
-          finishReason: "tool-calls",
-          message: null,
-          sequence: 0,
-          stepIndex: 0,
-          turnId,
-        },
-        type: "message.completed",
-      },
-      ctx,
-    );
-    await resumedHook?.(
-      {
-        data: {
-          actions: [
-            {
-              callId: "call-replayed-search",
-              input: { query: "Vercel Workflow reasoning" },
-              kind: "tool-call",
-              toolName: "search",
-            },
-          ],
-          sequence: 0,
-          stepIndex: 0,
-          turnId,
-        },
-        type: "actions.requested",
-      },
-      ctx,
-    );
-    const resumedIntermediateWrites = (await backgroundLogger.drain()) as Array<
-      Record<string, any> & { id: string }
-    >;
-    await resumedHook?.(
-      {
-        data: { finishReason: "tool-calls", sequence: 0, stepIndex: 0, turnId },
-        type: "step.completed",
-      },
-      ctx,
-    );
-    await resumedHook?.(
-      { data: { sequence: 0, turnId }, type: "turn.completed" },
-      ctx,
-    );
-
-    const resumedWrites = (await backgroundLogger.drain()) as Array<
-      Record<string, any> & { id: string }
-    >;
-    const allWrites = [
-      ...initialWrites,
-      ...resumedStartWrites,
-      ...resumedIntermediateWrites,
-      ...resumedWrites,
-    ];
-    const stepRowId = deterministicEveIdForTest(
-      "eve:row:step",
-      "session-reasoning-replay",
-      turnId,
-      "0",
-    );
-    expect(
-      allWrites.filter(
-        (write) => write.id === stepRowId && write.output !== undefined,
-      ),
-    ).toHaveLength(1);
-
-    const spans = mergeRowBatch([...allWrites].reverse());
-    const steps = spans.filter(
-      (span) => span.span_attributes?.name === "eve.step",
-    );
-    expect(steps).toHaveLength(1);
-    expect(steps[0]?.span_id).toBe(
-      deterministicEveIdForTest(
-        "eve:step",
-        "session-reasoning-replay",
-        turnId,
-        "0",
-      ),
-    );
-    expect(steps[0]?.output?.[0]?.message).toMatchObject({
-      content: null,
-      reasoning: [{ content: "Use the search tool before answering." }],
-      tool_calls: [
-        {
-          function: { name: "search" },
-          id: "call-replayed-search",
-          type: "function",
-        },
-      ],
-    });
-    expect(steps[0]?.output?.[0]?.message?.reasoning).toHaveLength(1);
-    expect(eveState.values.get("braintrust.eve.tracing")).toMatchObject({
-      reasoningBlocks: [],
-      stepStarts: [],
-    });
-  });
-
-  it("merges late tool results into tool spans closed by turn completion", async () => {
-    const eveState = createFakeDefineState();
-    const wildcard = braintrustEveHook({
-      defineState: eveState.defineState,
-      metadata: {
-        scenario: "eve-plugin-unit",
-        testRunId: "test-run-late-tool-result",
-      },
-    }).events?.["*"];
-    expect(wildcard).toBeDefined();
-
-    const ctx: EveHookContext = {
-      session: { id: "session-late-tool-result" },
-    };
-    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
-
-    await emit({
-      data: { sequence: 0, turnId: "turn-late-tool-result" },
-      meta: { at: "2026-01-01T00:00:00.000Z" },
-      type: "turn.started",
-    });
-    await emit({
-      data: { sequence: 0, stepIndex: 0, turnId: "turn-late-tool-result" },
-      meta: { at: "2026-01-01T00:00:00.010Z" },
-      type: "step.started",
-    });
-    await emit({
-      data: {
-        actions: [
-          {
-            callId: "call-late-search",
-            input: { query: "late tool result" },
-            kind: "tool-call",
-            toolName: "search",
-          },
-        ],
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-late-tool-result",
-      },
-      meta: { at: "2026-01-01T00:00:00.020Z" },
-      type: "actions.requested",
-    });
-    await emit({
-      data: { sequence: 0, turnId: "turn-late-tool-result" },
-      meta: { at: "2026-01-01T00:00:00.030Z" },
-      type: "turn.completed",
-    });
-    expect(eveState.values.get("braintrust.eve.tracing")).toMatchObject({
-      spanReferences: expect.arrayContaining([
-        expect.objectContaining({
-          exported: expect.any(String),
-          rootSpanId: deterministicEveIdForTest(
-            "eve:root",
-            "session-late-tool-result",
-            "turn-late-tool-result",
-          ),
-          rowId: deterministicEveIdForTest(
-            "eve:row:tool",
-            "session-late-tool-result",
-            "turn-late-tool-result",
-            "call-late-search",
-          ),
-          spanId: deterministicEveIdForTest(
-            "eve:tool",
-            "session-late-tool-result",
-            "turn-late-tool-result",
-            "call-late-search",
-          ),
-        }),
-      ]),
-      stepStarts: [],
-    });
-    const initialWrites = (await backgroundLogger.drain()) as Array<
-      Record<string, any> & { id: string }
-    >;
-    const resumedWildcard = braintrustEveHook({
-      defineState: eveState.defineState,
-      metadata: {
-        scenario: "eve-plugin-unit",
-        testRunId: "test-run-late-tool-result",
-      },
-    }).events?.["*"];
-    const flushSpy = vi.spyOn(backgroundLogger, "flush");
-    flushSpy.mockClear();
-    await resumedWildcard?.(
-      {
-        data: {
-          result: {
-            callId: "call-late-search",
-            kind: "tool-result",
-            output: { title: "Late result" },
-            toolName: "search",
-          },
-          sequence: 0,
-          status: "completed",
-          stepIndex: 0,
-          turnId: "turn-late-tool-result",
-        },
-        meta: { at: "2026-01-01T00:00:00.040Z" },
-        type: "action.result",
-      },
-      ctx,
-    );
-    expect(flushSpy).not.toHaveBeenCalled();
-
-    const resumedWrites = (await backgroundLogger.drain()) as Array<
-      Record<string, any> & { id: string }
-    >;
-    expect(
-      [...initialWrites, ...resumedWrites].every(
-        (span) => span._is_merge === true,
-      ),
-    ).toBe(true);
-
-    // The backend may ingest separate workflow uploads out of order. Because
-    // every write is a merge, a delayed initial write cannot erase the result.
-    const spans = mergeRowBatch([...resumedWrites, ...initialWrites]);
-    const turns = spans.filter(
-      (span) => span.span_attributes?.name === "eve.turn",
-    );
-    const tool = spans.find((span) => span.span_attributes?.name === "search");
-
-    expect(turns).toHaveLength(1);
-    expect(
-      spans.filter((span) => span.span_attributes?.name === "search"),
-    ).toHaveLength(1);
     expect(tool).toMatchObject({
-      input: { query: "late tool result" },
+      input: { query: "Eve instrumentation" },
       metadata: {
+        "eve.session_id": "session-root",
         scenario: "eve-plugin-unit",
-        testRunId: "test-run-late-tool-result",
+        testRunId: "test-run-flat-tree",
       },
-      output: { title: "Late result" },
+      output: { hits: ["eve.dev/docs"] },
       span_attributes: {
         name: "search",
         type: "tool",
       },
-      span_parents: [turns[0]?.span_id],
+      span_parents: [root?.span_id],
     });
-    expect(tool?.metrics?.end).toEqual(expect.any(Number));
+    expect(tool?.metadata).not.toHaveProperty("model");
+    expect(tool?.metadata).not.toHaveProperty("provider");
   });
 
-  it("lets action results complete sparse subagent events across workflow steps", async () => {
-    const eveState = createFakeDefineState();
-    const ctx: EveHookContext = {
-      session: { id: "session-sparse-subagent" },
-    };
-    const firstWildcard = braintrustEveHook({
-      defineState: eveState.defineState,
-    }).events?.["*"];
+  it("attaches a subagent turn beneath its action span", async () => {
+    const provider = braintrustEveInstrumentation();
+    const parentTurnContext = providerContext();
+    const actionContext = providerContext();
+    const childTurnContext = providerContext();
+    const childModelContext = providerContext();
+    const parentScope = ATTEMPT_SCOPE;
 
-    await firstWildcard?.(
+    await provider.events["turn.started"](
       {
-        data: { sequence: 0, turnId: "turn-sparse-subagent" },
+        idempotencyKey: "turn:session-root:turn-0",
+        rootSessionId: "session-root",
+        sequence: 0,
+        sessionId: "session-root",
+        turnId: "turn-0",
         type: "turn.started",
       },
-      ctx,
+      parentTurnContext,
     );
-    await firstWildcard?.(
+    await provider.events["action.started"](
       {
-        data: {
-          actions: [
-            {
-              callId: "call-sparse-subagent",
-              input: { message: "Research Eve" },
-              kind: "subagent-call",
-              subagentName: "researcher",
-            },
-          ],
-          sequence: 0,
-          stepIndex: 0,
-          turnId: "turn-sparse-subagent",
-        },
-        type: "actions.requested",
-      },
-      ctx,
-    );
-    await firstWildcard?.(
-      {
-        data: {
-          callId: "call-sparse-subagent",
-          sequence: 0,
-          subagentName: "researcher",
-          turnId: "turn-sparse-subagent",
-        },
-        meta: { at: "2026-01-01T00:00:00.100Z" },
-        type: "subagent.completed",
-      },
-      ctx,
-    );
-
-    const resumedWildcard = braintrustEveHook({
-      defineState: eveState.defineState,
-    }).events?.["*"];
-    await resumedWildcard?.(
-      {
-        data: {
-          result: {
-            callId: "call-sparse-subagent",
-            kind: "subagent-result",
-            output: { answer: "Authoritative result" },
-            subagentName: "researcher",
-          },
-          sequence: 0,
-          status: "completed",
-          stepIndex: 0,
-          turnId: "turn-sparse-subagent",
-        },
-        meta: { at: "2026-01-01T00:00:00.500Z" },
-        type: "action.result",
-      },
-      ctx,
-    );
-
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    const subagents = spans.filter(
-      (span) => span.span_attributes?.name === "researcher",
-    );
-    expect(subagents).toHaveLength(1);
-    expect(subagents[0]).toMatchObject({
-      output: { answer: "Authoritative result" },
-      metrics: { end: Date.parse("2026-01-01T00:00:00.100Z") / 1000 },
-      span_attributes: { type: "tool" },
-    });
-  });
-
-  it("evicts tracing state after session completion", async () => {
-    const fakeEve = createFakeDefineState();
-    defineState = fakeEve.defineState;
-    const wildcard = braintrustEveHook({
-      defineState,
-      metadata: {
-        scenario: "eve-plugin-unit",
-        testRunId: "test-run-late-after-session",
-      },
-    }).events?.["*"];
-    expect(wildcard).toBeDefined();
-
-    const ctx: EveHookContext = {
-      session: { id: "session-late-after-session" },
-    };
-    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
-
-    await emit({
-      data: { sequence: 0, turnId: "turn-late-after-session" },
-      meta: { at: "2026-01-01T00:00:00.000Z" },
-      type: "turn.started",
-    });
-    await emit({
-      data: { sequence: 0, stepIndex: 0, turnId: "turn-late-after-session" },
-      meta: { at: "2026-01-01T00:00:00.010Z" },
-      type: "step.started",
-    });
-    await emit({
-      data: {
-        actions: [
-          {
-            callId: "call-after-session",
-            input: { query: "after session" },
-            kind: "tool-call",
-            toolName: "search",
-          },
-        ],
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-late-after-session",
-      },
-      meta: { at: "2026-01-01T00:00:00.020Z" },
-      type: "actions.requested",
-    });
-    await emit({
-      meta: { at: "2026-01-01T00:00:00.030Z" },
-      type: "session.completed",
-    });
-
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    const tool = spans.find((span) => span.span_attributes?.name === "search");
-    expect(tool).toMatchObject({
-      input: { query: "after session" },
-    });
-    expect(tool?.metrics?.end).toEqual(expect.any(Number));
-    expect(fakeEve.values.get("braintrust.eve.tracing")).toEqual({
-      llmInputs: [],
-      metadata: {},
-      reasoningBlocks: [],
-      spanReferences: [],
-      stepStarts: [],
-    });
-  });
-
-  it("records result-only tool events without invented input", async () => {
-    const wildcard = braintrustEveHook({
-      defineState,
-      metadata: {
-        scenario: "eve-plugin-unit",
-        testRunId: "test-run-result-only",
-      },
-    }).events?.["*"];
-    expect(wildcard).toBeDefined();
-
-    const ctx: EveHookContext = {
-      session: { id: "session-result-only" },
-    };
-    const emit = (event: EveHandleMessageStreamEvent) => wildcard?.(event, ctx);
-
-    await emit({
-      data: {
-        result: {
-          callId: "call-result-only",
-          kind: "tool-result",
-          output: { title: "Result only" },
-          toolName: "search",
-        },
-        sequence: 0,
-        status: "completed",
-        stepIndex: 0,
-        turnId: "turn-result-only",
-      },
-      type: "action.result",
-    });
-    await emit({
-      data: { sequence: 0, turnId: "turn-result-only" },
-      type: "turn.completed",
-    });
-
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    const tool = spans.find((span) => span.span_attributes?.name === "search");
-    expect(tool).toMatchObject({
-      output: { title: "Result only" },
-      span_attributes: { name: "search", type: "tool" },
-    });
-    expect(tool?.input).toBeUndefined();
-  });
-
-  it("evicts tracing state after session failure", async () => {
-    const fakeEve = createFakeDefineState();
-    const wildcard = braintrustEveHook({
-      defineState: fakeEve.defineState,
-    }).events?.["*"];
-    const ctx: EveHookContext = {
-      session: { id: "session-failed-cleanup" },
-    };
-
-    await wildcard?.(
-      {
-        data: { sequence: 0, turnId: "turn-failed-cleanup" },
-        type: "turn.started",
-      },
-      ctx,
-    );
-    await wildcard?.(
-      {
-        data: {
-          sequence: 0,
-          stepIndex: 0,
-          turnId: "turn-failed-cleanup",
-        },
-        type: "step.started",
-      },
-      ctx,
-    );
-    await wildcard?.(
-      {
-        data: {
-          code: "session_failed",
-          message: "Session failed",
-          sessionId: "session-failed-cleanup",
-        },
-        type: "session.failed",
-      },
-      ctx,
-    );
-
-    expect(fakeEve.values.get("braintrust.eve.tracing")).toEqual({
-      llmInputs: [],
-      metadata: {},
-      reasoningBlocks: [],
-      spanReferences: [],
-      stepStarts: [],
-    });
-  });
-
-  it("flushes final session events but not ordinary or ignored events", async () => {
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    const ctx: EveHookContext = {
-      session: { id: "session-selective-flush" },
-    };
-
-    await wildcard?.(
-      {
-        data: { sequence: 0, turnId: "turn-selective-flush" },
-        type: "turn.started",
-      },
-      ctx,
-    );
-    const flushSpy = vi
-      .spyOn(backgroundLogger, "flush")
-      .mockResolvedValue(undefined);
-
-    await wildcard?.(
-      {
-        data: { wait: "next-user-message" },
-        type: "session.waiting",
-      },
-      ctx,
-    );
-    expect(flushSpy).not.toHaveBeenCalled();
-
-    await wildcard?.(
-      {
-        data: {
-          finishReason: "stop",
-          message: null,
-          sequence: 0,
-          stepIndex: 0,
-          turnId: "turn-selective-flush",
-        },
-        type: "message.completed",
-      },
-      ctx,
-    );
-    expect(flushSpy).not.toHaveBeenCalled();
-
-    await wildcard?.(
-      {
-        type: "session.completed",
-      },
-      ctx,
-    );
-    expect(flushSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("serializes events per session without blocking other sessions", async () => {
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    expect(wildcard).toBeDefined();
-
-    const sessionA: EveHookContext = { session: { id: "session-queue-a" } };
-    const sessionB: EveHookContext = { session: { id: "session-queue-b" } };
-    const emitA = (event: EveHandleMessageStreamEvent) =>
-      wildcard?.(event, sessionA);
-    const emitB = (event: EveHandleMessageStreamEvent) =>
-      wildcard?.(event, sessionB);
-
-    await emitA({
-      data: { sequence: 0, turnId: "turn-a" },
-      type: "turn.started",
-    });
-    await emitB({
-      data: { sequence: 0, turnId: "turn-b" },
-      type: "turn.started",
-    });
-
-    let releaseFirstFlush: (() => void) | undefined;
-    const firstFlush = new Promise<void>((resolve) => {
-      releaseFirstFlush = resolve;
-    });
-    const flushSpy = vi
-      .spyOn(backgroundLogger, "flush")
-      .mockImplementationOnce(() => firstFlush)
-      .mockResolvedValue(undefined);
-
-    const doneA = emitA({
-      type: "session.completed",
-    });
-    for (let i = 0; i < 10 && flushSpy.mock.calls.length < 1; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    }
-    expect(flushSpy).toHaveBeenCalledTimes(1);
-
-    let queuedEventFinished = false;
-    const queuedA = Promise.resolve(
-      emitA({
-        data: {
-          finishReason: "stop",
-          message: "queued",
-          sequence: 0,
-          stepIndex: 0,
-          turnId: "turn-a",
-        },
-        type: "message.completed",
-      }),
-    ).then(() => {
-      queuedEventFinished = true;
-    });
-    await Promise.resolve();
-    expect(queuedEventFinished).toBe(false);
-
-    await emitB({
-      data: { sequence: 0, turnId: "turn-b" },
-      type: "turn.completed",
-    });
-    expect(queuedEventFinished).toBe(false);
-
-    releaseFirstFlush?.();
-    await Promise.all([doneA, queuedA]);
-    expect(queuedEventFinished).toBe(true);
-  });
-
-  it("uses deterministic ids and attaches local subagent turns to their tool span", async () => {
-    const parentEveState = createFakeDefineState();
-    const childEveState = createFakeDefineState();
-    const parentWildcard = braintrustEveHook({
-      defineState: parentEveState.defineState,
-    }).events?.["*"];
-    const childWildcard = braintrustEveHook({
-      defineState: childEveState.defineState,
-    }).events?.["*"];
-    expect(parentWildcard).toBeDefined();
-    expect(childWildcard).toBeDefined();
-
-    const parentCtx: EveHookContext = {
-      session: { id: "session-parent" },
-    };
-    const childCtx: EveHookContext = {
-      session: {
-        id: "session-child",
-        parent: {
-          callId: "call-researcher",
-          sessionId: "session-parent",
-          turn: { id: "turn-parent" },
-        },
-      },
-    };
-    const emitParent = (event: EveHandleMessageStreamEvent) =>
-      parentWildcard?.(event, parentCtx);
-    const emitChild = (event: EveHandleMessageStreamEvent) =>
-      childWildcard?.(event, childCtx);
-
-    await emitParent({
-      data: { sequence: 0, turnId: "turn-parent" },
-      type: "turn.started",
-    });
-    await emitParent({
-      data: {
-        message: "Research Eve tracing",
-        sequence: 0,
-        turnId: "turn-parent",
-      },
-      type: "message.received",
-    });
-    await emitParent({
-      data: { sequence: 0, stepIndex: 0, turnId: "turn-parent" },
-      type: "step.started",
-    });
-    await emitParent({
-      data: {
-        actions: [
-          {
-            callId: "call-researcher",
-            input: { message: "Find the relevant section" },
-            kind: "subagent-call",
-            name: "researcher",
-            subagentName: "researcher",
-          },
-        ],
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-parent",
-      },
-      type: "actions.requested",
-    });
-    await emitParent({
-      data: {
         callId: "call-researcher",
-        childSessionId: "session-child",
+        idempotencyKey: "action:session-root:turn-0:call-researcher",
+        input: { message: "Research Eve" },
         name: "researcher",
-        sequence: 0,
-        toolName: "researcher",
-        turnId: "turn-parent",
+        scope: parentScope,
+        type: "action.started",
       },
-      type: "subagent.called",
-    });
-
-    await emitChild({
-      data: { sequence: 0, turnId: "turn-child" },
-      type: "turn.started",
-    });
-    await emitChild({
-      data: {
-        message: "Find the relevant section",
-        sequence: 0,
-        turnId: "turn-child",
-      },
-      type: "message.received",
-    });
-    await emitChild({
-      data: { sequence: 0, stepIndex: 0, turnId: "turn-child" },
-      type: "step.started",
-    });
-    await emitChild({
-      data: {
-        actions: [
-          {
-            callId: "call-search",
-            input: { query: "nested eve" },
-            kind: "tool-call",
-            toolName: "search",
-          },
-        ],
-        sequence: 0,
-        stepIndex: 1,
-        turnId: "turn-child",
-      },
-      type: "actions.requested",
-    });
-    await emitChild({
-      data: {
-        result: {
-          callId: "call-search",
-          kind: "tool-result",
-          output: { title: "Nested Eve" },
-          toolName: "search",
-        },
-        sequence: 0,
-        status: "completed",
-        stepIndex: 1,
-        turnId: "turn-child",
-      },
-      type: "action.result",
-    });
-    await emitChild({
-      data: {
-        finishReason: "stop",
-        message: "Child found Nested Eve.",
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-child",
-      },
-      type: "message.completed",
-    });
-    await emitChild({
-      data: {
-        finishReason: "stop",
-        sequence: 0,
-        stepIndex: 0,
-        turnId: "turn-child",
-      },
-      type: "step.completed",
-    });
-    await emitChild({
-      data: { sequence: 0, turnId: "turn-child" },
-      type: "turn.completed",
-    });
-
-    await emitParent({
-      data: {
-        callId: "call-researcher",
-        output: "Child found Nested Eve.",
-        sequence: 0,
-        status: "completed",
-        subagentName: "researcher",
-        turnId: "turn-parent",
-      },
-      type: "subagent.completed",
-    });
-    await emitParent({
-      data: {
-        result: {
-          callId: "call-researcher",
-          kind: "subagent-result",
-          output: "Child found Nested Eve.",
-          subagentName: "researcher",
-        },
-        sequence: 0,
-        status: "completed",
-        stepIndex: 0,
-        turnId: "turn-parent",
-      },
-      type: "action.result",
-    });
-    await emitParent({
-      data: { sequence: 0, stepIndex: 1, turnId: "turn-parent" },
-      type: "step.started",
-    });
-    await emitParent({
-      data: {
-        actions: [
-          {
-            callId: "call-read",
-            input: { url: "https://eve.dev/docs/guides/instrumentation" },
-            kind: "tool-call",
-            toolName: "read",
-          },
-        ],
-        sequence: 0,
-        stepIndex: 1,
-        turnId: "turn-parent",
-      },
-      type: "actions.requested",
-    });
-    await emitParent({
-      data: {
-        result: {
-          callId: "call-read",
-          kind: "tool-result",
-          output: { title: "Runtime context" },
-          toolName: "read",
-        },
-        sequence: 0,
-        status: "completed",
-        stepIndex: 1,
-        turnId: "turn-parent",
-      },
-      type: "action.result",
-    });
-    await emitParent({
-      data: {
-        finishReason: "tool-calls",
-        sequence: 0,
-        stepIndex: 1,
-        turnId: "turn-parent",
-      },
-      type: "step.completed",
-    });
-    await emitParent({
-      data: { sequence: 0, stepIndex: 2, turnId: "turn-parent" },
-      type: "step.started",
-    });
-    await emitParent({
-      data: {
-        finishReason: "stop",
-        message: "Parent used the child result.",
-        sequence: 0,
-        stepIndex: 2,
-        turnId: "turn-parent",
-      },
-      type: "message.completed",
-    });
-    await emitParent({
-      data: {
-        finishReason: "stop",
-        sequence: 0,
-        stepIndex: 2,
-        turnId: "turn-parent",
-      },
-      type: "step.completed",
-    });
-    await emitParent({
-      data: { sequence: 0, turnId: "turn-parent" },
-      type: "turn.completed",
-    });
-
-    const spans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    const parentTurnId = deterministicEveIdForTest(
-      "eve:turn",
-      "session-parent",
-      "turn-parent",
+      actionContext,
     );
-    const childTurnId = deterministicEveIdForTest(
-      "eve:turn",
-      "session-child",
-      "turn-child",
-    );
-    const subagentSpanId = deterministicEveIdForTest(
-      "eve:subagent",
-      "session-parent",
-      "call-researcher",
-    );
-    const parentTurn = spans.find(
-      (span) =>
-        span.span_attributes?.name === "eve.turn" &&
-        span.span_id === parentTurnId,
-    );
-    const subagentSpans = spans.filter(
-      (span) => span.span_attributes?.name === "researcher",
-    );
-    const childTurn = spans.find(
-      (span) =>
-        span.span_attributes?.name === "eve.turn" &&
-        span.span_id === childTurnId,
-    );
-    const childSearch = spans.find(
-      (span) =>
-        span.span_attributes?.name === "search" &&
-        span.span_parents?.[0] === childTurnId,
-    );
-    const parentRead = spans.find(
-      (span) =>
-        span.span_attributes?.name === "read" &&
-        span.span_parents?.[0] === parentTurnId,
-    );
-    const parentSteps = spans.filter(
-      (span) =>
-        span.span_attributes?.name === "eve.step" &&
-        span.span_parents?.[0] === parentTurnId,
-    );
-
-    expect(parentTurn).toBeDefined();
-    expect(subagentSpans).toHaveLength(1);
-    expect(subagentSpans[0]?.span_id).toBe(subagentSpanId);
-    expect(subagentSpans[0]?.input).toEqual({
-      message: "Find the relevant section",
-    });
-    expect(childTurn).toBeDefined();
-    expect(childSearch).toBeDefined();
-    expect(parentRead).toBeDefined();
-    expect(parentSteps).toHaveLength(3);
-    expect(parentTurn?.span_parents).toEqual([]);
-    expect(parentTurn?.span_id).toBe(parentTurnId);
-    expect(parentTurn?.span_id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-    );
-    expect(parentTurn?.root_span_id).toMatch(
-      /^([0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/,
-    );
-    expect(parentTurn?.root_span_id).toBe(
-      deterministicEveIdForTest("eve:root", "session-parent", "turn-parent"),
-    );
-    expect(subagentSpans[0]?.span_parents).toEqual([parentTurn?.span_id]);
-    expect(childTurn?.span_parents).toEqual([subagentSpanId]);
-    expect(childTurn?.root_span_id).toBe(parentTurn?.root_span_id);
-    expect(parentTurn?.metadata).toEqual({
-      "eve.session_id": "session-parent",
-    });
-    expect(subagentSpans[0]?.metadata).toEqual({
-      "eve.session_id": "session-parent",
-    });
-    expect(childTurn?.metadata).toEqual({
-      "eve.session_id": "session-child",
-    });
-    expect(childSearch?.metadata).toEqual({
-      "eve.session_id": "session-child",
-    });
-    expect(parentRead?.metadata).toEqual({
-      "eve.session_id": "session-parent",
-    });
-    expect(childSearch?.span_parents).toEqual([childTurn?.span_id]);
-    expect(childSearch?.span_id).toBe(
-      deterministicEveIdForTest(
-        "eve:tool",
-        "session-child",
-        "turn-child",
-        "call-search",
-      ),
-    );
-    expect(parentRead?.span_id).toBe(
-      deterministicEveIdForTest(
-        "eve:tool",
-        "session-parent",
-        "turn-parent",
-        "call-read",
-      ),
-    );
-    expect(parentSteps.map((span) => span.span_id)).toEqual([
-      deterministicEveIdForTest(
-        "eve:step",
-        "session-parent",
-        "turn-parent",
-        "0",
-      ),
-      deterministicEveIdForTest(
-        "eve:step",
-        "session-parent",
-        "turn-parent",
-        "1",
-      ),
-      deterministicEveIdForTest(
-        "eve:step",
-        "session-parent",
-        "turn-parent",
-        "2",
-      ),
-    ]);
-    expect(spans.map((span) => span.span_attributes?.name)).toEqual([
-      "eve.turn",
-      "eve.step",
-      "researcher",
-      "eve.turn",
-      "eve.step",
-      "search",
-      "eve.step",
-      "read",
-      "eve.step",
-    ]);
-
-    backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
-    initLogger({
-      projectName: "eve-plugin.test.ts",
-      projectId: "test-project-id",
-    });
-    const replay = braintrustEveHook({
-      defineState: parentEveState.defineState,
-    }).events?.["*"];
-    await replay?.(
-      {
-        data: { sequence: 0, turnId: "turn-parent" },
-        type: "turn.started",
-      },
-      parentCtx,
-    );
-    await replay?.(
-      {
-        data: { sequence: 0, turnId: "turn-parent" },
-        type: "turn.completed",
-      },
-      parentCtx,
-    );
-    const replaySpans = (await backgroundLogger.drain()) as Array<
-      Record<string, any>
-    >;
-    expect(
-      replaySpans.find((span) => span.span_id === parentTurn?.span_id),
-    ).toMatchObject({ _is_merge: true });
-  });
-
-  it("does not parent an Eve turn under the active Braintrust span", async () => {
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    expect(wildcard).toBeDefined();
-
-    const ctx: EveHookContext = {
-      session: { id: "session-wrapped" },
-    };
-    const parent = startSpan({ name: "workflow" });
-    await withCurrent(parent, async () => {
-      await wildcard?.(
+    await Promise.all([
+      provider.events["turn.started"](
         {
-          data: { sequence: 0, turnId: "turn-wrapped" },
+          idempotencyKey: "turn:session-child:turn-0",
+          parentLineage: {
+            callId: "call-researcher",
+            sessionId: "session-root",
+            turnId: "turn-0",
+          },
+          rootSessionId: "session-root",
+          sequence: 0,
+          sessionId: "session-child",
+          turnId: "turn-0",
           type: "turn.started",
         },
-        ctx,
-      );
-      await wildcard?.(
+        childTurnContext,
+      ),
+      provider.events["model.call.started"](
         {
-          data: { sequence: 0, turnId: "turn-wrapped" },
-          type: "turn.completed",
+          idempotencyKey: "model:child-attempt-0:0",
+          model: {
+            modelId: "qwen/qwen3-30b-a3b",
+            provider: "openrouter.chat",
+          },
+          scope: {
+            attemptId: "child-attempt-0",
+            attemptIndex: 0,
+            rootSessionId: "session-root",
+            sessionId: "session-child",
+            stepIndex: 0,
+            turnId: "turn-0",
+          },
+          type: "model.call.started",
         },
-        ctx,
-      );
+        childModelContext,
+      ),
+    ]);
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const parent = spans.find(
+      (span) =>
+        span.span_attributes?.name === "eve.turn" &&
+        span.metadata?.["eve.session_id"] === "session-root",
+    );
+    const action = spans.find(
+      (span) => span.span_attributes?.name === "researcher",
+    );
+    const child = spans.find(
+      (span) =>
+        span.span_attributes?.name === "eve.turn" &&
+        span.metadata?.["eve.session_id"] === "session-child",
+    );
+    const childModel = spans.find(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+
+    expect(action?.span_parents).toEqual([parent?.span_id]);
+    expect(child?.span_parents).toEqual([action?.span_id]);
+    expect(child?.root_span_id).toBe(parent?.root_span_id);
+    expect(childModel?.span_parents).toEqual([child?.span_id]);
+    expect(childModel?.root_span_id).toBe(parent?.root_span_id);
+  });
+
+  it("keeps a stable root across nested subagents with different turn ids", async () => {
+    const provider = braintrustEveInstrumentation();
+    const rootContext = providerContext();
+    const rootScope = { ...ATTEMPT_SCOPE, turnId: "root-turn" };
+    const childScope: EveInstrumentationAttemptScope = {
+      attemptId: "child-attempt",
+      attemptIndex: 0,
+      rootSessionId: "session-root",
+      sessionId: "session-child",
+      stepIndex: 0,
+      turnId: "child-turn",
+    };
+
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-root:root-turn",
+        rootSessionId: "session-root",
+        sequence: 4,
+        sessionId: "session-root",
+        turnId: "root-turn",
+        type: "turn.started",
+      },
+      rootContext,
+    );
+    await provider.events["action.started"](
+      {
+        callId: "call-child",
+        idempotencyKey: "action:session-root:root-turn:call-child",
+        name: "child",
+        scope: rootScope,
+        type: "action.started",
+      },
+      providerContext(),
+    );
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-child:child-turn",
+        parentLineage: {
+          callId: "call-child",
+          sessionId: "session-root",
+          turnId: "root-turn",
+        },
+        rootSessionId: "session-root",
+        sequence: 2,
+        sessionId: "session-child",
+        turnId: "child-turn",
+        type: "turn.started",
+      },
+      providerContext(),
+    );
+    await provider.events["action.started"](
+      {
+        callId: "call-grandchild",
+        idempotencyKey: "action:session-child:child-turn:call-grandchild",
+        name: "grandchild",
+        scope: childScope,
+        type: "action.started",
+      },
+      providerContext(),
+    );
+    const rootReference = rootContext.state.get();
+    if (
+      typeof rootReference !== "object" ||
+      rootReference === null ||
+      Array.isArray(rootReference) ||
+      typeof rootReference.rootSpanId !== "string"
+    ) {
+      throw new Error("Expected the root turn trace context to be persisted");
+    }
+    const resumedProvider = braintrustEveInstrumentation();
+    await resumedProvider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-grandchild:grandchild-turn",
+        parentLineage: {
+          callId: "call-grandchild",
+          sessionId: "session-child",
+          turnId: "child-turn",
+        },
+        parentTraceContext: {
+          spanId: "1111111111111111",
+          traceFlags: 1,
+          traceId: rootReference.rootSpanId,
+        },
+        rootSessionId: "session-root",
+        sequence: 7,
+        sessionId: "session-grandchild",
+        turnId: "grandchild-turn",
+        type: "turn.started",
+      },
+      providerContext(),
+    );
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const turns = spans.filter(
+      (span) => span.span_attributes?.name === "eve.turn",
+    );
+    const root = turns.find(
+      (turn) => turn.metadata?.["eve.session_id"] === "session-root",
+    );
+    const child = turns.find(
+      (turn) => turn.metadata?.["eve.session_id"] === "session-child",
+    );
+    const grandchild = turns.find(
+      (turn) => turn.metadata?.["eve.session_id"] === "session-grandchild",
+    );
+    const childAction = spans.find(
+      (span) => span.span_attributes?.name === "child",
+    );
+    const grandchildAction = spans.find(
+      (span) => span.span_attributes?.name === "grandchild",
+    );
+
+    expect(child?.span_parents).toEqual([childAction?.span_id]);
+    expect(grandchild?.span_parents).toEqual([grandchildAction?.span_id]);
+    expect(turns.map((turn) => turn.root_span_id)).toEqual([
+      root?.root_span_id,
+      root?.root_span_id,
+      root?.root_span_id,
+    ]);
+  });
+
+  it("creates a separate trace for each top-level turn in one session", async () => {
+    const provider = braintrustEveInstrumentation();
+
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:shared-session:turn-0",
+        rootSessionId: "shared-session",
+        sequence: 0,
+        sessionId: "shared-session",
+        turnId: "turn-0",
+        type: "turn.started",
+      },
+      providerContext(),
+    );
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:shared-session:turn-1",
+        rootSessionId: "shared-session",
+        sequence: 1,
+        sessionId: "shared-session",
+        turnId: "turn-1",
+        type: "turn.started",
+      },
+      providerContext(),
+    );
+
+    const turns = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    expect(turns).toHaveLength(2);
+    expect(turns.map((turn) => turn.metadata?.["eve.session_id"])).toEqual([
+      "shared-session",
+      "shared-session",
+    ]);
+    expect(new Set(turns.map((turn) => turn.root_span_id)).size).toBe(2);
+  });
+
+  it("preserves a durable subagent turn across provider instances", async () => {
+    const firstProvider = braintrustEveInstrumentation();
+    const parentTurnContext = providerContext();
+    const childTurnContext = providerContext();
+
+    await firstProvider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-root:turn-0",
+        rootSessionId: "session-root",
+        sequence: 0,
+        sessionId: "session-root",
+        turnId: "turn-0",
+        type: "turn.started",
+      },
+      parentTurnContext,
+    );
+    await firstProvider.events["action.started"](
+      {
+        callId: "call-researcher",
+        idempotencyKey: "action:session-root:turn-0:call-researcher",
+        name: "researcher",
+        scope: ATTEMPT_SCOPE,
+        type: "action.started",
+      },
+      providerContext(),
+    );
+    await firstProvider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-child:turn-0",
+        parentLineage: {
+          callId: "call-researcher",
+          sessionId: "session-root",
+          turnId: "turn-0",
+        },
+        rootSessionId: "session-root",
+        sequence: 0,
+        sessionId: "session-child",
+        turnId: "turn-0",
+        type: "turn.started",
+      },
+      childTurnContext,
+    );
+
+    const resumedProvider = braintrustEveInstrumentation();
+    const childScope: EveInstrumentationAttemptScope = {
+      attemptId: "child-attempt-0",
+      attemptIndex: 0,
+      rootSessionId: "session-root",
+      sessionId: "session-child",
+      stepIndex: 0,
+      turnId: "turn-0",
+    };
+    const modelContext = providerContext();
+    await resumedProvider.events["model.call.started"](
+      {
+        idempotencyKey: "model:child-attempt-0:0",
+        input: {
+          messages: [{ content: "Continue durably", role: "user" }],
+        },
+        model: { modelId: "gpt-5.4-mini", provider: "openai.responses" },
+        scope: childScope,
+        type: "model.call.started",
+      },
+      modelContext,
+    );
+    await resumedProvider.events["model.call.completed"](
+      {
+        content: [{ text: "Durable answer", type: "text" }],
+        finishReason: "stop",
+        idempotencyKey: "model:child-attempt-0:0",
+        scope: childScope,
+        type: "model.call.completed",
+        usage: { inputTokens: 3, outputTokens: 2 },
+      },
+      modelContext,
+    );
+    await resumedProvider.events["turn.completed"](
+      {
+        idempotencyKey: "turn:session-child:turn-0",
+        sessionId: "session-child",
+        turnId: "turn-0",
+        type: "turn.completed",
+      },
+      providerContext(childTurnContext.state.get()),
+    );
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const parent = spans.find(
+      (span) =>
+        span.span_attributes?.name === "eve.turn" &&
+        span.metadata?.["eve.session_id"] === "session-root",
+    );
+    const action = spans.find(
+      (span) => span.span_attributes?.name === "researcher",
+    );
+    const child = spans.find(
+      (span) =>
+        span.span_attributes?.name === "eve.turn" &&
+        span.metadata?.["eve.session_id"] === "session-child",
+    );
+    const step = spans.find(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+    expect(child).toMatchObject({
+      input: [{ content: "Continue durably", role: "user" }],
+      metrics: {
+        completion_tokens: 2,
+        prompt_tokens: 3,
+        tokens: 5,
+      },
+      output: "Durable answer",
+      span_parents: [action?.span_id],
     });
-    parent.end();
+    expect(child?.root_span_id).toBe(parent?.root_span_id);
+    expect(step?.span_parents).toEqual([child?.span_id]);
+    expect(step?.root_span_id).toBe(parent?.root_span_id);
+  });
+
+  it("resumes spans and turn metrics from Eve operation state", async () => {
+    const firstProvider = braintrustEveInstrumentation();
+    const turnContext = providerContext();
+    const modelContext = providerContext();
+    const scope = ATTEMPT_SCOPE;
+
+    await firstProvider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-root:turn-0",
+        rootSessionId: "session-root",
+        sequence: 0,
+        sessionId: "session-root",
+        turnId: "turn-0",
+        type: "turn.started",
+      },
+      turnContext,
+    );
+    await firstProvider.events["model.call.started"](
+      {
+        idempotencyKey: "model:attempt-0:0",
+        input: {
+          messages: [{ content: "Resume this call", role: "user" }],
+        },
+        model: {
+          modelId: "gpt-5.4-mini",
+          provider: "openai.responses",
+        },
+        scope,
+        type: "model.call.started",
+      },
+      modelContext,
+    );
+
+    const persisted = modelContext.state.get();
+    expect(persisted).toMatchObject({
+      exported: expect.any(String),
+      rootSpanId: expect.any(String),
+      spanId: expect.any(String),
+    });
+
+    const resumedProvider = braintrustEveInstrumentation();
+    await resumedProvider.events["model.call.completed"](
+      {
+        content: [{ text: "Resumed output", type: "text" }],
+        finishReason: "stop",
+        idempotencyKey: "model:attempt-0:0",
+        scope,
+        type: "model.call.completed",
+        usage: { inputTokens: 4, outputTokens: 2 },
+      },
+      providerContext(persisted),
+    );
+    const secondModelContext = providerContext();
+    await resumedProvider.events["model.call.started"](
+      {
+        idempotencyKey: "model:attempt-0:1",
+        input: {
+          messages: [{ content: "Continue this call", role: "user" }],
+        },
+        model: {
+          modelId: "gpt-5.4-mini",
+          provider: "openai.responses",
+        },
+        scope: { ...scope, stepIndex: 1 },
+        type: "model.call.started",
+      },
+      secondModelContext,
+    );
+    const secondPersisted = secondModelContext.state.get();
+    expect(secondPersisted).toMatchObject({
+      turnMetricContributions: {
+        "model:attempt-0:0": {
+          completion_tokens: 2,
+          prompt_tokens: 4,
+          tokens: 6,
+        },
+      },
+    });
+    const finalProvider = braintrustEveInstrumentation();
+    await finalProvider.events["model.call.completed"](
+      {
+        content: [{ text: "Final resumed output", type: "text" }],
+        finishReason: "stop",
+        idempotencyKey: "model:attempt-0:1",
+        scope: { ...scope, stepIndex: 1 },
+        type: "model.call.completed",
+        usage: { inputTokens: 3, outputTokens: 1 },
+      },
+      providerContext(secondPersisted),
+    );
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const steps = spans.filter(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+    expect(steps).toHaveLength(2);
+    expect(steps[0]).toMatchObject({
+      input: [{ content: "Resume this call", role: "user" }],
+      metrics: {
+        completion_tokens: 2,
+        prompt_tokens: 4,
+        tokens: 6,
+      },
+      output: [
+        {
+          finish_reason: "stop",
+          message: {
+            content: "Resumed output",
+            role: "assistant",
+          },
+        },
+      ],
+    });
+    const turn = spans.find(
+      (span) => span.span_attributes?.name === "eve.turn",
+    );
+    expect(turn?.metrics).toMatchObject({
+      completion_tokens: 3,
+      prompt_tokens: 7,
+      tokens: 10,
+    });
+  });
+
+  it("does not double-count replayed model completions", async () => {
+    const provider = braintrustEveInstrumentation();
+    const modelContext = providerContext();
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:replay-session:turn-0",
+        rootSessionId: "replay-session",
+        sequence: 0,
+        sessionId: "replay-session",
+        turnId: "turn-0",
+        type: "turn.started",
+      },
+      providerContext(),
+    );
+    const scope = {
+      ...ATTEMPT_SCOPE,
+      attemptId: "replay-attempt",
+      rootSessionId: "replay-session",
+      sessionId: "replay-session",
+    };
+    await provider.events["model.call.started"](
+      {
+        idempotencyKey: "model:replay-attempt:0",
+        model: { modelId: "gpt-5.4-mini", provider: "openai.responses" },
+        scope,
+        type: "model.call.started",
+      },
+      modelContext,
+    );
+    const completed: EveInstrumentationModelCallCompletedEvent = {
+      content: [{ text: "Done", type: "text" }],
+      finishReason: "stop",
+      idempotencyKey: "model:replay-attempt:0",
+      scope,
+      type: "model.call.completed",
+      usage: { inputTokens: 3, outputTokens: 2 },
+    };
+    await provider.events["model.call.completed"](completed, modelContext);
+    await provider.events["model.call.completed"](completed, modelContext);
 
     const spans = (await backgroundLogger.drain()) as Array<
       Record<string, any>
@@ -2221,51 +907,440 @@ describe("braintrustEveHook", () => {
     const turn = spans.find(
       (span) => span.span_attributes?.name === "eve.turn",
     );
-    expect(turn?.span_id).toBe(
-      deterministicEveIdForTest("eve:turn", "session-wrapped", "turn-wrapped"),
-    );
-    expect(turn?.span_parents).toEqual([]);
-    expect(turn?.root_span_id).toBe(
-      deterministicEveIdForTest("eve:root", "session-wrapped", "turn-wrapped"),
-    );
-    expect(turn?.root_span_id).not.toBe(parent.rootSpanId);
+    expect(turn?.metrics).toMatchObject({
+      completion_tokens: 2,
+      prompt_tokens: 3,
+      tokens: 5,
+    });
   });
 
-  it("does not throw when Eve emits malformed events or failures", async () => {
-    const wildcard = braintrustEveHook({ defineState }).events?.["*"];
-    expect(wildcard).toBeDefined();
+  it("records model, action, and turn failures as errors", async () => {
+    const provider = braintrustEveInstrumentation();
+    const turnContext = providerContext();
+    const modelContext = providerContext();
+    const actionContext = providerContext();
+    const scope = ATTEMPT_SCOPE;
 
-    await expect(
-      wildcard?.({ bad: true } as never, {} as never),
-    ).resolves.toBeUndefined();
-    await expect(
-      wildcard?.(
-        {
-          data: {
-            code: "boom",
-            message: "step failed",
-            sequence: 0,
-            stepIndex: 0,
-            turnId: "turn-missing-session",
-          },
-          type: "step.failed",
-        },
-        {} as never,
-      ),
-    ).resolves.toBeUndefined();
-    await expect(
-      wildcard?.(
-        {
-          data: { runtime: { modelId: 123 } },
-          type: "session.started",
-        } as never,
-        { session: { id: "session-malformed-runtime" } },
-      ),
-    ).resolves.toBeUndefined();
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-root:turn-0",
+        rootSessionId: "session-root",
+        sequence: 0,
+        sessionId: "session-root",
+        turnId: "turn-0",
+        type: "turn.started",
+      },
+      turnContext,
+    );
+    await provider.events["model.call.started"](
+      {
+        idempotencyKey: "model:attempt-0:0",
+        model: { modelId: "gpt-5.4-mini", provider: "openai.responses" },
+        scope,
+        type: "model.call.started",
+      },
+      modelContext,
+    );
+    await provider.events["model.call.failed"](
+      {
+        error: new Error("model exploded"),
+        idempotencyKey: "model:attempt-0:0",
+        scope,
+        type: "model.call.failed",
+      },
+      modelContext,
+    );
+    await provider.events["action.started"](
+      {
+        callId: "call-failing",
+        idempotencyKey: "action:session-root:turn-0:call-failing",
+        name: "failing-tool",
+        scope,
+        type: "action.started",
+      },
+      actionContext,
+    );
+    await provider.events["action.failed"](
+      {
+        error: new Error("tool exploded"),
+        errorCode: "TOOL_FAILED",
+        idempotencyKey: "action:session-root:turn-0:call-failing",
+        outcome: "failed",
+        scope,
+        type: "action.failed",
+      },
+      actionContext,
+    );
+    await provider.events["turn.failed"](
+      {
+        error: new Error("turn exploded"),
+        idempotencyKey: "turn:session-root:turn-0",
+        sessionId: "session-root",
+        turnId: "turn-0",
+        type: "turn.failed",
+      },
+      turnContext,
+    );
 
     const spans = (await backgroundLogger.drain()) as Array<
       Record<string, any>
     >;
-    expect(spans).toEqual([]);
+    expect(
+      spans.find((span) => span.span_attributes?.name === "eve.step")?.error,
+    ).toContain("model exploded");
+    expect(
+      spans.find((span) => span.span_attributes?.name === "failing-tool")
+        ?.error,
+    ).toContain("tool exploded");
+    expect(
+      spans.find((span) => span.span_attributes?.name === "eve.turn")?.error,
+    ).toContain("turn exploded");
+  });
+
+  it("projects model input without provider-private fields", async () => {
+    const provider = braintrustEveInstrumentation();
+    const turnContext = providerContext();
+    const modelContext = providerContext();
+
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-root:turn-0",
+        rootSessionId: "session-root",
+        sequence: 0,
+        sessionId: "session-root",
+        turnId: "turn-0",
+        type: "turn.started",
+      },
+      turnContext,
+    );
+    await provider.events["model.call.started"](
+      {
+        idempotencyKey: "model:attempt-0:0",
+        input: {
+          instructions: {
+            content: "Object system instruction",
+            providerOptions: { encrypted: "instruction-secret" },
+            role: "system",
+          },
+          messages: [
+            {
+              content: "Hello",
+              providerOptions: { reasoning_details: "message-secret" },
+              role: "user",
+            },
+            {
+              content: [
+                {
+                  providerOptions: { encrypted: "part-secret" },
+                  text: "Thinking",
+                  type: "reasoning",
+                },
+                {
+                  input: { query: "Eve" },
+                  providerOptions: { encrypted: "tool-secret" },
+                  toolCallId: "call-0",
+                  toolName: "search",
+                  type: "tool-call",
+                },
+                {
+                  providerOptions: { encrypted: "custom-secret" },
+                  type: "custom",
+                },
+              ],
+              providerOptions: { reasoning_details: "assistant-secret" },
+              role: "assistant",
+            },
+          ],
+        },
+        model: { modelId: "gpt-5.4-mini", provider: "openai.responses" },
+        scope: ATTEMPT_SCOPE,
+        type: "model.call.started",
+      },
+      modelContext,
+    );
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const step = spans.find(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+    expect(step?.input).toEqual([
+      { content: "Object system instruction", role: "system" },
+      { content: "Hello", role: "user" },
+      {
+        content: [
+          { text: "Thinking", type: "reasoning" },
+          {
+            input: { query: "Eve" },
+            toolCallId: "call-0",
+            toolName: "search",
+            type: "tool-call",
+          },
+        ],
+        role: "assistant",
+      },
+    ]);
+    expect(JSON.stringify(step?.input)).not.toContain("providerOptions");
+    expect(JSON.stringify(step?.input)).not.toContain("secret");
+  });
+
+  it("converts inline model and tool-result media to attachments", async () => {
+    const provider = braintrustEveInstrumentation();
+    const actionContext = providerContext();
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-root:turn-0",
+        rootSessionId: "session-root",
+        sequence: 0,
+        sessionId: "session-root",
+        turnId: "turn-0",
+        type: "turn.started",
+      },
+      providerContext(),
+    );
+    await provider.events["model.call.started"](
+      {
+        idempotencyKey: "model:attempt-0:0",
+        input: {
+          messages: [
+            {
+              content: [
+                {
+                  data: "AQID",
+                  filename: "tiny.png",
+                  mediaType: "image/png",
+                  type: "file",
+                },
+                {
+                  image: "DQ4P",
+                  mediaType: "image/png",
+                  type: "image",
+                },
+                {
+                  data: "not valid base64!",
+                  filename: "invalid.png",
+                  mediaType: "image/png",
+                  type: "file",
+                },
+              ],
+              role: "user",
+            },
+            {
+              content: [
+                {
+                  output: {
+                    type: "content",
+                    value: [
+                      {
+                        data: "BAUG",
+                        mediaType: "image/png",
+                        type: "image-data",
+                      },
+                    ],
+                  },
+                  toolCallId: "call-image",
+                  toolName: "render",
+                  type: "tool-result",
+                },
+              ],
+              role: "tool",
+            },
+          ],
+        },
+        model: { modelId: "gpt-5.4-mini", provider: "openai.responses" },
+        scope: ATTEMPT_SCOPE,
+        type: "model.call.started",
+      },
+      providerContext(),
+    );
+    await provider.events["action.started"](
+      {
+        callId: "call-render",
+        idempotencyKey: "action:session-root:turn-0:call-render",
+        input: {
+          data: "data:image/png;base64,BwgJ",
+          mediaType: "image/png",
+          type: "file",
+        },
+        name: "render",
+        scope: ATTEMPT_SCOPE,
+        type: "action.started",
+      },
+      actionContext,
+    );
+    await provider.events["action.completed"](
+      {
+        idempotencyKey: "action:session-root:turn-0:call-render",
+        output: {
+          output: {
+            type: "content",
+            value: [
+              {
+                data: new Uint8Array([10, 11, 12]),
+                mediaType: "image/png",
+                type: "image-data",
+              },
+            ],
+          },
+          type: "result",
+        },
+        scope: ATTEMPT_SCOPE,
+        type: "action.completed",
+      },
+      actionContext,
+    );
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const step = spans.find(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+    const inputAttachment = step?.input?.[0]?.content?.[0]?.data;
+    const imageAttachment = step?.input?.[0]?.content?.[1]?.image;
+    const unconvertedFile = step?.input?.[0]?.content?.[2]?.data;
+    const outputAttachment =
+      step?.input?.[1]?.content?.[0]?.output?.value?.[0]?.data;
+    const action = spans.find(
+      (span) => span.span_attributes?.name === "render",
+    );
+    const actionInputAttachment = action?.input?.data;
+    const actionOutputAttachment = action?.output?.value?.[0]?.data;
+    expect(inputAttachment).toBeInstanceOf(Attachment);
+    expect(inputAttachment.reference).toMatchObject({
+      content_type: "image/png",
+      filename: "tiny.png",
+      type: "braintrust_attachment",
+    });
+    expect(imageAttachment).toBeInstanceOf(Attachment);
+    expect(imageAttachment.reference).toMatchObject({
+      content_type: "image/png",
+      type: "braintrust_attachment",
+    });
+    expect(unconvertedFile).toBe("not valid base64!");
+    expect(outputAttachment).toBeInstanceOf(Attachment);
+    expect(outputAttachment.reference).toMatchObject({
+      content_type: "image/png",
+      filename: "attachment.png",
+      type: "braintrust_attachment",
+    });
+    expect(actionInputAttachment).toBeInstanceOf(Attachment);
+    expect(actionInputAttachment.reference).toMatchObject({
+      content_type: "image/png",
+      type: "braintrust_attachment",
+    });
+    expect(actionOutputAttachment).toBeInstanceOf(Attachment);
+    expect(actionOutputAttachment.reference).toMatchObject({
+      content_type: "image/png",
+      type: "braintrust_attachment",
+    });
+    expect(JSON.stringify(step?.input)).not.toContain("AQID");
+    expect(JSON.stringify(step?.input)).not.toContain("BAUG");
+  });
+
+  it("preserves arbitrary action outputs with type fields", async () => {
+    const provider = braintrustEveInstrumentation();
+    const actionContext = providerContext();
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-root:turn-0",
+        rootSessionId: "session-root",
+        sequence: 0,
+        sessionId: "session-root",
+        turnId: "turn-0",
+        type: "turn.started",
+      },
+      providerContext(),
+    );
+    await provider.events["action.started"](
+      {
+        callId: "call-text",
+        idempotencyKey: "action:session-root:turn-0:call-text",
+        name: "text-result",
+        scope: ATTEMPT_SCOPE,
+        type: "action.started",
+      },
+      actionContext,
+    );
+    await provider.events["action.completed"](
+      {
+        idempotencyKey: "action:session-root:turn-0:call-text",
+        output: {
+          output: { text: "preserve me", type: "text" },
+          type: "result",
+        },
+        scope: ATTEMPT_SCOPE,
+        type: "action.completed",
+      },
+      actionContext,
+    );
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    expect(
+      spans.find((span) => span.span_attributes?.name === "text-result")
+        ?.output,
+    ).toEqual({ text: "preserve me", type: "text" });
+  });
+
+  it.each([
+    ["step.attempt.completed", undefined],
+    ["step.attempt.failed", new Error("attempt exploded")],
+  ] as const)("closes an open model span on %s", async (type, error) => {
+    const provider = braintrustEveInstrumentation();
+    await provider.events["turn.started"](
+      {
+        idempotencyKey: "turn:session-root:turn-0",
+        rootSessionId: "session-root",
+        sequence: 0,
+        sessionId: "session-root",
+        turnId: "turn-0",
+        type: "turn.started",
+      },
+      providerContext(),
+    );
+    await provider.events["model.call.started"](
+      {
+        idempotencyKey: "model:attempt-0:0",
+        model: { modelId: "gpt-5.4-mini", provider: "openai.responses" },
+        scope: ATTEMPT_SCOPE,
+        type: "model.call.started",
+      },
+      providerContext(),
+    );
+
+    if (type === "step.attempt.completed") {
+      await provider.events[type](
+        {
+          idempotencyKey: "step:attempt-0",
+          scope: ATTEMPT_SCOPE,
+          type,
+        },
+        providerContext(),
+      );
+    } else {
+      await provider.events[type](
+        {
+          error,
+          idempotencyKey: "step:attempt-0",
+          scope: ATTEMPT_SCOPE,
+          type,
+        },
+        providerContext(),
+      );
+    }
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const step = spans.find(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+    expect(step?.metrics?.end).toEqual(expect.any(Number));
+    if (error !== undefined) {
+      expect(step?.error).toContain("attempt exploded");
+    }
   });
 });

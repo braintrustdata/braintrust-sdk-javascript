@@ -23,10 +23,7 @@ export {
   braintrustFlueInstrumentation,
   braintrustFlueObserver,
 } from "./plugins/flue-plugin";
-export {
-  braintrustEveHook,
-  braintrustEveInstrumentation,
-} from "./plugins/eve-plugin";
+export { braintrustEveInstrumentation } from "./plugins/eve-plugin";
 
 // Re-export core types for external instrumentation packages
 export type {
