@@ -1,7 +1,7 @@
 {
   "name": "@braintrust/openai-agents",
   "version": "0.1.5",
-  "description": "SDK for integrating Braintrust with OpenAI Agents",
+  "description": "Deprecated: use the OpenAI Agents integration in the braintrust package instead",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

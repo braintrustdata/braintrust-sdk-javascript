@@ -1,7 +1,7 @@
 {
   "name": "@braintrust/vercel-ai-sdk",
   "version": "0.0.6",
-  "description": "SDK for integrating Braintrust with Vercel AI SDK",
+  "description": "Deprecated: use the Vercel AI SDK integration in the braintrust package instead",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
