@@ -159,7 +159,7 @@ describe("parseMetricsFromUsage", () => {
     });
   });
 
-  it("should map output_tokens_details.thinking_tokens to completion_thinking_tokens", () => {
+  it("should map output_tokens_details.thinking_tokens to completion_reasoning_tokens", () => {
     const usage = {
       input_tokens: 100,
       output_tokens: 80,
@@ -175,7 +175,7 @@ describe("parseMetricsFromUsage", () => {
     expect(result).toEqual({
       prompt_tokens: 100,
       completion_tokens: 80,
-      completion_thinking_tokens: 20,
+      completion_reasoning_tokens: 20,
     });
   });
 
@@ -350,7 +350,7 @@ describe("aggregateAnthropicStreamChunks", () => {
     expect(result.metrics).toMatchObject({
       prompt_tokens: 10,
       completion_tokens: 80,
-      completion_thinking_tokens: 20,
+      completion_reasoning_tokens: 20,
       tokens: 90, // thinking tokens are already inside completion_tokens
     });
   });

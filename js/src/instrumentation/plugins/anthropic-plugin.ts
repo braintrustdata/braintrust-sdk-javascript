@@ -851,7 +851,7 @@ export function parseMetricsFromUsage(
   if (isObject(usage.output_tokens_details)) {
     const thinkingTokens = usage.output_tokens_details.thinking_tokens;
     if (typeof thinkingTokens === "number") {
-      metrics.completion_thinking_tokens = thinkingTokens;
+      metrics.completion_reasoning_tokens = thinkingTokens;
     }
   }
 

@@ -746,19 +746,12 @@ export function defineAnthropicInstrumentationAssertions(options: {
           time_to_first_token: expect.any(Number),
           prompt_tokens: expect.any(Number),
           completion_tokens: expect.any(Number),
+          completion_reasoning_tokens: expect.any(Number),
         });
-        // `output_tokens_details.thinking_tokens` only appears in responses
-        // from newer Anthropic SDK and API versions, so older pinned cassettes
-        // will not carry it.
         const metrics = (span?.metrics ?? {}) as Record<string, unknown>;
-        if ("completion_thinking_tokens" in metrics) {
-          expect(metrics.completion_thinking_tokens).toEqual(
-            expect.any(Number),
-          );
-          expect(
-            metrics.completion_thinking_tokens as number,
-          ).toBeLessThanOrEqual(metrics.completion_tokens as number);
-        }
+        expect(
+          metrics.completion_reasoning_tokens as number,
+        ).toBeLessThanOrEqual(metrics.completion_tokens as number);
         expect(
           output?.content?.some((block) => block.type === "thinking"),
         ).toBe(true);
