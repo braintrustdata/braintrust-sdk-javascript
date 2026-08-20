@@ -28,7 +28,16 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 2,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 12,
+                "time_to_first_token": 0,
+                "tokens": 14
               }
             }
           ],
@@ -38,9 +47,6 @@
           "output": null,
           "metadata": {
             "operation": "chat"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -67,7 +73,16 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 2,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 12,
+                "time_to_first_token": 0,
+                "tokens": 14
               }
             }
           ],
@@ -77,9 +92,6 @@
           "output": null,
           "metadata": {
             "operation": "chat-with-response"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -106,7 +118,16 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 3,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 8516,
+                "time_to_first_token": 0,
+                "tokens": 8519
               }
             }
           ],
@@ -116,9 +137,6 @@
           "output": null,
           "metadata": {
             "operation": "chat-image-attachment"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -145,7 +163,16 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 24,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 236,
+                "time_to_first_token": 0,
+                "tokens": 260
               }
             }
           ],
@@ -155,9 +182,6 @@
           "output": null,
           "metadata": {
             "operation": "chat-pdf-attachment"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -184,7 +208,16 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 7,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 77,
+                "time_to_first_token": 0,
+                "tokens": 84
               }
             }
           ],
@@ -194,9 +227,6 @@
           "output": null,
           "metadata": {
             "operation": "chat-tool"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -223,7 +253,16 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 1,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 12,
+                "time_to_first_token": 0,
+                "tokens": 13
               }
             }
           ],
@@ -233,9 +272,6 @@
           "output": null,
           "metadata": {
             "operation": "stream"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -262,7 +298,16 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 6,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 17,
+                "time_to_first_token": 0,
+                "tokens": 23
               }
             }
           ],
@@ -272,9 +317,6 @@
           "output": null,
           "metadata": {
             "operation": "stream-with-response"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -301,7 +343,16 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 7,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 77,
+                "time_to_first_token": 0,
+                "tokens": 84
               }
             }
           ],
@@ -311,9 +362,6 @@
           "output": null,
           "metadata": {
             "operation": "stream-tool"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -340,7 +388,7 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "time_to_first_token": 0
               }
             }
           ],
@@ -350,9 +398,46 @@
           "output": null,
           "metadata": {
             "operation": "stream-fixture"
+          }
+        },
+        {
+          "name": "openai-stream-multiple-choices-operation",
+          "children": [
+            {
+              "name": "Chat Completion",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content_kind": "string",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "json_keys": [],
+                  "role": "assistant"
+                },
+                {
+                  "json_keys": [],
+                  "role": "assistant"
+                }
+              ],
+              "metadata": {
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "input": {
+            "kind": "undefined"
           },
-          "metrics": {
-            "has_time_to_first_token": false
+          "output": null,
+          "metadata": {
+            "operation": "stream-multiple-choices"
           }
         },
         {
@@ -381,7 +466,16 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_accepted_prediction_tokens": 0,
+                "completion_audio_tokens": 0,
+                "completion_reasoning_tokens": 0,
+                "completion_rejected_prediction_tokens": 0,
+                "completion_tokens": 5,
+                "prompt_audio_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 45,
+                "time_to_first_token": 0,
+                "tokens": 50
               }
             }
           ],
@@ -391,9 +485,6 @@
           "output": null,
           "metadata": {
             "operation": "parse"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -420,7 +511,7 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "time_to_first_token": 0
               }
             }
           ],
@@ -430,9 +521,6 @@
           "output": null,
           "metadata": {
             "operation": "sync-stream"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -453,7 +541,8 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": false
+                "prompt_tokens": 1,
+                "tokens": 1
               }
             }
           ],
@@ -463,9 +552,6 @@
           "output": null,
           "metadata": {
             "operation": "embeddings"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -485,9 +571,6 @@
               "metadata": {
                 "model": "omni-moderation-2024-09-26",
                 "provider": "openai"
-              },
-              "metrics": {
-                "has_time_to_first_token": false
               }
             }
           ],
@@ -497,9 +580,6 @@
           "output": null,
           "metadata": {
             "operation": "moderations"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -528,7 +608,13 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 4,
+                "prompt_cache_write_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 13,
+                "time_to_first_token": 0,
+                "tokens": 17
               }
             }
           ],
@@ -538,9 +624,6 @@
           "output": null,
           "metadata": {
             "operation": "responses"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -569,7 +652,13 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 2,
+                "prompt_cache_write_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 21,
+                "time_to_first_token": 0,
+                "tokens": 23
               }
             }
           ],
@@ -579,9 +668,6 @@
           "output": null,
           "metadata": {
             "operation": "responses-with-response"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -610,7 +696,13 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 4,
+                "prompt_cache_write_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 13,
+                "time_to_first_token": 0,
+                "tokens": 17
               }
             }
           ],
@@ -620,9 +712,6 @@
           "output": null,
           "metadata": {
             "operation": "responses-create-stream"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -651,7 +740,13 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 2,
+                "prompt_cache_write_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 21,
+                "time_to_first_token": 0,
+                "tokens": 23
               }
             }
           ],
@@ -661,9 +756,6 @@
           "output": null,
           "metadata": {
             "operation": "responses-stream"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -692,7 +784,13 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 3,
+                "prompt_cache_write_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 13,
+                "time_to_first_token": 0,
+                "tokens": 16
               }
             }
           ],
@@ -702,9 +800,6 @@
           "output": null,
           "metadata": {
             "operation": "responses-stream-partial"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -736,7 +831,13 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 24,
+                "prompt_cache_write_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 46,
+                "time_to_first_token": 0,
+                "tokens": 70
               }
             }
           ],
@@ -746,9 +847,6 @@
           "output": null,
           "metadata": {
             "operation": "responses-parse"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         },
         {
@@ -791,7 +889,13 @@
                 "provider": "openai"
               },
               "metrics": {
-                "has_time_to_first_token": true
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 235,
+                "prompt_cache_write_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 133,
+                "time_to_first_token": 0,
+                "tokens": 368
               }
             }
           ],
@@ -801,9 +905,6 @@
           "output": null,
           "metadata": {
             "operation": "responses-compact"
-          },
-          "metrics": {
-            "has_time_to_first_token": false
           }
         }
       ],
@@ -814,9 +915,6 @@
       "metadata": {
         "openaiSdkVersion": "<openai-sdk-version>",
         "scenario": "openai-instrumentation"
-      },
-      "metrics": {
-        "has_time_to_first_token": false
       }
     }
   ]
