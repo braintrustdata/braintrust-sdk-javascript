@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { mergeRowBatch, batchItems } from "./merge_row_batch";
-import { IS_MERGE_FIELD } from "./db_fields";
+import { IS_MERGE_FIELD, MERGE_PATHS_FIELD } from "./db_fields";
 
 describe("mergeRowBatch", () => {
   test("basic", () => {
@@ -127,6 +127,70 @@ describe("mergeRowBatch", () => {
         root_span_id: "abc",
         _parent_id: "baz",
         span_parents: ["foo", "bar"],
+      },
+    ]);
+  });
+
+  test("merge paths replace nested objects and accumulate", () => {
+    const mergedRows = mergeRowBatch([
+      {
+        id: "x",
+        metadata: { response: { old: true }, stable: true },
+        metrics: { completion_tokens: 2, prompt_tokens: 3 },
+      },
+      {
+        id: "x",
+        metrics: { start: 1 },
+        [IS_MERGE_FIELD]: true as const,
+        [MERGE_PATHS_FIELD]: [["metrics"]],
+      },
+      {
+        id: "x",
+        metadata: { response: { status: "new" } },
+        metrics: { end: 2 },
+        [IS_MERGE_FIELD]: true as const,
+        [MERGE_PATHS_FIELD]: [["metadata", "response"]],
+      },
+      {
+        id: "x",
+        metadata: { model: "final" },
+        [IS_MERGE_FIELD]: true as const,
+        [MERGE_PATHS_FIELD]: [["metadata"], ["metrics"]],
+      },
+    ]);
+
+    expect(mergedRows).toEqual([
+      {
+        id: "x",
+        metadata: { model: "final" },
+        metrics: { end: 2, start: 1 },
+        [MERGE_PATHS_FIELD]: [["metrics"], ["metadata"]],
+      },
+    ]);
+  });
+
+  test("ignores malformed merge paths", () => {
+    const mergedRows = mergeRowBatch([
+      { id: "x", metadata: { a: 1 } },
+      {
+        id: "x",
+        metadata: { b: 2 },
+        [IS_MERGE_FIELD]: true as const,
+        [MERGE_PATHS_FIELD]: null,
+      },
+      {
+        id: "x",
+        metadata: { c: 3 },
+        [IS_MERGE_FIELD]: true as const,
+        [MERGE_PATHS_FIELD]: [null, [1], ["metadata", "c"]],
+      },
+    ]);
+
+    expect(mergedRows).toEqual([
+      {
+        id: "x",
+        metadata: { a: 1, b: 2, c: 3 },
+        [MERGE_PATHS_FIELD]: [["metadata", "c"]],
       },
     ]);
   });

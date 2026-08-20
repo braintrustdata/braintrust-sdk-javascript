@@ -11,6 +11,9 @@ importers:
       anthropic-sdk-v0:
         specifier: npm:@anthropic-ai/sdk@0.27.3
         version: '@anthropic-ai/sdk@0.27.3'
+      anthropic-sdk-v0-batches:
+        specifier: npm:@anthropic-ai/sdk@0.33.0
+        version: '@anthropic-ai/sdk@0.33.0'
       anthropic-sdk-v0-latest:
         specifier: npm:@anthropic-ai/sdk@0.112.3
         version: '@anthropic-ai/sdk@0.112.3'
@@ -28,6 +31,9 @@ packages:
 
   '@anthropic-ai/sdk@0.27.3':
     resolution: {integrity: sha512-IjLt0gd3L4jlOfilxVXTifn42FnVffMgDC04RJK1KDZpmkBWLv0XC92MVVmkxrFZNS/7l3xWgP/I3nqtX1sQHw==}
+
+  '@anthropic-ai/sdk@0.33.0':
+    resolution: {integrity: sha512-FnUnCNVgO8ayDyAD8hsBEmXMzQn4xGG3EnABtgFgSMmKg+zNgdyX2iKNIm01pAhmnH213MJUBMI7egEFF08cvA==}
 
   '@babel/runtime@7.29.2':
     resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
@@ -196,6 +202,18 @@ snapshots:
       standardwebhooks: 1.0.0
 
   '@anthropic-ai/sdk@0.27.3':
+    dependencies:
+      '@types/node': 18.19.130
+      '@types/node-fetch': 2.6.13
+      abort-controller: 3.0.0
+      agentkeepalive: 4.6.0
+      form-data-encoder: 1.7.2
+      formdata-node: 4.4.1
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
+
+  '@anthropic-ai/sdk@0.33.0':
     dependencies:
       '@types/node': 18.19.130
       '@types/node-fetch': 2.6.13

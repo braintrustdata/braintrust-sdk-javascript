@@ -1,11 +1,7 @@
 import { BasePlugin, toLoggedError } from "../core";
 import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
-import {
-  Attachment,
-  startSpan as startBaseSpan,
-  withCurrent,
-} from "../../logger";
+import { startSpan as startBaseSpan, withCurrent } from "../../logger";
 import type { Span } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
@@ -20,12 +16,27 @@ import {
   isPromiseLike,
 } from "../../../util/index";
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
-import { filterFrom, getCurrentUnixTimestamp } from "../../util";
+import { getCurrentUnixTimestamp } from "../../util";
 import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
 import { registerAnthropicSessionStreamCollector } from "../../wrappers/anthropic-session-collector";
 import { anthropicChannels } from "./anthropic-channels";
+import {
+  interceptAnthropicBatchTraceBind,
+  interceptAnthropicBatchTraceComplete,
+  interceptAnthropicBatchTraceFail,
+  interceptAnthropicBatchTraceStart,
+} from "./anthropic-batch-instrumentation";
+import {
+  coalesceInput,
+  extractAnthropicInput,
+  extractAnthropicInputMetadata,
+  extractAnthropicMetrics,
+  extractAnthropicOutput,
+  extractAnthropicOutputMetadata,
+  parseMetricsFromUsage,
+  processAttachmentsInInput,
+} from "./anthropic-span-data";
 import type {
-  AnthropicBase64Source,
   AnthropicCitation,
   AnthropicCreateParams,
   AnthropicInputMessage,
@@ -44,7 +55,6 @@ import type {
   AnthropicToolRunner,
   AnthropicToolRunnerParams,
   AnthropicToolRunnerTool,
-  AnthropicUsage,
 } from "../../vendor-sdk-types/anthropic";
 
 type AnthropicToolRunnerState = {
@@ -108,6 +118,20 @@ const ANTHROPIC_TOOL_RUNNER_TOOL_WRAPPED = Symbol.for(
  */
 export class AnthropicPlugin extends BasePlugin {
   protected onEnable(): void {
+    this.unsubscribers.push(
+      anthropicChannels.batchesBindTrace.intercept(
+        interceptAnthropicBatchTraceBind,
+      ),
+      anthropicChannels.batchesStartTrace.intercept(
+        interceptAnthropicBatchTraceStart,
+      ),
+      anthropicChannels.batchesCompleteTrace.intercept(
+        interceptAnthropicBatchTraceComplete,
+      ),
+      anthropicChannels.batchesFailTrace.intercept(
+        interceptAnthropicBatchTraceFail,
+      ),
+    );
     this.subscribeToAnthropicChannels();
     this.subscribeToAnthropicToolRunner();
     this.subscribeToAnthropicSessionStreams();
@@ -123,41 +147,19 @@ export class AnthropicPlugin extends BasePlugin {
       type: SpanTypeAttribute.LLM,
       extractInput: (args: unknown[]) => {
         const params = (args[0] || {}) as AnthropicCreateParams;
-        const input = coalesceInput(params.messages || [], params.system);
-        const metadata = filterFrom(params, ["messages", "system"]);
-        return {
-          input: processAttachmentsInInput(input),
-          metadata: { ...metadata, provider: "anthropic" },
-        };
+        return extractAnthropicInput(params);
       },
-      extractOutput: (message: AnthropicMessage) => {
-        return message
-          ? { role: message.role, content: message.content }
-          : null;
-      },
+      extractOutput: (message: AnthropicMessage) =>
+        extractAnthropicOutput(message),
       extractMetrics: (message: AnthropicMessage, startTime?: number) => {
-        const metrics = parseMetricsFromUsage(message?.usage);
+        const metrics = extractAnthropicMetrics(message);
         if (startTime) {
           metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
         }
-        const finalized = finalizeAnthropicTokens(metrics);
-        // Filter out undefined values to match Record<string, number> type
-        return Object.fromEntries(
-          Object.entries(finalized).filter(
-            (entry): entry is [string, number] => entry[1] !== undefined,
-          ),
-        );
+        return metrics;
       },
-      extractMetadata: (message: AnthropicMessage) => {
-        const metadata: Record<string, unknown> = {};
-        const metas = ["stop_reason", "stop_sequence"] as const;
-        for (const m of metas) {
-          if (message?.[m] !== undefined) {
-            metadata[m] = message[m];
-          }
-        }
-        return metadata;
-      },
+      extractMetadata: (message: AnthropicMessage) =>
+        extractAnthropicOutputMetadata(message),
       aggregateChunks: (chunks: AnthropicStreamEvent[]) =>
         aggregateAnthropicStreamChunks(chunks),
     };
@@ -208,10 +210,7 @@ export class AnthropicPlugin extends BasePlugin {
           input: processAttachmentsInInput(
             coalesceInput(params.messages ?? [], params.system),
           ),
-          metadata: {
-            ...extractAnthropicToolRunnerMetadata(params),
-            provider: "anthropic",
-          },
+          metadata: extractAnthropicToolRunnerMetadata(params),
         });
 
         const state = {
@@ -800,76 +799,22 @@ function safeAnthropicSessionLog(
   }
 }
 
-/**
- * Parse metrics from Anthropic usage object.
- * Maps Anthropic's token names to Braintrust's standard names.
- */
-export function parseMetricsFromUsage(
-  usage: AnthropicUsage | undefined,
-): Record<string, number> {
-  if (!usage) {
-    return {};
-  }
-
-  const metrics: Record<string, number> = {};
-
-  function saveIfExistsTo(source: keyof AnthropicUsage, target: string) {
-    const value = usage![source];
-    if (value !== undefined && value !== null && typeof value === "number") {
-      metrics[target] = value;
-    }
-  }
-
-  saveIfExistsTo("input_tokens", "prompt_tokens");
-  saveIfExistsTo("output_tokens", "completion_tokens");
-  saveIfExistsTo("cache_read_input_tokens", "prompt_cached_tokens");
-  saveIfExistsTo("cache_creation_input_tokens", "prompt_cache_creation_tokens");
-
-  // The 5m and 1h cache-write tiers are billed at different rates, so surface
-  // the per-TTL breakdown whenever the response carries it. It is an
-  // alternative representation of `cache_creation_input_tokens` rather than
-  // additional tokens. `finalizeAnthropicTokens` retains the aggregate as a
-  // fallback if the breakdown is partial.
-  if (isObject(usage.cache_creation)) {
-    const cacheCreation = usage.cache_creation;
-    for (const [source, target] of [
-      ["ephemeral_5m_input_tokens", "prompt_cache_creation_5m_tokens"],
-      ["ephemeral_1h_input_tokens", "prompt_cache_creation_1h_tokens"],
-    ] as const) {
-      const value = cacheCreation[source];
-      if (typeof value === "number") {
-        metrics[target] = value;
-      }
-    }
-  }
-
-  // Thinking tokens are already included in output_tokens.
-  if (isObject(usage.output_tokens_details)) {
-    const thinkingTokens = usage.output_tokens_details.thinking_tokens;
-    if (typeof thinkingTokens === "number") {
-      metrics.completion_reasoning_tokens = thinkingTokens;
-    }
-  }
-
-  if (isObject(usage.server_tool_use)) {
-    for (const [name, value] of Object.entries(usage.server_tool_use)) {
-      if (typeof value === "number") {
-        metrics[`server_tool_use_${name}`] = value;
-      }
-    }
-  }
-
-  return metrics;
-}
-
 function extractAnthropicToolRunnerMetadata(
   params: AnthropicToolRunnerParams,
 ): Record<string, unknown> {
-  const metadata = filterFrom(params, ["messages", "system", "tools"]);
+  const metadata = extractAnthropicInputMetadata(params, {
+    includeTools: false,
+  });
   const toolNames = extractAnthropicToolNames(params.tools);
 
   return {
     ...metadata,
+    ...(params.compactionControl !== undefined
+      ? { compactionControl: params.compactionControl }
+      : {}),
+    ...(params.max_iterations !== undefined
+      ? { max_iterations: params.max_iterations }
+      : {}),
     operation: "toolRunner",
     ...(toolNames.length > 0 ? { tool_names: toolNames } : {}),
   };
@@ -1377,6 +1322,9 @@ export function aggregateAnthropicStreamChunks(
           const initialMetrics = parseMetricsFromUsage(event.message.usage);
           metrics = { ...metrics, ...initialMetrics };
         }
+        if (typeof event.message?.model === "string") {
+          metadata = { ...metadata, model: event.message.model };
+        }
         if (typeof event.message?.role === "string") {
           role = event.message.role;
         }
@@ -1445,8 +1393,10 @@ export function aggregateAnthropicStreamChunks(
           metrics = { ...metrics, ...finalMetrics };
         }
         if (event.delta) {
-          // stop_reason, stop_sequence, etc.
-          metadata = { ...metadata, ...event.delta };
+          metadata = {
+            ...metadata,
+            ...extractAnthropicOutputMetadata(event.delta),
+          };
         }
         break;
     }
@@ -1594,103 +1544,8 @@ function isThinkingContentBlock(
   return contentBlock.type === "thinking";
 }
 
-function isAnthropicBase64ContentBlock(
-  input: Record<string, unknown>,
-): input is Record<string, unknown> & {
-  source: AnthropicBase64Source;
-  type: "image" | "document";
-} {
-  return (
-    (input.type === "image" || input.type === "document") &&
-    isObject(input.source) &&
-    input.source.type === "base64"
-  );
-}
-
-/**
- * Helper function to convert base64 content to an Attachment.
- */
-function convertBase64ToAttachment(
-  source: AnthropicBase64Source,
-  contentType: "image" | "document",
-): Record<string, unknown> {
-  const mediaType =
-    typeof source.media_type === "string" ? source.media_type : "image/png";
-  const base64Data = source.data;
-
-  if (base64Data && typeof base64Data === "string") {
-    // Convert base64 string to Blob
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    const blob = new Blob([bytes], { type: mediaType });
-
-    // Determine file extension from media type
-    const extension = mediaType.split("/")[1] || "bin";
-    // Use a descriptive prefix based on content type
-    const prefix = contentType === "document" ? "document" : "image";
-    const filename = `${prefix}.${extension}`;
-
-    const attachment = new Attachment({
-      data: blob,
-      filename: filename,
-      contentType: mediaType,
-    });
-
-    return {
-      ...source,
-      data: attachment,
-    };
-  }
-
-  return { ...source };
-}
-
-/**
- * Process input to convert base64 attachments (images, PDFs, etc.) to Attachment objects.
- */
-export function processAttachmentsInInput(input: unknown): unknown {
-  if (Array.isArray(input)) {
-    return input.map(processAttachmentsInInput);
-  }
-
-  if (isObject(input)) {
-    // Check for Anthropic's content blocks with base64 data
-    // Supports both "image" and "document" types (for PDFs, etc.)
-    if (isAnthropicBase64ContentBlock(input)) {
-      return {
-        ...input,
-        source: convertBase64ToAttachment(input.source, input.type),
-      };
-    }
-
-    // Recursively process nested objects
-    const processed: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(input)) {
-      processed[key] = processAttachmentsInInput(value);
-    }
-    return processed;
-  }
-
-  return input;
-}
-
-/**
- * Convert Anthropic args to the single "input" field Braintrust expects.
- * Combines messages array with system message if present. The system message
- * is placed first to match the order the model sees and the chat-message
- * convention used elsewhere (e.g. the playground).
- */
-export function coalesceInput(
-  messages: AnthropicInputMessage[],
-  system: AnthropicCreateParams["system"],
-): AnthropicInputMessage[] {
-  // Make a copy because we're going to mutate it
-  const input = (messages || []).slice();
-  if (system) {
-    input.unshift({ role: "system", content: system });
-  }
-  return input;
-}
+export {
+  coalesceInput,
+  parseMetricsFromUsage,
+  processAttachmentsInInput,
+} from "./anthropic-span-data";

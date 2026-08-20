@@ -1,6 +1,14 @@
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
-import { collectAnthropicSession, startSpan, wrapAnthropic } from "braintrust";
+import {
+  bindAnthropicBatchTrace,
+  collectAnthropicSession,
+  completeAnthropicBatchTrace,
+  failAnthropicBatchTrace,
+  startAnthropicBatchTrace,
+  startSpan,
+  wrapAnthropic,
+} from "braintrust";
 import {
   collectAsync,
   runOperation,
@@ -30,11 +38,46 @@ const WEB_SEARCH_SERVER_TOOL = {
   max_uses: 1,
 };
 
+function createMockBatchClient(Anthropic, decorateClient) {
+  const baseClient = new Anthropic({
+    apiKey: "anthropic-batch-test-key",
+    baseURL: "https://example.test",
+    fetch: async () =>
+      new Response(
+        JSON.stringify({
+          cancel_initiated_at: null,
+          created_at: new Date().toISOString(),
+          ended_at: null,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          id: "msgbatch_e2e",
+          processing_status: "in_progress",
+          request_counts: {
+            canceled: 0,
+            errored: 0,
+            expired: 0,
+            processing: 3,
+            succeeded: 0,
+          },
+          results_url: null,
+          type: "message_batch",
+        }),
+        {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        },
+      ),
+  });
+
+  return decorateClient ? decorateClient(baseClient) : baseClient;
+}
+
 async function runAnthropicInstrumentationScenario(
   Anthropic,
   {
     decorateClient,
+    supportsBatches = false,
     useBetaMessages = true,
+    supportsBetaMessagesStream = true,
     supportsBetaToolRunner = true,
     supportsSessions = true,
     supportsThinking = false,
@@ -49,6 +92,9 @@ async function runAnthropicInstrumentationScenario(
     baseURL: process.env.ANTHROPIC_BASE_URL,
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
+  const batchClient = supportsBatches
+    ? createMockBatchClient(Anthropic, decorateClient)
+    : undefined;
 
   await runTracedScenario({
     callback: async () => {
@@ -60,6 +106,136 @@ async function runAnthropicInstrumentationScenario(
           messages: [{ role: "user", content: "Reply with exactly OK." }],
         });
       });
+
+      if (supportsBatches) {
+        await runOperation("anthropic-batch-operation", "batch", async () => {
+          const started = await startAnthropicBatchTrace({
+            params: {
+              requests: [
+                {
+                  custom_id: "batch-success-one",
+                  params: {
+                    max_tokens: 24,
+                    messages: [{ role: "user", content: "Reply with ONE." }],
+                    model: ANTHROPIC_MODEL,
+                    system: "Reply with only the requested word.",
+                  },
+                },
+                {
+                  custom_id: "batch-error",
+                  params: {
+                    max_tokens: 24,
+                    messages: [{ role: "user", content: "Fail this request." }],
+                    model: ANTHROPIC_MODEL,
+                  },
+                },
+                {
+                  custom_id: "batch-success-two",
+                  params: {
+                    max_tokens: 24,
+                    messages: [{ role: "user", content: "Reply with TWO." }],
+                    model: ANTHROPIC_MODEL,
+                  },
+                },
+              ],
+            },
+          });
+
+          let batch;
+          try {
+            batch = await batchClient.messages.batches.create(started.params);
+          } catch (error) {
+            if (started.traceContext) {
+              await failAnthropicBatchTrace({
+                error,
+                params: started.params,
+                traceContext: started.traceContext,
+              });
+            }
+            throw error;
+          }
+          const traceContext = await bindAnthropicBatchTrace({
+            batch,
+            traceContext: started.traceContext,
+          });
+
+          async function* results() {
+            yield {
+              custom_id: "batch-success-two",
+              result: {
+                message: {
+                  content: [{ text: "TWO", type: "text" }],
+                  id: "msg_batch_two",
+                  model: ANTHROPIC_MODEL,
+                  role: "assistant",
+                  stop_reason: "end_turn",
+                  stop_sequence: null,
+                  type: "message",
+                  usage: {
+                    cache_creation_input_tokens: 1,
+                    cache_read_input_tokens: 2,
+                    input_tokens: 3,
+                    output_tokens: 4,
+                  },
+                },
+                type: "succeeded",
+              },
+            };
+            yield {
+              custom_id: "batch-error",
+              result: {
+                error: {
+                  error: {
+                    message: "Synthetic Anthropic batch request failure",
+                    type: "invalid_request_error",
+                  },
+                  type: "error",
+                },
+                type: "errored",
+              },
+            };
+            yield {
+              custom_id: "batch-success-one",
+              result: {
+                message: {
+                  content: [{ text: "ONE", type: "text" }],
+                  id: "msg_batch_one",
+                  model: "claude-haiku-4-5-resolved",
+                  role: "assistant",
+                  stop_reason: "end_turn",
+                  stop_sequence: null,
+                  type: "message",
+                  usage: {
+                    cache_creation_input_tokens: 0,
+                    cache_read_input_tokens: 0,
+                    input_tokens: 5,
+                    output_tokens: 2,
+                  },
+                },
+                type: "succeeded",
+              },
+            };
+          }
+
+          await completeAnthropicBatchTrace({
+            batch: {
+              ...batch,
+              ended_at: new Date(Date.now() + 1000).toISOString(),
+              processing_status: "ended",
+              request_counts: {
+                canceled: 0,
+                errored: 1,
+                expired: 0,
+                processing: 0,
+                succeeded: 2,
+              },
+            },
+            params: started.params,
+            results: results(),
+            traceContext,
+          });
+        });
+      }
 
       await runOperation(
         "anthropic-system-blocks-operation",
@@ -294,25 +470,27 @@ async function runAnthropicInstrumentationScenario(
           },
         );
 
-        await runOperation(
-          "anthropic-beta-messages-stream-operation",
-          "beta-messages-stream",
-          async () => {
-            const stream = client.beta.messages.stream({
-              model: ANTHROPIC_MODEL,
-              max_tokens: 32,
-              temperature: 0,
-              messages: [
-                {
-                  role: "user",
-                  content:
-                    "Count from 1 to 3 and include the words one two three.",
-                },
-              ],
-            });
-            await collectAsync(stream);
-          },
-        );
+        if (supportsBetaMessagesStream) {
+          await runOperation(
+            "anthropic-beta-messages-stream-operation",
+            "beta-messages-stream",
+            async () => {
+              const stream = client.beta.messages.stream({
+                model: ANTHROPIC_MODEL,
+                max_tokens: 32,
+                temperature: 0,
+                messages: [
+                  {
+                    role: "user",
+                    content:
+                      "Count from 1 to 3 and include the words one two three.",
+                  },
+                ],
+              });
+              await collectAsync(stream);
+            },
+          );
+        }
 
         await runOperation(
           "anthropic-beta-stream-tool-operation",

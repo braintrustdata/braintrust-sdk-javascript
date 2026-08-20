@@ -27,7 +27,7 @@ span_tree:
     │       }
     │       metadata: {
     │         "max_tokens": 24,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
     │         "provider": "anthropic",
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
@@ -42,6 +42,96 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 16
     │       }
+    ├── anthropic-batch-operation
+    │   metadata: {
+    │     "operation": "batch",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.batch [task]
+    │       metadata: {
+    │         "provider": "anthropic"
+    │       }
+    │       error: null
+    │       ├── anthropic.messages.create [llm]
+    │       │   input: [
+    │       │     {
+    │       │       "content": "Reply with only the requested word.",
+    │       │       "role": "system"
+    │       │     },
+    │       │     {
+    │       │       "content": "Reply with ONE.",
+    │       │       "role": "user"
+    │       │     }
+    │       │   ]
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "text": "ONE",
+    │       │         "type": "text"
+    │       │       }
+    │       │     ],
+    │       │     "role": "assistant"
+    │       │   }
+    │       │   metadata: {
+    │       │     "max_tokens": 24,
+    │       │     "model": "claude-haiku-4-5-resolved",
+    │       │     "provider": "anthropic",
+    │       │     "stop_reason": "end_turn",
+    │       │     "stop_sequence": null
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 2,
+    │       │     "prompt_cache_creation_tokens": 0,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 5,
+    │       │     "tokens": 7
+    │       │   }
+    │       │   error: null
+    │       ├── anthropic.messages.create [llm]
+    │       │   input: [
+    │       │     {
+    │       │       "content": "Fail this request.",
+    │       │       "role": "user"
+    │       │     }
+    │       │   ]
+    │       │   output: null
+    │       │   metadata: {
+    │       │     "max_tokens": 24,
+    │       │     "model": "claude-haiku-4-5",
+    │       │     "provider": "anthropic"
+    │       │   }
+    │       │   error: "Synthetic Anthropic batch request failure"
+    │       └── anthropic.messages.create [llm]
+    │           input: [
+    │             {
+    │               "content": "Reply with TWO.",
+    │               "role": "user"
+    │             }
+    │           ]
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "text": "TWO",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "role": "assistant"
+    │           }
+    │           metadata: {
+    │             "max_tokens": 24,
+    │             "model": "claude-haiku-4-5",
+    │             "provider": "anthropic",
+    │             "stop_reason": "end_turn",
+    │             "stop_sequence": null
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 4,
+    │             "prompt_cache_creation_tokens": 1,
+    │             "prompt_cached_tokens": 2,
+    │             "prompt_tokens": 6,
+    │             "tokens": 10
+    │           }
+    │           error: null
     ├── anthropic-system-blocks-operation
     │   metadata: {
     │     "operation": "system-blocks",
@@ -82,7 +172,7 @@ span_tree:
     │       }
     │       metadata: {
     │         "max_tokens": 24,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
     │         "provider": "anthropic",
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
@@ -120,7 +210,7 @@ span_tree:
     │       }
     │       metadata: {
     │         "max_tokens": 24,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
     │         "provider": "anthropic",
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
@@ -176,7 +266,7 @@ span_tree:
     │       }
     │       metadata: {
     │         "max_tokens": 32,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
     │         "provider": "anthropic",
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
@@ -206,9 +296,8 @@ span_tree:
     │       output: "1 one\n2 two\n3 three"
     │       metadata: {
     │         "max_tokens": 32,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
     │         "provider": "anthropic",
-    │         "stop_details": null,
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
     │         "stream": true,
@@ -238,9 +327,8 @@ span_tree:
     │       output: "1 one\n2 two\n3 three"
     │       metadata: {
     │         "max_tokens": 32,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
     │         "provider": "anthropic",
-    │         "stop_details": null,
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
     │         "stream": true,
@@ -282,34 +370,38 @@ span_tree:
     │       }
     │       metadata: {
     │         "max_tokens": 128,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
+    │         "parallel_tool_calls": false,
     │         "provider": "anthropic",
-    │         "stop_details": null,
     │         "stop_reason": "tool_use",
     │         "stop_sequence": null,
     │         "stream": true,
     │         "temperature": 0,
     │         "tool_choice": {
-    │           "disable_parallel_tool_use": true,
-    │           "name": "get_weather",
-    │           "type": "tool"
+    │           "function": {
+    │             "name": "get_weather"
+    │           },
+    │           "type": "function"
     │         },
     │         "tools": [
     │           {
-    │             "description": "Get the current weather in a given location",
-    │             "input_schema": {
-    │               "properties": {
-    │                 "location": {
-    │                   "description": "The city and state or city and country",
-    │                   "type": "string"
-    │                 }
-    │               },
-    │               "required": [
-    │                 "location"
-    │               ],
-    │               "type": "object"
+    │             "function": {
+    │               "description": "Get the current weather in a given location",
+    │               "name": "get_weather",
+    │               "parameters": {
+    │                 "properties": {
+    │                   "location": {
+    │                     "description": "The city and state or city and country",
+    │                     "type": "string"
+    │                   }
+    │                 },
+    │                 "required": [
+    │                   "location"
+    │                 ],
+    │                 "type": "object"
+    │               }
     │             },
-    │             "name": "get_weather"
+    │             "type": "function"
     │           }
     │         ]
     │       }
@@ -352,27 +444,30 @@ span_tree:
     │       }
     │       metadata: {
     │         "max_tokens": 128,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
     │         "provider": "anthropic",
     │         "stop_reason": "tool_use",
     │         "stop_sequence": null,
     │         "temperature": 0,
     │         "tools": [
     │           {
-    │             "description": "Get the current weather in a given location",
-    │             "input_schema": {
-    │               "properties": {
-    │                 "location": {
-    │                   "description": "The city and state or city and country",
-    │                   "type": "string"
-    │                 }
-    │               },
-    │               "required": [
-    │                 "location"
-    │               ],
-    │               "type": "object"
+    │             "function": {
+    │               "description": "Get the current weather in a given location",
+    │               "name": "get_weather",
+    │               "parameters": {
+    │                 "properties": {
+    │                   "location": {
+    │                     "description": "The city and state or city and country",
+    │                     "type": "string"
+    │                   }
+    │                 },
+    │                 "required": [
+    │                   "location"
+    │                 ],
+    │                 "type": "object"
+    │               }
     │             },
-    │             "name": "get_weather"
+    │             "type": "function"
     │           }
     │         ]
     │       }
@@ -510,8 +605,10 @@ span_tree:
     │         "stop_sequence": null,
     │         "temperature": 0,
     │         "tool_choice": {
-    │           "name": "web_search",
-    │           "type": "tool"
+    │           "function": {
+    │             "name": "web_search"
+    │           },
+    │           "type": "function"
     │         },
     │         "tools": [
     │           {
@@ -527,8 +624,6 @@ span_tree:
     │         "prompt_cache_creation_5m_tokens": 0,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 17662,
-    │         "server_tool_use_web_fetch_requests": 0,
-    │         "server_tool_use_web_search_requests": 1,
     │         "time_to_first_token": 0,
     │         "tokens": 17739
     │       }
@@ -562,7 +657,6 @@ span_tree:
     │         "max_tokens": 2048,
     │         "model": "claude-sonnet-4-5-20250929",
     │         "provider": "anthropic",
-    │         "stop_details": null,
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
     │         "stream": true,
@@ -605,7 +699,7 @@ span_tree:
     │       }
     │       metadata: {
     │         "max_tokens": 24,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
     │         "provider": "anthropic",
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
@@ -635,9 +729,8 @@ span_tree:
     │       output: "1 one\n2 two\n3 three"
     │       metadata: {
     │         "max_tokens": 32,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
     │         "provider": "anthropic",
-    │         "stop_details": null,
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
     │         "stream": true,
@@ -667,9 +760,8 @@ span_tree:
     │       output: "1 one\n2 two\n3 three"
     │       metadata: {
     │         "max_tokens": 32,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
     │         "provider": "anthropic",
-    │         "stop_details": null,
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
     │         "stream": true,
@@ -711,34 +803,38 @@ span_tree:
     │       }
     │       metadata: {
     │         "max_tokens": 128,
-    │         "model": "claude-haiku-4-5",
+    │         "model": "claude-haiku-4-5-20251001",
+    │         "parallel_tool_calls": false,
     │         "provider": "anthropic",
-    │         "stop_details": null,
     │         "stop_reason": "tool_use",
     │         "stop_sequence": null,
     │         "stream": true,
     │         "temperature": 0,
     │         "tool_choice": {
-    │           "disable_parallel_tool_use": true,
-    │           "name": "get_weather",
-    │           "type": "tool"
+    │           "function": {
+    │             "name": "get_weather"
+    │           },
+    │           "type": "function"
     │         },
     │         "tools": [
     │           {
-    │             "description": "Get the current weather in a given location",
-    │             "input_schema": {
-    │               "properties": {
-    │                 "location": {
-    │                   "description": "The city and state or city and country",
-    │                   "type": "string"
-    │                 }
-    │               },
-    │               "required": [
-    │                 "location"
-    │               ],
-    │               "type": "object"
+    │             "function": {
+    │               "description": "Get the current weather in a given location",
+    │               "name": "get_weather",
+    │               "parameters": {
+    │                 "properties": {
+    │                   "location": {
+    │                     "description": "The city and state or city and country",
+    │                     "type": "string"
+    │                   }
+    │                 },
+    │                 "required": [
+    │                   "location"
+    │                 ],
+    │                 "type": "object"
+    │               }
     │             },
-    │             "name": "get_weather"
+    │             "type": "function"
     │           }
     │         ]
     │       }
@@ -820,7 +916,7 @@ span_tree:
     │       │   }
     │       │   metadata: {
     │       │     "max_tokens": 128,
-    │       │     "model": "claude-haiku-4-5",
+    │       │     "model": "claude-haiku-4-5-20251001",
     │       │     "provider": "anthropic",
     │       │     "stop_reason": "tool_use",
     │       │     "stop_sequence": null,
@@ -828,20 +924,23 @@ span_tree:
     │       │     "temperature": 0,
     │       │     "tools": [
     │       │       {
-    │       │         "description": "Get the current weather in a given location",
-    │       │         "input_schema": {
-    │       │           "properties": {
-    │       │             "location": {
-    │       │               "description": "The city and state or city and country",
-    │       │               "type": "string"
-    │       │             }
-    │       │           },
-    │       │           "required": [
-    │       │             "location"
-    │       │           ],
-    │       │           "type": "object"
+    │       │         "function": {
+    │       │           "description": "Get the current weather in a given location",
+    │       │           "name": "get_weather",
+    │       │           "parameters": {
+    │       │             "properties": {
+    │       │               "location": {
+    │       │                 "description": "The city and state or city and country",
+    │       │                 "type": "string"
+    │       │               }
+    │       │             },
+    │       │             "required": [
+    │       │               "location"
+    │       │             ],
+    │       │             "type": "object"
+    │       │           }
     │       │         },
-    │       │         "name": "get_weather"
+    │       │         "type": "function"
     │       │       }
     │       │     ]
     │       │   }
@@ -908,7 +1007,7 @@ span_tree:
     │           }
     │           metadata: {
     │             "max_tokens": 128,
-    │             "model": "claude-haiku-4-5",
+    │             "model": "claude-haiku-4-5-20251001",
     │             "provider": "anthropic",
     │             "stop_reason": "end_turn",
     │             "stop_sequence": null,
@@ -916,20 +1015,23 @@ span_tree:
     │             "temperature": 0,
     │             "tools": [
     │               {
-    │                 "description": "Get the current weather in a given location",
-    │                 "input_schema": {
-    │                   "properties": {
-    │                     "location": {
-    │                       "description": "The city and state or city and country",
-    │                       "type": "string"
-    │                     }
-    │                   },
-    │                   "required": [
-    │                     "location"
-    │                   ],
-    │                   "type": "object"
+    │                 "function": {
+    │                   "description": "Get the current weather in a given location",
+    │                   "name": "get_weather",
+    │                   "parameters": {
+    │                     "properties": {
+    │                       "location": {
+    │                         "description": "The city and state or city and country",
+    │                         "type": "string"
+    │                       }
+    │                     },
+    │                     "required": [
+    │                       "location"
+    │                     ],
+    │                     "type": "object"
+    │                   }
     │                 },
-    │                 "name": "get_weather"
+    │                 "type": "function"
     │               }
     │             ]
     │           }
