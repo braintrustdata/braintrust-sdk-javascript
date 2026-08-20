@@ -291,7 +291,7 @@ function normalizeMistralChatMessage(
   return message;
 }
 
-export function normalizeMistralChatMessages(messages: unknown): unknown {
+function normalizeMistralChatMessages(messages: unknown): unknown {
   if (!Array.isArray(messages)) {
     return messages;
   }
