@@ -1,0 +1,420 @@
+{
+  "span_tree": [
+    {
+      "name": "deepseek_harness.turn",
+      "type": "task",
+      "children": [
+        {
+          "name": "deepseek_harness.step",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "You are an AI agent powered by DeepSeek Harness.",
+              "role": "system"
+            },
+            {
+              "content": "Call lookup exactly once with query `first`. Then reply exactly: First Harness answer.",
+              "role": "user"
+            }
+          ],
+          "output": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "message": {
+                "content": "",
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"query\":\"first\"}",
+                      "name": "lookup"
+                    },
+                    "id": "<span:1>",
+                    "type": "function"
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "deepseek_harness.session_id": "<deepseek_harness.session_id:1>",
+            "max_tokens": 2000,
+            "model": "gpt-5.6-luna",
+            "provider": "openai",
+            "tools": [
+              {
+                "function": {
+                  "description": "Return a deterministic lookup result",
+                  "name": "lookup",
+                  "parameters": {
+                    "properties": {
+                      "query": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          },
+          "metrics": {
+            "completion_tokens": 17,
+            "prompt_tokens": 73,
+            "time_to_first_token": 0,
+            "tokens": 90
+          }
+        },
+        {
+          "name": "lookup",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "query": "first"
+          },
+          "output": "Lookup result for first",
+          "metadata": {
+            "deepseek_harness.call_id": "<deepseek_harness.call_id:2>",
+            "deepseek_harness.session_id": "<deepseek_harness.session_id:1>"
+          }
+        },
+        {
+          "name": "deepseek_harness.step",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "You are an AI agent powered by DeepSeek Harness.",
+              "role": "system"
+            },
+            {
+              "content": "Call lookup exactly once with query `first`. Then reply exactly: First Harness answer.",
+              "role": "user"
+            },
+            {
+              "content": "",
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"query\":\"first\"}",
+                    "name": "lookup"
+                  },
+                  "id": "<span:1>",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": "Lookup result for first",
+              "role": "tool",
+              "tool_call_id": "call_GSOaMKXu3uekczmgnfsDTKkm|fc_0f61927da1eefd26016a8311915e24819198db51b965325b6a"
+            }
+          ],
+          "output": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "First Harness answer.",
+                "role": "assistant"
+              }
+            }
+          ],
+          "metadata": {
+            "deepseek_harness.session_id": "<deepseek_harness.session_id:1>",
+            "max_tokens": 2000,
+            "model": "gpt-5.6-luna",
+            "provider": "openai",
+            "tools": [
+              {
+                "function": {
+                  "description": "Return a deterministic lookup result",
+                  "name": "lookup",
+                  "parameters": {
+                    "properties": {
+                      "query": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          },
+          "metrics": {
+            "completion_tokens": 8,
+            "prompt_tokens": 104,
+            "time_to_first_token": 0,
+            "tokens": 112
+          }
+        }
+      ],
+      "input": [
+        {
+          "content": "Call lookup exactly once with query `first`. Then reply exactly: First Harness answer.",
+          "role": "user"
+        }
+      ],
+      "output": "First Harness answer.",
+      "metadata": {
+        "deepseek_harness.session_id": "<deepseek_harness.session_id:1>",
+        "deepseek_harness.stop_reason": "completed",
+        "deepseek_harness.turn": 1,
+        "scenario": "deepseek-harness-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "metrics": {
+        "completion_tokens": 25,
+        "prompt_tokens": 177,
+        "tokens": 202
+      }
+    },
+    {
+      "name": "deepseek_harness.turn",
+      "type": "task",
+      "children": [
+        {
+          "name": "deepseek_harness.step",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "You are an AI agent powered by DeepSeek Harness.",
+              "role": "system"
+            },
+            {
+              "content": "Call lookup exactly once with query `first`. Then reply exactly: First Harness answer.",
+              "role": "user"
+            },
+            {
+              "content": "",
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"query\":\"first\"}",
+                    "name": "lookup"
+                  },
+                  "id": "<span:1>",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": "Lookup result for first",
+              "role": "tool",
+              "tool_call_id": "call_GSOaMKXu3uekczmgnfsDTKkm|fc_0f61927da1eefd26016a8311915e24819198db51b965325b6a"
+            },
+            {
+              "content": "First Harness answer.",
+              "role": "assistant"
+            },
+            {
+              "content": "Call lookup exactly once with query `second`. Then reply exactly: Second Harness answer.",
+              "role": "user"
+            }
+          ],
+          "output": [
+            {
+              "finish_reason": "tool_calls",
+              "index": 0,
+              "message": {
+                "content": "",
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"query\":\"second\"}",
+                      "name": "lookup"
+                    },
+                    "id": "<span:1>",
+                    "type": "function"
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "deepseek_harness.session_id": "<deepseek_harness.session_id:1>",
+            "max_tokens": 2000,
+            "model": "gpt-5.6-luna",
+            "provider": "openai",
+            "tools": [
+              {
+                "function": {
+                  "description": "Return a deterministic lookup result",
+                  "name": "lookup",
+                  "parameters": {
+                    "properties": {
+                      "query": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          },
+          "metrics": {
+            "completion_tokens": 17,
+            "prompt_tokens": 135,
+            "time_to_first_token": 0,
+            "tokens": 152
+          }
+        },
+        {
+          "name": "lookup",
+          "type": "tool",
+          "children": [],
+          "input": {
+            "query": "second"
+          },
+          "output": "Lookup result for second",
+          "metadata": {
+            "deepseek_harness.call_id": "<deepseek_harness.call_id:2>",
+            "deepseek_harness.session_id": "<deepseek_harness.session_id:1>"
+          }
+        },
+        {
+          "name": "deepseek_harness.step",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "You are an AI agent powered by DeepSeek Harness.",
+              "role": "system"
+            },
+            {
+              "content": "Call lookup exactly once with query `first`. Then reply exactly: First Harness answer.",
+              "role": "user"
+            },
+            {
+              "content": "",
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"query\":\"first\"}",
+                    "name": "lookup"
+                  },
+                  "id": "<span:1>",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": "Lookup result for first",
+              "role": "tool",
+              "tool_call_id": "call_GSOaMKXu3uekczmgnfsDTKkm|fc_0f61927da1eefd26016a8311915e24819198db51b965325b6a"
+            },
+            {
+              "content": "First Harness answer.",
+              "role": "assistant"
+            },
+            {
+              "content": "Call lookup exactly once with query `second`. Then reply exactly: Second Harness answer.",
+              "role": "user"
+            },
+            {
+              "content": "",
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"query\":\"second\"}",
+                    "name": "lookup"
+                  },
+                  "id": "<span:2>",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": "Lookup result for second",
+              "role": "tool",
+              "tool_call_id": "call_z74tDpYKFyDloXJLobkqa1rQ|fc_0f61927da1eefd26016a831194eb248191a66cc2f008ae8a8b"
+            }
+          ],
+          "output": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "Second Harness answer.",
+                "role": "assistant"
+              }
+            }
+          ],
+          "metadata": {
+            "deepseek_harness.session_id": "<deepseek_harness.session_id:1>",
+            "max_tokens": 2000,
+            "model": "gpt-5.6-luna",
+            "provider": "openai",
+            "tools": [
+              {
+                "function": {
+                  "description": "Return a deterministic lookup result",
+                  "name": "lookup",
+                  "parameters": {
+                    "properties": {
+                      "query": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          },
+          "metrics": {
+            "completion_tokens": 8,
+            "prompt_tokens": 166,
+            "time_to_first_token": 0,
+            "tokens": 174
+          }
+        }
+      ],
+      "input": [
+        {
+          "content": "Call lookup exactly once with query `second`. Then reply exactly: Second Harness answer.",
+          "role": "user"
+        }
+      ],
+      "output": "Second Harness answer.",
+      "metadata": {
+        "deepseek_harness.session_id": "<deepseek_harness.session_id:1>",
+        "deepseek_harness.stop_reason": "completed",
+        "deepseek_harness.turn": 2,
+        "scenario": "deepseek-harness-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "metrics": {
+        "completion_tokens": 25,
+        "prompt_tokens": 301,
+        "tokens": 326
+      }
+    }
+  ]
+}

@@ -165,8 +165,17 @@ import {
 } from "./functions/stream";
 import iso, { IsoAsyncLocalStorage } from "./isomorph";
 import { createCacheLayers } from "./prompt-cache/cache-config";
-import { PromptCache } from "./prompt-cache/prompt-cache";
-import { ParametersCache } from "./prompt-cache/parameters-cache";
+import {
+  PromptCache,
+  type PromptDiskCacheEntry,
+  type PromptMemoryCacheEntry,
+} from "./prompt-cache/prompt-cache";
+import {
+  ParametersCache,
+  type ParametersDiskCacheEntry,
+  type ParametersMemoryCacheEntry,
+} from "./prompt-cache/parameters-cache";
+import { LRUCache } from "./lru-cache";
 import {
   addAzureBlobHeaders,
   getCurrentUnixTimestamp,
@@ -719,6 +728,23 @@ export type SerializedBraintrustState = z.infer<typeof loginSchema>;
 let stateNonce = 0;
 
 const V1_PROXY_SUFFIX = "/v1/proxy";
+const LOADER_LOGIN_CACHE_MAX = 16;
+
+type ResolvedLoaderLoginOptions = Required<
+  Pick<LoginOptions, "apiKey" | "appUrl" | "fetch">
+> &
+  Pick<LoginOptions, "orgName"> & {
+    forceLogin?: boolean;
+    credentialCacheNamespace: string;
+    existingState?: BraintrustState;
+  };
+
+type LoaderCacheViews = {
+  promptCache: PromptCache;
+  parametersCache: ParametersCache;
+};
+
+type LoaderRequestState = Pick<BraintrustState, "appUrl" | "orgId" | "apiConn">;
 
 // proxyUrl may point at the universal proxy (`{apiUrl}/v1/proxy`) for
 // EU/self-hosted orgs, but proxyConn only targets Braintrust API endpoints
@@ -770,8 +796,18 @@ export class BraintrustState {
   private _otelFlushCallback: (() => Promise<void>) | null = null;
   public spanOriginEnvironment: SpanOriginEnvironment | undefined;
   private traceContextSigningSecret: string | undefined;
+  private loaderLoginCache = new WeakMap<
+    typeof globalThis.fetch,
+    LRUCache<string, Promise<LoaderRequestState>>
+  >();
 
-  constructor(private loginParams: LoginOptions) {
+  private readonly loginParams: LoginOptions;
+  private activeLoginOrgNameSelector: string | undefined;
+
+  constructor(loginParams: LoginOptions) {
+    this.loginParams = { ...loginParams };
+    this.activeLoginOrgNameSelector =
+      loginParams.orgName ?? iso.getEnv("BRAINTRUST_ORG_NAME");
     this.id = `${new Date().toLocaleString()}-${stateNonce++}`; // This is for debugging. uuidv4() breaks on platforms like Cloudflare.
     this.currentExperiment = undefined;
     this.currentLogger = undefined;
@@ -806,7 +842,10 @@ export class BraintrustState {
 
     this.resetLoginInfo();
 
-    const { memoryCache, diskCache } = createCacheLayers<Prompt>({
+    const { memoryCache, diskCache } = createCacheLayers<
+      PromptMemoryCacheEntry,
+      PromptDiskCacheEntry
+    >({
       memoryMaxEnvVar: "BRAINTRUST_PROMPT_CACHE_MEMORY_MAX",
       diskCacheDirEnvVar: "BRAINTRUST_PROMPT_CACHE_DIR",
       diskMaxEnvVar: "BRAINTRUST_PROMPT_CACHE_DISK_MAX",
@@ -818,13 +857,15 @@ export class BraintrustState {
     const {
       memoryCache: parametersMemoryCache,
       diskCache: parametersDiskCache,
-    } = createCacheLayers<RemoteEvalParameters>({
-      memoryMaxEnvVar: "BRAINTRUST_PARAMETERS_CACHE_MEMORY_MAX",
-      diskCacheDirEnvVar: "BRAINTRUST_PARAMETERS_CACHE_DIR",
-      diskMaxEnvVar: "BRAINTRUST_PARAMETERS_CACHE_DISK_MAX",
-      getDefaultDiskCacheDir: () =>
-        `${iso.getEnv("HOME") ?? iso.homedir!()}/.braintrust/parameters_cache`,
-    });
+    } = createCacheLayers<ParametersMemoryCacheEntry, ParametersDiskCacheEntry>(
+      {
+        memoryMaxEnvVar: "BRAINTRUST_PARAMETERS_CACHE_MEMORY_MAX",
+        diskCacheDirEnvVar: "BRAINTRUST_PARAMETERS_CACHE_DIR",
+        diskMaxEnvVar: "BRAINTRUST_PARAMETERS_CACHE_DISK_MAX",
+        getDefaultDiskCacheDir: () =>
+          `${iso.getEnv("HOME") ?? iso.homedir!()}/.braintrust/parameters_cache`,
+      },
+    );
     this.parametersCache = new ParametersCache({
       memoryCache: parametersMemoryCache,
       diskCache: parametersDiskCache,
@@ -868,6 +909,146 @@ export class BraintrustState {
     this._appConn = null;
     this._apiConn = null;
     this._proxyConn = null;
+    this.loaderLoginCache = new WeakMap();
+  }
+
+  /** @internal */
+  public async _internalResolveLoaderLoginOptions({
+    apiKey,
+    appUrl,
+    orgName,
+    fetch,
+    forceLogin,
+  }: Pick<LoginOptions, "apiKey" | "appUrl" | "orgName" | "fetch"> & {
+    forceLogin?: boolean;
+  }): Promise<ResolvedLoaderLoginOptions> {
+    const resolvedAppUrl =
+      appUrl ??
+      (this.loggedIn ? (this.appUrl ?? undefined) : undefined) ??
+      this.loginParams.appUrl ??
+      iso.getEnv("BRAINTRUST_APP_URL") ??
+      "https://www.braintrust.dev";
+    const resolvedApiKey =
+      apiKey ??
+      (this.loggedIn ? (this.loginToken ?? undefined) : undefined) ??
+      this.loginParams.apiKey ??
+      (await iso.getBraintrustApiKey());
+    if (!resolvedApiKey) {
+      throw new Error(
+        "Please specify an api key (e.g. by setting BRAINTRUST_API_KEY).",
+      );
+    }
+    const normalizedApiKey = HTTPConnection.sanitize_token(resolvedApiKey);
+    const usesActiveCredential =
+      this.loggedIn && normalizedApiKey === this.loginToken;
+    const requestedOrgName =
+      orgName ??
+      (usesActiveCredential ? this.activeLoginOrgNameSelector : undefined) ??
+      this.loginParams.orgName ??
+      iso.getEnv("BRAINTRUST_ORG_NAME");
+    const resolvedOrgName =
+      orgName ??
+      (usesActiveCredential ? (this.orgName ?? undefined) : undefined) ??
+      requestedOrgName;
+    const resolvedFetch =
+      fetch ??
+      (this.loggedIn ? this.fetch : undefined) ??
+      this.loginParams.fetch ??
+      globalThis.fetch;
+    const credentialCacheNamespace = JSON.stringify([
+      "loader-credential",
+      resolvedAppUrl,
+      requestedOrgName,
+      normalizedApiKey,
+    ]);
+
+    return {
+      apiKey: normalizedApiKey,
+      appUrl: resolvedAppUrl,
+      orgName: resolvedOrgName,
+      fetch: resolvedFetch,
+      forceLogin,
+      credentialCacheNamespace,
+      existingState:
+        !forceLogin &&
+        usesActiveCredential &&
+        resolvedAppUrl === this.appUrl &&
+        resolvedOrgName === this.orgName &&
+        resolvedFetch === this.fetch
+          ? this
+          : undefined,
+    };
+  }
+
+  /** @internal */
+  public _internalGetLoaderCacheViews(
+    loginOptions: ResolvedLoaderLoginOptions,
+    requestState?: LoaderRequestState,
+  ): LoaderCacheViews {
+    const expectedResolvedOrgIdentity =
+      requestState?.orgId && requestState.appUrl
+        ? JSON.stringify([
+            "loader-org",
+            requestState.appUrl,
+            requestState.orgId,
+          ])
+        : undefined;
+
+    return {
+      promptCache: this.promptCache.withNamespace(
+        loginOptions.credentialCacheNamespace,
+        expectedResolvedOrgIdentity,
+      ),
+      parametersCache: this.parametersCache.withNamespace(
+        loginOptions.credentialCacheNamespace,
+        expectedResolvedOrgIdentity,
+      ),
+    };
+  }
+
+  /** @internal */
+  public async _internalGetLoaderState({
+    apiKey,
+    appUrl,
+    orgName,
+    fetch,
+    forceLogin,
+    existingState,
+  }: ResolvedLoaderLoginOptions) {
+    if (existingState) {
+      return existingState;
+    }
+
+    let cache = this.loaderLoginCache.get(fetch);
+    if (!cache) {
+      cache = new LRUCache({ max: LOADER_LOGIN_CACHE_MAX });
+      this.loaderLoginCache.set(fetch, cache);
+    }
+
+    const cacheKey = JSON.stringify([appUrl, orgName, apiKey]);
+    if (!forceLogin) {
+      const cachedState = cache.get(cacheKey);
+      if (cachedState) {
+        return cachedState;
+      }
+    }
+
+    const statePromise = loginToLoaderRequestState({
+      orgName,
+      apiKey,
+      appUrl,
+      fetch,
+    });
+    cache.set(cacheKey, statePromise);
+
+    try {
+      return await statePromise;
+    } catch (error) {
+      if (cache.get(cacheKey) === statePromise) {
+        cache.delete(cacheKey);
+      }
+      throw error;
+    }
   }
 
   public resetIdGenState() {
@@ -924,6 +1105,8 @@ export class BraintrustState {
     this.debugLogLevel = other.debugLogLevel;
     this.debugLogLevelConfigured = other.debugLogLevelConfigured;
     this.traceContextSigningSecret = other.traceContextSigningSecret;
+    this.fetch = other.fetch;
+    this.activeLoginOrgNameSelector = other.activeLoginOrgNameSelector;
     setGlobalDebugLogLevel(
       this.debugLogLevelConfigured ? (this.debugLogLevel ?? false) : undefined,
     );
@@ -1252,25 +1435,95 @@ export class FailedHTTPResponse extends Error {
   public status: number;
   public text: string;
   public data: string;
+  public readonly cause?: unknown;
 
-  constructor(status: number, text: string, data: string) {
+  constructor(status: number, text: string, data: string, cause?: unknown) {
     super(`${status}: ${text} (${data})`);
     this.status = status;
     this.text = text;
     this.data = data;
+    this.cause = cause;
   }
+}
+
+class HTTPTransportError extends Error {
+  public readonly cause: unknown;
+
+  constructor(cause: unknown) {
+    super(cause instanceof Error ? cause.message : String(cause));
+    this.name = "HTTPTransportError";
+    this.cause = cause;
+  }
+}
+
+const httpTransportErrorCauses = new WeakSet<object>();
+
+function recordHTTPTransportError(error: unknown): void {
+  if (
+    (typeof error === "object" && error !== null) ||
+    typeof error === "function"
+  ) {
+    httpTransportErrorCauses.add(error);
+  }
+}
+
+function rethrowHTTPTransportError(
+  error: unknown,
+  classifyTransportErrors: boolean,
+): never {
+  if (classifyTransportErrors) {
+    throw new HTTPTransportError(error);
+  }
+  recordHTTPTransportError(error);
+  throw error;
+}
+
+function isLoaderCacheFallbackError(error: unknown): boolean {
+  if (error instanceof FailedHTTPResponse) {
+    return error.status === 408 || error.status === 429 || error.status >= 500;
+  }
+
+  if (error instanceof HTTPTransportError) {
+    return true;
+  }
+
+  return (
+    ((typeof error === "object" && error !== null) ||
+      typeof error === "function") &&
+    httpTransportErrorCauses.has(error)
+  );
+}
+
+async function readJSONResponse(
+  response: Response,
+  classifyTransportErrors = false,
+) {
+  let data: string;
+  try {
+    data = await response.text();
+  } catch (error) {
+    rethrowHTTPTransportError(error, classifyTransportErrors);
+  }
+  return JSON.parse(data);
 }
 
 async function checkResponse(resp: Response) {
   if (resp.ok) {
     return resp;
-  } else {
+  }
+
+  let data: string;
+  try {
+    data = await resp.text();
+  } catch (error) {
     throw new FailedHTTPResponse(
       resp.status,
       resp.statusText,
-      await resp.text(),
+      "Unable to read response body",
+      error,
     );
   }
+  throw new FailedHTTPResponse(resp.status, resp.statusText, data);
 }
 
 class HTTPConnection {
@@ -1279,7 +1532,11 @@ class HTTPConnection {
   headers: Record<string, string>;
   fetch: typeof globalThis.fetch;
 
-  constructor(base_url: string, fetch: typeof globalThis.fetch) {
+  constructor(
+    base_url: string,
+    fetch: typeof globalThis.fetch,
+    private readonly classifyTransportErrors = false,
+  ) {
     this.base_url = base_url;
     this.token = null;
     this.headers = {};
@@ -1351,9 +1608,10 @@ class HTTPConnection {
     // so we need to bind it again.
     const this_fetch = this.fetch;
     const this_headers = this.headers;
-    return await checkResponse(
+    let response: Response;
+    try {
       // Using toString() here makes it work with isomorphic fetch
-      await this_fetch(url.toString(), {
+      response = await this_fetch(url.toString(), {
         headers: {
           Accept: "application/json",
           ...this_headers,
@@ -1361,8 +1619,14 @@ class HTTPConnection {
         },
         keepalive: true,
         ...rest,
-      }),
-    );
+      });
+    } catch (error) {
+      if (config?.signal?.aborted) {
+        throw getAbortReason(config.signal);
+      }
+      rethrowHTTPTransportError(error, this.classifyTransportErrors);
+    }
+    return await checkResponse(response);
   }
 
   async post(
@@ -1381,8 +1645,9 @@ class HTTPConnection {
     const tries = retries + 1;
     for (let i = 0; i < tries; i++) {
       try {
-        return await checkResponse(
-          await this_fetch(_urljoin(this_base_url, path), {
+        let response: Response;
+        try {
+          response = await this_fetch(_urljoin(this_base_url, path), {
             method: "POST",
             headers: {
               Accept: "application/json",
@@ -1398,8 +1663,14 @@ class HTTPConnection {
                   : undefined,
             keepalive: true,
             ...rest,
-          }),
-        );
+          });
+        } catch (error) {
+          if (config?.signal?.aborted) {
+            throw getAbortReason(config.signal);
+          }
+          rethrowHTTPTransportError(error, this.classifyTransportErrors);
+        }
+        return await checkResponse(response);
       } catch (error) {
         if (config?.signal?.aborted) {
           throw getAbortReason(config.signal);
@@ -1433,7 +1704,7 @@ class HTTPConnection {
     for (let i = 0; i < tries; i++) {
       try {
         const resp = await this.get(`${object_type}`, args);
-        return await resp.json();
+        return await readJSONResponse(resp, this.classifyTransportErrors);
       } catch (e) {
         if (i < tries - 1) {
           debugLogger.debug(
@@ -1462,7 +1733,7 @@ class HTTPConnection {
     const resp = await this.post(`${object_type}`, args, {
       headers: { "Content-Type": "application/json" },
     });
-    return await resp.json();
+    return await readJSONResponse(resp, this.classifyTransportErrors);
   }
 
   // Custom inspect for Node.js console.log
@@ -4842,6 +5113,39 @@ type LoadParametersImplementationOptions = LoadParametersBaseOptions & {
   environment?: string;
 };
 
+type LoaderRequestResult<T> =
+  | ({ ok: true; response: T } & LoaderCacheViews)
+  | ({ ok: false; error: unknown } & LoaderCacheViews);
+
+async function runCredentialScopedLoaderRequest<T>(
+  state: BraintrustState,
+  loginOptions: Pick<
+    FullLoginOptions,
+    "apiKey" | "appUrl" | "orgName" | "fetch" | "forceLogin"
+  >,
+  request: (requestState: LoaderRequestState) => Promise<T>,
+): Promise<LoaderRequestResult<T>> {
+  const resolvedLoginOptions =
+    await state._internalResolveLoaderLoginOptions(loginOptions);
+  let cacheViews = state._internalGetLoaderCacheViews(resolvedLoginOptions);
+
+  try {
+    const requestState =
+      await state._internalGetLoaderState(resolvedLoginOptions);
+    cacheViews = state._internalGetLoaderCacheViews(
+      resolvedLoginOptions,
+      requestState,
+    );
+    return {
+      ok: true,
+      response: await request(requestState),
+      ...cacheViews,
+    };
+  } catch (error) {
+    return { ok: false, error, ...cacheViews };
+  }
+}
+
 /**
  * Load a prompt from the specified project.
  *
@@ -4855,7 +5159,7 @@ type LoadParametersImplementationOptions = LoadParametersBaseOptions & {
  * @param options.defaults (Optional) A dictionary of default values to use when rendering the prompt. Prompt values will override these defaults.
  * @param options.noTrace If true, do not include logging metadata for this prompt when build() is called.
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
- * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js,
+ * @param options.apiKey The API key to use for this request, independently of any existing global login. If the parameter is not specified, will use an existing login or try the `BRAINTRUST_API_KEY` environment variable. In Node.js,
  * if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @returns The prompt object.
@@ -4900,33 +5204,37 @@ export async function loadPrompt({
   }
 
   const state = stateArg ?? _globalState;
-  let response;
-  try {
-    await state.login({
-      orgName,
-      apiKey,
-      appUrl,
-      fetch,
-      forceLogin,
-    });
-    if (id) {
-      // Load prompt by ID using the /v1/prompt/{id} endpoint
-      response = await state
-        .apiConn()
-        .get_json(`v1/prompt/${id}`, versionOrEnvironment);
-      // Wrap single prompt response in objects array to match list API format
-      if (response) {
-        response = { objects: [response] };
+  const result = await runCredentialScopedLoaderRequest(
+    state,
+    { orgName, apiKey, appUrl, fetch, forceLogin },
+    async (requestState) => {
+      let response;
+      if (id) {
+        // Load prompt by ID using the /v1/prompt/{id} endpoint
+        response = await requestState
+          .apiConn()
+          .get_json(`v1/prompt/${id}`, versionOrEnvironment);
+        // Wrap single prompt response in objects array to match list API format
+        if (response) {
+          response = { objects: [response] };
+        }
+      } else {
+        response = await requestState.apiConn().get_json("v1/prompt", {
+          project_name: projectName,
+          project_id: projectId,
+          slug,
+          ...versionOrEnvironment,
+        });
       }
-    } else {
-      response = await state.apiConn().get_json("v1/prompt", {
-        project_name: projectName,
-        project_id: projectId,
-        slug,
-        ...versionOrEnvironment,
-      });
+      return response;
+    },
+  );
+  const { promptCache } = result;
+  if (!result.ok) {
+    const e = result.error;
+    if (!isLoaderCacheFallbackError(e)) {
+      throw e;
     }
-  } catch (e) {
     // If environment or version was specified, don't fall back to cache
     if (version || environment) {
       throw new Error(`Prompt not found with specified parameters: ${e}`);
@@ -4937,14 +5245,14 @@ export async function loadPrompt({
       .warn("Failed to load prompt, attempting to fall back to cache:", e);
     let prompt;
     if (id) {
-      prompt = await state.promptCache.get({ id });
+      prompt = await promptCache.get({ id });
       if (!prompt) {
         throw new Error(
           `Prompt with id ${id} not found (not found on server or in local cache): ${e}`,
         );
       }
     } else {
-      prompt = await state.promptCache.get({
+      prompt = await promptCache.get({
         slug,
         projectId,
         projectName,
@@ -4960,6 +5268,7 @@ export async function loadPrompt({
     }
     return prompt;
   }
+  const { response } = result;
 
   if (!("objects" in response) || response.objects.length === 0) {
     if (id) {
@@ -4987,9 +5296,9 @@ export async function loadPrompt({
   const prompt = new Prompt(metadata, defaults || {}, noTrace);
   try {
     if (id) {
-      await state.promptCache.set({ id }, prompt);
+      await promptCache.set({ id }, prompt);
     } else if (slug) {
-      await state.promptCache.set(
+      await promptCache.set(
         { slug, projectId, projectName, version: version ?? "latest" },
         prompt,
       );
@@ -5011,7 +5320,7 @@ export async function loadPrompt({
  * @param options.environment Fetch the version of the parameters assigned to the specified environment (e.g. "production", "staging"). If both `version` and `environment` are provided, `version` takes precedence.
  * @param options.id The id of specific parameters to load. If specified, this takes precedence over all other parameters (project and slug).
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
- * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js, if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories.
+ * @param options.apiKey The API key to use for this request, independently of any existing global login. If the parameter is not specified, will use an existing login or try the `BRAINTRUST_API_KEY` environment variable. In Node.js, if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @returns The parameters object.
  * @throws If the parameters are not found.
@@ -5075,32 +5384,36 @@ export async function loadParameters<
   }
 
   const state = stateArg ?? _globalState;
-  let response;
-  try {
-    await state.login({
-      orgName,
-      apiKey,
-      appUrl,
-      fetch,
-      forceLogin,
-    });
-    if (id) {
-      response = await state.apiConn().get_json(`v1/function/${id}`, {
-        ...versionOrEnvironment,
-      });
-      if (response) {
-        response = { objects: [response] };
+  const result = await runCredentialScopedLoaderRequest(
+    state,
+    { orgName, apiKey, appUrl, fetch, forceLogin },
+    async (requestState) => {
+      let response;
+      if (id) {
+        response = await requestState.apiConn().get_json(`v1/function/${id}`, {
+          ...versionOrEnvironment,
+        });
+        if (response) {
+          response = { objects: [response] };
+        }
+      } else {
+        response = await requestState.apiConn().get_json("v1/function", {
+          project_name: projectName,
+          project_id: projectId,
+          slug,
+          function_type: "parameters",
+          ...versionOrEnvironment,
+        });
       }
-    } else {
-      response = await state.apiConn().get_json("v1/function", {
-        project_name: projectName,
-        project_id: projectId,
-        slug,
-        function_type: "parameters",
-        ...versionOrEnvironment,
-      });
+      return response;
+    },
+  );
+  const { parametersCache } = result;
+  if (!result.ok) {
+    const e = result.error;
+    if (!isLoaderCacheFallbackError(e)) {
+      throw e;
     }
-  } catch (e) {
     if (version || environment) {
       throw new Error(`Parameters not found with specified parameters: ${e}`);
     }
@@ -5110,14 +5423,14 @@ export async function loadParameters<
       .warn("Failed to load parameters, attempting to fall back to cache:", e);
     let parameters;
     if (id) {
-      parameters = await state.parametersCache.get({ id });
+      parameters = await parametersCache.get({ id });
       if (!parameters) {
         throw new Error(
           `Parameters with id ${id} not found (not found on server or in local cache): ${e}`,
         );
       }
     } else {
-      parameters = await state.parametersCache.get({
+      parameters = await parametersCache.get({
         slug,
         projectId,
         projectName,
@@ -5134,6 +5447,7 @@ export async function loadParameters<
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return parameters as RemoteEvalParameters<true, true, InferParameters<S>>;
   }
+  const { response } = result;
 
   if (!("objects" in response) || response.objects.length === 0) {
     if (id) {
@@ -5161,9 +5475,9 @@ export async function loadParameters<
   const parameters = new RemoteEvalParameters(metadata);
   try {
     if (id) {
-      await state.parametersCache.set({ id }, parameters);
+      await parametersCache.set({ id }, parameters);
     } else if (slug) {
-      await state.parametersCache.set(
+      await parametersCache.set(
         { slug, projectId, projectName, version: version ?? "latest" },
         parameters,
       );
@@ -5297,6 +5611,59 @@ export async function login(
   return state;
 }
 
+async function loginToLoaderRequestState({
+  appUrl,
+  apiKey,
+  orgName,
+  fetch,
+}: Required<Pick<LoginOptions, "appUrl" | "apiKey" | "fetch">> &
+  Pick<LoginOptions, "orgName">): Promise<LoaderRequestState> {
+  let orgId: string;
+  let apiUrl: string;
+
+  if (apiKey === TEST_API_KEY) {
+    orgId = "test-org-id";
+    apiUrl = "https://braintrust.dev/fake-api-url";
+  } else {
+    let loginResponse: Response;
+    try {
+      loginResponse = await fetch(_urljoin(appUrl, `/api/apikey/login`), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+      });
+    } catch (error) {
+      throw new HTTPTransportError(error);
+    }
+
+    const info = await readJSONResponse(
+      await checkResponse(loginResponse),
+      true,
+    );
+    const org = selectLoginOrg(info.org_info, orgName);
+    orgId = org.id;
+    apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
+    if (!apiUrl) {
+      throw new Error(
+        orgName
+          ? `Unable to log into organization '${orgName}'. Are you sure this credential is scoped to the organization?`
+          : "Unable to log into any organization with the provided credential.",
+      );
+    }
+  }
+
+  const apiConnection = new HTTPConnection(apiUrl, fetch, true);
+  apiConnection.set_token(apiKey);
+  apiConnection.make_long_lived();
+  return {
+    appUrl,
+    orgId,
+    apiConn: () => apiConnection,
+  };
+}
+
 export async function loginToState(options: LoginOptions = {}) {
   const {
     appUrl = iso.getEnv("BRAINTRUST_APP_URL") || "https://www.braintrust.dev",
@@ -5335,16 +5702,18 @@ export async function loginToState(options: LoginOptions = {}) {
     _saveOrgInfo(state, testOrgInfo, testOrgInfo[0].name);
     return state;
   } else {
-    const resp = await checkResponse(
-      await fetch(_urljoin(state.appUrl, `/api/apikey/login`), {
+    const loginResponse = await fetch(
+      _urljoin(state.appUrl, `/api/apikey/login`),
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
-      }),
+      },
     );
-    const info = await resp.json();
+    const resp = await checkResponse(loginResponse);
+    const info = await readJSONResponse(resp);
 
     _saveOrgInfo(state, info.org_info, orgName);
     if (!state.apiUrl) {
@@ -6289,13 +6658,13 @@ export function wrapTraced<
   if (args?.asyncFlush) {
     return ((...fnArgs: Parameters<F>) =>
       traced((span) => {
-        if (!hasExplicitInput) {
+        if (!args?.noTraceIO && !hasExplicitInput) {
           span.log({ input: fnArgs });
         }
 
         const output = fn(...fnArgs);
 
-        if (!hasExplicitOutput) {
+        if (!args?.noTraceIO && !hasExplicitOutput) {
           if (output instanceof Promise) {
             return (async () => {
               const result = await output;
@@ -6312,7 +6681,7 @@ export function wrapTraced<
   } else {
     return ((...fnArgs: Parameters<F>) =>
       traced(async (span) => {
-        if (!hasExplicitInput) {
+        if (!args?.noTraceIO && !hasExplicitInput) {
           span.log({ input: fnArgs });
         }
 
@@ -6320,7 +6689,7 @@ export function wrapTraced<
 
         const output = await outputResult;
 
-        if (!hasExplicitOutput) {
+        if (!args?.noTraceIO && !hasExplicitOutput) {
           span.log({ output });
         }
 
@@ -6577,33 +6946,35 @@ export function withParent<R>(
 
 function _saveOrgInfo(
   state: BraintrustState,
-  org_info: any,
-  org_name: string | undefined,
+  orgInfo: any,
+  orgName: string | undefined,
 ) {
-  if (org_info.length === 0) {
+  const org = selectLoginOrg(orgInfo, orgName);
+  state.orgId = org.id;
+  state.orgName = org.name;
+  state.apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
+  state.proxyUrl = iso.getEnv("BRAINTRUST_PROXY_URL") ?? org.proxy_url;
+  state.gitMetadataSettings = org.git_metadata || undefined;
+}
+
+function selectLoginOrg(orgInfo: any, orgName: string | undefined) {
+  if (orgInfo.length === 0) {
     throw new LoginInvalidOrgError(
       "This user is not part of any organizations.",
     );
   }
 
-  for (const org of org_info) {
-    if (org_name === undefined || org.name === org_name) {
-      state.orgId = org.id;
-      state.orgName = org.name;
-      state.apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
-      state.proxyUrl = iso.getEnv("BRAINTRUST_PROXY_URL") ?? org.proxy_url;
-      state.gitMetadataSettings = org.git_metadata || undefined;
-      break;
+  for (const org of orgInfo) {
+    if (orgName === undefined || org.name === orgName) {
+      return org;
     }
   }
 
-  if (state.orgId === undefined) {
-    throw new LoginInvalidOrgError(
-      `Organization ${org_name} not found. Must be one of ${org_info
-        .map((x: any) => x.name)
-        .join(", ")}`,
-    );
-  }
+  throw new LoginInvalidOrgError(
+    `Organization ${orgName} not found. Must be one of ${orgInfo
+      .map((org: any) => org.name)
+      .join(", ")}`,
+  );
 }
 
 function validateTags(tags: readonly string[]) {
@@ -9379,6 +9750,16 @@ export class Prompt<
       "__braintrust_prompt_marker" in data
     );
   }
+
+  /** @internal */
+  public _internalSerializeForCache() {
+    return {
+      metadata: this.metadata,
+      defaults: this.defaults,
+      noTrace: this.noTrace,
+    };
+  }
+
   public static fromPromptData(
     name: string,
     promptData: PromptData,
@@ -9439,6 +9820,11 @@ export class RemoteEvalParameters<
   public get data(): T {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return (this.metadata.function_data.data ?? {}) as T;
+  }
+
+  /** @internal */
+  public _internalSerializeForCache() {
+    return { metadata: this.metadata };
   }
 
   public validate(data: unknown): boolean {

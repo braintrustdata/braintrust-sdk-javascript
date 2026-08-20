@@ -18,6 +18,7 @@ export const INSTRUMENTATION_NAMES = {
   CLOUDFLARE_THINK: "cloudflare-think",
   COHERE: "cohere",
   CURSOR_SDK: "cursor-sdk",
+  DEEPSEEK_HARNESS: "deepseek-harness",
   EVE: "eve",
   FLUE: "flue",
   GENKIT: "genkit",

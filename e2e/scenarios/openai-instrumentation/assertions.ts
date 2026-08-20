@@ -84,6 +84,63 @@ function validateStreamFixtureOutput(span: CapturedLogEvent | undefined): void {
   expect(message?.refusal).toBe("NOPE");
 }
 
+function validateMultipleChoicesStreamOutput(
+  span: CapturedLogEvent | undefined,
+): void {
+  expect(span?.output).toEqual([
+    expect.objectContaining({
+      index: 0,
+      finish_reason: "tool_calls",
+      message: expect.objectContaining({
+        role: "assistant",
+        tool_calls: [
+          {
+            id: "choice_0_call_0",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Boston"}',
+            },
+          },
+          {
+            id: "choice_0_call_1",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Paris"}',
+            },
+          },
+        ],
+      }),
+    }),
+    expect.objectContaining({
+      index: 1,
+      finish_reason: "tool_calls",
+      message: expect.objectContaining({
+        role: "assistant",
+        tool_calls: [
+          {
+            id: "choice_1_call_0",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Tokyo"}',
+            },
+          },
+          {
+            id: "choice_1_call_1",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Rome"}',
+            },
+          },
+        ],
+      }),
+    }),
+  ]);
+}
+
 function validateAttachmentInput(
   span: CapturedLogEvent | undefined,
   contentType: string,
@@ -195,6 +252,15 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     testName:
       "captures trace for streamed chat completion with logprobs and refusal",
     validate: validateStreamFixtureOutput,
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-stream-multiple-choices-operation",
+    operation: "stream-multiple-choices",
+    testName: "captures all streamed chat completion choices by index",
+    validate: validateMultipleChoicesStreamOutput,
   },
   {
     childNames: ["Chat Completion"],
@@ -339,6 +405,235 @@ function getOperationSpecs(version: string): OperationSpec[] {
       (!spec.minOpenAIMajorVersion ||
         (Number.isFinite(major) && major >= spec.minOpenAIMajorVersion)),
   );
+}
+
+function pickMetadata(
+  metadata: Record<string, unknown> | undefined,
+  keys: string[],
+): Json {
+  if (!metadata) {
+    return null;
+  }
+
+  const picked = Object.fromEntries(
+    keys.flatMap((key) => {
+      const value = metadata[key];
+      if (value === undefined) {
+        return [];
+      }
+
+      return [
+        [
+          key,
+          key === "openaiSdkVersion" && typeof value === "string"
+            ? "<openai-sdk-version>"
+            : (value as Json),
+        ],
+      ];
+    }),
+  );
+
+  return Object.keys(picked).length > 0 ? (picked as Json) : null;
+}
+
+function isRecord(value: Json | undefined): value is Record<string, Json> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function jsonKeysFromText(value: unknown): string[] {
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      Array.isArray(parsed)
+    ) {
+      return [];
+    }
+
+    return Object.keys(parsed).sort();
+  } catch {
+    return [];
+  }
+}
+
+function summarizeInput(input: Json): Json {
+  if (typeof input === "string") {
+    return {
+      kind: "text",
+    } satisfies Json;
+  }
+
+  if (!Array.isArray(input)) {
+    return input === null ? null : ({ kind: typeof input } satisfies Json);
+  }
+
+  return input.map((message) => {
+    if (!isRecord(message as Json)) {
+      return { kind: typeof message } satisfies Json;
+    }
+
+    return {
+      content_kind: Array.isArray(message.content)
+        ? "blocks"
+        : typeof message.content,
+      role: message.role ?? null,
+    } satisfies Json;
+  }) satisfies Json;
+}
+
+function summarizeChatOutput(output: Json): Json {
+  if (!Array.isArray(output)) {
+    return null;
+  }
+
+  return output.map((choice) => {
+    if (!isRecord(choice as Json) || !isRecord(choice.message as Json)) {
+      return null;
+    }
+
+    return {
+      json_keys: jsonKeysFromText(choice.message.content),
+      role: choice.message.role ?? null,
+    } satisfies Json;
+  }) satisfies Json;
+}
+
+function summarizeResponsesOutput(
+  output: Json,
+  options?: {
+    // For normalization across SDK versions
+    dropEmptyOutputTextMessages?: boolean;
+  },
+): Json {
+  if (!Array.isArray(output)) {
+    return null;
+  }
+
+  const summaries = output.map((item) => {
+    if (!isRecord(item as Json)) {
+      return null;
+    }
+
+    const content = Array.isArray(item.content) ? item.content : [];
+    const contentTypes = content.flatMap((entry) =>
+      isRecord(entry as Json) && typeof entry.type === "string"
+        ? [entry.type]
+        : [],
+    );
+    const jsonKeys = content.flatMap((entry) =>
+      isRecord(entry as Json) ? jsonKeysFromText(entry.text) : [],
+    );
+
+    return {
+      content_types: contentTypes,
+      json_keys: [...new Set(jsonKeys)].sort(),
+      role: item.role ?? null,
+      status: item.status ?? null,
+      type: item.type ?? null,
+    } satisfies Json;
+  });
+
+  const filtered = options?.dropEmptyOutputTextMessages
+    ? summaries.filter((item) => {
+        if (!isRecord(item as Json)) {
+          return true;
+        }
+
+        return !(
+          item.role === "assistant" &&
+          item.status === "completed" &&
+          item.type === "message" &&
+          Array.isArray(item.content_types) &&
+          item.content_types.length === 1 &&
+          item.content_types[0] === "output_text" &&
+          Array.isArray(item.json_keys) &&
+          item.json_keys.length === 0
+        );
+      })
+    : summaries;
+
+  // Deduplicate identical items — the Responses API occasionally returns
+  // duplicate output entries (e.g., two identical "message" items when
+  // streaming), which would cause non-deterministic snapshot failures.
+  const seen = new Set<string>();
+  const deduped: Json[] = [];
+
+  for (const summarized of filtered) {
+    const key = JSON.stringify(summarized);
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(summarized);
+    }
+  }
+
+  return deduped;
+}
+
+function summarizeOutput(name: string, output: Json): Json {
+  if (name === "Chat Completion") {
+    return summarizeChatOutput(output);
+  }
+
+  if (name === "Embedding") {
+    return isRecord(output)
+      ? ({
+          embedding_length: output.embedding_length ?? null,
+        } satisfies Json)
+      : null;
+  }
+
+  if (name === "Moderation") {
+    return Array.isArray(output)
+      ? ({
+          flagged_count: output.filter(
+            (entry) => isRecord(entry as Json) && entry.flagged === true,
+          ).length,
+          result_count: output.length,
+        } satisfies Json)
+      : null;
+  }
+
+  if (
+    name === "openai.responses.create" ||
+    name === "openai.responses.compact"
+  ) {
+    return summarizeResponsesOutput(output);
+  }
+
+  if (name === "openai.responses.parse") {
+    return summarizeResponsesOutput(output, {
+      dropEmptyOutputTextMessages: true,
+    });
+  }
+
+  return output === null || output === undefined
+    ? null
+    : ({ kind: typeof output } satisfies Json);
+}
+
+function summarizeOpenAIPayload(
+  event: CapturedLogEvent,
+  summaryName: string | undefined,
+): Json {
+  const name = summaryName ?? event.span.name ?? "";
+  const fields = spanTreeFields(event);
+
+  return {
+    input: summarizeInput(event.input as Json),
+    metadata: pickMetadata(
+      event.row.metadata as Record<string, unknown> | undefined,
+      ["model", "openaiSdkVersion", "operation", "provider", "scenario"],
+    ),
+    metrics: fields.metrics as Json,
+    name: name || null,
+    output: summarizeOutput(name, event.output as Json),
+    type: event.span.type ?? null,
+  } satisfies Json;
 }
 
 function findOpenAISpan(

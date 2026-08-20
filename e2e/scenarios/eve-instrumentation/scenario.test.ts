@@ -25,13 +25,24 @@ const scenarioDir = await prepareScenarioDir({
 const eveScenarios = await Promise.all(
   [
     {
+      cassetteKey: "eve-v0",
       dependencyName: "eve-v0",
       label: "v0 pinned",
+      provider: false,
       variantKey: "eve-v0",
     },
     {
+      cassetteKey: "eve-v0-latest",
+      dependencyName: "eve-v0-provider",
+      label: "v0 provider minimum",
+      provider: true,
+      variantKey: "eve-v0-provider",
+    },
+    {
+      cassetteKey: "eve-v0-latest",
       dependencyName: "eve-v0-latest",
       label: "v0 latest",
+      provider: true,
       variantKey: "eve-v0-latest",
     },
   ].map(async (scenario) => ({
@@ -42,7 +53,8 @@ const eveScenarios = await Promise.all(
     ),
   })),
 );
-const TIMEOUT_MS = 120_000;
+const TIMEOUT_MS =
+  process.env.BRAINTRUST_E2E_CASSETTE_MODE === "record" ? 300_000 : 120_000;
 
 describe.sequential("eve instrumentation variants", () => {
   for (const scenario of eveScenarios) {
@@ -61,9 +73,11 @@ describe.sequential("eve instrumentation variants", () => {
               entry: "scenario.ts",
               env: {
                 EVE_PACKAGE_NAME: scenario.dependencyName,
+                EVE_INSTRUMENTATION_PROVIDER: scenario.provider ? "1" : "0",
                 NODE_ENV: "development",
               },
               runContext: {
+                cassette: { variantKey: scenario.cassetteKey },
                 originalScenarioDir,
                 variantKey: scenario.variantKey,
               },
@@ -78,31 +92,21 @@ describe.sequential("eve instrumentation variants", () => {
 
       test("captures user turns as traces with subagent turns attached", async () => {
         const turns = findAllSpans(events, "eve.turn");
-        const root = turns.find(
-          (turn) =>
-            Array.isArray(turn.input) &&
-            turn.input[0]?.content ===
-              "Run the Braintrust Eve instrumentation e2e scenario",
-        );
-        const secondRoot = turns.find(
-          (turn) =>
-            Array.isArray(turn.input) &&
-            turn.input[0]?.content ===
-              "Run the Braintrust Eve instrumentation e2e scenario again",
-        );
+        const [root, secondRoot] = turns
+          .filter((turn) => turn.span.parentIds.length === 0)
+          .sort(
+            (left, right) =>
+              Number(left.metrics?.start ?? 0) -
+              Number(right.metrics?.start ?? 0),
+          );
         const steps = findChildSpans(events, "eve.step", root?.span.id);
         const researcher = findChildSpans(
           events,
           "researcher",
           root?.span.id,
         )[0];
-        const childTurn = turns.find(
-          (turn) =>
-            Array.isArray(turn.input) &&
-            String(turn.input[0]?.content).includes(
-              "Caller message:\nRun the Braintrust Eve instrumentation e2e scenario",
-            ) &&
-            !String(turn.input[0]?.content).includes("scenario again"),
+        const childTurn = turns.find((turn) =>
+          turn.span.parentIds.includes(researcher?.span.id ?? ""),
         );
         const childSteps = findChildSpans(
           events,
@@ -125,12 +129,8 @@ describe.sequential("eve instrumentation variants", () => {
           "researcher",
           secondRoot?.span.id,
         );
-        const secondChildTurn = turns.find(
-          (turn) =>
-            Array.isArray(turn.input) &&
-            String(turn.input[0]?.content).includes(
-              "Caller message:\nRun the Braintrust Eve instrumentation e2e scenario again",
-            ),
+        const secondChildTurn = turns.find((turn) =>
+          turn.span.parentIds.includes(secondResearcher?.span.id ?? ""),
         );
         const secondRead = findLatestChildSpan(
           events,
@@ -155,10 +155,17 @@ describe.sequential("eve instrumentation variants", () => {
         });
         expect(root?.metadata).not.toHaveProperty("model");
         expect(root?.metadata).not.toHaveProperty("provider");
-        expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
-        expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
-        expect(root?.metrics?.tokens).toEqual(expect.any(Number));
-        expect(root?.output).toContain("Final answer from read");
+        if (scenario.provider) {
+          expect(root?.metrics).not.toHaveProperty("completion_tokens");
+          expect(root?.metrics).not.toHaveProperty("prompt_tokens");
+          expect(root?.metrics).not.toHaveProperty("tokens");
+          expect(root?.output).toBeUndefined();
+        } else {
+          expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
+          expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
+          expect(root?.metrics?.tokens).toEqual(expect.any(Number));
+          expect(root?.output).toContain("Final answer from read");
+        }
 
         expect(steps).toHaveLength(2);
         expect(steps.map((step) => step.span.type)).toEqual(["llm", "llm"]);
@@ -193,9 +200,17 @@ describe.sequential("eve instrumentation variants", () => {
             "eve.session_id": root?.metadata?.["eve.session_id"],
             scenario: "eve-instrumentation",
             testRunId: expect.any(String),
+            ...(scenario.provider
+              ? {
+                  model: "qwen/qwen3-30b-a3b",
+                  provider: "openrouter",
+                }
+              : {}),
           });
-          expect(step.metadata).not.toHaveProperty("model");
-          expect(step.metadata).not.toHaveProperty("provider");
+          if (!scenario.provider) {
+            expect(step.metadata).not.toHaveProperty("model");
+            expect(step.metadata).not.toHaveProperty("provider");
+          }
         }
 
         expect(researcher).toBeDefined();
@@ -211,17 +226,26 @@ describe.sequential("eve instrumentation variants", () => {
           testRunId: expect.any(String),
         });
         expect(researcher?.output).toContain("Researcher result");
+        expect(researcher?.error).toBeUndefined();
 
         expect(childTurn).toBeDefined();
         expect(childTurn?.span.parentIds).toEqual([researcher?.span.id]);
         expect(childTurn?.span.rootId).toEqual(root?.span.rootId);
         expect(childTurn?.metadata).toMatchObject({
           "eve.session_id": expect.any(String),
-          model: "qwen/qwen3-30b-a3b",
-          provider: "openrouter",
           scenario: "eve-instrumentation",
           testRunId: expect.any(String),
+          ...(scenario.provider
+            ? {}
+            : {
+                model: "qwen/qwen3-30b-a3b",
+                provider: "openrouter",
+              }),
         });
+        if (scenario.provider) {
+          expect(childTurn?.metadata).not.toHaveProperty("model");
+          expect(childTurn?.metadata).not.toHaveProperty("provider");
+        }
         expect(childTurn?.metadata?.["eve.session_id"]).not.toEqual(
           root?.metadata?.["eve.session_id"],
         );
@@ -289,7 +313,11 @@ describe.sequential("eve instrumentation variants", () => {
         });
         expect(secondRoot?.metadata).not.toHaveProperty("model");
         expect(secondRoot?.metadata).not.toHaveProperty("provider");
-        expect(secondRoot?.output).toContain("Final answer from read");
+        if (scenario.provider) {
+          expect(secondRoot?.output).toBeUndefined();
+        } else {
+          expect(secondRoot?.output).toContain("Final answer from read");
+        }
         expect(secondSteps).toHaveLength(2);
         expect(secondSteps.map((step) => step.span.type)).toEqual([
           "llm",
@@ -300,9 +328,17 @@ describe.sequential("eve instrumentation variants", () => {
             "eve.session_id": secondRoot?.metadata?.["eve.session_id"],
             scenario: "eve-instrumentation",
             testRunId: expect.any(String),
+            ...(scenario.provider
+              ? {
+                  model: "qwen/qwen3-30b-a3b",
+                  provider: "openrouter",
+                }
+              : {}),
           });
-          expect(step.metadata).not.toHaveProperty("model");
-          expect(step.metadata).not.toHaveProperty("provider");
+          if (!scenario.provider) {
+            expect(step.metadata).not.toHaveProperty("model");
+            expect(step.metadata).not.toHaveProperty("provider");
+          }
         }
         expect(secondSteps[0]?.output).toMatchObject([
           {
@@ -326,6 +362,7 @@ describe.sequential("eve instrumentation variants", () => {
         ]);
         expect(secondResearcher?.span.type).toBe("tool");
         expect(secondResearcher?.span.ended).toBe(true);
+        expect(secondResearcher?.error).toBeUndefined();
         expect(secondResearcher?.span.parentIds).toEqual([secondRoot?.span.id]);
         expect(secondResearcher?.metadata).toMatchObject({
           "eve.session_id": secondRoot?.metadata?.["eve.session_id"],
@@ -336,9 +373,17 @@ describe.sequential("eve instrumentation variants", () => {
         expect(secondChildTurn?.span.rootId).toEqual(secondRoot?.span.rootId);
         expect(secondChildTurn?.metadata).toMatchObject({
           "eve.session_id": expect.any(String),
-          model: "qwen/qwen3-30b-a3b",
-          provider: "openrouter",
+          ...(scenario.provider
+            ? {}
+            : {
+                model: "qwen/qwen3-30b-a3b",
+                provider: "openrouter",
+              }),
         });
+        if (scenario.provider) {
+          expect(secondChildTurn?.metadata).not.toHaveProperty("model");
+          expect(secondChildTurn?.metadata).not.toHaveProperty("provider");
+        }
         expect(secondChildTurn?.metadata?.["eve.session_id"]).not.toEqual(
           secondRoot?.metadata?.["eve.session_id"],
         );

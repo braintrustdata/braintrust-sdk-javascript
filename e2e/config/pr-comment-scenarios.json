@@ -1,5 +1,20 @@
 [
   {
+    "scenarioDirName": "deepseek-harness-instrumentation",
+    "label": "DeepSeek Harness Instrumentation",
+    "metadataScenario": "deepseek-harness-instrumentation",
+    "variants": [
+      {
+        "variantKey": "deepseek-harness-v0",
+        "label": "v0.1 prerelease pinned"
+      },
+      {
+        "variantKey": "deepseek-harness-v0-latest",
+        "label": "v0.1 prerelease latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "cloudflare-agents-instrumentation",
     "label": "Cloudflare Agents Instrumentation",
     "metadataScenario": "cloudflare-agents-instrumentation",
@@ -632,6 +647,7 @@
     "metadataScenario": "eve-instrumentation",
     "variants": [
       { "variantKey": "eve-v0", "label": "v0 pinned" },
+      { "variantKey": "eve-v0-provider", "label": "v0 provider minimum" },
       { "variantKey": "eve-v0-latest", "label": "v0 latest" }
     ]
   },

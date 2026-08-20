@@ -476,7 +476,10 @@ export type EveModelMessage =
     };
 
 export interface EveInstrumentationModelInput {
-  readonly instructions?: string | readonly EveSystemModelMessage[];
+  readonly instructions?:
+    | string
+    | EveSystemModelMessage
+    | readonly EveSystemModelMessage[];
   readonly messages: readonly EveModelMessage[];
 }
 
@@ -508,4 +511,208 @@ export interface EveInstrumentationDefinition {
   readonly recordInputs?: boolean;
   readonly recordOutputs?: boolean;
   readonly setup?: (context: EveInstrumentationSetupContext) => void;
+}
+
+/**
+ * Vendored types for Eve's instrumentation-provider API, introduced in
+ * eve@0.34.0. Keep this limited to lifecycle events consumed by Braintrust.
+ */
+
+export interface EveProviderSetupContext {
+  readonly agentName: string;
+  readonly environment?: "development" | "preview" | "production";
+  readonly evaluation?: { readonly runId: string };
+  readonly frameworkVersion?: string;
+}
+
+export interface EveProviderState {
+  get(): EveJsonValue | undefined;
+  set(value: EveJsonValue | undefined): void;
+}
+
+export interface EveProviderContext {
+  readonly state: EveProviderState;
+}
+
+export interface EveInstrumentationAttemptScope {
+  readonly attemptId: string;
+  readonly attemptIndex: number;
+  readonly functionId?: string;
+  readonly rootSessionId?: string;
+  readonly sessionId: string;
+  readonly stepIndex: number;
+  readonly turnId: string;
+}
+
+export interface EveInstrumentationParentLineage {
+  readonly callId: string;
+  readonly sessionId: string;
+  readonly subagentName?: string;
+  readonly turnId: string;
+}
+
+export interface EveInstrumentationTraceContext {
+  readonly isRemote?: boolean;
+  readonly spanId: string;
+  readonly traceFlags: number;
+  readonly traceId: string;
+}
+
+export interface EveProviderTurnStartedEvent {
+  readonly idempotencyKey: string;
+  readonly parentLineage?: EveInstrumentationParentLineage;
+  readonly parentTraceContext?: EveInstrumentationTraceContext;
+  readonly rootSessionId: string;
+  readonly sequence: number;
+  readonly sessionId: string;
+  readonly turnId: string;
+  readonly type: "turn.started";
+}
+
+export type EveProviderTurnTerminalEvent =
+  | {
+      readonly idempotencyKey: string;
+      readonly sessionId: string;
+      readonly turnId: string;
+      readonly type: "turn.cancelled" | "turn.completed";
+    }
+  | {
+      readonly error?: unknown;
+      readonly idempotencyKey: string;
+      readonly sessionId: string;
+      readonly turnId: string;
+      readonly type: "turn.failed";
+    };
+
+export interface EveProviderModelCallStartedEvent {
+  readonly idempotencyKey: string;
+  readonly input?: EveInstrumentationModelInput;
+  readonly model: {
+    readonly modelId: string;
+    readonly provider: string;
+  };
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "model.call.started";
+}
+
+export type EveProviderContentPart =
+  | { readonly text: string; readonly type: "text" }
+  | { readonly text: string; readonly type: "reasoning" }
+  | {
+      readonly callId: string;
+      readonly input: unknown;
+      readonly toolName: string;
+      readonly type: "tool-call";
+    }
+  | {
+      readonly callId: string;
+      readonly input: unknown;
+      readonly output: unknown;
+      readonly toolName: string;
+      readonly type: "tool-result";
+    }
+  | {
+      readonly callId: string;
+      readonly error: unknown;
+      readonly input: unknown;
+      readonly toolName: string;
+      readonly type: "tool-error";
+    };
+
+export interface EveProviderUsage {
+  readonly inputTokenDetails?: {
+    readonly cacheReadTokens?: number;
+    readonly cacheWriteTokens?: number;
+  };
+  readonly inputTokens?: number;
+  readonly outputTokens?: number;
+}
+
+export type EveProviderModelCallTerminalEvent =
+  | {
+      readonly content?: readonly EveProviderContentPart[];
+      readonly finishReason: string;
+      readonly idempotencyKey: string;
+      readonly scope: EveInstrumentationAttemptScope;
+      readonly type: "model.call.completed";
+      readonly usage: EveProviderUsage;
+    }
+  | {
+      readonly error?: unknown;
+      readonly idempotencyKey: string;
+      readonly scope: EveInstrumentationAttemptScope;
+      readonly type: "model.call.failed";
+    };
+
+export type EveProviderActionKind =
+  | "load-skill"
+  | "remote-agent-call"
+  | "subagent-call"
+  | "tool-call";
+
+export interface EveProviderActionStartedEvent {
+  readonly callId: string;
+  readonly idempotencyKey: string;
+  readonly input?: unknown;
+  readonly kind: EveProviderActionKind;
+  readonly name: string;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "action.started";
+}
+
+export type EveProviderActionTerminalEvent =
+  | {
+      readonly acceptedAtMs?: number;
+      readonly idempotencyKey: string;
+      readonly outcome: "completed";
+      readonly output:
+        | { readonly output?: unknown; readonly type: "result" }
+        | { readonly error?: unknown; readonly type: "error" };
+      readonly scope: EveInstrumentationAttemptScope;
+      readonly type: "action.completed";
+      readonly usage?: EveProviderUsage;
+    }
+  | {
+      readonly acceptedAtMs?: number;
+      readonly error?: unknown;
+      readonly errorCode?: string;
+      readonly idempotencyKey: string;
+      readonly outcome: "abandoned" | "cancelled" | "failed" | "rejected";
+      readonly scope: EveInstrumentationAttemptScope;
+      readonly type: "action.failed";
+    };
+
+export type EveProviderStepAttemptTerminalEvent = {
+  readonly error?: unknown;
+  readonly idempotencyKey: string;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "step.attempt.completed" | "step.attempt.failed";
+};
+
+type EveProviderHandler<TEvent> = (
+  event: TEvent,
+  context: EveProviderContext,
+) => void | PromiseLike<void>;
+
+export interface EveProviderDefinition {
+  readonly capture?: "content" | "metadata";
+  readonly events?: {
+    readonly "action.completed"?: EveProviderHandler<EveProviderActionTerminalEvent>;
+    readonly "action.failed"?: EveProviderHandler<EveProviderActionTerminalEvent>;
+    readonly "action.started"?: EveProviderHandler<EveProviderActionStartedEvent>;
+    readonly "model.call.completed"?: EveProviderHandler<EveProviderModelCallTerminalEvent>;
+    readonly "model.call.failed"?: EveProviderHandler<EveProviderModelCallTerminalEvent>;
+    readonly "model.call.started"?: EveProviderHandler<EveProviderModelCallStartedEvent>;
+    readonly "step.attempt.completed"?: EveProviderHandler<EveProviderStepAttemptTerminalEvent>;
+    readonly "step.attempt.failed"?: EveProviderHandler<EveProviderStepAttemptTerminalEvent>;
+    readonly "turn.cancelled"?: EveProviderHandler<EveProviderTurnTerminalEvent>;
+    readonly "turn.completed"?: EveProviderHandler<EveProviderTurnTerminalEvent>;
+    readonly "turn.failed"?: EveProviderHandler<EveProviderTurnTerminalEvent>;
+    readonly "turn.started"?: EveProviderHandler<EveProviderTurnStartedEvent>;
+  };
+  readonly flush?: () => void | PromiseLike<void>;
+  readonly setup?: (
+    context: EveProviderSetupContext,
+  ) => void | PromiseLike<void>;
+  readonly shutdown?: () => void | PromiseLike<void>;
 }

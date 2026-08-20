@@ -507,6 +507,118 @@
           }
         },
         {
+          "name": "openai-stream-multiple-choices-operation",
+          "children": [
+            {
+              "name": "Chat Completion",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Return two streamed choices with two weather tool calls each.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "tool_calls",
+                  "index": 0,
+                  "logprobs": null,
+                  "message": {
+                    "role": "assistant",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": "{\"location\":\"Boston\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:1>",
+                        "type": "function"
+                      },
+                      {
+                        "function": {
+                          "arguments": "{\"location\":\"Paris\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:2>",
+                        "type": "function"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "finish_reason": "tool_calls",
+                  "index": 1,
+                  "logprobs": null,
+                  "message": {
+                    "role": "assistant",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": "{\"location\":\"Tokyo\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:3>",
+                        "type": "function"
+                      },
+                      {
+                        "function": {
+                          "arguments": "{\"location\":\"Rome\"}",
+                          "name": "get_weather"
+                        },
+                        "id": "<span:4>",
+                        "type": "function"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "max_tokens": 12,
+                "model": "gpt-4o-mini-2024-07-18",
+                "n": 2,
+                "parallel_tool_calls": true,
+                "provider": "openai",
+                "stream": true,
+                "temperature": 0,
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the weather for a location",
+                      "name": "get_weather",
+                      "parameters": {
+                        "properties": {
+                          "location": {
+                            "description": "The location to get weather for",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "location"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-multiple-choices",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
           "name": "openai-parse-operation",
           "children": [
             {

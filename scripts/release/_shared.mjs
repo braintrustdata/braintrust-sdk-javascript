@@ -15,6 +15,10 @@ export const DOCS_HOMEPAGE = "https://www.braintrust.dev/docs";
 export const PUBLISHABLE_PACKAGES = [
   { dir: "js", name: "braintrust" },
   { dir: "integrations/browser-js", name: "@braintrust/browser" },
+  {
+    dir: "integrations/deepseek-harness",
+    name: "@braintrust/deepseek-harness",
+  },
   { dir: "integrations/langchain-js", name: "@braintrust/langchain-js" },
   { dir: "integrations/openai-agents-js", name: "@braintrust/openai-agents" },
   { dir: "integrations/otel-js", name: "@braintrust/otel" },

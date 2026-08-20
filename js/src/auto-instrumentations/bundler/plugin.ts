@@ -4,7 +4,7 @@ import { extname, isAbsolute, join, sep } from "path";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import moduleDetailsFromPath from "module-details-from-path";
-import { getDefaultInstrumentationConfigs } from "../configs/all";
+import { getDefaultAutoInstrumentationConfigs } from "../configs/all";
 import { applySpecialCasePatch } from "../loader/special-case-patches";
 import { getPackageName } from "../loader/get-package-version";
 
@@ -57,9 +57,9 @@ function getModuleVersion(basedir: string): string | undefined {
 export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
   const browser =
     options.browser ?? options.useDiagnosticChannelCompatShim ?? false;
-  const allInstrumentations = getDefaultInstrumentationConfigs({
-    additionalInstrumentations: options.instrumentations,
-  });
+  const allInstrumentations = getDefaultAutoInstrumentationConfigs(
+    options.instrumentations,
+  );
 
   // Create the code transformer instrumentor
   const instrumentationMatcher = create(allInstrumentations);

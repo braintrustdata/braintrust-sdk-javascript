@@ -34,26 +34,40 @@ export interface PromptKey {
   id?: string;
 }
 
+export type PromptMemoryCacheEntry = {
+  value: Prompt;
+  resolvedOrgIdentity?: string;
+};
+
+export type PromptDiskCacheEntry = {
+  value: ReturnType<Prompt["_internalSerializeForCache"]>;
+  resolvedOrgIdentity?: string;
+};
+
 /**
  * Creates a unique cache key from prompt key.
  * @param key - The prompt key to convert into a cache key.
  * @returns A string that uniquely identifies the prompt in the cache.
  * @throws {Error} If neither projectId nor projectName is provided (when not using id).
  */
-function createCacheKey(key: PromptKey): string {
+function createCacheKey(key: PromptKey, namespace?: string): string {
+  let cacheKey: string;
   if (key.id) {
     // When caching by ID, we don't need project or slug
-    return `id:${key.id}`;
+    cacheKey = `id:${key.id}`;
+  } else {
+    const prefix = key.projectId ?? key.projectName;
+    if (!prefix) {
+      throw new Error("Either projectId or projectName must be provided");
+    }
+    if (!key.slug) {
+      throw new Error("Slug must be provided when not using ID");
+    }
+    cacheKey = `${prefix}:${key.slug}:${key.version ?? "latest"}`;
   }
-
-  const prefix = key.projectId ?? key.projectName;
-  if (!prefix) {
-    throw new Error("Either projectId or projectName must be provided");
-  }
-  if (!key.slug) {
-    throw new Error("Slug must be provided when not using ID");
-  }
-  return `${prefix}:${key.slug}:${key.version ?? "latest"}`;
+  return namespace === undefined
+    ? cacheKey
+    : `${namespace.length}:${namespace}:${cacheKey}`;
 }
 
 /**
@@ -62,15 +76,37 @@ function createCacheKey(key: PromptKey): string {
  * This cache can use either layer independently, both layers together, or no layers.
  */
 export class PromptCache {
-  private readonly memoryCache?: LRUCache<string, Prompt>;
-  private readonly diskCache?: DiskCache<Prompt>;
+  private readonly memoryCache?: LRUCache<string, PromptMemoryCacheEntry>;
+  private readonly diskCache?: DiskCache<PromptDiskCacheEntry>;
+  private readonly namespace?: string;
+  private readonly expectedResolvedOrgIdentity?: string;
 
   constructor(options: {
-    memoryCache?: LRUCache<string, Prompt>;
-    diskCache?: DiskCache<Prompt>;
+    memoryCache?: LRUCache<string, PromptMemoryCacheEntry>;
+    diskCache?: DiskCache<PromptDiskCacheEntry>;
+    namespace?: string;
+    expectedResolvedOrgIdentity?: string;
   }) {
     this.memoryCache = options.memoryCache;
     this.diskCache = options.diskCache;
+    this.namespace = options.namespace;
+    this.expectedResolvedOrgIdentity = options.expectedResolvedOrgIdentity;
+  }
+
+  /**
+   * Returns a cache view that shares the same storage layers but isolates all
+   * entries under the provided namespace.
+   */
+  withNamespace(
+    namespace: string,
+    expectedResolvedOrgIdentity?: string,
+  ): PromptCache {
+    return new PromptCache({
+      memoryCache: this.memoryCache,
+      diskCache: this.diskCache,
+      namespace,
+      expectedResolvedOrgIdentity,
+    });
   }
 
   /**
@@ -78,24 +114,37 @@ export class PromptCache {
    * First checks the in-memory LRU cache, then falls back to checking the disk cache if available.
    */
   async get(key: PromptKey): Promise<Prompt | undefined> {
-    const cacheKey = createCacheKey(key);
-
-    // First check memory cache.
+    const cacheKey = createCacheKey(key, this.namespace);
     if (this.memoryCache) {
-      const memoryPrompt = this.memoryCache.get(cacheKey);
-      if (memoryPrompt !== undefined) {
-        return memoryPrompt;
+      const memoryEntry = this.memoryCache.get(cacheKey);
+      if (
+        memoryEntry !== undefined &&
+        (this.expectedResolvedOrgIdentity === undefined ||
+          memoryEntry.resolvedOrgIdentity === this.expectedResolvedOrgIdentity)
+      ) {
+        return memoryEntry.value;
       }
     }
 
-    // If not in memory and disk cache exists, check disk cache.
     if (this.diskCache) {
-      const diskPrompt = await this.diskCache.get(cacheKey);
-      if (!diskPrompt) {
+      const diskEntry = await this.diskCache.get(cacheKey);
+      if (
+        !diskEntry ||
+        (this.expectedResolvedOrgIdentity !== undefined &&
+          diskEntry.resolvedOrgIdentity !== this.expectedResolvedOrgIdentity)
+      ) {
         return undefined;
       }
-      // Store in memory cache if available.
-      this.memoryCache?.set(cacheKey, diskPrompt);
+      const serializedPrompt = diskEntry.value;
+      const diskPrompt = new Prompt(
+        serializedPrompt.metadata,
+        serializedPrompt.defaults,
+        serializedPrompt.noTrace,
+      );
+      this.memoryCache?.set(cacheKey, {
+        value: diskPrompt,
+        resolvedOrgIdentity: diskEntry.resolvedOrgIdentity,
+      });
       return diskPrompt;
     }
 
@@ -111,14 +160,17 @@ export class PromptCache {
    * @throws If there is an error writing to the disk cache.
    */
   async set(key: PromptKey, value: Prompt): Promise<void> {
-    const cacheKey = createCacheKey(key);
-
-    // Update memory cache if available.
-    this.memoryCache?.set(cacheKey, value);
-
-    // Update disk cache if available.
+    const cacheKey = createCacheKey(key, this.namespace);
+    const memoryEntry = {
+      value,
+      resolvedOrgIdentity: this.expectedResolvedOrgIdentity,
+    };
+    this.memoryCache?.set(cacheKey, memoryEntry);
     if (this.diskCache) {
-      await this.diskCache.set(cacheKey, value);
+      await this.diskCache.set(cacheKey, {
+        value: value._internalSerializeForCache(),
+        resolvedOrgIdentity: this.expectedResolvedOrgIdentity,
+      });
     }
   }
 }
