@@ -14,6 +14,13 @@ export type ChannelConfig = {
   type: string;
 };
 
+/** Preserve tracing for custom/older Span implementations that lack the query. */
+export function isSpanRecording(span: Span): boolean {
+  return (
+    (span as Span & { isRecording?: () => boolean }).isRecording?.() ?? true
+  );
+}
+
 function hasChannelSpanInfo(
   value: unknown,
 ): value is SpanInfoCarrier & { span_info: ChannelSpanInfo } {

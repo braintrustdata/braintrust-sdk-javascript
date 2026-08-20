@@ -92,6 +92,10 @@ export const spanComponentsV4Schema = z
   .object({
     object_type: spanObjectTypeV3EnumSchema,
     propagated_event: z.record(z.unknown()).nullish(),
+    trace_flags: z
+      .string()
+      .regex(/^[0-9a-fA-F]{2}$/)
+      .optional(),
   })
   .and(
     z.union([
@@ -134,6 +138,7 @@ export class SpanComponentsV4 {
       compute_object_metadata_args:
         this.data.compute_object_metadata_args || undefined,
       propagated_event: this.data.propagated_event || undefined,
+      trace_flags: this.data.trace_flags || undefined,
     };
 
     // Filter out undefined values
@@ -215,6 +220,7 @@ export class SpanComponentsV4 {
         jsonObj["span_id"] = v3Components.data.span_id;
         jsonObj["root_span_id"] = v3Components.data.root_span_id;
         jsonObj["propagated_event"] = v3Components.data.propagated_event;
+        jsonObj["trace_flags"] = v3Components.data.trace_flags;
       } else {
         // V4 binary format
         jsonObj["object_type"] = rawBytes[1];

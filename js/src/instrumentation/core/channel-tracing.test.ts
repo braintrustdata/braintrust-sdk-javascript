@@ -203,6 +203,43 @@ describe("traceAsyncChannel current span binding", () => {
     expect(spans).toHaveLength(0);
   });
 
+  it("preserves execution context while skipping extraction for a non-recording span", async () => {
+    initLogger({
+      projectName: "channel-tracing-sampled-out",
+      projectId: "test-project-id",
+      sampleRate: 0,
+    });
+    const extractInput = vi.fn(() => ({ input: "input", metadata: undefined }));
+    const extractOutput = vi.fn((result) => result);
+    const extractMetrics = vi.fn(() => ({}));
+    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
+      name: "channel-tracing-sampled-out",
+      type: "function",
+      extractInput,
+      extractOutput,
+      extractMetrics,
+    });
+
+    try {
+      await testChannels.asyncCall.tracePromise(
+        async () => {
+          expect(currentSpan().isRecording()).toBe(false);
+          await Promise.resolve();
+          expect(currentSpan().isRecording()).toBe(false);
+          return { ok: true as const };
+        },
+        { arguments: [{}] } as any,
+      );
+    } finally {
+      unsubscribe();
+    }
+
+    expect(extractInput).not.toHaveBeenCalled();
+    expect(extractOutput).not.toHaveBeenCalled();
+    expect(extractMetrics).not.toHaveBeenCalled();
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+  });
+
   it("uses debug logging when shouldTrace throws", async () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")

@@ -60,11 +60,24 @@ function isValidSpanContext(spanContext: unknown): boolean {
  * retrieval by getCurrentSpan().
  */
 function buildBtOtelContext(span: Span): unknown {
-  const btSpan = span as { spanId: string; rootSpanId: string };
+  const btSpan = span as {
+    spanId: string;
+    rootSpanId: string;
+    _getTraceFlags?: () => string;
+    isRecording?: () => boolean;
+  };
+  const traceFlags =
+    typeof btSpan._getTraceFlags === "function"
+      ? parseInt(btSpan._getTraceFlags(), 16)
+      : typeof btSpan.isRecording === "function"
+        ? btSpan.isRecording()
+          ? 1
+          : 0
+        : 1;
   const spanContext = {
     traceId: btSpan.rootSpanId,
     spanId: btSpan.spanId,
-    traceFlags: 1, // sampled
+    traceFlags,
   };
   const wrappedSpan = otelTrace.wrapSpanContext(spanContext);
   const currentContext = otelContext.active();
@@ -150,6 +163,7 @@ export class OtelContextManager extends ContextManager {
       return {
         rootSpanId: typedBtSpan.rootSpanId,
         spanParents: [typedBtSpan.spanId],
+        traceFlags: spanContext.traceFlags.toString(16).padStart(2, "0"),
       };
     }
 
@@ -159,6 +173,7 @@ export class OtelContextManager extends ContextManager {
     return {
       rootSpanId: otelTraceId,
       spanParents: [otelSpanId],
+      traceFlags: spanContext.traceFlags.toString(16).padStart(2, "0"),
     };
   }
 

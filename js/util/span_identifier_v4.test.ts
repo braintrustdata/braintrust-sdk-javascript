@@ -82,6 +82,19 @@ describe("SpanComponentsV4", () => {
         originalData.propagated_event,
       );
     });
+
+    test("preserves an optional raw trace-flags byte", () => {
+      const serialized = new SpanComponentsV4({
+        object_type: SpanObjectTypeV3.PROJECT_LOGS,
+        object_id: "project-123",
+        row_id: "row-456",
+        span_id: "fedcba0987654321",
+        root_span_id: "0123456789abcdef0123456789abcdef",
+        trace_flags: "02",
+      }).toStr();
+
+      expect(SpanComponentsV4.fromStr(serialized).data.trace_flags).toBe("02");
+    });
   });
 
   describe("Hex string compression", () => {

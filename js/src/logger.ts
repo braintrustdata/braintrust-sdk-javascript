@@ -29,6 +29,12 @@ import {
   parseTraceparent,
 } from "./propagation";
 import {
+  isTraceFlagsSampled,
+  normalizeTraceFlags,
+  shouldSampleTraceId,
+  validateSampleRate,
+} from "./sampling";
+import {
   _urljoin,
   AnyDatasetRecord,
   AUDIT_METADATA_FIELD,
@@ -209,6 +215,8 @@ const InlineAttachmentReferenceSchema = z.object({
 export interface ContextParentSpanIds {
   rootSpanId: string;
   spanParents: string[];
+  /** Raw W3C trace-flags from the selected parent, when available. */
+  traceFlags?: string;
 }
 
 export class LoginInvalidOrgError extends Error {
@@ -285,6 +293,10 @@ const RESUME_SPAN_WITHOUT_INITIAL_WRITE = Symbol(
   "braintrust.resume-span-without-initial-write",
 );
 const INTERNAL_SPAN_CONTEXT = Symbol("braintrust.internal-span-context");
+const LOGGER_SAMPLE_RATE = Symbol("braintrust.logger-sample-rate");
+
+const loggerSampleRates = new WeakMap<object, number>();
+const spanDefaultSampleRates = new WeakMap<object, number>();
 
 type InitialSpanWriteAsMergeArg = {
   readonly [INITIAL_SPAN_WRITE_AS_MERGE]?: true;
@@ -294,6 +306,28 @@ type InitialSpanWriteAsMergeArg = {
 type InternalSpanContextArg = {
   readonly [INTERNAL_SPAN_CONTEXT]?: Record<string, unknown>;
 };
+
+type InternalLoggerSampleRateArg = {
+  readonly [LOGGER_SAMPLE_RATE]?: number;
+};
+
+type ResolvedPropagatedState = Readonly<
+  Omit<PropagatedState, "traceFlags"> & { traceFlags: string }
+>;
+
+function validateStartSpanSampleRate(args?: StartSpanArgs): void {
+  if (args?.sampleRate !== undefined) {
+    validateSampleRate(args.sampleRate);
+  }
+}
+
+function getLoggerSampleRate(logger: object): number {
+  return loggerSampleRates.get(logger) ?? 1;
+}
+
+function getSpanDefaultSampleRate(span: object): number {
+  return spanDefaultSampleRates.get(span) ?? 1;
+}
 
 export type StartSpanArgs = {
   name?: string;
@@ -311,6 +345,11 @@ export type StartSpanArgs = {
   propagatedEvent?: StartSpanEventArgs;
   spanId?: string;
   parentSpanIds?: ParentSpanIds | MultiParentSpanIds;
+  /**
+   * Sampling rate for a newly-created project-log trace. Existing parent
+   * decisions always win, so this never resamples a child.
+   */
+  sampleRate?: number;
 };
 
 export type EndSpanArgs = {
@@ -330,6 +369,8 @@ export interface Exportable {
  * We suggest using one of the various `traced` methods, instead of creating Spans directly. See {@link Span.traced} for full details.
  */
 export interface Span extends Exportable {
+  /** Whether this span records trace data, rather than only carrying context. */
+  isRecording(): boolean;
   /**
    * Row ID of the span.
    */
@@ -556,9 +597,13 @@ class BraintrustContextManager extends ContextManager {
       return undefined;
     }
 
+    const traceCarrier = currentSpan as Span & {
+      _getTraceFlags?: () => string;
+    };
     return {
       rootSpanId: currentSpan.rootSpanId,
       spanParents: [currentSpan.spanId],
+      traceFlags: traceCarrier._getTraceFlags?.(),
     };
   }
 
@@ -620,12 +665,17 @@ export class NoopSpan implements Span {
 
   public log(_: ExperimentLogPartialArgs) {}
 
+  public isRecording(): boolean {
+    return false;
+  }
+
   public logFeedback(_event: Omit<LogFeedbackFullArgs, "id">) {}
 
   public traced<R>(
     callback: (span: Span) => R,
-    _1?: StartSpanArgs & SetCurrentArg,
+    args?: StartSpanArgs & SetCurrentArg,
   ): R {
+    validateStartSpanSampleRate(args);
     return callback(this);
   }
 
@@ -633,7 +683,8 @@ export class NoopSpan implements Span {
     return undefined;
   }
 
-  public startSpan(_1?: StartSpanArgs) {
+  public startSpan(args?: StartSpanArgs) {
+    validateStartSpanSampleRate(args);
     return this;
   }
 
@@ -672,8 +723,9 @@ export class NoopSpan implements Span {
   public startSpanWithParents(
     _spanId: string,
     _spanParents: string[],
-    _args?: StartSpanArgs,
+    args?: StartSpanArgs,
   ): Span {
+    validateStartSpanSampleRate(args);
     return this;
   }
 
@@ -2511,6 +2563,7 @@ export function _internalResumeSpan({
     propagatedEvent: (components.data.propagated_event ?? undefined) as
       | StartSpanEventArgs
       | undefined,
+    propagatedState: { traceFlags: components.data.trace_flags },
     [RESUME_SPAN_WITHOUT_INITIAL_WRITE]: true,
   });
 }
@@ -2761,10 +2814,13 @@ function startSpanParentArgs(args: {
         | StartSpanEventArgs
         | undefined);
     const propagatedState = args.propagatedState ?? parentPropagatedState;
-    if (propagatedState) {
+    if (propagatedState || parentComponents.data.trace_flags) {
       const { braintrustParent: _ignoredBraintrustParent, ...w3cState } =
-        propagatedState;
-      argPropagatedState = w3cState;
+        propagatedState ?? {};
+      argPropagatedState = {
+        ...w3cState,
+        traceFlags: parentComponents.data.trace_flags ?? w3cState.traceFlags,
+      };
     }
   } else {
     argParentObjectId = args.parentObjectId;
@@ -2829,6 +2885,11 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
 
   public get loggingState(): BraintrustState {
     return this.state;
+  }
+
+  /** The immutable default sampling rate for new project-log roots. */
+  public get sampleRate(): number {
+    return getLoggerSampleRate(this);
   }
 
   private parentObjectType() {
@@ -2922,6 +2983,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
    * See {@link traced} for full details.
    */
   public startSpan(args?: StartSpanArgs): Span {
+    validateStartSpanSampleRate(args);
     this.calledStartSpan = true;
     return this.startSpanImpl(args);
   }
@@ -2932,6 +2994,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
       // Sometimes `args` gets passed directly into this function, and it contains an undefined value for `state`.
       // To ensure that we always use this logger's state, we override the `state` argument no matter what.
       state: this.state,
+      [LOGGER_SAMPLE_RATE]: this.sampleRate,
       ...startSpanParentArgs({
         state: this.state,
         parent: args?.parent,
@@ -4958,6 +5021,8 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
   setCurrent?: boolean;
   state?: BraintrustState;
   orgProjectMetadata?: OrgProjectMetadata;
+  /** Fraction of new project-log traces to record. Defaults to 1. */
+  sampleRate?: number;
 } & AsyncFlushArg<IsAsyncFlush>;
 
 /**
@@ -4979,6 +5044,11 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
 export function initLogger<IsAsyncFlush extends boolean = true>(
   options: Readonly<InitLoggerOptions<IsAsyncFlush>> = {},
 ) {
+  const configuredSampleRate = options?.sampleRate;
+  const sampleRate =
+    configuredSampleRate === undefined
+      ? 1
+      : validateSampleRate(configuredSampleRate);
   const {
     projectName,
     projectId,
@@ -5035,6 +5105,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
     computeMetadataArgs,
     linkArgs,
   });
+  loggerSampleRates.set(ret, sampleRate);
   if (options.setCurrent ?? true) {
     state.currentLogger = ret as Logger<false>;
   }
@@ -5866,7 +5937,7 @@ function getSpanParentObjectAndPropagatedState<IsAsyncFlush extends boolean>(
     };
   }
 
-  const experiment = currentExperiment();
+  const experiment = currentExperiment({ state });
   if (experiment) {
     return { parentObject: experiment, propagatedState: undefined };
   }
@@ -6769,6 +6840,7 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
     OptionalStateArg &
     InternalSpanContextArg,
 ): { span: Span; isSyncFlushLogger: boolean } {
+  validateStartSpanSampleRate(args);
   const state = args?.state ?? _globalState;
 
   // Resolve the parent object and any forwarded W3C state in one pass, so we
@@ -6815,7 +6887,11 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
         ((parentObject.data.propagated_event ?? undefined) as
           | StartSpanEventArgs
           | undefined),
-      propagatedState,
+      propagatedState: {
+        ...(propagatedState ?? {}),
+        traceFlags:
+          parentObject.data.trace_flags ?? propagatedState?.traceFlags,
+      },
     });
     return {
       span,
@@ -7653,6 +7729,7 @@ export class Experiment
    * See {@link traced} for full details.
    */
   public startSpan(args?: StartSpanArgs): Span {
+    validateStartSpanSampleRate(args);
     this.calledStartSpan = true;
     return this.startSpanImpl(args);
   }
@@ -7946,6 +8023,8 @@ interface ResolvedSpanIds {
   spanId: string;
   rootSpanId: string;
   spanParents: string[] | undefined;
+  isRoot: boolean;
+  traceFlags: string | undefined;
 }
 
 /**
@@ -7979,6 +8058,8 @@ function _resolveSpanIds(
         "parentSpanIds" in parentSpanIds
           ? parentSpanIds.parentSpanIds
           : [parentSpanIds.spanId],
+      isRoot: false,
+      traceFlags: undefined,
     };
   }
 
@@ -7990,6 +8071,8 @@ function _resolveSpanIds(
         spanId: resolvedSpanId,
         rootSpanId: parentInfo.rootSpanId,
         spanParents: parentInfo.spanParents,
+        isRoot: false,
+        traceFlags: parentInfo.traceFlags,
       };
     }
   }
@@ -8011,6 +8094,8 @@ function _resolveSpanIds(
     spanId: resolvedSpanId,
     rootSpanId: resolvedRootSpanId,
     spanParents: undefined,
+    isRoot: true,
+    traceFlags: undefined,
   };
 }
 
@@ -8036,12 +8121,10 @@ export class SpanImpl implements Span {
   private _rootSpanId: string;
   private _spanParents: string[] | undefined;
 
-  // Inbound W3C trace-context state (tracestate + raw traceparent flags) to
-  // forward on outbound propagation. Captured at the span that received it (via
-  // extractTraceContextFromHeaders) and inherited by all subspans, so that any
-  // inject() within the trace re-emits the upstream state unchanged, per the W3C
-  // Trace Context spec. Not interpreted.
-  private _propagatedState: PropagatedState | undefined;
+  // Canonical W3C propagation state for this trace. Its flags byte is both
+  // forwarded unchanged and the sole source of the native recording decision.
+  private readonly _propagatedState: ResolvedPropagatedState;
+  private readonly _recording: boolean;
 
   public kind = "span" as const;
 
@@ -8057,10 +8140,11 @@ export class SpanImpl implements Span {
       propagatedState?: PropagatedState | undefined;
     } & Omit<StartSpanArgs, "parent"> &
       InitialSpanWriteAsMergeArg &
-      InternalSpanContextArg,
+      InternalSpanContextArg &
+      InternalLoggerSampleRateArg,
   ) {
+    validateStartSpanSampleRate(args);
     this._state = args.state;
-    this._propagatedState = args.propagatedState;
     const instrumentationName =
       getSpanInstrumentationName(args) ??
       INSTRUMENTATION_NAMES.BRAINTRUST_JS_LOGGER;
@@ -8132,10 +8216,32 @@ export class SpanImpl implements Span {
     this._rootSpanId = resolvedIds.rootSpanId;
     this._spanParents = resolvedIds.spanParents;
 
+    const inheritedTraceFlags =
+      args.propagatedState?.traceFlags ?? resolvedIds.traceFlags;
+    const traceFlags = resolvedIds.isRoot
+      ? this.parentObjectType === SpanObjectTypeV3.PROJECT_LOGS
+        ? shouldSampleTraceId(
+            this._rootSpanId,
+            args.sampleRate ?? args[LOGGER_SAMPLE_RATE] ?? 1,
+          )
+          ? "01"
+          : "00"
+        : "01"
+      : normalizeTraceFlags(inheritedTraceFlags, { warnOnInvalid: true });
+    this._propagatedState = {
+      ...(args.propagatedState ?? {}),
+      traceFlags,
+    };
+    this._recording = isTraceFlagsSampled(traceFlags);
+    spanDefaultSampleRates.set(
+      this,
+      args[LOGGER_SAMPLE_RATE] ?? getSpanDefaultSampleRate(this),
+    );
+
     // Deterministic spans can be initialized concurrently by separate
     // workflow executions, so their first write must not replace later merges.
     this.isMerge = args[INITIAL_SPAN_WRITE_AS_MERGE] === true;
-    if (!args[RESUME_SPAN_WITHOUT_INITIAL_WRITE]) {
+    if (this._recording && !args[RESUME_SPAN_WITHOUT_INITIAL_WRITE]) {
       this.logInternal({ event, internalData });
     }
     this.isMerge = true;
@@ -8155,6 +8261,15 @@ export class SpanImpl implements Span {
     return this._id;
   }
 
+  public isRecording(): boolean {
+    return this._recording;
+  }
+
+  /** @internal Used by the optional OTel bridge and native context manager. */
+  public _getTraceFlags(): string {
+    return this._propagatedState.traceFlags;
+  }
+
   public get spanId(): string {
     return this._spanId;
   }
@@ -8168,7 +8283,8 @@ export class SpanImpl implements Span {
   }
 
   public setAttributes(args: Omit<StartSpanArgs, "event">): void {
-    this.logInternal({ internalData: { span_attributes: args } });
+    const { sampleRate: _ignoredSampleRate, ...spanAttributes } = args;
+    this.logInternal({ internalData: { span_attributes: spanAttributes } });
   }
 
   public setSpanParents(parents: string[]): void {
@@ -8188,6 +8304,7 @@ export class SpanImpl implements Span {
     // set of fields which we want to log in just one of the span rows.
     internalData?: Partial<ExperimentEvent>;
   }): void {
+    if (!this._recording) return;
     const [serializableInternalData, lazyInternalData] = splitLoggingData({
       event,
       internalData,
@@ -8250,6 +8367,7 @@ export class SpanImpl implements Span {
   }
 
   public logFeedback(event: Omit<LogFeedbackFullArgs, "id">): void {
+    if (!this._recording) return;
     logFeedbackImpl(this._state, this.parentObjectType, this.parentObjectId, {
       ...event,
       id: this.id,
@@ -8285,6 +8403,7 @@ export class SpanImpl implements Span {
     return new SpanImpl({
       state: this._state,
       ...args,
+      [LOGGER_SAMPLE_RATE]: getSpanDefaultSampleRate(this),
       ...startSpanParentArgs({
         state: this._state,
         parent: args?.parent,
@@ -8310,6 +8429,7 @@ export class SpanImpl implements Span {
     return new SpanImpl({
       state: this._state,
       ...args,
+      [LOGGER_SAMPLE_RATE]: getSpanDefaultSampleRate(this),
       ...startSpanParentArgs({
         state: this._state,
         parent: args?.parent,
@@ -8339,7 +8459,9 @@ export class SpanImpl implements Span {
 
   public async export(): Promise<string> {
     // Disable span cache since remote function spans won't be in the local cache
-    this._state.spanCache.disable();
+    if (this._recording) {
+      this._state.spanCache.disable();
+    }
 
     return new (getSpanComponentsClass())({
       object_type: this.parentObjectType,
@@ -8352,6 +8474,7 @@ export class SpanImpl implements Span {
       span_id: this._spanId,
       root_span_id: this._rootSpanId,
       propagated_event: this.propagatedEvent,
+      trace_flags: this._propagatedState.traceFlags,
     }).toStr();
   }
 
@@ -8404,12 +8527,18 @@ export class SpanImpl implements Span {
   }
 
   public async permalink(): Promise<string> {
+    if (!this._recording) {
+      return NOOP_SPAN_PERMALINK;
+    }
     return await permalink(await this.export(), {
       state: this._state,
     });
   }
 
   public link(): string {
+    if (!this._recording) {
+      return NOOP_SPAN_PERMALINK;
+    }
     if (!this.id) {
       return NOOP_SPAN_PERMALINK;
     }

@@ -88,6 +88,10 @@ export const spanComponentsV3Schema = z
     // `propagated_event`. This will required zod-ifying the contents of
     // sdk/js/util/object.ts.
     propagated_event: z.record(z.unknown()).nullish(),
+    trace_flags: z
+      .string()
+      .regex(/^[0-9a-fA-F]{2}$/)
+      .optional(),
   })
   .and(
     z.union([
@@ -128,6 +132,7 @@ export class SpanComponentsV3 {
       compute_object_metadata_args:
         this.data.compute_object_metadata_args || undefined,
       propagated_event: this.data.propagated_event || undefined,
+      trace_flags: this.data.trace_flags || undefined,
     };
     const allBuffers: Array<Uint8Array> = [];
     allBuffers.push(

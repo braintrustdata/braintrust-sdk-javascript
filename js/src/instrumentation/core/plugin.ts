@@ -7,6 +7,7 @@ import type { Span } from "../../logger";
 import { getCurrentUnixTimestamp } from "../../util";
 import {
   buildStartSpanArgs,
+  isSpanRecording,
   mergeInputMetadata,
 } from "./channel-tracing-utils";
 
@@ -122,6 +123,15 @@ export abstract class BasePlugin {
 
         const { span, startTime } = spanData;
 
+        if (!isSpanRecording(span)) {
+          span.end();
+          spans.delete(event);
+          return;
+        }
+
+        if (!isSpanRecording(span)) {
+          return;
+        }
         try {
           const output = config.extractOutput(event.result, event);
           const metrics = config.extractMetrics(event.result, startTime, event);

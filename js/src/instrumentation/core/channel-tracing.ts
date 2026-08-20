@@ -26,6 +26,7 @@ import type {
 import { isAsyncIterable, patchStreamIfNeeded } from "./stream-patcher";
 import {
   buildStartSpanArgs,
+  isSpanRecording,
   mergeInputMetadata,
   type ChannelConfig,
 } from "./channel-tracing-utils";
@@ -218,18 +219,20 @@ function startSpanForEvent<
   }
   const startTime = getCurrentUnixTimestamp();
 
-  try {
-    const { input, metadata } = config.extractInput(
-      event.arguments,
-      event as StartOf<TChannel>,
-      span,
-    );
-    span.log({
-      input,
-      metadata: mergeInputMetadata(metadata, spanInfoMetadata),
-    });
-  } catch (error) {
-    debugLogger.error(`Error extracting input for ${channelName}:`, error);
+  if (isSpanRecording(span)) {
+    try {
+      const { input, metadata } = config.extractInput(
+        event.arguments,
+        event as StartOf<TChannel>,
+        span,
+      );
+      span.log({
+        input,
+        metadata: mergeInputMetadata(metadata, spanInfoMetadata),
+      });
+    } catch (error) {
+      debugLogger.error(`Error extracting input for ${channelName}:`, error);
+    }
   }
 
   return { span, startTime };
@@ -479,6 +482,12 @@ export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
       const asyncEndEvent = event as AsyncEndOf<TChannel>;
       const { span, startTime } = spanData;
 
+      if (!isSpanRecording(span)) {
+        span.end();
+        states.delete(event as object);
+        return;
+      }
+
       try {
         const output = config.extractOutput(
           asyncEndEvent.result,
@@ -560,6 +569,29 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
 
       const asyncEndEvent = event as AsyncEndOf<TChannel>;
       const { span, startTime } = spanData;
+
+      if (!isSpanRecording(span)) {
+        if (isAsyncIterable(asyncEndEvent.result)) {
+          patchStreamIfNeeded(asyncEndEvent.result, {
+            onComplete: () => {
+              span.end();
+              states.delete(event as object);
+            },
+            onError: () => {
+              span.end();
+              states.delete(event as object);
+            },
+            onCancel: () => {
+              span.end();
+              states.delete(event as object);
+            },
+          });
+        } else {
+          span.end();
+          states.delete(event as object);
+        }
+        return;
+      }
 
       if (isAsyncIterable(asyncEndEvent.result)) {
         let firstChunkTime: number | undefined;
