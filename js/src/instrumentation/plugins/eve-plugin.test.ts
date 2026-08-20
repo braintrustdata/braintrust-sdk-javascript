@@ -244,8 +244,6 @@ describe("braintrustEveInstrumentation", () => {
     await provider.events["turn.completed"](
       {
         idempotencyKey: "turn:session-root:turn-0",
-        rootSessionId: "session-root",
-        sequence: 0,
         sessionId: "session-root",
         turnId: "turn-0",
         type: "turn.completed",
