@@ -21,39 +21,37 @@ import {
 } from "../core/channel-tracing";
 import { ollamaChannels } from "./ollama-channels";
 
-class OllamaInstrumentationConsumer {
-  public register(): void {
-    traceStreamingChannel(ollamaChannels.chat, {
-      name: "ollama.chat",
-      type: SpanTypeAttribute.LLM,
-      extractInput: extractOllamaChatInput,
-      extractOutput: (result, event) =>
-        extractOllamaChatOutput(
-          result,
-          countOllamaToolCalls(event?.arguments?.[0]?.messages),
-        ),
-      extractMetadata: extractOllamaResponseMetadata,
-      extractMetrics: extractOllamaMetrics,
-      aggregateChunks: aggregateOllamaChatChunks,
-    });
-    traceStreamingChannel(ollamaChannels.generate, {
-      name: "ollama.generate",
-      type: SpanTypeAttribute.LLM,
-      extractInput: extractOllamaGenerateInput,
-      extractOutput: extractOllamaGenerateOutput,
-      extractMetadata: extractOllamaResponseMetadata,
-      extractMetrics: extractOllamaMetrics,
-      aggregateChunks: aggregateOllamaGenerateChunks,
-    });
-    traceAsyncChannel(ollamaChannels.embed, {
-      name: "ollama.embed",
-      type: SpanTypeAttribute.LLM,
-      extractInput: extractOllamaEmbedInput,
-      extractOutput: extractOllamaEmbedOutput,
-      extractMetadata: extractOllamaResponseMetadata,
-      extractMetrics: extractOllamaMetrics,
-    });
-  }
+export function registerOllamaInstrumentation(): void {
+  traceStreamingChannel(ollamaChannels.chat, {
+    name: "ollama.chat",
+    type: SpanTypeAttribute.LLM,
+    extractInput: extractOllamaChatInput,
+    extractOutput: (result, event) =>
+      extractOllamaChatOutput(
+        result,
+        countOllamaToolCalls(event?.arguments?.[0]?.messages),
+      ),
+    extractMetadata: extractOllamaResponseMetadata,
+    extractMetrics: extractOllamaMetrics,
+    aggregateChunks: aggregateOllamaChatChunks,
+  });
+  traceStreamingChannel(ollamaChannels.generate, {
+    name: "ollama.generate",
+    type: SpanTypeAttribute.LLM,
+    extractInput: extractOllamaGenerateInput,
+    extractOutput: extractOllamaGenerateOutput,
+    extractMetadata: extractOllamaResponseMetadata,
+    extractMetrics: extractOllamaMetrics,
+    aggregateChunks: aggregateOllamaGenerateChunks,
+  });
+  traceAsyncChannel(ollamaChannels.embed, {
+    name: "ollama.embed",
+    type: SpanTypeAttribute.LLM,
+    extractInput: extractOllamaEmbedInput,
+    extractOutput: extractOllamaEmbedOutput,
+    extractMetadata: extractOllamaResponseMetadata,
+    extractMetrics: extractOllamaMetrics,
+  });
 }
 
 function isNonNegativeNumber(value: unknown): value is number {
@@ -608,13 +606,6 @@ export function aggregateOllamaChatChunks(
     metrics: extractOllamaMetrics(last ?? {}),
     metadata: extractOllamaResponseMetadata(last ?? {}),
   };
-}
-
-let ollamaInstrumentationConsumer: OllamaInstrumentationConsumer | undefined;
-
-export function registerOllamaInstrumentation(): void {
-  ollamaInstrumentationConsumer ??= new OllamaInstrumentationConsumer();
-  ollamaInstrumentationConsumer.register();
 }
 
 export function aggregateOllamaGenerateChunks(

@@ -16,89 +16,87 @@ const CLOUDFLARE_WORKERS_CONTEXT = {
   },
 };
 
-class CloudflareAgentsInstrumentationConsumer {
-  public register(): void {
-    const channel = cloudflareAgentsChannels.runAgentTool.tracingChannel();
-    const spans = new WeakMap<object, Span>();
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof cloudflareAgentsChannels.runAgentTool>
-    > = {
-      start: (event) => {
-        try {
-          const agentClass = event.arguments[0];
-          const options = event.arguments[1];
-          if (ownValue(options, "detached")) {
-            return;
-          }
+export function registerCloudflareAgentsInstrumentation(): void {
+  const channel = cloudflareAgentsChannels.runAgentTool.tracingChannel();
+  const spans = new WeakMap<object, Span>();
+  const handlers: IsoChannelHandlers<
+    ChannelMessage<typeof cloudflareAgentsChannels.runAgentTool>
+  > = {
+    start: (event) => {
+      try {
+        const agentClass = event.arguments[0];
+        const options = event.arguments[1];
+        if (ownValue(options, "detached")) {
+          return;
+        }
 
-          const name = ownValue(agentClass, "name");
-          if (typeof name !== "string" || name.length === 0) {
-            debugLogger.warn(
-              "Skipping Cloudflare Agents runAgentTool span because the child agent class has no name.",
-            );
-            return;
-          }
-
-          const span = _internalStartSpanWithContext(
-            withSpanInstrumentationName(
-              {
-                name,
-                spanAttributes: { type: SpanTypeAttribute.TOOL },
-                event: {
-                  input: ownValue(options, "input"),
-                },
-              },
-              INSTRUMENTATION_NAMES.CLOUDFLARE_AGENTS,
-            ),
-            CLOUDFLARE_WORKERS_CONTEXT,
+        const name = ownValue(agentClass, "name");
+        if (typeof name !== "string" || name.length === 0) {
+          debugLogger.warn(
+            "Skipping Cloudflare Agents runAgentTool span because the child agent class has no name.",
           );
-          spans.set(event, span);
-        } catch (error) {
-          logInstrumentationError("start", error);
-        }
-      },
-      asyncEnd: (event) => {
-        const span = spans.get(event);
-        if (!span) {
           return;
         }
-        spans.delete(event);
 
-        try {
-          const status = ownValue(event.result, "status");
-          if (status === "completed") {
-            span.log({ output: ownValue(event.result, "output") });
-          } else {
-            const error = ownValue(event.result, "error");
-            if (typeof error === "string") {
-              span.log({ error });
-            }
+        const span = _internalStartSpanWithContext(
+          withSpanInstrumentationName(
+            {
+              name,
+              spanAttributes: { type: SpanTypeAttribute.TOOL },
+              event: {
+                input: ownValue(options, "input"),
+              },
+            },
+            INSTRUMENTATION_NAMES.CLOUDFLARE_AGENTS,
+          ),
+          CLOUDFLARE_WORKERS_CONTEXT,
+        );
+        spans.set(event, span);
+      } catch (error) {
+        logInstrumentationError("start", error);
+      }
+    },
+    asyncEnd: (event) => {
+      const span = spans.get(event);
+      if (!span) {
+        return;
+      }
+      spans.delete(event);
+
+      try {
+        const status = ownValue(event.result, "status");
+        if (status === "completed") {
+          span.log({ output: ownValue(event.result, "output") });
+        } else {
+          const error = ownValue(event.result, "error");
+          if (typeof error === "string") {
+            span.log({ error });
           }
-        } catch (error) {
-          logInstrumentationError("completion", error);
-        } finally {
-          safelyEndSpan(span);
         }
-      },
-      error: (event) => {
-        const span = spans.get(event);
-        if (!span) {
-          return;
-        }
-        spans.delete(event);
+      } catch (error) {
+        logInstrumentationError("completion", error);
+      } finally {
+        safelyEndSpan(span);
+      }
+    },
+    error: (event) => {
+      const span = spans.get(event);
+      if (!span) {
+        return;
+      }
+      spans.delete(event);
 
-        try {
-          span.log({ error: event.error });
-        } catch (error) {
-          logInstrumentationError("rejection", error);
-        } finally {
-          safelyEndSpan(span);
-        }
-      },
-    };
+      try {
+        span.log({ error: event.error });
+      } catch (error) {
+        logInstrumentationError("rejection", error);
+      } finally {
+        safelyEndSpan(span);
+      }
+    },
+  };
 
-    channel.subscribe(handlers);
-  }
+  channel.subscribe(handlers);
 }
 
 function ownValue(value: unknown, key: PropertyKey): unknown {
@@ -128,14 +126,4 @@ function logInstrumentationError(operation: string, error: unknown): void {
     `Failed to process Cloudflare Agents ${operation} instrumentation:`,
     error,
   );
-}
-
-let cloudflareAgentsInstrumentationConsumer:
-  | CloudflareAgentsInstrumentationConsumer
-  | undefined;
-
-export function registerCloudflareAgentsInstrumentation(): void {
-  cloudflareAgentsInstrumentationConsumer ??=
-    new CloudflareAgentsInstrumentationConsumer();
-  cloudflareAgentsInstrumentationConsumer.register();
 }

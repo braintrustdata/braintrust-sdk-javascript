@@ -24,15 +24,13 @@ import {
   getBedrockRuntimeOperation,
 } from "./bedrock-runtime-common";
 
-class BedrockRuntimeInstrumentationConsumer {
-  public register(): void {
-    for (const channel of [
-      bedrockRuntimeChannels.clientSend,
-      smithyCoreChannels.clientSend,
-      smithyClientChannels.clientSend,
-    ]) {
-      traceBedrockRuntimeClientSendChannel(channel);
-    }
+export function registerBedrockRuntimeInstrumentation(): void {
+  for (const channel of [
+    bedrockRuntimeChannels.clientSend,
+    smithyCoreChannels.clientSend,
+    smithyClientChannels.clientSend,
+  ]) {
+    traceBedrockRuntimeClientSendChannel(channel);
   }
 }
 
@@ -798,14 +796,4 @@ function extractTextFromJsonLike(value: unknown): string {
   }
 
   return "";
-}
-
-let bedrockRuntimeInstrumentationConsumer:
-  | BedrockRuntimeInstrumentationConsumer
-  | undefined;
-
-export function registerBedrockRuntimeInstrumentation(): void {
-  bedrockRuntimeInstrumentationConsumer ??=
-    new BedrockRuntimeInstrumentationConsumer();
-  bedrockRuntimeInstrumentationConsumer.register();
 }

@@ -26,36 +26,34 @@ const RERANK_METADATA_ALLOWLIST = new Set([
   "truncation",
 ]);
 
-class VoyageAIInstrumentationConsumer {
-  public register(): void {
-    interceptVoyageAICall(
-      voyageAIChannels.embed,
-      "voyageai.embed",
-      extractTextEmbeddingInput,
-      summarizeEmbeddingOutput,
-      extractEmbeddingUsageMetrics,
-    );
-    interceptVoyageAICall(
-      voyageAIChannels.multimodalEmbed,
-      "voyageai.multimodalEmbed",
-      extractMultimodalEmbeddingInput,
-      summarizeEmbeddingOutput,
-      extractEmbeddingUsageMetrics,
-    );
-    interceptVoyageAICall(
-      voyageAIChannels.rerank,
-      "voyageai.rerank",
-      extractRerankInput,
-      summarizeRerankOutput,
-    );
-    interceptVoyageAICall(
-      voyageAIChannels.contextualizedEmbed,
-      "voyageai.contextualizedEmbed",
-      extractContextualizedEmbeddingInput,
-      summarizeContextualizedEmbeddingOutput,
-      extractEmbeddingUsageMetrics,
-    );
-  }
+export function registerVoyageAIInstrumentation(): void {
+  interceptVoyageAICall(
+    voyageAIChannels.embed,
+    "voyageai.embed",
+    extractTextEmbeddingInput,
+    summarizeEmbeddingOutput,
+    extractEmbeddingUsageMetrics,
+  );
+  interceptVoyageAICall(
+    voyageAIChannels.multimodalEmbed,
+    "voyageai.multimodalEmbed",
+    extractMultimodalEmbeddingInput,
+    summarizeEmbeddingOutput,
+    extractEmbeddingUsageMetrics,
+  );
+  interceptVoyageAICall(
+    voyageAIChannels.rerank,
+    "voyageai.rerank",
+    extractRerankInput,
+    summarizeRerankOutput,
+  );
+  interceptVoyageAICall(
+    voyageAIChannels.contextualizedEmbed,
+    "voyageai.contextualizedEmbed",
+    extractContextualizedEmbeddingInput,
+    summarizeContextualizedEmbeddingOutput,
+    extractEmbeddingUsageMetrics,
+  );
 }
 
 type VoyageAIResult =
@@ -447,13 +445,10 @@ function extractUsageMetrics(result: VoyageAIResult): Record<string, number> {
   const rawResponse = isObject(result.rawResponse)
     ? result.rawResponse
     : undefined;
-  const usage = (
-    isObject(result.usage)
-      ? result.usage
-      : isObject(rawResponse?.usage)
-        ? rawResponse.usage
-        : undefined
-  ) as VoyageAIUsage | undefined;
+  const usageValue = isObject(result.usage) ? result.usage : rawResponse?.usage;
+  const usage = isObject(usageValue)
+    ? (usageValue as VoyageAIUsage)
+    : undefined;
   const tokens =
     typeof result.totalTokens === "number"
       ? result.totalTokens
@@ -462,13 +457,4 @@ function extractUsageMetrics(result: VoyageAIResult): Record<string, number> {
   return typeof tokens === "number" && Number.isFinite(tokens) && tokens >= 0
     ? { tokens }
     : {};
-}
-
-let voyageAIInstrumentationConsumer:
-  | VoyageAIInstrumentationConsumer
-  | undefined;
-
-export function registerVoyageAIInstrumentation(): void {
-  voyageAIInstrumentationConsumer ??= new VoyageAIInstrumentationConsumer();
-  voyageAIInstrumentationConsumer.register();
 }

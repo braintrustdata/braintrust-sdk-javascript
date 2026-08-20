@@ -20,273 +20,261 @@ import type {
   OpenAIResponseStreamEvent,
 } from "../../vendor-sdk-types/openai";
 
-/**
- * Internal instrumentation consumer for the OpenAI SDK.
- *
- * Handles instrumentation for:
- * - Chat completions (streaming and non-streaming)
- * - Embeddings
- * - Moderations
- * - Beta API (parse, stream)
- * - Responses API (create, stream, parse, compact)
- */
-class OpenAIInstrumentationConsumer {
-  public register(): void {
-    // Chat Completions - supports streaming
-    traceStreamingChannel(openAIChannels.chatCompletionsCreate, {
-      name: "Chat Completion",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { messages, ...metadata } = params;
-        return {
-          input: processInputAttachments(messages),
-          metadata: { ...metadata, provider: "openai" },
-        };
-      },
-      extractOutput: (result) => {
-        return result?.choices;
-      },
-      extractMetrics: (result, startTime, endEvent) => {
-        const metrics = withCachedMetric(
-          parseMetricsFromUsage(result?.usage),
-          result,
-          endEvent,
-        );
-        if (startTime) {
-          metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-        }
-        return metrics;
-      },
-      aggregateChunks: aggregateChatCompletionChunks,
-    });
+export function registerOpenAIInstrumentation(): void {
+  // Chat Completions - supports streaming
+  traceStreamingChannel(openAIChannels.chatCompletionsCreate, {
+    name: "Chat Completion",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { messages, ...metadata } = params;
+      return {
+        input: processInputAttachments(messages),
+        metadata: { ...metadata, provider: "openai" },
+      };
+    },
+    extractOutput: (result) => {
+      return result?.choices;
+    },
+    extractMetrics: (result, startTime, endEvent) => {
+      const metrics = withCachedMetric(
+        parseMetricsFromUsage(result?.usage),
+        result,
+        endEvent,
+      );
+      if (startTime) {
+        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
+      }
+      return metrics;
+    },
+    aggregateChunks: aggregateChatCompletionChunks,
+  });
 
-    // Embeddings
-    traceAsyncChannel(openAIChannels.embeddingsCreate, {
-      name: "Embedding",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { input, ...metadata } = params;
-        return {
-          input,
-          metadata: { ...metadata, provider: "openai" },
-        };
-      },
-      extractOutput: (result) => {
-        const embedding = result?.data?.[0]?.embedding;
-        return Array.isArray(embedding)
-          ? { embedding_length: embedding.length }
-          : undefined;
-      },
-      extractMetrics: (result, _startTime, endEvent) => {
-        return withCachedMetric(
-          parseMetricsFromUsage(result?.usage),
-          result,
-          endEvent,
-        );
-      },
-    });
+  // Embeddings
+  traceAsyncChannel(openAIChannels.embeddingsCreate, {
+    name: "Embedding",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { input, ...metadata } = params;
+      return {
+        input,
+        metadata: { ...metadata, provider: "openai" },
+      };
+    },
+    extractOutput: (result) => {
+      const embedding = result?.data?.[0]?.embedding;
+      return Array.isArray(embedding)
+        ? { embedding_length: embedding.length }
+        : undefined;
+    },
+    extractMetrics: (result, _startTime, endEvent) => {
+      return withCachedMetric(
+        parseMetricsFromUsage(result?.usage),
+        result,
+        endEvent,
+      );
+    },
+  });
 
-    // Beta Chat Completions Parse
-    traceStreamingChannel(openAIChannels.betaChatCompletionsParse, {
-      name: "Chat Completion",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { messages, ...metadata } = params;
-        return {
-          input: processInputAttachments(messages),
-          metadata: { ...metadata, provider: "openai" },
-        };
-      },
-      extractOutput: (result) => {
-        return result?.choices;
-      },
-      extractMetrics: (result, startTime, endEvent) => {
-        const metrics = withCachedMetric(
-          parseMetricsFromUsage(result?.usage),
-          result,
-          endEvent,
-        );
-        if (startTime) {
-          metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-        }
-        return metrics;
-      },
-      aggregateChunks: aggregateChatCompletionChunks,
-    });
+  // Beta Chat Completions Parse
+  traceStreamingChannel(openAIChannels.betaChatCompletionsParse, {
+    name: "Chat Completion",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { messages, ...metadata } = params;
+      return {
+        input: processInputAttachments(messages),
+        metadata: { ...metadata, provider: "openai" },
+      };
+    },
+    extractOutput: (result) => {
+      return result?.choices;
+    },
+    extractMetrics: (result, startTime, endEvent) => {
+      const metrics = withCachedMetric(
+        parseMetricsFromUsage(result?.usage),
+        result,
+        endEvent,
+      );
+      if (startTime) {
+        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
+      }
+      return metrics;
+    },
+    aggregateChunks: aggregateChatCompletionChunks,
+  });
 
-    // Beta Chat Completions Stream (sync method returning event-based stream)
-    traceSyncStreamChannel(openAIChannels.betaChatCompletionsStream, {
-      name: "Chat Completion",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { messages, ...metadata } = params;
-        return {
-          input: processInputAttachments(messages),
-          metadata: { ...metadata, provider: "openai" },
-        };
-      },
-    });
+  // Beta Chat Completions Stream (sync method returning event-based stream)
+  traceSyncStreamChannel(openAIChannels.betaChatCompletionsStream, {
+    name: "Chat Completion",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { messages, ...metadata } = params;
+      return {
+        input: processInputAttachments(messages),
+        metadata: { ...metadata, provider: "openai" },
+      };
+    },
+  });
 
-    // Moderations
-    traceAsyncChannel(openAIChannels.moderationsCreate, {
-      name: "Moderation",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { input, ...metadata } = params;
-        return {
-          input,
-          metadata: { ...metadata, provider: "openai" },
-        };
-      },
-      extractOutput: (result) => {
-        return result?.results;
-      },
-      extractMetrics: (result, _startTime, endEvent) => {
-        return withCachedMetric(
-          parseMetricsFromUsage(result?.usage),
-          result,
-          endEvent,
-        );
-      },
-    });
+  // Moderations
+  traceAsyncChannel(openAIChannels.moderationsCreate, {
+    name: "Moderation",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { input, ...metadata } = params;
+      return {
+        input,
+        metadata: { ...metadata, provider: "openai" },
+      };
+    },
+    extractOutput: (result) => {
+      return result?.results;
+    },
+    extractMetrics: (result, _startTime, endEvent) => {
+      return withCachedMetric(
+        parseMetricsFromUsage(result?.usage),
+        result,
+        endEvent,
+      );
+    },
+  });
 
-    // Responses API - create (supports streaming via stream=true param)
-    traceStreamingChannel(openAIChannels.responsesCreate, {
-      name: "openai.responses.create",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { input, ...metadata } = params;
-        return {
-          input: processInputAttachments(input),
-          metadata: { ...metadata, provider: "openai" },
-        };
-      },
-      extractOutput: (result) => {
-        return processImagesInOutput(result?.output);
-      },
-      extractMetadata: (result) => {
-        if (!result) {
-          return undefined;
-        }
-        const { output: _output, usage: _usage, ...metadata } = result;
-        return Object.keys(metadata).length > 0 ? metadata : undefined;
-      },
-      extractMetrics: (result, startTime, endEvent) => {
-        const metrics = withCachedMetric(
-          parseMetricsFromUsage(result?.usage),
-          result,
-          endEvent,
-        );
-        if (startTime) {
-          metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-        }
-        return metrics;
-      },
-      aggregateChunks: aggregateResponseStreamEvents,
-    });
+  // Responses API - create (supports streaming via stream=true param)
+  traceStreamingChannel(openAIChannels.responsesCreate, {
+    name: "openai.responses.create",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { input, ...metadata } = params;
+      return {
+        input: processInputAttachments(input),
+        metadata: { ...metadata, provider: "openai" },
+      };
+    },
+    extractOutput: (result) => {
+      return processImagesInOutput(result?.output);
+    },
+    extractMetadata: (result) => {
+      if (!result) {
+        return undefined;
+      }
+      const { output: _output, usage: _usage, ...metadata } = result;
+      return Object.keys(metadata).length > 0 ? metadata : undefined;
+    },
+    extractMetrics: (result, startTime, endEvent) => {
+      const metrics = withCachedMetric(
+        parseMetricsFromUsage(result?.usage),
+        result,
+        endEvent,
+      );
+      if (startTime) {
+        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
+      }
+      return metrics;
+    },
+    aggregateChunks: aggregateResponseStreamEvents,
+  });
 
-    // Responses API - stream (sync method returning event-based stream)
-    traceSyncStreamChannel(openAIChannels.responsesStream, {
-      name: "openai.responses.create",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { input, ...metadata } = params;
-        return {
-          input: processInputAttachments(input),
-          metadata: { ...metadata, provider: "openai" },
-        };
-      },
-      extractFromEvent: (event) => {
-        if (event.type !== "response.completed" || !event.response) {
-          return {};
-        }
+  // Responses API - stream (sync method returning event-based stream)
+  traceSyncStreamChannel(openAIChannels.responsesStream, {
+    name: "openai.responses.create",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { input, ...metadata } = params;
+      return {
+        input: processInputAttachments(input),
+        metadata: { ...metadata, provider: "openai" },
+      };
+    },
+    extractFromEvent: (event) => {
+      if (event.type !== "response.completed" || !event.response) {
+        return {};
+      }
 
-        const response = event.response;
-        const data: Record<string, unknown> = {};
+      const response = event.response;
+      const data: Record<string, unknown> = {};
 
-        if (response.output !== undefined) {
-          data.output = processImagesInOutput(response.output);
-        }
+      if (response.output !== undefined) {
+        data.output = processImagesInOutput(response.output);
+      }
 
-        const { usage: _usage, output: _output, ...metadata } = response;
-        if (Object.keys(metadata).length > 0) {
-          data.metadata = metadata;
-        }
+      const { usage: _usage, output: _output, ...metadata } = response;
+      if (Object.keys(metadata).length > 0) {
+        data.metadata = metadata;
+      }
 
-        data.metrics = parseMetricsFromUsage(response.usage);
-        return data;
-      },
-    });
+      data.metrics = parseMetricsFromUsage(response.usage);
+      return data;
+    },
+  });
 
-    // Responses API - parse
-    traceStreamingChannel(openAIChannels.responsesParse, {
-      name: "openai.responses.parse",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { input, ...metadata } = params;
-        return {
-          input: processInputAttachments(input),
-          metadata: { ...metadata, provider: "openai" },
-        };
-      },
-      extractOutput: (result) => {
-        return processImagesInOutput(result?.output);
-      },
-      extractMetadata: (result) => {
-        if (!result) {
-          return undefined;
-        }
-        const { output: _output, usage: _usage, ...metadata } = result;
-        return Object.keys(metadata).length > 0 ? metadata : undefined;
-      },
-      extractMetrics: (result, startTime, endEvent) => {
-        const metrics = withCachedMetric(
-          parseMetricsFromUsage(result?.usage),
-          result,
-          endEvent,
-        );
-        if (startTime) {
-          metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-        }
-        return metrics;
-      },
-      aggregateChunks: aggregateResponseStreamEvents,
-    });
+  // Responses API - parse
+  traceStreamingChannel(openAIChannels.responsesParse, {
+    name: "openai.responses.parse",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { input, ...metadata } = params;
+      return {
+        input: processInputAttachments(input),
+        metadata: { ...metadata, provider: "openai" },
+      };
+    },
+    extractOutput: (result) => {
+      return processImagesInOutput(result?.output);
+    },
+    extractMetadata: (result) => {
+      if (!result) {
+        return undefined;
+      }
+      const { output: _output, usage: _usage, ...metadata } = result;
+      return Object.keys(metadata).length > 0 ? metadata : undefined;
+    },
+    extractMetrics: (result, startTime, endEvent) => {
+      const metrics = withCachedMetric(
+        parseMetricsFromUsage(result?.usage),
+        result,
+        endEvent,
+      );
+      if (startTime) {
+        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
+      }
+      return metrics;
+    },
+    aggregateChunks: aggregateResponseStreamEvents,
+  });
 
-    // Responses API - compact
-    traceAsyncChannel(openAIChannels.responsesCompact, {
-      name: "openai.responses.compact",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { input, ...metadata } = params;
-        return {
-          input: processInputAttachments(input),
-          metadata: { ...metadata, provider: "openai" },
-        };
-      },
-      extractOutput: (result) => {
-        return processImagesInOutput(result?.output);
-      },
-      extractMetadata: (result) => {
-        if (!result) {
-          return undefined;
-        }
-        const { output: _output, usage: _usage, ...metadata } = result;
-        return Object.keys(metadata).length > 0 ? metadata : undefined;
-      },
-      extractMetrics: (result, startTime, endEvent) => {
-        const metrics = withCachedMetric(
-          parseMetricsFromUsage(result?.usage),
-          result,
-          endEvent,
-        );
-        if (startTime) {
-          metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-        }
-        return metrics;
-      },
-    });
-  }
+  // Responses API - compact
+  traceAsyncChannel(openAIChannels.responsesCompact, {
+    name: "openai.responses.compact",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { input, ...metadata } = params;
+      return {
+        input: processInputAttachments(input),
+        metadata: { ...metadata, provider: "openai" },
+      };
+    },
+    extractOutput: (result) => {
+      return processImagesInOutput(result?.output);
+    },
+    extractMetadata: (result) => {
+      if (!result) {
+        return undefined;
+      }
+      const { output: _output, usage: _usage, ...metadata } = result;
+      return Object.keys(metadata).length > 0 ? metadata : undefined;
+    },
+    extractMetrics: (result, startTime, endEvent) => {
+      const metrics = withCachedMetric(
+        parseMetricsFromUsage(result?.usage),
+        result,
+        endEvent,
+      );
+      if (startTime) {
+        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
+      }
+      return metrics;
+    },
+  });
 }
 
 function getCachedMetricFromEndEvent(endEvent: unknown): number | undefined {
@@ -583,10 +571,3 @@ function aggregateResponseStreamEvents(
 }
 
 export { parseMetricsFromUsage };
-
-let openAIInstrumentationConsumer: OpenAIInstrumentationConsumer | undefined;
-
-export function registerOpenAIInstrumentation(): void {
-  openAIInstrumentationConsumer ??= new OpenAIInstrumentationConsumer();
-  openAIInstrumentationConsumer.register();
-}

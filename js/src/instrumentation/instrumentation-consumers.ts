@@ -28,31 +28,12 @@ import { registerCloudflareAIChatInstrumentation } from "./providers/cloudflare-
 import { registerCloudflareAgentsInstrumentation } from "./providers/cloudflare-agents-instrumentation";
 import type { InstrumentationConfig } from "./config";
 
-/**
- * Internal coordinator for all AI provider instrumentation consumers.
- *
- * This coordinator enables consumers for:
- * - OpenAI SDK (chat completions, embeddings, etc.)
- * - Anthropic SDK (messages)
- * - Claude Agent SDK (agent interactions)
- * - Vercel AI SDK (generateText, streamText, etc.)
- * - Google GenAI SDK
- * - HuggingFace Inference SDK
- * - LangChain.js and LangGraph
- * - Mistral SDK
- * - Ollama SDK
- * - Cohere SDK
- * - Voyage AI SDK
- *
- * The coordinator is automatically enabled when the Braintrust library is loaded.
- * Individual integrations can be disabled via configuration.
- */
+/** Registers the configured process-lifetime instrumentation consumers. */
 export function registerInstrumentationConsumers(
   config: InstrumentationConfig = {},
 ): void {
   const integrations = config.integrations ?? {};
 
-  // Enable OpenAI integration (default: true)
   if (integrations.openai !== false) {
     registerOpenAIInstrumentation();
   }
@@ -61,18 +42,15 @@ export function registerInstrumentationConsumers(
     registerOpenAICodexInstrumentation();
   }
 
-  // Enable Anthropic integration (default: true)
   if (integrations.anthropic !== false) {
     registerAnthropicInstrumentation();
   }
 
-  // Enable AI SDK integration (default: true)
   // Support both 'aisdk' and legacy 'vercel' config keys
   if (integrations.aisdk !== false && integrations.vercel !== false) {
     registerAISDKInstrumentation();
   }
 
-  // Enable Claude Agent SDK integration (default: true)
   if (integrations.claudeAgentSDK !== false) {
     registerClaudeAgentSDKInstrumentation();
   }
@@ -85,12 +63,10 @@ export function registerInstrumentationConsumers(
     registerCursorSDKInstrumentation();
   }
 
-  // Enable OpenAI Agents SDK integration (default: true)
   if (integrations.openAIAgents !== false) {
     registerOpenAIAgentsInstrumentation();
   }
 
-  // Enable Google GenAI integration (default: true)
   // Support both 'googleGenAI' and legacy 'google' config keys
   if (integrations.googleGenAI !== false && integrations.google !== false) {
     registerGoogleGenAIInstrumentation();
@@ -117,7 +93,6 @@ export function registerInstrumentationConsumers(
     registerOllamaInstrumentation();
   }
 
-  // Enable Google ADK integration (default: true)
   if (integrations.googleADK !== false) {
     registerGoogleADKInstrumentation();
   }

@@ -15,48 +15,46 @@ import type {
   GroqChatCompletionChunk,
 } from "../../vendor-sdk-types/groq";
 
-class GroqInstrumentationConsumer {
-  public register(): void {
-    traceStreamingChannel(groqChannels.chatCompletionsCreate, {
-      name: "groq.chat.completions.create",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { messages, ...metadata } = params;
-        return {
-          input: processInputAttachments(messages),
-          metadata: { ...metadata, provider: "groq" },
-        };
-      },
-      extractOutput: (result) => result?.choices,
-      extractMetrics: (result, startTime) => {
-        const metrics = parseGroqMetrics(result);
-        if (startTime) {
-          metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-        }
-        return metrics;
-      },
-      aggregateChunks: aggregateGroqChatCompletionChunks,
-    });
+export function registerGroqInstrumentation(): void {
+  traceStreamingChannel(groqChannels.chatCompletionsCreate, {
+    name: "groq.chat.completions.create",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { messages, ...metadata } = params;
+      return {
+        input: processInputAttachments(messages),
+        metadata: { ...metadata, provider: "groq" },
+      };
+    },
+    extractOutput: (result) => result?.choices,
+    extractMetrics: (result, startTime) => {
+      const metrics = parseGroqMetrics(result);
+      if (startTime) {
+        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
+      }
+      return metrics;
+    },
+    aggregateChunks: aggregateGroqChatCompletionChunks,
+  });
 
-    traceAsyncChannel(groqChannels.embeddingsCreate, {
-      name: "groq.embeddings.create",
-      type: SpanTypeAttribute.LLM,
-      extractInput: ([params]) => {
-        const { input, ...metadata } = params;
-        return {
-          input,
-          metadata: { ...metadata, provider: "groq" },
-        };
-      },
-      extractOutput: (result) => {
-        const embedding = result?.data?.[0]?.embedding;
-        return Array.isArray(embedding)
-          ? { embedding_length: embedding.length }
-          : undefined;
-      },
-      extractMetrics: (result) => parseGroqMetrics(result),
-    });
-  }
+  traceAsyncChannel(groqChannels.embeddingsCreate, {
+    name: "groq.embeddings.create",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { input, ...metadata } = params;
+      return {
+        input,
+        metadata: { ...metadata, provider: "groq" },
+      };
+    },
+    extractOutput: (result) => {
+      const embedding = result?.data?.[0]?.embedding;
+      return Array.isArray(embedding)
+        ? { embedding_length: embedding.length }
+        : undefined;
+    },
+    extractMetrics: (result) => parseGroqMetrics(result),
+  });
 }
 
 export function parseGroqMetrics(
@@ -137,11 +135,4 @@ function aggregateGroqReasoning(
   }
 
   return reasoning.length > 0 ? reasoning : undefined;
-}
-
-let groqInstrumentationConsumer: GroqInstrumentationConsumer | undefined;
-
-export function registerGroqInstrumentation(): void {
-  groqInstrumentationConsumer ??= new GroqInstrumentationConsumer();
-  groqInstrumentationConsumer.register();
 }
