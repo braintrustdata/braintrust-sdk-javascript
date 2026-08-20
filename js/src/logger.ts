@@ -194,6 +194,7 @@ import {
   getSpanInstrumentationName,
   INSTRUMENTATION_NAMES,
   mergeSpanOriginContext,
+  SDK_VERSION,
   type SpanOriginEnvironment,
 } from "./span-origin";
 
@@ -1576,6 +1577,11 @@ class HTTPConnection {
   // As far as I can tell, you cannot set the retry/backoff factor here
   _reset() {
     this.headers = {};
+    // Identifies SDK-originated traffic so the backend can attribute object
+    // creation to the TS SDK. Ignored by browsers (User-Agent is a forbidden
+    // header there), which is acceptable since the SDK is primarily used
+    // server-side.
+    this.headers["User-Agent"] = `braintrust-ts/${SDK_VERSION}`;
     if (this.token) {
       this.headers["Authorization"] = `Bearer ${this.token}`;
     }
