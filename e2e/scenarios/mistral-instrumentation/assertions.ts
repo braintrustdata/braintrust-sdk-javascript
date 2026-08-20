@@ -143,17 +143,13 @@ function summarizeOutput(output: unknown): Json {
 
     const message = firstChoice.message;
     const finishReason =
-      typeof firstChoice.finishReason === "string" ||
-      firstChoice.finishReason === null
-        ? firstChoice.finishReason
-        : typeof firstChoice.finish_reason === "string" ||
-            firstChoice.finish_reason === null
-          ? firstChoice.finish_reason
-          : null;
-    const toolCalls =
-      (Array.isArray(message.tool_calls) && message.tool_calls) ||
-      (Array.isArray(message.toolCalls) && message.toolCalls) ||
-      [];
+      typeof firstChoice.finish_reason === "string" ||
+      firstChoice.finish_reason === null
+        ? firstChoice.finish_reason
+        : null;
+    const toolCalls = Array.isArray(message.tool_calls)
+      ? message.tool_calls
+      : [];
     const contentParts = Array.isArray(message.content) ? message.content : [];
     const contentPartTypes = contentParts
       .map((part) =>
@@ -166,9 +162,7 @@ function summarizeOutput(output: unknown): Json {
       has_content:
         typeof message.content === "string"
           ? message.content.length > 0
-          : contentPartTypes.includes("text")
-            ? true
-            : false,
+          : contentPartTypes.includes("text"),
       role: typeof message.role === "string" ? message.role : null,
       tool_call_count: toolCalls.length,
       type: "choices",
@@ -308,6 +302,24 @@ function pickOutputSpans<T extends { output?: unknown }>(spans: T[]): T[] {
 }
 
 function snapshotEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
+  const batchFileOperation = findLatestSpan(
+    events,
+    "mistral-batch-file-operation",
+  );
+  const batchFileTask = findChildSpans(
+    events,
+    "mistral.batch",
+    batchFileOperation?.span.id,
+  )[0];
+  const batchInlineOperation = findLatestSpan(
+    events,
+    "mistral-batch-inline-operation",
+  );
+  const batchInlineTask = findChildSpans(
+    events,
+    "mistral.batch",
+    batchInlineOperation?.span.id,
+  )[0];
   const chatCompleteOperation = findLatestSpan(
     events,
     "mistral-chat-complete-operation",
@@ -383,6 +395,16 @@ function snapshotEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
 
   return [
     findLatestSpan(events, ROOT_NAME),
+    batchFileOperation,
+    batchFileTask,
+    ...findChildSpans(events, "mistral.chat.complete", batchFileTask?.span.id),
+    batchInlineOperation,
+    batchInlineTask,
+    ...findChildSpans(
+      events,
+      "mistral.chat.complete",
+      batchInlineTask?.span.id,
+    ),
     chatCompleteOperation,
     findMistralSpan(events, chatCompleteOperation?.span.id, [
       "mistral.chat.complete",
@@ -479,6 +501,7 @@ export function defineMistralInstrumentationAssertions(options: {
   snapshotName: string;
   supportsClassifiers?: boolean;
   supportsClassify?: boolean;
+  supportsInlineBatch?: boolean;
   supportsThinkingStream?: boolean;
   testFileUrl: string;
   timeoutMs: number;
@@ -492,6 +515,7 @@ export function defineMistralInstrumentationAssertions(options: {
   const classifyModel = nonEmptyString(process.env.MISTRAL_CLASSIFIER_MODEL);
   const supportsClassify =
     (options.supportsClassify ?? true) && !!classifyModel;
+  const supportsInlineBatch = options.supportsInlineBatch ?? true;
   const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
   const testConfig = {
     timeout: timeoutMs,
@@ -515,6 +539,90 @@ export function defineMistralInstrumentationAssertions(options: {
         scenario: SCENARIO_NAME,
       });
     });
+
+    test("captures file batch.jobs.create() lifecycle", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(events, "mistral-batch-file-operation");
+      const task = findChildSpans(
+        events,
+        "mistral.batch",
+        operation?.span.id,
+      )[0];
+      const children = findChildSpans(
+        events,
+        "mistral.chat.complete",
+        task?.span.id,
+      );
+
+      expect(operation).toBeDefined();
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(task?.span.type).toBe("task");
+      expect(task?.row.metadata).toMatchObject({ provider: "mistral" });
+      expect(children).toHaveLength(2);
+      for (const child of children) {
+        expect(child.span.type).toBe("llm");
+        expect(child.row.metadata).toMatchObject({
+          model: CHAT_MODEL,
+          provider: "mistral",
+        });
+        expect(child.input).toBeDefined();
+        expect(child.output).toBeDefined();
+        expect(child.metrics).toMatchObject({
+          prompt_tokens: 4,
+          completion_tokens: 1,
+          tokens: 5,
+        });
+      }
+      expect(
+        children.find((child) => Array.isArray(child.row.metadata?.tools))?.row
+          .metadata,
+      ).toMatchObject({
+        tool_choice: "required",
+        parallel_tool_calls: false,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "get_weather",
+              description: "Get weather for a city.",
+              parameters: expect.any(Object),
+            },
+          },
+          {
+            type: "web_search",
+            tool_configuration: { include: ["news"] },
+          },
+        ],
+      });
+    });
+
+    if (supportsInlineBatch) {
+      test("captures inline batch.jobs.create() lifecycle", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "mistral-batch-inline-operation",
+        );
+        const task = findChildSpans(
+          events,
+          "mistral.batch",
+          operation?.span.id,
+        )[0];
+        const children = findChildSpans(
+          events,
+          "mistral.chat.complete",
+          task?.span.id,
+        );
+
+        expect(operation).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(task?.span.type).toBe("task");
+        expect(children).toHaveLength(2);
+        expect(children.every((child) => child.output !== undefined)).toBe(
+          true,
+        );
+      });
+    }
 
     test("captures trace for chat.complete()", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
@@ -667,18 +775,14 @@ export function defineMistralInstrumentationAssertions(options: {
           const output = span.output as
             | Array<{
                 message?: {
-                  toolCalls?: unknown;
                   tool_calls?: unknown;
                 };
               }>
             | undefined;
           const firstChoice = Array.isArray(output) ? output[0] : undefined;
-          const toolCalls =
-            (Array.isArray(firstChoice?.message?.tool_calls) &&
-              firstChoice.message.tool_calls) ||
-            (Array.isArray(firstChoice?.message?.toolCalls) &&
-              firstChoice.message.toolCalls) ||
-            [];
+          const toolCalls = Array.isArray(firstChoice?.message?.tool_calls)
+            ? firstChoice.message.tool_calls
+            : [];
           return [span.span.id, toolCalls.length];
         }),
       );
@@ -689,14 +793,10 @@ export function defineMistralInstrumentationAssertions(options: {
         .map((span) => {
           const output = span.output as
             | Array<{
-                finishReason?: unknown;
                 finish_reason?: unknown;
               }>
             | undefined;
           const firstChoice = Array.isArray(output) ? output[0] : undefined;
-          if (typeof firstChoice?.finishReason === "string") {
-            return firstChoice.finishReason;
-          }
           if (typeof firstChoice?.finish_reason === "string") {
             return firstChoice.finish_reason;
           }
@@ -708,18 +808,14 @@ export function defineMistralInstrumentationAssertions(options: {
           const output = span.output as
             | Array<{
                 message?: {
-                  toolCalls?: unknown;
                   tool_calls?: unknown;
                 };
               }>
             | undefined;
           const firstChoice = Array.isArray(output) ? output[0] : undefined;
-          const toolCalls =
-            (Array.isArray(firstChoice?.message?.tool_calls) &&
-              firstChoice.message.tool_calls) ||
-            (Array.isArray(firstChoice?.message?.toolCalls) &&
-              firstChoice.message.toolCalls) ||
-            [];
+          const toolCalls = Array.isArray(firstChoice?.message?.tool_calls)
+            ? firstChoice.message.tool_calls
+            : [];
 
           return toolCalls
             .map((toolCall) => {
@@ -825,7 +921,7 @@ export function defineMistralInstrumentationAssertions(options: {
       expect(span?.span.type).toBe("llm");
       expect(metadata).toMatchObject({
         provider: "mistral",
-        agentId: expect.any(String),
+        agent_id: expect.any(String),
       });
       if (typeof metadata?.model === "string") {
         expect(metadata.model).toBe(AGENT_MODEL);
@@ -855,18 +951,14 @@ export function defineMistralInstrumentationAssertions(options: {
           const output = span.output as
             | Array<{
                 message?: {
-                  toolCalls?: unknown;
                   tool_calls?: unknown;
                 };
               }>
             | undefined;
           const firstChoice = Array.isArray(output) ? output[0] : undefined;
-          const toolCalls =
-            (Array.isArray(firstChoice?.message?.tool_calls) &&
-              firstChoice.message.tool_calls) ||
-            (Array.isArray(firstChoice?.message?.toolCalls) &&
-              firstChoice.message.toolCalls) ||
-            [];
+          const toolCalls = Array.isArray(firstChoice?.message?.tool_calls)
+            ? firstChoice.message.tool_calls
+            : [];
           return toolCalls.length > 0;
         });
 
@@ -904,7 +996,7 @@ export function defineMistralInstrumentationAssertions(options: {
       expect(span?.span.type).toBe("llm");
       expect(metadata).toMatchObject({
         provider: "mistral",
-        agentId: expect.any(String),
+        agent_id: expect.any(String),
       });
       if (typeof metadata?.model === "string") {
         expect(metadata.model).toBe(AGENT_MODEL);

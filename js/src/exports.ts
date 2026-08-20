@@ -129,6 +129,27 @@ export {
 
 export { registerSandbox } from "./sandbox";
 
+export {
+  completeMistralBatchTrace,
+  failMistralBatchTrace,
+  startMistralBatchTrace,
+} from "./mistral-batch";
+export type {
+  CompleteMistralBatchTraceArgs,
+  FailMistralBatchTraceArgs,
+  MistralBatchCreateInputParams,
+  MistralBatchCreateParams,
+  MistralBatchCollectionContext,
+  MistralBatchFileLike,
+  MistralBatchInput,
+  MistralBatchInputFileContent,
+  MistralBatchJSONLSource,
+  MistralBatchLike,
+  MistralBatchTraceCollection,
+  MistralBatchRequestLike,
+  StartMistralBatchTraceArgs,
+} from "./mistral-batch-types";
+
 // Internal isomorph layer for platform-specific implementations
 import _internalIso from "./isomorph";
 export { _internalIso };

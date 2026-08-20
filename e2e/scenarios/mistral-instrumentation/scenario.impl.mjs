@@ -1,4 +1,8 @@
-import { wrapMistral } from "braintrust";
+import {
+  completeMistralBatchTrace,
+  startMistralBatchTrace,
+  wrapMistral,
+} from "braintrust";
 import {
   collectAsync,
   runOperation,
@@ -27,6 +31,7 @@ const MISTRAL_REQUEST_RETRY_OPTIONS = {
 const MISTRAL_THINKING_STREAM_OPTOUTS = new Set(["mistral-sdk-v1"]);
 const MISTRAL_CLASSIFIER_OPTOUTS = new Set(["mistral-sdk-v1"]);
 const MISTRAL_CLASSIFY_OPTOUTS = new Set(["mistral-sdk-v1"]);
+const MISTRAL_INLINE_BATCH_OPTOUTS = new Set(["mistral-sdk-v1"]);
 
 function createMistralScenarioSpec(spec) {
   return {
@@ -39,6 +44,9 @@ function createMistralScenarioSpec(spec) {
       : {}),
     ...(MISTRAL_CLASSIFY_OPTOUTS.has(spec.dependencyName)
       ? { supportsClassify: false }
+      : {}),
+    ...(MISTRAL_INLINE_BATCH_OPTOUTS.has(spec.dependencyName)
+      ? { supportsInlineBatch: false }
       : {}),
   };
 }
@@ -230,6 +238,80 @@ async function simulateToolExecutionDelay() {
   await new Promise((resolve) => setTimeout(resolve, TEST_TOOL_DELAY_MS));
 }
 
+function batchResult(customId, content) {
+  return {
+    custom_id: customId,
+    response: {
+      status_code: 200,
+      body: {
+        id: `mistral-batch-${customId}`,
+        object: "chat.completion",
+        model: CHAT_MODEL,
+        choices: [
+          {
+            index: 0,
+            message: { role: "assistant", content },
+            finish_reason: "stop",
+          },
+        ],
+        usage: {
+          prompt_tokens: 4,
+          completion_tokens: 1,
+          total_tokens: 5,
+        },
+      },
+    },
+  };
+}
+
+function createBatchHttpClient() {
+  return {
+    async request(request) {
+      const requestBody = JSON.parse(await request.text());
+      const requests = Array.isArray(requestBody.requests)
+        ? requestBody.requests
+        : [];
+      const requestCount = requests.length || 2;
+      const now = Math.ceil(Date.now() / 1000);
+      return new Response(
+        JSON.stringify({
+          id: requests.length > 0 ? "batch-inline-e2e" : "batch-file-e2e",
+          object: "batch",
+          input_files: requestBody.input_files || [],
+          metadata: requestBody.metadata || null,
+          endpoint: requestBody.endpoint,
+          model: requestBody.model,
+          output_file: null,
+          error_file: null,
+          errors: [],
+          ...(requests.length > 0
+            ? {
+                outputs: requests.map((batchRequest, index) =>
+                  batchResult(
+                    batchRequest.custom_id,
+                    `inline batch ${index + 1}`,
+                  ),
+                ),
+              }
+            : {}),
+          status: "SUCCESS",
+          created_at: now,
+          total_requests: requestCount,
+          completed_requests: requestCount,
+          succeeded_requests: requestCount,
+          failed_requests: 0,
+          started_at: now,
+          completed_at: now,
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        },
+      );
+    },
+  };
+}
+
 async function createAgentViaHttp(client, apiKey) {
   const baseUrl = getMistralApiBaseUrl(client);
   const response = await withRetry(
@@ -356,6 +438,8 @@ async function runMistralInstrumentationScenario(
     decorateClient,
     supportsClassifiers = true,
     supportsClassify = true,
+    supportsInlineBatch = true,
+    supportsSignedBatch = true,
     supportsThinkingStream = true,
   } = {},
 ) {
@@ -364,12 +448,116 @@ async function runMistralInstrumentationScenario(
     serverURL: process.env.MISTRAL_BASE_URL || process.env.MISTRAL_API_URL,
   });
   const client = decorateClient ? decorateClient(baseClient) : baseClient;
+  const baseBatchClient = new Mistral({
+    apiKey: "mistral-batch-e2e-key",
+    httpClient: createBatchHttpClient(),
+  });
+  const batchClient = decorateClient
+    ? decorateClient(baseBatchClient)
+    : baseBatchClient;
   const classifyModel = nonEmptyString(process.env.MISTRAL_CLASSIFIER_MODEL);
   const { agentId, cleanup } = await resolveAgentRuntime(baseClient);
 
   try {
     await runTracedScenario({
       callback: async () => {
+        await runOperation(
+          "mistral-batch-file-operation",
+          "batch-file",
+          async () => {
+            const records = [
+              {
+                custom_id: "file-one",
+                body: {
+                  messages: [{ role: "user", content: "file batch one" }],
+                  toolChoice: "required",
+                  parallelToolCalls: false,
+                  tools: [
+                    getWeatherToolDefinition(),
+                    {
+                      type: "web_search",
+                      toolConfiguration: { include: ["news"] },
+                    },
+                  ],
+                },
+              },
+              {
+                custom_id: "file-two",
+                body: {
+                  messages: [{ role: "user", content: "file batch two" }],
+                },
+              },
+            ];
+            const input = {
+              files: [
+                {
+                  file: { id: "mistral-batch-input-file" },
+                  content: records,
+                },
+              ],
+            };
+            const params = supportsSignedBatch
+              ? await startMistralBatchTrace({
+                  input,
+                  params: {
+                    endpoint: "/v1/chat/completions",
+                    model: CHAT_MODEL,
+                  },
+                })
+              : {
+                  inputFiles: ["mistral-batch-input-file"],
+                  endpoint: "/v1/chat/completions",
+                  model: CHAT_MODEL,
+                };
+            const batch = await batchClient.batch.jobs.create(params);
+            await completeMistralBatchTrace({
+              batch,
+              input,
+              outputContent: [
+                batchResult("file-two", "file batch 2"),
+                batchResult("file-one", "file batch 1"),
+              ],
+            });
+          },
+        );
+
+        if (supportsInlineBatch) {
+          await runOperation(
+            "mistral-batch-inline-operation",
+            "batch-inline",
+            async () => {
+              const input = {
+                requests: [
+                  {
+                    customId: "inline-one",
+                    body: {
+                      messages: [{ role: "user", content: "inline batch one" }],
+                    },
+                  },
+                  {
+                    customId: "inline-two",
+                    body: {
+                      messages: [{ role: "user", content: "inline batch two" }],
+                    },
+                  },
+                ],
+              };
+              const params = await startMistralBatchTrace({
+                input,
+                params: {
+                  endpoint: "/v1/chat/completions",
+                  model: CHAT_MODEL,
+                },
+              });
+              const batch = await batchClient.batch.jobs.create(params);
+              await completeMistralBatchTrace({
+                batch,
+                input,
+              });
+            },
+          );
+        }
+
         await runOperation(
           "mistral-chat-complete-operation",
           "chat-complete",

@@ -2484,19 +2484,21 @@ export function updateSpan({
   });
 }
 
-/** @internal Rehydrate an exported root span so work can continue in another process. */
+/** @internal Rehydrate an exported span without emitting another initial row. */
 export function _internalResumeSpan({
   exported,
+  spanParents = [],
   state,
 }: {
   exported: string;
+  spanParents?: string[];
   state?: BraintrustState;
 }): Span {
   const resolvedState = state ?? _globalState;
   const components = SpanComponentsV4.fromStr(exported);
   const { row_id, root_span_id, span_id } = components.data;
   if (!row_id || !root_span_id || !span_id) {
-    throw new Error("Only exported root spans can be resumed");
+    throw new Error("Only exported spans can be resumed");
   }
   return new SpanImpl({
     state: resolvedState,
@@ -2505,7 +2507,7 @@ export function _internalResumeSpan({
       spanComponentsToObjectIdLambda(resolvedState, components),
     ),
     parentComputeObjectMetadataArgs: undefined,
-    parentSpanIds: { parentSpanIds: [], rootSpanId: root_span_id },
+    parentSpanIds: { parentSpanIds: spanParents, rootSpanId: root_span_id },
     spanId: span_id,
     event: { id: row_id },
     propagatedEvent: (components.data.propagated_event ?? undefined) as
@@ -6732,6 +6734,22 @@ export function _internalStartSpanWithInitialMerge<
     InitialSpanWriteAsMergeArg).span;
 }
 
+/** @internal Start a deterministic span under an exported object-only parent. */
+export function _internalStartSpanWithInitialMergeAndParentSpanIds<
+  IsAsyncFlush extends boolean = true,
+>(args: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg): Span {
+  return startSpanAndIsLogger(
+    {
+      ...args,
+      [INITIAL_SPAN_WRITE_AS_MERGE]: true,
+    } as StartSpanArgs &
+      AsyncFlushArg<IsAsyncFlush> &
+      OptionalStateArg &
+      InitialSpanWriteAsMergeArg,
+    { useParentSpanIdsForObjectParent: true },
+  ).span;
+}
+
 /** @internal Start a span with SDK-controlled context fields. */
 export function _internalStartSpanWithContext<
   IsAsyncFlush extends boolean = true,
@@ -6768,6 +6786,7 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
     AsyncFlushArg<IsAsyncFlush> &
     OptionalStateArg &
     InternalSpanContextArg,
+  internalOptions?: { useParentSpanIdsForObjectParent?: boolean },
 ): { span: Span; isSyncFlushLogger: boolean } {
   const state = args?.state ?? _globalState;
 
@@ -6785,17 +6804,21 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
     parentObject instanceof SpanComponentsV3 ||
     parentObject instanceof SpanComponentsV4
   ) {
-    const parentSpanIds: ParentSpanIds | undefined =
+    let parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
+    if (
       parentObject.data.row_id &&
       parentSpanIdsUsable(
         parentObject.data.span_id,
         parentObject.data.root_span_id,
       )
-        ? {
-            spanId: parentObject.data.span_id,
-            rootSpanId: parentObject.data.root_span_id,
-          }
-        : undefined;
+    ) {
+      parentSpanIds = {
+        spanId: parentObject.data.span_id,
+        rootSpanId: parentObject.data.root_span_id,
+      };
+    } else if (internalOptions?.useParentSpanIdsForObjectParent) {
+      parentSpanIds = args?.parentSpanIds;
+    }
     // The parent object/state are already resolved from `parent` above; drop
     // the raw `parent` so it isn't re-normalized.
     const { parent: _ignoredParent, ...spanArgs } = args ?? {};
