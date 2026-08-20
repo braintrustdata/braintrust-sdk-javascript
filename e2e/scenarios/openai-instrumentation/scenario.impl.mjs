@@ -7,7 +7,11 @@ import {
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
-import { completeOpenAIBatchTrace, startOpenAIBatchTrace } from "braintrust";
+import {
+  completeOpenAIBatchTrace,
+  openaiBatchesRetrieveTraced,
+  openaiFilesCreateTraced,
+} from "braintrust";
 
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
 const EMBEDDING_MODEL = "text-embedding-3-small";
@@ -106,10 +110,57 @@ function createMockStreamingClient(options) {
 }
 
 function createMockBatchClient(options) {
+  const batchCreatedAt = Date.now() / 1000;
   const baseClient = new options.OpenAI({
     apiKey: process.env.OPENAI_API_KEY ?? "test-openai-key",
     baseURL: "https://example.test/v1",
-    fetch: async (_url, init) => {
+    fetch: async (url, init) => {
+      const pathname = new URL(String(url)).pathname;
+      if (pathname.endsWith("/files")) {
+        return new Response(
+          JSON.stringify({
+            id: "file_batch_e2e_fixture",
+            object: "file",
+            bytes: 1024,
+            created_at: batchCreatedAt,
+            filename: "batch.jsonl",
+            purpose: "batch",
+            status: "processed",
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+              "x-request-id": "req_file_batch_e2e_fixture",
+            },
+            status: 200,
+          },
+        );
+      }
+
+      if (pathname.endsWith("/batches/batch_e2e_fixture")) {
+        return new Response(
+          JSON.stringify({
+            id: "batch_e2e_fixture",
+            object: "batch",
+            endpoint: "/v1/chat/completions",
+            input_file_id: "file_batch_e2e_fixture",
+            completion_window: "24h",
+            status: "completed",
+            created_at: batchCreatedAt,
+            in_progress_at: batchCreatedAt + 1,
+            completed_at: batchCreatedAt + 2,
+            request_counts: { completed: 2, failed: 1, total: 3 },
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+              "x-request-id": "req_batch_e2e_fixture",
+            },
+            status: 200,
+          },
+        );
+      }
+
       const params = JSON.parse(String(init?.body));
       return new Response(
         JSON.stringify({
@@ -650,24 +701,20 @@ export async function runOpenAIInstrumentationScenario(options) {
             }),
           )
           .join("\n");
-        const batchParams = await startOpenAIBatchTrace({
-          inputFile: { id: "file_batch_e2e_fixture" },
-          input,
-          params: {
-            completion_window: "24h",
-            endpoint: "/v1/chat/completions",
-          },
+        const inputFile = await openaiFilesCreateTraced(
+          batchFixtureClient.files,
+        )({
+          file: new File([input], "batch.jsonl"),
+          purpose: "batch",
         });
-        const created = await batchFixtureClient.batches.create(batchParams);
-
-        const completedAt = Date.now() / 1000 + 60;
-        const completed = {
-          ...created,
-          status: "completed",
-          in_progress_at: 1_740_000_010,
-          completed_at: completedAt,
-          request_counts: { completed: 2, failed: 1, total: 3 },
-        };
+        const created = await batchFixtureClient.batches.create({
+          input_file_id: inputFile.id,
+          completion_window: "24h",
+          endpoint: "/v1/chat/completions",
+        });
+        const completed = await openaiBatchesRetrieveTraced(
+          batchFixtureClient.batches,
+        )(created.id);
         // Start both content requests before awaiting either one. These promises
         // model the APIPromise<Response> values returned by files.content().
         const outputFile = Promise.resolve(
@@ -713,16 +760,11 @@ export async function runOpenAIInstrumentationScenario(options) {
           ),
         );
         await completeOpenAIBatchTrace({
-          batch: completed,
-          inputFile: input,
+          inputFileId: completed.input_file_id,
+          inputFileContent: input,
           // Batch results are not guaranteed to preserve input order.
-          outputFile,
-          errorFile,
-          webhook: {
-            type: "batch.completed",
-            created_at: completedAt,
-            data: { id: completed.id },
-          },
+          outputFileContent: outputFile,
+          errorFileContent: errorFile,
         });
         if (!(await outputFile).bodyUsed || !(await errorFile).bodyUsed) {
           throw new Error("Expected batch result responses to be consumed");

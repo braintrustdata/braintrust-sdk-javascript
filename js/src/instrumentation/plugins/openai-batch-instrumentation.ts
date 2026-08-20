@@ -1,6 +1,5 @@
 import { debugLogger } from "../../debug-logger";
 import {
-  _internalGetGlobalState,
   _internalStartSpanWithInitialMerge,
   _internalStartSpanWithInitialMergeAndParentSpanIds,
   getSpanParentObject,
@@ -14,19 +13,13 @@ import {
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
-import { SpanTypeAttribute, isObject } from "../../../util/index";
-import {
-  SpanComponentsV4,
-  type SpanComponentsV4Data,
-} from "../../../util/span_identifier_v4";
+import { isObject, SpanTypeAttribute } from "../../../util/index";
+import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
 import type {
   CompleteOpenAIBatchTraceArgs,
-  OpenAIBatchCreateParams,
-  OpenAIBatchJSONL,
+  OpenAIBatchFile,
   OpenAIBatchLike,
-  StartOpenAIBatchTraceArgs,
 } from "../../openai-batch-types";
-import { BRAINTRUST_OPENAI_BATCH_CONTEXT_KEY } from "./openai-batch-constants";
 import { openAIChannels } from "./openai-channels";
 import {
   extractOpenAIBatchInput,
@@ -40,20 +33,31 @@ const TERMINAL_STATUSES = new Set([
   "expired",
   "cancelled",
 ]);
-const INPUT_DIGEST_CHUNK_SIZE = 1024 * 1024;
 
-type BatchContext = {
-  version: 1;
-  parent: string;
-  inputFileId: string;
-  inputDigest: string;
-  endpoint: string;
-  startTime: number;
-  operationNonce: string;
+type BatchInputRecord = {
+  customId: string;
+  spanData?: ReturnType<typeof extractOpenAIBatchInput>;
 };
 
-type SerializedBatchContext = Omit<BatchContext, "endpoint" | "inputFileId"> & {
-  signature: string;
+type BatchInputs = {
+  endpoint?: string;
+  inputs: Map<string, BatchInputRecord>;
+  issues: Error[];
+};
+
+type BatchTraceContext = {
+  inputFileId: string;
+  endpoint: string;
+  parent: string;
+  taskStartTime: number;
+  childStartTime: number;
+};
+
+type PendingBatchTrace = {
+  context: BatchTraceContext;
+  inputs: Map<string, BatchInputRecord>;
+  endTime?: number;
+  status?: string;
 };
 
 type BatchResultRecord = {
@@ -61,19 +65,7 @@ type BatchResultRecord = {
   source: "output" | "error";
 };
 
-type BatchInputRecord = {
-  customId: string;
-  spanData?: ReturnType<typeof extractOpenAIBatchInput>;
-};
-
-type OpenAIBatchFile =
-  CompleteOpenAIBatchTraceArgs<OpenAIBatchLike>["outputFile"];
-
-type PreparedBatch = {
-  context: BatchContext;
-  inputs: Map<string, BatchInputRecord>;
-  params: OpenAIBatchCreateParams;
-};
+const pendingBatchTraces = new Map<string, PendingBatchTrace>();
 
 function read(value: unknown, key: PropertyKey): unknown {
   if (!isObject(value)) {
@@ -95,14 +87,10 @@ function isBatchRecordIterable(
   ) {
     return false;
   }
-  try {
-    return (
-      typeof Reflect.get(value, Symbol.iterator) === "function" ||
-      typeof Reflect.get(value, Symbol.asyncIterator) === "function"
-    );
-  } catch {
-    return false;
-  }
+  return (
+    typeof read(value, Symbol.iterator) === "function" ||
+    typeof read(value, Symbol.asyncIterator) === "function"
+  );
 }
 
 function validCustomId(value: unknown): value is string {
@@ -113,293 +101,16 @@ function logBatchInstrumentationError(context: string, error: unknown): void {
   debugLogger.debug(`OpenAI Batch instrumentation ${context}:`, error);
 }
 
-function batchContextPayload(context: BatchContext): string {
-  return JSON.stringify([BRAINTRUST_OPENAI_BATCH_CONTEXT_KEY, context]);
-}
-
-async function importBatchSigningKey(secret: string) {
-  return await globalThis.crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign", "verify"],
-  );
-}
-
-async function signBatchContext(
-  context: BatchContext,
-  secret: string,
+async function exportParent(
+  parent: { export(): Promise<string> } | { toStr(): string },
 ): Promise<string | undefined> {
-  try {
-    const signature = await globalThis.crypto.subtle.sign(
-      "HMAC",
-      await importBatchSigningKey(secret),
-      new TextEncoder().encode(batchContextPayload(context)),
-    );
-    return digestHex(new Uint8Array(signature), 32);
-  } catch {
-    return undefined;
-  }
-}
-
-function signatureBytes(value: string): Uint8Array | undefined {
-  if (!/^[0-9a-f]{64}$/.test(value)) {
-    return undefined;
-  }
-  return Uint8Array.from(value.match(/.{2}/g) ?? [], (byte) =>
-    Number.parseInt(byte, 16),
-  );
-}
-
-async function verifyBatchContext(
-  context: BatchContext,
-  signature: string,
-): Promise<boolean> {
-  const secret =
-    _internalGetGlobalState()._internalGetTraceContextSigningSecret();
-  if (!secret) {
-    return false;
-  }
-  const bytes = signatureBytes(signature);
-  if (!bytes) {
-    return false;
-  }
-  try {
-    return await globalThis.crypto.subtle.verify(
-      "HMAC",
-      await importBatchSigningKey(secret),
-      bytes,
-      new TextEncoder().encode(batchContextPayload(context)),
-    );
-  } catch {
-    return false;
-  }
-}
-
-async function parseBatchContext(
-  value: unknown,
-  inputFileId: string,
-  endpoint: string,
-): Promise<BatchContext | undefined> {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(value);
-  } catch {
-    return undefined;
-  }
-  if (
-    !isObject(parsed) ||
-    parsed.version !== 1 ||
-    typeof parsed.parent !== "string" ||
-    typeof parsed.inputDigest !== "string" ||
-    !/^[0-9a-f]{64}$/.test(parsed.inputDigest) ||
-    typeof parsed.startTime !== "number" ||
-    !Number.isFinite(parsed.startTime) ||
-    typeof parsed.operationNonce !== "string" ||
-    !/^[0-9a-f]{32}$/.test(parsed.operationNonce) ||
-    typeof parsed.signature !== "string"
-  ) {
-    return undefined;
-  }
-
-  const context: BatchContext = {
-    version: 1,
-    parent: parsed.parent,
-    inputFileId,
-    inputDigest: parsed.inputDigest,
-    endpoint,
-    startTime: parsed.startTime,
-    operationNonce: parsed.operationNonce,
-  };
-  if (!(await verifyBatchContext(context, parsed.signature))) {
-    return undefined;
-  }
-
-  try {
-    SpanComponentsV4.fromStr(context.parent);
-  } catch {
-    return undefined;
-  }
-  return context;
-}
-
-async function exportParent(parent: ReturnType<typeof getSpanParentObject>) {
   if ("toStr" in parent && typeof parent.toStr === "function") {
     return parent.toStr();
   }
-  return await parent.export();
-}
-
-async function exportMinimalParent(
-  parent: ReturnType<typeof getSpanParentObject>,
-): Promise<string | undefined> {
-  const exported = await exportParent(parent);
-  if (!exported) {
-    return undefined;
+  if ("export" in parent && typeof parent.export === "function") {
+    return await parent.export();
   }
-  const parsed = SpanComponentsV4.fromStr(exported).data;
-  const projectId = read(parsed.compute_object_metadata_args, "project_id");
-  const projectName = read(parsed.compute_object_metadata_args, "project_name");
-  const computeObjectMetadataArgs =
-    typeof projectId === "string" || typeof projectName === "string"
-      ? {
-          ...(typeof projectId === "string" ? { project_id: projectId } : {}),
-          ...(typeof projectName === "string"
-            ? { project_name: projectName }
-            : {}),
-        }
-      : undefined;
-  if (!parsed.object_id && !computeObjectMetadataArgs) {
-    return undefined;
-  }
-
-  const routing = parsed.object_id
-    ? { object_id: parsed.object_id }
-    : { compute_object_metadata_args: computeObjectMetadataArgs ?? {} };
-  // SpanComponents requires all three span identifiers together. The
-  // conditional below preserves that invariant, but TypeScript cannot infer
-  // it through the object spreads.
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return new SpanComponentsV4({
-    object_type: parsed.object_type,
-    ...routing,
-    ...(parsed.row_id && parsed.span_id && parsed.root_span_id
-      ? {
-          row_id: parsed.row_id,
-          span_id: parsed.span_id,
-          root_span_id: parsed.root_span_id,
-        }
-      : {}),
-  } as SpanComponentsV4Data).toStr();
-}
-
-async function prepareCreateParams(
-  args: StartOpenAIBatchTraceArgs,
-  parent: ReturnType<typeof getSpanParentObject>,
-  startTime: number,
-): Promise<PreparedBatch | undefined> {
-  const params: OpenAIBatchCreateParams = {
-    ...args.params,
-    input_file_id: args.inputFile.id,
-  };
-  const endpoint = read(params, "endpoint");
-  const inputFileId = read(params, "input_file_id");
-  if (
-    typeof endpoint !== "string" ||
-    !SUPPORTED_ENDPOINTS.has(endpoint) ||
-    typeof inputFileId !== "string" ||
-    inputFileId.length === 0
-  ) {
-    return undefined;
-  }
-
-  const metadataValue = read(params, "metadata");
-  if (
-    metadataValue !== undefined &&
-    metadataValue !== null &&
-    (!isObject(metadataValue) || Array.isArray(metadataValue))
-  ) {
-    logBatchInstrumentationError(
-      "skipped context injection",
-      "invalid metadata",
-    );
-    return undefined;
-  }
-  const metadata = metadataValue ?? {};
-  if (
-    Object.prototype.hasOwnProperty.call(
-      metadata,
-      BRAINTRUST_OPENAI_BATCH_CONTEXT_KEY,
-    )
-  ) {
-    logBatchInstrumentationError(
-      "skipped context injection",
-      "conflicting reserved metadata",
-    );
-    return undefined;
-  }
-  if (Object.keys(metadata).length >= 16) {
-    logBatchInstrumentationError(
-      "skipped context injection",
-      "metadata is full",
-    );
-    return undefined;
-  }
-
-  const exportedParent = await exportMinimalParent(parent);
-  if (!exportedParent) {
-    logBatchInstrumentationError(
-      "skipped context injection",
-      "no routable Braintrust parent",
-    );
-    return undefined;
-  }
-  const signingSecret =
-    _internalGetGlobalState()._internalGetTraceContextSigningSecret();
-  if (!signingSecret) {
-    logBatchInstrumentationError(
-      "skipped context injection",
-      "no signing secret is available",
-    );
-    return undefined;
-  }
-  const inputData = await readBatchInputs(args.input, endpoint);
-  if (inputData.issues.length > 0) {
-    logBatchInstrumentationError(
-      "skipped invalid input file",
-      inputData.issues[0],
-    );
-    return undefined;
-  }
-  const context: BatchContext = {
-    version: 1,
-    parent: exportedParent,
-    inputFileId,
-    inputDigest: inputData.inputDigest,
-    endpoint,
-    startTime,
-    operationNonce: randomBatchNonce(),
-  };
-  const signature = await signBatchContext(context, signingSecret);
-  if (!signature) {
-    logBatchInstrumentationError(
-      "skipped context injection",
-      "could not sign batch context",
-    );
-    return undefined;
-  }
-  const serialized = JSON.stringify({
-    version: context.version,
-    parent: context.parent,
-    inputDigest: context.inputDigest,
-    startTime: context.startTime,
-    operationNonce: context.operationNonce,
-    signature,
-  } satisfies SerializedBatchContext);
-  if (serialized.length > 512) {
-    logBatchInstrumentationError(
-      "skipped context injection",
-      "signed context exceeds OpenAI metadata limits",
-    );
-    return undefined;
-  }
-
-  return {
-    context,
-    inputs: inputData.inputs,
-    params: {
-      ...params,
-      metadata: {
-        ...metadata,
-        [BRAINTRUST_OPENAI_BATCH_CONTEXT_KEY]: serialized,
-      },
-    },
-  };
+  return undefined;
 }
 
 async function deterministicDigest(namespace: string, ...parts: string[]) {
@@ -422,19 +133,15 @@ function digestUuid(bytes: Uint8Array): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-function randomBatchNonce(): string {
-  return digestHex(globalThis.crypto.getRandomValues(new Uint8Array(16)), 16);
-}
-
-async function batchSpanIds(operationNonce: string): Promise<{
+async function batchSpanIds(inputFileId: string): Promise<{
   rowId: string;
   spanId: string;
   rootSpanId: string;
 }> {
   const [row, span, root] = await Promise.all([
-    deterministicDigest("openai:batch:row", operationNonce),
-    deterministicDigest("openai:batch:span", operationNonce),
-    deterministicDigest("openai:batch:root", operationNonce),
+    deterministicDigest("openai:batch:row", inputFileId),
+    deterministicDigest("openai:batch:span", inputFileId),
+    deterministicDigest("openai:batch:root", inputFileId),
   ]);
   return {
     rowId: digestUuid(row),
@@ -443,36 +150,16 @@ async function batchSpanIds(operationNonce: string): Promise<{
   };
 }
 
-async function childSpanIds(operationNonce: string, customId: string) {
+async function childSpanIds(inputFileId: string, customId: string) {
   const [row, span] = await Promise.all([
-    deterministicDigest("openai:batch:child:row", operationNonce, customId),
-    deterministicDigest("openai:batch:child:span", operationNonce, customId),
+    deterministicDigest("openai:batch:child:row", inputFileId, customId),
+    deterministicDigest("openai:batch:child:span", inputFileId, customId),
   ]);
   return { rowId: digestUuid(row), spanId: digestHex(span, 8) };
 }
 
-async function batchContextFromBatch(
-  batch: OpenAIBatchLike,
-): Promise<BatchContext | undefined> {
-  const metadata = read(batch, "metadata");
-  const inputFileId = read(batch, "input_file_id");
-  const endpoint = read(batch, "endpoint");
-  if (
-    !isObject(metadata) ||
-    typeof inputFileId !== "string" ||
-    typeof endpoint !== "string"
-  ) {
-    return undefined;
-  }
-  return await parseBatchContext(
-    read(metadata, BRAINTRUST_OPENAI_BATCH_CONTEXT_KEY),
-    inputFileId,
-    endpoint,
-  );
-}
-
-async function startBatchSpan(context: BatchContext): Promise<Span> {
-  const ids = await batchSpanIds(context.operationNonce);
+async function startBatchSpan(context: BatchTraceContext): Promise<Span> {
+  const ids = await batchSpanIds(context.inputFileId);
   const parent = SpanComponentsV4.fromStr(context.parent);
   const hasParentSpan = Boolean(
     parent.data.row_id && parent.data.span_id && parent.data.root_span_id,
@@ -493,10 +180,14 @@ async function startBatchSpan(context: BatchContext): Promise<Span> {
               }
             : {}),
           spanId: ids.spanId,
-          startTime: context.startTime,
+          startTime: context.taskStartTime,
           event: {
             id: ids.rowId,
-            metadata: { provider: "openai" },
+            metadata: {
+              endpoint: context.endpoint,
+              input_file_id: context.inputFileId,
+              provider: "openai",
+            },
           },
         },
         INSTRUMENTATION_NAMES.OPENAI,
@@ -506,11 +197,11 @@ async function startBatchSpan(context: BatchContext): Promise<Span> {
 }
 
 async function startBatchChild(
-  context: BatchContext,
+  context: BatchTraceContext,
   taskParent: string,
   input: BatchInputRecord,
 ): Promise<Span> {
-  const ids = await childSpanIds(context.operationNonce, input.customId);
+  const ids = await childSpanIds(context.inputFileId, input.customId);
   return withCurrent(NOOP_SPAN, () =>
     _internalStartSpanWithInitialMerge(
       withSpanInstrumentationName(
@@ -522,7 +213,7 @@ async function startBatchChild(
           type: SpanTypeAttribute.LLM,
           parent: taskParent,
           spanId: ids.spanId,
-          startTime: context.startTime,
+          startTime: context.childStartTime,
           event: {
             id: ids.rowId,
             ...(input.spanData?.input !== undefined
@@ -530,6 +221,7 @@ async function startBatchChild(
               : {}),
             metadata: {
               ...input.spanData?.metadata,
+              custom_id: input.customId,
               provider: "openai",
             },
           },
@@ -541,25 +233,17 @@ async function startBatchChild(
 }
 
 async function* jsonlRecords(
-  file: OpenAIBatchJSONL | OpenAIBatchFile,
+  file: OpenAIBatchFile,
   onIssue: (error: Error) => void = () => {},
 ): AsyncGenerator<unknown> {
   const resolvedFile = await file;
-  if (resolvedFile === undefined) {
-    return;
-  }
   if (typeof resolvedFile === "string") {
-    let offset = 0;
-    while (offset < resolvedFile.length) {
-      const newline = resolvedFile.indexOf("\n", offset);
-      const end = newline === -1 ? resolvedFile.length : newline;
-      const line = resolvedFile.slice(offset, end).replace(/\r$/, "");
-      offset = newline === -1 ? resolvedFile.length : newline + 1;
+    for (const line of resolvedFile.split("\n")) {
       if (!line.trim()) {
         continue;
       }
       try {
-        yield JSON.parse(line);
+        yield JSON.parse(line.replace(/\r$/, ""));
       } catch (error) {
         logBatchInstrumentationError("skipped malformed JSONL", error);
         onIssue(new Error("OpenAI Batch file contains malformed JSONL"));
@@ -574,16 +258,12 @@ async function* jsonlRecords(
     let reader: unknown;
     try {
       reader = Reflect.apply(getReader, body, []);
-      if (!isObject(reader)) {
-        throw new Error("Response body returned an invalid stream reader");
-      }
-
       const decoder = new TextDecoder();
       let pending = "";
       while (true) {
         const readChunk = read(reader, "read");
         if (typeof readChunk !== "function") {
-          throw new Error("Response body stream reader has no read method");
+          throw new Error("Response body stream has no read method");
         }
         const chunk = await Reflect.apply(readChunk, reader, []);
         if (!isObject(chunk)) {
@@ -596,7 +276,6 @@ async function* jsonlRecords(
         if (!(chunk.value instanceof Uint8Array)) {
           throw new Error("Response body stream returned a non-byte chunk");
         }
-
         pending += decoder.decode(chunk.value, { stream: true });
         let newline = pending.indexOf("\n");
         while (newline !== -1) {
@@ -607,21 +286,18 @@ async function* jsonlRecords(
               yield JSON.parse(line);
             } catch (error) {
               logBatchInstrumentationError("skipped malformed JSONL", error);
-              onIssue(
-                new Error("OpenAI Batch response contains malformed JSONL"),
-              );
+              onIssue(new Error("OpenAI Batch file contains malformed JSONL"));
             }
           }
           newline = pending.indexOf("\n");
         }
       }
-
       if (pending.trim()) {
         try {
           yield JSON.parse(pending.replace(/\r$/, ""));
         } catch (error) {
           logBatchInstrumentationError("skipped malformed JSONL", error);
-          onIssue(new Error("OpenAI Batch response contains malformed JSONL"));
+          onIssue(new Error("OpenAI Batch file contains malformed JSONL"));
         }
       }
     } catch (error) {
@@ -629,7 +305,7 @@ async function* jsonlRecords(
       onIssue(new Error("OpenAI Batch response body could not be read"));
     } finally {
       const releaseLock = read(reader, "releaseLock");
-      if (isObject(reader) && typeof releaseLock === "function") {
+      if (typeof releaseLock === "function") {
         try {
           Reflect.apply(releaseLock, reader, []);
         } catch (error) {
@@ -647,56 +323,177 @@ async function* jsonlRecords(
     for await (const record of resolvedFile) {
       yield record;
     }
-  } else {
-    logBatchInstrumentationError("skipped invalid JSONL source", resolvedFile);
-    onIssue(new Error("OpenAI Batch file source is invalid"));
+    return;
   }
+
+  logBatchInstrumentationError("skipped invalid JSONL source", resolvedFile);
+  onIssue(new Error("OpenAI Batch file source is invalid"));
 }
 
-async function startPreparedBatch(
-  inputs: Map<string, BatchInputRecord>,
-  context: BatchContext,
-): Promise<void> {
-  const task = await startBatchSpan(context);
-  const taskParent = await task.export();
-  for (const input of inputs.values()) {
-    try {
-      await startBatchChild(context, taskParent, input);
-    } catch (error) {
-      logBatchInstrumentationError("skipped invalid input record", error);
-    }
-  }
-}
-
-export const interceptOpenAIBatchTraceStart: Parameters<
-  typeof openAIChannels.batchesStartTrace.intercept
->[0] = async (target, thisArg, args) => {
-  const parent = getSpanParentObject();
-  const startTime = getCurrentUnixTimestamp();
-  let prepared: PreparedBatch | undefined;
+async function readBatchInputs(file: OpenAIBatchFile): Promise<BatchInputs> {
+  const inputs = new Map<string, BatchInputRecord>();
+  const issues: Error[] = [];
+  let endpoint: string | undefined;
   try {
-    prepared = await prepareCreateParams(args[0], parent, startTime);
+    for await (const value of jsonlRecords(file, (issue) =>
+      issues.push(issue),
+    )) {
+      const customId = read(value, "custom_id");
+      const url = read(value, "url");
+      const body = read(value, "body");
+      if (
+        !validCustomId(customId) ||
+        inputs.has(customId) ||
+        read(value, "method") !== "POST" ||
+        typeof url !== "string" ||
+        !SUPPORTED_ENDPOINTS.has(url) ||
+        (endpoint !== undefined && endpoint !== url) ||
+        !isObject(body)
+      ) {
+        issues.push(new Error("OpenAI Batch input contains an invalid record"));
+        continue;
+      }
+      endpoint = url;
+      let spanData: BatchInputRecord["spanData"];
+      try {
+        spanData = extractOpenAIBatchInput(url, body);
+      } catch (error) {
+        logBatchInstrumentationError("could not extract batch input", error);
+      }
+      inputs.set(customId, { customId, spanData });
+    }
   } catch (error) {
-    logBatchInstrumentationError("could not prepare batch", error);
+    logBatchInstrumentationError("could not process input file", error);
+    issues.push(new Error("OpenAI Batch input file could not be processed"));
   }
+  if (!endpoint || inputs.size === 0) {
+    issues.push(new Error("OpenAI Batch input contains no supported records"));
+  }
+  return { endpoint, inputs, issues };
+}
 
-  const params = await Reflect.apply(target, thisArg, [
-    prepared
-      ? {
-          ...args[0],
-          params: prepared.params,
-        }
-      : args[0],
-  ]);
-  if (prepared) {
+async function writePendingSpans(
+  trace: PendingBatchTrace,
+  endTime?: number,
+): Promise<void> {
+  const task = await startBatchSpan(trace.context);
+  const taskParent = await task.export();
+  for (const input of trace.inputs.values()) {
     try {
-      await startPreparedBatch(prepared.inputs, prepared.context);
+      const child = await startBatchChild(trace.context, taskParent, input);
+      if (endTime !== undefined) {
+        child.end({ endTime });
+      }
     } catch (error) {
-      logBatchInstrumentationError("could not start batch spans", error);
+      logBatchInstrumentationError("could not write batch request span", error);
     }
   }
-  return params;
+  if (endTime !== undefined) {
+    if (trace.status && trace.status !== "completed") {
+      task.log({ error: new Error(`OpenAI Batch ${trace.status}`) });
+    }
+    task.end({ endTime });
+  }
+}
+
+export const interceptOpenAIFilesCreateTraced: Parameters<
+  typeof openAIChannels.filesCreateTraced.intercept
+>[0] = async (target, thisArg, args) => {
+  const startTime = getCurrentUnixTimestamp();
+  const inputPromise = readBatchInputs(args[0].inputFileContent);
+  const parentPromise = exportParent(args[0].parent);
+  const file = await Reflect.apply(target, thisArg, args);
+  try {
+    const inputFileId = read(file, "id");
+    const [inputData, exportedParent] = await Promise.all([
+      inputPromise,
+      parentPromise,
+    ]);
+    if (
+      typeof inputFileId !== "string" ||
+      !exportedParent ||
+      !inputData.endpoint ||
+      inputData.issues.length > 0
+    ) {
+      if (inputData.issues[0]) {
+        logBatchInstrumentationError(
+          "skipped invalid input file",
+          inputData.issues[0],
+        );
+      }
+      return file;
+    }
+    const trace: PendingBatchTrace = {
+      context: {
+        inputFileId,
+        endpoint: inputData.endpoint,
+        parent: exportedParent,
+        taskStartTime: startTime,
+        childStartTime: startTime,
+      },
+      inputs: inputData.inputs,
+    };
+    pendingBatchTraces.set(inputFileId, trace);
+    await writePendingSpans(trace);
+  } catch (error) {
+    logBatchInstrumentationError("could not start batch spans", error);
+  }
+  return file;
 };
+
+function validTimestamp(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0;
+}
+
+function terminalEndTime(batch: OpenAIBatchLike, startTime: number): number {
+  let timestamp: unknown;
+  switch (batch.status) {
+    case "completed":
+      timestamp = batch.completed_at;
+      break;
+    case "failed":
+      timestamp = batch.failed_at;
+      break;
+    case "expired":
+      timestamp = batch.expired_at;
+      break;
+    default:
+      timestamp = batch.cancelled_at;
+  }
+  return validTimestamp(timestamp)
+    ? Math.max(timestamp, startTime)
+    : Math.max(getCurrentUnixTimestamp(), startTime);
+}
+
+async function updateBatchTimestamps(batch: OpenAIBatchLike): Promise<void> {
+  const trace = pendingBatchTraces.get(batch.input_file_id);
+  if (!trace || trace.context.endpoint !== batch.endpoint) {
+    return;
+  }
+  if (validTimestamp(batch.created_at)) {
+    trace.context.taskStartTime = batch.created_at;
+  }
+  trace.context.childStartTime = validTimestamp(batch.in_progress_at)
+    ? Math.max(batch.in_progress_at, trace.context.taskStartTime)
+    : trace.context.taskStartTime;
+  trace.status = batch.status;
+  if (TERMINAL_STATUSES.has(batch.status)) {
+    trace.endTime = terminalEndTime(batch, trace.context.childStartTime);
+  }
+  await writePendingSpans(trace, trace.endTime);
+}
+
+export const interceptOpenAIBatchesRetrieveTraced: Parameters<
+  typeof openAIChannels.batchesRetrieveTraced.intercept
+>[0] = (target, thisArg, args) =>
+  Promise.resolve(Reflect.apply(target, thisArg, args)).then(async (batch) => {
+    try {
+      await updateBatchTimestamps(batch);
+    } catch (error) {
+      logBatchInstrumentationError("could not update batch timestamps", error);
+    }
+    return batch;
+  });
 
 function errorFromResult(result: BatchResultRecord): Error | undefined {
   const error = read(result.value, "error");
@@ -712,9 +509,7 @@ function errorFromResult(result: BatchResultRecord): Error | undefined {
     result.source === "error" ||
     (typeof statusCode === "number" && (statusCode < 200 || statusCode >= 300))
   ) {
-    const body = read(response, "body");
-    const bodyError = read(body, "error");
-    const message = read(bodyError, "message");
+    const message = read(read(read(response, "body"), "error"), "message");
     return new Error(
       typeof message === "string" ? message : "OpenAI Batch request failed",
     );
@@ -723,7 +518,7 @@ function errorFromResult(result: BatchResultRecord): Error | undefined {
 }
 
 async function completeBatchResult(
-  context: BatchContext,
+  context: BatchTraceContext,
   taskParent: string,
   endTime: number,
   input: BatchInputRecord,
@@ -732,26 +527,19 @@ async function completeBatchResult(
   const child = await startBatchChild(context, taskParent, input);
   try {
     const resultError = errorFromResult(result);
-    const response = read(result.value, "response");
-    const responseBody = read(response, "body");
+    const responseBody = read(read(result.value, "response"), "body");
     if (resultError) {
       child.log({ error: resultError });
     } else if (isObject(responseBody)) {
-      if (context.endpoint === "/v1/chat/completions") {
-        const model = read(responseBody, "model");
-        child.log({
-          output: read(responseBody, "choices"),
-          ...(typeof model === "string" ? { metadata: { model } } : {}),
-          metrics: parseMetricsFromUsage(read(responseBody, "usage")),
-        });
-      } else {
-        const model = read(responseBody, "model");
-        child.log({
-          output: processImagesInOutput(read(responseBody, "output")),
-          ...(typeof model === "string" ? { metadata: { model } } : {}),
-          metrics: parseMetricsFromUsage(read(responseBody, "usage")),
-        });
-      }
+      const model = read(responseBody, "model");
+      child.log({
+        output:
+          context.endpoint === "/v1/chat/completions"
+            ? read(responseBody, "choices")
+            : processImagesInOutput(read(responseBody, "output")),
+        ...(typeof model === "string" ? { metadata: { model } } : {}),
+        metrics: parseMetricsFromUsage(read(responseBody, "usage")),
+      });
     } else {
       child.log({ error: new Error("OpenAI Batch response body is missing") });
     }
@@ -759,133 +547,6 @@ async function completeBatchResult(
     child.log({ error });
   } finally {
     child.end({ endTime });
-  }
-}
-
-async function readBatchInputs(
-  file: OpenAIBatchFile,
-  endpoint: string,
-): Promise<{
-  inputDigest: string;
-  inputs: Map<string, BatchInputRecord>;
-  issues: Error[];
-}> {
-  const inputs = new Map<string, BatchInputRecord>();
-  const issues: Error[] = [];
-  const chunkDigests: string[] = [];
-  let digestChunk = "";
-  try {
-    for await (const value of jsonlRecords(file, (issue) =>
-      issues.push(issue),
-    )) {
-      const customId = read(value, "custom_id");
-      const body = read(value, "body");
-      if (
-        !validCustomId(customId) ||
-        inputs.has(customId) ||
-        read(value, "method") !== "POST" ||
-        read(value, "url") !== endpoint ||
-        !isObject(body)
-      ) {
-        issues.push(new Error("OpenAI Batch input contains an invalid record"));
-        continue;
-      }
-      const canonicalRecord = JSON.stringify({
-        body: canonicalizeJSON(body),
-        custom_id: customId,
-      });
-      const framedRecord = `${canonicalRecord.length}:${canonicalRecord}`;
-      if (
-        digestChunk.length > 0 &&
-        digestChunk.length + framedRecord.length > INPUT_DIGEST_CHUNK_SIZE
-      ) {
-        chunkDigests.push(
-          digestHex(
-            await deterministicDigest("openai:batch:input:chunk", digestChunk),
-            32,
-          ),
-        );
-        digestChunk = "";
-      }
-      digestChunk += framedRecord;
-
-      let spanData: BatchInputRecord["spanData"];
-      try {
-        spanData = extractOpenAIBatchInput(endpoint, body);
-      } catch (error) {
-        logBatchInstrumentationError("could not extract batch input", error);
-      }
-      inputs.set(customId, { customId, spanData });
-    }
-  } catch (error) {
-    logBatchInstrumentationError("could not process input file", error);
-    issues.push(new Error("OpenAI Batch input file could not be processed"));
-  }
-  chunkDigests.push(
-    digestHex(
-      await deterministicDigest("openai:batch:input:chunk", digestChunk),
-      32,
-    ),
-  );
-  return {
-    inputDigest: digestHex(
-      await deterministicDigest("openai:batch:input", chunkDigests.join("")),
-      32,
-    ),
-    inputs,
-    issues,
-  };
-}
-
-function canonicalizeJSON(
-  value: unknown,
-  ancestors: Set<object> = new Set(),
-): unknown {
-  if (
-    value === null ||
-    typeof value === "string" ||
-    typeof value === "boolean"
-  ) {
-    return value;
-  }
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) {
-      throw new Error("OpenAI Batch input contains a non-finite number");
-    }
-    return value;
-  }
-  if (Array.isArray(value)) {
-    if (ancestors.has(value)) {
-      throw new Error("OpenAI Batch input contains a circular value");
-    }
-    ancestors.add(value);
-    try {
-      return value.map((entry) => canonicalizeJSON(entry, ancestors));
-    } finally {
-      ancestors.delete(value);
-    }
-  }
-  if (!isObject(value)) {
-    throw new Error("OpenAI Batch input contains a non-JSON value");
-  }
-  if (ancestors.has(value)) {
-    throw new Error("OpenAI Batch input contains a circular value");
-  }
-  ancestors.add(value);
-  try {
-    return Object.fromEntries(
-      Object.keys(value)
-        .sort()
-        .map((key) => {
-          const entry = read(value, key);
-          if (entry === undefined) {
-            throw new Error("OpenAI Batch input contains an undefined value");
-          }
-          return [key, canonicalizeJSON(entry, ancestors)];
-        }),
-    );
-  } finally {
-    ancestors.delete(value);
   }
 }
 
@@ -899,172 +560,122 @@ async function completeResultFile({
   source,
   taskParent,
 }: {
-  context: BatchContext;
+  context: BatchTraceContext;
   endTime: number;
-  file: OpenAIBatchFile;
+  file: OpenAIBatchFile | undefined;
   inputs: Map<string, BatchInputRecord>;
   issues: Error[];
   seen: Set<string>;
   source: BatchResultRecord["source"];
   taskParent: string;
 }): Promise<void> {
-  try {
-    for await (const value of jsonlRecords(file, (issue) =>
-      issues.push(issue),
-    )) {
-      try {
-        const customId = read(value, "custom_id");
-        if (!validCustomId(customId) || !isObject(value)) {
-          logBatchInstrumentationError(
-            "skipped result without custom_id",
-            value,
-          );
-          issues.push(
-            new Error("OpenAI Batch result is missing a valid custom_id"),
-          );
-          continue;
-        }
-        if (seen.has(customId)) {
-          logBatchInstrumentationError("skipped duplicate result", customId);
-          issues.push(new Error("OpenAI Batch result contains a duplicate"));
-          continue;
-        }
-        const input = inputs.get(customId);
-        if (!input) {
-          issues.push(
-            new Error("OpenAI Batch result does not match an input record"),
-          );
-          continue;
-        }
-        seen.add(customId);
-        await completeBatchResult(context, taskParent, endTime, input, {
-          value,
-          source,
-        });
-      } catch (error) {
-        logBatchInstrumentationError("skipped invalid result", error);
-        issues.push(new Error("OpenAI Batch result could not be processed"));
-      }
+  if (file === undefined) {
+    return;
+  }
+  for await (const value of jsonlRecords(file, (issue) => issues.push(issue))) {
+    const customId = read(value, "custom_id");
+    if (!validCustomId(customId) || !isObject(value)) {
+      issues.push(
+        new Error("OpenAI Batch result is missing a valid custom_id"),
+      );
+      continue;
     }
-  } catch (error) {
-    logBatchInstrumentationError(`could not process ${source} file`, error);
-    issues.push(
-      new Error(`OpenAI Batch ${source} file could not be processed`),
-    );
+    if (seen.has(customId)) {
+      issues.push(new Error("OpenAI Batch result contains a duplicate"));
+      continue;
+    }
+    const input = inputs.get(customId);
+    if (!input) {
+      issues.push(
+        new Error("OpenAI Batch result does not match an input record"),
+      );
+      continue;
+    }
+    seen.add(customId);
+    await completeBatchResult(context, taskParent, endTime, input, {
+      value,
+      source,
+    });
   }
 }
 
-function terminalEndTime(
-  batch: OpenAIBatchLike,
-  webhookCreatedAt: number | undefined,
-  startTime: number,
-): number {
-  let timestamp: number | null | undefined;
-  switch (batch.status) {
-    case "completed":
-      timestamp = batch.completed_at;
-      break;
-    case "failed":
-      timestamp = batch.failed_at;
-      break;
-    case "expired":
-      timestamp = batch.expired_at;
-      break;
-    default:
-      timestamp = batch.cancelled_at;
-  }
+function sameInputs(
+  first: Map<string, BatchInputRecord>,
+  second: Map<string, BatchInputRecord>,
+): boolean {
+  return (
+    first.size === second.size &&
+    [...first.keys()].every((customId) => second.has(customId))
+  );
+}
 
-  if (
-    typeof timestamp === "number" &&
-    Number.isFinite(timestamp) &&
-    timestamp >= startTime
-  ) {
-    return timestamp;
+async function contextForCompletion(
+  inputFileId: string,
+  inputData: BatchInputs,
+): Promise<PendingBatchTrace | undefined> {
+  if (!inputData.endpoint || inputData.issues.length > 0) {
+    return undefined;
   }
-  if (
-    typeof webhookCreatedAt === "number" &&
-    Number.isFinite(webhookCreatedAt) &&
-    webhookCreatedAt >= startTime
-  ) {
-    return webhookCreatedAt;
+  const existing = pendingBatchTraces.get(inputFileId);
+  if (existing) {
+    if (
+      existing.context.endpoint !== inputData.endpoint ||
+      !sameInputs(existing.inputs, inputData.inputs)
+    ) {
+      return undefined;
+    }
+    return { ...existing, inputs: inputData.inputs };
   }
-  return Math.max(getCurrentUnixTimestamp(), startTime);
+  const parent = await exportParent(getSpanParentObject());
+  if (!parent) {
+    return undefined;
+  }
+  const startTime = getCurrentUnixTimestamp();
+  return {
+    context: {
+      inputFileId,
+      endpoint: inputData.endpoint,
+      parent,
+      taskStartTime: startTime,
+      childStartTime: startTime,
+    },
+    inputs: inputData.inputs,
+  };
 }
 
 async function completeBatch(
-  args: CompleteOpenAIBatchTraceArgs<OpenAIBatchLike>,
+  args: CompleteOpenAIBatchTraceArgs,
 ): Promise<void> {
-  const { batch, webhook } = args;
-  const batchId = read(batch, "id");
-  const status = read(batch, "status");
-  if (
-    typeof batchId !== "string" ||
-    typeof status !== "string" ||
-    !TERMINAL_STATUSES.has(status)
-  ) {
-    return;
-  }
-  if (
-    webhook &&
-    (read(webhook, "type") !== `batch.${status}` ||
-      read(read(webhook, "data"), "id") !== batchId)
-  ) {
-    logBatchInstrumentationError("ignored mismatched webhook", webhook);
-    return;
-  }
-  const context = await batchContextFromBatch(batch);
-  if (!context || !SUPPORTED_ENDPOINTS.has(context.endpoint)) {
-    return;
-  }
-
-  const endTime = terminalEndTime(
-    batch,
-    webhook?.created_at,
-    context.startTime,
-  );
-  const inputData = await readBatchInputs(args.inputFile, context.endpoint);
-  const issues = [...inputData.issues];
-  if (
-    inputData.issues.length === 0 &&
-    inputData.inputDigest !== context.inputDigest
-  ) {
-    issues.push(
-      new Error("OpenAI Batch input does not match the signed input file"),
+  const inputData = await readBatchInputs(args.inputFileContent);
+  const trace = await contextForCompletion(args.inputFileId, inputData);
+  if (!trace) {
+    logBatchInstrumentationError(
+      "left batch spans pending",
+      inputData.issues[0] ?? new Error("OpenAI Batch input does not match"),
     );
-  }
-  const requestTotal = read(read(batch, "request_counts"), "total");
-  if (
-    typeof requestTotal === "number" &&
-    requestTotal !== inputData.inputs.size
-  ) {
-    issues.push(
-      new Error("OpenAI Batch input does not match its request count"),
-    );
-  }
-  if (issues.length > 0) {
-    logBatchInstrumentationError("left batch spans pending", issues[0]);
     return;
   }
-
-  const task = await startBatchSpan(context);
+  const endTime = trace.endTime ?? getCurrentUnixTimestamp();
+  const task = await startBatchSpan(trace.context);
   const taskParent = await task.export();
+  const issues: Error[] = [];
   const seen = new Set<string>();
   await Promise.all([
     completeResultFile({
-      context,
+      context: trace.context,
       endTime,
-      file: args.outputFile,
-      inputs: inputData.inputs,
+      file: args.outputFileContent,
+      inputs: trace.inputs,
       issues,
       seen,
       source: "output",
       taskParent,
     }),
     completeResultFile({
-      context,
+      context: trace.context,
       endTime,
-      file: args.errorFile,
-      inputs: inputData.inputs,
+      file: args.errorFileContent,
+      inputs: trace.inputs,
       issues,
       seen,
       source: "error",
@@ -1076,40 +687,37 @@ async function completeBatch(
     return;
   }
 
-  const missing = [...inputData.inputs.values()].filter(
+  const missing = [...trace.inputs.values()].filter(
     ({ customId }) => !seen.has(customId),
   );
-  if (status === "completed" && missing.length > 0) {
-    logBatchInstrumentationError(
-      "left batch spans pending",
-      new Error("OpenAI Batch result files are incomplete"),
-    );
-    return;
-  }
-  for (const input of missing) {
-    try {
-      const child = await startBatchChild(context, taskParent, input);
-      child.log({ error: new Error(`OpenAI Batch ${status}`) });
-      child.end({ endTime });
-    } catch (error) {
-      logBatchInstrumentationError("could not complete missing result", error);
+  if (!trace.status || trace.status === "completed") {
+    if (missing.length > 0) {
+      logBatchInstrumentationError(
+        "left batch spans pending",
+        new Error("OpenAI Batch result files are incomplete"),
+      );
+      return;
     }
-  }
-
-  if (status !== "completed") {
-    task.log({ error: new Error(`OpenAI Batch ${status}`) });
+  } else {
+    for (const input of missing) {
+      const child = await startBatchChild(trace.context, taskParent, input);
+      child.log({ error: new Error(`OpenAI Batch ${trace.status}`) });
+      child.end({ endTime });
+    }
+    task.log({ error: new Error(`OpenAI Batch ${trace.status}`) });
   }
   task.end({ endTime });
+  pendingBatchTraces.delete(args.inputFileId);
 }
 
 export const interceptOpenAIBatchTraceComplete: Parameters<
   typeof openAIChannels.batchesCompleteTrace.intercept
 >[0] = (target, thisArg, args) =>
-  Promise.resolve(Reflect.apply(target, thisArg, args)).then(async (batch) => {
+  Promise.resolve(Reflect.apply(target, thisArg, args)).then(async (result) => {
     try {
-      await completeBatch({ ...args[0], batch });
+      await completeBatch(args[0]);
     } catch (error) {
       logBatchInstrumentationError("could not complete batch", error);
     }
-    return batch;
+    return result;
   });

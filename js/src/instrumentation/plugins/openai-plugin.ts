@@ -15,8 +15,9 @@ import {
   processImagesInOutput,
 } from "./openai-span-data";
 import {
+  interceptOpenAIBatchesRetrieveTraced,
   interceptOpenAIBatchTraceComplete,
-  interceptOpenAIBatchTraceStart,
+  interceptOpenAIFilesCreateTraced,
 } from "./openai-batch-instrumentation";
 import {
   BRAINTRUST_CACHED_STREAM_METRIC,
@@ -47,8 +48,11 @@ export class OpenAIPlugin extends BasePlugin {
 
   protected onEnable(): void {
     this.unsubscribers.push(
-      openAIChannels.batchesStartTrace.intercept(
-        interceptOpenAIBatchTraceStart,
+      openAIChannels.filesCreateTraced.intercept(
+        interceptOpenAIFilesCreateTraced,
+      ),
+      openAIChannels.batchesRetrieveTraced.intercept(
+        interceptOpenAIBatchesRetrieveTraced,
       ),
       openAIChannels.batchesCompleteTrace.intercept(
         interceptOpenAIBatchTraceComplete,

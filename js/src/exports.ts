@@ -131,7 +131,8 @@ export { registerSandbox } from "./sandbox";
 
 export {
   completeOpenAIBatchTrace,
-  startOpenAIBatchTrace,
+  openaiBatchesRetrieveTraced,
+  openaiFilesCreateTraced,
 } from "./openai-batch";
 
 // Internal isomorph layer for platform-specific implementations

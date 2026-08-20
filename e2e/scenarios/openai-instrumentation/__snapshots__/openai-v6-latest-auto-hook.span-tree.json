@@ -913,113 +913,7 @@
         },
         {
           "name": "openai-batch-operation",
-          "children": [
-            {
-              "name": "openai.batch",
-              "type": "task",
-              "children": [
-                {
-                  "name": "Chat Completion",
-                  "type": "llm",
-                  "children": [],
-                  "input": [
-                    {
-                      "content": "Reply with exactly ALPHA.",
-                      "role": "user"
-                    }
-                  ],
-                  "output": [
-                    {
-                      "finish_reason": "stop",
-                      "index": 0,
-                      "message": {
-                        "content": "ALPHA",
-                        "role": "assistant"
-                      }
-                    }
-                  ],
-                  "metadata": {
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai"
-                  },
-                  "metrics": {
-                    "completion_tokens": 1,
-                    "prompt_tokens": 9,
-                    "tokens": 10
-                  },
-                  "context": {
-                    "caller_filename": "<node-internal>",
-                    "caller_functionname": "<node-internal>",
-                    "caller_lineno": 0
-                  }
-                },
-                {
-                  "name": "Chat Completion",
-                  "type": "llm",
-                  "children": [],
-                  "input": [
-                    {
-                      "content": "Reply with exactly BRAVO.",
-                      "role": "user"
-                    }
-                  ],
-                  "output": [
-                    {
-                      "finish_reason": "stop",
-                      "index": 0,
-                      "message": {
-                        "content": "BRAVO",
-                        "role": "assistant"
-                      }
-                    }
-                  ],
-                  "metadata": {
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai"
-                  },
-                  "metrics": {
-                    "completion_tokens": 1,
-                    "prompt_tokens": 8,
-                    "tokens": 9
-                  },
-                  "context": {
-                    "caller_filename": "<node-internal>",
-                    "caller_functionname": "<node-internal>",
-                    "caller_lineno": 0
-                  }
-                },
-                {
-                  "name": "Chat Completion",
-                  "type": "llm",
-                  "children": [],
-                  "input": [
-                    {
-                      "content": "Reply with exactly CHARLIE.",
-                      "role": "user"
-                    }
-                  ],
-                  "metadata": {
-                    "model": "gpt-4o-mini-2024-07-18",
-                    "provider": "openai"
-                  },
-                  "error": "Batch fixture request failed",
-                  "context": {
-                    "caller_filename": "<node-internal>",
-                    "caller_functionname": "<node-internal>",
-                    "caller_lineno": 0
-                  }
-                }
-              ],
-              "metadata": {
-                "provider": "openai"
-              },
-              "context": {
-                "caller_filename": "<node-internal>",
-                "caller_functionname": "<node-internal>",
-                "caller_lineno": 0
-              }
-            }
-          ],
+          "children": [],
           "metadata": {
             "operation": "batch",
             "testRunId": "<run:1>"
@@ -1782,6 +1676,116 @@
       "context": {
         "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
         "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
+      }
+    },
+    {
+      "name": "openai.batch",
+      "type": "task",
+      "children": [
+        {
+          "name": "Chat Completion",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "Reply with exactly ALPHA.",
+              "role": "user"
+            }
+          ],
+          "output": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "ALPHA",
+                "role": "assistant"
+              }
+            }
+          ],
+          "metadata": {
+            "custom_id": "batch_chat_alpha",
+            "model": "gpt-4o-mini-2024-07-18",
+            "provider": "openai"
+          },
+          "metrics": {
+            "completion_tokens": 1,
+            "prompt_tokens": 9,
+            "tokens": 10
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "Chat Completion",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "Reply with exactly BRAVO.",
+              "role": "user"
+            }
+          ],
+          "output": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "BRAVO",
+                "role": "assistant"
+              }
+            }
+          ],
+          "metadata": {
+            "custom_id": "batch_chat_bravo",
+            "model": "gpt-4o-mini-2024-07-18",
+            "provider": "openai"
+          },
+          "metrics": {
+            "completion_tokens": 1,
+            "prompt_tokens": 8,
+            "tokens": 9
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "Chat Completion",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "Reply with exactly CHARLIE.",
+              "role": "user"
+            }
+          ],
+          "metadata": {
+            "custom_id": "batch_chat_charlie",
+            "model": "gpt-4o-mini-2024-07-18",
+            "provider": "openai"
+          },
+          "error": "Batch fixture request failed",
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "endpoint": "/v1/chat/completions",
+        "input_file_id": "file_batch_e2e_fixture",
+        "provider": "openai"
+      },
+      "context": {
+        "caller_filename": "<node-internal>",
+        "caller_functionname": "<node-internal>",
         "caller_lineno": 0
       }
     }

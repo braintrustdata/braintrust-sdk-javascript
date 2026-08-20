@@ -1,65 +1,285 @@
 import { openAIChannels } from "./instrumentation/plugins/openai-channels";
+import { getSpanParentObject } from "./logger";
+import {
+  createLazyAPIPromise,
+  type EnhancedResponse,
+} from "./wrappers/openai-promise-utils";
 import type {
   CompleteOpenAIBatchTraceArgs,
-  OpenAIBatchCreateParams,
+  OpenAIAPIPromise,
   OpenAIBatchLike,
-  StartOpenAIBatchTraceArgs,
+  OpenAIBatchesResource,
+  OpenAIBatchFileContent,
+  OpenAIFileLike,
+  OpenAIFilesResource,
 } from "./openai-batch-types";
 
-/**
- * Start a trace for a new OpenAI Batch, with pending spans for its requests,
- * and return the parameters to pass to `client.batches.create()`.
- *
- * Supported endpoints are `/v1/chat/completions` and `/v1/responses`.
- */
-export async function startOpenAIBatchTrace(
-  args: StartOpenAIBatchTraceArgs,
-): Promise<OpenAIBatchCreateParams> {
-  return await openAIChannels.batchesStartTrace.invoke(
-    async (input) => ({
-      ...input.params,
-      input_file_id: input.inputFile.id,
-    }),
-    undefined,
-    [args],
-    {},
-  );
+function read(value: unknown, key: PropertyKey): unknown {
+  if (
+    value === null ||
+    (typeof value !== "object" && typeof value !== "function")
+  ) {
+    return undefined;
+  }
+  try {
+    return Reflect.get(value, key);
+  } catch {
+    return undefined;
+  }
+}
+
+function isAsyncIterable(value: unknown): value is AsyncIterable<unknown> {
+  return typeof read(value, Symbol.asyncIterator) === "function";
+}
+
+function teeAsyncIterable(source: AsyncIterable<unknown>): {
+  upload: AsyncIterable<Uint8Array>;
+  trace: Response;
+} {
+  const iterator = source[Symbol.asyncIterator]();
+  const stream = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const result = await iterator.next();
+        if (result.done) {
+          controller.close();
+          return;
+        }
+        if (!(result.value instanceof Uint8Array)) {
+          throw new TypeError(
+            "OpenAI upload streams must yield Uint8Array chunks",
+          );
+        }
+        controller.enqueue(result.value);
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      await iterator.return?.(reason);
+    },
+  });
+  const [uploadStream, trace] = stream.tee();
+  const upload = {
+    async *[Symbol.asyncIterator]() {
+      const reader = uploadStream.getReader();
+      try {
+        while (true) {
+          const result = await reader.read();
+          if (result.done) {
+            return;
+          }
+          yield result.value;
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    },
+  };
+  const path = read(source, "path");
+  if (typeof path === "string") {
+    Object.defineProperty(upload, "path", { value: path });
+  }
+  return { upload, trace: new Response(trace) };
+}
+
+function teeUpload(
+  upload: unknown,
+): { upload: unknown; trace: OpenAIBatchFileContent } | undefined {
+  if (upload instanceof Blob) {
+    return { upload, trace: new Response(upload) };
+  }
+  if (upload instanceof Response) {
+    return { upload, trace: upload.clone() };
+  }
+  if (isAsyncIterable(upload)) {
+    return teeAsyncIterable(upload);
+  }
+  return undefined;
 }
 
 /**
- * Complete an OpenAI Batch trace from caller-supplied Batch API data.
+ * Wrap `openai.files.create` to trace an OpenAI Batch input file upload.
  *
- * This helper performs no OpenAI API requests. Pass the Responses or promises
- * returned by `client.files.content()` for the input and result files, JSONL
- * strings, or iterables of parsed records. Supplied Response bodies are
- * consumed directly.
+ * Pass the `openai.files` resource, then call the returned function with the
+ * same arguments as `openai.files.create`. Files whose purpose is not `batch`
+ * are passed through without tracing. Blob and Response uploads are copied for
+ * tracing; async-iterable uploads (including Node file streams) are teed so the
+ * exact bytes still flow to OpenAI while Braintrust reads a separate branch.
+ *
+ * The returned input file ID identifies the trace. Each request span is
+ * identified by that file ID and its JSONL `custom_id`, so use every traced
+ * input file for only one OpenAI Batch.
+ *
+ * @example
+ * ```ts
+ * const inputFile = await openaiFilesCreateTraced(openai.files)({
+ *   file: createReadStream("batch.jsonl"),
+ *   purpose: "batch",
+ * });
+ * ```
  */
-export async function completeOpenAIBatchTrace<TBatch extends OpenAIBatchLike>(
-  args: CompleteOpenAIBatchTraceArgs<TBatch>,
-): Promise<TBatch> {
-  const inputFile = Promise.resolve(args.inputFile);
-  const outputFile =
-    args.outputFile === undefined
+export function openaiFilesCreateTraced<
+  TParams,
+  TFile extends OpenAIFileLike,
+  TOptions = unknown,
+>(
+  files: OpenAIFilesResource<TParams, TFile, TOptions>,
+): (params: TParams, options?: TOptions) => OpenAIAPIPromise<TFile> {
+  return (params, options) => {
+    const parent = getSpanParentObject();
+    const purpose = read(params, "purpose");
+    const file = read(params, "file");
+    if (purpose !== "batch") {
+      return files.create(params, options);
+    }
+
+    let branches: ReturnType<typeof teeUpload>;
+    try {
+      branches = teeUpload(file);
+    } catch {
+      return files.create(params, options);
+    }
+    if (!branches) {
+      return files.create(params, options);
+    }
+
+    const tracedParams = {
+      ...Object(params),
+      file: branches.upload,
+    } as TParams;
+    const apiPromise = files.create(tracedParams, options);
+    let enhancedResponse: EnhancedResponse<TFile> | undefined;
+    const tracedResponse = openAIChannels.filesCreateTraced
+      .invoke(
+        async () => {
+          enhancedResponse = await apiPromise.withResponse();
+          return enhancedResponse.data;
+        },
+        files,
+        [{ params, inputFileContent: branches.trace, parent }],
+        {},
+      )
+      .then((data) => {
+        if (!enhancedResponse) {
+          throw new Error(
+            "Expected OpenAI withResponse() to provide a response",
+          );
+        }
+        return { ...enhancedResponse, data };
+      });
+
+    return createLazyAPIPromise(
+      () => tracedResponse,
+      () => tracedResponse.then(({ response }) => response),
+      () => apiPromise,
+    );
+  };
+}
+
+/**
+ * Wrap `openai.batches.retrieve` to update an OpenAI Batch trace with the
+ * server-recorded lifecycle timestamps and close its spans at a terminal
+ * status.
+ *
+ * Pass the `openai.batches` resource, then call the returned function with the
+ * same arguments as `openai.batches.retrieve`. The Batch must use an input file
+ * previously uploaded through `openaiFilesCreateTraced` in this process.
+ *
+ * @example
+ * ```ts
+ * const batch = await openaiBatchesRetrieveTraced(openai.batches)(batchId);
+ * ```
+ */
+export function openaiBatchesRetrieveTraced<
+  TBatch extends OpenAIBatchLike,
+  TOptions = unknown,
+>(
+  batches: OpenAIBatchesResource<TBatch, TOptions>,
+): (batchId: string, options?: TOptions) => OpenAIAPIPromise<TBatch> {
+  return (batchId, options) => {
+    const apiPromise = batches.retrieve(batchId, options);
+    let enhancedResponse: EnhancedResponse<TBatch> | undefined;
+    const tracedResponse = openAIChannels.batchesRetrieveTraced
+      .invoke(
+        async () => {
+          enhancedResponse = await apiPromise.withResponse();
+          return enhancedResponse.data;
+        },
+        batches,
+        [{ batchId }],
+        {},
+      )
+      .then((data) => {
+        if (!enhancedResponse) {
+          throw new Error(
+            "Expected OpenAI withResponse() to provide a response",
+          );
+        }
+        return { ...enhancedResponse, data };
+      });
+
+    return createLazyAPIPromise(
+      () => tracedResponse,
+      () => tracedResponse.then(({ response }) => response),
+      () => apiPromise,
+    );
+  };
+}
+
+/**
+ * Add result data to spans created by `openaiFilesCreateTraced`.
+ *
+ * This helper performs no OpenAI API requests. Pass the input file ID and the
+ * input, output, and error contents returned by `openai.files.content`, or pass
+ * JSONL strings/iterables directly. Response bodies are consumed. Call
+ * `openaiBatchesRetrieveTraced` first when exact OpenAI lifecycle timestamps
+ * are available.
+ *
+ * @example
+ * ```ts
+ * const outputFileContent = batch.output_file_id
+ *   ? await openai.files.content(batch.output_file_id)
+ *   : undefined;
+ * const errorFileContent = batch.error_file_id
+ *   ? await openai.files.content(batch.error_file_id)
+ *   : undefined;
+ * await completeOpenAIBatchTrace({
+ *   inputFileId: batch.input_file_id,
+ *   inputFileContent: await openai.files.content(batch.input_file_id),
+ *   outputFileContent,
+ *   errorFileContent,
+ * });
+ * ```
+ */
+export async function completeOpenAIBatchTrace(
+  args: CompleteOpenAIBatchTraceArgs,
+): Promise<void> {
+  const inputFileContent = Promise.resolve(args.inputFileContent);
+  const outputFileContent =
+    args.outputFileContent === undefined
       ? undefined
-      : Promise.resolve(args.outputFile);
-  const errorFile =
-    args.errorFile === undefined ? undefined : Promise.resolve(args.errorFile);
+      : Promise.resolve(args.outputFileContent);
+  const errorFileContent =
+    args.errorFileContent === undefined
+      ? undefined
+      : Promise.resolve(args.errorFileContent);
 
-  // Content requests are commonly started before this helper is called. Attach
-  // rejection handlers immediately so early no-op paths and disabled
-  // instrumentation cannot leave caller-supplied promises unhandled.
-  void inputFile.catch(() => undefined);
-  void outputFile?.catch(() => undefined);
-  void errorFile?.catch(() => undefined);
+  void inputFileContent.catch(() => undefined);
+  void outputFileContent?.catch(() => undefined);
+  void errorFileContent?.catch(() => undefined);
 
-  const batch = await openAIChannels.batchesCompleteTrace.invoke(
-    async (input) => input.batch,
+  await openAIChannels.batchesCompleteTrace.invoke(
+    async () => undefined,
     undefined,
-    [{ ...args, inputFile, outputFile, errorFile }],
+    [
+      {
+        ...args,
+        inputFileContent,
+        outputFileContent,
+        errorFileContent,
+      },
+    ],
     {},
   );
-  // The completion channel preserves the exact batch object supplied by the
-  // caller, including fields from a newer OpenAI SDK version.
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return batch as TBatch;
 }

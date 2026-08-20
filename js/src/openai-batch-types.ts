@@ -3,24 +3,28 @@ export type OpenAIBatchJSONL =
   | Iterable<unknown>
   | AsyncIterable<unknown>;
 
-type OpenAIBatchFileContent = OpenAIBatchJSONL | Response;
+export type OpenAIBatchFileContent = OpenAIBatchJSONL | Response;
 
-type OpenAIBatchFile =
+export type OpenAIBatchFile =
   | OpenAIBatchFileContent
   | PromiseLike<OpenAIBatchFileContent>;
 
-type SupportedOpenAIBatchEndpoint = "/v1/chat/completions" | "/v1/responses";
+export interface OpenAIFileLike {
+  id: string;
+  [key: string]: unknown;
+}
 
 export interface OpenAIBatchLike {
   id: string;
   endpoint: string;
   input_file_id: string;
   status: string;
+  created_at?: number | null;
+  in_progress_at?: number | null;
   completed_at?: number | null;
   failed_at?: number | null;
   expired_at?: number | null;
   cancelled_at?: number | null;
-  metadata?: Record<string, string> | null;
   request_counts?: {
     completed?: number;
     failed?: number;
@@ -29,47 +33,38 @@ export interface OpenAIBatchLike {
   [key: string]: unknown;
 }
 
-export interface OpenAIBatchCreateParams {
-  input_file_id: string;
-  endpoint: SupportedOpenAIBatchEndpoint;
-  completion_window: "24h";
-  metadata?: Record<string, string> | null;
-  [key: string]: unknown;
+export type OpenAIEnhancedResponse<T> = {
+  response: Response;
+  data: T;
+  request_id?: string | null;
+};
+
+export interface OpenAIAPIPromise<T> extends Promise<T> {
+  withResponse(): Promise<OpenAIEnhancedResponse<T>>;
+  asResponse(): Promise<Response>;
 }
 
-export interface OpenAIBatchCreateInputParams {
-  endpoint: SupportedOpenAIBatchEndpoint;
-  completion_window: "24h";
-  metadata?: Record<string, string> | null;
-  [key: string]: unknown;
+export interface OpenAIFilesResource<TParams, TFile, TOptions> {
+  create(params: TParams, options?: TOptions): OpenAIAPIPromise<TFile>;
 }
 
-export interface OpenAIFileLike {
-  id: string;
-  [key: string]: unknown;
+export interface OpenAIBatchesResource<TBatch, TOptions> {
+  retrieve(batchId: string, options?: TOptions): OpenAIAPIPromise<TBatch>;
 }
 
-export interface OpenAIBatchWebhookEvent {
-  type:
-    | "batch.completed"
-    | "batch.failed"
-    | "batch.expired"
-    | "batch.cancelled";
-  created_at?: number;
-  data: { id: string };
-  [key: string]: unknown;
+export interface OpenAIFilesCreateTraceArgs {
+  inputFileContent: OpenAIBatchFileContent;
+  parent: { export(): Promise<string> } | { toStr(): string };
+  params: unknown;
 }
 
-export interface StartOpenAIBatchTraceArgs {
-  inputFile: OpenAIFileLike;
-  input: OpenAIBatchJSONL;
-  params: OpenAIBatchCreateInputParams;
+export interface OpenAIBatchesRetrieveTraceArgs {
+  batchId: string;
 }
 
-export interface CompleteOpenAIBatchTraceArgs<TBatch extends OpenAIBatchLike> {
-  batch: TBatch;
-  inputFile: OpenAIBatchFile;
-  outputFile?: OpenAIBatchFile;
-  errorFile?: OpenAIBatchFile;
-  webhook?: OpenAIBatchWebhookEvent;
+export interface CompleteOpenAIBatchTraceArgs {
+  inputFileId: string;
+  inputFileContent: OpenAIBatchFile;
+  outputFileContent?: OpenAIBatchFile;
+  errorFileContent?: OpenAIBatchFile;
 }
