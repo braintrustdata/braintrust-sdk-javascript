@@ -427,6 +427,41 @@ describe("PiCodingAgentPlugin", () => {
     await result;
     expect(taskSpan?.end).toHaveBeenCalledTimes(1);
   });
+
+  it("patches agent.streamFunction when streamFn is absent (pi >= 0.81)", async () => {
+    const interceptor = promptInterceptor(enablePlugin(plugins));
+    const finalMessage = makeAssistantMessage("done");
+    const originalStreamFn = vi.fn(async () => makeStream(finalMessage));
+    const agent = makeAgent(originalStreamFn, "streamFunction");
+    const session = makeSession(agent);
+
+    await interceptor(
+      async function (this: typeof session) {
+        const stream = await this.agent.streamFunction(
+          anthropicModel(),
+          { systemPrompt: "system", messages: [], tools: [] },
+          {},
+        );
+        await stream.result();
+        await this.agent.emit({
+          message: finalMessage,
+          toolResults: [],
+          turnIndex: 0,
+          type: "turn_end",
+        });
+      },
+      session,
+      ["hello", undefined],
+      { moduleVersion: "0.84.2" },
+    );
+
+    expect(agent.streamFunction).not.toBe(originalStreamFn);
+    expect(agent.streamFn).toBeUndefined();
+    expect(originalStreamFn).toHaveBeenCalled();
+
+    const taskSpan = findSpan(spans, "AgentSession.prompt");
+    expect(taskSpan?.end).toHaveBeenCalledTimes(1);
+  });
 });
 
 function enablePlugin(plugins: PiCodingAgentPlugin[]): PiCodingAgentPlugin {
@@ -521,11 +556,14 @@ function makeIteratorBackedStream(events: any[]) {
   };
 }
 
-function makeAgent(streamFn: any) {
+function makeAgent(
+  streamFn: any,
+  streamFnKey: "streamFn" | "streamFunction" = "streamFn",
+) {
   const listeners = new Set<any>();
   return {
     state: { model: anthropicModel(), tools: [] as any[] },
-    streamFn,
+    [streamFnKey]: streamFn,
     subscribe: vi.fn((listener) => {
       listeners.add(listener);
       return vi.fn(() => listeners.delete(listener));

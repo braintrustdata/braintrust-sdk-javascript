@@ -39,7 +39,11 @@ export interface PiPromptOptions {
 }
 
 export interface PiAgent {
-  streamFn: PiStreamFn;
+  // Renamed from `streamFn` to `streamFunction` in
+  // @earendil-works/pi-coding-agent v0.81.0. Both are optional here since only
+  // one exists on any given installed version.
+  streamFn?: PiStreamFn;
+  streamFunction?: PiStreamFn;
   subscribe(listener: PiAgentEventListener): () => void;
   readonly state?: {
     model?: PiModel;
