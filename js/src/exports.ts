@@ -225,6 +225,27 @@ export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapVoyageAI } from "./wrappers/voyageai";
 export { wrapGroq } from "./wrappers/groq";
+export {
+  bindGroqBatchTrace,
+  collectGroqBatchTrace,
+  failGroqBatchTrace,
+  startGroqBatchTrace,
+} from "./groq-batch";
+export type {
+  BindGroqBatchTraceArgs,
+  CollectGroqBatchTraceArgs,
+  FailGroqBatchTraceArgs,
+  GroqBatchCreateInputParams,
+  GroqBatchCreateParams,
+  GroqBatchFile,
+  GroqBatchFileFactory,
+  GroqBatchJSONL,
+  GroqBatchLike,
+  GroqBatchReplayableJSONL,
+  GroqBatchTraceContext,
+  GroqFileLike,
+  StartGroqBatchTraceArgs,
+} from "./groq-batch-types";
 export { wrapBedrockRuntime } from "./wrappers/bedrock-runtime";
 export { wrapCopilotClient } from "./wrappers/github-copilot";
 export {

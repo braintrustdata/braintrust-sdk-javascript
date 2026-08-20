@@ -8,12 +8,50 @@ import type {
   GroqEmbeddingCreateParams,
   GroqEmbeddingResponse,
 } from "../../vendor-sdk-types/groq";
+import type {
+  BindGroqBatchTraceArgs,
+  CollectGroqBatchTraceArgs,
+  FailGroqBatchTraceArgs,
+  GroqBatchCreateParams,
+  GroqBatchLike,
+  GroqBatchTraceContext,
+  StartGroqBatchTraceArgs,
+} from "../../groq-batch-types";
 
 type GroqChatResult = GroqChatCompletion | GroqChatStream;
 
 export const groqChannels = defineChannels(
   "groq-sdk",
   {
+    batchesStartTrace: channel<
+      [StartGroqBatchTraceArgs],
+      GroqBatchCreateParams
+    >({
+      channelName: "batches.start-trace",
+      kind: "async",
+    }),
+
+    batchesBindTrace: channel<
+      [BindGroqBatchTraceArgs<GroqBatchLike>],
+      { traceContext?: GroqBatchTraceContext }
+    >({
+      channelName: "batches.bind-trace",
+      kind: "async",
+    }),
+
+    batchesCollectTrace: channel<
+      [CollectGroqBatchTraceArgs<GroqBatchLike>],
+      GroqBatchLike
+    >({
+      channelName: "batches.collect-trace",
+      kind: "async",
+    }),
+
+    batchesFailTrace: channel<[FailGroqBatchTraceArgs], void>({
+      channelName: "batches.fail-trace",
+      kind: "async",
+    }),
+
     chatCompletionsCreate: channel<
       [GroqChatCreateParams],
       GroqChatResult,
