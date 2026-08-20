@@ -467,9 +467,52 @@ function aggregateChatLogprobs(
   return aggregated;
 }
 
+type AggregatedChatChoice = {
+  index: number;
+  role: string | undefined;
+  content: string | undefined;
+  refusal: string | undefined;
+  toolCallsByIndex: Map<
+    number,
+    NonNullable<OpenAIChatChoice["message"]["tool_calls"]>[number]
+  >;
+  logprobs: OpenAIChatLogprobs | null | undefined;
+  finish_reason: string | null | undefined;
+};
+
+function createAggregatedChatChoice(index: number): AggregatedChatChoice {
+  return {
+    index,
+    role: undefined,
+    content: undefined,
+    refusal: undefined,
+    toolCallsByIndex: new Map(),
+    logprobs: undefined,
+    finish_reason: undefined,
+  };
+}
+
+function toChatChoice(choice: AggregatedChatChoice): OpenAIChatChoice {
+  const toolCalls = Array.from(choice.toolCallsByIndex.entries())
+    .sort(([left], [right]) => left - right)
+    .map(([, toolCall]) => toolCall);
+
+  return {
+    index: choice.index,
+    message: {
+      role: choice.role,
+      content: choice.content,
+      ...(choice.refusal !== undefined ? { refusal: choice.refusal } : {}),
+      tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
+    },
+    logprobs: choice.logprobs ?? null,
+    finish_reason: choice.finish_reason,
+  };
+}
+
 /**
  * Aggregate chat completion chunks into a single response.
- * Combines role (first), content (concatenated), tool_calls (by id),
+ * Combines role (first), content (concatenated), tool_calls (by index),
  * finish_reason (last), and usage (last chunk).
  */
 export function aggregateChatCompletionChunks(
@@ -480,12 +523,7 @@ export function aggregateChatCompletionChunks(
   output: OpenAIChatChoice[];
   metrics: Record<string, number>;
 } {
-  let role = undefined;
-  let content = undefined;
-  let refusal = undefined;
-  let tool_calls = undefined;
-  let logprobs: OpenAIChatLogprobs | null | undefined = undefined;
-  let finish_reason = undefined;
+  const choicesByIndex = new Map<number, AggregatedChatChoice>();
   let metrics: Record<string, number> = {};
 
   for (const chunk of chunks) {
@@ -496,76 +534,95 @@ export function aggregateChatCompletionChunks(
       };
     }
 
-    const choice = chunk.choices?.[0];
-    if (!choice) {
+    const choices = chunk.choices;
+    if (!choices?.length) {
       continue;
     }
 
-    if (choice.finish_reason) {
-      finish_reason = choice.finish_reason;
-    }
+    for (const choice of choices) {
+      const choiceIndex = choice.index;
+      let aggregatedChoice = choicesByIndex.get(choiceIndex);
+      if (!aggregatedChoice) {
+        aggregatedChoice = createAggregatedChatChoice(choiceIndex);
+        choicesByIndex.set(choiceIndex, aggregatedChoice);
+      }
 
-    logprobs = aggregateChatLogprobs(logprobs, choice.logprobs);
+      if (choice.finish_reason) {
+        aggregatedChoice.finish_reason = choice.finish_reason;
+      }
 
-    const delta = choice.delta;
-    if (!delta) {
-      continue;
-    }
+      aggregatedChoice.logprobs = aggregateChatLogprobs(
+        aggregatedChoice.logprobs,
+        choice.logprobs,
+      );
 
-    if (delta.finish_reason) {
-      finish_reason = delta.finish_reason;
-    }
+      const delta = choice.delta;
+      if (!delta) {
+        continue;
+      }
 
-    if (!role && delta.role) {
-      role = delta.role;
-    }
+      if (delta.finish_reason) {
+        aggregatedChoice.finish_reason = delta.finish_reason;
+      }
 
-    if (delta.content) {
-      content = (content || "") + delta.content;
-    }
+      if (!aggregatedChoice.role && delta.role) {
+        aggregatedChoice.role = delta.role;
+      }
 
-    if (delta.refusal) {
-      refusal = (refusal || "") + delta.refusal;
-    }
+      if (delta.content) {
+        aggregatedChoice.content =
+          (aggregatedChoice.content || "") + delta.content;
+      }
 
-    if (delta.tool_calls) {
-      const toolDelta = delta.tool_calls[0];
-      if (
-        !tool_calls ||
-        (toolDelta.id && tool_calls[tool_calls.length - 1].id !== toolDelta.id)
-      ) {
-        tool_calls = [
-          ...(tool_calls || []),
-          {
-            id: toolDelta.id,
-            type: toolDelta.type,
-            function: toolDelta.function,
-          },
-        ];
-      } else {
-        tool_calls[tool_calls.length - 1].function.arguments +=
-          toolDelta.function.arguments;
+      if (delta.refusal) {
+        aggregatedChoice.refusal =
+          (aggregatedChoice.refusal || "") + delta.refusal;
+      }
+
+      if (delta.tool_calls) {
+        for (const toolDelta of delta.tool_calls) {
+          let aggregatedToolCall = aggregatedChoice.toolCallsByIndex.get(
+            toolDelta.index,
+          );
+          if (!aggregatedToolCall) {
+            aggregatedToolCall = {
+              function: { arguments: "" },
+            };
+            aggregatedChoice.toolCallsByIndex.set(
+              toolDelta.index,
+              aggregatedToolCall,
+            );
+          }
+
+          if (toolDelta.id !== undefined) {
+            aggregatedToolCall.id = toolDelta.id;
+          }
+          if (toolDelta.type !== undefined) {
+            aggregatedToolCall.type = toolDelta.type;
+          }
+          if (toolDelta.function?.name !== undefined) {
+            aggregatedToolCall.function.name = toolDelta.function.name;
+          }
+          if (toolDelta.function?.arguments !== undefined) {
+            aggregatedToolCall.function.arguments +=
+              toolDelta.function.arguments;
+          }
+        }
       }
     }
   }
 
   metrics = withCachedMetric(metrics, streamResult, endEvent);
+  const output = Array.from(choicesByIndex.values())
+    .sort((left, right) => left.index - right.index)
+    .map(toChatChoice);
 
   return {
     metrics,
-    output: [
-      {
-        index: 0,
-        message: {
-          role,
-          content,
-          ...(refusal !== undefined ? { refusal } : {}),
-          tool_calls,
-        },
-        logprobs: logprobs ?? null,
-        finish_reason,
-      },
-    ],
+    output:
+      output.length > 0
+        ? output
+        : [toChatChoice(createAggregatedChatChoice(0))],
   };
 }
 

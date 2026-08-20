@@ -64,10 +64,24 @@ interface OpenAIChatToolFunction {
   [key: string]: unknown;
 }
 
+interface OpenAIChatToolFunctionDelta {
+  arguments?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
 interface OpenAIChatToolCall {
   id?: string;
   type?: string;
   function: OpenAIChatToolFunction;
+  [key: string]: unknown;
+}
+
+interface OpenAIChatToolCallDelta {
+  index: number;
+  id?: string;
+  type?: string;
+  function?: OpenAIChatToolFunctionDelta;
   [key: string]: unknown;
 }
 
@@ -111,12 +125,13 @@ interface OpenAIChatDelta {
   role?: string;
   content?: string;
   refusal?: string;
-  tool_calls?: OpenAIChatToolCall[];
+  tool_calls?: OpenAIChatToolCallDelta[];
   finish_reason?: string | null;
   [key: string]: unknown;
 }
 
 export interface OpenAIChatChunkChoice {
+  index: number;
   delta?: OpenAIChatDelta;
   finish_reason?: string | null;
   logprobs?: OpenAIChatLogprobs | null;
