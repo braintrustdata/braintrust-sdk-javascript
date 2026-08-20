@@ -356,6 +356,49 @@
           }
         },
         {
+          "name": "openai-stream-multiple-choices-operation",
+          "children": [
+            {
+              "name": "Chat Completion",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content_kind": "string",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "json_keys": [],
+                  "role": "assistant"
+                },
+                {
+                  "json_keys": [],
+                  "role": "assistant"
+                }
+              ],
+              "metadata": {
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai"
+              },
+              "metrics": {
+                "has_time_to_first_token": true
+              }
+            }
+          ],
+          "input": {
+            "kind": "undefined"
+          },
+          "output": null,
+          "metadata": {
+            "operation": "stream-multiple-choices"
+          },
+          "metrics": {
+            "has_time_to_first_token": false
+          }
+        },
+        {
           "name": "openai-parse-operation",
           "children": [
             {

@@ -77,6 +77,63 @@ function validateStreamFixtureOutput(span: CapturedLogEvent | undefined): void {
   expect(message?.refusal).toBe("NOPE");
 }
 
+function validateMultipleChoicesStreamOutput(
+  span: CapturedLogEvent | undefined,
+): void {
+  expect(span?.output).toEqual([
+    expect.objectContaining({
+      index: 0,
+      finish_reason: "tool_calls",
+      message: expect.objectContaining({
+        role: "assistant",
+        tool_calls: [
+          {
+            id: "choice_0_call_0",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Boston"}',
+            },
+          },
+          {
+            id: "choice_0_call_1",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Paris"}',
+            },
+          },
+        ],
+      }),
+    }),
+    expect.objectContaining({
+      index: 1,
+      finish_reason: "tool_calls",
+      message: expect.objectContaining({
+        role: "assistant",
+        tool_calls: [
+          {
+            id: "choice_1_call_0",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Tokyo"}',
+            },
+          },
+          {
+            id: "choice_1_call_1",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Rome"}',
+            },
+          },
+        ],
+      }),
+    }),
+  ]);
+}
+
 function validateAttachmentInput(
   span: CapturedLogEvent | undefined,
   contentType: string,
@@ -188,6 +245,15 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     testName:
       "captures trace for streamed chat completion with logprobs and refusal",
     validate: validateStreamFixtureOutput,
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-stream-multiple-choices-operation",
+    operation: "stream-multiple-choices",
+    testName: "captures all streamed chat completion choices by index",
+    validate: validateMultipleChoicesStreamOutput,
   },
   {
     childNames: ["Chat Completion"],

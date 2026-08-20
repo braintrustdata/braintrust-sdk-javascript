@@ -472,17 +472,13 @@ type AggregatedChatChoice = {
   role: string | undefined;
   content: string | undefined;
   refusal: string | undefined;
-  tool_calls: OpenAIChatChoice["message"]["tool_calls"] | undefined;
+  toolCallsByIndex: Map<
+    number,
+    NonNullable<OpenAIChatChoice["message"]["tool_calls"]>[number]
+  >;
   logprobs: OpenAIChatLogprobs | null | undefined;
   finish_reason: string | null | undefined;
 };
-
-function getStreamingChoiceIndex(
-  choice: NonNullable<OpenAIChatCompletionChunk["choices"]>[number],
-  position: number,
-): number {
-  return typeof choice.index === "number" ? choice.index : position;
-}
 
 function createAggregatedChatChoice(index: number): AggregatedChatChoice {
   return {
@@ -490,20 +486,24 @@ function createAggregatedChatChoice(index: number): AggregatedChatChoice {
     role: undefined,
     content: undefined,
     refusal: undefined,
-    tool_calls: undefined,
+    toolCallsByIndex: new Map(),
     logprobs: undefined,
     finish_reason: undefined,
   };
 }
 
 function toChatChoice(choice: AggregatedChatChoice): OpenAIChatChoice {
+  const toolCalls = Array.from(choice.toolCallsByIndex.entries())
+    .sort(([left], [right]) => left - right)
+    .map(([, toolCall]) => toolCall);
+
   return {
     index: choice.index,
     message: {
       role: choice.role,
       content: choice.content,
       ...(choice.refusal !== undefined ? { refusal: choice.refusal } : {}),
-      tool_calls: choice.tool_calls,
+      tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
     },
     logprobs: choice.logprobs ?? null,
     finish_reason: choice.finish_reason,
@@ -512,7 +512,7 @@ function toChatChoice(choice: AggregatedChatChoice): OpenAIChatChoice {
 
 /**
  * Aggregate chat completion chunks into a single response.
- * Combines role (first), content (concatenated), tool_calls (by id),
+ * Combines role (first), content (concatenated), tool_calls (by index),
  * finish_reason (last), and usage (last chunk).
  */
 export function aggregateChatCompletionChunks(
@@ -539,8 +539,8 @@ export function aggregateChatCompletionChunks(
       continue;
     }
 
-    for (const [position, choice] of choices.entries()) {
-      const choiceIndex = getStreamingChoiceIndex(choice, position);
+    for (const choice of choices) {
+      const choiceIndex = choice.index;
       let aggregatedChoice = choicesByIndex.get(choiceIndex);
       if (!aggregatedChoice) {
         aggregatedChoice = createAggregatedChatChoice(choiceIndex);
@@ -580,25 +580,33 @@ export function aggregateChatCompletionChunks(
       }
 
       if (delta.tool_calls) {
-        const toolDelta = delta.tool_calls[0];
-        if (
-          !aggregatedChoice.tool_calls ||
-          (toolDelta.id &&
-            aggregatedChoice.tool_calls[aggregatedChoice.tool_calls.length - 1]
-              .id !== toolDelta.id)
-        ) {
-          aggregatedChoice.tool_calls = [
-            ...(aggregatedChoice.tool_calls || []),
-            {
-              id: toolDelta.id,
-              type: toolDelta.type,
-              function: toolDelta.function,
-            },
-          ];
-        } else {
-          aggregatedChoice.tool_calls[
-            aggregatedChoice.tool_calls.length - 1
-          ].function.arguments += toolDelta.function.arguments;
+        for (const toolDelta of delta.tool_calls) {
+          let aggregatedToolCall = aggregatedChoice.toolCallsByIndex.get(
+            toolDelta.index,
+          );
+          if (!aggregatedToolCall) {
+            aggregatedToolCall = {
+              function: { arguments: "" },
+            };
+            aggregatedChoice.toolCallsByIndex.set(
+              toolDelta.index,
+              aggregatedToolCall,
+            );
+          }
+
+          if (toolDelta.id !== undefined) {
+            aggregatedToolCall.id = toolDelta.id;
+          }
+          if (toolDelta.type !== undefined) {
+            aggregatedToolCall.type = toolDelta.type;
+          }
+          if (toolDelta.function?.name !== undefined) {
+            aggregatedToolCall.function.name = toolDelta.function.name;
+          }
+          if (toolDelta.function?.arguments !== undefined) {
+            aggregatedToolCall.function.arguments +=
+              toolDelta.function.arguments;
+          }
         }
       }
     }
