@@ -42,6 +42,96 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 16
     │       }
+    ├── anthropic-batch-operation
+    │   metadata: {
+    │     "operation": "batch",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.batch [task]
+    │       metadata: {
+    │         "provider": "anthropic"
+    │       }
+    │       error: null
+    │       ├── anthropic.messages.create [llm]
+    │       │   input: [
+    │       │     {
+    │       │       "content": "Reply with only the requested word.",
+    │       │       "role": "system"
+    │       │     },
+    │       │     {
+    │       │       "content": "Reply with ONE.",
+    │       │       "role": "user"
+    │       │     }
+    │       │   ]
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "text": "ONE",
+    │       │         "type": "text"
+    │       │       }
+    │       │     ],
+    │       │     "role": "assistant"
+    │       │   }
+    │       │   metadata: {
+    │       │     "max_tokens": 24,
+    │       │     "model": "claude-haiku-4-5-resolved",
+    │       │     "provider": "anthropic",
+    │       │     "stop_reason": "end_turn",
+    │       │     "stop_sequence": null
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 2,
+    │       │     "prompt_cache_creation_tokens": 0,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 5,
+    │       │     "tokens": 7
+    │       │   }
+    │       │   error: null
+    │       ├── anthropic.messages.create [llm]
+    │       │   input: [
+    │       │     {
+    │       │       "content": "Fail this request.",
+    │       │       "role": "user"
+    │       │     }
+    │       │   ]
+    │       │   output: null
+    │       │   metadata: {
+    │       │     "max_tokens": 24,
+    │       │     "model": "claude-haiku-4-5",
+    │       │     "provider": "anthropic"
+    │       │   }
+    │       │   error: "Synthetic Anthropic batch request failure"
+    │       └── anthropic.messages.create [llm]
+    │           input: [
+    │             {
+    │               "content": "Reply with TWO.",
+    │               "role": "user"
+    │             }
+    │           ]
+    │           output: {
+    │             "content": [
+    │               {
+    │                 "text": "TWO",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "role": "assistant"
+    │           }
+    │           metadata: {
+    │             "max_tokens": 24,
+    │             "model": "claude-haiku-4-5",
+    │             "provider": "anthropic",
+    │             "stop_reason": "end_turn",
+    │             "stop_sequence": null
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 4,
+    │             "prompt_cache_creation_tokens": 1,
+    │             "prompt_cached_tokens": 2,
+    │             "prompt_tokens": 6,
+    │             "tokens": 10
+    │           }
+    │           error: null
     ├── anthropic-system-blocks-operation
     │   metadata: {
     │     "operation": "system-blocks",
@@ -324,9 +414,144 @@ span_tree:
     │         "time_to_first_token": 0,
     │         "tokens": 713
     │       }
-    └── anthropic-tool-operation
+    ├── anthropic-tool-operation
+    │   metadata: {
+    │     "operation": "tool",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.messages.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Use the get_weather tool for Paris, France. Do not answer from memory.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "caller": {
+    │               "type": "direct"
+    │             },
+    │             "id": "<span:1>",
+    │             "input": {
+    │               "location": "Paris, France"
+    │             },
+    │             "name": "get_weather",
+    │             "type": "tool_use"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "max_tokens": 128,
+    │         "model": "claude-haiku-4-5-20251001",
+    │         "provider": "anthropic",
+    │         "stop_reason": "tool_use",
+    │         "stop_sequence": null,
+    │         "temperature": 0,
+    │         "tools": [
+    │           {
+    │             "function": {
+    │               "description": "Get the current weather in a given location",
+    │               "name": "get_weather",
+    │               "parameters": {
+    │                 "properties": {
+    │                   "location": {
+    │                     "description": "The city and state or city and country",
+    │                     "type": "string"
+    │                   }
+    │                 },
+    │                 "required": [
+    │                   "location"
+    │                 ],
+    │                 "type": "object"
+    │               }
+    │             },
+    │             "type": "function"
+    │           }
+    │         ]
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 56,
+    │         "prompt_cache_creation_1h_tokens": 0,
+    │         "prompt_cache_creation_5m_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 589,
+    │         "time_to_first_token": 0,
+    │         "tokens": 645
+    │       }
+    ├── anthropic-beta-create-operation
+    │   metadata: {
+    │     "operation": "beta-create",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.messages.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly BETA.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "BETA",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "max_tokens": 24,
+    │         "model": "claude-haiku-4-5-20251001",
+    │         "provider": "anthropic",
+    │         "stop_reason": "end_turn",
+    │         "stop_sequence": null,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 5,
+    │         "prompt_cache_creation_1h_tokens": 0,
+    │         "prompt_cache_creation_5m_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 13,
+    │         "time_to_first_token": 0,
+    │         "tokens": 18
+    │       }
+    ├── anthropic-beta-stream-operation
+    │   metadata: {
+    │     "operation": "beta-stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.messages.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Count from 1 to 3 and include the words one two three.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: "1 one\n2 two\n3 three"
+    │       metadata: {
+    │         "max_tokens": 32,
+    │         "model": "claude-haiku-4-5-20251001",
+    │         "provider": "anthropic",
+    │         "stop_reason": "end_turn",
+    │         "stop_sequence": null,
+    │         "stream": true,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 15,
+    │         "prompt_cache_creation_1h_tokens": 0,
+    │         "prompt_cache_creation_5m_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 24,
+    │         "time_to_first_token": 0,
+    │         "tokens": 39
+    │       }
+    └── anthropic-beta-stream-tool-operation
         metadata: {
-          "operation": "tool",
+          "operation": "beta-stream-tool",
           "testRunId": "<run:1>"
         }
         └── anthropic.messages.create [llm]
@@ -339,9 +564,6 @@ span_tree:
             output: {
               "content": [
                 {
-                  "caller": {
-                    "type": "direct"
-                  },
                   "id": "<span:1>",
                   "input": {
                     "location": "Paris, France"
@@ -355,10 +577,18 @@ span_tree:
             metadata: {
               "max_tokens": 128,
               "model": "claude-haiku-4-5-20251001",
+              "parallel_tool_calls": false,
               "provider": "anthropic",
               "stop_reason": "tool_use",
               "stop_sequence": null,
+              "stream": true,
               "temperature": 0,
+              "tool_choice": {
+                "function": {
+                  "name": "get_weather"
+                },
+                "type": "function"
+              },
               "tools": [
                 {
                   "function": {
@@ -382,11 +612,11 @@ span_tree:
               ]
             }
             metrics: {
-              "completion_tokens": 56,
+              "completion_tokens": 26,
               "prompt_cache_creation_1h_tokens": 0,
               "prompt_cache_creation_5m_tokens": 0,
               "prompt_cached_tokens": 0,
-              "prompt_tokens": 589,
+              "prompt_tokens": 687,
               "time_to_first_token": 0,
-              "tokens": 645
+              "tokens": 713
             }

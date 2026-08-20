@@ -168,6 +168,10 @@
         "label": "v0 pinned"
       },
       {
+        "variantKey": "anthropic-v0-batches",
+        "label": "v0 batches pinned"
+      },
+      {
         "variantKey": "anthropic-v0-latest",
         "label": "v0 latest"
       }

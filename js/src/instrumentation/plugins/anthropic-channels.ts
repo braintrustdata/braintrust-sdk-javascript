@@ -1,6 +1,14 @@
 import { channel, defineChannels } from "../core/channel-definitions";
 import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
+  CompleteAnthropicBatchTraceArgs,
+  BindAnthropicBatchTraceArgs,
+  FailAnthropicBatchTraceArgs,
+  AnthropicBatchLike,
+  StartAnthropicBatchTraceArgs,
+  StartAnthropicBatchTraceResult,
+} from "../../anthropic-batch-types";
+import type {
   AnthropicCreateParams,
   AnthropicMessage,
   AnthropicMessageStream,
@@ -14,10 +22,36 @@ import type {
 } from "../../vendor-sdk-types/anthropic";
 
 type AnthropicResult = AnthropicMessage | AnthropicMessageStream;
+type AnthropicBindTraceResult = { traceContext?: string };
 
 export const anthropicChannels = defineChannels(
   "@anthropic-ai/sdk",
   {
+    batchesStartTrace: channel<
+      [StartAnthropicBatchTraceArgs],
+      StartAnthropicBatchTraceResult
+    >({
+      channelName: "messages.batches.start-trace",
+      kind: "async",
+    }),
+    batchesCompleteTrace: channel<
+      [CompleteAnthropicBatchTraceArgs],
+      AnthropicBatchLike
+    >({
+      channelName: "messages.batches.complete-trace",
+      kind: "async",
+    }),
+    batchesBindTrace: channel<
+      [BindAnthropicBatchTraceArgs],
+      AnthropicBindTraceResult
+    >({
+      channelName: "messages.batches.bind-trace",
+      kind: "async",
+    }),
+    batchesFailTrace: channel<[FailAnthropicBatchTraceArgs], void>({
+      channelName: "messages.batches.fail-trace",
+      kind: "async",
+    }),
     messagesCreate: channel<
       [AnthropicCreateParams],
       AnthropicResult,
