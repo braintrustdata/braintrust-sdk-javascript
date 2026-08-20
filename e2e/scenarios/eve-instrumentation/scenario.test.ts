@@ -26,7 +26,7 @@ const eveScenarios = await Promise.all(
   [
     {
       dependencyName: "eve-v0",
-      label: "v0 pinned",
+      label: "v0.34 pinned",
       variantKey: "eve-v0",
     },
     {
@@ -137,12 +137,16 @@ describe.sequential("eve instrumentation variants", () => {
           "read",
           secondRoot?.span.id,
         );
-
+        const secondChildSearch = findLatestChildSpan(
+          events,
+          "search",
+          secondChildTurn?.span.id,
+        );
         expect(findAllSpans(events, "eve.session")).toEqual([]);
         expect(turns).toHaveLength(4);
         expect(
           turns.filter((turn) => turn.span.parentIds.length === 0),
-        ).toHaveLength(2);
+        ).toEqual([root, secondRoot]);
         expect(new Set(turns.map((turn) => turn.span.rootId)).size).toBe(2);
 
         expect(root).toBeDefined();
@@ -155,10 +159,21 @@ describe.sequential("eve instrumentation variants", () => {
         });
         expect(root?.metadata).not.toHaveProperty("model");
         expect(root?.metadata).not.toHaveProperty("provider");
-        expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
-        expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
-        expect(root?.metrics?.tokens).toEqual(expect.any(Number));
         expect(root?.output).toContain("Final answer from read");
+        expect(root?.metrics).toMatchObject({
+          completion_tokens: steps.reduce(
+            (total, step) => total + (step.metrics?.completion_tokens ?? 0),
+            0,
+          ),
+          prompt_tokens: steps.reduce(
+            (total, step) => total + (step.metrics?.prompt_tokens ?? 0),
+            0,
+          ),
+          tokens: steps.reduce(
+            (total, step) => total + (step.metrics?.tokens ?? 0),
+            0,
+          ),
+        });
 
         expect(steps).toHaveLength(2);
         expect(steps.map((step) => step.span.type)).toEqual(["llm", "llm"]);
@@ -191,11 +206,14 @@ describe.sequential("eve instrumentation variants", () => {
           expect(step.input[0]).toMatchObject({ role: "system" });
           expect(step.metadata).toMatchObject({
             "eve.session_id": root?.metadata?.["eve.session_id"],
+            model: "qwen/qwen3-30b-a3b",
+            provider: "openrouter",
             scenario: "eve-instrumentation",
             testRunId: expect.any(String),
           });
-          expect(step.metadata).not.toHaveProperty("model");
-          expect(step.metadata).not.toHaveProperty("provider");
+          expect(step.metrics?.completion_tokens).toEqual(expect.any(Number));
+          expect(step.metrics?.prompt_tokens).toEqual(expect.any(Number));
+          expect(step.metrics?.tokens).toEqual(expect.any(Number));
         }
 
         expect(researcher).toBeDefined();
@@ -217,14 +235,28 @@ describe.sequential("eve instrumentation variants", () => {
         expect(childTurn?.span.rootId).toEqual(root?.span.rootId);
         expect(childTurn?.metadata).toMatchObject({
           "eve.session_id": expect.any(String),
-          model: "qwen/qwen3-30b-a3b",
-          provider: "openrouter",
           scenario: "eve-instrumentation",
           testRunId: expect.any(String),
         });
+        expect(childTurn?.metadata).not.toHaveProperty("model");
+        expect(childTurn?.metadata).not.toHaveProperty("provider");
         expect(childTurn?.metadata?.["eve.session_id"]).not.toEqual(
           root?.metadata?.["eve.session_id"],
         );
+        expect(childTurn?.metrics).toMatchObject({
+          completion_tokens: childSteps.reduce(
+            (total, step) => total + (step.metrics?.completion_tokens ?? 0),
+            0,
+          ),
+          prompt_tokens: childSteps.reduce(
+            (total, step) => total + (step.metrics?.prompt_tokens ?? 0),
+            0,
+          ),
+          tokens: childSteps.reduce(
+            (total, step) => total + (step.metrics?.tokens ?? 0),
+            0,
+          ),
+        });
 
         expect(childSteps).toHaveLength(2);
         for (const step of childSteps) {
@@ -242,6 +274,9 @@ describe.sequential("eve instrumentation variants", () => {
             scenario: "eve-instrumentation",
             testRunId: expect.any(String),
           });
+          expect(step.metrics?.completion_tokens).toEqual(expect.any(Number));
+          expect(step.metrics?.prompt_tokens).toEqual(expect.any(Number));
+          expect(step.metrics?.tokens).toEqual(expect.any(Number));
           expect(step.output).toMatchObject([
             {
               message: {
@@ -286,74 +321,81 @@ describe.sequential("eve instrumentation variants", () => {
         expect(secondRoot?.span.rootId).not.toEqual(root?.span.rootId);
         expect(secondRoot?.metadata).toMatchObject({
           "eve.session_id": root?.metadata?.["eve.session_id"],
+          scenario: "eve-instrumentation",
+          testRunId: expect.any(String),
         });
-        expect(secondRoot?.metadata).not.toHaveProperty("model");
-        expect(secondRoot?.metadata).not.toHaveProperty("provider");
         expect(secondRoot?.output).toContain("Final answer from read");
+        expect(secondRoot?.metrics).toMatchObject({
+          completion_tokens: secondSteps.reduce(
+            (total, step) => total + (step.metrics?.completion_tokens ?? 0),
+            0,
+          ),
+          prompt_tokens: secondSteps.reduce(
+            (total, step) => total + (step.metrics?.prompt_tokens ?? 0),
+            0,
+          ),
+          tokens: secondSteps.reduce(
+            (total, step) => total + (step.metrics?.tokens ?? 0),
+            0,
+          ),
+        });
         expect(secondSteps).toHaveLength(2);
-        expect(secondSteps.map((step) => step.span.type)).toEqual([
-          "llm",
-          "llm",
-        ]);
         for (const step of secondSteps) {
+          expect(step.span.parentIds).toEqual([secondRoot?.span.id]);
+          expect(step.span.rootId).toEqual(secondRoot?.span.rootId);
           expect(step.metadata).toMatchObject({
             "eve.session_id": secondRoot?.metadata?.["eve.session_id"],
-            scenario: "eve-instrumentation",
-            testRunId: expect.any(String),
+            model: "qwen/qwen3-30b-a3b",
+            provider: "openrouter",
           });
-          expect(step.metadata).not.toHaveProperty("model");
-          expect(step.metadata).not.toHaveProperty("provider");
         }
-        expect(secondSteps[0]?.output).toMatchObject([
-          {
-            finish_reason: "tool_calls",
-            message: {
-              reasoning: [{ content: expect.any(String) }],
-              tool_calls: [
-                { function: { name: "researcher" }, type: "function" },
-                { function: { name: "read" }, type: "function" },
-              ],
-            },
-          },
-        ]);
-        expect(secondSteps[1]?.output).toMatchObject([
-          {
-            finish_reason: "stop",
-            message: {
-              reasoning: [{ content: expect.any(String) }],
-            },
-          },
-        ]);
-        expect(secondResearcher?.span.type).toBe("tool");
-        expect(secondResearcher?.span.ended).toBe(true);
         expect(secondResearcher?.span.parentIds).toEqual([secondRoot?.span.id]);
-        expect(secondResearcher?.metadata).toMatchObject({
-          "eve.session_id": secondRoot?.metadata?.["eve.session_id"],
-        });
         expect(secondChildTurn?.span.parentIds).toEqual([
           secondResearcher?.span.id,
         ]);
         expect(secondChildTurn?.span.rootId).toEqual(secondRoot?.span.rootId);
-        expect(secondChildTurn?.metadata).toMatchObject({
-          "eve.session_id": expect.any(String),
-          model: "qwen/qwen3-30b-a3b",
-          provider: "openrouter",
-        });
-        expect(secondChildTurn?.metadata?.["eve.session_id"]).not.toEqual(
-          secondRoot?.metadata?.["eve.session_id"],
-        );
-        expect(secondRead?.span.type).toBe("tool");
-        expect(secondRead?.span.ended).toBe(true);
+        expect(secondChildTurn?.span.rootId).not.toEqual(root?.span.rootId);
         expect(secondRead?.span.parentIds).toEqual([secondRoot?.span.id]);
-        expect(secondRead?.metadata).toMatchObject({
-          "eve.session_id": secondRoot?.metadata?.["eve.session_id"],
-        });
 
         for (const event of events) {
           expect(spanInstrumentationName(event)).toBe("eve");
         }
 
         const rawRows = payloads.flatMap((payload) => payload.rows);
+        for (const span of [
+          ...findAllSpans(events, "eve.step"),
+          researcher,
+          childSearch,
+          read,
+          secondResearcher,
+          secondRead,
+          secondChildSearch,
+        ]) {
+          expect(span).toBeDefined();
+          expect(
+            rawRows.filter(
+              (row) =>
+                row.id === span?.row.id &&
+                Object.prototype.hasOwnProperty.call(row, "input"),
+            ),
+          ).toHaveLength(1);
+          expect(
+            rawRows.filter(
+              (row) =>
+                row.id === span?.row.id &&
+                Object.prototype.hasOwnProperty.call(row, "metadata"),
+            ),
+          ).toHaveLength(1);
+        }
+        for (const turn of turns) {
+          expect(
+            rawRows.filter(
+              (row) =>
+                row.id === turn.row.id &&
+                Object.prototype.hasOwnProperty.call(row, "metadata"),
+            ),
+          ).toHaveLength(1);
+        }
         for (const step of findAllSpans(events, "eve.step")) {
           expect(
             rawRows.filter(

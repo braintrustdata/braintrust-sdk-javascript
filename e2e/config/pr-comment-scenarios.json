@@ -623,7 +623,7 @@
     "label": "Eve Instrumentation",
     "metadataScenario": "eve-instrumentation",
     "variants": [
-      { "variantKey": "eve-v0", "label": "v0 pinned" },
+      { "variantKey": "eve-v0", "label": "v0.34 pinned" },
       { "variantKey": "eve-v0-latest", "label": "v0 latest" }
     ]
   },

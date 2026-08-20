@@ -20,10 +20,7 @@ export type { BraintrustPluginConfig } from "./braintrust-plugin";
 export { OpenAIAgentsTraceProcessor } from "./plugins/openai-agents-trace-processor";
 export type { OpenAIAgentsTraceProcessorOptions } from "./plugins/openai-agents-trace-processor";
 export { braintrustFlueInstrumentation } from "./plugins/flue-plugin";
-export {
-  braintrustEveHook,
-  braintrustEveInstrumentation,
-} from "./plugins/eve-plugin";
+export { braintrustEveInstrumentation } from "./plugins/eve-plugin";
 
 // Re-export core types for external instrumentation packages
 export type {
