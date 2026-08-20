@@ -68,6 +68,7 @@ type PiToolSpanState = {
 
 type PiAgentPatchState = {
   originalStreamFn: PiStreamFn;
+  streamFnKey: "streamFn" | "streamFunction";
   wrappedStreamFn: PiStreamFn;
 };
 
@@ -228,9 +229,21 @@ function extractSession(
 function isPiAgent(value: unknown): value is PiAgent {
   return (
     isObject(value) &&
-    typeof value.streamFn === "function" &&
+    (typeof value.streamFn === "function" ||
+      typeof value.streamFunction === "function") &&
     typeof value.subscribe === "function"
   );
+}
+
+// @earendil-works/pi-coding-agent renamed `agent.streamFn` to
+// `agent.streamFunction` starting in v0.81.0. Resolve whichever property
+// actually exists so both the pre- and post-rename shapes are patchable.
+function resolveStreamFnKey(
+  agent: PiAgent,
+): "streamFn" | "streamFunction" | undefined {
+  if (typeof agent.streamFn === "function") return "streamFn";
+  if (typeof agent.streamFunction === "function") return "streamFunction";
+  return undefined;
 }
 
 function promptContextStore(): IsoAsyncLocalStorage<PiPromptState | undefined> {
@@ -245,17 +258,28 @@ function currentPiPromptState(): PiPromptState | undefined {
 }
 
 function installPiAgentInstrumentation(agent: PiAgent): void {
+  const streamFnKey = resolveStreamFnKey(agent);
+  if (!streamFnKey) {
+    // isPiAgent() already validated that one of these exists; this should be
+    // unreachable, but stay defensive rather than patching the wrong property.
+    throw new Error(
+      "Pi Coding Agent: unable to resolve streamFn/streamFunction property",
+    );
+  }
+
   const existing = piAgentPatchStates.get(agent);
-  if (!existing || agent.streamFn !== existing.wrappedStreamFn) {
+  if (!existing || agent[streamFnKey] !== existing.wrappedStreamFn) {
+    const originalStreamFn = agent[streamFnKey];
     const patchState = {
-      originalStreamFn: agent.streamFn,
-      wrappedStreamFn: agent.streamFn,
+      originalStreamFn,
+      streamFnKey,
+      wrappedStreamFn: originalStreamFn,
     } satisfies PiAgentPatchState;
     patchState.wrappedStreamFn = makeInstrumentedStreamFn(
       agent,
       patchState.originalStreamFn,
     );
-    agent.streamFn = patchState.wrappedStreamFn;
+    agent[streamFnKey] = patchState.wrappedStreamFn;
     piAgentPatchStates.set(agent, patchState);
   }
 
