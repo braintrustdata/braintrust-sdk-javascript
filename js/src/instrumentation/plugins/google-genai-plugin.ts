@@ -22,17 +22,26 @@ import {
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { googleGenAIChannels } from "./google-genai-channels";
+import {
+  extractGoogleGenAISystemInstruction,
+  extractGoogleGenAIResponseMetadata,
+  normalizeGoogleGenAIToolChoice,
+  populateGoogleGenAIUsageMetrics,
+  selectGoogleGenAIGenerationConfig,
+  serializeGoogleGenAIContents,
+  serializeGoogleGenAIRequestContents,
+  serializeGoogleGenAIResponse,
+  serializeGoogleGenAITools,
+} from "./google-genai-shared";
 import type {
   GoogleGenAIEmbedContentParams,
   GoogleGenAIEmbedContentResponse,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateContentResponse,
-  GoogleGenAIContent,
   GoogleGenAIInteraction,
   GoogleGenAIInteractionCreateParams,
   GoogleGenAIInteractionSSEEvent,
   GoogleGenAIInteractionUsage,
-  GoogleGenAIPart,
   GoogleGenAIUsageMetadata,
 } from "../../vendor-sdk-types/google-genai";
 
@@ -170,7 +179,10 @@ export class GoogleGenAIPlugin extends BasePlugin {
           }
 
           try {
-            const responseMetadata = extractResponseMetadata(event.result);
+            const responseMetadata = extractGoogleGenAIResponseMetadata(
+              event.result,
+            );
+            const output = serializeGoogleGenAIResponse(event.result);
             spanState.span.log({
               ...(responseMetadata ? { metadata: responseMetadata } : {}),
               metrics: cleanMetrics(
@@ -179,7 +191,7 @@ export class GoogleGenAIPlugin extends BasePlugin {
                   spanState.startTime,
                 ),
               ),
-              output: event.result,
+              ...(output ? { output } : {}),
             });
           } finally {
             spanState.span.end();
@@ -486,13 +498,14 @@ function patchGoogleGenAIStreamingResult(args: {
 
     if (options.result) {
       const { end, ...metricsWithoutEnd } = options.result.metrics;
-      const responseMetadata = extractResponseMetadata(
+      const responseMetadata = extractGoogleGenAIResponseMetadata(
         options.result.aggregated,
       );
+      const output = serializeGoogleGenAIResponse(options.result.aggregated);
       span.log({
         ...(responseMetadata ? { metadata: responseMetadata } : {}),
         metrics: cleanMetrics(metricsWithoutEnd),
-        output: options.result.aggregated,
+        ...(output ? { output } : {}),
       });
       span.end(typeof end === "number" ? { endTime: end } : undefined);
       return;
@@ -653,23 +666,13 @@ function patchGoogleGenAIStreamingResult(args: {
 function serializeGenerateContentInput(
   params: GoogleGenAIGenerateContentParams,
 ): Record<string, unknown> {
-  const input: Record<string, unknown> = {
+  return {
     model: params.model,
-    contents: serializeContentCollection(params.contents),
+    contents: serializeGoogleGenAIRequestContents(
+      params.contents,
+      extractGoogleGenAISystemInstruction(params.config),
+    ),
   };
-
-  const config = params.config ? tryToDict(params.config) : null;
-  if (config) {
-    const filteredConfig: Record<string, unknown> = {};
-    Object.keys(config).forEach((key) => {
-      if (key !== "tools") {
-        filteredConfig[key] = config[key];
-      }
-    });
-    input.config = filteredConfig;
-  }
-
-  return input;
 }
 
 function serializeEmbedContentInput(
@@ -677,7 +680,7 @@ function serializeEmbedContentInput(
 ): Record<string, unknown> {
   const input: Record<string, unknown> = {
     model: params.model,
-    contents: serializeContentCollection(params.contents),
+    contents: serializeGoogleGenAIContents(params.contents),
   };
 
   const config = params.config ? tryToDict(params.config) : null;
@@ -725,7 +728,7 @@ function serializeInteractionInput(
 function extractInteractionMetadata(
   params: GoogleGenAIInteractionCreateParams,
 ): Record<string, unknown> {
-  const metadata: Record<string, unknown> = {};
+  const metadata: Record<string, unknown> = { provider: "google" };
 
   for (const key of [
     "model",
@@ -751,66 +754,6 @@ function extractInteractionMetadata(
   }
 
   return metadata;
-}
-
-/**
- * Serialize contents, converting inline data to Attachments.
- */
-function serializeContentCollection(
-  contents: string | GoogleGenAIContent | GoogleGenAIContent[],
-): unknown {
-  if (contents === null || contents === undefined) {
-    return null;
-  }
-
-  if (Array.isArray(contents)) {
-    return contents.map((item) => serializeContentItem(item));
-  }
-
-  return serializeContentItem(contents);
-}
-
-/**
- * Serialize a single content item.
- */
-function serializeContentItem(item: string | GoogleGenAIContent): unknown {
-  if (typeof item === "object" && item !== null) {
-    if (item.parts && Array.isArray(item.parts)) {
-      return {
-        ...item,
-        parts: item.parts.map((part: GoogleGenAIPart) => serializePart(part)),
-      };
-    }
-    return item;
-  }
-
-  if (typeof item === "string") {
-    return { text: item };
-  }
-
-  return item;
-}
-
-/**
- * Serialize a part, converting inline data to Attachments.
- */
-function serializePart(part: GoogleGenAIPart): unknown {
-  if (!part || typeof part !== "object") {
-    return part;
-  }
-
-  if (part.inlineData && part.inlineData.data) {
-    const { data, mimeType } = part.inlineData;
-    const attachment = createAttachmentFromInlineData(data, mimeType);
-
-    if (attachment) {
-      return {
-        image_url: { url: attachment },
-      };
-    }
-  }
-
-  return part;
 }
 
 function serializeInteractionValue(
@@ -909,61 +852,27 @@ function createAttachmentFromInlineData(
   });
 }
 
-function serializeGenerateContentTools(
-  params: GoogleGenAIGenerateContentParams,
-): Record<string, unknown>[] | null {
-  const config = params.config ? tryToDict(params.config) : null;
-  const tools = config?.tools;
-  if (!Array.isArray(tools)) {
-    return null;
-  }
-
-  try {
-    const serializedTools: Record<string, unknown>[] = [];
-    for (const tool of tools) {
-      const toolDict = tryToDict(tool);
-      if (toolDict) {
-        serializedTools.push(toolDict);
-      }
-    }
-    return serializedTools.length > 0 ? serializedTools : null;
-  } catch {
-    return null;
-  }
-}
-
 function extractGenerateContentMetadata(
   params: GoogleGenAIGenerateContentParams,
 ): Record<string, unknown> {
-  const metadata: Record<string, unknown> = {};
-
-  if (params.model) {
-    metadata.model = params.model;
-  }
-
-  if (params.config) {
-    const config = tryToDict(params.config);
-    if (config) {
-      Object.keys(config).forEach((key) => {
-        if (key !== "tools") {
-          metadata[key] = config[key];
-        }
-      });
-    }
-  }
-
-  const tools = serializeGenerateContentTools(params);
-  if (tools) {
-    metadata.tools = tools;
-  }
-
-  return metadata;
+  const config = selectGoogleGenAIGenerationConfig(params.config);
+  const tools = serializeGoogleGenAITools(config.tools);
+  const toolChoice = normalizeGoogleGenAIToolChoice(config.toolConfig);
+  delete config.tools;
+  delete config.toolConfig;
+  return {
+    ...config,
+    ...(tools.length > 0 ? { tools } : {}),
+    ...(toolChoice !== undefined ? { tool_choice: toolChoice } : {}),
+    ...(params.model ? { model: params.model } : {}),
+    provider: "google",
+  };
 }
 
 function extractEmbedContentMetadata(
   params: GoogleGenAIEmbedContentParams,
 ): Record<string, unknown> {
-  const metadata: Record<string, unknown> = {};
+  const metadata: Record<string, unknown> = { provider: "google" };
 
   if (params.model) {
     metadata.model = params.model;
@@ -996,7 +905,7 @@ function extractGenerateContentMetrics(
   }
 
   if (response?.usageMetadata) {
-    populateUsageMetrics(metrics, response.usageMetadata);
+    populateGoogleGenAIUsageMetrics(metrics, response.usageMetadata);
   }
 
   return metrics;
@@ -1016,7 +925,7 @@ function extractEmbedContentMetrics(
   }
 
   if (response?.usageMetadata) {
-    populateUsageMetrics(metrics, response.usageMetadata);
+    populateGoogleGenAIUsageMetrics(metrics, response.usageMetadata);
   }
 
   const embeddingTokenCount = extractEmbedPromptTokenCount(response);
@@ -1142,51 +1051,6 @@ function summarizeEmbedContentOutput(
   };
 }
 
-function populateUsageMetrics(
-  metrics: Record<string, number>,
-  usage: GoogleGenAIUsageMetadata,
-): void {
-  if (
-    usage.promptTokenCount !== undefined ||
-    usage.toolUsePromptTokenCount !== undefined
-  ) {
-    metrics.prompt_tokens =
-      (usage.promptTokenCount ?? 0) + (usage.toolUsePromptTokenCount ?? 0);
-  }
-  if (
-    usage.candidatesTokenCount !== undefined ||
-    usage.thoughtsTokenCount !== undefined
-  ) {
-    metrics.completion_tokens =
-      (usage.candidatesTokenCount ?? 0) + (usage.thoughtsTokenCount ?? 0);
-  }
-  if (usage.totalTokenCount !== undefined) {
-    metrics.tokens = usage.totalTokenCount;
-  }
-  if (usage.cachedContentTokenCount !== undefined) {
-    metrics.prompt_cached_tokens = usage.cachedContentTokenCount;
-  }
-  if (usage.thoughtsTokenCount !== undefined) {
-    metrics.completion_reasoning_tokens = usage.thoughtsTokenCount;
-  }
-  for (const detail of usage.promptTokensDetails ?? []) {
-    if (detail.modality === "AUDIO" && detail.tokenCount !== undefined) {
-      metrics.prompt_audio_tokens =
-        (metrics.prompt_audio_tokens ?? 0) + detail.tokenCount;
-    }
-  }
-  for (const detail of usage.candidatesTokensDetails ?? []) {
-    if (detail.modality === "AUDIO" && detail.tokenCount !== undefined) {
-      metrics.completion_audio_tokens =
-        (metrics.completion_audio_tokens ?? 0) + detail.tokenCount;
-    }
-    if (detail.modality === "IMAGE" && detail.tokenCount !== undefined) {
-      metrics.completion_image_tokens =
-        (metrics.completion_image_tokens ?? 0) + detail.tokenCount;
-    }
-  }
-}
-
 function populateInteractionUsageMetrics(
   metrics: Record<string, number>,
   usage: GoogleGenAIInteractionUsage,
@@ -1278,11 +1142,9 @@ function aggregateGenerateContentChunks(
   const otherParts: Record<string, unknown>[] = [];
   let groundingMetadata: unknown = undefined;
   let usageMetadata: GoogleGenAIUsageMetadata | null = null;
-  let lastResponse: GoogleGenAIGenerateContentResponse | null = null;
+  let lastCandidateResponse: GoogleGenAIGenerateContentResponse | null = null;
 
   for (const chunk of chunks) {
-    lastResponse = chunk;
-
     if (chunk.usageMetadata) {
       usageMetadata = chunk.usageMetadata;
     }
@@ -1291,6 +1153,7 @@ function aggregateGenerateContentChunks(
     }
 
     if (chunk.candidates && Array.isArray(chunk.candidates)) {
+      lastCandidateResponse = chunk;
       for (const candidate of chunk.candidates) {
         if (candidate.content?.parts) {
           for (const part of candidate.content.parts) {
@@ -1326,9 +1189,9 @@ function aggregateGenerateContentChunks(
   }
   parts.push(...otherParts);
 
-  if (parts.length > 0 && lastResponse?.candidates) {
+  if (parts.length > 0 && lastCandidateResponse?.candidates) {
     const candidates: Record<string, unknown>[] = [];
-    for (const candidate of lastResponse.candidates) {
+    for (const candidate of lastCandidateResponse.candidates) {
       const candidateDict: Record<string, unknown> = {
         content: {
           parts,
@@ -1356,14 +1219,10 @@ function aggregateGenerateContentChunks(
 
   if (usageMetadata) {
     aggregated.usageMetadata = usageMetadata;
-    populateUsageMetrics(metrics, usageMetadata);
+    populateGoogleGenAIUsageMetrics(metrics, usageMetadata);
   }
   if (groundingMetadata !== undefined) {
     aggregated.groundingMetadata = groundingMetadata;
-  }
-
-  if (text) {
-    aggregated.text = text;
   }
 
   return { aggregated, metrics };
@@ -1569,38 +1428,6 @@ function cleanMetrics(metrics: Record<string, number>): Record<string, number> {
     }
   }
   return cleaned;
-}
-
-function extractResponseMetadata(
-  response: unknown,
-): Record<string, unknown> | undefined {
-  const responseDict = tryToDict(response);
-  if (!responseDict) {
-    return undefined;
-  }
-
-  const metadata: Record<string, unknown> = {};
-  const responseGroundingMetadata = responseDict.groundingMetadata;
-  const candidateGroundingMetadata: unknown[] = [];
-
-  if (Array.isArray(responseDict.candidates)) {
-    for (const candidate of responseDict.candidates) {
-      const candidateDict = tryToDict(candidate);
-      if (candidateDict?.groundingMetadata !== undefined) {
-        candidateGroundingMetadata.push(candidateDict.groundingMetadata);
-      }
-    }
-  }
-
-  if (responseGroundingMetadata !== undefined) {
-    metadata.groundingMetadata = responseGroundingMetadata;
-  } else if (candidateGroundingMetadata.length === 1) {
-    [metadata.groundingMetadata] = candidateGroundingMetadata;
-  } else if (candidateGroundingMetadata.length > 1) {
-    metadata.groundingMetadata = candidateGroundingMetadata;
-  }
-
-  return Object.keys(metadata).length > 0 ? metadata : undefined;
 }
 
 /**

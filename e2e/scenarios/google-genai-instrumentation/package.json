@@ -21,6 +21,9 @@
     "google-genai-sdk-v2": "npm:@google/genai@2.8.0",
     "google-genai-sdk-v2-latest": "npm:@google/genai@2.8.0"
   },
+  "devDependencies": {
+    "typescript": "5.4.4"
+  },
   "pnpm": {
     "overrides": {
       "protobufjs@<7.5.8": "^7.5.8",

@@ -127,6 +127,155 @@ describe("GoogleGenAIPlugin", () => {
       expect(handlers).toHaveProperty("error");
     });
 
+    it("records provider metadata for non-streaming and streaming generations", async () => {
+      plugin.enable();
+
+      const params = {
+        contents: "Hello",
+        model: "gemini-2.5-flash",
+      };
+      const nonStreamingHandlers = subscribeSpy.mock.calls[0][0];
+      nonStreamingHandlers.start({ arguments: [params] });
+      expect(mockStartSpan).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          event: expect.objectContaining({
+            metadata: expect.objectContaining({ provider: "google" }),
+          }),
+        }),
+      );
+
+      async function* stream() {
+        yield {
+          candidates: [{ content: { parts: [{ text: "Hello" }] } }],
+        };
+      }
+      const streamingHandlers = subscribeSpy.mock.calls[1][0];
+      const streamingEvent: any = { arguments: [params] };
+      streamingHandlers.start(streamingEvent);
+      streamingEvent.result = stream();
+      streamingHandlers.asyncEnd(streamingEvent);
+      for await (const _chunk of streamingEvent.result) {
+        // Consume the result so the streaming span is created and completed.
+      }
+      expect(mockStartSpan).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          event: expect.objectContaining({
+            metadata: expect.objectContaining({ provider: "google" }),
+          }),
+        }),
+      );
+    });
+
+    it("keeps generation settings out of input and normalizes system content", () => {
+      plugin.enable();
+
+      const handlers = subscribeSpy.mock.calls[0][0];
+      handlers.start({
+        arguments: [
+          {
+            contents: "Hello",
+            model: "gemini-2.5-flash",
+            config: {
+              systemInstruction: "Be concise",
+              temperature: 0,
+              toolConfig: {
+                functionCallingConfig: { mode: "NONE" },
+              },
+              tools: [
+                {
+                  functionDeclarations: [{ name: "get_weather" }],
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      expect(mockStartSpan).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          event: expect.objectContaining({
+            input: {
+              contents: [
+                { parts: [{ text: "Be concise" }], role: "system" },
+                { text: "Hello" },
+              ],
+              model: "gemini-2.5-flash",
+            },
+            metadata: expect.objectContaining({
+              provider: "google",
+              temperature: 0,
+              tool_choice: "none",
+              tools: [
+                {
+                  function: { name: "get_weather" },
+                  type: "function",
+                },
+              ],
+            }),
+          }),
+        }),
+      );
+      const event = mockStartSpan.mock.calls.at(-1)![0]!.event as {
+        input: Record<string, unknown>;
+        metadata: Record<string, unknown>;
+      };
+      expect(event.input).not.toHaveProperty("config");
+      expect(event.metadata).not.toHaveProperty("systemInstruction");
+      expect(event.metadata).not.toHaveProperty("toolConfig");
+    });
+
+    it("preserves accumulated candidates when the final stream chunk only has usage", async () => {
+      plugin.enable();
+
+      async function* stream() {
+        yield {
+          candidates: [
+            { content: { parts: [{ text: "Hel" }], role: "model" } },
+          ],
+        };
+        yield {
+          candidates: [
+            {
+              content: { parts: [{ text: "lo" }], role: "model" },
+              finishReason: "STOP",
+            },
+          ],
+        };
+        yield { usageMetadata: { totalTokenCount: 3 } };
+      }
+
+      const handlers = subscribeSpy.mock.calls[1][0];
+      const event: any = {
+        arguments: [{ contents: "Hello", model: "gemini-2.5-flash" }],
+      };
+      handlers.start(event);
+      event.result = stream();
+      handlers.asyncEnd(event);
+      for await (const _chunk of event.result) {
+        // Consume the wrapped stream so it finalizes the span.
+      }
+
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      expect(span.log).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          metrics: expect.objectContaining({ tokens: 3 }),
+          output: expect.objectContaining({
+            candidates: [
+              {
+                content: {
+                  parts: [{ text: "Hello" }],
+                  role: "model",
+                },
+                finishReason: "STOP",
+              },
+            ],
+          }),
+        }),
+      );
+    });
+
     it.each([
       {
         name: "candidate-only usage",
@@ -270,6 +419,68 @@ describe("GoogleGenAIPlugin", () => {
         prompt_tokens: 0,
         tokens: 0,
       });
+    });
+
+    it("allowlists completion output and extracts candidate metadata", () => {
+      plugin.enable();
+
+      const handlers = subscribeSpy.mock.calls[0][0];
+      const event: any = {
+        arguments: [
+          {
+            contents: "Hello",
+            model: "gemini-2.5-flash",
+          },
+        ],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = {
+        arbitraryExtension: "private-response-extension",
+        candidates: [
+          {
+            content: { parts: [{ text: "Hello" }], role: "model" },
+            groundingMetadata: { webSearchQueries: ["hello query"] },
+          },
+        ],
+        modelVersion: "gemini-2.5-flash-001",
+        parsed: { private: "derived-parsed-value" },
+        responseId: "response-1",
+        sdkHttpResponse: {
+          headers: { Authorization: "secret-response-header" },
+        },
+        usageMetadata: { totalTokenCount: 2 },
+        text: "Hello",
+      };
+      handlers.asyncEnd(event);
+
+      expect(span.log).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          metadata: {
+            groundingMetadata: { webSearchQueries: ["hello query"] },
+            model: "gemini-2.5-flash-001",
+          },
+          output: {
+            candidates: event.result.candidates,
+            modelVersion: "gemini-2.5-flash-001",
+            responseId: "response-1",
+            usageMetadata: { totalTokenCount: 2 },
+          },
+        }),
+      );
+      expect(JSON.stringify(span.log.mock.calls.at(-1)?.[0])).not.toContain(
+        "secret-response-header",
+      );
+      expect(JSON.stringify(span.log.mock.calls.at(-1)?.[0])).not.toContain(
+        "private-response-extension",
+      );
+      expect(span.log.mock.calls.at(-1)?.[0].output).not.toHaveProperty(
+        "parsed",
+      );
+      expect(span.log.mock.calls.at(-1)?.[0].output).not.toHaveProperty("text");
     });
   });
 

@@ -67,11 +67,15 @@ span_tree:
     │           │   }
     │           └── generate_content [llm]
     │               input: {
-    │                 "config": {
-    │                   "systemInstruction": "You are an agent. Your internal name is \"weather_agent\".\n\nAnswer the user's question in one short sentence.",
-    │                   "temperature": 0
-    │                 },
     │                 "contents": [
+    │                   {
+    │                     "parts": [
+    │                       {
+    │                         "text": "You are an agent. Your internal name is \"weather_agent\".\n\nAnswer the user's question in one short sentence."
+    │                       }
+    │                     ],
+    │                     "role": "system"
+    │                   },
     │                   {
     │                     "parts": [
     │                       {
@@ -100,23 +104,6 @@ span_tree:
     │                 ],
     │                 "modelVersion": "gemini-2.5-flash-lite",
     │                 "responseId": "<responseId:1>",
-    │                 "sdkHttpResponse": {
-    │                   "headers": {
-    │                     "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
-    │                     "connection": "keep-alive",
-    │                     "content-type": "application/json; charset=UTF-8",
-    │                     "date": "<timestamp>",
-    │                     "keep-alive": "timeout=5",
-    │                     "server": "scaffolding on HTTPServer2",
-    │                     "server-timing": "<server-timing>",
-    │                     "transfer-encoding": "chunked",
-    │                     "vary": "Origin, X-Origin, Referer",
-    │                     "x-content-type-options": "nosniff",
-    │                     "x-frame-options": "SAMEORIGIN",
-    │                     "x-gemini-service-tier": "<x-gemini-service-tier>",
-    │                     "x-xss-protection": "0"
-    │                   }
-    │                 },
     │                 "usageMetadata": {
     │                   "candidatesTokenCount": 16,
     │                   "promptTokenCount": 37,
@@ -132,7 +119,7 @@ span_tree:
     │               }
     │               metadata: {
     │                 "model": "gemini-2.5-flash-lite",
-    │                 "systemInstruction": "You are an agent. Your internal name is \"weather_agent\".\n\nAnswer the user's question in one short sentence.",
+    │                 "provider": "google",
     │                 "temperature": 0
     │               }
     │               metrics: {
