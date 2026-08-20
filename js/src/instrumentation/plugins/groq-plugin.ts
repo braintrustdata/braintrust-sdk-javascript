@@ -5,13 +5,16 @@ import {
   unsubscribeAll,
 } from "../core/channel-tracing";
 import { SpanTypeAttribute } from "../../../util/index";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
 import { getCurrentUnixTimestamp } from "../../util";
-import {
-  aggregateChatCompletionChunks,
-  parseMetricsFromUsage,
-} from "./openai-plugin";
+import { aggregateChatCompletionChunks } from "./openai-plugin";
 import { groqChannels } from "./groq-channels";
+import { extractGroqCompletionInput, parseGroqMetrics } from "./groq-span-data";
+import {
+  interceptGroqBatchTraceBind,
+  interceptGroqBatchTraceCollect,
+  interceptGroqBatchTraceFail,
+  interceptGroqBatchTraceStart,
+} from "./groq-batch-instrumentation";
 import type {
   GroqChatCompletion,
   GroqChatCompletionChunk,
@@ -20,16 +23,19 @@ import type {
 export class GroqPlugin extends BasePlugin {
   protected onEnable(): void {
     this.unsubscribers.push(
+      groqChannels.batchesStartTrace.intercept(interceptGroqBatchTraceStart),
+      groqChannels.batchesBindTrace.intercept(interceptGroqBatchTraceBind),
+      groqChannels.batchesCollectTrace.intercept(
+        interceptGroqBatchTraceCollect,
+      ),
+      groqChannels.batchesFailTrace.intercept(interceptGroqBatchTraceFail),
+    );
+
+    this.unsubscribers.push(
       traceStreamingChannel(groqChannels.chatCompletionsCreate, {
         name: "groq.chat.completions.create",
         type: SpanTypeAttribute.LLM,
-        extractInput: ([params]) => {
-          const { messages, ...metadata } = params;
-          return {
-            input: processInputAttachments(messages),
-            metadata: { ...metadata, provider: "groq" },
-          };
-        },
+        extractInput: ([params]) => extractGroqCompletionInput(params),
         extractOutput: (result) => result?.choices,
         extractMetrics: (result, startTime) => {
           const metrics = parseGroqMetrics(result);
@@ -69,44 +75,6 @@ export class GroqPlugin extends BasePlugin {
   }
 }
 
-export function parseGroqMetrics(
-  result:
-    | Pick<GroqChatCompletion, "usage" | "x_groq">
-    | { usage?: unknown; x_groq?: unknown }
-    | null
-    | undefined,
-): Record<string, number> {
-  const metrics = parseMetricsFromUsage(result?.usage);
-  const xGroq = result?.x_groq;
-
-  if (!xGroq || typeof xGroq !== "object") {
-    return metrics;
-  }
-
-  const extraUsage = "usage" in xGroq ? xGroq.usage : undefined;
-
-  if (!extraUsage || typeof extraUsage !== "object") {
-    return metrics;
-  }
-
-  const dramCachedTokens = (extraUsage as Record<string, unknown>)[
-    "dram_cached_tokens"
-  ];
-  const sramCachedTokens = (extraUsage as Record<string, unknown>)[
-    "sram_cached_tokens"
-  ];
-
-  return {
-    ...metrics,
-    ...(typeof dramCachedTokens === "number"
-      ? { dram_cached_tokens: dramCachedTokens }
-      : {}),
-    ...(typeof sramCachedTokens === "number"
-      ? { sram_cached_tokens: sramCachedTokens }
-      : {}),
-  };
-}
-
 export function aggregateGroqChatCompletionChunks(
   chunks: GroqChatCompletionChunk[],
   streamResult?: unknown,
@@ -120,6 +88,20 @@ export function aggregateGroqChatCompletionChunks(
     streamResult,
     endEvent,
   );
+  const metrics: Record<string, number> = { ...aggregated.metrics };
+  const retainedMetricNames = new Set(["cached"]);
+  for (const chunk of chunks) {
+    const normalizedMetrics = parseGroqMetrics(chunk);
+    for (const name of Object.keys(normalizedMetrics)) {
+      retainedMetricNames.add(name);
+    }
+    Object.assign(metrics, normalizedMetrics);
+  }
+  for (const name of Object.keys(metrics)) {
+    if (!retainedMetricNames.has(name)) {
+      delete metrics[name];
+    }
+  }
   const reasoning = aggregateGroqReasoning(chunks);
   if (reasoning !== undefined) {
     const message = aggregated.output[0]?.message;
@@ -128,7 +110,7 @@ export function aggregateGroqChatCompletionChunks(
     }
   }
   return {
-    metrics: aggregated.metrics,
+    metrics,
     output: aggregated.output,
   };
 }

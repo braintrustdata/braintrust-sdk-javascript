@@ -6732,6 +6732,22 @@ export function _internalStartSpanWithInitialMerge<
     InitialSpanWriteAsMergeArg).span;
 }
 
+/** @internal Start a deterministic span under an exported object-only parent. */
+export function _internalStartSpanWithInitialMergeAndParentSpanIds<
+  IsAsyncFlush extends boolean = true,
+>(args: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg): Span {
+  return startSpanAndIsLogger(
+    {
+      ...args,
+      [INITIAL_SPAN_WRITE_AS_MERGE]: true,
+    } as StartSpanArgs &
+      AsyncFlushArg<IsAsyncFlush> &
+      OptionalStateArg &
+      InitialSpanWriteAsMergeArg,
+    { useParentSpanIdsForObjectParent: true },
+  ).span;
+}
+
 /** @internal Start a span with SDK-controlled context fields. */
 export function _internalStartSpanWithContext<
   IsAsyncFlush extends boolean = true,
@@ -6768,6 +6784,7 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
     AsyncFlushArg<IsAsyncFlush> &
     OptionalStateArg &
     InternalSpanContextArg,
+  internalOptions?: { useParentSpanIdsForObjectParent?: boolean },
 ): { span: Span; isSyncFlushLogger: boolean } {
   const state = args?.state ?? _globalState;
 
@@ -6785,17 +6802,21 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
     parentObject instanceof SpanComponentsV3 ||
     parentObject instanceof SpanComponentsV4
   ) {
-    const parentSpanIds: ParentSpanIds | undefined =
+    let parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
+    if (
       parentObject.data.row_id &&
       parentSpanIdsUsable(
         parentObject.data.span_id,
         parentObject.data.root_span_id,
       )
-        ? {
-            spanId: parentObject.data.span_id,
-            rootSpanId: parentObject.data.root_span_id,
-          }
-        : undefined;
+    ) {
+      parentSpanIds = {
+        spanId: parentObject.data.span_id,
+        rootSpanId: parentObject.data.root_span_id,
+      };
+    } else if (internalOptions?.useParentSpanIdsForObjectParent) {
+      parentSpanIds = args?.parentSpanIds;
+    }
     // The parent object/state are already resolved from `parent` above; drop
     // the raw `parent` so it isn't re-normalized.
     const { parent: _ignoredParent, ...spanArgs } = args ?? {};
