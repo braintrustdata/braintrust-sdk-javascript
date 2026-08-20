@@ -419,16 +419,6 @@ function isRecord(value: Json | undefined): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function summarizeMetricPresence(metrics: Json): Json {
-  if (!isRecord(metrics)) {
-    return null;
-  }
-
-  return {
-    has_time_to_first_token: typeof metrics.time_to_first_token === "number",
-  } satisfies Json;
-}
-
 function jsonKeysFromText(value: unknown): string[] {
   if (typeof value !== "string") {
     return [];
@@ -610,6 +600,7 @@ function summarizeOpenAIPayload(
   summaryName: string | undefined,
 ): Json {
   const name = summaryName ?? event.span.name ?? "";
+  const fields = spanTreeFields(event);
 
   return {
     input: summarizeInput(event.input as Json),
@@ -617,7 +608,7 @@ function summarizeOpenAIPayload(
       event.row.metadata as Record<string, unknown> | undefined,
       ["model", "openaiSdkVersion", "operation", "provider", "scenario"],
     ),
-    metrics: summarizeMetricPresence(event.metrics as Json),
+    metrics: fields.metrics as Json,
     name: name || null,
     output: summarizeOutput(name, event.output as Json),
     type: event.span.type ?? null,
