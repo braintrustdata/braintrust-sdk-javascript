@@ -18,11 +18,15 @@ const dynamicModel = withReadableReasoning(
 );
 
 export default defineAgent({
+  experimental: {
+    instrumentationProviders: true,
+  },
   model: defineDynamic({
-    fallback: dynamicModel,
     events: {
-      "step.started": () => dynamicModel,
+      "step.started": () => ({
+        model: dynamicModel,
+        modelContextWindowTokens: 8_192,
+      }),
     },
   }),
-  modelContextWindowTokens: 8_192,
 });

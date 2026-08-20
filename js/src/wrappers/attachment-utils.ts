@@ -242,6 +242,26 @@ export function processInputAttachments(input: any): any {
       }
     }
 
+    // AI SDK tool output content format
+    if (
+      (node.type === "image-data" || node.type === "file-data") &&
+      node.data
+    ) {
+      const mediaType = node.mediaType || "application/octet-stream";
+      const filename =
+        node.filename ||
+        `output_${node.type === "image-data" ? "image" : "file"}_${attachmentIndex}.${getExtensionFromMediaType(mediaType)}`;
+      const attachment = toAttachment(node.data, mediaType, filename);
+
+      if (attachment) {
+        attachmentIndex++;
+        return {
+          ...node,
+          data: attachment,
+        };
+      }
+    }
+
     const processed: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(node)) {
       processed[key] = processNode(value);

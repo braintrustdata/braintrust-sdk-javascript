@@ -10,10 +10,7 @@
 export { OpenAIAgentsTraceProcessor } from "./providers/openai-agents-trace-processor";
 export type { OpenAIAgentsTraceProcessorOptions } from "./providers/openai-agents-trace-processor";
 export { braintrustFlueInstrumentation } from "./providers/flue-instrumentation";
-export {
-  braintrustEveHook,
-  braintrustEveInstrumentation,
-} from "./providers/eve-instrumentation";
+export { braintrustEveInstrumentation } from "./providers/eve-instrumentation";
 
 // Configuration API
 export { configureInstrumentation } from "./registry";

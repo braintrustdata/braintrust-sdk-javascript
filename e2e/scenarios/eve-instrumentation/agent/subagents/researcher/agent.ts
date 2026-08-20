@@ -11,6 +11,9 @@ const openrouter = createOpenRouter({
 export default defineAgent({
   description:
     "Research the Eve instrumentation documentation before the parent reads it.",
+  experimental: {
+    instrumentationProviders: true,
+  },
   model: withReadableReasoning(
     openrouter("qwen/qwen3-30b-a3b", {
       provider: {

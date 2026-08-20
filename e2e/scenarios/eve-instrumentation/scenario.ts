@@ -65,13 +65,10 @@ async function main() {
     }
 
     const body = (await response.json()) as {
-      continuationToken?: string;
       sessionId?: string;
     };
-    if (!body.sessionId || !body.continuationToken) {
-      throw new Error(
-        `Eve session create did not return a sessionId and continuationToken`,
-      );
+    if (!body.sessionId) {
+      throw new Error(`Eve session create did not return a sessionId`);
     }
 
     const seenSessionIds = new Set([body.sessionId]);
@@ -81,11 +78,13 @@ async function main() {
       seenSessionIds,
       "session.waiting",
     );
+    // Eve emits session.waiting just before its durable session snapshot is
+    // visible to the continuation route.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     const followUp = await fetch(
       `${baseUrl}/eve/v1/session/${body.sessionId}`,
       {
         body: JSON.stringify({
-          continuationToken: body.continuationToken,
           message: "Run the Braintrust Eve instrumentation e2e scenario again",
         }),
         headers: { "content-type": "application/json" },
@@ -213,6 +212,7 @@ async function streamUntil(
   const decoder = new TextDecoder();
   let buffer = "";
   let nextIndex = startIndex;
+  let turnCompleted = false;
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -228,7 +228,10 @@ async function streamUntil(
           continue;
         }
         const event = JSON.parse(trimmed) as {
-          data?: { childSessionId?: string; message?: string };
+          data?: {
+            childSessionId?: string;
+            message?: string;
+          };
           type?: string;
         };
         nextIndex++;
@@ -256,7 +259,13 @@ async function streamUntil(
             ).then(() => undefined),
           );
         }
-        if (event.type === until) {
+        if (event.type === "turn.completed") {
+          turnCompleted = true;
+        }
+        if (
+          event.type === until &&
+          (until !== "session.waiting" || turnCompleted)
+        ) {
           await Promise.all(childStreams);
           return nextIndex;
         }

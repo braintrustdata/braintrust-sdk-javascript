@@ -1,7 +1,9 @@
 import { debugLogger } from "../../debug-logger";
 import {
+  Attachment,
   NOOP_SPAN,
   _internalStartSpanWithInitialMerge,
+  currentLogger,
   flush,
   updateSpan,
   withCurrent,
@@ -14,161 +16,105 @@ import {
 } from "../../span-origin";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
+import {
+  convertDataToBlob,
+  getExtensionFromMediaType,
+  processInputAttachments,
+} from "../../wrappers/attachment-utils";
 import type {
-  EveAssistantStepFinishReason,
-  EveActionResultError,
-  EveHandleMessageStreamEvent,
-  EveHookContext,
-  EveHookDefinition,
+  EveInstrumentationActionCompletedEvent,
+  EveInstrumentationActionFailedEvent,
+  EveInstrumentationActionStartedEvent,
+  EveInstrumentationContentPart,
   EveInstrumentationDefinition,
+  EveInstrumentationHandlerContext,
+  EveInstrumentationModelCallCompletedEvent,
+  EveInstrumentationModelCallFailedEvent,
+  EveInstrumentationModelCallStartedEvent,
   EveInstrumentationModelInput,
-  EveInstrumentationStepStartedEventInput,
-  EveModelMessage,
-  EveModelMessageContentPart,
-  EveRuntimeActionRequest,
-  EveRuntimeActionResult,
-  EveRuntimeToolCallActionRequest,
-  EveRuntimeToolResultActionResult,
+  EveInstrumentationStepAttemptCompletedEvent,
+  EveInstrumentationStepAttemptFailedEvent,
+  EveInstrumentationTurnFailedEvent,
+  EveInstrumentationTurnSettledEvent,
+  EveInstrumentationTurnStartedEvent,
+  EveInstrumentationUsage,
 } from "../../vendor-sdk-types/eve";
-
-type SpanState = {
-  metadata: Record<string, unknown>;
-  span: EveSpan;
-};
 
 type EveSpan = Pick<Span, "end" | "log" | "rootSpanId" | "spanId">;
 
-type EveSpanStartEvent = {
-  readonly created: string;
-  readonly metrics: { readonly start: number };
-  readonly span_attributes: Record<string, unknown>;
-  readonly span_parents: string[];
-};
-
 type EveSpanReference = {
-  readonly endTime?: number;
   readonly exported: string;
   readonly rootSpanId: string;
-  readonly rowId: string;
   readonly spanId: string;
-  readonly startEvent?: EveSpanStartEvent;
+  readonly turnMetricContributions?: Record<string, Record<string, number>>;
 };
 
-type StepState = SpanState & {
-  input?: unknown;
-  metrics: Record<string, number>;
-  output?: unknown;
-  reasoning: readonly EveReasoningBlock[];
-};
-
-type TurnState = SpanState & {
+type TurnState = {
   key: string;
-  metrics: Record<string, number>;
-  output?: unknown;
-  sessionId: string;
-  stepsByIndex: Map<number, StepState>;
-  turnId: string;
-};
-
-type ToolState = SpanState & {
-  endedByTurn?: boolean;
-  turnKey: string;
-};
-
-type EveEntityKind = "step" | "subagent" | "tool" | "turn";
-
-type EveStateHandle<T> = {
-  get(): T;
-  update(fn: (current: T) => T): void;
-};
-
-type EveDefineState = <T>(name: string, initial: () => T) => EveStateHandle<T>;
-
-type EveTraceState = {
   metadata: Record<string, unknown>;
-  reasoningBlocks: readonly (EveReasoningBlock & { key: string })[];
-  spanReferences: readonly EveSpanReference[];
-  stepStarts: readonly {
-    ordinal: number;
-    open: boolean;
-    stepIndex: number;
-    turnId: string;
-  }[];
-  llmInputs: readonly {
-    input: CapturedEveModelInput;
-    key: string;
-  }[];
+  rootSpanId: string;
+  rowId: string;
+  span: EveSpan;
+  spanId: string;
 };
 
-type EveReasoningBlock = {
-  content: string;
-  eventAt?: string;
-};
+type EveInstrumentationEvent =
+  | EveInstrumentationActionCompletedEvent
+  | EveInstrumentationActionFailedEvent
+  | EveInstrumentationActionStartedEvent
+  | EveInstrumentationModelCallCompletedEvent
+  | EveInstrumentationModelCallFailedEvent
+  | EveInstrumentationModelCallStartedEvent
+  | EveInstrumentationStepAttemptCompletedEvent
+  | EveInstrumentationStepAttemptFailedEvent
+  | EveInstrumentationTurnFailedEvent
+  | EveInstrumentationTurnSettledEvent
+  | EveInstrumentationTurnStartedEvent;
 
-const EVE_TRACE_STATE_KEY = "braintrust.eve.tracing";
 const MAX_EVE_CACHE_ENTRIES = 10_000;
-const MAX_STORED_LLM_INPUTS = 100;
-const MAX_STORED_REASONING_BLOCKS = 100;
-const MAX_STORED_SPAN_REFERENCES = 10_000;
-const MAX_STORED_STEP_STARTS = 10_000;
+const eveRootSpanIdsByTurnKey = new LRUCache<string, string>({
+  max: MAX_EVE_CACHE_ENTRIES,
+});
 
-type CapturedEveModelMessage = {
-  content: string | readonly Record<string, unknown>[];
-  role: EveModelMessage["role"];
-};
-
-type CapturedEveModelInput = readonly CapturedEveModelMessage[];
-
-/** Manual hook instrumentation for eve runtime stream events. */
-export function braintrustEveHook(options: {
-  defineState: EveDefineState;
-  metadata?: Record<string, unknown>;
-}): EveHookDefinition {
-  const state = options.defineState(EVE_TRACE_STATE_KEY, emptyEveTraceState);
-  const bridge = new EveBridge(state);
+/**
+ * Creates an Eve instrumentation provider.
+ *
+ * Eve 0.34.0 introduced the provider event API used here. Older Eve hook and
+ * single-file instrumentation layouts are intentionally unsupported.
+ */
+export function braintrustEveInstrumentation(
+  options: {
+    metadata?: Record<string, unknown>;
+    setup?: EveInstrumentationDefinition["setup"];
+  } = {},
+): EveInstrumentationDefinition {
+  const bridge = new EveBridge(options.metadata);
   return {
+    capture: "content",
     events: {
-      "*": async (event: EveHandleMessageStreamEvent, ctx: EveHookContext) => {
-        await bridge.handle(event, ctx, options.metadata);
-      },
+      "action.completed": (event, context) => bridge.handle(event, context),
+      "action.failed": (event, context) => bridge.handle(event, context),
+      "action.started": (event, context) => bridge.handle(event, context),
+      "model.call.completed": (event, context) => bridge.handle(event, context),
+      "model.call.failed": (event, context) => bridge.handle(event, context),
+      "model.call.started": (event, context) => bridge.handle(event, context),
+      "step.attempt.completed": (event, context) =>
+        bridge.handle(event, context),
+      "step.attempt.failed": (event, context) => bridge.handle(event, context),
+      "turn.cancelled": (event, context) => bridge.handle(event, context),
+      "turn.completed": (event, context) => bridge.handle(event, context),
+      "turn.failed": (event, context) => bridge.handle(event, context),
+      "turn.started": (event, context) => bridge.handle(event, context),
     },
-  };
-}
-
-/** Eve instrumentation helper for logger setup and durable LLM input capture. */
-export function braintrustEveInstrumentation(options: {
-  defineState: EveDefineState;
-  setup?: EveInstrumentationDefinition["setup"];
-}): EveInstrumentationDefinition {
-  const state = options.defineState(EVE_TRACE_STATE_KEY, emptyEveTraceState);
-  return {
-    events: {
-      "step.started": (input: EveInstrumentationStepStartedEventInput) => {
-        try {
-          captureEveModelInput(state, input);
-        } catch (error) {
-          debugLogger.warn("Error in Eve LLM input capture:", error);
-        }
-      },
-    },
-    recordInputs: false,
-    recordOutputs: false,
+    flush: () => flush(),
     setup: options.setup,
   };
-}
-
-function isEveHandleMessageStreamEvent(
-  event: unknown,
-): event is EveHandleMessageStreamEvent {
-  return isObject(event) && typeof event["type"] === "string";
 }
 
 class ResumedEveSpan implements EveSpan {
   private endTime: number | undefined;
 
-  constructor(private readonly reference: EveSpanReference) {
-    this.endTime = reference.endTime;
-  }
+  constructor(private readonly reference: EveSpanReference) {}
 
   get rootSpanId(): string {
     return this.reference.rootSpanId;
@@ -179,16 +125,9 @@ class ResumedEveSpan implements EveSpan {
   }
 
   log(event: Parameters<Span["log"]>[0]): void {
-    const metrics = {
-      ...this.reference.startEvent?.metrics,
-      ...(this.endTime === undefined ? {} : { end: this.endTime }),
-      ...event.metrics,
-    };
     updateSpan({
       exported: this.reference.exported,
-      ...this.reference.startEvent,
       ...event,
-      ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
     });
   }
 
@@ -202,48 +141,307 @@ class ResumedEveSpan implements EveSpan {
 }
 
 class EveBridge {
-  constructor(private readonly state: EveStateHandle<EveTraceState>) {}
-
-  private eventQueuesBySession = new Map<string, Promise<void>>();
-  private completedToolKeys = new LRUCache<string, true>({
-    max: MAX_EVE_CACHE_ENTRIES,
-  });
-  private toolsByCallKey = new LRUCache<string, ToolState>({
-    max: MAX_EVE_CACHE_ENTRIES,
-  });
   private turnsByKey = new LRUCache<string, TurnState>({
     max: MAX_EVE_CACHE_ENTRIES,
   });
+  private turnsStartingByKey = new Map<string, Promise<TurnState>>();
+  private openModelsByAttempt = new Map<string, Map<string, EveSpan>>();
+  private turnMetricContributionsByKey = new Map<
+    string,
+    Record<string, Record<string, number>>
+  >();
+
+  constructor(private readonly configuredMetadata?: Record<string, unknown>) {}
+
+  async handle(
+    event: EveInstrumentationEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<void> {
+    try {
+      switch (event.type) {
+        case "turn.started":
+          await this.getOrStartTurn(event, context);
+          return;
+        case "model.call.started":
+          await this.handleModelCallStarted(event, context);
+          return;
+        case "model.call.completed":
+          await this.handleModelCallCompleted(event, context);
+          return;
+        case "model.call.failed":
+          await this.handleModelCallFailed(event, context);
+          return;
+        case "step.attempt.completed":
+        case "step.attempt.failed":
+          this.handleStepAttemptTerminal(event);
+          return;
+        case "action.started":
+          await this.handleActionStarted(event, context);
+          return;
+        case "action.completed":
+          await this.handleActionCompleted(event, context);
+          return;
+        case "action.failed":
+          await this.handleActionFailed(event, context);
+          return;
+        case "turn.cancelled":
+        case "turn.completed":
+          await this.handleTurnSettled(event, context);
+          return;
+        case "turn.failed":
+          await this.handleTurnFailed(event, context);
+          return;
+      }
+    } catch (error) {
+      debugLogger.warn("Error in Eve instrumentation provider:", error);
+    }
+  }
+
+  private async handleModelCallStarted(
+    event: EveInstrumentationModelCallStartedEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<void> {
+    const turn = await this.turnForScope(event.scope, context);
+    const metadata = {
+      ...this.metadata(event.scope.sessionId),
+      ...modelMetadata(event.model.modelId, event.model.provider),
+    };
+    const input = capturedModelInput(event.input);
+    const ids = await generateEveIds("step", event.idempotencyKey);
+    const span = await this.startEveSpan(context, {
+      event: {
+        id: ids.rowId,
+        ...(input === undefined ? {} : { input }),
+        metadata,
+      },
+      name: "eve.step",
+      parentSpanIds: {
+        rootSpanId: turn.rootSpanId,
+        spanId: turn.spanId,
+      },
+      spanAttributes: { type: SpanTypeAttribute.LLM },
+      spanId: ids.spanId,
+    });
+    const reference = readSpanReference(context.state.get());
+    if (reference !== undefined) {
+      context.state.set({
+        ...reference,
+        turnMetricContributions:
+          this.turnMetricContributionsByKey.get(turn.key) ?? {},
+      });
+    }
+    const openModels =
+      this.openModelsByAttempt.get(event.scope.attemptId) ?? new Map();
+    openModels.set(event.idempotencyKey, span);
+    this.openModelsByAttempt.set(event.scope.attemptId, openModels);
+
+    if (input !== undefined) {
+      const initialInput = initialTurnInput(input);
+      if (initialInput !== undefined) {
+        this.updateTurn(turn, { input: initialInput });
+      }
+    }
+  }
+
+  private async handleModelCallCompleted(
+    event: EveInstrumentationModelCallCompletedEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<void> {
+    const turn = await this.turnForScope(event.scope, context);
+    this.restoreTurnMetricContributions(turn.key, context.state.get());
+    const span = await this.resumeModelSpan(event, context, turn);
+    const metrics = usageMetrics(event.usage);
+    const output = modelOutput(event.finishReason, event.content);
+    span.log({ metrics, output });
+    span.end();
+    this.closeOpenModel(event.scope.attemptId, event.idempotencyKey);
+    this.updateTurnMetrics(turn, event.idempotencyKey, metrics);
+
+    const finalOutput = finalText(event.content);
+    if (
+      finalOutput !== undefined &&
+      normalizedFinishReason(event.finishReason) !== "tool_calls"
+    ) {
+      this.updateTurn(turn, { output: finalOutput });
+    }
+  }
+
+  private async handleModelCallFailed(
+    event: EveInstrumentationModelCallFailedEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<void> {
+    const turn = await this.turnForScope(event.scope, context);
+    const span = await this.resumeModelSpan(event, context, turn);
+    span.log({ error: toError(event.error, "Eve model call failed") });
+    span.end();
+    this.closeOpenModel(event.scope.attemptId, event.idempotencyKey);
+  }
+
+  private handleStepAttemptTerminal(
+    event:
+      | EveInstrumentationStepAttemptCompletedEvent
+      | EveInstrumentationStepAttemptFailedEvent,
+  ): void {
+    const openModels = this.openModelsByAttempt.get(event.scope.attemptId);
+    if (openModels === undefined) {
+      return;
+    }
+    for (const span of openModels.values()) {
+      if (event.type === "step.attempt.failed") {
+        span.log({
+          error: toError(event.error, "Eve step attempt failed"),
+        });
+      }
+      span.end();
+    }
+    this.openModelsByAttempt.delete(event.scope.attemptId);
+  }
+
+  private async handleActionStarted(
+    event: EveInstrumentationActionStartedEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<void> {
+    const turn = await this.turnForScope(event.scope, context);
+    const metadata = turn.metadata;
+    const input = processInputAttachments(event.input);
+    const ids = await generateEveIds(
+      "action",
+      event.scope.sessionId,
+      event.scope.turnId,
+      event.callId,
+    );
+    await this.startEveSpan(context, {
+      event: {
+        id: ids.rowId,
+        ...(input === undefined ? {} : { input }),
+        metadata,
+      },
+      name: event.name,
+      parentSpanIds: {
+        rootSpanId: turn.rootSpanId,
+        spanId: turn.spanId,
+      },
+      spanAttributes: { type: SpanTypeAttribute.TOOL },
+      spanId: ids.spanId,
+    });
+  }
+
+  private async handleActionCompleted(
+    event: EveInstrumentationActionCompletedEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<void> {
+    const span = await this.resumeActionSpan(event, context);
+    if (event.output.type === "error") {
+      span.log({
+        error: toError(event.output.error, "Eve action failed"),
+      });
+    } else if (event.output.output !== undefined) {
+      span.log({ output: processInputAttachments(event.output.output) });
+    }
+    span.end(actionEndArgs(event.acceptedAtMs));
+  }
+
+  private async handleActionFailed(
+    event: EveInstrumentationActionFailedEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<void> {
+    const span = await this.resumeActionSpan(event, context);
+    span.log({
+      error: toError(
+        event.error,
+        event.errorCode === undefined
+          ? "Eve action " + event.outcome
+          : event.errorCode + ": Eve action " + event.outcome,
+      ),
+    });
+    span.end(actionEndArgs(event.acceptedAtMs));
+  }
+
+  private async handleTurnSettled(
+    event: EveInstrumentationTurnSettledEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<void> {
+    const turn = await this.resumeTurn(event, context);
+    turn.span.end();
+    this.turnsByKey.delete(turn.key);
+    this.turnMetricContributionsByKey.delete(turn.key);
+  }
+
+  private async handleTurnFailed(
+    event: EveInstrumentationTurnFailedEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<void> {
+    const turn = await this.resumeTurn(event, context);
+    turn.span.log({
+      error: toError(event.error, "Eve turn failed"),
+    });
+    turn.span.end();
+    this.turnsByKey.delete(turn.key);
+    this.turnMetricContributionsByKey.delete(turn.key);
+  }
+
+  private async startTurnSpan(
+    event: EveInstrumentationTurnStartedEvent,
+    context: EveInstrumentationHandlerContext,
+    metadata: Record<string, unknown>,
+  ): Promise<EveSpan> {
+    const ids = await generateEveIds("turn", event.sessionId, event.turnId);
+    const parentSpanId =
+      event.parentLineage === undefined
+        ? undefined
+        : await deterministicEveId(
+            "eve:action",
+            event.parentLineage.sessionId,
+            event.parentLineage.turnId,
+            event.parentLineage.callId,
+          );
+    const parentTurn =
+      event.parentLineage === undefined
+        ? undefined
+        : this.turnsByKey.get(
+            turnKey(event.parentLineage.sessionId, event.parentLineage.turnId),
+          );
+    const parentRootSpanId =
+      event.parentLineage === undefined
+        ? undefined
+        : eveRootSpanIdsByTurnKey.get(
+            turnKey(event.parentLineage.sessionId, event.parentLineage.turnId),
+          );
+    const rootSpanId =
+      event.parentLineage === undefined
+        ? await deterministicEveId("eve:root", event.sessionId, event.turnId)
+        : (parentTurn?.rootSpanId ??
+          parentRootSpanId ??
+          (typeof event.parentTraceContext?.traceId === "string" &&
+          event.parentTraceContext.traceId.length > 0
+            ? event.parentTraceContext.traceId
+            : await deterministicEveId(
+                "eve:root",
+                event.parentLineage.sessionId,
+                event.parentLineage.turnId,
+              )));
+    return await this.startEveSpan(context, {
+      event: { id: ids.rowId, metadata },
+      name: "eve.turn",
+      parentSpanIds:
+        parentSpanId === undefined
+          ? { parentSpanIds: [], rootSpanId }
+          : { rootSpanId, spanId: parentSpanId },
+      spanAttributes: { type: SpanTypeAttribute.TASK },
+      spanId: ids.spanId,
+    });
+  }
 
   private async startEveSpan(
+    context: EveInstrumentationHandlerContext,
     args: Parameters<typeof _internalStartSpanWithInitialMerge>[0],
   ): Promise<EveSpan> {
-    const rowId = args?.event?.id;
-    const reference =
-      typeof rowId === "string" &&
-      readEveTraceState(this.state).spanReferences.find(
-        (candidate) => candidate.rowId === rowId,
-      );
-    if (reference) {
+    const reference = readSpanReference(context.state.get());
+    if (reference !== undefined) {
       return new ResumedEveSpan(reference);
     }
 
     const startTime = args?.startTime ?? getCurrentUnixTimestamp();
-    const parentSpanIds = args?.parentSpanIds;
-    const startEvent: EveSpanStartEvent = {
-      created: new Date().toISOString(),
-      metrics: { start: startTime },
-      span_attributes: {
-        ...(args?.name ? { name: args.name } : {}),
-        ...(args?.type ? { type: args.type } : {}),
-        ...args?.spanAttributes,
-      },
-      span_parents: parentSpanIds
-        ? "spanId" in parentSpanIds
-          ? [parentSpanIds.spanId]
-          : parentSpanIds.parentSpanIds
-        : [],
-    };
     const span = withCurrent(NOOP_SPAN, () =>
       _internalStartSpanWithInitialMerge(
         withSpanInstrumentationName(
@@ -252,2059 +450,752 @@ class EveBridge {
         ),
       ),
     );
-    if (typeof rowId !== "string") {
-      return span;
-    }
 
     try {
-      const exported = await span.export();
-      const reference = {
-        exported,
+      const reference: EveSpanReference = {
+        exported: await span.export(),
         rootSpanId: span.rootSpanId,
-        rowId,
         spanId: span.spanId,
-        startEvent,
       };
-      this.state.update((current) => {
-        const normalized = normalizeEveTraceState(current);
-        return normalized.spanReferences.some(
-          (candidate) => candidate.rowId === rowId,
-        )
-          ? normalized
-          : {
-              ...normalized,
-              spanReferences: [...normalized.spanReferences, reference].slice(
-                -MAX_STORED_SPAN_REFERENCES,
-              ),
-            };
-      });
+      context.state.set(reference);
     } catch (error) {
       debugLogger.warn("Error exporting Eve span for resumption:", error);
     }
     return span;
   }
 
-  private async startEveChildSpan(
-    parent: EveSpan,
-    args: Parameters<typeof _internalStartSpanWithInitialMerge>[0],
-  ): Promise<EveSpan> {
-    return await this.startEveSpan({
-      ...args,
-      parentSpanIds: {
-        rootSpanId: parent.rootSpanId,
-        spanId: parent.spanId,
-      },
-    });
-  }
-
-  private stepOrdinal(
-    event: Extract<EveHandleMessageStreamEvent, { type: "step.started" }>,
-  ): number {
-    let ordinal = 0;
-    this.state.update((current) => {
-      const state = normalizeEveTraceState(current);
-      const previous = state.stepStarts
-        .filter(
-          (entry) =>
-            entry.turnId === event.data.turnId &&
-            entry.stepIndex === event.data.stepIndex,
-        )
-        .at(-1);
-      if (previous?.open) {
-        ordinal = previous.ordinal;
-        return state;
-      }
-
-      ordinal = state.stepStarts.filter(
-        (entry) => entry.turnId === event.data.turnId,
-      ).length;
-      return {
-        ...state,
-        stepStarts: [
-          ...state.stepStarts,
-          {
-            open: true,
-            ordinal,
-            stepIndex: event.data.stepIndex,
-            turnId: event.data.turnId,
-          },
-        ].slice(-MAX_STORED_STEP_STARTS),
-      };
-    });
-    return ordinal;
-  }
-
-  private markStepEnded(turnId: string, stepIndex: number): void {
-    this.state.update((current) => {
-      const state = normalizeEveTraceState(current);
-      let index = -1;
-      for (let i = state.stepStarts.length - 1; i >= 0; i--) {
-        const entry = state.stepStarts[i];
-        if (entry?.turnId === turnId && entry.stepIndex === stepIndex) {
-          index = i;
-          break;
-        }
-      }
-      if (index < 0 || !state.stepStarts[index]?.open) {
-        return state;
-      }
-      return {
-        ...state,
-        stepStarts: state.stepStarts.map((entry, entryIndex) =>
-          entryIndex === index ? { ...entry, open: false } : entry,
-        ),
-      };
-    });
-  }
-
-  async handle(
-    event: unknown,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
-    if (!isEveHandleMessageStreamEvent(event)) {
-      return;
-    }
-    const run = async () => {
-      try {
-        if (!(await this.handleEvent(event, ctx, hookMetadata))) {
-          return;
-        }
-        if (event.type === "session.failed") {
-          const sessionId = event.data.sessionId || sessionIdFromContext(ctx);
-          await this.flushInstrumentation();
-          if (sessionId) {
-            this.cleanupSession(sessionId);
-          }
-        } else if (event.type === "session.completed") {
-          const sessionId = sessionIdFromContext(ctx);
-          await this.flushInstrumentation();
-          if (sessionId) {
-            this.cleanupSession(sessionId);
-          }
-        }
-      } catch (error) {
-        debugLogger.warn("Error in Eve hook instrumentation:", error);
-      }
-    };
-
-    const sessionId =
-      event.type === "session.failed"
-        ? event.data.sessionId || sessionIdFromContext(ctx)
-        : sessionIdFromContext(ctx);
-    if (!sessionId) {
-      await run();
-      return;
-    }
-
-    const previous = this.eventQueuesBySession.get(sessionId);
-    const queued = previous ? previous.then(run) : run();
-    this.eventQueuesBySession.set(sessionId, queued);
-    try {
-      await queued;
-    } finally {
-      if (this.eventQueuesBySession.get(sessionId) === queued) {
-        this.eventQueuesBySession.delete(sessionId);
-      }
-    }
-  }
-
-  private async handleEvent(
-    event: EveHandleMessageStreamEvent,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<boolean> {
-    switch (event.type) {
-      case "session.started":
-        this.handleSessionStarted(event, ctx, hookMetadata);
-        return true;
-      case "turn.started":
-        await this.handleTurnStarted(event, ctx, hookMetadata);
-        return true;
-      case "message.received":
-        await this.handleMessageReceived(event, ctx, hookMetadata);
-        return true;
-      case "step.started":
-        await this.handleStepStarted(event, ctx, hookMetadata);
-        return true;
-      case "reasoning.completed":
-        this.handleReasoningCompleted(event, ctx);
-        return true;
-      case "message.completed":
-        this.handleMessageCompleted(event, ctx);
-        return true;
-      case "result.completed":
-        this.handleResultCompleted(event, ctx);
-        return true;
-      case "actions.requested":
-        await this.handleActionsRequested(event, ctx, hookMetadata);
-        return true;
-      case "action.result":
-        await this.handleActionResult(event, ctx, hookMetadata);
-        return true;
-      case "subagent.called":
-        await this.handleSubagentCalled(event, ctx, hookMetadata);
-        return true;
-      case "subagent.completed":
-        await this.handleSubagentCompleted(event, ctx, hookMetadata);
-        return true;
-      case "step.completed":
-        this.handleStepCompleted(event, ctx);
-        return true;
-      case "step.failed":
-        this.handleStepFailed(event, ctx);
-        return true;
-      case "turn.completed":
-        this.handleTurnCompleted(event, ctx);
-        return true;
-      case "turn.failed":
-        this.handleTurnFailed(event, ctx);
-        return true;
-      case "session.failed":
-        this.handleSessionFailed(event, ctx);
-        return true;
-      case "session.completed":
-        this.handleSessionCompleted(event, ctx);
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  private handleSessionStarted(
-    event: Extract<EveHandleMessageStreamEvent, { type: "session.started" }>,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): void {
-    const sessionId = sessionIdFromContext(ctx);
-    if (!sessionId) {
-      return;
-    }
-
-    const metadata = {
-      ...(hookMetadata ?? {}),
-      ...modelMetadataFromRuntime(event.data.runtime),
-    };
-    this.state.update((current) => {
-      const normalized = normalizeEveTraceState(current);
-      return {
-        ...normalized,
-        metadata: { ...normalized.metadata, ...metadata },
-      };
-    });
-    for (const [key, turn] of this.turnsByKey) {
-      if (!key.startsWith(`${sessionId}:`)) {
-        continue;
-      }
-
-      turn.metadata = { ...turn.metadata, ...metadata };
-      turn.span.log({ metadata: turn.metadata });
-      for (const step of turn.stepsByIndex.values()) {
-        step.metadata = { ...step.metadata, ...metadata };
-        step.span.log({ metadata: step.metadata });
-      }
-    }
-  }
-
-  private async handleTurnStarted(
-    event: Extract<EveHandleMessageStreamEvent, { type: "turn.started" }>,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
-    const sessionId = sessionIdFromContext(ctx);
-    if (!sessionId) {
-      return;
-    }
-
-    const key = turnKey(sessionId, event.data.turnId);
-    const metadata = {
-      ...readEveTraceState(this.state).metadata,
-      ...(hookMetadata ?? {}),
-      "eve.session_id": sessionId,
-    };
+  private async getOrStartTurn(
+    event: EveInstrumentationTurnStartedEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<TurnState> {
+    const key = turnKey(event.sessionId, event.turnId);
     const existing = this.turnsByKey.get(key);
-    if (existing) {
-      existing.metadata = { ...existing.metadata, ...metadata };
-      existing.span.log({ metadata: existing.metadata });
-      return;
+    if (existing !== undefined) {
+      return existing;
     }
 
-    const span = await this.startTurnSpan(sessionId, event, ctx, metadata);
-    span.log({ metadata });
-    this.turnsByKey.set(key, {
+    const starting = this.turnsStartingByKey.get(key);
+    if (starting !== undefined) {
+      return await starting;
+    }
+
+    const metadata = this.metadata(event.sessionId);
+    const start = (async () => {
+      const ids = await generateEveIds("turn", event.sessionId, event.turnId);
+      const span = await this.startTurnSpan(event, context, metadata);
+      const turn = {
+        key,
+        metadata,
+        rootSpanId: span.rootSpanId,
+        rowId: ids.rowId,
+        span,
+        spanId: span.spanId,
+      };
+      this.turnsByKey.set(key, turn);
+      eveRootSpanIdsByTurnKey.set(key, turn.rootSpanId);
+      return turn;
+    })();
+    this.turnsStartingByKey.set(key, start);
+    try {
+      return await start;
+    } finally {
+      if (this.turnsStartingByKey.get(key) === start) {
+        this.turnsStartingByKey.delete(key);
+      }
+    }
+  }
+
+  private async resumeTurn(
+    event:
+      | EveInstrumentationTurnSettledEvent
+      | EveInstrumentationTurnFailedEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<TurnState> {
+    const key = turnKey(event.sessionId, event.turnId);
+    const existing = this.turnsByKey.get(key);
+    if (existing !== undefined) {
+      return existing;
+    }
+    const starting = this.turnsStartingByKey.get(key);
+    if (starting !== undefined) {
+      return await starting;
+    }
+
+    const metadata = this.metadata(event.sessionId);
+    const span = await this.startTurnSpan(
+      {
+        idempotencyKey: event.idempotencyKey,
+        rootSessionId: event.sessionId,
+        sequence: 0,
+        sessionId: event.sessionId,
+        turnId: event.turnId,
+        type: "turn.started",
+      },
+      context,
+      metadata,
+    );
+    const ids = await generateEveIds("turn", event.sessionId, event.turnId);
+    return {
       key,
       metadata,
-      metrics: {},
-      sessionId,
+      rootSpanId: span.rootSpanId,
+      rowId: ids.rowId,
       span,
-      stepsByIndex: new Map(),
-      turnId: event.data.turnId,
+      spanId: span.spanId,
+    };
+  }
+
+  private async turnForScope(
+    scope: EveInstrumentationModelCallStartedEvent["scope"],
+    context: EveInstrumentationHandlerContext,
+  ): Promise<TurnState> {
+    const key = turnKey(scope.sessionId, scope.turnId);
+    const existing = this.turnsByKey.get(key);
+    if (existing !== undefined) {
+      return existing;
+    }
+    const starting = this.turnsStartingByKey.get(key);
+    if (starting !== undefined) {
+      return await starting;
+    }
+
+    const ids = await generateEveIds("turn", scope.sessionId, scope.turnId);
+    const persistedRootSpanId = readSpanReference(
+      context.state.get(),
+    )?.rootSpanId;
+    const rememberedRootSpanId = eveRootSpanIdsByTurnKey.get(key);
+    return {
+      key,
+      metadata: this.metadata(scope.sessionId),
+      rootSpanId:
+        persistedRootSpanId ??
+        rememberedRootSpanId ??
+        (await deterministicEveId(
+          "eve:root",
+          scope.rootSessionId ?? scope.sessionId,
+          scope.turnId,
+        )),
+      rowId: ids.rowId,
+      span: NOOP_SPAN,
+      spanId: ids.spanId,
+    };
+  }
+
+  private updateTurn(
+    turn: TurnState,
+    event: { input?: unknown; output?: unknown },
+  ): void {
+    currentLogger<true>()?.updateSpan({
+      id: turn.rowId,
+      root_span_id: turn.rootSpanId,
+      span_id: turn.spanId,
+      ...event,
     });
   }
 
-  private async handleMessageReceived(
-    event: Extract<EveHandleMessageStreamEvent, { type: "message.received" }>,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
-    const turn = await this.ensureTurn(event, ctx, hookMetadata);
-    if (!turn) {
+  private closeOpenModel(attemptId: string, idempotencyKey: string): void {
+    const openModels = this.openModelsByAttempt.get(attemptId);
+    if (openModels === undefined) {
       return;
     }
-
-    const input = [{ content: event.data.message, role: "user" }];
-    turn.span.log({ input });
+    openModels.delete(idempotencyKey);
+    if (openModels.size === 0) {
+      this.openModelsByAttempt.delete(attemptId);
+    }
   }
 
-  private async handleStepStarted(
-    event: Extract<EveHandleMessageStreamEvent, { type: "step.started" }>,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
-    const turn = await this.ensureTurn(event, ctx, hookMetadata);
-    const sessionId = sessionIdFromContext(ctx);
-    if (!turn || !sessionId) {
+  private restoreTurnMetricContributions(
+    turnKey: string,
+    state: unknown,
+  ): void {
+    const persisted = readSpanReference(state)?.turnMetricContributions;
+    if (
+      persisted === undefined ||
+      this.turnMetricContributionsByKey.has(turnKey)
+    ) {
       return;
     }
+    this.turnMetricContributionsByKey.set(turnKey, { ...persisted });
+  }
 
-    const existing = turn.stepsByIndex.get(event.data.stepIndex);
-    if (existing) {
-      existing.span.log({
-        ...(existing.input !== undefined ? { input: existing.input } : {}),
-        metadata: existing.metadata,
-        metrics: existing.metrics,
-        output: existing.output,
-      });
-      const endTime = eventTime(event);
-      existing.span.end(endTime === undefined ? undefined : { endTime });
-      this.markStepEnded(event.data.turnId, event.data.stepIndex);
-      clearStoredEveReasoning(
-        this.state,
-        sessionId,
-        event.data.turnId,
-        event.data.stepIndex,
-      );
+  private updateTurnMetrics(
+    turn: TurnState,
+    idempotencyKey: string,
+    metrics: Record<string, number>,
+  ): void {
+    const contributions = {
+      ...(this.turnMetricContributionsByKey.get(turn.key) ?? {}),
+      [idempotencyKey]: metrics,
+    };
+    this.turnMetricContributionsByKey.set(turn.key, contributions);
+    const totals: Record<string, number> = {};
+    for (const contribution of Object.values(contributions)) {
+      for (const [name, value] of Object.entries(contribution)) {
+        totals[name] = (totals[name] ?? 0) + value;
+      }
     }
+    if (Object.keys(totals).length === 0) {
+      return;
+    }
+    currentLogger<true>()?.updateSpan({
+      id: turn.rowId,
+      metrics: totals,
+      root_span_id: turn.rootSpanId,
+      span_id: turn.spanId,
+    });
+  }
 
-    const stepOrdinal = this.stepOrdinal(event);
-    const metadata = { ...turn.metadata };
-    const input = consumeCapturedEveModelInput(
-      this.state,
-      sessionId,
-      event.data.turnId,
-      event.data.stepIndex,
-    );
-    const reasoning = readStoredEveReasoning(
-      this.state,
-      sessionId,
-      event.data.turnId,
-      event.data.stepIndex,
-    );
-    const output = mergeEveReasoning(undefined, reasoning);
-    const { rowId: eventId, spanId } = await generateEveIds(
-      "step",
-      sessionId,
-      event.data.turnId,
-      String(stepOrdinal),
-    );
-    const span = await this.startEveChildSpan(turn.span, {
+  private async resumeModelSpan(
+    event:
+      | EveInstrumentationModelCallCompletedEvent
+      | EveInstrumentationModelCallFailedEvent,
+    context: EveInstrumentationHandlerContext,
+    turn: TurnState,
+  ): Promise<EveSpan> {
+    const ids = await generateEveIds("step", event.idempotencyKey);
+    return await this.startEveSpan(context, {
       event: {
-        id: eventId,
-        ...(input !== undefined ? { input } : {}),
-        metadata,
+        id: ids.rowId,
+        metadata: this.metadata(event.scope.sessionId),
       },
       name: "eve.step",
-      spanAttributes: { type: SpanTypeAttribute.LLM },
-      spanId,
-      startTime: eventTime(event),
-    });
-    span.log({
-      ...(input !== undefined ? { input } : {}),
-      metadata,
-    });
-
-    turn.stepsByIndex.set(event.data.stepIndex, {
-      ...(input !== undefined ? { input } : {}),
-      metadata,
-      metrics: {},
-      ...(output !== undefined ? { output } : {}),
-      reasoning,
-      span,
-    });
-  }
-
-  private handleReasoningCompleted(
-    event: Extract<
-      EveHandleMessageStreamEvent,
-      { type: "reasoning.completed" }
-    >,
-    ctx: unknown,
-  ): void {
-    const sessionId = sessionIdFromContext(ctx);
-    if (!sessionId) {
-      return;
-    }
-
-    const reasoning = storeEveReasoning(this.state, sessionId, event);
-    const step = this.stepForEvent(event, ctx);
-    if (step) {
-      step.reasoning = reasoning;
-      step.output = mergeEveReasoning(step.output, reasoning);
-    }
-  }
-
-  private handleMessageCompleted(
-    event: Extract<EveHandleMessageStreamEvent, { type: "message.completed" }>,
-    ctx: unknown,
-  ): void {
-    const step = this.stepForEvent(event, ctx);
-    if (!step) {
-      return;
-    }
-
-    const existingMessage = eveOutputMessage(step.output);
-    const existingToolCalls = isObject(existingMessage)
-      ? existingMessage.tool_calls
-      : undefined;
-    step.output = mergeEveReasoning(
-      [
-        {
-          finish_reason: normalizedFinishReason(event.data.finishReason),
-          index: 0,
-          message: {
-            content: event.data.message,
-            role: "assistant",
-            ...(Array.isArray(existingToolCalls)
-              ? { tool_calls: existingToolCalls }
-              : {}),
-          },
-        },
-      ],
-      step.reasoning,
-    );
-
-    const turn = this.turnForEvent(event, ctx);
-    if (turn && event.data.finishReason !== "tool-calls") {
-      turn.output = event.data.message;
-    }
-  }
-
-  private handleResultCompleted(
-    event: Extract<EveHandleMessageStreamEvent, { type: "result.completed" }>,
-    ctx: unknown,
-  ): void {
-    const step = this.stepForEvent(event, ctx);
-    if (step) {
-      step.output = mergeEveReasoning(
-        [
-          {
-            finish_reason: "stop",
-            index: 0,
-            message: {
-              content: event.data.result,
-              role: "assistant",
-            },
-          },
-        ],
-        step.reasoning,
-      );
-    }
-
-    const turn = this.turnForEvent(event, ctx);
-    if (turn) {
-      turn.output = event.data.result;
-    }
-  }
-
-  private async handleActionsRequested(
-    event: Extract<EveHandleMessageStreamEvent, { type: "actions.requested" }>,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
-    const turn = await this.ensureTurn(event, ctx, hookMetadata);
-    const sessionId = sessionIdFromContext(ctx);
-    if (!turn || !sessionId) {
-      return;
-    }
-
-    const traceActions = event.data.actions.filter(isTraceableActionRequest);
-    if (traceActions.length === 0) {
-      return;
-    }
-
-    for (const action of traceActions) {
-      if (isToolCallAction(action)) {
-        await this.startRequestedTool(event, turn, sessionId, action);
-      } else if (isLocalSubagentCallAction(action)) {
-        await this.startRequestedSubagent(event, turn, sessionId, action);
-      }
-    }
-
-    const step = turn.stepsByIndex.get(event.data.stepIndex);
-    if (!step) {
-      return;
-    }
-
-    const toolCallsById = new Map<string, unknown>();
-    if (Array.isArray(step.output) && isObject(step.output[0])) {
-      const message = step.output[0]["message"];
-      if (isObject(message) && Array.isArray(message["tool_calls"])) {
-        for (const toolCall of message["tool_calls"]) {
-          if (isObject(toolCall) && typeof toolCall["id"] === "string") {
-            toolCallsById.set(toolCall["id"], toolCall);
-          }
-        }
-      }
-    }
-    for (const action of traceActions) {
-      const name =
-        action.kind === "tool-call"
-          ? action.toolName
-          : (action.subagentName ?? action.name ?? "agent");
-      toolCallsById.set(action.callId, {
-        function: {
-          arguments: JSON.stringify(action.input),
-          name,
-        },
-        id: action.callId,
-        type: "function",
-      });
-    }
-
-    step.output = mergeEveReasoning(
-      [
-        {
-          finish_reason: "tool_calls",
-          index: 0,
-          message: {
-            content: null,
-            role: "assistant",
-            tool_calls: [...toolCallsById.values()],
-          },
-        },
-      ],
-      step.reasoning,
-    );
-  }
-
-  private async handleActionResult(
-    event: Extract<EveHandleMessageStreamEvent, { type: "action.result" }>,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
-    if (isToolResult(event.data.result)) {
-      await this.handleToolResult(event, ctx, event.data.result, hookMetadata);
-      return;
-    }
-    if (isSubagentResult(event.data.result)) {
-      await this.handleSubagentResult(
-        event,
-        ctx,
-        event.data.result,
-        hookMetadata,
-      );
-    }
-  }
-
-  private async handleToolResult(
-    event: Extract<EveHandleMessageStreamEvent, { type: "action.result" }>,
-    ctx: unknown,
-    result: EveRuntimeToolResultActionResult,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
-    const sessionId = sessionIdFromContext(ctx);
-    if (!sessionId) {
-      return;
-    }
-
-    const key = toolKey(sessionId, result.callId);
-    if (this.completedToolKeys.has(key)) {
-      return;
-    }
-    const tool =
-      this.toolsByCallKey.get(key) ??
-      (await this.startSyntheticTool(event, ctx, result, hookMetadata));
-    if (!tool) {
-      return;
-    }
-    const failed =
-      event.data.status === "failed" ||
-      result.isError === true ||
-      event.data.error !== undefined;
-    tool.span.log({
-      ...(failed
-        ? {
-            error: actionResultError(event.data.error, result.output),
-          }
-        : {}),
-      metadata: tool.metadata,
-      output: result.output,
-    });
-
-    const endTime = eventTime(event);
-    tool.span.end(endTime === undefined ? undefined : { endTime });
-    this.toolsByCallKey.delete(key);
-    this.completedToolKeys.set(key, true);
-  }
-
-  private async handleSubagentCalled(
-    event: Extract<EveHandleMessageStreamEvent, { type: "subagent.called" }>,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
-    if (event.data.remote?.url) {
-      return;
-    }
-
-    const turn = await this.ensureTurn(event, ctx, hookMetadata);
-    const sessionId = sessionIdFromContext(ctx);
-    if (!turn || !sessionId) {
-      return;
-    }
-
-    const key = toolKey(sessionId, event.data.callId);
-    const metadata = toolMetadataFromTurn(turn);
-    const existing = this.toolsByCallKey.get(key);
-    if (existing) {
-      existing.metadata = { ...existing.metadata, ...metadata };
-      existing.span.log({ metadata: existing.metadata });
-      return;
-    }
-    if (this.completedToolKeys.has(key)) {
-      return;
-    }
-
-    const { rowId: eventId, spanId } = await generateEveIds(
-      "subagent",
-      sessionId,
-      event.data.callId,
-    );
-    const pending = this.toolsByCallKey.get(key);
-    if (pending || this.completedToolKeys.has(key)) {
-      if (pending) {
-        pending.metadata = { ...pending.metadata, ...metadata };
-        pending.span.log({ metadata: pending.metadata });
-      }
-      return;
-    }
-    const span = await this.startEveChildSpan(turn.span, {
-      event: {
-        id: eventId,
-        metadata,
+      parentSpanIds: {
+        rootSpanId: turn.rootSpanId,
+        spanId: turn.spanId,
       },
-      name: event.data.toolName ?? event.data.name,
+      spanAttributes: { type: SpanTypeAttribute.LLM },
+      spanId: ids.spanId,
+    });
+  }
+
+  private async resumeActionSpan(
+    event:
+      | EveInstrumentationActionCompletedEvent
+      | EveInstrumentationActionFailedEvent,
+    context: EveInstrumentationHandlerContext,
+  ): Promise<EveSpan> {
+    const turn = await this.turnForScope(event.scope, context);
+    const separator = event.idempotencyKey.lastIndexOf(":");
+    const callId =
+      separator < 0
+        ? event.idempotencyKey
+        : event.idempotencyKey.slice(separator + 1);
+    const ids = await generateEveIds(
+      "action",
+      event.scope.sessionId,
+      event.scope.turnId,
+      callId,
+    );
+    return await this.startEveSpan(context, {
+      event: { id: ids.rowId, metadata: turn.metadata },
+      name: "eve.action",
+      parentSpanIds: {
+        rootSpanId: turn.rootSpanId,
+        spanId: turn.spanId,
+      },
       spanAttributes: { type: SpanTypeAttribute.TOOL },
-      spanId,
-      startTime: eventTime(event),
-    });
-    span.log({ metadata });
-    this.toolsByCallKey.set(key, {
-      metadata,
-      span,
-      turnKey: turnKey(sessionId, event.data.turnId),
+      spanId: ids.spanId,
     });
   }
 
-  private async handleSubagentCompleted(
-    event: Extract<EveHandleMessageStreamEvent, { type: "subagent.completed" }>,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
-    const sessionId = sessionIdFromContext(ctx);
-    if (!sessionId) {
-      return;
-    }
-
-    const key = toolKey(sessionId, event.data.callId);
-    if (this.completedToolKeys.has(key)) {
-      return;
-    }
-    const subagent =
-      this.toolsByCallKey.get(key) ??
-      (await this.startSyntheticSubagent(event, ctx, hookMetadata));
-    if (!subagent) {
-      return;
-    }
-    subagent.span.log({
-      ...(event.data.status === "failed"
-        ? {
-            error: actionResultError(event.data.error, event.data.output),
-          }
-        : {}),
-      metadata: subagent.metadata,
-      ...(event.data.output !== undefined ? { output: event.data.output } : {}),
-    });
-    const endTime = eventTime(event);
-    const recordedEndTime = subagent.span.end(
-      endTime === undefined ? undefined : { endTime },
-    );
-    this.state.update((current) => {
-      const normalized = normalizeEveTraceState(current);
-      return {
-        ...normalized,
-        spanReferences: normalized.spanReferences.map((reference) =>
-          reference.spanId === subagent.span.spanId
-            ? { ...reference, endTime: recordedEndTime }
-            : reference,
-        ),
-      };
-    });
-  }
-
-  private async handleSubagentResult(
-    event: Extract<EveHandleMessageStreamEvent, { type: "action.result" }>,
-    ctx: unknown,
-    result: Extract<EveRuntimeActionResult, { kind: "subagent-result" }>,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<void> {
-    const sessionId = sessionIdFromContext(ctx);
-    if (!sessionId) {
-      return;
-    }
-
-    const key = toolKey(sessionId, result.callId);
-    if (this.completedToolKeys.has(key)) {
-      return;
-    }
-    const subagent =
-      this.toolsByCallKey.get(key) ??
-      (await this.startSyntheticSubagentResult(
-        event,
-        ctx,
-        result,
-        hookMetadata,
-      ));
-    if (!subagent) {
-      return;
-    }
-    const isError =
-      event.data.status === "failed" ||
-      result.isError === true ||
-      event.data.error !== undefined;
-    subagent.span.log({
-      ...(isError
-        ? {
-            error: actionResultError(event.data.error, result.output),
-          }
-        : {}),
-      metadata: subagent.metadata,
-      output: result.output,
-    });
-    const endTime = eventTime(event);
-    subagent.span.end(endTime === undefined ? undefined : { endTime });
-
-    this.toolsByCallKey.delete(key);
-    this.completedToolKeys.set(key, true);
-  }
-
-  private handleStepCompleted(
-    event: Extract<EveHandleMessageStreamEvent, { type: "step.completed" }>,
-    ctx: unknown,
-  ): void {
-    const step = this.stepForEvent(event, ctx);
-    if (!step) {
-      return;
-    }
-
-    const usage = event.data.usage;
-    const inputTokens =
-      typeof usage?.inputTokens === "number" &&
-      Number.isFinite(usage.inputTokens) &&
-      usage.inputTokens >= 0
-        ? usage.inputTokens
-        : undefined;
-    const outputTokens =
-      typeof usage?.outputTokens === "number" &&
-      Number.isFinite(usage.outputTokens) &&
-      usage.outputTokens >= 0
-        ? usage.outputTokens
-        : undefined;
-    const cacheReadTokens =
-      typeof usage?.cacheReadTokens === "number" &&
-      Number.isFinite(usage.cacheReadTokens) &&
-      usage.cacheReadTokens >= 0
-        ? usage.cacheReadTokens
-        : undefined;
-    const cacheWriteTokens =
-      typeof usage?.cacheWriteTokens === "number" &&
-      Number.isFinite(usage.cacheWriteTokens) &&
-      usage.cacheWriteTokens >= 0
-        ? usage.cacheWriteTokens
-        : undefined;
-    const costUsd =
-      typeof usage?.costUsd === "number" &&
-      Number.isFinite(usage.costUsd) &&
-      usage.costUsd >= 0
-        ? usage.costUsd
-        : undefined;
-    const total =
-      inputTokens !== undefined && outputTokens !== undefined
-        ? inputTokens + outputTokens
-        : undefined;
-    const metrics = {
-      ...(inputTokens !== undefined ? { prompt_tokens: inputTokens } : {}),
-      ...(outputTokens !== undefined
-        ? { completion_tokens: outputTokens }
-        : {}),
-      ...(total !== undefined ? { tokens: total } : {}),
-      ...(cacheReadTokens !== undefined
-        ? { prompt_cached_tokens: cacheReadTokens }
-        : {}),
-      ...(cacheWriteTokens !== undefined
-        ? { prompt_cache_creation_tokens: cacheWriteTokens }
-        : {}),
-      ...(costUsd !== undefined ? { estimated_cost: costUsd } : {}),
-    };
-    step.metrics = { ...step.metrics, ...metrics };
-    const sessionId = sessionIdFromContext(ctx);
-    if (Array.isArray(step.output) && isObject(step.output[0])) {
-      const finishReason = step.output[0].finish_reason;
-      if (typeof finishReason !== "string") {
-        step.output[0].finish_reason = normalizedFinishReason(
-          event.data.finishReason,
-        );
-      }
-    }
-    step.span.log({
-      ...(step.input !== undefined ? { input: step.input } : {}),
-      metadata: step.metadata,
-      metrics,
-      output: step.output,
-    });
-    const endTime = eventTime(event);
-    step.span.end(endTime === undefined ? undefined : { endTime });
-
-    const turn = this.turnForEvent(event, ctx);
-    if (turn) {
-      for (const [key, value] of Object.entries(metrics)) {
-        turn.metrics[key] = (turn.metrics[key] ?? 0) + value;
-      }
-      turn.stepsByIndex.delete(event.data.stepIndex);
-    }
-    this.markStepEnded(event.data.turnId, event.data.stepIndex);
-    if (sessionId) {
-      clearStoredEveReasoning(
-        this.state,
-        sessionId,
-        event.data.turnId,
-        event.data.stepIndex,
-      );
-    }
-  }
-
-  private handleStepFailed(
-    event: Extract<EveHandleMessageStreamEvent, { type: "step.failed" }>,
-    ctx: unknown,
-  ): void {
-    const step = this.stepForEvent(event, ctx);
-    if (step) {
-      step.span.log({
-        error: errorFromMessage(
-          event.data.message,
-          event.data.code,
-          event.data.details,
-        ),
-      });
-      const endTime = eventTime(event);
-      step.span.end(endTime === undefined ? undefined : { endTime });
-    }
-
-    const turn = this.turnForEvent(event, ctx);
-    turn?.stepsByIndex.delete(event.data.stepIndex);
-    this.markStepEnded(event.data.turnId, event.data.stepIndex);
-    const sessionId = sessionIdFromContext(ctx);
-    if (sessionId) {
-      clearStoredEveReasoning(
-        this.state,
-        sessionId,
-        event.data.turnId,
-        event.data.stepIndex,
-      );
-    }
-  }
-
-  private handleTurnCompleted(
-    event: Extract<EveHandleMessageStreamEvent, { type: "turn.completed" }>,
-    ctx: unknown,
-  ): void {
-    const turn = this.turnForEvent(event, ctx);
-    if (!turn) {
-      return;
-    }
-
-    this.finalizeTurn(turn, {
-      endTime: eventTime(event),
-    });
-  }
-
-  private handleTurnFailed(
-    event: Extract<EveHandleMessageStreamEvent, { type: "turn.failed" }>,
-    ctx: unknown,
-  ): void {
-    const turn = this.turnForEvent(event, ctx);
-    if (!turn) {
-      return;
-    }
-
-    this.finalizeTurn(turn, {
-      endTime: eventTime(event),
-      error: errorFromMessage(
-        event.data.message,
-        event.data.code,
-        event.data.details,
-      ),
-    });
-  }
-
-  private handleSessionFailed(
-    event: Extract<EveHandleMessageStreamEvent, { type: "session.failed" }>,
-    ctx: unknown,
-  ): void {
-    const sessionId = event.data.sessionId || sessionIdFromContext(ctx);
-    if (!sessionId) {
-      return;
-    }
-    const error = errorFromMessage(
-      event.data.message,
-      event.data.code,
-      event.data.details,
-    );
-    for (const [key, turn] of this.turnsByKey) {
-      if (!key.startsWith(`${sessionId}:`)) {
-        continue;
-      }
-      this.finalizeTurn(turn, {
-        endTime: eventTime(event),
-        error,
-      });
-    }
-
-    for (const [key, tool] of this.toolsByCallKey) {
-      if (key.startsWith(`${sessionId}:`)) {
-        const endTime = eventTime(event);
-        if (!tool.endedByTurn) {
-          tool.span.log({ metadata: tool.metadata });
-          tool.span.end(endTime === undefined ? undefined : { endTime });
-          tool.endedByTurn = true;
-        }
-      }
-    }
-  }
-
-  private handleSessionCompleted(
-    event: Extract<EveHandleMessageStreamEvent, { type: "session.completed" }>,
-    ctx: unknown,
-  ): void {
-    const sessionId = sessionIdFromContext(ctx);
-    if (!sessionId) {
-      return;
-    }
-    for (const [key, turn] of this.turnsByKey) {
-      if (!key.startsWith(`${sessionId}:`)) {
-        continue;
-      }
-      this.finalizeTurn(turn, {
-        endTime: eventTime(event),
-      });
-    }
-
-    for (const [key, tool] of this.toolsByCallKey) {
-      if (key.startsWith(`${sessionId}:`) && !tool.endedByTurn) {
-        const endTime = eventTime(event);
-        tool.span.log({ metadata: tool.metadata });
-        tool.span.end(endTime === undefined ? undefined : { endTime });
-        tool.endedByTurn = true;
-      }
-    }
-  }
-
-  private async ensureTurn(
-    event: Extract<
-      EveHandleMessageStreamEvent,
-      {
-        data: { readonly sequence: number; readonly turnId: string };
-      }
-    >,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<TurnState | undefined> {
-    const sessionId = sessionIdFromContext(ctx);
-    if (!sessionId) {
-      return undefined;
-    }
-
-    const key = turnKey(sessionId, event.data.turnId);
-    const existing = this.turnsByKey.get(key);
-    if (existing) {
-      return existing;
-    }
-
-    const metadata = {
-      ...readEveTraceState(this.state).metadata,
-      ...(hookMetadata ?? {}),
+  private metadata(sessionId: string): Record<string, unknown> {
+    return {
+      ...(this.configuredMetadata ?? {}),
       "eve.session_id": sessionId,
     };
-    const span = await this.startTurnSpan(sessionId, event, ctx, metadata);
-    span.log({ metadata });
-    const state = {
-      key,
-      metadata,
-      metrics: {},
-      sessionId,
-      span,
-      stepsByIndex: new Map<number, StepState>(),
-      turnId: event.data.turnId,
-    };
-    this.turnsByKey.set(key, state);
-    return state;
   }
+}
 
-  private async startRequestedTool(
-    event: Extract<EveHandleMessageStreamEvent, { type: "actions.requested" }>,
-    turn: TurnState,
-    sessionId: string,
-    action: EveRuntimeToolCallActionRequest,
-  ): Promise<void> {
-    const key = toolKey(sessionId, action.callId);
-    if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
-      return;
-    }
-
-    const metadata = toolMetadataFromTurn(turn);
-    const { rowId: eventId, spanId } = await generateEveIds(
-      "tool",
-      sessionId,
-      event.data.turnId,
-      action.callId,
-    );
-    if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
-      return;
-    }
-    const span = await this.startEveChildSpan(turn.span, {
-      event: {
-        id: eventId,
-        input: action.input,
-        metadata,
-      },
-      name: action.toolName,
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-      spanId,
-      startTime: eventTime(event),
-    });
-    span.log({ input: action.input, metadata });
-    this.toolsByCallKey.set(key, {
-      metadata,
-      span,
-      turnKey: turnKey(sessionId, event.data.turnId),
-    });
+function readSpanReference(value: unknown): EveSpanReference | undefined {
+  if (!isObject(value)) {
+    return undefined;
   }
-
-  private async startRequestedSubagent(
-    event: Extract<EveHandleMessageStreamEvent, { type: "actions.requested" }>,
-    turn: TurnState,
-    sessionId: string,
-    action: Extract<EveRuntimeActionRequest, { kind: "subagent-call" }>,
-  ): Promise<void> {
-    const key = toolKey(sessionId, action.callId);
-    if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
-      return;
-    }
-
-    const name = action.subagentName ?? action.name ?? "agent";
-    const metadata = toolMetadataFromTurn(turn);
-    const { rowId: eventId, spanId } = await generateEveIds(
-      "subagent",
-      sessionId,
-      action.callId,
-    );
-    if (this.toolsByCallKey.has(key) || this.completedToolKeys.has(key)) {
-      return;
-    }
-    const span = await this.startEveChildSpan(turn.span, {
-      event: {
-        id: eventId,
-        input: action.input,
-        metadata,
-      },
-      name,
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-      spanId,
-      startTime: eventTime(event),
-    });
-    span.log({ input: action.input, metadata });
-    this.toolsByCallKey.set(key, {
-      metadata,
-      span,
-      turnKey: turnKey(sessionId, event.data.turnId),
-    });
+  const exported = value["exported"];
+  const rootSpanId = value["rootSpanId"];
+  const spanId = value["spanId"];
+  if (
+    typeof exported !== "string" ||
+    typeof rootSpanId !== "string" ||
+    typeof spanId !== "string"
+  ) {
+    return undefined;
   }
+  return {
+    exported,
+    rootSpanId,
+    spanId,
+    ...(isObject(value["turnMetricContributions"])
+      ? {
+          turnMetricContributions: numericMetricContributions(
+            value["turnMetricContributions"],
+          ),
+        }
+      : {}),
+  };
+}
 
-  private async startSyntheticTool(
-    event: Extract<EveHandleMessageStreamEvent, { type: "action.result" }>,
-    ctx: unknown,
-    result: EveRuntimeToolResultActionResult,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<ToolState | undefined> {
-    const turn = await this.ensureTurn(event, ctx, hookMetadata);
-    const sessionId = sessionIdFromContext(ctx);
-    if (!turn || !sessionId) {
-      return undefined;
-    }
-
-    const metadata = toolMetadataFromTurn(turn);
-    const { rowId: eventId, spanId } = await generateEveIds(
-      "tool",
-      sessionId,
-      event.data.turnId,
-      result.callId,
-    );
-    const existing = this.toolsByCallKey.get(toolKey(sessionId, result.callId));
-    if (existing) {
-      return existing;
-    }
-    const span = await this.startEveChildSpan(turn.span, {
-      event: {
-        id: eventId,
-        metadata,
-      },
-      name: result.toolName,
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-      spanId,
-      startTime: eventTime(event),
-    });
-    span.log({ metadata });
-    const state = {
-      metadata,
-      span,
-      turnKey: turnKey(sessionId, event.data.turnId),
-    };
-    this.toolsByCallKey.set(toolKey(sessionId, result.callId), state);
-    return state;
+function capturedModelInput(
+  input: EveInstrumentationModelInput | undefined,
+): unknown[] | undefined {
+  if (input === undefined) {
+    return undefined;
   }
-
-  private async startSyntheticSubagent(
-    event: Extract<EveHandleMessageStreamEvent, { type: "subagent.completed" }>,
-    ctx: unknown,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<ToolState | undefined> {
-    const turn = await this.ensureTurn(event, ctx, hookMetadata);
-    const sessionId = sessionIdFromContext(ctx);
-    if (!turn || !sessionId) {
-      return undefined;
-    }
-
-    const metadata = toolMetadataFromTurn(turn);
-    const { rowId: eventId, spanId } = await generateEveIds(
-      "subagent",
-      sessionId,
-      event.data.callId,
-    );
-    const existing = this.toolsByCallKey.get(
-      toolKey(sessionId, event.data.callId),
-    );
-    if (existing) {
-      return existing;
-    }
-    const span = await this.startEveChildSpan(turn.span, {
-      event: {
-        id: eventId,
-        metadata,
-      },
-      name: event.data.subagentName,
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-      spanId,
-      startTime: eventTime(event),
-    });
-    span.log({ metadata });
-    const state = {
-      metadata,
-      span,
-      turnKey: turnKey(sessionId, event.data.turnId),
-    };
-    this.toolsByCallKey.set(toolKey(sessionId, event.data.callId), state);
-    return state;
-  }
-
-  private async startSyntheticSubagentResult(
-    event: Extract<EveHandleMessageStreamEvent, { type: "action.result" }>,
-    ctx: unknown,
-    result: Extract<EveRuntimeActionResult, { kind: "subagent-result" }>,
-    hookMetadata?: Record<string, unknown>,
-  ): Promise<ToolState | undefined> {
-    const turn = await this.ensureTurn(event, ctx, hookMetadata);
-    const sessionId = sessionIdFromContext(ctx);
-    if (!turn || !sessionId) {
-      return undefined;
-    }
-
-    const metadata = toolMetadataFromTurn(turn);
-    const { rowId: eventId, spanId } = await generateEveIds(
-      "subagent",
-      sessionId,
-      result.callId,
-    );
-    const existing = this.toolsByCallKey.get(toolKey(sessionId, result.callId));
-    if (existing) {
-      return existing;
-    }
-    const span = await this.startEveChildSpan(turn.span, {
-      event: {
-        id: eventId,
-        metadata,
-      },
-      name: result.subagentName,
-      spanAttributes: { type: SpanTypeAttribute.TOOL },
-      spanId,
-      startTime: eventTime(event),
-    });
-    span.log({ metadata });
-    const state = {
-      metadata,
-      span,
-      turnKey: turnKey(sessionId, event.data.turnId),
-    };
-    this.toolsByCallKey.set(toolKey(sessionId, result.callId), state);
-    return state;
-  }
-
-  private async startTurnSpan(
-    sessionId: string,
-    event: Extract<
-      EveHandleMessageStreamEvent,
-      { data: { readonly sequence: number; readonly turnId: string } }
-    >,
-    ctx: unknown,
-    metadata: Record<string, unknown>,
-  ): Promise<EveSpan> {
-    const session = isObject(ctx) ? ctx["session"] : undefined;
-    const parent = isObject(session) ? session["parent"] : undefined;
-    const parentTurn = isObject(parent) ? parent["turn"] : undefined;
-    const parentLineage =
-      isObject(parent) &&
-      typeof parent["callId"] === "string" &&
-      typeof parent["sessionId"] === "string" &&
-      isObject(parentTurn) &&
-      typeof parentTurn["id"] === "string"
-        ? {
-            callId: parent["callId"],
-            sessionId: parent["sessionId"],
-            turnId: parentTurn["id"],
-          }
-        : undefined;
-    const [{ rowId: eventId, spanId }, rootSpanId, parentSpanId] =
-      await Promise.all([
-        generateEveIds("turn", sessionId, event.data.turnId),
-        deterministicEveId(
-          "eve:root",
-          parentLineage?.sessionId ?? sessionId,
-          parentLineage?.turnId ?? event.data.turnId,
-        ),
-        parentLineage
-          ? deterministicEveId(
-              "eve:subagent",
-              parentLineage.sessionId,
-              parentLineage.callId,
-            )
-          : Promise.resolve(undefined),
-      ]);
-
-    return await this.startEveSpan({
-      event: {
-        id: eventId,
-        metadata,
-      },
-      name: "eve.turn",
-      parentSpanIds: parentSpanId
-        ? { rootSpanId, spanId: parentSpanId }
-        : { parentSpanIds: [], rootSpanId },
-      spanAttributes: { type: SpanTypeAttribute.TASK },
-      spanId,
-      startTime: eventTime(event),
-    });
-  }
-
-  private turnForEvent(
-    event: Extract<
-      EveHandleMessageStreamEvent,
-      { data: { readonly turnId: string } }
-    >,
-    ctx: unknown,
-  ): TurnState | undefined {
-    const sessionId = sessionIdFromContext(ctx);
-    return sessionId
-      ? this.turnsByKey.get(turnKey(sessionId, event.data.turnId))
-      : undefined;
-  }
-
-  private stepForEvent(
-    event: Extract<
-      EveHandleMessageStreamEvent,
-      { data: { readonly stepIndex: number; readonly turnId: string } }
-    >,
-    ctx: unknown,
-  ): StepState | undefined {
-    return this.turnForEvent(event, ctx)?.stepsByIndex.get(
-      event.data.stepIndex,
-    );
-  }
-
-  private finalizeTurn(
-    turn: TurnState,
-    args: { endTime: number | undefined; error?: Error },
-  ): void {
-    const { endTime } = args;
-    for (const step of turn.stepsByIndex.values()) {
-      step.span.log({
-        ...(step.input !== undefined ? { input: step.input } : {}),
-        metadata: step.metadata,
-        metrics: step.metrics,
-        output: step.output,
-      });
-      step.span.end(endTime === undefined ? undefined : { endTime });
-    }
-    turn.stepsByIndex.clear();
-
-    for (const tool of this.toolsByCallKey.values()) {
-      if (tool.turnKey !== turn.key) {
-        continue;
+  const value: unknown[] = [];
+  if (typeof input.instructions === "string") {
+    value.push({ content: input.instructions, role: "system" });
+  } else if (Array.isArray(input.instructions)) {
+    for (const instruction of input.instructions) {
+      const projected = projectedModelMessage(instruction);
+      if (projected?.role === "system") {
+        value.push(projected);
       }
-      if (tool.endedByTurn) {
-        continue;
-      }
-      tool.span.log({ metadata: tool.metadata });
-      tool.span.end(endTime === undefined ? undefined : { endTime });
-      tool.endedByTurn = true;
     }
+  } else if (isObject(input.instructions)) {
+    const instruction = projectedModelMessage(input.instructions);
+    if (instruction?.role === "system") {
+      value.push(instruction);
+    }
+  }
+  for (const message of input.messages) {
+    const projected = projectedModelMessage(message);
+    if (projected !== undefined) {
+      value.push(projected);
+    }
+  }
+  return value;
+}
 
-    if (args.error) {
-      turn.span.log({ error: args.error });
-    } else {
-      turn.span.log({
-        metadata: turn.metadata,
-        metrics: turn.metrics,
-        output: turn.output,
-      });
+function projectedModelMessage(
+  value: unknown,
+): { content: unknown; role: string } | undefined {
+  if (!isObject(value)) {
+    return undefined;
+  }
+  const role = value["role"];
+  if (
+    role !== "system" &&
+    role !== "user" &&
+    role !== "assistant" &&
+    role !== "tool"
+  ) {
+    return undefined;
+  }
+  const content = value["content"];
+  if (typeof content === "string") {
+    return { content, role };
+  }
+  if (!Array.isArray(content)) {
+    return undefined;
+  }
+  const projected: unknown[] = [];
+  for (const part of content) {
+    if (!isObject(part) || typeof part["type"] !== "string") {
+      continue;
     }
-    turn.span.end(endTime === undefined ? undefined : { endTime });
-    this.turnsByKey.delete(turn.key);
-    this.state.update((current) => {
-      const normalized = normalizeEveTraceState(current);
+    switch (part["type"]) {
+      case "text":
+      case "reasoning":
+        if (typeof part["text"] === "string") {
+          projected.push({ text: part["text"], type: part["type"] });
+        }
+        break;
+      case "image": {
+        if (part["image"] === undefined) {
+          break;
+        }
+        const mediaType =
+          typeof part["mediaType"] === "string"
+            ? part["mediaType"]
+            : "image/png";
+        projected.push({
+          image: mediaAttachment(part["image"], mediaType, undefined),
+          ...(typeof part["mediaType"] === "string" ? { mediaType } : {}),
+          type: "image",
+        });
+        break;
+      }
+      case "file": {
+        const mediaType =
+          typeof part["mediaType"] === "string"
+            ? part["mediaType"]
+            : "application/octet-stream";
+        const data =
+          part["data"] === undefined
+            ? undefined
+            : mediaAttachment(
+                part["data"],
+                mediaType,
+                typeof part["filename"] === "string"
+                  ? part["filename"]
+                  : undefined,
+              );
+        projected.push({
+          ...(data === undefined ? {} : { data }),
+          ...(typeof part["filename"] === "string"
+            ? { filename: part["filename"] }
+            : {}),
+          mediaType,
+          type: "file",
+        });
+        break;
+      }
+      case "tool-call":
+        if (
+          typeof part["toolCallId"] === "string" &&
+          typeof part["toolName"] === "string"
+        ) {
+          projected.push({
+            input: part["input"],
+            toolCallId: part["toolCallId"],
+            toolName: part["toolName"],
+            type: "tool-call",
+          });
+        }
+        break;
+      case "tool-result":
+        if (
+          typeof part["toolCallId"] === "string" &&
+          typeof part["toolName"] === "string"
+        ) {
+          projected.push({
+            output: projectedToolOutput(part["output"]),
+            toolCallId: part["toolCallId"],
+            toolName: part["toolName"],
+            type: "tool-result",
+          });
+        }
+        break;
+      case "tool-approval-response":
+        if (
+          typeof part["approvalId"] === "string" &&
+          typeof part["approved"] === "boolean"
+        ) {
+          projected.push({
+            approvalId: part["approvalId"],
+            approved: part["approved"],
+            ...(typeof part["reason"] === "string"
+              ? { reason: part["reason"] }
+              : {}),
+            type: "tool-approval-response",
+          });
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return { content: projected, role };
+}
+
+function projectedToolOutput(value: unknown): unknown {
+  if (!isObject(value)) {
+    return value;
+  }
+  if (typeof value["type"] !== "string") {
+    return undefined;
+  }
+  switch (value["type"]) {
+    case "text":
+    case "json":
+    case "error-text":
+    case "error-json":
+      return { type: value["type"], value: value["value"] };
+    case "execution-denied":
       return {
-        ...normalized,
-        reasoningBlocks: normalized.reasoningBlocks.filter(
-          (entry) =>
-            !entry.key.startsWith(`${turn.sessionId}\0${turn.turnId}\0`),
-        ),
-        stepStarts: normalized.stepStarts.filter(
-          (entry) => entry.turnId !== turn.turnId,
-        ),
+        ...(typeof value["reason"] === "string"
+          ? { reason: value["reason"] }
+          : {}),
+        type: "execution-denied",
       };
-    });
-  }
-
-  private cleanupSession(sessionId: string): void {
-    const keyPrefix = `${sessionId}:`;
-    for (const key of this.turnsByKey.keys()) {
-      if (key.startsWith(keyPrefix)) {
-        this.turnsByKey.delete(key);
+    case "content": {
+      if (!Array.isArray(value["value"])) {
+        return { type: "content", value: [] };
       }
-    }
-    for (const key of this.toolsByCallKey.keys()) {
-      if (key.startsWith(keyPrefix)) {
-        this.toolsByCallKey.delete(key);
+      const content: unknown[] = [];
+      for (const part of value["value"]) {
+        if (!isObject(part) || typeof part["type"] !== "string") {
+          continue;
+        }
+        if (part["type"] === "text" && typeof part["text"] === "string") {
+          content.push({ text: part["text"], type: "text" });
+        } else if (
+          (part["type"] === "file-data" || part["type"] === "image-data") &&
+          part["data"] !== undefined &&
+          typeof part["mediaType"] === "string"
+        ) {
+          const data = mediaAttachment(
+            part["data"],
+            part["mediaType"],
+            typeof part["filename"] === "string" ? part["filename"] : undefined,
+          );
+          content.push({
+            ...(data === undefined ? {} : { data }),
+            ...(typeof part["filename"] === "string"
+              ? { filename: part["filename"] }
+              : {}),
+            mediaType: part["mediaType"],
+            type: part["type"],
+          });
+        } else if (
+          (part["type"] === "file-url" || part["type"] === "image-url") &&
+          typeof part["url"] === "string"
+        ) {
+          content.push({ type: part["type"], url: part["url"] });
+        }
       }
+      return {
+        type: "content",
+        value: content,
+      };
     }
-    for (const key of this.completedToolKeys.keys()) {
-      if (key.startsWith(keyPrefix)) {
-        this.completedToolKeys.delete(key);
-      }
-    }
-    this.state.update(() => emptyEveTraceState());
-  }
-
-  private async flushInstrumentation(): Promise<boolean> {
-    try {
-      await flush();
-      return true;
-    } catch (error) {
-      debugLogger.warn("Error in Eve flush instrumentation:", error);
-      return false;
-    }
+    default:
+      return undefined;
   }
 }
 
-function emptyEveTraceState(): EveTraceState {
-  return {
-    llmInputs: [],
-    metadata: {},
-    reasoningBlocks: [],
-    spanReferences: [],
-    stepStarts: [],
-  };
-}
-
-function normalizeEveTraceState(state: unknown): EveTraceState {
-  if (!isObject(state)) {
-    return emptyEveTraceState();
+function mediaAttachment(
+  data: unknown,
+  contentType: string,
+  filename: string | undefined,
+): unknown {
+  const blob = convertDataToBlob(data, contentType);
+  if (blob === null) {
+    return data;
   }
-  const metadata = isObject(state["metadata"]) ? state["metadata"] : {};
-  const spanReferences = Array.isArray(state["spanReferences"])
-    ? state["spanReferences"]
-        .flatMap((entry): EveTraceState["spanReferences"] => {
-          if (!isObject(entry)) {
-            return [];
-          }
-          const exported = entry["exported"];
-          const endTime = entry["endTime"];
-          const rootSpanId = entry["rootSpanId"];
-          const rowId = entry["rowId"];
-          const spanId = entry["spanId"];
-          const startEvent = entry["startEvent"];
-          const startEventCreated = isObject(startEvent)
-            ? startEvent["created"]
-            : undefined;
-          const startEventMetrics = isObject(startEvent)
-            ? startEvent["metrics"]
-            : undefined;
-          const startEventSpanAttributes = isObject(startEvent)
-            ? startEvent["span_attributes"]
-            : undefined;
-          const startEventSpanParents = isObject(startEvent)
-            ? startEvent["span_parents"]
-            : undefined;
-          const normalizedStartEvent =
-            typeof startEventCreated === "string" &&
-            isObject(startEventMetrics) &&
-            typeof startEventMetrics["start"] === "number" &&
-            Number.isFinite(startEventMetrics["start"]) &&
-            isObject(startEventSpanAttributes) &&
-            Array.isArray(startEventSpanParents) &&
-            startEventSpanParents.every(
-              (parent): parent is string => typeof parent === "string",
-            )
-              ? {
-                  created: startEventCreated,
-                  metrics: { start: startEventMetrics["start"] },
-                  span_attributes: { ...startEventSpanAttributes },
-                  span_parents: [...startEventSpanParents],
-                }
-              : undefined;
-          return typeof exported === "string" &&
-            typeof rootSpanId === "string" &&
-            typeof rowId === "string" &&
-            typeof spanId === "string"
-            ? [
-                {
-                  ...(typeof endTime === "number" && Number.isFinite(endTime)
-                    ? { endTime }
-                    : {}),
-                  exported,
-                  rootSpanId,
-                  rowId,
-                  spanId,
-                  ...(normalizedStartEvent
-                    ? { startEvent: normalizedStartEvent }
-                    : {}),
-                },
-              ]
-            : [];
-        })
-        .slice(-MAX_STORED_SPAN_REFERENCES)
-    : [];
-  const llmInputs = Array.isArray(state["llmInputs"])
-    ? state["llmInputs"]
-        .flatMap((entry): EveTraceState["llmInputs"] => {
-          if (!isObject(entry)) {
-            return [];
-          }
-          const key = entry["key"];
-          const input = entry["input"];
-          return typeof key === "string" && isCapturedModelInput(input)
-            ? [{ input, key }]
-            : [];
-        })
-        .slice(-MAX_STORED_LLM_INPUTS)
-    : [];
-  const reasoningBlocks = Array.isArray(state["reasoningBlocks"])
-    ? state["reasoningBlocks"]
-        .flatMap((entry): EveTraceState["reasoningBlocks"] => {
-          if (!isObject(entry)) {
-            return [];
-          }
-          const content = entry["content"];
-          const eventAt = entry["eventAt"];
-          const key = entry["key"];
-          return typeof content === "string" &&
-            (eventAt === undefined || typeof eventAt === "string") &&
-            typeof key === "string"
-            ? [
-                {
-                  content,
-                  ...(typeof eventAt === "string" ? { eventAt } : {}),
-                  key,
-                },
-              ]
-            : [];
-        })
-        .slice(-MAX_STORED_REASONING_BLOCKS)
-    : [];
-  const stepStarts = Array.isArray(state["stepStarts"])
-    ? state["stepStarts"]
-        .flatMap((entry): EveTraceState["stepStarts"] => {
-          if (!isObject(entry)) {
-            return [];
-          }
-          const ordinal = entry["ordinal"];
-          const open = entry["open"];
-          const stepIndex = entry["stepIndex"];
-          const turnId = entry["turnId"];
-          return typeof ordinal === "number" &&
-            Number.isInteger(ordinal) &&
-            ordinal >= 0 &&
-            typeof open === "boolean" &&
-            typeof stepIndex === "number" &&
-            Number.isInteger(stepIndex) &&
-            typeof turnId === "string"
-            ? [{ open, ordinal, stepIndex, turnId }]
-            : [];
-        })
-        .slice(-MAX_STORED_STEP_STARTS)
-    : [];
-  return {
-    llmInputs,
-    metadata: { ...metadata },
-    reasoningBlocks,
-    spanReferences,
-    stepStarts,
-  };
-}
-
-function readEveTraceState(
-  state: EveStateHandle<EveTraceState>,
-): EveTraceState {
-  try {
-    return normalizeEveTraceState(state.get());
-  } catch {
-    return emptyEveTraceState();
-  }
-}
-
-function storeEveReasoning(
-  state: EveStateHandle<EveTraceState>,
-  sessionId: string,
-  event: Extract<EveHandleMessageStreamEvent, { type: "reasoning.completed" }>,
-): readonly EveReasoningBlock[] {
-  const eventAt = event.meta?.at;
-  const key = llmInputKey(sessionId, event.data.turnId, event.data.stepIndex);
-  let stored: readonly EveReasoningBlock[] = [];
-  state.update((current) => {
-    const normalized = normalizeEveTraceState(current);
-    const alreadyStored = normalized.reasoningBlocks.some(
-      (entry) =>
-        entry.content === event.data.reasoning &&
-        entry.eventAt === eventAt &&
-        entry.key === key,
-    );
-    const reasoningBlocks = alreadyStored
-      ? normalized.reasoningBlocks
-      : [
-          ...normalized.reasoningBlocks,
-          {
-            content: event.data.reasoning,
-            ...(eventAt ? { eventAt } : {}),
-            key,
-          },
-        ].slice(-MAX_STORED_REASONING_BLOCKS);
-    stored = reasoningBlocks.flatMap((entry) =>
-      entry.key === key
-        ? [
-            {
-              content: entry.content,
-              ...(entry.eventAt ? { eventAt: entry.eventAt } : {}),
-            },
-          ]
-        : [],
-    );
-    return alreadyStored ? normalized : { ...normalized, reasoningBlocks };
-  });
-  return stored;
-}
-
-function readStoredEveReasoning(
-  state: EveStateHandle<EveTraceState>,
-  sessionId: string,
-  turnId: string,
-  stepIndex: number,
-): readonly EveReasoningBlock[] {
-  const key = llmInputKey(sessionId, turnId, stepIndex);
-  return readEveTraceState(state).reasoningBlocks.flatMap((entry) =>
-    entry.key === key
-      ? [
-          {
-            content: entry.content,
-            ...(entry.eventAt ? { eventAt: entry.eventAt } : {}),
-          },
-        ]
-      : [],
-  );
-}
-
-function clearStoredEveReasoning(
-  state: EveStateHandle<EveTraceState>,
-  sessionId: string,
-  turnId: string,
-  stepIndex: number,
-): void {
-  const key = llmInputKey(sessionId, turnId, stepIndex);
-  state.update((current) => {
-    const normalized = normalizeEveTraceState(current);
-    return {
-      ...normalized,
-      reasoningBlocks: normalized.reasoningBlocks.filter(
-        (entry) => entry.key !== key,
-      ),
-    };
+  return new Attachment({
+    contentType,
+    data: blob,
+    filename:
+      filename ?? `attachment.${getExtensionFromMediaType(contentType)}`,
   });
 }
 
-function eveOutputMessage(output: unknown): unknown {
-  return Array.isArray(output) && isObject(output[0])
-    ? output[0]["message"]
-    : undefined;
+function initialTurnInput(input: readonly unknown[]): unknown[] | undefined {
+  for (let index = input.length - 1; index >= 0; index--) {
+    const message = input[index];
+    if (isObject(message) && message["role"] === "user") {
+      return [message];
+    }
+  }
+  return undefined;
 }
 
-function mergeEveReasoning(
-  output: unknown,
-  reasoning: readonly { content: string }[],
-): unknown | undefined {
-  if (reasoning.length === 0) {
-    return output;
-  }
-
-  const choice = Array.isArray(output) && isObject(output[0]) ? output[0] : {};
-  const message = isObject(choice["message"]) ? choice["message"] : {};
+function modelOutput(
+  finishReason: string,
+  content: readonly EveInstrumentationContentPart[] | undefined,
+): unknown {
+  const parts = content ?? [];
+  const text = parts
+    .filter(
+      (
+        part,
+      ): part is Extract<EveInstrumentationContentPart, { type: "text" }> =>
+        part.type === "text",
+    )
+    .map((part) => part.text)
+    .join("");
+  const reasoning = parts
+    .filter(
+      (
+        part,
+      ): part is Extract<
+        EveInstrumentationContentPart,
+        { type: "reasoning" }
+      > => part.type === "reasoning",
+    )
+    .map((part) => ({ content: part.text }));
+  const toolCalls = parts.flatMap((part) => {
+    if (part.type !== "tool-call") {
+      return [];
+    }
+    return [
+      {
+        function: {
+          arguments: jsonString(part.input),
+          name: part.toolName,
+        },
+        id: part.callId,
+        type: "function",
+      },
+    ];
+  });
   return [
     {
-      ...choice,
-      index: typeof choice["index"] === "number" ? choice["index"] : 0,
+      finish_reason: normalizedFinishReason(finishReason),
+      index: 0,
       message: {
-        ...message,
-        content: "content" in message ? message["content"] : null,
-        reasoning: reasoning.map((block) => ({ content: block.content })),
-        role:
-          typeof message["role"] === "string" ? message["role"] : "assistant",
+        content: text.length === 0 ? null : text,
+        ...(reasoning.length === 0 ? {} : { reasoning }),
+        role: "assistant",
+        ...(toolCalls.length === 0 ? {} : { tool_calls: toolCalls }),
       },
     },
   ];
 }
 
-function captureEveModelInput(
-  state: EveStateHandle<EveTraceState>,
-  input: EveInstrumentationStepStartedEventInput,
-): void {
-  const sessionId = input.session.id;
-  const turnId = input.turn.id;
-  const stepIndex = input.step.index;
-  const captured = capturedModelInput(input.modelInput);
-  if (!captured) {
-    return;
-  }
-
-  const key = llmInputKey(sessionId, turnId, stepIndex);
-  state.update((current) => {
-    const normalized = normalizeEveTraceState(current);
-    const llmInputs = [...normalized.llmInputs, { input: captured, key }];
-    return {
-      ...normalized,
-      llmInputs: llmInputs.slice(-MAX_STORED_LLM_INPUTS),
-    };
-  });
-}
-
-function consumeCapturedEveModelInput(
-  state: EveStateHandle<EveTraceState>,
-  sessionId: string,
-  turnId: string,
-  stepIndex: number,
-): CapturedEveModelInput | undefined {
-  try {
-    const key = llmInputKey(sessionId, turnId, stepIndex);
-    let input: CapturedEveModelInput | undefined;
-    state.update((current) => {
-      const normalized = normalizeEveTraceState(current);
-      const index = normalized.llmInputs.findIndex(
-        (candidate) => candidate.key === key,
-      );
-      if (index < 0) {
-        return normalized;
-      }
-      input = normalized.llmInputs[index]?.input;
-      return {
-        ...normalized,
-        llmInputs: normalized.llmInputs.filter(
-          (_, candidateIndex) => candidateIndex !== index,
-        ),
-      };
-    });
-    return input;
-  } catch (error) {
-    debugLogger.warn("Error in Eve LLM input consumption:", error);
-    return undefined;
-  }
-}
-
-function capturedModelInput(
-  modelInput: EveInstrumentationModelInput,
-): CapturedEveModelInput | undefined {
-  const { instructions, messages } = modelInput;
-  const value: CapturedEveModelMessage[] = [];
-  if (typeof instructions === "string") {
-    value.push({ content: instructions, role: "system" });
-  } else if (instructions) {
-    value.push(...instructions.map(capturedEveModelMessage));
-  }
-  value.push(...messages.map(capturedEveModelMessage));
-
-  try {
-    const cloned: unknown = JSON.parse(JSON.stringify(value));
-    if (!Array.isArray(cloned)) {
-      return undefined;
-    }
-    return cloned;
-  } catch {
-    return undefined;
-  }
-}
-
-function capturedEveModelMessage(
-  message: EveModelMessage,
-): CapturedEveModelMessage {
-  const { content, role } = message;
-  if (typeof content === "string") {
-    return { content, role };
-  }
-  return { content: content.map(capturedEveModelContentPart), role };
-}
-
-function capturedEveModelContentPart(
-  part: EveModelMessageContentPart,
-): Record<string, unknown> {
-  switch (part.type) {
-    case "text":
-    case "reasoning":
-      return { text: part.text, type: part.type };
-    case "image":
-      return {
-        image: part.image,
-        ...(part.mediaType !== undefined ? { mediaType: part.mediaType } : {}),
-        type: "image",
-      };
-    case "file":
-    case "reasoning-file":
-      return {
-        data: part.data,
-        ...(part.type === "file" && part.filename !== undefined
-          ? { filename: part.filename }
-          : {}),
-        mediaType: part.mediaType,
-        type: part.type,
-      };
-    case "custom":
-      return {
-        ...("kind" in part ? { kind: part.kind } : {}),
-        type: "custom",
-      };
-    case "tool-call":
-      return {
-        input: part.input,
-        ...(part.providerExecuted !== undefined
-          ? { providerExecuted: part.providerExecuted }
-          : {}),
-        toolCallId: part.toolCallId,
-        toolName: part.toolName,
-        type: "tool-call",
-      };
-    case "tool-result": {
-      const output = part.output;
-      let capturedOutput: Record<string, unknown>;
-      switch (output.type) {
-        case "text":
-        case "error-text":
-          capturedOutput = { type: output.type, value: output.value };
-          break;
-        case "json":
-        case "error-json":
-          capturedOutput = { type: output.type, value: output.value };
-          break;
-        case "execution-denied":
-          capturedOutput = {
-            ...(output.reason !== undefined ? { reason: output.reason } : {}),
-            type: "execution-denied",
-          };
-          break;
-        case "content":
-          capturedOutput = {
-            type: "content",
-            value: output.value.map(capturedEveModelContentPart),
-          };
-          break;
-      }
-      return {
-        output: capturedOutput,
-        toolCallId: part.toolCallId,
-        toolName: part.toolName,
-        type: "tool-result",
-      };
-    }
-    case "tool-approval-request":
-      return {
-        approvalId: part.approvalId,
-        ...(part.isAutomatic !== undefined
-          ? { isAutomatic: part.isAutomatic }
-          : {}),
-        ...(part.signature !== undefined ? { signature: part.signature } : {}),
-        toolCallId: part.toolCallId,
-        type: "tool-approval-request",
-      };
-    case "tool-approval-response":
-      return {
-        approvalId: part.approvalId,
-        approved: part.approved,
-        ...(part.providerExecuted !== undefined
-          ? { providerExecuted: part.providerExecuted }
-          : {}),
-        ...(part.reason !== undefined ? { reason: part.reason } : {}),
-        type: "tool-approval-response",
-      };
-    case "file-data":
-    case "image-data":
-      return {
-        data: part.data,
-        ...(part.type === "file-data" && part.filename !== undefined
-          ? { filename: part.filename }
-          : {}),
-        mediaType: part.mediaType,
-        type: part.type,
-      };
-    case "file-url":
-    case "image-url":
-      return {
-        ...(part.type === "file-url" && part.mediaType !== undefined
-          ? { mediaType: part.mediaType }
-          : {}),
-        type: part.type,
-        url: part.url,
-      };
-    case "file-id":
-    case "image-file-id":
-      return { fileId: part.fileId, type: part.type };
-    case "file-reference":
-    case "image-file-reference":
-      return {
-        providerReference: part.providerReference,
-        type: part.type,
-      };
-  }
-}
-
-function isCapturedModelInput(input: unknown): input is CapturedEveModelInput {
-  return (
-    Array.isArray(input) &&
-    input.every(
-      (message) =>
-        isObject(message) &&
-        (message["role"] === "system" ||
-          message["role"] === "user" ||
-          message["role"] === "assistant" ||
-          message["role"] === "tool") &&
-        (typeof message["content"] === "string" ||
-          (Array.isArray(message["content"]) &&
-            message["content"].every(isObject))),
+function finalText(
+  content: readonly EveInstrumentationContentPart[] | undefined,
+): string | undefined {
+  const text = (content ?? [])
+    .filter(
+      (
+        part,
+      ): part is Extract<EveInstrumentationContentPart, { type: "text" }> =>
+        part.type === "text",
     )
+    .map((part) => part.text)
+    .join("");
+  return text.length === 0 ? undefined : text;
+}
+
+function jsonString(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? "null";
+  } catch {
+    return "null";
+  }
+}
+
+function normalizedFinishReason(finishReason: string): string {
+  if (finishReason === "content-filter") {
+    return "content_filter";
+  }
+  if (finishReason === "tool-calls") {
+    return "tool_calls";
+  }
+  return finishReason;
+}
+
+function usageMetrics(usage: EveInstrumentationUsage): Record<string, number> {
+  const inputTokens = validMetric(usage.inputTokens);
+  const outputTokens = validMetric(usage.outputTokens);
+  const cacheReadTokens = validMetric(usage.inputTokenDetails?.cacheReadTokens);
+  const cacheWriteTokens = validMetric(
+    usage.inputTokenDetails?.cacheWriteTokens,
   );
-}
-
-function llmInputKey(
-  sessionId: string,
-  turnId: string,
-  stepIndex: number,
-): string {
-  return `${sessionId}\0${turnId}\0${stepIndex}`;
-}
-
-function modelMetadataFromRuntime(runtime: unknown): Record<string, unknown> {
-  if (!isObject(runtime)) {
-    return {};
-  }
-  const modelId = runtime["modelId"];
-  return typeof modelId === "string" && !modelId.trim().startsWith("dynamic:")
-    ? modelMetadataFromModelId(modelId)
-    : {};
-}
-
-function modelMetadataFromModelId(modelId: string): Record<string, unknown> {
-  const normalized = modelId.trim();
-  if (!normalized) {
-    return {};
-  }
-
-  const slashIndex = normalized.indexOf("/");
-  if (slashIndex > 0 && slashIndex < normalized.length - 1) {
-    return {
-      model: normalized.slice(slashIndex + 1),
-      provider: normalized.slice(0, slashIndex),
-    };
-  }
-
   return {
-    model: normalized,
+    ...(inputTokens === undefined ? {} : { prompt_tokens: inputTokens }),
+    ...(outputTokens === undefined ? {} : { completion_tokens: outputTokens }),
+    ...(inputTokens === undefined || outputTokens === undefined
+      ? {}
+      : { tokens: inputTokens + outputTokens }),
+    ...(cacheReadTokens === undefined
+      ? {}
+      : { prompt_cached_tokens: cacheReadTokens }),
+    ...(cacheWriteTokens === undefined
+      ? {}
+      : { prompt_cache_creation_tokens: cacheWriteTokens }),
   };
 }
 
-function sessionIdFromContext(ctx: unknown): string | undefined {
-  if (!isObject(ctx)) {
-    return undefined;
+function validMetric(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? value
+    : undefined;
+}
+
+function numericMetrics(
+  value: Record<string, unknown>,
+): Record<string, number> {
+  const metrics: Record<string, number> = {};
+  for (const name of [
+    "completion_tokens",
+    "prompt_cache_creation_tokens",
+    "prompt_cached_tokens",
+    "prompt_tokens",
+    "tokens",
+  ]) {
+    const metric = validMetric(value[name]);
+    if (metric !== undefined) {
+      metrics[name] = metric;
+    }
   }
-  const session = ctx["session"];
-  if (!isObject(session)) {
-    return undefined;
+  return metrics;
+}
+
+function numericMetricContributions(
+  value: Record<string, unknown>,
+): Record<string, Record<string, number>> {
+  const contributions: Record<string, Record<string, number>> = {};
+  for (const [idempotencyKey, contribution] of Object.entries(value)) {
+    if (isObject(contribution)) {
+      contributions[idempotencyKey] = numericMetrics(contribution);
+    }
   }
-  const id = session["id"];
-  return typeof id === "string" ? id : undefined;
+  return contributions;
 }
 
-function toolMetadataFromTurn(turn: TurnState): Record<string, unknown> {
-  const { model: _model, provider: _provider, ...metadata } = turn.metadata;
-  return metadata;
+function modelMetadata(
+  modelId: string,
+  providerId: string,
+): Record<string, unknown> {
+  const provider = providerId.split(".")[0]?.trim();
+  const model = modelId.trim();
+  return {
+    ...(model.length === 0 ? {} : { model }),
+    ...(provider === undefined || provider.length === 0 ? {} : { provider }),
+  };
 }
 
-function isToolCallAction(
-  action: unknown,
-): action is EveRuntimeToolCallActionRequest {
-  return (
-    isObject(action) &&
-    action["kind"] === "tool-call" &&
-    typeof action["callId"] === "string" &&
-    typeof action["toolName"] === "string" &&
-    isObject(action["input"])
-  );
-}
-
-function isLocalSubagentCallAction(
-  action: unknown,
-): action is Extract<EveRuntimeActionRequest, { kind: "subagent-call" }> {
-  return (
-    isObject(action) &&
-    action["kind"] === "subagent-call" &&
-    typeof action["callId"] === "string" &&
-    isObject(action["input"])
-  );
-}
-
-function isTraceableActionRequest(
-  action: unknown,
-): action is
-  | EveRuntimeToolCallActionRequest
-  | Extract<EveRuntimeActionRequest, { kind: "subagent-call" }> {
-  return isToolCallAction(action) || isLocalSubagentCallAction(action);
-}
-
-function isToolResult(
-  result: unknown,
-): result is EveRuntimeToolResultActionResult {
-  return (
-    isObject(result) &&
-    result["kind"] === "tool-result" &&
-    typeof result["callId"] === "string" &&
-    typeof result["toolName"] === "string"
-  );
-}
-
-function isSubagentResult(
-  result: unknown,
-): result is Extract<EveRuntimeActionResult, { kind: "subagent-result" }> {
-  return (
-    isObject(result) &&
-    result["kind"] === "subagent-result" &&
-    typeof result["callId"] === "string" &&
-    typeof result["subagentName"] === "string"
-  );
-}
-
-function normalizedFinishReason(
-  finishReason: EveAssistantStepFinishReason,
-): string {
-  switch (finishReason) {
-    case "content-filter":
-      return "content_filter";
-    case "tool-calls":
-      return "tool_calls";
-    default:
-      return finishReason;
+function toError(error: unknown, fallback: string): Error {
+  if (error instanceof Error) {
+    return error;
   }
-}
-
-function errorFromMessage(
-  message: string,
-  code: string,
-  details?: unknown,
-): Error {
-  const error = new Error(`${code}: ${message}`);
-  if (details !== undefined) {
-    error.cause = details;
+  if (typeof error === "string" && error.length > 0) {
+    return new Error(error);
   }
-  return error;
-}
-
-function actionResultError(
-  error: EveActionResultError | undefined,
-  output: unknown,
-): Error {
-  if (error) {
-    return errorFromMessage(error.message, error.code);
+  if (isObject(error) && typeof error["message"] === "string") {
+    const code = typeof error["code"] === "string" ? error["code"] + ": " : "";
+    const result = new Error(code + error["message"]);
+    result.cause = error;
+    return result;
   }
-  const result = new Error("Eve action failed");
-  if (output !== undefined) {
-    result.cause = output;
+  const result = new Error(fallback);
+  if (error !== undefined) {
+    result.cause = error;
   }
   return result;
 }
 
-function eventTime(event: {
-  readonly meta?: { readonly at: string };
-}): number | undefined {
-  if (!event.meta?.at) {
-    return undefined;
-  }
-  const timestamp = Date.parse(event.meta.at);
-  return Number.isFinite(timestamp) ? timestamp / 1000 : undefined;
+function actionEndArgs(
+  acceptedAtMs: number | undefined,
+): { endTime: number } | undefined {
+  return typeof acceptedAtMs === "number" && Number.isFinite(acceptedAtMs)
+    ? { endTime: acceptedAtMs / 1000 }
+    : undefined;
 }
 
 function turnKey(sessionId: string, turnId: string): string {
-  return `${sessionId}:${turnId}`;
-}
-
-function toolKey(sessionId: string, callId: string): string {
-  return `${sessionId}:${callId}`;
+  return sessionId + ":" + turnId;
 }
 
 async function generateEveIds(
-  kind: EveEntityKind,
+  kind: "action" | "step" | "turn",
   ...parts: string[]
 ): Promise<{ rowId: string; spanId: string }> {
   const [rowId, spanId] = await Promise.all([
-    deterministicEveId(`eve:row:${kind}`, ...parts),
-    deterministicEveId(`eve:${kind}`, ...parts),
+    deterministicEveId("eve:row:" + kind, ...parts),
+    deterministicEveId("eve:" + kind, ...parts),
   ]);
   return { rowId, spanId };
 }
 
 async function deterministicEveId(...parts: string[]): Promise<string> {
   const data = new TextEncoder().encode(
-    parts.map((part) => `${part.length}:${part}`).join("\0"),
+    parts.map((part) => part.length + ":" + part).join("\0"),
   );
   const digest = await globalThis.crypto.subtle.digest("SHA-256", data);
   const bytes = Array.from(new Uint8Array(digest, 0, 16));
   const hex = bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  return (
+    hex.slice(0, 8) +
+    "-" +
+    hex.slice(8, 12) +
+    "-" +
+    hex.slice(12, 16) +
+    "-" +
+    hex.slice(16, 20) +
+    "-" +
+    hex.slice(20)
+  );
 }

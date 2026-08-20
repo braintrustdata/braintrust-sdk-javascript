@@ -196,10 +196,7 @@ export {
   BraintrustMiddleware,
   wrapAISDKModel,
 } from "./wrappers/ai-sdk";
-export {
-  braintrustEveHook,
-  braintrustEveInstrumentation,
-} from "./instrumentation";
+export { braintrustEveInstrumentation } from "./instrumentation";
 export { collectAnthropicSession } from "./wrappers/anthropic-session-collector";
 export { wrapAnthropic } from "./wrappers/anthropic";
 export {

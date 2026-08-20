@@ -1,8 +1,8 @@
 /**
- * Vendored types for eve's authored hook APIs.
+ * Vendored types for eve's instrumentation provider API, introduced in 0.34.0.
  *
  * Keep this surface intentionally narrow. These types are not exported to SDK
- * users and should only cover fields we read, correlate, or log.
+ * users and should only cover fields the Braintrust provider reads or returns.
  */
 
 export type EveJsonValue =
@@ -13,499 +13,197 @@ export type EveJsonValue =
   | EveJsonValue[]
   | { readonly [key: string]: EveJsonValue };
 
-export type EveJsonObject = { readonly [key: string]: EveJsonValue };
-
-export interface EveHookContext {
-  readonly session: {
-    readonly id: string;
-    readonly parent?: {
-      readonly callId?: string;
-      readonly sessionId?: string;
-      readonly turn?: {
-        readonly id?: string;
-      };
-    };
-  };
+export interface EveInstrumentationState {
+  get(): EveJsonValue | undefined;
+  set(value: EveJsonValue | undefined): void;
 }
 
-export type EveAssistantStepFinishReason =
-  | "content-filter"
-  | "error"
-  | "length"
-  | "other"
-  | "stop"
-  | "tool-calls";
-
-export interface EveStreamEventMeta {
-  readonly at: string;
-}
-
-export interface EveRuntimeToolCallActionRequest {
-  readonly callId: string;
-  readonly input: EveJsonObject;
-  readonly kind: "tool-call";
-  readonly toolName: string;
-}
-
-export interface EveRuntimeToolResultActionResult {
-  readonly callId: string;
-  readonly isError?: boolean;
-  readonly kind: "tool-result";
-  readonly output: EveJsonValue;
-  readonly toolName: string;
-}
-
-export type EveRuntimeActionRequest =
-  | EveRuntimeToolCallActionRequest
-  | {
-      readonly callId: string;
-      readonly input?: EveJsonObject;
-      readonly kind: "load-skill" | "remote-agent-call";
-      readonly name?: string;
-    }
-  | {
-      readonly callId: string;
-      readonly input: EveJsonObject;
-      readonly kind: "subagent-call";
-      readonly name?: string;
-      readonly subagentName?: string;
-    };
-
-export type EveRuntimeActionResult =
-  | EveRuntimeToolResultActionResult
-  | {
-      readonly callId: string;
-      readonly isError?: boolean;
-      readonly kind: "load-skill-result";
-      readonly output?: EveJsonValue;
-      readonly name?: string;
-    }
-  | {
-      readonly callId: string;
-      readonly isError?: boolean;
-      readonly kind: "subagent-result";
-      readonly output?: EveJsonValue;
-      readonly subagentName?: string;
-    };
-
-export type EveActionResultStatus = "completed" | "failed" | "rejected";
-
-export interface EveActionResultError {
-  readonly code: string;
-  readonly message: string;
-}
-
-export type EveHandleMessageStreamEvent =
-  | {
-      readonly data: {
-        readonly invocation?: unknown;
-        readonly runtime?: {
-          readonly agentId: string;
-          readonly agentName?: string;
-          readonly eveVersion: string;
-          readonly modelId: string;
-        };
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "session.started";
-    }
-  | {
-      readonly data: {
-        readonly sequence: number;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "turn.started";
-    }
-  | {
-      readonly data: {
-        readonly sequence: number;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "turn.completed";
-    }
-  | {
-      readonly data: {
-        readonly message: string;
-        readonly sequence: number;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "message.received";
-    }
-  | {
-      readonly data: {
-        readonly finishReason: EveAssistantStepFinishReason;
-        readonly message: string | null;
-        readonly sequence: number;
-        readonly stepIndex: number;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "message.completed";
-    }
-  | {
-      readonly data: {
-        readonly reasoning: string;
-        readonly sequence: number;
-        readonly stepIndex: number;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "reasoning.completed";
-    }
-  | {
-      readonly data: {
-        readonly result: EveJsonValue;
-        readonly sequence: number;
-        readonly stepIndex: number;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "result.completed";
-    }
-  | {
-      readonly data: {
-        readonly sequence: number;
-        readonly stepIndex: number;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "step.started";
-    }
-  | {
-      readonly data: {
-        readonly finishReason: EveAssistantStepFinishReason;
-        readonly providerMetadata?: {
-          readonly gateway?: {
-            readonly generationId?: string;
-          };
-        };
-        readonly sequence: number;
-        readonly stepIndex: number;
-        readonly turnId: string;
-        readonly usage?: {
-          readonly cacheReadTokens?: number;
-          readonly cacheWriteTokens?: number;
-          readonly costUsd?: number;
-          readonly inputTokens?: number;
-          readonly outputTokens?: number;
-        };
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "step.completed";
-    }
-  | {
-      readonly data: {
-        readonly code: string;
-        readonly details?: EveJsonObject;
-        readonly message: string;
-        readonly sequence: number;
-        readonly stepIndex: number;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "step.failed";
-    }
-  | {
-      readonly data: {
-        readonly actions: readonly EveRuntimeActionRequest[];
-        readonly sequence: number;
-        readonly stepIndex: number;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "actions.requested";
-    }
-  | {
-      readonly data: {
-        readonly error?: EveActionResultError;
-        readonly result: EveRuntimeActionResult;
-        readonly sequence: number;
-        readonly stepIndex: number;
-        readonly status: EveActionResultStatus;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "action.result";
-    }
-  | {
-      readonly data: {
-        readonly callId: string;
-        readonly childSessionId: string;
-        readonly name: string;
-        readonly remote?: {
-          readonly url?: string;
-        };
-        readonly sequence: number;
-        readonly toolName?: string;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "subagent.called";
-    }
-  | {
-      readonly data: {
-        readonly callId: string;
-        readonly error?: EveActionResultError;
-        readonly output?: EveJsonValue;
-        readonly sequence: number;
-        readonly status?: EveActionResultStatus;
-        readonly subagentName: string;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "subagent.completed";
-    }
-  | {
-      readonly data: {
-        readonly code: string;
-        readonly details?: EveJsonObject;
-        readonly message: string;
-        readonly sequence: number;
-        readonly turnId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "turn.failed";
-    }
-  | {
-      readonly data: {
-        readonly code: string;
-        readonly details?: EveJsonObject;
-        readonly message: string;
-        readonly sessionId: string;
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "session.failed";
-    }
-  | {
-      readonly data: {
-        readonly wait: "next-user-message";
-      };
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "session.waiting";
-    }
-  | {
-      readonly meta?: EveStreamEventMeta;
-      readonly type: "session.completed";
-    };
-
-export interface EveHookDefinition {
-  readonly events?: {
-    readonly "*"?: (
-      event: EveHandleMessageStreamEvent,
-      ctx: EveHookContext,
-    ) => void | Promise<void>;
-    readonly [eventType: string]:
-      | ((
-          event: EveHandleMessageStreamEvent,
-          ctx: EveHookContext,
-        ) => void | Promise<void>)
-      | undefined;
-  };
+export interface EveInstrumentationHandlerContext {
+  readonly state: EveInstrumentationState;
 }
 
 export interface EveInstrumentationSetupContext {
   readonly agentName: string;
+  readonly environment?: "development" | "preview" | "production";
+  readonly evaluation?: { readonly runId: string };
+  readonly frameworkVersion?: string;
 }
 
-type EveTextPart = {
-  readonly text: string;
-  readonly type: "text";
-};
+export interface EveInstrumentationAttemptScope {
+  readonly attemptId: string;
+  readonly attemptIndex: number;
+  readonly rootSessionId?: string;
+  readonly sessionId: string;
+  readonly stepIndex: number;
+  readonly turnId: string;
+}
 
-type EveImagePart = {
-  readonly image: unknown;
-  readonly mediaType?: string;
-  readonly type: "image";
-};
+export interface EveInstrumentationParentLineage {
+  readonly callId: string;
+  readonly sessionId: string;
+  readonly turnId: string;
+}
 
-type EveFilePart = {
-  readonly data: unknown;
-  readonly filename?: string;
-  readonly mediaType: string;
-  readonly type: "file";
-};
+export interface EveInstrumentationTraceContext {
+  readonly spanId: string;
+  readonly traceFlags: number;
+  readonly traceId: string;
+}
 
-type EveReasoningPart = {
-  readonly text: string;
-  readonly type: "reasoning";
-};
-
-type EveReasoningFilePart = {
-  readonly data: unknown;
-  readonly mediaType: string;
-  readonly type: "reasoning-file";
-};
-
-type EveCustomPart = {
-  readonly kind: `${string}.${string}`;
-  readonly type: "custom";
-};
-
-type EveToolCallPart = {
-  readonly input: unknown;
-  readonly providerExecuted?: boolean;
-  readonly toolCallId: string;
-  readonly toolName: string;
-  readonly type: "tool-call";
-};
-
-type EveToolResultContentPart =
-  | EveTextPart
-  | EveFilePart
-  | {
-      readonly data: string;
-      readonly filename?: string;
-      readonly mediaType: string;
-      readonly type: "file-data";
-    }
-  | {
-      readonly mediaType?: string;
-      readonly type: "file-url";
-      readonly url: string;
-    }
-  | {
-      readonly fileId: string | Readonly<Record<string, string>>;
-      readonly type: "file-id" | "image-file-id";
-    }
-  | {
-      readonly providerReference: Readonly<Record<string, string>>;
-      readonly type: "file-reference" | "image-file-reference";
-    }
-  | {
-      readonly data: string;
-      readonly mediaType: string;
-      readonly type: "image-data";
-    }
-  | {
-      readonly type: "image-url";
-      readonly url: string;
-    }
-  | { readonly type: "custom" };
-
-type EveToolResultOutput =
-  | {
-      readonly type: "text" | "error-text";
-      readonly value: string;
-    }
-  | {
-      readonly type: "json" | "error-json";
-      readonly value: EveJsonValue;
-    }
-  | {
-      readonly reason?: string;
-      readonly type: "execution-denied";
-    }
-  | {
-      readonly type: "content";
-      readonly value: readonly EveToolResultContentPart[];
-    };
-
-type EveToolResultPart = {
-  readonly output: EveToolResultOutput;
-  readonly toolCallId: string;
-  readonly toolName: string;
-  readonly type: "tool-result";
-};
-
-type EveToolApprovalRequest = {
-  readonly approvalId: string;
-  readonly isAutomatic?: boolean;
-  readonly signature?: string;
-  readonly toolCallId: string;
-  readonly type: "tool-approval-request";
-};
-
-type EveToolApprovalResponse = {
-  readonly approvalId: string;
-  readonly approved: boolean;
-  readonly providerExecuted?: boolean;
-  readonly reason?: string;
-  readonly type: "tool-approval-response";
-};
-
-export type EveModelMessageContentPart =
-  | EveTextPart
-  | EveImagePart
-  | EveFilePart
-  | EveReasoningPart
-  | EveReasoningFilePart
-  | EveCustomPart
-  | EveToolCallPart
-  | EveToolResultPart
-  | EveToolApprovalRequest
-  | EveToolApprovalResponse
-  | EveToolResultContentPart;
-
-export type EveSystemModelMessage = {
-  readonly content: string;
-  readonly role: "system";
-};
-
-export type EveModelMessage =
-  | EveSystemModelMessage
-  | {
-      readonly content:
-        | string
-        | readonly (EveTextPart | EveImagePart | EveFilePart)[];
-      readonly role: "user";
-    }
-  | {
-      readonly content:
-        | string
-        | readonly (
-            | EveTextPart
-            | EveCustomPart
-            | EveFilePart
-            | EveReasoningPart
-            | EveReasoningFilePart
-            | EveToolCallPart
-            | EveToolResultPart
-            | EveToolApprovalRequest
-          )[];
-      readonly role: "assistant";
-    }
-  | {
-      readonly content: readonly (
-        | EveToolResultPart
-        | EveToolApprovalResponse
-      )[];
-      readonly role: "tool";
-    };
+export interface EveInstrumentationUsage {
+  readonly inputTokenDetails?: {
+    readonly cacheReadTokens?: number;
+    readonly cacheWriteTokens?: number;
+  };
+  readonly inputTokens?: number;
+  readonly outputTokens?: number;
+}
 
 export interface EveInstrumentationModelInput {
-  readonly instructions?: string | readonly EveSystemModelMessage[];
-  readonly messages: readonly EveModelMessage[];
+  readonly instructions?: unknown;
+  readonly messages: readonly unknown[];
 }
 
-export interface EveInstrumentationStepStartedEventInput {
-  readonly modelInput: EveInstrumentationModelInput;
-  readonly session: {
-    readonly id: string;
-  };
-  readonly step: {
-    readonly index: number;
-  };
-  readonly turn: {
-    readonly id: string;
-    readonly sequence: number;
-  };
+export type EveInstrumentationContentPart =
+  | {
+      readonly text: string;
+      readonly type: "text";
+    }
+  | {
+      readonly text: string;
+      readonly type: "reasoning";
+    }
+  | {
+      readonly callId: string;
+      readonly input: unknown;
+      readonly toolName: string;
+      readonly type: "tool-call";
+    }
+  | {
+      readonly type: "tool-result";
+    }
+  | {
+      readonly type: "tool-error";
+    };
+
+export interface EveInstrumentationTurnStartedEvent {
+  readonly idempotencyKey: string;
+  readonly parentLineage?: EveInstrumentationParentLineage;
+  readonly parentTraceContext?: EveInstrumentationTraceContext;
+  readonly rootSessionId: string;
+  readonly sequence: number;
+  readonly sessionId: string;
+  readonly turnId: string;
+  readonly type: "turn.started";
 }
+
+export interface EveInstrumentationTurnSettledEvent {
+  readonly idempotencyKey: string;
+  readonly sessionId: string;
+  readonly turnId: string;
+  readonly type: "turn.cancelled" | "turn.completed";
+}
+
+export interface EveInstrumentationTurnFailedEvent {
+  readonly error?: unknown;
+  readonly idempotencyKey: string;
+  readonly sessionId: string;
+  readonly turnId: string;
+  readonly type: "turn.failed";
+}
+
+export interface EveInstrumentationModelCallStartedEvent {
+  readonly idempotencyKey: string;
+  readonly input?: EveInstrumentationModelInput;
+  readonly model: {
+    readonly modelId: string;
+    readonly provider: string;
+  };
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "model.call.started";
+}
+
+export interface EveInstrumentationModelCallCompletedEvent {
+  readonly content?: readonly EveInstrumentationContentPart[];
+  readonly finishReason: string;
+  readonly idempotencyKey: string;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "model.call.completed";
+  readonly usage: EveInstrumentationUsage;
+}
+
+export interface EveInstrumentationModelCallFailedEvent {
+  readonly error?: unknown;
+  readonly idempotencyKey: string;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "model.call.failed";
+}
+
+export interface EveInstrumentationStepAttemptCompletedEvent {
+  readonly idempotencyKey: string;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "step.attempt.completed";
+}
+
+export interface EveInstrumentationStepAttemptFailedEvent {
+  readonly error?: unknown;
+  readonly idempotencyKey: string;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "step.attempt.failed";
+}
+
+export interface EveInstrumentationActionStartedEvent {
+  readonly callId: string;
+  readonly idempotencyKey: string;
+  readonly input?: unknown;
+  readonly name: string;
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "action.started";
+}
+
+export interface EveInstrumentationActionCompletedEvent {
+  readonly acceptedAtMs?: number;
+  readonly idempotencyKey: string;
+  readonly output:
+    | { readonly output?: unknown; readonly type: "result" }
+    | { readonly error?: unknown; readonly type: "error" };
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "action.completed";
+}
+
+export interface EveInstrumentationActionFailedEvent {
+  readonly acceptedAtMs?: number;
+  readonly error?: unknown;
+  readonly errorCode?: string;
+  readonly idempotencyKey: string;
+  readonly outcome: "abandoned" | "cancelled" | "failed" | "rejected";
+  readonly scope: EveInstrumentationAttemptScope;
+  readonly type: "action.failed";
+}
+
+type EveInstrumentationHandler<TEvent> = (
+  event: TEvent,
+  context: EveInstrumentationHandlerContext,
+) => void | PromiseLike<void>;
 
 export interface EveInstrumentationDefinition {
-  readonly events?: {
-    readonly "step.started"?: (
-      input: EveInstrumentationStepStartedEventInput,
-    ) => void | { readonly runtimeContext?: EveJsonObject };
-    readonly [eventType: string]:
-      | ((
-          input: EveInstrumentationStepStartedEventInput,
-        ) => void | { readonly runtimeContext?: EveJsonObject })
-      | undefined;
+  readonly capture: "content";
+  readonly events: {
+    readonly "action.completed": EveInstrumentationHandler<EveInstrumentationActionCompletedEvent>;
+    readonly "action.failed": EveInstrumentationHandler<EveInstrumentationActionFailedEvent>;
+    readonly "action.started": EveInstrumentationHandler<EveInstrumentationActionStartedEvent>;
+    readonly "model.call.completed": EveInstrumentationHandler<EveInstrumentationModelCallCompletedEvent>;
+    readonly "model.call.failed": EveInstrumentationHandler<EveInstrumentationModelCallFailedEvent>;
+    readonly "model.call.started": EveInstrumentationHandler<EveInstrumentationModelCallStartedEvent>;
+    readonly "step.attempt.completed": EveInstrumentationHandler<EveInstrumentationStepAttemptCompletedEvent>;
+    readonly "step.attempt.failed": EveInstrumentationHandler<EveInstrumentationStepAttemptFailedEvent>;
+    readonly "turn.cancelled": EveInstrumentationHandler<EveInstrumentationTurnSettledEvent>;
+    readonly "turn.completed": EveInstrumentationHandler<EveInstrumentationTurnSettledEvent>;
+    readonly "turn.failed": EveInstrumentationHandler<EveInstrumentationTurnFailedEvent>;
+    readonly "turn.started": EveInstrumentationHandler<EveInstrumentationTurnStartedEvent>;
   };
-  readonly recordInputs?: boolean;
-  readonly recordOutputs?: boolean;
-  readonly setup?: (context: EveInstrumentationSetupContext) => void;
+  readonly flush: () => Promise<void>;
+  readonly setup?: (
+    context: EveInstrumentationSetupContext,
+  ) => void | PromiseLike<void>;
 }

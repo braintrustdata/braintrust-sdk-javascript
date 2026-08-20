@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "@openrouter/ai-sdk-provider": "3.0.0",
-    "ai": "7.0.34",
-    "eve-v0": "npm:eve@0.22.1",
-    "eve-v0-latest": "npm:eve@0.27.6",
+    "ai": "7.0.68",
+    "eve-v0": "npm:eve@0.34.0",
+    "eve-v0-latest": "npm:eve@0.39.1",
     "zod": "4.3.6"
   }
 }
