@@ -52,6 +52,9 @@ describe.concurrent("variants", () => {
         ...(scenario.supportsClassify === false
           ? { supportsClassify: false }
           : {}),
+        ...(scenario.supportsInlineBatch === false
+          ? { supportsInlineBatch: false }
+          : {}),
         testFileUrl: import.meta.url,
         timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
       });
@@ -80,6 +83,9 @@ describe.concurrent("variants", () => {
           : {}),
         ...(scenario.supportsClassify === false
           ? { supportsClassify: false }
+          : {}),
+        ...(scenario.supportsInlineBatch === false
+          ? { supportsInlineBatch: false }
           : {}),
         testFileUrl: import.meta.url,
         timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
