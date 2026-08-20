@@ -304,6 +304,29 @@
     ]
   },
   {
+    "scenarioDirName": "bedrock-agent-runtime-instrumentation",
+    "label": "Bedrock Agent Runtime Instrumentation",
+    "metadataScenario": "bedrock-agent-runtime-instrumentation",
+    "variants": [
+      {
+        "variantKey": "bedrock-agent-runtime-v3-wrapped",
+        "label": "v3 pinned wrapped"
+      },
+      {
+        "variantKey": "bedrock-agent-runtime-v3-auto",
+        "label": "v3 pinned auto-hook"
+      },
+      {
+        "variantKey": "bedrock-agent-runtime-v3-latest-wrapped",
+        "label": "v3 latest wrapped"
+      },
+      {
+        "variantKey": "bedrock-agent-runtime-v3-latest-auto",
+        "label": "v3 latest auto-hook"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "bedrock-runtime-instrumentation",
     "label": "Bedrock Runtime Instrumentation",
     "metadataScenario": "bedrock-runtime-instrumentation",

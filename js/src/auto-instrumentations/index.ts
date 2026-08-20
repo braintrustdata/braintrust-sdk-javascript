@@ -31,6 +31,7 @@
 export { openaiConfigs } from "./configs/openai";
 export { openAICodexConfigs } from "./configs/openai-codex";
 export { anthropicConfigs } from "./configs/anthropic";
+export { bedrockAgentRuntimeConfigs } from "./configs/bedrock-agent-runtime";
 export { bedrockRuntimeConfigs } from "./configs/bedrock-runtime";
 export { aiSDKConfigs } from "./configs/ai-sdk";
 export { claudeAgentSDKConfigs } from "./configs/claude-agent-sdk";
