@@ -36,6 +36,7 @@ type RunGoogleGenAIScenario = (harness: {
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
@@ -365,7 +366,14 @@ function summarizeGooglePayload(event: CapturedLogEvent): Json {
     input: event.input as Json,
     metadata: pickMetadata(
       event.row.metadata as Record<string, unknown> | undefined,
-      ["model", "operation", "scenario"],
+      [
+        "maxOutputTokens",
+        "model",
+        "operation",
+        "provider",
+        "scenario",
+        "temperature",
+      ],
     ),
     metrics: normalizeGoogleMetrics(event.metrics as Json),
     name: event.span.name ?? null,
@@ -533,6 +541,131 @@ function outputHasFunctionCall(
   );
 }
 
+export function defineGoogleGenAIBatchHelperAssertions(options: {
+  runScenario: RunGoogleGenAIScenario;
+  snapshotName: string;
+  testFileUrl: string;
+  timeoutMs: number;
+}): void {
+  const spanSnapshotPath = resolveFileSnapshotPath(
+    options.testFileUrl,
+    `${options.snapshotName}.span-tree.json`,
+  );
+  const timeoutMs = effectiveScenarioTimeoutMs(options.timeoutMs);
+
+  describe.sequential("explicit batch helper", () => {
+    let events: CapturedLogEvent[] = [];
+
+    beforeAll(async () => {
+      await withScenarioHarness(async (harness) => {
+        await options.runScenario(harness);
+        events = harness.events();
+      });
+    }, timeoutMs);
+
+    test("traces one synthetic lifecycle outside the SDK matrix", () => {
+      const root = findLatestSpan(events, "google-genai-batch-helper-root");
+      const operation = findLatestSpan(events, "google-batch-inline-operation");
+      const task = findLatestChildSpan(
+        events,
+        "google-genai.batch",
+        operation?.span.id,
+      );
+      const children = findChildSpans(
+        events,
+        "generate_content",
+        task?.span.id,
+      );
+      const child = children.find((event) => event.output !== undefined);
+      const failedChild = children.find(
+        (event) => typeof event.row.error === "string",
+      );
+
+      expect(root?.row.metadata).toMatchObject({
+        scenario: "google-genai-batch-helper",
+      });
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(task?.row.metadata).toMatchObject({
+        batch_name: "batches/e2e-inline",
+        model: "models/gemini-2.5-flash-001",
+        state: "JOB_STATE_SUCCEEDED",
+      });
+      expect(child?.input).toEqual({
+        contents: { text: "Reply with exactly INLINE ONE." },
+        model: "models/gemini-2.5-flash-001",
+      });
+      expect(child?.output).toEqual({
+        candidates: [
+          {
+            content: { parts: [{ text: "INLINE ONE" }], role: "model" },
+            groundingMetadata: {
+              webSearchQueries: ["inline one query"],
+            },
+          },
+        ],
+        usageMetadata: {
+          candidatesTokenCount: 2,
+          promptTokenCount: 5,
+          totalTokenCount: 7,
+        },
+      });
+      expect(child?.row.metadata).toMatchObject({
+        groundingMetadata: { webSearchQueries: ["inline one query"] },
+        maxOutputTokens: 24,
+        model: "models/gemini-2.5-flash-001",
+        temperature: 0,
+      });
+      expect(child?.metrics).toMatchObject({
+        completion_tokens: 2,
+        prompt_tokens: 5,
+        tokens: 7,
+      });
+      expect(children).toHaveLength(2);
+      expect(failedChild?.row.error).toBe("Synthetic batch error");
+      expect(
+        Number(task?.metrics?.end) - Number(task?.metrics?.start),
+      ).toBeCloseTo(120);
+
+      const serialized = JSON.stringify([task, child]);
+      expect(serialized).not.toContain("batch-secret-header");
+      expect(serialized).not.toContain("batch-secret-metadata");
+      expect(serialized).not.toContain("batch-response-secret");
+      expect(serialized).not.toContain("private-response-extension");
+      expect(serialized).not.toContain("sdkHttpResponse");
+    });
+
+    test("matches the complete batch span contract", async () => {
+      const root = findLatestSpan(events, "google-genai-batch-helper-root");
+      const operation = findLatestSpan(events, "google-batch-inline-operation");
+      const task = findLatestChildSpan(
+        events,
+        "google-genai.batch",
+        operation?.span.id,
+      );
+      const children = findChildSpans(
+        events,
+        "generate_content",
+        task?.span.id,
+      );
+      const selected = [root, operation, task, ...children].filter(
+        (event): event is CapturedLogEvent => event !== undefined,
+      );
+
+      await matchSpanTreeSnapshot(
+        selected.map((event) => ({
+          event,
+          fields: {
+            ...spanTreeFields(event),
+            context: event.context,
+            metrics: event.metrics,
+          },
+        })),
+        spanSnapshotPath,
+      );
+    });
+  });
+}
+
 export function defineGoogleGenAIInstrumentationAssertions(options: {
   name: string;
   runScenario: RunGoogleGenAIScenario;
@@ -588,7 +721,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       },
     );
 
-    test("captures system instruction metadata and input", testConfig, () => {
+    test("normalizes the system instruction into input", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
       const operation = findLatestSpan(
         events,
@@ -604,14 +737,20 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(span?.row.metadata).toMatchObject({
         model: GOOGLE_MODEL,
-        systemInstruction: "You are a pirate. Always respond in pirate speak.",
       });
       expect(span?.input).toMatchObject({
-        config: expect.objectContaining({
-          systemInstruction:
-            "You are a pirate. Always respond in pirate speak.",
-        }),
+        contents: [
+          {
+            parts: [
+              { text: "You are a pirate. Always respond in pirate speak." },
+            ],
+            role: "system",
+          },
+          { text: "Tell me about the weather." },
+        ],
       });
+      expect(span?.input).not.toHaveProperty("config");
+      expect(span?.row.metadata).not.toHaveProperty("systemInstruction");
     });
 
     test("captures multi-turn conversation input", testConfig, () => {
@@ -645,6 +784,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(span?.row.metadata).toMatchObject({
         model: GOOGLE_EMBEDDING_MODEL,
+        provider: "google",
       });
       expect(span?.output).toMatchObject({
         embedding_count: expect.any(Number),
@@ -673,6 +813,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(operation.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(span?.row.metadata).toMatchObject({
         model: GOOGLE_INTERACTIONS_MODEL,
+        provider: "google",
       });
       expect(span?.input).toMatchObject({
         generation_config: expect.objectContaining({
@@ -724,6 +865,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         expect(operation.span.parentIds).toEqual([root?.span.id ?? ""]);
         expect(span?.row.metadata).toMatchObject({
           model: GOOGLE_INTERACTIONS_MODEL,
+          provider: "google",
         });
         expect(span?.input).toMatchObject({
           generation_config: expect.objectContaining({
@@ -893,6 +1035,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(span?.row.metadata).toMatchObject({
         model: GOOGLE_MODEL,
+        provider: "google",
       });
       expect(JSON.stringify(span?.input)).toContain("file.png");
     });
@@ -1062,7 +1205,12 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(span?.row.metadata).toMatchObject({
         model: GOOGLE_MODEL,
+        tool_choice: {
+          function: { name: "get_weather" },
+          type: "function",
+        },
       });
+      expect(span?.row.metadata).not.toHaveProperty("toolConfig");
       expect(outputHasFunctionCall(output, "get_weather")).toBe(true);
     });
 
@@ -1091,7 +1239,9 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(span?.row.metadata).toMatchObject({
         model: GOOGLE_MODEL,
+        tool_choice: "required",
       });
+      expect(span?.row.metadata).not.toHaveProperty("toolConfig");
       expect(JSON.stringify(span?.row.metadata)).toContain("get_weather");
       expect(JSON.stringify(span?.row.metadata)).toContain("get_time");
     });

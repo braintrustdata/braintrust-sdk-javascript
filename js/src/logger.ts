@@ -295,6 +295,10 @@ type InternalSpanContextArg = {
   readonly [INTERNAL_SPAN_CONTEXT]?: Record<string, unknown>;
 };
 
+type StartSpanInternalOptions = {
+  useParentSpanIdsForObjectParent?: boolean;
+};
+
 export type StartSpanArgs = {
   name?: string;
   type?: SpanType;
@@ -2044,6 +2048,16 @@ with a Blob/ArrayBuffer, or run the program on Node.js.`,
       debugLogger.warn(`Failed to read file: ${e}`);
     }
   }
+}
+
+/** @internal Create an attachment with an SDK-controlled idempotency key. */
+export function _internalCreateAttachment(
+  params: AttachmentParams,
+  key: string,
+): Attachment {
+  const attachment = new Attachment(params);
+  attachment.reference.key = key;
+  return attachment;
 }
 
 /**
@@ -6722,14 +6736,20 @@ export function startSpan<IsAsyncFlush extends boolean = true>(
 /** @internal Start a span whose initial row is merged with concurrent writes. */
 export function _internalStartSpanWithInitialMerge<
   IsAsyncFlush extends boolean = true,
->(args?: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg): Span {
-  return startSpanAndIsLogger({
-    ...args,
-    [INITIAL_SPAN_WRITE_AS_MERGE]: true,
-  } as StartSpanArgs &
-    AsyncFlushArg<IsAsyncFlush> &
-    OptionalStateArg &
-    InitialSpanWriteAsMergeArg).span;
+>(
+  args?: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg,
+  internalOptions?: StartSpanInternalOptions,
+): Span {
+  return startSpanAndIsLogger(
+    {
+      ...args,
+      [INITIAL_SPAN_WRITE_AS_MERGE]: true,
+    } as StartSpanArgs &
+      AsyncFlushArg<IsAsyncFlush> &
+      OptionalStateArg &
+      InitialSpanWriteAsMergeArg,
+    internalOptions,
+  ).span;
 }
 
 /** @internal Start a span with SDK-controlled context fields. */
@@ -6768,6 +6788,7 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
     AsyncFlushArg<IsAsyncFlush> &
     OptionalStateArg &
     InternalSpanContextArg,
+  internalOptions?: StartSpanInternalOptions,
 ): { span: Span; isSyncFlushLogger: boolean } {
   const state = args?.state ?? _globalState;
 
@@ -6785,17 +6806,21 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
     parentObject instanceof SpanComponentsV3 ||
     parentObject instanceof SpanComponentsV4
   ) {
-    const parentSpanIds: ParentSpanIds | undefined =
+    let parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
+    if (
       parentObject.data.row_id &&
       parentSpanIdsUsable(
         parentObject.data.span_id,
         parentObject.data.root_span_id,
       )
-        ? {
-            spanId: parentObject.data.span_id,
-            rootSpanId: parentObject.data.root_span_id,
-          }
-        : undefined;
+    ) {
+      parentSpanIds = {
+        spanId: parentObject.data.span_id,
+        rootSpanId: parentObject.data.root_span_id,
+      };
+    } else if (internalOptions?.useParentSpanIdsForObjectParent) {
+      parentSpanIds = args?.parentSpanIds;
+    }
     // The parent object/state are already resolved from `parent` above; drop
     // the raw `parent` so it isn't re-normalized.
     const { parent: _ignoredParent, ...spanArgs } = args ?? {};
@@ -7162,11 +7187,14 @@ function extractAttachments(
     // the above instance check doesn't catch it.
     if (value?.reference?.type === BRAINTRUST_ATTACHMENT && value?.uploader) {
       // This looks like a serialized Attachment object, recreate it properly
-      const attachment = new Attachment({
-        data: value.dataDebugString,
-        filename: value.reference.filename,
-        contentType: value.reference.content_type,
-      });
+      const attachment = _internalCreateAttachment(
+        {
+          data: value.dataDebugString,
+          filename: value.reference.filename,
+          contentType: value.reference.content_type,
+        },
+        value.reference.key,
+      );
       attachments.push(attachment);
       event[key] = attachment.reference;
       continue;

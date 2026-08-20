@@ -4,7 +4,10 @@ import {
   readInstalledPackageVersion,
   resolveScenarioDir,
 } from "../../helpers/scenario-harness";
-import { defineGoogleGenAIInstrumentationAssertions } from "./assertions";
+import {
+  defineGoogleGenAIBatchHelperAssertions,
+  defineGoogleGenAIInstrumentationAssertions,
+} from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
 const scenarioDir = await prepareScenarioDir({
@@ -45,6 +48,20 @@ const googleGenAIScenarios = await Promise.all(
     ),
   })),
 );
+
+defineGoogleGenAIBatchHelperAssertions({
+  runScenario: async ({ runScenarioDir }) => {
+    await runScenarioDir({
+      entry: "batch-scenario.mjs",
+      env: { BRAINTRUST_DISABLE_INSTRUMENTATION: "google-genai" },
+      scenarioDir,
+      timeoutMs: TIMEOUT_MS,
+    });
+  },
+  snapshotName: "google-genai-batch-helper",
+  testFileUrl: import.meta.url,
+  timeoutMs: TIMEOUT_MS,
+});
 
 describe.concurrent("variants", () => {
   for (const scenario of googleGenAIScenarios) {
