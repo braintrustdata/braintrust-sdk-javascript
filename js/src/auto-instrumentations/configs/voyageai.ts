@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { voyageAIChannels } from "../../instrumentation/plugins/voyageai-channels";
+import { voyageAIChannels } from "../../instrumentation/providers/voyageai-channels";
 
 const GENERATED_CLIENT_MODULES = [
   "dist/cjs/Client.js",

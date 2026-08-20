@@ -1,0 +1,138 @@
+import {
+  traceAsyncChannel,
+  traceStreamingChannel,
+} from "../core/channel-tracing";
+import { SpanTypeAttribute } from "../../../util/index";
+import { processInputAttachments } from "../../wrappers/attachment-utils";
+import { getCurrentUnixTimestamp } from "../../util";
+import {
+  aggregateChatCompletionChunks,
+  parseMetricsFromUsage,
+} from "./openai-instrumentation";
+import { groqChannels } from "./groq-channels";
+import type {
+  GroqChatCompletion,
+  GroqChatCompletionChunk,
+} from "../../vendor-sdk-types/groq";
+
+export function registerGroqInstrumentation(): void {
+  traceStreamingChannel(groqChannels.chatCompletionsCreate, {
+    name: "groq.chat.completions.create",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { messages, ...metadata } = params;
+      return {
+        input: processInputAttachments(messages),
+        metadata: { ...metadata, provider: "groq" },
+      };
+    },
+    extractOutput: (result) => result?.choices,
+    extractMetrics: (result, startTime) => {
+      const metrics = parseGroqMetrics(result);
+      if (startTime) {
+        metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
+      }
+      return metrics;
+    },
+    aggregateChunks: aggregateGroqChatCompletionChunks,
+  });
+
+  traceAsyncChannel(groqChannels.embeddingsCreate, {
+    name: "groq.embeddings.create",
+    type: SpanTypeAttribute.LLM,
+    extractInput: ([params]) => {
+      const { input, ...metadata } = params;
+      return {
+        input,
+        metadata: { ...metadata, provider: "groq" },
+      };
+    },
+    extractOutput: (result) => {
+      const embedding = result?.data?.[0]?.embedding;
+      return Array.isArray(embedding)
+        ? { embedding_length: embedding.length }
+        : undefined;
+    },
+    extractMetrics: (result) => parseGroqMetrics(result),
+  });
+}
+
+export function parseGroqMetrics(
+  result:
+    | Pick<GroqChatCompletion, "usage" | "x_groq">
+    | { usage?: unknown; x_groq?: unknown }
+    | null
+    | undefined,
+): Record<string, number> {
+  const metrics = parseMetricsFromUsage(result?.usage);
+  const xGroq = result?.x_groq;
+
+  if (!xGroq || typeof xGroq !== "object") {
+    return metrics;
+  }
+
+  const extraUsage = "usage" in xGroq ? xGroq.usage : undefined;
+
+  if (!extraUsage || typeof extraUsage !== "object") {
+    return metrics;
+  }
+
+  const dramCachedTokens = (extraUsage as Record<string, unknown>)[
+    "dram_cached_tokens"
+  ];
+  const sramCachedTokens = (extraUsage as Record<string, unknown>)[
+    "sram_cached_tokens"
+  ];
+
+  return {
+    ...metrics,
+    ...(typeof dramCachedTokens === "number"
+      ? { dram_cached_tokens: dramCachedTokens }
+      : {}),
+    ...(typeof sramCachedTokens === "number"
+      ? { sram_cached_tokens: sramCachedTokens }
+      : {}),
+  };
+}
+
+export function aggregateGroqChatCompletionChunks(
+  chunks: GroqChatCompletionChunk[],
+  streamResult?: unknown,
+  endEvent?: unknown,
+): {
+  metrics: Record<string, number>;
+  output: GroqChatCompletion["choices"];
+} {
+  const aggregated = aggregateChatCompletionChunks(
+    chunks,
+    streamResult,
+    endEvent,
+  );
+  const reasoning = aggregateGroqReasoning(chunks);
+  if (reasoning !== undefined) {
+    const message = aggregated.output[0]?.message;
+    if (message) {
+      message.reasoning = reasoning;
+    }
+  }
+  return {
+    metrics: aggregated.metrics,
+    output: aggregated.output,
+  };
+}
+
+function aggregateGroqReasoning(
+  chunks: GroqChatCompletionChunk[],
+): string | undefined {
+  let reasoning = "";
+
+  for (const chunk of chunks) {
+    const delta = chunk.choices?.[0]?.delta;
+    const deltaReasoning = delta?.reasoning;
+    if (typeof deltaReasoning === "string") {
+      reasoning += deltaReasoning;
+    }
+  }
+
+  return reasoning.length > 0 ? reasoning : undefined;
+}

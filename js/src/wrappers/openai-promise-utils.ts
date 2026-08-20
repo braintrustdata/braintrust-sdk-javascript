@@ -6,7 +6,7 @@ import type {
   OpenAIAsyncChannel,
   OpenAIChannel,
   OpenAIStartContext,
-} from "../instrumentation/plugins/openai-channels";
+} from "../instrumentation/providers/openai-channels";
 
 export type EnhancedResponse<T> = {
   response: Response;

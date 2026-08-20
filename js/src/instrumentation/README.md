@@ -1,7 +1,8 @@
-# Writing Braintrust Instrumentation Plugins
+# Braintrust Instrumentation Consumers
 
-Braintrust instrumentation plugins wrap provider calls through typed invocation
-hooks or consume tracing-compatible events from the internal global registry.
+Braintrust instrumentation consumers wrap provider calls through typed
+invocation hooks or consume tracing-compatible events from the internal global
+registry.
 Auto-instrumented provider code and manual wrappers use the same typed channels,
 so extraction, stream handling, and span behavior stay aligned.
 
@@ -13,15 +14,15 @@ An instrumentation has four parts:
    transformation.
 2. A typed channel defines its arguments, result, extra event fields, and stable
    `orchestrion:<package>:<operation>` identifier.
-3. A plugin intercepts that channel, or subscribes to its legacy tracing
-   lifecycle, and maps the call into Braintrust spans.
+3. An internal consumer intercepts that channel, or subscribes to its legacy
+   tracing lifecycle, and maps the call into Braintrust spans.
 4. A manual wrapper invokes the same typed channel when transformation is not
    available.
 
-The global hook transport is internal. New and migrated plugins should prefer
-the typed channel's `intercept` API. Existing plugins can continue using
-`traceAsyncChannel`, `traceStreamingChannel`, `traceSyncStreamChannel`, or
-`BasePlugin` helpers during the gradual migration.
+The global hook transport and its consumers are internal. New and migrated
+consumers should prefer the typed channel's `intercept` API. Existing consumers
+can continue using `traceAsyncChannel`, `traceStreamingChannel`, or
+`traceSyncStreamChannel` during the gradual migration.
 
 ## Invocation Hooks
 
@@ -100,27 +101,25 @@ construct it from the package and operation.
 Prefer the shared tracing helpers:
 
 ```ts
-this.register(
-  traceAsyncChannel(providerChannels.create, {
-    name: "provider.messages.create",
-    type: "llm",
-    extractInput(args) {
-      return {
-        input: args[0].messages,
-        metadata: { model: args[0].model },
-      };
-    },
-    extractOutput(result) {
-      return result.content;
-    },
-    extractMetrics(result) {
-      return {
-        prompt_tokens: result.usage.input_tokens,
-        completion_tokens: result.usage.output_tokens,
-      };
-    },
-  }),
-);
+traceAsyncChannel(providerChannels.create, {
+  name: "provider.messages.create",
+  type: "llm",
+  extractInput(args) {
+    return {
+      input: args[0].messages,
+      metadata: { model: args[0].model },
+    };
+  },
+  extractOutput(result) {
+    return result.content;
+  },
+  extractMetrics(result) {
+    return {
+      prompt_tokens: result.usage.input_tokens,
+      completion_tokens: result.usage.output_tokens,
+    };
+  },
+});
 ```
 
 The helpers:
@@ -129,7 +128,7 @@ The helpers:
 - bind the current span store to `start` for async-context propagation
 - contain extraction failures and log them through `debugLogger`
 - patch streams without replacing their public semantics
-- unsubscribe and unbind stores when a plugin is disabled
+- install process-lifetime subscriptions and span-store bindings
 
 Use raw `IsoChannelHandlers` only when a provider requires lifecycle behavior
 that the shared helpers cannot express.
@@ -146,7 +145,7 @@ return providerChannels.create.invoke(originalCreate, this, [params], {
 ```
 
 Legacy wrappers can continue calling the tracing-compatible operators until
-their plugin is migrated:
+their consumer is migrated:
 
 ```ts
 return providerChannels.create.tracePromise(() => originalCreate(params), {
@@ -155,7 +154,7 @@ return providerChannels.create.tracePromise(() => originalCreate(params), {
 ```
 
 Do not create spans directly inside wrappers. Keeping span creation in the
-plugin prevents auto and manual instrumentation from drifting.
+internal consumer prevents auto and manual instrumentation from drifting.
 
 ## Promise and Stream Requirements
 
@@ -177,14 +176,14 @@ termination, and async context.
 - Avoid prototype-sensitive merges and unnecessary mutation of provider data.
 - Capture only fields permitted by the instrumentation specification.
 - Pass `Error` objects directly to `span.log({ error })`.
-- Use narrow vendored provider interfaces shared by wrappers and plugins.
-- Keep enable, disable, subscription, and patching behavior idempotent.
+- Use narrow vendored provider interfaces shared by wrappers and consumers.
+- Keep enable, subscription, and patching behavior idempotent.
 
 ## Testing
 
 Test at the narrowest useful layers:
 
-1. Plugin unit tests for extraction and span handling.
+1. Consumer unit tests for extraction and span handling.
 2. Global hook/runtime tests for lifecycle and context behavior.
 3. Orchestrion transformation tests for generated wrappers.
 4. Bundler and loader tests for real transformed execution.

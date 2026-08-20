@@ -1,4 +1,4 @@
-import { googleADKChannels } from "../instrumentation/plugins/google-adk-channels";
+import { googleADKChannels } from "../instrumentation/providers/google-adk-channels";
 import type {
   GoogleADKRunner,
   GoogleADKRunnerConstructor,

@@ -1,9 +1,9 @@
 import { runWithAutoInstrumentationSuppressed } from "../instrumentation/auto-instrumentation-suppression";
-import { bedrockRuntimeChannels } from "../instrumentation/plugins/bedrock-runtime-channels";
+import { bedrockRuntimeChannels } from "../instrumentation/providers/bedrock-runtime-channels";
 import {
   buildBedrockRuntimeSpanInfo,
   getBedrockRuntimeOperation,
-} from "../instrumentation/plugins/bedrock-runtime-common";
+} from "../instrumentation/providers/bedrock-runtime-common";
 import type {
   BedrockRuntimeClient,
   BedrockRuntimeCommandLike,

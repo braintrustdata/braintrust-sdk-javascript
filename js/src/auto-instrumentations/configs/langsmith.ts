@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { langSmithChannels } from "../../instrumentation/plugins/langsmith-channels";
+import { langSmithChannels } from "../../instrumentation/providers/langsmith-channels";
 
 const versionRange = ">=0.3.30 <1.0.0";
 

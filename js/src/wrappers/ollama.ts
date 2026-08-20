@@ -1,5 +1,5 @@
 import { debugLogger } from "../debug-logger";
-import { ollamaChannels } from "../instrumentation/plugins/ollama-channels";
+import { ollamaChannels } from "../instrumentation/providers/ollama-channels";
 import { isObject } from "../../util";
 import type {
   OllamaChatRequest,

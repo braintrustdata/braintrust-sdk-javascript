@@ -1,4 +1,4 @@
-import { openRouterAgentChannels } from "../instrumentation/plugins/openrouter-agent-channels";
+import { openRouterAgentChannels } from "../instrumentation/providers/openrouter-agent-channels";
 import type {
   OpenRouterAgentClient,
   OpenRouterAgentCallModelRequest,

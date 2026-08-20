@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { claudeAgentSDKChannels } from "../../instrumentation/plugins/claude-agent-sdk-channels";
+import { claudeAgentSDKChannels } from "../../instrumentation/providers/claude-agent-sdk-channels";
 
 /**
  * Instrumentation configuration for the Claude Agent SDK.

@@ -1,4 +1,4 @@
-import { strandsAgentSDKChannels } from "../instrumentation/plugins/strands-agent-sdk-channels";
+import { strandsAgentSDKChannels } from "../instrumentation/providers/strands-agent-sdk-channels";
 import type {
   StrandsAgent,
   StrandsAgentConstructor,

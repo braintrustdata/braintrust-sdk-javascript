@@ -1,4 +1,4 @@
-import { voyageAIChannels } from "../instrumentation/plugins/voyageai-channels";
+import { voyageAIChannels } from "../instrumentation/providers/voyageai-channels";
 import type {
   VoyageAIClient,
   VoyageAIContextualizedEmbedRequest,

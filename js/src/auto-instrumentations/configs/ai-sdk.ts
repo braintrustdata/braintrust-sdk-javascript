@@ -2,7 +2,7 @@ import type { InstrumentationConfig } from "../orchestrion-js";
 import {
   aiSDKChannels,
   harnessAgentChannels,
-} from "../../instrumentation/plugins/ai-sdk-channels";
+} from "../../instrumentation/providers/ai-sdk-channels";
 
 /**
  * Instrumentation configurations for the Vercel AI SDK.
@@ -222,7 +222,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
   },
 
   // AI SDK v7 exposes its telemetry lifecycle through a dispatcher created for
-  // each operation. We patch that dispatcher in the plugin instead of rewriting
+  // each operation. We patch that dispatcher in the consumer instead of rewriting
   // the module to call registerTelemetry().
   {
     channelName: aiSDKChannels.v7CreateTelemetryDispatcher.channelName,

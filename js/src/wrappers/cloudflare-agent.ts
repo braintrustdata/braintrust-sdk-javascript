@@ -1,5 +1,5 @@
 import { debugLogger } from "../debug-logger";
-import { cloudflareAgentsChannels } from "../instrumentation/plugins/cloudflare-agents-channels";
+import { cloudflareAgentsChannels } from "../instrumentation/providers/cloudflare-agents-channels";
 import type { CloudflareAgent } from "../vendor-sdk-types/cloudflare-agents";
 
 const WRAPPED_RUN_AGENT_TOOL = Symbol.for(
