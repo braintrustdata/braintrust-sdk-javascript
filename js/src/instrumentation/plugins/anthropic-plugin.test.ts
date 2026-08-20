@@ -164,6 +164,42 @@ describe("parseMetricsFromUsage", () => {
     });
   });
 
+  it("should map output_tokens_details.thinking_tokens to completion_reasoning_tokens", () => {
+    const usage = {
+      input_tokens: 100,
+      output_tokens: 80,
+      output_tokens_details: {
+        thinking_tokens: 20,
+      },
+    };
+
+    const result = parseMetricsFromUsageForTest(usage);
+
+    expect(result).toEqual({
+      prompt_tokens: 100,
+      completion_tokens: 80,
+      completion_reasoning_tokens: 20,
+    });
+  });
+
+  it("should ignore a null or non-number output token breakdown", () => {
+    expect(
+      parseMetricsFromUsageForTest({
+        input_tokens: 100,
+        output_tokens: 80,
+        output_tokens_details: null,
+      }),
+    ).toEqual({ prompt_tokens: 100, completion_tokens: 80 });
+
+    expect(
+      parseMetricsFromUsageForTest({
+        input_tokens: 100,
+        output_tokens: 80,
+        output_tokens_details: { thinking_tokens: "not a number" },
+      }),
+    ).toEqual({ prompt_tokens: 100, completion_tokens: 80 });
+  });
+
   it("should ignore invalid token values", () => {
     const usage = {
       input_tokens: "not a number",
@@ -174,6 +210,7 @@ describe("parseMetricsFromUsage", () => {
         ephemeral_1h_input_tokens: -1,
         ephemeral_5m_input_tokens: 1.5,
       },
+      output_tokens_details: { thinking_tokens: -1 },
     };
 
     const result = parseMetricsFromUsageForTest(usage);
@@ -469,6 +506,40 @@ describe("aggregateAnthropicStreamChunks", () => {
       prompt_tokens: 150, // 100 + 50
       prompt_cached_tokens: 50,
       tokens: 150, // prompt_tokens + completion_tokens (0)
+    });
+  });
+
+  it("should carry thinking tokens through from message_delta without double counting", () => {
+    const chunks = [
+      {
+        type: "message_start",
+        message: {
+          usage: {
+            input_tokens: 10,
+            output_tokens: 0,
+          },
+        },
+      },
+      {
+        type: "content_block_delta",
+        delta: { type: "thinking_delta", thinking: "hmm" },
+      },
+      {
+        type: "message_delta",
+        usage: {
+          output_tokens: 80,
+          output_tokens_details: { thinking_tokens: 20 },
+        },
+      },
+    ];
+
+    const result = aggregateAnthropicStreamChunksForTest(chunks);
+
+    expect(result.metrics).toMatchObject({
+      prompt_tokens: 10,
+      completion_tokens: 80,
+      completion_reasoning_tokens: 20,
+      tokens: 90,
     });
   });
 

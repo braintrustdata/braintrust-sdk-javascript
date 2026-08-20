@@ -4,7 +4,7 @@
 
 [![npm version](https://img.shields.io/npm/v/braintrust.svg)](https://www.npmjs.com/package/braintrust)
 
-An isomorphic JavaScript/TypeScript SDK for logging, tracing, and evaluating AI applications with [Braintrust](https://www.braintrust.dev/). For more details, see the [Braintrust docs](https://www.braintrust.dev/docs)
+An isomorphic JavaScript/TypeScript SDK for logging, tracing, and evaluating AI applications with [Braintrust](https://www.braintrust.dev/). For more details, see the [TypeScript SDK docs](https://www.braintrust.dev/docs/reference/sdks/typescript).
 
 ## Installation
 

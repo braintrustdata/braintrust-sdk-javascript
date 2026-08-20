@@ -323,6 +323,18 @@ export function parseMetricsFromUsage(
     }
   }
 
+  const thinkingTokens = isObject(usage.output_tokens_details)
+    ? usage.output_tokens_details.thinking_tokens
+    : undefined;
+  if (
+    typeof thinkingTokens === "number" &&
+    Number.isFinite(thinkingTokens) &&
+    Number.isInteger(thinkingTokens) &&
+    thinkingTokens >= 0
+  ) {
+    metrics.completion_reasoning_tokens = thinkingTokens;
+  }
+
   return metrics;
 }
 

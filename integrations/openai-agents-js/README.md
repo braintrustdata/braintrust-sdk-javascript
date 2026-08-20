@@ -4,14 +4,18 @@
 
 SDK for integrating Braintrust with OpenAI Agents.
 
+> [!WARNING]
+> This package is deprecated and will stop being published after the next
+> release. Use the OpenAI Agents integration in `braintrust` instead.
+
 ## Installation
 
 ```bash
-npm install braintrust @braintrust/openai-agents @openai/agents
+npm install braintrust @openai/agents
 # or
-yarn add braintrust @braintrust/openai-agents @openai/agents
+yarn add braintrust @openai/agents
 # or
-pnpm add braintrust @braintrust/openai-agents @openai/agents
+pnpm add braintrust @openai/agents
 ```
 
 ## Requirements
@@ -23,7 +27,7 @@ pnpm add braintrust @braintrust/openai-agents @openai/agents
 
 ```typescript
 import { initLogger } from "braintrust";
-import { OpenAIAgentsTraceProcessor } from "@braintrust/openai-agents";
+import { OpenAIAgentsTraceProcessor } from "braintrust/instrumentation";
 import { Agent, run, addTraceProcessor } from "@openai/agents";
 
 // Initialize Braintrust logger

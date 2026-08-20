@@ -795,7 +795,12 @@ export function defineAnthropicInstrumentationAssertions(options: {
           time_to_first_token: expect.any(Number),
           prompt_tokens: expect.any(Number),
           completion_tokens: expect.any(Number),
+          completion_reasoning_tokens: expect.any(Number),
         });
+        const metrics = span?.metrics as Record<string, number>;
+        expect(metrics.completion_reasoning_tokens).toBeLessThanOrEqual(
+          metrics.completion_tokens,
+        );
         expect(
           output?.content?.some((block) => block.type === "thinking"),
         ).toBe(true);
