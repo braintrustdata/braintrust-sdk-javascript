@@ -113,6 +113,7 @@
                     "model": "gpt-4o-mini-2024-07-18"
                   },
                   "metric_keys": [
+                    "completion_reasoning_tokens",
                     "completion_tokens",
                     "prompt_cached_tokens",
                     "prompt_tokens",

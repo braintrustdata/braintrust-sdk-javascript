@@ -155,6 +155,7 @@ span_tree:
     │         "tags": []
     │       }
     │       metrics: {
+    │         "completion_reasoning_tokens": 0,
     │         "completion_tokens": 2,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 12,
@@ -553,6 +554,7 @@ span_tree:
     │             ]
     │           }
     │           metrics: {
+    │             "completion_reasoning_tokens": 0,
     │             "completion_tokens": 2,
     │             "prompt_cached_tokens": 0,
     │             "prompt_tokens": 18,
@@ -716,6 +718,7 @@ span_tree:
     │         "tags": []
     │       }
     │       metrics: {
+    │         "completion_reasoning_tokens": 0,
     │         "completion_tokens": 6,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 22,
@@ -940,6 +943,7 @@ span_tree:
     │         "tags": []
     │       }
     │       metrics: {
+    │         "completion_reasoning_tokens": 0,
     │         "completion_tokens": 16,
     │         "prompt_cached_tokens": 0,
     │         "prompt_tokens": 72,
@@ -1191,6 +1195,7 @@ span_tree:
         │     "tags": []
         │   }
         │   metrics: {
+        │     "completion_reasoning_tokens": 0,
         │     "completion_tokens": 21,
         │     "prompt_cached_tokens": 0,
         │     "prompt_tokens": 76,
@@ -1457,6 +1462,7 @@ span_tree:
               "tags": []
             }
             metrics: {
+              "completion_reasoning_tokens": 0,
               "completion_tokens": 11,
               "prompt_cached_tokens": 0,
               "prompt_tokens": 106,
