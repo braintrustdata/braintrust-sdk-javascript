@@ -1,4 +1,4 @@
-// Auto-generated file (content hash e392acbca346c32a) -- do not modify
+// Auto-generated file (content hash 9963a3f7375263a4) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -17,6 +17,8 @@ export const AclObjectType = z.union([
     "org_project",
     "org_audit_logs",
     "project_group",
+    "ai_secret",
+    "org_ai_secret",
   ]),
   z.null(),
 ]);
@@ -1041,7 +1043,7 @@ export const PromptParserNullish = z.union([
   z.null(),
 ]);
 export type PromptParserNullishType = z.infer<typeof PromptParserNullish>;
-export const PreprocessorSavedFunctionId = z.union([
+export const PreprocessorId = z.union([
   z.object({
     type: z.literal("function"),
     id: z.string(),
@@ -1052,18 +1054,17 @@ export const PreprocessorSavedFunctionId = z.union([
     name: z.string(),
     function_type: z.literal("preprocessor").optional().default("preprocessor"),
   }),
+  z.object({ type: z.literal("inline"), code: z.string().min(1) }),
   z.null(),
 ]);
-export type PreprocessorSavedFunctionIdType = z.infer<
-  typeof PreprocessorSavedFunctionId
->;
+export type PreprocessorIdType = z.infer<typeof PreprocessorId>;
 export const PromptDataNullish = z.union([
   z
     .object({
       prompt: PromptBlockDataNullish,
       options: PromptOptionsNullish,
       parser: PromptParserNullish,
-      preprocessor: PreprocessorSavedFunctionId,
+      preprocessor: PreprocessorId,
       tool_functions: z.union([z.array(SavedFunctionId), z.null()]),
       template_format: z.union([
         z.enum(["mustache", "nunjucks", "none"]),
@@ -1309,7 +1310,7 @@ export const PromptData = z
     prompt: PromptBlockDataNullish,
     options: PromptOptionsNullish,
     parser: PromptParserNullish,
-    preprocessor: PreprocessorSavedFunctionId,
+    preprocessor: PreprocessorId,
     tool_functions: z.union([z.array(SavedFunctionId), z.null()]),
     template_format: z.union([
       z.enum(["mustache", "nunjucks", "none"]),
@@ -2395,6 +2396,7 @@ export const View = z.object({
   ]),
   name: z.string(),
   description: z.union([z.string(), z.null()]).optional(),
+  starred: z.boolean().optional(),
   created: z.union([z.string(), z.null()]).optional(),
   updated_at: z.union([z.string(), z.null()]).optional(),
   view_data: ViewData.optional(),
