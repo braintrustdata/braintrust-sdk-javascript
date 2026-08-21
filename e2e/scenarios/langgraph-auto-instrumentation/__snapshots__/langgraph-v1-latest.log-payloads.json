@@ -266,6 +266,7 @@
       "tags": []
     },
     "metrics": {
+      "completion_reasoning_tokens": "<number>",
       "completion_tokens": "<number>",
       "end": 0,
       "prompt_cached_tokens": "<number>",
