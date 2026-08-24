@@ -231,6 +231,59 @@
           }
         },
         {
+          "name": "ai-sdk-generate-image-operation",
+          "children": [
+            {
+              "name": "generateImage",
+              "type": "function",
+              "children": [],
+              "input": {
+                "maxRetries": 0,
+                "model": {
+                  "maxImagesPerCall": 1,
+                  "modelId": "fake-image-model",
+                  "provider": "braintrust.test",
+                  "specificationVersion": "v2"
+                },
+                "n": 1,
+                "prompt": "A deterministic test image",
+                "seed": 42,
+                "size": "1x1"
+              },
+              "output": {
+                "images": [
+                  {
+                    "content_type": "image/png",
+                    "filename": "generated_image_0.png",
+                    "key": "<uuid:1>",
+                    "type": "braintrust_attachment"
+                  }
+                ],
+                "responses": [
+                  {
+                    "headers": "<omitted>",
+                    "modelId": "fake-image-model",
+                    "timestamp": "<timestamp>"
+                  }
+                ],
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "fake-image-model",
+                "provider": "braintrust.test"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "generate-image",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "ai-sdk-output-object-response-format-operation",
           "children": [],
           "metadata": {

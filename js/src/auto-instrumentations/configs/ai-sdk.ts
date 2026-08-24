@@ -65,6 +65,34 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   },
 
+  // generateImage - stable in v6+, experimental alias in v5
+  ...[
+    {
+      functionName: "generateImage",
+      versionRange: ">=6.0.0 <8.0.0",
+      isExportAlias: false,
+    },
+    {
+      functionName: "experimental_generateImage",
+      versionRange: ">=5.0.0 <6.0.0",
+      isExportAlias: true,
+    },
+  ].flatMap(({ functionName, versionRange, isExportAlias }) =>
+    ["dist/index.mjs", "dist/index.js"].map((filePath) => ({
+      channelName: aiSDKChannels.generateImage.channelName,
+      module: {
+        name: "ai",
+        versionRange,
+        filePath,
+      },
+      functionQuery: {
+        functionName,
+        kind: "Async" as const,
+        ...(isExportAlias ? { isExportAlias } : {}),
+      },
+    })),
+  ),
+
   // streamText - async function (v3 only, before the sync refactor in v4)
   {
     channelName: aiSDKChannels.streamText.channelName,

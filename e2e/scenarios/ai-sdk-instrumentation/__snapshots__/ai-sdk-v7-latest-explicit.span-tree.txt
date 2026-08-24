@@ -253,6 +253,11 @@ span_tree:
     │             "prompt_tokens": 18,
     │             "tokens": 21
     │           }
+    ├── ai-sdk-generate-image-operation
+    │   metadata: {
+    │     "operation": "generate-image",
+    │     "testRunId": "<run:1>"
+    │   }
     ├── ai-sdk-output-object-response-format-operation
     │   metadata: {
     │     "operation": "output-object-response-format",

@@ -263,6 +263,27 @@ function findGenerateTrace(events: CapturedLogEvent[]) {
   return { child, operation, parent };
 }
 
+function findGenerateImageTrace(events: CapturedLogEvent[]) {
+  const operation = findLatestSpan(events, "ai-sdk-generate-image-operation");
+  const parent = findParentSpan(events, "generateImage", operation?.span.id);
+
+  return { operation, parent };
+}
+
+function findAttachmentReferences(value: unknown): Record<string, unknown>[] {
+  if (!value || typeof value !== "object") {
+    return [];
+  }
+  if (
+    !Array.isArray(value) &&
+    "type" in value &&
+    value.type === "braintrust_attachment"
+  ) {
+    return [value as Record<string, unknown>];
+  }
+  return Object.values(value).flatMap(findAttachmentReferences);
+}
+
 function findGenerateTextTraceForOperation(
   events: CapturedLogEvent[],
   operationSpanName: string,
@@ -671,6 +692,14 @@ function summarizeAISDKOutput(name: string | null, value: unknown): Json {
     return snapshotValue(value);
   }
 
+  if (name === "generateImage" && isRecord(value)) {
+    return {
+      images: Array.isArray(value.images)
+        ? value.images.map(() => "<attachment>")
+        : [],
+    };
+  }
+
   if (!isRecord(value)) {
     return value === undefined ? null : ({} as Json);
   }
@@ -705,11 +734,15 @@ function collectSummaryEvents(
     sdkMajorVersion: number;
     supportsProviderCacheAssertions: boolean;
     supportsGenerateObject: boolean;
+    supportsGenerateImage: boolean;
     supportsRerank: boolean;
     supportsStreamObject: boolean;
   },
 ) {
   const generate = findGenerateTrace(events);
+  const generateImage = options.supportsGenerateImage
+    ? findGenerateImageTrace(events)
+    : undefined;
   const stream = findStreamTrace(events);
   const tool = findToolTrace(events);
   const rerank = options.supportsRerank ? findRerankTrace(events) : undefined;
@@ -730,6 +763,7 @@ function collectSummaryEvents(
     findLatestSpan(events, ROOT_NAME),
     generate.operation,
     generate.parent,
+    ...(generateImage ? [generateImage.operation, generateImage.parent] : []),
     stream.operation,
     stream.parent,
     tool.operation,
@@ -752,6 +786,7 @@ function buildSpanTree(
     sdkMajorVersion: number;
     supportsProviderCacheAssertions: boolean;
     supportsGenerateObject: boolean;
+    supportsGenerateImage: boolean;
     supportsRerank: boolean;
     supportsStreamObject: boolean;
   },
@@ -869,6 +904,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   supportsDenyOutputOverrideScenario: boolean;
   supportsEmbedMany: boolean;
   supportsGenerateObject: boolean;
+  supportsGenerateImage: boolean;
   supportsOutputObjectScenario: boolean;
   supportsRerank: boolean;
   supportsStreamObject: boolean;
@@ -934,6 +970,35 @@ export function defineAISDKInstrumentationAssertions(options: {
         ]),
       ).toBe(true);
     });
+
+    if (options.supportsGenerateImage) {
+      test("captures trace for generateImage()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const trace = findGenerateImageTrace(events);
+
+        expectOperationParentedByRoot(trace.operation, root);
+        expectAISDKParentSpan(trace.parent, "braintrust.test");
+        expect(operationName(trace.operation)).toBe("generate-image");
+        const attachments = findAttachmentReferences(trace.parent?.output);
+        expect(attachments).toHaveLength(1);
+        expect(attachments[0]).toMatchObject({
+          type: "braintrust_attachment",
+          filename: "generated_image_0.png",
+          content_type: "image/png",
+        });
+        if (options.sdkMajorVersion >= 6) {
+          expect(trace.parent?.metrics).toMatchObject({
+            prompt_tokens: 3,
+            completion_tokens: 4,
+            tokens: 7,
+          });
+        } else {
+          expect(trace.parent?.metrics?.prompt_tokens).toBeUndefined();
+          expect(trace.parent?.metrics?.completion_tokens).toBeUndefined();
+          expect(trace.parent?.metrics?.tokens).toBeUndefined();
+        }
+      });
+    }
 
     if (options.supportsOpenAICacheAssertions) {
       test(

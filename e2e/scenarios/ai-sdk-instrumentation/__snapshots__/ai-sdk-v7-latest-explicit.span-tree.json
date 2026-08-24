@@ -266,6 +266,14 @@
           }
         },
         {
+          "name": "ai-sdk-generate-image-operation",
+          "children": [],
+          "metadata": {
+            "operation": "generate-image",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "ai-sdk-output-object-response-format-operation",
           "children": [],
           "metadata": {

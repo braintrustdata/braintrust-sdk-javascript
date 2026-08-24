@@ -91,6 +91,8 @@ describeVariants("variants", () => {
         supportsDenyOutputOverrideScenario,
         supportsEmbedMany: scenario.supportsEmbedMany !== false,
         supportsGenerateObject: scenario.supportsGenerateObject,
+        supportsGenerateImage:
+          scenario.supportsGenerateImage ?? sdkMajorVersion >= 5,
         supportsOutputObjectScenario,
         supportsRerank: scenario.supportsRerank !== false,
         supportsStreamObject: scenario.supportsStreamObject,
@@ -145,6 +147,8 @@ describeVariants("variants", () => {
         supportsDenyOutputOverrideScenario,
         supportsEmbedMany: scenario.supportsEmbedMany !== false,
         supportsGenerateObject: scenario.supportsGenerateObject,
+        supportsGenerateImage:
+          scenario.supportsGenerateImage ?? sdkMajorVersion >= 5,
         supportsOutputObjectScenario,
         supportsRerank: scenario.supportsRerank !== false,
         supportsStreamObject: scenario.supportsStreamObject,

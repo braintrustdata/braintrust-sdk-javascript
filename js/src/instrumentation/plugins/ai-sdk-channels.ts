@@ -6,6 +6,7 @@ import type {
   AISDKCallParams,
   AISDKEmbedParams,
   AISDKEmbeddingResult,
+  AISDKGenerateImageParams,
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentCreateSessionParams,
   AISDKHarnessAgentSession,
@@ -36,6 +37,14 @@ export const aiSDKChannels = defineChannels(
       unknown
     >({
       channelName: "generateText",
+      kind: "async",
+    }),
+    generateImage: channel<
+      [AISDKGenerateImageParams],
+      AISDKResult,
+      AISDKChannelContext
+    >({
+      channelName: "generateImage",
       kind: "async",
     }),
     streamText: channel<

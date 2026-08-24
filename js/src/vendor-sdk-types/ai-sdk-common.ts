@@ -72,11 +72,23 @@ export interface AISDKStepResult {
   [key: string]: unknown;
 }
 
-interface AISDKGeneratedFile {
+export interface AISDKGeneratedFile {
   mediaType?: string;
   base64?: string;
   uint8Array?: Uint8Array;
   [key: string]: unknown;
+}
+
+export interface AISDKGenerateImageParams extends Omit<
+  AISDKCallParams,
+  "prompt"
+> {
+  prompt?: string | Record<string, unknown>;
+  n?: number;
+  size?: string;
+  aspectRatio?: string;
+  seed?: number;
+  maxImagesPerCall?: number;
 }
 
 export interface AISDKLanguageModel {
@@ -264,6 +276,10 @@ export type AISDKGenerateFunction = (
   params: AISDKCallParams,
 ) => Promise<AISDKResult>;
 
+export type AISDKGenerateImageFunction = (
+  params: AISDKGenerateImageParams,
+) => Promise<AISDKResult>;
+
 export type AISDKStreamFunction = (params: AISDKCallParams) => AISDKResult;
 
 export interface AISDKAgentInstance {
@@ -355,6 +371,8 @@ export interface AISDKProviderResolver {
 
 export interface AISDKNamespaceBase {
   generateText: AISDKGenerateFunction;
+  generateImage?: AISDKGenerateImageFunction;
+  experimental_generateImage?: AISDKGenerateImageFunction;
   streamText: AISDKStreamFunction;
   generateObject: AISDKGenerateFunction;
   streamObject: AISDKStreamFunction;

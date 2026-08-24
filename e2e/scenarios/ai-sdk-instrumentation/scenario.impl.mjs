@@ -171,6 +171,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     supportsDenyOutputOverrideScenario: false,
     supportsEmbedMany: true,
     supportsGenerateObject: true,
+    supportsGenerateImage: false,
     supportsOpenAICacheScenario: false,
     supportsOutputObjectScenario: true,
     supportsProviderCacheAssertions: true,
@@ -198,6 +199,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     supportsDenyOutputOverrideScenario: false,
     supportsEmbedMany: true,
     supportsGenerateObject: true,
+    supportsGenerateImage: false,
     supportsOpenAICacheScenario: false,
     supportsOutputObjectScenario: true,
     supportsProviderCacheAssertions: true,
@@ -248,6 +250,33 @@ function createOutputObjectIfSupported(ai) {
   }
 
   return undefined;
+}
+
+function createFakeImageModel(sdkMajorVersion) {
+  return {
+    specificationVersion:
+      sdkMajorVersion >= 7 ? "v4" : sdkMajorVersion >= 6 ? "v3" : "v2",
+    provider: "braintrust.test",
+    modelId: "fake-image-model",
+    maxImagesPerCall: 1,
+    doGenerate: async ({ n = 1 }) => ({
+      images: Array.from(
+        { length: n },
+        () => new Uint8Array([137, 80, 78, 71]),
+      ),
+      warnings: [],
+      usage: {
+        inputTokens: 3,
+        outputTokens: 4,
+        totalTokens: 7,
+      },
+      response: {
+        timestamp: new Date(0),
+        modelId: "fake-image-model",
+        headers: {},
+      },
+    }),
+  };
 }
 
 async function assertOutputObjectResponseFormatShape(ai, sdkMajorVersion) {
@@ -403,7 +432,14 @@ async function runAISDKInstrumentationScenario(
     options.supportsOpenAICacheScenario ?? sdkMajorVersion >= 5;
   const supportsOutputObjectScenario =
     options.supportsOutputObjectScenario ?? true;
+  const supportsGenerateImage =
+    options.supportsGenerateImage ?? sdkMajorVersion >= 5;
   const outputObject = createOutputObjectIfSupported(options.ai);
+  const generateImage = supportsGenerateImage
+    ? typeof instrumentedAI.generateImage === "function"
+      ? instrumentedAI.generateImage
+      : instrumentedAI.experimental_generateImage
+    : undefined;
 
   await runTracedScenario({
     callback: async () => {
@@ -415,6 +451,23 @@ async function runAISDKInstrumentationScenario(
           ...tokenLimit(options.maxTokensKey, 24),
         });
       });
+
+      if (typeof generateImage === "function") {
+        await runOperation(
+          "ai-sdk-generate-image-operation",
+          "generate-image",
+          async () => {
+            await generateImage({
+              model: createFakeImageModel(sdkMajorVersion),
+              prompt: "A deterministic test image",
+              n: 1,
+              size: "1x1",
+              seed: 42,
+              maxRetries: 0,
+            });
+          },
+        );
+      }
 
       if (outputObject && supportsOutputObjectScenario) {
         if (sdkMajorVersion >= 5) {
