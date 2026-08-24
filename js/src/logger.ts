@@ -116,6 +116,17 @@ const datasetSnapshotRegisterResponseSchema = z.object({
   found_existing: z.boolean().optional(),
 });
 
+const datasetObjectInfoSchema = z.object({
+  object_id: z.string(),
+  object_name: z.string(),
+  parent_cols: z.object({
+    project: z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  }),
+});
+
 const datasetRestorePreviewResultSchema = z.object({
   rows_to_restore: z.number(),
   rows_to_delete: z.number(),
@@ -4466,18 +4477,35 @@ declare global {
   var __bt_eval_internal_btql: Record<string, unknown> | undefined;
 }
 
-export type InitDatasetOptions<IsLegacyDataset extends boolean> =
+type InitDatasetBaseOptions<IsLegacyDataset extends boolean> =
   FullLoginOptions & {
-    dataset?: string;
-    description?: string;
     version?: string;
     environment?: string;
     snapshotName?: string;
     projectId?: string;
-    metadata?: Record<string, unknown>;
     state?: BraintrustState;
     _internal_btql?: Record<string, unknown>;
   } & UseOutputOption<IsLegacyDataset>;
+
+type InitDatasetByIdOptions<IsLegacyDataset extends boolean> =
+  InitDatasetBaseOptions<IsLegacyDataset> & {
+    datasetId: string;
+    dataset?: string;
+    description?: never;
+    metadata?: never;
+  };
+
+type InitDatasetByNameOptions<IsLegacyDataset extends boolean> =
+  InitDatasetBaseOptions<IsLegacyDataset> & {
+    datasetId?: never;
+    dataset?: string;
+    description?: string;
+    metadata?: Record<string, unknown>;
+  };
+
+export type InitDatasetOptions<IsLegacyDataset extends boolean> =
+  | InitDatasetByIdOptions<IsLegacyDataset>
+  | InitDatasetByNameOptions<IsLegacyDataset>;
 
 export type FullInitDatasetOptions<IsLegacyDataset extends boolean> = {
   project?: string;
@@ -4690,22 +4718,23 @@ async function serializeDatasetForExperiment({
 }
 
 /**
- * Create a new dataset in a specified project. If the project does not exist, it will be created.
+ * Initialize a dataset by name or ID. When initializing by name, the dataset and its project will be created if they do not exist.
  *
  * @param options Options for configuring initDataset().
- * @param options.project The name of the project to create the dataset in. Must specify at least one of `project` or `projectId`.
- * @param options.dataset The name of the dataset to create. If not specified, a name will be generated automatically.
- * @param options.description An optional description of the dataset.
+ * @param options.project The name of the project to create the dataset in. Must specify at least one of `project` or `projectId` unless `datasetId` is provided.
+ * @param options.dataset The name of the dataset to create. If not specified, a name will be generated automatically. Ignored if `datasetId` is provided.
+ * @param options.datasetId The ID of an existing dataset. Takes precedence over `dataset` and does not require `project` or `projectId`.
+ * @param options.description An optional description when initializing a dataset by name. Cannot be used with `datasetId`.
  * @param options.version Pin the dataset to a specific version xact_id. If `snapshotName` or `environment` are also provided, `version` takes precedence.
  * @param options.snapshotName Pin the dataset to the version captured by this named snapshot. If `environment` is also provided, `snapshotName` takes precedence.
  * @param options.environment Pin the dataset to the version tagged with this environment slug.
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js, if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories. If no API key is specified, will prompt the user to login.
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
- * @param options.projectId The id of the project to create the dataset in. This takes precedence over `project` if specified.
- * @param options.metadata A dictionary with additional data about the dataset. The values in `metadata` can be any JSON-serializable type, but its keys must be strings.
+ * @param options.projectId The id of the project to create the dataset in. This takes precedence over `project` if specified and is not required when `datasetId` is provided.
+ * @param options.metadata A dictionary with additional data when initializing a dataset by name. Cannot be used with `datasetId`. The values in `metadata` can be any JSON-serializable type, but its keys must be strings.
  * @param options.useOutput (Deprecated) If true, records will be fetched from this dataset in the legacy format, with the "expected" field renamed to "output". This option will be removed in a future version of Braintrust.
- * @returns The newly created Dataset.
+ * @returns The initialized Dataset.
  */
 export function initDataset<
   IsLegacyDataset extends boolean = typeof DEFAULT_IS_LEGACY_DATASET,
@@ -4753,6 +4782,7 @@ export function initDataset<
   const {
     project,
     dataset,
+    datasetId,
     description,
     version,
     snapshotName,
@@ -4768,6 +4798,15 @@ export function initDataset<
     state: stateArg,
     _internal_btql,
   } = options;
+  if (
+    datasetId !== undefined &&
+    (description !== undefined || metadata !== undefined)
+  ) {
+    throw new Error(
+      "Cannot specify description or metadata when datasetId is provided",
+    );
+  }
+
   const selection = normalizeDatasetSelection({
     version,
     environment,
@@ -4798,6 +4837,37 @@ export function initDataset<
         fetch,
         forceLogin,
       });
+
+      if (datasetId !== undefined) {
+        const objectInfo = datasetObjectInfoSchema.array().parse(
+          await state.appConn().post_json("api/self/get_object_info", {
+            object_type: "dataset",
+            object_ids: [datasetId],
+          }),
+        );
+        if (objectInfo.length === 0) {
+          throw new Error(`Dataset with ID ${datasetId} not found`);
+        }
+        if (objectInfo.length !== 1) {
+          throw new Error(
+            `Expected exactly one dataset with ID ${datasetId}, but found ${objectInfo.length}`,
+          );
+        }
+
+        const datasetInfo = objectInfo[0];
+        return {
+          project: {
+            id: datasetInfo.parent_cols.project.id,
+            name: datasetInfo.parent_cols.project.name,
+            fullInfo: datasetInfo.parent_cols.project,
+          },
+          dataset: {
+            id: datasetInfo.object_id,
+            name: datasetInfo.object_name,
+            fullInfo: datasetInfo,
+          },
+        };
+      }
 
       const args: Record<string, unknown> = {
         org_id: state.orgId,

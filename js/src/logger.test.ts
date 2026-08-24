@@ -451,6 +451,182 @@ test("init validation", () => {
   );
 });
 
+test("initDataset supports dataset IDs without a project", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
+    const postJson = vi.spyOn(state.appConn(), "post_json").mockResolvedValue([
+      {
+        object_id: "00000000-0000-0000-0000-000000000002",
+        object_name: "test-dataset",
+        parent_cols: {
+          project: {
+            id: "00000000-0000-0000-0000-000000000001",
+            name: "test-project",
+          },
+        },
+      },
+    ]);
+
+    const datasetById = initDataset({
+      datasetId: "00000000-0000-0000-0000-000000000002",
+      state,
+    });
+    await expect(datasetById.id).resolves.toBe(
+      "00000000-0000-0000-0000-000000000002",
+    );
+    await expect(datasetById.name).resolves.toBe("test-dataset");
+    await expect(datasetById.project).resolves.toMatchObject({
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    });
+
+    expect(postJson).toHaveBeenCalledOnce();
+    expect(postJson).toHaveBeenCalledWith("api/self/get_object_info", {
+      object_type: "dataset",
+      object_ids: ["00000000-0000-0000-0000-000000000002"],
+    });
+  } finally {
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("initDataset gives dataset IDs precedence over names", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
+    const postJson = vi.spyOn(state.appConn(), "post_json").mockResolvedValue([
+      {
+        object_id: "00000000-0000-0000-0000-000000000002",
+        object_name: "test-dataset",
+        parent_cols: {
+          project: {
+            id: "00000000-0000-0000-0000-000000000001",
+            name: "test-project",
+          },
+        },
+      },
+    ]);
+
+    const datasetByIdAndName = initDataset({
+      project: "ignored-project",
+      dataset: "ignored-dataset",
+      datasetId: "00000000-0000-0000-0000-000000000002",
+      state,
+    });
+    await datasetByIdAndName.id;
+
+    expect(postJson).toHaveBeenCalledOnce();
+    expect(postJson).toHaveBeenCalledWith("api/self/get_object_info", {
+      object_type: "dataset",
+      object_ids: ["00000000-0000-0000-0000-000000000002"],
+    });
+    expect(postJson).not.toHaveBeenCalledWith(
+      "api/dataset/register",
+      expect.anything(),
+    );
+  } finally {
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("initDataset keeps the existing name-based registration path", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
+    const postJson = vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    });
+
+    const datasetByName = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      state,
+    });
+    await datasetByName.id;
+
+    expect(postJson).toHaveBeenCalledOnce();
+    expect(postJson).toHaveBeenCalledWith(
+      "api/dataset/register",
+      expect.objectContaining({
+        project_name: "test-project",
+        dataset_name: "test-dataset",
+      }),
+    );
+  } finally {
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("initDataset reports an unknown dataset ID", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+
+  try {
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
+    const postJson = vi
+      .spyOn(state.appConn(), "post_json")
+      .mockResolvedValue([]);
+
+    const dataset = initDataset({
+      datasetId: "00000000-0000-0000-0000-000000000099",
+      state,
+    });
+
+    await expect(dataset.id).rejects.toThrow(
+      "Dataset with ID 00000000-0000-0000-0000-000000000099 not found",
+    );
+    expect(postJson).toHaveBeenCalledOnce();
+    expect(postJson).toHaveBeenCalledWith("api/self/get_object_info", {
+      object_type: "dataset",
+      object_ids: ["00000000-0000-0000-0000-000000000099"],
+    });
+    expect(postJson).not.toHaveBeenCalledWith(
+      "api/dataset/register",
+      expect.anything(),
+    );
+  } finally {
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("initDataset rejects dataset ID updates", () => {
+  const optionsWithDescription = {
+    datasetId: "00000000-0000-0000-0000-000000000002",
+    description: "unsupported update",
+  };
+  const optionsWithMetadata = {
+    datasetId: "00000000-0000-0000-0000-000000000002",
+    metadata: { unsupported: "update" },
+  };
+
+  expect(() => {
+    // @ts-expect-error description cannot be used with datasetId
+    initDataset(optionsWithDescription);
+  }).toThrow(
+    "Cannot specify description or metadata when datasetId is provided",
+  );
+  expect(() => {
+    // @ts-expect-error metadata cannot be used with datasetId
+    initDataset(optionsWithMetadata);
+  }).toThrow(
+    "Cannot specify description or metadata when datasetId is provided",
+  );
+});
+
 test("init accepts dataset with id only", () => {
   // Test that the type system accepts {id: string}
   const datasetIdOnly = { id: "dataset-id-123" };
