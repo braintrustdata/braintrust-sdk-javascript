@@ -28,7 +28,6 @@ import type {
   AISDKResult,
   AISDKRerankResult,
 } from "../../vendor-sdk-types/ai-sdk";
-import iso from "../../isomorph";
 import type {
   AISDKV7LanguageModelCallStartEvent,
   AISDKV7OperationEvent,
@@ -74,9 +73,6 @@ type EmbedSpanState = CallSpanState & {
 export function braintrustAISDKTelemetry(): any {
   const operations = new Map<string, OperationState>();
   const operationKeysByCallId = new Map<string, string[]>();
-  const workflowOperationKeyStore = iso.newAsyncLocalStorage<
-    string | undefined
-  >();
   const modelSpans = new Map<string, Span[]>();
   const objectSpans = new Map<string, Span>();
   const embedSpans = new Map<string, EmbedSpanState>();
@@ -135,13 +131,6 @@ export function braintrustAISDKTelemetry(): any {
     }
 
     operations.delete(operationKey);
-    if (workflowOperationKeyStore.getStore() === operationKey) {
-      // TODO(luca): Replace ALS.enterWith() with ALS.run() once direct
-      // telemetry can wrap the full WorkflowAgent callback lifecycle.
-      // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
-      workflowOperationKeyStore.enterWith(undefined);
-    }
-
     const keys = operationKeysByCallId.get(state.callId);
     if (!keys) {
       return;
@@ -208,16 +197,12 @@ export function braintrustAISDKTelemetry(): any {
       }
     }
 
-    const workflowOperationKey = workflowOperationKeyStore.getStore();
-    if (workflowOperationKey && keys.includes(workflowOperationKey)) {
-      return workflowOperationKey;
-    }
-
-    if (callId === "workflow-agent") {
-      return undefined;
-    }
-
-    return mode === "finish" ? keys[0] : keys[keys.length - 1];
+    // Dispatcher instrumentation stamps an explicit key on every callback.
+    // Direct registerTelemetry() usage has no callback boundary to carry one,
+    // so overlapping operations with the same callId are best-effort.
+    return callId === "workflow-agent" || mode === "active"
+      ? keys[keys.length - 1]
+      : keys[0];
   };
 
   const operationKeyFromEvent = (
@@ -237,18 +222,17 @@ export function braintrustAISDKTelemetry(): any {
           return operationKey;
         }
 
-        const workflowOperationKey = workflowOperationKeyStore.getStore();
-        if (workflowOperationKey && operations.has(workflowOperationKey)) {
-          return workflowOperationKey;
+        // Some direct WorkflowAgent telemetry callbacks use a child callId
+        // instead of the operation's shared `workflow-agent` callId. Without
+        // a dispatcher key, route these to the newest active workflow as a
+        // deterministic best-effort fallback.
+        const workflowAgentKeys = operationKeysByCallId.get("workflow-agent");
+        if (workflowAgentKeys?.length) {
+          return workflowAgentKeys[workflowAgentKeys.length - 1];
         }
 
         return callId === "workflow-agent" ? undefined : callId;
       }
-    }
-
-    const workflowOperationKey = workflowOperationKeyStore.getStore();
-    if (workflowOperationKey && operations.has(workflowOperationKey)) {
-      return workflowOperationKey;
     }
 
     const wrapperSpan = currentWorkflowAgentWrapperSpan();
@@ -266,8 +250,8 @@ export function braintrustAISDKTelemetry(): any {
     // WorkflowAgent uses this callId on the operation, but omits it from
     // tool start/end callbacks in @ai-sdk/workflow@1.0.x.
     const workflowAgentKeys = operationKeysByCallId.get("workflow-agent");
-    if (workflowAgentKeys?.length === 1) {
-      return workflowAgentKeys[0];
+    if (workflowAgentKeys?.length) {
+      return workflowAgentKeys[workflowAgentKeys.length - 1];
     }
 
     if (operations.size === 1) {
@@ -519,15 +503,6 @@ export function braintrustAISDKTelemetry(): any {
 
         if (!ownsSpan) {
           return;
-        }
-
-        if (workflowAgent) {
-          // Direct registerTelemetry() calls do not receive the hidden
-          // dispatcher operation key used by auto-instrumentation.
-          // TODO(luca): Replace ALS.enterWith() with ALS.run() once direct
-          // telemetry can wrap the full WorkflowAgent callback lifecycle.
-          // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
-          workflowOperationKeyStore.enterWith(operationKey);
         }
 
         let metadata = metadataFromEvent(event);

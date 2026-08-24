@@ -19,7 +19,6 @@ const hookBrand = Symbol.for(GLOBAL_INSTRUMENTATION_HOOK_BRAND);
 const invocationHookBrand = Symbol.for(GLOBAL_INVOCATION_HOOK_BRAND);
 
 export interface GlobalHookAsyncLocalStorage<T> {
-  enterWith(store: T): void;
   run<R>(store: T | undefined, callback: () => R): R;
   getStore(): T | undefined;
 }

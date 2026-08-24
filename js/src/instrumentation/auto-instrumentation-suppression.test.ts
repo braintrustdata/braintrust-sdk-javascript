@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { configureNode } from "../node/config";
 import {
-  enterAutoInstrumentationAllowed,
   isAutoInstrumentationSuppressed,
+  runWithAutoInstrumentationAllowed,
   runWithAutoInstrumentationSuppressed,
 } from "./auto-instrumentation-suppression";
 
@@ -19,32 +19,34 @@ describe("auto instrumentation suppression context", () => {
       await Promise.resolve();
       expect(isAutoInstrumentationSuppressed()).toBe(true);
 
-      const restoreToolContext = enterAutoInstrumentationAllowed();
-      expect(isAutoInstrumentationSuppressed()).toBe(false);
+      await runWithAutoInstrumentationAllowed(async () => {
+        expect(isAutoInstrumentationSuppressed()).toBe(false);
 
-      await runWithAutoInstrumentationSuppressed(async () => {
-        expect(isAutoInstrumentationSuppressed()).toBe(true);
-        await Promise.resolve();
-        expect(isAutoInstrumentationSuppressed()).toBe(true);
+        await runWithAutoInstrumentationSuppressed(async () => {
+          expect(isAutoInstrumentationSuppressed()).toBe(true);
+          await Promise.resolve();
+          expect(isAutoInstrumentationSuppressed()).toBe(true);
+        });
+
+        expect(isAutoInstrumentationSuppressed()).toBe(false);
       });
-
-      expect(isAutoInstrumentationSuppressed()).toBe(false);
-      restoreToolContext();
       expect(isAutoInstrumentationSuppressed()).toBe(true);
     });
 
     expect(isAutoInstrumentationSuppressed()).toBe(false);
   });
 
-  it("keeps instrumentation allowed until every active allow frame exits", async () => {
+  it("restores nested allow frames at each callback boundary", async () => {
     await runWithAutoInstrumentationSuppressed(async () => {
-      const restoreFirstTool = enterAutoInstrumentationAllowed();
-      const restoreSecondTool = enterAutoInstrumentationAllowed();
-
-      expect(isAutoInstrumentationSuppressed()).toBe(false);
-      restoreFirstTool();
-      expect(isAutoInstrumentationSuppressed()).toBe(false);
-      restoreSecondTool();
+      await runWithAutoInstrumentationAllowed(async () => {
+        expect(isAutoInstrumentationSuppressed()).toBe(false);
+        await runWithAutoInstrumentationAllowed(async () => {
+          expect(isAutoInstrumentationSuppressed()).toBe(false);
+          await Promise.resolve();
+          expect(isAutoInstrumentationSuppressed()).toBe(false);
+        });
+        expect(isAutoInstrumentationSuppressed()).toBe(false);
+      });
       expect(isAutoInstrumentationSuppressed()).toBe(true);
     });
   });

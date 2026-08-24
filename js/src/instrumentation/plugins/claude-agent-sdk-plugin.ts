@@ -2,6 +2,7 @@ import { BasePlugin } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import type { IsoChannelHandlers } from "../../isomorph";
+import { debugLogger } from "../../debug-logger";
 import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
 import {
@@ -25,7 +26,8 @@ import {
 import {
   bindClaudeLocalToolContextToAsyncIterable,
   createClaudeLocalToolContext,
-  setClaudeLocalToolParentResolver,
+  registerClaudeLocalToolParentResolver,
+  runWithClaudeLocalToolContext,
   type ClaudeAgentSDKLocalToolContext,
 } from "./claude-agent-sdk-local-tool-context";
 import type {
@@ -627,6 +629,7 @@ function createToolTracingHooks(
       (isLocalToolUse(input.tool_name, mcpServers) ||
         localToolHookNames.has(input.tool_name))
     ) {
+      registerClaudeLocalToolParentResolver(toolUseID, resolveParentSpan);
       return {};
     }
 
@@ -1591,7 +1594,6 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
   }
 
   private subscribeToQuery(): void {
-    const channel = claudeAgentSDKChannels.query.tracingChannel();
     const spans = new WeakMap<object, QueryState>();
 
     const handlers: IsoChannelHandlers<
@@ -1728,7 +1730,6 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         };
 
         localToolContext.resolveLocalToolParent = resolveToolUseParentSpan;
-        setClaudeLocalToolParentResolver(resolveToolUseParentSpan);
         const optionsWithHooks = injectTracingHooks(
           options,
           resolveToolUseParentSpan,
@@ -1853,9 +1854,56 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
       },
     };
 
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
+    this.unsubscribers.push(
+      claudeAgentSDKChannels.query.intercept(
+        (target, thisArg, args, additional) => {
+          const event: ChannelMessage<typeof claudeAgentSDKChannels.query> = {
+            ...additional,
+            arguments: args,
+          };
+          try {
+            handlers.start?.(event, claudeAgentSDKChannels.query.channelName);
+          } catch (error) {
+            debugLogger.error(
+              "Error starting Claude Agent SDK instrumentation:",
+              error,
+            );
+          }
+
+          const state = spans.get(event);
+          const invokeTarget = () => Reflect.apply(target, thisArg, args);
+          try {
+            const result = state
+              ? runWithClaudeLocalToolContext(
+                  invokeTarget,
+                  state.localToolContext,
+                )
+              : invokeTarget();
+            event.result = result;
+            try {
+              handlers.end?.(event, claudeAgentSDKChannels.query.channelName);
+            } catch (error) {
+              debugLogger.error(
+                "Error finalizing Claude Agent SDK instrumentation:",
+                error,
+              );
+            }
+            return result;
+          } catch (error) {
+            event.error =
+              error instanceof Error ? error : new Error(String(error));
+            try {
+              handlers.error?.(event, claudeAgentSDKChannels.query.channelName);
+            } catch (instrumentationError) {
+              debugLogger.error(
+                "Error handling Claude Agent SDK instrumentation failure:",
+                instrumentationError,
+              );
+            }
+            throw error;
+          }
+        },
+      ),
+    );
   }
 }

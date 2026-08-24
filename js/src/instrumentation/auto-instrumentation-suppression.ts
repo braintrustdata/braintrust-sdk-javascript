@@ -4,7 +4,6 @@ import iso, {
 } from "../isomorph";
 
 type AutoInstrumentationSuppressionFrame = {
-  id: symbol;
   mode: "allow" | "suppress";
 };
 
@@ -34,7 +33,6 @@ export function isAutoInstrumentationSuppressed(): boolean {
 
 export function runWithAutoInstrumentationSuppressed<R>(callback: () => R): R {
   const frame = {
-    id: Symbol("braintrust.auto-instrumentation-suppress"),
     mode: "suppress" as const,
   };
   return suppressionStore().run(
@@ -56,7 +54,6 @@ export function bindAutoInstrumentationSuppressionToStart<T>(
     frames: [
       ...currentFrames(),
       {
-        id: Symbol("braintrust.auto-instrumentation-suppress"),
         mode: "suppress" as const,
       },
     ],
@@ -67,23 +64,12 @@ export function bindAutoInstrumentationSuppressionToStart<T>(
   };
 }
 
-export function enterAutoInstrumentationAllowed(): () => void {
+export function runWithAutoInstrumentationAllowed<R>(callback: () => R): R {
   const frame = {
-    id: Symbol("braintrust.auto-instrumentation-allow"),
     mode: "allow" as const,
   };
-  // TODO(luca): Replace ALS.enterWith() with ALS.run()
-  // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
-  suppressionStore().enterWith({
-    frames: [...currentFrames(), frame],
-  });
-
-  return () => {
-    const frames = currentFrames().filter(
-      (candidate) => candidate.id !== frame.id,
-    );
-    // TODO(luca): Replace ALS.enterWith() with ALS.run()
-    // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
-    suppressionStore().enterWith(frames.length > 0 ? { frames } : undefined);
-  };
+  return suppressionStore().run(
+    { frames: [...currentFrames(), frame] },
+    callback,
+  );
 }

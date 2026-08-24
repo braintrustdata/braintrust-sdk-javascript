@@ -21,7 +21,6 @@ export type IsoAsyncLocalStorage<T> = GlobalHookAsyncLocalStorage<T>;
 class DefaultAsyncLocalStorage<T> implements IsoAsyncLocalStorage<T> {
   constructor() {}
 
-  enterWith(_: T): void {}
   run<R>(_: T | undefined, callback: () => R): R {
     return callback();
   }

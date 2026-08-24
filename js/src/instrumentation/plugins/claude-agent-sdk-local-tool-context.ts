@@ -11,7 +11,6 @@ const LOCAL_TOOL_CONTEXT_ASYNC_ITERATOR_PATCHED = Symbol.for(
 );
 
 type AsyncLocalStorageLike<T> = {
-  enterWith: (store: T) => void;
   getStore: () => T | undefined;
   run: <R>(store: T, callback: () => R) => R;
 };
@@ -29,9 +28,6 @@ function createLocalToolContextStore(): AsyncLocalStorageLike<ClaudeAgentSDKLoca
 
   let currentStore: ClaudeAgentSDKLocalToolContext | undefined;
   return {
-    enterWith(store) {
-      currentStore = store;
-    },
     getStore() {
       return currentStore;
     },
@@ -48,13 +44,16 @@ function createLocalToolContextStore(): AsyncLocalStorageLike<ClaudeAgentSDKLoca
 }
 
 const localToolContextStore = createLocalToolContextStore();
-let fallbackLocalToolParentResolver: LocalToolParentResolver | undefined;
+const localToolParentResolversByToolUseId = new Map<
+  string,
+  LocalToolParentResolver
+>();
 
 export function createClaudeLocalToolContext(): ClaudeAgentSDKLocalToolContext {
   return {};
 }
 
-function runWithClaudeLocalToolContext<R>(
+export function runWithClaudeLocalToolContext<R>(
   callback: () => R,
   context?: ClaudeAgentSDKLocalToolContext,
 ): R {
@@ -64,39 +63,25 @@ function runWithClaudeLocalToolContext<R>(
   );
 }
 
-function ensureClaudeLocalToolContext():
-  | ClaudeAgentSDKLocalToolContext
-  | undefined {
-  const existing = localToolContextStore.getStore();
-  if (existing) {
-    return existing;
-  }
-
-  const created: ClaudeAgentSDKLocalToolContext = {};
-  // TODO(luca): Replace ALS.enterWith() with ALS.run()
-  // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
-  localToolContextStore.enterWith(created);
-  return created;
-}
-
-export function setClaudeLocalToolParentResolver(
+export function registerClaudeLocalToolParentResolver(
+  toolUseId: string,
   resolver: LocalToolParentResolver,
 ): void {
-  fallbackLocalToolParentResolver = resolver;
-  const context = ensureClaudeLocalToolContext();
-  if (!context) {
-    return;
-  }
-  context.resolveLocalToolParent = resolver;
+  localToolParentResolversByToolUseId.set(toolUseId, resolver);
 }
 
-export function getClaudeLocalToolParentResolver():
-  | LocalToolParentResolver
-  | undefined {
-  return (
-    localToolContextStore.getStore()?.resolveLocalToolParent ??
-    fallbackLocalToolParentResolver
-  );
+export function getClaudeLocalToolParentResolver(
+  toolUseId?: string,
+): LocalToolParentResolver | undefined {
+  const currentResolver =
+    localToolContextStore.getStore()?.resolveLocalToolParent;
+  if (!toolUseId) {
+    return currentResolver;
+  }
+
+  const registeredResolver = localToolParentResolversByToolUseId.get(toolUseId);
+  localToolParentResolversByToolUseId.delete(toolUseId);
+  return currentResolver ?? registeredResolver;
 }
 
 function isAsyncIterable(value: unknown): value is AsyncIterable<unknown> {

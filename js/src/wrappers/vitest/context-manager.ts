@@ -54,12 +54,6 @@ class VitestContextManager {
     return this.contextStorage.getStore();
   }
 
-  setContext(context: VitestExperimentContext): void {
-    // TODO(luca): Replace ALS.enterWith() with ALS.run()
-    // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
-    this.contextStorage.enterWith(context);
-  }
-
   runInContext<R>(context: VitestExperimentContext, callback: () => R): R {
     return this.contextStorage.run(context, callback);
   }

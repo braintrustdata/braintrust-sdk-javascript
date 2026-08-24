@@ -12,7 +12,7 @@ import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
 import {
-  enterAutoInstrumentationAllowed,
+  runWithAutoInstrumentationAllowed,
   runWithAutoInstrumentationSuppressed,
 } from "../auto-instrumentation-suppression";
 import { piCodingAgentChannels } from "./pi-coding-agent-channels";
@@ -62,7 +62,6 @@ type PiLlmSpanState = {
 };
 
 type PiToolSpanState = {
-  restoreAutoInstrumentation?: () => void;
   span: Span;
 };
 
@@ -73,6 +72,9 @@ type PiAgentPatchState = {
 
 const piAgentPatchStates = new WeakMap<PiAgent, PiAgentPatchState>();
 const piAgentEventSubscriptions = new WeakSet<PiAgent>();
+const PI_TOOL_EXECUTE_WRAPPED = Symbol.for(
+  "braintrust.pi_coding_agent.tool_execute_wrapped",
+);
 let piPromptContextStore:
   | IsoAsyncLocalStorage<PiPromptState | undefined>
   | undefined;
@@ -167,6 +169,7 @@ function startPiPromptRun(
     return undefined;
   }
   installPiAgentInstrumentation(agent);
+  wrapPiToolExecutors(agent.state?.tools);
 
   const metadata = {
     ...extractSessionMetadata(session),
@@ -299,6 +302,7 @@ function makeInstrumentedStreamFn(
       return invokeOriginal();
     }
 
+    wrapPiToolExecutors(context.tools);
     const llmState = await startPiLlmSpan(state, model, context, options);
     try {
       const stream = await runWithAutoInstrumentationSuppressed(invokeOriginal);
@@ -308,6 +312,41 @@ function makeInstrumentedStreamFn(
       throw error;
     }
   };
+}
+
+function wrapPiToolExecutors(tools: PiTool[] | undefined): void {
+  if (!tools) {
+    return;
+  }
+
+  for (const tool of tools) {
+    try {
+      const execute = tool.execute;
+      if (
+        typeof execute !== "function" ||
+        (execute as typeof execute & { [PI_TOOL_EXECUTE_WRAPPED]?: boolean })[
+          PI_TOOL_EXECUTE_WRAPPED
+        ]
+      ) {
+        continue;
+      }
+
+      const wrappedExecute = function (this: unknown, ...args: unknown[]) {
+        return runWithAutoInstrumentationAllowed(() =>
+          Reflect.apply(execute, this, args),
+        );
+      };
+      Object.defineProperty(wrappedExecute, PI_TOOL_EXECUTE_WRAPPED, {
+        configurable: false,
+        enumerable: false,
+        value: true,
+        writable: false,
+      });
+      tool.execute = wrappedExecute;
+    } catch (error) {
+      logInstrumentationError("Pi Coding Agent tool wrapping", error);
+    }
+  }
 }
 
 async function startPiLlmSpan(
@@ -528,35 +567,26 @@ async function startPiToolSpan(
     return;
   }
 
-  const restoreAutoInstrumentation = enterAutoInstrumentationAllowed();
   const metadata = {
     "gen_ai.tool.call.id": event.toolCallId,
     "gen_ai.tool.name": event.toolName,
     "pi_coding_agent.tool.name": event.toolName,
   };
-  try {
-    const span = startBaseSpan(
-      withSpanInstrumentationName(
-        {
-          event: {
-            input: event.args,
-            metadata,
-          },
-          name: event.toolName || "tool",
-          parent: await state.span.export(),
-          spanAttributes: { type: SpanTypeAttribute.TOOL },
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        event: {
+          input: event.args,
+          metadata,
         },
-        INSTRUMENTATION_NAMES.PI_CODING_AGENT,
-      ),
-    );
-    state.activeToolSpans.set(event.toolCallId, {
-      restoreAutoInstrumentation,
-      span,
-    });
-  } catch (error) {
-    restoreAutoInstrumentation();
-    throw error;
-  }
+        name: event.toolName || "tool",
+        parent: await state.span.export(),
+        spanAttributes: { type: SpanTypeAttribute.TOOL },
+      },
+      INSTRUMENTATION_NAMES.PI_CODING_AGENT,
+    ),
+  );
+  state.activeToolSpans.set(event.toolCallId, { span });
 }
 
 function finishPiToolSpan(
@@ -582,11 +612,7 @@ function finishPiToolSpan(
       output: event.result,
     });
   } finally {
-    try {
-      toolState.span.end();
-    } finally {
-      toolState.restoreAutoInstrumentation?.();
-    }
+    toolState.span.end();
   }
 }
 
@@ -671,14 +697,10 @@ function finishPiLlmSpan(
 
 function finishOpenToolSpans(state: PiPromptState, error?: unknown): void {
   for (const [, toolState] of state.activeToolSpans) {
-    try {
-      safeLog(toolState.span, {
-        error: error ? toLoggedError(error) : "Pi tool did not complete",
-      });
-      toolState.span.end();
-    } finally {
-      toolState.restoreAutoInstrumentation?.();
-    }
+    safeLog(toolState.span, {
+      error: error ? toLoggedError(error) : "Pi tool did not complete",
+    });
+    toolState.span.end();
   }
   state.activeToolSpans.clear();
 }

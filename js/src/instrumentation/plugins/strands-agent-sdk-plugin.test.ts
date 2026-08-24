@@ -12,9 +12,6 @@ const {
   mockNewAsyncLocalStorage: vi.fn(() => {
     let current: unknown;
     return {
-      enterWith: vi.fn((store: unknown) => {
-        current = store;
-      }),
       getStore: vi.fn(() => current),
       run: vi.fn((store: unknown, callback: () => unknown) => {
         const previous = current;
