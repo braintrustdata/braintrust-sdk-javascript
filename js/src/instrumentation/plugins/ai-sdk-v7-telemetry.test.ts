@@ -12,6 +12,7 @@ import {
   registerWorkflowAgentWrapperSpan,
   unregisterWorkflowAgentWrapperSpan,
 } from "../../wrappers/ai-sdk/workflow-agent-context";
+import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
 try {
   configureNode();
@@ -556,6 +557,117 @@ describe("braintrustAISDKTelemetry", () => {
     expect(
       spans.filter((span) => span.span_attributes?.name === "get_weather"),
     ).toHaveLength(0);
+  });
+
+  it("keeps concurrent WorkflowAgent streams with shared callIds separate", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const callId = "workflow-agent";
+    const runA = "workflow-agent:run-a";
+    const runB = "workflow-agent:run-b";
+
+    telemetry.onStart?.({
+      [AI_SDK_V7_OPERATION_KEY]: runA,
+      callId,
+      messages: [{ role: "user", content: "First workflow run" }],
+      operationId: "ai.workflowAgent.stream",
+    });
+    telemetry.onStart?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      callId,
+      messages: [{ role: "user", content: "Second workflow run" }],
+      operationId: "ai.workflowAgent.stream",
+    });
+
+    telemetry.onLanguageModelCallStart?.({
+      [AI_SDK_V7_OPERATION_KEY]: runA,
+      callId,
+      prompt: [{ role: "user", content: "First workflow run" }],
+    });
+    telemetry.onLanguageModelCallEnd?.({
+      [AI_SDK_V7_OPERATION_KEY]: runA,
+      callId,
+      text: "First answer",
+    });
+    telemetry.onLanguageModelCallStart?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      callId,
+      prompt: [{ role: "user", content: "Second workflow run" }],
+    });
+    telemetry.onLanguageModelCallEnd?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      callId,
+      text: "Calling get_weather.",
+    });
+
+    telemetry.onToolExecutionStart?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      toolCall: {
+        toolCallId: "tool-run-b",
+        toolName: "get_weather",
+        input: { location: "Vienna, Austria" },
+      },
+    });
+    telemetry.onToolExecutionEnd?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      output: { condition: "sunny" },
+      success: true,
+      toolCall: {
+        toolCallId: "tool-run-b",
+        toolName: "get_weather",
+      },
+    });
+
+    telemetry.onEnd?.({
+      [AI_SDK_V7_OPERATION_KEY]: runA,
+      callId,
+      messages: [{ role: "assistant", content: "First answer" }],
+      operationId: "ai.workflowAgent.stream",
+      text: "First answer",
+    });
+    telemetry.onEnd?.({
+      [AI_SDK_V7_OPERATION_KEY]: runB,
+      callId,
+      messages: [{ role: "assistant", content: "Second answer" }],
+      operationId: "ai.workflowAgent.stream",
+      text: "Second answer",
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const workflowSpans = spans.filter(
+      (span) => span.span_attributes?.name === "WorkflowAgent.stream",
+    );
+    const firstWorkflow = workflowSpans.find((span) =>
+      JSON.stringify(span.input).includes("First workflow run"),
+    );
+    const secondWorkflow = workflowSpans.find((span) =>
+      JSON.stringify(span.input).includes("Second workflow run"),
+    );
+    const firstModel = spans.find(
+      (span) =>
+        span.span_attributes?.name === "doGenerate" &&
+        JSON.stringify(span.input).includes("First workflow run"),
+    );
+    const secondModel = spans.find(
+      (span) =>
+        span.span_attributes?.name === "doGenerate" &&
+        JSON.stringify(span.input).includes("Second workflow run"),
+    );
+    const tool = spans.find(
+      (span) => span.span_attributes?.name === "get_weather",
+    );
+
+    expect(workflowSpans).toHaveLength(2);
+    expect(firstWorkflow?.output).toMatchObject({ text: "First answer" });
+    expect(secondWorkflow?.output).toMatchObject({ text: "Second answer" });
+    expect(firstModel?.span_parents).toEqual([firstWorkflow?.span_id]);
+    expect(secondModel?.span_parents).toEqual([secondWorkflow?.span_id]);
+    expect(tool).toMatchObject({
+      input: { location: "Vienna, Austria" },
+      output: { condition: "sunny" },
+      span_parents: [secondWorkflow?.span_id],
+    });
   });
 
   it("keeps concurrent direct WorkflowAgent telemetry separated without dispatcher keys", async () => {

@@ -34,6 +34,7 @@ import type {
   AISDKV7Telemetry,
   AISDKV7TelemetryOptions,
 } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 import { currentWorkflowAgentWrapperSpan } from "./workflow-agent-context";
 import {
   currentHarnessTurnParent,
@@ -144,10 +145,26 @@ export function braintrustAISDKTelemetry(): any {
     }
   };
 
+  const explicitOperationKey = (event: unknown): string | undefined => {
+    if (!isObject(event)) {
+      return undefined;
+    }
+
+    const key = (event as { [AI_SDK_V7_OPERATION_KEY]?: unknown })[
+      AI_SDK_V7_OPERATION_KEY
+    ];
+    return typeof key === "string" ? key : undefined;
+  };
+
   const createOperationKey = (
     event: AISDKV7OperationEvent,
     operationName: string,
   ): string => {
+    const explicit = explicitOperationKey(event);
+    if (explicit) {
+      return explicit;
+    }
+
     if (operationName === "WorkflowAgent.stream") {
       workflowAgentOperationCounter += 1;
       return `${event.callId}:${workflowAgentOperationCounter}`;
@@ -192,6 +209,11 @@ export function braintrustAISDKTelemetry(): any {
     event: { callId?: unknown } | unknown,
     mode: "active" | "finish" = "active",
   ): string | undefined => {
+    const explicit = explicitOperationKey(event);
+    if (explicit && operations.has(explicit)) {
+      return explicit;
+    }
+
     if (isObject(event)) {
       const callId = (event as { callId?: unknown }).callId;
       if (typeof callId === "string") {

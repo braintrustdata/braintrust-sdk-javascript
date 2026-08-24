@@ -1,8 +1,6 @@
 import iso from "../../isomorph";
 
-export type ClaudeLocalToolParentResolver = (
-  toolUseId: string,
-) => Promise<string>;
+type ClaudeLocalToolParentResolver = (toolUseId: string) => Promise<string>;
 
 const localToolContextStore =
   iso.newAsyncLocalStorage<ClaudeLocalToolParentResolver>();
