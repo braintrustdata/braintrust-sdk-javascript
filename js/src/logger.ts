@@ -4477,35 +4477,19 @@ declare global {
   var __bt_eval_internal_btql: Record<string, unknown> | undefined;
 }
 
-type InitDatasetBaseOptions<IsLegacyDataset extends boolean> =
+export type InitDatasetOptions<IsLegacyDataset extends boolean> =
   FullLoginOptions & {
+    dataset?: string;
+    datasetId?: string;
+    description?: string;
     version?: string;
     environment?: string;
     snapshotName?: string;
     projectId?: string;
+    metadata?: Record<string, unknown>;
     state?: BraintrustState;
     _internal_btql?: Record<string, unknown>;
   } & UseOutputOption<IsLegacyDataset>;
-
-type InitDatasetByIdOptions<IsLegacyDataset extends boolean> =
-  InitDatasetBaseOptions<IsLegacyDataset> & {
-    datasetId: string;
-    dataset?: string;
-    description?: never;
-    metadata?: never;
-  };
-
-type InitDatasetByNameOptions<IsLegacyDataset extends boolean> =
-  InitDatasetBaseOptions<IsLegacyDataset> & {
-    datasetId?: never;
-    dataset?: string;
-    description?: string;
-    metadata?: Record<string, unknown>;
-  };
-
-export type InitDatasetOptions<IsLegacyDataset extends boolean> =
-  | InitDatasetByIdOptions<IsLegacyDataset>
-  | InitDatasetByNameOptions<IsLegacyDataset>;
 
 export type FullInitDatasetOptions<IsLegacyDataset extends boolean> = {
   project?: string;

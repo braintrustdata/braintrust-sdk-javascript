@@ -614,13 +614,11 @@ test("initDataset rejects dataset ID updates", () => {
   };
 
   expect(() => {
-    // @ts-expect-error description cannot be used with datasetId
     initDataset(optionsWithDescription);
   }).toThrow(
     "Cannot specify description or metadata when datasetId is provided",
   );
   expect(() => {
-    // @ts-expect-error metadata cannot be used with datasetId
     initDataset(optionsWithMetadata);
   }).toThrow(
     "Cannot specify description or metadata when datasetId is provided",
