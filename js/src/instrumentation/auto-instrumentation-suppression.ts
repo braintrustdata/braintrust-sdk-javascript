@@ -1,75 +1,22 @@
-import iso, {
-  type IsoAsyncLocalStorage,
-  type IsoTracingChannel,
-} from "../isomorph";
-
-type AutoInstrumentationSuppressionFrame = {
-  mode: "allow" | "suppress";
-};
-
-type AutoInstrumentationSuppressionState = {
-  frames: AutoInstrumentationSuppressionFrame[];
-};
+import iso, { type IsoAsyncLocalStorage } from "../isomorph";
 
 let autoInstrumentationSuppressionStore:
-  | IsoAsyncLocalStorage<AutoInstrumentationSuppressionState | undefined>
+  | IsoAsyncLocalStorage<boolean>
   | undefined;
 
 function suppressionStore() {
-  autoInstrumentationSuppressionStore ??= iso.newAsyncLocalStorage<
-    AutoInstrumentationSuppressionState | undefined
-  >();
+  autoInstrumentationSuppressionStore ??= iso.newAsyncLocalStorage<boolean>();
   return autoInstrumentationSuppressionStore;
 }
 
-function currentFrames(): AutoInstrumentationSuppressionFrame[] {
-  return suppressionStore().getStore()?.frames ?? [];
-}
-
 export function isAutoInstrumentationSuppressed(): boolean {
-  const frames = currentFrames();
-  return frames[frames.length - 1]?.mode === "suppress";
+  return suppressionStore().getStore() === true;
 }
 
 export function runWithAutoInstrumentationSuppressed<R>(callback: () => R): R {
-  const frame = {
-    mode: "suppress" as const,
-  };
-  return suppressionStore().run(
-    { frames: [...currentFrames(), frame] },
-    callback,
-  );
-}
-
-export function bindAutoInstrumentationSuppressionToStart<T>(
-  tracingChannel: Pick<IsoTracingChannel<T>, "start">,
-): (() => void) | undefined {
-  const startChannel = tracingChannel.start;
-  if (!startChannel) {
-    return undefined;
-  }
-
-  const store = suppressionStore();
-  startChannel.bindStore(store, () => ({
-    frames: [
-      ...currentFrames(),
-      {
-        mode: "suppress" as const,
-      },
-    ],
-  }));
-
-  return () => {
-    startChannel.unbindStore(store);
-  };
+  return suppressionStore().run(true, callback);
 }
 
 export function runWithAutoInstrumentationAllowed<R>(callback: () => R): R {
-  const frame = {
-    mode: "allow" as const,
-  };
-  return suppressionStore().run(
-    { frames: [...currentFrames(), frame] },
-    callback,
-  );
+  return suppressionStore().run(undefined, callback);
 }

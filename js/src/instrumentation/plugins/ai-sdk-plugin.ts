@@ -73,7 +73,6 @@ import type {
   AISDKV7Telemetry,
   AISDKV7TelemetryOptions,
 } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
-import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
 interface AISDKPluginConfig {
   /**
@@ -115,7 +114,6 @@ const AUTO_PATCHED_V7_TELEMETRY_DISPATCHER = Symbol.for(
 const RUNTIME_DENY_OUTPUT_PATHS = Symbol.for(
   "braintrust.ai-sdk.deny-output-paths",
 );
-let aiSDKV7TelemetryOperationCounter = 0;
 const TRANSPORT_PAYLOAD_ROOT_PATHS = [
   "rawResponse",
   "request",
@@ -840,18 +838,13 @@ function subscribeToHarnessContinuation(
 }
 
 function interceptAISDKV7TelemetryDispatcher(): () => void {
-  const telemetry = braintrustAISDKTelemetry();
   return aiSDKChannels.v7CreateTelemetryDispatcher.intercept(
     (target, thisArg, args) => {
       const dispatcher = Reflect.apply(target, thisArg, args);
       const telemetryOptions = args[0]?.telemetry;
       if (telemetryOptions?.isEnabled !== false) {
         try {
-          patchAISDKV7TelemetryDispatcher(
-            dispatcher,
-            telemetry,
-            telemetryOptions,
-          );
+          patchAISDKV7TelemetryDispatcher(dispatcher, telemetryOptions);
         } catch (error) {
           debugLogger.error(
             "Error instrumenting AI SDK v7 telemetry dispatcher:",
@@ -866,7 +859,6 @@ function interceptAISDKV7TelemetryDispatcher(): () => void {
 
 function patchAISDKV7TelemetryDispatcher(
   dispatcher: unknown,
-  telemetry: AISDKV7Telemetry,
   telemetryOptions?: AISDKV7TelemetryOptions,
 ): void {
   if (!isObject(dispatcher)) {
@@ -878,7 +870,7 @@ function patchAISDKV7TelemetryDispatcher(
     return;
   }
   dispatcherRecord[AUTO_PATCHED_V7_TELEMETRY_DISPATCHER] = true;
-  let operationKey: string | undefined;
+  const telemetry = braintrustAISDKTelemetry() as AISDKV7Telemetry;
   const telemetryEventFields: AISDKV7TelemetryOptions = {};
   if (typeof telemetryOptions?.recordInputs === "boolean") {
     telemetryEventFields.recordInputs = telemetryOptions.recordInputs;
@@ -889,49 +881,17 @@ function patchAISDKV7TelemetryDispatcher(
   if (typeof telemetryOptions?.functionId === "string") {
     telemetryEventFields.functionId = telemetryOptions.functionId;
   }
+  const hasTelemetryEventFields = Object.keys(telemetryEventFields).length > 0;
 
-  const eventWithOperationKey = (event: unknown): unknown => {
-    if (!isObject(event)) {
+  const eventWithTelemetryFields = (event: unknown): unknown => {
+    if (!isObject(event) || !hasTelemetryEventFields) {
       return event;
     }
 
-    const eventRecord = event as Record<PropertyKey, unknown>;
-    const callId =
-      typeof eventRecord.callId === "string" ? eventRecord.callId : "unknown";
-    operationKey ??= `${callId}:${++aiSDKV7TelemetryOperationCounter}`;
-
-    if (Object.keys(telemetryEventFields).length > 0) {
-      const augmentedEvent = {
-        ...telemetryEventFields,
-        ...(event as Record<string, unknown>),
-      };
-      try {
-        Object.defineProperty(augmentedEvent, AI_SDK_V7_OPERATION_KEY, {
-          configurable: true,
-          enumerable: false,
-          value: operationKey,
-        });
-      } catch {
-        (augmentedEvent as Record<PropertyKey, unknown>)[
-          AI_SDK_V7_OPERATION_KEY
-        ] = operationKey;
-      }
-      return augmentedEvent;
-    }
-
-    try {
-      Object.defineProperty(eventRecord, AI_SDK_V7_OPERATION_KEY, {
-        configurable: true,
-        enumerable: false,
-        value: operationKey,
-      });
-      return event;
-    } catch {
-      return {
-        ...(event as Record<string, unknown>),
-        [AI_SDK_V7_OPERATION_KEY]: operationKey,
-      };
-    }
+    return {
+      ...telemetryEventFields,
+      ...(event as Record<string, unknown>),
+    };
   };
 
   for (const key of AI_SDK_V7_TELEMETRY_CALLBACKS) {
@@ -949,7 +909,7 @@ function patchAISDKV7TelemetryDispatcher(
       try {
         const braintrustResult = braintrustCallback.call(
           telemetry,
-          eventWithOperationKey(event) as any,
+          eventWithTelemetryFields(event) as any,
         );
         if (isPromiseLike(braintrustResult)) {
           void Promise.resolve(braintrustResult).catch(() => undefined);
@@ -974,7 +934,6 @@ function patchAISDKV7TelemetryDispatcher(
   }) =>
     braintrustExecuteTool.call(telemetry, {
       ...args,
-      ...(operationKey ? { [AI_SDK_V7_OPERATION_KEY]: operationKey } : {}),
       execute: () =>
         typeof existingExecuteTool === "function"
           ? existingExecuteTool.call(dispatcher, args)

@@ -32,7 +32,6 @@ import {
 } from "./ai-sdk-plugin";
 import iso from "../../isomorph";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
-import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
 type MockTracingChannel = {
@@ -375,7 +374,20 @@ describe("AISDKPlugin", () => {
       expect(startEvent).not.toHaveProperty("recordInputs");
     });
 
-    it("stamps a stable unique operation key on each dispatcher", async () => {
+    it("uses an independent telemetry integration for each dispatcher", async () => {
+      const telemetryA = {
+        executeTool: vi.fn(({ execute }) => execute()),
+        onAbort: vi.fn(),
+        onStart: vi.fn(),
+      };
+      const telemetryB = {
+        executeTool: vi.fn(({ execute }) => execute()),
+        onAbort: vi.fn(),
+        onStart: vi.fn(),
+      };
+      telemetryMocks.braintrustAISDKTelemetry
+        .mockReturnValueOnce(telemetryA)
+        .mockReturnValueOnce(telemetryB);
       const dispatcherA = {
         executeTool: vi.fn(({ execute }) => execute()),
         onAbort: vi.fn(),
@@ -418,22 +430,12 @@ describe("AISDKPlugin", () => {
         toolCallId: "tool-b",
       });
 
-      const runAStart = telemetryMocks.telemetry.onStart?.mock.calls[0]?.[0];
-      const runBStart = telemetryMocks.telemetry.onStart?.mock.calls[1]?.[0];
-      const runAAbort = telemetryMocks.telemetry.onAbort?.mock.calls[0]?.[0];
-      const runBTool = telemetryMocks.telemetry.executeTool?.mock.calls[0]?.[0];
-
-      expect(runAStart?.[AI_SDK_V7_OPERATION_KEY]).toEqual(expect.any(String));
-      expect(runBStart?.[AI_SDK_V7_OPERATION_KEY]).toEqual(expect.any(String));
-      expect(runAStart?.[AI_SDK_V7_OPERATION_KEY]).not.toBe(
-        runBStart?.[AI_SDK_V7_OPERATION_KEY],
-      );
-      expect(runAAbort?.[AI_SDK_V7_OPERATION_KEY]).toBe(
-        runAStart?.[AI_SDK_V7_OPERATION_KEY],
-      );
-      expect(runBTool?.[AI_SDK_V7_OPERATION_KEY]).toBe(
-        runBStart?.[AI_SDK_V7_OPERATION_KEY],
-      );
+      expect(telemetryA.onStart).toHaveBeenCalledTimes(1);
+      expect(telemetryA.onAbort).toHaveBeenCalledTimes(1);
+      expect(telemetryA.executeTool).not.toHaveBeenCalled();
+      expect(telemetryB.onStart).toHaveBeenCalledTimes(1);
+      expect(telemetryB.onAbort).not.toHaveBeenCalled();
+      expect(telemetryB.executeTool).toHaveBeenCalledTimes(1);
     });
 
     it("preserves existing dispatcher callback return and rejection semantics", async () => {

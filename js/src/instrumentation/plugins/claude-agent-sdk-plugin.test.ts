@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 // Mock iso's newTracingChannel - must be before any imports that use it
 const streamPatcherMock = vi.hoisted(() => ({
@@ -12,6 +13,7 @@ const streamPatcherMock = vi.hoisted(() => ({
 
 vi.mock("../../isomorph", () => ({
   default: {
+    newAsyncLocalStorage: <T>() => new AsyncLocalStorage<T>(),
     newTracingChannel: vi.fn(),
   },
 }));

@@ -75,9 +75,7 @@ const piAgentEventSubscriptions = new WeakSet<PiAgent>();
 const PI_TOOL_EXECUTE_WRAPPED = Symbol.for(
   "braintrust.pi_coding_agent.tool_execute_wrapped",
 );
-let piPromptContextStore:
-  | IsoAsyncLocalStorage<PiPromptState | undefined>
-  | undefined;
+let piPromptContextStore: IsoAsyncLocalStorage<PiPromptState> | undefined;
 
 export class PiCodingAgentPlugin extends BasePlugin {
   private readonly activePromptStates = new Set<PiPromptState>();
@@ -236,10 +234,8 @@ function isPiAgent(value: unknown): value is PiAgent {
   );
 }
 
-function promptContextStore(): IsoAsyncLocalStorage<PiPromptState | undefined> {
-  piPromptContextStore ??= iso.newAsyncLocalStorage<
-    PiPromptState | undefined
-  >();
+function promptContextStore(): IsoAsyncLocalStorage<PiPromptState> {
+  piPromptContextStore ??= iso.newAsyncLocalStorage<PiPromptState>();
   return piPromptContextStore;
 }
 

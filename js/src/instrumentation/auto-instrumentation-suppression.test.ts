@@ -36,7 +36,7 @@ describe("auto instrumentation suppression context", () => {
     expect(isAutoInstrumentationSuppressed()).toBe(false);
   });
 
-  it("restores nested allow frames at each callback boundary", async () => {
+  it("restores nested allow contexts at each callback boundary", async () => {
     await runWithAutoInstrumentationSuppressed(async () => {
       await runWithAutoInstrumentationAllowed(async () => {
         expect(isAutoInstrumentationSuppressed()).toBe(false);

@@ -1,7 +1,5 @@
 import { BasePlugin, toLoggedError } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
-import type { IsoChannelHandlers } from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
 import {
   Attachment,
@@ -18,10 +16,7 @@ import { LRUCache } from "../../lru-cache";
 import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { convertDataToBlob } from "../../wrappers/attachment-utils";
-import {
-  bindAutoInstrumentationSuppressionToStart,
-  runWithAutoInstrumentationSuppressed,
-} from "../auto-instrumentation-suppression";
+import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { strandsAgentSDKChannels } from "./strands-agent-sdk-channels";
 import type {
   StrandsAfterModelCallEvent,
@@ -105,12 +100,12 @@ export class StrandsAgentSDKPlugin extends BasePlugin {
   private readonly activeChildParents: ActiveChildParents = new WeakMap();
 
   protected onEnable(): void {
-    this.subscribeToAgentStream();
-    this.subscribeToMultiAgentStream(
+    this.interceptAgentStream();
+    this.interceptMultiAgentStream(
       strandsAgentSDKChannels.graphStream,
       "Graph.stream",
     );
-    this.subscribeToMultiAgentStream(
+    this.interceptMultiAgentStream(
       strandsAgentSDKChannels.swarmStream,
       "Swarm.stream",
     );
@@ -123,145 +118,124 @@ export class StrandsAgentSDKPlugin extends BasePlugin {
     this.unsubscribers = [];
   }
 
-  private subscribeToAgentStream(): void {
-    const channel = strandsAgentSDKChannels.agentStream.tracingChannel();
-    const states = new WeakMap<object, AgentStreamState>();
-    const unbindAutoInstrumentationSuppression =
-      bindAutoInstrumentationSuppressionToStart(channel);
-
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof strandsAgentSDKChannels.agentStream>
-    > = {
-      start: (event) => {
-        const state = startAgentStream(event, this.activeChildParents);
-        if (state) {
-          states.set(event, state);
-        }
-      },
-      end: (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
-
-        const result = event.result;
-        if (isAsyncIterable(result)) {
-          patchStreamIfNeeded<StrandsAgentStreamEvent>(result, {
-            aroundNext: (callback) =>
-              runWithAutoInstrumentationSuppressed(callback),
-            onChunk: (chunk) => handleAgentStreamEvent(state, chunk),
-            onComplete: () => {
-              finalizeAgentStream(state);
-              states.delete(event);
-            },
-            onError: (error) => {
-              finalizeAgentStream(state, error);
-              states.delete(event);
-            },
-          });
-          return;
-        }
-
-        finalizeAgentStream(state, undefined, result);
-        states.delete(event);
-      },
-      error: (event) => {
-        const state = states.get(event);
-        if (!state || !event.error) {
-          return;
-        }
-        finalizeAgentStream(state, event.error);
-        states.delete(event);
-      },
-    };
-
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindAutoInstrumentationSuppression?.();
-      channel.unsubscribe(handlers);
-    });
+  private interceptAgentStream(): void {
+    this.unsubscribers.push(
+      strandsAgentSDKChannels.agentStream.intercept(
+        (target, thisArg, args, additional) =>
+          instrumentStrandsStreamInvocation<
+            AgentStreamState,
+            StrandsAgentStreamEvent,
+            ReturnType<typeof target>
+          >({
+            finalize: finalizeAgentStream,
+            handleChunk: handleAgentStreamEvent,
+            invoke: () => Reflect.apply(target, thisArg, args),
+            name: "Strands Agent SDK",
+            start: () =>
+              startAgentStream(
+                args[0],
+                extractAgent(additional.agent, thisArg),
+                this.activeChildParents,
+              ),
+          }),
+      ),
+    );
   }
 
-  private subscribeToMultiAgentStream(
+  private interceptMultiAgentStream(
     channel: MultiAgentStreamChannel,
     operation: MultiAgentStreamState["operation"],
   ): void {
-    const tracingChannel = channel.tracingChannel();
-    const states = new WeakMap<object, MultiAgentStreamState>();
-    const unbindAutoInstrumentationSuppression =
-      bindAutoInstrumentationSuppressionToStart(tracingChannel);
-
-    const handlers: IsoChannelHandlers<ChannelMessage<typeof channel>> = {
-      start: (event) => {
-        const state = startMultiAgentStream(
-          event,
-          operation,
-          this.activeChildParents,
-        );
-        if (state) {
-          states.set(event, state);
-        }
-      },
-      end: (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
-
-        const result = event.result;
-        if (isAsyncIterable(result)) {
-          patchStreamIfNeeded<StrandsMultiAgentStreamEvent>(result, {
-            aroundNext: (callback) =>
-              runWithAutoInstrumentationSuppressed(callback),
-            onChunk: (chunk) =>
-              handleMultiAgentStreamEvent(
-                state,
-                chunk,
-                this.activeChildParents,
-              ),
-            onComplete: () => {
-              finalizeMultiAgentStream(state, this.activeChildParents);
-              states.delete(event);
-            },
-            onError: (error) => {
-              finalizeMultiAgentStream(state, this.activeChildParents, error);
-              states.delete(event);
-            },
-          });
-          return;
-        }
-
-        finalizeMultiAgentStream(
-          state,
-          this.activeChildParents,
-          undefined,
-          result,
-        );
-        states.delete(event);
-      },
-      error: (event) => {
-        const state = states.get(event);
-        if (!state || !event.error) {
-          return;
-        }
-        finalizeMultiAgentStream(state, this.activeChildParents, event.error);
-        states.delete(event);
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindAutoInstrumentationSuppression?.();
-      tracingChannel.unsubscribe(handlers);
-    });
+    this.unsubscribers.push(
+      channel.intercept((target, thisArg, args, additional) =>
+        instrumentStrandsStreamInvocation<
+          MultiAgentStreamState,
+          StrandsMultiAgentStreamEvent,
+          ReturnType<typeof target>
+        >({
+          finalize: (state, error, output) =>
+            finalizeMultiAgentStream(
+              state,
+              this.activeChildParents,
+              error,
+              output,
+            ),
+          handleChunk: (state, chunk) =>
+            handleMultiAgentStreamEvent(state, chunk, this.activeChildParents),
+          invoke: () => Reflect.apply(target, thisArg, args),
+          name: "Strands multi-agent",
+          start: () =>
+            startMultiAgentStream(
+              args[0],
+              extractOrchestrator(additional.orchestrator, thisArg),
+              operation,
+              this.activeChildParents,
+            ),
+        }),
+      ),
+    );
   }
 }
 
+function instrumentStrandsStreamInvocation<TState, TChunk, TResult>(options: {
+  finalize: (state: TState, error?: unknown, output?: unknown) => void;
+  handleChunk: (state: TState, chunk: TChunk) => void;
+  invoke: () => TResult;
+  name: string;
+  start: () => TState;
+}): TResult {
+  let state: TState | undefined;
+  try {
+    state = options.start();
+  } catch (error) {
+    debugLogger.error(`Error starting ${options.name} instrumentation:`, error);
+  }
+
+  let result: TResult;
+  try {
+    result = runWithAutoInstrumentationSuppressed(options.invoke);
+  } catch (error) {
+    if (state) {
+      try {
+        options.finalize(state, error);
+      } catch (instrumentationError) {
+        debugLogger.error(
+          `Error handling ${options.name} instrumentation failure:`,
+          instrumentationError,
+        );
+      }
+    }
+    throw error;
+  }
+
+  if (state) {
+    try {
+      if (isAsyncIterable(result)) {
+        patchStreamIfNeeded<TChunk>(result, {
+          aroundNext: (callback) =>
+            runWithAutoInstrumentationSuppressed(callback),
+          onChunk: (chunk) => options.handleChunk(state, chunk),
+          onComplete: () => options.finalize(state),
+          onError: (error) => options.finalize(state, error),
+        });
+      } else {
+        options.finalize(state, undefined, result);
+      }
+    } catch (error) {
+      debugLogger.error(
+        `Error finalizing ${options.name} instrumentation:`,
+        error,
+      );
+    }
+  }
+  return result;
+}
+
 function startAgentStream(
-  event: ChannelMessage<typeof strandsAgentSDKChannels.agentStream>,
+  input: unknown,
+  agent: StrandsAgent | undefined,
   activeChildParents: ActiveChildParents,
-): AgentStreamState | undefined {
-  const agent = extractAgent(event);
+): AgentStreamState {
   const model = agent?.model;
   const metadata = {
     ...extractAgentMetadata(agent),
@@ -273,17 +247,14 @@ function startAgentStream(
     ? getOnlyChildParent(activeChildParents, agent)
     : undefined;
   const attachmentCache = createStrandsAttachmentCache();
-  const input = processStrandsInputAttachments(
-    event.arguments[0],
-    attachmentCache,
-  );
+  const processedInput = processStrandsInputAttachments(input, attachmentCache);
   const span = parentSpan
     ? withCurrent(parentSpan, () =>
         startBaseSpan(
           withSpanInstrumentationName(
             {
               event: {
-                input,
+                input: processedInput,
                 metadata,
               },
               name: formatAgentSpanName(agent),
@@ -297,7 +268,7 @@ function startAgentStream(
         withSpanInstrumentationName(
           {
             event: {
-              input,
+              input: processedInput,
               metadata,
             },
             name: formatAgentSpanName(agent),
@@ -318,11 +289,11 @@ function startAgentStream(
 }
 
 function startMultiAgentStream(
-  event: ChannelMessage<MultiAgentStreamChannel>,
+  input: unknown,
+  orchestrator: StrandsMultiAgent | undefined,
   operation: MultiAgentStreamState["operation"],
   activeChildParents: ActiveChildParents,
 ): MultiAgentStreamState {
-  const orchestrator = extractOrchestrator(event);
   const metadata = {
     "strands.operation": operation,
     provider: "strands",
@@ -331,14 +302,14 @@ function startMultiAgentStream(
   const parentSpan = orchestrator
     ? getOnlyChildParent(activeChildParents, orchestrator)
     : undefined;
-  const input = processStrandsInputAttachments(event.arguments[0]);
+  const processedInput = processStrandsInputAttachments(input);
   const span = parentSpan
     ? withCurrent(parentSpan, () =>
         startBaseSpan(
           withSpanInstrumentationName(
             {
               event: {
-                input,
+                input: processedInput,
                 metadata,
               },
               name:
@@ -355,7 +326,7 @@ function startMultiAgentStream(
         withSpanInstrumentationName(
           {
             event: {
-              input,
+              input: processedInput,
               metadata,
             },
             name:
@@ -847,19 +818,18 @@ function finalizeMultiAgentStream(
   state.span.end();
 }
 
-function extractAgent(
-  event: ChannelMessage<typeof strandsAgentSDKChannels.agentStream>,
-): StrandsAgent | undefined {
-  const candidate = event.agent ?? event.self;
+function extractAgent(agent: unknown, self: unknown): StrandsAgent | undefined {
+  const candidate = agent ?? self;
   return isObject(candidate) && typeof candidate.stream === "function"
     ? (candidate as StrandsAgent)
     : undefined;
 }
 
 function extractOrchestrator(
-  event: ChannelMessage<MultiAgentStreamChannel>,
+  orchestrator: unknown,
+  self: unknown,
 ): StrandsMultiAgent | undefined {
-  const candidate = event.orchestrator ?? event.self;
+  const candidate = orchestrator ?? self;
   return isObject(candidate) && typeof candidate.stream === "function"
     ? (candidate as StrandsMultiAgent)
     : undefined;
