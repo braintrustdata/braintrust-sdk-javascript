@@ -91,113 +91,120 @@ describe("PiCodingAgentPlugin", () => {
     expect(mockRemoveInterceptor).toHaveBeenCalledTimes(1);
   });
 
-  it("uses interceptor ALS for prompt, LLM, and tool spans", async () => {
-    const interceptor = promptInterceptor(enablePlugin(plugins));
-    const finalMessage = makeAssistantMessage("done");
-    const originalStreamFn = vi.fn(async () => {
-      expect(isAutoInstrumentationSuppressed()).toBe(true);
-      return makeStream(finalMessage);
-    });
-    const agent = makeAgent(originalStreamFn);
-    agent.state.tools = [bashTool()];
-    const session = makeSession(agent);
-    const context = {
-      systemPrompt: "system",
-      messages: [
-        {
-          role: "user",
-          content: [{ type: "text", text: "hello" }],
-          timestamp: 1,
-        },
-      ],
-      tools: [bashTool()],
-    };
-
-    await interceptor(
-      async function (this: typeof session) {
+  it.each([
+    { property: "streamFn" as const, version: "0.79.1" },
+    { property: "streamFunction" as const, version: "0.81.0" },
+  ])(
+    "uses interceptor ALS for prompt, LLM, and tool spans with $property",
+    async ({ property, version }) => {
+      const interceptor = promptInterceptor(enablePlugin(plugins));
+      const finalMessage = makeAssistantMessage("done");
+      const originalStreamFn = vi.fn(async () => {
         expect(isAutoInstrumentationSuppressed()).toBe(true);
-        const stream = await this.agent.streamFn(anthropicModel(), context, {
-          apiKey: "secret",
-          headers: { authorization: "secret" },
-          reasoning: "low",
-        });
-        await this.agent.emit({
-          args: { command: "printf pi_tool_ok" },
-          toolCallId: "tool-1",
-          toolName: "bash",
-          type: "tool_execution_start",
-        });
-        await this.agent.emit({
-          isError: false,
-          result: { stdout: "pi_tool_ok" },
-          toolCallId: "tool-1",
-          toolName: "bash",
-          type: "tool_execution_end",
-        });
-        await stream.result();
-        await this.agent.emit({
-          message: finalMessage,
-          toolResults: [],
-          turnIndex: 0,
-          type: "turn_end",
-        });
-      },
-      session,
-      ["hello", undefined],
-      { moduleVersion: "0.79.1" },
-    );
+        return makeStream(finalMessage);
+      });
+      const agent = makeAgent(originalStreamFn, property);
+      agent.state.tools = [bashTool()];
+      const session = makeSession(agent);
+      const context = {
+        systemPrompt: "system",
+        messages: [
+          {
+            role: "user",
+            content: [{ type: "text", text: "hello" }],
+            timestamp: 1,
+          },
+        ],
+        tools: [bashTool()],
+      };
 
-    expect(isAutoInstrumentationSuppressed()).toBe(false);
-    expect(agent.streamFn).not.toBe(originalStreamFn);
-    expect(originalStreamFn).toHaveBeenCalledWith(
-      anthropicModel(),
-      context,
-      expect.objectContaining({ apiKey: "secret" }),
-    );
-
-    const taskSpan = findSpan(spans, "AgentSession.prompt");
-    const llmSpan = findSpan(spans, "anthropic.messages.create");
-    const toolSpan = findSpan(spans, "bash");
-    expect(llmSpan?.args.event.input).toEqual([
-      { role: "system", content: "system" },
-      { role: "user", content: [{ type: "text", text: "hello" }] },
-    ]);
-    expect(llmSpan?.args.event.metadata).toMatchObject({
-      model: "claude-haiku-4-5",
-      provider: "anthropic",
-      tools: [
-        {
-          type: "function",
-          function: expect.objectContaining({ name: "bash" }),
+      await interceptor(
+        async function (this: typeof session) {
+          expect(isAutoInstrumentationSuppressed()).toBe(true);
+          const stream = await this.agent[property](anthropicModel(), context, {
+            apiKey: "secret",
+            headers: { authorization: "secret" },
+            reasoning: "low",
+          });
+          await this.agent.emit({
+            args: { command: "printf pi_tool_ok" },
+            toolCallId: "tool-1",
+            toolName: "bash",
+            type: "tool_execution_start",
+          });
+          await this.agent.emit({
+            isError: false,
+            result: { stdout: "pi_tool_ok" },
+            toolCallId: "tool-1",
+            toolName: "bash",
+            type: "tool_execution_end",
+          });
+          await stream.result();
+          await this.agent.emit({
+            message: finalMessage,
+            toolResults: [],
+            turnIndex: 0,
+            type: "turn_end",
+          });
         },
-      ],
-    });
-    expect(llmSpan?.args.event.metadata).not.toHaveProperty("apiKey");
-    expect(llmSpan?.args.event.metadata).not.toHaveProperty("headers");
-    expect(llmSpan?.log).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metrics: expect.objectContaining({
-          completion_tokens: 3,
-          prompt_tokens: 5,
-          tokens: 8,
+        session,
+        ["hello", undefined],
+        { moduleVersion: version },
+      );
+
+      expect(isAutoInstrumentationSuppressed()).toBe(false);
+      expect(agent[property]).not.toBe(originalStreamFn);
+      expect(originalStreamFn).toHaveBeenCalledWith(
+        anthropicModel(),
+        context,
+        expect.objectContaining({ apiKey: "secret" }),
+      );
+
+      const taskSpan = findSpan(spans, "AgentSession.prompt");
+      const llmSpan = findSpan(spans, "anthropic.messages.create");
+      const toolSpan = findSpan(spans, "bash");
+      expect(llmSpan?.args.event.input).toEqual([
+        { role: "system", content: "system" },
+        { role: "user", content: [{ type: "text", text: "hello" }] },
+      ]);
+      expect(llmSpan?.args.event.metadata).toMatchObject({
+        model: "claude-haiku-4-5",
+        "pi_coding_agent.operation": `agent.${property}`,
+        provider: "anthropic",
+        tools: [
+          {
+            type: "function",
+            function: expect.objectContaining({ name: "bash" }),
+          },
+        ],
+      });
+      expect(llmSpan?.args.event.metadata).not.toHaveProperty("apiKey");
+      expect(llmSpan?.args.event.metadata).not.toHaveProperty("headers");
+      expect(llmSpan?.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_tokens: 3,
+            prompt_tokens: 5,
+            tokens: 8,
+          }),
+          output: expect.any(Array),
         }),
-        output: expect.any(Array),
-      }),
-    );
-    expect(toolSpan?.args.event.input).toEqual({
-      command: "printf pi_tool_ok",
-    });
-    expect(toolSpan?.log).toHaveBeenCalledWith(
-      expect.objectContaining({ output: { stdout: "pi_tool_ok" } }),
-    );
-    const finalTaskLog = taskSpan?.log.mock.calls.at(-1)?.[0];
-    expect(finalTaskLog?.metrics).toMatchObject({
-      completion_tokens: 3,
-      prompt_tokens: 5,
-      tokens: 8,
-    });
-    expect(taskSpan?.end).toHaveBeenCalledTimes(1);
-  });
+      );
+      expect(toolSpan?.args.event.input).toEqual({
+        command: "printf pi_tool_ok",
+      });
+      expect(toolSpan?.log).toHaveBeenCalledWith(
+        expect.objectContaining({ output: { stdout: "pi_tool_ok" } }),
+      );
+      const finalTaskLog = taskSpan?.log.mock.calls.at(-1)?.[0];
+      expect(finalTaskLog?.metrics).toMatchObject({
+        completion_tokens: 3,
+        prompt_tokens: 5,
+        tokens: 8,
+      });
+      expect(taskSpan?.end).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it("isolates overlapping prompts on the same agent without prompt matching", async () => {
     const interceptor = promptInterceptor(enablePlugin(plugins));
@@ -521,11 +528,14 @@ function makeIteratorBackedStream(events: any[]) {
   };
 }
 
-function makeAgent(streamFn: any) {
+function makeAgent(
+  streamFunction: any,
+  property: "streamFn" | "streamFunction" = "streamFn",
+): any {
   const listeners = new Set<any>();
   return {
     state: { model: anthropicModel(), tools: [] as any[] },
-    streamFn,
+    [property]: streamFunction,
     subscribe: vi.fn((listener) => {
       listeners.add(listener);
       return vi.fn(() => listeners.delete(listener));

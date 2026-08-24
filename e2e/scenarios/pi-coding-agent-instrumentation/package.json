@@ -6,17 +6,24 @@
       "dependencies": {
         "pi-coding-agent-v0-latest": {
           "package": "@earendil-works/pi-coding-agent",
-          "range": ">=0.0.0 <0.80.0"
+          "range": "0"
+        },
+        "pi-coding-agent-v081-latest": {
+          "package": "@earendil-works/pi-coding-agent",
+          "range": ">=0.81.0 <0.82.0"
         }
       }
     }
   },
   "dependencies": {
     "pi-coding-agent-v0": "npm:@earendil-works/pi-coding-agent@0.79.1",
-    "pi-coding-agent-v0-latest": "npm:@earendil-works/pi-coding-agent@0.79.10"
+    "pi-coding-agent-v0-latest": "npm:@earendil-works/pi-coding-agent@0.84.3",
+    "pi-coding-agent-v081": "npm:@earendil-works/pi-coding-agent@0.81.0",
+    "pi-coding-agent-v081-latest": "npm:@earendil-works/pi-coding-agent@0.81.1"
   },
   "pnpm": {
     "overrides": {
+      "@earendil-works/pi-coding-agent@0.81.0>@earendil-works/pi-agent-core": "0.81.0",
       "brace-expansion@>=3.0.0 <5.0.9": "^5.0.9",
       "undici@<8.9.0": "^8.9.0"
     }

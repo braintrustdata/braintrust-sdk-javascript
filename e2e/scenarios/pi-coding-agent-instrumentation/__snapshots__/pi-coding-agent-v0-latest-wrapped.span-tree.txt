@@ -14,7 +14,7 @@ span_tree:
                 "finish_reason": "stop",
                 "index": 0,
                 "message": {
-                  "content": "PI_CODING_AGENT_OK\n\nCommand output: `pi_tool_ok`",
+                  "content": "PI_CODING_AGENT_OK pi_tool_ok",
                   "role": "assistant"
                 }
               }
@@ -28,17 +28,17 @@ span_tree:
               "provider": "anthropic"
             }
             metrics: {
-              "completion_tokens": 80,
+              "completion_tokens": 6,
               "duration": 0,
               "prompt_cache_creation_tokens": 0,
               "prompt_cached_tokens": 0,
-              "prompt_tokens": 4596,
-              "tokens": 4676
+              "prompt_tokens": 10,
+              "tokens": 16
             }
             ├── anthropic.messages.create [llm]
             │   input: [
             │     {
-            │       "content": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-<hash>/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.10_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-<hash>/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.10_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-<hash>/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.10_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\nCurrent date: <timestamp>\nCurrent working directory: <repo>/e2e/scenarios/pi-coding-agent-instrumentation/",
+            │       "content": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n- Use bash for file operations like ls, rg, find\n- You can inspect PI_* environment variables for current model and session details.\n- Be concise in your responses\n- Show file paths clearly when working with files\n\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-<hash>/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.84.3_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-<hash>/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.84.3_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-<hash>/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.84.3_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md), environment variables (docs/environment-variables.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\nCurrent working directory: <repo>/e2e/scenarios/pi-coding-agent-instrumentation/",
             │       "role": "system"
             │     },
             │     {
@@ -72,7 +72,7 @@ span_tree:
             │         }
             │       ],
             │       "role": "tool",
-            │       "tool_call_id": "<tool-call-id>"
+            │       "tool_call_id": "tool-call-1"
             │     }
             │   ]
             │   output: [
@@ -80,7 +80,7 @@ span_tree:
             │       "finish_reason": "stop",
             │       "index": 0,
             │       "message": {
-            │         "content": "PI_CODING_AGENT_OK\n\nCommand output: `pi_tool_ok`",
+            │         "content": "PI_CODING_AGENT_OK pi_tool_ok",
             │         "role": "assistant"
             │       }
             │     }
@@ -89,18 +89,18 @@ span_tree:
             │     "model": "claude-haiku-4-5",
             │     "pi_coding_agent.api": "anthropic-messages",
             │     "pi_coding_agent.model": "claude-haiku-4-5",
-            │     "pi_coding_agent.operation": "agent.streamFn",
+            │     "pi_coding_agent.operation": "agent.streamFunction",
             │     "pi_coding_agent.stop_reason": "stop",
             │     "provider": "anthropic"
             │   }
             │   metrics: {
-            │     "completion_tokens": 23,
+            │     "completion_tokens": 3,
             │     "duration": 0,
             │     "prompt_cache_creation_tokens": 0,
             │     "prompt_cached_tokens": 0,
-            │     "prompt_tokens": 2335,
+            │     "prompt_tokens": 5,
             │     "time_to_first_token": 0,
-            │     "tokens": 2358
+            │     "tokens": 8
             │   }
             └── bash [tool]
                 input: {
@@ -115,7 +115,7 @@ span_tree:
                   ]
                 }
                 metadata: {
-                  "gen_ai.tool.call.id": "<tool-call-id>",
+                  "gen_ai.tool.call.id": "tool-call-1",
                   "gen_ai.tool.name": "bash",
                   "pi_coding_agent.tool.name": "bash"
                 }

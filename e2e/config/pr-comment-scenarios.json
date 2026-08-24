@@ -94,7 +94,15 @@
       },
       {
         "variantKey": "pi-coding-agent-v0-latest",
-        "label": "v0 latest"
+        "label": "latest"
+      },
+      {
+        "variantKey": "pi-coding-agent-v081",
+        "label": "v0.81 pinned"
+      },
+      {
+        "variantKey": "pi-coding-agent-v081-latest",
+        "label": "v0.81 latest"
       }
     ]
   },
