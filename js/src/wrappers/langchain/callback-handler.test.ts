@@ -128,4 +128,66 @@ describe("BraintrustLangChainCallbackHandler metrics", () => {
       tokens: 12,
     });
   });
+
+  it("preserves reasoning metrics from message usage metadata", async () => {
+    const { endLog } = await finishChatModelRun({
+      generations: [
+        [
+          {
+            message: {
+              usage_metadata: {
+                input_tokens: 10,
+                output_tokens: 20,
+                total_tokens: 30,
+                output_token_details: {
+                  reasoning: 16,
+                },
+              },
+            },
+          },
+        ],
+      ],
+    });
+
+    expect(endLog.metrics).toEqual({
+      prompt_tokens: 10,
+      completion_tokens: 20,
+      completion_reasoning_tokens: 16,
+      tokens: 30,
+    });
+  });
+
+  it("reports zero reasoning tokens rather than dropping the field", async () => {
+    const { endLog } = await finishChatModelRun({
+      generations: [
+        [
+          {
+            message: {
+              usage_metadata: {
+                input_tokens: 12,
+                output_tokens: 2,
+                total_tokens: 14,
+                input_token_details: {
+                  audio: 0,
+                  cache_read: 0,
+                },
+                output_token_details: {
+                  audio: 0,
+                  reasoning: 0,
+                },
+              },
+            },
+          },
+        ],
+      ],
+    });
+
+    expect(endLog.metrics).toEqual({
+      prompt_tokens: 12,
+      completion_tokens: 2,
+      prompt_cached_tokens: 0,
+      completion_reasoning_tokens: 0,
+      tokens: 14,
+    });
+  });
 });
