@@ -54,28 +54,12 @@
                               "invalid_tool_calls": [],
                               "response_metadata": {
                                 "finish_reason": "stop",
-                                "model_name": "gpt-4o-mini-2024-07-18",
+                                "model_name": "gpt-5-nano-2025-08-07",
                                 "model_provider": "openai",
-                                "system_fingerprint": "<system_fingerprint>",
                                 "tokenUsage": {
-                                  "completionTokens": 4,
-                                  "promptTokens": 15,
-                                  "totalTokens": 19
-                                },
-                                "usage": {
-                                  "completion_tokens": 4,
-                                  "completion_tokens_details": {
-                                    "accepted_prediction_tokens": 0,
-                                    "audio_tokens": 0,
-                                    "reasoning_tokens": 0,
-                                    "rejected_prediction_tokens": 0
-                                  },
-                                  "prompt_tokens": 15,
-                                  "prompt_tokens_details": {
-                                    "audio_tokens": 0,
-                                    "cached_tokens": 0
-                                  },
-                                  "total_tokens": 19
+                                  "completionTokens": 205,
+                                  "promptTokens": 14,
+                                  "totalTokens": 219
                                 }
                               },
                               "tool_calls": [],
@@ -85,13 +69,13 @@
                                   "audio": 0,
                                   "cache_read": 0
                                 },
-                                "input_tokens": 15,
+                                "input_tokens": 14,
                                 "output_token_details": {
                                   "audio": 0,
-                                  "reasoning": 0
+                                  "reasoning": 192
                                 },
-                                "output_tokens": 4,
-                                "total_tokens": 19
+                                "output_tokens": 205,
+                                "total_tokens": 219
                               }
                             },
                             "lc": 1,
@@ -103,22 +87,22 @@
                     ],
                     "llmOutput": {
                       "tokenUsage": {
-                        "completionTokens": 4,
-                        "promptTokens": 15,
-                        "totalTokens": 19
+                        "completionTokens": 205,
+                        "promptTokens": 14,
+                        "totalTokens": 219
                       }
                     }
                   },
                   "metadata": {
-                    "model": "gpt-4o-mini-2024-07-18"
+                    "model": "gpt-5-nano-2025-08-07"
                   },
-                  "metric_keys": [
-                    "completion_reasoning_tokens",
-                    "completion_tokens",
-                    "prompt_cached_tokens",
-                    "prompt_tokens",
-                    "tokens"
-                  ]
+                  "metrics": {
+                    "completion_reasoning_tokens": 192,
+                    "completion_tokens": 205,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 14,
+                    "tokens": 219
+                  }
                 }
               ],
               "input": {

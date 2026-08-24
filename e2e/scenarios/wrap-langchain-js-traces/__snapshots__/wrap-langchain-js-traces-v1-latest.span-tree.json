@@ -44,33 +44,17 @@
                         ],
                         "kwargs": {
                           "additional_kwargs": {},
-                          "content": "OK.",
+                          "content": "OK",
                           "id": "<span:1>",
                           "invalid_tool_calls": [],
                           "response_metadata": {
                             "finish_reason": "stop",
-                            "model_name": "gpt-4o-mini-2024-07-18",
+                            "model_name": "gpt-5-nano-2025-08-07",
                             "model_provider": "openai",
-                            "system_fingerprint": "<system_fingerprint>",
                             "tokenUsage": {
-                              "completionTokens": 2,
-                              "promptTokens": 12,
-                              "totalTokens": 14
-                            },
-                            "usage": {
-                              "completion_tokens": 2,
-                              "completion_tokens_details": {
-                                "accepted_prediction_tokens": 0,
-                                "audio_tokens": 0,
-                                "reasoning_tokens": 0,
-                                "rejected_prediction_tokens": 0
-                              },
-                              "prompt_tokens": 12,
-                              "prompt_tokens_details": {
-                                "audio_tokens": 0,
-                                "cached_tokens": 0
-                              },
-                              "total_tokens": 14
+                              "completionTokens": 266,
+                              "promptTokens": 11,
+                              "totalTokens": 277
                             }
                           },
                           "tool_calls": [],
@@ -80,27 +64,27 @@
                               "audio": 0,
                               "cache_read": 0
                             },
-                            "input_tokens": 12,
+                            "input_tokens": 11,
                             "output_token_details": {
                               "audio": 0,
-                              "reasoning": 0
+                              "reasoning": 256
                             },
-                            "output_tokens": 2,
-                            "total_tokens": 14
+                            "output_tokens": 266,
+                            "total_tokens": 277
                           }
                         },
                         "lc": 1,
                         "type": "constructor"
                       },
-                      "text": "OK."
+                      "text": "OK"
                     }
                   ]
                 ],
                 "llmOutput": {
                   "tokenUsage": {
-                    "completionTokens": 2,
-                    "promptTokens": 12,
-                    "totalTokens": 14
+                    "completionTokens": 266,
+                    "promptTokens": 11,
+                    "totalTokens": 277
                   }
                 }
               },
@@ -111,24 +95,21 @@
                   "sdk_language": "javascript"
                 },
                 "invocation_params": {
-                  "max_tokens": 24,
-                  "model": "gpt-4o-mini-2024-07-18",
-                  "stream": false,
-                  "temperature": 0
+                  "max_completion_tokens": 512,
+                  "model": "gpt-5-nano",
+                  "stream": false
                 },
                 "metadata": {
                   "ls_integration": "langchain_chat_model",
-                  "ls_max_tokens": 24,
-                  "ls_model_name": "gpt-4o-mini-2024-07-18",
+                  "ls_model_name": "gpt-5-nano",
                   "ls_model_type": "chat",
                   "ls_provider": "openai",
-                  "ls_temperature": 0,
                   "versions": {
                     "@langchain/core": "1.2.1",
                     "@langchain/openai": "1.5.3"
                   }
                 },
-                "model": "gpt-4o-mini-2024-07-18",
+                "model": "gpt-5-nano-2025-08-07",
                 "options": {},
                 "run_id": "<uuid:1>",
                 "serialized": {
@@ -139,16 +120,15 @@
                     "ChatOpenAI"
                   ],
                   "kwargs": {
-                    "max_tokens": 24,
-                    "model": "gpt-4o-mini-2024-07-18",
+                    "max_tokens": 512,
+                    "model": "gpt-5-nano",
                     "openai_api_key": {
                       "id": [
                         "OPENAI_API_KEY"
                       ],
                       "lc": 1,
                       "type": "secret"
-                    },
-                    "temperature": 0
+                    }
                   },
                   "lc": 1,
                   "type": "constructor"
@@ -156,11 +136,11 @@
                 "tags": []
               },
               "metrics": {
-                "completion_reasoning_tokens": 0,
-                "completion_tokens": 2,
+                "completion_reasoning_tokens": 256,
+                "completion_tokens": 266,
                 "prompt_cached_tokens": 0,
-                "prompt_tokens": 12,
-                "tokens": 14
+                "prompt_tokens": 11,
+                "tokens": 277
               }
             }
           ],
@@ -1301,7 +1281,7 @@
                       "additional_kwargs": {},
                       "content": "6223",
                       "response_metadata": {},
-                      "tool_call_id": "call_lcOSg1ZwQk3T0mSSMO95zd95"
+                      "tool_call_id": "call_BMkQ0blzGQeVPEC7pIElPdRs"
                     },
                     "lc": 1,
                     "type": "constructor"
