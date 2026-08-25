@@ -626,6 +626,11 @@ function normalizeAISDKSnapshotValue(value: unknown): unknown {
       continue;
     }
 
+    if (key === "relevance_score" && typeof entry === "number") {
+      normalized[key] = 0;
+      continue;
+    }
+
     if ((key === "_output" || key === "text") && typeof entry === "string") {
       normalized[key] = "<llm-response>";
       continue;
@@ -977,8 +982,14 @@ export function defineAISDKInstrumentationAssertions(options: {
         const trace = findGenerateImageTrace(events);
 
         expectOperationParentedByRoot(trace.operation, root);
-        expectAISDKParentSpan(trace.parent, "braintrust.test");
+        expectAISDKParentSpan(trace.parent, "openai.image");
         expect(operationName(trace.operation)).toBe("generate-image");
+        expect(trace.parent?.input).toMatchObject({
+          prompt: "Generate an image of a Yoggie",
+        });
+        expect(trace.parent?.row.metadata).toMatchObject({
+          model: "gpt-image-1-mini",
+        });
         const attachments = findAttachmentReferences(trace.parent?.output);
         expect(attachments).toHaveLength(1);
         expect(attachments[0]).toMatchObject({
@@ -987,11 +998,9 @@ export function defineAISDKInstrumentationAssertions(options: {
           content_type: "image/png",
         });
         if (options.sdkMajorVersion >= 6) {
-          expect(trace.parent?.metrics).toMatchObject({
-            prompt_tokens: 3,
-            completion_tokens: 4,
-            tokens: 7,
-          });
+          expectMetricGreaterThanZero(trace.parent, "prompt_tokens");
+          expectMetricGreaterThanZero(trace.parent, "completion_tokens");
+          expectMetricGreaterThanZero(trace.parent, "tokens");
         } else {
           expect(trace.parent?.metrics?.prompt_tokens).toBeUndefined();
           expect(trace.parent?.metrics?.completion_tokens).toBeUndefined();

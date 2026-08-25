@@ -252,33 +252,6 @@ function createOutputObjectIfSupported(ai) {
   return undefined;
 }
 
-function createFakeImageModel(sdkMajorVersion) {
-  return {
-    specificationVersion:
-      sdkMajorVersion >= 7 ? "v4" : sdkMajorVersion >= 6 ? "v3" : "v2",
-    provider: "braintrust.test",
-    modelId: "fake-image-model",
-    maxImagesPerCall: 1,
-    doGenerate: async ({ n = 1 }) => ({
-      images: Array.from(
-        { length: n },
-        () => new Uint8Array([137, 80, 78, 71]),
-      ),
-      warnings: [],
-      usage: {
-        inputTokens: 3,
-        outputTokens: 4,
-        totalTokens: 7,
-      },
-      response: {
-        timestamp: new Date(0),
-        modelId: "fake-image-model",
-        headers: {},
-      },
-    }),
-  };
-}
-
 async function assertOutputObjectResponseFormatShape(ai, sdkMajorVersion) {
   const outputSchema = ai.Output.object({
     schema: z.object({
@@ -440,6 +413,9 @@ async function runAISDKInstrumentationScenario(
       ? instrumentedAI.generateImage
       : instrumentedAI.experimental_generateImage
     : undefined;
+  const openaiImageModel = supportsGenerateImage
+    ? openai.image("gpt-image-1-mini")
+    : undefined;
 
   await runTracedScenario({
     callback: async () => {
@@ -452,17 +428,21 @@ async function runAISDKInstrumentationScenario(
         });
       });
 
-      if (typeof generateImage === "function") {
+      if (typeof generateImage === "function" && openaiImageModel) {
         await runOperation(
           "ai-sdk-generate-image-operation",
           "generate-image",
           async () => {
             await generateImage({
-              model: createFakeImageModel(sdkMajorVersion),
-              prompt: "A deterministic test image",
+              model: openaiImageModel,
+              prompt: "Generate an image of a Yoggie",
               n: 1,
-              size: "1x1",
-              seed: 42,
+              size: "1024x1024",
+              providerOptions: {
+                openai: {
+                  quality: "low",
+                },
+              },
               maxRetries: 0,
             });
           },

@@ -4783,16 +4783,16 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 308
+                        "noCacheTokens": 305
                       },
-                      "inputTokens": 308,
+                      "inputTokens": 305,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
                         "textTokens": 62
                       },
                       "outputTokens": 62,
                       "raw": {
-                        "input_tokens": 308,
+                        "input_tokens": 305,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
@@ -4802,7 +4802,7 @@
                           "reasoning_tokens": 0
                         }
                       },
-                      "totalTokens": 370
+                      "totalTokens": 367
                     }
                   },
                   "metadata": {
@@ -4817,8 +4817,8 @@
                     "completion_tokens": 62,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 308,
-                    "tokens": 370
+                    "prompt_tokens": 305,
+                    "tokens": 367
                   }
                 }
               ],
@@ -5352,16 +5352,16 @@
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
                         "cacheWriteTokens": 0,
-                        "noCacheTokens": 308
+                        "noCacheTokens": 305
                       },
-                      "inputTokens": 308,
+                      "inputTokens": 305,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
                         "textTokens": 62
                       },
                       "outputTokens": 62,
                       "raw": {
-                        "input_tokens": 308,
+                        "input_tokens": 305,
                         "input_tokens_details": {
                           "cache_write_tokens": 0,
                           "cached_tokens": 0
@@ -5371,7 +5371,7 @@
                           "reasoning_tokens": 0
                         }
                       },
-                      "totalTokens": 370
+                      "totalTokens": 367
                     },
                     "warnings": []
                   }
@@ -5469,29 +5469,29 @@
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 741
+                    "noCacheTokens": 738
                   },
-                  "inputTokens": 741,
+                  "inputTokens": 738,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
                     "textTokens": 142
                   },
                   "outputTokens": 142,
-                  "totalTokens": 883
+                  "totalTokens": 880
                 },
                 "usage": {
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
                     "cacheWriteTokens": 0,
-                    "noCacheTokens": 741
+                    "noCacheTokens": 738
                   },
-                  "inputTokens": 741,
+                  "inputTokens": 738,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
                     "textTokens": 142
                   },
                   "outputTokens": 142,
-                  "totalTokens": 883
+                  "totalTokens": 880
                 },
                 "warnings": []
               },

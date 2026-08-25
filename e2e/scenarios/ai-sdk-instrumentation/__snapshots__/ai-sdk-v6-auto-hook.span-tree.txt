@@ -291,15 +291,20 @@ span_tree:
     │       input: {
     │         "maxRetries": 0,
     │         "model": {
-    │           "maxImagesPerCall": 1,
-    │           "modelId": "fake-image-model",
-    │           "provider": "braintrust.test",
+    │           "config": {
+    │             "provider": "openai.image"
+    │           },
+    │           "modelId": "gpt-image-1-mini",
     │           "specificationVersion": "v3"
     │         },
     │         "n": 1,
-    │         "prompt": "A deterministic test image",
-    │         "seed": 42,
-    │         "size": "1x1"
+    │         "prompt": "Generate an image of a Yoggie",
+    │         "providerOptions": {
+    │           "openai": {
+    │             "quality": "low"
+    │           }
+    │         },
+    │         "size": "1024x1024"
     │       }
     │       output: {
     │         "images": [
@@ -310,17 +315,30 @@ span_tree:
     │             "type": "braintrust_attachment"
     │           }
     │         ],
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "images": [
+    │               {
+    │                 "background": "opaque",
+    │                 "created": 0,
+    │                 "outputFormat": "png",
+    │                 "quality": "low",
+    │                 "size": "1024x1024"
+    │               }
+    │             ]
+    │           }
+    │         },
     │         "responses": [
     │           {
     │             "headers": "<omitted>",
-    │             "modelId": "fake-image-model",
+    │             "modelId": "gpt-image-1-mini",
     │             "timestamp": "<timestamp>"
     │           }
     │         ],
     │         "usage": {
-    │           "inputTokens": 3,
-    │           "outputTokens": 4,
-    │           "totalTokens": 7
+    │           "inputTokens": 13,
+    │           "outputTokens": 272,
+    │           "totalTokens": 285
     │         },
     │         "warnings": []
     │       }
@@ -329,13 +347,13 @@ span_tree:
     │           "integration_name": "ai-sdk",
     │           "sdk_language": "typescript"
     │         },
-    │         "model": "fake-image-model",
-    │         "provider": "braintrust.test"
+    │         "model": "gpt-image-1-mini",
+    │         "provider": "openai.image"
     │       }
     │       metrics: {
-    │         "completion_tokens": 4,
-    │         "prompt_tokens": 3,
-    │         "tokens": 7
+    │         "completion_tokens": 272,
+    │         "prompt_tokens": 13,
+    │         "tokens": 285
     │       }
     ├── ai-sdk-output-object-response-format-operation
     │   metadata: {
