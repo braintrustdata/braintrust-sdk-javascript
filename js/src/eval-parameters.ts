@@ -4,6 +4,7 @@ import { Prompt, RemoteEvalParameters } from "./logger";
 import {
   promptDefinitionWithToolsSchema,
   promptDefinitionToPromptData,
+  type PromptDefinitionWithTools,
 } from "./prompt-schemas";
 import { PromptData as promptDataSchema } from "./generated_types";
 
@@ -25,7 +26,20 @@ export const evalParametersSchema = z.record(
   ]),
 );
 
-export type EvalParameters = z.infer<typeof evalParametersSchema>;
+export type EvalParameters = Record<
+  string,
+  | {
+      type: "prompt";
+      default?: PromptDefinitionWithTools;
+      description?: string;
+    }
+  | {
+      type: "model";
+      default?: string;
+      description?: string;
+    }
+  | z.ZodTypeAny
+>;
 
 // Type helper to infer the type of a parameter value
 type InferParameterValue<T> = T extends { type: "prompt" }

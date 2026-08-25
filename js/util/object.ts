@@ -1,7 +1,7 @@
 import {
   AsyncScoringControlType as AsyncScoringControl,
   type ObjectReferenceType,
-} from "./generated_types";
+} from "./generated_plain_types";
 import {
   Source,
   ASYNC_SCORING_CONTROL_FIELD,

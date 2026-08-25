@@ -38,7 +38,8 @@ export enum SpanObjectTypeV3 {
   PLAYGROUND_LOGS = 3,
 }
 
-export const spanObjectTypeV3EnumSchema = z.nativeEnum(SpanObjectTypeV3);
+export const spanObjectTypeV3EnumSchema: z.ZodType<SpanObjectTypeV3> =
+  z.nativeEnum(SpanObjectTypeV3);
 
 export function spanObjectTypeV3ToTypedString(
   objectType: SpanObjectTypeV3,
@@ -81,7 +82,35 @@ const _INTERNAL_SPAN_COMPONENT_UUID_FIELDS_ID_TO_NAME: Record<
   [InternalSpanComponentUUIDFields.ROOT_SPAN_ID]: "root_span_id",
 };
 
-export const spanComponentsV3Schema = z
+type SpanObjectMetadata =
+  | {
+      object_id?: string | null;
+      compute_object_metadata_args?: null;
+    }
+  | {
+      object_id?: null;
+      compute_object_metadata_args: Record<string, unknown>;
+    };
+
+type SpanRowIds =
+  | {
+      row_id: string;
+      span_id: string;
+      root_span_id: string;
+    }
+  | {
+      row_id?: null;
+      span_id?: null;
+      root_span_id?: null;
+    };
+
+export type SpanComponentsV3Data = {
+  object_type: SpanObjectTypeV3;
+  propagated_event?: Record<string, unknown> | null;
+} & SpanObjectMetadata &
+  SpanRowIds;
+
+export const spanComponentsV3Schema: z.ZodType<SpanComponentsV3Data> = z
   .object({
     object_type: spanObjectTypeV3EnumSchema,
     // TODO(manu): We should have a more elaborate zod schema for
@@ -117,8 +146,6 @@ export const spanComponentsV3Schema = z
       }),
     ]),
   );
-
-export type SpanComponentsV3Data = z.infer<typeof spanComponentsV3Schema>;
 
 export class SpanComponentsV3 {
   constructor(public data: SpanComponentsV3Data) {}

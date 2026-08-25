@@ -1,4 +1,4 @@
-import { GitMetadataSettingsType as GitMetadataSettings } from "./generated_types";
+import type { GitMetadataSettingsType as GitMetadataSettings } from "./generated_plain_types";
 
 export function mergeGitMetadataSettings(
   s1: GitMetadataSettings,

@@ -3,17 +3,17 @@ import type { Trace } from "./trace";
 import iso from "./isomorph";
 import { slugify } from "../util/string_util";
 import { z } from "zod/v3";
-import {
-  type FunctionTypeEnumType as FunctionType,
-  type IfExistsType as IfExists,
-  type SavedFunctionIdType as SavedFunctionId,
-  type PromptBlockDataType as PromptBlockData,
-  type PromptDataType as PromptData,
-  type ToolFunctionDefinitionType as ToolFunctionDefinition,
-  FunctionData as functionDataSchema,
-  Project as projectSchema,
-  type ExtendedSavedFunctionIdType as ExtendedSavedFunctionId,
-} from "./generated_types";
+import { Project as projectSchema } from "./generated_types";
+import type {
+  FunctionTypeEnumType as FunctionType,
+  IfExistsType as IfExists,
+  SavedFunctionIdType as SavedFunctionId,
+  PromptBlockDataType as PromptBlockData,
+  PromptDataType as PromptData,
+  ToolFunctionDefinitionType as ToolFunctionDefinition,
+  ExtendedSavedFunctionIdType as ExtendedSavedFunctionId,
+  FunctionDataType,
+} from "./generated_plain_types";
 import { loadPrettyXact, TransactionId } from "../util/index";
 import {
   _internalGetGlobalState,
@@ -782,7 +782,7 @@ interface FunctionEvent {
   name: string;
   description: string;
   prompt_data?: PromptData;
-  function_data: z.infer<typeof functionDataSchema>;
+  function_data: FunctionDataType;
   function_type?: FunctionType;
   if_exists?: IfExists;
   tags?: string[];

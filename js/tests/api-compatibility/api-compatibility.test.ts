@@ -2948,6 +2948,60 @@ describe("API Compatibility", () => {
     expect(fs.existsSync(path.join(tempDir, "package"))).toBe(true);
   });
 
+  test("keeps public declarations free of expanded Zod schema graphs", () => {
+    const publicDeclarationPaths = [
+      "dist/index.d.ts",
+      "dist/browser.d.ts",
+      "util/dist/index.d.ts",
+    ];
+
+    for (const declarationTypesPath of publicDeclarationPaths) {
+      const declarationPath = path.join(
+        __dirname,
+        "..",
+        "..",
+        declarationTypesPath,
+      );
+      const declaration = fs.readFileSync(declarationPath, "utf8");
+
+      expect(declaration).not.toMatch(/z\.infer<typeof/);
+      expect(declaration).not.toMatch(
+        /^declare const [\w$]+: z\.Zod(?:Object|Union|Intersection|DiscriminatedUnion|Record)</m,
+      );
+    }
+
+    const mainDeclaration = fs.readFileSync(
+      path.join(__dirname, "..", "..", "dist/index.d.ts"),
+      "utf8",
+    );
+    for (const schemaName of [
+      "AttachmentReference",
+      "braintrustStreamChunkSchema",
+      "logs3OverflowUploadSchema",
+      "promptContentsSchema",
+      "promptDefinitionSchema",
+      "promptDefinitionWithToolsSchema",
+    ]) {
+      expect(mainDeclaration).toMatch(
+        new RegExp(`declare const ${schemaName}: z\\.ZodType<`),
+      );
+    }
+
+    const utilDeclaration = fs.readFileSync(
+      path.join(__dirname, "..", "..", "util/dist/index.d.ts"),
+      "utf8",
+    );
+    for (const schemaName of [
+      "spanComponentsV3Schema",
+      "spanComponentsV4Schema",
+      "spanObjectTypeV3EnumSchema",
+    ]) {
+      expect(utilDeclaration).toMatch(
+        new RegExp(`declare const ${schemaName}: z\\.ZodType<`),
+      );
+    }
+  });
+
   test("should not regress public API surface for all entrypoints", async () => {
     if (!publishedVersion) {
       console.log("Skipping test: No published version available");

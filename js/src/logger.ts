@@ -66,37 +66,39 @@ import {
   getObjValueByPath,
 } from "./util";
 import {
-  type AnyModelParamsType as AnyModelParam,
   AttachmentReference as attachmentReferenceSchema,
-  type AttachmentReferenceType as AttachmentReference,
   BraintrustAttachmentReference as BraintrustAttachmentReferenceSchema,
-  type BraintrustAttachmentReferenceType as BraintrustAttachmentReference,
   BraintrustModelParams as braintrustModelParamsSchema,
   ChatCompletionTool as chatCompletionToolSchema,
-  type ChatCompletionToolType as ChatCompletionTool,
   ExternalAttachmentReference as ExternalAttachmentReferenceSchema,
-  type ExternalAttachmentReferenceType as ExternalAttachmentReference,
-  type ModelParamsType as ModelParams,
   ResponseFormatJsonSchema as responseFormatJsonSchemaSchema,
   AttachmentStatus as attachmentStatusSchema,
-  type AttachmentStatusType as AttachmentStatus,
   GitMetadataSettings as gitMetadataSettingsSchema,
-  type GitMetadataSettingsType as GitMetadataSettings,
-  type ChatCompletionMessageParamType as Message,
-  type ChatCompletionOpenAIMessageParamType as OpenAIMessage,
   DatasetSnapshot as datasetSnapshotSchema,
-  type DatasetSnapshotType as DatasetSnapshot,
   PromptData as promptDataSchema,
-  type PromptDataType as PromptData,
   Prompt as promptSchema,
-  type PromptType as PromptRow,
-  type PromptSessionEventType as PromptSessionEvent,
-  type RepoInfoType as RepoInfo,
-  type ObjectReferenceType as ObjectReference,
-  type PromptBlockDataType as PromptBlockData,
-  type ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
-  type ObjectReferenceType,
 } from "./generated_types";
+import type {
+  AnyModelParamsType as AnyModelParam,
+  AttachmentReferenceType as AttachmentReference,
+  BraintrustAttachmentReferenceType as BraintrustAttachmentReference,
+  ChatCompletionToolType as ChatCompletionTool,
+  ExternalAttachmentReferenceType as ExternalAttachmentReference,
+  ModelParamsType as ModelParams,
+  AttachmentStatusType as AttachmentStatus,
+  GitMetadataSettingsType as GitMetadataSettings,
+  ChatCompletionMessageParamType as Message,
+  ChatCompletionOpenAIMessageParamType as OpenAIMessage,
+  DatasetSnapshotType as DatasetSnapshot,
+  PromptDataType as PromptData,
+  PromptType as PromptRow,
+  PromptSessionEventType as PromptSessionEvent,
+  RepoInfoType as RepoInfo,
+  ObjectReferenceType as ObjectReference,
+  ObjectReferenceType,
+  PromptBlockDataType as PromptBlockData,
+  ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
+} from "./generated_plain_types";
 
 const BRAINTRUST_ATTACHMENT =
   BraintrustAttachmentReferenceSchema.shape.type.value;
@@ -120,16 +122,21 @@ const datasetRestorePreviewResultSchema = z.object({
   rows_to_restore: z.number(),
   rows_to_delete: z.number(),
 });
-export type DatasetRestorePreviewResult = z.infer<
-  typeof datasetRestorePreviewResultSchema
->;
+export type DatasetRestorePreviewResult = {
+  rows_to_restore: number;
+  rows_to_delete: number;
+};
 
 const datasetRestoreResultSchema = z.object({
   xact_id: z.string().nullable(),
   rows_restored: z.number(),
   rows_deleted: z.number(),
 });
-export type DatasetRestoreResult = z.infer<typeof datasetRestoreResultSchema>;
+export type DatasetRestoreResult = {
+  xact_id: string | null;
+  rows_restored: number;
+  rows_deleted: number;
+};
 
 const parametersRowSchema = z.object({
   id: z.string().uuid(),
@@ -148,7 +155,21 @@ const parametersRowSchema = z.object({
     .union([z.object({}).partial().passthrough(), z.null()])
     .optional(),
 });
-type ParametersRow = z.infer<typeof parametersRowSchema>;
+type ParametersRow = {
+  id: string;
+  _xact_id: string;
+  project_id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  function_type: "parameters";
+  function_data: {
+    type: "parameters";
+    data?: Record<string, unknown>;
+    __schema: Record<string, unknown>;
+  };
+  metadata?: Record<string, unknown> | null;
+};
 
 import { waitUntil } from "@vercel/functions";
 import {
@@ -714,7 +735,18 @@ const loginSchema = z.strictObject({
   debugLogLevelDisabled: z.boolean().optional(),
 });
 
-export type SerializedBraintrustState = z.infer<typeof loginSchema>;
+export type SerializedBraintrustState = {
+  appUrl: string;
+  appPublicUrl: string;
+  orgName: string;
+  apiUrl: string;
+  proxyUrl: string;
+  loginToken: string;
+  orgId?: string | null;
+  gitMetadataSettings?: GitMetadataSettings | null;
+  debugLogLevel?: "error" | "warn" | "info" | "debug";
+  debugLogLevelDisabled?: boolean;
+};
 
 let stateNonce = 0;
 
@@ -1863,7 +1895,10 @@ const attachmentMetadataSchema = z.object({
   status: attachmentStatusSchema,
 });
 
-type AttachmentMetadata = z.infer<typeof attachmentMetadataSchema>;
+type AttachmentMetadata = {
+  downloadUrl: string;
+  status: AttachmentStatus;
+};
 
 /**
  * A readonly alternative to `Attachment`, which can be used for fetching
@@ -2784,14 +2819,22 @@ function castLogger<ToB extends boolean, FromB extends boolean>(
   return logger as unknown as Logger<ToB>;
 }
 
-export const logs3OverflowUploadSchema = z.object({
-  method: z.enum(["PUT", "POST"]),
-  signedUrl: z.string().url(),
-  headers: z.record(z.string()).optional(),
-  fields: z.record(z.string()).optional(),
-  key: z.string().min(1),
-});
-export type Logs3OverflowUpload = z.infer<typeof logs3OverflowUploadSchema>;
+export type Logs3OverflowUpload = {
+  method: "PUT" | "POST";
+  signedUrl: string;
+  headers?: Record<string, string>;
+  fields?: Record<string, string>;
+  key: string;
+};
+
+export const logs3OverflowUploadSchema: z.ZodType<Logs3OverflowUpload> =
+  z.object({
+    method: z.enum(["PUT", "POST"]),
+    signedUrl: z.string().url(),
+    headers: z.record(z.string()).optional(),
+    fields: z.record(z.string()).optional(),
+    key: z.string().min(1),
+  });
 
 export type Logs3OverflowInputRow = {
   object_ids: Record<string, unknown>;

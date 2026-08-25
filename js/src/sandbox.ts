@@ -1,6 +1,6 @@
 import { z } from "zod/v3";
 import { slugify } from "../util/string_util";
-import { type IfExistsType } from "./generated_types";
+import { type IfExistsType } from "./generated_plain_types";
 import { type BraintrustState, _internalGetGlobalState } from "./logger";
 
 /**
