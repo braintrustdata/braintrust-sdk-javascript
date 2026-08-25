@@ -2,29 +2,10 @@ import { z } from "zod/v3";
 import Ajv from "ajv";
 import { Prompt, RemoteEvalParameters } from "./logger";
 import {
-  promptDefinitionWithToolsSchema,
   promptDefinitionToPromptData,
   type PromptDefinitionWithTools,
 } from "./prompt-schemas";
 import { PromptData as promptDataSchema } from "./generated_types";
-
-// Schema for evaluation parameters
-export const evalParametersSchema = z.record(
-  z.string(),
-  z.union([
-    z.object({
-      type: z.literal("prompt"),
-      default: promptDefinitionWithToolsSchema.optional(),
-      description: z.string().optional(),
-    }),
-    z.object({
-      type: z.literal("model"),
-      default: z.string().optional(),
-      description: z.string().optional(),
-    }),
-    z.instanceof(z.ZodType), // For Zod schemas
-  ]),
-);
 
 export type EvalParameters = Record<
   string,
