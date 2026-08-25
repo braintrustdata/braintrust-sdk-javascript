@@ -27,12 +27,12 @@ pnpm run build      # Build all workspace packages (from repo root)
 
 ## Public TypeScript APIs
 
-Do not derive publicly exposed TypeScript types from Zod schemas (for example,
+Do not derive SDK-owned public TypeScript types from Zod schemas (for example,
 with `z.infer`, `z.input`, `z.output`, or equivalent schema-derived aliases).
 Define public API types explicitly with interfaces, type aliases, or generated
-plain types. When exporting a runtime validator, give it a compact public type
-such as `z.ZodType<PublicType>` and test that the validator and public type stay
-in sync.
+plain types. Generic APIs may still infer types from caller-provided schemas.
+When exporting a runtime validator, give it a compact public type such as
+`z.ZodType<PublicType>` and test that the validator and public type stay in sync.
 
 Zod-derived public declarations can expand into large schema implementation
 graphs. Those declarations are expensive for downstream TypeScript consumers to

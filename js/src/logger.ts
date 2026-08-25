@@ -95,7 +95,6 @@ import type {
   PromptSessionEventType as PromptSessionEvent,
   RepoInfoType as RepoInfo,
   ObjectReferenceType as ObjectReference,
-  ObjectReferenceType,
   PromptBlockDataType as PromptBlockData,
   ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
 } from "./generated_plain_types";
@@ -8418,7 +8417,7 @@ export class Dataset<
     metadata?: Record<string, unknown>;
     tags?: string[];
     output?: unknown;
-    origin?: ObjectReferenceType;
+    origin?: ObjectReference;
     isMerge?: boolean;
   }): LazyValue<BackgroundLogEvent> {
     return new LazyValue(async () => {
@@ -8477,7 +8476,7 @@ export class Dataset<
     readonly metadata?: Record<string, unknown>;
     readonly id?: string;
     readonly output?: unknown;
-    readonly origin?: ObjectReferenceType;
+    readonly origin?: ObjectReference;
   }): string {
     this.validateEvent({ metadata, expected, output, tags });
 

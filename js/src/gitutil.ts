@@ -1,6 +1,6 @@
-import {
-  type GitMetadataSettingsType as GitMetadataSettings,
-  type RepoInfoType as RepoInfo,
+import type {
+  GitMetadataSettingsType as GitMetadataSettings,
+  RepoInfoType as RepoInfo,
 } from "./generated_plain_types";
 import { debugLogger } from "./debug-logger";
 import { runGitCommand } from "./git-command";

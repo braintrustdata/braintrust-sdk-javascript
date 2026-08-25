@@ -4,7 +4,7 @@ import {
   SSEProgressEventData as sseProgressEventDataSchema,
 } from "../generated_types";
 import type {
-  CallEventType as CallEventSchema,
+  CallEventType as CallEvent,
   SSEConsoleEventDataType,
   SSEProgressEventDataType,
 } from "../generated_plain_types";
@@ -176,7 +176,7 @@ export class BraintrustStream {
     return this.memoizedFinalValue;
   }
 
-  static parseRawEvent(event: CallEventSchema): BraintrustStreamChunk {
+  static parseRawEvent(event: CallEvent): BraintrustStreamChunk {
     switch (event.event) {
       case "text_delta":
         return {
@@ -225,7 +225,7 @@ export class BraintrustStream {
     }
   }
 
-  static serializeRawEvent(event: BraintrustStreamChunk): CallEventSchema {
+  static serializeRawEvent(event: BraintrustStreamChunk): CallEvent {
     switch (event.type) {
       case "text_delta":
         return {

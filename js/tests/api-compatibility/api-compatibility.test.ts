@@ -2949,6 +2949,7 @@ describe("API Compatibility", () => {
   });
 
   test("keeps public declarations free of expanded Zod schema graphs", () => {
+    const declarationRoot = path.join(__dirname, "..", "..");
     const publicDeclarationPaths = [
       "dist/index.d.ts",
       "dist/browser.d.ts",
@@ -2956,12 +2957,7 @@ describe("API Compatibility", () => {
     ];
 
     for (const declarationTypesPath of publicDeclarationPaths) {
-      const declarationPath = path.join(
-        __dirname,
-        "..",
-        "..",
-        declarationTypesPath,
-      );
+      const declarationPath = path.join(declarationRoot, declarationTypesPath);
       const declaration = fs.readFileSync(declarationPath, "utf8");
 
       expect(declaration).not.toMatch(/z\.infer<typeof/);
@@ -2971,7 +2967,7 @@ describe("API Compatibility", () => {
     }
 
     const mainDeclaration = fs.readFileSync(
-      path.join(__dirname, "..", "..", "dist/index.d.ts"),
+      path.join(declarationRoot, "dist/index.d.ts"),
       "utf8",
     );
     for (const schemaName of [
@@ -2988,7 +2984,7 @@ describe("API Compatibility", () => {
     }
 
     const utilDeclaration = fs.readFileSync(
-      path.join(__dirname, "..", "..", "util/dist/index.d.ts"),
+      path.join(declarationRoot, "util/dist/index.d.ts"),
       "utf8",
     );
     for (const schemaName of [

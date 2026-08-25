@@ -1,10 +1,10 @@
 import { newId, Prompt } from "./logger";
-import {
-  type FunctionIdType as FunctionId,
-  type GraphDataType as GraphData,
-  type GraphNodeType as GraphNode,
-  type GraphEdgeType as GraphEdge,
-  type PromptBlockDataType as PromptBlockData,
+import type {
+  FunctionIdType as FunctionId,
+  GraphDataType as GraphData,
+  GraphNodeType as GraphNode,
+  GraphEdgeType as GraphEdge,
+  PromptBlockDataType as PromptBlockData,
 } from "./generated_plain_types";
 
 export interface BuildContext {

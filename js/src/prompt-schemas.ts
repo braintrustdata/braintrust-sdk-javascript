@@ -17,7 +17,7 @@ export type PromptContents =
   | { prompt: string }
   | { messages: ChatCompletionMessageParamType[] };
 
-const promptContentsSchemaInternal = z.union([
+const internalPromptContentsSchema = z.union([
   z.object({
     prompt: z.string(),
   }),
@@ -29,7 +29,7 @@ export const promptContentsSchema: z.ZodType<
   PromptContents,
   z.ZodTypeDef,
   unknown
-> = promptContentsSchemaInternal;
+> = internalPromptContentsSchema;
 
 export type PromptDefinition = PromptContents & {
   model: string;
@@ -38,7 +38,7 @@ export type PromptDefinition = PromptContents & {
   environments?: string[];
 };
 
-const promptDefinitionSchemaInternal = promptContentsSchemaInternal.and(
+const internalPromptDefinitionSchema = internalPromptContentsSchema.and(
   z.object({
     model: z.string(),
     params: modelParamsSchema.optional(),
@@ -50,14 +50,14 @@ export const promptDefinitionSchema: z.ZodType<
   PromptDefinition,
   z.ZodTypeDef,
   unknown
-> = promptDefinitionSchemaInternal;
+> = internalPromptDefinitionSchema;
 
 export type PromptDefinitionWithTools = PromptDefinition & {
   tools?: ToolFunctionDefinition[];
 };
 
-const promptDefinitionWithToolsSchemaInternal =
-  promptDefinitionSchemaInternal.and(
+const internalPromptDefinitionWithToolsSchema =
+  internalPromptDefinitionSchema.and(
     z.object({
       tools: z.array(toolFunctionDefinitionSchema).optional(),
     }),
@@ -66,7 +66,7 @@ export const promptDefinitionWithToolsSchema: z.ZodType<
   PromptDefinitionWithTools,
   z.ZodTypeDef,
   unknown
-> = promptDefinitionWithToolsSchemaInternal;
+> = internalPromptDefinitionWithToolsSchema;
 
 export function promptDefinitionToPromptData(
   promptDefinition: PromptDefinition,

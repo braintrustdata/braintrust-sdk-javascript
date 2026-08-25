@@ -1,6 +1,6 @@
-import {
+import type {
   AsyncScoringControlType as AsyncScoringControl,
-  type ObjectReferenceType,
+  ObjectReferenceType,
 } from "./generated_plain_types";
 import {
   Source,
