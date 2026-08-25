@@ -4,14 +4,14 @@
       "callIndex": 0,
       "id": "eb9cfd999a33e1b9",
       "matchKey": "POST api.mistral.ai/v1/agents",
-      "recordedAt": "2026-07-21T07:57:35.025Z",
+      "recordedAt": "2026-08-25T04:09:30.279Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "instructions": "You are concise. Keep responses under five words.",
             "model": "mistral-small-2506",
-            "name": "braintrust-e2e-mrud267a"
+            "name": "braintrust-e2e-mt85boal"
           }
         },
         "headers": {},
@@ -35,20 +35,20 @@
               "tool_choice": "auto",
               "top_p": null
             },
-            "created_at": "2026-07-21T07:57:34.961917Z",
+            "created_at": "2026-08-25T04:09:30.152724Z",
             "deployment_chat": false,
             "description": null,
             "guardrails": [],
             "handoffs": null,
-            "id": "ag_019f83ae2160718c9344f6fec242d310",
+            "id": "ag_01a0371be50f77c3a02713424d408e3a",
             "instructions": "You are concise. Keep responses under five words.",
             "metadata": null,
             "model": "mistral-small-2506",
-            "name": "braintrust-e2e-mrud267a",
+            "name": "braintrust-e2e-mt85boal",
             "object": "agent",
             "source": "api",
             "tools": [],
-            "updated_at": "2026-07-21T07:57:34.961919Z",
+            "updated_at": "2026-08-25T04:09:30.152727Z",
             "version": 0,
             "version_message": null,
             "versions": []
@@ -58,21 +58,21 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a7d4dd82c9a8-IAD",
+          "cf-ray": "a307bddaac20b7d7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 21 Jul 2026 07:57:35 GMT",
-          "mistral-correlation-id": "019f83ae-213a-7635-9d56-93a533ed6a8f",
+          "date": "Tue, 25 Aug 2026 04:09:30 GMT",
+          "mistral-correlation-id": "01a0371b-e4e0-7b3f-917b-2dd94d19971b",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "65",
-          "x-kong-proxy-latency": "8",
-          "x-kong-request-id": "019f83ae-213a-7635-9d56-93a533ed6a8f",
-          "x-kong-upstream-latency": "66"
+          "x-envoy-upstream-service-time": "86",
+          "x-kong-proxy-latency": "13",
+          "x-kong-request-id": "01a0371b-e4e0-7b3f-917b-2dd94d19971b",
+          "x-kong-upstream-latency": "87"
         },
         "status": 200,
         "statusText": "OK"
@@ -82,7 +82,7 @@
       "callIndex": 0,
       "id": "14815025e2552fc1",
       "matchKey": "POST api.mistral.ai/v1/chat/completions",
-      "recordedAt": "2026-07-21T07:57:35.279Z",
+      "recordedAt": "2026-08-25T04:09:30.652Z",
       "request": {
         "body": {
           "kind": "json",
@@ -118,23 +118,24 @@
                 "finish_reason": "stop",
                 "index": 0,
                 "message": {
-                  "content": "observability",
+                  "content": "Observability",
                   "role": "assistant",
                   "tool_calls": null
                 }
               }
             ],
-            "created": 1784620655,
-            "id": "693a14dbab75427f9b8083075ad53db2",
-            "model": "mistral-small-2506",
+            "created": 1787630970,
+            "id": "c85ec0499f1a47d3a9f168681d5cc663",
+            "model": "mistral-small-latest",
             "object": "chat.completion",
             "usage": {
               "completion_tokens": 3,
-              "prompt_tokens": 21,
+              "prompt_tokens": 33,
               "prompt_tokens_details": {
                 "cached_tokens": 0
               },
-              "total_tokens": 24
+              "service_tier": "standard",
+              "total_tokens": 36
             }
           }
         },
@@ -142,27 +143,27 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a7d62f55c9a8-IAD",
+          "cf-ray": "a307bddc2859b7d7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 21 Jul 2026 07:57:35 GMT",
-          "mistral-correlation-id": "019f83ae-2208-7aa0-8f08-0d7b5c0663e1",
+          "date": "Tue, 25 Aug 2026 04:09:30 GMT",
+          "mistral-correlation-id": "01a0371b-e5d0-7355-add1-99f39937c680",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "112",
-          "x-kong-proxy-latency": "11",
-          "x-kong-request-id": "019f83ae-2208-7aa0-8f08-0d7b5c0663e1",
-          "x-kong-upstream-latency": "112",
+          "x-envoy-upstream-service-time": "216",
+          "x-kong-proxy-latency": "16",
+          "x-kong-request-id": "01a0371b-e5d0-7355-add1-99f39937c680",
+          "x-kong-upstream-latency": "216",
           "x-max-retry-attempts-reached": "false",
-          "x-ratelimit-limit-req-minute": "1250",
-          "x-ratelimit-limit-tokens-minute": "5000000",
-          "x-ratelimit-remaining-req-minute": "1241",
-          "x-ratelimit-remaining-tokens-minute": "4999513",
-          "x-ratelimit-tokens-query-cost": "24"
+          "x-ratelimit-limit-req-minute": "100",
+          "x-ratelimit-limit-tokens-minute": "100000",
+          "x-ratelimit-remaining-req-minute": "90",
+          "x-ratelimit-remaining-tokens-minute": "99101",
+          "x-ratelimit-tokens-query-cost": "36"
         },
         "status": 200,
         "statusText": "OK"
@@ -172,7 +173,7 @@
       "callIndex": 1,
       "id": "13fe08026ce13a63",
       "matchKey": "POST api.mistral.ai/v1/chat/completions",
-      "recordedAt": "2026-07-21T07:57:35.499Z",
+      "recordedAt": "2026-08-25T04:09:31.037Z",
       "request": {
         "body": {
           "kind": "json",
@@ -198,11 +199,10 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"id\":\"bb1268be59aa45ac9d9e6c07df3b58ef\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-2506\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}",
-            "data: {\"id\":\"bb1268be59aa45ac9d9e6c07df3b58ef\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-2506\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"stream\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopq\"}",
-            "data: {\"id\":\"bb1268be59aa45ac9d9e6c07df3b58ef\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-2506\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"ed\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuv\"}",
-            "data: {\"id\":\"bb1268be59aa45ac9d9e6c07df3b58ef\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-2506\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" output\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstu\"}",
-            "data: {\"id\":\"bb1268be59aa45ac9d9e6c07df3b58ef\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-2506\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":10,\"total_tokens\":14,\"completion_tokens\":4,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"p\":\"abcdefghijklm\"}",
+            "data: {\"id\":\"4a9a7ad7643341079eb7f8ca0c0a11f7\",\"object\":\"chat.completion.chunk\",\"created\":1787630970,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}",
+            "data: {\"id\":\"4a9a7ad7643341079eb7f8ca0c0a11f7\",\"object\":\"chat.completion.chunk\",\"created\":1787630970,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"stream\"},\"finish_reason\":null}],\"p\":\"a\"}",
+            "data: {\"id\":\"4a9a7ad7643341079eb7f8ca0c0a11f7\",\"object\":\"chat.completion.chunk\",\"created\":1787630970,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"ed output\"},\"finish_reason\":null}],\"p\":\"abcdefgh\"}",
+            "data: {\"id\":\"4a9a7ad7643341079eb7f8ca0c0a11f7\",\"object\":\"chat.completion.chunk\",\"created\":1787630970,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":22,\"total_tokens\":26,\"completion_tokens\":4,\"prompt_tokens_details\":{\"cached_tokens\":0},\"service_tier\":\"standard\"},\"p\":\"abcdefg\"}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -211,20 +211,20 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a7d799f4c9a8-IAD",
+          "cf-ray": "a307bdde5f13b7d7-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Tue, 21 Jul 2026 07:57:35 GMT",
-          "mistral-correlation-id": "019f83ae-22fd-746a-aa6f-5b20b16f287d",
+          "date": "Tue, 25 Aug 2026 04:09:30 GMT",
+          "mistral-correlation-id": "01a0371b-e730-7012-bdbf-ed27c7ffd204",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "62",
-          "x-kong-proxy-latency": "8",
-          "x-kong-request-id": "019f83ae-22fd-746a-aa6f-5b20b16f287d",
-          "x-kong-upstream-latency": "63",
+          "x-envoy-upstream-service-time": "221",
+          "x-kong-proxy-latency": "10",
+          "x-kong-request-id": "01a0371b-e730-7012-bdbf-ed27c7ffd204",
+          "x-kong-upstream-latency": "222",
           "x-max-retry-attempts-reached": "false"
         },
         "status": 200,
@@ -235,7 +235,7 @@
       "callIndex": 2,
       "id": "f8c76a97e5ee3ebc",
       "matchKey": "POST api.mistral.ai/v1/chat/completions",
-      "recordedAt": "2026-07-21T07:57:49.332Z",
+      "recordedAt": "2026-08-25T04:09:32.405Z",
       "request": {
         "body": {
           "kind": "json",
@@ -261,69 +261,72 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Let\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz012345678\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"'s break\"},\"finish_reason\":null}],\"p\":\"abcdef\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" down the problem step\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstu\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" by step to find\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123456789\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" John's age.\\n\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvw\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"1. **First\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuv\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Sister (S1\"},\"finish_reason\":null}],\"p\":\"abcdefghijk\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"):**\\n   -\"},\"finish_reason\":null}],\"p\":\"abc\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Current\"},\"finish_reason\":null}],\"p\":\"abcdefghijk\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" age: 4\"},\"finish_reason\":null}],\"p\":\"abcdefghijkl\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" years old\"},\"finish_reason\":null}],\"p\":\"abcdefghijk\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\\n\\n2. **\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqr\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Second\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Sister (S2\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnop\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"):**\\n   -\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz012\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Next year, S\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmno\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"2 will be twice\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqr\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" as old as S\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuv\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"1.\\n   -\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrs\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Next\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz012\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" year, S1\"},\"finish_reason\":null}],\"p\":\"abcdefghij\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" will be \"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"4 + 1\"},\"finish_reason\":null}],\"p\":\"abcdef\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" = 5 years\"},\"finish_reason\":null}],\"p\":\"abc\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" old.\\n   -\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmn\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Therefore, S2\"},\"finish_reason\":null}],\"p\":\"ab\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"'s age next year\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrst\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\":\"},\"finish_reason\":null}],\"p\":\"abcde\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" 2 × \"},\"finish_reason\":null}],\"p\":\"abcdefghijklmn\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"5 = 1\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123456\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"0 years old.\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuv\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"   - Current\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" age of S2\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123456\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\": 1\"},\"finish_reason\":null}],\"p\":\"a\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"0 - 1\"},\"finish_reason\":null}],\"p\":\"abcdefghijklm\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" = 9 years\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" old.\\n\\n3.\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" **Third Sister (\"},\"finish_reason\":null}],\"p\":\"abcdefghijk\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"S3):**\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123456\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"   - S3\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmno\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" is two years older\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopq\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" than S2.\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"   - Current age\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrst\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" of S3:\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz012345678\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" 9\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmno\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" + 2 =\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz01234\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" 11 years\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnop\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" old.\\n\\n4.\"},\"finish_reason\":null}],\"p\":\"abcdefghi\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" **Old\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123456\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"er Brother (John\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvw\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"):**\\n   -\"},\"finish_reason\":null}],\"p\":\"abcd\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" S3 is half\"},\"finish_reason\":null}],\"p\":\"a\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" the age of her\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrst\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" older brother.\\n  \"},\"finish_reason\":null}],\"p\":\"abcd\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" - Therefore, John\"},\"finish_reason\":null}],\"p\":\"a\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"'s age:\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrs\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" 1\"},\"finish_reason\":null}],\"p\":\"abcdefgh\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"1 × 2\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" = 22\"},\"finish_reason\":null}],\"p\":\"abc\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" years old.\\n\\n**\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrst\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Final Answer:**\\n2\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
-            "data: {\"id\":\"ee24d36dccd44d4488f8cf4e9327951a\",\"object\":\"chat.completion.chunk\",\"created\":1784620655,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"2\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":83,\"total_tokens\":300,\"completion_tokens\":217,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"p\":\"abcde\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Let\"},\"finish_reason\":null}],\"p\":\"abcdefgh\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"'s break\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrst\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" down the problem step\"},\"finish_reason\":null}],\"p\":\"abcdef\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" by step to find\"},\"finish_reason\":null}],\"p\":\"abc\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" John's age.\\n\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz012345678\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"1. **First\"},\"finish_reason\":null}],\"p\":\"abcdefghijk\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Sister's\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz012345\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Age:**\\n   -\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz01234\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Given\"},\"finish_reason\":null}],\"p\":\"abcde\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\": The\"},\"finish_reason\":null}],\"p\":\"abcdefghijkl\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" first sister is **\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmno\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"4 years old**.\\n\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvw\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"2. **Second\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmn\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Sister's Age Next\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopq\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Year:**\\n   -\"},\"finish_reason\":null}],\"p\":\"abcdefghij\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Next year, the\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmno\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" second sister will be\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmno\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" twice\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmno\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" as old as the\"},\"finish_reason\":null}],\"p\":\"abcde\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" first sister.\\n  \"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwx\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" - First\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnop\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" sister's age\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopq\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" next year: \\\\(\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz012345678\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"4 + 1\"},\"finish_reason\":null}],\"p\":\"abcdefgh\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" = 5\\\\)\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz01\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" years.\\n   -\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrs\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Therefore\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopq\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\", second sister's\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuv\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" age next year:\"},\"finish_reason\":null}],\"p\":\"abc\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \\\\(2 \\\\times\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmno\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" 5 = \"},\"finish_reason\":null}],\"p\":\"abcdefg\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"10\\\\) years\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz01234\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\\n   - **\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz01234567\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Current age of the\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuv\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" second sister:** \\\\(\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz012345\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"10 - \"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz01234\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"1 = 9\"},\"finish_reason\":null}],\"p\":\"abcdefgh\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\\\\) years.\\n\\n3\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrs\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\". **Third Sister\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"'s Age:**\\n  \"},\"finish_reason\":null}],\"p\":\"abcd\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" - The third sister\"},\"finish_reason\":null}],\"p\":\"abcdefghijkl\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" is two years older\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmn\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" than the second sister\"},\"finish_reason\":null}],\"p\":\"abcde\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\\n   - **\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmn\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Current age of the\"},\"finish_reason\":null}],\"p\":\"a\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" third sister:** \\\\(\"},\"finish_reason\":null}],\"p\":\"abcdefghi\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"9 + 2\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" = 11\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopq\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\\\\) years.\\n\\n4\"},\"finish_reason\":null}],\"p\":\"ab\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\". **John\"},\"finish_reason\":null}],\"p\":\"abcdefghijk\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"'s Age:**\\n  \"},\"finish_reason\":null}],\"p\":\"abcdefghij\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" - The third sister\"},\"finish_reason\":null}],\"p\":\"abcdefg\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" is half the age\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqr\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" of her\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvw\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" older brother (\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuv\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"John).\\n   -\"},\"finish_reason\":null}],\"p\":\"abcdefghij\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Therefore, John's\"},\"finish_reason\":null}],\"p\":\"abcdefg\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" age: \\\\(1\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"1 \\\\times \"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"2 = 2\"},\"finish_reason\":null}],\"p\":\"abcde\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"2\\\\) years.\\n\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnop\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"**Final Answer:**\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxy\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\\\\[\\n\\\\box\"},\"finish_reason\":null}],\"p\":\"abcdefghijklm\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"ed{22\"},\"finish_reason\":null}],\"p\":\"ab\"}",
+            "data: {\"id\":\"3a892e4075304740a3feb7220f07e692\",\"object\":\"chat.completion.chunk\",\"created\":1787630971,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"}\\n\\\\]\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":83,\"total_tokens\":317,\"completion_tokens\":234,\"prompt_tokens_details\":{\"cached_tokens\":0},\"service_tier\":\"standard\"},\"p\":\"abcdefghijklmnopqrstuvwxyz01234\"}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -332,20 +335,20 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a7d8fbd0c9a8-IAD",
+          "cf-ray": "a307bde0cd1cb7d7-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Tue, 21 Jul 2026 07:57:37 GMT",
-          "mistral-correlation-id": "019f83ae-23d8-7de6-9b45-2a8e97bd2f82",
+          "date": "Tue, 25 Aug 2026 04:09:31 GMT",
+          "mistral-correlation-id": "01a0371b-e8b3-786b-b8a3-51b6103933fe",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "1872",
-          "x-kong-proxy-latency": "8",
-          "x-kong-request-id": "019f83ae-23d8-7de6-9b45-2a8e97bd2f82",
-          "x-kong-upstream-latency": "1873",
+          "x-envoy-upstream-service-time": "157",
+          "x-kong-proxy-latency": "19",
+          "x-kong-request-id": "01a0371b-e8b3-786b-b8a3-51b6103933fe",
+          "x-kong-upstream-latency": "158",
           "x-max-retry-attempts-reached": "false"
         },
         "status": 200,
@@ -356,7 +359,7 @@
       "callIndex": 3,
       "id": "2eeb94a546a46c52",
       "matchKey": "POST api.mistral.ai/v1/chat/completions",
-      "recordedAt": "2026-07-21T07:57:49.662Z",
+      "recordedAt": "2026-08-25T04:09:32.984Z",
       "request": {
         "body": {
           "kind": "json",
@@ -404,10 +407,10 @@
                   "tool_calls": [
                     {
                       "function": {
-                        "arguments": "{\"city\": \"Vienna\"}",
+                        "arguments": "{}",
                         "name": "get_weather"
                       },
-                      "id": "4EE1Ao9IY",
+                      "id": "Kn75NNCcu",
                       "index": 0,
                       "type": "function"
                     }
@@ -415,17 +418,18 @@
                 }
               }
             ],
-            "created": 1784620669,
-            "id": "bef1db1544a94a4785396539024283b4",
-            "model": "mistral-small-2506",
+            "created": 1787630972,
+            "id": "cab00da64f554046a5661d12490520ca",
+            "model": "mistral-small-latest",
             "object": "chat.completion",
             "usage": {
-              "completion_tokens": 13,
-              "prompt_tokens": 55,
+              "completion_tokens": 7,
+              "prompt_tokens": 67,
               "prompt_tokens_details": {
                 "cached_tokens": 0
               },
-              "total_tokens": 68
+              "service_tier": "standard",
+              "total_tokens": 74
             }
           }
         },
@@ -433,27 +437,27 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a82f7c42c9a8-IAD",
+          "cf-ray": "a307bde95f17b7d7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 21 Jul 2026 07:57:49 GMT",
-          "mistral-correlation-id": "019f83ae-59e7-7e39-9c5d-fdf557e519c6",
+          "date": "Tue, 25 Aug 2026 04:09:32 GMT",
+          "mistral-correlation-id": "01a0371b-ee0e-7612-9c1c-9464f69dfaf8",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "186",
-          "x-kong-proxy-latency": "14",
-          "x-kong-request-id": "019f83ae-59e7-7e39-9c5d-fdf557e519c6",
-          "x-kong-upstream-latency": "187",
+          "x-envoy-upstream-service-time": "441",
+          "x-kong-proxy-latency": "13",
+          "x-kong-request-id": "01a0371b-ee0e-7612-9c1c-9464f69dfaf8",
+          "x-kong-upstream-latency": "442",
           "x-max-retry-attempts-reached": "false",
-          "x-ratelimit-limit-req-minute": "1250",
-          "x-ratelimit-limit-tokens-minute": "5000000",
-          "x-ratelimit-remaining-req-minute": "1239",
-          "x-ratelimit-remaining-tokens-minute": "4999431",
-          "x-ratelimit-tokens-query-cost": "68"
+          "x-ratelimit-limit-req-minute": "100",
+          "x-ratelimit-limit-tokens-minute": "100000",
+          "x-ratelimit-remaining-req-minute": "87",
+          "x-ratelimit-remaining-tokens-minute": "98684",
+          "x-ratelimit-tokens-query-cost": "74"
         },
         "status": 200,
         "statusText": "OK"
@@ -463,7 +467,7 @@
       "callIndex": 4,
       "id": "9f02baf3695e0b00",
       "matchKey": "POST api.mistral.ai/v1/chat/completions",
-      "recordedAt": "2026-07-21T07:57:50.017Z",
+      "recordedAt": "2026-08-25T04:09:33.434Z",
       "request": {
         "body": {
           "kind": "json",
@@ -511,10 +515,10 @@
                   "tool_calls": [
                     {
                       "function": {
-                        "arguments": "{\"from\": \"USD\", \"to\": \"EUR\"}",
+                        "arguments": "{}",
                         "name": "get_exchange_rate"
                       },
-                      "id": "UD7j5xAoW",
+                      "id": "SWFmUogHz",
                       "index": 0,
                       "type": "function"
                     }
@@ -522,16 +526,17 @@
                 }
               }
             ],
-            "created": 1784620669,
-            "id": "ef781e8fee48475c9f2aaa42231e2600",
-            "model": "mistral-small-2506",
+            "created": 1787630973,
+            "id": "d4a3330cd82349c9a807d83c7c81c9a3",
+            "model": "mistral-small-latest",
             "object": "chat.completion",
             "usage": {
-              "completion_tokens": 20,
-              "prompt_tokens": 58,
+              "completion_tokens": 8,
+              "prompt_tokens": 70,
               "prompt_tokens_details": {
                 "cached_tokens": 0
               },
+              "service_tier": "standard",
               "total_tokens": 78
             }
           }
@@ -540,26 +545,26 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a831dfbbc9a8-IAD",
+          "cf-ray": "a307bded3a13b7d7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 21 Jul 2026 07:57:50 GMT",
-          "mistral-correlation-id": "019f83ae-5b5a-7c30-a035-907ddabd7254",
+          "date": "Tue, 25 Aug 2026 04:09:33 GMT",
+          "mistral-correlation-id": "01a0371b-f07d-79c7-977c-81171e98e075",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "174",
+          "x-envoy-upstream-service-time": "268",
           "x-kong-proxy-latency": "11",
-          "x-kong-request-id": "019f83ae-5b5a-7c30-a035-907ddabd7254",
-          "x-kong-upstream-latency": "175",
+          "x-kong-request-id": "01a0371b-f07d-79c7-977c-81171e98e075",
+          "x-kong-upstream-latency": "269",
           "x-max-retry-attempts-reached": "false",
-          "x-ratelimit-limit-req-minute": "1250",
-          "x-ratelimit-limit-tokens-minute": "5000000",
-          "x-ratelimit-remaining-req-minute": "1238",
-          "x-ratelimit-remaining-tokens-minute": "4999353",
+          "x-ratelimit-limit-req-minute": "100",
+          "x-ratelimit-limit-tokens-minute": "100000",
+          "x-ratelimit-remaining-req-minute": "86",
+          "x-ratelimit-remaining-tokens-minute": "98606",
           "x-ratelimit-tokens-query-cost": "78"
         },
         "status": 200,
@@ -570,7 +575,7 @@
       "callIndex": 5,
       "id": "8ca9551bfff5100b",
       "matchKey": "POST api.mistral.ai/v1/chat/completions",
-      "recordedAt": "2026-07-21T07:57:50.499Z",
+      "recordedAt": "2026-08-25T04:09:34.350Z",
       "request": {
         "body": {
           "kind": "json",
@@ -633,7 +638,7 @@
                         "arguments": "{\"location\": \"Vienna\"}",
                         "name": "get_weather"
                       },
-                      "id": "f4XiJcsFO",
+                      "id": "rGwvZk9MB",
                       "index": 0,
                       "type": "function"
                     },
@@ -642,7 +647,7 @@
                         "arguments": "{\"from_currency\": \"USD\", \"to_currency\": \"EUR\"}",
                         "name": "get_exchange_rate"
                       },
-                      "id": "FbvuBvWdj",
+                      "id": "sZhe5BEcJ",
                       "index": 1,
                       "type": "function"
                     }
@@ -650,17 +655,18 @@
                 }
               }
             ],
-            "created": 1784620670,
-            "id": "5a910a2e387a4dec91db57dc74857ceb",
-            "model": "mistral-small-2506",
+            "created": 1787630973,
+            "id": "3ea9fd04241743af940d0870174c4dd0",
+            "model": "mistral-small-latest",
             "object": "chat.completion",
             "usage": {
               "completion_tokens": 34,
-              "prompt_tokens": 116,
+              "prompt_tokens": 128,
               "prompt_tokens_details": {
                 "cached_tokens": 0
               },
-              "total_tokens": 150
+              "service_tier": "standard",
+              "total_tokens": 162
             }
           }
         },
@@ -668,27 +674,27 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a8340b69c9a8-IAD",
+          "cf-ray": "a307bdf00a08b7d7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 21 Jul 2026 07:57:50 GMT",
-          "mistral-correlation-id": "019f83ae-5cbc-75a7-b737-257f23c32f52",
+          "date": "Tue, 25 Aug 2026 04:09:34 GMT",
+          "mistral-correlation-id": "01a0371b-f23c-7900-95fc-9a71dcf9f610",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "298",
+          "x-envoy-upstream-service-time": "735",
           "x-kong-proxy-latency": "14",
-          "x-kong-request-id": "019f83ae-5cbc-75a7-b737-257f23c32f52",
-          "x-kong-upstream-latency": "299",
+          "x-kong-request-id": "01a0371b-f23c-7900-95fc-9a71dcf9f610",
+          "x-kong-upstream-latency": "736",
           "x-max-retry-attempts-reached": "false",
-          "x-ratelimit-limit-req-minute": "1250",
-          "x-ratelimit-limit-tokens-minute": "5000000",
-          "x-ratelimit-remaining-req-minute": "1237",
-          "x-ratelimit-remaining-tokens-minute": "4999203",
-          "x-ratelimit-tokens-query-cost": "150"
+          "x-ratelimit-limit-req-minute": "100",
+          "x-ratelimit-limit-tokens-minute": "100000",
+          "x-ratelimit-remaining-req-minute": "85",
+          "x-ratelimit-remaining-tokens-minute": "98444",
+          "x-ratelimit-tokens-query-cost": "162"
         },
         "status": 200,
         "statusText": "OK"
@@ -698,7 +704,7 @@
       "callIndex": 0,
       "id": "1321473f0b8e1b2b",
       "matchKey": "POST api.mistral.ai/v1/fim/completions",
-      "recordedAt": "2026-07-21T07:57:50.803Z",
+      "recordedAt": "2026-08-25T04:09:34.662Z",
       "request": {
         "body": {
           "kind": "json",
@@ -731,8 +737,8 @@
                 }
               }
             ],
-            "created": 1784620670,
-            "id": "344a26ea63174d089eb13d1bcce74b43",
+            "created": 1787630974,
+            "id": "7f21930cc3fa413a9436debd73cae8a9",
             "model": "codestral-2508",
             "object": "chat.completion",
             "usage": {
@@ -741,6 +747,7 @@
               "prompt_tokens_details": {
                 "cached_tokens": 0
               },
+              "service_tier": "standard",
               "total_tokens": 20
             }
           }
@@ -749,21 +756,21 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a837083cc9a8-IAD",
+          "cf-ray": "a307bdf5b9f7b7d7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 21 Jul 2026 07:57:50 GMT",
-          "mistral-correlation-id": "019f83ae-5e9c-7b26-8c1b-94c5c4a47082",
+          "date": "Tue, 25 Aug 2026 04:09:34 GMT",
+          "mistral-correlation-id": "01a0371b-f5d1-74bc-b0b5-826689541ba0",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "128",
-          "x-kong-proxy-latency": "10",
-          "x-kong-request-id": "019f83ae-5e9c-7b26-8c1b-94c5c4a47082",
-          "x-kong-upstream-latency": "129",
+          "x-envoy-upstream-service-time": "131",
+          "x-kong-proxy-latency": "14",
+          "x-kong-request-id": "01a0371b-f5d1-74bc-b0b5-826689541ba0",
+          "x-kong-upstream-latency": "132",
           "x-max-retry-attempts-reached": "false",
           "x-ratelimit-limit-req-minute": "500",
           "x-ratelimit-limit-tokens-minute": "1000000",
@@ -779,7 +786,7 @@
       "callIndex": 1,
       "id": "98ef647654f0b136",
       "matchKey": "POST api.mistral.ai/v1/fim/completions",
-      "recordedAt": "2026-07-21T07:57:51.170Z",
+      "recordedAt": "2026-08-25T04:09:34.963Z",
       "request": {
         "body": {
           "kind": "json",
@@ -800,23 +807,23 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"{\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmn\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}],\"p\":\"ab\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" name\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\":\"},\"finish_reason\":null}],\"p\":\"abcdef\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" '\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz01234\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"project\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz012345\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"',\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrs\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" title\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstu\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\":\"},\"finish_reason\":null}],\"p\":\"ab\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" '\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123456\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Projects\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz01\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"',\\n\"},\"finish_reason\":null}],\"p\":\"abcdef\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123456789\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" type\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123\"}",
-            "data: {\"id\":\"0a861e81f4c24e6798d0ba7dfc615acf\",\"object\":\"chat.completion.chunk\",\"created\":1784620670,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\":\"},\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":9,\"total_tokens\":25,\"completion_tokens\":16,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"p\":\"abcdefghijklmnopqrstuvwxyz01234567\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"{\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmno\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}],\"p\":\"abcdefghi\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" name\"},\"finish_reason\":null}],\"p\":\"abcd\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\":\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuv\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" '\"},\"finish_reason\":null}],\"p\":\"abcde\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"project\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopq\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"',\\n\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxy\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}],\"p\":\"abcdefg\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" title\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstu\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\":\"},\"finish_reason\":null}],\"p\":\"abcdefghijk\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" '\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Project\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmn\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"',\\n\"},\"finish_reason\":null}],\"p\":\"abcdefg\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" \"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz012\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" type\"},\"finish_reason\":null}],\"p\":\"abcdefg\"}",
+            "data: {\"id\":\"25e13b81b88b4f1e8674db31044013bd\",\"object\":\"chat.completion.chunk\",\"created\":1787630974,\"model\":\"codestral-2508\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\":\"},\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":9,\"total_tokens\":25,\"completion_tokens\":16,\"prompt_tokens_details\":{\"cached_tokens\":0},\"service_tier\":\"standard\"},\"p\":\"a\"}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -825,20 +832,20 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a8389a8fc9a8-IAD",
+          "cf-ray": "a307bdf76e57b7d7-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Tue, 21 Jul 2026 07:57:51 GMT",
-          "mistral-correlation-id": "019f83ae-5f9c-7de9-b6ac-b23f7021e0ec",
+          "date": "Tue, 25 Aug 2026 04:09:34 GMT",
+          "mistral-correlation-id": "01a0371b-f6d8-7c5e-8203-3f55ac79742e",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "118",
+          "x-envoy-upstream-service-time": "91",
           "x-kong-proxy-latency": "12",
-          "x-kong-request-id": "019f83ae-5f9c-7de9-b6ac-b23f7021e0ec",
-          "x-kong-upstream-latency": "120",
+          "x-kong-request-id": "01a0371b-f6d8-7c5e-8203-3f55ac79742e",
+          "x-kong-upstream-latency": "92",
           "x-max-retry-attempts-reached": "false"
         },
         "status": 200,
@@ -847,14 +854,14 @@
     },
     {
       "callIndex": 0,
-      "id": "41148706d9450ee0",
+      "id": "48218d54c290ab70",
       "matchKey": "POST api.mistral.ai/v1/agents/completions",
-      "recordedAt": "2026-07-21T07:57:51.492Z",
+      "recordedAt": "2026-08-25T04:09:35.300Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
-            "agent_id": "ag_019f83ae2160718c9344f6fec242d310",
+            "agent_id": "ag_01a0371be50f77c3a02713424d408e3a",
             "max_tokens": 16,
             "messages": [
               {
@@ -881,23 +888,24 @@
                 "finish_reason": "stop",
                 "index": 0,
                 "message": {
-                  "content": "Agent complete.",
+                  "content": "Agent complete",
                   "role": "assistant",
                   "tool_calls": null
                 }
               }
             ],
-            "created": 1784620671,
-            "id": "4515bd5bc1d24354a77bb0974a22f41f",
-            "model": "mistral-small-2506",
+            "created": 1787630975,
+            "id": "a799ae98959644f698616eb40d25247b",
+            "model": "mistral-small-latest",
             "object": "chat.completion",
             "usage": {
-              "completion_tokens": 4,
-              "prompt_tokens": 21,
+              "completion_tokens": 3,
+              "prompt_tokens": 33,
               "prompt_tokens_details": {
                 "cached_tokens": 0
               },
-              "total_tokens": 25
+              "service_tier": "standard",
+              "total_tokens": 36
             }
           }
         },
@@ -905,27 +913,27 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a83aede3c9a8-IAD",
+          "cf-ray": "a307bdf94bbab7d7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 21 Jul 2026 07:57:51 GMT",
-          "mistral-correlation-id": "019f83ae-610e-7f19-8dbf-f0b3b4ce77bc",
+          "date": "Tue, 25 Aug 2026 04:09:35 GMT",
+          "mistral-correlation-id": "01a0371b-f804-7e46-9a33-fbc487057f56",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "189",
+          "x-envoy-upstream-service-time": "209",
           "x-kong-proxy-latency": "11",
-          "x-kong-request-id": "019f83ae-610e-7f19-8dbf-f0b3b4ce77bc",
-          "x-kong-upstream-latency": "190",
+          "x-kong-request-id": "01a0371b-f804-7e46-9a33-fbc487057f56",
+          "x-kong-upstream-latency": "210",
           "x-max-retry-attempts-reached": "false",
-          "x-ratelimit-limit-req-minute": "1250",
-          "x-ratelimit-limit-tokens-minute": "5000000",
-          "x-ratelimit-remaining-req-minute": "1236",
-          "x-ratelimit-remaining-tokens-minute": "4999178",
-          "x-ratelimit-tokens-query-cost": "25"
+          "x-ratelimit-limit-req-minute": "100",
+          "x-ratelimit-limit-tokens-minute": "100000",
+          "x-ratelimit-remaining-req-minute": "84",
+          "x-ratelimit-remaining-tokens-minute": "98408",
+          "x-ratelimit-tokens-query-cost": "36"
         },
         "status": 200,
         "statusText": "OK"
@@ -933,14 +941,14 @@
     },
     {
       "callIndex": 1,
-      "id": "21834d1a6798b91a",
+      "id": "edfa6e90f358219b",
       "matchKey": "POST api.mistral.ai/v1/agents/completions",
-      "recordedAt": "2026-07-21T07:57:51.981Z",
+      "recordedAt": "2026-08-25T04:09:35.812Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
-            "agent_id": "ag_019f83ae2160718c9344f6fec242d310",
+            "agent_id": "ag_01a0371be50f77c3a02713424d408e3a",
             "max_tokens": 32,
             "messages": [
               {
@@ -983,10 +991,10 @@
                   "tool_calls": [
                     {
                       "function": {
-                        "arguments": "{}",
+                        "arguments": "{\"city\": \"Vienna\"}",
                         "name": "get_time_in_city"
                       },
-                      "id": "sYXmH2HEN",
+                      "id": "ivyAWOEAf",
                       "index": 0,
                       "type": "function"
                     }
@@ -994,17 +1002,18 @@
                 }
               }
             ],
-            "created": 1784620671,
-            "id": "9cad66f25885478187a68ddfdfcb6bdd",
-            "model": "mistral-small-2506",
+            "created": 1787630975,
+            "id": "8b9dff3696db494096ffff4c5f16ff3a",
+            "model": "mistral-small-latest",
             "object": "chat.completion",
             "usage": {
-              "completion_tokens": 8,
-              "prompt_tokens": 71,
+              "completion_tokens": 14,
+              "prompt_tokens": 83,
               "prompt_tokens_details": {
                 "cached_tokens": 0
               },
-              "total_tokens": 79
+              "service_tier": "standard",
+              "total_tokens": 97
             }
           }
         },
@@ -1012,27 +1021,27 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a83cf912c9a8-IAD",
+          "cf-ray": "a307bdfb69b8b7d7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 21 Jul 2026 07:57:51 GMT",
-          "mistral-correlation-id": "019f83ae-625f-79af-9f91-9170938518af",
+          "date": "Tue, 25 Aug 2026 04:09:35 GMT",
+          "mistral-correlation-id": "01a0371b-f956-7bfd-b9a3-731ce8005639",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "334",
-          "x-kong-proxy-latency": "19",
-          "x-kong-request-id": "019f83ae-625f-79af-9f91-9170938518af",
-          "x-kong-upstream-latency": "336",
+          "x-envoy-upstream-service-time": "377",
+          "x-kong-proxy-latency": "17",
+          "x-kong-request-id": "01a0371b-f956-7bfd-b9a3-731ce8005639",
+          "x-kong-upstream-latency": "378",
           "x-max-retry-attempts-reached": "false",
-          "x-ratelimit-limit-req-minute": "1250",
-          "x-ratelimit-limit-tokens-minute": "5000000",
-          "x-ratelimit-remaining-req-minute": "1235",
-          "x-ratelimit-remaining-tokens-minute": "4999099",
-          "x-ratelimit-tokens-query-cost": "79"
+          "x-ratelimit-limit-req-minute": "100",
+          "x-ratelimit-limit-tokens-minute": "100000",
+          "x-ratelimit-remaining-req-minute": "83",
+          "x-ratelimit-remaining-tokens-minute": "98311",
+          "x-ratelimit-tokens-query-cost": "97"
         },
         "status": 200,
         "statusText": "OK"
@@ -1040,14 +1049,14 @@
     },
     {
       "callIndex": 2,
-      "id": "19a1db9a2eaeb5b5",
+      "id": "cc0691fb277a8477",
       "matchKey": "POST api.mistral.ai/v1/agents/completions",
-      "recordedAt": "2026-07-21T07:57:52.314Z",
+      "recordedAt": "2026-08-25T04:09:36.301Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
-            "agent_id": "ag_019f83ae2160718c9344f6fec242d310",
+            "agent_id": "ag_01a0371be50f77c3a02713424d408e3a",
             "max_tokens": 16,
             "messages": [
               {
@@ -1068,11 +1077,9 @@
       "response": {
         "body": {
           "chunks": [
-            "data: {\"id\":\"93087c87b9bc4039b23b1f83b807a212\",\"object\":\"chat.completion.chunk\",\"created\":1784620672,\"model\":\"mistral-small-2506\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}",
-            "data: {\"id\":\"93087c87b9bc4039b23b1f83b807a212\",\"object\":\"chat.completion.chunk\",\"created\":1784620672,\"model\":\"mistral-small-2506\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Under\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmno\"}",
-            "data: {\"id\":\"93087c87b9bc4039b23b1f83b807a212\",\"object\":\"chat.completion.chunk\",\"created\":1784620672,\"model\":\"mistral-small-2506\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"stood\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwx\"}",
-            "data: {\"id\":\"93087c87b9bc4039b23b1f83b807a212\",\"object\":\"chat.completion.chunk\",\"created\":1784620672,\"model\":\"mistral-small-2506\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"finish_reason\":null}],\"p\":\"abcdefghijklm\"}",
-            "data: {\"id\":\"93087c87b9bc4039b23b1f83b807a212\",\"object\":\"chat.completion.chunk\",\"created\":1784620672,\"model\":\"mistral-small-2506\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":21,\"total_tokens\":25,\"completion_tokens\":4,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"p\":\"a\"}",
+            "data: {\"id\":\"9165c821553a45e58365d82ea4a9107f\",\"object\":\"chat.completion.chunk\",\"created\":1787630976,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}",
+            "data: {\"id\":\"9165c821553a45e58365d82ea4a9107f\",\"object\":\"chat.completion.chunk\",\"created\":1787630976,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Agent\"},\"finish_reason\":null}],\"p\":\"abcdefghijklmnopqrstuvwxyz0123456\"}",
+            "data: {\"id\":\"9165c821553a45e58365d82ea4a9107f\",\"object\":\"chat.completion.chunk\",\"created\":1787630976,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" stream\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":33,\"total_tokens\":36,\"completion_tokens\":3,\"prompt_tokens_details\":{\"cached_tokens\":0},\"service_tier\":\"standard\"},\"p\":\"abcdefghijk\"}",
             "data: [DONE]"
           ],
           "kind": "sse"
@@ -1081,20 +1088,20 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a8404e45c9a8-IAD",
+          "cf-ray": "a307bdfeebf7b7d7-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Tue, 21 Jul 2026 07:57:52 GMT",
-          "mistral-correlation-id": "019f83ae-6469-7dbd-aae8-af57aa279950",
+          "date": "Tue, 25 Aug 2026 04:09:36 GMT",
+          "mistral-correlation-id": "01a0371b-fb86-71ca-9623-d97ddd7e387a",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "102",
-          "x-kong-proxy-latency": "9",
-          "x-kong-request-id": "019f83ae-6469-7dbd-aae8-af57aa279950",
-          "x-kong-upstream-latency": "103",
+          "x-envoy-upstream-service-time": "306",
+          "x-kong-proxy-latency": "15",
+          "x-kong-request-id": "01a0371b-fb86-71ca-9623-d97ddd7e387a",
+          "x-kong-upstream-latency": "307",
           "x-max-retry-attempts-reached": "false"
         },
         "status": 200,
@@ -1105,7 +1112,7 @@
       "callIndex": 0,
       "id": "aecd0d4b46ae8df3",
       "matchKey": "POST api.mistral.ai/v1/embeddings",
-      "recordedAt": "2026-07-21T07:57:52.591Z",
+      "recordedAt": "2026-08-25T04:09:36.526Z",
       "request": {
         "body": {
           "kind": "json",
@@ -1492,7 +1499,7 @@
                 "object": "embedding"
               }
             ],
-            "id": "5bda3749741441d4822cda42cd053022",
+            "id": "c8d84fca212d4dfd87f973cd58f0cd74",
             "model": "mistral-embed",
             "object": "list",
             "usage": {
@@ -1512,21 +1519,21 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a84218d9c9a8-IAD",
+          "cf-ray": "a307be01abc4b7d7-IAD",
           "connection": "keep-alive",
           "content-encoding": "gzip",
           "content-type": "application/json",
-          "date": "Tue, 21 Jul 2026 07:57:52 GMT",
-          "mistral-correlation-id": "019f83ae-6582-782f-9996-10bdba048096",
+          "date": "Tue, 25 Aug 2026 04:09:36 GMT",
+          "mistral-correlation-id": "01a0371b-fd3e-7cfe-8b44-ea99a6c2e193",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "136",
+          "x-envoy-upstream-service-time": "92",
           "x-kong-proxy-latency": "14",
-          "x-kong-request-id": "019f83ae-6582-782f-9996-10bdba048096",
-          "x-kong-upstream-latency": "137",
+          "x-kong-request-id": "01a0371b-fd3e-7cfe-8b44-ea99a6c2e193",
+          "x-kong-upstream-latency": "92",
           "x-ratelimit-limit-req-minute": "360",
           "x-ratelimit-remaining-req-minute": "358",
           "x-ratelimit-tokens-query-cost": "9"
@@ -1537,16 +1544,16 @@
     },
     {
       "callIndex": 0,
-      "id": "23dcec565e2a749c",
-      "matchKey": "DELETE api.mistral.ai/v1/agents/ag_019f83ae2160718c9344f6fec242d310",
-      "recordedAt": "2026-07-21T07:57:52.821Z",
+      "id": "191163560f4cc4ba",
+      "matchKey": "DELETE api.mistral.ai/v1/agents/ag_01a0371be50f77c3a02713424d408e3a",
+      "recordedAt": "2026-08-25T04:09:36.757Z",
       "request": {
         "body": {
           "kind": "empty"
         },
         "headers": {},
         "method": "DELETE",
-        "url": "https://api.mistral.ai/v1/agents/ag_019f83ae2160718c9344f6fec242d310"
+        "url": "https://api.mistral.ai/v1/agents/ag_01a0371be50f77c3a02713424d408e3a"
       },
       "response": {
         "body": {
@@ -1556,18 +1563,18 @@
           "access-control-allow-origin": "*",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1e8a843dbafc9a8-IAD",
+          "cf-ray": "a307be031f9eb7d7-IAD",
           "connection": "keep-alive",
-          "date": "Tue, 21 Jul 2026 07:57:52 GMT",
-          "mistral-correlation-id": "019f83ae-669c-738e-92f9-2ac39de87126",
+          "date": "Tue, 25 Aug 2026 04:09:36 GMT",
+          "mistral-correlation-id": "01a0371b-fe24-736c-9a24-45bec4e6343b",
           "server": "cloudflare",
           "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=15552000; includeSubDomains; preload",
           "x-content-type-options": "nosniff",
-          "x-envoy-upstream-service-time": "95",
+          "x-envoy-upstream-service-time": "97",
           "x-kong-proxy-latency": "12",
-          "x-kong-request-id": "019f83ae-669c-738e-92f9-2ac39de87126",
-          "x-kong-upstream-latency": "97"
+          "x-kong-request-id": "01a0371b-fe24-736c-9a24-45bec4e6343b",
+          "x-kong-upstream-latency": "98"
         },
         "status": 204,
         "statusText": "No Content"

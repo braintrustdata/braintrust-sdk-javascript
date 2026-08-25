@@ -1,9 +1,11 @@
 const CHAT_MODEL = "mistral-small-2506";
+const CHAT_RESPONSE_MODEL = "mistral-small-latest";
 const ADJUSTABLE_REASONING_MODEL = "mistral-small-latest";
 const NATIVE_REASONING_MODEL = "magistral-small-latest";
 const EMBEDDING_MODEL = "mistral-embed";
 const FIM_MODEL = "codestral-2508";
 const AGENT_MODEL = CHAT_MODEL;
+const AGENT_RESPONSE_MODEL = CHAT_RESPONSE_MODEL;
 const CLASSIFIER_MODEL = "mistral-moderation-2603";
 const ROOT_NAME = "mistral-root";
 const SCENARIO_NAME = "mistral-instrumentation";
@@ -11,7 +13,9 @@ const SCENARIO_NAME = "mistral-instrumentation";
 export {
   ADJUSTABLE_REASONING_MODEL,
   AGENT_MODEL,
+  AGENT_RESPONSE_MODEL,
   CHAT_MODEL,
+  CHAT_RESPONSE_MODEL,
   CLASSIFIER_MODEL,
   EMBEDDING_MODEL,
   FIM_MODEL,

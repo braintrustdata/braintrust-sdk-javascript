@@ -77,9 +77,9 @@ span_tree:
     │       metrics: {
     │         "cached_tokens": 0,
     │         "completion_tokens": 2,
-    │         "prompt_tokens": 40,
+    │         "prompt_tokens": 15,
     │         "time_to_first_token": 0,
-    │         "tokens": 42
+    │         "tokens": 17
     │       }
     ├── huggingface-chat-stream-tool-call-operation
     │   metadata: {
@@ -161,7 +161,7 @@ span_tree:
     │   └── huggingface.text_generation [llm]
     │       input: "The capital of France is"
     │       output: {
-    │         "generated_text": " the city of Paris"
+    │         "generated_text": " also one of the"
     │       }
     │       metadata: {
     │         "model": "meta-llama/Llama-3.1-8B",
@@ -181,7 +181,7 @@ span_tree:
     │       input: "The capital of France is"
     │       output: {
     │         "finish_reason": "length",
-    │         "generated_text": " a city of great"
+    │         "generated_text": " a city of art"
     │       }
     │       metadata: {
     │         "finish_reason": "length",

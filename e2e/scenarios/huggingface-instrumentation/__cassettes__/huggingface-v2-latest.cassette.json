@@ -4,7 +4,7 @@
       "callIndex": 0,
       "id": "2bb2abdc43ebde9d",
       "matchKey": "POST router.huggingface.co/v1/chat/completions",
-      "recordedAt": "2026-08-12T03:36:35.571Z",
+      "recordedAt": "2026-08-25T04:10:41.143Z",
       "request": {
         "body": {
           "kind": "json",
@@ -38,8 +38,8 @@
                 }
               }
             ],
-            "created": 1786505795,
-            "id": "chatcmpl-RK2npXm5oHBuKRjBh2Ql3aKi",
+            "created": 1787631041,
+            "id": "chatcmpl-RIaXzXfl99IdAHLAgsLHH5WK",
             "model": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
             "object": "chat.completion",
             "service_tier": "default",
@@ -59,17 +59,18 @@
           "content-length": "471",
           "content-type": "application/json",
           "cross-origin-opener-policy": "same-origin",
-          "date": "Wed, 12 Aug 2026 03:36:35 GMT",
+          "date": "Tue, 25 Aug 2026 04:10:41 GMT",
           "referrer-policy": "strict-origin-when-cross-origin",
           "server": "uvicorn",
+          "strict-transport-security": "max-age=31536000",
           "vary": "Origin",
-          "via": "1.1 bc330e83c319e99d19922ed79166586a.cloudfront.net (CloudFront)",
-          "x-amz-cf-id": "IMxjRHjGj-wzNvkYoslwl_UhwDDH7Ygae-QlJec-h8PNdc2lxsGdXQ==",
+          "via": "1.1 ad2604250e9eed83c372fadb62dfeaca.cloudfront.net (CloudFront)",
+          "x-amz-cf-id": "R18SnKnO02iPDnRtq4wJLQ1lccibfjofg5H-ZhCqYzpxkmad9cCnwQ==",
           "x-amz-cf-pop": "IAD61-P1",
           "x-cache": "Miss from cloudfront",
           "x-inference-provider": "deepinfra",
           "x-powered-by": "huggingface-moon",
-          "x-request-id": "RK2npXm5oHBuKRjBh2Ql3aKi",
+          "x-request-id": "RIaXzXfl99IdAHLAgsLHH5WK",
           "x-robots-tag": "noindex"
         },
         "status": 200,
