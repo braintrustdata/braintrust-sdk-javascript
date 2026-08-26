@@ -1,10 +1,10 @@
-import {
-  FunctionId as functionIdSchema,
-  type InvokeFunctionType as InvokeFunctionRequest,
-  type ChatCompletionMessageParamType as Message,
-  type StreamingModeType as StreamingMode,
-  type FunctionTypeEnumType as FunctionType,
-} from "../generated_types";
+import { FunctionId as functionIdSchema } from "../generated_types";
+import type {
+  InvokeFunctionType as InvokeFunctionRequest,
+  ChatCompletionMessageParamType as Message,
+  StreamingModeType as StreamingMode,
+  FunctionTypeEnumType as FunctionType,
+} from "../generated_plain_types";
 import {
   _internalGetGlobalState,
   BraintrustState,

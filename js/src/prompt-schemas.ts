@@ -1,15 +1,23 @@
 import { z } from "zod/v3";
 import {
   ToolFunctionDefinition as toolFunctionDefinitionSchema,
-  type ToolFunctionDefinitionType as ToolFunctionDefinition,
   ChatCompletionMessageParam as chatCompletionMessageParamSchema,
   ModelParams as modelParamsSchema,
-  type PromptBlockDataType as PromptBlockData,
-  type PromptDataType as PromptData,
 } from "./generated_types";
+import type {
+  ToolFunctionDefinitionType as ToolFunctionDefinition,
+  ChatCompletionMessageParamType,
+  ModelParamsType,
+  PromptBlockDataType as PromptBlockData,
+  PromptDataType as PromptData,
+} from "./generated_plain_types";
 
 // This roughly maps to promptBlockDataSchema, but is more ergonomic for the user.
-export const promptContentsSchema = z.union([
+export type PromptContents =
+  | { prompt: string }
+  | { messages: ChatCompletionMessageParamType[] };
+
+const internalPromptContentsSchema = z.union([
   z.object({
     prompt: z.string(),
   }),
@@ -17,10 +25,20 @@ export const promptContentsSchema = z.union([
     messages: z.array(chatCompletionMessageParamSchema),
   }),
 ]);
+export const promptContentsSchema: z.ZodType<
+  PromptContents,
+  z.ZodTypeDef,
+  unknown
+> = internalPromptContentsSchema;
 
-export type PromptContents = z.infer<typeof promptContentsSchema>;
+export type PromptDefinition = PromptContents & {
+  model: string;
+  params?: ModelParamsType;
+  templateFormat?: "mustache" | "nunjucks" | "none";
+  environments?: string[];
+};
 
-export const promptDefinitionSchema = promptContentsSchema.and(
+const internalPromptDefinitionSchema = internalPromptContentsSchema.and(
   z.object({
     model: z.string(),
     params: modelParamsSchema.optional(),
@@ -28,18 +46,27 @@ export const promptDefinitionSchema = promptContentsSchema.and(
     environments: z.array(z.string()).optional(),
   }),
 );
+export const promptDefinitionSchema: z.ZodType<
+  PromptDefinition,
+  z.ZodTypeDef,
+  unknown
+> = internalPromptDefinitionSchema;
 
-export type PromptDefinition = z.infer<typeof promptDefinitionSchema>;
+export type PromptDefinitionWithTools = PromptDefinition & {
+  tools?: ToolFunctionDefinition[];
+};
 
-export const promptDefinitionWithToolsSchema = promptDefinitionSchema.and(
-  z.object({
-    tools: z.array(toolFunctionDefinitionSchema).optional(),
-  }),
-);
-
-export type PromptDefinitionWithTools = z.infer<
-  typeof promptDefinitionWithToolsSchema
->;
+const internalPromptDefinitionWithToolsSchema =
+  internalPromptDefinitionSchema.and(
+    z.object({
+      tools: z.array(toolFunctionDefinitionSchema).optional(),
+    }),
+  );
+export const promptDefinitionWithToolsSchema: z.ZodType<
+  PromptDefinitionWithTools,
+  z.ZodTypeDef,
+  unknown
+> = internalPromptDefinitionWithToolsSchema;
 
 export function promptDefinitionToPromptData(
   promptDefinition: PromptDefinition,

@@ -1,3 +1,7 @@
+import type { z } from "zod/v3";
+import { AttachmentReference as attachmentReferenceSchema } from "./generated_types";
+import type { AttachmentReferenceType } from "./generated_plain_types";
+
 export type {
   AnyDataset,
   AttachmentParams,
@@ -322,7 +326,8 @@ export type {
 
 export { addAzureBlobHeaders, LazyValue } from "./util";
 
-export { AttachmentReference } from "./generated_types";
+export const AttachmentReference: z.ZodType<AttachmentReferenceType> =
+  attachmentReferenceSchema;
 
 export type { EvalParameters } from "./eval-parameters";
 

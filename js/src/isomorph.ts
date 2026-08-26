@@ -1,7 +1,7 @@
-import {
-  type GitMetadataSettingsType as GitMetadataSettings,
-  type RepoInfoType as RepoInfo,
-} from "./generated_types";
+import type {
+  GitMetadataSettingsType as GitMetadataSettings,
+  RepoInfoType as RepoInfo,
+} from "./generated_plain_types";
 import {
   newGlobalTracingChannel,
   type GlobalHookAsyncLocalStorage,

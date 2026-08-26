@@ -1,9 +1,13 @@
 import {
-  type CallEventType as CallEventSchema,
   CallEvent as callEventSchema,
   SSEConsoleEventData as sseConsoleEventDataSchema,
   SSEProgressEventData as sseProgressEventDataSchema,
 } from "../generated_types";
+import type {
+  CallEventType as CallEvent,
+  SSEConsoleEventDataType,
+  SSEProgressEventDataType,
+} from "../generated_plain_types";
 import {
   createParser,
   EventSourceParser,
@@ -12,46 +16,55 @@ import {
 } from "eventsource-parser";
 import { z } from "zod/v3";
 
-export const braintrustStreamChunkSchema = z.union([
-  z.object({
-    type: z.literal("text_delta"),
-    data: z.string(),
-  }),
-  z.object({
-    type: z.literal("reasoning_delta"),
-    data: z.string(),
-  }),
-  z.object({
-    type: z.literal("json_delta"),
-    data: z.string(),
-  }),
-  z.object({
-    type: z.literal("error"),
-    data: z.string(),
-  }),
-  z.object({
-    type: z.literal("console"),
-    data: sseConsoleEventDataSchema,
-  }),
-  z.object({
-    type: z.literal("progress"),
-    data: sseProgressEventDataSchema,
-  }),
-  z.object({
-    type: z.literal("start"),
-    data: z.string(),
-  }),
-  z.object({
-    type: z.literal("done"),
-    data: z.string(),
-  }),
-]);
-
 /**
  * A chunk of data from a Braintrust stream. Each chunk type matches
  * an SSE event type.
  */
-export type BraintrustStreamChunk = z.infer<typeof braintrustStreamChunkSchema>;
+export type BraintrustStreamChunk =
+  | { type: "text_delta"; data: string }
+  | { type: "reasoning_delta"; data: string }
+  | { type: "json_delta"; data: string }
+  | { type: "error"; data: string }
+  | { type: "console"; data: SSEConsoleEventDataType }
+  | { type: "progress"; data: SSEProgressEventDataType }
+  | { type: "start"; data: string }
+  | { type: "done"; data: string };
+
+export const braintrustStreamChunkSchema: z.ZodType<BraintrustStreamChunk> =
+  z.union([
+    z.object({
+      type: z.literal("text_delta"),
+      data: z.string(),
+    }),
+    z.object({
+      type: z.literal("reasoning_delta"),
+      data: z.string(),
+    }),
+    z.object({
+      type: z.literal("json_delta"),
+      data: z.string(),
+    }),
+    z.object({
+      type: z.literal("error"),
+      data: z.string(),
+    }),
+    z.object({
+      type: z.literal("console"),
+      data: sseConsoleEventDataSchema,
+    }),
+    z.object({
+      type: z.literal("progress"),
+      data: sseProgressEventDataSchema,
+    }),
+    z.object({
+      type: z.literal("start"),
+      data: z.string(),
+    }),
+    z.object({
+      type: z.literal("done"),
+      data: z.string(),
+    }),
+  ]);
 
 /**
  * A Braintrust stream. This is a wrapper around a ReadableStream of `BraintrustStreamChunk`,
@@ -163,7 +176,7 @@ export class BraintrustStream {
     return this.memoizedFinalValue;
   }
 
-  static parseRawEvent(event: CallEventSchema): BraintrustStreamChunk {
+  static parseRawEvent(event: CallEvent): BraintrustStreamChunk {
     switch (event.event) {
       case "text_delta":
         return {
@@ -212,7 +225,7 @@ export class BraintrustStream {
     }
   }
 
-  static serializeRawEvent(event: BraintrustStreamChunk): CallEventSchema {
+  static serializeRawEvent(event: BraintrustStreamChunk): CallEvent {
     switch (event.type) {
       case "text_delta":
         return {

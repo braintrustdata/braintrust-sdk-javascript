@@ -1,4 +1,4 @@
-import { type IfExistsType as IfExists } from "./generated_types";
+import type { IfExistsType as IfExists } from "./generated_plain_types";
 
 export type GenericFunction<Input, Output> =
   | ((input: Input) => Output)

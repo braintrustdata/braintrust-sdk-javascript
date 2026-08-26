@@ -5,6 +5,7 @@ import {
   SpanComponentsV3,
   SpanObjectTypeV3,
   spanObjectTypeV3EnumSchema,
+  type SpanComponentsV3Data,
 } from "./span_identifier_v3";
 import {
   ParentExperimentIds,
@@ -19,7 +20,7 @@ import {
   uint8ArrayToString,
 } from "./bytes";
 import { z } from "zod/v3";
-import { InvokeFunctionType as InvokeFunctionRequest } from "./generated_types";
+import type { InvokeFunctionType as InvokeFunctionRequest } from "./generated_plain_types";
 import { mergeDicts } from "./object_util";
 
 const ENCODING_VERSION_NUMBER_V4 = 4;
@@ -88,7 +89,9 @@ const FIELDS_ID_TO_NAME: Record<Fields, string> = {
   [Fields.ROOT_SPAN_ID]: "root_span_id",
 };
 
-export const spanComponentsV4Schema = z
+export type SpanComponentsV4Data = SpanComponentsV3Data;
+
+export const spanComponentsV4Schema: z.ZodType<SpanComponentsV4Data> = z
   .object({
     object_type: spanObjectTypeV3EnumSchema,
     propagated_event: z.record(z.unknown()).nullish(),
@@ -121,8 +124,6 @@ export const spanComponentsV4Schema = z
       }),
     ]),
   );
-
-export type SpanComponentsV4Data = z.infer<typeof spanComponentsV4Schema>;
 
 export class SpanComponentsV4 {
   constructor(public data: SpanComponentsV4Data) {}

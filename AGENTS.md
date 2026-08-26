@@ -25,6 +25,21 @@ mise install        # Install toolchain and dependencies
 pnpm run build      # Build all workspace packages (from repo root)
 ```
 
+## Public TypeScript APIs
+
+Do not derive SDK-owned public TypeScript types from Zod schemas (for example,
+with `z.infer`, `z.input`, `z.output`, or equivalent schema-derived aliases).
+Define public API types explicitly with interfaces, type aliases, or generated
+plain types. Generic APIs may still infer types from caller-provided schemas.
+When exporting a runtime validator, give it a compact public type such as
+`z.ZodType<PublicType>` and test that the validator and public type stay in sync.
+
+Zod-derived public declarations can expand into large schema implementation
+graphs. Those declarations are expensive for downstream TypeScript consumers to
+parse, instantiate, and type-check, increasing compile time, declaration size,
+and memory usage. They also expose validation-library implementation details as
+part of the SDK's API surface.
+
 ## Instrumentation
 
 Use the normal Orchestrion config plus plugin/channel path by default. Special-case source patches should be rare exceptions only when the target SDK cannot be instrumented through the standard transformer path, and the reason should be documented next to the patch.
