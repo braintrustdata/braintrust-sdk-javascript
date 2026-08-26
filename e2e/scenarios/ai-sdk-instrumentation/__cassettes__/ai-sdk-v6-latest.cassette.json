@@ -4210,6 +4210,40 @@
         "status": 200,
         "statusText": "OK"
       }
+    },
+    {
+      "callIndex": 0,
+      "id": "9de291d498b83c36",
+      "matchKey": "POST api.openai.com/v1/images/generations",
+      "recordedAt": "2026-08-25T19:13:51.870Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "model": "gpt-image-1-mini",
+            "n": 1,
+            "prompt": "Generate an image of a Yoggie",
+            "quality": "low",
+            "size": "1024x1024"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "ai-sdk-v6-latest.cassette.blobs/5f81951ef55626ed4a60ca2c460922b71903b3753f49db880f069b60f9eeef0f.bin",
+          "sha256": "5f81951ef55626ed4a60ca2c460922b71903b3753f49db880f069b60f9eeef0f"
+        },
+        "headers": {
+          "content-type": "application/json"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
     }
   ],
   "meta": {

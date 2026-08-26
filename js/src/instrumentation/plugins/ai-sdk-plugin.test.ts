@@ -26,9 +26,11 @@ import {
   AISDKPlugin,
   DEFAULT_DENY_OUTPUT_PATHS,
   processAISDKCallInput,
+  processAISDKGenerateImageInput,
   processAISDKWorkflowAgentCallInput,
   processAISDKWorkflowAgentModelCallInput,
   processAISDKOutput as processAISDKOutputActual,
+  processAISDKGenerateImageOutput,
 } from "./ai-sdk-plugin";
 import iso from "../../isomorph";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
@@ -219,6 +221,135 @@ describe("AISDKPlugin", () => {
       // Verify that unsubscribers were called
       // This is tested indirectly - if it doesn't throw, unsubscribe worked
       expect(true).toBe(true);
+    });
+  });
+
+  describe("generateImage", () => {
+    it("subscribes to the image generation channel", () => {
+      plugin.enable();
+
+      expect(
+        mockChannels.get("orchestrion:ai:generateImage")?.subscribe,
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    it("converts base64 image data to an attachment without logging bytes", () => {
+      const result = processAISDKGenerateImageOutput(
+        {
+          image: { base64: "aGVsbG8=", mediaType: "image/png" },
+          images: [{ base64: "aGVsbG8=", mediaType: "image/png" }],
+          usage: { inputTokens: 3, outputTokens: 4, totalTokens: 7 },
+        } as any,
+        [],
+      ) as any;
+
+      expect(result.image).toBeUndefined();
+      expect(result.images).toHaveLength(1);
+      expect(result.images[0].reference).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "image/png",
+      });
+      expect(JSON.stringify(result)).not.toContain("aGVsbG8=");
+    });
+
+    it("converts Uint8Array image data to an attachment", () => {
+      const result = processAISDKGenerateImageOutput(
+        {
+          images: [
+            {
+              uint8Array: new Uint8Array([137, 80, 78, 71]),
+              mediaType: "image/png",
+            },
+          ],
+        } as any,
+        [],
+      ) as any;
+
+      expect(result.images[0].reference).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "image/png",
+      });
+      expect(JSON.stringify(result)).not.toContain("137");
+    });
+
+    it("converts inline image-edit inputs while preserving remote URLs", () => {
+      const result = processAISDKGenerateImageInput({
+        model: { modelId: "image-model", provider: "test-provider" },
+        prompt: {
+          images: [
+            "aGVsbG8=",
+            new Uint8Array([137, 80, 78, 71]),
+            "https://example.com/reference.png",
+          ],
+          mask: "data:image/png;base64,d29ybGQ=",
+          text: "Edit these images",
+        },
+      }).input as any;
+
+      expect(result.prompt.images[0].reference).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "image/png",
+      });
+      expect(result.prompt.images[1].reference).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "image/png",
+      });
+      expect(result.prompt.images[2]).toBe("https://example.com/reference.png");
+      expect(result.prompt.mask.reference).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "image/png",
+      });
+      expect(JSON.stringify(result)).not.toContain("aGVsbG8=");
+      expect(JSON.stringify(result)).not.toContain("d29ybGQ=");
+    });
+
+    it("preserves generated files when attachment conversion fails", () => {
+      const malformedFile = {
+        base64: "not valid base64!",
+        mediaType: "image/png",
+        providerData: "keep-me",
+      };
+      const customFile = Object.create({
+        get base64() {
+          throw new Error("unavailable");
+        },
+        get mediaType() {
+          return "image/custom";
+        },
+        get uint8Array() {
+          throw new Error("unavailable");
+        },
+      }) as Record<string, unknown>;
+
+      const result = processAISDKGenerateImageOutput(
+        { images: [malformedFile, customFile] } as any,
+        [],
+      ) as any;
+
+      expect(result.images[0]).toBe(malformedFile);
+      expect(result.images[1]).toBe(customFile);
+    });
+
+    it("falls back to a singular image result without duplicating it", () => {
+      const fallback = processAISDKGenerateImageOutput(
+        {
+          image: { base64: "aGVsbG8=", mediaType: "image/png" },
+        } as any,
+        [],
+      ) as any;
+      const both = processAISDKGenerateImageOutput(
+        {
+          image: { base64: "aGVsbG8=", mediaType: "image/png" },
+          images: [{ base64: "d29ybGQ=", mediaType: "image/png" }],
+        } as any,
+        [],
+      ) as any;
+
+      expect(fallback.images).toHaveLength(1);
+      expect(fallback.image).toBeUndefined();
+      expect(both.images).toHaveLength(1);
+      expect(both.image).toBeUndefined();
+      expect(JSON.stringify(both)).not.toContain("aGVsbG8=");
     });
   });
 

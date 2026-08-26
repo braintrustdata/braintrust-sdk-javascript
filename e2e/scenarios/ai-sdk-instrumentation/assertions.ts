@@ -6,11 +6,7 @@ import {
   withScenarioHarness,
   type ScenarioRunContext,
 } from "../../helpers/scenario-harness";
-import {
-  matchSpanTreeSnapshot,
-  spanTreeFields,
-  type SpanTreeEntry,
-} from "../../helpers/span-tree";
+import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import {
   findAllSpans,
   findChildSpans,
@@ -43,49 +39,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function latestEvent<T>(events: T[]): T | undefined {
   return events.at(-1);
-}
-
-function pickMetadata(
-  metadata: Record<string, unknown> | undefined,
-  keys: string[],
-): Json {
-  if (!metadata) {
-    return null;
-  }
-
-  const picked = Object.fromEntries(
-    keys.flatMap((key) =>
-      key in metadata
-        ? [
-            [
-              key,
-              key === "aiSdkVersion"
-                ? "<ai-sdk-version>"
-                : (metadata[key] as Json),
-            ],
-          ]
-        : [],
-    ),
-  );
-
-  return Object.keys(picked).length > 0 ? (picked as Json) : null;
-}
-
-function pickMetrics(
-  metrics: Record<string, unknown> | undefined,
-  keys: string[],
-): Json {
-  if (!metrics) {
-    return null;
-  }
-
-  const picked = Object.fromEntries(
-    keys.flatMap((key) =>
-      key in metrics ? [[key, metrics[key] as Json]] : [],
-    ),
-  );
-
-  return Object.keys(picked).length > 0 ? (picked as Json) : null;
 }
 
 function collectToolCallNames(output: unknown): string[] {
@@ -170,38 +123,6 @@ function collectMetricValues(
     .filter((value): value is number => typeof value === "number");
 }
 
-function summarizePrompt(value: unknown): Json {
-  if (typeof value === "string") {
-    return "<prompt>";
-  }
-
-  if (!Array.isArray(value)) {
-    return null;
-  }
-
-  return value.map((message) => {
-    if (!isRecord(message)) {
-      return "<message>" as Json;
-    }
-
-    const summary: Record<string, Json> = {
-      role: typeof message.role === "string" ? message.role : "<message>",
-    };
-
-    if (Array.isArray(message.content)) {
-      summary.content_types = message.content
-        .map((entry) => (isRecord(entry) ? entry.type : undefined))
-        .filter((type): type is string => typeof type === "string");
-    }
-
-    return summary as Json;
-  });
-}
-
-function summarizeSchema(value: unknown): Json {
-  return value === undefined ? null : "<schema>";
-}
-
 function findModelChildren(
   capturedEvents: CapturedLogEvent[],
   parentId: string | undefined,
@@ -261,6 +182,25 @@ function findGenerateTrace(events: CapturedLogEvent[]) {
   const child = findLatestModelSpan(events, parent?.span.id, "doGenerate");
 
   return { child, operation, parent };
+}
+
+function findGenerateImageTrace(events: CapturedLogEvent[]) {
+  const operation = findLatestSpan(events, "ai-sdk-generate-image-operation");
+  const parent = findParentSpan(events, "generateImage", operation?.span.id);
+
+  return { operation, parent };
+}
+
+function findAttachmentReferences(value: unknown): Record<string, unknown>[] {
+  if (typeof value !== "object" || value === null) {
+    return [];
+  }
+
+  if (isRecord(value) && value.type === "braintrust_attachment") {
+    return [value];
+  }
+
+  return Object.values(value).flatMap(findAttachmentReferences);
 }
 
 function findGenerateTextTraceForOperation(
@@ -600,7 +540,10 @@ function normalizeAISDKSnapshotValue(value: unknown): unknown {
       continue;
     }
 
-    if (key === "estimated_cost" && typeof entry === "number") {
+    if (
+      (key === "estimated_cost" || key === "relevance_score") &&
+      typeof entry === "number"
+    ) {
       normalized[key] = 0;
       continue;
     }
@@ -638,139 +581,6 @@ function normalizeAISDKSnapshotValue(value: unknown): unknown {
   return normalized;
 }
 
-function snapshotValue(value: unknown): Json {
-  if (value === undefined) {
-    return null;
-  }
-
-  return normalizeAISDKSnapshotValue(structuredClone(value)) as Json;
-}
-
-function summarizeAISDKInput(value: unknown): Json {
-  if (!isRecord(value)) {
-    return snapshotValue(value);
-  }
-
-  const summary: Record<string, Json> = {};
-  const prompt = summarizePrompt(value.prompt ?? value.messages);
-
-  if (prompt !== null) {
-    summary.prompt = prompt;
-  }
-  if (value.schema !== undefined) {
-    summary.schema = summarizeSchema(value.schema);
-  }
-
-  return Object.keys(summary).length > 0
-    ? (summary as Json)
-    : snapshotValue(value);
-}
-
-function summarizeAISDKOutput(name: string | null, value: unknown): Json {
-  if (name === "get_weather") {
-    return snapshotValue(value);
-  }
-
-  if (!isRecord(value)) {
-    return value === undefined ? null : ({} as Json);
-  }
-
-  return {};
-}
-
-function summarizeAISDKPayload(event: CapturedLogEvent): Json {
-  return {
-    input: summarizeAISDKInput(event.input),
-    metadata: pickMetadata(
-      event.row.metadata as Record<string, unknown> | undefined,
-      ["aiSdkVersion", "provider", "model", "operation", "scenario"],
-    ),
-    metrics: pickMetrics(event.metrics, [
-      "completion_tokens",
-      "prompt_tokens",
-      "prompt_cached_tokens",
-      "prompt_cache_creation_tokens",
-      "time_to_first_token",
-      "tokens",
-    ]),
-    name: event.span.name ?? null,
-    output: summarizeAISDKOutput(event.span.name ?? null, event.output),
-  } satisfies Json;
-}
-
-function collectSummaryEvents(
-  events: CapturedLogEvent[],
-  options: {
-    agentSpanName?: AgentSpanName;
-    sdkMajorVersion: number;
-    supportsProviderCacheAssertions: boolean;
-    supportsGenerateObject: boolean;
-    supportsRerank: boolean;
-    supportsStreamObject: boolean;
-  },
-) {
-  const generate = findGenerateTrace(events);
-  const stream = findStreamTrace(events);
-  const tool = findToolTrace(events);
-  const rerank = options.supportsRerank ? findRerankTrace(events) : undefined;
-  const generateObject = options.supportsGenerateObject
-    ? findGenerateObjectTrace(events)
-    : undefined;
-  const streamObject = options.supportsStreamObject
-    ? findStreamObjectTrace(events)
-    : undefined;
-  const agentGenerate = options.agentSpanName
-    ? findAgentGenerateTrace(events, options.agentSpanName)
-    : undefined;
-  const agentStream = options.agentSpanName
-    ? findAgentStreamTrace(events, options.agentSpanName)
-    : undefined;
-
-  return [
-    findLatestSpan(events, ROOT_NAME),
-    generate.operation,
-    generate.parent,
-    stream.operation,
-    stream.parent,
-    tool.operation,
-    tool.parent,
-    ...(rerank ? [rerank.operation, rerank.parent] : []),
-    ...tool.toolSpans,
-    ...(generateObject
-      ? [generateObject.operation, generateObject.parent]
-      : []),
-    ...(streamObject ? [streamObject.operation, streamObject.parent] : []),
-    ...(agentGenerate ? [agentGenerate.operation, agentGenerate.parent] : []),
-    ...(agentStream ? [agentStream.operation, agentStream.parent] : []),
-  ].filter((event): event is CapturedLogEvent => event !== undefined);
-}
-
-function buildSpanTree(
-  events: CapturedLogEvent[],
-  options: {
-    agentSpanName?: AgentSpanName;
-    sdkMajorVersion: number;
-    supportsProviderCacheAssertions: boolean;
-    supportsGenerateObject: boolean;
-    supportsRerank: boolean;
-    supportsStreamObject: boolean;
-  },
-): SpanTreeEntry[] {
-  return collectSummaryEvents(events, options).map((event) => {
-    const summary = summarizeAISDKPayload(event) as Record<string, Json>;
-    const { name: _name, ...fields } = summary;
-
-    return {
-      event,
-      fields: {
-        span_attributes: spanTreeFields(event).span_attributes,
-        ...fields,
-      },
-      name: typeof summary.name === "string" ? summary.name : event.span.name,
-    };
-  });
-}
-
 function expectOperationParentedByRoot(
   operation: CapturedLogEvent | undefined,
   root: CapturedLogEvent | undefined,
@@ -782,9 +592,10 @@ function expectOperationParentedByRoot(
 function expectAISDKParentSpan(
   span: CapturedLogEvent | undefined,
   providerPrefix = "openai",
+  spanType = "function",
 ) {
   expect(span).toBeDefined();
-  expect(span?.span.type).toBe("function");
+  expect(span?.span.type).toBe(spanType);
   expect(span?.row.metadata).toMatchObject({
     braintrust: {
       integration_name: "ai-sdk",
@@ -869,6 +680,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   supportsDenyOutputOverrideScenario: boolean;
   supportsEmbedMany: boolean;
   supportsGenerateObject: boolean;
+  supportsGenerateImage: boolean;
   supportsOutputObjectScenario: boolean;
   supportsRerank: boolean;
   supportsStreamObject: boolean;
@@ -934,6 +746,39 @@ export function defineAISDKInstrumentationAssertions(options: {
         ]),
       ).toBe(true);
     });
+
+    if (options.supportsGenerateImage) {
+      test("captures trace for generateImage()", testConfig, () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const trace = findGenerateImageTrace(events);
+
+        expectOperationParentedByRoot(trace.operation, root);
+        expectAISDKParentSpan(trace.parent, "openai.image", "llm");
+        expect(operationName(trace.operation)).toBe("generate-image");
+        expect(trace.parent?.input).toMatchObject({
+          prompt: "Generate an image of a Yoggie",
+        });
+        expect(trace.parent?.row.metadata).toMatchObject({
+          model: "gpt-image-1-mini",
+        });
+        const attachments = findAttachmentReferences(trace.parent?.output);
+        expect(attachments).toHaveLength(1);
+        expect(attachments[0]).toMatchObject({
+          type: "braintrust_attachment",
+          filename: "generated_image_0.png",
+          content_type: "image/png",
+        });
+        if (options.sdkMajorVersion >= 6) {
+          expectMetricGreaterThanZero(trace.parent, "prompt_tokens");
+          expectMetricGreaterThanZero(trace.parent, "completion_tokens");
+          expectMetricGreaterThanZero(trace.parent, "tokens");
+        } else {
+          expect(trace.parent?.metrics?.prompt_tokens).toBeUndefined();
+          expect(trace.parent?.metrics?.completion_tokens).toBeUndefined();
+          expect(trace.parent?.metrics?.tokens).toBeUndefined();
+        }
+      });
+    }
 
     if (options.supportsOpenAICacheAssertions) {
       test(
