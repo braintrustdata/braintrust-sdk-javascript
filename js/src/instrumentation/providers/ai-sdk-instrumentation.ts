@@ -1,0 +1,4227 @@
+import { toLoggedError } from "../core";
+import { debugLogger } from "../../debug-logger";
+import {
+  traceAsyncChannel,
+  traceStreamingChannel,
+  traceSyncStreamChannel,
+} from "../core/channel-tracing";
+import type { ChannelMessage } from "../core/channel-definitions";
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
+import type { IsoChannelHandlers } from "../../isomorph";
+import {
+  SpanTypeAttribute,
+  isObject,
+  isPromiseLike,
+} from "../../../util/index";
+import { getCurrentUnixTimestamp } from "../../util";
+import {
+  _internalStartSpanWithInitialMerge,
+  Attachment,
+  currentSpan,
+  type Span,
+  withCurrent,
+} from "../../logger";
+import {
+  INSTRUMENTATION_NAMES,
+  withSpanInstrumentationName,
+} from "../../span-origin";
+import {
+  convertDataToBlob,
+  getExtensionFromMediaType,
+} from "../../wrappers/attachment-utils";
+import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logged-output";
+import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
+import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
+import {
+  bindHarnessTurnParentToStart,
+  captureHarnessCreateSessionParent,
+  endHarnessTurn,
+  harnessContinuationParent,
+  registerHarnessSessionParent,
+  registerHarnessTurnSpan,
+  updateHarnessTurn,
+  type HarnessTurnParent,
+} from "../../wrappers/ai-sdk/harness-agent-context";
+import {
+  registerWorkflowAgentWrapperSpan,
+  unregisterWorkflowAgentWrapperSpan,
+} from "../../wrappers/ai-sdk/workflow-agent-context";
+import { zodToJsonSchema } from "../../zod/utils";
+import { aiSDKChannels, harnessAgentChannels } from "./ai-sdk-channels";
+import { currentCloudflareThinkSpan } from "./cloudflare-think-context";
+import type {
+  AISDK,
+  AISDKCallParams,
+  AISDKEmbedParams,
+  AISDKEmbeddingResult,
+  AISDKHarnessAgentCallParams,
+  AISDKHarnessAgentSettings,
+  AISDKLanguageModel,
+  AISDKModel,
+  AISDKModelStreamChunk,
+  AISDKOutputObject,
+  AISDKOutputResponseFormat,
+  AISDKRerankParams,
+  AISDKRerankResult,
+  AISDKResult,
+  AISDKTool,
+  AISDKTools,
+  AISDKUsage,
+} from "../../vendor-sdk-types/ai-sdk";
+import type {
+  AISDKV7Telemetry,
+  AISDKV7TelemetryOptions,
+} from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+
+interface AISDKInstrumentationConfig {
+  /**
+   * List of JSON paths to remove from output field.
+   * Uses dot notation with array wildcards: "roundtrips[].request.body"
+   */
+  denyOutputPaths?: string[];
+}
+
+/**
+ * Default paths to omit from AI SDK output logging.
+ * These contain redundant or verbose data that's not useful for tracing.
+ */
+export const DEFAULT_DENY_OUTPUT_PATHS: string[] = [
+  // v3
+  "roundtrips[].request.body",
+  "roundtrips[].request.headers",
+  "roundtrips[].response.headers",
+  "rawResponse.headers",
+  "responseMessages",
+  // v5
+  "request.body",
+  "request.headers",
+  "responses[].headers",
+  "response.body",
+  "response.headers",
+  "steps[].request.body",
+  "steps[].request.headers",
+  "steps[].responses[].headers",
+  "steps[].response.body",
+  "steps[].response.headers",
+];
+
+const AUTO_PATCHED_MODEL = Symbol.for("braintrust.ai-sdk.auto-patched-model");
+const AUTO_PATCHED_TOOL = Symbol.for("braintrust.ai-sdk.auto-patched-tool");
+const AUTO_PATCHED_V7_TELEMETRY_DISPATCHER = Symbol.for(
+  "braintrust.ai-sdk.v7.auto-patched-telemetry-dispatcher",
+);
+const RUNTIME_DENY_OUTPUT_PATHS = Symbol.for(
+  "braintrust.ai-sdk.deny-output-paths",
+);
+let aiSDKV7TelemetryOperationCounter = 0;
+const TRANSPORT_PAYLOAD_ROOT_PATHS = [
+  "rawResponse",
+  "request",
+  "response",
+  "responses[]",
+  "roundtrips[].request",
+  "roundtrips[].response",
+  "steps[].request",
+  "steps[].response",
+  "steps[].responses[]",
+];
+
+const AI_SDK_V7_TELEMETRY_CALLBACKS = [
+  "onStart",
+  "onStepStart",
+  "onLanguageModelCallStart",
+  "onLanguageModelCallEnd",
+  "onToolExecutionStart",
+  "onToolExecutionEnd",
+  "onChunk",
+  "onStepEnd",
+  "onStepFinish",
+  "onObjectStepStart",
+  "onObjectStepEnd",
+  "onEmbedStart",
+  "onEmbedEnd",
+  "onRerankStart",
+  "onRerankEnd",
+  "onEnd",
+  "onAbort",
+  "onError",
+] as const;
+
+/**
+ * Internal AI SDK consumer that subscribes to instrumentation channels
+ * and creates Braintrust spans.
+ *
+ * This consumer handles:
+ * - generateText (async function)
+ * - streamText (function returning stream)
+ * - generateObject (async function)
+ * - streamObject (function returning stream)
+ * - embed (async function)
+ * - embedMany (async function)
+ * - rerank (async function)
+ * - Agent.generate (async method)
+ * - Agent.stream (async method returning stream)
+ * - ToolLoopAgent.generate (async method)
+ * - ToolLoopAgent.stream (async method returning stream)
+ * - WorkflowAgent.stream (async method returning stream)
+ *
+ * The consumer automatically extracts:
+ * - Model and provider information
+ * - Token usage metrics
+ * - Tool calls and structured outputs
+ * - Streaming responses with time-to-first-token
+ */
+class AISDKInstrumentationConsumer {
+  private config: AISDKInstrumentationConfig;
+
+  constructor(config: AISDKInstrumentationConfig = {}) {
+    this.config = config;
+  }
+
+  public register(): void {
+    this.subscribeToAISDK();
+  }
+
+  private subscribeToAISDK(): void {
+    const denyOutputPaths =
+      this.config.denyOutputPaths || DEFAULT_DENY_OUTPUT_PATHS;
+
+    subscribeToAISDKV7TelemetryDispatcher();
+    subscribeToHarnessAgentCreateSession();
+    subscribeToHarnessContinuation(
+      harnessAgentChannels.continueGenerate,
+      denyOutputPaths,
+    );
+    subscribeToHarnessContinuation(
+      harnessAgentChannels.continueStream,
+      denyOutputPaths,
+    );
+
+    // generateText - async function that may return streams
+    traceStreamingChannel(aiSDKChannels.generateText, {
+      name: "generateText",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths),
+      extractOutput: (result, endEvent) => {
+        finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
+        return processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        );
+      },
+      extractMetrics: (result, _startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent),
+      aggregateChunks: aggregateAISDKChunks,
+    });
+
+    // streamText - function returning stream
+    traceStreamingChannel(aiSDKChannels.streamText, {
+      name: "streamText",
+      type: SpanTypeAttribute.FUNCTION,
+      shouldTrace: () => currentCloudflareThinkSpan() === undefined,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths),
+      extractOutput: (result, endEvent) =>
+        processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result, startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent, startTime),
+      aggregateChunks: aggregateAISDKChunks,
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths: denyOutputPaths,
+          endEvent,
+          result,
+          span,
+          startTime,
+        }),
+    });
+
+    // streamText - sync function returning stream (v4+, used by auto-hook)
+    traceSyncStreamChannel(aiSDKChannels.streamTextSync, {
+      name: "streamText",
+      type: SpanTypeAttribute.FUNCTION,
+      shouldTrace: () => currentCloudflareThinkSpan() === undefined,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths),
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths: denyOutputPaths,
+          endEvent,
+          result,
+          span,
+          startTime,
+        }),
+    });
+
+    // generateObject - async function that may return streams
+    traceStreamingChannel(aiSDKChannels.generateObject, {
+      name: "generateObject",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths),
+      extractOutput: (result, endEvent) => {
+        finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
+        return processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        );
+      },
+      extractMetrics: (result, _startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent),
+      aggregateChunks: aggregateAISDKChunks,
+    });
+
+    // streamObject - function returning stream
+    traceStreamingChannel(aiSDKChannels.streamObject, {
+      name: "streamObject",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths),
+      extractOutput: (result, endEvent) =>
+        processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result, startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent, startTime),
+      aggregateChunks: aggregateAISDKChunks,
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths: denyOutputPaths,
+          endEvent,
+          result,
+          span,
+          startTime,
+        }),
+    });
+
+    // streamObject - sync function returning stream (v4+, used by auto-hook)
+    traceSyncStreamChannel(aiSDKChannels.streamObjectSync, {
+      name: "streamObject",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths),
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths: denyOutputPaths,
+          endEvent,
+          result,
+          span,
+          startTime,
+        }),
+    });
+
+    // embed - async embedding function
+    traceAsyncChannel(aiSDKChannels.embed, {
+      name: "embed",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event) =>
+        prepareAISDKEmbedInput(params, event.self),
+      extractOutput: (result, endEvent) =>
+        processAISDKEmbeddingOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result, _startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent),
+    });
+
+    // embedMany - async embedding batch function
+    traceAsyncChannel(aiSDKChannels.embedMany, {
+      name: "embedMany",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event) =>
+        prepareAISDKEmbedInput(params, event.self),
+      extractOutput: (result, endEvent) =>
+        processAISDKEmbeddingOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result, _startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent),
+    });
+
+    // rerank - async reranking function
+    traceAsyncChannel(aiSDKChannels.rerank, {
+      name: "rerank",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event) =>
+        prepareAISDKRerankInput(params, event.self),
+      extractOutput: (result, endEvent) =>
+        processAISDKRerankOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result, _startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent),
+    });
+
+    // Agent.generate - async method
+    traceStreamingChannel(aiSDKChannels.agentGenerate, {
+      name: "Agent.generate",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+          agentOwner: true,
+        }),
+      extractOutput: (result, endEvent) => {
+        finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
+        return processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        );
+      },
+      extractMetrics: (result, _startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent),
+      aggregateChunks: aggregateAISDKChunks,
+    });
+
+    // Agent.stream - async method returning stream (v5, used by wrapAISDK)
+    traceStreamingChannel(aiSDKChannels.agentStream, {
+      name: "Agent.stream",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+          agentOwner: true,
+        }),
+      extractOutput: (result, endEvent) =>
+        processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result, startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent, startTime),
+      aggregateChunks: aggregateAISDKChunks,
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths: denyOutputPaths,
+          endEvent,
+          result,
+          span,
+          startTime,
+        }),
+    });
+
+    // Agent.stream - sync method returning stream (v5, used by auto-hook)
+    traceSyncStreamChannel(aiSDKChannels.agentStreamSync, {
+      name: "Agent.stream",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+          agentOwner: true,
+        }),
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths: denyOutputPaths,
+          endEvent,
+          result,
+          span,
+          startTime,
+        }),
+    });
+
+    // HarnessAgent.generate - one task span per agent turn
+    traceStreamingChannel(harnessAgentChannels.generate, {
+      name: "HarnessAgent.generate",
+      startSpan: _internalStartSpanWithInitialMerge,
+      type: SpanTypeAttribute.TASK,
+      extractInput: ([params], event, span) =>
+        prepareAISDKHarnessAgentInput(params, event.self, span),
+      extractOutput: (result, endEvent) =>
+        processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result) => extractTokenMetrics(result),
+      aggregateChunks: aggregateAISDKChunks,
+    });
+
+    // HarnessAgent.stream - async method returning an AI SDK stream result
+    traceStreamingChannel(harnessAgentChannels.stream, {
+      name: "HarnessAgent.stream",
+      startSpan: _internalStartSpanWithInitialMerge,
+      type: SpanTypeAttribute.TASK,
+      extractInput: ([params], event, span) =>
+        prepareAISDKHarnessAgentInput(params, event.self, span),
+      extractOutput: (result, endEvent) =>
+        processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result, startTime) => ({
+        ...extractTokenMetrics(result),
+        ...(startTime === undefined
+          ? {}
+          : {
+              time_to_first_token: getCurrentUnixTimestamp() - startTime,
+            }),
+      }),
+      aggregateChunks: aggregateAISDKChunks,
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths: denyOutputPaths,
+          endEvent,
+          result,
+          resolvePromiseUsage: true,
+          span,
+          startTime,
+        }),
+    });
+
+    // Trace a continuation as its own task only when its original turn cannot
+    // be recovered. Known continuations extend the original Harness task.
+    traceStreamingChannel(harnessAgentChannels.continueGenerate, {
+      name: "HarnessAgent.continueGenerate",
+      shouldTrace: (args) =>
+        !harnessContinuationParent(harnessSessionFromArguments(args)),
+      startSpan: _internalStartSpanWithInitialMerge,
+      type: SpanTypeAttribute.TASK,
+      extractInput: ([params], event, span) =>
+        prepareAISDKHarnessAgentInput(params, event.self, span),
+      extractOutput: (result, endEvent) =>
+        processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result) => extractTokenMetrics(result),
+      aggregateChunks: aggregateAISDKChunks,
+    });
+
+    traceStreamingChannel(harnessAgentChannels.continueStream, {
+      name: "HarnessAgent.continueStream",
+      shouldTrace: (args) =>
+        !harnessContinuationParent(harnessSessionFromArguments(args)),
+      startSpan: _internalStartSpanWithInitialMerge,
+      type: SpanTypeAttribute.TASK,
+      extractInput: ([params], event, span) =>
+        prepareAISDKHarnessAgentInput(params, event.self, span),
+      extractOutput: (result, endEvent) =>
+        processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result, startTime) => ({
+        ...extractTokenMetrics(result),
+        ...(startTime === undefined
+          ? {}
+          : {
+              time_to_first_token: getCurrentUnixTimestamp() - startTime,
+            }),
+      }),
+      aggregateChunks: aggregateAISDKChunks,
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths: denyOutputPaths,
+          endEvent,
+          result,
+          resolvePromiseUsage: true,
+          span,
+          startTime,
+        }),
+    });
+
+    // ToolLoopAgent.generate - async method
+    traceStreamingChannel(aiSDKChannels.toolLoopAgentGenerate, {
+      name: "ToolLoopAgent.generate",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+          agentOwner: true,
+        }),
+      extractOutput: (result, endEvent) => {
+        finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
+        return processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        );
+      },
+      extractMetrics: (result, _startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent),
+      aggregateChunks: aggregateAISDKChunks,
+    });
+
+    // ToolLoopAgent.stream - async method returning stream
+    traceStreamingChannel(aiSDKChannels.toolLoopAgentStream, {
+      name: "ToolLoopAgent.stream",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event, span) =>
+        prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+          agentOwner: true,
+        }),
+      extractOutput: (result, endEvent) =>
+        processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        ),
+      extractMetrics: (result, startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent, startTime),
+      aggregateChunks: aggregateAISDKChunks,
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths: denyOutputPaths,
+          endEvent,
+          result,
+          span,
+          startTime,
+        }),
+    });
+
+    // WorkflowAgent.stream - async method returning stream
+    traceStreamingChannel(aiSDKChannels.workflowAgentStream, {
+      name: "WorkflowAgent.stream",
+      type: SpanTypeAttribute.FUNCTION,
+      extractInput: ([params], event, span) =>
+        prepareAISDKWorkflowAgentStreamInput(
+          params,
+          event,
+          span,
+          denyOutputPaths,
+        ),
+      extractOutput: (result, endEvent) => {
+        finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
+        return processAISDKOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, denyOutputPaths),
+        );
+      },
+      extractMetrics: (result, _startTime, endEvent) =>
+        extractTopLevelAISDKMetrics(result, endEvent),
+      aggregateChunks: aggregateAISDKChunks,
+      onComplete: ({ span }) => {
+        unregisterWorkflowAgentWrapperSpan(span);
+      },
+      onError: ({ event, span }) => {
+        finalizeAISDKChildTracing(event as { [key: string]: unknown });
+        unregisterWorkflowAgentWrapperSpan(span);
+      },
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths: denyOutputPaths,
+          endEvent,
+          onComplete: () => unregisterWorkflowAgentWrapperSpan(span),
+          onCancel: () => unregisterWorkflowAgentWrapperSpan(span),
+          onError: () => unregisterWorkflowAgentWrapperSpan(span),
+          result,
+          span,
+          startTime,
+        }),
+    });
+  }
+}
+
+function subscribeToHarnessAgentCreateSession(): void {
+  const channel = harnessAgentChannels.createSession.tracingChannel();
+  const parents = new WeakMap<object, HarnessTurnParent>();
+  const handlers: IsoChannelHandlers<
+    ChannelMessage<typeof harnessAgentChannels.createSession>
+  > = {
+    start: (event) => {
+      const parent = captureHarnessCreateSessionParent(event.arguments?.[0]);
+      if (parent) {
+        parents.set(event, parent);
+      }
+    },
+    asyncEnd: (event) => {
+      registerHarnessSessionParent(event.result, parents.get(event));
+      parents.delete(event);
+    },
+    error: (event) => {
+      parents.delete(event);
+    },
+  };
+
+  channel.subscribe(handlers);
+}
+
+type HarnessContinuationChannel = typeof harnessAgentChannels.continueGenerate;
+
+function harnessContinuationParentFromEvent(
+  event: ChannelMessage<HarnessContinuationChannel>,
+): HarnessTurnParent | undefined {
+  try {
+    return harnessContinuationParent(event.arguments?.[0]?.session);
+  } catch {
+    return undefined;
+  }
+}
+
+function subscribeToHarnessContinuation(
+  continuationChannel: HarnessContinuationChannel,
+  defaultDenyOutputPaths: string[],
+): void {
+  const channel = continuationChannel.tracingChannel();
+  const parents = new WeakMap<object, HarnessTurnParent>();
+  const startTimes = new WeakMap<object, number>();
+  bindHarnessTurnParentToStart(channel, harnessContinuationParentFromEvent);
+  const handlers: IsoChannelHandlers<
+    ChannelMessage<HarnessContinuationChannel>
+  > = {
+    start: (event) => {
+      const parent = harnessContinuationParentFromEvent(event);
+      if (!parent) {
+        return;
+      }
+
+      parents.set(event, parent);
+      startTimes.set(event, getCurrentUnixTimestamp());
+      try {
+        const params = event.arguments?.[0];
+        if (params) {
+          // Harness reads telemetry from its settings after this event starts.
+          // The original task already contains the turn input, so only install
+          // telemetry here; continuation work is logged onto that task.
+          prepareAISDKHarnessAgentInput(params, event.self);
+        }
+      } catch (error) {
+        debugLogger.error(
+          "Error preparing Harness continuation telemetry:",
+          error,
+        );
+      }
+    },
+    asyncEnd: (event) => {
+      const parent = parents.get(event);
+      const startTime = startTimes.get(event) ?? getCurrentUnixTimestamp();
+      parents.delete(event);
+      startTimes.delete(event);
+      if (!parent) {
+        return;
+      }
+
+      const endEvent = event as ChannelMessage<HarnessContinuationChannel> & {
+        result: AISDKResult | AsyncIterable<unknown>;
+      };
+      const span = {
+        end: () => endHarnessTurn(parent),
+        log: (update: Parameters<Span["log"]>[0]) =>
+          updateHarnessTurn(
+            parent,
+            Object.prototype.hasOwnProperty.call(update, "error") &&
+              !Object.prototype.hasOwnProperty.call(update, "output")
+              ? { ...update, output: null }
+              : update,
+          ),
+      };
+
+      try {
+        if (isAsyncIterable(endEvent.result)) {
+          patchStreamIfNeeded(endEvent.result, {
+            onComplete: (chunks) => {
+              try {
+                const { metadata, metrics, output } = aggregateAISDKChunks(
+                  chunks,
+                  endEvent.result,
+                  endEvent,
+                );
+                span.log({
+                  ...(metadata ? { metadata } : {}),
+                  metrics,
+                  output,
+                });
+              } catch (error) {
+                debugLogger.error(
+                  "Error aggregating Harness continuation stream:",
+                  error,
+                );
+              } finally {
+                span.end();
+              }
+            },
+            onError: (error) => {
+              span.log({ error: toLoggedError(error), output: null });
+              span.end();
+            },
+          });
+          return;
+        }
+
+        if (
+          patchAISDKStreamingResult({
+            defaultDenyOutputPaths,
+            endEvent,
+            result: endEvent.result,
+            resolvePromiseUsage: true,
+            span,
+            startTime,
+          })
+        ) {
+          return;
+        }
+
+        finalizeAISDKChildTracing(endEvent);
+        span.log({
+          metrics: extractTokenMetrics(endEvent.result),
+          output: processAISDKOutput(
+            endEvent.result,
+            resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+          ),
+        });
+        span.end();
+      } catch (error) {
+        debugLogger.error("Error tracing Harness continuation:", error);
+        span.end();
+      }
+    },
+    error: (event) => {
+      const parent = parents.get(event);
+      parents.delete(event);
+      startTimes.delete(event);
+      if (!parent) {
+        return;
+      }
+      updateHarnessTurn(parent, {
+        error: toLoggedError(event.error),
+        output: null,
+      });
+      endHarnessTurn(parent);
+    },
+  };
+
+  channel.subscribe(handlers);
+}
+
+function subscribeToAISDKV7TelemetryDispatcher(): void {
+  const channel = aiSDKChannels.v7CreateTelemetryDispatcher.tracingChannel();
+  const telemetry = braintrustAISDKTelemetry();
+  const handlers: IsoChannelHandlers<
+    ChannelMessage<typeof aiSDKChannels.v7CreateTelemetryDispatcher>
+  > = {
+    end: (event) => {
+      const telemetryOptions = event.arguments?.[0]?.telemetry;
+      if (telemetryOptions?.isEnabled === false) {
+        return;
+      }
+
+      patchAISDKV7TelemetryDispatcher(
+        event.result,
+        telemetry,
+        telemetryOptions,
+      );
+    },
+  };
+
+  channel.subscribe(handlers);
+}
+
+function patchAISDKV7TelemetryDispatcher(
+  dispatcher: unknown,
+  telemetry: AISDKV7Telemetry,
+  telemetryOptions?: AISDKV7TelemetryOptions,
+): void {
+  if (!isObject(dispatcher)) {
+    return;
+  }
+
+  const dispatcherRecord = dispatcher as Record<PropertyKey, unknown>;
+  if (dispatcherRecord[AUTO_PATCHED_V7_TELEMETRY_DISPATCHER]) {
+    return;
+  }
+  dispatcherRecord[AUTO_PATCHED_V7_TELEMETRY_DISPATCHER] = true;
+  let operationKey: string | undefined;
+  const telemetryEventFields: AISDKV7TelemetryOptions = {};
+  if (typeof telemetryOptions?.recordInputs === "boolean") {
+    telemetryEventFields.recordInputs = telemetryOptions.recordInputs;
+  }
+  if (typeof telemetryOptions?.recordOutputs === "boolean") {
+    telemetryEventFields.recordOutputs = telemetryOptions.recordOutputs;
+  }
+  if (typeof telemetryOptions?.functionId === "string") {
+    telemetryEventFields.functionId = telemetryOptions.functionId;
+  }
+
+  const eventWithOperationKey = (event: unknown): unknown => {
+    if (!isObject(event)) {
+      return event;
+    }
+
+    const eventRecord = event as Record<PropertyKey, unknown>;
+    const callId =
+      typeof eventRecord.callId === "string" ? eventRecord.callId : "unknown";
+    operationKey ??= `${callId}:${++aiSDKV7TelemetryOperationCounter}`;
+
+    if (Object.keys(telemetryEventFields).length > 0) {
+      const augmentedEvent = {
+        ...telemetryEventFields,
+        ...(event as Record<string, unknown>),
+      };
+      try {
+        Object.defineProperty(augmentedEvent, AI_SDK_V7_OPERATION_KEY, {
+          configurable: true,
+          enumerable: false,
+          value: operationKey,
+        });
+      } catch {
+        (augmentedEvent as Record<PropertyKey, unknown>)[
+          AI_SDK_V7_OPERATION_KEY
+        ] = operationKey;
+      }
+      return augmentedEvent;
+    }
+
+    try {
+      Object.defineProperty(eventRecord, AI_SDK_V7_OPERATION_KEY, {
+        configurable: true,
+        enumerable: false,
+        value: operationKey,
+      });
+      return event;
+    } catch {
+      return {
+        ...(event as Record<string, unknown>),
+        [AI_SDK_V7_OPERATION_KEY]: operationKey,
+      };
+    }
+  };
+
+  for (const key of AI_SDK_V7_TELEMETRY_CALLBACKS) {
+    const braintrustCallback = telemetry[key];
+    if (typeof braintrustCallback !== "function") {
+      continue;
+    }
+
+    const existingCallback = dispatcherRecord[key];
+    dispatcherRecord[key] = (event: unknown) => {
+      const existingResult =
+        typeof existingCallback === "function"
+          ? existingCallback.call(dispatcher, event)
+          : undefined;
+      try {
+        const braintrustResult = braintrustCallback.call(
+          telemetry,
+          eventWithOperationKey(event) as any,
+        );
+        if (isPromiseLike(braintrustResult)) {
+          void Promise.resolve(braintrustResult).catch(() => undefined);
+        }
+      } catch {
+        // Keep Braintrust telemetry isolated from the user's callback path.
+      }
+      return existingResult;
+    };
+  }
+
+  const braintrustExecuteTool = telemetry.executeTool;
+  if (typeof braintrustExecuteTool !== "function") {
+    return;
+  }
+
+  const existingExecuteTool = dispatcherRecord.executeTool;
+  dispatcherRecord.executeTool = (args: {
+    callId: string;
+    toolCallId: string;
+    execute: () => PromiseLike<unknown>;
+  }) =>
+    braintrustExecuteTool.call(telemetry, {
+      ...args,
+      ...(operationKey ? { [AI_SDK_V7_OPERATION_KEY]: operationKey } : {}),
+      execute: () =>
+        typeof existingExecuteTool === "function"
+          ? existingExecuteTool.call(dispatcher, args)
+          : args.execute(),
+    });
+}
+
+function resolveDenyOutputPaths(
+  event:
+    | {
+        arguments?: ArrayLike<unknown>;
+        denyOutputPaths?: string[];
+      }
+    | undefined,
+  defaultDenyOutputPaths: string[],
+): string[] {
+  if (Array.isArray(event?.denyOutputPaths)) {
+    return event.denyOutputPaths;
+  }
+
+  const firstArgument =
+    event?.arguments && event.arguments.length > 0
+      ? event.arguments[0]
+      : undefined;
+  if (!firstArgument || typeof firstArgument !== "object") {
+    return defaultDenyOutputPaths;
+  }
+
+  const runtimeDenyOutputPaths = (
+    firstArgument as Record<string | symbol, unknown>
+  )[RUNTIME_DENY_OUTPUT_PATHS];
+  if (
+    Array.isArray(runtimeDenyOutputPaths) &&
+    runtimeDenyOutputPaths.every((path) => typeof path === "string")
+  ) {
+    return runtimeDenyOutputPaths;
+  }
+
+  return defaultDenyOutputPaths;
+}
+
+interface ProcessCallInputSyncResult {
+  input: AISDKCallParams;
+  outputPromise?: Promise<{
+    output: {
+      response_format: AISDKOutputResponseFormat;
+    };
+  }>;
+}
+
+const isZodSchema = (value: any): boolean => {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    "_def" in value &&
+    typeof value._def === "object"
+  );
+};
+
+const serializeZodSchema = (schema: unknown): AISDKOutputResponseFormat => {
+  try {
+    return zodToJsonSchema(schema as any) as AISDKOutputResponseFormat;
+  } catch {
+    return {
+      type: "object",
+      description: "Zod schema (conversion failed)",
+    };
+  }
+};
+
+const isOutputObject = (value: unknown): value is AISDKOutputObject => {
+  if (value == null || typeof value !== "object") {
+    return false;
+  }
+
+  const output = value as AISDKOutputObject;
+  if (!("responseFormat" in output)) {
+    return false;
+  }
+
+  if (output.type === "object" || output.type === "text") {
+    return true;
+  }
+
+  if (
+    typeof output.responseFormat === "function" ||
+    typeof output.responseFormat === "object"
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const serializeOutputObject = (
+  output: AISDKOutputObject,
+  model: AISDKModel | undefined,
+): {
+  type?: string;
+  response_format:
+    | AISDKOutputResponseFormat
+    | Promise<AISDKOutputResponseFormat>
+    | null;
+} => {
+  try {
+    const result: {
+      type?: string;
+      response_format:
+        | AISDKOutputResponseFormat
+        | Promise<AISDKOutputResponseFormat>
+        | null;
+    } = {
+      response_format: null,
+    };
+
+    if (output.type) {
+      result.type = output.type;
+    }
+
+    let responseFormat:
+      | AISDKOutputResponseFormat
+      | Promise<AISDKOutputResponseFormat>
+      | undefined;
+
+    if (typeof output.responseFormat === "function") {
+      const mockModelForSchema = {
+        supportsStructuredOutputs: true,
+        ...(model && typeof model === "object" ? model : {}),
+      };
+      responseFormat = output.responseFormat({ model: mockModelForSchema });
+    } else if (
+      output.responseFormat != null &&
+      typeof output.responseFormat === "object"
+    ) {
+      responseFormat = output.responseFormat;
+    }
+
+    if (responseFormat) {
+      if (typeof responseFormat.then === "function") {
+        result.response_format = Promise.resolve(responseFormat).then(
+          (resolved) => {
+            if (resolved.schema && isZodSchema(resolved.schema)) {
+              return {
+                ...resolved,
+                schema: serializeZodSchema(resolved.schema),
+              };
+            }
+            return resolved;
+          },
+        );
+      } else {
+        const syncResponseFormat = responseFormat as AISDKOutputResponseFormat;
+        if (
+          syncResponseFormat.schema &&
+          isZodSchema(syncResponseFormat.schema)
+        ) {
+          responseFormat = {
+            ...syncResponseFormat,
+            schema: serializeZodSchema(syncResponseFormat.schema),
+          };
+        }
+        result.response_format = responseFormat;
+      }
+    }
+
+    return result;
+  } catch {
+    return {
+      response_format: null,
+    };
+  }
+};
+
+const processInputAttachmentsSync = (
+  input: AISDKCallParams,
+): ProcessCallInputSyncResult => {
+  if (!input) return { input };
+
+  const processed: AISDKCallParams = { ...input };
+  delete processed.headers;
+  delete processed.experimental_output;
+
+  if (input.messages && Array.isArray(input.messages)) {
+    processed.messages = input.messages.map(processMessage);
+  }
+
+  if (input.prompt && typeof input.prompt === "object") {
+    if (Array.isArray(input.prompt)) {
+      processed.prompt = input.prompt.map(processMessage);
+    } else {
+      processed.prompt = processPromptContent(input.prompt);
+    }
+  }
+
+  if (input.schema && isZodSchema(input.schema)) {
+    processed.schema = serializeZodSchema(input.schema);
+  }
+
+  if (input.callOptionsSchema && isZodSchema(input.callOptionsSchema)) {
+    processed.callOptionsSchema = serializeZodSchema(input.callOptionsSchema);
+  }
+
+  if (input.tools) {
+    processed.tools = serializeAISDKToolsForLogging(input.tools);
+  }
+
+  let outputPromise:
+    | Promise<{
+        output: {
+          response_format: AISDKOutputResponseFormat;
+        };
+      }>
+    | undefined;
+
+  if (input.output && isOutputObject(input.output)) {
+    const serialized = serializeOutputObject(input.output, input.model);
+
+    if (
+      serialized.response_format &&
+      typeof serialized.response_format.then === "function"
+    ) {
+      processed.output = { ...serialized, response_format: {} };
+      outputPromise = serialized.response_format.then(
+        (resolvedFormat: AISDKOutputResponseFormat) => ({
+          output: { ...serialized, response_format: resolvedFormat },
+        }),
+      );
+    } else {
+      processed.output = serialized;
+    }
+  }
+
+  return {
+    input: sanitizeAISDKCallInputValue(processed) as AISDKCallParams,
+    outputPromise,
+  };
+};
+
+const processMessage = (message: any): any => {
+  if (!message || typeof message !== "object") return message;
+
+  if (Array.isArray(message.content)) {
+    return {
+      ...message,
+      content: message.content.map(processContentPart),
+    };
+  }
+
+  if (typeof message.content === "object" && message.content !== null) {
+    return {
+      ...message,
+      content: processContentPart(message.content),
+    };
+  }
+
+  return message;
+};
+
+const processPromptContent = (prompt: any): any => {
+  if (Array.isArray(prompt)) {
+    return prompt.map(processContentPart);
+  }
+
+  if (prompt.content) {
+    if (Array.isArray(prompt.content)) {
+      return {
+        ...prompt,
+        content: prompt.content.map(processContentPart),
+      };
+    } else if (typeof prompt.content === "object") {
+      return {
+        ...prompt,
+        content: processContentPart(prompt.content),
+      };
+    }
+  }
+
+  return prompt;
+};
+
+const processContentPart = (part: any): any => {
+  if (!part || typeof part !== "object") return part;
+
+  try {
+    if (part.type === "image" && part.image) {
+      const imageAttachment = convertImageToAttachment(
+        part.image,
+        part.mimeType || part.mediaType,
+      );
+      if (imageAttachment) {
+        return {
+          ...part,
+          image: imageAttachment,
+        };
+      }
+    }
+
+    if (
+      part.type === "file" &&
+      part.data &&
+      (part.mimeType || part.mediaType)
+    ) {
+      const fileAttachment = convertDataToAttachment(
+        part.data,
+        part.mimeType || part.mediaType,
+        part.name || part.filename,
+      );
+      if (fileAttachment) {
+        return {
+          ...part,
+          data: fileAttachment,
+        };
+      }
+    }
+
+    if (part.type === "image_url" && part.image_url) {
+      if (typeof part.image_url === "object" && part.image_url.url) {
+        const imageAttachment = convertImageToAttachment(part.image_url.url);
+        if (imageAttachment) {
+          return {
+            ...part,
+            image_url: {
+              ...part.image_url,
+              url: imageAttachment,
+            },
+          };
+        }
+      }
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-restricted-properties
+    console.warn("Error processing content part:", error);
+  }
+
+  return part;
+};
+
+const convertImageToAttachment = (
+  image: any,
+  explicitMimeType?: string,
+): Attachment | null => {
+  try {
+    if (typeof image === "string" && image.startsWith("data:")) {
+      const [mimeTypeSection, base64Data] = image.split(",");
+      const mimeType = mimeTypeSection.match(/data:(.*?);/)?.[1];
+      if (mimeType && base64Data) {
+        const blob = convertDataToBlob(base64Data, mimeType);
+        if (blob) {
+          return new Attachment({
+            data: blob,
+            filename: `image.${getExtensionFromMediaType(mimeType)}`,
+            contentType: mimeType,
+          });
+        }
+      }
+    }
+
+    if (explicitMimeType) {
+      if (image instanceof Uint8Array) {
+        return new Attachment({
+          data: new Blob([image], { type: explicitMimeType }),
+          filename: `image.${getExtensionFromMediaType(explicitMimeType)}`,
+          contentType: explicitMimeType,
+        });
+      }
+
+      if (typeof Buffer !== "undefined" && Buffer.isBuffer(image)) {
+        return new Attachment({
+          data: new Blob([image], { type: explicitMimeType }),
+          filename: `image.${getExtensionFromMediaType(explicitMimeType)}`,
+          contentType: explicitMimeType,
+        });
+      }
+    }
+
+    if (image instanceof Blob && image.type) {
+      return new Attachment({
+        data: image,
+        filename: `image.${getExtensionFromMediaType(image.type)}`,
+        contentType: image.type,
+      });
+    }
+
+    if (image instanceof Attachment) {
+      return image;
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-restricted-properties
+    console.warn("Error converting image to attachment:", error);
+  }
+
+  return null;
+};
+
+const convertDataToAttachment = (
+  data: any,
+  mimeType: string,
+  filename?: string,
+): Attachment | null => {
+  if (!mimeType) return null;
+
+  try {
+    let blob: Blob | null = null;
+
+    if (typeof data === "string" && data.startsWith("data:")) {
+      const [, base64Data] = data.split(",");
+      if (base64Data) {
+        blob = convertDataToBlob(base64Data, mimeType);
+      }
+    } else if (typeof data === "string" && data.length > 0) {
+      blob = convertDataToBlob(data, mimeType);
+    } else if (data instanceof Uint8Array) {
+      blob = new Blob([data], { type: mimeType });
+    } else if (typeof Buffer !== "undefined" && Buffer.isBuffer(data)) {
+      blob = new Blob([data], { type: mimeType });
+    } else if (data instanceof Blob) {
+      blob = data;
+    }
+
+    if (blob) {
+      return new Attachment({
+        data: blob,
+        filename: filename || `file.${getExtensionFromMediaType(mimeType)}`,
+        contentType: mimeType,
+      });
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-restricted-properties
+    console.warn("Error converting data to attachment:", error);
+  }
+
+  return null;
+};
+
+/**
+ * Process AI SDK input parameters, converting attachments as needed.
+ */
+export function processAISDKCallInput(
+  params: AISDKCallParams,
+): ProcessCallInputSyncResult {
+  return processInputAttachmentsSync(params);
+}
+
+export function processAISDKWorkflowAgentCallInput(
+  params: AISDKCallParams,
+): ProcessCallInputSyncResult {
+  const processed = processAISDKCallInput(params);
+  return {
+    ...processed,
+    input: extractWorkflowAgentInput(processed.input),
+  };
+}
+
+export function processAISDKWorkflowAgentModelCallInput(
+  params: AISDKCallParams,
+): ProcessCallInputSyncResult {
+  const processed = processAISDKCallInput(params);
+  return {
+    ...processed,
+    input: extractWorkflowAgentModelInput(processed.input),
+  };
+}
+
+function prepareAISDKCallInput(
+  params: AISDKCallParams,
+  event: {
+    aiSDK?: AISDK;
+    denyOutputPaths?: string[];
+    self?: unknown;
+    [key: string]: unknown;
+  },
+  span: Span,
+  defaultDenyOutputPaths: string[],
+  childTracingOptions: AISDKChildTracingOptions = {},
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  const { input, outputPromise } = processAISDKCallInput(params);
+  if (outputPromise && input && typeof input === "object") {
+    outputPromise
+      .then((resolvedData) => {
+        span.log({
+          input: {
+            ...(input as Record<string, unknown>),
+            ...resolvedData,
+          },
+        });
+      })
+      .catch(() => {
+        // Use the placeholder response_format if async resolution fails.
+      });
+  }
+
+  const metadata = extractMetadataFromCallParams(params, event.self);
+  const childTracing = prepareAISDKChildTracing(
+    params,
+    event.self,
+    span,
+    defaultDenyOutputPaths,
+    event.aiSDK,
+    childTracingOptions,
+  );
+  event.modelWrapped = childTracing.modelWrapped;
+  if (childTracing.cleanup) {
+    event.__braintrust_ai_sdk_cleanup = childTracing.cleanup;
+  }
+
+  return {
+    input,
+    metadata,
+  };
+}
+
+function prepareAISDKHarnessAgentInput(
+  params: AISDKHarnessAgentCallParams,
+  self?: unknown,
+  span?: Span,
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  if (span) {
+    registerHarnessTurnSpan({
+      session: params.session,
+      span,
+    });
+  }
+  if (isObject(self)) {
+    try {
+      if (isObject(self.settings)) {
+        const settings = self.settings as AISDKHarnessAgentSettings;
+        if (settings.telemetry === undefined) {
+          // HarnessAgent reads telemetry from its constructor settings after
+          // this channel starts. Replace the settings object so instrumentation
+          // does not mutate the configuration object supplied by the caller.
+          Reflect.set(self, "settings", { ...settings, telemetry: {} });
+        }
+      }
+    } catch {
+      // A frozen or custom HarnessAgent may not allow settings replacement.
+      // Root turn tracing still works; only its optional lifecycle spans are
+      // unavailable in that case.
+    }
+  }
+
+  const selectedInput: AISDKHarnessAgentCallParams = {};
+  if (params.prompt !== undefined) {
+    selectedInput.prompt = params.prompt;
+  }
+  if (params.messages !== undefined) {
+    selectedInput.messages = params.messages;
+  }
+  if (params.toolApprovalContinuations !== undefined) {
+    selectedInput.toolApprovalContinuations = params.toolApprovalContinuations;
+  }
+
+  const metadata = extractMetadataFromCallParams({}, self);
+  if (
+    isObject(params.session) &&
+    typeof params.session.sessionId === "string"
+  ) {
+    metadata.sessionId = params.session.sessionId;
+  }
+  if (isObject(self)) {
+    if (typeof self.harnessId === "string") {
+      metadata.harnessId = self.harnessId;
+    }
+    if (typeof self.permissionMode === "string") {
+      metadata.permissionMode = self.permissionMode;
+    }
+  }
+
+  return {
+    input: processAISDKCallInput(selectedInput).input,
+    metadata,
+  };
+}
+
+function harnessSessionFromArguments(args: unknown[]): unknown {
+  const params = args[0];
+  return isObject(params) ? params.session : undefined;
+}
+
+function prepareAISDKWorkflowAgentStreamInput(
+  params: AISDKCallParams,
+  event: {
+    aiSDK?: AISDK;
+    denyOutputPaths?: string[];
+    self?: unknown;
+    [key: string]: unknown;
+  },
+  span: Span,
+  defaultDenyOutputPaths: string[],
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  registerWorkflowAgentWrapperSpan(span);
+  const { input } = processAISDKWorkflowAgentCallInput(params);
+  const metadata = extractWorkflowMetadataFromCallParams(params, event.self);
+  const childTracing = prepareAISDKChildTracing(
+    params,
+    event.self,
+    span,
+    defaultDenyOutputPaths,
+    event.aiSDK,
+    { agentOwner: true, workflowAgent: true },
+  );
+  event.modelWrapped = childTracing.modelWrapped;
+  if (childTracing.cleanup) {
+    event.__braintrust_ai_sdk_cleanup = childTracing.cleanup;
+  }
+
+  return {
+    input,
+    metadata,
+  };
+}
+
+/**
+ * Prepares an AI SDK stream owned by an outer agent framework span.
+ * The framework owns the parent span lifecycle while AI SDK model and tool
+ * calls are attached directly beneath it.
+ */
+export function prepareAISDKAgentCallInput(
+  params: AISDKCallParams,
+  event: {
+    aiSDK?: AISDK;
+    denyOutputPaths?: string[];
+    self?: unknown;
+    [key: string]: unknown;
+  },
+  span: Span,
+  defaultDenyOutputPaths: string[] = DEFAULT_DENY_OUTPUT_PATHS,
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  const { input } = processAISDKWorkflowAgentCallInput(params);
+  const metadata = extractMetadataFromCallParams(params, event.self);
+  const childTracing = prepareAISDKChildTracing(
+    params,
+    event.self,
+    span,
+    defaultDenyOutputPaths,
+    event.aiSDK,
+    { agentOwner: true },
+  );
+  event.modelWrapped = childTracing.modelWrapped;
+  if (childTracing.cleanup) {
+    event.__braintrust_ai_sdk_cleanup = childTracing.cleanup;
+  }
+
+  return { input, metadata };
+}
+
+function prepareAISDKEmbedInput(
+  params: AISDKEmbedParams,
+  self?: unknown,
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  return {
+    input: { ...params },
+    metadata: extractMetadataFromEmbedParams(params, self),
+  };
+}
+
+function prepareAISDKRerankInput(
+  params: AISDKRerankParams,
+  self?: unknown,
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  const { documents, query } = params;
+
+  return {
+    input: {
+      documents,
+      query,
+    },
+    metadata: extractMetadataFromRerankParams(params, self),
+  };
+}
+
+function extractTopLevelAISDKMetrics(
+  result: AISDKResult,
+  event?: { [key: string]: unknown },
+  startTime?: number,
+): Record<string, number> {
+  const metrics = hasModelChildTracing(event)
+    ? {}
+    : extractTokenMetrics(result);
+
+  if (startTime) {
+    metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
+  }
+
+  return metrics;
+}
+
+async function extractResolvedAISDKTokenMetrics(
+  result: AISDKResult,
+): Promise<Record<string, number>> {
+  for (const field of ["totalUsage", "usage"] as const) {
+    try {
+      const usage = await Promise.resolve(result[field]);
+      if (usage !== undefined) {
+        return extractTokenMetrics({ [field]: usage } as AISDKResult);
+      }
+    } catch {
+      // Fall back to the next usage field or the synchronous extractor.
+    }
+  }
+  return extractTokenMetrics(result);
+}
+
+function hasModelChildTracing(event?: { [key: string]: unknown }): boolean {
+  return (
+    event?.modelWrapped === true ||
+    event?.__braintrust_ai_sdk_model_wrapped === true
+  );
+}
+
+function serializeToolExecutionInput(args: unknown[]): unknown {
+  return args.length > 0 ? args[0] : args;
+}
+
+export function createAISDKIntegrationMetadata(): Record<string, unknown> {
+  return {
+    braintrust: {
+      integration_name: "ai-sdk",
+      sdk_language: "typescript",
+    },
+  };
+}
+
+function resolveModelFromSelf(self?: unknown): AISDKModel | undefined {
+  return self &&
+    typeof self === "object" &&
+    "model" in self &&
+    (self as { model?: AISDKModel }).model
+    ? (self as { model?: AISDKModel }).model
+    : self &&
+        typeof self === "object" &&
+        "settings" in self &&
+        (self as { settings?: { model?: AISDKModel } }).settings?.model
+      ? (self as { settings?: { model?: AISDKModel } }).settings?.model
+      : undefined;
+}
+
+function resolveToolsFromSelf(self?: unknown): AISDKTools | undefined {
+  if (!self || typeof self !== "object") {
+    return undefined;
+  }
+
+  const selfRecord = self as {
+    settings?: { tools?: AISDKTools };
+    tools?: AISDKTools;
+  };
+
+  return selfRecord.tools ?? selfRecord.settings?.tools;
+}
+
+function extractBaseMetadata(
+  model: AISDKModel | undefined,
+  self?: unknown,
+): Record<string, unknown> {
+  const metadata: Record<string, unknown> = createAISDKIntegrationMetadata();
+  const { model: modelId, provider } = serializeModelWithProvider(
+    model ?? resolveModelFromSelf(self),
+  );
+  if (modelId) {
+    metadata.model = modelId;
+  }
+  if (provider) {
+    metadata.provider = provider;
+  }
+  return metadata;
+}
+
+function extractMetadataFromCallParams(
+  params: AISDKCallParams,
+  self?: unknown,
+): Record<string, unknown> {
+  const metadata = extractBaseMetadata(params.model, self);
+  const tools = serializeAISDKToolsForLogging(
+    params.tools ?? resolveToolsFromSelf(self),
+  );
+  if (tools) {
+    metadata.tools = tools;
+  }
+  return metadata;
+}
+
+export function extractWorkflowMetadataFromCallParams(
+  params: AISDKCallParams,
+  self?: unknown,
+): Record<string, unknown> {
+  const metadata = extractMetadataFromCallParams(params, self);
+  const options = extractAISDKCallOptionsForMetadata(params);
+  if (Object.keys(options).length > 0) {
+    metadata.options = options;
+  }
+  return metadata;
+}
+
+function extractWorkflowAgentInput(params: AISDKCallParams): AISDKCallParams {
+  const input: AISDKCallParams = {};
+  if (params.instructions !== undefined) {
+    input.instructions = params.instructions;
+  }
+  if (params.system !== undefined) {
+    input.system = params.system;
+  }
+
+  if (Array.isArray(params.messages)) {
+    return { ...input, messages: params.messages };
+  }
+
+  if (typeof params.prompt === "string") {
+    return { ...input, prompt: params.prompt };
+  }
+
+  if (Array.isArray(params.prompt)) {
+    return { ...input, prompt: params.prompt };
+  }
+
+  return input;
+}
+
+function extractWorkflowAgentModelInput(
+  params: AISDKCallParams,
+): AISDKCallParams {
+  const input: AISDKCallParams = {};
+  if (params.instructions !== undefined) {
+    input.instructions = params.instructions;
+  }
+  if (params.system !== undefined) {
+    input.system = params.system;
+  }
+
+  if (Array.isArray(params.messages)) {
+    return { ...input, messages: params.messages };
+  }
+
+  if (typeof params.prompt === "string") {
+    return { ...input, prompt: params.prompt };
+  }
+
+  if (Array.isArray(params.prompt)) {
+    return { ...input, messages: params.prompt };
+  }
+
+  return input;
+}
+
+function sanitizeAISDKCallInputValue(value: unknown, depth = 0): unknown {
+  if (value === undefined || typeof value === "function") {
+    return undefined;
+  }
+
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+
+  if (isPromiseLike(value)) {
+    return "[Promise]";
+  }
+
+  if (typeof AbortSignal !== "undefined" && value instanceof AbortSignal) {
+    return "[AbortSignal]";
+  }
+
+  if (depth >= 8) {
+    return "[Object]";
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => sanitizeAISDKCallInputValue(item, depth + 1))
+      .filter((item) => item !== undefined);
+  }
+
+  if (!isObject(value)) {
+    return value;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    return value;
+  }
+
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, nested] of Object.entries(value)) {
+    if (
+      key === "__proto__" ||
+      key === "constructor" ||
+      key === "prototype" ||
+      key.toLowerCase() === "headers"
+    ) {
+      continue;
+    }
+
+    const sanitizedNested = sanitizeAISDKCallInputValue(nested, depth + 1);
+    if (sanitizedNested !== undefined) {
+      sanitized[key] = sanitizedNested;
+    }
+  }
+
+  return sanitized;
+}
+
+function extractAISDKCallOptionsForMetadata(
+  params: AISDKCallParams,
+): Record<string, unknown> {
+  const options: Record<string, unknown> = {};
+  const inputOrTopLevelKeys = new Set([
+    "model",
+    "instructions",
+    "messages",
+    "prompt",
+    "system",
+    "tools",
+    "headers",
+    "abortSignal",
+    "signal",
+    "experimental_output",
+  ]);
+
+  for (const [key, value] of Object.entries(params)) {
+    if (
+      inputOrTopLevelKeys.has(key) ||
+      key === "__proto__" ||
+      key === "constructor" ||
+      key === "prototype" ||
+      (/^on[A-Z]/.test(key) && typeof value === "function")
+    ) {
+      continue;
+    }
+
+    const sanitized = sanitizeAISDKMetadataValue(value);
+    if (sanitized !== undefined) {
+      options[key] = sanitized;
+    }
+  }
+
+  return options;
+}
+
+function sanitizeAISDKMetadataValue(value: unknown, depth = 0): unknown {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === "function") {
+    return "[Function]";
+  }
+
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+
+  if (isPromiseLike(value)) {
+    return "[Promise]";
+  }
+
+  if (typeof AbortSignal !== "undefined" && value instanceof AbortSignal) {
+    return "[AbortSignal]";
+  }
+
+  if (depth >= 8) {
+    return "[Object]";
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => sanitizeAISDKMetadataValue(item, depth + 1))
+      .filter((item) => item !== undefined);
+  }
+
+  if (!isObject(value)) {
+    return value;
+  }
+
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, nested] of Object.entries(value)) {
+    if (
+      key === "__proto__" ||
+      key === "constructor" ||
+      key === "prototype" ||
+      key.toLowerCase() === "headers"
+    ) {
+      continue;
+    }
+
+    const sanitizedNested = sanitizeAISDKMetadataValue(nested, depth + 1);
+    if (sanitizedNested !== undefined) {
+      sanitized[key] = sanitizedNested;
+    }
+  }
+
+  return sanitized;
+}
+
+function buildAISDKModelStartEvent(
+  callOptions: AISDKCallParams,
+  baseMetadata: Record<string, unknown>,
+  options: { workflowAgent?: boolean },
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  if (!options.workflowAgent) {
+    return {
+      input: processAISDKCallInput(callOptions).input,
+      metadata: baseMetadata,
+    };
+  }
+
+  return {
+    input: processAISDKWorkflowAgentModelCallInput(callOptions).input,
+    metadata: {
+      ...baseMetadata,
+      ...extractWorkflowMetadataFromCallParams(callOptions),
+    },
+  };
+}
+
+function extractMetadataFromEmbedParams(
+  params: AISDKEmbedParams,
+  self?: unknown,
+): Record<string, unknown> {
+  return extractBaseMetadata(params.model, self);
+}
+
+function extractMetadataFromRerankParams(
+  params: AISDKRerankParams,
+  self?: unknown,
+): Record<string, unknown> {
+  const metadata = extractBaseMetadata(params.model, self);
+
+  if (typeof params.topN === "number") {
+    metadata.topN = params.topN;
+  }
+  if (Array.isArray(params.documents)) {
+    metadata.document_count = params.documents.length;
+  }
+
+  return metadata;
+}
+
+type AISDKChildTracingOptions = {
+  agentOwner?: boolean;
+  workflowAgent?: boolean;
+};
+
+type AISDKModelPatchEntry = {
+  activeSpanIds: Set<string>;
+  baseMetadata: Record<string, unknown>;
+  childTracingOptions: AISDKChildTracingOptions;
+  denyOutputPaths: string[];
+  openSpans: Set<Span>;
+  parentSpan: Span;
+};
+
+type AISDKModelPatchState = {
+  entries: AISDKModelPatchEntry[];
+  originalDoGenerate: NonNullable<AISDKLanguageModel["doGenerate"]>;
+  originalDoStream?: AISDKLanguageModel["doStream"];
+};
+
+type AISDKToolPatchEntry = {
+  activeSpanIds: Set<string>;
+  childTracingOptions: AISDKChildTracingOptions;
+  name: string;
+  parentSpan: Span;
+};
+
+type AISDKToolPatchState = {
+  entries: AISDKToolPatchEntry[];
+  originalExecute: (...args: unknown[]) => unknown;
+};
+
+function activeAISDKChildPatchEntry<
+  TEntry extends { activeSpanIds: Set<string>; parentSpan: Span },
+>(entries: TEntry[]): TEntry | undefined {
+  const activeSpan = currentSpan();
+  const activeSpanId = activeSpan.spanId;
+  if (activeSpanId) {
+    for (let index = entries.length - 1; index >= 0; index -= 1) {
+      const entry = entries[index];
+      if (entry?.activeSpanIds.has(activeSpanId)) {
+        return entry;
+      }
+    }
+  }
+
+  const activeParentSpanIds = activeSpan.spanParents ?? [];
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (
+      entry?.parentSpan.spanId &&
+      activeParentSpanIds.includes(entry.parentSpan.spanId)
+    ) {
+      return entry;
+    }
+  }
+
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (entry?.parentSpan.spanId === activeSpanId) {
+      return entry;
+    }
+  }
+
+  return entries[entries.length - 1];
+}
+
+function attachNestedAISDKChildPatchEntry<
+  TEntry extends { activeSpanIds: Set<string>; parentSpan: Span },
+>(entries: TEntry[], nestedSpan: Span, cleanup: Array<() => void>): boolean {
+  const activeSpanId = currentSpan().spanId;
+  if (!activeSpanId || activeSpanId === nestedSpan.spanId) {
+    return false;
+  }
+
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (
+      entry?.parentSpan.spanId === activeSpanId ||
+      entry?.activeSpanIds.has(activeSpanId)
+    ) {
+      entry.activeSpanIds.add(nestedSpan.spanId);
+      cleanup.push(() => {
+        entry.activeSpanIds.delete(nestedSpan.spanId);
+      });
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function shadowActiveAISDKChildPatchEntry<
+  TEntry extends { activeSpanIds: Set<string>; parentSpan: Span },
+>(
+  entries: TEntry[],
+  entry: TEntry,
+  nestedSpan: Span,
+  cleanup: Array<() => void>,
+) {
+  const activeSpanId = currentSpan().spanId;
+  if (!activeSpanId || activeSpanId === nestedSpan.spanId) {
+    return;
+  }
+
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const existingEntry = entries[index];
+    if (
+      existingEntry?.parentSpan.spanId === activeSpanId ||
+      existingEntry?.activeSpanIds.has(activeSpanId)
+    ) {
+      entry.activeSpanIds.add(activeSpanId);
+      cleanup.push(() => {
+        entry.activeSpanIds.delete(activeSpanId);
+      });
+      return;
+    }
+  }
+}
+
+function closeOpenAISDKModelPatchSpans(entry: AISDKModelPatchEntry): void {
+  for (const span of entry.openSpans) {
+    span.end();
+  }
+  entry.openSpans.clear();
+}
+
+function prepareAISDKChildTracing(
+  params: AISDKCallParams,
+  self: unknown,
+  parentSpan: Span,
+  denyOutputPaths: string[],
+  aiSDK?: AISDK,
+  childTracingOptions: AISDKChildTracingOptions = {},
+): {
+  cleanup?: () => void;
+  modelWrapped: boolean;
+} {
+  const cleanup: Array<() => void> = [];
+  const patchedModels = new WeakMap<object, AISDKModel>();
+  const patchedTools = new WeakSet<object>();
+  let modelWrapped = false;
+
+  const patchModel = (
+    model: AISDKModel | undefined,
+  ): AISDKModel | undefined => {
+    const resolvedModel = resolveAISDKModel(model, aiSDK);
+    if (
+      !resolvedModel ||
+      typeof resolvedModel !== "object" ||
+      typeof resolvedModel.doGenerate !== "function"
+    ) {
+      return resolvedModel;
+    }
+
+    const existingWrappedModel = patchedModels.get(resolvedModel);
+    if (existingWrappedModel) {
+      modelWrapped = true;
+      return existingWrappedModel;
+    }
+
+    modelWrapped = true;
+
+    const modelRecord = resolvedModel as AISDKLanguageModel & {
+      [AUTO_PATCHED_MODEL]?: AISDKModelPatchState;
+    };
+    const entry: AISDKModelPatchEntry = {
+      activeSpanIds: new Set([parentSpan.spanId]),
+      baseMetadata: buildAISDKChildMetadata(resolvedModel),
+      childTracingOptions,
+      denyOutputPaths,
+      openSpans: new Set(),
+      parentSpan,
+    };
+    const cleanupModelEntry = (
+      state: AISDKModelPatchState,
+      patchedModel: AISDKLanguageModel & {
+        [AUTO_PATCHED_MODEL]?: AISDKModelPatchState;
+      },
+    ) => {
+      closeOpenAISDKModelPatchSpans(entry);
+      const index = state.entries.indexOf(entry);
+      if (index >= 0) {
+        state.entries.splice(index, 1);
+      }
+      if (state.entries.length > 0) {
+        return;
+      }
+      patchedModel.doGenerate = state.originalDoGenerate;
+      patchedModel.doStream = state.originalDoStream;
+      delete patchedModel[AUTO_PATCHED_MODEL];
+    };
+    const existingState = modelRecord[AUTO_PATCHED_MODEL];
+    if (existingState) {
+      patchedModels.set(resolvedModel, resolvedModel);
+      if (
+        childTracingOptions.agentOwner &&
+        attachNestedAISDKChildPatchEntry(
+          existingState.entries,
+          parentSpan,
+          cleanup,
+        )
+      ) {
+        return resolvedModel;
+      }
+
+      if (!childTracingOptions.agentOwner) {
+        shadowActiveAISDKChildPatchEntry(
+          existingState.entries,
+          entry,
+          parentSpan,
+          cleanup,
+        );
+      }
+
+      existingState.entries.push(entry);
+      cleanup.push(() => {
+        cleanupModelEntry(existingState, modelRecord);
+      });
+      return resolvedModel;
+    }
+
+    const originalDoGenerate = resolvedModel.doGenerate;
+    const originalDoStream = resolvedModel.doStream;
+    const wrappedModel = Object.create(
+      Object.getPrototypeOf(resolvedModel),
+    ) as AISDKLanguageModel;
+    Object.defineProperties(
+      wrappedModel,
+      Object.getOwnPropertyDescriptors(resolvedModel),
+    );
+    const wrappedModelRecord = wrappedModel as AISDKLanguageModel & {
+      [AUTO_PATCHED_MODEL]?: AISDKModelPatchState;
+    };
+    const state: AISDKModelPatchState = {
+      entries: [entry],
+      originalDoGenerate,
+      originalDoStream,
+    };
+    Object.defineProperty(wrappedModel, AUTO_PATCHED_MODEL, {
+      configurable: true,
+      value: state,
+    });
+
+    wrappedModel.doGenerate = async function doGeneratePatched(
+      callOptions: AISDKCallParams,
+    ) {
+      const activeEntry = activeAISDKChildPatchEntry(state.entries);
+      if (!activeEntry) {
+        return Reflect.apply(originalDoGenerate, resolvedModel, [callOptions]);
+      }
+
+      closeOpenAISDKModelPatchSpans(activeEntry);
+      return activeEntry.parentSpan.traced(
+        async (span) => {
+          activeEntry.openSpans.add(span);
+          try {
+            const result = await Reflect.apply(
+              originalDoGenerate,
+              resolvedModel,
+              [callOptions],
+            );
+
+            const output = processAISDKOutput(
+              result,
+              activeEntry.denyOutputPaths,
+            );
+            const metrics = extractTokenMetrics(result);
+            const metadataPayload = buildResolvedMetadataPayload(result);
+            const missingUsageMetadata = buildMissingUsageMetadata(
+              output,
+              metrics,
+              "ai_sdk_result_missing_usage",
+            );
+
+            span.log({
+              output,
+              metrics,
+              ...mergeMetadataPayload(metadataPayload, missingUsageMetadata),
+            });
+
+            return result;
+          } finally {
+            activeEntry.openSpans.delete(span);
+          }
+        },
+        withSpanInstrumentationName(
+          {
+            name: "doGenerate",
+            spanAttributes: {
+              type: SpanTypeAttribute.LLM,
+            },
+            event: buildAISDKModelStartEvent(
+              callOptions,
+              activeEntry.baseMetadata,
+              {
+                workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+              },
+            ),
+          },
+          INSTRUMENTATION_NAMES.AI_SDK,
+        ),
+      );
+    };
+
+    if (originalDoStream) {
+      wrappedModel.doStream = async function doStreamPatched(
+        callOptions: AISDKCallParams,
+      ) {
+        const activeEntry = activeAISDKChildPatchEntry(state.entries);
+        if (!activeEntry) {
+          return Reflect.apply(originalDoStream, resolvedModel, [callOptions]);
+        }
+
+        closeOpenAISDKModelPatchSpans(activeEntry);
+        const span = activeEntry.parentSpan.startSpan(
+          withSpanInstrumentationName(
+            {
+              name: "doStream",
+              spanAttributes: {
+                type: SpanTypeAttribute.LLM,
+              },
+              event: buildAISDKModelStartEvent(
+                callOptions,
+                activeEntry.baseMetadata,
+                {
+                  workflowAgent: activeEntry.childTracingOptions.workflowAgent,
+                },
+              ),
+            },
+            INSTRUMENTATION_NAMES.AI_SDK,
+          ),
+        );
+        activeEntry.openSpans.add(span);
+
+        const streamStartTime = getCurrentUnixTimestamp();
+        const result = await withCurrent(span, () =>
+          Reflect.apply(originalDoStream, resolvedModel, [callOptions]),
+        );
+        // firstChunkTime !== streamStartTime because the first few chunks may be actual bookkeeping stuff for the SDK
+        // instead of actual LLM output that can be streamed to users.
+        let firstChunkTime: number | undefined;
+        const output: Record<string, unknown> = {};
+        let text = "";
+        let reasoning = "";
+        const toolCalls: unknown[] = [];
+        let object: unknown = undefined;
+        let streamSpanEnded = false;
+
+        const logAndEndStreamSpan = (usageUnavailableReason?: string): void => {
+          if (streamSpanEnded) {
+            return;
+          }
+
+          output.text = text;
+          output.reasoning = reasoning;
+          output.toolCalls = toolCalls;
+
+          if (object !== undefined) {
+            output.object = object;
+          }
+
+          const metrics = extractTokenMetrics(output as AISDKResult);
+          if (
+            firstChunkTime !== undefined &&
+            !activeEntry.childTracingOptions.workflowAgent
+          ) {
+            metrics.time_to_first_token = Math.max(
+              firstChunkTime - streamStartTime,
+              1e-6,
+            );
+          }
+
+          const metadataPayload = buildResolvedMetadataPayload(
+            output as AISDKResult,
+          );
+          const missingUsageMetadata = usageUnavailableReason
+            ? { usage_unavailable_reason: usageUnavailableReason }
+            : buildMissingUsageMetadata(
+                output,
+                metrics,
+                "ai_sdk_result_missing_usage",
+              );
+
+          span.log({
+            output: processAISDKOutput(
+              output as AISDKResult,
+              activeEntry.denyOutputPaths,
+            ),
+            metrics,
+            ...mergeMetadataPayload(metadataPayload, missingUsageMetadata),
+          });
+          activeEntry.openSpans.delete(span);
+          span.end();
+          streamSpanEnded = true;
+        };
+
+        const transformStream = new TransformStream({
+          transform(chunk: AISDKModelStreamChunk, controller) {
+            if (
+              firstChunkTime === undefined &&
+              isAISDKContentStreamChunk(chunk)
+            ) {
+              firstChunkTime = getCurrentUnixTimestamp();
+            }
+
+            switch (chunk.type) {
+              case "text-delta":
+                text += extractTextDelta(chunk);
+                break;
+              case "reasoning-delta":
+                if (chunk.delta) {
+                  reasoning += chunk.delta;
+                } else if (chunk.text) {
+                  reasoning += chunk.text;
+                }
+                break;
+              case "tool-call":
+                toolCalls.push(chunk);
+                break;
+              case "object":
+                object = chunk.object;
+                break;
+              case "raw":
+                if (chunk.rawValue) {
+                  const rawVal = chunk.rawValue as {
+                    choices?: Array<{ delta?: { content?: string } }>;
+                    content?: string;
+                    delta?: { content?: string };
+                    text?: string;
+                  };
+                  if (rawVal.delta?.content) {
+                    text += rawVal.delta.content;
+                  } else if (rawVal.choices?.[0]?.delta?.content) {
+                    text += rawVal.choices[0].delta.content;
+                  } else if (typeof rawVal.text === "string") {
+                    text += rawVal.text;
+                  } else if (typeof rawVal.content === "string") {
+                    text += rawVal.content;
+                  }
+                }
+                break;
+              case "finish":
+                output.finishReason = chunk.finishReason;
+                output.usage = chunk.usage;
+
+                logAndEndStreamSpan();
+                break;
+            }
+            controller.enqueue(chunk);
+          },
+          flush() {
+            logAndEndStreamSpan("ai_sdk_stream_finished_without_usage");
+          },
+        });
+
+        return {
+          ...result,
+          stream: result.stream.pipeThrough(transformStream),
+        };
+      };
+    }
+
+    cleanup.push(() => {
+      cleanupModelEntry(state, wrappedModelRecord);
+    });
+
+    patchedModels.set(resolvedModel, wrappedModel);
+    patchedModels.set(wrappedModel, wrappedModel);
+    return wrappedModel;
+  };
+
+  const patchTool = (tool: AISDKTool, name: string): void => {
+    if (
+      tool == null ||
+      typeof tool !== "object" ||
+      !("execute" in tool) ||
+      typeof tool.execute !== "function" ||
+      patchedTools.has(tool)
+    ) {
+      return;
+    }
+
+    patchedTools.add(tool);
+    const toolRecord = tool as AISDKTool & {
+      [AUTO_PATCHED_TOOL]?: AISDKToolPatchState;
+      execute: (...args: unknown[]) => unknown;
+    };
+    const entry: AISDKToolPatchEntry = {
+      activeSpanIds: new Set([parentSpan.spanId]),
+      childTracingOptions,
+      name,
+      parentSpan,
+    };
+    const cleanupToolEntry = (state: AISDKToolPatchState) => {
+      const index = state.entries.indexOf(entry);
+      if (index >= 0) {
+        state.entries.splice(index, 1);
+      }
+      if (state.entries.length > 0) {
+        return;
+      }
+      tool.execute = state.originalExecute;
+      delete toolRecord[AUTO_PATCHED_TOOL];
+    };
+    const existingState = toolRecord[AUTO_PATCHED_TOOL];
+    if (existingState) {
+      if (
+        childTracingOptions.agentOwner &&
+        attachNestedAISDKChildPatchEntry(
+          existingState.entries,
+          parentSpan,
+          cleanup,
+        )
+      ) {
+        return;
+      }
+
+      if (!childTracingOptions.agentOwner) {
+        shadowActiveAISDKChildPatchEntry(
+          existingState.entries,
+          entry,
+          parentSpan,
+          cleanup,
+        );
+      }
+
+      existingState.entries.push(entry);
+      cleanup.push(() => {
+        cleanupToolEntry(existingState);
+      });
+      return;
+    }
+
+    const originalExecute = toolRecord.execute;
+    const state: AISDKToolPatchState = {
+      entries: [entry],
+      originalExecute,
+    };
+    toolRecord[AUTO_PATCHED_TOOL] = state;
+    tool.execute = function executePatched(...args: unknown[]) {
+      const activeEntry = activeAISDKChildPatchEntry(state.entries);
+      const result = Reflect.apply(originalExecute, this, args);
+      if (!activeEntry) {
+        return result;
+      }
+
+      if (isAsyncGenerator(result)) {
+        return (async function* () {
+          const span = activeEntry.parentSpan.startSpan(
+            withSpanInstrumentationName(
+              {
+                name: activeEntry.name,
+                spanAttributes: {
+                  type: SpanTypeAttribute.TOOL,
+                },
+              },
+              INSTRUMENTATION_NAMES.AI_SDK,
+            ),
+          );
+          span.log({ input: serializeToolExecutionInput(args) });
+
+          try {
+            let lastValue: unknown;
+            for await (const value of result) {
+              lastValue = value;
+              yield value;
+            }
+            span.log({ output: lastValue });
+          } catch (error) {
+            span.log({ error: toLoggedError(error) });
+            throw error;
+          } finally {
+            span.end();
+          }
+        })();
+      }
+
+      return activeEntry.parentSpan.traced(
+        async (span) => {
+          span.log({ input: serializeToolExecutionInput(args) });
+          const awaitedResult = await result;
+          span.log({ output: awaitedResult });
+          return awaitedResult;
+        },
+        withSpanInstrumentationName(
+          {
+            name: activeEntry.name,
+            spanAttributes: {
+              type: SpanTypeAttribute.TOOL,
+            },
+          },
+          INSTRUMENTATION_NAMES.AI_SDK,
+        ),
+      );
+    };
+
+    cleanup.push(() => {
+      cleanupToolEntry(state);
+    });
+  };
+
+  const patchTools = (tools: AISDKTools | undefined): void => {
+    if (!tools) {
+      return;
+    }
+
+    const inferName = (tool: AISDKTool, fallback: string) =>
+      (tool && (tool.name || tool.toolName || tool.id)) || fallback;
+
+    if (Array.isArray(tools)) {
+      tools.forEach((tool, index) =>
+        patchTool(tool, inferName(tool, `tool[${index}]`)),
+      );
+      return;
+    }
+
+    for (const [key, tool] of Object.entries(tools)) {
+      patchTool(tool, key);
+    }
+  };
+
+  if (params && typeof params === "object") {
+    const originalParamModel = params.model;
+    const patchedParamModel = patchModel(originalParamModel);
+    if (patchedParamModel && patchedParamModel !== originalParamModel) {
+      params.model = patchedParamModel;
+      cleanup.push(() => {
+        params.model = originalParamModel;
+      });
+    }
+    patchTools(params.tools);
+  }
+
+  if (self && typeof self === "object") {
+    const selfRecord = self as {
+      model?: AISDKModel;
+      tools?: AISDKTools;
+      settings?: { model?: AISDKModel; tools?: AISDKTools };
+    };
+
+    if (selfRecord.model !== undefined) {
+      const originalSelfModel = selfRecord.model;
+      const patchedSelfModel = patchModel(originalSelfModel);
+      if (patchedSelfModel && patchedSelfModel !== originalSelfModel) {
+        selfRecord.model = patchedSelfModel;
+        cleanup.push(() => {
+          selfRecord.model = originalSelfModel;
+        });
+      }
+    }
+
+    if (selfRecord.tools !== undefined) {
+      patchTools(selfRecord.tools);
+    }
+
+    if (selfRecord.settings && typeof selfRecord.settings === "object") {
+      if (selfRecord.settings.model !== undefined) {
+        const originalSettingsModel = selfRecord.settings.model;
+        const patchedSettingsModel = patchModel(originalSettingsModel);
+        if (
+          patchedSettingsModel &&
+          patchedSettingsModel !== originalSettingsModel
+        ) {
+          selfRecord.settings.model = patchedSettingsModel;
+          cleanup.push(() => {
+            if (selfRecord.settings) {
+              selfRecord.settings.model = originalSettingsModel;
+            }
+          });
+        }
+      }
+      if (selfRecord.settings.tools !== undefined) {
+        patchTools(selfRecord.settings.tools);
+      }
+    }
+  }
+
+  return {
+    cleanup:
+      cleanup.length > 0
+        ? () => {
+            while (cleanup.length > 0) {
+              cleanup.pop()?.();
+            }
+          }
+        : undefined,
+    modelWrapped,
+  };
+}
+
+export function finalizeAISDKChildTracing(event?: {
+  [key: string]: unknown;
+}): void {
+  const cleanup = event?.__braintrust_ai_sdk_cleanup;
+  if (event && typeof cleanup === "function") {
+    cleanup();
+    delete event.__braintrust_ai_sdk_cleanup;
+  }
+}
+
+function extractAISDKStreamPart(chunk: unknown): unknown {
+  if (!isObject(chunk) || !isObject(chunk.part)) {
+    return chunk;
+  }
+
+  return chunk.part;
+}
+
+function stringContent(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function rawValueHasAISDKContent(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+
+  if (typeof value === "string") {
+    return value.length > 0;
+  }
+
+  if (!isObject(value)) {
+    return true;
+  }
+
+  // Raw streams also include provider lifecycle events; only content shapes count.
+  const delta = value.delta;
+  if (
+    stringContent(value.content) ||
+    stringContent(value.text) ||
+    stringContent(value.delta) ||
+    stringContent(value.arguments) ||
+    stringContent(value.partial_json) ||
+    (isObject(delta) &&
+      (stringContent(delta.content) ||
+        stringContent(delta.text) ||
+        stringContent(delta.arguments) ||
+        stringContent(delta.partial_json) ||
+        stringContent(delta.thinking))) ||
+    (Array.isArray(value.choices) &&
+      value.choices.some((choice) => {
+        if (!isObject(choice) || !isObject(choice.delta)) {
+          return false;
+        }
+
+        const choiceDelta = choice.delta;
+        if (
+          stringContent(choiceDelta.content) ||
+          stringContent(choiceDelta.text)
+        ) {
+          return true;
+        }
+
+        if (
+          isObject(choiceDelta.function_call) &&
+          stringContent(choiceDelta.function_call.arguments)
+        ) {
+          return true;
+        }
+
+        return (
+          Array.isArray(choiceDelta.tool_calls) &&
+          choiceDelta.tool_calls.some(
+            (toolCall) =>
+              isObject(toolCall) &&
+              isObject(toolCall.function) &&
+              stringContent(toolCall.function.arguments),
+          )
+        );
+      }))
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function isAISDKContentStreamChunk(chunk: unknown): boolean {
+  const part = extractAISDKStreamPart(chunk);
+  if (typeof part === "string") {
+    return part.length > 0;
+  }
+
+  if (!isObject(part) || typeof part.type !== "string") {
+    return false;
+  }
+
+  // TTFT should ignore framing like stream-start, metadata, and text/tool starts.
+  switch (part.type) {
+    case "text-delta":
+      return (
+        stringContent(part.textDelta) !== undefined ||
+        stringContent(part.delta) !== undefined ||
+        stringContent(part.text) !== undefined ||
+        stringContent(part.content) !== undefined
+      );
+    case "reasoning-delta":
+      return (
+        stringContent(part.delta) !== undefined ||
+        stringContent(part.text) !== undefined ||
+        stringContent(part.content) !== undefined
+      );
+    case "tool-call":
+    case "object":
+    case "file":
+      return true;
+    case "tool-input-delta":
+    case "tool-call-delta":
+      return (
+        stringContent(part.argsTextDelta) !== undefined ||
+        stringContent(part.inputTextDelta) !== undefined ||
+        stringContent(part.delta) !== undefined ||
+        stringContent(part.text) !== undefined ||
+        stringContent(part.content) !== undefined
+      );
+    case "raw":
+      return rawValueHasAISDKContent(part.rawValue);
+    default:
+      return false;
+  }
+}
+
+function isAISDKContentAsyncIterableChunk(chunk: unknown): boolean {
+  if (isAISDKContentStreamChunk(chunk)) {
+    return true;
+  }
+
+  const part = extractAISDKStreamPart(chunk);
+  return isObject(part) && typeof part.type !== "string";
+}
+
+export function patchAISDKStreamingResult(args: {
+  defaultDenyOutputPaths: string[];
+  endEvent: { denyOutputPaths?: string[]; [key: string]: unknown };
+  forceTopLevelMetrics?: boolean;
+  onComplete?: (result: {
+    metrics: Record<string, number>;
+    output: unknown;
+  }) => void;
+  onCancel?: () => void;
+  onError?: (error: Error) => void;
+  result: AISDKResult;
+  resolvePromiseUsage?: boolean;
+  span: Pick<Span, "end" | "log">;
+  startTime: number;
+  transformOutput?: (output: unknown) => unknown;
+}): boolean {
+  const {
+    defaultDenyOutputPaths,
+    endEvent,
+    forceTopLevelMetrics,
+    onComplete,
+    onCancel,
+    onError,
+    result,
+    resolvePromiseUsage,
+    span,
+    startTime,
+    transformOutput,
+  } = args;
+
+  if (!result || typeof result !== "object") {
+    return false;
+  }
+
+  const resultRecord = result as Record<string, unknown>;
+  attachKnownResultPromiseHandlers(resultRecord);
+  let finalized = false;
+  const finalize = (
+    outcome?:
+      | { error: Error }
+      | { metrics: Record<string, number>; output: unknown },
+  ) => {
+    if (finalized) {
+      return;
+    }
+    finalized = true;
+    try {
+      finalizeAISDKChildTracing(endEvent);
+    } catch (error) {
+      debugLogger.error("Error finalizing AI SDK child tracing:", error);
+    }
+    try {
+      span.end();
+    } catch (error) {
+      debugLogger.error("Error ending AI SDK streaming span:", error);
+    }
+    if (outcome && "error" in outcome) {
+      try {
+        onError?.(outcome.error);
+      } catch (error) {
+        debugLogger.error("Error in AI SDK streaming error hook:", error);
+      }
+    } else if (outcome) {
+      try {
+        onComplete?.(outcome);
+      } catch (error) {
+        debugLogger.error("Error in AI SDK streaming completion hook:", error);
+      }
+    } else {
+      try {
+        onCancel?.();
+      } catch (error) {
+        debugLogger.error(
+          "Error in AI SDK streaming cancellation hook:",
+          error,
+        );
+      }
+    }
+  };
+  let outputLogged = false;
+  const logStreamingOutput = async (firstChunkTime?: number) => {
+    if (outputLogged) {
+      return;
+    }
+    outputLogged = true;
+
+    try {
+      const metrics = forceTopLevelMetrics
+        ? await extractResolvedAISDKTokenMetrics(result)
+        : extractTopLevelAISDKMetrics(result, endEvent);
+      if (resolvePromiseUsage && !forceTopLevelMetrics) {
+        try {
+          const resultRecord = result as Record<string, unknown>;
+          const pendingUsage = resultRecord.totalUsage ?? resultRecord.usage;
+          if (isPromiseLike(pendingUsage)) {
+            const usage = await Promise.resolve(pendingUsage);
+            if (isObject(usage)) {
+              Object.assign(
+                metrics,
+                extractTokenMetrics({ usage: usage as AISDKUsage }),
+              );
+            }
+          }
+        } catch {
+          // Keep any eagerly available metrics if a usage getter rejects.
+        }
+      }
+      if (
+        metrics.time_to_first_token === undefined &&
+        firstChunkTime !== undefined
+      ) {
+        metrics.time_to_first_token = firstChunkTime - startTime;
+      }
+
+      const processedOutput = await processAISDKStreamingOutput(
+        result,
+        resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+      );
+      const output = transformOutput
+        ? transformOutput(processedOutput)
+        : processedOutput;
+      const metadata = buildResolvedMetadataPayload(result).metadata;
+
+      try {
+        span.log({
+          output,
+          ...(metadata ? { metadata } : {}),
+          metrics,
+        });
+      } catch (error) {
+        debugLogger.error("Error logging AI SDK streaming output:", error);
+      }
+      finalize({ metrics, output });
+    } catch (error) {
+      const loggedError = toLoggedError(error);
+      try {
+        span.log({ error: loggedError });
+      } catch (loggingError) {
+        debugLogger.error(
+          "Error logging AI SDK streaming failure:",
+          loggingError,
+        );
+      }
+      finalize({
+        error: error instanceof Error ? error : new Error(String(loggedError)),
+      });
+    }
+  };
+  const createAsyncIterableHooks = () => {
+    let firstChunkTime: number | undefined;
+
+    return {
+      onChunk: (chunk: unknown) => {
+        if (
+          firstChunkTime === undefined &&
+          isAISDKContentAsyncIterableChunk(chunk)
+        ) {
+          firstChunkTime = getCurrentUnixTimestamp();
+        }
+      },
+      onComplete: async () => {
+        await logStreamingOutput(firstChunkTime);
+      },
+      onError: (error: Error) => {
+        if (!outputLogged) {
+          outputLogged = true;
+          try {
+            span.log({ error });
+          } catch (loggingError) {
+            debugLogger.error(
+              "Error logging AI SDK stream failure:",
+              loggingError,
+            );
+          }
+        }
+        finalize({ error });
+      },
+      onCancel: finalize,
+    };
+  };
+  const patchAsyncIterable = (stream: AsyncIterable<unknown>) =>
+    isReadableStreamLike(stream)
+      ? createPatchedReadableStream(stream, createAsyncIterableHooks())
+      : createPatchedAsyncIterable(stream, createAsyncIterableHooks());
+  const patchAsyncIterableField = (field: string): boolean => {
+    let descriptorOwner: object | null = resultRecord;
+    let descriptor: PropertyDescriptor | undefined;
+    while (descriptorOwner) {
+      descriptor = Object.getOwnPropertyDescriptor(descriptorOwner, field);
+      if (descriptor) {
+        break;
+      }
+      descriptorOwner = Object.getPrototypeOf(descriptorOwner);
+    }
+
+    if (
+      !descriptor ||
+      (descriptorOwner === resultRecord && !descriptor.configurable)
+    ) {
+      return false;
+    }
+
+    if ("value" in descriptor) {
+      if (!isAsyncIterable(descriptor.value)) {
+        return false;
+      }
+
+      try {
+        Object.defineProperty(resultRecord, field, {
+          configurable:
+            descriptorOwner === resultRecord ? descriptor.configurable : true,
+          enumerable: descriptor.enumerable,
+          value: patchAsyncIterable(descriptor.value),
+          writable: descriptor.writable,
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    if (typeof descriptor.get !== "function") {
+      return false;
+    }
+
+    const originalGet = descriptor.get;
+    const originalSet = descriptor.set;
+    try {
+      Object.defineProperty(resultRecord, field, {
+        configurable:
+          descriptorOwner === resultRecord ? descriptor.configurable : true,
+        enumerable: descriptor.enumerable,
+        get() {
+          const stream = originalGet.call(this);
+          return isAsyncIterable(stream) ? patchAsyncIterable(stream) : stream;
+        },
+        ...(originalSet
+          ? {
+              set(value: unknown) {
+                originalSet.call(this, value);
+              },
+            }
+          : {}),
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  let patched = false;
+
+  if (isReadableStreamLike(resultRecord.baseStream)) {
+    let firstChunkTime: number | undefined;
+
+    const transformedBaseStream = resultRecord.baseStream.pipeThrough(
+      new TransformStream({
+        transform(chunk, controller) {
+          if (
+            firstChunkTime === undefined &&
+            isAISDKContentStreamChunk(chunk)
+          ) {
+            firstChunkTime = getCurrentUnixTimestamp();
+          }
+          controller.enqueue(chunk);
+        },
+        async flush() {
+          await logStreamingOutput(firstChunkTime);
+        },
+      }),
+    );
+    const reader = transformedBaseStream.getReader();
+    const wrappedBaseStream = new ReadableStream({
+      async pull(controller) {
+        try {
+          const { done, value } = await reader.read();
+          if (done) {
+            controller.close();
+            return;
+          }
+
+          controller.enqueue(value);
+        } catch (error) {
+          const loggedError = toLoggedError(error);
+          try {
+            span.log({ error: loggedError });
+          } catch (loggingError) {
+            debugLogger.error(
+              "Error logging AI SDK base stream failure:",
+              loggingError,
+            );
+          }
+          finalize({
+            error:
+              error instanceof Error ? error : new Error(String(loggedError)),
+          });
+          controller.error(error);
+        }
+      },
+      async cancel(reason) {
+        try {
+          finalize();
+        } finally {
+          await reader.cancel(reason);
+        }
+      },
+    });
+
+    Object.defineProperty(resultRecord, "baseStream", {
+      configurable: true,
+      enumerable: true,
+      value: wrappedBaseStream,
+      writable: true,
+    });
+
+    patched = true;
+  }
+
+  for (const field of [
+    "partialObjectStream",
+    "textStream",
+    "fullStream",
+    "stream",
+  ]) {
+    patched = patchAsyncIterableField(field) || patched;
+  }
+
+  return patched;
+}
+
+function attachKnownResultPromiseHandlers(
+  result: Record<string, unknown>,
+): void {
+  const promiseLikeFields = [
+    "content",
+    "text",
+    "object",
+    "value",
+    "values",
+    "finishReason",
+    "embedding",
+    "embeddings",
+    "usage",
+    "totalUsage",
+    "responses",
+    "steps",
+  ];
+
+  for (const field of promiseLikeFields) {
+    try {
+      if (!(field in result)) {
+        continue;
+      }
+      const value = result[field];
+      if (isPromiseLike(value)) {
+        void Promise.resolve(value).catch(() => {});
+      }
+    } catch {
+      // Ignore getter failures while attaching safeguards.
+    }
+  }
+}
+
+type ReadableStreamLike = {
+  cancel?: (reason?: unknown) => Promise<void>;
+  getReader(): ReadableStreamDefaultReader<unknown>;
+  pipeThrough<T>(transform: TransformStream<unknown, T>): ReadableStream<T>;
+};
+
+function isReadableStreamLike(value: unknown): value is ReadableStreamLike {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    typeof (value as { getReader?: unknown }).getReader === "function" &&
+    typeof (value as { pipeThrough?: unknown }).pipeThrough === "function"
+  );
+}
+
+function createPatchedReadableStream(
+  stream: ReadableStreamLike,
+  hooks: {
+    onCancel?: () => void | Promise<void>;
+    onChunk: (chunk: unknown) => void;
+    onComplete: () => Promise<void>;
+    onError: (error: Error) => void;
+  },
+): ReadableStream<unknown> {
+  let reader: ReadableStreamDefaultReader<unknown> | undefined;
+  let completed = false;
+
+  return new ReadableStream({
+    async pull(controller) {
+      reader ??= stream.getReader();
+
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          completed = true;
+          await hooks.onComplete();
+          controller.close();
+          return;
+        }
+
+        hooks.onChunk(value);
+        controller.enqueue(value);
+      } catch (error) {
+        completed = true;
+        hooks.onError(
+          error instanceof Error ? error : new Error(String(error)),
+        );
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      if (!completed) {
+        completed = true;
+        try {
+          await hooks.onCancel?.();
+        } catch {
+          // Ignore cleanup errors so stream cancellation keeps its behavior.
+        }
+      }
+
+      if (reader) {
+        await reader.cancel(reason);
+      } else if (stream.cancel) {
+        await stream.cancel(reason);
+      }
+    },
+  });
+}
+
+function createPatchedAsyncIterable(
+  stream: AsyncIterable<unknown>,
+  hooks: {
+    onCancel?: () => void | Promise<void>;
+    onChunk: (chunk: unknown) => void;
+    onComplete: () => Promise<void>;
+    onError: (error: Error) => void;
+  },
+): AsyncIterable<unknown> {
+  return {
+    async *[Symbol.asyncIterator]() {
+      let completed = false;
+      try {
+        for await (const chunk of stream) {
+          hooks.onChunk(chunk);
+          yield chunk;
+        }
+        completed = true;
+        await hooks.onComplete();
+      } catch (error) {
+        completed = true;
+        hooks.onError(
+          error instanceof Error ? error : new Error(String(error)),
+        );
+        throw error;
+      } finally {
+        if (!completed) {
+          try {
+            await hooks.onCancel?.();
+          } catch {
+            // Ignore cleanup errors so stream cancellation keeps its behavior.
+          }
+        }
+      }
+    },
+  };
+}
+
+async function processAISDKStreamingOutput(
+  result: AISDKResult,
+  denyOutputPaths: string[],
+): Promise<Record<string, unknown> | AISDKResult> {
+  const output = processAISDKOutput(result, denyOutputPaths);
+
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  const outputRecord = output as Record<string, unknown>;
+  const isObjectStreamingResult =
+    result != null &&
+    typeof result === "object" &&
+    "partialObjectStream" in result;
+
+  try {
+    // Object-stream results can expose a text getter that rejects when no text
+    // output exists. Skip probing text for those streams.
+    if (!isObjectStreamingResult && "text" in result) {
+      const resolvedText = await Promise.resolve(result.text);
+      if (typeof resolvedText === "string") {
+        outputRecord.text = resolvedText;
+      }
+    }
+  } catch {
+    // Ignore getter failures
+  }
+
+  try {
+    if ("object" in result) {
+      const resolvedObject = await Promise.resolve(result.object);
+      if (resolvedObject !== undefined) {
+        outputRecord.object = resolvedObject;
+      }
+    }
+  } catch {
+    // Ignore getter/promise failures
+  }
+
+  try {
+    if ("finishReason" in result) {
+      const resolvedFinishReason = await Promise.resolve(result.finishReason);
+      if (resolvedFinishReason !== undefined) {
+        outputRecord.finishReason = resolvedFinishReason;
+      }
+    }
+  } catch {
+    // Ignore getter/promise failures
+  }
+
+  return outputRecord;
+}
+
+function buildAISDKChildMetadata(
+  model: AISDKModel | undefined,
+): Record<string, unknown> {
+  const { model: modelId, provider } = serializeModelWithProvider(model);
+
+  return {
+    ...(modelId ? { model: modelId } : {}),
+    ...(provider ? { provider } : {}),
+    braintrust: {
+      integration_name: "ai-sdk",
+      sdk_language: "typescript",
+    },
+  };
+}
+
+function buildResolvedMetadataPayload(result: AISDKResult): {
+  metadata?: Record<string, unknown>;
+} {
+  const gatewayInfo = extractGatewayRoutingInfo(result);
+  const metadata: Record<string, unknown> = {};
+
+  if (gatewayInfo?.provider) {
+    metadata.provider = gatewayInfo.provider;
+  }
+  if (gatewayInfo?.model) {
+    metadata.model = gatewayInfo.model;
+  }
+
+  let finishReason: unknown;
+  try {
+    finishReason = result.finishReason;
+  } catch {
+    finishReason = undefined;
+  }
+
+  if (isPromiseLike(finishReason)) {
+    void Promise.resolve(finishReason).catch(() => {});
+  } else if (finishReason !== undefined) {
+    metadata.finish_reason = finishReason;
+  }
+
+  return Object.keys(metadata).length > 0 ? { metadata } : {};
+}
+
+function mergeMetadataPayload(
+  metadataPayload: { metadata?: Record<string, unknown> },
+  extraMetadata?: Record<string, unknown>,
+): { metadata?: Record<string, unknown> } {
+  if (!extraMetadata || Object.keys(extraMetadata).length === 0) {
+    return metadataPayload;
+  }
+
+  return {
+    metadata: {
+      ...(metadataPayload.metadata ?? {}),
+      ...extraMetadata,
+    },
+  };
+}
+
+function buildMissingUsageMetadata(
+  output: unknown,
+  metrics: Record<string, number>,
+  reason: string,
+): Record<string, unknown> | undefined {
+  if (!hasLoggedOutput(output) || hasTokenUsageMetrics(metrics)) {
+    return undefined;
+  }
+
+  return { usage_unavailable_reason: reason };
+}
+
+function hasLoggedOutput(output: unknown): boolean {
+  if (output === null || output === undefined) {
+    return false;
+  }
+
+  if (Array.isArray(output)) {
+    return output.length > 0;
+  }
+
+  if (typeof output === "object") {
+    return Object.keys(output as Record<string, unknown>).length > 0;
+  }
+
+  return true;
+}
+
+function hasTokenUsageMetrics(metrics: Record<string, number>): boolean {
+  return Object.keys(metrics).some(
+    (key) => key !== "estimated_cost" && key !== "time_to_first_token",
+  );
+}
+
+function resolveAISDKModel(
+  model: AISDKModel | undefined,
+  aiSDK?: AISDK,
+): AISDKModel | undefined {
+  if (typeof model !== "string") {
+    return model;
+  }
+
+  const provider =
+    (
+      globalThis as typeof globalThis & {
+        AI_SDK_DEFAULT_PROVIDER?: {
+          languageModel?: (modelId: string) => AISDKLanguageModel;
+        };
+      }
+    ).AI_SDK_DEFAULT_PROVIDER ??
+    aiSDK?.gateway ??
+    null;
+
+  if (provider && typeof provider.languageModel === "function") {
+    return provider.languageModel(model);
+  }
+
+  return model;
+}
+
+function extractTextDelta(chunk: AISDKModelStreamChunk): string {
+  if (typeof chunk.textDelta === "string") return chunk.textDelta;
+  if (typeof chunk.delta === "string") return chunk.delta;
+  if (typeof chunk.text === "string") return chunk.text;
+  if (typeof chunk.content === "string") return chunk.content;
+  return "";
+}
+
+function isAsyncGenerator(value: unknown): value is AsyncGenerator {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    typeof (value as AsyncGenerator)[Symbol.asyncIterator] === "function" &&
+    typeof (value as AsyncGenerator).next === "function" &&
+    typeof (value as AsyncGenerator).return === "function" &&
+    typeof (value as AsyncGenerator).throw === "function"
+  );
+}
+
+/**
+ * Process AI SDK output, omitting specified paths.
+ */
+export function processAISDKOutput(
+  output: AISDKResult,
+  denyOutputPaths: string[],
+): Record<string, unknown> | AISDKResult {
+  if (!output) return output;
+
+  const merged = extractSerializableOutputFields(output);
+  const deleteOutputPaths = denyOutputPaths.filter((path) =>
+    path.toLowerCase().endsWith("headers"),
+  );
+  const sanitized = omit(merged, denyOutputPaths, deleteOutputPaths);
+
+  // Transport payloads can contain nested provider request/response headers; keep
+  // user/model/tool payload fields named "headers" outside these roots intact.
+  for (const path of TRANSPORT_PAYLOAD_ROOT_PATHS) {
+    const stack: Array<{
+      obj: Record<string, unknown> | unknown[] | undefined;
+      keys: (string | number)[];
+    }> = [{ obj: sanitized, keys: parsePath(path) }];
+
+    while (stack.length > 0) {
+      const entry = stack.pop();
+      if (!entry || entry.keys.length === 0) {
+        continue;
+      }
+
+      const firstKey = entry.keys[0];
+      const remainingKeys = entry.keys.slice(1);
+
+      if (firstKey === "[]") {
+        if (Array.isArray(entry.obj)) {
+          for (const item of entry.obj) {
+            stack.push({
+              obj: item as Record<string, unknown> | unknown[] | undefined,
+              keys: remainingKeys,
+            });
+          }
+        }
+        continue;
+      }
+
+      if (
+        !entry.obj ||
+        typeof entry.obj !== "object" ||
+        !(firstKey in entry.obj)
+      ) {
+        continue;
+      }
+
+      const record = entry.obj as Record<string | number, unknown>;
+      if (remainingKeys.length === 0) {
+        record[firstKey] = sanitizeAISDKMetadataValue(record[firstKey]);
+        continue;
+      }
+
+      stack.push({
+        obj: record[firstKey] as
+          | Record<string, unknown>
+          | unknown[]
+          | undefined,
+        keys: remainingKeys,
+      });
+    }
+  }
+
+  return normalizeAISDKLoggedOutput(sanitized);
+}
+
+export function processAISDKEmbeddingOutput(
+  output: AISDKEmbeddingResult,
+  denyOutputPaths: string[],
+): Record<string, unknown> | AISDKEmbeddingResult {
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  const summarized: Record<string, unknown> = {};
+  const whitelistedFields = [
+    "usage",
+    "totalUsage",
+    "warnings",
+    "providerMetadata",
+    "experimental_providerMetadata",
+  ] as const;
+
+  for (const field of whitelistedFields) {
+    const value = safeSerializableFieldRead(output, field);
+    if (value !== undefined && isSerializableOutputValue(value)) {
+      summarized[field] = value;
+    }
+  }
+
+  const embedding = safeSerializableFieldRead(output, "embedding");
+  if (Array.isArray(embedding)) {
+    summarized.embedding_length = embedding.length;
+  }
+
+  const embeddings = safeSerializableFieldRead(output, "embeddings");
+  if (Array.isArray(embeddings)) {
+    summarized.embedding_count = embeddings.length;
+
+    const firstEmbedding = embeddings.find((item) => Array.isArray(item));
+    if (Array.isArray(firstEmbedding)) {
+      summarized.embedding_length = firstEmbedding.length;
+    }
+  }
+
+  return normalizeAISDKLoggedOutput(omit(summarized, denyOutputPaths));
+}
+
+export function processAISDKRerankOutput(
+  output: AISDKRerankResult,
+  _denyOutputPaths: string[],
+): unknown {
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  const ranking = safeSerializableFieldRead(output, "ranking");
+  if (Array.isArray(ranking)) {
+    return ranking.slice(0, 100).map((item) => {
+      const entry =
+        item && typeof item === "object"
+          ? (item as Record<string, unknown>)
+          : undefined;
+      return {
+        index:
+          typeof entry?.originalIndex === "number"
+            ? entry.originalIndex
+            : undefined,
+        relevance_score:
+          typeof entry?.score === "number" ? entry.score : undefined,
+      };
+    });
+  }
+
+  return undefined;
+}
+
+/**
+ * Extract token metrics from AI SDK result.
+ */
+export function extractTokenMetrics(
+  result: AISDKResult,
+): Record<string, number> {
+  const metrics: Record<string, number> = {};
+
+  let usage: AISDKUsage | undefined;
+  const totalUsageValue = safeResultFieldRead(result, "totalUsage");
+  if (totalUsageValue !== undefined && !isPromiseLike(totalUsageValue)) {
+    usage = totalUsageValue as AISDKUsage;
+  }
+
+  if (!usage) {
+    const usageValue = safeResultFieldRead(result, "usage");
+    if (usageValue !== undefined && !isPromiseLike(usageValue)) {
+      usage = usageValue as AISDKUsage;
+    }
+  }
+
+  if (!usage) {
+    return metrics;
+  }
+
+  // Extract token counts
+  const promptTokens = firstNumber(
+    usage.inputTokens?.total,
+    usage.inputTokens,
+    usage.promptTokens,
+    usage.prompt_tokens,
+  );
+  if (promptTokens !== undefined) {
+    metrics.prompt_tokens = promptTokens;
+  }
+
+  const completionTokens = firstNumber(
+    usage.outputTokens?.total,
+    usage.outputTokens,
+    usage.completionTokens,
+    usage.completion_tokens,
+  );
+  if (completionTokens !== undefined) {
+    metrics.completion_tokens = completionTokens;
+  }
+
+  const totalTokens = firstNumber(
+    usage.totalTokens,
+    usage.tokens,
+    usage.total_tokens,
+  );
+  if (totalTokens !== undefined) {
+    metrics.tokens = totalTokens;
+  } else if (promptTokens !== undefined && completionTokens !== undefined) {
+    metrics.tokens = promptTokens + completionTokens;
+  }
+
+  const promptCachedTokens = firstNumber(
+    usage.inputTokens?.cacheRead,
+    usage.inputTokenDetails?.cacheReadTokens,
+    usage.cachedInputTokens,
+    usage.promptCachedTokens,
+    usage.prompt_cached_tokens,
+  );
+  if (promptCachedTokens !== undefined) {
+    metrics.prompt_cached_tokens = promptCachedTokens;
+  }
+
+  const promptCacheCreationTokens = firstNumber(
+    usage.inputTokens?.cacheWrite,
+    usage.inputTokenDetails?.cacheWriteTokens,
+    usage.promptCacheCreationTokens,
+    usage.prompt_cache_creation_tokens,
+    extractAnthropicCacheCreationTokens(result),
+  );
+  if (promptCacheCreationTokens !== undefined) {
+    metrics.prompt_cache_creation_tokens = promptCacheCreationTokens;
+  }
+
+  const promptReasoningTokens = firstNumber(
+    usage.promptReasoningTokens,
+    usage.prompt_reasoning_tokens,
+  );
+  if (promptReasoningTokens !== undefined) {
+    metrics.prompt_reasoning_tokens = promptReasoningTokens;
+  }
+
+  const completionCachedTokens = firstNumber(
+    usage.completionCachedTokens,
+    usage.completion_cached_tokens,
+  );
+  if (completionCachedTokens !== undefined) {
+    metrics.completion_cached_tokens = completionCachedTokens;
+  }
+
+  const reasoningTokenCount = firstNumber(
+    usage.outputTokens?.reasoning,
+    usage.reasoningTokens,
+    usage.completionReasoningTokens,
+    usage.completion_reasoning_tokens,
+    usage.reasoning_tokens,
+    usage.thinkingTokens,
+    usage.thinking_tokens,
+  );
+  if (reasoningTokenCount !== undefined) {
+    metrics.completion_reasoning_tokens = reasoningTokenCount;
+    metrics.reasoning_tokens = reasoningTokenCount;
+  }
+
+  const completionAudioTokens = firstNumber(
+    usage.completionAudioTokens,
+    usage.completion_audio_tokens,
+  );
+  if (completionAudioTokens !== undefined) {
+    metrics.completion_audio_tokens = completionAudioTokens;
+  }
+
+  // Extract cost from gateway routing if available
+  const cost = extractCostFromResult(result);
+  if (cost !== undefined) {
+    metrics.estimated_cost = cost;
+  }
+
+  return metrics;
+}
+
+function extractAnthropicCacheCreationTokens(
+  result: AISDKResult,
+): number | undefined {
+  const providerMetadata = safeSerializableFieldRead(
+    result,
+    "providerMetadata",
+  ) as Record<string, unknown> | undefined;
+  const anthropicMetadata = providerMetadata?.anthropic as
+    | Record<string, unknown>
+    | undefined;
+  if (!anthropicMetadata) {
+    return undefined;
+  }
+
+  return firstNumber(
+    anthropicMetadata.cacheCreationInputTokens,
+    (anthropicMetadata.usage as Record<string, unknown> | undefined)
+      ?.cache_creation_input_tokens,
+  );
+}
+
+function safeResultFieldRead(
+  result: AISDKResult,
+  field: "usage" | "totalUsage",
+): unknown {
+  return safeSerializableFieldRead(result, field);
+}
+
+function safeSerializableFieldRead(
+  obj: Record<string, unknown> | AISDKResult,
+  field: string,
+): unknown {
+  try {
+    const value = obj?.[field as keyof typeof obj];
+    if (isPromiseLike(value)) {
+      void Promise.resolve(value).catch(() => {});
+      return undefined;
+    }
+    return value;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Aggregate AI SDK streaming chunks into a single response.
+ */
+function aggregateAISDKChunks(
+  chunks: unknown[],
+  _result?: AISDKResult | AsyncIterable<unknown>,
+  endEvent?: { [key: string]: unknown },
+): {
+  output: Record<string, unknown>;
+  metrics: Record<string, number>;
+  metadata?: Record<string, unknown>;
+} {
+  // For AI SDK streams, the chunks are typically delta objects
+  // We'll return the last chunk which usually contains the final state
+  const lastChunk = chunks[chunks.length - 1] as AISDKResult | undefined;
+
+  const output: Record<string, unknown> = {};
+  let metrics: Record<string, number> = {};
+  let metadata: Record<string, unknown> | undefined;
+
+  // Extract usage from last chunk
+  if (lastChunk) {
+    metrics = hasModelChildTracing(endEvent)
+      ? {}
+      : extractTokenMetrics(lastChunk);
+    metadata = buildResolvedMetadataPayload(lastChunk).metadata;
+
+    // Extract common output fields
+    const text = safeSerializableFieldRead(lastChunk, "text");
+    if (text !== undefined) {
+      output.text = text;
+    }
+    const objectValue = safeSerializableFieldRead(lastChunk, "object");
+    if (objectValue !== undefined) {
+      output.object = objectValue;
+    }
+    const finishReason = safeSerializableFieldRead(lastChunk, "finishReason");
+    if (finishReason !== undefined) {
+      output.finishReason = finishReason;
+    }
+    const toolCalls = safeSerializableFieldRead(lastChunk, "toolCalls");
+    if (toolCalls !== undefined) {
+      output.toolCalls = toolCalls;
+    }
+  }
+
+  finalizeAISDKChildTracing(endEvent);
+
+  return { output, metrics, metadata };
+}
+
+/**
+ * Extract getter values from AI SDK result objects.
+ */
+function extractGetterValues(
+  obj: AISDKResult,
+): Partial<Record<string, unknown>> {
+  const getterValues: Record<string, unknown> = {};
+
+  const getterNames = [
+    "content",
+    "messages",
+    "text",
+    "output",
+    "object",
+    "value",
+    "values",
+    "embedding",
+    "embeddings",
+    "finishReason",
+    "usage",
+    "totalUsage",
+    "toolCalls",
+    "toolResults",
+    "warnings",
+    "responses",
+    "experimental_providerMetadata",
+    "providerMetadata",
+    "rawResponse",
+    "response",
+  ];
+
+  for (const name of getterNames) {
+    try {
+      if (!obj || !(name in obj)) {
+        continue;
+      }
+
+      const value = obj[name];
+      if (isPromiseLike(value)) {
+        // Some AI SDK getters return promises that may reject when no output
+        // was generated. Consume rejections for values we are not logging.
+        void Promise.resolve(value).catch(() => {});
+        continue;
+      }
+
+      if (isSerializableOutputValue(value)) {
+        getterValues[name] = value;
+      }
+    } catch {
+      // Ignore errors accessing getters
+    }
+  }
+
+  return getterValues;
+}
+
+function extractSerializableOutputFields(
+  output: AISDKResult,
+): Record<string, unknown> {
+  const serialized: Record<string, unknown> = {};
+  const directFieldNames = [
+    "messages",
+    "steps",
+    "output",
+    "request",
+    "responseMessages",
+    "warnings",
+    "rawResponse",
+    "response",
+    "providerMetadata",
+    "experimental_providerMetadata",
+  ] as const;
+
+  for (const name of directFieldNames) {
+    try {
+      const value = output?.[name];
+      if (isPromiseLike(value)) {
+        void Promise.resolve(value).catch(() => {});
+        continue;
+      }
+      if (isSerializableOutputValue(value)) {
+        serialized[name] = value;
+      }
+    } catch {
+      // Ignore errors accessing getters
+    }
+  }
+
+  return {
+    ...serialized,
+    ...extractGetterValues(output),
+  };
+}
+
+function isSerializableOutputValue(value: unknown): boolean {
+  if (typeof value === "function") {
+    return false;
+  }
+
+  if (isPromiseLike(value)) {
+    return false;
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    typeof (value as { getReader?: unknown }).getReader === "function"
+  ) {
+    return false;
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    typeof (value as { [Symbol.asyncIterator]?: unknown })[
+      Symbol.asyncIterator
+    ] === "function"
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Extracts model ID and provider from a model object or string.
+ */
+export function serializeModelWithProvider(model: AISDKModel | undefined): {
+  model: string | undefined;
+  provider?: string;
+} {
+  const modelId = typeof model === "string" ? model : model?.modelId;
+  const explicitProvider =
+    typeof model === "object" ? model?.provider : undefined;
+
+  if (!modelId) {
+    return { model: modelId, provider: explicitProvider };
+  }
+
+  // Parse gateway-style model strings like "openai/gpt-4"
+  const parsed = parseGatewayModelString(modelId);
+  return {
+    model: parsed.model,
+    provider: explicitProvider || parsed.provider,
+  };
+}
+
+/**
+ * Parse gateway model string like "openai/gpt-4" into provider and model.
+ */
+function parseGatewayModelString(modelString: string): {
+  model: string;
+  provider?: string;
+} {
+  if (!modelString || typeof modelString !== "string") {
+    return { model: modelString };
+  }
+  const slashIndex = modelString.indexOf("/");
+  if (slashIndex > 0 && slashIndex < modelString.length - 1) {
+    return {
+      provider: modelString.substring(0, slashIndex),
+      model: modelString.substring(slashIndex + 1),
+    };
+  }
+  return { model: modelString };
+}
+
+function extractGatewayRoutingInfo(result: AISDKResult): {
+  model?: string;
+  provider?: string;
+} | null {
+  const steps = safeSerializableFieldRead(result, "steps");
+  if (Array.isArray(steps) && steps.length > 0) {
+    const routing = (steps[0] as { providerMetadata?: any })?.providerMetadata
+      ?.gateway?.routing;
+    if (routing) {
+      return {
+        provider: routing.resolvedProvider || routing.finalProvider,
+        model: routing.resolvedProviderApiModelId,
+      };
+    }
+  }
+
+  const providerMetadata = safeSerializableFieldRead(
+    result,
+    "providerMetadata",
+  );
+  const routing = (providerMetadata as { gateway?: any } | undefined)?.gateway
+    ?.routing;
+  if (routing) {
+    return {
+      provider: routing.resolvedProvider || routing.finalProvider,
+      model: routing.resolvedProviderApiModelId,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Extract cost from result's providerMetadata.
+ */
+function extractCostFromResult(result: AISDKResult): number | undefined {
+  // Check for cost in steps (multi-step results)
+  const steps = safeSerializableFieldRead(result, "steps");
+  if (Array.isArray(steps) && steps.length > 0) {
+    let totalCost = 0;
+    let foundCost = false;
+    for (const step of steps) {
+      const gateway = step?.providerMetadata?.gateway;
+      const stepCost =
+        parseGatewayCost(gateway?.cost) ||
+        parseGatewayCost(gateway?.marketCost);
+      if (stepCost !== undefined && stepCost > 0) {
+        totalCost += stepCost;
+        foundCost = true;
+      }
+    }
+    if (foundCost) {
+      return totalCost;
+    }
+  }
+
+  // Check direct providerMetadata
+  const providerMetadata = safeSerializableFieldRead(
+    result,
+    "providerMetadata",
+  );
+  const gateway = (providerMetadata as { gateway?: any } | undefined)?.gateway;
+  const directCost =
+    parseGatewayCost(gateway?.cost) || parseGatewayCost(gateway?.marketCost);
+  if (directCost !== undefined && directCost > 0) {
+    return directCost;
+  }
+
+  return undefined;
+}
+
+/**
+ * Parse gateway cost value.
+ */
+function parseGatewayCost(cost: unknown): number | undefined {
+  if (cost === undefined || cost === null) {
+    return undefined;
+  }
+  if (typeof cost === "number") {
+    return cost;
+  }
+  if (typeof cost === "string") {
+    const parsed = parseFloat(cost);
+    if (!isNaN(parsed)) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Get first number from a list of values.
+ */
+function firstNumber(...values: unknown[]): number | undefined {
+  for (const v of values) {
+    if (typeof v === "number") {
+      return v;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Deep copy an object via JSON serialization.
+ */
+function deepCopy(obj: Record<string, unknown>): Record<string, unknown> {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+/**
+ * Parse a JSON path string into an array of keys.
+ */
+function parsePath(path: string): (string | number)[] {
+  const keys: (string | number)[] = [];
+  let current = "";
+
+  for (let i = 0; i < path.length; i++) {
+    const char = path[i];
+
+    if (char === ".") {
+      if (current) {
+        keys.push(current);
+        current = "";
+      }
+    } else if (char === "[") {
+      if (current) {
+        keys.push(current);
+        current = "";
+      }
+      let bracketContent = "";
+      i++;
+      while (i < path.length && path[i] !== "]") {
+        bracketContent += path[i];
+        i++;
+      }
+      if (bracketContent === "") {
+        keys.push("[]");
+      } else {
+        const index = parseInt(bracketContent, 10);
+        keys.push(isNaN(index) ? bracketContent : index);
+      }
+    } else {
+      current += char;
+    }
+  }
+
+  if (current) {
+    keys.push(current);
+  }
+
+  return keys;
+}
+
+/**
+ * Omit a value at a specific path in an object.
+ */
+function omitAtPath(
+  obj: Record<string, unknown> | unknown[] | undefined,
+  keys: (string | number)[],
+  deleteLeaf = false,
+): void {
+  if (keys.length === 0) return;
+
+  const firstKey = keys[0];
+  const remainingKeys = keys.slice(1);
+
+  if (firstKey === "[]") {
+    if (Array.isArray(obj)) {
+      obj.forEach((item) => {
+        if (remainingKeys.length > 0) {
+          omitAtPath(
+            item as Record<string, unknown> | unknown[] | undefined,
+            remainingKeys,
+            deleteLeaf,
+          );
+        }
+      });
+    }
+  } else if (remainingKeys.length === 0) {
+    if (obj && typeof obj === "object" && firstKey in obj) {
+      if (deleteLeaf) {
+        delete (obj as Record<string | number, unknown>)[firstKey];
+      } else {
+        (obj as Record<string | number, unknown>)[firstKey] = "<omitted>";
+      }
+    }
+  } else {
+    if (obj && typeof obj === "object" && firstKey in obj) {
+      omitAtPath(
+        (obj as Record<string | number, unknown>)[firstKey] as
+          | Record<string, unknown>
+          | unknown[]
+          | undefined,
+        remainingKeys,
+        deleteLeaf,
+      );
+    }
+  }
+}
+
+/**
+ * Omit specified paths from an object.
+ */
+function omit(
+  obj: Record<string, unknown>,
+  paths: string[],
+  deletePaths: string[] = [],
+): Record<string, unknown> {
+  const result = deepCopy(obj);
+  const deletePathSet = new Set(deletePaths);
+
+  for (const path of paths) {
+    const keys = parsePath(path);
+    omitAtPath(result, keys, deletePathSet.has(path));
+  }
+
+  return result;
+}
+
+let aiSDKInstrumentationConsumer: AISDKInstrumentationConsumer | undefined;
+
+export function registerAISDKInstrumentation(
+  config: AISDKInstrumentationConfig = {},
+): void {
+  aiSDKInstrumentationConsumer ??= new AISDKInstrumentationConsumer(config);
+  aiSDKInstrumentationConsumer.register();
+}

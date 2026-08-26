@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { anthropicChannels } from "../../instrumentation/plugins/anthropic-channels";
+import { anthropicChannels } from "../../instrumentation/providers/anthropic-channels";
 
 /**
  * Instrumentation configurations for the Anthropic SDK.

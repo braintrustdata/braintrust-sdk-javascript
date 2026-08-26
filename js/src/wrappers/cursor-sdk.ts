@@ -1,4 +1,4 @@
-import { cursorSDKChannels } from "../instrumentation/plugins/cursor-sdk-channels";
+import { cursorSDKChannels } from "../instrumentation/providers/cursor-sdk-channels";
 import type {
   CursorSDKAgent,
   CursorSDKAgentClass,

@@ -1,4 +1,4 @@
-import { genkitChannels } from "../instrumentation/plugins/genkit-channels";
+import { genkitChannels } from "../instrumentation/providers/genkit-channels";
 import type {
   GenkitAction,
   GenkitEmbedManyParams,

@@ -1,7 +1,7 @@
 import {
   huggingFaceTransformersChannels,
   isSupportedHuggingFaceTransformersTask,
-} from "../instrumentation/plugins/huggingface-transformers-channels";
+} from "../instrumentation/providers/huggingface-transformers-channels";
 import type {
   HuggingFaceTransformersModule,
   HuggingFaceTransformersPipeline,

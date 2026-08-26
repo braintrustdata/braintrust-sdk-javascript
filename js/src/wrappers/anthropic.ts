@@ -1,4 +1,4 @@
-import { anthropicChannels } from "../instrumentation/plugins/anthropic-channels";
+import { anthropicChannels } from "../instrumentation/providers/anthropic-channels";
 import { TypedApplyProxy } from "../typed-instrumentation-helpers";
 import type {
   AnthropicBeta,

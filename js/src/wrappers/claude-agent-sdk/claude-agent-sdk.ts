@@ -1,6 +1,6 @@
-import { claudeAgentSDKChannels } from "../../instrumentation/plugins/claude-agent-sdk-channels";
-import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "../../instrumentation/plugins/claude-agent-sdk-instrumentation-constants";
-import { wrapLocalClaudeToolHandler } from "../../instrumentation/plugins/claude-agent-sdk-local-tool-spans";
+import { claudeAgentSDKChannels } from "../../instrumentation/providers/claude-agent-sdk-channels";
+import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "../../instrumentation/providers/claude-agent-sdk-instrumentation-constants";
+import { wrapLocalClaudeToolHandler } from "../../instrumentation/providers/claude-agent-sdk-local-tool-spans";
 import type {
   ClaudeAgentSDKModule,
   ClaudeAgentSDKQueryParams,

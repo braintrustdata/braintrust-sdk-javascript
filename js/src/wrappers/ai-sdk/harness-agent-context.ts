@@ -335,10 +335,10 @@ export function currentHarnessTurnParent(): HarnessTurnParent | undefined {
 export function bindHarnessTurnParentToStart<T>(
   tracingChannel: IsoTracingChannel<T>,
   parentFromEvent: (event: T) => HarnessTurnParent | undefined,
-): () => void {
+): void {
   const startChannel = tracingChannel.start;
   if (!startChannel) {
-    return () => {};
+    return;
   }
 
   harnessTurnParentStore ??= iso.newAsyncLocalStorage<
@@ -349,9 +349,6 @@ export function bindHarnessTurnParentToStart<T>(
     store,
     (event) => parentFromEvent(event) ?? store.getStore(),
   );
-  return () => {
-    startChannel.unbindStore(store);
-  };
 }
 
 export function startHarnessTurnChildSpan(

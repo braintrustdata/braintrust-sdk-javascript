@@ -1,11 +1,11 @@
 /**
- * Plugin registry and configuration for auto-instrumentation.
+ * Registry and configuration for auto-instrumentation.
  *
- * Plugins are automatically enabled when the Braintrust library is loaded.
+ * Instrumentation consumers are automatically enabled when Braintrust loads.
  * Users can disable specific integrations programmatically or via environment variables.
  */
 
-import { BraintrustPlugin } from "./braintrust-plugin";
+import { registerInstrumentationConsumers } from "./instrumentation-consumers";
 import iso from "../isomorph";
 import {
   getDefaultInstrumentationIntegrations,
@@ -16,7 +16,7 @@ import { GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION } from "../global-instrum
 
 export type { InstrumentationConfig } from "./config";
 
-// Key used to stamp the active PluginRegistry instance onto the shared
+// Key used to stamp the active InstrumentationRegistry instance onto the shared
 // braintrust state object (globalThis[Symbol.for("braintrust-state")]).
 //
 // The braintrust state is already shared across all SDK instances loaded in
@@ -43,8 +43,7 @@ function getSharedState(): Record<symbol, unknown> | undefined {
     : undefined;
 }
 
-class PluginRegistry {
-  private braintrustPlugin: BraintrustPlugin | null = null;
+class InstrumentationRegistry {
   private config: InstrumentationConfig = {};
   private enabled = false;
 
@@ -65,7 +64,7 @@ class PluginRegistry {
   }
 
   /**
-   * Enable all configured plugins.
+   * Enable all configured instrumentation consumers.
    * Called automatically when the library is loaded.
    */
   enable(): void {
@@ -73,7 +72,7 @@ class PluginRegistry {
       return;
     }
 
-    // If another SDK instance in the same process already registered plugins,
+    // If another SDK instance already registered instrumentation consumers,
     // skip to avoid duplicate global hook subscriptions.
     const sharedState = getSharedState();
     if (sharedState) {
@@ -95,31 +94,8 @@ class PluginRegistry {
       },
     };
 
-    // Enable BraintrustPlugin with configuration
-    this.braintrustPlugin = new BraintrustPlugin(finalConfig);
-    this.braintrustPlugin.enable();
-  }
-
-  /**
-   * Disable all plugins.
-   * Primarily used for testing.
-   */
-  disable(): void {
-    if (!this.enabled) {
-      return;
-    }
-
-    this.enabled = false;
-
-    const sharedState = getSharedState();
-    if (sharedState && sharedState[REGISTRY_STATE_KEY] === this) {
-      delete sharedState[REGISTRY_STATE_KEY];
-    }
-
-    if (this.braintrustPlugin) {
-      this.braintrustPlugin.disable();
-      this.braintrustPlugin = null;
-    }
+    // Enable the configured instrumentation consumers.
+    registerInstrumentationConsumers(finalConfig);
   }
 
   /**
@@ -148,9 +124,9 @@ class PluginRegistry {
 }
 
 /**
- * Global plugin registry instance.
+ * Global instrumentation registry instance.
  */
-export const registry = new PluginRegistry();
+export const registry = new InstrumentationRegistry();
 
 /**
  * Configure auto-instrumentation.

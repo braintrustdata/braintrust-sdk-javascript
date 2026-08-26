@@ -20,7 +20,7 @@ import {
   processAISDKWorkflowAgentCallInput,
   processAISDKWorkflowAgentModelCallInput,
   serializeModelWithProvider,
-} from "../../instrumentation/plugins/ai-sdk-plugin";
+} from "../../instrumentation/providers/ai-sdk-instrumentation";
 import type {
   AISDKCallParams,
   AISDKEmbeddingResult,

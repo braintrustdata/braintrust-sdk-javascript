@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { googleGenAIChannels } from "../../instrumentation/plugins/google-genai-channels";
+import { googleGenAIChannels } from "../../instrumentation/providers/google-genai-channels";
 
 /**
  * Instrumentation configurations for the Google GenAI SDK.

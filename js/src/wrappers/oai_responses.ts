@@ -3,7 +3,7 @@ import type {
   ResultOf,
 } from "../instrumentation/core/channel-definitions";
 import type { ChannelSpanInfo } from "../instrumentation/core/types";
-import { openAIChannels } from "../instrumentation/plugins/openai-channels";
+import { openAIChannels } from "../instrumentation/providers/openai-channels";
 import { parseMetricsFromUsage } from "../openai-utils";
 import {
   APIPromise,

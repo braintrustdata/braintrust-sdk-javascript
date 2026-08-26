@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { IsoChannelHandlers } from "../isomorph";
 import type { ChannelMessage } from "../instrumentation/core/channel-definitions";
-import { genkitChannels } from "../instrumentation/plugins/genkit-channels";
+import { genkitChannels } from "../instrumentation/providers/genkit-channels";
 import { configureNode } from "../node/config";
 import type {
   GenkitAction,

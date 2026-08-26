@@ -1,4 +1,4 @@
-import { googleGenAIChannels } from "../instrumentation/plugins/google-genai-channels";
+import { googleGenAIChannels } from "../instrumentation/providers/google-genai-channels";
 import { isObject } from "../util";
 import type {
   GoogleGenAIClient,

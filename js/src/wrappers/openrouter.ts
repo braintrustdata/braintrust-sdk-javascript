@@ -1,4 +1,4 @@
-import { openRouterChannels } from "../instrumentation/plugins/openrouter-channels";
+import { openRouterChannels } from "../instrumentation/providers/openrouter-channels";
 import type {
   OpenRouterBeta,
   OpenRouterCallModelRequest,

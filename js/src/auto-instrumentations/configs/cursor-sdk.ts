@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { cursorSDKChannels } from "../../instrumentation/plugins/cursor-sdk-channels";
+import { cursorSDKChannels } from "../../instrumentation/providers/cursor-sdk-channels";
 
 const cursorSDKVersionRange = ">=1.0.7 <2.0.0";
 

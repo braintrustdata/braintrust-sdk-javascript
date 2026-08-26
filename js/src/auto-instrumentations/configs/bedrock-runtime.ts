@@ -2,7 +2,7 @@ import type { InstrumentationConfig } from "@apm-js-collab/code-transformer";
 import {
   smithyClientChannels,
   smithyCoreChannels,
-} from "../../instrumentation/plugins/bedrock-runtime-channels";
+} from "../../instrumentation/providers/bedrock-runtime-channels";
 
 export const bedrockRuntimeConfigs: InstrumentationConfig[] = [
   {

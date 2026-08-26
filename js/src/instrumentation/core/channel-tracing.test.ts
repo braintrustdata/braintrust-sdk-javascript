@@ -27,12 +27,32 @@ import { traceAsyncChannel, traceStreamingChannel } from "./channel-tracing";
 const testChannels = defineChannels(
   "channel-tracing-test",
   {
-    asyncCall: channel<[Record<string, unknown>], { ok: true }>({
-      channelName: "async.call",
+    asyncBinding: channel<[Record<string, unknown>], { ok: true }>({
+      channelName: "async.binding",
       kind: "async",
     }),
-    streamingCall: channel<[Record<string, unknown>], { ok: true }>({
-      channelName: "streaming.call",
+    provenance: channel<[Record<string, unknown>], { ok: true }>({
+      channelName: "async.provenance",
+      kind: "async",
+    }),
+    skipped: channel<[Record<string, unknown>], { ok: true }>({
+      channelName: "async.skipped",
+      kind: "async",
+    }),
+    throwingPredicate: channel<[Record<string, unknown>], { ok: true }>({
+      channelName: "async.throwing-predicate",
+      kind: "async",
+    }),
+    suppressed: channel<[Record<string, unknown>], { ok: true }>({
+      channelName: "async.suppressed",
+      kind: "async",
+    }),
+    streamingCleanup: channel<[Record<string, unknown>], { ok: true }>({
+      channelName: "streaming.cleanup",
+      kind: "async",
+    }),
+    streamingCancellation: channel<[Record<string, unknown>], { ok: true }>({
+      channelName: "streaming.cancellation",
       kind: "async",
     }),
   },
@@ -60,7 +80,7 @@ describe("traceAsyncChannel current span binding", () => {
   });
 
   it("binds the created span into the traced async execution context", async () => {
-    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
+    traceAsyncChannel(testChannels.asyncBinding, {
       name: "channel-tracing-test",
       type: "function",
       extractInput: () => ({
@@ -73,21 +93,16 @@ describe("traceAsyncChannel current span binding", () => {
 
     const seenSpanIds: string[] = [];
 
-    try {
-      await testChannels.asyncCall.tracePromise(
-        async () => {
-          seenSpanIds.push(currentSpan().spanId);
-          await Promise.resolve();
-          seenSpanIds.push(currentSpan().spanId);
+    await testChannels.asyncBinding.tracePromise(
+      async () => {
+        seenSpanIds.push(currentSpan().spanId);
+        await Promise.resolve();
+        seenSpanIds.push(currentSpan().spanId);
 
-          return { ok: true as const };
-        },
-        { arguments: [{}] } as any,
-      );
-    } finally {
-      unsubscribe();
-    }
-
+        return { ok: true as const };
+      },
+      { arguments: [{}] } as any,
+    );
     expect(seenSpanIds).toHaveLength(2);
     expect(seenSpanIds[0]).toBeTruthy();
     expect(seenSpanIds[1]).toBe(seenSpanIds[0]);
@@ -103,7 +118,7 @@ describe("traceAsyncChannel current span binding", () => {
   });
 
   it("limits channel provenance to directly instrumented spans", async () => {
-    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
+    traceAsyncChannel(testChannels.provenance, {
       name: "channel-parent",
       type: "function",
       extractInput: () => ({ input: "input", metadata: undefined }),
@@ -111,32 +126,27 @@ describe("traceAsyncChannel current span binding", () => {
       extractMetrics: () => ({}),
     });
 
-    try {
-      await testChannels.asyncCall.tracePromise(
-        async () => {
-          const parent = currentSpan();
-          parent.startSpan({ name: "user-child" }).end();
-          parent
-            .startSpanWithParents("user-multi-parent-child", [parent.spanId], {
-              name: "user-multi-parent-child",
-            })
-            .end();
-          parent
-            .startSpan(
-              withSpanInstrumentationName(
-                { name: "instrumentation-child" },
-                INSTRUMENTATION_NAMES.OPENAI,
-              ),
-            )
-            .end();
-          return { ok: true as const };
-        },
-        { arguments: [{}] } as any,
-      );
-    } finally {
-      unsubscribe();
-    }
-
+    await testChannels.provenance.tracePromise(
+      async () => {
+        const parent = currentSpan();
+        parent.startSpan({ name: "user-child" }).end();
+        parent
+          .startSpanWithParents("user-multi-parent-child", [parent.spanId], {
+            name: "user-multi-parent-child",
+          })
+          .end();
+        parent
+          .startSpan(
+            withSpanInstrumentationName(
+              { name: "instrumentation-child" },
+              INSTRUMENTATION_NAMES.OPENAI,
+            ),
+          )
+          .end();
+        return { ok: true as const };
+      },
+      { arguments: [{}] } as any,
+    );
     const spans = (await backgroundLogger.drain()) as Array<
       Record<string, any>
     >;
@@ -161,7 +171,7 @@ describe("traceAsyncChannel current span binding", () => {
   });
 
   it("does not create a span when shouldTrace returns false", async () => {
-    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
+    traceAsyncChannel(testChannels.skipped, {
       name: "channel-tracing-test",
       shouldTrace: ([params]) =>
         !(
@@ -181,21 +191,16 @@ describe("traceAsyncChannel current span binding", () => {
 
     const seenSpanIds: string[] = [];
 
-    try {
-      await testChannels.asyncCall.tracePromise(
-        async () => {
-          seenSpanIds.push(currentSpan().spanId);
-          await Promise.resolve();
-          seenSpanIds.push(currentSpan().spanId);
+    await testChannels.skipped.tracePromise(
+      async () => {
+        seenSpanIds.push(currentSpan().spanId);
+        await Promise.resolve();
+        seenSpanIds.push(currentSpan().spanId);
 
-          return { ok: true as const };
-        },
-        { arguments: [{ skip: true }] } as any,
-      );
-    } finally {
-      unsubscribe();
-    }
-
+        return { ok: true as const };
+      },
+      { arguments: [{ skip: true }] } as any,
+    );
     expect(seenSpanIds).toEqual(["", ""]);
     expect(currentSpan()).toBe(NOOP_SPAN);
 
@@ -207,7 +212,7 @@ describe("traceAsyncChannel current span binding", () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
-    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
+    traceAsyncChannel(testChannels.throwingPredicate, {
       name: "channel-tracing-test",
       shouldTrace: () => {
         throw new Error("predicate failed");
@@ -221,15 +226,10 @@ describe("traceAsyncChannel current span binding", () => {
       extractMetrics: () => ({}),
     });
 
-    try {
-      await testChannels.asyncCall.tracePromise(
-        async () => ({ ok: true as const }),
-        { arguments: [{}] } as any,
-      );
-    } finally {
-      unsubscribe();
-    }
-
+    await testChannels.throwingPredicate.tracePromise(
+      async () => ({ ok: true as const }),
+      { arguments: [{}] } as any,
+    );
     expect(consoleErrorSpy).not.toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
 
@@ -238,7 +238,7 @@ describe("traceAsyncChannel current span binding", () => {
   });
 
   it("skips auto instrumentation spans while suppression is active", async () => {
-    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
+    traceAsyncChannel(testChannels.suppressed, {
       name: "channel-tracing-test",
       type: "function",
       extractInput: () => ({
@@ -249,23 +249,18 @@ describe("traceAsyncChannel current span binding", () => {
       extractMetrics: () => ({}),
     });
 
-    try {
-      await runWithAutoInstrumentationSuppressed(() =>
-        testChannels.asyncCall.tracePromise(
-          async () => {
-            expect(currentSpan()).toBe(NOOP_SPAN);
-            await Promise.resolve();
-            expect(currentSpan()).toBe(NOOP_SPAN);
+    await runWithAutoInstrumentationSuppressed(() =>
+      testChannels.suppressed.tracePromise(
+        async () => {
+          expect(currentSpan()).toBe(NOOP_SPAN);
+          await Promise.resolve();
+          expect(currentSpan()).toBe(NOOP_SPAN);
 
-            return { ok: true as const };
-          },
-          { arguments: [{}] } as any,
-        ),
-      );
-    } finally {
-      unsubscribe();
-    }
-
+          return { ok: true as const };
+        },
+        { arguments: [{}] } as any,
+      ),
+    );
     const spans = await backgroundLogger.drain();
     expect(spans).toHaveLength(0);
   });
@@ -280,7 +275,7 @@ describe("traceAsyncChannel current span binding", () => {
         throw new Error("logging failed");
       }),
     } as unknown as Span;
-    const unsubscribe = traceStreamingChannel(testChannels.streamingCall, {
+    traceStreamingChannel(testChannels.streamingCleanup, {
       name: "streaming-channel-test",
       startSpan: () => child,
       type: "function",
@@ -291,25 +286,20 @@ describe("traceAsyncChannel current span binding", () => {
       onError,
     });
 
-    try {
-      await expect(
-        testChannels.streamingCall.tracePromise(
-          async () => ({ ok: true as const }),
-          { arguments: [{}] } as any,
-        ),
-      ).resolves.toEqual({ ok: true });
-      await expect(
-        testChannels.streamingCall.tracePromise(
-          async () => {
-            throw new Error("call failed");
-          },
-          { arguments: [{}] } as any,
-        ),
-      ).rejects.toThrow("call failed");
-    } finally {
-      unsubscribe();
-    }
-
+    await expect(
+      testChannels.streamingCleanup.tracePromise(
+        async () => ({ ok: true as const }),
+        { arguments: [{}] } as any,
+      ),
+    ).resolves.toEqual({ ok: true });
+    await expect(
+      testChannels.streamingCleanup.tracePromise(
+        async () => {
+          throw new Error("call failed");
+        },
+        { arguments: [{}] } as any,
+      ),
+    ).rejects.toThrow("call failed");
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenCalledTimes(1);
     expect(end).toHaveBeenCalledTimes(2);
@@ -321,7 +311,7 @@ describe("traceAsyncChannel current span binding", () => {
       end: vi.fn(),
       log: vi.fn(),
     } as unknown as Span;
-    const unsubscribe = traceStreamingChannel(testChannels.streamingCall, {
+    traceStreamingChannel(testChannels.streamingCancellation, {
       name: "streaming-channel-test",
       startSpan: () => child,
       type: "function",
@@ -337,17 +327,12 @@ describe("traceAsyncChannel current span binding", () => {
       },
     };
 
-    try {
-      const patched = await testChannels.streamingCall.tracePromise(
-        async () => stream as any,
-        { arguments: [{}] } as any,
-      );
-      (patched as unknown as typeof stream).abort();
-      await Promise.resolve();
-    } finally {
-      unsubscribe();
-    }
-
+    const patched = await testChannels.streamingCancellation.tracePromise(
+      async () => stream as any,
+      { arguments: [{}] } as any,
+    );
+    (patched as unknown as typeof stream).abort();
+    await Promise.resolve();
     const cancellationError = expect.objectContaining({
       message: "Stream cancelled before completion",
       name: "AbortError",

@@ -1,4 +1,4 @@
-import { piCodingAgentChannels } from "../instrumentation/plugins/pi-coding-agent-channels";
+import { piCodingAgentChannels } from "../instrumentation/providers/pi-coding-agent-channels";
 import type {
   PiAgentSession,
   PiAgentSessionClass,

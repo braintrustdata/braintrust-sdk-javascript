@@ -1,4 +1,4 @@
-import { huggingFaceChannels } from "../instrumentation/plugins/huggingface-channels";
+import { huggingFaceChannels } from "../instrumentation/providers/huggingface-channels";
 import { isObject } from "../../util";
 import type {
   HuggingFaceChatCompletion,

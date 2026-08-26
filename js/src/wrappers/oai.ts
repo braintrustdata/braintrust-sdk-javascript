@@ -10,7 +10,7 @@ import type {
   ArgsOf,
   ResultOf,
 } from "../instrumentation/core/channel-definitions";
-import { openAIChannels } from "../instrumentation/plugins/openai-channels";
+import { openAIChannels } from "../instrumentation/providers/openai-channels";
 import type {
   OpenAIChatCompletion,
   OpenAIChatCreateParams,

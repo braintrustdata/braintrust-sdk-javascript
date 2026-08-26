@@ -1,4 +1,4 @@
-import { gitHubCopilotChannels } from "../instrumentation/plugins/github-copilot-channels";
+import { gitHubCopilotChannels } from "../instrumentation/providers/github-copilot-channels";
 import type {
   GitHubCopilotClient,
   GitHubCopilotResumeSessionConfig,

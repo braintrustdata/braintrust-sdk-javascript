@@ -133,11 +133,13 @@ describe("Import restrictions", () => {
 
         // Check for dynamic import() statements
         // Match import(...) but not static import statements
-        // Exception: allow dynamic import in anthropic-plugin for APIPromise patching
+        // Exception: allow dynamic import in anthropic-instrumentation for APIPromise patching
         if (
           /\bimport\s*\(/.test(line) &&
           !/^import\s+/.test(line.trim()) &&
-          !relativePath.includes("instrumentation/plugins/anthropic-plugin.ts")
+          !relativePath.includes(
+            "instrumentation/providers/anthropic-instrumentation.ts",
+          )
         ) {
           violations.push(
             `${relativePath}:${index + 1} - Found dynamic import() statement: "${line.trim()}"`,
