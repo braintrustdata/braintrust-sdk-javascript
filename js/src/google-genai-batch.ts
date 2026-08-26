@@ -1,6 +1,8 @@
 import type {
   CompleteGeminiDeveloperBatchTraceArgs,
   CompleteGeminiDeveloperBatchTraceResult,
+  GeminiDeveloperBatchFile,
+  GeminiDeveloperBatchJSONL,
   GeminiDeveloperBatchLike,
   GeminiDeveloperBatchTraceContext,
   StartGeminiDeveloperBatchTraceArgs,
@@ -9,6 +11,19 @@ import {
   completeGoogleGenAIBatchTrace,
   startGoogleGenAIBatchTrace,
 } from "./instrumentation/plugins/google-genai-batch-instrumentation";
+
+function protectBatchFilePromise(
+  file: GeminiDeveloperBatchFile | undefined,
+): Promise<GeminiDeveloperBatchJSONL> | undefined {
+  if (file === undefined) {
+    return undefined;
+  }
+  const promise = Promise.resolve(file);
+  // Attach immediately so an early tracing exit cannot leave a caller-owned
+  // rejection unhandled.
+  void promise.catch(() => undefined);
+  return promise;
+}
 
 /**
  * Start pending Braintrust spans for a Gemini Developer API batch that the
@@ -22,11 +37,7 @@ export async function startGeminiDeveloperBatchTrace<
 >(
   args: StartGeminiDeveloperBatchTraceArgs<TBatch>,
 ): Promise<GeminiDeveloperBatchTraceContext | undefined> {
-  const input =
-    args.input === undefined ? undefined : Promise.resolve(args.input);
-  // Attach immediately so disabled instrumentation and other early no-op paths
-  // cannot leave a caller-supplied rejected promise unhandled.
-  void input?.catch(() => undefined);
+  const input = protectBatchFilePromise(args.input);
   return await startGoogleGenAIBatchTrace({ ...args, input });
 }
 
@@ -46,18 +57,8 @@ export async function completeGeminiDeveloperBatchTrace<
 >(
   args: CompleteGeminiDeveloperBatchTraceArgs<TBatch>,
 ): Promise<CompleteGeminiDeveloperBatchTraceResult<TBatch>> {
-  const input =
-    args.input === undefined ? undefined : Promise.resolve(args.input);
-  const outputFile =
-    args.outputFile === undefined
-      ? undefined
-      : Promise.resolve(args.outputFile);
-
-  // File requests are commonly started before this helper is called. Attach
-  // rejection handlers immediately so early no-op paths and disabled
-  // instrumentation cannot leave caller-supplied promises unhandled.
-  void input?.catch(() => undefined);
-  void outputFile?.catch(() => undefined);
+  const input = protectBatchFilePromise(args.input);
+  const outputFile = protectBatchFilePromise(args.outputFile);
 
   const traceContext = await completeGoogleGenAIBatchTrace({
     ...args,

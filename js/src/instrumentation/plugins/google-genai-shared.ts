@@ -95,6 +95,27 @@ export function selectGoogleGenAIGenerationConfig(
   return selected;
 }
 
+export function extractGoogleGenAIGenerationMetadata(
+  configValue: unknown,
+  model?: string,
+): Record<string, unknown> {
+  const {
+    tools: providerTools,
+    toolConfig,
+    ...config
+  } = selectGoogleGenAIGenerationConfig(configValue);
+  const tools = serializeGoogleGenAITools(providerTools);
+  const toolChoice = normalizeGoogleGenAIToolChoice(toolConfig);
+
+  return {
+    ...config,
+    ...(tools.length > 0 ? { tools } : {}),
+    ...(toolChoice !== undefined ? { tool_choice: toolChoice } : {}),
+    ...(model ? { model } : {}),
+    provider: "google",
+  };
+}
+
 export function extractGoogleGenAISystemInstruction(config: unknown): unknown {
   return read(resolveGoogleGenAIObject(config), "systemInstruction");
 }
@@ -104,11 +125,7 @@ export function serializeGoogleGenAIRequestContents(
   systemInstruction: unknown,
   options: GoogleGenAISerializationOptions = {},
 ): unknown {
-  const state: GoogleGenAISerializationState = {
-    ...options,
-    nextAttachmentIndex: 0,
-    seen: new WeakSet<object>(),
-  };
+  const state = createGoogleGenAISerializationState(options);
   const serializedContents = serializeGoogleGenAIContentsInternal(
     contents,
     state,
@@ -117,35 +134,39 @@ export function serializeGoogleGenAIRequestContents(
     return serializedContents;
   }
 
-  const serializedInstruction = serializeGoogleGenAIContentsInternal(
-    systemInstruction,
-    state,
-  );
-  let systemContent: unknown;
-  if (
-    isObject(serializedInstruction) &&
-    !Array.isArray(serializedInstruction) &&
-    Array.isArray(read(serializedInstruction, "parts"))
-  ) {
-    systemContent = Object.fromEntries([
-      ...Object.keys(serializedInstruction)
-        .filter((key) => key !== "role")
-        .map((key) => [key, read(serializedInstruction, key)] as const),
-      ["role", "system"],
-    ]);
-  } else {
-    const parts = Array.isArray(serializedInstruction)
-      ? serializedInstruction
-      : [serializedInstruction];
-    systemContent = { role: "system", parts };
-  }
-
   return [
-    systemContent,
+    serializeGoogleGenAISystemInstruction(systemInstruction, state),
     ...(Array.isArray(serializedContents)
       ? serializedContents
       : [serializedContents]),
   ];
+}
+
+function serializeGoogleGenAISystemInstruction(
+  systemInstruction: unknown,
+  state: GoogleGenAISerializationState,
+): unknown {
+  const serialized = serializeGoogleGenAIContentsInternal(
+    systemInstruction,
+    state,
+  );
+  if (
+    !isObject(serialized) ||
+    Array.isArray(serialized) ||
+    !Array.isArray(read(serialized, "parts"))
+  ) {
+    return {
+      role: "system",
+      parts: Array.isArray(serialized) ? serialized : [serialized],
+    };
+  }
+
+  return Object.fromEntries([
+    ...Object.keys(serialized)
+      .filter((key) => key !== "role")
+      .map((key) => [key, read(serialized, key)] as const),
+    ["role", "system"],
+  ]);
 }
 
 export function serializeGoogleGenAITools(tools: unknown): unknown[] {
@@ -649,16 +670,22 @@ type GoogleGenAISerializationState = GoogleGenAISerializationOptions & {
   seen: WeakSet<object>;
 };
 
+function createGoogleGenAISerializationState(
+  options: GoogleGenAISerializationOptions = {},
+): GoogleGenAISerializationState {
+  return {
+    ...options,
+    nextAttachmentIndex: 0,
+    seen: new WeakSet<object>(),
+  };
+}
+
 export function serializeGoogleGenAIResponse(
   value: unknown,
   options: GoogleGenAISerializationOptions = {},
 ): Record<string, unknown> | undefined {
   const response = resolveGoogleGenAIObject(value);
-  const state: GoogleGenAISerializationState = {
-    ...options,
-    nextAttachmentIndex: 0,
-    seen: new WeakSet<object>(),
-  };
+  const state = createGoogleGenAISerializationState(options);
   const entries: Array<[string, unknown]> = [];
   for (const key of GENERATE_CONTENT_RESPONSE_FIELDS) {
     const entry = read(response, key);
@@ -674,11 +701,7 @@ export function extractGoogleGenAIResponseMetadata(
   options: GoogleGenAISerializationOptions = {},
 ): Record<string, unknown> | undefined {
   const response = resolveGoogleGenAIObject(value);
-  const state: GoogleGenAISerializationState = {
-    ...options,
-    nextAttachmentIndex: 0,
-    seen: new WeakSet<object>(),
-  };
+  const state = createGoogleGenAISerializationState(options);
   const entries: Array<[string, unknown]> = [];
   const modelVersion = read(response, "modelVersion");
   if (typeof modelVersion === "string" && modelVersion.length > 0) {
@@ -716,11 +739,10 @@ export function extractGoogleGenAIResponseMetadata(
 }
 
 export function serializeGoogleGenAIContents(contents: unknown): unknown {
-  const state: GoogleGenAISerializationState = {
-    nextAttachmentIndex: 0,
-    seen: new WeakSet<object>(),
-  };
-  return serializeGoogleGenAIContentsInternal(contents, state);
+  return serializeGoogleGenAIContentsInternal(
+    contents,
+    createGoogleGenAISerializationState(),
+  );
 }
 
 function serializeGoogleGenAIContentsInternal(
@@ -751,10 +773,59 @@ function serializeGoogleGenAIContent(
 }
 
 export function serializeGoogleGenAIValue(value: unknown): unknown {
-  return serializeGoogleGenAIValueInternal(value, {
-    nextAttachmentIndex: 0,
-    seen: new WeakSet<object>(),
-  });
+  return serializeGoogleGenAIValueInternal(
+    value,
+    createGoogleGenAISerializationState(),
+  );
+}
+
+function serializeGoogleGenAIInlineData(
+  value: object,
+  state: GoogleGenAISerializationState,
+): unknown | undefined {
+  if (state.preserveInlineData) {
+    return undefined;
+  }
+
+  const inlineData = read(value, "inlineData");
+  if (!isObject(inlineData)) {
+    return undefined;
+  }
+  const data = read(inlineData, "data");
+  const mimeType = read(inlineData, "mimeType");
+  if (
+    (typeof data !== "string" && !(data instanceof Uint8Array)) ||
+    typeof mimeType !== "string"
+  ) {
+    return undefined;
+  }
+
+  try {
+    const bytes =
+      typeof data === "string"
+        ? Uint8Array.from(atob(data), (character) => character.charCodeAt(0))
+        : data;
+    const filename = `file.${mimeType.split("/")[1] ?? "bin"}`;
+    const attachmentParams = {
+      data: bytes.buffer.slice(
+        bytes.byteOffset,
+        bytes.byteOffset + bytes.byteLength,
+      ),
+      filename,
+      contentType: mimeType,
+    };
+    const attachment = state.attachmentKey
+      ? _internalCreateAttachment(
+          attachmentParams,
+          state.attachmentKey(state.nextAttachmentIndex++),
+        )
+      : new Attachment(attachmentParams);
+    return mimeType.startsWith("image/")
+      ? { image_url: { url: attachment } }
+      : { file: { file_data: attachment, filename } };
+  } catch {
+    return undefined;
+  }
 }
 
 function serializeGoogleGenAIValueInternal(
@@ -782,43 +853,9 @@ function serializeGoogleGenAIValueInternal(
   }
   state.seen.add(value);
   try {
-    const inlineData = read(value, "inlineData");
-    if (!state.preserveInlineData && isObject(inlineData)) {
-      const data = read(inlineData, "data");
-      const mimeType = read(inlineData, "mimeType");
-      if (
-        (typeof data === "string" || data instanceof Uint8Array) &&
-        typeof mimeType === "string"
-      ) {
-        try {
-          const bytes =
-            typeof data === "string"
-              ? Uint8Array.from(atob(data), (character) =>
-                  character.charCodeAt(0),
-                )
-              : data;
-          const filename = `file.${mimeType.split("/")[1] ?? "bin"}`;
-          const attachmentParams = {
-            data: bytes.buffer.slice(
-              bytes.byteOffset,
-              bytes.byteOffset + bytes.byteLength,
-            ),
-            filename,
-            contentType: mimeType,
-          };
-          const attachment = state.attachmentKey
-            ? _internalCreateAttachment(
-                attachmentParams,
-                state.attachmentKey(state.nextAttachmentIndex++),
-              )
-            : new Attachment(attachmentParams);
-          return mimeType.startsWith("image/")
-            ? { image_url: { url: attachment } }
-            : { file: { file_data: attachment, filename } };
-        } catch {
-          // Preserve the provider value if attachment conversion fails.
-        }
-      }
+    const inlineData = serializeGoogleGenAIInlineData(value, state);
+    if (inlineData !== undefined) {
+      return inlineData;
     }
 
     return Object.fromEntries(

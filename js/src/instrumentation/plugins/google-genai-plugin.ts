@@ -23,15 +23,13 @@ import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { googleGenAIChannels } from "./google-genai-channels";
 import {
+  extractGoogleGenAIGenerationMetadata,
   extractGoogleGenAISystemInstruction,
   extractGoogleGenAIResponseMetadata,
-  normalizeGoogleGenAIToolChoice,
   populateGoogleGenAIUsageMetrics,
-  selectGoogleGenAIGenerationConfig,
   serializeGoogleGenAIContents,
   serializeGoogleGenAIRequestContents,
   serializeGoogleGenAIResponse,
-  serializeGoogleGenAITools,
 } from "./google-genai-shared";
 import type {
   GoogleGenAIEmbedContentParams,
@@ -855,18 +853,7 @@ function createAttachmentFromInlineData(
 function extractGenerateContentMetadata(
   params: GoogleGenAIGenerateContentParams,
 ): Record<string, unknown> {
-  const config = selectGoogleGenAIGenerationConfig(params.config);
-  const tools = serializeGoogleGenAITools(config.tools);
-  const toolChoice = normalizeGoogleGenAIToolChoice(config.toolConfig);
-  delete config.tools;
-  delete config.toolConfig;
-  return {
-    ...config,
-    ...(tools.length > 0 ? { tools } : {}),
-    ...(toolChoice !== undefined ? { tool_choice: toolChoice } : {}),
-    ...(params.model ? { model: params.model } : {}),
-    provider: "google",
-  };
+  return extractGoogleGenAIGenerationMetadata(params.config, params.model);
 }
 
 function extractEmbedContentMetadata(

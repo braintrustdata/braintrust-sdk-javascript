@@ -18,14 +18,12 @@ import {
   type SpanComponentsV4Data,
 } from "../../../util/span_identifier_v4";
 import {
+  extractGoogleGenAIGenerationMetadata,
   extractGoogleGenAISystemInstruction,
   extractGoogleGenAIResponseMetadata,
-  normalizeGoogleGenAIToolChoice,
   populateGoogleGenAIUsageMetrics,
-  selectGoogleGenAIGenerationConfig,
   serializeGoogleGenAIRequestContents,
   serializeGoogleGenAIResponse,
-  serializeGoogleGenAITools,
 } from "./google-genai-shared";
 import type {
   CompleteGeminiDeveloperBatchTraceArgs,
@@ -168,9 +166,10 @@ function batchModel(
     return providerModel;
   }
   const paramsModel = read(params, "model");
-  return typeof paramsModel === "string" && paramsModel.length > 0
-    ? paramsModel
-    : undefined;
+  if (typeof paramsModel === "string" && paramsModel.length > 0) {
+    return paramsModel;
+  }
+  return undefined;
 }
 
 function normalizedModel(value: string): string {
@@ -390,6 +389,22 @@ async function batchOperationNonce(
     ),
     16,
   );
+}
+
+async function createBatchContext(
+  fields: Omit<BatchContext, "version" | "operationNonce">,
+): Promise<BatchContext> {
+  return {
+    version: 1,
+    ...fields,
+    operationNonce: await batchOperationNonce(
+      fields.parent,
+      fields.batchName,
+      fields.model,
+      fields.sourceKind,
+      fields.inputDigest,
+    ),
+  };
 }
 
 async function batchSpanIds(operationNonce: string): Promise<{
@@ -691,12 +706,7 @@ function batchSpanData(
   }
 
   const requestConfig = read(request, "config");
-  const config = selectGoogleGenAIGenerationConfig(requestConfig);
-  const tools = serializeGoogleGenAITools(config.tools);
-  const toolChoice = normalizeGoogleGenAIToolChoice(config.toolConfig);
   const systemInstruction = extractGoogleGenAISystemInstruction(requestConfig);
-  delete config.tools;
-  delete config.toolConfig;
 
   const input: Record<string, unknown> = {
     model,
@@ -713,14 +723,22 @@ function batchSpanData(
   };
   return {
     input,
-    metadata: {
-      ...config,
-      ...(tools.length > 0 ? { tools } : {}),
-      ...(toolChoice !== undefined ? { tool_choice: toolChoice } : {}),
-      model,
-      provider: "google",
-    },
+    metadata: extractGoogleGenAIGenerationMetadata(requestConfig, model),
   };
+}
+
+async function batchInputAttachmentSeed(
+  operationNonce: string | undefined,
+  correlationId: string,
+): Promise<Uint8Array | undefined> {
+  if (!operationNonce) {
+    return undefined;
+  }
+  return await deterministicDigest(
+    "google-genai:batch:input-attachment",
+    operationNonce,
+    correlationId,
+  );
 }
 
 async function* batchInputRecords(
@@ -739,13 +757,10 @@ async function* batchInputRecords(
     for (let index = 0; index < requests.length; index++) {
       const raw = requests[index];
       const correlationId = `inline:${index}`;
-      const attachmentSeed = operationNonce
-        ? await deterministicDigest(
-            "google-genai:batch:input-attachment",
-            operationNonce,
-            correlationId,
-          )
-        : undefined;
+      const attachmentSeed = await batchInputAttachmentSeed(
+        operationNonce,
+        correlationId,
+      );
       const spanData = batchSpanData(raw, model, attachmentSeed);
       yield {
         correlationId,
@@ -770,13 +785,10 @@ async function* batchInputRecords(
       throw new Error("Google GenAI Batch file record is invalid");
     }
     const correlationId = `key:${key}`;
-    const attachmentSeed = operationNonce
-      ? await deterministicDigest(
-          "google-genai:batch:input-attachment",
-          operationNonce,
-          correlationId,
-        )
-      : undefined;
+    const attachmentSeed = await batchInputAttachmentSeed(
+      operationNonce,
+      correlationId,
+    );
     const spanData = batchSpanData(request, model, attachmentSeed);
     yield {
       correlationId,
@@ -1045,22 +1057,14 @@ async function startBatchTrace(
     logBatchInstrumentationError("could not validate batch input", error);
     return undefined;
   }
-  const context: BatchContext = {
-    version: 1,
+  const context = await createBatchContext({
     parent: exportedParent,
     batchName,
     model,
     sourceKind,
     inputDigest: preparedInputs.inputIndex.inputDigest,
     startTime,
-    operationNonce: await batchOperationNonce(
-      exportedParent,
-      batchName,
-      model,
-      sourceKind,
-      preparedInputs.inputIndex.inputDigest,
-    ),
-  };
+  });
   const task = await startBatchSpan(context);
   const taskParent = await task.export();
   const flusher = new BatchTraceFlusher(task);
@@ -1109,23 +1113,19 @@ function resultError(value: unknown): Error | undefined {
 function hasUsableBatchOutcome(
   value: unknown,
 ): value is Record<string, unknown> {
-  try {
-    if (!isObject(value)) {
-      return false;
-    }
-    const hasResponse = isObject(read(value, "response"));
-    const hasError = isObject(read(value, "error"));
-    return hasResponse !== hasError;
-  } catch {
+  if (!isObject(value)) {
     return false;
   }
+  const hasResponse = isObject(read(value, "response"));
+  const hasError = isObject(read(value, "error"));
+  return hasResponse !== hasError;
 }
 
 type PreparedBatchOutcome =
-  | { byteLength: number; digest: string | undefined; error: Error }
+  | { byteLength: number; digest: string; error: Error }
   | {
       byteLength: number;
-      digest: string | undefined;
+      digest: string;
       metadata: Record<string, unknown>;
       metrics: Record<string, number>;
       output: unknown;
@@ -1373,22 +1373,14 @@ async function completeBatch(
     const providerStart =
       parseProviderTimestamp(read(args.batch, "createTime")) ??
       parseProviderTimestamp(read(args.batch, "startTime"));
-    context = {
-      version: 1,
+    context = await createBatchContext({
       parent,
       batchName,
       model,
       sourceKind,
       inputDigest: inputs.inputDigest,
       startTime: providerStart ?? collectionTime,
-      operationNonce: await batchOperationNonce(
-        parent,
-        batchName,
-        model,
-        sourceKind,
-        inputs.inputDigest,
-      ),
-    };
+    });
     const collectContext = context;
     task = await startBatchSpan(collectContext);
     taskParent = await task.export();
@@ -1447,7 +1439,7 @@ async function completeBatch(
 
   const endTime = terminalEndTime(args.batch, context.startTime);
   const seen = new Set<string>();
-  const outcomeDigests = new Map<string, string | undefined>();
+  const outcomeDigests = new Map<string, string>();
   const ambiguous = new Set<string>();
   let firstIssue: Error | undefined;
 
@@ -1506,10 +1498,7 @@ async function completeBatch(
         }
         const outcomeDigest = outcome.digest;
         if (seen.has(correlationId)) {
-          if (
-            outcomeDigest === undefined ||
-            outcomeDigest !== outcomeDigests.get(correlationId)
-          ) {
+          if (outcomeDigest !== outcomeDigests.get(correlationId)) {
             ambiguous.add(correlationId);
             await resetBatchChild(
               context,
