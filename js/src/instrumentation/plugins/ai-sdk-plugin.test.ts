@@ -40,6 +40,7 @@ const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
 type MockTracingChannel = {
   handlers: any[];
   hasSubscribers: boolean;
+  intercept: ReturnType<typeof vi.fn>;
   subscribe: ReturnType<typeof vi.fn>;
   unsubscribe: ReturnType<typeof vi.fn>;
 };
@@ -68,6 +69,23 @@ describe("AISDKPlugin", () => {
       const channel: MockTracingChannel = {
         handlers: [],
         hasSubscribers: false,
+        intercept: vi.fn((interceptor: any) => {
+          const handlers = {
+            end: (event: any) =>
+              interceptor(
+                () => event.result,
+                event.self,
+                event.arguments ?? [],
+                {},
+              ),
+          };
+          channel.handlers.push(handlers);
+          return vi.fn(() => {
+            channel.handlers = channel.handlers.filter(
+              (candidate) => candidate !== handlers,
+            );
+          });
+        }),
         subscribe: vi.fn((handlers: any) => {
           channel.handlers.push(handlers);
           channel.hasSubscribers = true;
@@ -374,7 +392,7 @@ describe("AISDKPlugin", () => {
       const channel = mockChannels.get(
         "orchestrion:ai:createTelemetryDispatcher",
       );
-      expect(channel?.subscribe).toHaveBeenCalledTimes(1);
+      expect(channel?.intercept).toHaveBeenCalledTimes(1);
 
       channel?.handlers[0]?.end({
         arguments: [{ telemetry: {} }],

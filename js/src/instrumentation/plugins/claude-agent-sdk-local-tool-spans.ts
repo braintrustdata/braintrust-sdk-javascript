@@ -53,7 +53,7 @@ export function wrapLocalClaudeToolHandler(
       ? `mcp__${metadata.serverName}__${metadata.toolName}`
       : metadata.toolName;
     const toolUseId = getToolUseIdFromExtra(handlerArgs[1]);
-    const localToolParentResolver = getClaudeLocalToolParentResolver();
+    const localToolParentResolver = getClaudeLocalToolParentResolver(toolUseId);
     const spanName = metadata.serverName
       ? `tool: ${metadata.serverName}/${metadata.toolName}`
       : `tool: ${metadata.toolName}`;

@@ -21,8 +21,8 @@ const WRAPPED_INSTANCE = Symbol.for(
 );
 
 /**
- * Wraps the Strands Agent SDK with Braintrust tracing. The wrapper emits
- * diagnostics-channel events; the Strands plugin owns span lifecycle.
+ * Wraps the Strands Agent SDK with Braintrust tracing. The wrapper invokes
+ * typed instrumentation channels; the Strands plugin owns span lifecycle.
  */
 export function wrapStrandsAgentSDK<T>(sdk: T): T {
   if (!sdk || typeof sdk !== "object") {
@@ -157,13 +157,11 @@ function wrapAgentInstance(agent: StrandsAgent): StrandsAgent {
             StrandsInvokeArgs,
             StrandsInvokeOptions | undefined,
           ];
-          return strandsAgentSDKChannels.agentStream.traceSync(
-            () => Reflect.apply(value, target, callArgs),
-            {
-              agent: proxy,
-              arguments: callArgs,
-              self: proxy,
-            } as never,
+          return strandsAgentSDKChannels.agentStream.invoke(
+            value as StrandsAgent["stream"],
+            target,
+            callArgs,
+            { agent: proxy },
           );
         };
       }
@@ -219,13 +217,13 @@ function wrapMultiAgentInstance(
             kind === "graph"
               ? strandsAgentSDKChannels.graphStream
               : strandsAgentSDKChannels.swarmStream;
-          return channel.traceSync(
-            () => Reflect.apply(value, target, callArgs),
+          return channel.invoke(
+            value as StrandsMultiAgent["stream"],
+            target,
+            callArgs,
             {
-              arguments: callArgs,
               orchestrator: proxy,
-              self: proxy,
-            } as never,
+            },
           );
         };
       }

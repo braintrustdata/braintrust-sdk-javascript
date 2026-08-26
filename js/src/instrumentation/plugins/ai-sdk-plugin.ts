@@ -195,7 +195,7 @@ export class AISDKPlugin extends BasePlugin {
     const denyOutputPaths =
       this.config.denyOutputPaths || DEFAULT_DENY_OUTPUT_PATHS;
 
-    this.unsubscribers.push(subscribeToAISDKV7TelemetryDispatcher());
+    this.unsubscribers.push(interceptAISDKV7TelemetryDispatcher());
     this.unsubscribers.push(subscribeToHarnessAgentCreateSession());
     this.unsubscribers.push(
       subscribeToHarnessContinuation(
@@ -857,31 +857,29 @@ function subscribeToHarnessContinuation(
   };
 }
 
-function subscribeToAISDKV7TelemetryDispatcher(): () => void {
-  const channel = aiSDKChannels.v7CreateTelemetryDispatcher.tracingChannel();
+function interceptAISDKV7TelemetryDispatcher(): () => void {
   const telemetry = braintrustAISDKTelemetry();
-  const handlers: IsoChannelHandlers<
-    ChannelMessage<typeof aiSDKChannels.v7CreateTelemetryDispatcher>
-  > = {
-    end: (event) => {
-      const telemetryOptions = event.arguments?.[0]?.telemetry;
-      if (telemetryOptions?.isEnabled === false) {
-        return;
+  return aiSDKChannels.v7CreateTelemetryDispatcher.intercept(
+    (target, thisArg, args) => {
+      const dispatcher = Reflect.apply(target, thisArg, args);
+      const telemetryOptions = args[0]?.telemetry;
+      if (telemetryOptions?.isEnabled !== false) {
+        try {
+          patchAISDKV7TelemetryDispatcher(
+            dispatcher,
+            telemetry,
+            telemetryOptions,
+          );
+        } catch (error) {
+          debugLogger.error(
+            "Error instrumenting AI SDK v7 telemetry dispatcher:",
+            error,
+          );
+        }
       }
-
-      patchAISDKV7TelemetryDispatcher(
-        event.result,
-        telemetry,
-        telemetryOptions,
-      );
+      return dispatcher;
     },
-  };
-
-  channel.subscribe(handlers);
-
-  return () => {
-    channel.unsubscribe(handlers);
-  };
+  );
 }
 
 function patchAISDKV7TelemetryDispatcher(
@@ -909,7 +907,6 @@ function patchAISDKV7TelemetryDispatcher(
   if (typeof telemetryOptions?.functionId === "string") {
     telemetryEventFields.functionId = telemetryOptions.functionId;
   }
-
   const eventWithOperationKey = (event: unknown): unknown => {
     if (!isObject(event)) {
       return event;

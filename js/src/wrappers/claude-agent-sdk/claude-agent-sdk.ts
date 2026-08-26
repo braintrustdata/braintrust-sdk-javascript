@@ -54,11 +54,11 @@ function wrapClaudeAgentQuery(
         thisArg === proxy || thisArg === undefined
           ? (defaultThis ?? thisArg)
           : thisArg;
-      return claudeAgentSDKChannels.query.traceSync(
-        () => Reflect.apply(target, invocationTarget, [wrappedParams]),
-        // The channel carries no extra context fields, but the generated
-        // StartOf<> type for Record<string, never> is overly strict here.
-        { arguments: [wrappedParams] } as never,
+      return claudeAgentSDKChannels.query.invoke(
+        target,
+        invocationTarget,
+        [wrappedParams],
+        {},
       );
     },
   });
