@@ -29,7 +29,7 @@ import type {
   PiModel,
   PiPromptOptions,
   PiSimpleStreamOptions,
-  PiStreamFn,
+  PiStreamFunction,
   PiTextContent,
   PiTool,
   PiToolCall,
@@ -66,8 +66,9 @@ type PiToolSpanState = {
 };
 
 type PiAgentPatchState = {
-  originalStreamFn: PiStreamFn;
-  wrappedStreamFn: PiStreamFn;
+  originalStreamFunction: PiStreamFunction;
+  property: "streamFn" | "streamFunction";
+  wrappedStreamFunction: PiStreamFunction;
 };
 
 const piAgentPatchStates = new WeakMap<PiAgent, PiAgentPatchState>();
@@ -229,7 +230,8 @@ function extractSession(
 function isPiAgent(value: unknown): value is PiAgent {
   return (
     isObject(value) &&
-    typeof value.streamFn === "function" &&
+    (typeof value.streamFunction === "function" ||
+      typeof value.streamFn === "function") &&
     typeof value.subscribe === "function"
   );
 }
@@ -244,17 +246,27 @@ function currentPiPromptState(): PiPromptState | undefined {
 }
 
 function installPiAgentInstrumentation(agent: PiAgent): void {
+  const property =
+    typeof agent.streamFunction === "function" ? "streamFunction" : "streamFn";
+  const streamFunction = agent[property];
   const existing = piAgentPatchStates.get(agent);
-  if (!existing || agent.streamFn !== existing.wrappedStreamFn) {
+  if (
+    streamFunction &&
+    (!existing ||
+      existing.property !== property ||
+      streamFunction !== existing.wrappedStreamFunction)
+  ) {
     const patchState = {
-      originalStreamFn: agent.streamFn,
-      wrappedStreamFn: agent.streamFn,
+      originalStreamFunction: streamFunction,
+      property,
+      wrappedStreamFunction: streamFunction,
     } satisfies PiAgentPatchState;
-    patchState.wrappedStreamFn = makeInstrumentedStreamFn(
+    patchState.wrappedStreamFunction = makeInstrumentedStreamFunction(
       agent,
-      patchState.originalStreamFn,
+      patchState.originalStreamFunction,
+      property,
     );
-    agent.streamFn = patchState.wrappedStreamFn;
+    agent[property] = patchState.wrappedStreamFunction;
     piAgentPatchStates.set(agent, patchState);
   }
 
@@ -281,25 +293,32 @@ function installPiAgentInstrumentation(agent: PiAgent): void {
   }
 }
 
-function makeInstrumentedStreamFn(
+function makeInstrumentedStreamFunction(
   agent: PiAgent,
-  originalStreamFn: PiStreamFn,
-): PiStreamFn {
-  return async function instrumentedPiStreamFn(
+  originalStreamFunction: PiStreamFunction,
+  property: PiAgentPatchState["property"],
+): PiStreamFunction {
+  return async function instrumentedPiStreamFunction(
     this: unknown,
     model: PiModel,
     context: PiContext,
     options?: PiSimpleStreamOptions,
   ) {
     const invokeOriginal = () =>
-      Reflect.apply(originalStreamFn, this, [model, context, options]);
+      Reflect.apply(originalStreamFunction, this, [model, context, options]);
     const state = currentPiPromptState();
     if (!state || state.agent !== agent || state.finalized) {
       return invokeOriginal();
     }
 
     wrapPiToolExecutors(context.tools);
-    const llmState = await startPiLlmSpan(state, model, context, options);
+    const llmState = await startPiLlmSpan(
+      state,
+      model,
+      context,
+      property,
+      options,
+    );
     try {
       const stream = await runWithAutoInstrumentationSuppressed(invokeOriginal);
       return patchAssistantMessageStream(stream, state, llmState);
@@ -349,13 +368,14 @@ async function startPiLlmSpan(
   state: PiPromptState,
   model: PiModel,
   context: PiContext,
+  property: PiAgentPatchState["property"],
   options?: PiSimpleStreamOptions,
 ): Promise<PiLlmSpanState> {
   const metadata = {
     ...extractModelMetadata(model),
     ...extractStreamOptionsMetadata(options),
     ...extractToolMetadata(context.tools),
-    "pi_coding_agent.operation": "agent.streamFn",
+    "pi_coding_agent.operation": `agent.${property}`,
   };
   const span = startBaseSpan(
     withSpanInstrumentationName(

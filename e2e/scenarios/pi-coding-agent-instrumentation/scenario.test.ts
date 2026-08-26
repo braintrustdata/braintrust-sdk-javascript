@@ -25,9 +25,28 @@ const piCodingAgentScenarios = await Promise.all(
       autoEntry: "scenario.pi-coding-agent-v079.mjs",
       autoSnapshotName: "pi-coding-agent-v0-latest-auto-hook",
       dependencyName: "pi-coding-agent-v0-latest",
+      fakeStream: true,
       variantKey: "pi-coding-agent-v0-latest",
       wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
       wrapperSnapshotName: "pi-coding-agent-v0-latest-wrapped",
+    },
+    {
+      autoEntry: "scenario.pi-coding-agent-v079.mjs",
+      autoSnapshotName: "pi-coding-agent-v081-auto-hook",
+      dependencyName: "pi-coding-agent-v081",
+      fakeStream: true,
+      variantKey: "pi-coding-agent-v081",
+      wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
+      wrapperSnapshotName: "pi-coding-agent-v081-wrapped",
+    },
+    {
+      autoEntry: "scenario.pi-coding-agent-v079.mjs",
+      autoSnapshotName: "pi-coding-agent-v081-latest-auto-hook",
+      dependencyName: "pi-coding-agent-v081-latest",
+      fakeStream: true,
+      variantKey: "pi-coding-agent-v081-latest",
+      wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
+      wrapperSnapshotName: "pi-coding-agent-v081-latest-wrapped",
     },
   ].map(async (scenario) => ({
     ...scenario,
@@ -51,8 +70,14 @@ describe.concurrent("variants", () => {
               env: {
                 PI_CODING_AGENT_PACKAGE_NAME:
                   piCodingAgentScenario.dependencyName,
+                ...(piCodingAgentScenario.fakeStream
+                  ? { PI_CODING_AGENT_FAKE_STREAM: "true" }
+                  : {}),
               },
               runContext: {
+                ...(piCodingAgentScenario.fakeStream
+                  ? { cassette: false as const }
+                  : {}),
                 variantKey: piCodingAgentScenario.variantKey,
                 originalScenarioDir,
               },
@@ -73,9 +98,15 @@ describe.concurrent("variants", () => {
               env: {
                 PI_CODING_AGENT_PACKAGE_NAME:
                   piCodingAgentScenario.dependencyName,
+                ...(piCodingAgentScenario.fakeStream
+                  ? { PI_CODING_AGENT_FAKE_STREAM: "true" }
+                  : {}),
               },
               nodeArgs: ["--import", "braintrust/hook.mjs"],
               runContext: {
+                ...(piCodingAgentScenario.fakeStream
+                  ? { cassette: false as const }
+                  : {}),
                 variantKey: piCodingAgentScenario.variantKey,
                 originalScenarioDir,
               },

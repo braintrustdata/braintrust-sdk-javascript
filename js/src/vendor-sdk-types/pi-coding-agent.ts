@@ -39,7 +39,9 @@ export interface PiPromptOptions {
 }
 
 export interface PiAgent {
-  streamFn: PiStreamFn;
+  /** @deprecated Renamed to streamFunction in pi-agent-core 0.81.0. */
+  streamFn?: PiStreamFunction;
+  streamFunction?: PiStreamFunction;
   subscribe(listener: PiAgentEventListener): () => void;
   readonly state?: {
     model?: PiModel;
@@ -94,7 +96,7 @@ export type PiAgentEvent =
       isError: boolean;
     };
 
-export type PiStreamFn = (
+export type PiStreamFunction = (
   model: PiModel,
   context: PiContext,
   options?: PiSimpleStreamOptions,
