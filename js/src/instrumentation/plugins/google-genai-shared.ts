@@ -81,7 +81,7 @@ function resolveGoogleGenAIObject(value: unknown): unknown {
   }
 }
 
-export function selectGoogleGenAIGenerationConfig(
+function selectGoogleGenAIGenerationConfig(
   value: unknown,
 ): Record<string, unknown> {
   const config = resolveGoogleGenAIObject(value);
