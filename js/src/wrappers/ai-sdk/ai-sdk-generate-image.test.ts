@@ -63,7 +63,7 @@ describe("ai sdk generateImage wrapper", () => {
     const span = spans[0] as any;
     expect(span.span_attributes).toMatchObject({
       name: "generateImage",
-      type: "function",
+      type: "llm",
     });
     expect(span.input).toMatchObject({
       prompt: "A test image",

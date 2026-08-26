@@ -26,6 +26,7 @@ import {
   AISDKPlugin,
   DEFAULT_DENY_OUTPUT_PATHS,
   processAISDKCallInput,
+  processAISDKGenerateImageInput,
   processAISDKWorkflowAgentCallInput,
   processAISDKWorkflowAgentModelCallInput,
   processAISDKOutput as processAISDKOutputActual,
@@ -269,6 +270,64 @@ describe("AISDKPlugin", () => {
         content_type: "image/png",
       });
       expect(JSON.stringify(result)).not.toContain("137");
+    });
+
+    it("converts inline image-edit inputs while preserving remote URLs", () => {
+      const result = processAISDKGenerateImageInput({
+        model: { modelId: "image-model", provider: "test-provider" },
+        prompt: {
+          images: [
+            "aGVsbG8=",
+            new Uint8Array([137, 80, 78, 71]),
+            "https://example.com/reference.png",
+          ],
+          mask: "data:image/png;base64,d29ybGQ=",
+          text: "Edit these images",
+        },
+      }).input as any;
+
+      expect(result.prompt.images[0].reference).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "image/png",
+      });
+      expect(result.prompt.images[1].reference).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "image/png",
+      });
+      expect(result.prompt.images[2]).toBe("https://example.com/reference.png");
+      expect(result.prompt.mask.reference).toMatchObject({
+        type: "braintrust_attachment",
+        content_type: "image/png",
+      });
+      expect(JSON.stringify(result)).not.toContain("aGVsbG8=");
+      expect(JSON.stringify(result)).not.toContain("d29ybGQ=");
+    });
+
+    it("preserves generated files when attachment conversion fails", () => {
+      const malformedFile = {
+        base64: "not valid base64!",
+        mediaType: "image/png",
+        providerData: "keep-me",
+      };
+      const customFile = Object.create({
+        get base64() {
+          throw new Error("unavailable");
+        },
+        get mediaType() {
+          return "image/custom";
+        },
+        get uint8Array() {
+          throw new Error("unavailable");
+        },
+      }) as Record<string, unknown>;
+
+      const result = processAISDKGenerateImageOutput(
+        { images: [malformedFile, customFile] } as any,
+        [],
+      ) as any;
+
+      expect(result.images[0]).toBe(malformedFile);
+      expect(result.images[1]).toBe(customFile);
     });
 
     it("falls back to a singular image result without duplicating it", () => {

@@ -299,7 +299,7 @@
           "children": [
             {
               "name": "generateImage",
-              "type": "function",
+              "type": "llm",
               "children": [],
               "input": {
                 "maxRetries": 0,

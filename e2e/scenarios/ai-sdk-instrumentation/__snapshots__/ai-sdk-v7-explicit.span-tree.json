@@ -259,14 +259,6 @@
           }
         },
         {
-          "name": "ai-sdk-generate-image-operation",
-          "children": [],
-          "metadata": {
-            "operation": "generate-image",
-            "testRunId": "<run:1>"
-          }
-        },
-        {
           "name": "ai-sdk-output-object-response-format-operation",
           "children": [],
           "metadata": {
@@ -4700,7 +4692,7 @@
                             "itemId": "<itemId:1>"
                           }
                         },
-                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                         "type": "text"
                       }
                     ],
@@ -4709,25 +4701,25 @@
                     "usage": {
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
-                        "noCacheTokens": 305
+                        "noCacheTokens": 308
                       },
-                      "inputTokens": 305,
+                      "inputTokens": 308,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 59
+                        "textTokens": 62
                       },
-                      "outputTokens": 59,
+                      "outputTokens": 62,
                       "raw": {
-                        "input_tokens": 305,
+                        "input_tokens": 308,
                         "input_tokens_details": {
                           "cached_tokens": 0
                         },
-                        "output_tokens": 59,
+                        "output_tokens": 62,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
-                      "totalTokens": 364
+                      "totalTokens": 370
                     }
                   },
                   "metadata": {
@@ -4739,10 +4731,10 @@
                     "provider": "openai.responses"
                   },
                   "metrics": {
-                    "completion_tokens": 59,
+                    "completion_tokens": 62,
                     "prompt_cached_tokens": 0,
-                    "prompt_tokens": 305,
-                    "tokens": 364
+                    "prompt_tokens": 308,
+                    "tokens": 370
                   }
                 }
               ],
@@ -4908,7 +4900,7 @@
                         "itemId": "<itemId:7>"
                       }
                     },
-                    "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                    "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                     "type": "text"
                   }
                 ],
@@ -4929,7 +4921,7 @@
                               "itemId": "<itemId:7>"
                             }
                           },
-                          "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                          "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                           "type": "text"
                         }
                       ],
@@ -5230,7 +5222,7 @@
                             "itemId": "<itemId:7>"
                           }
                         },
-                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                        "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                         "type": "text"
                       }
                     ],
@@ -5255,7 +5247,7 @@
                                   "itemId": "<itemId:7>"
                                 }
                               },
-                              "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                              "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                               "type": "text"
                             }
                           ],
@@ -5271,30 +5263,30 @@
                     "usage": {
                       "inputTokenDetails": {
                         "cacheReadTokens": 0,
-                        "noCacheTokens": 305
+                        "noCacheTokens": 308
                       },
-                      "inputTokens": 305,
+                      "inputTokens": 308,
                       "outputTokenDetails": {
                         "reasoningTokens": 0,
-                        "textTokens": 59
+                        "textTokens": 62
                       },
-                      "outputTokens": 59,
+                      "outputTokens": 62,
                       "raw": {
-                        "input_tokens": 305,
+                        "input_tokens": 308,
                         "input_tokens_details": {
                           "cached_tokens": 0
                         },
-                        "output_tokens": 59,
+                        "output_tokens": 62,
                         "output_tokens_details": {
                           "reasoning_tokens": 0
                         }
                       },
-                      "totalTokens": 364
+                      "totalTokens": 370
                     },
                     "warnings": []
                   }
                 ],
-                "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A**. After applying the discount code **SAVE20**, the final total is **$799.20**.",
+                "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
                 "toolCalls": [
                   {
                     "input": {
@@ -5386,28 +5378,28 @@
                 "totalUsage": {
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
-                    "noCacheTokens": 738
+                    "noCacheTokens": 741
                   },
-                  "inputTokens": 738,
+                  "inputTokens": 741,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 139
+                    "textTokens": 142
                   },
-                  "outputTokens": 139,
-                  "totalTokens": 877
+                  "outputTokens": 142,
+                  "totalTokens": 883
                 },
                 "usage": {
                   "inputTokenDetails": {
                     "cacheReadTokens": 0,
-                    "noCacheTokens": 738
+                    "noCacheTokens": 741
                   },
-                  "inputTokens": 738,
+                  "inputTokens": 741,
                   "outputTokenDetails": {
                     "reasoningTokens": 0,
-                    "textTokens": 139
+                    "textTokens": 142
                   },
-                  "outputTokens": 139,
-                  "totalTokens": 877
+                  "outputTokens": 142,
+                  "totalTokens": 883
                 },
                 "warnings": []
               },

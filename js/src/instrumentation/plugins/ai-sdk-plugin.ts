@@ -232,7 +232,7 @@ export class AISDKPlugin extends BasePlugin {
     this.unsubscribers.push(
       traceAsyncChannel(aiSDKChannels.generateImage, {
         name: "generateImage",
-        type: SpanTypeAttribute.FUNCTION,
+        type: SpanTypeAttribute.LLM,
         extractInput: ([params], event) =>
           prepareAISDKGenerateImageInput(params, event.self),
         extractOutput: (result, endEvent) =>
@@ -1353,17 +1353,10 @@ const convertImageToAttachment = (
     }
 
     if (explicitMimeType) {
-      if (image instanceof Uint8Array) {
+      const blob = convertDataToBlob(image, explicitMimeType);
+      if (blob) {
         return new Attachment({
-          data: new Blob([image], { type: explicitMimeType }),
-          filename: `image.${getExtensionFromMediaType(explicitMimeType)}`,
-          contentType: explicitMimeType,
-        });
-      }
-
-      if (typeof Buffer !== "undefined" && Buffer.isBuffer(image)) {
-        return new Attachment({
-          data: new Blob([image], { type: explicitMimeType }),
+          data: blob,
           filename: `image.${getExtensionFromMediaType(explicitMimeType)}`,
           contentType: explicitMimeType,
         });
@@ -1436,6 +1429,31 @@ export function processAISDKCallInput(
   params: AISDKCallParams,
 ): ProcessCallInputSyncResult {
   return processInputAttachmentsSync(params);
+}
+
+export function processAISDKGenerateImageInput(
+  params: AISDKGenerateImageParams,
+): ProcessCallInputSyncResult {
+  const prompt = params.prompt;
+  if (!isObject(prompt) || Array.isArray(prompt)) {
+    return processAISDKCallInput(params);
+  }
+
+  const processedPrompt = { ...prompt };
+  if (Array.isArray(prompt.images)) {
+    processedPrompt.images = prompt.images.map(
+      (image) => convertImageToAttachment(image, "image/png") ?? image,
+    );
+  }
+  if (prompt.mask !== undefined) {
+    processedPrompt.mask =
+      convertImageToAttachment(prompt.mask, "image/png") ?? prompt.mask;
+  }
+
+  return processAISDKCallInput({
+    ...params,
+    prompt: processedPrompt,
+  });
 }
 
 export function processAISDKWorkflowAgentCallInput(
@@ -1673,7 +1691,7 @@ function prepareAISDKGenerateImageInput(
   metadata: Record<string, unknown>;
 } {
   return {
-    input: processAISDKCallInput(params as AISDKCallParams).input,
+    input: processAISDKGenerateImageInput(params).input,
     metadata: extractMetadataFromCallParams(params as AISDKCallParams, self),
   };
 }
@@ -3674,17 +3692,23 @@ export function processAISDKGenerateImageOutput(
 function convertAISDKGeneratedFileToAttachment(
   file: unknown,
   index: number,
-): Attachment | Record<string, unknown> {
+): unknown {
   if (!file || typeof file !== "object") {
-    return { value: file };
+    return file;
   }
 
-  const generatedFile = file as AISDKGeneratedFile;
+  const generatedFile = file as AISDKGeneratedFile & Record<string, unknown>;
+  const generatedMediaType = safeSerializableFieldRead(
+    generatedFile,
+    "mediaType",
+  );
   const mediaType =
-    typeof generatedFile.mediaType === "string"
-      ? generatedFile.mediaType
+    typeof generatedMediaType === "string"
+      ? generatedMediaType
       : "application/octet-stream";
-  const data = generatedFile.base64 ?? generatedFile.uint8Array;
+  const data =
+    safeSerializableFieldRead(generatedFile, "base64") ??
+    safeSerializableFieldRead(generatedFile, "uint8Array");
   const blob = convertDataToBlob(data, mediaType);
 
   if (blob) {
@@ -3695,7 +3719,7 @@ function convertAISDKGeneratedFileToAttachment(
     });
   }
 
-  return { mediaType };
+  return file;
 }
 
 export function processAISDKEmbeddingOutput(

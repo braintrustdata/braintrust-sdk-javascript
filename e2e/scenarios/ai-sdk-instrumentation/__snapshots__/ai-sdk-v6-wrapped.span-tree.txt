@@ -287,7 +287,7 @@ span_tree:
     │     "operation": "generate-image",
     │     "testRunId": "<run:1>"
     │   }
-    │   └── generateImage [function]
+    │   └── generateImage [llm]
     │       input: {
     │         "maxRetries": 0,
     │         "model": {
