@@ -19,7 +19,7 @@
     "cohere-sdk-v7": "npm:cohere-ai@7.14.0",
     "cohere-sdk-v7-latest": "npm:cohere-ai@7.21.0",
     "cohere-sdk-v8": "npm:cohere-ai@8.0.0",
-    "cohere-sdk-v8-latest": "npm:cohere-ai@8.0.0"
+    "cohere-sdk-v8-latest": "npm:cohere-ai@8.0.1"
   },
   "pnpm": {
     "overrides": {
