@@ -89,18 +89,14 @@ export function aggregateGroqChatCompletionChunks(
     endEvent,
   );
   const metrics: Record<string, number> = { ...aggregated.metrics };
-  const retainedMetricNames = new Set(["cached"]);
-  for (const chunk of chunks) {
-    const normalizedMetrics = parseGroqMetrics(chunk);
-    for (const name of Object.keys(normalizedMetrics)) {
-      retainedMetricNames.add(name);
-    }
-    Object.assign(metrics, normalizedMetrics);
-  }
+  // Preserve the shared cache-hit metric; normalize Groq token metrics below.
   for (const name of Object.keys(metrics)) {
-    if (!retainedMetricNames.has(name)) {
+    if (name !== "cached") {
       delete metrics[name];
     }
+  }
+  for (const chunk of chunks) {
+    Object.assign(metrics, parseGroqMetrics(chunk));
   }
   const reasoning = aggregateGroqReasoning(chunks);
   if (reasoning !== undefined) {

@@ -153,14 +153,12 @@ export function parseGroqMetrics(
     "sram_cached_tokens",
   );
   let groqCachedTokens: number | undefined;
-  for (const value of [dramCachedTokens, sramCachedTokens]) {
-    if (value !== undefined) {
-      const total = (groqCachedTokens ?? 0) + value;
-      if (!Number.isSafeInteger(total)) {
-        return metrics;
-      }
-      groqCachedTokens = total;
+  if (dramCachedTokens !== undefined || sramCachedTokens !== undefined) {
+    const total = (dramCachedTokens ?? 0) + (sramCachedTokens ?? 0);
+    if (!Number.isSafeInteger(total)) {
+      return metrics;
     }
+    groqCachedTokens = total;
   }
 
   if (

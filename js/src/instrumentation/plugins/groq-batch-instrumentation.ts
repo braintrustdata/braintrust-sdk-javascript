@@ -2039,18 +2039,20 @@ function completedBatchResultSourcesIssue(
   if (totalCount === 0) {
     return undefined;
   }
-  const requiresOutput =
-    completedCount !== undefined
-      ? completedCount > 0
-      : totalCount !== undefined &&
-        failedCount !== undefined &&
-        failedCount < totalCount;
-  const requiresError =
-    failedCount !== undefined
-      ? failedCount > 0
-      : totalCount !== undefined &&
-        completedCount !== undefined &&
-        completedCount < totalCount;
+
+  let requiresOutput = false;
+  if (completedCount !== undefined) {
+    requiresOutput = completedCount > 0;
+  } else if (totalCount !== undefined && failedCount !== undefined) {
+    requiresOutput = failedCount < totalCount;
+  }
+
+  let requiresError = false;
+  if (failedCount !== undefined) {
+    requiresError = failedCount > 0;
+  } else if (totalCount !== undefined && completedCount !== undefined) {
+    requiresError = completedCount < totalCount;
+  }
   if (requiresOutput && args.outputFile === undefined) {
     return new Error(
       "Groq Batch completed collection requires the output file",
