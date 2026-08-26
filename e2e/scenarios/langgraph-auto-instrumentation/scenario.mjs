@@ -12,7 +12,7 @@ const { ChatOpenAI } = await import(langchainOpenAIPackageName);
 import { runMain, runTracedScenario } from "../../helpers/provider-runtime.mjs";
 import { ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
 
-const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
+const OPENAI_MODEL = "gpt-5-nano";
 
 runMain(async () => {
   await runTracedScenario({
@@ -26,8 +26,7 @@ runMain(async () => {
 
       const model = new ChatOpenAI({
         model: OPENAI_MODEL,
-        maxTokens: 24,
-        temperature: 0,
+        maxTokens: 4_000,
       });
 
       async function sayHello() {

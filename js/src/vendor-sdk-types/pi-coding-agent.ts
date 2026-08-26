@@ -141,6 +141,7 @@ export interface PiContext {
 export interface PiTool {
   name: string;
   description?: string;
+  execute?: (this: unknown, ...args: unknown[]) => unknown;
   parameters?: unknown;
   [key: string]: unknown;
 }

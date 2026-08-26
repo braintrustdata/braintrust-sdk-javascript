@@ -12,6 +12,7 @@ import {
 import { runMain } from "../../helpers/scenario-runtime";
 
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
+const OPENAI_REASONING_MODEL = "gpt-5-nano";
 
 runMain(async () => {
   const { AIMessage, HumanMessage, ToolMessage } = await import(
@@ -33,9 +34,8 @@ runMain(async () => {
 
       await runOperation("langchain-invoke-operation", "invoke", async () => {
         const model = new ChatOpenAI({
-          model: OPENAI_MODEL,
-          maxTokens: 24,
-          temperature: 0,
+          model: OPENAI_REASONING_MODEL,
+          maxTokens: 512,
           callbacks: [handler],
         });
         await model.invoke([new HumanMessage("Reply with exactly OK.")]);

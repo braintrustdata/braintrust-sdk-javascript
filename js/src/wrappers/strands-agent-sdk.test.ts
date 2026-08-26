@@ -1,15 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { traceSync } = vi.hoisted(() => ({
-  traceSync: vi.fn((fn: () => unknown, _event?: unknown) => fn()),
+const { invoke } = vi.hoisted(() => ({
+  invoke: vi.fn(
+    (
+      target: Function,
+      thisArg: unknown,
+      args: unknown[],
+      _additional?: unknown,
+    ) => Reflect.apply(target, thisArg, args),
+  ),
 }));
 
 vi.mock("../isomorph", () => ({
   default: {
     newTracingChannel: vi.fn(() => ({
-      subscribe: vi.fn(),
-      traceSync,
-      unsubscribe: vi.fn(),
+      invoke,
     })),
   },
 }));
@@ -61,14 +66,12 @@ describe("wrapStrandsAgentSDK", () => {
     expect(result).toMatchObject({
       lastMessage: { role: "assistant", content: [{ text: "world" }] },
     });
-    expect(traceSync).toHaveBeenCalledTimes(2);
-    expect(traceSync.mock.calls[0][1]).toMatchObject({
-      arguments: ["hello", undefined],
-      self: expect.objectContaining({ name: "assistant" }),
+    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(invoke.mock.calls[0][2]).toEqual(["hello", undefined]);
+    expect(invoke.mock.calls[0][3]).toMatchObject({
+      agent: expect.objectContaining({ name: "assistant" }),
     });
-    expect(traceSync.mock.calls[1][1]).toMatchObject({
-      arguments: ["world", undefined],
-    });
+    expect(invoke.mock.calls[1][2]).toEqual(["world", undefined]);
   });
 
   it("wraps Graph and Swarm stream/invoke", async () => {
@@ -101,12 +104,14 @@ describe("wrapStrandsAgentSDK", () => {
     await expect(new wrapped.Swarm().invoke("swarm")).resolves.toMatchObject({
       status: "COMPLETED",
     });
-    expect(traceSync).toHaveBeenCalledTimes(2);
-    expect(traceSync.mock.calls[0][1]).toMatchObject({
-      arguments: ["graph", undefined],
+    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(invoke.mock.calls[0][2]).toEqual(["graph", undefined]);
+    expect(invoke.mock.calls[0][3]).toMatchObject({
+      orchestrator: expect.anything(),
     });
-    expect(traceSync.mock.calls[1][1]).toMatchObject({
-      arguments: ["swarm", undefined],
+    expect(invoke.mock.calls[1][2]).toEqual(["swarm", undefined]);
+    expect(invoke.mock.calls[1][3]).toMatchObject({
+      orchestrator: expect.anything(),
     });
   });
 
@@ -126,7 +131,7 @@ describe("wrapStrandsAgentSDK", () => {
     ) as any;
 
     await new wrapped.Agent().invoke("hello");
-    expect(traceSync).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledTimes(1);
   });
 
   it("preserves private-field-safe method binding", async () => {

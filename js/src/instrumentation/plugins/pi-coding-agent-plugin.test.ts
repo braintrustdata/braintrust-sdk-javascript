@@ -104,7 +104,8 @@ describe("PiCodingAgentPlugin", () => {
         return makeStream(finalMessage);
       });
       const agent = makeAgent(originalStreamFn, property);
-      agent.state.tools = [bashTool()];
+      const tool = bashTool();
+      agent.state.tools = [tool];
       const session = makeSession(agent);
       const context = {
         systemPrompt: "system",
@@ -115,7 +116,7 @@ describe("PiCodingAgentPlugin", () => {
             timestamp: 1,
           },
         ],
-        tools: [bashTool()],
+        tools: [tool],
       };
 
       await interceptor(
@@ -132,6 +133,10 @@ describe("PiCodingAgentPlugin", () => {
             toolName: "bash",
             type: "tool_execution_start",
           });
+          await tool.execute?.("tool-1", {
+            command: "printf pi_tool_ok",
+          });
+          expect(isAutoInstrumentationSuppressed()).toBe(true);
           await this.agent.emit({
             isError: false,
             result: { stdout: "pi_tool_ok" },
@@ -466,6 +471,12 @@ function bashTool() {
   return {
     description: "Run a shell command.",
     name: "bash",
+    execute: vi.fn(async (..._args: unknown[]) => {
+      expect(isAutoInstrumentationSuppressed()).toBe(false);
+      await Promise.resolve();
+      expect(isAutoInstrumentationSuppressed()).toBe(false);
+      return { stdout: "pi_tool_ok" };
+    }),
     parameters: {
       type: "object",
       properties: {
