@@ -21,7 +21,6 @@ import {
   failMistralBatchTrace,
   startMistralBatchTrace,
 } from "../../mistral-batch";
-import { BRAINTRUST_MISTRAL_BATCH_CONTEXT_KEY } from "./mistral-batch-constants";
 import { MistralPlugin } from "./mistral-plugin";
 
 try {
@@ -40,6 +39,7 @@ const requests = [
     body: { messages: [{ role: "user", content: "second" }] },
   },
 ];
+const BRAINTRUST_MISTRAL_BATCH_CONTEXT_KEY = "braintrust.batch_context";
 
 function success(customId: string, content: string) {
   return {

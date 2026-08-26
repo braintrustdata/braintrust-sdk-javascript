@@ -29,12 +29,12 @@ import type {
   CompleteMistralBatchTraceArgs,
   FailMistralBatchTraceArgs,
   MistralBatchCreateParams,
+  MistralBatchCollectionContext,
   MistralBatchInput,
   MistralBatchLike,
   MistralBatchTraceCollection,
   StartMistralBatchTraceArgs,
 } from "../../mistral-batch-types";
-import { BRAINTRUST_MISTRAL_BATCH_CONTEXT_KEY } from "./mistral-batch-constants";
 import {
   extractMistralChatInput,
   extractMistralResponseMetadata,
@@ -42,6 +42,7 @@ import {
   parseMistralMetricsFromUsage,
 } from "./mistral-span-data";
 
+const BRAINTRUST_MISTRAL_BATCH_CONTEXT_KEY = "braintrust.batch_context";
 const SUPPORTED_ENDPOINT = "/v1/chat/completions";
 const TERMINAL_STATUSES = new Set([
   "SUCCESS",
@@ -1100,11 +1101,8 @@ async function resumeBatchChild(
   return _internalResumeSpan({ exported, spanParents: [task.span_id] });
 }
 
-async function startPreparedBatch(
-  inputs: Map<string, BatchInputRecord>,
-  context: BatchContext,
-  startParent: string,
-): Promise<void> {
+async function startPreparedBatch(prepared: PreparedBatch): Promise<void> {
+  const { context, inputs, startParent } = prepared;
   let task: Span | undefined;
   let taskParent: string | undefined;
   let startedChildCount = 0;
@@ -1176,11 +1174,7 @@ export async function startMistralBatchTraceImpl(
     return providerReadyParams(args);
   }
   try {
-    await startPreparedBatch(
-      prepared.inputs,
-      prepared.context,
-      prepared.startParent,
-    );
+    await startPreparedBatch(prepared);
     return prepared.params;
   } catch (error) {
     reportBatchTraceError(
@@ -1219,21 +1213,30 @@ function errorFromResult(result: BatchResultRecord): Error | undefined {
   return undefined;
 }
 
-async function completeBatchResult(
-  context: BatchContext,
-  taskParent: string,
-  childStartTime: number,
-  endTime: number,
-  input: BatchInputRecord,
-  result: BatchResultRecord,
-  resume: boolean,
-  initializedOrdinals: Set<number>,
-): Promise<boolean> {
+async function completeBatchResult({
+  childStartTime,
+  context,
+  endTime,
+  initializedOrdinals,
+  input,
+  result,
+  resumeExistingSpans,
+  taskParent,
+}: {
+  childStartTime: number;
+  context: BatchContext;
+  endTime: number;
+  initializedOrdinals: Set<number>;
+  input: BatchInputRecord;
+  result: BatchResultRecord;
+  resumeExistingSpans: boolean;
+  taskParent: string;
+}): Promise<boolean> {
   const child =
-    resume || initializedOrdinals.has(input.ordinal)
+    resumeExistingSpans || initializedOrdinals.has(input.ordinal)
       ? await resumeBatchChild(context, taskParent, input)
       : await startBatchChild(context, taskParent, input, childStartTime);
-  if (!resume && !initializedOrdinals.has(input.ordinal)) {
+  if (!resumeExistingSpans && !initializedOrdinals.has(input.ordinal)) {
     initializedOrdinals.add(input.ordinal);
   }
   try {
@@ -1420,7 +1423,7 @@ async function completeResultFile({
   consumption,
   inputs,
   issues,
-  resume,
+  resumeExistingSpans,
   source,
   taskParent,
 }: {
@@ -1433,7 +1436,7 @@ async function completeResultFile({
   consumption: ResultConsumption;
   inputs: Map<string, BatchInputRecord>;
   issues: Error[];
-  resume: boolean;
+  resumeExistingSpans: boolean;
   source: BatchResultRecord["source"];
   taskParent: string;
 }): Promise<void> {
@@ -1481,19 +1484,19 @@ async function completeResultFile({
           );
           continue;
         }
-        const completed = await completeBatchResult(
-          context,
-          taskParent,
+        const completed = await completeBatchResult({
           childStartTime,
+          context,
           endTime,
+          initializedOrdinals,
           input,
-          {
+          result: {
             value,
             source,
           },
-          resume,
-          initializedOrdinals,
-        );
+          resumeExistingSpans,
+          taskParent,
+        });
         if (!completed) {
           recordIssue(
             issues,
@@ -1586,8 +1589,9 @@ async function completeBatch(
     return;
   }
 
-  const requiresCompleteIntegrity =
-    status === "SUCCESS" || !resumedSignedContext;
+  const isSuccessful = status === "SUCCESS";
+  const isCollectOnly = !resumedSignedContext;
+  const requiresCompleteIntegrity = isSuccessful || isCollectOnly;
   const integrityIssues = [...inputData.issues];
   if (resumedSignedContext && inputData.inputDigest !== context.inputDigest) {
     integrityIssues.push(
@@ -1623,10 +1627,10 @@ async function completeBatch(
   }
   if (integrityIssues.length > 0) {
     let diagnosticContext: string;
-    if (!resumedSignedContext) {
+    if (isCollectOnly) {
       diagnosticContext =
         "skipped collect-only batch with incomplete correlation";
-    } else if (status === "SUCCESS") {
+    } else if (isSuccessful) {
       diagnosticContext = "left batch spans pending";
     } else {
       diagnosticContext =
@@ -1664,7 +1668,7 @@ async function completeBatch(
   };
   const canProcessResults =
     integrityIssues.length === 0 ||
-    (status !== "SUCCESS" &&
+    (!isSuccessful &&
       resumedSignedContext &&
       (inputData.issues.length > 0 ||
         inputData.inputDigest === context.inputDigest));
@@ -1679,7 +1683,7 @@ async function completeBatch(
       consumption,
       inputs: inputData.inputs,
       issues,
-      resume: resumedSignedContext,
+      resumeExistingSpans: resumedSignedContext,
       source: "output",
       taskParent,
     });
@@ -1693,14 +1697,14 @@ async function completeBatch(
       consumption,
       inputs: inputData.inputs,
       issues,
-      resume: resumedSignedContext,
+      resumeExistingSpans: resumedSignedContext,
       source: "error",
       taskParent,
     });
   }
 
-  if (status === "SUCCESS" && inputData.inputs.size > 0) {
-    if (!resumedSignedContext) {
+  if (isSuccessful && inputData.inputs.size > 0) {
+    if (isCollectOnly) {
       for (const input of inputData.inputs.values()) {
         if (initializedOrdinals.has(input.ordinal)) {
           continue;
@@ -1748,7 +1752,7 @@ async function completeBatch(
     [...inputData.inputs.values()].map((input) => [input.ordinal, input]),
   );
   const closureCount =
-    status === "SUCCESS" || !resumedSignedContext
+    isSuccessful || isCollectOnly
       ? inputData.requestCount
       : context.requestCount;
   for (let ordinal = 0; ordinal < closureCount; ordinal++) {
@@ -1776,7 +1780,7 @@ async function completeBatch(
     }
   }
 
-  if (status !== "SUCCESS") {
+  if (!isSuccessful) {
     task.log({ error: statusError });
   }
   task.end({ endTime });
@@ -1790,18 +1794,20 @@ export async function completeMistralBatchTraceImpl<
 ): Promise<MistralBatchTraceCollection<TBatch>> {
   const collectionTime = getCurrentUnixTimestamp();
   const suppliedCollectionContext = args.collectionContext;
-  let collectionContext =
-    suppliedCollectionContext &&
-    read(suppliedCollectionContext, "version") === 1 &&
-    typeof read(suppliedCollectionContext, "value") === "string"
-      ? suppliedCollectionContext
-      : undefined;
-  if (suppliedCollectionContext && !collectionContext) {
-    reportBatchTraceError(
-      args.onTraceError,
-      "ignored invalid collection context",
-      new Error("Mistral Batch collection context is invalid"),
-    );
+  let collectionContext: MistralBatchCollectionContext | undefined;
+  if (suppliedCollectionContext) {
+    if (
+      read(suppliedCollectionContext, "version") === 1 &&
+      typeof read(suppliedCollectionContext, "value") === "string"
+    ) {
+      collectionContext = suppliedCollectionContext;
+    } else {
+      reportBatchTraceError(
+        args.onTraceError,
+        "ignored invalid collection context",
+        new Error("Mistral Batch collection context is invalid"),
+      );
+    }
   }
   if (!collectionContext) {
     try {

@@ -102,6 +102,84 @@ function pickMappedMetadata(
   return picked;
 }
 
+function normalizeMistralToolDefinition(
+  tool: unknown,
+): Record<string, unknown> | undefined {
+  if (!isObject(tool)) {
+    return undefined;
+  }
+  if (isObject(tool.function)) {
+    const fn = tool.function;
+    if (typeof fn.name !== "string" || fn.name.length === 0) {
+      return undefined;
+    }
+    return {
+      type: "function",
+      function: {
+        name: fn.name,
+        ...(typeof fn.description === "string"
+          ? { description: fn.description }
+          : {}),
+        ...(isObject(fn.parameters) ? { parameters: fn.parameters } : {}),
+        ...(typeof fn.strict === "boolean" ? { strict: fn.strict } : {}),
+      },
+    };
+  }
+
+  const type = tool.type;
+  if (
+    type !== "web_search" &&
+    type !== "web_search_premium" &&
+    type !== "code_interpreter" &&
+    type !== "image_generation" &&
+    type !== "document_library" &&
+    type !== "connector"
+  ) {
+    return undefined;
+  }
+
+  const normalized: Record<string, unknown> = { type };
+  const rawConfiguration = tool.tool_configuration ?? tool.toolConfiguration;
+  if (isObject(rawConfiguration)) {
+    const configuration: Record<string, unknown> = {};
+    for (const key of ["exclude", "include"] as const) {
+      const value = rawConfiguration[key];
+      if (
+        Array.isArray(value) &&
+        value.every((entry) => typeof entry === "string")
+      ) {
+        configuration[key] = value;
+      }
+    }
+    const requiresConfirmation =
+      rawConfiguration.requires_confirmation ??
+      rawConfiguration.requiresConfirmation;
+    if (
+      Array.isArray(requiresConfirmation) &&
+      requiresConfirmation.every((entry) => typeof entry === "string")
+    ) {
+      configuration.requires_confirmation = requiresConfirmation;
+    }
+    if (Object.keys(configuration).length > 0) {
+      normalized.tool_configuration = configuration;
+    }
+  }
+
+  const libraryIds = tool.library_ids ?? tool.libraryIds;
+  if (
+    type === "document_library" &&
+    Array.isArray(libraryIds) &&
+    libraryIds.every((entry) => typeof entry === "string")
+  ) {
+    normalized.library_ids = libraryIds;
+  }
+  const connectorId = tool.connector_id ?? tool.connectorId;
+  if (type === "connector" && typeof connectorId === "string") {
+    normalized.connector_id = connectorId;
+  }
+  return normalized;
+}
+
 export function extractMistralRequestMetadata(
   metadata: Record<string, unknown> | undefined,
 ): Record<string, unknown> {
@@ -111,83 +189,9 @@ export function extractMistralRequestMetadata(
   }
 
   if (Array.isArray(metadata.tools)) {
-    const tools = metadata.tools.flatMap((tool) => {
-      if (!isObject(tool)) {
-        return [];
-      }
-      if (isObject(tool.function)) {
-        const fn = tool.function;
-        if (typeof fn.name !== "string" || fn.name.length === 0) {
-          return [];
-        }
-        return [
-          {
-            type: "function",
-            function: {
-              name: fn.name,
-              ...(typeof fn.description === "string"
-                ? { description: fn.description }
-                : {}),
-              ...(isObject(fn.parameters) ? { parameters: fn.parameters } : {}),
-              ...(typeof fn.strict === "boolean" ? { strict: fn.strict } : {}),
-            },
-          },
-        ];
-      }
-
-      const type = tool.type;
-      if (
-        type !== "web_search" &&
-        type !== "web_search_premium" &&
-        type !== "code_interpreter" &&
-        type !== "image_generation" &&
-        type !== "document_library" &&
-        type !== "connector"
-      ) {
-        return [];
-      }
-
-      const normalized: Record<string, unknown> = { type };
-      const rawConfiguration =
-        tool.tool_configuration ?? tool.toolConfiguration;
-      if (isObject(rawConfiguration)) {
-        const configuration: Record<string, unknown> = {};
-        for (const key of ["exclude", "include"] as const) {
-          const value = rawConfiguration[key];
-          if (
-            Array.isArray(value) &&
-            value.every((entry) => typeof entry === "string")
-          ) {
-            configuration[key] = value;
-          }
-        }
-        const requiresConfirmation =
-          rawConfiguration.requires_confirmation ??
-          rawConfiguration.requiresConfirmation;
-        if (
-          Array.isArray(requiresConfirmation) &&
-          requiresConfirmation.every((entry) => typeof entry === "string")
-        ) {
-          configuration.requires_confirmation = requiresConfirmation;
-        }
-        if (Object.keys(configuration).length > 0) {
-          normalized.tool_configuration = configuration;
-        }
-      }
-      const libraryIds = tool.library_ids ?? tool.libraryIds;
-      if (
-        type === "document_library" &&
-        Array.isArray(libraryIds) &&
-        libraryIds.every((entry) => typeof entry === "string")
-      ) {
-        normalized.library_ids = libraryIds;
-      }
-      const connectorId = tool.connector_id ?? tool.connectorId;
-      if (type === "connector" && typeof connectorId === "string") {
-        normalized.connector_id = connectorId;
-      }
-      return [normalized];
-    });
+    const tools = metadata.tools
+      .map(normalizeMistralToolDefinition)
+      .filter((tool): tool is Record<string, unknown> => tool !== undefined);
     if (tools.length > 0) {
       picked.tools = tools;
     }
