@@ -35,29 +35,11 @@ export interface AnthropicBatchLike {
   request_counts: AnthropicBatchRequestCounts;
 }
 
-interface AnthropicBatchSucceededResult {
-  message: unknown;
-  type: "succeeded";
-}
-
-interface AnthropicBatchErroredResult {
-  error: unknown;
-  type: "errored";
-}
-
-interface AnthropicBatchCanceledResult {
-  type: "canceled";
-}
-
-interface AnthropicBatchExpiredResult {
-  type: "expired";
-}
-
 export type AnthropicBatchResult =
-  | AnthropicBatchSucceededResult
-  | AnthropicBatchErroredResult
-  | AnthropicBatchCanceledResult
-  | AnthropicBatchExpiredResult;
+  | { message: unknown; type: "succeeded" }
+  | { error: unknown; type: "errored" }
+  | { type: "canceled" }
+  | { type: "expired" };
 
 export interface AnthropicBatchResultRecord {
   custom_id: string;

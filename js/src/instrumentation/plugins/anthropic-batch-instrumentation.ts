@@ -133,6 +133,13 @@ type InitializedBatchSpans = {
   task: boolean;
 };
 
+interface BatchResultOutcome {
+  error: unknown;
+  metadata: Record<string, unknown>;
+  metrics: Record<string, number>;
+  output: unknown;
+}
+
 function read(value: unknown, key: PropertyKey): unknown {
   if (!isObject(value)) {
     return undefined;
@@ -389,9 +396,13 @@ function deterministicAttachmentKey(prefix: string, index: number): string {
   if (!Number.isSafeInteger(index) || index < 0 || index > 0xffffffff) {
     throw new Error("Anthropic Batch input contains too many attachments");
   }
-  const raw = prefix + index.toString(16).padStart(8, "0");
-  const hex = `${raw.slice(0, 12)}4${raw.slice(13, 16)}${((Number.parseInt(raw[16] ?? "0", 16) & 0x3) | 0x8).toString(16)}${raw.slice(17)}`;
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  const rawHex = prefix + index.toString(16).padStart(8, "0");
+  const variantNibble = (
+    (Number.parseInt(rawHex[16] ?? "0", 16) & 0x3) |
+    0x8
+  ).toString(16);
+  const uuidHex = `${rawHex.slice(0, 12)}4${rawHex.slice(13, 16)}${variantNibble}${rawHex.slice(17)}`;
+  return `${uuidHex.slice(0, 8)}-${uuidHex.slice(8, 12)}-${uuidHex.slice(12, 16)}-${uuidHex.slice(16, 20)}-${uuidHex.slice(20)}`;
 }
 
 function randomBatchNonce(): string {
@@ -429,7 +440,7 @@ async function prepareBatchSpanIds(
   context: BatchContext,
   inputs: Map<string, BatchInputRecord>,
 ): Promise<PreparedBatchSpanIds> {
-  const batch = batchSpanIds(context.operationNonce);
+  const batchIdsPromise = batchSpanIds(context.operationNonce);
   const children = new Map<string, ChildSpanIds>();
   const records = Array.from(inputs.values());
   for (
@@ -452,7 +463,7 @@ async function prepareBatchSpanIds(
       children.set(customId, ids);
     }
   }
-  return { batch: await batch, children };
+  return { batch: await batchIdsPromise, children };
 }
 
 const DIGEST_BUFFER_CODE_UNITS = 64 * 1024;
@@ -1050,7 +1061,7 @@ function resultError(
 function batchResultOutcome(
   inputMetadata: Record<string, unknown>,
   record: AnthropicBatchResultRecord,
-) {
+): BatchResultOutcome {
   if (record.result.type !== "succeeded") {
     return {
       error: resultError(record.result),
@@ -1123,7 +1134,7 @@ async function completeCollectOnlyBatchResult(
   state: BraintrustState,
 ): Promise<void> {
   let inputData: ReturnType<typeof extractAnthropicInput> | undefined;
-  let outcome;
+  let outcome: BatchResultOutcome;
   try {
     inputData = extractAnthropicInput(input.requestParams, {
       attachmentKey: (index) =>
@@ -1142,6 +1153,28 @@ async function completeCollectOnlyBatchResult(
       output: null,
     };
   }
+  writeCollectOnlyBatchChild(
+    context,
+    taskParent,
+    endTime,
+    {
+      id: ids.rowId,
+      ...(inputData ? { input: inputData.input } : {}),
+      ...outcome,
+    },
+    ids,
+    state,
+  );
+}
+
+function writeCollectOnlyBatchChild(
+  context: BatchContext,
+  taskParent: string,
+  endTime: number,
+  event: BatchResultOutcome & { id: string; input?: unknown },
+  ids: ChildSpanIds,
+  state: BraintrustState,
+): void {
   withCurrent(
     NOOP_SPAN,
     () =>
@@ -1150,13 +1183,11 @@ async function completeCollectOnlyBatchResult(
           {
             event: {
               [MERGE_PATHS_FIELD]: [["metadata"], ["metrics"]],
-              id: ids.rowId,
-              ...(inputData ? { input: inputData.input } : {}),
-              ...outcome,
+              ...event,
               metrics: {
                 end: endTime,
                 start: context.startTime,
-                ...outcome.metrics,
+                ...event.metrics,
               },
             },
             name: "anthropic.messages.create",
@@ -1193,34 +1224,22 @@ async function failCollectOnlyBatchChild(
     // The terminal provider error still closes the child if input extraction
     // itself fails.
   }
-  withCurrent(
-    NOOP_SPAN,
-    () =>
-      _internalStartSpanWithInitialMerge(
-        withSpanInstrumentationName(
-          {
-            event: {
-              [MERGE_PATHS_FIELD]: [["metadata"], ["metrics"]],
-              error,
-              id: ids.rowId,
-              ...(inputData ? { input: inputData.input } : {}),
-              metadata: inputData?.metadata ?? {
-                model: input.requestParams.model,
-                provider: "anthropic",
-              },
-              metrics: { end: endTime, start: context.startTime },
-              output: null,
-            },
-            name: "anthropic.messages.create",
-            parent: taskParent,
-            spanId: ids.spanId,
-            startTime: context.startTime,
-            state,
-            type: SpanTypeAttribute.LLM,
-          },
-          INSTRUMENTATION_NAMES.ANTHROPIC,
-        ),
-      ),
+  writeCollectOnlyBatchChild(
+    context,
+    taskParent,
+    endTime,
+    {
+      error,
+      id: ids.rowId,
+      ...(inputData ? { input: inputData.input } : {}),
+      metadata: inputData?.metadata ?? {
+        model: input.requestParams.model,
+        provider: "anthropic",
+      },
+      metrics: {},
+      output: null,
+    },
+    ids,
     state,
   );
 }
@@ -1247,31 +1266,21 @@ function requestCounts(
   if (!isObject(counts)) {
     return undefined;
   }
-  const canceled = read(counts, "canceled");
-  const errored = read(counts, "errored");
-  const expired = read(counts, "expired");
-  const processing = read(counts, "processing");
-  const succeeded = read(counts, "succeeded");
-  if (
-    typeof canceled !== "number" ||
-    !Number.isInteger(canceled) ||
-    canceled < 0 ||
-    typeof errored !== "number" ||
-    !Number.isInteger(errored) ||
-    errored < 0 ||
-    typeof expired !== "number" ||
-    !Number.isInteger(expired) ||
-    expired < 0 ||
-    typeof processing !== "number" ||
-    !Number.isInteger(processing) ||
-    processing < 0 ||
-    typeof succeeded !== "number" ||
-    !Number.isInteger(succeeded) ||
-    succeeded < 0
-  ) {
-    return undefined;
+  const parsedCounts: AnthropicBatchRequestCounts = {
+    canceled: 0,
+    errored: 0,
+    expired: 0,
+    processing: 0,
+    succeeded: 0,
+  };
+  for (const field of REQUEST_COUNT_FIELDS) {
+    const value = read(counts, field);
+    if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+      return undefined;
+    }
+    parsedCounts[field] = value;
   }
-  return { canceled, errored, expired, processing, succeeded };
+  return parsedCounts;
 }
 
 async function collectOnlyContext(
