@@ -186,7 +186,7 @@ span_tree:
     │           "finish_reason": "stop",
     │           "index": 0,
     │           "message": {
-    │             "content": "observability",
+    │             "content": "Observability",
     │             "role": "assistant"
     │           }
     │         }
@@ -195,16 +195,16 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:1>",
     │         "max_tokens": 24,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion",
     │         "provider": "mistral",
     │         "temperature": 0
     │       }
     │       metrics: {
     │         "completion_tokens": 3,
-    │         "prompt_tokens": 21,
+    │         "prompt_tokens": 33,
     │         "time_to_first_token": 0,
-    │         "tokens": 24
+    │         "tokens": 36
     │       }
     ├── mistral-chat-stream-operation
     │   metadata: {
@@ -232,7 +232,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:1>",
     │         "max_tokens": 24,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion.chunk",
     │         "provider": "mistral",
     │         "stream": true,
@@ -240,9 +240,9 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_tokens": 4,
-    │         "prompt_tokens": 10,
+    │         "prompt_tokens": 22,
     │         "time_to_first_token": 0,
-    │         "tokens": 14
+    │         "tokens": 26
     │       }
     ├── mistral-chat-reasoning-stream-operation
     │   metadata: {
@@ -357,7 +357,7 @@ span_tree:
     │   │     "created": 0,
     │   │     "id": "<span:1>",
     │   │     "max_tokens": 48,
-    │   │     "model": "mistral-small-2506",
+    │   │     "model": "mistral-small-latest",
     │   │     "object": "chat.completion",
     │   │     "provider": "mistral",
     │   │     "temperature": 0,
@@ -386,9 +386,9 @@ span_tree:
     │   │   }
     │   │   metrics: {
     │   │     "completion_tokens": 13,
-    │   │     "prompt_tokens": 91,
+    │   │     "prompt_tokens": 103,
     │   │     "time_to_first_token": 0,
-    │   │     "tokens": 104
+    │   │     "tokens": 116
     │   │   }
     │   ├── mistral.chat.complete [llm]
     │   │   input: [
@@ -421,7 +421,7 @@ span_tree:
     │   │     "created": 0,
     │   │     "id": "<span:1>",
     │   │     "max_tokens": 48,
-    │   │     "model": "mistral-small-2506",
+    │   │     "model": "mistral-small-latest",
     │   │     "object": "chat.completion",
     │   │     "provider": "mistral",
     │   │     "temperature": 0,
@@ -455,9 +455,9 @@ span_tree:
     │   │   }
     │   │   metrics: {
     │   │     "completion_tokens": 22,
-    │   │     "prompt_tokens": 125,
+    │   │     "prompt_tokens": 137,
     │   │     "time_to_first_token": 0,
-    │   │     "tokens": 147
+    │   │     "tokens": 159
     │   │   }
     │   └── mistral.chat.complete [llm]
     │       input: [
@@ -502,7 +502,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:1>",
     │         "max_tokens": 96,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion",
     │         "provider": "mistral",
     │         "temperature": 0,
@@ -555,9 +555,9 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_tokens": 34,
-    │         "prompt_tokens": 219,
+    │         "prompt_tokens": 231,
     │         "time_to_first_token": 0,
-    │         "tokens": 253
+    │         "tokens": 265
     │       }
     ├── mistral-fim-complete-operation
     │   metadata: {
@@ -603,7 +603,7 @@ span_tree:
     │           "finish_reason": "length",
     │           "index": 0,
     │           "message": {
-    │             "content": "{\n  name: 'project',\n  title: 'Projects',\n  type:",
+    │             "content": "{\n  name: 'project',\n  title: 'Project',\n  type:",
     │             "role": "assistant"
     │           }
     │         }
@@ -651,7 +651,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:2>",
     │         "max_tokens": 16,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion",
     │         "provider": "mistral",
     │         "response_format": {
@@ -661,9 +661,9 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_tokens": 4,
-    │         "prompt_tokens": 21,
+    │         "prompt_tokens": 33,
     │         "time_to_first_token": 0,
-    │         "tokens": 25
+    │         "tokens": 37
     │       }
     ├── mistral-agents-tool-call-operation
     │   metadata: {
@@ -702,7 +702,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:2>",
     │         "max_tokens": 32,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion",
     │         "provider": "mistral",
     │         "response_format": {
@@ -734,9 +734,9 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_tokens": 14,
-    │         "prompt_tokens": 107,
+    │         "prompt_tokens": 119,
     │         "time_to_first_token": 0,
-    │         "tokens": 121
+    │         "tokens": 133
     │       }
     ├── mistral-agents-stream-operation
     │   metadata: {
@@ -755,7 +755,7 @@ span_tree:
     │           "finish_reason": "stop",
     │           "index": 0,
     │           "message": {
-    │             "content": "Understood.",
+    │             "content": "Agent stream",
     │             "role": "assistant"
     │           }
     │         }
@@ -765,7 +765,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:2>",
     │         "max_tokens": 16,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion.chunk",
     │         "provider": "mistral",
     │         "response_format": {
@@ -775,10 +775,10 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_tokens": 4,
-    │         "prompt_tokens": 21,
+    │         "completion_tokens": 3,
+    │         "prompt_tokens": 33,
     │         "time_to_first_token": 0,
-    │         "tokens": 25
+    │         "tokens": 36
     │       }
     ├── mistral-embeddings-operation
     │   metadata: {

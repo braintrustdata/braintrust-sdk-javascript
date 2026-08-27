@@ -221,7 +221,7 @@
                   "finish_reason": "stop",
                   "index": 0,
                   "message": {
-                    "content": "observability",
+                    "content": "Observability",
                     "role": "assistant"
                   }
                 }
@@ -230,7 +230,7 @@
                 "created": 0,
                 "id": "<span:1>",
                 "max_tokens": 24,
-                "model": "mistral-small-2506",
+                "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
                 "temperature": 0
@@ -238,9 +238,9 @@
               "metrics": {
                 "completion_tokens": 3,
                 "prompt_cached_tokens": 0,
-                "prompt_tokens": 21,
+                "prompt_tokens": 33,
                 "time_to_first_token": 0,
-                "tokens": 24
+                "tokens": 36
               }
             }
           ],
@@ -276,7 +276,7 @@
                 "created": 0,
                 "id": "<span:1>",
                 "max_tokens": 24,
-                "model": "mistral-small-2506",
+                "model": "mistral-small-latest",
                 "object": "chat.completion.chunk",
                 "provider": "mistral",
                 "stream": true,
@@ -285,9 +285,9 @@
               "metrics": {
                 "completion_tokens": 4,
                 "prompt_cached_tokens": 0,
-                "prompt_tokens": 10,
+                "prompt_tokens": 22,
                 "time_to_first_token": 0,
-                "tokens": 14
+                "tokens": 26
               }
             }
           ],
@@ -332,7 +332,7 @@
               },
               "metrics": {
                 "completion_tokens": 234,
-                "prompt_cached_tokens": 64,
+                "prompt_cached_tokens": 0,
                 "prompt_tokens": 83,
                 "time_to_first_token": 0,
                 "tokens": 317
@@ -428,7 +428,7 @@
                 "created": 0,
                 "id": "<span:1>",
                 "max_tokens": 48,
-                "model": "mistral-small-2506",
+                "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
                 "temperature": 0,
@@ -457,10 +457,10 @@
               },
               "metrics": {
                 "completion_tokens": 13,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 91,
+                "prompt_cached_tokens": 80,
+                "prompt_tokens": 103,
                 "time_to_first_token": 0,
-                "tokens": 104
+                "tokens": 116
               }
             },
             {
@@ -497,7 +497,7 @@
                 "created": 0,
                 "id": "<span:1>",
                 "max_tokens": 48,
-                "model": "mistral-small-2506",
+                "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
                 "temperature": 0,
@@ -531,10 +531,10 @@
               },
               "metrics": {
                 "completion_tokens": 22,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 125,
+                "prompt_cached_tokens": 112,
+                "prompt_tokens": 137,
                 "time_to_first_token": 0,
-                "tokens": 147
+                "tokens": 159
               }
             },
             {
@@ -583,7 +583,7 @@
                 "created": 0,
                 "id": "<span:1>",
                 "max_tokens": 96,
-                "model": "mistral-small-2506",
+                "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
                 "temperature": 0,
@@ -636,10 +636,10 @@
               },
               "metrics": {
                 "completion_tokens": 34,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 219,
+                "prompt_cached_tokens": 208,
+                "prompt_tokens": 231,
                 "time_to_first_token": 0,
-                "tokens": 253
+                "tokens": 265
               }
             }
           ],
@@ -702,7 +702,7 @@
                   "finish_reason": "length",
                   "index": 0,
                   "message": {
-                    "content": "{\n  name: 'project',\n  title: 'Projects',\n  type:",
+                    "content": "{\n  name: 'project',\n  title: 'Project',\n  type:",
                     "role": "assistant"
                   }
                 }
@@ -749,7 +749,7 @@
                   "finish_reason": "stop",
                   "index": 0,
                   "message": {
-                    "content": "Agent complete.",
+                    "content": "Agent complete",
                     "role": "assistant"
                   }
                 }
@@ -759,7 +759,7 @@
                 "created": 0,
                 "id": "<span:2>",
                 "max_tokens": 16,
-                "model": "mistral-small-2506",
+                "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
                 "response_format": {
@@ -768,11 +768,11 @@
                 "temperature": 0
               },
               "metrics": {
-                "completion_tokens": 4,
+                "completion_tokens": 3,
                 "prompt_cached_tokens": 0,
-                "prompt_tokens": 21,
+                "prompt_tokens": 33,
                 "time_to_first_token": 0,
-                "tokens": 25
+                "tokens": 36
               }
             }
           ],
@@ -819,7 +819,7 @@
                 "created": 0,
                 "id": "<span:2>",
                 "max_tokens": 32,
-                "model": "mistral-small-2506",
+                "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
                 "response_format": {
@@ -851,10 +851,10 @@
               },
               "metrics": {
                 "completion_tokens": 14,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 107,
+                "prompt_cached_tokens": 32,
+                "prompt_tokens": 119,
                 "time_to_first_token": 0,
-                "tokens": 121
+                "tokens": 133
               }
             }
           ],
@@ -881,7 +881,7 @@
                   "finish_reason": "stop",
                   "index": 0,
                   "message": {
-                    "content": "Understood.",
+                    "content": "Agent stream",
                     "role": "assistant"
                   }
                 }
@@ -891,7 +891,7 @@
                 "created": 0,
                 "id": "<span:2>",
                 "max_tokens": 16,
-                "model": "mistral-small-2506",
+                "model": "mistral-small-latest",
                 "object": "chat.completion.chunk",
                 "provider": "mistral",
                 "response_format": {
@@ -901,11 +901,11 @@
                 "temperature": 0
               },
               "metrics": {
-                "completion_tokens": 4,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 21,
+                "completion_tokens": 3,
+                "prompt_cached_tokens": 16,
+                "prompt_tokens": 33,
                 "time_to_first_token": 0,
-                "tokens": 25
+                "tokens": 36
               }
             }
           ],

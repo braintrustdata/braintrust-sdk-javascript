@@ -72,6 +72,7 @@ export function assertLangchainTraces(options: {
   );
   expect(invokeSpan).toBeDefined();
   expect(invokeSpan?.span.type).toBe("llm");
+  expect(invokeSpan?.metrics?.completion_reasoning_tokens).toBeGreaterThan(0);
 
   const chainChildren = findChildSpans(
     options.capturedEvents,

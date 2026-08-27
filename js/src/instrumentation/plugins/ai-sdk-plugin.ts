@@ -55,6 +55,7 @@ import type {
   AISDKCallParams,
   AISDKEmbedParams,
   AISDKEmbeddingResult,
+  AISDKGeneratedFile,
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentSettings,
   AISDKLanguageModel,
@@ -64,6 +65,7 @@ import type {
   AISDKOutputResponseFormat,
   AISDKRerankParams,
   AISDKRerankResult,
+  AISDKGenerateImageParams,
   AISDKResult,
   AISDKTool,
   AISDKTools,
@@ -193,7 +195,7 @@ export class AISDKPlugin extends BasePlugin {
     const denyOutputPaths =
       this.config.denyOutputPaths || DEFAULT_DENY_OUTPUT_PATHS;
 
-    this.unsubscribers.push(subscribeToAISDKV7TelemetryDispatcher());
+    this.unsubscribers.push(interceptAISDKV7TelemetryDispatcher());
     this.unsubscribers.push(subscribeToHarnessAgentCreateSession());
     this.unsubscribers.push(
       subscribeToHarnessContinuation(
@@ -223,6 +225,22 @@ export class AISDKPlugin extends BasePlugin {
         extractMetrics: (result, _startTime, endEvent) =>
           extractTopLevelAISDKMetrics(result, endEvent),
         aggregateChunks: aggregateAISDKChunks,
+      }),
+    );
+
+    // generateImage - async image generation function (v5 experimental, v6+ stable)
+    this.unsubscribers.push(
+      traceAsyncChannel(aiSDKChannels.generateImage, {
+        name: "generateImage",
+        type: SpanTypeAttribute.LLM,
+        extractInput: ([params], event) =>
+          prepareAISDKGenerateImageInput(params, event.self),
+        extractOutput: (result, endEvent) =>
+          processAISDKGenerateImageOutput(
+            result,
+            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+          ),
+        extractMetrics: (result) => extractTokenMetrics(result),
       }),
     );
 
@@ -839,31 +857,29 @@ function subscribeToHarnessContinuation(
   };
 }
 
-function subscribeToAISDKV7TelemetryDispatcher(): () => void {
-  const channel = aiSDKChannels.v7CreateTelemetryDispatcher.tracingChannel();
+function interceptAISDKV7TelemetryDispatcher(): () => void {
   const telemetry = braintrustAISDKTelemetry();
-  const handlers: IsoChannelHandlers<
-    ChannelMessage<typeof aiSDKChannels.v7CreateTelemetryDispatcher>
-  > = {
-    end: (event) => {
-      const telemetryOptions = event.arguments?.[0]?.telemetry;
-      if (telemetryOptions?.isEnabled === false) {
-        return;
+  return aiSDKChannels.v7CreateTelemetryDispatcher.intercept(
+    (target, thisArg, args) => {
+      const dispatcher = Reflect.apply(target, thisArg, args);
+      const telemetryOptions = args[0]?.telemetry;
+      if (telemetryOptions?.isEnabled !== false) {
+        try {
+          patchAISDKV7TelemetryDispatcher(
+            dispatcher,
+            telemetry,
+            telemetryOptions,
+          );
+        } catch (error) {
+          debugLogger.error(
+            "Error instrumenting AI SDK v7 telemetry dispatcher:",
+            error,
+          );
+        }
       }
-
-      patchAISDKV7TelemetryDispatcher(
-        event.result,
-        telemetry,
-        telemetryOptions,
-      );
+      return dispatcher;
     },
-  };
-
-  channel.subscribe(handlers);
-
-  return () => {
-    channel.unsubscribe(handlers);
-  };
+  );
 }
 
 function patchAISDKV7TelemetryDispatcher(
@@ -891,7 +907,6 @@ function patchAISDKV7TelemetryDispatcher(
   if (typeof telemetryOptions?.functionId === "string") {
     telemetryEventFields.functionId = telemetryOptions.functionId;
   }
-
   const eventWithOperationKey = (event: unknown): unknown => {
     if (!isObject(event)) {
       return event;
@@ -1335,17 +1350,10 @@ const convertImageToAttachment = (
     }
 
     if (explicitMimeType) {
-      if (image instanceof Uint8Array) {
+      const blob = convertDataToBlob(image, explicitMimeType);
+      if (blob) {
         return new Attachment({
-          data: new Blob([image], { type: explicitMimeType }),
-          filename: `image.${getExtensionFromMediaType(explicitMimeType)}`,
-          contentType: explicitMimeType,
-        });
-      }
-
-      if (typeof Buffer !== "undefined" && Buffer.isBuffer(image)) {
-        return new Attachment({
-          data: new Blob([image], { type: explicitMimeType }),
+          data: blob,
           filename: `image.${getExtensionFromMediaType(explicitMimeType)}`,
           contentType: explicitMimeType,
         });
@@ -1418,6 +1426,31 @@ export function processAISDKCallInput(
   params: AISDKCallParams,
 ): ProcessCallInputSyncResult {
   return processInputAttachmentsSync(params);
+}
+
+export function processAISDKGenerateImageInput(
+  params: AISDKGenerateImageParams,
+): ProcessCallInputSyncResult {
+  const prompt = params.prompt;
+  if (!isObject(prompt) || Array.isArray(prompt)) {
+    return processAISDKCallInput(params);
+  }
+
+  const processedPrompt = { ...prompt };
+  if (Array.isArray(prompt.images)) {
+    processedPrompt.images = prompt.images.map(
+      (image) => convertImageToAttachment(image, "image/png") ?? image,
+    );
+  }
+  if (prompt.mask !== undefined) {
+    processedPrompt.mask =
+      convertImageToAttachment(prompt.mask, "image/png") ?? prompt.mask;
+  }
+
+  return processAISDKCallInput({
+    ...params,
+    prompt: processedPrompt,
+  });
 }
 
 export function processAISDKWorkflowAgentCallInput(
@@ -1644,6 +1677,19 @@ function prepareAISDKEmbedInput(
   return {
     input: { ...params },
     metadata: extractMetadataFromEmbedParams(params, self),
+  };
+}
+
+function prepareAISDKGenerateImageInput(
+  params: AISDKGenerateImageParams,
+  self?: unknown,
+): {
+  input: unknown;
+  metadata: Record<string, unknown>;
+} {
+  return {
+    input: processAISDKGenerateImageInput(params).input,
+    metadata: extractMetadataFromCallParams(params as AISDKCallParams, self),
   };
 }
 
@@ -3595,6 +3641,82 @@ export function processAISDKOutput(
   }
 
   return normalizeAISDKLoggedOutput(sanitized);
+}
+
+export function processAISDKGenerateImageOutput(
+  output: AISDKResult,
+  denyOutputPaths: string[],
+): Record<string, unknown> | AISDKResult {
+  if (!output || typeof output !== "object") {
+    return output;
+  }
+
+  const summarized: Record<string, unknown> = {};
+  for (const field of [
+    "usage",
+    "warnings",
+    "providerMetadata",
+    "experimental_providerMetadata",
+    "responses",
+  ] as const) {
+    const value = safeSerializableFieldRead(output, field);
+    if (value !== undefined && isSerializableOutputValue(value)) {
+      summarized[field] = value;
+    }
+  }
+
+  const images = safeSerializableFieldRead(output, "images");
+  const image = safeSerializableFieldRead(output, "image");
+  const generatedFiles =
+    Array.isArray(images) && images.length > 0
+      ? images
+      : image !== undefined
+        ? [image]
+        : [];
+
+  const loggedOutput = normalizeAISDKLoggedOutput(
+    omit(summarized, denyOutputPaths),
+  ) as Record<string, unknown>;
+  if (generatedFiles.length > 0) {
+    loggedOutput.images = generatedFiles.map((file, index) =>
+      convertAISDKGeneratedFileToAttachment(file, index),
+    );
+  }
+
+  return loggedOutput;
+}
+
+function convertAISDKGeneratedFileToAttachment(
+  file: unknown,
+  index: number,
+): unknown {
+  if (!file || typeof file !== "object") {
+    return file;
+  }
+
+  const generatedFile = file as AISDKGeneratedFile & Record<string, unknown>;
+  const generatedMediaType = safeSerializableFieldRead(
+    generatedFile,
+    "mediaType",
+  );
+  const mediaType =
+    typeof generatedMediaType === "string"
+      ? generatedMediaType
+      : "application/octet-stream";
+  const data =
+    safeSerializableFieldRead(generatedFile, "base64") ??
+    safeSerializableFieldRead(generatedFile, "uint8Array");
+  const blob = convertDataToBlob(data, mediaType);
+
+  if (blob) {
+    return new Attachment({
+      data: blob,
+      filename: `generated_image_${index}.${getExtensionFromMediaType(mediaType)}`,
+      contentType: mediaType,
+    });
+  }
+
+  return file;
 }
 
 export function processAISDKEmbeddingOutput(

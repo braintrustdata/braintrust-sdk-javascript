@@ -195,6 +195,10 @@ export interface AnthropicUsage {
   cache_read_input_tokens?: number;
   cache_creation_input_tokens?: number;
   cache_creation?: AnthropicCacheCreationUsage | null;
+  output_tokens_details?: {
+    thinking_tokens?: number;
+    [key: string]: unknown;
+  } | null;
   server_tool_use?: AnthropicServerToolUseUsage;
   [key: string]: unknown;
 }

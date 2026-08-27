@@ -42,6 +42,14 @@ const MOCK_CHAT_STREAM_SSE = [
   "data: [DONE]",
   "",
 ].join("\n");
+const MOCK_CHAT_MULTIPLE_CHOICES_STREAM_SSE = [
+  'data: {"id":"chatcmpl-multiple-choices-fixture","object":"chat.completion.chunk","created":1740000000,"model":"gpt-4o-mini","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"choice_0_call_0","type":"function","function":{"name":"get_weather","arguments":"{\\"location\\":\\"Bos"}},{"index":1,"id":"choice_0_call_1","type":"function","function":{"name":"get_weather","arguments":"{\\"location\\":\\"Par"}}]},"logprobs":null,"finish_reason":null},{"index":1,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"choice_1_call_0","type":"function","function":{"name":"get_weather","arguments":"{\\"location\\":\\"Tok"}},{"index":1,"id":"choice_1_call_1","type":"function","function":{"name":"get_weather","arguments":"{\\"location\\":\\"Ro"}}]},"logprobs":null,"finish_reason":null}]}',
+  "",
+  'data: {"id":"chatcmpl-multiple-choices-fixture","object":"chat.completion.chunk","created":1740000000,"model":"gpt-4o-mini","choices":[{"index":1,"delta":{"tool_calls":[{"index":1,"function":{"arguments":"me\\"}"}},{"index":0,"function":{"arguments":"yo\\"}"}}]},"logprobs":null,"finish_reason":"tool_calls"},{"index":0,"delta":{"tool_calls":[{"index":1,"function":{"arguments":"is\\"}"}},{"index":0,"function":{"arguments":"ton\\"}"}}]},"logprobs":null,"finish_reason":"tool_calls"}]}',
+  "",
+  "data: [DONE]",
+  "",
+].join("\n");
 
 const CHAT_PARSE_SCHEMA = {
   type: "object",
@@ -86,12 +94,12 @@ function parseMajorVersion(version) {
   return Number.isNaN(major) ? null : major;
 }
 
-function createMockStreamingClient(options) {
+function createMockStreamingClient(options, responseBody) {
   const baseClient = new options.OpenAI({
     apiKey: process.env.OPENAI_API_KEY ?? "test-openai-key",
     baseURL: "https://example.test/v1",
     fetch: async () =>
-      new Response(MOCK_CHAT_STREAM_SSE, {
+      new Response(responseBody, {
         headers: {
           "content-type": "text/event-stream",
         },
@@ -112,7 +120,14 @@ export async function runOpenAIInstrumentationScenario(options) {
   const client = options.decorateClient
     ? options.decorateClient(baseClient)
     : baseClient;
-  const streamFixtureClient = createMockStreamingClient(options);
+  const streamFixtureClient = createMockStreamingClient(
+    options,
+    MOCK_CHAT_STREAM_SSE,
+  );
+  const multipleChoicesStreamFixtureClient = createMockStreamingClient(
+    options,
+    MOCK_CHAT_MULTIPLE_CHOICES_STREAM_SSE,
+  );
   const openAIMajorVersion = parseMajorVersion(options.openaiSdkVersion);
   const shouldCheckPrivateFieldMethods =
     typeof options.decorateClient === "function" &&
@@ -377,6 +392,31 @@ export async function runOpenAIInstrumentationScenario(options) {
             max_tokens: 12,
             temperature: 0,
           });
+          await collectAsync(chatStream);
+        },
+      );
+
+      await runOperation(
+        "openai-stream-multiple-choices-operation",
+        "stream-multiple-choices",
+        async () => {
+          const chatStream =
+            await multipleChoicesStreamFixtureClient.chat.completions.create({
+              model: OPENAI_MODEL,
+              messages: [
+                {
+                  role: "user",
+                  content:
+                    "Return two streamed choices with two weather tool calls each.",
+                },
+              ],
+              stream: true,
+              n: 2,
+              parallel_tool_calls: true,
+              max_tokens: 12,
+              temperature: 0,
+              tools: CHAT_TOOLS,
+            });
           await collectAsync(chatStream);
         },
       );

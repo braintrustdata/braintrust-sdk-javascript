@@ -11,7 +11,7 @@ export const claudeAgentSDKChannels = defineChannels(
     query: channel<
       [ClaudeAgentSDKQueryParams],
       AsyncIterable<ClaudeAgentSDKMessage>,
-      Record<string, never>,
+      Record<never, never>,
       ClaudeAgentSDKMessage
     >({
       channelName: "query",

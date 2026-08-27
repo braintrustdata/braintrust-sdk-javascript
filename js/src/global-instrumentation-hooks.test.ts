@@ -446,7 +446,6 @@ describe("global instrumentation hooks", () => {
 
     const storeError = new Error("store failed");
     const brokenStore = {
-      enterWith() {},
       getStore() {
         return undefined;
       },
@@ -475,7 +474,6 @@ describe("global instrumentation hooks", () => {
 
     let callback: (() => unknown) | undefined;
     channel.start.bindStore({
-      enterWith() {},
       getStore() {
         return undefined;
       },

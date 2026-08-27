@@ -41,6 +41,7 @@ runAutoAISDKInstrumentationOrExit({
   supportsDenyOutputOverrideScenario: false,
   supportsEmbedMany: true,
   supportsGenerateObject: true,
+  supportsGenerateImage: false,
   supportsOpenAICacheScenario: false,
   supportsOutputObjectScenario: true,
   supportsProviderCacheAssertions: true,

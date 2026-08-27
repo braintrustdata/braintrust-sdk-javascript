@@ -89,7 +89,9 @@
           "project_log",
           "org_project",
           "org_audit_logs",
-          "project_group"
+          "project_group",
+          "ai_secret",
+          "org_ai_secret"
         ],
         "description": "The object type that the ACL applies to"
       },
@@ -4164,7 +4166,7 @@
         ],
         "description": "Each permission permits a certain type of operation on an object in the system\n\nPermissions can be assigned to to objects on an individual basis, or grouped into roles"
       },
-      "PreprocessorSavedFunctionId": {
+      "PreprocessorId": {
         "anyOf": [
           {
             "type": "object",
@@ -4205,10 +4207,26 @@
             "title": "preprocessor_global"
           },
           {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["inline"]
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The complete JavaScript preprocessor implementation, including its handler."
+              }
+            },
+            "required": ["type", "code"],
+            "title": "preprocessor_inline"
+          },
+          {
             "type": "null"
           }
         ],
-        "description": "For prompt-backed functions: the preprocessor function to use for trace template variables. Set to null to disable preprocessing. If omitted, the traced project's default preprocessor will be used, falling back to the global 'thread' preprocessor."
+        "description": "For prompt-backed functions: the saved, global, or inline preprocessor to use for trace template variables. Set to null to disable preprocessing. If omitted, the traced project's default preprocessor will be used, falling back to the global 'thread' preprocessor."
       },
       "Project": {
         "type": "object",
@@ -5449,7 +5467,7 @@
             "$ref": "#/components/schemas/PromptParserNullish"
           },
           "preprocessor": {
-            "$ref": "#/components/schemas/PreprocessorSavedFunctionId"
+            "$ref": "#/components/schemas/PreprocessorId"
           },
           "tool_functions": {
             "type": ["array", "null"],
@@ -5546,7 +5564,7 @@
             "$ref": "#/components/schemas/PromptParserNullish"
           },
           "preprocessor": {
-            "$ref": "#/components/schemas/PreprocessorSavedFunctionId"
+            "$ref": "#/components/schemas/PreprocessorId"
           },
           "tool_functions": {
             "type": ["array", "null"],
@@ -6991,6 +7009,10 @@
           "description": {
             "type": ["string", "null"],
             "description": "Textual description of the view"
+          },
+          "starred": {
+            "type": "boolean",
+            "description": "Whether the view is starred in its project"
           },
           "created": {
             "type": ["string", "null"],

@@ -77,6 +77,63 @@ function validateStreamFixtureOutput(span: CapturedLogEvent | undefined): void {
   expect(message?.refusal).toBe("NOPE");
 }
 
+function validateMultipleChoicesStreamOutput(
+  span: CapturedLogEvent | undefined,
+): void {
+  expect(span?.output).toEqual([
+    expect.objectContaining({
+      index: 0,
+      finish_reason: "tool_calls",
+      message: expect.objectContaining({
+        role: "assistant",
+        tool_calls: [
+          {
+            id: "choice_0_call_0",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Boston"}',
+            },
+          },
+          {
+            id: "choice_0_call_1",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Paris"}',
+            },
+          },
+        ],
+      }),
+    }),
+    expect.objectContaining({
+      index: 1,
+      finish_reason: "tool_calls",
+      message: expect.objectContaining({
+        role: "assistant",
+        tool_calls: [
+          {
+            id: "choice_1_call_0",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Tokyo"}',
+            },
+          },
+          {
+            id: "choice_1_call_1",
+            type: "function",
+            function: {
+              name: "get_weather",
+              arguments: '{"location":"Rome"}',
+            },
+          },
+        ],
+      }),
+    }),
+  ]);
+}
+
 function validateAttachmentInput(
   span: CapturedLogEvent | undefined,
   contentType: string,
@@ -188,6 +245,15 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     testName:
       "captures trace for streamed chat completion with logprobs and refusal",
     validate: validateStreamFixtureOutput,
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-stream-multiple-choices-operation",
+    operation: "stream-multiple-choices",
+    testName: "captures all streamed chat completion choices by index",
+    validate: validateMultipleChoicesStreamOutput,
   },
   {
     childNames: ["Chat Completion"],
@@ -351,16 +417,6 @@ function pickMetadata(
 
 function isRecord(value: Json | undefined): value is Record<string, Json> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function summarizeMetricPresence(metrics: Json): Json {
-  if (!isRecord(metrics)) {
-    return null;
-  }
-
-  return {
-    has_time_to_first_token: typeof metrics.time_to_first_token === "number",
-  } satisfies Json;
 }
 
 function jsonKeysFromText(value: unknown): string[] {
@@ -544,6 +600,7 @@ function summarizeOpenAIPayload(
   summaryName: string | undefined,
 ): Json {
   const name = summaryName ?? event.span.name ?? "";
+  const fields = spanTreeFields(event);
 
   return {
     input: summarizeInput(event.input as Json),
@@ -551,7 +608,7 @@ function summarizeOpenAIPayload(
       event.row.metadata as Record<string, unknown> | undefined,
       ["model", "openaiSdkVersion", "operation", "provider", "scenario"],
     ),
-    metrics: summarizeMetricPresence(event.metrics as Json),
+    metrics: fields.metrics as Json,
     name: name || null,
     output: summarizeOutput(name, event.output as Json),
     type: event.span.type ?? null,

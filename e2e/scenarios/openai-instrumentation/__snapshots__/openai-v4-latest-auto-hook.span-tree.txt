@@ -8,9 +8,6 @@ span_tree:
       "openaiSdkVersion": "<openai-sdk-version>",
       "scenario": "openai-instrumentation"
     }
-    metrics: {
-      "has_time_to_first_token": false
-    }
     ├── openai-chat-operation
     │   input: {
     │     "kind": "undefined"
@@ -18,9 +15,6 @@ span_tree:
     │   output: null
     │   metadata: {
     │     "operation": "chat"
-    │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
     │   }
     │   └── Chat Completion [llm]
     │       input: [
@@ -40,7 +34,16 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_accepted_prediction_tokens": 0,
+    │         "completion_audio_tokens": 0,
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_rejected_prediction_tokens": 0,
+    │         "completion_tokens": 2,
+    │         "prompt_audio_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 12,
+    │         "time_to_first_token": 0,
+    │         "tokens": 14
     │       }
     ├── openai-chat-with-response-operation
     │   input: {
@@ -50,9 +53,6 @@ span_tree:
     │   metadata: {
     │     "operation": "chat-with-response"
     │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
-    │   }
     │   └── Chat Completion [llm]
     │       input: [
     │         {
@@ -71,7 +71,16 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_accepted_prediction_tokens": 0,
+    │         "completion_audio_tokens": 0,
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_rejected_prediction_tokens": 0,
+    │         "completion_tokens": 2,
+    │         "prompt_audio_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 12,
+    │         "time_to_first_token": 0,
+    │         "tokens": 14
     │       }
     ├── openai-chat-tool-operation
     │   input: {
@@ -81,9 +90,6 @@ span_tree:
     │   metadata: {
     │     "operation": "chat-tool"
     │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
-    │   }
     │   └── Chat Completion [llm]
     │       input: [
     │         {
@@ -102,7 +108,16 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_accepted_prediction_tokens": 0,
+    │         "completion_audio_tokens": 0,
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_rejected_prediction_tokens": 0,
+    │         "completion_tokens": 7,
+    │         "prompt_audio_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 77,
+    │         "time_to_first_token": 0,
+    │         "tokens": 84
     │       }
     ├── openai-stream-operation
     │   input: {
@@ -112,9 +127,6 @@ span_tree:
     │   metadata: {
     │     "operation": "stream"
     │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
-    │   }
     │   └── Chat Completion [llm]
     │       input: [
     │         {
@@ -133,7 +145,16 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_accepted_prediction_tokens": 0,
+    │         "completion_audio_tokens": 0,
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_rejected_prediction_tokens": 0,
+    │         "completion_tokens": 1,
+    │         "prompt_audio_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 12,
+    │         "time_to_first_token": 0,
+    │         "tokens": 13
     │       }
     ├── openai-stream-with-response-operation
     │   input: {
@@ -143,9 +164,6 @@ span_tree:
     │   metadata: {
     │     "operation": "stream-with-response"
     │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
-    │   }
     │   └── Chat Completion [llm]
     │       input: [
     │         {
@@ -164,7 +182,16 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_accepted_prediction_tokens": 0,
+    │         "completion_audio_tokens": 0,
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_rejected_prediction_tokens": 0,
+    │         "completion_tokens": 6,
+    │         "prompt_audio_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 17,
+    │         "time_to_first_token": 0,
+    │         "tokens": 23
     │       }
     ├── openai-stream-tool-operation
     │   input: {
@@ -174,9 +201,6 @@ span_tree:
     │   metadata: {
     │     "operation": "stream-tool"
     │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
-    │   }
     │   └── Chat Completion [llm]
     │       input: [
     │         {
@@ -195,7 +219,16 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_accepted_prediction_tokens": 0,
+    │         "completion_audio_tokens": 0,
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_rejected_prediction_tokens": 0,
+    │         "completion_tokens": 7,
+    │         "prompt_audio_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 77,
+    │         "time_to_first_token": 0,
+    │         "tokens": 84
     │       }
     ├── openai-stream-fixture-operation
     │   input: {
@@ -205,9 +238,6 @@ span_tree:
     │   metadata: {
     │     "operation": "stream-fixture"
     │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
-    │   }
     │   └── Chat Completion [llm]
     │       input: [
     │         {
@@ -226,7 +256,39 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "time_to_first_token": 0
+    │       }
+    ├── openai-stream-multiple-choices-operation
+    │   input: {
+    │     "kind": "undefined"
+    │   }
+    │   output: null
+    │   metadata: {
+    │     "operation": "stream-multiple-choices"
+    │   }
+    │   └── Chat Completion [llm]
+    │       input: [
+    │         {
+    │           "content_kind": "string",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "json_keys": [],
+    │           "role": "assistant"
+    │         },
+    │         {
+    │           "json_keys": [],
+    │           "role": "assistant"
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai"
+    │       }
+    │       metrics: {
+    │         "time_to_first_token": 0
     │       }
     ├── openai-parse-operation
     │   input: {
@@ -235,9 +297,6 @@ span_tree:
     │   output: null
     │   metadata: {
     │     "operation": "parse"
-    │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
     │   }
     │   └── Chat Completion [llm]
     │       input: [
@@ -259,7 +318,16 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_accepted_prediction_tokens": 0,
+    │         "completion_audio_tokens": 0,
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_rejected_prediction_tokens": 0,
+    │         "completion_tokens": 5,
+    │         "prompt_audio_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 45,
+    │         "time_to_first_token": 0,
+    │         "tokens": 50
     │       }
     ├── openai-sync-stream-operation
     │   input: {
@@ -268,9 +336,6 @@ span_tree:
     │   output: null
     │   metadata: {
     │     "operation": "sync-stream"
-    │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
     │   }
     │   └── Chat Completion [llm]
     │       input: [
@@ -290,7 +355,16 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_accepted_prediction_tokens": 0,
+    │         "completion_audio_tokens": 0,
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_rejected_prediction_tokens": 0,
+    │         "completion_tokens": 2,
+    │         "prompt_audio_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 14,
+    │         "time_to_first_token": 0,
+    │         "tokens": 16
     │       }
     ├── openai-embeddings-operation
     │   input: {
@@ -299,9 +373,6 @@ span_tree:
     │   output: null
     │   metadata: {
     │     "operation": "embeddings"
-    │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
     │   }
     │   └── Embedding [llm]
     │       input: {
@@ -315,7 +386,8 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": false
+    │         "prompt_tokens": 1,
+    │         "tokens": 1
     │       }
     ├── openai-moderations-operation
     │   input: {
@@ -324,9 +396,6 @@ span_tree:
     │   output: null
     │   metadata: {
     │     "operation": "moderations"
-    │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
     │   }
     │   └── Moderation [llm]
     │       input: {
@@ -340,9 +409,6 @@ span_tree:
     │         "model": "omni-moderation-2024-09-26",
     │         "provider": "openai"
     │       }
-    │       metrics: {
-    │         "has_time_to_first_token": false
-    │       }
     ├── openai-responses-operation
     │   input: {
     │     "kind": "undefined"
@@ -350,9 +416,6 @@ span_tree:
     │   output: null
     │   metadata: {
     │     "operation": "responses"
-    │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
     │   }
     │   └── openai.responses.create [llm]
     │       input: {
@@ -374,7 +437,13 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_tokens": 3,
+    │         "prompt_cache_write_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 13,
+    │         "time_to_first_token": 0,
+    │         "tokens": 16
     │       }
     ├── openai-responses-with-response-operation
     │   input: {
@@ -384,9 +453,6 @@ span_tree:
     │   metadata: {
     │     "operation": "responses-with-response"
     │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
-    │   }
     │   └── openai.responses.create [llm]
     │       input: {
     │         "kind": "text"
@@ -407,7 +473,13 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_tokens": 2,
+    │         "prompt_cache_write_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 21,
+    │         "time_to_first_token": 0,
+    │         "tokens": 23
     │       }
     ├── openai-responses-create-stream-operation
     │   input: {
@@ -417,9 +489,6 @@ span_tree:
     │   metadata: {
     │     "operation": "responses-create-stream"
     │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
-    │   }
     │   └── openai.responses.create [llm]
     │       input: {
     │         "kind": "text"
@@ -440,7 +509,13 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_tokens": 5,
+    │         "prompt_cache_write_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 13,
+    │         "time_to_first_token": 0,
+    │         "tokens": 18
     │       }
     ├── openai-responses-stream-operation
     │   input: {
@@ -450,9 +525,6 @@ span_tree:
     │   metadata: {
     │     "operation": "responses-stream"
     │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
-    │   }
     │   └── openai.responses.create [llm]
     │       input: {
     │         "kind": "text"
@@ -473,7 +545,13 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_tokens": 2,
+    │         "prompt_cache_write_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 21,
+    │         "time_to_first_token": 0,
+    │         "tokens": 23
     │       }
     ├── openai-responses-stream-partial-operation
     │   input: {
@@ -483,9 +561,6 @@ span_tree:
     │   metadata: {
     │     "operation": "responses-stream-partial"
     │   }
-    │   metrics: {
-    │     "has_time_to_first_token": false
-    │   }
     │   └── openai.responses.create [llm]
     │       input: {
     │         "kind": "text"
@@ -506,7 +581,13 @@ span_tree:
     │         "provider": "openai"
     │       }
     │       metrics: {
-    │         "has_time_to_first_token": true
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_tokens": 3,
+    │         "prompt_cache_write_tokens": 0,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 13,
+    │         "time_to_first_token": 0,
+    │         "tokens": 16
     │       }
     └── openai-responses-parse-operation
         input: {
@@ -515,9 +596,6 @@ span_tree:
         output: null
         metadata: {
           "operation": "responses-parse"
-        }
-        metrics: {
-          "has_time_to_first_token": false
         }
         └── openai.responses.parse [llm]
             input: {
@@ -542,5 +620,11 @@ span_tree:
               "provider": "openai"
             }
             metrics: {
-              "has_time_to_first_token": true
+              "completion_reasoning_tokens": 0,
+              "completion_tokens": 22,
+              "prompt_cache_write_tokens": 0,
+              "prompt_cached_tokens": 0,
+              "prompt_tokens": 46,
+              "time_to_first_token": 0,
+              "tokens": 68
             }

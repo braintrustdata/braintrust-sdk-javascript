@@ -19,9 +19,10 @@ import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import {
   ADJUSTABLE_REASONING_MODEL,
   FIM_MODEL,
+  AGENT_RESPONSE_MODEL,
   CHAT_MODEL,
+  CHAT_RESPONSE_MODEL,
   CLASSIFIER_MODEL,
-  AGENT_MODEL,
   EMBEDDING_MODEL,
   NATIVE_REASONING_MODEL,
   ROOT_NAME,
@@ -639,7 +640,7 @@ export function defineMistralInstrumentationAssertions(options: {
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(span?.span.type).toBe("llm");
       expect(span?.row.metadata).toMatchObject({
-        model: CHAT_MODEL,
+        model: CHAT_RESPONSE_MODEL,
         provider: "mistral",
       });
       expect(span?.output).toBeDefined();
@@ -657,7 +658,7 @@ export function defineMistralInstrumentationAssertions(options: {
       expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
       expect(span?.span.type).toBe("llm");
       expect(span?.row.metadata).toMatchObject({
-        model: CHAT_MODEL,
+        model: CHAT_RESPONSE_MODEL,
         provider: "mistral",
       });
       expect(span?.metrics?.time_to_first_token).toEqual(expect.any(Number));
@@ -849,7 +850,7 @@ export function defineMistralInstrumentationAssertions(options: {
       for (const span of selectedSpans) {
         expect(span.span.type).toBe("llm");
         expect(span.row.metadata).toMatchObject({
-          model: CHAT_MODEL,
+          model: CHAT_RESPONSE_MODEL,
           provider: "mistral",
         });
       }
@@ -924,7 +925,7 @@ export function defineMistralInstrumentationAssertions(options: {
         agent_id: expect.any(String),
       });
       if (typeof metadata?.model === "string") {
-        expect(metadata.model).toBe(AGENT_MODEL);
+        expect(metadata.model).toBe(AGENT_RESPONSE_MODEL);
       }
       expect(input).toEqual(expect.any(Array));
       expect(input?.[0]?.role).toBe("user");
@@ -999,7 +1000,7 @@ export function defineMistralInstrumentationAssertions(options: {
         agent_id: expect.any(String),
       });
       if (typeof metadata?.model === "string") {
-        expect(metadata.model).toBe(AGENT_MODEL);
+        expect(metadata.model).toBe(AGENT_RESPONSE_MODEL);
       }
       expect(input).toEqual(expect.any(Array));
       expect(input?.[0]?.role).toBe("user");
