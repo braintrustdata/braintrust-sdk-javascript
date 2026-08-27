@@ -2,9 +2,7 @@
 
 ## 1.0.0
 
-### Major Changes
-
-- Promote these packages to version 1. There are no breaking changes in this release. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2384)
+This release promotes `@braintrust/browser` to semver major version 1.0.0. There are no breaking changes in this release.
 
 ### Patch Changes
 

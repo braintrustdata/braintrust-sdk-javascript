@@ -2,10 +2,19 @@
 
 ## 0.2.5
 
-### Patch Changes
-
-- ref: Deprecate `@braintrust/openai-agents`, `@braintrust/langchain-js`, and `@braintrust/vercel-ai-sdk` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2383)
+- `@braintrust/langchain-js` is now deprecated. This release marks the last release for this package. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2383)
 - Updated dependencies: braintrust@3.29.0
+
+### Migration
+
+To migrate, install `braintrust` and import `BraintrustLangChainCallbackHandler`
+from `braintrust` instead. See the
+[LangChain integration guide](https://www.braintrust.dev/docs/integrations/sdk-integrations/langchain)
+for setup examples. For application-wide instrumentation, use the Braintrust
+runtime hook described in the
+[auto-instrumentation guide](https://www.braintrust.dev/docs/instrument/trace-llm-calls#auto-instrumentation).
+`setGlobalHandler` has no direct replacement; use automatic instrumentation or
+pass the callback handler explicitly.
 
 ## 0.2.4
 
