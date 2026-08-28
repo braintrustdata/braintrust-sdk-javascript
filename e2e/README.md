@@ -188,7 +188,7 @@ After any successful record run, stale cassette variants are cleaned only inside
 
 These scenarios have cassette wiring in place and will use cassettes once they're recorded:
 
-`anthropic-bedrock-instrumentation`, `anthropic-instrumentation`, `openai-instrumentation`, `openai-codex-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `cursor-sdk-instrumentation`, `github-copilot-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `ollama-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`, `wrap-langchain-js-traces`.
+`anthropic-bedrock-instrumentation`, `anthropic-instrumentation`, `openai-instrumentation`, `openai-codex-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `cursor-sdk-instrumentation`, `github-copilot-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `ollama-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`.
 
 ### Cassette format
 
