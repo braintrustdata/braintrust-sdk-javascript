@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import { vi, expect, test, describe, beforeEach, afterEach } from "vitest";
+import {
+  vi,
+  expect,
+  expectTypeOf,
+  test,
+  describe,
+  beforeEach,
+  afterEach,
+} from "vitest";
 import {
   _exportsForTestingOnly,
   init,
@@ -11,6 +19,7 @@ import {
   loadPrompt,
   loadParameters,
   wrapTraced,
+  traced,
   currentSpan,
   withParent,
   startSpan,
@@ -19,6 +28,8 @@ import {
   deepCopyEvent,
   ReadonlyExperiment,
   renderMessageImpl,
+  flush,
+  type InitLoggerOptions,
 } from "./logger";
 
 import { configureNode } from "./node/config";
@@ -30,6 +41,12 @@ import { SpanComponentsV4 } from "../util/span_identifier_v4";
 import { SpanCache } from "./span-cache";
 
 configureNode();
+
+type InitLoggerHasAsyncFlush = "asyncFlush" extends keyof InitLoggerOptions
+  ? true
+  : false;
+
+expectTypeOf<InitLoggerHasAsyncFlush>().toEqualTypeOf<false>();
 
 test("renderMessage with file content parts", () => {
   const message = {
@@ -424,6 +441,57 @@ test("verify MemoryBackgroundLogger intercepts logs", async () => {
   expect(await memoryLogger.drain()).length(0);
 
   _exportsForTestingOnly.clearTestBackgroundLogger(); // can go back to normal
+});
+
+test("logger and tracing APIs preserve return shapes without implicit flushing", async () => {
+  await _exportsForTestingOnly.simulateLoginForTests();
+  const backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+  const flushSpy = vi.spyOn(backgroundLogger, "flush");
+
+  try {
+    const logger = initLogger({
+      projectName: "test",
+      projectId: "test-project-id",
+    });
+
+    const id = logger.log({ input: "input" });
+    expectTypeOf(id).toEqualTypeOf<string>();
+
+    const loggerSyncResult = logger.traced(() => 42 as const);
+    expectTypeOf(loggerSyncResult).toEqualTypeOf<42>();
+    expect(loggerSyncResult).toBe(42);
+
+    const loggerAsyncResult = logger.traced(async () => 43);
+    expectTypeOf(loggerAsyncResult).toEqualTypeOf<Promise<number>>();
+    await expect(loggerAsyncResult).resolves.toBe(43);
+
+    const tracedSyncResult = traced(() => "sync" as const);
+    expectTypeOf(tracedSyncResult).toEqualTypeOf<"sync">();
+    expect(tracedSyncResult).toBe("sync");
+
+    const syncFunction = (value: number) => value + 1;
+    const wrappedSyncFunction = wrapTraced(syncFunction);
+    expectTypeOf(wrappedSyncFunction).toEqualTypeOf<typeof syncFunction>();
+    expect(wrappedSyncFunction(1)).toBe(2);
+
+    const asyncFunction = async (value: number) => value + 1;
+    const wrappedAsyncFunction = wrapTraced(asyncFunction);
+    expectTypeOf(wrappedAsyncFunction).toEqualTypeOf<typeof asyncFunction>();
+    await expect(wrappedAsyncFunction(2)).resolves.toBe(3);
+
+    expect(flushSpy).not.toHaveBeenCalled();
+
+    await logger.flush();
+    const span = logger.startSpan({ name: "explicit-flush" });
+    span.end();
+    await span.flush();
+    await flush();
+
+    expect(flushSpy).toHaveBeenCalledTimes(3);
+  } finally {
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  }
 });
 
 test("init validation", () => {

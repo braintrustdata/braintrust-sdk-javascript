@@ -585,7 +585,7 @@ class EveBridge {
     turn: TurnState,
     event: { input?: unknown; output?: unknown },
   ): void {
-    currentLogger<true>()?.updateSpan({
+    currentLogger()?.updateSpan({
       id: turn.rowId,
       root_span_id: turn.rootSpanId,
       span_id: turn.spanId,
@@ -637,7 +637,7 @@ class EveBridge {
     if (Object.keys(totals).length === 0) {
       return;
     }
-    currentLogger<true>()?.updateSpan({
+    currentLogger()?.updateSpan({
       id: turn.rowId,
       metrics: totals,
       root_span_id: turn.rootSpanId,

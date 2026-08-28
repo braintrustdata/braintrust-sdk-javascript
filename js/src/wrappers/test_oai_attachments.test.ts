@@ -11,7 +11,6 @@ describe("OpenAI attachment processing", () => {
     initLogger({
       projectName: PROJECT_NAME,
       apiKey: "test-key",
-      asyncFlush: false,
     });
   });
 

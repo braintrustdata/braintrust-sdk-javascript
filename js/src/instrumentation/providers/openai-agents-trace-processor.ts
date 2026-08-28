@@ -44,7 +44,7 @@ type TraceMetadata = {
 };
 
 export interface OpenAIAgentsTraceProcessorOptions {
-  logger?: Logger<any>;
+  logger?: Logger;
   maxTraces?: number;
 }
 
@@ -180,7 +180,7 @@ function parseUsageMetrics(usage: unknown): Record<string, number> {
 export class OpenAIAgentsTraceProcessor {
   private static readonly DEFAULT_MAX_TRACES = 10000;
 
-  private logger?: Logger<any>;
+  private logger?: Logger;
   private maxTraces: number;
   private traceSpans = new Map<
     string,

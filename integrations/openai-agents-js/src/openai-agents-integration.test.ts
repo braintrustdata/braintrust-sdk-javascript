@@ -55,7 +55,7 @@ describe(
   TEST_SUITE_OPTIONS,
   () => {
     let backgroundLogger: TestBackgroundLogger;
-    let _logger: Logger<false>;
+    let _logger: Logger;
     let Agent: any;
     let run: any;
     let tool: any;

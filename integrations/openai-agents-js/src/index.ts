@@ -118,7 +118,7 @@ function getTimeElapsed(end?: string, start?: string): number | undefined {
 export class OpenAIAgentsTraceProcessor {
   private static readonly DEFAULT_MAX_TRACES = 10000;
 
-  private logger?: Logger<any>;
+  private logger?: Logger;
   private maxTraces: number;
   private traceSpans = new Map<
     string,

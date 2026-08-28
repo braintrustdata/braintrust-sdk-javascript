@@ -27,10 +27,10 @@ export type LangChainCallbackManagerConfigureArgs = [
   options?: unknown,
 ];
 
-export type LangChainCallbackHandlerOptions<IsAsyncFlush extends boolean> = {
+export type LangChainCallbackHandlerOptions = {
   debug: boolean;
   excludeMetadataProps: RegExp;
-  logger?: Logger<IsAsyncFlush> | Span;
+  logger?: Logger | Span;
   parent?: Span | (() => Span);
 };
 
