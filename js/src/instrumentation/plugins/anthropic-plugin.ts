@@ -21,10 +21,8 @@ import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
 import { registerAnthropicSessionStreamCollector } from "../../wrappers/anthropic-session-collector";
 import { anthropicChannels } from "./anthropic-channels";
 import {
-  interceptAnthropicBatchTraceBind,
-  interceptAnthropicBatchTraceComplete,
-  interceptAnthropicBatchTraceFail,
-  interceptAnthropicBatchTraceStart,
+  interceptAnthropicBatchesCompleteTrace,
+  interceptAnthropicBatchesCreateTraced,
 } from "./anthropic-batch-instrumentation";
 import {
   coalesceInput,
@@ -119,17 +117,11 @@ const ANTHROPIC_TOOL_RUNNER_TOOL_WRAPPED = Symbol.for(
 export class AnthropicPlugin extends BasePlugin {
   protected onEnable(): void {
     this.unsubscribers.push(
-      anthropicChannels.batchesBindTrace.intercept(
-        interceptAnthropicBatchTraceBind,
-      ),
-      anthropicChannels.batchesStartTrace.intercept(
-        interceptAnthropicBatchTraceStart,
+      anthropicChannels.batchesCreateTraced.intercept(
+        interceptAnthropicBatchesCreateTraced,
       ),
       anthropicChannels.batchesCompleteTrace.intercept(
-        interceptAnthropicBatchTraceComplete,
-      ),
-      anthropicChannels.batchesFailTrace.intercept(
-        interceptAnthropicBatchTraceFail,
+        interceptAnthropicBatchesCompleteTrace,
       ),
     );
     this.subscribeToAnthropicChannels();

@@ -1,11 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import {
-  bindAnthropicBatchTrace,
+  anthropicBatchesCreateTraced,
   collectAnthropicSession,
   completeAnthropicBatchTrace,
-  failAnthropicBatchTrace,
-  startAnthropicBatchTrace,
   startSpan,
   wrapAnthropic,
 } from "braintrust";
@@ -109,55 +107,38 @@ async function runAnthropicInstrumentationScenario(
 
       if (supportsBatches) {
         await runOperation("anthropic-batch-operation", "batch", async () => {
-          const started = await startAnthropicBatchTrace({
-            params: {
-              requests: [
-                {
-                  custom_id: "batch-success-one",
-                  params: {
-                    max_tokens: 24,
-                    messages: [{ role: "user", content: "Reply with ONE." }],
-                    model: ANTHROPIC_MODEL,
-                    system: "Reply with only the requested word.",
-                  },
+          const params = {
+            requests: [
+              {
+                custom_id: "batch-success-one",
+                params: {
+                  max_tokens: 24,
+                  messages: [{ role: "user", content: "Reply with ONE." }],
+                  model: ANTHROPIC_MODEL,
+                  system: "Reply with only the requested word.",
                 },
-                {
-                  custom_id: "batch-error",
-                  params: {
-                    max_tokens: 24,
-                    messages: [{ role: "user", content: "Fail this request." }],
-                    model: ANTHROPIC_MODEL,
-                  },
+              },
+              {
+                custom_id: "batch-error",
+                params: {
+                  max_tokens: 24,
+                  messages: [{ role: "user", content: "Fail this request." }],
+                  model: ANTHROPIC_MODEL,
                 },
-                {
-                  custom_id: "batch-success-two",
-                  params: {
-                    max_tokens: 24,
-                    messages: [{ role: "user", content: "Reply with TWO." }],
-                    model: ANTHROPIC_MODEL,
-                  },
+              },
+              {
+                custom_id: "batch-success-two",
+                params: {
+                  max_tokens: 24,
+                  messages: [{ role: "user", content: "Reply with TWO." }],
+                  model: ANTHROPIC_MODEL,
                 },
-              ],
-            },
-          });
-
-          let batch;
-          try {
-            batch = await batchClient.messages.batches.create(started.params);
-          } catch (error) {
-            if (started.traceContext) {
-              await failAnthropicBatchTrace({
-                error,
-                params: started.params,
-                traceContext: started.traceContext,
-              });
-            }
-            throw error;
-          }
-          const traceContext = await bindAnthropicBatchTrace({
-            batch,
-            traceContext: started.traceContext,
-          });
+              },
+            ],
+          };
+          const batch = await anthropicBatchesCreateTraced(
+            batchClient.messages.batches,
+          )(params);
 
           async function* results() {
             yield {
@@ -230,9 +211,8 @@ async function runAnthropicInstrumentationScenario(
                 succeeded: 2,
               },
             },
-            params: started.params,
+            params,
             results: results(),
-            traceContext,
           });
         });
       }

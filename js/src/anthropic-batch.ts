@@ -1,80 +1,88 @@
 import { anthropicChannels } from "./instrumentation/plugins/anthropic-channels";
+import { getSpanParentObject } from "./logger";
 import type {
+  AnthropicAPIPromise,
   AnthropicBatchCreateParams,
   AnthropicBatchLike,
-  AnthropicBatchTraceContext,
-  BindAnthropicBatchTraceArgs,
+  AnthropicBatchesCreateTracedOptions,
+  AnthropicBatchesResource,
+  AnthropicEnhancedResponse,
   CompleteAnthropicBatchTraceArgs,
-  FailAnthropicBatchTraceArgs,
-  StartAnthropicBatchTraceArgs,
-  StartAnthropicBatchTraceResult,
 } from "./anthropic-batch-types";
+import { createLazyAPIPromise } from "./wrappers/openai-promise-utils";
 
 /**
- * Start a resumable trace for an Anthropic Message Batch without calling
- * Anthropic. After creating the provider batch, bind this context with
- * {@link bindAnthropicBatchTrace} and persist the bound value.
+ * Wrap `client.messages.batches.create` to trace an Anthropic Message Batch.
+ *
+ * Pass `client.messages.batches`, then call the returned function with the same
+ * arguments as `client.messages.batches.create`. The returned value preserves
+ * Anthropic's `APIPromise` helpers.
+ *
+ * @example
+ * ```ts
+ * const batch = await anthropicBatchesCreateTraced(
+ *   client.messages.batches,
+ * )({ requests });
+ * ```
  */
-export async function startAnthropicBatchTrace<
+export function anthropicBatchesCreateTraced<
   TParams extends AnthropicBatchCreateParams,
->(
-  args: StartAnthropicBatchTraceArgs<TParams>,
-): Promise<StartAnthropicBatchTraceResult<TParams>> {
-  const result = await anthropicChannels.batchesStartTrace.invoke(
-    async (input) => ({ params: { ...input.params } }),
-    undefined,
-    [args],
-    {},
-  );
-  // The channel uses the minimum structural batch type while this public API
-  // preserves caller fields from newer Anthropic SDK versions.
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return result as StartAnthropicBatchTraceResult<TParams>;
-}
-
-/** Bind a started trace context to the batch returned by Anthropic. */
-export async function bindAnthropicBatchTrace<
   TBatch extends AnthropicBatchLike,
+  TOptions = unknown,
 >(
-  args: BindAnthropicBatchTraceArgs<TBatch>,
-): Promise<AnthropicBatchTraceContext | undefined> {
-  const result = await anthropicChannels.batchesBindTrace.invoke(
-    async (input) => ({ traceContext: input.traceContext }),
-    undefined,
-    [args],
-    {},
-  );
-  return result.traceContext;
+  batches: AnthropicBatchesResource<TParams, TBatch, TOptions>,
+  traceOptions: AnthropicBatchesCreateTracedOptions = {},
+): (params: TParams, requestOptions?: TOptions) => AnthropicAPIPromise<TBatch> {
+  return (params, requestOptions) => {
+    const parent = getSpanParentObject({ state: traceOptions.state });
+    const apiPromise = batches.create(params, requestOptions);
+    let enhancedResponse: AnthropicEnhancedResponse<TBatch> | undefined;
+    const tracedResponse = anthropicChannels.batchesCreateTraced
+      .invoke(
+        async () => {
+          enhancedResponse = await apiPromise.withResponse();
+          return enhancedResponse.data;
+        },
+        batches,
+        [{ params, parent, state: traceOptions.state }],
+        {},
+      )
+      .then((data) => {
+        if (!enhancedResponse) {
+          throw new Error(
+            "Expected Anthropic withResponse() to provide a response",
+          );
+        }
+        return { ...enhancedResponse, data };
+      });
+
+    return createLazyAPIPromise(
+      () => tracedResponse,
+      () => tracedResponse.then(({ response }) => response),
+      () => apiPromise,
+    );
+  };
 }
 
 /**
- * Complete an Anthropic Message Batch trace from caller-supplied batch data and
- * the iterable returned by `client.messages.batches.results()`. Either the
- * batch-bound value returned by {@link bindAnthropicBatchTrace} resumes the
- * started spans. An unbound or omitted context creates a collect-only trace.
+ * Add result data to spans created by `anthropicBatchesCreateTraced`.
+ *
+ * This helper performs no Anthropic API requests. Pass the terminal batch, the
+ * original create parameters, and the iterable returned by
+ * `client.messages.batches.results(batch.id)`. If creation was not traced in
+ * this process, the helper creates a collect-only trace.
  */
 export async function completeAnthropicBatchTrace<
   TBatch extends AnthropicBatchLike,
   TParams extends AnthropicBatchCreateParams,
->(args: CompleteAnthropicBatchTraceArgs<TBatch, TParams>): Promise<TBatch> {
-  const batch = await anthropicChannels.batchesCompleteTrace.invoke(
-    async (input) => input.batch,
-    undefined,
-    [args],
-    {},
-  );
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return batch as TBatch;
-}
+>(args: CompleteAnthropicBatchTraceArgs<TBatch, TParams>): Promise<void> {
+  const results = Promise.resolve(args.results);
+  void results.catch(() => undefined);
 
-/** End pending Anthropic batch spans after the caller's submission fails. */
-export async function failAnthropicBatchTrace<
-  TParams extends AnthropicBatchCreateParams,
->(args: FailAnthropicBatchTraceArgs<TParams>): Promise<void> {
-  await anthropicChannels.batchesFailTrace.invoke(
+  await anthropicChannels.batchesCompleteTrace.invoke(
     async () => undefined,
     undefined,
-    [args],
+    [{ ...args, results }],
     {},
   );
 }

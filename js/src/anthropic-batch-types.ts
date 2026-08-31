@@ -1,8 +1,6 @@
 import type { BraintrustState } from "./logger";
 
-export type AnthropicBatchTraceContext = string;
-
-export interface AnthropicBatchMessageCreateParams {
+interface AnthropicBatchMessageCreateParams {
   max_tokens?: number;
   messages: unknown[];
   model: string;
@@ -46,7 +44,7 @@ export interface AnthropicBatchResultRecord {
   result: AnthropicBatchResult;
 }
 
-export type AnthropicBatchResults =
+type AnthropicBatchResults =
   | Iterable<AnthropicBatchResultRecord>
   | AsyncIterable<AnthropicBatchResultRecord>;
 
@@ -54,26 +52,31 @@ export type AnthropicBatchResultsSource =
   | AnthropicBatchResults
   | PromiseLike<AnthropicBatchResults>;
 
-export interface StartAnthropicBatchTraceArgs<
+export type AnthropicEnhancedResponse<T> = {
+  data: T;
+  request_id?: string | null;
+  response: Response;
+};
+
+export interface AnthropicAPIPromise<T> extends Promise<T> {
+  asResponse(): Promise<Response>;
+  withResponse(): Promise<AnthropicEnhancedResponse<T>>;
+}
+
+export interface AnthropicBatchesResource<TParams, TBatch, TOptions> {
+  create(params: TParams, options?: TOptions): AnthropicAPIPromise<TBatch>;
+}
+
+export interface AnthropicBatchesCreateTraceArgs<
   TParams extends AnthropicBatchCreateParams = AnthropicBatchCreateParams,
 > {
   params: TParams;
+  parent: { export(): Promise<string> } | { toStr(): string };
   state?: BraintrustState;
 }
 
-export interface StartAnthropicBatchTraceResult<
-  TParams extends AnthropicBatchCreateParams = AnthropicBatchCreateParams,
-> {
-  params: TParams;
-  traceContext?: AnthropicBatchTraceContext;
-}
-
-export interface BindAnthropicBatchTraceArgs<
-  TBatch extends AnthropicBatchLike = AnthropicBatchLike,
-> {
-  batch: TBatch;
+export interface AnthropicBatchesCreateTracedOptions {
   state?: BraintrustState;
-  traceContext?: AnthropicBatchTraceContext;
 }
 
 export interface CompleteAnthropicBatchTraceArgs<
@@ -84,14 +87,4 @@ export interface CompleteAnthropicBatchTraceArgs<
   params: TParams;
   results: AnthropicBatchResultsSource;
   state?: BraintrustState;
-  traceContext?: AnthropicBatchTraceContext;
-}
-
-export interface FailAnthropicBatchTraceArgs<
-  TParams extends AnthropicBatchCreateParams = AnthropicBatchCreateParams,
-> {
-  error: unknown;
-  params: TParams;
-  state?: BraintrustState;
-  traceContext: AnthropicBatchTraceContext;
 }

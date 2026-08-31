@@ -1,11 +1,8 @@
 import type {
-  AnthropicBatchCreateParams,
   AnthropicBatchLike,
   AnthropicBatchResultRecord,
-  BindAnthropicBatchTraceArgs,
+  AnthropicBatchesCreateTraceArgs,
   CompleteAnthropicBatchTraceArgs,
-  FailAnthropicBatchTraceArgs,
-  StartAnthropicBatchTraceArgs,
 } from "../../anthropic-batch-types";
 import { debugLogger } from "../../debug-logger";
 import {
@@ -48,7 +45,6 @@ import {
 
 const CUSTOM_ID_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
 const BATCH_SPAN_CHUNK_SIZE = 1000;
-const MAX_BATCH_CONTEXT_LENGTH = 4096;
 const MAX_BATCH_ID_LENGTH = 256;
 const MAX_PARENT_CONTEXT_LENGTH = 2048;
 const REQUEST_COUNT_FIELDS = [
@@ -67,25 +63,17 @@ type AnthropicBatchRequestCounts = Record<
 >;
 
 type BatchContext = {
-  batchId?: string;
+  batchId: string;
   inputDigest: string;
-  operationNonce: string;
+  operationId: string;
   parent: string;
   startTime: number;
-  version: 2;
 };
-
-type SerializedBatchContext = BatchContext & { signature: string };
 
 type BatchInputRecord = {
   customId: string;
   requestParams: AnthropicCreateParams;
 };
-
-type ParsedBatchContext =
-  | { context: BatchContext; secret: string; status: "valid" }
-  | { status: "credential_unavailable" }
-  | { status: "invalid" };
 
 class BatchResultsSourceError extends Error {
   public constructor(public readonly sourceError: unknown) {
@@ -93,12 +81,12 @@ class BatchResultsSourceError extends Error {
   }
 }
 
-type PreparedBatch = {
+type PendingBatchTrace = {
   context: BatchContext;
-  inputs: Map<string, BatchInputRecord>;
-  params: AnthropicBatchCreateParams;
-  traceContext: string;
+  state: BraintrustState;
 };
+
+const pendingBatchTraces = new Map<string, PendingBatchTrace>();
 
 type ParsedInputs = {
   firstIssue?: Error;
@@ -187,151 +175,15 @@ function validSucceededMessage(value: unknown): boolean {
   );
 }
 
-function batchContextPayload(context: BatchContext): string {
-  return JSON.stringify([
-    "braintrust.anthropic.batch_context",
-    {
-      ...(context.batchId !== undefined ? { batchId: context.batchId } : {}),
-      inputDigest: context.inputDigest,
-      operationNonce: context.operationNonce,
-      parent: context.parent,
-      startTime: context.startTime,
-      version: context.version,
-    },
-  ]);
-}
-
-async function importBatchSigningKey(secret: string) {
-  return await globalThis.crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign", "verify"],
-  );
-}
-
-async function signBatchContext(
-  context: BatchContext,
-  secret: string,
-): Promise<string | undefined> {
-  try {
-    const payload = batchContextPayload(context);
-    if (payload.length > MAX_BATCH_CONTEXT_LENGTH) {
-      return undefined;
-    }
-    const signature = await globalThis.crypto.subtle.sign(
-      "HMAC",
-      await importBatchSigningKey(secret),
-      new TextEncoder().encode(payload),
-    );
-    return digestHex(new Uint8Array(signature), 32);
-  } catch {
-    return undefined;
-  }
-}
-
-function signatureBytes(value: string): Uint8Array | undefined {
-  if (!/^[0-9a-f]{64}$/.test(value)) {
-    return undefined;
-  }
-  return Uint8Array.from(value.match(/.{2}/g) ?? [], (byte) =>
-    Number.parseInt(byte, 16),
-  );
-}
-
-async function verifyBatchContext(
-  context: BatchContext,
-  signature: string,
-  secret: string,
-): Promise<boolean> {
-  const bytes = signatureBytes(signature);
-  if (!bytes) {
-    return false;
-  }
-  try {
-    return await globalThis.crypto.subtle.verify(
-      "HMAC",
-      await importBatchSigningKey(secret),
-      bytes,
-      new TextEncoder().encode(batchContextPayload(context)),
-    );
-  } catch {
-    return false;
-  }
-}
-
-async function parseBatchContext(
-  value: unknown,
-  state: BraintrustState,
-): Promise<ParsedBatchContext> {
-  if (
-    typeof value !== "string" ||
-    value.length === 0 ||
-    value.length > MAX_BATCH_CONTEXT_LENGTH
-  ) {
-    return { status: "invalid" };
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(value);
-  } catch {
-    return { status: "invalid" };
-  }
-  if (
-    !isObject(parsed) ||
-    parsed.version !== 2 ||
-    typeof parsed.parent !== "string" ||
-    parsed.parent.length === 0 ||
-    parsed.parent.length > MAX_PARENT_CONTEXT_LENGTH ||
-    typeof parsed.inputDigest !== "string" ||
-    !/^[0-9a-f]{64}$/.test(parsed.inputDigest) ||
-    typeof parsed.startTime !== "number" ||
-    !Number.isFinite(parsed.startTime) ||
-    typeof parsed.operationNonce !== "string" ||
-    !/^[0-9a-f]{32}$/.test(parsed.operationNonce) ||
-    typeof parsed.signature !== "string" ||
-    !/^[0-9a-f]{64}$/.test(parsed.signature) ||
-    (parsed.batchId !== undefined && !validBatchId(parsed.batchId))
-  ) {
-    return { status: "invalid" };
-  }
-  const context: BatchContext = {
-    ...(validBatchId(parsed.batchId) ? { batchId: parsed.batchId } : {}),
-    inputDigest: parsed.inputDigest,
-    operationNonce: parsed.operationNonce,
-    parent: parsed.parent,
-    startTime: parsed.startTime,
-    version: 2,
-  };
-  try {
-    SpanComponentsV4.fromStr(context.parent);
-  } catch {
-    return { status: "invalid" };
-  }
-  const secret = await state
-    ._internalResolveTraceContextSigningSecret()
-    .catch(() => undefined);
-  if (!secret) {
-    return { status: "credential_unavailable" };
-  }
-  if (!(await verifyBatchContext(context, parsed.signature, secret))) {
-    return { status: "invalid" };
-  }
-  return { context, secret, status: "valid" };
-}
-
-async function exportParent(parent: ReturnType<typeof getSpanParentObject>) {
-  if ("toStr" in parent && typeof parent.toStr === "function") {
-    return parent.toStr();
-  }
-  return await parent.export();
-}
-
 async function exportMinimalParent(
-  parent: ReturnType<typeof getSpanParentObject>,
+  parent: AnthropicBatchesCreateTraceArgs["parent"],
 ): Promise<string | undefined> {
-  const exported = await exportParent(parent);
+  let exported: string;
+  if ("toStr" in parent) {
+    exported = parent.toStr();
+  } else {
+    exported = await parent.export();
+  }
   if (!exported) {
     return undefined;
   }
@@ -405,14 +257,10 @@ function deterministicAttachmentKey(prefix: string, index: number): string {
   return `${uuidHex.slice(0, 8)}-${uuidHex.slice(8, 12)}-${uuidHex.slice(12, 16)}-${uuidHex.slice(16, 20)}-${uuidHex.slice(20)}`;
 }
 
-function randomBatchNonce(): string {
-  return digestHex(globalThis.crypto.getRandomValues(new Uint8Array(16)), 16);
-}
-
-async function batchSpanIds(operationNonce: string) {
+async function batchSpanIds(operationId: string) {
   const digest = await deterministicDigest(
     "anthropic:batch:span-ids",
-    operationNonce,
+    operationId,
   );
   return {
     rootSpanId: digestHex(digest.slice(8), 16),
@@ -421,10 +269,10 @@ async function batchSpanIds(operationNonce: string) {
   };
 }
 
-async function childSpanIds(operationNonce: string, customId: string) {
+async function childSpanIds(operationId: string, customId: string) {
   const digest = await deterministicDigest(
     "anthropic:batch:child:span-ids",
-    operationNonce,
+    operationId,
     customId,
   );
   return {
@@ -440,7 +288,7 @@ async function prepareBatchSpanIds(
   context: BatchContext,
   inputs: Map<string, BatchInputRecord>,
 ): Promise<PreparedBatchSpanIds> {
-  const batchIdsPromise = batchSpanIds(context.operationNonce);
+  const batchIdsPromise = batchSpanIds(context.operationId);
   const children = new Map<string, ChildSpanIds>();
   const records = Array.from(inputs.values());
   for (
@@ -455,7 +303,7 @@ async function prepareBatchSpanIds(
           async (input) =>
             [
               input.customId,
-              await childSpanIds(context.operationNonce, input.customId),
+              await childSpanIds(context.operationId, input.customId),
             ] as const,
         ),
     );
@@ -645,66 +493,6 @@ async function readBatchInputs(params: unknown): Promise<ParsedInputs> {
   };
 }
 
-async function prepareBatch(
-  args: StartAnthropicBatchTraceArgs,
-  parent: ReturnType<typeof getSpanParentObject>,
-  startTime: number,
-  state: BraintrustState,
-): Promise<PreparedBatch | undefined> {
-  const params = { ...args.params };
-  const inputData = await readBatchInputs(params);
-  if (inputData.firstIssue) {
-    logBatchInstrumentationError(
-      "skipped invalid batch input",
-      inputData.firstIssue,
-    );
-    return undefined;
-  }
-  const exportedParent = await exportMinimalParent(parent);
-  const signingSecret = await state
-    ._internalResolveTraceContextSigningSecret()
-    .catch(() => undefined);
-  if (!exportedParent || !signingSecret) {
-    logBatchInstrumentationError(
-      "skipped trace start",
-      new Error("No routable parent or signing secret is available"),
-    );
-    return undefined;
-  }
-  const context: BatchContext = {
-    inputDigest: inputData.inputDigest,
-    operationNonce: randomBatchNonce(),
-    parent: exportedParent,
-    startTime,
-    version: 2,
-  };
-  const signature = await signBatchContext(context, signingSecret);
-  if (!signature) {
-    logBatchInstrumentationError(
-      "skipped trace start",
-      new Error("Could not sign batch context"),
-    );
-    return undefined;
-  }
-  const traceContext = JSON.stringify({
-    ...context,
-    signature,
-  } satisfies SerializedBatchContext);
-  if (traceContext.length > MAX_BATCH_CONTEXT_LENGTH) {
-    logBatchInstrumentationError(
-      "skipped trace start",
-      new Error("Anthropic Batch trace context is too large"),
-    );
-    return undefined;
-  }
-  return {
-    context,
-    inputs: inputData.inputs,
-    params,
-    traceContext,
-  };
-}
-
 async function startBatchSpan(
   context: BatchContext,
   ids: BatchSpanIds,
@@ -725,7 +513,10 @@ async function startBatchSpan(
           {
             event: {
               id: ids.rowId,
-              metadata: { provider: "anthropic" },
+              metadata: {
+                batch_id: context.batchId,
+                provider: "anthropic",
+              },
             },
             name: "anthropic.batch",
             parent: context.parent,
@@ -908,90 +699,60 @@ async function endBatchWithError(
   task.end({ endTime });
 }
 
-export const interceptAnthropicBatchTraceStart: Parameters<
-  typeof anthropicChannels.batchesStartTrace.intercept
+export const interceptAnthropicBatchesCreateTraced: Parameters<
+  typeof anthropicChannels.batchesCreateTraced.intercept
 >[0] = async (target, thisArg, args) => {
-  const state = args[0].state ?? _internalGetGlobalState();
-  const parent = getSpanParentObject({ state });
   const startTime = getCurrentUnixTimestamp();
-  let prepared: PreparedBatch | undefined;
-  try {
-    prepared = await prepareBatch(args[0], parent, startTime, state);
-  } catch (error) {
+  const state = args[0].state ?? _internalGetGlobalState();
+  const preparation = Promise.all([
+    readBatchInputs(args[0].params),
+    exportMinimalParent(args[0].parent),
+  ]).catch((error) => {
     logBatchInstrumentationError("could not prepare batch", error);
-  }
-  const result = await Reflect.apply(target, thisArg, [
-    prepared ? { ...args[0], params: prepared.params } : args[0],
-  ]);
-  if (!prepared) {
-    return result;
-  }
-  if (!(await startPreparedBatch(prepared.inputs, prepared.context, state))) {
-    return result;
-  }
-  return { ...result, traceContext: prepared.traceContext };
-};
-
-async function bindBatchContext(
-  args: BindAnthropicBatchTraceArgs,
-): Promise<string | undefined> {
-  if (args.traceContext === undefined) {
     return undefined;
-  }
-  const batchId = read(args.batch, "id");
-  if (!validBatchId(batchId)) {
-    logBatchInstrumentationError(
-      "could not bind trace context",
-      new Error("Anthropic Batch batch ID is invalid"),
-    );
-    return undefined;
-  }
-  const state = args.state ?? _internalGetGlobalState();
-  const parsed = await parseBatchContext(args.traceContext, state);
-  if (parsed.status === "credential_unavailable") {
-    logBatchInstrumentationError(
-      "could not bind trace context",
-      new Error("No signing credential is available"),
-    );
-    return undefined;
-  }
-  if (parsed.status !== "valid") {
-    logBatchInstrumentationError(
-      "could not bind trace context",
-      new Error("Anthropic Batch trace context or batch is invalid"),
-    );
-    return undefined;
-  }
-  if (parsed.context.batchId !== undefined) {
-    return parsed.context.batchId === batchId ? args.traceContext : undefined;
-  }
-  const context: BatchContext = { ...parsed.context, batchId };
-  const signature = await signBatchContext(context, parsed.secret);
-  if (!signature) {
-    return undefined;
-  }
-  const serialized = JSON.stringify({
-    ...context,
-    signature,
-  } satisfies SerializedBatchContext);
-  return serialized.length <= MAX_BATCH_CONTEXT_LENGTH ? serialized : undefined;
-}
-
-export const interceptAnthropicBatchTraceBind: Parameters<
-  typeof anthropicChannels.batchesBindTrace.intercept
->[0] = async (target, thisArg, args) => {
-  const result = await Reflect.apply(target, thisArg, args);
+  });
+  const batch = await Reflect.apply(target, thisArg, args);
   try {
-    return {
-      traceContext: await bindBatchContext({
-        ...args[0],
-        traceContext: result.traceContext,
-      }),
+    const batchId = read(batch, "id");
+    const prepared = await preparation;
+    if (!validBatchId(batchId) || !prepared) {
+      return batch;
+    }
+    const [inputData, parent] = prepared;
+    if (inputData.firstIssue || !parent) {
+      logBatchInstrumentationError(
+        "skipped invalid batch input",
+        inputData.firstIssue ?? new Error("No routable parent is available"),
+      );
+      return batch;
+    }
+    const createdAt = parseTimestamp(read(batch, "created_at"));
+    const observedAt = getCurrentUnixTimestamp();
+    const context: BatchContext = {
+      batchId,
+      inputDigest: inputData.inputDigest,
+      operationId: digestHex(
+        await deterministicDigest(
+          "anthropic:batch:operation",
+          batchId,
+          inputData.inputDigest,
+          parent,
+        ),
+        16,
+      ),
+      parent,
+      startTime:
+        createdAt !== undefined && createdAt <= observedAt
+          ? createdAt
+          : startTime,
     };
+    if (await startPreparedBatch(inputData.inputs, context, state)) {
+      pendingBatchTraces.set(batchId, { context, state });
+    }
   } catch (error) {
-    logBatchInstrumentationError("could not bind trace context", error);
-    return { ...result, traceContext: undefined };
+    logBatchInstrumentationError("could not start batch trace", error);
   }
+  return batch;
 };
 
 function isBatchResultIterable(
@@ -1013,7 +774,7 @@ function isBatchResultIterable(
   }
 }
 
-async function* batchResults(
+async function* iterateBatchResults(
   source: CompleteAnthropicBatchTraceArgs["results"],
 ): AsyncGenerator<unknown> {
   let resolved: Awaited<typeof source>;
@@ -1259,7 +1020,7 @@ function terminalEndTime(batch: AnthropicBatchLike, startTime: number): number {
     : Math.max(getCurrentUnixTimestamp(), startTime);
 }
 
-function requestCounts(
+function parseRequestCounts(
   batch: AnthropicBatchLike,
 ): AnthropicBatchRequestCounts | undefined {
   const counts = read(batch, "request_counts");
@@ -1296,10 +1057,11 @@ async function collectOnlyContext(
   const observedAt = getCurrentUnixTimestamp();
   const createdAt = parseTimestamp(read(batch, "created_at"));
   return {
+    batchId,
     inputDigest,
-    operationNonce: digestHex(
+    operationId: digestHex(
       await deterministicDigest(
-        "anthropic:batch:collect-only",
+        "anthropic:batch:operation",
         batchId,
         inputDigest,
         parent,
@@ -1311,14 +1073,12 @@ async function collectOnlyContext(
       createdAt !== undefined && createdAt <= observedAt
         ? createdAt
         : observedAt,
-    version: 2,
   };
 }
 
 async function completeBatch(
   args: CompleteAnthropicBatchTraceArgs,
 ): Promise<void> {
-  const state = args.state ?? _internalGetGlobalState();
   const batchId = read(args.batch, "id");
   if (
     !validBatchId(batchId) ||
@@ -1334,7 +1094,7 @@ async function completeBatch(
     );
     return;
   }
-  const counts = requestCounts(args.batch);
+  const counts = parseRequestCounts(args.batch);
   if (!counts) {
     logBatchInstrumentationError(
       "left batch spans pending",
@@ -1354,28 +1114,20 @@ async function completeBatch(
     return;
   }
 
-  const parsedContext =
-    args.traceContext === undefined
-      ? undefined
-      : await parseBatchContext(args.traceContext, state);
-  if (parsedContext?.status === "credential_unavailable") {
-    logBatchInstrumentationError(
-      "left batch spans pending",
-      new Error("No signing credential is available"),
-    );
-    return;
-  }
-  let context =
-    parsedContext?.status === "valid" ? parsedContext.context : undefined;
-  const resumesStartedTrace =
-    context !== undefined &&
-    context.inputDigest === inputData.inputDigest &&
-    context.batchId === batchId;
+  const pendingTrace = pendingBatchTraces.get(batchId);
+  const matchingPendingTrace =
+    pendingTrace?.context.inputDigest === inputData.inputDigest
+      ? pendingTrace
+      : undefined;
+  const resumesStartedTrace = matchingPendingTrace !== undefined;
+  const state =
+    args.state ?? matchingPendingTrace?.state ?? _internalGetGlobalState();
+  let context = matchingPendingTrace?.context;
   if (!resumesStartedTrace) {
-    if (args.traceContext !== undefined) {
+    if (pendingTrace) {
       logBatchInstrumentationError(
-        "discarded invalid or mismatched trace context",
-        new Error("Anthropic Batch trace context is invalid"),
+        "ignored mismatched pending trace",
+        new Error("Anthropic Batch input does not match the created batch"),
       );
     }
     context = await collectOnlyContext(
@@ -1419,7 +1171,7 @@ async function completeBatch(
   let completedResults = 0;
   let resultsSourceError: BatchResultsSourceError | undefined;
   try {
-    for await (const value of batchResults(results)) {
+    for await (const value of iterateBatchResults(results)) {
       consumedResults++;
       if (consumedResults > total) {
         firstIssue ??= new Error(
@@ -1597,6 +1349,9 @@ async function completeBatch(
       task.log({ error: terminalStatusError });
       task.end({ endTime });
     } finally {
+      if (resumesStartedTrace) {
+        pendingBatchTraces.delete(batchId);
+      }
       if (resultsSourceError) {
         throw resultsSourceError;
       }
@@ -1611,68 +1366,22 @@ async function completeBatch(
   }
   task.log({ error: null });
   task.end({ endTime });
+  if (resumesStartedTrace) {
+    pendingBatchTraces.delete(batchId);
+  }
 }
 
-export const interceptAnthropicBatchTraceComplete: Parameters<
+export const interceptAnthropicBatchesCompleteTrace: Parameters<
   typeof anthropicChannels.batchesCompleteTrace.intercept
->[0] = (target, thisArg, args) => {
-  // Provider result promises are already running, so observe their rejection
-  // while asynchronous validation proceeds. Do not assimilate arbitrary
-  // PromiseLikes here because they may start lazy provider work.
-  if (args[0].results instanceof Promise) {
-    void args[0].results.catch(() => undefined);
-  }
-  return Promise.resolve(Reflect.apply(target, thisArg, args)).then(
-    async (batch) => {
-      try {
-        await completeBatch({ ...args[0], batch });
-      } catch (error) {
-        if (error instanceof BatchResultsSourceError) {
-          throw error.sourceError;
-        }
-        logBatchInstrumentationError("could not complete batch", error);
+>[0] = (target, thisArg, args) =>
+  Promise.resolve(Reflect.apply(target, thisArg, args)).then(async (result) => {
+    try {
+      await completeBatch(args[0]);
+    } catch (error) {
+      if (error instanceof BatchResultsSourceError) {
+        throw error.sourceError;
       }
-      return batch;
-    },
-  );
-};
-
-async function failBatch(args: FailAnthropicBatchTraceArgs): Promise<void> {
-  const state = args.state ?? _internalGetGlobalState();
-  const [parsedContext, inputData] = await Promise.all([
-    parseBatchContext(args.traceContext, state),
-    readBatchInputs(args.params),
-  ]);
-  const context =
-    parsedContext.status === "valid" ? parsedContext.context : undefined;
-  if (
-    !context ||
-    inputData.firstIssue ||
-    context.inputDigest !== inputData.inputDigest
-  ) {
-    logBatchInstrumentationError(
-      "could not report submission failure",
-      new Error("Anthropic Batch trace context or input is invalid"),
-    );
-    return;
-  }
-  await endBatchWithError(
-    context,
-    inputData.inputs,
-    args.error,
-    await prepareBatchSpanIds(context, inputData.inputs),
-    state,
-  );
-}
-
-export const interceptAnthropicBatchTraceFail: Parameters<
-  typeof anthropicChannels.batchesFailTrace.intercept
->[0] = async (target, thisArg, args) => {
-  const result = await Reflect.apply(target, thisArg, args);
-  try {
-    await failBatch(args[0]);
-  } catch (error) {
-    logBatchInstrumentationError("could not fail batch", error);
-  }
-  return result;
-};
+      logBatchInstrumentationError("could not complete batch", error);
+    }
+    return result;
+  });

@@ -49,6 +49,7 @@ span_tree:
     │   }
     │   └── anthropic.batch [task]
     │       metadata: {
+    │         "batch_id": "msgbatch_e2e",
     │         "provider": "anthropic"
     │       }
     │       error: null

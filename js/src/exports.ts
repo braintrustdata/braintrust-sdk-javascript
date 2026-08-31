@@ -207,28 +207,9 @@ export { braintrustEveInstrumentation } from "./instrumentation/plugins/eve-inst
 export { collectAnthropicSession } from "./wrappers/anthropic-session-collector";
 export { wrapAnthropic } from "./wrappers/anthropic";
 export {
-  bindAnthropicBatchTrace,
+  anthropicBatchesCreateTraced,
   completeAnthropicBatchTrace,
-  failAnthropicBatchTrace,
-  startAnthropicBatchTrace,
 } from "./anthropic-batch";
-export type {
-  AnthropicBatchCreateParams,
-  AnthropicBatchLike,
-  AnthropicBatchMessageCreateParams,
-  AnthropicBatchRequest,
-  AnthropicBatchRequestCounts,
-  AnthropicBatchResult,
-  AnthropicBatchResultRecord,
-  AnthropicBatchResults,
-  AnthropicBatchResultsSource,
-  AnthropicBatchTraceContext,
-  BindAnthropicBatchTraceArgs,
-  CompleteAnthropicBatchTraceArgs,
-  FailAnthropicBatchTraceArgs,
-  StartAnthropicBatchTraceArgs,
-  StartAnthropicBatchTraceResult,
-} from "./anthropic-batch-types";
 export {
   BraintrustObservabilityExporter,
   wrapMastraAgent,
