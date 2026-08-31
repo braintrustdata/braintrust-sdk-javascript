@@ -26,17 +26,38 @@ import {
   serializeGoogleGenAIResponse,
 } from "./google-genai-shared";
 import type {
-  CompleteGeminiDeveloperBatchTraceArgs,
+  CompleteGoogleGenAIBatchTraceArgs,
   GeminiDeveloperBatchCreateParams as GoogleGenAIBatchCreateParams,
   GeminiDeveloperBatchFile as GoogleGenAIBatchFile,
   GeminiDeveloperBatchLike as GoogleGenAIBatch,
-  StartGeminiDeveloperBatchTraceArgs,
+  GoogleGenAIBatchesCreateTraceArgs,
 } from "../../google-genai-batch-types";
+import { googleGenAIChannels } from "./google-genai-channels";
 
-type GoogleGenAIBatchStartTraceArgs =
-  StartGeminiDeveloperBatchTraceArgs<GoogleGenAIBatch>;
-type GoogleGenAIBatchCompleteTraceArgs =
-  CompleteGeminiDeveloperBatchTraceArgs<GoogleGenAIBatch>;
+type GoogleGenAIBatchStartTraceArgs = {
+  batch: GoogleGenAIBatch;
+  params: GoogleGenAIBatchCreateParams;
+  input?: GoogleGenAIBatchFile;
+  parent?: GoogleGenAIBatchesCreateTraceArgs["parent"];
+};
+type GoogleGenAIBatchCompleteTraceArgs = {
+  batch: GoogleGenAIBatch;
+  params: GoogleGenAIBatchCreateParams;
+  traceContext?: string;
+  input?: GoogleGenAIBatchFile;
+  outputFile?: GoogleGenAIBatchFile;
+};
+
+type PendingGoogleGenAIBatchTrace = {
+  input?: GoogleGenAIBatchFile;
+  params: GoogleGenAIBatchCreateParams;
+  traceContext: string;
+};
+
+type BatchCompletion = {
+  completed: boolean;
+  traceContext?: string;
+};
 
 const TERMINAL_STATES = new Set([
   "JOB_STATE_SUCCEEDED",
@@ -50,6 +71,7 @@ const BATCH_TRACE_FLUSH_MAX_ROWS = 100;
 const BATCH_TRACE_FLUSH_MAX_BYTES = 1024 * 1024;
 const CONTEXT_NAMESPACE = "braintrust.google_genai.batch_context";
 const UTF8_ENCODER = new TextEncoder();
+const pendingBatchTraces = new Map<string, PendingGoogleGenAIBatchTrace>();
 
 type BatchSourceKind = "file" | "inline";
 
@@ -192,15 +214,22 @@ function parseProviderTimestamp(value: unknown): number | undefined {
   return Number.isFinite(milliseconds) ? milliseconds / 1000 : undefined;
 }
 
-async function exportParent(parent: ReturnType<typeof getSpanParentObject>) {
+type BatchTraceParent =
+  | ReturnType<typeof getSpanParentObject>
+  | GoogleGenAIBatchesCreateTraceArgs["parent"];
+
+async function exportParent(parent: BatchTraceParent) {
   if ("toStr" in parent && typeof parent.toStr === "function") {
     return parent.toStr();
   }
-  return await parent.export();
+  if ("export" in parent && typeof parent.export === "function") {
+    return await parent.export();
+  }
+  return undefined;
 }
 
 async function exportMinimalParent(
-  parent: ReturnType<typeof getSpanParentObject>,
+  parent: BatchTraceParent,
 ): Promise<string | undefined> {
   const exported = await exportParent(parent);
   if (!exported) {
@@ -1033,7 +1062,9 @@ async function startBatchTrace(
     );
     return undefined;
   }
-  const exportedParent = await exportMinimalParent(getSpanParentObject());
+  const exportedParent = await exportMinimalParent(
+    args.parent ?? getSpanParentObject(),
+  );
   const signingSecret =
     _internalGetGlobalState()._internalGetTraceContextSigningSecret();
   if (!exportedParent || !signingSecret) {
@@ -1298,12 +1329,15 @@ function taskCompletionMetadata(
 
 async function completeBatch(
   args: GoogleGenAIBatchCompleteTraceArgs,
-): Promise<string | undefined> {
+): Promise<BatchCompletion> {
   const state = read(args.batch, "state");
   if (typeof state !== "string" || !TERMINAL_STATES.has(state)) {
-    return typeof args.traceContext === "string"
-      ? args.traceContext
-      : undefined;
+    return {
+      completed: false,
+      ...(typeof args.traceContext === "string"
+        ? { traceContext: args.traceContext }
+        : {}),
+    };
   }
   const batchName = read(args.batch, "name");
   const sourceKind = batchSourceKind(args.params);
@@ -1319,7 +1353,7 @@ async function completeBatch(
       "skipped unsupported completion",
       "missing batch name, model, or Gemini source",
     );
-    return undefined;
+    return { completed: false };
   }
 
   let context = await parseBatchContext(args.traceContext);
@@ -1351,7 +1385,7 @@ async function completeBatch(
         "skipped collect-only batch",
         "no routable Braintrust parent or signing secret",
       );
-      return undefined;
+      return { completed: false };
     }
     let preparedInputs: PreparedBatchInputs;
     try {
@@ -1367,7 +1401,7 @@ async function completeBatch(
         "could not validate collect-only batch input",
         error,
       );
-      return undefined;
+      return { completed: false };
     }
     const collectionTime = getCurrentUnixTimestamp();
     const providerStart =
@@ -1413,7 +1447,7 @@ async function completeBatch(
         startedIds,
         error,
       );
-      return undefined;
+      return { completed: false };
     }
   } else {
     inputs = await readBatchInputs(
@@ -1427,9 +1461,12 @@ async function completeBatch(
         "could not resume supplied context",
         "batch input does not match the signed context",
       );
-      return resumableContext;
+      return {
+        completed: false,
+        ...(resumableContext ? { traceContext: resumableContext } : {}),
+      };
     }
-    // startGeminiDeveloperBatchTrace durably flushes the input rows.
+    // googleGenAIBatchesCreateTraced durably flushes the input rows.
     // Completion therefore only needs to stream result merges and never
     // retains the normalized request payloads in memory.
     task = await startBatchSpan(context);
@@ -1546,7 +1583,10 @@ async function completeBatch(
       firstIssue ?? new Error("Google GenAI Batch results are incomplete"),
     );
     await flusher.flush();
-    return resumableContext;
+    return {
+      completed: false,
+      ...(resumableContext ? { traceContext: resumableContext } : {}),
+    };
   }
 
   if (firstIssue) {
@@ -1579,7 +1619,10 @@ async function completeBatch(
   });
   task.end({ endTime });
   await flusher.flush();
-  return resumableContext;
+  return {
+    completed: true,
+    ...(resumableContext ? { traceContext: resumableContext } : {}),
+  };
 }
 
 export async function startGoogleGenAIBatchTrace(
@@ -1597,11 +1640,184 @@ export async function completeGoogleGenAIBatchTrace(
   args: GoogleGenAIBatchCompleteTraceArgs,
 ): Promise<string | undefined> {
   try {
-    return await completeBatch(args);
+    return (await completeBatch(args)).traceContext;
   } catch (error) {
     logBatchInstrumentationError("could not complete batch trace", error);
     return typeof args.traceContext === "string"
       ? args.traceContext
       : undefined;
   }
+}
+
+function pendingTraceForBatch(
+  batch: GoogleGenAIBatch,
+): PendingGoogleGenAIBatchTrace | undefined {
+  const batchName = read(batch, "name");
+  return typeof batchName === "string"
+    ? pendingBatchTraces.get(batchName)
+    : undefined;
+}
+
+async function updatePendingTrace(
+  batch: GoogleGenAIBatch,
+  trace: PendingGoogleGenAIBatchTrace,
+  outputFile?: GoogleGenAIBatchFile,
+): Promise<void> {
+  const completion = await completeBatch({
+    batch,
+    params: trace.params,
+    traceContext: trace.traceContext,
+    input: trace.input,
+    outputFile,
+  });
+  const batchName = read(batch, "name");
+  if (typeof batchName !== "string") {
+    return;
+  }
+  if (completion.completed) {
+    pendingBatchTraces.delete(batchName);
+  } else if (completion.traceContext) {
+    pendingBatchTraces.set(batchName, {
+      ...trace,
+      traceContext: completion.traceContext,
+    });
+  }
+}
+
+const interceptGoogleGenAIBatchesCreateTraced: Parameters<
+  typeof googleGenAIChannels.batchesCreateTraced.intercept
+>[0] = async (target, thisArg, args) => {
+  const batch = await Reflect.apply(target, thisArg, args);
+  try {
+    const traceContext = await startBatchTrace({
+      batch,
+      params: args[0].params,
+      input: args[0].inputFileContent,
+      parent: args[0].parent,
+    });
+    const batchName = read(batch, "name");
+    if (traceContext && typeof batchName === "string") {
+      pendingBatchTraces.set(batchName, {
+        input: args[0].inputFileContent,
+        params: args[0].params,
+        traceContext,
+      });
+    }
+  } catch (error) {
+    logBatchInstrumentationError("could not trace batch creation", error);
+  }
+  return batch;
+};
+
+const interceptGoogleGenAIBatchesGetTraced: Parameters<
+  typeof googleGenAIChannels.batchesGetTraced.intercept
+>[0] = async (target, thisArg, args) => {
+  const batch = await Reflect.apply(target, thisArg, args);
+  const trace = pendingTraceForBatch(batch);
+  if (trace) {
+    try {
+      await updatePendingTrace(batch, trace);
+    } catch (error) {
+      logBatchInstrumentationError("could not update batch trace", error);
+    }
+  }
+  return batch;
+};
+
+function collectOnlyTrace(
+  args: CompleteGoogleGenAIBatchTraceArgs,
+): PendingGoogleGenAIBatchTrace | undefined {
+  const model = read(args.batch, "model");
+  if (typeof model !== "string" || model.length === 0) {
+    logBatchInstrumentationError(
+      "skipped collect-only batch",
+      "the batch has no model",
+    );
+    return undefined;
+  }
+  if (args.inlinedRequests) {
+    return {
+      params: { model, src: args.inlinedRequests },
+      traceContext: "",
+    };
+  }
+  if (args.inputFileContent !== undefined) {
+    return {
+      input: args.inputFileContent,
+      params: { model, src: "files/braintrust-batch-input" },
+      traceContext: "",
+    };
+  }
+  logBatchInstrumentationError(
+    "skipped collect-only batch",
+    "original inline requests or file input are required",
+  );
+  return undefined;
+}
+
+const interceptGoogleGenAIBatchTraceComplete: Parameters<
+  typeof googleGenAIChannels.batchesCompleteTrace.intercept
+>[0] = async (target, thisArg, args) => {
+  const result = await Reflect.apply(target, thisArg, args);
+  try {
+    const completionArgs = args[0];
+    if (
+      completionArgs.inlinedRequests &&
+      completionArgs.inputFileContent !== undefined
+    ) {
+      logBatchInstrumentationError(
+        "skipped ambiguous completion input",
+        "pass inlinedRequests or inputFileContent, not both",
+      );
+      return result;
+    }
+    const existing = pendingTraceForBatch(completionArgs.batch);
+    const trace = existing ?? collectOnlyTrace(completionArgs);
+    if (!trace) {
+      return result;
+    }
+    let completionTrace = trace;
+    if (completionArgs.inlinedRequests) {
+      const model = read(completionArgs.batch, "model");
+      if (typeof model !== "string" || model.length === 0) {
+        return result;
+      }
+      completionTrace = {
+        ...trace,
+        input: undefined,
+        params: { model, src: completionArgs.inlinedRequests },
+      };
+    } else if (completionArgs.inputFileContent !== undefined) {
+      completionTrace = {
+        ...trace,
+        input: completionArgs.inputFileContent,
+      };
+    }
+    await updatePendingTrace(
+      completionArgs.batch,
+      completionTrace,
+      completionArgs.outputFileContent,
+    );
+  } catch (error) {
+    logBatchInstrumentationError("could not complete batch trace", error);
+  }
+  return result;
+};
+
+let batchInstrumentationEnabled = false;
+
+export function ensureGoogleGenAIBatchInstrumentation(): void {
+  if (batchInstrumentationEnabled) {
+    return;
+  }
+  batchInstrumentationEnabled = true;
+  googleGenAIChannels.batchesCreateTraced.intercept(
+    interceptGoogleGenAIBatchesCreateTraced,
+  );
+  googleGenAIChannels.batchesGetTraced.intercept(
+    interceptGoogleGenAIBatchesGetTraced,
+  );
+  googleGenAIChannels.batchesCompleteTrace.intercept(
+    interceptGoogleGenAIBatchTraceComplete,
+  );
 }

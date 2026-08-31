@@ -8,9 +8,14 @@ import {
   vi,
 } from "vitest";
 import {
-  completeGeminiDeveloperBatchTrace,
-  startGeminiDeveloperBatchTrace,
+  completeGoogleGenAIBatchTrace as completeGoogleGenAIBatchTracePublic,
+  googleGenAIBatchesCreateTraced,
+  googleGenAIBatchesGetTraced,
 } from "../../google-genai-batch";
+import {
+  completeGoogleGenAIBatchTrace,
+  startGoogleGenAIBatchTrace,
+} from "./google-genai-batch-instrumentation";
 import {
   _exportsForTestingOnly,
   _internalGetGlobalState,
@@ -75,6 +80,17 @@ const inlineParams = {
   ],
 };
 
+const startGeminiDeveloperBatchTrace = startGoogleGenAIBatchTrace;
+async function completeGeminiDeveloperBatchTrace(
+  args: Parameters<typeof completeGoogleGenAIBatchTrace>[0],
+) {
+  const traceContext = await completeGoogleGenAIBatchTrace(args);
+  return {
+    batch: args.batch,
+    ...(traceContext ? { traceContext } : {}),
+  };
+}
+
 describe("Google GenAI Batch instrumentation", () => {
   let backgroundLogger: ReturnType<
     typeof _exportsForTestingOnly.useTestBackgroundLogger
@@ -98,6 +114,169 @@ describe("Google GenAI Batch instrumentation", () => {
   afterEach(() => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
     vi.restoreAllMocks();
+  });
+
+  test("traces batches.create and batches.get with provider-compatible wrappers", async () => {
+    const created = {
+      createTime: "2026-08-19T09:00:00.000Z",
+      model,
+      name: "batches/wrapped-inline-1",
+      state: "JOB_STATE_PENDING",
+    };
+    const completed = {
+      ...created,
+      dest: {
+        inlinedResponses: [
+          {
+            response: {
+              candidates: [{ content: { parts: [{ text: "One" }] } }],
+            },
+          },
+          {
+            response: {
+              candidates: [{ content: { parts: [{ text: "Two" }] } }],
+            },
+          },
+        ],
+      },
+      state: "JOB_STATE_SUCCEEDED",
+      updateTime: "2026-08-19T09:01:00.000Z",
+    };
+    const batches = {
+      create: vi.fn(async () => created),
+      get: vi.fn(async () => completed),
+    };
+
+    const create = googleGenAIBatchesCreateTraced(batches);
+    await expect(create(inlineParams)).resolves.toBe(created);
+    expect(batches.create).toHaveBeenCalledWith(inlineParams);
+    expect(await backgroundLogger.drain()).toHaveLength(3);
+
+    const get = googleGenAIBatchesGetTraced(batches);
+    await expect(get({ name: created.name })).resolves.toBe(completed);
+    expect(batches.get).toHaveBeenCalledWith({ name: created.name });
+    const merged = mergeRowBatch(
+      (await backgroundLogger.drain()) as Array<
+        Record<string, any> & { id: string }
+      >,
+    );
+    expect(merged.filter((row) => row.metrics?.end !== undefined)).toHaveLength(
+      3,
+    );
+  });
+
+  test("preserves batches.create failures", async () => {
+    const providerError = new Error("Google batch creation failed");
+    const create = googleGenAIBatchesCreateTraced({
+      create: async () => {
+        throw providerError;
+      },
+    });
+
+    await expect(create(inlineParams)).rejects.toBe(providerError);
+    expect(await backgroundLogger.drain()).toHaveLength(0);
+  });
+
+  test("supports collect-only completion through the public API", async () => {
+    const params = {
+      model,
+      src: [{ contents: "Collect this" }],
+    };
+    const batch = {
+      createTime: "2026-08-19T09:00:00.000Z",
+      dest: {
+        inlinedResponses: [
+          {
+            response: {
+              candidates: [
+                { content: { parts: [{ text: "Collected" }], role: "model" } },
+              ],
+            },
+          },
+        ],
+      },
+      model,
+      name: "batches/public-collect-only-1",
+      state: "JOB_STATE_SUCCEEDED",
+      updateTime: "2026-08-19T09:01:00.000Z",
+    };
+
+    await completeGoogleGenAIBatchTracePublic({
+      batch,
+      inlinedRequests: params.src,
+    });
+
+    const merged = mergeRowBatch(
+      (await backgroundLogger.drain()) as Array<
+        Record<string, any> & { id: string }
+      >,
+    );
+    expect(merged).toHaveLength(2);
+    expect(merged).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          output: expect.objectContaining({ candidates: expect.any(Array) }),
+          span_attributes: expect.objectContaining({
+            name: "generate_content",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  test("completes a traced file batch with caller-supplied output", async () => {
+    const params = { model, src: "files/public-input" };
+    const inputFileContent = JSON.stringify({
+      key: "request-1",
+      request: { contents: "File request" },
+    });
+    const created = {
+      createTime: "2026-08-19T09:00:00.000Z",
+      model,
+      name: "batches/public-file-1",
+      state: "JOB_STATE_PENDING",
+    };
+    const create = googleGenAIBatchesCreateTraced({
+      create: async () => created,
+    });
+    await create(params, { inputFileContent });
+    const started = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
+
+    const completed = {
+      ...created,
+      dest: { fileName: "files/public-output" },
+      state: "JOB_STATE_SUCCEEDED",
+      updateTime: "2026-08-19T09:01:00.000Z",
+    };
+    await completeGoogleGenAIBatchTracePublic({
+      batch: completed,
+      outputFileContent: JSON.stringify({
+        key: "request-1",
+        response: {
+          candidates: [
+            { content: { parts: [{ text: "File result" }], role: "model" } },
+          ],
+        },
+      }),
+    });
+
+    const completedRows = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
+    const merged = mergeRowBatch([...started, ...completedRows]);
+    expect(merged).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          output: expect.objectContaining({ candidates: expect.any(Array) }),
+          span_attributes: expect.objectContaining({
+            name: "generate_content",
+          }),
+        }),
+      ]),
+    );
+    expect(merged.every((row) => row.metrics?.end !== undefined)).toBe(true);
   });
 
   test("starts after create and completes inline requests deterministically", async () => {
@@ -1190,13 +1369,13 @@ describe("Google GenAI Batch instrumentation", () => {
 
   test("handles rejected file input immediately on inline start paths", async () => {
     const input = Promise.reject(new Error("unused file input failed"));
-    const traceContext = await startGeminiDeveloperBatchTrace({
-      batch: { model, name: "batches/rejected-input-1" },
-      input,
-      params: inlineParams,
+    const batch = { model, name: "batches/rejected-input-1" };
+    const create = googleGenAIBatchesCreateTraced({
+      create: async () => batch,
     });
+    const returned = await create(inlineParams, { inputFileContent: input });
 
-    expect(traceContext).toEqual(expect.any(String));
+    expect(returned).toBe(batch);
     expect(await backgroundLogger.drain()).toHaveLength(3);
   });
 

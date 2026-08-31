@@ -1,8 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
-  completeGeminiDeveloperBatchTrace,
-  startGeminiDeveloperBatchTrace,
+  googleGenAIBatchesCreateTraced,
+  googleGenAIBatchesGetTraced,
 } from "braintrust";
 import {
   runOperation,
@@ -71,14 +71,6 @@ await runTracedScenario({
           name: "batches/e2e-inline",
           state: "JOB_STATE_PENDING",
         };
-        const traceContext = await startGeminiDeveloperBatchTrace({
-          batch: created,
-          params,
-        });
-        if (!traceContext) {
-          throw new Error("Google GenAI batch start returned no context");
-        }
-
         const completed = {
           ...created,
           dest: {
@@ -123,16 +115,30 @@ await runTracedScenario({
           state: "JOB_STATE_SUCCEEDED",
           updateTime: new Date(createTime.getTime() + 120_000).toISOString(),
         };
-        const completion = await completeGeminiDeveloperBatchTrace({
-          batch: completed,
-          params,
-          traceContext,
-        });
-        if (completion.batch !== completed) {
-          throw new Error("Google GenAI batch completion changed identity");
+        const batches = {
+          async create(receivedParams) {
+            if (receivedParams !== params) {
+              throw new Error("Google GenAI batch creation changed params");
+            }
+            return created;
+          },
+          async get({ name }) {
+            if (name !== created.name) {
+              throw new Error("Google GenAI batch retrieval changed name");
+            }
+            return completed;
+          },
+        };
+        const createdResult =
+          await googleGenAIBatchesCreateTraced(batches)(params);
+        if (createdResult !== created) {
+          throw new Error("Google GenAI batch creation changed identity");
         }
-        if (completion.traceContext !== traceContext) {
-          throw new Error("Google GenAI batch completion changed context");
+        const completedResult = await googleGenAIBatchesGetTraced(batches)({
+          name: created.name,
+        });
+        if (completedResult !== completed) {
+          throw new Error("Google GenAI batch retrieval changed identity");
         }
       },
     );

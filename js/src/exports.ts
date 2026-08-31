@@ -221,22 +221,10 @@ export { wrapStrandsAgentSDK } from "./wrappers/strands-agent-sdk";
 export { wrapCloudflareAIChat } from "./wrappers/cloudflare-ai-chat";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";
 export {
-  completeGeminiDeveloperBatchTrace,
-  startGeminiDeveloperBatchTrace,
+  completeGoogleGenAIBatchTrace,
+  googleGenAIBatchesCreateTraced,
+  googleGenAIBatchesGetTraced,
 } from "./google-genai-batch";
-export type {
-  CompleteGeminiDeveloperBatchTraceArgs,
-  CompleteGeminiDeveloperBatchTraceResult,
-  GeminiDeveloperBatchCreateParams,
-  GeminiDeveloperBatchFile,
-  GeminiDeveloperBatchJSONL,
-  GeminiDeveloperBatchLike,
-  GeminiDeveloperBatchSource,
-  GeminiDeveloperBatchSourceConfig,
-  GeminiDeveloperBatchTraceContext,
-  GeminiDeveloperInlinedBatchRequest,
-  StartGeminiDeveloperBatchTraceArgs,
-} from "./google-genai-batch-types";
 export { wrapGoogleADK } from "./wrappers/google-adk";
 export { wrapGenkit } from "./wrappers/genkit";
 export { wrapHuggingFace } from "./wrappers/huggingface";

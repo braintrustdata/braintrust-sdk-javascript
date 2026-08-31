@@ -9,8 +9,6 @@ export type GeminiDeveloperBatchFile =
   | GeminiDeveloperBatchJSONL
   | PromiseLike<GeminiDeveloperBatchJSONL>;
 
-export type GeminiDeveloperBatchTraceContext = string;
-
 export interface GeminiDeveloperInlinedBatchRequest {
   model?: string;
   contents?: unknown;
@@ -18,19 +16,22 @@ export interface GeminiDeveloperInlinedBatchRequest {
   metadata?: Record<string, string>;
 }
 
-export interface GeminiDeveloperBatchSourceConfig {
-  fileName?: string;
-  inlinedRequests?: GeminiDeveloperInlinedBatchRequest[];
-}
-
 export type GeminiDeveloperBatchSource =
   | string
   | GeminiDeveloperInlinedBatchRequest[]
-  | GeminiDeveloperBatchSourceConfig;
+  | {
+      fileName?: string;
+      inlinedRequests?: GeminiDeveloperInlinedBatchRequest[];
+    };
 
 export interface GeminiDeveloperBatchCreateParams {
   model?: string;
   src: GeminiDeveloperBatchSource;
+  config?: unknown;
+}
+
+export interface GeminiDeveloperBatchGetParams {
+  name: string;
   config?: unknown;
 }
 
@@ -65,48 +66,52 @@ export interface GeminiDeveloperBatchLike {
   };
 }
 
-export interface StartGeminiDeveloperBatchTraceArgs<
-  TBatch extends GeminiDeveloperBatchLike,
-> {
-  batch: TBatch;
-  params: GeminiDeveloperBatchCreateParams;
+export interface GoogleGenAIBatchesCreateTraceOptions {
   /**
-   * Required for file-backed batches. Omit for inline batches. Pass text,
-   * bytes, or a replayable iterable when the source is a `Response`; tracing
-   * never consumes caller-owned response bodies.
+   * The original JSONL content for a file-backed batch. Inline requests are
+   * read directly from `params.src`.
    */
-  input?: GeminiDeveloperBatchFile;
+  inputFileContent?: GeminiDeveloperBatchFile;
 }
 
-export interface CompleteGeminiDeveloperBatchTraceArgs<
-  TBatch extends GeminiDeveloperBatchLike,
+export interface GoogleGenAIBatchesCreateTraceArgs {
+  params: GeminiDeveloperBatchCreateParams;
+  inputFileContent?: GeminiDeveloperBatchFile;
+  parent: { export(): Promise<string> } | { toStr(): string };
+}
+
+export interface GoogleGenAIBatchesGetTraceArgs {
+  params: GeminiDeveloperBatchGetParams;
+}
+
+export interface CompleteGoogleGenAIBatchTraceArgs<
+  TBatch extends GeminiDeveloperBatchLike = GeminiDeveloperBatchLike,
 > {
   batch: TBatch;
-  params: GeminiDeveloperBatchCreateParams;
   /**
-   * Context returned by `startGeminiDeveloperBatchTrace`. When omitted or
-   * invalid, completion creates a collect-only trace under the active
-   * Braintrust parent.
+   * Original inline requests. Supply these only when collecting in a process
+   * that did not call `googleGenAIBatchesCreateTraced`.
    */
-  traceContext?: GeminiDeveloperBatchTraceContext;
+  inlinedRequests?: GeminiDeveloperInlinedBatchRequest[];
   /**
-   * Required for file-backed batches. Omit for inline batches. Pass text,
-   * bytes, or a replayable iterable when the source is a `Response`; tracing
-   * never consumes caller-owned response bodies.
+   * Original JSONL input. Supply this when starting or collecting a
+   * file-backed trace outside the process that traced batch creation.
    */
-  input?: GeminiDeveloperBatchFile;
+  inputFileContent?: GeminiDeveloperBatchFile;
   /** Required for a successful file-backed batch. */
-  outputFile?: GeminiDeveloperBatchFile;
+  outputFileContent?: GeminiDeveloperBatchFile;
 }
 
-export interface CompleteGeminiDeveloperBatchTraceResult<
+export interface GoogleGenAIBatchesCreateResource<
+  TParams,
   TBatch extends GeminiDeveloperBatchLike,
 > {
-  /** The exact provider batch object supplied to the completion helper. */
-  batch: TBatch;
-  /**
-   * Opaque resumable context for subsequent collection attempts. Persist this
-   * value when completion was first performed without start context.
-   */
-  traceContext?: GeminiDeveloperBatchTraceContext;
+  create(params: TParams): Promise<TBatch>;
+}
+
+export interface GoogleGenAIBatchesGetResource<
+  TParams,
+  TBatch extends GeminiDeveloperBatchLike,
+> {
+  get(params: TParams): Promise<TBatch>;
 }

@@ -1,16 +1,17 @@
 import type {
-  CompleteGeminiDeveloperBatchTraceArgs,
-  CompleteGeminiDeveloperBatchTraceResult,
+  CompleteGoogleGenAIBatchTraceArgs,
+  GeminiDeveloperBatchCreateParams,
   GeminiDeveloperBatchFile,
+  GeminiDeveloperBatchGetParams,
   GeminiDeveloperBatchJSONL,
   GeminiDeveloperBatchLike,
-  GeminiDeveloperBatchTraceContext,
-  StartGeminiDeveloperBatchTraceArgs,
+  GoogleGenAIBatchesCreateResource,
+  GoogleGenAIBatchesCreateTraceOptions,
+  GoogleGenAIBatchesGetResource,
 } from "./google-genai-batch-types";
-import {
-  completeGoogleGenAIBatchTrace,
-  startGoogleGenAIBatchTrace,
-} from "./instrumentation/plugins/google-genai-batch-instrumentation";
+import { googleGenAIChannels } from "./instrumentation/plugins/google-genai-channels";
+import { ensureGoogleGenAIBatchInstrumentation } from "./instrumentation/plugins/google-genai-batch-instrumentation";
+import { getSpanParentObject } from "./logger";
 
 function protectBatchFilePromise(
   file: GeminiDeveloperBatchFile | undefined,
@@ -19,54 +20,91 @@ function protectBatchFilePromise(
     return undefined;
   }
   const promise = Promise.resolve(file);
-  // Attach immediately so an early tracing exit cannot leave a caller-owned
-  // rejection unhandled.
   void promise.catch(() => undefined);
   return promise;
 }
 
 /**
- * Start pending Braintrust spans for a Gemini Developer API batch that the
- * caller has already created with `ai.batches.create()`.
+ * Wrap `ai.batches.create` to create a pending Braintrust batch trace after
+ * Google accepts the batch.
  *
- * This helper performs no Google API requests. Persist the returned opaque
- * context alongside the provider batch name for later completion.
+ * Pass the `ai.batches` resource, then call the returned function with the same
+ * creation parameters. For a file-backed batch, pass the original JSONL as
+ * `inputFileContent`; inline requests are read directly from `params.src`.
+ *
+ * @example
+ * ```ts
+ * const batch = await googleGenAIBatchesCreateTraced(ai.batches)(params);
+ * ```
  */
-export async function startGeminiDeveloperBatchTrace<
+export function googleGenAIBatchesCreateTraced<
+  TParams extends GeminiDeveloperBatchCreateParams,
   TBatch extends GeminiDeveloperBatchLike,
 >(
-  args: StartGeminiDeveloperBatchTraceArgs<TBatch>,
-): Promise<GeminiDeveloperBatchTraceContext | undefined> {
-  const input = protectBatchFilePromise(args.input);
-  return await startGoogleGenAIBatchTrace({ ...args, input });
+  batches: GoogleGenAIBatchesCreateResource<TParams, TBatch>,
+): (
+  params: TParams,
+  traceOptions?: GoogleGenAIBatchesCreateTraceOptions,
+) => Promise<TBatch> {
+  ensureGoogleGenAIBatchInstrumentation();
+  return (params, traceOptions) => {
+    const inputFileContent = protectBatchFilePromise(
+      traceOptions?.inputFileContent,
+    );
+    return googleGenAIChannels.batchesCreateTraced.invoke(
+      () => batches.create(params),
+      batches,
+      [{ params, inputFileContent, parent: getSpanParentObject() }],
+      {},
+    ) as Promise<TBatch>;
+  };
 }
 
 /**
- * Complete Gemini Developer API batch spans from caller-supplied Batch API
- * data.
+ * Wrap `ai.batches.get` to update a previously started Google GenAI batch
+ * trace. Terminal inline batches are completed directly from
+ * `batch.dest.inlinedResponses`. File-backed batches remain pending until
+ * their downloaded output is passed to `completeGoogleGenAIBatchTrace`.
  *
- * This helper performs no Google API requests. Inline results are read from
- * `batch.dest.inlinedResponses`; file-backed results must be supplied through
- * `outputFile`. If `traceContext` is omitted or cannot be resumed, the helper
- * creates a collect-only trace under the active Braintrust parent. Persist the
- * returned `traceContext` and pass it to later retries so they update the same
- * spans even when they run under a different active parent.
+ * @example
+ * ```ts
+ * const batch = await googleGenAIBatchesGetTraced(ai.batches)({name});
+ * ```
  */
-export async function completeGeminiDeveloperBatchTrace<
+export function googleGenAIBatchesGetTraced<
+  TParams extends GeminiDeveloperBatchGetParams,
   TBatch extends GeminiDeveloperBatchLike,
 >(
-  args: CompleteGeminiDeveloperBatchTraceArgs<TBatch>,
-): Promise<CompleteGeminiDeveloperBatchTraceResult<TBatch>> {
-  const input = protectBatchFilePromise(args.input);
-  const outputFile = protectBatchFilePromise(args.outputFile);
+  batches: GoogleGenAIBatchesGetResource<TParams, TBatch>,
+): (params: TParams) => Promise<TBatch> {
+  ensureGoogleGenAIBatchInstrumentation();
+  return (params) =>
+    googleGenAIChannels.batchesGetTraced.invoke(
+      () => batches.get(params),
+      batches,
+      [{ params }],
+      {},
+    ) as Promise<TBatch>;
+}
 
-  const traceContext = await completeGoogleGenAIBatchTrace({
-    ...args,
-    input,
-    outputFile,
-  });
-  return {
-    batch: args.batch,
-    ...(traceContext ? { traceContext } : {}),
-  };
+/**
+ * Add caller-supplied results to a Google GenAI batch trace.
+ *
+ * This helper performs no Google API requests. When creation was traced in the
+ * same process, only the terminal batch and downloaded output are needed. For
+ * collect-only tracing in another process, also pass either `inlinedRequests`
+ * or the original `inputFileContent`.
+ */
+export async function completeGoogleGenAIBatchTrace<
+  TBatch extends GeminiDeveloperBatchLike,
+>(args: CompleteGoogleGenAIBatchTraceArgs<TBatch>): Promise<void> {
+  ensureGoogleGenAIBatchInstrumentation();
+  const inputFileContent = protectBatchFilePromise(args.inputFileContent);
+  const outputFileContent = protectBatchFilePromise(args.outputFileContent);
+  await googleGenAIChannels.batchesCompleteTrace.invoke(
+    async () => undefined,
+    undefined,
+    [{ ...args, inputFileContent, outputFileContent }],
+    {},
+  );
 }
