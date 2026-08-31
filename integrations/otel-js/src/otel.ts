@@ -45,6 +45,10 @@ const SYSTEM_ATTRIBUTE_NAMES = new Set([
   "braintrust.context_json",
 ]);
 
+const MAX_BAGGAGE_LENGTH = 8192;
+const MAX_BAGGAGE_MEMBERS = 180;
+const utf8Encoder = new TextEncoder();
+
 /**
  * Custom filter function type for span filtering.
  * @param span - The span to evaluate
@@ -1077,6 +1081,34 @@ export function parentFromHeaders(
     if (!propagation) {
       console.error("OTEL propagation API not available");
       return undefined;
+    }
+
+    // Older @opentelemetry/core versions do not bound inbound baggage before
+    // splitting it into entries. Keep this public helper safe for callers that
+    // use those supported peer versions, including non-HTTP transports without
+    // a server-level header-size limit.
+    for (const name of Object.keys(headers)) {
+      if (name.toLowerCase() !== "baggage") {
+        continue;
+      }
+      const value = headers[name];
+      if (
+        typeof value !== "string" ||
+        value.length > MAX_BAGGAGE_LENGTH ||
+        utf8Encoder.encode(value).length > MAX_BAGGAGE_LENGTH
+      ) {
+        return undefined;
+      }
+      let memberCount = 1;
+      for (let i = 0; i < value.length; i++) {
+        // 0x2c is the ASCII code for the comma separating baggage members.
+        if (value.charCodeAt(i) === 0x2c) {
+          memberCount++;
+          if (memberCount > MAX_BAGGAGE_MEMBERS) {
+            return undefined;
+          }
+        }
+      }
     }
 
     // Extract context from headers using W3C Trace Context propagator
