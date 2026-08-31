@@ -11,17 +11,25 @@ import {
   _exportsForTestingOnly,
   _internalGetGlobalState,
   Attachment,
+  getSpanParentObject,
   initLogger,
   startSpan,
   withCurrent,
 } from "../../logger";
 import { configureNode } from "../../node/config";
-import {
-  completeMistralBatchTrace,
-  failMistralBatchTrace,
-  startMistralBatchTrace,
-} from "../../mistral-batch";
+import type {
+  CompleteMistralBatchTraceImplArgs,
+  MistralBatchCreateParams,
+  MistralBatchLike,
+  PrepareMistralBatchTraceArgs,
+} from "../../mistral-batch-types";
 import { MistralPlugin } from "./mistral-plugin";
+import {
+  completeMistralBatchTraceImpl,
+  failMistralBatchCreateTraceImpl,
+  type MistralBatchCreateTrace,
+  prepareMistralBatchTraceImpl,
+} from "./mistral-batch-instrumentation";
 
 try {
   configureNode();
@@ -40,6 +48,34 @@ const requests = [
   },
 ];
 const BRAINTRUST_MISTRAL_BATCH_CONTEXT_KEY = "braintrust.batch_context";
+const tracesByParams = new WeakMap<object, MistralBatchCreateTrace>();
+
+async function prepareTraceForTest(args: PrepareMistralBatchTraceArgs) {
+  const trace = await prepareMistralBatchTraceImpl(args);
+  tracesByParams.set(trace.params, trace);
+  return trace.params;
+}
+
+async function completeTraceForTest<TBatch extends MistralBatchLike>(
+  args: CompleteMistralBatchTraceImplArgs<TBatch>,
+) {
+  const collectionContext = await completeMistralBatchTraceImpl(
+    args,
+    getSpanParentObject(),
+  );
+  return { batch: args.batch, collectionContext };
+}
+
+async function failPreparedTraceForTest(args: {
+  params: MistralBatchCreateParams;
+  error: unknown;
+  onTraceError?: (error: Error) => void | Promise<void>;
+}) {
+  const trace = tracesByParams.get(args.params);
+  if (trace) {
+    await failMistralBatchCreateTraceImpl(trace, args.error, args.onTraceError);
+  }
+}
 
 function success(customId: string, content: string) {
   return {
@@ -94,7 +130,7 @@ describe("Mistral Batch instrumentation", () => {
       model: "mistral-small-latest",
       metadata: { owner: "sdk" },
     };
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: { requests },
       params: sourceParams,
     });
@@ -139,7 +175,7 @@ describe("Mistral Batch instrumentation", () => {
 
   it("traces agent batches and records the resolved response model", async () => {
     const input = { requests: [requests[0]] };
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input,
       params: {
         endpoint: "/v1/chat/completions",
@@ -170,7 +206,7 @@ describe("Mistral Batch instrumentation", () => {
     });
     expect(startedChild?.metadata).not.toHaveProperty("model");
 
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-agent",
         endpoint: params.endpoint,
@@ -220,7 +256,7 @@ describe("Mistral Batch instrumentation", () => {
       },
     });
     await withCurrent(signedParent, () =>
-      startMistralBatchTrace({
+      prepareTraceForTest({
         input,
         params: {
           endpoint: "/v1/chat/completions",
@@ -241,7 +277,7 @@ describe("Mistral Batch instrumentation", () => {
       },
     });
     await withCurrent(collectParent, () =>
-      completeMistralBatchTrace({
+      completeTraceForTest({
         batch: {
           id: "batch-propagated-collect-only",
           endpoint: "/v1/chat/completions",
@@ -267,7 +303,7 @@ describe("Mistral Batch instrumentation", () => {
     });
     const traceErrors: Error[] = [];
 
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: {
         requests: [
           requests[0],
@@ -295,7 +331,7 @@ describe("Mistral Batch instrumentation", () => {
   });
 
   it("uses provider JSON semantics when correlating inline inputs", async () => {
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: {
         requests: [
           {
@@ -315,7 +351,7 @@ describe("Mistral Batch instrumentation", () => {
     });
     await backgroundLogger.drain();
 
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-json-semantics",
         endpoint: params.endpoint,
@@ -349,9 +385,9 @@ describe("Mistral Batch instrumentation", () => {
       .mockImplementation(() => {
         throw new Error("locale-dependent comparison was used");
       });
-    let params: Awaited<ReturnType<typeof startMistralBatchTrace>>;
+    let params: Awaited<ReturnType<typeof prepareTraceForTest>>;
     try {
-      params = await startMistralBatchTrace({
+      params = await prepareTraceForTest({
         input: {
           requests: [
             {
@@ -380,7 +416,7 @@ describe("Mistral Batch instrumentation", () => {
         throw new Error("locale-dependent comparison was used");
       });
     try {
-      await completeMistralBatchTrace({
+      await completeTraceForTest({
         batch: {
           id: "batch-unicode-keys",
           endpoint: params.endpoint,
@@ -431,7 +467,7 @@ describe("Mistral Batch instrumentation", () => {
     }
 
     const input = { requests: [requests[0]] };
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input,
       params: {
         endpoint: "/v1/chat/completions",
@@ -456,7 +492,7 @@ describe("Mistral Batch instrumentation", () => {
       succeededRequests: 1,
       failedRequests: 0,
     };
-    const completed = await completeMistralBatchTrace({
+    const completed = await completeTraceForTest({
       batch,
       input,
       outputContent: [success("one", "A")],
@@ -475,7 +511,7 @@ describe("Mistral Batch instrumentation", () => {
   it("keeps explicit batch tracing enabled when the Mistral plugin is disabled", async () => {
     plugin.disable();
 
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: { requests },
       params: {
         endpoint: "/v1/chat/completions",
@@ -490,7 +526,7 @@ describe("Mistral Batch instrumentation", () => {
   });
 
   it("supports multiple input files and preserves provider-ready ids", async () => {
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: {
         files: [
           {
@@ -533,7 +569,7 @@ describe("Mistral Batch instrumentation", () => {
         },
       ],
     };
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input,
       params: {
         endpoint: "/v1/chat/completions",
@@ -542,7 +578,7 @@ describe("Mistral Batch instrumentation", () => {
     });
     await backgroundLogger.drain();
 
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-response-input",
         endpoint: params.endpoint,
@@ -563,7 +599,7 @@ describe("Mistral Batch instrumentation", () => {
   });
 
   it("captures canonical tool configuration on batch children", async () => {
-    await startMistralBatchTrace({
+    await prepareTraceForTest({
       input: {
         requests: [
           {
@@ -613,7 +649,7 @@ describe("Mistral Batch instrumentation", () => {
   });
 
   it("completes signed spans out of order and returns the exact batch", async () => {
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: { requests },
       params: {
         endpoint: "/v1/chat/completions",
@@ -640,7 +676,7 @@ describe("Mistral Batch instrumentation", () => {
       outputs: [success("two", "B"), success("one", "A")],
     };
 
-    const returned = await completeMistralBatchTrace({
+    const returned = await completeTraceForTest({
       batch,
       input: { requests },
     });
@@ -690,7 +726,7 @@ describe("Mistral Batch instrumentation", () => {
         },
       ],
     };
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input,
       params: {
         endpoint: "/v1/chat/completions",
@@ -716,7 +752,7 @@ describe("Mistral Batch instrumentation", () => {
     };
     const outputContent = [success("attachment-input", "A")];
     for (let retry = 0; retry < 2; retry++) {
-      await completeMistralBatchTrace({ batch, input, outputContent });
+      await completeTraceForTest({ batch, input, outputContent });
       const rows = (await backgroundLogger.drain()) as Array<
         Record<string, any>
       >;
@@ -728,7 +764,7 @@ describe("Mistral Batch instrumentation", () => {
   });
 
   it("ends pending spans when submission fails", async () => {
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: { requests },
       params: {
         endpoint: "/v1/chat/completions",
@@ -737,9 +773,8 @@ describe("Mistral Batch instrumentation", () => {
     });
     await backgroundLogger.drain();
 
-    await failMistralBatchTrace({
+    await failPreparedTraceForTest({
       params,
-      input: { requests },
       error: new Error("submission rejected"),
     });
     const rows = (await backgroundLogger.drain()) as Array<Record<string, any>>;
@@ -748,43 +783,8 @@ describe("Mistral Batch instrumentation", () => {
     expect(rows.every((row) => row.error === "submission rejected")).toBe(true);
   });
 
-  it("reports mismatched file ids when submission fails", async () => {
-    const input = {
-      files: [
-        {
-          file: { id: "expected-file" },
-          content: [
-            { custom_id: requests[0].customId, body: requests[0].body },
-          ],
-        },
-      ],
-    };
-    const params = await startMistralBatchTrace({
-      input,
-      params: {
-        endpoint: "/v1/chat/completions",
-        model: "mistral-small-latest",
-      },
-    });
-    await backgroundLogger.drain();
-    const traceErrors: Error[] = [];
-
-    await failMistralBatchTrace({
-      params: { ...params, inputFiles: ["different-file"] },
-      input,
-      error: new Error("submission rejected"),
-      onTraceError: (error) => {
-        traceErrors.push(error);
-      },
-    });
-
-    expect(traceErrors).toHaveLength(1);
-    expect(traceErrors[0].message).toContain("file ids do not match");
-    expect(await backgroundLogger.drain()).toHaveLength(0);
-  });
-
   it("closes failed batches despite a provider request-count mismatch", async () => {
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: { requests },
       params: {
         endpoint: "/v1/chat/completions",
@@ -803,7 +803,7 @@ describe("Mistral Batch instrumentation", () => {
       (row) => row.span_attributes?.name === "mistral.batch",
     )?.id;
 
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-failed-count-mismatch",
         endpoint: params.endpoint,
@@ -832,7 +832,7 @@ describe("Mistral Batch instrumentation", () => {
   });
 
   it("closes every signed child when failed input reconstruction is partial", async () => {
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: { requests },
       params: {
         endpoint: "/v1/chat/completions",
@@ -846,7 +846,7 @@ describe("Mistral Batch instrumentation", () => {
       (row) => row.span_attributes?.name === "mistral.batch",
     )?.id;
 
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-failed-partial-input",
         endpoint: params.endpoint,
@@ -886,7 +886,7 @@ describe("Mistral Batch instrumentation", () => {
       completedAt: 2000,
     };
 
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch,
       input: { requests },
       outputContent: [success("one", "A"), success("two", "B")],
@@ -913,7 +913,7 @@ describe("Mistral Batch instrumentation", () => {
 
   it("rejects mismatched collect-only terminal batches", async () => {
     const countErrors: Error[] = [];
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-collect-only-failed-count-mismatch",
         endpoint: "/v1/chat/completions",
@@ -931,7 +931,7 @@ describe("Mistral Batch instrumentation", () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
     const fileErrors: Error[] = [];
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-collect-only-cancelled-file-mismatch",
         endpoint: "/v1/chat/completions",
@@ -960,7 +960,7 @@ describe("Mistral Batch instrumentation", () => {
   });
 
   it("falls back to collect-only for invalid tracing metadata", async () => {
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-invalid",
         endpoint: "/v1/chat/completions",
@@ -986,14 +986,12 @@ describe("Mistral Batch instrumentation", () => {
     const outputContent = [success("one", "A"), success("two", "B")];
 
     let collectionContext:
-      | Awaited<
-          ReturnType<typeof completeMistralBatchTrace>
-        >["collectionContext"]
+      | Awaited<ReturnType<typeof completeTraceForTest>>["collectionContext"]
       | undefined;
     const collectUnderParent = async (name: string) => {
       const parent = startSpan({ name });
       const result = await withCurrent(parent, () =>
-        completeMistralBatchTrace({
+        completeTraceForTest({
           batch,
           input: { requests },
           ...(collectionContext ? { collectionContext } : {}),
@@ -1071,12 +1069,10 @@ describe("Mistral Batch instrumentation", () => {
       },
     ];
     let collectionContext:
-      | Awaited<
-          ReturnType<typeof completeMistralBatchTrace>
-        >["collectionContext"]
+      | Awaited<ReturnType<typeof completeTraceForTest>>["collectionContext"]
       | undefined;
     const collectKeys = async () => {
-      const result = await completeMistralBatchTrace({
+      const result = await completeTraceForTest({
         batch,
         input,
         ...(collectionContext ? { collectionContext } : {}),
@@ -1124,7 +1120,7 @@ describe("Mistral Batch instrumentation", () => {
     const collectIds = async (name: string) => {
       const parent = startSpan({ name });
       await withCurrent(parent, () =>
-        completeMistralBatchTrace({
+        completeTraceForTest({
           batch,
           input: { requests },
           outputContent,
@@ -1142,7 +1138,7 @@ describe("Mistral Batch instrumentation", () => {
   });
 
   it("leaves a successful batch pending when choices are missing or malformed", async () => {
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: { requests },
       params: {
         endpoint: "/v1/chat/completions",
@@ -1151,7 +1147,7 @@ describe("Mistral Batch instrumentation", () => {
     });
     await backgroundLogger.drain();
 
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-malformed-result",
         endpoint: params.endpoint,
@@ -1177,7 +1173,7 @@ describe("Mistral Batch instrumentation", () => {
   });
 
   it("completes a fully correlated batch despite unrelated result records", async () => {
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: { requests },
       params: {
         endpoint: "/v1/chat/completions",
@@ -1187,7 +1183,7 @@ describe("Mistral Batch instrumentation", () => {
     await backgroundLogger.drain();
     const traceErrors: Error[] = [];
 
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-extra-results",
         endpoint: params.endpoint,
@@ -1217,7 +1213,7 @@ describe("Mistral Batch instrumentation", () => {
 
   it("creates pending collect-only children for missing success results", async () => {
     const traceErrors: Error[] = [];
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-collect-only-incomplete",
         endpoint: "/v1/chat/completions",
@@ -1258,7 +1254,7 @@ describe("Mistral Batch instrumentation", () => {
     }
 
     const input = { requests: [requests[0]] };
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input,
       params: {
         endpoint: "/v1/chat/completions",
@@ -1267,7 +1263,7 @@ describe("Mistral Batch instrumentation", () => {
     });
     await backgroundLogger.drain();
 
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-stop-after-correlation",
         endpoint: params.endpoint,
@@ -1301,7 +1297,7 @@ describe("Mistral Batch instrumentation", () => {
       }),
     );
     const input = { requests: [requests[0]] };
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input,
       params: {
         endpoint: "/v1/chat/completions",
@@ -1310,7 +1306,7 @@ describe("Mistral Batch instrumentation", () => {
     });
     await backgroundLogger.drain();
 
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-cancel-result-stream",
         endpoint: params.endpoint,
@@ -1328,7 +1324,7 @@ describe("Mistral Batch instrumentation", () => {
 
   it("bounds result records and reports truncated correlation", async () => {
     const input = { requests: [requests[0]] };
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input,
       params: {
         endpoint: "/v1/chat/completions",
@@ -1338,7 +1334,7 @@ describe("Mistral Batch instrumentation", () => {
     await backgroundLogger.drain();
 
     const traceErrors: Error[] = [];
-    await completeMistralBatchTrace({
+    await completeTraceForTest({
       batch: {
         id: "batch-result-record-limit",
         endpoint: params.endpoint,
@@ -1371,7 +1367,7 @@ describe("Mistral Batch instrumentation", () => {
     }));
 
     const traceErrors: Error[] = [];
-    const params = await startMistralBatchTrace({
+    const params = await prepareTraceForTest({
       input: { requests: oversizedRequests },
       params: {
         endpoint: "/v1/chat/completions",

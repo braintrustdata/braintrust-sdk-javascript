@@ -26,14 +26,12 @@ import {
   type SpanComponentsV4Data,
 } from "../../../util/span_identifier_v4";
 import type {
-  CompleteMistralBatchTraceArgs,
-  FailMistralBatchTraceArgs,
+  CompleteMistralBatchTraceImplArgs,
   MistralBatchCreateParams,
   MistralBatchCollectionContext,
   MistralBatchInput,
   MistralBatchLike,
-  MistralBatchTraceCollection,
-  StartMistralBatchTraceArgs,
+  PrepareMistralBatchTraceArgs,
 } from "../../mistral-batch-types";
 import {
   extractMistralChatInput,
@@ -53,7 +51,7 @@ const TERMINAL_STATUSES = new Set([
 const INPUT_DIGEST_CHUNK_SIZE = 1024 * 1024;
 const MAX_JSONL_LINE_LENGTH = 16 * 1024 * 1024;
 const MAX_CORRELATION_REQUESTS = 100_000;
-const MAX_CORRELATION_BYTES = 32 * 1024 * 1024;
+export const MISTRAL_BATCH_MAX_CORRELATION_BYTES = 32 * 1024 * 1024;
 const MAX_RESULT_BYTES = 512 * 1024 * 1024;
 const MAX_CONTEXT_LENGTH = 2048;
 const MAX_RECORDED_ISSUES = 16;
@@ -113,6 +111,11 @@ type PreparedBatch = {
   inputs: Map<string, BatchInputRecord>;
   params: MistralBatchCreateParams;
   startParent: string;
+};
+
+export type MistralBatchCreateTrace = {
+  params: MistralBatchCreateParams;
+  prepared?: PreparedBatch;
 };
 
 type CollectOnlyBatch = {
@@ -736,7 +739,7 @@ async function readBatchInputs(input: MistralBatchInput): Promise<InputData> {
     const canonicalBytes = utf8ByteLength(canonicalRecord);
     if (
       canonicalBytes > MAX_JSONL_LINE_LENGTH ||
-      correlationBytes + canonicalBytes > MAX_CORRELATION_BYTES
+      correlationBytes + canonicalBytes > MISTRAL_BATCH_MAX_CORRELATION_BYTES
     ) {
       recordIssue(
         issues,
@@ -830,7 +833,7 @@ async function readBatchInputs(input: MistralBatchInput): Promise<InputData> {
 }
 
 function providerReadyParams(
-  args: StartMistralBatchTraceArgs,
+  args: PrepareMistralBatchTraceArgs,
 ): MistralBatchCreateParams {
   return "files" in args.input
     ? {
@@ -841,7 +844,7 @@ function providerReadyParams(
 }
 
 async function prepareCreateParams(
-  args: StartMistralBatchTraceArgs,
+  args: PrepareMistralBatchTraceArgs,
   parent: ReturnType<typeof getSpanParentObject>,
   startTime: number,
 ): Promise<PreparedBatch | undefined> {
@@ -1152,9 +1155,9 @@ async function startPreparedBatch(prepared: PreparedBatch): Promise<void> {
   }
 }
 
-export async function startMistralBatchTraceImpl(
-  args: StartMistralBatchTraceArgs,
-): Promise<MistralBatchCreateParams> {
+export async function prepareMistralBatchTraceImpl(
+  args: PrepareMistralBatchTraceArgs,
+): Promise<MistralBatchCreateTrace> {
   const parent = getSpanParentObject();
   const startTime = getCurrentUnixTimestamp();
   let prepared: PreparedBatch | undefined;
@@ -1171,11 +1174,11 @@ export async function startMistralBatchTraceImpl(
   }
 
   if (!prepared) {
-    return providerReadyParams(args);
+    return { params: providerReadyParams(args) };
   }
   try {
     await startPreparedBatch(prepared);
-    return prepared.params;
+    return { params: prepared.params, prepared };
   } catch (error) {
     reportBatchTraceError(
       args.onTraceError,
@@ -1184,7 +1187,7 @@ export async function startMistralBatchTraceImpl(
         ? error
         : new Error("Mistral Batch tracing could not start spans"),
     );
-    return providerReadyParams(args);
+    return { params: providerReadyParams(args) };
   }
 }
 
@@ -1535,7 +1538,7 @@ function sameStrings(left: unknown, right: string[]): boolean {
 }
 
 async function completeBatch(
-  args: CompleteMistralBatchTraceArgs<MistralBatchLike>,
+  args: CompleteMistralBatchTraceImplArgs<MistralBatchLike>,
   parent: ReturnType<typeof getSpanParentObject>,
   collectionTime: number,
 ): Promise<void> {
@@ -1789,9 +1792,9 @@ async function completeBatch(
 export async function completeMistralBatchTraceImpl<
   TBatch extends MistralBatchLike,
 >(
-  args: CompleteMistralBatchTraceArgs<TBatch>,
+  args: CompleteMistralBatchTraceImplArgs<TBatch>,
   parent: ReturnType<typeof getSpanParentObject>,
-): Promise<MistralBatchTraceCollection<TBatch>> {
+): Promise<MistralBatchCollectionContext | undefined> {
   const collectionTime = getCurrentUnixTimestamp();
   const suppliedCollectionContext = args.collectionContext;
   let collectionContext: MistralBatchCollectionContext | undefined;
@@ -1837,10 +1840,7 @@ export async function completeMistralBatchTraceImpl<
         : new Error("Mistral Batch tracing could not complete the batch"),
     );
   }
-  return {
-    batch: args.batch,
-    ...(collectionContext ? { collectionContext } : {}),
-  };
+  return collectionContext;
 }
 
 function normalizeError(error: unknown): Error {
@@ -1850,55 +1850,16 @@ function normalizeError(error: unknown): Error {
   return new Error(typeof error === "string" ? error : "Mistral Batch failed");
 }
 
-async function failBatch(args: FailMistralBatchTraceArgs): Promise<void> {
-  const inputData = await readBatchInputs(args.input);
-  if (inputData.issues.length > 0) {
-    reportBatchTraceError(
-      args.onTraceError,
-      "could not reconstruct failed batch input",
-      inputData.issues[0],
-    );
-    return;
-  }
-  const metadata = read(args.params, "metadata");
-  const bindings = batchBindings(
-    inputData,
-    read(args.params, "endpoint"),
-    read(args.params, "model"),
-    read(args.params, "agentId"),
-  );
-  if (!bindings || !hasReservedContext(metadata)) {
-    return;
-  }
-  const context = await parseBatchContext(
-    read(metadata, BRAINTRUST_MISTRAL_BATCH_CONTEXT_KEY),
-    bindings,
-  );
-  if (!context || context.inputDigest !== inputData.inputDigest) {
-    reportBatchTraceError(
-      args.onTraceError,
-      "could not verify failed batch context",
-      new Error("Mistral Batch tracing context does not match the input"),
-    );
-    return;
-  }
-  if (
-    inputData.inputKind === "files" &&
-    !sameStrings(read(args.params, "inputFiles"), inputData.inputFileIds)
-  ) {
-    reportBatchTraceError(
-      args.onTraceError,
-      "could not verify failed batch files",
-      new Error("Mistral Batch tracing file ids do not match the input"),
-    );
-    return;
-  }
-
+async function failPreparedBatch(
+  prepared: PreparedBatch,
+  failure: unknown,
+): Promise<void> {
+  const { context, inputs } = prepared;
   const endTime = Math.max(getCurrentUnixTimestamp(), context.startTime);
-  const error = normalizeError(args.error);
+  const error = normalizeError(failure);
   const task = await resumeBatchSpan(context);
   const taskParent = await task.export();
-  for (const input of inputData.inputs.values()) {
+  for (const input of inputs.values()) {
     try {
       const child = await resumeBatchChild(context, taskParent, input);
       child.log({ error });
@@ -1911,14 +1872,19 @@ async function failBatch(args: FailMistralBatchTraceArgs): Promise<void> {
   task.end({ endTime });
 }
 
-export async function failMistralBatchTraceImpl(
-  args: FailMistralBatchTraceArgs,
+export async function failMistralBatchCreateTraceImpl(
+  trace: MistralBatchCreateTrace,
+  failure: unknown,
+  onTraceError?: (error: Error) => void | Promise<void>,
 ): Promise<void> {
+  if (!trace.prepared) {
+    return;
+  }
   try {
-    await failBatch(args);
+    await failPreparedBatch(trace.prepared, failure);
   } catch (error) {
     reportBatchTraceError(
-      args.onTraceError,
+      onTraceError,
       "could not fail batch",
       error instanceof Error
         ? error

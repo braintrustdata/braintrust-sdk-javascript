@@ -9,25 +9,17 @@ export type MistralBatchJSONLSource =
   | MistralBatchJSONLContent
   | PromiseLike<MistralBatchJSONLContent>;
 
-/**
- * Repeatable input content. Use a factory for one-shot sources such as a
- * Response, ReadableStream, generator, or async iterable because start and
- * completion may read the input in different processes or at different times.
- */
 export type MistralBatchInputFileContent =
-  | string
-  | ReadonlyArray<unknown>
+  | MistralBatchJSONLSource
   | (() => MistralBatchJSONLSource);
 
 export interface MistralBatchFileLike {
   id: string;
-  [key: string]: unknown;
 }
 
 export interface MistralBatchRequestLike {
   customId: string;
   body: Record<string, unknown>;
-  [key: string]: unknown;
 }
 
 export type MistralBatchInput =
@@ -39,20 +31,17 @@ export type MistralBatchInput =
     }
   | { requests: ReadonlyArray<MistralBatchRequestLike> };
 
-interface MistralBatchCreateInputParamsBase {
+interface MistralBatchCreateParamsBase {
   endpoint: "/v1/chat/completions";
   metadata?: Record<string, string> | null;
   timeoutHours?: number;
-  [key: string]: unknown;
 }
 
-export type MistralBatchCreateInputParams = MistralBatchCreateInputParamsBase &
-  ({ model: string; agentId?: never } | { agentId: string; model?: never });
-
-export type MistralBatchCreateParams = MistralBatchCreateInputParams & {
-  inputFiles?: string[];
-  requests?: MistralBatchRequestLike[];
-};
+export type MistralBatchCreateParams = MistralBatchCreateParamsBase &
+  ({ model: string; agentId?: never } | { agentId: string; model?: never }) & {
+    inputFiles?: string[] | null;
+    requests?: MistralBatchRequestLike[] | null;
+  };
 
 export interface MistralBatchLike {
   id: string;
@@ -74,11 +63,26 @@ export interface MistralBatchLike {
   failedRequests?: number;
 }
 
-export interface StartMistralBatchTraceArgs {
-  input: MistralBatchInput;
-  params: MistralBatchCreateInputParams;
-  onTraceError?: (error: Error) => void | Promise<void>;
+export interface MistralFilesResource<TParams, TFile, TOptions> {
+  upload(params: TParams, options?: TOptions): Promise<TFile>;
 }
+
+export interface MistralBatchJobsResource<TParams, TBatch, TOptions> {
+  create(params: TParams, options?: TOptions): Promise<TBatch>;
+}
+
+export type MistralBatchCompletionInput =
+  | {
+      requests: ReadonlyArray<MistralBatchRequestLike>;
+      inputFileContents?: never;
+    }
+  | {
+      inputFileContents: ReadonlyArray<{
+        fileId: string;
+        content: MistralBatchInputFileContent;
+      }>;
+      requests?: never;
+    };
 
 /** Opaque context that keeps collect-only retries on the same trace. */
 export interface MistralBatchCollectionContext {
@@ -86,26 +90,28 @@ export interface MistralBatchCollectionContext {
   readonly value: string;
 }
 
-export interface MistralBatchTraceCollection<TBatch extends MistralBatchLike> {
+export type CompleteMistralBatchTraceArgs<TBatch extends MistralBatchLike> = {
   batch: TBatch;
+  outputFileContent?: MistralBatchJSONLSource;
+  errorFileContent?: MistralBatchJSONLSource;
+  /** Required when retrying a collect-only completion. */
   collectionContext?: MistralBatchCollectionContext;
+  onTraceError?: (error: Error) => void | Promise<void>;
+} & MistralBatchCompletionInput;
+
+export interface PrepareMistralBatchTraceArgs {
+  input: MistralBatchInput;
+  params: MistralBatchCreateParams;
+  onTraceError?: (error: Error) => void | Promise<void>;
 }
 
-export interface CompleteMistralBatchTraceArgs<
+export interface CompleteMistralBatchTraceImplArgs<
   TBatch extends MistralBatchLike,
 > {
   batch: TBatch;
   input: MistralBatchInput;
   outputContent?: MistralBatchJSONLSource;
   errorContent?: MistralBatchJSONLSource;
-  /** Required when retrying a collect-only completion. */
   collectionContext?: MistralBatchCollectionContext;
-  onTraceError?: (error: Error) => void | Promise<void>;
-}
-
-export interface FailMistralBatchTraceArgs {
-  params: MistralBatchCreateParams;
-  input: MistralBatchInput;
-  error: unknown;
   onTraceError?: (error: Error) => void | Promise<void>;
 }

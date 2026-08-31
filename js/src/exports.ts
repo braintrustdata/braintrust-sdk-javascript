@@ -131,24 +131,9 @@ export { registerSandbox } from "./sandbox";
 
 export {
   completeMistralBatchTrace,
-  failMistralBatchTrace,
-  startMistralBatchTrace,
+  mistralBatchJobsCreateTraced,
+  mistralFilesUploadTraced,
 } from "./mistral-batch";
-export type {
-  CompleteMistralBatchTraceArgs,
-  FailMistralBatchTraceArgs,
-  MistralBatchCreateInputParams,
-  MistralBatchCreateParams,
-  MistralBatchCollectionContext,
-  MistralBatchFileLike,
-  MistralBatchInput,
-  MistralBatchInputFileContent,
-  MistralBatchJSONLSource,
-  MistralBatchLike,
-  MistralBatchTraceCollection,
-  MistralBatchRequestLike,
-  StartMistralBatchTraceArgs,
-} from "./mistral-batch-types";
 
 export {
   completeOpenAIBatchTrace,

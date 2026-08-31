@@ -1,6 +1,7 @@
 import {
   completeMistralBatchTrace,
-  startMistralBatchTrace,
+  mistralBatchJobsCreateTraced,
+  mistralFilesUploadTraced,
   wrapMistral,
 } from "braintrust";
 import {
@@ -488,32 +489,30 @@ async function runMistralInstrumentationScenario(
                 },
               },
             ];
-            const input = {
-              files: [
-                {
-                  file: { id: "mistral-batch-input-file" },
-                  content: records,
-                },
-              ],
-            };
-            const params = supportsSignedBatch
-              ? await startMistralBatchTrace({
-                  input,
-                  params: {
-                    endpoint: "/v1/chat/completions",
-                    model: CHAT_MODEL,
+            const inputFile = supportsSignedBatch
+              ? await mistralFilesUploadTraced({
+                  async upload() {
+                    return { id: "mistral-batch-input-file" };
                   },
+                })({
+                  file: new Blob([
+                    records.map((record) => JSON.stringify(record)).join("\n"),
+                  ]),
+                  purpose: "batch",
                 })
-              : {
-                  inputFiles: ["mistral-batch-input-file"],
-                  endpoint: "/v1/chat/completions",
-                  model: CHAT_MODEL,
-                };
-            const batch = await batchClient.batch.jobs.create(params);
+              : { id: "mistral-batch-input-file" };
+            const createBatch = supportsSignedBatch
+              ? mistralBatchJobsCreateTraced(batchClient.batch.jobs)
+              : batchClient.batch.jobs.create.bind(batchClient.batch.jobs);
+            const batch = await createBatch({
+              inputFiles: [inputFile.id],
+              endpoint: "/v1/chat/completions",
+              model: CHAT_MODEL,
+            });
             await completeMistralBatchTrace({
               batch,
-              input,
-              outputContent: [
+              inputFileContents: [{ fileId: inputFile.id, content: records }],
+              outputFileContent: [
                 batchResult("file-two", "file batch 2"),
                 batchResult("file-one", "file batch 1"),
               ],
@@ -526,33 +525,30 @@ async function runMistralInstrumentationScenario(
             "mistral-batch-inline-operation",
             "batch-inline",
             async () => {
-              const input = {
-                requests: [
-                  {
-                    customId: "inline-one",
-                    body: {
-                      messages: [{ role: "user", content: "inline batch one" }],
-                    },
+              const requests = [
+                {
+                  customId: "inline-one",
+                  body: {
+                    messages: [{ role: "user", content: "inline batch one" }],
                   },
-                  {
-                    customId: "inline-two",
-                    body: {
-                      messages: [{ role: "user", content: "inline batch two" }],
-                    },
-                  },
-                ],
-              };
-              const params = await startMistralBatchTrace({
-                input,
-                params: {
-                  endpoint: "/v1/chat/completions",
-                  model: CHAT_MODEL,
                 },
+                {
+                  customId: "inline-two",
+                  body: {
+                    messages: [{ role: "user", content: "inline batch two" }],
+                  },
+                },
+              ];
+              const batch = await mistralBatchJobsCreateTraced(
+                batchClient.batch.jobs,
+              )({
+                requests,
+                endpoint: "/v1/chat/completions",
+                model: CHAT_MODEL,
               });
-              const batch = await batchClient.batch.jobs.create(params);
               await completeMistralBatchTrace({
                 batch,
-                input,
+                requests,
               });
             },
           );
