@@ -25,7 +25,7 @@ span_tree:
     │           "finishReason": "stop",
     │           "index": 0,
     │           "message": {
-    │             "content": "observability",
+    │             "content": "Observability",
     │             "prefix": false,
     │             "role": "assistant",
     │             "toolCalls": null
@@ -36,7 +36,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:1>",
     │         "maxTokens": 24,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion",
     │         "provider": "mistral",
     │         "temperature": 0
@@ -44,9 +44,9 @@ span_tree:
     │       metrics: {
     │         "completion_tokens": 3,
     │         "prompt_cached_tokens": 0,
-    │         "prompt_tokens": 21,
+    │         "prompt_tokens": 33,
     │         "time_to_first_token": 0,
-    │         "tokens": 24
+    │         "tokens": 36
     │       }
     ├── mistral-chat-stream-operation
     │   metadata: {
@@ -74,7 +74,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:1>",
     │         "maxTokens": 24,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion.chunk",
     │         "provider": "mistral",
     │         "stream": true,
@@ -83,9 +83,9 @@ span_tree:
     │       metrics: {
     │         "completion_tokens": 4,
     │         "prompt_cached_tokens": 0,
-    │         "prompt_tokens": 10,
+    │         "prompt_tokens": 22,
     │         "time_to_first_token": 0,
-    │         "tokens": 14
+    │         "tokens": 26
     │       }
     ├── mistral-chat-reasoning-stream-operation
     │   metadata: {
@@ -204,7 +204,7 @@ span_tree:
     │   │     "created": 0,
     │   │     "id": "<span:1>",
     │   │     "maxTokens": 48,
-    │   │     "model": "mistral-small-2506",
+    │   │     "model": "mistral-small-latest",
     │   │     "object": "chat.completion",
     │   │     "provider": "mistral",
     │   │     "temperature": 0,
@@ -212,10 +212,10 @@ span_tree:
     │   │   }
     │   │   metrics: {
     │   │     "completion_tokens": 13,
-    │   │     "prompt_cached_tokens": 0,
-    │   │     "prompt_tokens": 91,
+    │   │     "prompt_cached_tokens": 80,
+    │   │     "prompt_tokens": 103,
     │   │     "time_to_first_token": 0,
-    │   │     "tokens": 104
+    │   │     "tokens": 116
     │   │   }
     │   ├── mistral.chat.complete [llm]
     │   │   input: [
@@ -250,7 +250,7 @@ span_tree:
     │   │     "created": 0,
     │   │     "id": "<span:1>",
     │   │     "maxTokens": 48,
-    │   │     "model": "mistral-small-2506",
+    │   │     "model": "mistral-small-latest",
     │   │     "object": "chat.completion",
     │   │     "provider": "mistral",
     │   │     "temperature": 0,
@@ -259,9 +259,9 @@ span_tree:
     │   │   metrics: {
     │   │     "completion_tokens": 22,
     │   │     "prompt_cached_tokens": 0,
-    │   │     "prompt_tokens": 125,
+    │   │     "prompt_tokens": 137,
     │   │     "time_to_first_token": 0,
-    │   │     "tokens": 147
+    │   │     "tokens": 159
     │   │   }
     │   └── mistral.chat.complete [llm]
     │       input: [
@@ -309,7 +309,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:1>",
     │         "maxTokens": 96,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion",
     │         "provider": "mistral",
     │         "temperature": 0,
@@ -318,9 +318,9 @@ span_tree:
     │       metrics: {
     │         "completion_tokens": 34,
     │         "prompt_cached_tokens": 0,
-    │         "prompt_tokens": 219,
+    │         "prompt_tokens": 231,
     │         "time_to_first_token": 0,
-    │         "tokens": 253
+    │         "tokens": 265
     │       }
     ├── mistral-fim-complete-operation
     │   metadata: {
@@ -369,7 +369,7 @@ span_tree:
     │           "finishReason": "length",
     │           "index": 0,
     │           "message": {
-    │             "content": "{\n  name: 'project',\n  title: 'Projects',\n  type:",
+    │             "content": "{\n  name: 'project',\n  title: 'Project',\n  type:",
     │             "role": "assistant"
     │           }
     │         }
@@ -408,7 +408,7 @@ span_tree:
     │           "finishReason": "stop",
     │           "index": 0,
     │           "message": {
-    │             "content": "Agent complete.",
+    │             "content": "Agent complete",
     │             "prefix": false,
     │             "role": "assistant",
     │             "toolCalls": null
@@ -420,7 +420,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:2>",
     │         "maxTokens": 16,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion",
     │         "provider": "mistral",
     │         "responseFormat": {
@@ -429,11 +429,11 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_tokens": 4,
+    │         "completion_tokens": 3,
     │         "prompt_cached_tokens": 0,
-    │         "prompt_tokens": 21,
+    │         "prompt_tokens": 33,
     │         "time_to_first_token": 0,
-    │         "tokens": 25
+    │         "tokens": 36
     │       }
     ├── mistral-agents-tool-call-operation
     │   metadata: {
@@ -474,7 +474,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:2>",
     │         "maxTokens": 32,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion",
     │         "provider": "mistral",
     │         "responseFormat": {
@@ -485,10 +485,10 @@ span_tree:
     │       }
     │       metrics: {
     │         "completion_tokens": 14,
-    │         "prompt_cached_tokens": 64,
-    │         "prompt_tokens": 107,
+    │         "prompt_cached_tokens": 96,
+    │         "prompt_tokens": 119,
     │         "time_to_first_token": 0,
-    │         "tokens": 121
+    │         "tokens": 133
     │       }
     ├── mistral-agents-stream-operation
     │   metadata: {
@@ -507,7 +507,7 @@ span_tree:
     │           "finishReason": "stop",
     │           "index": 0,
     │           "message": {
-    │             "content": "Understood.",
+    │             "content": "Agent stream",
     │             "role": "assistant"
     │           }
     │         }
@@ -517,7 +517,7 @@ span_tree:
     │         "created": 0,
     │         "id": "<span:2>",
     │         "maxTokens": 16,
-    │         "model": "mistral-small-2506",
+    │         "model": "mistral-small-latest",
     │         "object": "chat.completion.chunk",
     │         "provider": "mistral",
     │         "responseFormat": {
@@ -527,11 +527,11 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_tokens": 4,
+    │         "completion_tokens": 3,
     │         "prompt_cached_tokens": 0,
-    │         "prompt_tokens": 21,
+    │         "prompt_tokens": 33,
     │         "time_to_first_token": 0,
-    │         "tokens": 25
+    │         "tokens": 36
     │       }
     ├── mistral-embeddings-operation
     │   metadata: {
@@ -577,17 +577,17 @@ span_tree:
     │             "violence_and_threats": false
     │           },
     │           "categoryScores": {
-    │             "criminal": 0.00806199200451374,
-    │             "dangerous": 0.005911068990826607,
-    │             "financial": 0.00011591934162424877,
-    │             "hate_and_discrimination": 0.0023231625091284513,
-    │             "health": 0.0003799845289904624,
-    │             "jailbreaking": 0.018689308315515518,
+    │             "criminal": 0.007937993854284286,
+    │             "dangerous": 0.005730246659368277,
+    │             "financial": 0.00011235327838221565,
+    │             "hate_and_discrimination": 0.002251847181469202,
+    │             "health": 0.00036259007174521685,
+    │             "jailbreaking": 0.019271135330200195,
     │             "law": 0.00020342697098385543,
     │             "pii": 0.001098731067031622,
     │             "selfharm": 0.0006361911655403674,
-    │             "sexual": 0.0031236486975103617,
-    │             "violence_and_threats": 0.004609572701156139
+    │             "sexual": 0.0030278353951871395,
+    │             "violence_and_threats": 0.0045384312979876995
     │           }
     │         }
     │       ]
@@ -624,17 +624,17 @@ span_tree:
                   "violence_and_threats": false
                 },
                 "categoryScores": {
-                  "criminal": 0.000755405577365309,
-                  "dangerous": 0.00022693384380545467,
-                  "financial": 0.00006402006692951545,
-                  "hate_and_discrimination": 0.0007096704212017357,
+                  "criminal": 0.0007672925130464137,
+                  "dangerous": 0.00023050671734381467,
+                  "financial": 0.00006605214002775028,
+                  "hate_and_discrimination": 0.0007208380266092718,
                   "health": 0.00008481103577651083,
-                  "jailbreaking": 0.0030278353951871395,
+                  "jailbreaking": 0.0031236486975103617,
                   "law": 0.00011235327838221565,
-                  "pii": 0.000552778597921133,
-                  "selfharm": 0.00004133539550821297,
+                  "pii": 0.0005703156930394471,
+                  "selfharm": 0.00004264746530679986,
                   "sexual": 0.0003799845289904624,
-                  "violence_and_threats": 0.00024923254386521876
+                  "violence_and_threats": 0.0002531563804950565
                 }
               }
             ]

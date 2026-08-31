@@ -324,14 +324,9 @@ async function getDataset(
       _internal_btql: data._internal_btql ?? undefined,
     });
   } else if ("dataset_id" in data) {
-    const datasetInfo = await getDatasetById({
-      state,
-      datasetId: data.dataset_id,
-    });
     return initDataset({
       state,
-      projectId: datasetInfo.projectId,
-      dataset: datasetInfo.dataset,
+      datasetId: data.dataset_id,
       version: data.dataset_version ?? undefined,
       environment: data.dataset_environment ?? undefined,
       _internal_btql: data._internal_btql ?? undefined,
@@ -342,27 +337,6 @@ async function getDataset(
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return data.data as EvalCase<unknown, unknown, BaseMetadata>[];
   }
-}
-
-const datasetFetchSchema = z.object({
-  project_id: z.string(),
-  name: z.string(),
-});
-async function getDatasetById({
-  state,
-  datasetId,
-}: {
-  state: BraintrustState;
-  datasetId: string;
-}): Promise<{ projectId: string; dataset: string }> {
-  const dataset = await state.appConn().post_json("api/dataset/get", {
-    id: datasetId,
-  });
-  const parsed = z.array(datasetFetchSchema).parse(dataset);
-  if (parsed.length === 0) {
-    throw new Error(`Dataset '${datasetId}' not found`);
-  }
-  return { projectId: parsed[0].project_id, dataset: parsed[0].name };
 }
 
 function makeScorer(

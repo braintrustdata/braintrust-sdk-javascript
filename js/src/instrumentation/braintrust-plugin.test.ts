@@ -1460,13 +1460,13 @@ describe("aggregateChatCompletionChunks", () => {
   it("should aggregate simple text chunks", () => {
     const chunks = [
       {
-        choices: [{ delta: { role: "assistant", content: "Hello" } }],
+        choices: [{ index: 0, delta: { role: "assistant", content: "Hello" } }],
       },
       {
-        choices: [{ delta: { content: " world" } }],
+        choices: [{ index: 0, delta: { content: " world" } }],
       },
       {
-        choices: [{ delta: { content: "!" } }],
+        choices: [{ index: 0, delta: { content: "!" } }],
       },
     ];
 
@@ -1490,10 +1490,10 @@ describe("aggregateChatCompletionChunks", () => {
   it("should extract role from first chunk", () => {
     const chunks = [
       {
-        choices: [{ delta: { role: "assistant" } }],
+        choices: [{ index: 0, delta: { role: "assistant" } }],
       },
       {
-        choices: [{ delta: { content: "Hi" } }],
+        choices: [{ index: 0, delta: { content: "Hi" } }],
       },
     ];
 
@@ -1505,10 +1505,10 @@ describe("aggregateChatCompletionChunks", () => {
   it("should extract finish_reason from last chunk with it", () => {
     const chunks = [
       {
-        choices: [{ delta: { role: "assistant", content: "Done" } }],
+        choices: [{ index: 0, delta: { role: "assistant", content: "Done" } }],
       },
       {
-        choices: [{ delta: { finish_reason: "stop" } }],
+        choices: [{ index: 0, delta: { finish_reason: "stop" } }],
       },
     ];
 
@@ -1522,10 +1522,12 @@ describe("aggregateChatCompletionChunks", () => {
       {
         choices: [
           {
+            index: 0,
             delta: {
               role: "assistant",
               tool_calls: [
                 {
+                  index: 0,
                   id: "call_1",
                   type: "function",
                   function: { name: "get_weather", arguments: '{"loc' },
@@ -1538,9 +1540,11 @@ describe("aggregateChatCompletionChunks", () => {
       {
         choices: [
           {
+            index: 0,
             delta: {
               tool_calls: [
                 {
+                  index: 0,
                   function: { arguments: 'ation":"' },
                 },
               ],
@@ -1551,9 +1555,11 @@ describe("aggregateChatCompletionChunks", () => {
       {
         choices: [
           {
+            index: 0,
             delta: {
               tool_calls: [
                 {
+                  index: 0,
                   function: { arguments: 'NYC"}' },
                 },
               ],
@@ -1579,10 +1585,12 @@ describe("aggregateChatCompletionChunks", () => {
       {
         choices: [
           {
+            index: 0,
             delta: {
               role: "assistant",
               tool_calls: [
                 {
+                  index: 0,
                   id: "call_1",
                   type: "function",
                   function: { name: "tool1", arguments: '{"a":' },
@@ -1595,9 +1603,11 @@ describe("aggregateChatCompletionChunks", () => {
       {
         choices: [
           {
+            index: 0,
             delta: {
               tool_calls: [
                 {
+                  index: 0,
                   function: { arguments: "1}" },
                 },
               ],
@@ -1608,9 +1618,11 @@ describe("aggregateChatCompletionChunks", () => {
       {
         choices: [
           {
+            index: 0,
             delta: {
               tool_calls: [
                 {
+                  index: 1,
                   id: "call_2",
                   type: "function",
                   function: { name: "tool2", arguments: '{"b":' },
@@ -1623,9 +1635,11 @@ describe("aggregateChatCompletionChunks", () => {
       {
         choices: [
           {
+            index: 0,
             delta: {
               tool_calls: [
                 {
+                  index: 1,
                   function: { arguments: "2}" },
                 },
               ],
@@ -1654,10 +1668,10 @@ describe("aggregateChatCompletionChunks", () => {
   it("should parse usage metrics from chunks", () => {
     const chunks = [
       {
-        choices: [{ delta: { role: "assistant", content: "Hi" } }],
+        choices: [{ index: 0, delta: { role: "assistant", content: "Hi" } }],
       },
       {
-        choices: [{ delta: { content: "!" } }],
+        choices: [{ index: 0, delta: { content: "!" } }],
         usage: {
           prompt_tokens: 10,
           completion_tokens: 2,
@@ -1678,13 +1692,13 @@ describe("aggregateChatCompletionChunks", () => {
   it("should merge usage from multiple chunks", () => {
     const chunks = [
       {
-        choices: [{ delta: { role: "assistant" } }],
+        choices: [{ index: 0, delta: { role: "assistant" } }],
         usage: {
           prompt_tokens: 10,
         },
       },
       {
-        choices: [{ delta: { content: "Hi" } }],
+        choices: [{ index: 0, delta: { content: "Hi" } }],
         usage: {
           completion_tokens: 5,
           total_tokens: 15,
@@ -1724,7 +1738,7 @@ describe("aggregateChatCompletionChunks", () => {
       {},
       { choices: null },
       { choices: [] },
-      { choices: [{ delta: { content: "Hi" } }] },
+      { choices: [{ index: 0, delta: { content: "Hi" } }] },
     ];
 
     const result = aggregateChatCompletionChunks(chunks as any);
@@ -1755,6 +1769,7 @@ describe("aggregateChatCompletionChunks", () => {
       {
         choices: [
           {
+            index: 0,
             delta: {
               role: "assistant",
               content: "Let me check",
@@ -1765,9 +1780,11 @@ describe("aggregateChatCompletionChunks", () => {
       {
         choices: [
           {
+            index: 0,
             delta: {
               tool_calls: [
                 {
+                  index: 0,
                   id: "call_1",
                   type: "function",
                   function: { name: "check", arguments: "{}" },
@@ -1778,7 +1795,7 @@ describe("aggregateChatCompletionChunks", () => {
         ],
       },
       {
-        choices: [{ delta: { finish_reason: "tool_calls" } }],
+        choices: [{ index: 0, delta: { finish_reason: "tool_calls" } }],
       },
     ];
 

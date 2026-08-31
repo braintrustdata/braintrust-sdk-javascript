@@ -113,6 +113,8 @@ function getTimeElapsed(end?: string, start?: string): number | undefined {
  *       If `undefined`, the current span, experiment, or logger will be selected exactly as in `startSpan`.
  *     - maxTraces: Maximum number of concurrent traces to keep in memory (default: 1000).
  *       When exceeded, oldest traces are evicted using LRU policy.
+ *
+ * @deprecated Import `OpenAIAgentsTraceProcessor` from `braintrust/instrumentation` instead. This package will stop being published after the next release.
  * */
 
 export class OpenAIAgentsTraceProcessor {

@@ -1,89 +1,22 @@
-import iso, {
-  type IsoAsyncLocalStorage,
-  type IsoTracingChannel,
-} from "../isomorph";
-
-type AutoInstrumentationSuppressionFrame = {
-  id: symbol;
-  mode: "allow" | "suppress";
-};
-
-type AutoInstrumentationSuppressionState = {
-  frames: AutoInstrumentationSuppressionFrame[];
-};
+import iso, { type IsoAsyncLocalStorage } from "../isomorph";
 
 let autoInstrumentationSuppressionStore:
-  | IsoAsyncLocalStorage<AutoInstrumentationSuppressionState | undefined>
+  | IsoAsyncLocalStorage<boolean>
   | undefined;
 
 function suppressionStore() {
-  autoInstrumentationSuppressionStore ??= iso.newAsyncLocalStorage<
-    AutoInstrumentationSuppressionState | undefined
-  >();
+  autoInstrumentationSuppressionStore ??= iso.newAsyncLocalStorage<boolean>();
   return autoInstrumentationSuppressionStore;
 }
 
-function currentFrames(): AutoInstrumentationSuppressionFrame[] {
-  return suppressionStore().getStore()?.frames ?? [];
-}
-
 export function isAutoInstrumentationSuppressed(): boolean {
-  const frames = currentFrames();
-  return frames[frames.length - 1]?.mode === "suppress";
+  return suppressionStore().getStore() === true;
 }
 
 export function runWithAutoInstrumentationSuppressed<R>(callback: () => R): R {
-  const frame = {
-    id: Symbol("braintrust.auto-instrumentation-suppress"),
-    mode: "suppress" as const,
-  };
-  return suppressionStore().run(
-    { frames: [...currentFrames(), frame] },
-    callback,
-  );
+  return suppressionStore().run(true, callback);
 }
 
-export function bindAutoInstrumentationSuppressionToStart<T>(
-  tracingChannel: Pick<IsoTracingChannel<T>, "start">,
-): (() => void) | undefined {
-  const startChannel = tracingChannel.start;
-  if (!startChannel) {
-    return undefined;
-  }
-
-  const store = suppressionStore();
-  startChannel.bindStore(store, () => ({
-    frames: [
-      ...currentFrames(),
-      {
-        id: Symbol("braintrust.auto-instrumentation-suppress"),
-        mode: "suppress" as const,
-      },
-    ],
-  }));
-
-  return () => {
-    startChannel.unbindStore(store);
-  };
-}
-
-export function enterAutoInstrumentationAllowed(): () => void {
-  const frame = {
-    id: Symbol("braintrust.auto-instrumentation-allow"),
-    mode: "allow" as const,
-  };
-  // TODO(luca): Replace ALS.enterWith() with ALS.run()
-  // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
-  suppressionStore().enterWith({
-    frames: [...currentFrames(), frame],
-  });
-
-  return () => {
-    const frames = currentFrames().filter(
-      (candidate) => candidate.id !== frame.id,
-    );
-    // TODO(luca): Replace ALS.enterWith() with ALS.run()
-    // eslint-disable-next-line no-restricted-syntax -- Existing ALS.enterWith() usage tracked by the TODO above.
-    suppressionStore().enterWith(frames.length > 0 ? { frames } : undefined);
-  };
+export function runWithAutoInstrumentationAllowed<R>(callback: () => R): R {
+  return suppressionStore().run(undefined, callback);
 }

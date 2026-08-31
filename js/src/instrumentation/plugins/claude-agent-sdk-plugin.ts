@@ -1,7 +1,6 @@
 import { BasePlugin } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
-import type { IsoChannelHandlers } from "../../isomorph";
+import { debugLogger } from "../../debug-logger";
 import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
 import {
@@ -23,10 +22,8 @@ import {
   wrapLocalMcpServerToolHandlers,
 } from "./claude-agent-sdk-local-tool-spans";
 import {
-  bindClaudeLocalToolContextToAsyncIterable,
-  createClaudeLocalToolContext,
-  setClaudeLocalToolParentResolver,
-  type ClaudeAgentSDKLocalToolContext,
+  registerClaudeLocalToolParentResolver,
+  runWithClaudeLocalToolContext,
 } from "./claude-agent-sdk-local-tool-context";
 import type {
   ClaudeAgentSDKHookCallback,
@@ -627,6 +624,7 @@ function createToolTracingHooks(
       (isLocalToolUse(input.tool_name, mcpServers) ||
         localToolHookNames.has(input.tool_name))
     ) {
+      registerClaudeLocalToolParentResolver(toolUseID, resolveParentSpan);
       return {};
     }
 
@@ -985,7 +983,7 @@ type QueryState = {
   latestRootLlmParentRef: { value: string | undefined };
   toolUseToParent: Map<string, string | null>;
   usageByMessageId: Map<string, ClaudeAgentSDKUsage>;
-  localToolContext: ClaudeAgentSDKLocalToolContext;
+  localToolParentResolver: ParentSpanResolver;
 };
 
 function setSubAgentPromptMessages(
@@ -1580,7 +1578,7 @@ async function finalizeQuerySpan(state: QueryState): Promise<void> {
 
 export class ClaudeAgentSDKPlugin extends BasePlugin {
   protected onEnable(): void {
-    this.subscribeToQuery();
+    this.interceptQuery();
   }
 
   protected onDisable(): void {
@@ -1590,272 +1588,276 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
     this.unsubscribers = [];
   }
 
-  private subscribeToQuery(): void {
-    const channel = claudeAgentSDKChannels.query.tracingChannel();
-    const spans = new WeakMap<object, QueryState>();
+  private interceptQuery(): void {
+    const startQuery = (params: ClaudeAgentSDKQueryParams): QueryState => {
+      const originalPrompt = params.prompt;
+      const options = params.options ?? {};
+      const promptIsAsyncIterable = isAsyncIterable(originalPrompt);
+      let promptStarted = false;
+      let capturedPromptMessages: ClaudeAgentSDKMessage[] | undefined;
+      let resolvePromptDone: (() => void) | undefined;
+      const promptDone = new Promise<void>((resolve) => {
+        resolvePromptDone = resolve;
+      });
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof claudeAgentSDKChannels.query>
-    > = {
-      start: (event) => {
-        const params = (event.arguments[0] ?? {}) as ClaudeAgentSDKQueryParams;
-        const originalPrompt = params.prompt;
-        const options = params.options ?? {};
-        const promptIsAsyncIterable = isAsyncIterable(originalPrompt);
-        let promptStarted = false;
-        let capturedPromptMessages: ClaudeAgentSDKMessage[] | undefined;
-        let resolvePromptDone: (() => void) | undefined;
-        const promptDone = new Promise<void>((resolve) => {
-          resolvePromptDone = resolve;
-        });
-
-        if (promptIsAsyncIterable) {
-          capturedPromptMessages = [];
-          const promptStream =
-            originalPrompt as AsyncIterable<ClaudeAgentSDKMessage>;
-          params.prompt = (async function* () {
-            promptStarted = true;
-            try {
-              for await (const message of promptStream) {
-                capturedPromptMessages!.push(message);
-                yield message;
-              }
-            } finally {
-              resolvePromptDone?.();
+      if (promptIsAsyncIterable) {
+        capturedPromptMessages = [];
+        const promptStream =
+          originalPrompt as AsyncIterable<ClaudeAgentSDKMessage>;
+        params.prompt = (async function* () {
+          promptStarted = true;
+          try {
+            for await (const message of promptStream) {
+              capturedPromptMessages!.push(message);
+              yield message;
             }
-          })();
-        }
-
-        const span = startBaseSpan(
-          withSpanInstrumentationName(
-            {
-              name: "Claude Agent",
-              spanAttributes: {
-                type: SpanTypeAttribute.TASK,
-              },
-            },
-            INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK,
-          ),
-        );
-        const startTime = getCurrentUnixTimestamp();
-
-        try {
-          span.log({
-            input:
-              typeof originalPrompt === "string"
-                ? originalPrompt
-                : promptIsAsyncIterable
-                  ? undefined
-                  : originalPrompt !== undefined
-                    ? String(originalPrompt)
-                    : undefined,
-            metadata: filterSerializableOptions(options),
-          });
-        } catch (error) {
-          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-          console.error("Error extracting input for Claude Agent SDK:", error);
-        }
-
-        const activeToolSpans = new Map<string, Span>();
-        const activeLlmSpansByParentToolUse = new Map<string, Span>();
-        const conversationHistoryByParentKey = new Map<
-          string,
-          ClaudeConversationMessage[]
-        >();
-        const subAgentSpans = new Map<string, Span>();
-        const endedSubAgentSpans = new Set<string>();
-        const toolUseToParent = new Map<string, string | null>();
-        const latestLlmParentBySubAgentToolUse = new Map<string, string>();
-        const latestRootLlmParentRef = {
-          value: undefined as string | undefined,
-        };
-        const subAgentDetailsByToolUseId = new Map<string, SubAgentDetails>();
-        const taskIdToToolUseId = new Map<string, string>();
-        const promptMessagesByParentKey = new Map<
-          string,
-          ClaudeConversationMessage[]
-        >();
-        const promptSourcePriorityByParentKey = new Map<string, number>();
-        const localToolContext = createClaudeLocalToolContext();
-        const { hasLocalToolHandlers, localToolHookNames } =
-          prepareLocalToolHandlersInMcpServers(options.mcpServers);
-        const skipLocalToolHooks =
-          options[CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION] === true ||
-          hasLocalToolHandlers;
-        const resolveToolUseParentSpan: ParentSpanResolver = async (
-          toolUseID,
-          context,
-        ) => {
-          const trackedParentToolUseId = toolUseToParent.get(toolUseID);
-          const parentToolUseId =
-            trackedParentToolUseId ??
-            (context?.agentId
-              ? (taskIdToToolUseId.get(context.agentId) ?? null)
-              : null);
-          const parentKey = llmParentKey(parentToolUseId);
-          const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
-          const latestLlmParent = parentToolUseId
-            ? latestLlmParentBySubAgentToolUse.get(parentToolUseId)
-            : latestRootLlmParentRef.value;
-
-          // Tool spans should be siblings of the driving LLM turn, but we still
-          // materialize that LLM span first so trace ordering reflects that the
-          // tool call was produced by the model.
-          if (!activeLlmSpan && !latestLlmParent) {
-            await ensureActiveLlmSpanForParentToolUse(
-              span,
-              activeLlmSpansByParentToolUse,
-              subAgentDetailsByToolUseId,
-              activeToolSpans,
-              subAgentSpans,
-              parentToolUseId,
-              getCurrentUnixTimestamp(),
-            );
+          } finally {
+            resolvePromptDone?.();
           }
+        })();
+      }
 
-          if (parentToolUseId) {
-            const subAgentSpan = await ensureSubAgentSpan(
-              subAgentDetailsByToolUseId,
-              span,
-              activeToolSpans,
-              subAgentSpans,
-              parentToolUseId,
-            );
-            return subAgentSpan.export();
-          }
-
-          return span.export();
-        };
-
-        localToolContext.resolveLocalToolParent = resolveToolUseParentSpan;
-        setClaudeLocalToolParentResolver(resolveToolUseParentSpan);
-        const optionsWithHooks = injectTracingHooks(
-          options,
-          resolveToolUseParentSpan,
-          taskIdToToolUseId,
-          toolUseToParent,
-          activeToolSpans,
-          localToolHookNames,
-          skipLocalToolHooks,
-          subAgentDetailsByToolUseId,
-          subAgentSpans,
-          endedSubAgentSpans,
-        );
-
-        params.options = optionsWithHooks;
-        event.arguments[0] = params;
-
-        spans.set(event, {
-          activeLlmSpansByParentToolUse,
-          activePartialMessageIdByParentKey: new Map(),
-          activeToolSpans,
-          conversationHistoryByParentKey,
-          capturedPromptMessages,
-          currentMessageId: undefined,
-          currentMessageStartTime: startTime,
-          currentMessages: [],
-          endedSubAgentSpans,
-          finalOutputUsageMessageIds: new Set(),
-          finalResults: [],
-          options: optionsWithHooks,
-          originalPrompt,
-          processing: Promise.resolve(),
-          promptDone,
-          promptMessagesByParentKey,
-          promptStarted: () => promptStarted,
-          promptSourcePriorityByParentKey,
-          span,
-          subAgentDetailsByToolUseId,
-          subAgentSpans,
-          taskIdToToolUseId,
-          latestLlmParentBySubAgentToolUse,
-          latestRootLlmParentRef,
-          toolUseToParent,
-          usageByMessageId: new Map(),
-          localToolContext,
-        });
-      },
-
-      end: (event) => {
-        const state = spans.get(event);
-        if (!state) {
-          return;
-        }
-
-        const eventResult = bindClaudeLocalToolContextToAsyncIterable(
-          event.result,
-          state.localToolContext,
-        );
-        if (eventResult === undefined) {
-          state.span.end();
-          spans.delete(event);
-          return;
-        }
-
-        if (isAsyncIterable(eventResult)) {
-          patchStreamIfNeeded(eventResult, {
-            onChunk: (message: ClaudeAgentSDKMessage) => {
-              maybeTrackToolUseContext(state, message);
-              state.processing = state.processing
-                .then(() => handleStreamMessage(state, message))
-                .catch((error) => {
-                  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                  console.error(
-                    "Error processing Claude Agent SDK stream chunk:",
-                    error,
-                  );
-                });
+      const span = startBaseSpan(
+        withSpanInstrumentationName(
+          {
+            name: "Claude Agent",
+            spanAttributes: {
+              type: SpanTypeAttribute.TASK,
             },
-            onComplete: () =>
-              state.processing
-                .then(() => finalizeQuerySpan(state))
-                .finally(() => {
-                  spans.delete(event);
-                }),
-            onError: (error: Error) =>
-              state.processing
-                .then(() => {
-                  state.span.log({
-                    error: error.message,
-                  });
-                })
-                .then(() => finalizeQuerySpan(state))
-                .finally(() => {
-                  spans.delete(event);
-                }),
-          });
+          },
+          INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK,
+        ),
+      );
+      const startTime = getCurrentUnixTimestamp();
 
-          return;
-        }
-
-        try {
-          state.span.log({ output: eventResult });
-        } catch (error) {
-          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-          console.error("Error extracting output for Claude Agent SDK:", error);
-        } finally {
-          state.span.end();
-          spans.delete(event);
-        }
-      },
-
-      error: (event) => {
-        const state = spans.get(event);
-        if (!state || !event.error) {
-          return;
-        }
-
-        state.span.log({
-          error: event.error.message,
+      try {
+        span.log({
+          input:
+            typeof originalPrompt === "string"
+              ? originalPrompt
+              : promptIsAsyncIterable
+                ? undefined
+                : originalPrompt !== undefined
+                  ? String(originalPrompt)
+                  : undefined,
+          metadata: filterSerializableOptions(options),
         });
-        state.span.end();
-        spans.delete(event);
-      },
+      } catch (error) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+        console.error("Error extracting input for Claude Agent SDK:", error);
+      }
+
+      const activeToolSpans = new Map<string, Span>();
+      const activeLlmSpansByParentToolUse = new Map<string, Span>();
+      const conversationHistoryByParentKey = new Map<
+        string,
+        ClaudeConversationMessage[]
+      >();
+      const subAgentSpans = new Map<string, Span>();
+      const endedSubAgentSpans = new Set<string>();
+      const toolUseToParent = new Map<string, string | null>();
+      const latestLlmParentBySubAgentToolUse = new Map<string, string>();
+      const latestRootLlmParentRef = {
+        value: undefined as string | undefined,
+      };
+      const subAgentDetailsByToolUseId = new Map<string, SubAgentDetails>();
+      const taskIdToToolUseId = new Map<string, string>();
+      const promptMessagesByParentKey = new Map<
+        string,
+        ClaudeConversationMessage[]
+      >();
+      const promptSourcePriorityByParentKey = new Map<string, number>();
+      const { hasLocalToolHandlers, localToolHookNames } =
+        prepareLocalToolHandlersInMcpServers(options.mcpServers);
+      const skipLocalToolHooks =
+        options[CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION] === true ||
+        hasLocalToolHandlers;
+      const resolveToolUseParentSpan: ParentSpanResolver = async (
+        toolUseID,
+        context,
+      ) => {
+        const trackedParentToolUseId = toolUseToParent.get(toolUseID);
+        const parentToolUseId =
+          trackedParentToolUseId ??
+          (context?.agentId
+            ? (taskIdToToolUseId.get(context.agentId) ?? null)
+            : null);
+        const parentKey = llmParentKey(parentToolUseId);
+        const activeLlmSpan = activeLlmSpansByParentToolUse.get(parentKey);
+        const latestLlmParent = parentToolUseId
+          ? latestLlmParentBySubAgentToolUse.get(parentToolUseId)
+          : latestRootLlmParentRef.value;
+
+        // Tool spans should be siblings of the driving LLM turn, but we still
+        // materialize that LLM span first so trace ordering reflects that the
+        // tool call was produced by the model.
+        if (!activeLlmSpan && !latestLlmParent) {
+          await ensureActiveLlmSpanForParentToolUse(
+            span,
+            activeLlmSpansByParentToolUse,
+            subAgentDetailsByToolUseId,
+            activeToolSpans,
+            subAgentSpans,
+            parentToolUseId,
+            getCurrentUnixTimestamp(),
+          );
+        }
+
+        if (parentToolUseId) {
+          const subAgentSpan = await ensureSubAgentSpan(
+            subAgentDetailsByToolUseId,
+            span,
+            activeToolSpans,
+            subAgentSpans,
+            parentToolUseId,
+          );
+          return subAgentSpan.export();
+        }
+
+        return span.export();
+      };
+
+      const optionsWithHooks = injectTracingHooks(
+        options,
+        resolveToolUseParentSpan,
+        taskIdToToolUseId,
+        toolUseToParent,
+        activeToolSpans,
+        localToolHookNames,
+        skipLocalToolHooks,
+        subAgentDetailsByToolUseId,
+        subAgentSpans,
+        endedSubAgentSpans,
+      );
+
+      params.options = optionsWithHooks;
+
+      return {
+        activeLlmSpansByParentToolUse,
+        activePartialMessageIdByParentKey: new Map(),
+        activeToolSpans,
+        conversationHistoryByParentKey,
+        capturedPromptMessages,
+        currentMessageId: undefined,
+        currentMessageStartTime: startTime,
+        currentMessages: [],
+        endedSubAgentSpans,
+        finalOutputUsageMessageIds: new Set(),
+        finalResults: [],
+        options: optionsWithHooks,
+        originalPrompt,
+        processing: Promise.resolve(),
+        promptDone,
+        promptMessagesByParentKey,
+        promptStarted: () => promptStarted,
+        promptSourcePriorityByParentKey,
+        span,
+        subAgentDetailsByToolUseId,
+        subAgentSpans,
+        taskIdToToolUseId,
+        latestLlmParentBySubAgentToolUse,
+        latestRootLlmParentRef,
+        toolUseToParent,
+        usageByMessageId: new Map(),
+        localToolParentResolver: resolveToolUseParentSpan,
+      };
     };
 
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
+    const finishQuery = (
+      state: QueryState,
+      result: AsyncIterable<ClaudeAgentSDKMessage>,
+    ): void => {
+      if (isAsyncIterable(result)) {
+        patchStreamIfNeeded(result, {
+          aroundNext: (callback) =>
+            runWithClaudeLocalToolContext(
+              callback,
+              state.localToolParentResolver,
+            ),
+          onChunk: (message: ClaudeAgentSDKMessage) => {
+            maybeTrackToolUseContext(state, message);
+            state.processing = state.processing
+              .then(() => handleStreamMessage(state, message))
+              .catch((error) => {
+                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+                console.error(
+                  "Error processing Claude Agent SDK stream chunk:",
+                  error,
+                );
+              });
+          },
+          onComplete: () =>
+            state.processing.then(() => finalizeQuerySpan(state)),
+          onError: (error: Error) =>
+            state.processing
+              .then(() => {
+                state.span.log({ error: error.message });
+              })
+              .then(() => finalizeQuerySpan(state)),
+        });
+
+        return;
+      }
+
+      try {
+        state.span.log({ output: result });
+      } catch (error) {
+        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
+        console.error("Error extracting output for Claude Agent SDK:", error);
+      } finally {
+        state.span.end();
+      }
+    };
+
+    this.unsubscribers.push(
+      claudeAgentSDKChannels.query.intercept((target, thisArg, args) => {
+        let state: QueryState | undefined;
+        try {
+          args[0] ??= {};
+          state = startQuery(args[0]);
+        } catch (error) {
+          debugLogger.error(
+            "Error starting Claude Agent SDK instrumentation:",
+            error,
+          );
+        }
+
+        const invokeTarget = () => Reflect.apply(target, thisArg, args);
+        try {
+          const result = state
+            ? runWithClaudeLocalToolContext(
+                invokeTarget,
+                state.localToolParentResolver,
+              )
+            : invokeTarget();
+          if (state) {
+            try {
+              finishQuery(state, result);
+            } catch (error) {
+              debugLogger.error(
+                "Error finalizing Claude Agent SDK instrumentation:",
+                error,
+              );
+            }
+          }
+          return result;
+        } catch (error) {
+          if (state) {
+            try {
+              state.span.log({
+                error: error instanceof Error ? error.message : String(error),
+              });
+              state.span.end();
+            } catch (instrumentationError) {
+              debugLogger.error(
+                "Error handling Claude Agent SDK instrumentation failure:",
+                instrumentationError,
+              );
+            }
+          }
+          throw error;
+        }
+      }),
+    );
   }
 }

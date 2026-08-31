@@ -87,8 +87,8 @@ export function wrapTest<VitestContext = unknown>(
 
       // Capture context at registration time (during wrapDescribe factory execution)
       // as a fallback. Vitest's async test runner creates new async contexts for
-      // each test, so AsyncLocalStorage.enterWith() set in the describe factory
-      // doesn't propagate to test execution. The captured context is used when
+      // each test, so the describe factory's AsyncLocalStorage context doesn't
+      // propagate to test execution. The captured context is used when
       // getExperimentContext() returns null at runtime.
       const registrationContext = getExperimentContext();
 
@@ -259,9 +259,7 @@ export function wrapDescribe(
           config.onProgress({ type: "suite_start", suiteName });
         }
 
-        contextManager.setContext(lazyContext);
-
-        factory();
+        contextManager.runInContext(lazyContext, factory);
 
         if (afterAll) {
           afterAll(async () => {

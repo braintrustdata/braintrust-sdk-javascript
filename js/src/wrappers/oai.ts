@@ -27,6 +27,7 @@ import {
   createLazyAPIPromise,
   EnhancedResponse,
   splitSpanInfo,
+  tracePromiseAsResponse,
   tracePromiseWithResponse,
 } from "./openai-promise-utils";
 import { OpenAIV4Client } from "../vendor-sdk-types/openai-v4";
@@ -113,7 +114,6 @@ export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
     OpenAIModerationCreateParams,
     OpenAIModerationResponse
   >(typedOpenai.moderations, wrapModerations);
-
   let betaProxy: OpenAIClient["beta"];
   if (typedOpenai.beta?.chat?.completions?.stream) {
     const betaChatCompletionProxy = new Proxy(
@@ -148,7 +148,6 @@ export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const topLevelProxy = new Proxy(typedOpenai, {
     get(target, name) {
       switch (name) {
@@ -254,6 +253,12 @@ function wrapChatCompletion<
     // to avoid unhandled rejections when the underlying OpenAI call fails immediately.
     // Without lazy execution, the promise chain starts before error handlers are attached.
     let executionPromise: Promise<EnhancedResponse<C>> | null = null;
+    let apiPromise: APIPromise<C> | null = null;
+
+    const getAPIPromise = (): APIPromise<C> => {
+      apiPromise ??= completion(params, options);
+      return apiPromise;
+    };
 
     const ensureExecuted = (): Promise<EnhancedResponse<C>> => {
       if (!executionPromise) {
@@ -265,37 +270,48 @@ function wrapChatCompletion<
           );
 
           if (params.stream) {
-            const completionPromise = completion(
-              params,
-              options,
-            ) as APIPromise<OpenAIChatStream>;
-            const { data, response } = await tracePromiseWithResponse(
-              openAIChannels.chatCompletionsCreate,
-              traceContext,
-              completionPromise,
-            );
+            const completionPromise =
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              getAPIPromise() as APIPromise<OpenAIChatStream>;
+            const { data, response, request_id } =
+              await tracePromiseWithResponse(
+                openAIChannels.chatCompletionsCreate,
+                traceContext,
+                completionPromise,
+              );
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            return { data: data as C, response };
+            return { data: data as C, response, request_id };
           }
 
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const completionResponse = completion(
-            params,
-            options,
-          ) as APIPromise<OpenAIChatCompletion>;
-          const { data, response } = await tracePromiseWithResponse(
+          const completionResponse =
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            getAPIPromise() as APIPromise<OpenAIChatCompletion>;
+          const { data, response, request_id } = await tracePromiseWithResponse(
             openAIChannels.chatCompletionsCreate,
             traceContext,
             completionResponse,
           );
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          return { data: data as C, response };
+          return { data: data as C, response, request_id };
         })();
       }
       return executionPromise;
     };
 
-    return createLazyAPIPromise(ensureExecuted);
+    return createLazyAPIPromise(
+      ensureExecuted,
+      () =>
+        tracePromiseAsResponse(
+          openAIChannels.chatCompletionsCreate,
+          createChannelContext(
+            openAIChannels.chatCompletionsCreate,
+            params,
+            span_info,
+          ),
+          getAPIPromise(),
+        ),
+      getAPIPromise,
+    );
   };
 }
 
@@ -338,6 +354,11 @@ function wrapApiCreateWithChannel<
     >(allParams);
     let executionPromise: Promise<EnhancedResponse<ResultOf<TChannel>>> | null =
       null;
+    let apiPromise: APIPromise<ResultOf<TChannel>> | null = null;
+    const getAPIPromise = () => {
+      apiPromise ??= create(params, options);
+      return apiPromise;
+    };
     const ensureExecuted = () => {
       if (!executionPromise) {
         executionPromise = (async () => {
@@ -345,13 +366,22 @@ function wrapApiCreateWithChannel<
           return tracePromiseWithResponse(
             channel,
             traceContext,
-            create(params, options),
+            getAPIPromise(),
           );
         })();
       }
       return executionPromise;
     };
-    return createLazyAPIPromise(ensureExecuted);
+    return createLazyAPIPromise(
+      ensureExecuted,
+      () =>
+        tracePromiseAsResponse(
+          channel,
+          createChannelContext(channel, params, span_info),
+          getAPIPromise(),
+        ),
+      getAPIPromise,
+    );
   };
 }
 

@@ -9,7 +9,6 @@ vi.mock("../../isomorph", () => ({
   default: {
     getEnv: vi.fn(),
     newAsyncLocalStorage: vi.fn(() => ({
-      enterWith: vi.fn(),
       getStore: vi.fn(() => undefined),
       run: vi.fn((_store: unknown, callback: () => unknown) => callback()),
     })),

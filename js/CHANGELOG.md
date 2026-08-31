@@ -1,5 +1,41 @@
 # braintrust
 
+## 3.29.0
+
+### Minor Changes
+
+- feat: Apply auto instrumentation with eval command (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2360)
+- feat: Use new eve instrumentation hooks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2373)
+- feat: Support `datasetId` in `initDataset()` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2398)
+
+### Patch Changes
+
+- fix(anthropic): Record thinking tokens as metric Thanks @dylanpulver! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2382)
+- feat: Instrument Vercel AI SDK image generation Thanks @laithmunir9! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2402)
+- fix: Don't ignore `noTraceIO` for `wrapTraced` around plain functions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2376)
+- fix(langchain): Record reasoning tokens as metric Thanks @dylanpulver! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2393)
+- fix: Preserve all OpenAI streaming chat choices in instrumentation output Thanks @jstar0! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2387)
+- ref: Remove `AsyncLocalStorage.enterWith()` usage (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2401)
+- feat: Use `apiKey` arg in `loadPrompt` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2375)
+
+## 3.28.0
+
+### Minor Changes
+
+- feat: Add experimental batch evals API (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2297)
+- feat: Add voyage instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2296)
+
+### Patch Changes
+
+- fix(claude-agent-sdk): Correctly parent subagent tool spans (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2362)
+- fix(claude-agent-sdk): Correct per-call token and cost metrics (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2348)
+- fix(dataset): Enforce `_internal_btql.limit` across paginated fetches (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2344)
+- deps: Bump deps (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2338)
+- ref: Remove the `simple-git` dependency and use git cli instead (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2351)
+- fix: Pass id and tags to scorer (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2357)
+- fix: Reduce flue instrumentation memory footprint (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2356)
+- chore: Update platform types (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2365)
+
 ## 3.27.0
 
 ### Minor Changes

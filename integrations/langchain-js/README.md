@@ -2,80 +2,56 @@
 
 [![npm version](https://img.shields.io/npm/v/%40braintrust%2Flangchain-js.svg)](https://www.npmjs.com/package/@braintrust/langchain-js)
 
-SDK for integrating [Braintrust](https://braintrust.dev) with [LangChain.js](https://langchain.com/js). This package provides a callback handler to automatically log LangChain.js executions to Braintrust.
+> [!WARNING]
+> This package and all of its exports are deprecated and will stop being
+> published after the next release. Use the LangChain integration in
+> `braintrust` instead.
 
 ## Installation
 
 ```bash
-npm install @braintrust/langchain-js
+npm install braintrust
 # or
-yarn add @braintrust/langchain-js
+yarn add braintrust
 # or
-pnpm add @braintrust/langchain-js
+pnpm add braintrust
 ```
 
-## Requirements
+## Automatic instrumentation
 
-- Node.js >= 16
-- LangChain.js >= 0.3.42 (incl. 1.0.0)
-
-## Quickstart
-
-First, make sure you have your Braintrust API key set in your environment:
+For application-wide instrumentation, use the Braintrust runtime hook:
 
 ```bash
-export BRAINTRUST_API_KEY="your-api-key"
+node --import braintrust/hook.mjs app.js
 ```
+
+Braintrust also supports Vite, Webpack, esbuild, and Rollup. See the
+[Braintrust SDK documentation](../../js/README.md#auto-instrumentation) for
+bundler setup.
+
+## Manual instrumentation
+
+For scoped instrumentation, pass `BraintrustLangChainCallbackHandler` from
+`braintrust` through LangChain's `callbacks` option:
 
 ```typescript
 import { ChatOpenAI } from "@langchain/openai";
-import {
-  BraintrustCallbackHandler,
-  setGlobalHandler,
-} from "@braintrust/langchain-js";
+import { BraintrustLangChainCallbackHandler } from "braintrust";
 
-// Create the callback handler (optionally pass in a custom logger)
-const handler = new BraintrustCallbackHandler();
+const handler = new BraintrustLangChainCallbackHandler();
 
-// Set the handler for all LangChain components
-setGlobalHandler(handler);
-
-// Use LangChain as normal - all calls will be logged to Braintrust
-const response = await model.invoke("Tell me a joke about bears");
-```
-
-If you'd like to pass the callback handler to specific LangChain calls, you can do so by passing the handler to the `callbacks` option.
-
-```typescript
-import { ChatOpenAI } from "@langchain/openai";
-import { BraintrustCallbackHandler } from "@braintrust/langchain-js";
-
-// Create the callback handler (optionally pass in a custom logger)
-const handler = new BraintrustCallbackHandler();
-
-// Initialize your LangChain components with the handler
 const model = new ChatOpenAI({
   callbacks: [handler],
 });
 
-// Use LangChain as normal - all calls will be logged to Braintrust
 const response = await model.invoke("Tell me a joke about bears", {
   callbacks: [handler],
 });
 ```
 
-### Supported Features
-
-The callback handler supports logging for:
-
-- LLM calls (including streaming)
-- Chat model interactions
-- Chain executions
-- Tool/Agent usage
-- Memory operations
-- State management (LangGraph)
-
-Review the [LangChain.js documentation](https://js.langchain.com/docs/how_to/#callbacks) for more information on how to use callbacks.
+`setGlobalHandler` does not have a direct replacement in `braintrust`. Use
+automatic instrumentation for application-wide coverage, or pass the handler
+explicitly for scoped instrumentation.
 
 ## Documentation
 

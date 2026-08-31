@@ -38,6 +38,7 @@ runMain(async () => {
     supportsAgentToolLoop: true,
     supportsEmbedMany: true,
     supportsGenerateObject: true,
+    supportsGenerateImage: false,
     supportsOpenAICacheScenario: false,
     supportsOutputObjectScenario: true,
     supportsProviderCacheAssertions: true,
