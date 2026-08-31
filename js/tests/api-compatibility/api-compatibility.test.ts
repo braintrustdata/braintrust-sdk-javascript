@@ -2223,8 +2223,8 @@ describe("isUnionTypeWidening", () => {
 
 describe("areInterfaceSignaturesCompatible", () => {
   test("should allow adding optional fields to interface", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; linkArgs?: LinkArgs; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; metadata?: Record<string, any>; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; metadata?: Record<string, any>; link?: string; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(true);
@@ -2239,40 +2239,40 @@ describe("areInterfaceSignaturesCompatible", () => {
   });
 
   test("should reject removing fields from interface", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; metadata?: Record<string, any>; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
   });
 
   test("should reject adding required fields to interface", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; requiredField: string; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; requiredField: string; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
   });
 
   test("should reject changing field types in interface", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: Record<string, any>; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; computeMetadataArgs?: string; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; metadata?: Record<string, any>; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; metadata?: string; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
   });
 
   test("should allow making required field optional", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush: IsAsyncFlush; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled: Enabled; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(true);
   });
 
   test("should reject making optional field required", () => {
-    const oldInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush?: IsAsyncFlush; }`;
-    const newInterface = `export interface LogOptions<IsAsyncFlush> { asyncFlush: IsAsyncFlush; }`;
+    const oldInterface = `export interface FeatureOptions<Enabled> { enabled?: Enabled; }`;
+    const newInterface = `export interface FeatureOptions<Enabled> { enabled: Enabled; }`;
 
     const result = areInterfaceSignaturesCompatible(oldInterface, newInterface);
     expect(result).toBe(false);
@@ -2577,8 +2577,8 @@ describe("areFunctionSignaturesCompatible", () => {
   test("should allow widening a field inside an options-object parameter", () => {
     // Real-world case: getSpanParentObject's options param widens its nested
     // `parent?` field from `string` to `string | PropagationContext`.
-    const oldFn = `export function getSpanParentObject<IsAsyncFlush extends boolean>(options?: AsyncFlushArg<IsAsyncFlush> & OptionalStateArg & { parent?: string; }): Span`;
-    const newFn = `export function getSpanParentObject<IsAsyncFlush extends boolean>(options?: AsyncFlushArg<IsAsyncFlush> & OptionalStateArg & { parent?: string | PropagationContext; }): Span`;
+    const oldFn = `export function getSpanParentObject<Mode extends boolean>(options?: ModeArg<Mode> & OptionalStateArg & { parent?: string; }): Span`;
+    const newFn = `export function getSpanParentObject<Mode extends boolean>(options?: ModeArg<Mode> & OptionalStateArg & { parent?: string | PropagationContext; }): Span`;
     expect(areFunctionSignaturesCompatible(oldFn, newFn)).toBe(true);
   });
 

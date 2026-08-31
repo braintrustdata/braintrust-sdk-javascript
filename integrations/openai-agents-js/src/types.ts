@@ -50,7 +50,7 @@ export type TraceMetadata = {
 };
 
 export interface OpenAIAgentsTraceProcessorOptions {
-  logger?: Logger<any>;
+  logger?: Logger;
   maxTraces?: number;
 }
 

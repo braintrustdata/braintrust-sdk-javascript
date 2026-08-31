@@ -764,9 +764,7 @@ function normalizeProxyConnUrl(proxyUrl: string): string {
 export class BraintrustState {
   public id: string;
   public currentExperiment: Experiment | undefined;
-  // Note: the value of IsAsyncFlush doesn't really matter here, since we
-  // (safely) dynamically cast it whenever retrieving the logger.
-  public currentLogger: Logger<false> | undefined;
+  public currentLogger: Logger | undefined;
   public currentParent: IsoAsyncLocalStorage<string | PropagationContext>;
   public currentSpan: IsoAsyncLocalStorage<Span>;
   // Any time we re-log in, we directly update the apiConn inside the logger.
@@ -1531,20 +1529,15 @@ interface OrgProjectMetadata {
   project: ObjectMetadata;
 }
 
-export interface LinkArgs {
+interface LinkArgs {
   org_name?: string;
   app_url?: string;
+}
+
+type ProjectMetadataArgs = {
   project_name?: string;
   project_id?: string;
-}
-
-export interface LogOptions<IsAsyncFlush> {
-  asyncFlush?: IsAsyncFlush;
-  computeMetadataArgs?: Record<string, any>;
-  linkArgs?: LinkArgs;
-}
-
-export type PromiseUnless<B, R> = B extends true ? R : Promise<Awaited<R>>;
+};
 
 export interface AttachmentParams {
   data: string | Blob | ArrayBuffer;
@@ -2546,12 +2539,11 @@ function startSpanParentArgs(args: {
   };
 }
 
-export class Logger<IsAsyncFlush extends boolean> implements Exportable {
+export class Logger implements Exportable {
   private state: BraintrustState;
   private lazyMetadata: LazyValue<OrgProjectMetadata>;
-  private _asyncFlush: IsAsyncFlush | undefined;
-  private computeMetadataArgs: Record<string, any> | undefined;
-  private _linkArgs: LinkArgs | undefined;
+  private computeMetadataArgs: ProjectMetadataArgs | undefined;
+  private linkArgs: LinkArgs | undefined;
   private lastStartTime: number;
   private lazyId: LazyValue<string>;
   private calledStartSpan: boolean;
@@ -2562,14 +2554,16 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
   constructor(
     state: BraintrustState,
     lazyMetadata: LazyValue<OrgProjectMetadata>,
-    logOptions: LogOptions<IsAsyncFlush> = {},
+    options: {
+      computeMetadataArgs?: ProjectMetadataArgs;
+      linkArgs?: LinkArgs;
+    } = {},
   ) {
     this.lazyMetadata = lazyMetadata;
-    this._asyncFlush = logOptions.asyncFlush;
-    this.computeMetadataArgs = logOptions.computeMetadataArgs;
-    this._linkArgs = logOptions.linkArgs;
+    this.computeMetadataArgs = options.computeMetadataArgs;
+    this.linkArgs = options.linkArgs;
     this.lastStartTime = getCurrentUnixTimestamp();
-    this.lazyId = new LazyValue(async () => await this.id);
+    this.lazyId = new LazyValue(() => this.id);
     this.calledStartSpan = false;
     this.state = state;
   }
@@ -2599,7 +2593,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
   }
 
   /**
-   * Log a single event. The event will be batched and uploaded behind the scenes if `logOptions.asyncFlush` is true.
+   * Log a single event. The event will be batched and uploaded behind the scenes. Call and await {@link Logger.flush} to ensure the event has been uploaded.
    *
    * @param event The event to log.
    * @param event.input: (Optional) the arguments that uniquely define a user input (an arbitrary, JSON serializable object).
@@ -2617,7 +2611,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
   public log(
     event: Readonly<StartSpanEventArgs>,
     options?: { allowConcurrentWithSpans?: boolean },
-  ): PromiseUnless<IsAsyncFlush, string> {
+  ): string {
     if (this.calledStartSpan && !options?.allowConcurrentWithSpans) {
       throw new Error(
         "Cannot run toplevel `log` method while using spans. To log to the span, call `logger.traced` and then log with `span.log`",
@@ -2626,16 +2620,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
 
     const span = this.startSpanImpl({ startTime: this.lastStartTime, event });
     this.lastStartTime = span.end();
-    const ret = span.id;
-    type Ret = PromiseUnless<IsAsyncFlush, string>;
-    if (this.asyncFlush === true) {
-      return ret as Ret;
-    } else {
-      return (async () => {
-        await this.flush();
-        return ret;
-      })() as Ret;
-    }
+    return span.id;
   }
 
   /**
@@ -2646,11 +2631,11 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
   public traced<R>(
     callback: (span: Span) => R,
     args?: StartSpanArgs & SetCurrentArg,
-  ): PromiseUnless<IsAsyncFlush, R> {
+  ): R {
     const { setCurrent, ...argsRest } = args ?? {};
     const span = this.startSpan(argsRest);
 
-    const ret = runCatchFinally(
+    return runCatchFinally(
       () => {
         if (setCurrent ?? true) {
           return withCurrent(span, callback);
@@ -2658,23 +2643,12 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
           return callback(span);
         }
       },
-      (e) => {
-        logError(span, e);
-        throw e;
+      (error) => {
+        logError(span, error);
+        throw error;
       },
       () => span.end(),
     );
-    type Ret = PromiseUnless<IsAsyncFlush, R>;
-
-    if (this.asyncFlush) {
-      return ret as Ret;
-    } else {
-      return (async () => {
-        const awaitedRet = await ret;
-        await this.flush();
-        return awaitedRet;
-      })() as Ret;
-    }
   }
 
   /**
@@ -2773,17 +2747,13 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
     return await this.state.bgLogger().flush();
   }
 
-  get asyncFlush(): IsAsyncFlush | undefined {
-    return this._asyncFlush;
-  }
-
   /**
    * Return the base URL for links (e.g. https://braintrust.dev/app/my-org-name)
    * if we have the info, otherwise return null.
    * Resolution order: state -> linkArgs -> env var
    */
   public _getLinkBaseUrl(): string | null {
-    return _getLinkBaseUrl(this.state, this._linkArgs);
+    return _getLinkBaseUrl(this.state, this.linkArgs);
   }
 
   /**
@@ -2803,19 +2773,6 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
     }
     return undefined;
   }
-}
-
-function castLogger<ToB extends boolean, FromB extends boolean>(
-  logger: Logger<FromB> | undefined,
-  asyncFlush?: ToB,
-): Logger<ToB> | undefined {
-  if (logger === undefined) return undefined;
-  if (asyncFlush !== undefined && !!asyncFlush !== !!logger.asyncFlush) {
-    throw new Error(
-      `Asserted asyncFlush setting ${asyncFlush} does not match stored logger's setting ${logger.asyncFlush}`,
-    );
-  }
-  return logger as unknown as Logger<ToB>;
 }
 
 export type Logs3OverflowUpload = {
@@ -4210,22 +4167,6 @@ export function withExperiment<R>(
   return callback(experiment);
 }
 
-/**
- * @deprecated Use {@link initLogger} instead.
- */
-export function withLogger<IsAsyncFlush extends boolean = false, R = void>(
-  callback: (logger: Logger<IsAsyncFlush>) => R,
-  options: Readonly<InitLoggerOptions<IsAsyncFlush> & SetCurrentArg> = {},
-): R {
-  debugLogger
-    .forState(options.state)
-    .warn(
-      "withLogger is deprecated and will be removed in a future version of braintrust. Simply create the logger with `initLogger`.",
-    );
-  const logger = initLogger(options);
-  return callback(logger);
-}
-
 type UseOutputOption<IsLegacyDataset extends boolean> = {
   useOutput?: IsLegacyDataset;
 };
@@ -4675,13 +4616,7 @@ export function withDataset<
 // from arguments serialized elsewhere.
 async function computeLoggerMetadata(
   state: BraintrustState,
-  {
-    project_name,
-    project_id,
-  }: {
-    project_name?: string;
-    project_id?: string;
-  },
+  { project_name, project_id }: ProjectMetadataArgs,
 ) {
   await state.login({});
   const org_id = state.orgId!;
@@ -4718,18 +4653,13 @@ async function computeLoggerMetadata(
   }
 }
 
-type AsyncFlushArg<IsAsyncFlush> = {
-  asyncFlush?: IsAsyncFlush;
-};
-
-export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
+export type InitLoggerOptions = FullLoginOptions & {
   projectName?: string;
   projectId?: string;
   environment?: SpanOriginEnvironment;
   setCurrent?: boolean;
   state?: BraintrustState;
-  orgProjectMetadata?: OrgProjectMetadata;
-} & AsyncFlushArg<IsAsyncFlush>;
+};
 
 /**
  * Create a new logger in a specified project. If the project does not exist, it will be created.
@@ -4737,7 +4667,6 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
  * @param options Additional options for configuring init().
  * @param options.projectName The name of the project to log into. If unspecified, will default to the Global project.
  * @param options.projectId The id of the project to log into. This takes precedence over projectName if specified.
- * @param options.asyncFlush If true, will log asynchronously in the background. Otherwise, will log synchronously. (true by default)
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js,
  * if that is unset, will try the nearest `.env.braintrust` file in the current working directory or parent directories. If no API key is specified, will prompt the user to login.
@@ -4747,13 +4676,10 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
  * @param setCurrent If true (the default), set the global current-experiment to the newly-created one.
  * @returns The newly created Logger.
  */
-export function initLogger<IsAsyncFlush extends boolean = true>(
-  options: Readonly<InitLoggerOptions<IsAsyncFlush>> = {},
-) {
+export function initLogger(options: Readonly<InitLoggerOptions> = {}): Logger {
   const {
     projectName,
     projectId,
-    asyncFlush: asyncFlushArg,
     appUrl,
     apiKey,
     orgName,
@@ -4764,9 +4690,6 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
     state: stateArg,
   } = options || {};
 
-  const asyncFlush =
-    asyncFlushArg === undefined ? (true as IsAsyncFlush) : asyncFlushArg;
-
   const computeMetadataArgs = {
     project_name: projectName,
     project_id: projectId,
@@ -4775,8 +4698,6 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   const linkArgs = {
     org_name: orgName,
     app_url: appUrl,
-    project_name: projectName,
-    project_id: projectId,
   };
 
   const state = stateArg ?? _globalState;
@@ -4801,13 +4722,12 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
     },
   );
 
-  const ret = new Logger<IsAsyncFlush>(state, lazyMetadata, {
-    asyncFlush,
+  const ret = new Logger(state, lazyMetadata, {
     computeMetadataArgs,
     linkArgs,
   });
   if (options.setCurrent ?? true) {
-    state.currentLogger = ret as Logger<false>;
+    state.currentLogger = ret;
   }
   return ret;
 }
@@ -5484,11 +5404,9 @@ export function currentExperiment(
 /**
  * Returns the currently-active logger (set by {@link initLogger}). Returns undefined if no current logger has been set.
  */
-export function currentLogger<IsAsyncFlush extends boolean>(
-  options?: AsyncFlushArg<IsAsyncFlush> & OptionalStateArg,
-): Logger<IsAsyncFlush> | undefined {
+export function currentLogger(options?: OptionalStateArg): Logger | undefined {
   const state = options?.state ?? _globalState;
-  return castLogger(state.currentLogger, options?.asyncFlush);
+  return state.currentLogger;
 }
 
 /**
@@ -5511,16 +5429,15 @@ export function currentSpan(options?: OptionalStateArg): Span {
  * disagreeing if state changed between calls). The state is only meaningful when
  * a parent slug was resolved; otherwise it is undefined.
  */
-function getSpanParentObjectAndPropagatedState<IsAsyncFlush extends boolean>(
-  options?: AsyncFlushArg<IsAsyncFlush> &
-    OptionalStateArg & { parent?: string | PropagationContext },
+function getSpanParentObjectAndPropagatedState(
+  options?: OptionalStateArg & { parent?: string | PropagationContext },
 ): {
   parentObject:
     | SpanComponentsV3
     | SpanComponentsV4
     | Span
     | Experiment
-    | Logger<IsAsyncFlush>;
+    | Logger;
   propagatedState: PropagatedState | undefined;
 } {
   const state = options?.state ?? _globalState;
@@ -5539,11 +5456,11 @@ function getSpanParentObjectAndPropagatedState<IsAsyncFlush extends boolean>(
     };
   }
 
-  const experiment = currentExperiment();
+  const experiment = state.currentExperiment;
   if (experiment) {
     return { parentObject: experiment, propagatedState: undefined };
   }
-  const logger = currentLogger<IsAsyncFlush>(options);
+  const logger = state.currentLogger;
   if (logger) {
     return { parentObject: logger, propagatedState: undefined };
   }
@@ -5557,15 +5474,9 @@ function getSpanParentObjectAndPropagatedState<IsAsyncFlush extends boolean>(
  * `parent` may be an exported slug string or an opaque W3C trace-context (from
  * {@link extractTraceContextFromHeaders}).
  */
-export function getSpanParentObject<IsAsyncFlush extends boolean>(
-  options?: AsyncFlushArg<IsAsyncFlush> &
-    OptionalStateArg & { parent?: string | PropagationContext },
-):
-  | SpanComponentsV3
-  | SpanComponentsV4
-  | Span
-  | Experiment
-  | Logger<IsAsyncFlush> {
+export function getSpanParentObject(
+  options?: OptionalStateArg & { parent?: string | PropagationContext },
+): SpanComponentsV3 | SpanComponentsV4 | Span | Experiment | Logger {
   return getSpanParentObjectAndPropagatedState(options).parentObject;
 }
 
@@ -6063,44 +5974,32 @@ export function logError(span: Span, error: unknown) {
  *
  * See {@link Span.traced} for full details.
  */
-export function traced<IsAsyncFlush extends boolean = true, R = void>(
+export function traced<R>(
   callback: (span: Span) => R,
-  args?: StartSpanArgs &
-    SetCurrentArg &
-    AsyncFlushArg<IsAsyncFlush> &
-    OptionalStateArg,
-): PromiseUnless<IsAsyncFlush, R> {
-  const { span, isSyncFlushLogger } = startSpanAndIsLogger(args);
+  args?: StartSpanArgs & SetCurrentArg & OptionalStateArg,
+): R {
+  const { setCurrent, ...spanArgs } = args ?? {};
+  const span = startSpanImpl(spanArgs);
 
-  const ret = runCatchFinally(
+  return runCatchFinally(
     () => {
-      if (args?.setCurrent ?? true) {
+      if (setCurrent ?? true) {
         return withCurrent(span, callback);
       } else {
         return callback(span);
       }
     },
-    (e) => {
-      logError(span, e);
-      throw e;
+    (error) => {
+      logError(span, error);
+      throw error;
     },
     () => span.end(),
   );
-
-  type Ret = PromiseUnless<IsAsyncFlush, R>;
-
-  if (args?.asyncFlush === undefined || args?.asyncFlush) {
-    return ret as Ret;
-  } else {
-    return (async () => {
-      const awaitedRet = await ret;
-      if (isSyncFlushLogger) {
-        await span.flush();
-      }
-      return awaitedRet;
-    })() as Ret;
-  }
 }
+
+type WrapTracedArgs = {
+  noTraceIO?: boolean;
+};
 
 /**
  * Check if a function is a sync generator function.
@@ -6113,7 +6012,7 @@ export function traced<IsAsyncFlush extends boolean = true, R = void>(
  * @param fn The function to check.
  * @returns True if the function is a sync generator function.
  */
-function isGeneratorFunction(fn: any): boolean {
+function isGeneratorFunction(fn: unknown): boolean {
   return Object.prototype.toString.call(fn) === "[object GeneratorFunction]";
 }
 
@@ -6124,7 +6023,7 @@ function isGeneratorFunction(fn: any): boolean {
  * @param fn The function to check.
  * @returns True if the function is an async generator function.
  */
-function isAsyncGeneratorFunction(fn: any): boolean {
+function isAsyncGeneratorFunction(fn: unknown): boolean {
   return (
     Object.prototype.toString.call(fn) === "[object AsyncGeneratorFunction]"
   );
@@ -6135,10 +6034,13 @@ function isAsyncGeneratorFunction(fn: any): boolean {
  */
 function wrapTracedSyncGenerator<F extends (...args: any[]) => any>(
   fn: F,
-  spanArgs: any,
+  spanArgs: StartSpanArgs & SetCurrentArg,
   noTraceIO: boolean,
 ): F {
-  const wrapper = function* (this: any, ...fnArgs: Parameters<F>) {
+  const wrapper = function* (
+    this: ThisParameterType<F>,
+    ...fnArgs: Parameters<F>
+  ) {
     const span = startSpan(spanArgs);
     try {
       if (!noTraceIO) {
@@ -6149,7 +6051,7 @@ function wrapTracedSyncGenerator<F extends (...args: any[]) => any>(
       const maxItems = envValue !== undefined ? Number(envValue) : 1000;
 
       if (!noTraceIO && maxItems !== 0) {
-        let collected: any[] = [];
+        let collected: unknown[] = [];
         let truncated = false;
 
         const gen = generatorWithCurrent(span, fn.apply(this, fnArgs));
@@ -6202,10 +6104,13 @@ function wrapTracedSyncGenerator<F extends (...args: any[]) => any>(
  */
 function wrapTracedAsyncGenerator<F extends (...args: any[]) => any>(
   fn: F,
-  spanArgs: any,
+  spanArgs: StartSpanArgs & SetCurrentArg,
   noTraceIO: boolean,
 ): F {
-  const wrapper = async function* (this: any, ...fnArgs: Parameters<F>) {
+  const wrapper = async function* (
+    this: ThisParameterType<F>,
+    ...fnArgs: Parameters<F>
+  ) {
     const span = startSpan(spanArgs);
     try {
       if (!noTraceIO) {
@@ -6216,7 +6121,7 @@ function wrapTracedAsyncGenerator<F extends (...args: any[]) => any>(
       const maxItems = envValue !== undefined ? Number(envValue) : 1000;
 
       if (!noTraceIO && maxItems !== 0) {
-        let collected: any[] = [];
+        let collected: unknown[] = [];
         let truncated = false;
 
         const gen = asyncGeneratorWithCurrent(span, fn.apply(this, fnArgs));
@@ -6264,10 +6169,6 @@ function wrapTracedAsyncGenerator<F extends (...args: any[]) => any>(
   return wrapper as F;
 }
 
-type WrapTracedArgs = {
-  noTraceIO?: boolean;
-};
-
 /**
  * Wrap a function with `traced`, using the arguments as `input` and return value as `output`.
  * Any functions wrapped this way will automatically be traced, similar to the `@traced` decorator
@@ -6293,84 +6194,52 @@ type WrapTracedArgs = {
  * @param args Span-level arguments (e.g. a custom name or type) to pass to `traced`.
  * @returns The wrapped function.
  */
-export function wrapTraced<
-  F extends (...args: any[]) => any,
-  IsAsyncFlush extends boolean = true,
->(
+export function wrapTraced<F extends (...args: any[]) => any>(
   fn: F,
-  args?: StartSpanArgs &
-    SetCurrentArg &
-    AsyncFlushArg<IsAsyncFlush> &
-    WrapTracedArgs,
-): IsAsyncFlush extends false
-  ? (...args: Parameters<F>) => Promise<Awaited<ReturnType<F>>>
-  : F {
-  const spanArgs: typeof args = {
+  args?: StartSpanArgs & SetCurrentArg & WrapTracedArgs,
+): F {
+  const { noTraceIO, ...argsRest } = args ?? {};
+  const spanArgs: StartSpanArgs & SetCurrentArg = {
     name: fn.name,
     type: "function",
-    ...args,
+    ...argsRest,
   };
-  const hasExplicitInput =
-    args &&
-    args.event &&
-    "input" in args.event &&
-    args.event.input !== undefined;
-  const hasExplicitOutput =
-    args && args.event && args.event.output !== undefined;
+  const hasExplicitInput = spanArgs.event?.input !== undefined;
+  const hasExplicitOutput = spanArgs.event?.output !== undefined;
 
-  const noTraceIO = args?.noTraceIO || hasExplicitInput || hasExplicitOutput;
+  const disableGeneratorTraceIO =
+    !!noTraceIO || hasExplicitInput || hasExplicitOutput;
   // Check if the function is a generator
   if (isGeneratorFunction(fn)) {
-    return wrapTracedSyncGenerator(fn, spanArgs, !!noTraceIO);
+    return wrapTracedSyncGenerator(fn, spanArgs, disableGeneratorTraceIO);
   }
 
   if (isAsyncGeneratorFunction(fn)) {
-    return wrapTracedAsyncGenerator(fn, spanArgs, !!noTraceIO);
+    return wrapTracedAsyncGenerator(fn, spanArgs, disableGeneratorTraceIO);
   }
 
-  if (args?.asyncFlush) {
-    return ((...fnArgs: Parameters<F>) =>
-      traced((span) => {
-        if (!hasExplicitInput) {
-          span.log({ input: fnArgs });
-        }
+  return ((...fnArgs: Parameters<F>) =>
+    traced((span) => {
+      if (!noTraceIO && !hasExplicitInput) {
+        span.log({ input: fnArgs });
+      }
 
-        const output = fn(...fnArgs);
+      const output = fn(...fnArgs);
 
-        if (!hasExplicitOutput) {
-          if (output instanceof Promise) {
-            return (async () => {
-              const result = await output;
-              span.log({ output: result });
-              return result;
-            })();
-          } else {
-            span.log({ output: output });
-          }
-        }
-
-        return output;
-      }, spanArgs)) as IsAsyncFlush extends false ? never : F;
-  } else {
-    return ((...fnArgs: Parameters<F>) =>
-      traced(async (span) => {
-        if (!hasExplicitInput) {
-          span.log({ input: fnArgs });
-        }
-
-        const outputResult = fn(...fnArgs);
-
-        const output = await outputResult;
-
-        if (!hasExplicitOutput) {
+      if (!noTraceIO && !hasExplicitOutput) {
+        if (output instanceof Promise) {
+          return (async () => {
+            const result = await output;
+            span.log({ output: result });
+            return result;
+          })();
+        } else {
           span.log({ output });
         }
+      }
 
-        return output;
-      }, spanArgs)) as IsAsyncFlush extends false
-      ? (...args: Parameters<F>) => Promise<Awaited<ReturnType<F>>>
-      : never;
-  }
+      return output;
+    }, spanArgs)) as F;
 }
 
 /**
@@ -6386,36 +6255,29 @@ export const traceable = wrapTraced;
  *
  * See {@link traced} for full details.
  */
-export function startSpan<IsAsyncFlush extends boolean = true>(
-  args?: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg,
-): Span {
-  return startSpanAndIsLogger(args).span;
+export function startSpan(args?: StartSpanArgs & OptionalStateArg): Span {
+  return startSpanImpl(args);
 }
 
 /** @internal Start a span whose initial row is merged with concurrent writes. */
-export function _internalStartSpanWithInitialMerge<
-  IsAsyncFlush extends boolean = true,
->(args?: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg): Span {
-  return startSpanAndIsLogger({
+export function _internalStartSpanWithInitialMerge(
+  args?: StartSpanArgs & OptionalStateArg,
+): Span {
+  return startSpanImpl({
     ...args,
     [INITIAL_SPAN_WRITE_AS_MERGE]: true,
-  } as StartSpanArgs &
-    AsyncFlushArg<IsAsyncFlush> &
-    OptionalStateArg &
-    InitialSpanWriteAsMergeArg).span;
+  } as StartSpanArgs & OptionalStateArg & InitialSpanWriteAsMergeArg);
 }
 
 /** @internal Start a span with SDK-controlled context fields. */
-export function _internalStartSpanWithContext<
-  IsAsyncFlush extends boolean = true,
->(
-  args: StartSpanArgs & AsyncFlushArg<IsAsyncFlush> & OptionalStateArg,
+export function _internalStartSpanWithContext(
+  args: StartSpanArgs & OptionalStateArg,
   context: Record<string, unknown>,
 ): Span {
-  return startSpanAndIsLogger({
+  return startSpanImpl({
     ...args,
     [INTERNAL_SPAN_CONTEXT]: context,
-  }).span;
+  });
 }
 
 /**
@@ -6436,23 +6298,16 @@ export function setFetch(fetch: typeof globalThis.fetch): void {
   _internalGetGlobalState().setFetch(fetch);
 }
 
-function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
-  args?: StartSpanArgs &
-    AsyncFlushArg<IsAsyncFlush> &
-    OptionalStateArg &
-    InternalSpanContextArg,
-): { span: Span; isSyncFlushLogger: boolean } {
+function startSpanImpl(
+  args?: StartSpanArgs & OptionalStateArg & InternalSpanContextArg,
+): Span {
   const state = args?.state ?? _globalState;
 
   // Resolve the parent object and any forwarded W3C state in one pass, so we
   // don't re-normalize `parent` (which could disagree if the active
   // logger/experiment changed between calls).
   const { parentObject, propagatedState } =
-    getSpanParentObjectAndPropagatedState<IsAsyncFlush>({
-      asyncFlush: args?.asyncFlush,
-      parent: args?.parent,
-      state,
-    });
+    getSpanParentObjectAndPropagatedState(args);
 
   if (
     parentObject instanceof SpanComponentsV3 ||
@@ -6472,7 +6327,7 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
     // The parent object/state are already resolved from `parent` above; drop
     // the raw `parent` so it isn't re-normalized.
     const { parent: _ignoredParent, ...spanArgs } = args ?? {};
-    const span = new SpanImpl({
+    return new SpanImpl({
       state,
       ...spanArgs,
       parentObjectType: parentObject.data.object_type,
@@ -6490,21 +6345,8 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
           | undefined),
       propagatedState,
     });
-    return {
-      span,
-      isSyncFlushLogger:
-        parentObject.data.object_type === SpanObjectTypeV3.PROJECT_LOGS &&
-        // Since there's no parent logger here, we're free to choose the async flush
-        // behavior, and therefore propagate along whatever we get from the arguments
-        args?.asyncFlush === false,
-    };
   } else {
-    const span = parentObject.startSpan(args);
-    return {
-      span,
-      isSyncFlushLogger:
-        parentObject.kind === "logger" && parentObject.asyncFlush === false,
-    };
+    return parentObject.startSpan(args);
   }
 }
 
@@ -7197,7 +7039,7 @@ export class Experiment
     this.lazyMetadata = lazyMetadata;
     this.dataset = dataset;
     this.lastStartTime = getCurrentUnixTimestamp();
-    this.lazyId = new LazyValue(async () => await this.id);
+    this.lazyId = new LazyValue(() => this.id);
     this.calledStartSpan = false;
     this.state = state;
   }
@@ -7298,7 +7140,7 @@ export class Experiment
     const { setCurrent, ...argsRest } = args ?? {};
     const span = this.startSpan(argsRest);
 
-    const ret = runCatchFinally(
+    return runCatchFinally(
       () => {
         if (setCurrent ?? true) {
           return withCurrent(span, callback);
@@ -7306,14 +7148,12 @@ export class Experiment
           return callback(span);
         }
       },
-      (e) => {
-        logError(span, e);
-        throw e;
+      (error) => {
+        logError(span, error);
+        throw error;
       },
       () => span.end(),
     );
-
-    return ret as R;
   }
 
   /**
@@ -7941,9 +7781,9 @@ export class SpanImpl implements Span {
           return callback(span);
         }
       },
-      (e) => {
-        logError(span, e);
-        throw e;
+      (error) => {
+        logError(span, error);
+        throw error;
       },
       () => span.end(),
     );
