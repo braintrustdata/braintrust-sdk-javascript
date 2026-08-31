@@ -3,11 +3,9 @@ export type GroqBatchJSONL =
   | Iterable<unknown>
   | AsyncIterable<unknown>;
 
-export type GroqBatchReplayableJSONL =
-  | string
-  | (() => Iterable<unknown> | AsyncIterable<unknown>);
+export type GroqBatchFileContent = GroqBatchJSONL | Response;
 
-type GroqBatchFileContent = GroqBatchJSONL | Response;
+export type GroqBatchReplayableJSONL = string | (() => GroqBatchFileContent);
 
 export type GroqBatchFileFactory = () =>
   | GroqBatchFileContent
@@ -34,6 +32,50 @@ export interface GroqBatchLike {
     failed?: number;
     total?: number;
   } | null;
+  [key: string]: unknown;
+}
+
+export type GroqEnhancedResponse<T> = {
+  response: Response;
+  data: T;
+  request_id?: string | null;
+};
+
+export interface GroqAPIPromise<T> extends Promise<T> {
+  withResponse(): Promise<GroqEnhancedResponse<T>>;
+  asResponse(): Promise<Response>;
+}
+
+export interface GroqFilesResource<TParams, TFile, TOptions> {
+  create(params: TParams, options?: TOptions): GroqAPIPromise<TFile>;
+}
+
+export interface GroqBatchesCreateResource<TParams, TBatch, TOptions> {
+  create(params: TParams, options?: TOptions): GroqAPIPromise<TBatch>;
+}
+
+export interface GroqBatchesRetrieveResource<TBatch, TOptions> {
+  retrieve(batchId: string, options?: TOptions): GroqAPIPromise<TBatch>;
+}
+
+export interface GroqFilesCreateTraceArgs {
+  inputFileContent: Response;
+  parent: { export(): Promise<string> } | { toStr(): string };
+}
+
+export interface GroqBatchesCreateTraceArgs {
+  params: unknown;
+}
+
+export interface GroqBatchesRetrieveTraceArgs {
+  batchId: string;
+}
+
+export interface CompleteGroqBatchTraceArgs<TBatch extends GroqBatchLike> {
+  batch: TBatch;
+  inputFileContent: GroqBatchFile;
+  outputFileContent?: GroqBatchFile;
+  errorFileContent?: GroqBatchFile;
 }
 
 export interface GroqBatchCreateParams {

@@ -10,10 +10,14 @@ import { aggregateChatCompletionChunks } from "./openai-plugin";
 import { groqChannels } from "./groq-channels";
 import { extractGroqCompletionInput, parseGroqMetrics } from "./groq-span-data";
 import {
+  interceptGroqBatchesCreateTraced,
+  interceptGroqBatchesRetrieveTraced,
+  interceptGroqBatchTraceComplete,
   interceptGroqBatchTraceBind,
   interceptGroqBatchTraceCollect,
   interceptGroqBatchTraceFail,
   interceptGroqBatchTraceStart,
+  interceptGroqFilesCreateTraced,
 } from "./groq-batch-instrumentation";
 import type {
   GroqChatCompletion,
@@ -23,6 +27,16 @@ import type {
 export class GroqPlugin extends BasePlugin {
   protected onEnable(): void {
     this.unsubscribers.push(
+      groqChannels.filesCreateTraced.intercept(interceptGroqFilesCreateTraced),
+      groqChannels.batchesCreateTraced.intercept(
+        interceptGroqBatchesCreateTraced,
+      ),
+      groqChannels.batchesRetrieveTraced.intercept(
+        interceptGroqBatchesRetrieveTraced,
+      ),
+      groqChannels.batchesCompleteTrace.intercept(
+        interceptGroqBatchTraceComplete,
+      ),
       groqChannels.batchesStartTrace.intercept(interceptGroqBatchTraceStart),
       groqChannels.batchesBindTrace.intercept(interceptGroqBatchTraceBind),
       groqChannels.batchesCollectTrace.intercept(

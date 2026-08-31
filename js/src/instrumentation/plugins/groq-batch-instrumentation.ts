@@ -21,7 +21,6 @@ import {
   type SpanComponentsV4Data,
 } from "../../../util/span_identifier_v4";
 import type {
-  BindGroqBatchTraceArgs,
   CollectGroqBatchTraceArgs,
   FailGroqBatchTraceArgs,
   GroqBatchCreateParams,
@@ -106,6 +105,12 @@ type BatchFile =
   | GroqBatchJSONL
   | CollectGroqBatchTraceArgs<GroqBatchLike>["outputFile"];
 
+type TracedBatchUpload = {
+  input: GroqBatchReplayableJSONL;
+  parent: string;
+  startTime: number;
+};
+
 type PreparedBatch = {
   context: BatchContext;
   input: GroqBatchReplayableJSONL;
@@ -144,6 +149,9 @@ type BatchFileDigestState = {
 class BatchFatalError extends Error {}
 class BatchRecordLimitError extends BatchFatalError {}
 class BatchEmissionError extends Error {}
+
+const tracedBatchUploads = new Map<string, TracedBatchUpload>();
+const boundBatchTraceContexts = new Map<string, GroqBatchTraceContext>();
 
 function batchReplayIssue(
   replay: BatchInputData,
@@ -193,18 +201,23 @@ function isBatchRecordIterable(
   }
 }
 
-function replayableBatchInput(input: GroqBatchReplayableJSONL): GroqBatchJSONL {
+function replayableBatchInput(input: GroqBatchReplayableJSONL): BatchFile {
   if (typeof input === "string") {
     return input;
   }
   if (typeof input === "function") {
     const source = input();
-    if (isBatchRecordIterable(source)) {
+    const body = read(source, "body");
+    if (
+      typeof source === "string" ||
+      isBatchRecordIterable(source) ||
+      (isObject(body) && typeof read(body, "getReader") === "function")
+    ) {
       return source;
     }
   }
   throw new Error(
-    "Groq Batch start and failure input must be a string or replayable iterable factory",
+    "Groq Batch input must be a string or replayable file factory",
   );
 }
 
@@ -415,15 +428,20 @@ async function parseBatchContext(
   return context;
 }
 
-async function exportParent(parent: ReturnType<typeof getSpanParentObject>) {
+type SpanParentCarrier = { export(): Promise<string> } | { toStr(): string };
+
+async function exportParent(parent: SpanParentCarrier) {
   if ("toStr" in parent && typeof parent.toStr === "function") {
     return parent.toStr();
   }
-  return await parent.export();
+  if ("export" in parent && typeof parent.export === "function") {
+    return await parent.export();
+  }
+  throw new Error("Groq Batch parent cannot be exported");
 }
 
 async function exportMinimalParent(
-  parent: ReturnType<typeof getSpanParentObject>,
+  parent: SpanParentCarrier,
 ): Promise<string | undefined> {
   const exported = await exportParent(parent);
   if (!exported) {
@@ -468,9 +486,36 @@ async function exportMinimalParent(
   } as SpanComponentsV4Data).toStr();
 }
 
+export const interceptGroqFilesCreateTraced: Parameters<
+  typeof groqChannels.filesCreateTraced.intercept
+>[0] = async (target, thisArg, args) => {
+  const startTime = getCurrentUnixTimestamp();
+  const file = await Reflect.apply(target, thisArg, args);
+  try {
+    const inputFileId = read(file, "id");
+    const parent = await exportMinimalParent(args[0].parent);
+    if (
+      typeof inputFileId !== "string" ||
+      inputFileId.length === 0 ||
+      !parent
+    ) {
+      return file;
+    }
+    const inputFileContent = args[0].inputFileContent;
+    tracedBatchUploads.set(inputFileId, {
+      input: () => inputFileContent.clone(),
+      parent,
+      startTime,
+    });
+  } catch (error) {
+    logBatchInstrumentationError("could not retain traced input upload", error);
+  }
+  return file;
+};
+
 async function prepareCreateParams(
   args: StartGroqBatchTraceArgs,
-  parent: ReturnType<typeof getSpanParentObject>,
+  parent: SpanParentCarrier | string,
   startTime: number,
 ): Promise<PreparedBatch | undefined> {
   const params: GroqBatchCreateParams = {
@@ -513,7 +558,8 @@ async function prepareCreateParams(
     return undefined;
   }
 
-  const exportedParent = await exportMinimalParent(parent);
+  const exportedParent =
+    typeof parent === "string" ? parent : await exportMinimalParent(parent);
   if (!exportedParent) {
     logBatchInstrumentationError(
       "skipped context injection",
@@ -692,10 +738,11 @@ async function unboundBatchContextFromValues(
 }
 
 async function bindBatchTrace(
-  args: BindGroqBatchTraceArgs<GroqBatchLike>,
+  batch: GroqBatchLike,
+  context?: BatchContext,
 ): Promise<GroqBatchTraceContext | undefined> {
-  const context = await unboundBatchContextFromValues(args.batch);
-  const batchId = read(args.batch, "id");
+  context ??= await unboundBatchContextFromValues(batch);
+  const batchId = read(batch, "id");
   const signingSecret =
     _internalGetGlobalState()._internalGetTraceContextSigningSecret();
   if (!context || !validCustomId(batchId) || !signingSecret) {
@@ -733,6 +780,18 @@ async function bindBatchTrace(
     return undefined;
   }
   return { value };
+}
+
+async function bindAndCacheBatchTrace(
+  batch: GroqBatchLike,
+  context?: BatchContext,
+): Promise<GroqBatchTraceContext | undefined> {
+  const traceContext = await bindBatchTrace(batch, context);
+  const batchId = read(batch, "id");
+  if (traceContext && typeof batchId === "string") {
+    boundBatchTraceContexts.set(batchId, traceContext);
+  }
+  return traceContext;
 }
 
 async function validateBatchTraceBinding(
@@ -779,12 +838,27 @@ export const interceptGroqBatchTraceBind: Parameters<
 >[0] = async (target, thisArg, args) => {
   await Reflect.apply(target, thisArg, args);
   try {
-    const traceContext = await bindBatchTrace(args[0]);
+    const traceContext = await bindBatchTrace(args[0].batch);
     return traceContext ? { traceContext } : {};
   } catch (error) {
     logBatchInstrumentationError("could not bind provider batch ID", error);
     return {};
   }
+};
+
+export const interceptGroqBatchesRetrieveTraced: Parameters<
+  typeof groqChannels.batchesRetrieveTraced.intercept
+>[0] = async (target, thisArg, args) => {
+  const batch = await Reflect.apply(target, thisArg, args);
+  try {
+    const context = await unboundBatchContextFromValues(batch);
+    if (context) {
+      await bindAndCacheBatchTrace(batch, context);
+    }
+  } catch (error) {
+    logBatchInstrumentationError("could not bind retrieved batch", error);
+  }
+  return batch;
 };
 
 async function startBatchSpan(context: BatchContext): Promise<Span> {
@@ -1232,6 +1306,93 @@ export const interceptGroqBatchTraceStart: Parameters<
   return await Reflect.apply(target, thisArg, [
     prepared && started ? { ...args[0], params: prepared.params } : args[0],
   ]);
+};
+
+export const interceptGroqBatchesCreateTraced: Parameters<
+  typeof groqChannels.batchesCreateTraced.intercept
+>[0] = async (target, thisArg, args) => {
+  const params = args[0].params;
+  if (!isObject(params)) {
+    return await Reflect.apply(target, thisArg, args);
+  }
+  const inputFileId = read(params, "input_file_id");
+  if (typeof inputFileId !== "string") {
+    return await Reflect.apply(target, thisArg, args);
+  }
+  const upload = tracedBatchUploads.get(inputFileId);
+  if (!upload) {
+    return await Reflect.apply(target, thisArg, args);
+  }
+  const endpoint = read(params, "endpoint");
+  const completionWindow = read(params, "completion_window");
+  if (
+    endpoint !== "/v1/chat/completions" ||
+    typeof completionWindow !== "string"
+  ) {
+    tracedBatchUploads.delete(inputFileId);
+    return await Reflect.apply(target, thisArg, args);
+  }
+
+  let prepared: PreparedBatch | undefined;
+  let started = false;
+  try {
+    prepared = await prepareCreateParams(
+      {
+        inputFile: { id: inputFileId },
+        input: upload.input,
+        params: {
+          ...params,
+          endpoint,
+          completion_window: completionWindow,
+        },
+      },
+      upload.parent,
+      upload.startTime,
+    );
+    if (prepared) {
+      started = await startPreparedBatch(prepared);
+    }
+  } catch (error) {
+    logBatchInstrumentationError(
+      "could not prepare traced batch creation",
+      error,
+    );
+  }
+
+  try {
+    const batch = await Reflect.apply(target, thisArg, [
+      prepared && started ? { ...args[0], params: prepared.params } : args[0],
+    ]);
+    if (prepared && started) {
+      try {
+        await bindAndCacheBatchTrace(batch);
+      } catch (error) {
+        logBatchInstrumentationError(
+          "could not bind traced batch creation",
+          error,
+        );
+      }
+    }
+    return batch;
+  } catch (error) {
+    if (prepared && started) {
+      try {
+        await failBatch({
+          params: prepared.params,
+          input: upload.input,
+          error,
+        });
+      } catch (instrumentationError) {
+        logBatchInstrumentationError(
+          "could not end rejected batch creation",
+          instrumentationError,
+        );
+      }
+    }
+    throw error;
+  } finally {
+    tracedBatchUploads.delete(inputFileId);
+  }
 };
 
 function serializedJSONStringBytes(value: string, maxBytes?: number): number {
@@ -2691,6 +2852,40 @@ export const interceptGroqBatchTraceCollect: Parameters<
       return batch;
     },
   );
+};
+
+export const interceptGroqBatchTraceComplete: Parameters<
+  typeof groqChannels.batchesCompleteTrace.intercept
+>[0] = async (target, thisArg, args) => {
+  const collectParent = getSpanParentObject();
+  const result = await Reflect.apply(target, thisArg, args);
+  try {
+    const batch = args[0].batch;
+    const batchId = read(batch, "id");
+    let traceContext =
+      typeof batchId === "string"
+        ? boundBatchTraceContexts.get(batchId)
+        : undefined;
+    if (!traceContext) {
+      const context = await unboundBatchContextFromValues(batch);
+      if (context) {
+        traceContext = await bindAndCacheBatchTrace(batch, context);
+      }
+    }
+    await collectBatch(
+      {
+        batch,
+        traceContext,
+        inputFile: args[0].inputFileContent,
+        outputFile: args[0].outputFileContent,
+        errorFile: args[0].errorFileContent,
+      },
+      collectParent,
+    );
+  } catch (error) {
+    logBatchInstrumentationError("could not complete batch", error);
+  }
+  return result;
 };
 
 function submissionError(value: unknown): Error {

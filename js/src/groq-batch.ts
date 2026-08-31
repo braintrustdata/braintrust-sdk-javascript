@@ -1,13 +1,343 @@
 import { groqChannels } from "./instrumentation/plugins/groq-channels";
+import { getSpanParentObject } from "./logger";
+import {
+  createLazyAPIPromise,
+  type EnhancedResponse,
+} from "./wrappers/openai-promise-utils";
 import type {
   BindGroqBatchTraceArgs,
   CollectGroqBatchTraceArgs,
+  CompleteGroqBatchTraceArgs,
   FailGroqBatchTraceArgs,
+  GroqAPIPromise,
   GroqBatchCreateParams,
   GroqBatchLike,
+  GroqBatchesCreateResource,
+  GroqBatchesRetrieveResource,
   GroqBatchTraceContext,
+  GroqFileLike,
+  GroqFilesResource,
   StartGroqBatchTraceArgs,
 } from "./groq-batch-types";
+
+function read(value: unknown, key: PropertyKey): unknown {
+  if (
+    value === null ||
+    (typeof value !== "object" && typeof value !== "function")
+  ) {
+    return undefined;
+  }
+  try {
+    return Reflect.get(value, key);
+  } catch {
+    return undefined;
+  }
+}
+
+function isAsyncIterable(value: unknown): value is AsyncIterable<unknown> {
+  return typeof read(value, Symbol.asyncIterator) === "function";
+}
+
+function teeAsyncIterable(source: AsyncIterable<unknown>): {
+  upload: AsyncIterable<Uint8Array>;
+  trace: Response;
+} {
+  const iterator = source[Symbol.asyncIterator]();
+  const stream = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const result = await iterator.next();
+        if (result.done) {
+          controller.close();
+          return;
+        }
+        if (!(result.value instanceof Uint8Array)) {
+          throw new TypeError(
+            "Groq upload streams must yield Uint8Array chunks",
+          );
+        }
+        controller.enqueue(result.value);
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      await iterator.return?.(reason);
+    },
+  });
+  const [uploadStream, trace] = stream.tee();
+  const upload = {
+    async *[Symbol.asyncIterator]() {
+      const reader = uploadStream.getReader();
+      try {
+        while (true) {
+          const result = await reader.read();
+          if (result.done) {
+            return;
+          }
+          yield result.value;
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    },
+  };
+  const path = read(source, "path");
+  if (typeof path === "string") {
+    Object.defineProperty(upload, "path", { value: path });
+  }
+  return { upload, trace: new Response(trace) };
+}
+
+function teeUpload(
+  upload: unknown,
+): { upload: unknown; trace: Response } | undefined {
+  if (upload instanceof Blob) {
+    return { upload, trace: new Response(upload) };
+  }
+  if (upload instanceof Response) {
+    return { upload, trace: upload.clone() };
+  }
+  if (isAsyncIterable(upload)) {
+    return teeAsyncIterable(upload);
+  }
+  return undefined;
+}
+
+/**
+ * Wrap `groq.files.create` to trace a Groq Batch input file upload.
+ *
+ * Pass the `groq.files` resource, then call the returned function with the
+ * same arguments as `groq.files.create`. Files whose purpose is not `batch`
+ * pass through without tracing. Blob and Response uploads are copied for
+ * tracing; async-iterable uploads (including Node file streams) are teed so
+ * the same bytes still flow to Groq while Braintrust retains a separate copy.
+ *
+ * Use each traced input file for only one Groq Batch.
+ *
+ * @example
+ * ```ts
+ * const inputFile = await groqFilesCreateTraced(groq.files)({
+ *   file: createReadStream("batch.jsonl"),
+ *   purpose: "batch",
+ * });
+ * ```
+ */
+export function groqFilesCreateTraced<
+  TParams,
+  TFile extends GroqFileLike,
+  TOptions = unknown,
+>(
+  files: GroqFilesResource<TParams, TFile, TOptions>,
+): (params: TParams, options?: TOptions) => GroqAPIPromise<TFile> {
+  return (params, options) => {
+    if (read(params, "purpose") !== "batch") {
+      return files.create(params, options);
+    }
+
+    let branches: ReturnType<typeof teeUpload>;
+    try {
+      branches = teeUpload(read(params, "file"));
+    } catch {
+      return files.create(params, options);
+    }
+    if (!branches) {
+      return files.create(params, options);
+    }
+
+    const tracedParams = {
+      ...Object(params),
+      file: branches.upload,
+    } as TParams;
+    const apiPromise = files.create(tracedParams, options);
+    let enhancedResponse: EnhancedResponse<TFile> | undefined;
+    const tracedResponse = groqChannels.filesCreateTraced
+      .invoke(
+        async () => {
+          enhancedResponse = await apiPromise.withResponse();
+          return enhancedResponse.data;
+        },
+        files,
+        [
+          {
+            inputFileContent: branches.trace,
+            parent: getSpanParentObject(),
+          },
+        ],
+        {},
+      )
+      .then((data) => {
+        if (!enhancedResponse) {
+          throw new Error("Expected Groq withResponse() to provide a response");
+        }
+        return { ...enhancedResponse, data };
+      });
+
+    return createLazyAPIPromise(
+      () => tracedResponse,
+      () => tracedResponse.then(({ response }) => response),
+      () => apiPromise,
+    );
+  };
+}
+
+/**
+ * Wrap `groq.batches.create` to start pending batch spans, inject resumable
+ * trace metadata, bind the accepted Groq batch ID, and record submission
+ * failures without changing the provider call's result.
+ *
+ * Pass the `groq.batches` resource, then call the returned function with the
+ * same arguments as `groq.batches.create`. The input file must have been
+ * uploaded through `groqFilesCreateTraced` in this process.
+ *
+ * @example
+ * ```ts
+ * const batch = await groqBatchesCreateTraced(groq.batches)({
+ *   completion_window: "24h",
+ *   endpoint: "/v1/chat/completions",
+ *   input_file_id: inputFile.id,
+ * });
+ * ```
+ */
+export function groqBatchesCreateTraced<
+  TParams,
+  TBatch extends GroqBatchLike,
+  TOptions = unknown,
+>(
+  batches: GroqBatchesCreateResource<TParams, TBatch, TOptions>,
+): (params: TParams, options?: TOptions) => GroqAPIPromise<TBatch> {
+  return (params, options) => {
+    let apiPromise: GroqAPIPromise<TBatch> | undefined;
+    let enhancedResponse: EnhancedResponse<TBatch> | undefined;
+    const tracedResponse = groqChannels.batchesCreateTraced
+      .invoke(
+        async (input) => {
+          apiPromise = batches.create(input.params as TParams, options);
+          enhancedResponse = await apiPromise.withResponse();
+          return enhancedResponse.data;
+        },
+        batches,
+        [{ params }],
+        {},
+      )
+      .then((data) => {
+        if (!enhancedResponse) {
+          throw new Error("Expected Groq withResponse() to provide a response");
+        }
+        return { ...enhancedResponse, data };
+      });
+
+    const providerPromise = () => {
+      if (!apiPromise) {
+        throw new Error("Expected Groq batch creation to start");
+      }
+      return apiPromise;
+    };
+    return createLazyAPIPromise(
+      () => tracedResponse,
+      async () => (await tracedResponse).response,
+      providerPromise,
+    );
+  };
+}
+
+/**
+ * Wrap `groq.batches.retrieve` to retain the Groq batch-ID correlation and
+ * provider lifecycle timestamps used when the trace is completed.
+ *
+ * @example
+ * ```ts
+ * const batch = await groqBatchesRetrieveTraced(groq.batches)(batchId);
+ * ```
+ */
+export function groqBatchesRetrieveTraced<
+  TBatch extends GroqBatchLike,
+  TOptions = unknown,
+>(
+  batches: GroqBatchesRetrieveResource<TBatch, TOptions>,
+): (batchId: string, options?: TOptions) => GroqAPIPromise<TBatch> {
+  return (batchId, options) => {
+    const apiPromise = batches.retrieve(batchId, options);
+    let enhancedResponse: EnhancedResponse<TBatch> | undefined;
+    const tracedResponse = groqChannels.batchesRetrieveTraced
+      .invoke(
+        async () => {
+          enhancedResponse = await apiPromise.withResponse();
+          return enhancedResponse.data;
+        },
+        batches,
+        [{ batchId }],
+        {},
+      )
+      .then((data) => {
+        if (!enhancedResponse) {
+          throw new Error("Expected Groq withResponse() to provide a response");
+        }
+        return { ...enhancedResponse, data };
+      });
+
+    return createLazyAPIPromise(
+      () => tracedResponse,
+      () => tracedResponse.then(({ response }) => response),
+      () => apiPromise,
+    );
+  };
+}
+
+/**
+ * Add result data to a Groq Batch trace.
+ *
+ * This helper performs no Groq API requests. Pass the Batch returned by Groq
+ * and the input, output, and error contents returned by `groq.files.content`,
+ * or pass JSONL strings/iterables directly. Response bodies are consumed.
+ *
+ * @example
+ * ```ts
+ * const outputFileContent = batch.output_file_id
+ *   ? await groq.files.content(batch.output_file_id)
+ *   : undefined;
+ * const errorFileContent = batch.error_file_id
+ *   ? await groq.files.content(batch.error_file_id)
+ *   : undefined;
+ * await completeGroqBatchTrace({
+ *   batch,
+ *   inputFileContent: await groq.files.content(batch.input_file_id),
+ *   outputFileContent,
+ *   errorFileContent,
+ * });
+ * ```
+ */
+export async function completeGroqBatchTrace<TBatch extends GroqBatchLike>(
+  args: CompleteGroqBatchTraceArgs<TBatch>,
+): Promise<void> {
+  const inputFileContent = Promise.resolve(args.inputFileContent);
+  const outputFileContent =
+    args.outputFileContent === undefined
+      ? undefined
+      : Promise.resolve(args.outputFileContent);
+  const errorFileContent =
+    args.errorFileContent === undefined
+      ? undefined
+      : Promise.resolve(args.errorFileContent);
+
+  void inputFileContent.catch(() => undefined);
+  void outputFileContent?.catch(() => undefined);
+  void errorFileContent?.catch(() => undefined);
+
+  await groqChannels.batchesCompleteTrace.invoke(
+    async () => undefined,
+    undefined,
+    [
+      {
+        ...args,
+        inputFileContent,
+        outputFileContent,
+        errorFileContent,
+      },
+    ],
+    {},
+  );
+}
 
 /**
  * Start a trace for a new Groq Batch, with pending spans for its requests, and

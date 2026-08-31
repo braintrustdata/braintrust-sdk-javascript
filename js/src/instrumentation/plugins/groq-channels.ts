@@ -11,10 +11,15 @@ import type {
 import type {
   BindGroqBatchTraceArgs,
   CollectGroqBatchTraceArgs,
+  CompleteGroqBatchTraceArgs,
   FailGroqBatchTraceArgs,
+  GroqBatchesCreateTraceArgs,
+  GroqBatchesRetrieveTraceArgs,
   GroqBatchCreateParams,
   GroqBatchLike,
   GroqBatchTraceContext,
+  GroqFileLike,
+  GroqFilesCreateTraceArgs,
   StartGroqBatchTraceArgs,
 } from "../../groq-batch-types";
 
@@ -23,6 +28,32 @@ type GroqChatResult = GroqChatCompletion | GroqChatStream;
 export const groqChannels = defineChannels(
   "groq-sdk",
   {
+    filesCreateTraced: channel<[GroqFilesCreateTraceArgs], GroqFileLike>({
+      channelName: "files.create-traced",
+      kind: "async",
+    }),
+
+    batchesCreateTraced: channel<[GroqBatchesCreateTraceArgs], GroqBatchLike>({
+      channelName: "batches.create-traced",
+      kind: "async",
+    }),
+
+    batchesRetrieveTraced: channel<
+      [GroqBatchesRetrieveTraceArgs],
+      GroqBatchLike
+    >({
+      channelName: "batches.retrieve-traced",
+      kind: "async",
+    }),
+
+    batchesCompleteTrace: channel<
+      [CompleteGroqBatchTraceArgs<GroqBatchLike>],
+      void
+    >({
+      channelName: "batches.complete-trace",
+      kind: "async",
+    }),
+
     batchesStartTrace: channel<
       [StartGroqBatchTraceArgs],
       GroqBatchCreateParams

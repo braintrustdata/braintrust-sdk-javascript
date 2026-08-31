@@ -18,9 +18,17 @@ import { configureNode } from "../../node/config";
 import {
   bindGroqBatchTrace,
   collectGroqBatchTrace,
+  completeGroqBatchTrace,
   failGroqBatchTrace,
+  groqBatchesCreateTraced,
+  groqBatchesRetrieveTraced,
+  groqFilesCreateTraced,
   startGroqBatchTrace,
 } from "../../groq-batch";
+import type {
+  GroqAPIPromise,
+  GroqEnhancedResponse,
+} from "../../groq-batch-types";
 import { GroqPlugin } from "./groq-plugin";
 
 try {
@@ -55,6 +63,27 @@ const chatInput = [
 
 function jsonl(records: unknown[]): string {
   return records.map((record) => JSON.stringify(record)).join("\n");
+}
+
+function apiPromise<T>(data: T): GroqAPIPromise<T> {
+  return asyncApiPromise(Promise.resolve(data));
+}
+
+function asyncApiPromise<T>(dataPromise: Promise<T>): GroqAPIPromise<T> {
+  const promise = dataPromise as GroqAPIPromise<T>;
+  let enhancedResponse: Promise<GroqEnhancedResponse<T>> | undefined;
+  promise.withResponse = () => {
+    enhancedResponse ??= dataPromise.then((data) => ({
+      data,
+      response: new Response(JSON.stringify(data), {
+        headers: { "content-type": "application/json" },
+      }),
+      request_id: "request-id",
+    }));
+    return enhancedResponse;
+  };
+  promise.asResponse = async () => (await promise.withResponse()).response;
+  return promise;
 }
 
 async function startBatch(
@@ -130,6 +159,126 @@ describe("Groq Batch instrumentation", () => {
     plugin.disable();
     _exportsForTestingOnly.clearTestBackgroundLogger();
     vi.restoreAllMocks();
+  });
+
+  it("traces the Groq SDK batch lifecycle through wrapped resource methods", async () => {
+    let submittedParams: Record<string, unknown> | undefined;
+    const files = {
+      create(params: { file: Blob; purpose: string }) {
+        expect(params.file).toBeInstanceOf(Blob);
+        return apiPromise({ id: "file_wrapped", purpose: params.purpose });
+      },
+    };
+    const batches = {
+      create(params: Record<string, unknown>) {
+        submittedParams = params;
+        return apiPromise({
+          ...params,
+          id: "batch_wrapped",
+          endpoint: String(params.endpoint),
+          input_file_id: String(params.input_file_id),
+          status: "validating",
+        });
+      },
+      retrieve(batchId: string) {
+        return apiPromise({
+          ...submittedParams,
+          id: batchId,
+          endpoint: String(submittedParams?.endpoint),
+          input_file_id: String(submittedParams?.input_file_id),
+          status: "completed",
+          completed_at: Date.now() / 1000 + 10,
+          request_counts: { completed: 1, failed: 1, total: 2 },
+        });
+      },
+    };
+
+    const filePromise = groqFilesCreateTraced(files)({
+      file: new Blob([jsonl(chatInput)]),
+      purpose: "batch",
+    });
+    expect(typeof filePromise.withResponse).toBe("function");
+    expect(typeof filePromise.asResponse).toBe("function");
+    const inputFile = await filePromise;
+    const createdBatch = await groqBatchesCreateTraced(batches)({
+      completion_window: "24h",
+      endpoint: "/v1/chat/completions",
+      input_file_id: inputFile.id,
+      metadata: { caller: "value" },
+    });
+
+    expect(createdBatch.id).toBe("batch_wrapped");
+    expect(submittedParams).toMatchObject({
+      completion_window: "24h",
+      endpoint: "/v1/chat/completions",
+      input_file_id: "file_wrapped",
+      metadata: {
+        caller: "value",
+        [CONTEXT_KEY]: expect.any(String),
+      },
+    });
+    expect(await backgroundLogger.drain()).toHaveLength(3);
+
+    const completedBatch = await groqBatchesRetrieveTraced(batches)(
+      createdBatch.id,
+    );
+    await completeGroqBatchTrace({
+      batch: completedBatch,
+      inputFileContent: jsonl(chatInput),
+      outputFileContent: jsonl([
+        {
+          custom_id: "ok",
+          response: { status_code: 200, body: { choices: [] } },
+        },
+      ]),
+      errorFileContent: jsonl([
+        { custom_id: "bad", error: { message: "request failed" } },
+      ]),
+    });
+
+    const completedRows = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    expect(completedRows).toHaveLength(3);
+    expect(completedRows.every((row) => row.metrics?.end !== undefined)).toBe(
+      true,
+    );
+  });
+
+  it("ends pending spans when traced Groq batch creation rejects", async () => {
+    const files = {
+      create() {
+        return apiPromise({ id: "file_rejected" });
+      },
+    };
+    const batches = {
+      create() {
+        return asyncApiPromise(
+          Promise.reject(new Error("wrapped create rejected")),
+        );
+      },
+    };
+    const inputFile = await groqFilesCreateTraced(files)({
+      file: new Blob([jsonl(chatInput)]),
+      purpose: "batch",
+    });
+
+    await expect(
+      groqBatchesCreateTraced(batches)({
+        completion_window: "24h",
+        endpoint: "/v1/chat/completions",
+        input_file_id: inputFile.id,
+      }),
+    ).rejects.toThrow("wrapped create rejected");
+
+    const rows = (await backgroundLogger.drain()) as Array<Record<string, any>>;
+    const completedRows = rows.filter((row) => row.metrics?.end !== undefined);
+    expect(completedRows).toHaveLength(3);
+    expect(
+      completedRows.every((row) =>
+        row.error?.includes("wrapped create rejected"),
+      ),
+    ).toBe(true);
   });
 
   it("returns provider-ready params and starts pending task and LLM spans", async () => {
