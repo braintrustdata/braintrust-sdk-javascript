@@ -61,7 +61,11 @@ export function createEveInstrumentationProvider(
 ): EveProviderDefinition {
   const bridge = new EveProviderBridge(options.metadata);
   return {
-    capture: "content",
+    tracePolicy: () => ({
+      emit: true,
+      recordInputs: true,
+      recordOutputs: true,
+    }),
     events: {
       "action.completed": (event, context) =>
         bridge.handleActionTerminal(event, context),
