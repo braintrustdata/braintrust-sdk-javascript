@@ -1,5 +1,23 @@
 # braintrust
 
+## 3.29.0
+
+### Minor Changes
+
+- feat: Apply auto instrumentation with eval command (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2360)
+- feat: Use new eve instrumentation hooks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2373)
+- feat: Support `datasetId` in `initDataset()` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2398)
+
+### Patch Changes
+
+- fix(anthropic): Record thinking tokens as metric Thanks @dylanpulver! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2382)
+- feat: Instrument Vercel AI SDK image generation Thanks @laithmunir9! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2402)
+- fix: Don't ignore `noTraceIO` for `wrapTraced` around plain functions (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2376)
+- fix(langchain): Record reasoning tokens as metric Thanks @dylanpulver! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2393)
+- fix: Preserve all OpenAI streaming chat choices in instrumentation output Thanks @jstar0! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2387)
+- ref: Remove `AsyncLocalStorage.enterWith()` usage (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2401)
+- feat: Use `apiKey` arg in `loadPrompt` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2375)
+
 ## 3.28.0
 
 ### Minor Changes

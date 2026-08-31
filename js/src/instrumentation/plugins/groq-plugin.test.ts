@@ -43,6 +43,7 @@ describe("aggregateGroqChatCompletionChunks", () => {
         {
           choices: [
             {
+              index: 0,
               delta: {
                 role: "assistant",
                 reasoning: "First, count the marbles. ",
@@ -54,6 +55,7 @@ describe("aggregateGroqChatCompletionChunks", () => {
         {
           choices: [
             {
+              index: 0,
               delta: {
                 reasoning: "Then double the remainder.",
               },
@@ -64,6 +66,7 @@ describe("aggregateGroqChatCompletionChunks", () => {
         {
           choices: [
             {
+              index: 0,
               delta: {
                 content: "14",
               },

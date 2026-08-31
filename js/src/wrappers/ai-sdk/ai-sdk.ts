@@ -12,6 +12,8 @@ import type {
   AISDKCallParams,
   AISDKEmbedFunction,
   AISDKEmbedParams,
+  AISDKGenerateImageFunction,
+  AISDKGenerateImageParams,
   AISDKGenerateFunction,
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentCreateSessionFunction,
@@ -126,6 +128,15 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
       switch (prop) {
         case "generateText":
           return wrapGenerateText(typedAISDK.generateText, options, typedAISDK);
+        case "generateImage":
+        case "experimental_generateImage":
+          return typeof original === "function"
+            ? wrapGenerateImage(
+                original as AISDKGenerateImageFunction,
+                options,
+                typedAISDK,
+              )
+            : original;
         case "streamText":
           return wrapStreamText(typedAISDK.streamText, options, typedAISDK);
         case "generateObject":
@@ -469,6 +480,49 @@ const wrapGenerateObject = (
     { aiSDK },
     options,
   );
+};
+
+const wrapGenerateImage = (
+  generateImage: AISDKGenerateImageFunction,
+  options: WrapAISDKOptions = {},
+  aiSDK?: AISDK,
+) => {
+  return makeGenerateImageWrapper(generateImage, { aiSDK }, options);
+};
+
+const makeGenerateImageWrapper = (
+  generateImage: AISDKGenerateImageFunction,
+  contextOptions: {
+    aiSDK?: AISDK;
+    self?: unknown;
+    spanType?: SpanTypeAttribute;
+  } = {},
+  options: WrapAISDKOptions = {},
+) => {
+  const wrapper = async function (
+    allParams: AISDKGenerateImageParams & SpanInfo,
+  ) {
+    const { span_info, ...params } = allParams;
+    const tracedParams = { ...params };
+
+    return aiSDKChannels.generateImage.tracePromise(
+      () => generateImage(tracedParams),
+      createAISDKChannelContext(tracedParams, {
+        aiSDK: contextOptions.aiSDK,
+        denyOutputPaths: options.denyOutputPaths,
+        self: contextOptions.self,
+        span_info: mergeSpanInfo(span_info, {
+          name: "generateImage",
+          spanType: contextOptions.spanType,
+        }),
+      }),
+    );
+  };
+  Object.defineProperty(wrapper, "name", {
+    value: "generateImage",
+    writable: false,
+  });
+  return wrapper;
 };
 
 const makeEmbedWrapper = (
