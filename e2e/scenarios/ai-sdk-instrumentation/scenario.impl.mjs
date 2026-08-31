@@ -171,6 +171,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     supportsDenyOutputOverrideScenario: false,
     supportsEmbedMany: true,
     supportsGenerateObject: true,
+    supportsGenerateImage: false,
     supportsOpenAICacheScenario: false,
     supportsOutputObjectScenario: true,
     supportsProviderCacheAssertions: true,
@@ -198,6 +199,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     supportsDenyOutputOverrideScenario: false,
     supportsEmbedMany: true,
     supportsGenerateObject: true,
+    supportsGenerateImage: false,
     supportsOpenAICacheScenario: false,
     supportsOutputObjectScenario: true,
     supportsProviderCacheAssertions: true,
@@ -403,7 +405,17 @@ async function runAISDKInstrumentationScenario(
     options.supportsOpenAICacheScenario ?? sdkMajorVersion >= 5;
   const supportsOutputObjectScenario =
     options.supportsOutputObjectScenario ?? true;
+  const supportsGenerateImage =
+    options.supportsGenerateImage ?? sdkMajorVersion >= 5;
   const outputObject = createOutputObjectIfSupported(options.ai);
+  const generateImage = supportsGenerateImage
+    ? typeof instrumentedAI.generateImage === "function"
+      ? instrumentedAI.generateImage
+      : instrumentedAI.experimental_generateImage
+    : undefined;
+  const openaiImageModel = supportsGenerateImage
+    ? openai.image("gpt-image-1-mini")
+    : undefined;
 
   await runTracedScenario({
     callback: async () => {
@@ -415,6 +427,27 @@ async function runAISDKInstrumentationScenario(
           ...tokenLimit(options.maxTokensKey, 24),
         });
       });
+
+      if (typeof generateImage === "function" && openaiImageModel) {
+        await runOperation(
+          "ai-sdk-generate-image-operation",
+          "generate-image",
+          async () => {
+            await generateImage({
+              model: openaiImageModel,
+              prompt: "Generate an image of a Yoggie",
+              n: 1,
+              size: "1024x1024",
+              providerOptions: {
+                openai: {
+                  quality: "low",
+                },
+              },
+              maxRetries: 0,
+            });
+          },
+        );
+      }
 
       if (outputObject && supportsOutputObjectScenario) {
         if (sdkMajorVersion >= 5) {

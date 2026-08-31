@@ -52,8 +52,8 @@
               "metrics": {
                 "completion_tokens": 2,
                 "latency_ms": 0,
-                "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 14921,
+                "prompt_cache_creation_tokens": 14921,
+                "prompt_cached_tokens": 0,
                 "prompt_tokens": 6,
                 "tokens": 14929
               }

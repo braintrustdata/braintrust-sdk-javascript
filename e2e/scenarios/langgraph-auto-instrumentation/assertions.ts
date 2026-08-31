@@ -29,12 +29,14 @@ function findDescendantSpan(
     }
     visited.add(current);
 
+    const matchingSpan = findChildSpans(events, name, current).find(predicate);
+    if (matchingSpan) {
+      return matchingSpan;
+    }
+
     for (const event of events) {
       if (!event.span.parentIds.includes(current)) {
         continue;
-      }
-      if (event.span.name === name && predicate(event)) {
-        return event;
       }
       if (event.span.id) {
         queue.push(event.span.id);
@@ -231,10 +233,12 @@ export function assertLangGraphAutoInstrumentation(options: {
   expect(llmSpan).toBeDefined();
   expect(llmSpan?.span.type).toBe("llm");
   expect(llmSpan?.metrics).toMatchObject({
+    completion_reasoning_tokens: expect.any(Number),
     completion_tokens: expect.any(Number),
     prompt_tokens: expect.any(Number),
     tokens: expect.any(Number),
   });
+  expect(llmSpan?.metrics?.completion_reasoning_tokens).toBeGreaterThan(0);
 
   const spanTree = [root, graphSpan, sayHelloSpan, llmSpan, sayByeSpan].map(
     (event) => {
@@ -249,13 +253,6 @@ export function assertLangGraphAutoInstrumentation(options: {
               ),
             )
           : undefined;
-      const metricKeys =
-        fields.metrics &&
-        typeof fields.metrics === "object" &&
-        !Array.isArray(fields.metrics)
-          ? Object.keys(fields.metrics).sort()
-          : undefined;
-
       return {
         event: event!,
         fields: {
@@ -263,8 +260,7 @@ export function assertLangGraphAutoInstrumentation(options: {
           input: snapshotIOValue(fields.input),
           output: snapshotIOValue(fields.output),
           metadata,
-          metric_keys:
-            metricKeys && metricKeys.length > 0 ? metricKeys : undefined,
+          metrics: fields.metrics,
         },
       };
     },

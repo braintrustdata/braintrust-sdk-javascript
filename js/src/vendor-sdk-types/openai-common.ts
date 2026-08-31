@@ -8,11 +8,13 @@
 
 export interface OpenAIAPIPromise<T> extends Promise<T> {
   withResponse(): Promise<OpenAIWithResponse<T>>;
+  asResponse(): Promise<Response>;
 }
 
 export interface OpenAIWithResponse<T> {
   data: T;
   response: Response;
+  request_id?: string | null;
 }
 
 // Requests

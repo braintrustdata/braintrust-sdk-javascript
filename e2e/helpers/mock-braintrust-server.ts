@@ -682,6 +682,16 @@ export async function startMockBraintrustServer(
           capturedRequest.method === "POST" &&
           capturedRequest.path === "/attachment"
         ) {
+          if (prodForwarding) {
+            const forwardedResponse = await forwardProdRequest(capturedRequest);
+            respondJson(
+              res,
+              200,
+              (await forwardedResponse.json()) as JsonValue,
+            );
+            return;
+          }
+
           const key =
             isRecord(capturedRequest.jsonBody) &&
             typeof capturedRequest.jsonBody.key === "string"
@@ -706,6 +716,11 @@ export async function startMockBraintrustServer(
           capturedRequest.method === "POST" &&
           capturedRequest.path === "/attachment/status"
         ) {
+          if (prodForwarding) {
+            await forwardProdRequest(capturedRequest, {
+              drainResponseBody: true,
+            });
+          }
           respondJson(res, 200, { ok: true });
           return;
         }

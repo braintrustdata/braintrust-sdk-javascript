@@ -208,10 +208,9 @@
         "sdk_language": "javascript"
       },
       "invocation_params": {
-        "max_tokens": 24,
-        "model": "gpt-4o-mini-2024-07-18",
-        "stream": false,
-        "temperature": 0
+        "max_completion_tokens": 4000,
+        "model": "gpt-5-nano",
+        "stream": false
       },
       "metadata": {
         "checkpoint_ns": "sayHello:<uuid:9>",
@@ -225,17 +224,15 @@
         "langgraph_triggers": [
           "branch:to:sayHello"
         ],
-        "ls_max_tokens": 24,
-        "ls_model_name": "gpt-4o-mini-2024-07-18",
+        "ls_model_name": "gpt-5-nano",
         "ls_model_type": "chat",
         "ls_provider": "openai",
-        "ls_temperature": 0,
         "versions": {
           "@langchain/core": "<langchain-version>",
           "@langchain/openai": "<langchain-version>"
         }
       },
-      "model": "gpt-4o-mini-2024-07-18",
+      "model": "gpt-5-nano-2025-08-07",
       "options": {
         "signal": {}
       },
@@ -249,16 +246,15 @@
           "ChatOpenAI"
         ],
         "kwargs": {
-          "max_tokens": 24,
-          "model": "gpt-4o-mini-2024-07-18",
+          "max_tokens": 4000,
+          "model": "gpt-5-nano",
           "openai_api_key": {
             "id": [
               "OPENAI_API_KEY"
             ],
             "lc": 1,
             "type": "secret"
-          },
-          "temperature": 0
+          }
         },
         "lc": 1,
         "type": "constructor"
@@ -266,6 +262,7 @@
       "tags": []
     },
     "metrics": {
+      "completion_reasoning_tokens": "<number>",
       "completion_tokens": "<number>",
       "end": 0,
       "prompt_cached_tokens": "<number>",
@@ -293,28 +290,12 @@
                 "invalid_tool_calls": [],
                 "response_metadata": {
                   "finish_reason": "stop",
-                  "model_name": "gpt-4o-mini-2024-07-18",
+                  "model_name": "gpt-5-nano-2025-08-07",
                   "model_provider": "openai",
-                  "system_fingerprint": "<system_fingerprint>",
                   "tokenUsage": {
-                    "completionTokens": 4,
-                    "promptTokens": 15,
-                    "totalTokens": 19
-                  },
-                  "usage": {
-                    "completion_tokens": 4,
-                    "completion_tokens_details": {
-                      "accepted_prediction_tokens": 0,
-                      "audio_tokens": 0,
-                      "reasoning_tokens": 0,
-                      "rejected_prediction_tokens": 0
-                    },
-                    "prompt_tokens": 15,
-                    "prompt_tokens_details": {
-                      "audio_tokens": 0,
-                      "cached_tokens": 0
-                    },
-                    "total_tokens": 19
+                    "completionTokens": 205,
+                    "promptTokens": 14,
+                    "totalTokens": 219
                   }
                 },
                 "tool_calls": [],
@@ -327,7 +308,7 @@
                   "input_tokens": "<number>",
                   "output_token_details": {
                     "audio": 0,
-                    "reasoning": 0
+                    "reasoning": 192
                   },
                   "output_tokens": "<number>",
                   "total_tokens": "<number>"
@@ -342,9 +323,9 @@
       ],
       "llmOutput": {
         "tokenUsage": {
-          "completionTokens": 4,
-          "promptTokens": 15,
-          "totalTokens": 19
+          "completionTokens": 205,
+          "promptTokens": 14,
+          "totalTokens": 219
         }
       }
     },
@@ -372,11 +353,10 @@
     ],
     "log_id": "g",
     "metadata": {
-      "max_tokens": 24,
-      "model": "gpt-4o-mini-2024-07-18",
+      "max_completion_tokens": 4000,
+      "model": "gpt-5-nano",
       "provider": "openai",
-      "stream": false,
-      "temperature": 0
+      "stream": false
     },
     "metrics": {
       "completion_accepted_prediction_tokens": "<number>",
@@ -396,7 +376,6 @@
       {
         "finish_reason": "stop",
         "index": 0,
-        "logprobs": null,
         "message": {
           "annotations": [],
           "content": "hello from langgraph",

@@ -1,6 +1,6 @@
 {
   "name": "@braintrust/deepseek-harness",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Braintrust tracing plugin for DeepSeek Harness",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

@@ -239,10 +239,31 @@ bt.describe("Translation Suite", () => {
 import { initDataset } from "braintrust";
 
 initDataset({
-  project: "my-project", // Project name or ID
-  dataset: "my-dataset", // Dataset name or ID
+  project: "my-project", // Project name
+  dataset: "my-dataset", // Dataset name
   version: "v1.2", // Optional: specific version
   description: "...", // Optional: description
+}).fetchedData();
+```
+
+Use `projectId` instead of `project` to select the project by ID while
+initializing a dataset by name:
+
+```typescript
+initDataset({
+  projectId: "my-project-id",
+  dataset: "my-dataset",
+}).fetchedData();
+```
+
+Use `datasetId` to load an existing dataset directly. A project is not
+required, and `datasetId` takes precedence if project or dataset names are also
+provided:
+
+```typescript
+initDataset({
+  datasetId: "my-dataset-id",
+  version: "v1.2",
 }).fetchedData();
 ```
 

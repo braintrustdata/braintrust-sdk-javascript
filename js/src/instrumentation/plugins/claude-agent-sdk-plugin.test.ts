@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 // Mock iso's newTracingChannel - must be before any imports that use it
 const streamPatcherMock = vi.hoisted(() => ({
@@ -12,6 +13,7 @@ const streamPatcherMock = vi.hoisted(() => ({
 
 vi.mock("../../isomorph", () => ({
   default: {
+    newAsyncLocalStorage: <T>() => new AsyncLocalStorage<T>(),
     newTracingChannel: vi.fn(),
   },
 }));
@@ -123,11 +125,16 @@ describe("ClaudeAgentSDKPlugin", () => {
   let plugin: ClaudeAgentSDKPlugin;
   let mockChannel: any;
   let mockUnsubscribe: any;
+  let queryInterceptor: any;
 
   beforeEach(() => {
     streamPatcherMock.options = undefined;
     mockUnsubscribe = vi.fn();
     mockChannel = {
+      intercept: vi.fn((interceptor) => {
+        queryInterceptor = interceptor;
+        return mockUnsubscribe;
+      }),
       subscribe: vi.fn(),
       unsubscribe: mockUnsubscribe,
       hasSubscribers: false,
@@ -149,21 +156,15 @@ describe("ClaudeAgentSDKPlugin", () => {
       expect(mockNewTracingChannel).toHaveBeenCalledWith(
         "orchestrion:@anthropic-ai/claude-agent-sdk:query",
       );
-      expect(mockChannel.subscribe).toHaveBeenCalledTimes(1);
-      expect(mockChannel.subscribe).toHaveBeenCalledWith(
-        expect.objectContaining({
-          start: expect.any(Function),
-          end: expect.any(Function),
-          error: expect.any(Function),
-        }),
-      );
+      expect(mockChannel.intercept).toHaveBeenCalledTimes(1);
+      expect(mockChannel.intercept).toHaveBeenCalledWith(expect.any(Function));
     });
 
     it("should not subscribe twice if already enabled", () => {
       plugin.enable();
       plugin.enable();
 
-      expect(mockChannel.subscribe).toHaveBeenCalledTimes(1);
+      expect(mockChannel.intercept).toHaveBeenCalledTimes(1);
     });
 
     it("should store unsubscribe function", () => {
@@ -202,7 +203,34 @@ describe("ClaudeAgentSDKPlugin", () => {
 
     beforeEach(() => {
       plugin.enable();
-      handlers = mockChannel.subscribe.mock.calls[0][0];
+      handlers = {
+        start: (event: any) =>
+          queryInterceptor(
+            () => ({
+              async *[Symbol.asyncIterator]() {
+                // Keep the query span open so tests can drive stream callbacks.
+              },
+            }),
+            event.self,
+            event.arguments ?? [],
+            {},
+          ),
+        end: () => undefined,
+        error: (event: any) => {
+          try {
+            queryInterceptor(
+              () => {
+                throw event.error;
+              },
+              event.self,
+              event.arguments ?? [],
+              {},
+            );
+          } catch {
+            // The invocation interceptor preserves the target's exception.
+          }
+        },
+      };
     });
 
     describe("start handler", () => {
@@ -752,7 +780,7 @@ describe("ClaudeAgentSDKPlugin", () => {
       plugin.disable();
       plugin.enable();
 
-      expect(mockChannel.subscribe).toHaveBeenCalledTimes(2);
+      expect(mockChannel.intercept).toHaveBeenCalledTimes(2);
     });
 
     it("should properly clean up on multiple enable/disable cycles", () => {
