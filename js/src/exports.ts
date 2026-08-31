@@ -150,6 +150,12 @@ export type {
   StartMistralBatchTraceArgs,
 } from "./mistral-batch-types";
 
+export {
+  completeOpenAIBatchTrace,
+  openaiBatchesRetrieveTraced,
+  openaiFilesCreateTraced,
+} from "./openai-batch";
+
 // Internal isomorph layer for platform-specific implementations
 import _internalIso from "./isomorph";
 export { _internalIso };

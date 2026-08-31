@@ -17,6 +17,13 @@ import type {
   OpenAIResponseCreateParams,
   OpenAIResponseStreamEvent,
 } from "../../vendor-sdk-types/openai";
+import type {
+  CompleteOpenAIBatchTraceArgs,
+  OpenAIBatchLike,
+  OpenAIBatchesRetrieveTraceArgs,
+  OpenAIFileLike,
+  OpenAIFilesCreateTraceArgs,
+} from "../../openai-batch-types";
 
 type OpenAIChatSpanInfo = NonNullable<CompiledPrompt<"chat">["span_info"]>;
 
@@ -31,6 +38,33 @@ type OpenAIResponsesChannelExtras = OpenAIChannelExtras;
 export const openAIChannels = defineChannels(
   "openai",
   {
+    filesCreateTraced: channel<
+      [OpenAIFilesCreateTraceArgs],
+      OpenAIFileLike,
+      OpenAIChannelExtras
+    >({
+      channelName: "files.create-traced",
+      kind: "async",
+    }),
+
+    batchesRetrieveTraced: channel<
+      [OpenAIBatchesRetrieveTraceArgs],
+      OpenAIBatchLike,
+      OpenAIChannelExtras
+    >({
+      channelName: "batches.retrieve-traced",
+      kind: "async",
+    }),
+
+    batchesCompleteTrace: channel<
+      [CompleteOpenAIBatchTraceArgs],
+      void,
+      OpenAIChannelExtras
+    >({
+      channelName: "batches.complete-trace",
+      kind: "async",
+    }),
+
     chatCompletionsCreate: channel<
       [OpenAIChatCreateParams],
       OpenAIChatCompletion | OpenAIChatStream,

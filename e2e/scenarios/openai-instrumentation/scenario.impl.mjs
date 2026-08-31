@@ -7,6 +7,11 @@ import {
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
+import {
+  completeOpenAIBatchTrace,
+  openaiBatchesRetrieveTraced,
+  openaiFilesCreateTraced,
+} from "braintrust";
 
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
 const EMBEDDING_MODEL = "text-embedding-3-small";
@@ -112,6 +117,87 @@ function createMockStreamingClient(options, responseBody) {
     : baseClient;
 }
 
+function createMockBatchClient(options) {
+  const batchCreatedAt = Date.now() / 1000;
+  const baseClient = new options.OpenAI({
+    apiKey: process.env.OPENAI_API_KEY ?? "test-openai-key",
+    baseURL: "https://example.test/v1",
+    fetch: async (url, init) => {
+      const pathname = new URL(String(url)).pathname;
+      if (pathname.endsWith("/files")) {
+        return new Response(
+          JSON.stringify({
+            id: "file_batch_e2e_fixture",
+            object: "file",
+            bytes: 1024,
+            created_at: batchCreatedAt,
+            filename: "batch.jsonl",
+            purpose: "batch",
+            status: "processed",
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+              "x-request-id": "req_file_batch_e2e_fixture",
+            },
+            status: 200,
+          },
+        );
+      }
+
+      if (pathname.endsWith("/batches/batch_e2e_fixture")) {
+        return new Response(
+          JSON.stringify({
+            id: "batch_e2e_fixture",
+            object: "batch",
+            endpoint: "/v1/chat/completions",
+            input_file_id: "file_batch_e2e_fixture",
+            completion_window: "24h",
+            status: "completed",
+            created_at: batchCreatedAt,
+            in_progress_at: batchCreatedAt + 1,
+            completed_at: batchCreatedAt + 2,
+            request_counts: { completed: 2, failed: 1, total: 3 },
+          }),
+          {
+            headers: {
+              "content-type": "application/json",
+              "x-request-id": "req_batch_e2e_fixture",
+            },
+            status: 200,
+          },
+        );
+      }
+
+      const params = JSON.parse(String(init?.body));
+      return new Response(
+        JSON.stringify({
+          id: "batch_e2e_fixture",
+          object: "batch",
+          endpoint: params.endpoint,
+          input_file_id: params.input_file_id,
+          completion_window: params.completion_window,
+          status: "validating",
+          created_at: 1_740_000_000,
+          metadata: params.metadata,
+          request_counts: { completed: 0, failed: 0, total: 0 },
+        }),
+        {
+          headers: {
+            "content-type": "application/json",
+            "x-request-id": "req_batch_e2e_fixture",
+          },
+          status: 200,
+        },
+      );
+    },
+  });
+
+  return options.decorateClient
+    ? options.decorateClient(baseClient)
+    : baseClient;
+}
+
 export async function runOpenAIInstrumentationScenario(options) {
   const baseClient = new options.OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -128,6 +214,7 @@ export async function runOpenAIInstrumentationScenario(options) {
     options,
     MOCK_CHAT_MULTIPLE_CHOICES_STREAM_SSE,
   );
+  const batchFixtureClient = createMockBatchClient(options);
   const openAIMajorVersion = parseMajorVersion(options.openaiSdkVersion);
   const shouldCheckPrivateFieldMethods =
     typeof options.decorateClient === "function" &&
@@ -622,6 +709,107 @@ export async function runOpenAIInstrumentationScenario(options) {
           },
         );
       }
+
+      await runOperation("openai-batch-operation", "batch", async () => {
+        const batchItems = [
+          {
+            customId: "batch_chat_alpha",
+            prompt: "Reply with exactly ALPHA.",
+            response: "ALPHA",
+          },
+          {
+            customId: "batch_chat_bravo",
+            prompt: "Reply with exactly BRAVO.",
+            response: "BRAVO",
+          },
+          {
+            customId: "batch_chat_charlie",
+            prompt: "Reply with exactly CHARLIE.",
+            response: "CHARLIE",
+          },
+        ];
+        const input = batchItems
+          .map((item) =>
+            JSON.stringify({
+              custom_id: item.customId,
+              method: "POST",
+              url: "/v1/chat/completions",
+              body: {
+                model: OPENAI_MODEL,
+                messages: [{ role: "user", content: item.prompt }],
+              },
+            }),
+          )
+          .join("\n");
+        const inputFile = await openaiFilesCreateTraced(
+          batchFixtureClient.files,
+        )({
+          file: new File([input], "batch.jsonl"),
+          purpose: "batch",
+        });
+        const created = await batchFixtureClient.batches.create({
+          input_file_id: inputFile.id,
+          completion_window: "24h",
+          endpoint: "/v1/chat/completions",
+        });
+        const completed = await openaiBatchesRetrieveTraced(
+          batchFixtureClient.batches,
+        )(created.id);
+        // Start both content requests before awaiting either one. These promises
+        // model the APIPromise<Response> values returned by files.content().
+        const outputFile = Promise.resolve(
+          new Response(
+            [batchItems[1], batchItems[0]]
+              .map((item, index) =>
+                JSON.stringify({
+                  custom_id: item.customId,
+                  response: {
+                    status_code: 200,
+                    body: {
+                      choices: [
+                        {
+                          index: 0,
+                          finish_reason: "stop",
+                          message: {
+                            role: "assistant",
+                            content: item.response,
+                          },
+                        },
+                      ],
+                      usage: {
+                        prompt_tokens: 8 + index,
+                        completion_tokens: 1,
+                        total_tokens: 9 + index,
+                      },
+                    },
+                  },
+                }),
+              )
+              .join("\n"),
+          ),
+        );
+        const errorFile = Promise.resolve(
+          new Response(
+            JSON.stringify({
+              custom_id: batchItems[2].customId,
+              error: {
+                code: "fixture_error",
+                message: "Batch fixture request failed",
+              },
+            }),
+          ),
+        );
+        await completeOpenAIBatchTrace({
+          inputFileId: completed.input_file_id,
+          inputFileContent: input,
+          // Batch results are not guaranteed to preserve input order.
+          outputFileContent: outputFile,
+          errorFileContent: errorFile,
+        });
+        if (!(await outputFile).bodyUsed || !(await errorFile).bodyUsed) {
+          throw new Error("Expected batch result responses to be consumed");
+        }
+      });
     },
     metadata: {
       openaiSdkVersion: options.openaiSdkVersion,
