@@ -25,22 +25,24 @@
   },
   "dependencies": {
     "@opentelemetry/sdk-node": "0.201.1",
-    "zod": "3.25.76",
-    "ai-sdk-v5": "npm:ai@5.0.82",
-    "ai-sdk-v5-latest": "npm:ai@5.0.244",
     "ai-sdk-openai-v5": "npm:@ai-sdk/openai@2.0.57",
     "ai-sdk-openai-v5-latest": "npm:@ai-sdk/openai@2.0.118",
+    "ai-sdk-openai-v6": "npm:@ai-sdk/openai@3.0.7",
+    "ai-sdk-openai-v6-latest": "npm:@ai-sdk/openai@3.0.99",
+    "ai-sdk-v5": "npm:ai@5.0.82",
+    "ai-sdk-v5-latest": "npm:ai@5.0.244",
     "ai-sdk-v6": "npm:ai@6.0.1",
     "ai-sdk-v6-latest": "npm:ai@6.0.264",
-    "ai-sdk-openai-v6": "npm:@ai-sdk/openai@3.0.7",
-    "ai-sdk-openai-v6-latest": "npm:@ai-sdk/openai@3.0.99"
+    "zod": "3.25.76"
   },
   "pnpm": {
     "overrides": {
       "protobufjs@<7.5.8": "^7.5.8",
       "@opentelemetry/sdk-node@<0.217.0": "^0.217.0",
       "@opentelemetry/exporter-prometheus@<0.217.0": "^0.217.0",
-      "@opentelemetry/propagator-jaeger@<2.9.0": "^2.9.0"
+      "@opentelemetry/propagator-jaeger@<2.9.0": "^2.9.0",
+      "undici@<6.28.0": "^6.28.0",
+      "@opentelemetry/core@2": "^2.8.0"
     }
   }
 }

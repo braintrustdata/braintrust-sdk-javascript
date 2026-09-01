@@ -1491,6 +1491,37 @@ describe("otel namespace helpers", () => {
         consoleSpy.mockRestore();
       });
 
+      it("should reject oversized baggage before propagation", () => {
+        const extractSpy = vi.spyOn(propagation, "extract");
+        const headers = {
+          traceparent:
+            "00-12345678901234567890123456789012-1234567890123456-01",
+          baggage: `braintrust.parent=project_name:test,extra=${"x".repeat(8192)}`,
+        };
+
+        expect(parentFromHeaders(headers)).toBeUndefined();
+        expect(extractSpy).not.toHaveBeenCalled();
+
+        extractSpy.mockRestore();
+      });
+
+      it("should reject baggage with too many members before propagation", () => {
+        const extractSpy = vi.spyOn(propagation, "extract");
+        const headers = {
+          traceparent:
+            "00-12345678901234567890123456789012-1234567890123456-01",
+          baggage: Array.from(
+            { length: 181 },
+            (_, index) => `k${index}=v`,
+          ).join(","),
+        };
+
+        expect(parentFromHeaders(headers)).toBeUndefined();
+        expect(extractSpy).not.toHaveBeenCalled();
+
+        extractSpy.mockRestore();
+      });
+
       it("should return undefined when traceparent format is invalid", () => {
         const consoleSpy = vi
           .spyOn(console, "error")
