@@ -40,10 +40,10 @@ const eveScenarios = await Promise.all(
     },
     {
       cassetteKey: "eve-v0-latest",
-      dependencyName: "eve-v0-current",
-      label: "v0 current pinned",
+      dependencyName: "eve-v0-latest-pinned",
+      label: "v0 latest pinned",
       provider: true,
-      variantKey: "eve-v0-current",
+      variantKey: "eve-v0-latest-pinned",
     },
     {
       cassetteKey: "eve-v0-latest",

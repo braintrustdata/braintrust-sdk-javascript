@@ -17,12 +17,12 @@ importers:
       eve-v0:
         specifier: npm:eve@0.22.1
         version: eve@0.22.1(ai@7.0.82(zod@4.3.6))
-      eve-v0-current:
-        specifier: npm:eve@0.37.1
-        version: eve@0.37.1(ai@7.0.82(zod@4.3.6))
       eve-v0-latest:
         specifier: npm:eve@0.47.6
         version: eve@0.47.6(ai@7.0.82(zod@4.3.6))
+      eve-v0-latest-pinned:
+        specifier: npm:eve@0.37.1
+        version: eve@0.37.1(ai@7.0.82(zod@4.3.6))
       eve-v0-provider:
         specifier: npm:eve@0.34.0
         version: eve@0.34.0(ai@7.0.82(zod@4.3.6))

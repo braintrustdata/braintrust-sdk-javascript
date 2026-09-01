@@ -16,7 +16,7 @@
     "@openrouter/ai-sdk-provider": "3.0.0",
     "ai": "7.0.82",
     "eve-v0": "npm:eve@0.22.1",
-    "eve-v0-current": "npm:eve@0.37.1",
+    "eve-v0-latest-pinned": "npm:eve@0.37.1",
     "eve-v0-provider": "npm:eve@0.34.0",
     "eve-v0-latest": "npm:eve@0.47.6",
     "zod": "4.3.6"
