@@ -7,7 +7,7 @@ export type GroqBatchFileContent = GroqBatchJSONL | Response;
 
 export type GroqBatchReplayableJSONL = string | (() => GroqBatchFileContent);
 
-export type GroqBatchFileFactory = () =>
+type GroqBatchFileFactory = () =>
   | GroqBatchFileContent
   | PromiseLike<GroqBatchFileContent>;
 
