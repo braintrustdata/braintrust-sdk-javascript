@@ -53,6 +53,7 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
     const setup = () => undefined;
     const instrumentation = braintrustEveInstrumentation({ setup });
     expect(instrumentation).toMatchObject({
+      capture: "content",
       setup,
       tracePolicy: expect.any(Function),
     });

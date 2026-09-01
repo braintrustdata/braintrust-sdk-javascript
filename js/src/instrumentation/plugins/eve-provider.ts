@@ -61,6 +61,10 @@ export function createEveInstrumentationProvider(
 ): EveProviderDefinition {
   const bridge = new EveProviderBridge(options.metadata);
   return {
+    // Eve versions before tracePolicy use capture to decide whether provider
+    // events include content. Newer versions prefer tracePolicy when both are
+    // present, so keep the deprecated field for backwards compatibility.
+    capture: "content",
     tracePolicy: () => ({
       emit: true,
       recordInputs: true,

@@ -113,7 +113,7 @@ async function main() {
     );
     // Eve can publish the waiting boundary just before the completed turn's
     // model history becomes visible to a follow-up request.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     const followUp = await fetch(
       `${baseUrl}/eve/v1/session/${body.sessionId}`,
       {

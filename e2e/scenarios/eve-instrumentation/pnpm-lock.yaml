@@ -10,39 +10,42 @@ importers:
     dependencies:
       '@openrouter/ai-sdk-provider':
         specifier: 3.0.0
-        version: 3.0.0(ai@7.0.58(zod@4.3.6))(zod@4.3.6)
+        version: 3.0.0(ai@7.0.82(zod@4.3.6))(zod@4.3.6)
       ai:
-        specifier: 7.0.58
-        version: 7.0.58(zod@4.3.6)
+        specifier: 7.0.82
+        version: 7.0.82(zod@4.3.6)
       eve-v0:
         specifier: npm:eve@0.22.1
-        version: eve@0.22.1(ai@7.0.58(zod@4.3.6))
-      eve-v0-latest:
+        version: eve@0.22.1(ai@7.0.82(zod@4.3.6))
+      eve-v0-current:
         specifier: npm:eve@0.37.1
-        version: eve@0.37.1(ai@7.0.58(zod@4.3.6))
+        version: eve@0.37.1(ai@7.0.82(zod@4.3.6))
+      eve-v0-latest:
+        specifier: npm:eve@0.47.6
+        version: eve@0.47.6(ai@7.0.82(zod@4.3.6))
       eve-v0-provider:
         specifier: npm:eve@0.34.0
-        version: eve@0.34.0(ai@7.0.58(zod@4.3.6))
+        version: eve@0.34.0(ai@7.0.82(zod@4.3.6))
       zod:
         specifier: 4.3.6
         version: 4.3.6
 
 packages:
 
-  '@ai-sdk/gateway@4.0.46':
-    resolution: {integrity: sha512-LIAO6kAG8fpXQb9L0iwPk1FIbXftvqnyC56v5NEAzeWTeL8fUsy/Hx86VPBTWEDFdwbVprjWifJOAqS6AOj3mA==}
+  '@ai-sdk/gateway@4.0.67':
+    resolution: {integrity: sha512-LtyxLkg7dZ2iz8Ouh1806BJbA+q+FKc/mXUCl4v/wdNNIGtbfk80dNtlhqjhqOZa4dnfc3caVafRL7ocxzoegA==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider-utils@5.0.25':
-    resolution: {integrity: sha512-xscPPHCSjCHWrdhai25sbHCJeKNLW/3D1uSpUZa4cEtTKXA8OnPQ3+Rfu1SmM5Ea/Mf8Dfn3cllw9zeMzo/zFA==}
+  '@ai-sdk/provider-utils@5.0.32':
+    resolution: {integrity: sha512-MZUhlINn6FzKIWuX3T36h+yM9d7bG+yatH+kC99ZCe0DHxXfP73KwaoLiLcZDPQDamFyO3umPPBLJieZJyG4DQ==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider@4.0.7':
-    resolution: {integrity: sha512-6or44XprPzKbr8zkmzosowSE0pxkvJcoojBL+mCZvPUt3kvXp3XSNqeVun9golb1acEfSo6yaEBRT18h2VU+1Q==}
+  '@ai-sdk/provider@4.0.8':
+    resolution: {integrity: sha512-aWO7iwhFUGf347tCwNGggggfmZigaSu7TF739IZSrWWABUp7zkb4Cr3fMqvBe5EIS7ABJJu3Cadn0g/zs1G0QQ==}
     engines: {node: '>=22'}
 
   '@emnapi/core@1.11.1':
@@ -181,8 +184,8 @@ packages:
   '@workflow/serde@4.1.0':
     resolution: {integrity: sha512-pav4F2BoirECWR7Nf1TKt+2eETcBj7jj4cBefQ8VXQCA6NPkaKeLfj/zMgi+3zYV5ZIBT4GuUiphsj0/b9hPQQ==}
 
-  ai@7.0.58:
-    resolution: {integrity: sha512-GfgO90CQQ0yYuoxJAUOeQ6tviyYw1BUIDygSZ1q3Ce6kSc93tYmB5eltKY/NxC0YOouAax7JvDqVnYxvIAr04Q==}
+  ai@7.0.82:
+    resolution: {integrity: sha512-XRl4uMQyTSn5LPRs75HAb75K27T2IeQ/6oesgBCMMVaQZ2le6pqGrDrVZOrDIujLKtHgStp09H3dZ4CwFnVe3A==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -289,6 +292,26 @@ packages:
       ai: ^7.0.58
       braintrust: ^3.0.0
       just-bash: ^3.0.0
+      microsandbox: ^0.5.0
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
+      braintrust:
+        optional: true
+      just-bash:
+        optional: true
+      microsandbox:
+        optional: true
+
+  eve@0.47.6:
+    resolution: {integrity: sha512-k7tXAMBadjOW0LBHeEV3WDoyeufwTzIxAmInuCf7QFVFoh0CrYI0UJcD0zVnVQdDc0X1fVVj79Q76Twwh6QvTw==}
+    engines: {node: '>=24'}
+    hasBin: true
+    peerDependencies:
+      '@opentelemetry/api': ^1.0.0
+      ai: ^7.0.82
+      braintrust: ^3.0.0
+      just-bash: ^3.1.0
       microsandbox: ^0.5.0
     peerDependenciesMeta:
       '@opentelemetry/api':
@@ -478,23 +501,23 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/gateway@4.0.46(zod@4.3.6)':
+  '@ai-sdk/gateway@4.0.67(zod@4.3.6)':
     dependencies:
-      '@ai-sdk/provider': 4.0.7
-      '@ai-sdk/provider-utils': 5.0.25(zod@4.3.6)
+      '@ai-sdk/provider': 4.0.8
+      '@ai-sdk/provider-utils': 5.0.32(zod@4.3.6)
       '@vercel/oidc': 3.2.0
       zod: 4.3.6
 
-  '@ai-sdk/provider-utils@5.0.25(zod@4.3.6)':
+  '@ai-sdk/provider-utils@5.0.32(zod@4.3.6)':
     dependencies:
-      '@ai-sdk/provider': 4.0.7
+      '@ai-sdk/provider': 4.0.8
       '@standard-schema/spec': 1.1.0
       '@workflow/serde': 4.1.0
       eventsource-parser: 3.1.0
       undici: 7.29.0
       zod: 4.3.6
 
-  '@ai-sdk/provider@4.0.7':
+  '@ai-sdk/provider@4.0.8':
     dependencies:
       json-schema: 0.4.0
 
@@ -521,9 +544,9 @@ snapshots:
       '@tybys/wasm-util': 0.10.3
     optional: true
 
-  '@openrouter/ai-sdk-provider@3.0.0(ai@7.0.58(zod@4.3.6))(zod@4.3.6)':
+  '@openrouter/ai-sdk-provider@3.0.0(ai@7.0.82(zod@4.3.6))(zod@4.3.6)':
     dependencies:
-      ai: 7.0.58(zod@4.3.6)
+      ai: 7.0.82(zod@4.3.6)
       zod: 4.3.6
 
   '@oxc-project/types@0.138.0': {}
@@ -590,11 +613,11 @@ snapshots:
 
   '@workflow/serde@4.1.0': {}
 
-  ai@7.0.58(zod@4.3.6):
+  ai@7.0.82(zod@4.3.6):
     dependencies:
-      '@ai-sdk/gateway': 4.0.46(zod@4.3.6)
-      '@ai-sdk/provider': 4.0.7
-      '@ai-sdk/provider-utils': 5.0.25(zod@4.3.6)
+      '@ai-sdk/gateway': 4.0.67(zod@4.3.6)
+      '@ai-sdk/provider': 4.0.8
+      '@ai-sdk/provider-utils': 5.0.32(zod@4.3.6)
       zod: 4.3.6
 
   consola@3.4.2: {}
@@ -612,9 +635,9 @@ snapshots:
       httpxy: 0.5.4
       srvx: 0.11.21
 
-  eve@0.22.1(ai@7.0.58(zod@4.3.6)):
+  eve@0.22.1(ai@7.0.82(zod@4.3.6)):
     dependencies:
-      ai: 7.0.58(zod@4.3.6)
+      ai: 7.0.82(zod@4.3.6)
       nitro: 3.0.260610-beta
     transitivePeerDependencies:
       - '@azure/app-configuration'
@@ -656,9 +679,9 @@ snapshots:
       - xml2js
       - zephyr-agent
 
-  eve@0.34.0(ai@7.0.58(zod@4.3.6)):
+  eve@0.34.0(ai@7.0.82(zod@4.3.6)):
     dependencies:
-      ai: 7.0.58(zod@4.3.6)
+      ai: 7.0.82(zod@4.3.6)
       nitro: 3.0.260610-beta
       undici: 8.9.0
     transitivePeerDependencies:
@@ -701,9 +724,54 @@ snapshots:
       - xml2js
       - zephyr-agent
 
-  eve@0.37.1(ai@7.0.58(zod@4.3.6)):
+  eve@0.37.1(ai@7.0.82(zod@4.3.6)):
     dependencies:
-      ai: 7.0.58(zod@4.3.6)
+      ai: 7.0.82(zod@4.3.6)
+      nitro: 3.0.260610-beta
+      undici: 8.9.0
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@netlify/blobs'
+      - '@netlify/runtime'
+      - '@planetscale/database'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - '@vercel/queue'
+      - aws4fetch
+      - better-sqlite3
+      - chokidar
+      - dotenv
+      - drizzle-orm
+      - giget
+      - idb-keyval
+      - ioredis
+      - jiti
+      - lru-cache
+      - miniflare
+      - mongodb
+      - mysql2
+      - rollup
+      - sqlite3
+      - uploadthing
+      - vite
+      - wrangler
+      - xml2js
+      - zephyr-agent
+
+  eve@0.47.6(ai@7.0.82(zod@4.3.6)):
+    dependencies:
+      ai: 7.0.82(zod@4.3.6)
       nitro: 3.0.260610-beta
       undici: 8.9.0
     transitivePeerDependencies:

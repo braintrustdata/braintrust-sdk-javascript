@@ -715,6 +715,7 @@ type EveTraceCapturePolicy = (
 ) => EveTracePolicyDecision | boolean;
 
 export interface EveProviderDefinition {
+  readonly capture?: "content" | "metadata";
   readonly tracePolicy?: EveTraceCapturePolicy;
   readonly events?: {
     readonly "action.completed"?: EveProviderHandler<EveProviderActionTerminalEvent>;

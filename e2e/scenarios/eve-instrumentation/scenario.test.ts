@@ -40,6 +40,13 @@ const eveScenarios = await Promise.all(
     },
     {
       cassetteKey: "eve-v0-latest",
+      dependencyName: "eve-v0-current",
+      label: "v0 current pinned",
+      provider: true,
+      variantKey: "eve-v0-current",
+    },
+    {
+      cassetteKey: "eve-v0-latest",
       dependencyName: "eve-v0-latest",
       label: "v0 latest",
       provider: true,
@@ -409,8 +416,14 @@ describe.sequential("eve instrumentation variants", () => {
           ).toHaveLength(1);
         }
 
+        const snapshotEvents = JSON.parse(
+          JSON.stringify(events).replace(
+            /ag_researcher:[0-9a-f]+/g,
+            "ag_researcher:<id>",
+          ),
+        ) as CapturedLogEvent[];
         await matchSpanTreeSnapshot(
-          events,
+          snapshotEvents,
           resolveFileSnapshotPath(
             import.meta.url,
             `${scenario.variantKey}.span-tree.json`,
