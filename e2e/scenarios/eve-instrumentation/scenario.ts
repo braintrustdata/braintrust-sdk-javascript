@@ -111,9 +111,6 @@ async function main() {
       seenSessionIds,
       "session.waiting",
     );
-    // Eve can publish the waiting boundary just before the completed turn's
-    // model history becomes visible to a follow-up request.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     const followUp = await fetch(
       `${baseUrl}/eve/v1/session/${body.sessionId}`,
       {
@@ -122,6 +119,9 @@ async function main() {
             ? { continuationToken: body.continuationToken }
             : {}),
           message: "Run the Braintrust Eve instrumentation e2e scenario again",
+          // Queue the follow-up if the waiting event arrives while Eve is still
+          // committing the completed turn's model history.
+          turnPolicy: "queue",
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
