@@ -50,6 +50,7 @@ import {
   mergeRowBatch,
   OBJECT_DELETE_FIELD,
   OBJECT_ID_KEYS,
+  projectLogsIdentifier,
   SanitizedExperimentLogPartialArgs,
   SpanComponentsV3,
   SpanComponentsV4,
@@ -2568,13 +2569,21 @@ function spanComponentsToObjectIdLambda(
       throw new Error(
         "Impossible: computeObjectMetadataArgs not supported for prompt sessions",
       );
-    case SpanObjectTypeV3.PROJECT_LOGS:
+    case SpanObjectTypeV3.PROJECT_LOGS: {
+      const identifier = projectLogsIdentifier(
+        components.data.object_id,
+        components.data.compute_object_metadata_args,
+      );
+      if (identifier?.kind === "object_id") {
+        return async () => identifier.objectId;
+      }
+      const computeMetadataArgs =
+        identifier?.kind === "project_name"
+          ? { project_name: identifier.projectName }
+          : { ...components.data.compute_object_metadata_args };
       return async () =>
-        (
-          await computeLoggerMetadata(state, {
-            ...components.data.compute_object_metadata_args,
-          })
-        ).project.id;
+        (await computeLoggerMetadata(state, computeMetadataArgs)).project.id;
+    }
     default:
       const x: never = components.data.object_type;
       throw new Error(`Unknown object type: ${x}`);

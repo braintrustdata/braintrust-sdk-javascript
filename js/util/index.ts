@@ -115,6 +115,7 @@ export type { SpanComponentsV3Data } from "./span_identifier_v3";
 export {
   SpanComponentsV3,
   SpanObjectTypeV3,
+  projectLogsIdentifier,
   spanComponentsV3Schema,
   spanObjectTypeV3EnumSchema,
   spanObjectTypeV3ToString,

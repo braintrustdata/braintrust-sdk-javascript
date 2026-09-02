@@ -60,6 +60,42 @@ export function spanObjectTypeV3ToString(objectType: SpanObjectTypeV3): string {
   return spanObjectTypeV3ToTypedString(objectType);
 }
 
+type ProjectLogsIdentifier =
+  | { kind: "object_id"; objectId: string }
+  | { kind: "project_name"; projectName: string };
+
+/**
+ * Returns the project identifier encoded in span components, preferring an
+ * explicit object ID, then a project ID in metadata, then a project name.
+ */
+export function projectLogsIdentifier(
+  objectId: string | null | undefined,
+  computeObjectMetadataArgs: Record<string, unknown> | null | undefined,
+): ProjectLogsIdentifier | undefined {
+  if (objectId) {
+    return { kind: "object_id", objectId };
+  }
+  if (!computeObjectMetadataArgs) {
+    return undefined;
+  }
+
+  const projectId = computeObjectMetadataArgs.project_id;
+  const projectName = computeObjectMetadataArgs.project_name;
+  if (
+    (projectId != null && typeof projectId !== "string") ||
+    (projectName != null && typeof projectName !== "string")
+  ) {
+    return undefined;
+  }
+  if (projectId) {
+    return { kind: "object_id", objectId: projectId };
+  }
+  if (projectName) {
+    return { kind: "project_name", projectName };
+  }
+  return undefined;
+}
+
 enum InternalSpanComponentUUIDFields {
   OBJECT_ID = 1,
   ROW_ID = 2,
