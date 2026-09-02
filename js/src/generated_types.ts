@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 9963a3f7375263a4) -- do not modify
+// Auto-generated file (content hash 719572142fc24803) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -1635,6 +1635,7 @@ export const ProjectSettings = z.union([
       ]),
       disable_realtime_queries: z.union([z.boolean(), z.null()]),
       monitor_charts_use_metrics_start: z.union([z.boolean(), z.null()]),
+      blind_reviews: z.union([z.boolean(), z.null()]),
       default_preprocessor: NullableSavedFunctionId,
     })
     .partial(),
@@ -1702,6 +1703,7 @@ export const WindowedAutomationConfig = z.object({
       auto_approve_tools: z.array(z.string().min(1)).optional().default([]),
       harness: z.enum(["native", "codex", "claude-code"]).optional(),
       model: z.string().min(1).optional(),
+      endpoint_name: z.string().min(1).optional(),
       reasoning_effort: z
         .enum(["none", "minimal", "low", "medium", "high", "xhigh", "max"])
         .optional(),

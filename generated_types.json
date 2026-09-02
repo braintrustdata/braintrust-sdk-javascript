@@ -4371,7 +4371,7 @@
                             "type": "string",
                             "minLength": 1,
                             "maxLength": 10000,
-                            "description": "Instructions for Loop to format content sent to this destination"
+                            "description": "Publish a Slack mrkdwn digest.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say \"No pattern outcomes.\"\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report."
                           }
                         },
                         "required": ["type", "workspace_id", "channel"]
@@ -4658,7 +4658,7 @@
                             "type": "string",
                             "minLength": 1,
                             "maxLength": 10000,
-                            "description": "Instructions for Loop to format content sent to this destination"
+                            "description": "Publish a Slack mrkdwn digest.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say \"No pattern outcomes.\"\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report."
                           }
                         },
                         "required": ["type", "workspace_id", "channel"]
@@ -5254,6 +5254,10 @@
           "monitor_charts_use_metrics_start": {
             "type": ["boolean", "null"],
             "description": "If true, use metrics.start rather than created for monitor chart time bucket dimensions."
+          },
+          "blind_reviews": {
+            "type": ["boolean", "null"],
+            "description": "If true, hide peer review scores, comments, and aggregate results from reviewers without project update permissions until they submit their own review."
           },
           "default_preprocessor": {
             "$ref": "#/components/schemas/NullableSavedFunctionId"
@@ -6698,7 +6702,7 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 10000,
-                "description": "Instructions for Loop to format content sent to this destination"
+                "description": "Publish a Slack mrkdwn digest.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say \"No pattern outcomes.\"\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report."
               }
             },
             "required": ["type", "workspace_id", "channel"],
@@ -7501,6 +7505,10 @@
                 "type": "string",
                 "minLength": 1
               },
+              "endpoint_name": {
+                "type": "string",
+                "minLength": 1
+              },
               "reasoning_effort": {
                 "type": "string",
                 "enum": [
@@ -7566,7 +7574,7 @@
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 10000,
-                      "description": "Instructions for Loop to format content sent to this destination"
+                      "description": "Publish a Slack mrkdwn digest.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say \"No pattern outcomes.\"\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report."
                     }
                   },
                   "required": ["type", "workspace_id", "channel"]
