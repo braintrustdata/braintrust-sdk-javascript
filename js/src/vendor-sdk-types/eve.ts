@@ -694,8 +694,29 @@ type EveProviderHandler<TEvent> = (
   context: EveProviderContext,
 ) => void | PromiseLike<void>;
 
+type EveChannelAudience = "private" | "public" | "unknown";
+
+interface EveTraceCaptureContext {
+  readonly agentName?: string;
+  readonly audience: EveChannelAudience;
+  readonly channelType?: string;
+}
+
+type EveTracePolicyDecision =
+  | { readonly emit: false }
+  | {
+      readonly emit: true;
+      readonly recordInputs: boolean;
+      readonly recordOutputs: boolean;
+    };
+
+type EveTraceCapturePolicy = (
+  trace: EveTraceCaptureContext,
+) => EveTracePolicyDecision | boolean;
+
 export interface EveProviderDefinition {
   readonly capture?: "content" | "metadata";
+  readonly tracePolicy?: EveTraceCapturePolicy;
   readonly events?: {
     readonly "action.completed"?: EveProviderHandler<EveProviderActionTerminalEvent>;
     readonly "action.failed"?: EveProviderHandler<EveProviderActionTerminalEvent>;
