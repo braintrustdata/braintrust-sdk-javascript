@@ -1,5 +1,16 @@
 # braintrust
 
+## 3.30.0
+
+### Minor Changes
+
+- feat: Add OpenAI Batch API Instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2369)
+
+### Patch Changes
+
+- fix(eve): migrate provider to tracePolicy Thanks @chadhietala! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2417)
+- fix(pi-coding-agent): Instrument `streamFunction` properly (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2400)
+
 ## 3.29.0
 
 ### Minor Changes

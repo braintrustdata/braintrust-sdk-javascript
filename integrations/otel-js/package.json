@@ -1,6 +1,6 @@
 {
   "name": "@braintrust/otel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SDK for integrating Braintrust with OpenTelemetry",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
