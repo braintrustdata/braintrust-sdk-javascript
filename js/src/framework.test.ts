@@ -17,8 +17,10 @@ import {
   _exportsForTestingOnly,
   BraintrustState,
   initLogger,
+  injectTraceContext,
   TestBackgroundLogger,
 } from "./logger";
+import { parseBaggage } from "./propagation";
 import { configureNode } from "./node/config";
 import type { ProgressReporter } from "./reporters/types";
 import { InternalAbortError } from "./util";
@@ -2127,6 +2129,64 @@ test("Eval with parent flushes evaluator state, not global state", async () => {
 
   _exportsForTestingOnly.clearTestBackgroundLogger();
   _exportsForTestingOnly.simulateLogoutForTests();
+});
+
+// Regression: the experiment id resolves asynchronously (POST
+// /api/experiment/register), but `Span.inject` reads it synchronously to build
+// the `braintrust.parent` baggage entry. If Eval starts tasks before the id
+// lands, the first task propagates trace identity with no destination and the
+// receiving process silently starts a fresh local trace.
+test("Eval resolves the experiment id before tasks run so injected context is routable", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state as never);
+  vi.spyOn(_exportsForTestingOnly.isomorph, "getRepoInfo").mockResolvedValue(
+    undefined,
+  );
+  vi.spyOn(
+    _exportsForTestingOnly.isomorph,
+    "getPastNAncestors",
+  ).mockResolvedValue([]);
+  vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: { id: "project-id", name: "test-inject-project" },
+    experiment: {
+      id: "experiment-id",
+      project_id: "project-id",
+      name: "test-inject-experiment",
+      public: false,
+    },
+  });
+  _exportsForTestingOnly.useTestBackgroundLogger();
+
+  const carriers: Record<string, string>[] = [];
+
+  await Eval(
+    "test-inject-project",
+    {
+      data: [{ input: 1 }, { input: 2 }],
+      task: (input: number) => {
+        carriers.push(injectTraceContext());
+        return input * 2;
+      },
+      scores: [],
+      state,
+      // Keep the run hermetic: score summarization is a separate server round trip.
+      summarizeScores: false,
+    },
+    { returnResults: false },
+  );
+
+  expect(carriers).toHaveLength(2);
+  for (const carrier of carriers) {
+    expect(carrier["traceparent"]).toBeDefined();
+    // The first task must carry the parent, not just the later ones.
+    expect(parseBaggage(carrier["baggage"])["braintrust.parent"]).toBe(
+      "experiment_id:experiment-id",
+    );
+  }
+
+  _exportsForTestingOnly.clearTestBackgroundLogger();
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
 });
 
 test("classifier-only evaluator populates classifications field", async () => {

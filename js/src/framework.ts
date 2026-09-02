@@ -814,14 +814,13 @@ export async function Eval<
       { disabled: Boolean(options.parent || options.noSendLogs) },
     );
 
-    // Ensure experiment ID is resolved before tasks start for OTEL parent attribute support
-    // The Experiment constructor starts resolution (fire-and-forget), but we await here to ensure completion
-    // Only needed when OTEL compat mode is enabled
-    if (
-      experiment &&
-      typeof process !== "undefined" &&
-      globalThis.BRAINTRUST_CONTEXT_MANAGER !== undefined
-    ) {
+    // Resolve the experiment ID before any task (and therefore any span) exists.
+    // Everything that reads the parent synchronously depends on it: OTEL parent
+    // attributes, and the `braintrust.parent` baggage entry that `Span.inject` /
+    // `injectTraceContext` emit. Without this, the first span of a run would
+    // propagate trace identity with no destination, and the receiving process
+    // would silently start a fresh local trace instead.
+    if (experiment) {
       await experiment._waitForId();
     }
 

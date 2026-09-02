@@ -8462,11 +8462,25 @@ export class SpanImpl implements Span {
   ): T | Record<string, string> {
     const resolvedCarrier = carrier ?? {};
     try {
+      const braintrustParent =
+        this._getOtelParent() ?? this._propagatedState?.braintrustParent;
+      if (!braintrustParent) {
+        // Symmetric with the receive-side warning in resolveW3cParent:
+        // surface this in the process that caused it, rather than leaving the
+        // consumer to debug a trace that arrived with no destination.
+        debugLogger
+          .forState(this._state)
+          .warn(
+            "Injecting trace context without a braintrust.parent; the receiver " +
+              "cannot route the trace and will start a fresh local span instead. " +
+              "The parent object id has not resolved yet (it resolves asynchronously " +
+              "after init); await the experiment or logger before injecting.",
+          );
+      }
       _injectIntoCarrier(resolvedCarrier, {
         traceId: this._rootSpanId,
         spanId: this._spanId,
-        braintrustParent:
-          this._getOtelParent() ?? this._propagatedState?.braintrustParent,
+        braintrustParent,
         propagatedState: this._propagatedState,
       });
     } catch (e) {

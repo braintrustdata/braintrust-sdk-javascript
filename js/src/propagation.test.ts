@@ -7,7 +7,7 @@
  * propagation path (no `@opentelemetry/api` dependency).
  */
 
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   _exportsForTestingOnly,
   _injectIntoCarrier,
@@ -27,6 +27,10 @@ import {
   parseBaggage,
   parseTraceparent,
 } from "./propagation";
+import {
+  resetDebugLoggerForTests,
+  setGlobalDebugLogLevel,
+} from "./debug-logger";
 import { SpanComponentsV3 } from "../util/span_identifier_v3";
 import { SpanComponentsV4 } from "../util/span_identifier_v4";
 import { SpanObjectTypeV3 } from "../util/index";
@@ -476,6 +480,7 @@ test("getHeader reads Web Headers-style objects", () => {
 // --------------------------------------------------------------------------- //
 
 const PROJECT_NAME = "propagation-test";
+const EXPERIMENT_ID = "propagation-test-experiment";
 
 describe("inject / extract / round-trip", () => {
   let memoryLogger: ReturnType<
@@ -719,6 +724,47 @@ describe("inject / extract / round-trip", () => {
       expect(parseBaggage(carrier.values[BAGGAGE_HEADER])).toEqual({
         user: "alice",
         [BRAINTRUST_PARENT_KEY]: `project_name:${PROJECT_NAME}`,
+      });
+    });
+
+    // An experiment's id resolves asynchronously (POST /api/experiment/register),
+    // so a span created before it lands has no `braintrust.parent` to inject. The
+    // trace identity still propagates, which is how this used to fail silently:
+    // the receiver saw a traceparent it could not route and started a fresh local
+    // trace instead. Warn on the send side, where the problem actually is.
+    test("experiment span with an unresolved id warns and omits the parent", () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      setGlobalDebugLogLevel("warn");
+      try {
+        const experiment =
+          _exportsForTestingOnly.initTestExperiment(EXPERIMENT_ID);
+        const span = experiment.startSpan({ name: "task" });
+        const carrier = span.inject<Record<string, string>>({});
+        span.end();
+
+        expect(carrier[TRACEPARENT_HEADER]).toMatch(TRACEPARENT_RE);
+        expect(BAGGAGE_HEADER in carrier).toBe(false);
+        expect(warnSpy).toHaveBeenCalledWith(
+          "[braintrust]",
+          expect.stringContaining("without a braintrust.parent"),
+        );
+      } finally {
+        resetDebugLoggerForTests();
+        warnSpy.mockRestore();
+      }
+    });
+
+    test("experiment span injects the parent once the id is resolved", async () => {
+      const experiment =
+        _exportsForTestingOnly.initTestExperiment(EXPERIMENT_ID);
+      await experiment._waitForId();
+
+      const span = experiment.startSpan({ name: "task" });
+      const carrier = span.inject<Record<string, string>>({});
+      span.end();
+
+      expect(parseBaggage(carrier[BAGGAGE_HEADER])).toEqual({
+        [BRAINTRUST_PARENT_KEY]: `experiment_id:${EXPERIMENT_ID}`,
       });
     });
 
