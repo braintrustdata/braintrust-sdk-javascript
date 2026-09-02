@@ -29,7 +29,7 @@ import type {
   EveRuntimeActionResult,
   EveRuntimeToolCallActionRequest,
   EveRuntimeToolResultActionResult,
-  EveSystemModelMessage,
+  EveStreamEvent,
 } from "../../vendor-sdk-types/eve";
 
 type SpanState = {
@@ -132,7 +132,9 @@ export function braintrustEveHook(options: {
   const bridge = new EveBridge(state);
   return {
     events: {
-      "*": async (event: EveHandleMessageStreamEvent, ctx: EveHookContext) => {
+      // Eve delivers every accepted stream event here, including ones newer
+      // than the union we model; `bridge.handle` narrows and ignores the rest.
+      "*": async (event: EveStreamEvent, ctx: EveHookContext) => {
         await bridge.handle(event, ctx, options.metadata);
       },
     },
@@ -153,6 +155,9 @@ export function createLegacyEveInstrumentation(options: {
         } catch (error) {
           debugLogger.warn("Error in Eve LLM input capture:", error);
         }
+        // We capture input for our own spans and contribute no runtime context
+        // to Eve's AI SDK telemetry spans.
+        return undefined;
       },
     },
     recordInputs: false,
@@ -165,6 +170,29 @@ function isEveHandleMessageStreamEvent(
   event: unknown,
 ): event is EveHandleMessageStreamEvent {
   return isObject(event) && typeof event["type"] === "string";
+}
+
+/**
+ * Eve types model messages as the AI SDK's `ModelMessage`, whose shape moves
+ * between `ai` majors, so the boundary is untyped and asserted here instead.
+ * This checks only what the serializer relies on: a known role and a content
+ * value it can walk.
+ */
+function isEveModelMessage(message: unknown): message is EveModelMessage {
+  if (!isObject(message)) {
+    return false;
+  }
+  const role = message["role"];
+  if (
+    role !== "system" &&
+    role !== "user" &&
+    role !== "assistant" &&
+    role !== "tool"
+  ) {
+    return false;
+  }
+  const content = message["content"];
+  return typeof content === "string" || Array.isArray(content);
 }
 
 class ResumedEveSpan implements EveSpan {
@@ -1965,11 +1993,15 @@ export function capturedModelInput(
   if (typeof instructions === "string") {
     value.push({ content: instructions, role: "system" });
   } else if (Array.isArray(instructions)) {
-    value.push(...instructions.map(capturedEveModelMessage));
-  } else if (instructions) {
-    value.push(capturedEveModelMessage(instructions as EveSystemModelMessage));
+    value.push(
+      ...instructions.filter(isEveModelMessage).map(capturedEveModelMessage),
+    );
+  } else if (isEveModelMessage(instructions)) {
+    value.push(capturedEveModelMessage(instructions));
   }
-  value.push(...messages.map(capturedEveModelMessage));
+  value.push(
+    ...messages.filter(isEveModelMessage).map(capturedEveModelMessage),
+  );
 
   try {
     const cloned: unknown = JSON.parse(JSON.stringify(value));
@@ -2110,6 +2142,13 @@ function capturedEveModelContentPart(
         providerReference: part.providerReference,
         type: part.type,
       };
+    default:
+      // Eve can deliver content parts newer than the ones we model. Record the
+      // discriminator so the message still round-trips instead of becoming a
+      // hole in the captured input.
+      return isObject(part) && typeof part["type"] === "string"
+        ? { type: part["type"] }
+        : {};
   }
 }
 

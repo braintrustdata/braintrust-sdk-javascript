@@ -291,18 +291,29 @@ export type EveHandleMessageStreamEvent =
       readonly type: "session.completed";
     };
 
+/**
+ * Loose shape of any runtime stream event delivered to the wildcard hook.
+ *
+ * Eve's `HookEventMap` is a closed map that grows over time (eve@0.48 exposes
+ * 33 events to authored hooks). Our handler must accept every one of them, so
+ * the boundary is typed loosely here and narrowed to
+ * {@link EveHandleMessageStreamEvent} inside the plugin. Keeping the two apart
+ * is what lets the event union above stay a discriminated union: folding a
+ * catch-all member into it would widen `data` to `unknown` after every
+ * `type` narrowing.
+ */
+export interface EveStreamEvent {
+  readonly data?: unknown;
+  readonly meta?: unknown;
+  readonly type: string;
+}
+
 export interface EveHookDefinition {
   readonly events?: {
     readonly "*"?: (
-      event: EveHandleMessageStreamEvent,
+      event: EveStreamEvent,
       ctx: EveHookContext,
     ) => void | Promise<void>;
-    readonly [eventType: string]:
-      | ((
-          event: EveHandleMessageStreamEvent,
-          ctx: EveHookContext,
-        ) => void | Promise<void>)
-      | undefined;
   };
 }
 
@@ -475,12 +486,19 @@ export type EveModelMessage =
       readonly role: "tool";
     };
 
+/**
+ * Model input snapshot handed to `step.started`.
+ *
+ * Eve types `messages` as the AI SDK's `ModelMessage` and `instructions` as
+ * `SystemModelMessage`, both of which change shape between `ai` majors. We only
+ * read these to serialize them, so the boundary stays untyped and the parts we
+ * capture are narrowed defensively by `capturedModelInput`. The capture
+ * contract itself lives in {@link EveModelMessage} and
+ * {@link EveModelMessageContentPart}.
+ */
 export interface EveInstrumentationModelInput {
-  readonly instructions?:
-    | string
-    | EveSystemModelMessage
-    | readonly EveSystemModelMessage[];
-  readonly messages: readonly EveModelMessage[];
+  readonly instructions?: unknown;
+  readonly messages: readonly unknown[];
 }
 
 export interface EveInstrumentationStepStartedEventInput {
@@ -499,14 +517,14 @@ export interface EveInstrumentationStepStartedEventInput {
 
 export interface EveInstrumentationDefinition {
   readonly events?: {
+    /**
+     * Eve requires this to return the runtime context to merge into the AI SDK
+     * telemetry span, or `undefined` to contribute none. `void` is not an
+     * accepted return type, so handlers must return explicitly.
+     */
     readonly "step.started"?: (
       input: EveInstrumentationStepStartedEventInput,
-    ) => void | { readonly runtimeContext?: EveJsonObject };
-    readonly [eventType: string]:
-      | ((
-          input: EveInstrumentationStepStartedEventInput,
-        ) => void | { readonly runtimeContext?: EveJsonObject })
-      | undefined;
+    ) => { readonly runtimeContext: EveJsonObject } | undefined;
   };
   readonly recordInputs?: boolean;
   readonly recordOutputs?: boolean;
@@ -526,7 +544,12 @@ export interface EveProviderSetupContext {
 }
 
 export interface EveProviderState {
-  get(): EveJsonValue | undefined;
+  /**
+   * Read as `unknown` rather than `EveJsonValue`: eve declares its JSON value
+   * as an interface-based union that is not structurally assignable to ours,
+   * and we narrow the stored value defensively at every read anyway.
+   */
+  get(): unknown;
   set(value: EveJsonValue | undefined): void;
 }
 

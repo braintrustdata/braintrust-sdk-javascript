@@ -17,7 +17,7 @@
     "ai": "7.0.58",
     "eve-v0": "npm:eve@0.22.1",
     "eve-v0-provider": "npm:eve@0.34.0",
-    "eve-v0-latest": "npm:eve@0.37.1",
+    "eve-v0-latest": "npm:eve@0.47.3",
     "zod": "4.3.6"
   }
 }

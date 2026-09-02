@@ -8,7 +8,7 @@ span_tree:
 │   ├── eve.step [llm]
 │   │   input: [
 │   │     {
-│   │       "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+│   │       "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.\n\nAgent messaging\nAgents you have already delegated to stay available after they answer. eve injects the current `<agents>` list into the conversation as a note labeled `[Agents]`; it is added automatically by the framework, not written by the user, and never requires a reply. The list is only a record of those existing agents — their `agentId`, name, and latest status. It does not limit which subagent tools you can call: your tool list is the source of truth, and any subagent tool can always be called without `agentId` to start a new agent, including when the `<agents>` list is empty or absent. Pass `agentId` to the same subagent tool only to continue one of those existing agents' sessions.",
 │   │       "role": "system"
 │   │     },
 │   │     {
@@ -87,7 +87,7 @@ span_tree:
 │   │       │       "role": "system"
 │   │       │     },
 │   │       │     {
-│   │       │       "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
+│   │       │       "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the result directly. The caller may send follow-up messages after you answer.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
 │   │       │       "role": "user"
 │   │       │     }
 │   │       │   ]
@@ -152,7 +152,7 @@ span_tree:
 │   │               "role": "system"
 │   │             },
 │   │             {
-│   │               "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
+│   │               "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the result directly. The caller may send follow-up messages after you answer.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
 │   │               "role": "user"
 │   │             },
 │   │             {
@@ -239,7 +239,7 @@ span_tree:
 │   └── eve.step [llm]
 │       input: [
 │         {
-│           "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+│           "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.\n\nAgent messaging\nAgents you have already delegated to stay available after they answer. eve injects the current `<agents>` list into the conversation as a note labeled `[Agents]`; it is added automatically by the framework, not written by the user, and never requires a reply. The list is only a record of those existing agents — their `agentId`, name, and latest status. It does not limit which subagent tools you can call: your tool list is the source of truth, and any subagent tool can always be called without `agentId` to start a new agent, including when the `<agents>` list is empty or absent. Pass `agentId` to the same subagent tool only to continue one of those existing agents' sessions.",
 │           "role": "system"
 │         },
 │         {
@@ -303,6 +303,10 @@ span_tree:
 │             }
 │           ],
 │           "role": "tool"
+│         },
+│         {
+│           "content": "[Agents]\n<agents>\n<agent id=\"ag_researcher:<agent_id:3>\" name=\"researcher\">Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)</agent>\n</agents>",
+│           "role": "user"
 │         }
 │       ]
 │       output: [
@@ -343,7 +347,7 @@ span_tree:
     ├── eve.step [llm]
     │   input: [
     │     {
-    │       "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+    │       "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.\n\nAgent messaging\nAgents you have already delegated to stay available after they answer. eve injects the current `<agents>` list into the conversation as a note labeled `[Agents]`; it is added automatically by the framework, not written by the user, and never requires a reply. The list is only a record of those existing agents — their `agentId`, name, and latest status. It does not limit which subagent tools you can call: your tool list is the source of truth, and any subagent tool can always be called without `agentId` to start a new agent, including when the `<agents>` list is empty or absent. Pass `agentId` to the same subagent tool only to continue one of those existing agents' sessions.",
     │       "role": "system"
     │     },
     │     {
@@ -407,6 +411,10 @@ span_tree:
     │         }
     │       ],
     │       "role": "tool"
+    │     },
+    │     {
+    │       "content": "[Agents]\n<agents>\n<agent id=\"ag_researcher:<agent_id:3>\" name=\"researcher\">Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)</agent>\n</agents>",
+    │       "role": "user"
     │     },
     │     {
     │       "content": [
@@ -497,7 +505,7 @@ span_tree:
     │       │       "role": "system"
     │       │     },
     │       │     {
-    │       │       "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario again",
+    │       │       "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the result directly. The caller may send follow-up messages after you answer.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario again",
     │       │       "role": "user"
     │       │     }
     │       │   ]
@@ -562,7 +570,7 @@ span_tree:
     │               "role": "system"
     │             },
     │             {
-    │               "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario again",
+    │               "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the result directly. The caller may send follow-up messages after you answer.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario again",
     │               "role": "user"
     │             },
     │             {
@@ -649,7 +657,7 @@ span_tree:
     └── eve.step [llm]
         input: [
           {
-            "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+            "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.\n\nAgent messaging\nAgents you have already delegated to stay available after they answer. eve injects the current `<agents>` list into the conversation as a note labeled `[Agents]`; it is added automatically by the framework, not written by the user, and never requires a reply. The list is only a record of those existing agents — their `agentId`, name, and latest status. It does not limit which subagent tools you can call: your tool list is the source of truth, and any subagent tool can always be called without `agentId` to start a new agent, including when the `<agents>` list is empty or absent. Pass `agentId` to the same subagent tool only to continue one of those existing agents' sessions.",
             "role": "system"
           },
           {
@@ -715,6 +723,10 @@ span_tree:
             "role": "tool"
           },
           {
+            "content": "[Agents]\n<agents>\n<agent id=\"ag_researcher:<agent_id:3>\" name=\"researcher\">Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)</agent>\n</agents>",
+            "role": "user"
+          },
+          {
             "content": [
               {
                 "text": "Okay, let me process what's needed here. The user asked to run the Braintrust Eve instrumentation e2e scenario. According to the instructions, I first made the two required tool calls: researcher with the user's message and read with the documentation URL. Now, I have the results from those calls.\n\nThe researcher tool was used to send the message \"Run the Braintrust Eve instrumentation e2e scenario\" to the subagent. The read tool fetched the documentation page, which has a title \"Eve instrumentation\", a URL, and an excerpt mentioning that Eve hooks expose runtime stream events mapped into a nested turn trace.\n\nNow, I need to construct the final answer. The instructions specify that it should start with \"Final answer from read:\", include the researcher result, the title, URL, and excerpt. The researcher result here is the link to the documentation. The read response provided the title, URL, and excerpt. \n\nI should verify that all required elements are included. The researcher result is the link, the title is \"Eve instrumentation\", the URL is the one provided, and the excerpt is the text about runtime context. Putting it all together in a single sentence as specified. No markdown, just plain text. Let me check for any missing parts or formatting issues. Looks good. Time to compose the final answer.\n",
@@ -741,7 +753,7 @@ span_tree:
                 "input": {
                   "message": "Run the Braintrust Eve instrumentation e2e scenario again"
                 },
-                "toolCallId": "<toolCallId:3>",
+                "toolCallId": "<toolCallId:4>",
                 "toolName": "researcher",
                 "type": "tool-call"
               },
@@ -749,7 +761,7 @@ span_tree:
                 "input": {
                   "url": "https://eve.dev/docs/guides/instrumentation"
                 },
-                "toolCallId": "<toolCallId:4>",
+                "toolCallId": "<toolCallId:5>",
                 "toolName": "read",
                 "type": "tool-call"
               }
@@ -768,7 +780,7 @@ span_tree:
                     "url": "https://eve.dev/docs/guides/instrumentation"
                   }
                 },
-                "toolCallId": "<toolCallId:4>",
+                "toolCallId": "<toolCallId:5>",
                 "toolName": "read",
                 "type": "tool-result"
               }
@@ -782,12 +794,16 @@ span_tree:
                   "type": "text",
                   "value": "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation"
                 },
-                "toolCallId": "<toolCallId:3>",
+                "toolCallId": "<toolCallId:4>",
                 "toolName": "researcher",
                 "type": "tool-result"
               }
             ],
             "role": "tool"
+          },
+          {
+            "content": "[Agents]\n<agents>\n<agent id=\"ag_researcher:<agent_id:3>\" name=\"researcher\">Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)</agent>\n<agent id=\"ag_researcher:<agent_id:6>\" name=\"researcher\">Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation</agent>\n</agents>",
+            "role": "user"
           }
         ]
         output: [

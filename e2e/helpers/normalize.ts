@@ -57,6 +57,10 @@ const UUID_SUBSTRING_REGEX =
 // "span" token prefix) with the span-id keys so the same id resolves to one
 // token wherever it appears.
 const HEX_ID_REGEX = /^(?:[0-9a-f]{16}|[0-9a-f]{32})$/;
+// Eve embeds per-run subagent ids (`ag_<name>:<hex>`) inside the `[Agents]`
+// summary message it appends to model input, so they appear in span content
+// rather than in an id field and vary between runs.
+const AGENT_REF_ID_SUBSTRING_REGEX = /\bag_([A-Za-z0-9_-]+):([0-9a-f]{6,})\b/g;
 const TIME_KEYS = new Set([
   "completed_at",
   "created",
@@ -476,7 +480,15 @@ function normalizeValue(
       return "project_name:<project_name>";
     }
 
-    const withNormalizedDates = normalizeDateLikeSubstrings(value);
+    const withNormalizedAgentIds = value.replace(
+      AGENT_REF_ID_SUBSTRING_REGEX,
+      (_match, name: string, id: string) =>
+        `ag_${name}:${tokenFor(tokenMaps.ids, id, "agent_id")}`,
+    );
+
+    const withNormalizedDates = normalizeDateLikeSubstrings(
+      withNormalizedAgentIds,
+    );
     if (withNormalizedDates !== value) {
       return withNormalizedDates;
     }
