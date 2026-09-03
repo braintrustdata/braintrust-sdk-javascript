@@ -19,18 +19,12 @@ export const PUBLISHABLE_PACKAGES = [
     dir: "integrations/deepseek-harness",
     name: "@braintrust/deepseek-harness",
   },
-  { dir: "integrations/langchain-js", name: "@braintrust/langchain-js" },
-  { dir: "integrations/openai-agents-js", name: "@braintrust/openai-agents" },
   { dir: "integrations/otel-js", name: "@braintrust/otel" },
   {
     dir: "integrations/templates-nunjucks",
     name: "@braintrust/templates-nunjucks-js",
   },
   { dir: "integrations/temporal-js", name: "@braintrust/temporal" },
-  {
-    dir: "integrations/vercel-ai-sdk",
-    name: "@braintrust/vercel-ai-sdk",
-  },
 ];
 
 export const PRIVATE_WORKSPACE_PACKAGES = [

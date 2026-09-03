@@ -762,20 +762,5 @@
         "variantKey": "vitest-evals-reporter"
       }
     ]
-  },
-  {
-    "scenarioDirName": "wrap-langchain-js-traces",
-    "label": "LangChain JS Wrapper Traces",
-    "metadataScenario": "wrap-langchain-js-traces",
-    "variants": [
-      {
-        "variantKey": "wrap-langchain-js-traces-v1",
-        "label": "v1 pinned"
-      },
-      {
-        "variantKey": "wrap-langchain-js-traces-v1-latest",
-        "label": "v1 latest"
-      }
-    ]
   }
 ]
