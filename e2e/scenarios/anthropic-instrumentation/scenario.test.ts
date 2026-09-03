@@ -15,6 +15,7 @@ const anthropicScenarios = await Promise.all(
   [
     {
       autoEntry: "scenario.anthropic-v0273.mjs",
+      cassetteKey: "anthropic-v0",
       dependencyName: "anthropic-sdk-v0",
       snapshotName: "anthropic-v0",
       supportsBetaMessages: false,
@@ -25,9 +26,25 @@ const anthropicScenarios = await Promise.all(
       wrapperEntry: "scenario.anthropic-v0273.ts",
     },
     {
+      autoEntry: "scenario.anthropic-v0330.mjs",
+      cassetteKey: "anthropic-v0-batches",
+      dependencyName: "anthropic-sdk-v0-batches",
+      snapshotName: "anthropic-v0-batches",
+      supportsBatches: true,
+      supportsBetaMessages: true,
+      supportsBetaMessagesStream: false,
+      supportsBetaToolRunner: false,
+      supportsSessions: false,
+      supportsServerToolUse: false,
+      supportsThinking: false,
+      wrapperEntry: "scenario.anthropic-v0330.ts",
+    },
+    {
       autoEntry: "scenario.mjs",
+      cassetteKey: "anthropic-v0-latest",
       dependencyName: "anthropic-sdk-v0-latest",
       snapshotName: "anthropic-v0-latest",
+      supportsBatches: true,
       supportsBetaMessages: true,
       supportsBetaToolRunner: true,
       supportsSessions: true,
@@ -54,6 +71,7 @@ describe.concurrent("variants", () => {
             entry: scenario.wrapperEntry,
             env: { ANTHROPIC_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
+              cassette: { variantKey: scenario.cassetteKey },
               variantKey: scenario.snapshotName,
               originalScenarioDir,
             },
@@ -64,7 +82,9 @@ describe.concurrent("variants", () => {
         snapshotName: scenario.supportsSessions
           ? `${scenario.snapshotName}-wrapped`
           : scenario.snapshotName,
+        supportsBatches: scenario.supportsBatches ?? false,
         supportsBetaMessages: scenario.supportsBetaMessages,
+        supportsBetaMessagesStream: scenario.supportsBetaMessagesStream ?? true,
         supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
         supportsSessions: scenario.supportsSessions,
         supportsServerToolUse: scenario.supportsServerToolUse ?? true,
@@ -81,6 +101,7 @@ describe.concurrent("variants", () => {
             env: { ANTHROPIC_PACKAGE_NAME: scenario.dependencyName },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
+              cassette: { variantKey: scenario.cassetteKey },
               variantKey: scenario.snapshotName,
               originalScenarioDir,
             },
@@ -89,7 +110,9 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: scenario.snapshotName,
+        supportsBatches: scenario.supportsBatches ?? false,
         supportsBetaMessages: scenario.supportsBetaMessages,
+        supportsBetaMessagesStream: scenario.supportsBetaMessagesStream ?? true,
         supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
         supportsSessions: scenario.supportsSessions,
         supportsServerToolUse: scenario.supportsServerToolUse ?? true,

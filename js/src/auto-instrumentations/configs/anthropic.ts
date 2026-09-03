@@ -23,7 +23,7 @@ export const anthropicConfigs: InstrumentationConfig[] = [
     channelName: anthropicChannels.messagesCreate.channelName,
     module: {
       name: "@anthropic-ai/sdk",
-      versionRange: ">=0.27.0 <0.39.0",
+      versionRange: ">=0.27.0 <0.33.0",
       filePath: "resources/messages.mjs",
     },
     functionQuery: {
@@ -36,7 +36,7 @@ export const anthropicConfigs: InstrumentationConfig[] = [
     channelName: anthropicChannels.messagesCreate.channelName,
     module: {
       name: "@anthropic-ai/sdk",
-      versionRange: ">=0.27.0 <0.39.0",
+      versionRange: ">=0.27.0 <0.33.0",
       filePath: "resources/messages.js",
     },
     functionQuery: {
@@ -51,7 +51,7 @@ export const anthropicConfigs: InstrumentationConfig[] = [
     channelName: anthropicChannels.messagesCreate.channelName,
     module: {
       name: "@anthropic-ai/sdk",
-      versionRange: ">=0.39.0",
+      versionRange: ">=0.33.0",
       filePath: "resources/messages/messages.mjs",
     },
     functionQuery: {
@@ -64,7 +64,7 @@ export const anthropicConfigs: InstrumentationConfig[] = [
     channelName: anthropicChannels.messagesCreate.channelName,
     module: {
       name: "@anthropic-ai/sdk",
-      versionRange: ">=0.39.0",
+      versionRange: ">=0.33.0",
       filePath: "resources/messages/messages.js",
     },
     functionQuery: {
@@ -79,7 +79,7 @@ export const anthropicConfigs: InstrumentationConfig[] = [
     channelName: anthropicChannels.betaMessagesCreate.channelName,
     module: {
       name: "@anthropic-ai/sdk",
-      versionRange: ">=0.39.0",
+      versionRange: ">=0.33.0",
       filePath: "resources/beta/messages/messages.mjs",
     },
     functionQuery: {
@@ -92,7 +92,7 @@ export const anthropicConfigs: InstrumentationConfig[] = [
     channelName: anthropicChannels.betaMessagesCreate.channelName,
     module: {
       name: "@anthropic-ai/sdk",
-      versionRange: ">=0.39.0",
+      versionRange: ">=0.33.0",
       filePath: "resources/beta/messages/messages.js",
     },
     functionQuery: {

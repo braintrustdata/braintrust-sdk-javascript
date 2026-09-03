@@ -1,6 +1,11 @@
 import { channel, defineChannels } from "../core/channel-definitions";
 import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
+  AnthropicBatchesCreateTraceArgs,
+  CompleteAnthropicBatchTraceArgs,
+  AnthropicBatchLike,
+} from "../../anthropic-batch-types";
+import type {
   AnthropicCreateParams,
   AnthropicMessage,
   AnthropicMessageStream,
@@ -14,10 +19,20 @@ import type {
 } from "../../vendor-sdk-types/anthropic";
 
 type AnthropicResult = AnthropicMessage | AnthropicMessageStream;
-
 export const anthropicChannels = defineChannels(
   "@anthropic-ai/sdk",
   {
+    batchesCreateTraced: channel<
+      [AnthropicBatchesCreateTraceArgs],
+      AnthropicBatchLike
+    >({
+      channelName: "messages.batches.create-traced",
+      kind: "async",
+    }),
+    batchesCompleteTrace: channel<[CompleteAnthropicBatchTraceArgs], void>({
+      channelName: "messages.batches.complete-trace",
+      kind: "async",
+    }),
     messagesCreate: channel<
       [AnthropicCreateParams],
       AnthropicResult,

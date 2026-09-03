@@ -207,6 +207,10 @@ export { braintrustEveInstrumentation } from "./instrumentation/plugins/eve-inst
 export { collectAnthropicSession } from "./wrappers/anthropic-session-collector";
 export { wrapAnthropic } from "./wrappers/anthropic";
 export {
+  anthropicBatchesCreateTraced,
+  completeAnthropicBatchTrace,
+} from "./anthropic-batch";
+export {
   BraintrustObservabilityExporter,
   wrapMastraAgent,
 } from "./wrappers/mastra";
