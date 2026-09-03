@@ -1,0 +1,125 @@
+span_tree:
+└── google-genai-batch-helper-root [task]
+    metadata: {
+      "scenario": "google-genai-batch-helper",
+      "testRunId": "<run:1>"
+    }
+    metrics: {
+      "end": 0,
+      "start": 0
+    }
+    context: {
+      "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+      "caller_functionname": "runTracedScenario",
+      "caller_lineno": 0
+    }
+    └── google-batch-inline-operation
+        metadata: {
+          "operation": "batch-inline",
+          "testRunId": "<run:1>"
+        }
+        metrics: {
+          "end": 0,
+          "start": 0
+        }
+        context: {
+          "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+          "caller_functionname": "runOperation",
+          "caller_lineno": 0
+        }
+        └── google-genai.batch [task]
+            metadata: {
+              "batch_name": "batches/e2e-inline",
+              "failed_request_count": 1,
+              "incomplete_request_count": 0,
+              "model": "models/gemini-2.5-flash-001",
+              "provider": "google",
+              "state": "JOB_STATE_SUCCEEDED",
+              "successful_request_count": 1
+            }
+            metrics: {
+              "end": 0,
+              "start": 0
+            }
+            context: {
+              "caller_filename": "<node-internal>",
+              "caller_functionname": "<node-internal>",
+              "caller_lineno": 0
+            }
+            ├── generate_content [llm]
+            │   input: {
+            │     "contents": {
+            │       "text": "Reply with exactly INLINE ONE."
+            │     },
+            │     "model": "models/gemini-2.5-flash-001"
+            │   }
+            │   output: {
+            │     "candidates": [
+            │       {
+            │         "content": {
+            │           "parts": [
+            │             {
+            │               "text": "INLINE ONE"
+            │             }
+            │           ],
+            │           "role": "model"
+            │         },
+            │         "groundingMetadata": {
+            │           "webSearchQueries": [
+            │             "inline one query"
+            │           ]
+            │         }
+            │       }
+            │     ],
+            │     "usageMetadata": {
+            │       "candidatesTokenCount": 2,
+            │       "promptTokenCount": 5,
+            │       "totalTokenCount": 7
+            │     }
+            │   }
+            │   metadata: {
+            │     "batch_request_index": 0,
+            │     "groundingMetadata": {
+            │       "webSearchQueries": [
+            │         "inline one query"
+            │       ]
+            │     },
+            │     "maxOutputTokens": 24,
+            │     "model": "models/gemini-2.5-flash-001",
+            │     "provider": "google",
+            │     "temperature": 0
+            │   }
+            │   metrics: {
+            │     "completion_tokens": 2,
+            │     "end": 0,
+            │     "prompt_tokens": 5,
+            │     "start": 0,
+            │     "tokens": 7
+            │   }
+            │   context: {
+            │     "caller_filename": "<node-internal>",
+            │     "caller_functionname": "<node-internal>",
+            │     "caller_lineno": 0
+            │   }
+            └── generate_content [llm]
+                input: {
+                  "contents": {
+                    "text": "This synthetic request fails."
+                  },
+                  "model": "models/gemini-2.5-flash-001"
+                }
+                metadata: {
+                  "batch_request_index": 1,
+                  "model": "models/gemini-2.5-flash-001",
+                  "provider": "google"
+                }
+                metrics: {
+                  "end": 0,
+                  "start": 0
+                }
+                error: "Synthetic batch error"
+                context: {
+                  "caller_filename": "<node-internal>",
+                  "caller_functionname": "<node-internal>",
+                  "caller_lineno": 0
+                }

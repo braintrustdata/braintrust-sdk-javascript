@@ -220,6 +220,11 @@ export { wrapCloudflareAgent } from "./wrappers/cloudflare-agent";
 export { wrapStrandsAgentSDK } from "./wrappers/strands-agent-sdk";
 export { wrapCloudflareAIChat } from "./wrappers/cloudflare-ai-chat";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";
+export {
+  completeGoogleGenAIBatchTrace,
+  googleGenAIBatchesCreateTraced,
+  googleGenAIBatchesGetTraced,
+} from "./google-genai-batch";
 export { wrapGoogleADK } from "./wrappers/google-adk";
 export { wrapGenkit } from "./wrappers/genkit";
 export { wrapHuggingFace } from "./wrappers/huggingface";

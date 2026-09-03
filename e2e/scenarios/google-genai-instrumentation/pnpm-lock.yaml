@@ -12,18 +12,22 @@ importers:
 
   .:
     dependencies:
-      google-genai-sdk-v1-latest:
-        specifier: npm:@google/genai@1.52.0
-        version: '@google/genai@1.52.0'
       google-genai-sdk-v1:
         specifier: npm:@google/genai@1.30.0
         version: '@google/genai@1.30.0'
-      google-genai-sdk-v2-latest:
-        specifier: npm:@google/genai@2.8.0
-        version: '@google/genai@2.8.0'
+      google-genai-sdk-v1-latest:
+        specifier: npm:@google/genai@1.52.0
+        version: '@google/genai@1.52.0'
       google-genai-sdk-v2:
         specifier: npm:@google/genai@2.8.0
         version: '@google/genai@2.8.0'
+      google-genai-sdk-v2-latest:
+        specifier: npm:@google/genai@2.8.0
+        version: '@google/genai@2.8.0'
+    devDependencies:
+      typescript:
+        specifier: 5.4.4
+        version: 5.4.4
 
 packages:
 
@@ -188,6 +192,11 @@ packages:
 
   safe-buffer@5.2.1:
     resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
+
+  typescript@5.4.4:
+    resolution: {integrity: sha512-dGE2Vv8cpVvw28v8HCPqyb08EzbBURxDpuhJvTrusShUfGnhHBafDsLdS1EhhxyL6BJQE+2cT3dDPAv+MQ6oLw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
 
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
@@ -384,6 +393,8 @@ snapshots:
   retry@0.13.1: {}
 
   safe-buffer@5.2.1: {}
+
+  typescript@5.4.4: {}
 
   undici-types@7.18.2: {}
 
