@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { aggregateMistralStreamChunks } from "./mistral-plugin";
 import {
-  aggregateMistralStreamChunks,
+  extractMistralChatInput,
   extractMistralRequestMetadata,
   extractMistralResponseMetadata,
+  normalizeMistralChatChoices,
   parseMistralMetricsFromUsage,
-} from "./mistral-plugin";
+} from "./mistral-span-data";
 
 describe("extractMistralRequestMetadata", () => {
   it("keeps only allowlisted request metadata", () => {
@@ -17,19 +19,100 @@ describe("extractMistralRequestMetadata", () => {
         n: 2,
         safe_prompt: true,
         toolChoice: "auto",
+        parallelToolCalls: false,
+        max_tool_calls: 2,
         messages: [{ role: "user", content: "hi" }],
-        tools: [{ type: "function" }],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "lookup",
+              description: "Look something up",
+              parameters: { type: "object" },
+              strict: true,
+            },
+          },
+          {
+            type: "web_search",
+            toolConfiguration: {
+              include: ["news"],
+              requiresConfirmation: ["open_url"],
+            },
+          },
+          {
+            type: "connector",
+            connectorId: "connector-123",
+            authorization: { type: "api-key", value: "secret" },
+          },
+        ],
         suffix: "ignored",
         arbitrary: "ignored",
       }),
     ).toEqual({
       model: "mistral-large-latest",
-      maxTokens: 128,
+      max_tokens: 128,
       reasoning_effort: "high",
       temperature: 0.4,
       n: 2,
       safe_prompt: true,
-      toolChoice: "auto",
+      tool_choice: "auto",
+      parallel_tool_calls: false,
+      max_tool_calls: 2,
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "lookup",
+            description: "Look something up",
+            parameters: { type: "object" },
+            strict: true,
+          },
+        },
+        {
+          type: "web_search",
+          tool_configuration: {
+            include: ["news"],
+            requires_confirmation: ["open_url"],
+          },
+        },
+        {
+          type: "connector",
+          connector_id: "connector-123",
+        },
+      ],
+    });
+  });
+
+  it("normalizes Mistral's required tool choice", () => {
+    expect(extractMistralRequestMetadata({ toolChoice: "any" })).toEqual({
+      tool_choice: "required",
+    });
+  });
+
+  it("canonicalizes camel-case and snake-case request metadata", () => {
+    const camelCase = extractMistralRequestMetadata({
+      agentId: "agent-123",
+      maxTokens: 128,
+      reasoningEffort: "high",
+      responseFormat: { type: "json_object" },
+      topP: 0.8,
+    });
+
+    expect(camelCase).toEqual(
+      extractMistralRequestMetadata({
+        agent_id: "agent-123",
+        max_tokens: 128,
+        reasoning_effort: "high",
+        response_format: { type: "json_object" },
+        top_p: 0.8,
+      }),
+    );
+    expect(camelCase).toEqual({
+      agent_id: "agent-123",
+      max_tokens: 128,
+      reasoning_effort: "high",
+      response_format: { type: "json_object" },
+      top_p: 0.8,
     });
   });
 
@@ -46,7 +129,8 @@ describe("extractMistralResponseMetadata", () => {
         created: 1234,
         object: "chat.completion",
         model: "mistral-large-latest",
-        agentId: "agent_123",
+        agentId: "legacy_agent",
+        agent_id: "agent_123",
         usage: { total_tokens: 20 },
         choices: [{ index: 0 }],
         data: [{ embedding: [0.1] }],
@@ -57,7 +141,7 @@ describe("extractMistralResponseMetadata", () => {
       created: 1234,
       object: "chat.completion",
       model: "mistral-large-latest",
-      agentId: "agent_123",
+      agent_id: "agent_123",
     });
   });
 
@@ -68,6 +152,85 @@ describe("extractMistralResponseMetadata", () => {
         choices: [{ index: 0 }],
       }),
     ).toBeUndefined();
+  });
+});
+
+describe("Mistral chat payload normalization", () => {
+  it("normalizes input messages through the shared chat extractor", () => {
+    expect(
+      extractMistralChatInput({
+        messages: [
+          {
+            role: "assistant",
+            content: null,
+            toolCalls: [
+              {
+                id: "call-1",
+                type: "function",
+                function: { name: "lookup", arguments: '{"q":"hi"}' },
+              },
+            ],
+          },
+          { role: "tool", toolCallId: "call-1", content: "result" },
+        ],
+      }).input,
+    ).toEqual([
+      {
+        role: "assistant",
+        content: null,
+        tool_calls: [
+          {
+            id: "call-1",
+            type: "function",
+            function: { name: "lookup", arguments: '{"q":"hi"}' },
+          },
+        ],
+      },
+      { role: "tool", tool_call_id: "call-1", content: "result" },
+    ]);
+  });
+
+  it("normalizes camel-case and snake-case choices identically", () => {
+    const expected = [
+      {
+        index: 0,
+        finish_reason: "tool_calls",
+        message: {
+          role: "assistant",
+          content: null,
+          tool_calls: [
+            {
+              id: "call-1",
+              type: "function",
+              function: { name: "lookup", arguments: '{"q":"hi"}' },
+            },
+          ],
+        },
+      },
+    ];
+    const camelCase = [
+      {
+        index: 0,
+        finishReason: "tool_calls",
+        message: {
+          role: "assistant",
+          content: null,
+          prefix: false,
+          toolCalls: expected[0].message.tool_calls,
+        },
+      },
+    ];
+
+    expect(normalizeMistralChatChoices(camelCase)).toEqual(expected);
+    expect(
+      normalizeMistralChatChoices([
+        {
+          index: 0,
+          finish_reason: "tool_calls",
+          message: expected[0].message,
+        },
+      ]),
+    ).toEqual(expected);
   });
 });
 
@@ -89,7 +252,20 @@ describe("parseMistralMetricsFromUsage", () => {
       prompt_tokens: 10,
       completion_tokens: 6,
       tokens: 16,
-      prompt_audio_seconds: 3,
+    });
+  });
+
+  it("derives total tokens when the provider total is missing or invalid", () => {
+    expect(
+      parseMistralMetricsFromUsage({
+        prompt_tokens: 10,
+        completionTokens: 6,
+        total_tokens: Number.POSITIVE_INFINITY,
+      }),
+    ).toEqual({
+      prompt_tokens: 10,
+      completion_tokens: 6,
+      tokens: 16,
     });
   });
 
@@ -104,6 +280,35 @@ describe("parseMistralMetricsFromUsage", () => {
         },
       }),
     ).toEqual({
+      prompt_cached_tokens: 7,
+      completion_reasoning_tokens: 2,
+    });
+  });
+
+  it("omits unsupported and invalid metric values", () => {
+    expect(
+      parseMistralMetricsFromUsage({
+        promptTokens: 10,
+        completionTokens: -1,
+        totalTokens: Number.POSITIVE_INFINITY,
+        promptAudioSeconds: 3,
+        arbitraryCounter: 99,
+        toString: 42,
+        inputTokensDetails: {
+          cachedTokens: 7,
+          reasoningTokens: 4,
+          audioTokens: 1.5,
+          arbitraryTokens: 8,
+          toString: 11,
+        },
+        outputTokensDetails: {
+          reasoningTokens: 2,
+          cachedTokens: 5,
+          imageTokens: Number.NaN,
+        },
+      }),
+    ).toEqual({
+      prompt_tokens: 10,
       prompt_cached_tokens: 7,
       completion_reasoning_tokens: 2,
     });
@@ -164,7 +369,7 @@ describe("aggregateMistralStreamChunks", () => {
         role: "assistant",
         content: "Hello world",
       },
-      finishReason: "stop",
+      finish_reason: "stop",
     });
 
     expect(aggregated.metadata).toMatchObject({
@@ -220,7 +425,7 @@ describe("aggregateMistralStreamChunks", () => {
     expect(aggregated.output?.[0]).toMatchObject({
       message: {
         content: null,
-        toolCalls: [
+        tool_calls: [
           {
             id: "tool_1",
             function: {
@@ -230,7 +435,7 @@ describe("aggregateMistralStreamChunks", () => {
           },
         ],
       },
-      finishReason: "tool_calls",
+      finish_reason: "tool_calls",
     });
   });
 
@@ -289,9 +494,8 @@ describe("aggregateMistralStreamChunks", () => {
     expect(aggregated.output?.[0]).toMatchObject({
       message: {
         content: null,
-        toolCalls: [
+        tool_calls: [
           {
-            index: 0,
             id: "tool_0",
             function: {
               name: "first_tool",
@@ -299,7 +503,6 @@ describe("aggregateMistralStreamChunks", () => {
             },
           },
           {
-            index: 1,
             id: "tool_1",
             function: {
               name: "second_tool",
@@ -308,7 +511,7 @@ describe("aggregateMistralStreamChunks", () => {
           },
         ],
       },
-      finishReason: "tool_calls",
+      finish_reason: "tool_calls",
     });
   });
 
@@ -357,7 +560,7 @@ describe("aggregateMistralStreamChunks", () => {
           role: "assistant",
           content: "a",
         },
-        finishReason: "stop",
+        finish_reason: "stop",
       },
       {
         index: 1,
@@ -365,7 +568,7 @@ describe("aggregateMistralStreamChunks", () => {
           role: "assistant",
           content: "b",
         },
-        finishReason: "length",
+        finish_reason: "length",
       },
     ]);
   });
@@ -433,7 +636,7 @@ describe("aggregateMistralStreamChunks", () => {
             },
           ],
         },
-        finishReason: "stop",
+        finish_reason: "stop",
       },
     ]);
   });

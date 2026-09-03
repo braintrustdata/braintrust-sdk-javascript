@@ -71,10 +71,12 @@ export function convertDataToBlob(data: any, mediaType: string): Blob | null {
 }
 
 /**
- * Process input to extract and convert image/file content parts to Attachments
- * Similar to processImagesInOutput in oai_responses.ts - replaces data in-place
+ * Return a payload copy with inline image/file content converted to Attachments.
  */
-export function processInputAttachments(input: any): any {
+export function processInputAttachments(
+  input: any,
+  options?: { attachmentKey?: (index: number) => string },
+): any {
   if (!input) {
     return input;
   }
@@ -99,11 +101,17 @@ export function processInputAttachments(input: any): any {
       return null;
     }
 
-    return new Attachment({
+    const attachment = new Attachment({
       data: blob,
       filename,
       contentType: mediaType,
     });
+    const key = options?.attachmentKey?.(attachmentIndex);
+    attachmentIndex++;
+    if (key) {
+      attachment.reference.key = key;
+    }
+    return attachment;
   };
 
   const processNode = (node: any): any => {
@@ -217,7 +225,6 @@ export function processInputAttachments(input: any): any {
       const attachment = toAttachment(node.image, mediaType, filename);
 
       if (attachment) {
-        attachmentIndex++;
         return {
           ...node,
           image: attachment,
@@ -234,7 +241,6 @@ export function processInputAttachments(input: any): any {
       const attachment = toAttachment(node.data, mediaType, filename);
 
       if (attachment) {
-        attachmentIndex++;
         return {
           ...node,
           data: attachment,

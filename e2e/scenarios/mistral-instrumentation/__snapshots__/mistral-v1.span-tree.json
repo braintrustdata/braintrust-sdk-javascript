@@ -5,6 +5,119 @@
       "type": "task",
       "children": [
         {
+          "name": "mistral-batch-file-operation",
+          "children": [
+            {
+              "name": "mistral.batch",
+              "type": "task",
+              "children": [
+                {
+                  "name": "mistral.chat.complete",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "file batch two",
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "finish_reason": "stop",
+                      "index": 0,
+                      "message": {
+                        "content": "file batch 2",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "id": "<span:1>",
+                    "model": "mistral-small-2506",
+                    "object": "chat.completion",
+                    "provider": "mistral"
+                  },
+                  "metrics": {
+                    "completion_tokens": 1,
+                    "prompt_tokens": 4,
+                    "tokens": 5
+                  }
+                },
+                {
+                  "name": "mistral.chat.complete",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "file batch one",
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "finish_reason": "stop",
+                      "index": 0,
+                      "message": {
+                        "content": "file batch 1",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "id": "<span:1>",
+                    "model": "mistral-small-2506",
+                    "object": "chat.completion",
+                    "parallel_tool_calls": false,
+                    "provider": "mistral",
+                    "tool_choice": "required",
+                    "tools": [
+                      {
+                        "function": {
+                          "description": "Get weather for a city.",
+                          "name": "get_weather",
+                          "parameters": {
+                            "properties": {
+                              "location": {
+                                "description": "City name, e.g. Vienna.",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "location"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "type": "function"
+                      },
+                      {
+                        "tool_configuration": {
+                          "include": [
+                            "news"
+                          ]
+                        },
+                        "type": "web_search"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_tokens": 1,
+                    "prompt_tokens": 4,
+                    "tokens": 5
+                  }
+                }
+              ],
+              "metadata": {
+                "provider": "mistral"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "batch-file",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "mistral-chat-complete-operation",
           "children": [
             {
@@ -23,20 +136,18 @@
               ],
               "output": [
                 {
-                  "finishReason": "stop",
+                  "finish_reason": "stop",
                   "index": 0,
                   "message": {
                     "content": "Observability",
-                    "prefix": false,
-                    "role": "assistant",
-                    "toolCalls": null
+                    "role": "assistant"
                   }
                 }
               ],
               "metadata": {
                 "created": 0,
                 "id": "<span:1>",
-                "maxTokens": 24,
+                "max_tokens": 24,
                 "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
@@ -70,7 +181,7 @@
               ],
               "output": [
                 {
-                  "finishReason": null,
+                  "finish_reason": null,
                   "index": 0,
                   "message": {
                     "content": "streamed output",
@@ -81,7 +192,7 @@
               "metadata": {
                 "created": 0,
                 "id": "<span:1>",
-                "maxTokens": 24,
+                "max_tokens": 24,
                 "model": "mistral-small-latest",
                 "object": "chat.completion.chunk",
                 "provider": "mistral",
@@ -113,7 +224,7 @@
               ],
               "output": [
                 {
-                  "finishReason": null,
+                  "finish_reason": null,
                   "index": 0,
                   "message": {
                     "content": "Let's break down the problem step by step to find John's age.\n\n1. **First Sister's Age:**\n   - Given: The first sister is **4 years old**.\n\n2. **Second Sister's Age Next Year:**\n   - Next year, the second sister will be twice as old as the first sister.\n   - First sister's age next year: \\(4 + 1 = 5\\) years.\n   - Therefore, second sister's age next year: \\(2 \\times 5 = 10\\) years.\n   - **Current age of the second sister:** \\(10 - 1 = 9\\) years.\n\n3. **Third Sister's Age:**\n   - The third sister is two years older than the second sister.\n   - **Current age of the third sister:** \\(9 + 2 = 11\\) years.\n\n4. **John's Age:**\n   - The third sister is half the age of her older brother (John).\n   - Therefore, John's age: \\(11 \\times 2 = 22\\) years.\n\n**Final Answer:**\n\\[\n\\box",
@@ -124,7 +235,7 @@
               "metadata": {
                 "created": 0,
                 "id": "<span:1>",
-                "maxTokens": 256,
+                "max_tokens": 256,
                 "model": "mistral-small-latest",
                 "object": "chat.completion.chunk",
                 "provider": "mistral",
@@ -156,11 +267,32 @@
                 }
               ],
               "metadata": {
-                "maxTokens": 48,
+                "max_tokens": 48,
                 "model": "mistral-small-2506",
                 "provider": "mistral",
                 "temperature": 0,
-                "toolChoice": "required"
+                "tool_choice": "required",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get weather for a city.",
+                      "name": "get_weather",
+                      "parameters": {
+                        "properties": {
+                          "location": {
+                            "description": "City name, e.g. Vienna.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "location"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
               },
               "error": "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
             },
@@ -176,13 +308,12 @@
               ],
               "output": [
                 {
-                  "finishReason": "tool_calls",
+                  "finish_reason": "tool_calls",
                   "index": 0,
                   "message": {
                     "content": "",
-                    "prefix": false,
                     "role": "assistant",
-                    "toolCalls": [
+                    "tool_calls": [
                       {
                         "function": {
                           "arguments": "{}",
@@ -198,12 +329,22 @@
               "metadata": {
                 "created": 0,
                 "id": "<span:1>",
-                "maxTokens": 48,
+                "max_tokens": 48,
                 "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
                 "temperature": 0,
-                "toolChoice": "required"
+                "tool_choice": "required",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get weather for a city.",
+                      "name": "get_weather",
+                      "parameters": {}
+                    },
+                    "type": "function"
+                  }
+                ]
               },
               "metrics": {
                 "completion_tokens": 7,
@@ -223,11 +364,37 @@
                 }
               ],
               "metadata": {
-                "maxTokens": 48,
+                "max_tokens": 48,
                 "model": "mistral-small-2506",
                 "provider": "mistral",
                 "temperature": 0,
-                "toolChoice": "required"
+                "tool_choice": "required",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get currency exchange rate.",
+                      "name": "get_exchange_rate",
+                      "parameters": {
+                        "properties": {
+                          "from_currency": {
+                            "description": "Base currency code, e.g. USD.",
+                            "type": "string"
+                          },
+                          "to_currency": {
+                            "description": "Target currency code, e.g. EUR.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "from_currency",
+                          "to_currency"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
               },
               "error": "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
             },
@@ -243,13 +410,12 @@
               ],
               "output": [
                 {
-                  "finishReason": "tool_calls",
+                  "finish_reason": "tool_calls",
                   "index": 0,
                   "message": {
                     "content": "",
-                    "prefix": false,
                     "role": "assistant",
-                    "toolCalls": [
+                    "tool_calls": [
                       {
                         "function": {
                           "arguments": "{}",
@@ -265,12 +431,22 @@
               "metadata": {
                 "created": 0,
                 "id": "<span:1>",
-                "maxTokens": 48,
+                "max_tokens": 48,
                 "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
                 "temperature": 0,
-                "toolChoice": "required"
+                "tool_choice": "required",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get currency exchange rate.",
+                      "name": "get_exchange_rate",
+                      "parameters": {}
+                    },
+                    "type": "function"
+                  }
+                ]
               },
               "metrics": {
                 "completion_tokens": 8,
@@ -294,11 +470,56 @@
                 }
               ],
               "metadata": {
-                "maxTokens": 96,
+                "max_tokens": 96,
                 "model": "mistral-small-2506",
                 "provider": "mistral",
                 "temperature": 0,
-                "toolChoice": "required"
+                "tool_choice": "required",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get weather for a city.",
+                      "name": "get_weather",
+                      "parameters": {
+                        "properties": {
+                          "location": {
+                            "description": "City name, e.g. Vienna.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "location"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  },
+                  {
+                    "function": {
+                      "description": "Get currency exchange rate.",
+                      "name": "get_exchange_rate",
+                      "parameters": {
+                        "properties": {
+                          "from_currency": {
+                            "description": "Base currency code, e.g. USD.",
+                            "type": "string"
+                          },
+                          "to_currency": {
+                            "description": "Target currency code, e.g. EUR.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "from_currency",
+                          "to_currency"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
               },
               "error": "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
             },
@@ -318,13 +539,12 @@
               ],
               "output": [
                 {
-                  "finishReason": "tool_calls",
+                  "finish_reason": "tool_calls",
                   "index": 0,
                   "message": {
                     "content": "",
-                    "prefix": false,
                     "role": "assistant",
-                    "toolCalls": [
+                    "tool_calls": [
                       {
                         "function": {
                           "arguments": "{\"location\": \"Vienna\"}",
@@ -348,12 +568,30 @@
               "metadata": {
                 "created": 0,
                 "id": "<span:1>",
-                "maxTokens": 96,
+                "max_tokens": 96,
                 "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
                 "temperature": 0,
-                "toolChoice": "required"
+                "tool_choice": "required",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get weather for a city.",
+                      "name": "get_weather",
+                      "parameters": {}
+                    },
+                    "type": "function"
+                  },
+                  {
+                    "function": {
+                      "description": "Get currency exchange rate.",
+                      "name": "get_exchange_rate",
+                      "parameters": {}
+                    },
+                    "type": "function"
+                  }
+                ]
               },
               "metrics": {
                 "completion_tokens": 34,
@@ -378,20 +616,18 @@
               "input": "function add(a, b) {",
               "output": [
                 {
-                  "finishReason": "stop",
+                  "finish_reason": "stop",
                   "index": 0,
                   "message": {
                     "content": "\n    return a + b;\n",
-                    "prefix": false,
-                    "role": "assistant",
-                    "toolCalls": null
+                    "role": "assistant"
                   }
                 }
               ],
               "metadata": {
                 "created": 0,
                 "id": "<span:1>",
-                "maxTokens": 24,
+                "max_tokens": 24,
                 "model": "codestral-2508",
                 "object": "chat.completion",
                 "provider": "mistral",
@@ -420,7 +656,7 @@
               "input": "const project = ",
               "output": [
                 {
-                  "finishReason": "length",
+                  "finish_reason": "length",
                   "index": 0,
                   "message": {
                     "content": "{\n  name: 'project',\n  title: 'Project',\n  type:",
@@ -431,7 +667,7 @@
               "metadata": {
                 "created": 0,
                 "id": "<span:1>",
-                "maxTokens": 16,
+                "max_tokens": 16,
                 "model": "codestral-2508",
                 "object": "chat.completion.chunk",
                 "provider": "mistral",
@@ -466,25 +702,23 @@
               ],
               "output": [
                 {
-                  "finishReason": "stop",
+                  "finish_reason": "stop",
                   "index": 0,
                   "message": {
                     "content": "Agent complete",
-                    "prefix": false,
-                    "role": "assistant",
-                    "toolCalls": null
+                    "role": "assistant"
                   }
                 }
               ],
               "metadata": {
-                "agentId": "<agentId:1>",
+                "agent_id": "<agent_id:1>",
                 "created": 0,
                 "id": "<span:2>",
-                "maxTokens": 16,
+                "max_tokens": 16,
                 "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
-                "responseFormat": {
+                "response_format": {
                   "type": "text"
                 },
                 "temperature": 0
@@ -516,14 +750,35 @@
                 }
               ],
               "metadata": {
-                "agentId": "<agentId:1>",
-                "maxTokens": 32,
+                "agent_id": "<agent_id:1>",
+                "max_tokens": 32,
                 "provider": "mistral",
-                "responseFormat": {
+                "response_format": {
                   "type": "text"
                 },
                 "temperature": 0,
-                "toolChoice": "required"
+                "tool_choice": "required",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the local time in a city.",
+                      "name": "get_time_in_city",
+                      "parameters": {
+                        "properties": {
+                          "city": {
+                            "description": "City name, e.g. Vienna.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "city"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
               },
               "error": "Input validation failed: TypeError: Cannot read properties of undefined (reading '_zod')"
             },
@@ -539,13 +794,12 @@
               ],
               "output": [
                 {
-                  "finishReason": "tool_calls",
+                  "finish_reason": "tool_calls",
                   "index": 0,
                   "message": {
                     "content": "",
-                    "prefix": false,
                     "role": "assistant",
-                    "toolCalls": [
+                    "tool_calls": [
                       {
                         "function": {
                           "arguments": "{\"city\": \"Vienna\"}",
@@ -559,18 +813,28 @@
                 }
               ],
               "metadata": {
-                "agentId": "<agentId:1>",
+                "agent_id": "<agent_id:1>",
                 "created": 0,
                 "id": "<span:2>",
-                "maxTokens": 32,
+                "max_tokens": 32,
                 "model": "mistral-small-latest",
                 "object": "chat.completion",
                 "provider": "mistral",
-                "responseFormat": {
+                "response_format": {
                   "type": "text"
                 },
                 "temperature": 0,
-                "toolChoice": "required"
+                "tool_choice": "required",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the local time in a city.",
+                      "name": "get_time_in_city",
+                      "parameters": {}
+                    },
+                    "type": "function"
+                  }
+                ]
               },
               "metrics": {
                 "completion_tokens": 14,
@@ -600,7 +864,7 @@
               ],
               "output": [
                 {
-                  "finishReason": "stop",
+                  "finish_reason": "stop",
                   "index": 0,
                   "message": {
                     "content": "Agent stream",
@@ -609,14 +873,14 @@
                 }
               ],
               "metadata": {
-                "agentId": "<agentId:1>",
+                "agent_id": "<agent_id:1>",
                 "created": 0,
                 "id": "<span:2>",
-                "maxTokens": 16,
+                "max_tokens": 16,
                 "model": "mistral-small-latest",
                 "object": "chat.completion.chunk",
                 "provider": "mistral",
-                "responseFormat": {
+                "response_format": {
                   "type": "text"
                 },
                 "stream": true,
