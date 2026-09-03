@@ -15,6 +15,6 @@
   "dependencies": {
     "ai-sdk-harness-codex-v1": "npm:@ai-sdk/harness-codex@1.0.0",
     "ai-sdk-harness-v1": "npm:@ai-sdk/harness@1.0.0",
-    "ai-sdk-harness-v1-latest": "npm:@ai-sdk/harness@1.0.33"
+    "ai-sdk-harness-v1-latest": "npm:@ai-sdk/harness@1.0.94"
   }
 }
