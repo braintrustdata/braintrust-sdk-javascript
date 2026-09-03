@@ -34,14 +34,10 @@ span_tree:
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_time": 0.0072439,
     │         "completion_tokens": 2,
-    │         "prompt_time": 0.001728151,
     │         "prompt_tokens": 40,
-    │         "queue_time": 0.054452998,
     │         "time_to_first_token": 0,
-    │         "tokens": 42,
-    │         "total_time": 0.008972051
+    │         "tokens": 42
     │       }
     ├── groq-stream-operation
     │   metadata: {
@@ -69,18 +65,13 @@ span_tree:
     │       metadata: {
     │         "model": "llama-3.3-70b-versatile",
     │         "provider": "groq",
-    │         "stream": true,
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_time": 0.006718869,
     │         "completion_tokens": 2,
-    │         "prompt_time": 0.003972294,
     │         "prompt_tokens": 40,
-    │         "queue_time": 0.095351581,
     │         "time_to_first_token": 0,
-    │         "tokens": 42,
-    │         "total_time": 0.010691163
+    │         "tokens": 42
     │       }
     ├── groq-reasoning-stream-operation
     │   metadata: {
@@ -111,91 +102,232 @@ span_tree:
     │         "model": "openai/gpt-oss-20b",
     │         "provider": "groq",
     │         "reasoning_format": "parsed",
-    │         "stream": true,
     │         "temperature": 0.6
     │       }
     │       metrics: {
     │         "completion_reasoning_tokens": 158,
-    │         "completion_time": 0.270633239,
     │         "completion_tokens": 168,
-    │         "prompt_time": 0.005148062,
     │         "prompt_tokens": 108,
-    │         "queue_time": 0.103912089,
     │         "time_to_first_token": 0,
-    │         "tokens": 276,
-    │         "total_time": 0.275781301
+    │         "tokens": 276
     │       }
-    └── groq-tool-operation
+    ├── groq-tool-operation
+    │   metadata: {
+    │     "operation": "tool",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── groq.chat.completions.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Check the weather in Vienna and use the weather tool.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "tool_calls",
+    │           "index": 0,
+    │           "logprobs": null,
+    │           "message": {
+    │             "role": "assistant",
+    │             "tool_calls": [
+    │               {
+    │                 "function": {
+    │                   "arguments": "{\"location\":\"Vienna\"}",
+    │                   "name": "get_weather"
+    │                 },
+    │                 "id": "<span:1>",
+    │                 "type": "function"
+    │               }
+    │             ]
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "llama-3.3-70b-versatile",
+    │         "provider": "groq",
+    │         "temperature": 0,
+    │         "tool_choice": {
+    │           "function": {
+    │             "name": "get_weather"
+    │           },
+    │           "type": "function"
+    │         },
+    │         "tools": [
+    │           {
+    │             "function": {
+    │               "description": "Get the weather for a city.",
+    │               "name": "get_weather",
+    │               "parameters": {
+    │                 "properties": {
+    │                   "location": {
+    │                     "description": "City name.",
+    │                     "type": "string"
+    │                   }
+    │                 },
+    │                 "required": [
+    │                   "location"
+    │                 ],
+    │                 "type": "object"
+    │               }
+    │             },
+    │             "type": "function"
+    │           }
+    │         ]
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 11,
+    │         "prompt_tokens": 246,
+    │         "time_to_first_token": 0,
+    │         "tokens": 257
+    │       }
+    ├── groq-batch-operation
+    │   metadata: {
+    │     "operation": "batch",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── groq.batch [task]
+    │       metadata: {
+    │         "provider": "groq"
+    │       }
+    │       ├── groq.chat.completions.create [llm]
+    │       │   input: [
+    │       │     {
+    │       │       "content": "Reply with ALPHA.",
+    │       │       "role": "user"
+    │       │     }
+    │       │   ]
+    │       │   output: [
+    │       │     {
+    │       │       "finish_reason": "stop",
+    │       │       "index": 0,
+    │       │       "message": {
+    │       │         "content": "ALPHA",
+    │       │         "role": "assistant"
+    │       │       }
+    │       │     }
+    │       │   ]
+    │       │   metadata: {
+    │       │     "model": "llama-3.3-70b-versatile",
+    │       │     "provider": "groq",
+    │       │     "temperature": 0
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 1,
+    │       │     "prompt_cached_tokens": 3,
+    │       │     "prompt_tokens": 5,
+    │       │     "tokens": 6
+    │       │   }
+    │       ├── groq.chat.completions.create [llm]
+    │       │   input: [
+    │       │     {
+    │       │       "content": "Reply with BRAVO.",
+    │       │       "role": "user"
+    │       │     }
+    │       │   ]
+    │       │   output: [
+    │       │     {
+    │       │       "finish_reason": "stop",
+    │       │       "index": 0,
+    │       │       "message": {
+    │       │         "content": "BRAVO",
+    │       │         "role": "assistant"
+    │       │       }
+    │       │     }
+    │       │   ]
+    │       │   metadata: {
+    │       │     "model": "llama-3.3-70b-versatile",
+    │       │     "provider": "groq",
+    │       │     "temperature": 0
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 1,
+    │       │     "prompt_cached_tokens": 3,
+    │       │     "prompt_tokens": 5,
+    │       │     "tokens": 6
+    │       │   }
+    │       └── groq.chat.completions.create [llm]
+    │           input: [
+    │             {
+    │               "content": "This request should fail.",
+    │               "role": "user"
+    │             }
+    │           ]
+    │           metadata: {
+    │             "model": "llama-3.3-70b-versatile",
+    │             "provider": "groq",
+    │             "temperature": 0
+    │           }
+    │           error: "Groq batch fixture request failed"
+    ├── groq-batch-collect-only-operation
+    │   metadata: {
+    │     "operation": "batch-collect-only",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── groq.batch [task]
+    │       metadata: {
+    │         "provider": "groq"
+    │       }
+    │       └── groq.chat.completions.create [llm]
+    │           input: [
+    │             {
+    │               "content": "Collect this response.",
+    │               "role": "user"
+    │             }
+    │           ]
+    │           output: [
+    │             {
+    │               "finish_reason": "stop",
+    │               "index": 0,
+    │               "message": {
+    │                 "content": "COLLECTED",
+    │                 "role": "assistant"
+    │               }
+    │             }
+    │           ]
+    │           metadata: {
+    │             "model": "llama-3.3-70b-versatile",
+    │             "provider": "groq",
+    │             "temperature": 0
+    │           }
+    │           metrics: {
+    │             "completion_tokens": 1,
+    │             "prompt_tokens": 4,
+    │             "tokens": 5
+    │           }
+    └── groq-batch-submission-failure-operation
         metadata: {
-          "operation": "tool",
+          "operation": "batch-submission-failure",
           "testRunId": "<run:1>"
         }
-        └── groq.chat.completions.create [llm]
-            input: [
-              {
-                "content": "Check the weather in Vienna and use the weather tool.",
-                "role": "user"
-              }
-            ]
-            output: [
-              {
-                "finish_reason": "tool_calls",
-                "index": 0,
-                "logprobs": null,
-                "message": {
-                  "role": "assistant",
-                  "tool_calls": [
-                    {
-                      "function": {
-                        "arguments": "{\"location\":\"Vienna\"}",
-                        "name": "get_weather"
-                      },
-                      "id": "<span:1>",
-                      "type": "function"
-                    }
-                  ]
-                }
-              }
-            ]
+        └── groq.batch [task]
             metadata: {
-              "model": "llama-3.3-70b-versatile",
-              "provider": "groq",
-              "temperature": 0,
-              "tool_choice": {
-                "function": {
-                  "name": "get_weather"
-                },
-                "type": "function"
-              },
-              "tools": [
-                {
-                  "function": {
-                    "description": "Get the weather for a city.",
-                    "name": "get_weather",
-                    "parameters": {
-                      "properties": {
-                        "location": {
-                          "description": "City name.",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "location"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "type": "function"
+              "provider": "groq"
+            }
+            error: "Groq batch submission failed"
+            ├── groq.chat.completions.create [llm]
+            │   input: [
+            │     {
+            │       "content": "First pending request.",
+            │       "role": "user"
+            │     }
+            │   ]
+            │   metadata: {
+            │     "model": "llama-3.3-70b-versatile",
+            │     "provider": "groq",
+            │     "temperature": 0
+            │   }
+            │   error: "Groq batch submission failed"
+            └── groq.chat.completions.create [llm]
+                input: [
+                  {
+                    "content": "Second pending request.",
+                    "role": "user"
+                  }
+                ]
+                metadata: {
+                  "model": "llama-3.3-70b-versatile",
+                  "provider": "groq",
+                  "temperature": 0
                 }
-              ]
-            }
-            metrics: {
-              "completion_time": 0.039504246,
-              "completion_tokens": 11,
-              "prompt_time": 0.020812356,
-              "prompt_tokens": 246,
-              "queue_time": 0.091778475,
-              "time_to_first_token": 0,
-              "tokens": 257,
-              "total_time": 0.060316602
-            }
+                error: "Groq batch submission failed"
