@@ -1,9 +1,7 @@
 import type { Payload } from "@temporalio/common";
+import type { PropagationContext } from "braintrust";
 
-export const BRAINTRUST_SPAN_HEADER = "_braintrust-span";
-export const BRAINTRUST_WORKFLOW_SPAN_HEADER = "_braintrust-workflow-span";
-export const BRAINTRUST_WORKFLOW_SPAN_ID_HEADER =
-  "_braintrust-workflow-span-id";
+const TRACE_CONTEXT_HEADERS = ["traceparent", "tracestate", "baggage"] as const;
 
 export function serializeHeaderValue(value: string): Payload {
   return {
@@ -26,4 +24,42 @@ export function deserializeHeaderValue(
   } catch {
     return undefined;
   }
+}
+
+export function serializeTraceContext(
+  context: PropagationContext,
+): Record<string, Payload> {
+  return Object.fromEntries(
+    TRACE_CONTEXT_HEADERS.flatMap((name) => {
+      const value = context[name];
+      return value ? [[name, serializeHeaderValue(value)]] : [];
+    }),
+  );
+}
+
+export function deserializeTraceContext(
+  headers: Record<string, Payload> | undefined,
+): PropagationContext | undefined {
+  if (!headers) return undefined;
+  const context = Object.fromEntries(
+    TRACE_CONTEXT_HEADERS.flatMap((name) => {
+      const value = deserializeHeaderValue(headers[name]);
+      return value ? [[name, value]] : [];
+    }),
+  );
+  return context.traceparent ? context : undefined;
+}
+
+export function withParentSpanId(
+  context: PropagationContext,
+  spanId: string,
+): PropagationContext | undefined {
+  const match = context.traceparent.match(
+    /^([0-9a-f]{2})-([0-9a-f]{32})-[0-9a-f]{16}-([0-9a-f]{2})$/,
+  );
+  if (!match) return undefined;
+  return {
+    ...context,
+    traceparent: `${match[1]}-${match[2]}-${spanId}-${match[3]}`,
+  };
 }

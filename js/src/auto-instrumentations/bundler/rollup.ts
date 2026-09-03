@@ -7,10 +7,3 @@ export function braintrustRollupPlugin(
 ): RollupPlugin | RollupPlugin[] {
   return unplugin.rollup(options);
 }
-
-export type RollupPluginOptions = BundlerPluginOptions;
-
-/**
- * @deprecated Use {@link braintrustRollupPlugin} instead.
- */
-export const rollupPlugin = unplugin.rollup;

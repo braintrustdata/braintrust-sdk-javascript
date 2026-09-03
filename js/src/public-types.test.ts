@@ -1,69 +1,84 @@
-import { expectTypeOf, test } from "vitest";
-import { z } from "zod/v3";
+import { expect, expectTypeOf, test } from "vitest";
 
-import {
-  AttachmentReference,
-  braintrustStreamChunkSchema,
-  logs3OverflowUploadSchema,
-  promptContentsSchema,
-  promptDefinitionSchema,
-  promptDefinitionWithToolsSchema,
-  type BraintrustStreamChunk,
-  type EvalParameters,
-  type Logs3OverflowUpload,
-  type PromptContents,
-  type PromptDefinition,
-  type PromptDefinitionWithTools,
+import * as publicExports from "./exports";
+import type {
+  ContextManager,
+  ContextParentSpanIds,
+  CurrentSpanStore,
+  Dataset,
+  DurableEvalStore,
+  EvalScorer,
+  EvalTask,
+  LangChainCallbackHandlerOptions,
+  PropagationContext,
+  Span,
+  StartSpanArgs,
+  TemplateRendererPlugin,
+  Trace,
 } from "./exports";
-import type { InferParameters } from "./eval-parameters";
-import type { AttachmentReferenceType } from "./generated_plain_types";
-import type { Prompt } from "./logger";
 import {
-  spanComponentsV3Schema,
-  type SpanComponentsV3Data,
-} from "../util/span_identifier_v3";
-import {
-  spanComponentsV4Schema,
-  type SpanComponentsV4Data,
-} from "../util/span_identifier_v4";
+  BraintrustLangChainCallbackHandler,
+  init,
+  initDataset,
+  withParent,
+} from "./exports";
 
-test("exported validators preserve their public output types", () => {
+test("exports only intentional extension types", () => {
+  expectTypeOf<Span>().toBeObject();
+  expectTypeOf<StartSpanArgs>().toBeObject();
+  expectTypeOf<ContextManager>().toBeObject();
+  expectTypeOf<ContextParentSpanIds>().toBeObject();
+  expectTypeOf<CurrentSpanStore>().toBeObject();
+  expectTypeOf<PropagationContext>().toBeObject();
+  expectTypeOf(publicExports.configureContextManager).toBeFunction();
+  expectTypeOf<Trace>().toBeObject();
+  expectTypeOf<DurableEvalStore>().toBeObject();
+  expectTypeOf<TemplateRendererPlugin>().toBeObject();
+  expectTypeOf<LangChainCallbackHandlerOptions>().toBeObject();
+  expectTypeOf(BraintrustLangChainCallbackHandler).toBeConstructibleWith();
   expectTypeOf<
-    z.infer<typeof AttachmentReference>
-  >().toEqualTypeOf<AttachmentReferenceType>();
-  expectTypeOf<
-    z.infer<typeof braintrustStreamChunkSchema>
-  >().toEqualTypeOf<BraintrustStreamChunk>();
-  expectTypeOf<
-    z.infer<typeof logs3OverflowUploadSchema>
-  >().toEqualTypeOf<Logs3OverflowUpload>();
-  expectTypeOf<
-    z.infer<typeof promptContentsSchema>
-  >().toEqualTypeOf<PromptContents>();
-  expectTypeOf<
-    z.infer<typeof promptDefinitionSchema>
-  >().toEqualTypeOf<PromptDefinition>();
-  expectTypeOf<
-    z.infer<typeof promptDefinitionWithToolsSchema>
-  >().toEqualTypeOf<PromptDefinitionWithTools>();
-  expectTypeOf<
-    z.infer<typeof spanComponentsV3Schema>
-  >().toEqualTypeOf<SpanComponentsV3Data>();
-  expectTypeOf<
-    z.infer<typeof spanComponentsV4Schema>
-  >().toEqualTypeOf<SpanComponentsV4Data>();
+    EvalTask<unknown, unknown, unknown, void, never>
+  >().toBeFunction();
+  expectTypeOf<EvalScorer<unknown, unknown, unknown>>().toBeFunction();
 });
 
-test("evaluation parameters retain custom schema inference", () => {
-  const parameters = {
-    subject: z.string(),
-    model: { type: "model" as const },
-    prompt: { type: "prompt" as const },
-  } satisfies EvalParameters;
+test("does not expose runtime schemas or implementation helpers", () => {
+  for (const name of [
+    "AttachmentReference",
+    "braintrustStreamChunkSchema",
+    "logs3OverflowUploadSchema",
+    "promptContentsSchema",
+    "promptDefinitionSchema",
+    "promptDefinitionWithToolsSchema",
+    "SpanImpl",
+    "IDGenerator",
+    "_exportsForTestingOnly",
+    "default",
+  ]) {
+    expect(publicExports).not.toHaveProperty(name);
+  }
+});
 
-  expectTypeOf<InferParameters<typeof parameters>>().toEqualTypeOf<{
-    subject: string;
-    model: string;
-    prompt: Prompt;
-  }>();
+test("accepts only canonical v4 call shapes", () => {
+  if (false) {
+    init({ project: "project" });
+    initDataset({ project: "project", dataset: "dataset" });
+
+    // @ts-expect-error The string-first overload was removed in v4.
+    init("project");
+    // @ts-expect-error The string-first overload was removed in v4.
+    initDataset("project", { dataset: "dataset" });
+    // @ts-expect-error Exported span slugs are internal integration plumbing.
+    withParent("exported-span", () => undefined);
+
+    const dataset = null as unknown as Dataset;
+    // @ts-expect-error Dataset records use `expected`, not the legacy `output` alias.
+    dataset.insert({ input: "input", output: "expected" });
+
+    const span = null as unknown as Span;
+    // @ts-expect-error Spans end with `end()`; the `close()` alias was removed.
+    span.close();
+  }
+
+  expect(true).toBe(true);
 });

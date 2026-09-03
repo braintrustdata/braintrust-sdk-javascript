@@ -12,7 +12,7 @@ import type { Dataset, Experiment } from "../../logger";
  * - flushPromise/flushResolved: Coordination for experiment flushing
  */
 export interface VitestExperimentContext {
-  dataset: Dataset<false> | undefined;
+  dataset: Dataset | undefined;
   experiment: Experiment;
   datasetExamples: Map<string, string>;
   parent?: VitestExperimentContext; // Link to parent describe
@@ -65,7 +65,7 @@ class VitestContextManager {
   }
 
   createChildContext(
-    dataset: Dataset<false> | undefined,
+    dataset: Dataset | undefined,
     experiment: Experiment,
   ): VitestExperimentContext {
     const parent = this.getCurrentContext();

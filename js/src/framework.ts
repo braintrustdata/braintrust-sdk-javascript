@@ -42,7 +42,7 @@ import {
   startSpan,
   traced,
   withCurrent,
-  withParent,
+  _internalWithParent,
   _internalGetGlobalState,
 } from "./logger";
 import type { ProgressReporter } from "./reporters/types";
@@ -131,10 +131,6 @@ export interface EvalHooks<
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 > {
-  /**
-   * @deprecated Use `metadata` instead.
-   */
-  meta: (info: Metadata) => void;
   /**
    * The metadata object for the current evaluation. You can mutate this object to add or remove metadata.
    */
@@ -371,37 +367,14 @@ export interface Evaluator<
   flushBeforeScoring?: boolean;
 }
 
-export class EvalResultWithSummary<
+export interface EvalResultWithSummary<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata = DefaultMetadataType,
 > {
-  constructor(
-    public summary: ExperimentSummary,
-    public results: EvalResult<Input, Output, Expected, Metadata>[],
-  ) {}
-
-  /**
-   * @deprecated Use `summary` instead.
-   */
-  toString(): string {
-    return JSON.stringify(this.summary);
-  }
-
-  [Symbol.for("nodejs.util.inspect.custom")](): string {
-    return `EvalResultWithSummary(summary="...", results=[...])`;
-  }
-
-  toJSON(): {
-    summary: ExperimentSummary;
-    results: EvalResult<Input, Output, Expected, Metadata>[];
-  } {
-    return {
-      summary: this.summary,
-      results: this.results,
-    };
-  }
+  summary: ExperimentSummary;
+  results: EvalResult<Input, Output, Expected, Metadata>[];
 }
 
 export type { ReporterBody } from "./reporters/types";
@@ -784,15 +757,15 @@ export async function Eval<
     _initializeSpanContext();
 
     // Better to return this empty object than have an annoying-to-use signature
-    return new EvalResultWithSummary(
-      {
+    return {
+      summary: {
         scores: {},
         metrics: {},
         projectName: "",
         experimentName: "",
       },
-      [],
-    );
+      results: [],
+    };
   }
 
   const progressReporter = options.progress ?? new SimpleProgressReporter();
@@ -840,7 +813,7 @@ export async function Eval<
       const enableCache = options.enableCache ?? true;
       let ret;
       if (options.parent) {
-        ret = await withParent(
+        ret = await _internalWithParent(
           options.parent,
           () =>
             runEvaluator(
@@ -932,9 +905,6 @@ export async function _internalRunEvaluatorTask(
     ...("metadata" in datum ? datum.metadata : {}),
   };
   const hooks: EvalHooks<unknown, Record<string, unknown>, EvalParameters> = {
-    meta(value) {
-      Object.assign(metadata, value);
-    },
     metadata,
     expected: "expected" in datum ? datum.expected : undefined,
     span,
@@ -1525,12 +1495,14 @@ async function runEvaluatorInternal(
         if (!experiment) {
           // This will almost always be a no-op span, but it means that if the Eval
           // is run in the context of a different type of span, it will be logged.
+          const { parent: _ignoredParent, ...spanEvent } = baseEvent;
           return await traced(callback, {
-            ...baseEvent,
+            ...spanEvent,
             state: evaluator.state,
           });
         } else {
-          const result = await experiment.traced(callback, baseEvent);
+          const { parent: _ignoredParent, ...spanEvent } = baseEvent;
+          const result = await experiment.traced(callback, spanEvent);
           // Flush logs to provide backpressure and prevent memory accumulation
           // when maxConcurrency is set. Only flush when pending data exceeds the
           // byte threshold, avoiding excessive sequential round-trips for small
@@ -1675,10 +1647,10 @@ async function runEvaluatorInternal(
           localScoreAccumulator ?? undefined,
         );
 
-    return new EvalResultWithSummary(
+    return {
       summary,
-      collectResults ? collectedResults : [],
-    );
+      results: collectResults ? collectedResults : [],
+    };
   } finally {
     // Clean up disk-based span cache after eval completes and stop caching
     // Only if it was enabled

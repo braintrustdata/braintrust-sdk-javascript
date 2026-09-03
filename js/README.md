@@ -136,7 +136,7 @@ The wrappers are composable and idempotent. They preserve LangSmith behavior, in
 Disable LangSmith instrumentation in code or through the environment:
 
 ```typescript
-import { configureInstrumentation } from "braintrust";
+import { configureInstrumentation } from "braintrust/instrumentation";
 
 configureInstrumentation({ integrations: { langsmith: false } });
 ```
@@ -153,7 +153,7 @@ When Braintrust LangChain/LangGraph instrumentation is enabled, LangSmith runs s
 
 See the [Migrate from v2.x to v3.x guide](https://www.braintrust.dev/docs/reference/sdks/typescript/migrations/v2-to-v3).
 
-In 3.x, browser usage should move to `@braintrust/browser` instead of relying on the legacy `braintrust/browser` path.
+For direct browser imports, use `@braintrust/browser`. The package root still selects its browser build through export conditions, but `braintrust/browser` is no longer published.
 
 ### Upgrading from 1.x to 2.x
 

@@ -7,9 +7,7 @@ const agentsPackageName =
 const instrumentationMode =
   process.env.CLOUDFLARE_AGENTS_INSTRUMENTATION_MODE ?? "auto";
 const braintrustPlugins =
-  instrumentationMode === "auto"
-    ? braintrustVitePlugin({ useDiagnosticChannelCompatShim: true })
-    : [];
+  instrumentationMode === "auto" ? braintrustVitePlugin({ browser: true }) : [];
 
 export default defineConfig({
   define: {

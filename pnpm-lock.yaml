@@ -82,6 +82,9 @@ importers:
 
   e2e:
     devDependencies:
+      '@braintrust/browser':
+        specifier: workspace:^
+        version: link:../integrations/browser-js
       '@braintrust/langchain-js':
         specifier: workspace:^
         version: link:../integrations/langchain-js

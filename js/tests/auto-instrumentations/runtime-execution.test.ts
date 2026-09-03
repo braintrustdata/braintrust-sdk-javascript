@@ -63,7 +63,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -72,7 +72,7 @@ describe("Runtime Execution of Bundled Code", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -122,7 +122,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -131,7 +131,7 @@ describe("Runtime Execution of Bundled Code", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -188,7 +188,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -197,7 +197,7 @@ describe("Runtime Execution of Bundled Code", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -233,7 +233,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { vitePlugin } =
+      const { braintrustVitePlugin } =
         await import("../../src/auto-instrumentations/bundler/vite.js");
 
       await viteBuild({
@@ -248,7 +248,7 @@ describe("Runtime Execution of Bundled Code", () => {
           emptyOutDir: true,
           minify: false,
         },
-        plugins: [vitePlugin({ browser: false })],
+        plugins: [braintrustVitePlugin({ browser: false })],
         logLevel: "error",
         resolve: {
           preserveSymlinks: true,
@@ -292,7 +292,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { vitePlugin } =
+      const { braintrustVitePlugin } =
         await import("../../src/auto-instrumentations/bundler/vite.js");
 
       await viteBuild({
@@ -307,7 +307,7 @@ describe("Runtime Execution of Bundled Code", () => {
           emptyOutDir: true,
           minify: false,
         },
-        plugins: [vitePlugin({ browser: false })],
+        plugins: [braintrustVitePlugin({ browser: false })],
         logLevel: "error",
         resolve: {
           preserveSymlinks: true,
@@ -344,7 +344,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { rollupPlugin } =
+      const { braintrustRollupPlugin } =
         await import("../../src/auto-instrumentations/bundler/rollup.js");
 
       // Simple resolver plugin
@@ -363,7 +363,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       const bundle = await rollup({
         input: entryPoint,
-        plugins: [resolverPlugin, rollupPlugin({ browser: false })],
+        plugins: [resolverPlugin, braintrustRollupPlugin({ browser: false })],
         external: [],
         preserveSymlinks: true,
       });
@@ -413,7 +413,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { rollupPlugin } =
+      const { braintrustRollupPlugin } =
         await import("../../src/auto-instrumentations/bundler/rollup.js");
 
       const resolverPlugin = {
@@ -431,7 +431,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       const bundle = await rollup({
         input: entryPoint,
-        plugins: [resolverPlugin, rollupPlugin({ browser: false })],
+        plugins: [resolverPlugin, braintrustRollupPlugin({ browser: false })],
         external: [],
         preserveSymlinks: true,
       });
@@ -476,7 +476,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -485,7 +485,7 @@ describe("Runtime Execution of Bundled Code", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -530,7 +530,7 @@ describe("Runtime Execution of Bundled Code", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -539,7 +539,7 @@ describe("Runtime Execution of Bundled Code", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,

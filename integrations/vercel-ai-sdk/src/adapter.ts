@@ -1,4 +1,4 @@
-import { BraintrustStream, BraintrustStreamChunk } from "braintrust";
+import { BraintrustStream } from "braintrust";
 
 export interface AIStreamCallbacksAndOptions {
   onStart?: () => void | Promise<void>;
@@ -14,6 +14,13 @@ function formatStreamPart(type: "text" | "data", value: unknown): string {
 }
 
 import { ReadableStream, TransformStream } from "stream/web";
+
+type BraintrustStreamChunk =
+  ReturnType<BraintrustStream["toReadableStream"]> extends ReadableStream<
+    infer Chunk
+  >
+    ? Chunk
+    : never;
 
 export type BraintrustStreamOrReadable =
   | BraintrustStream
@@ -45,16 +52,6 @@ export function toDataStreamResponse(
     },
     ...init,
   });
-}
-
-/**
- * @deprecated Use `toDataStreamResponse` instead.
- */
-export function toAIStreamResponse(
-  stream: BraintrustStreamOrReadable,
-  init?: ResponseInit,
-): Response {
-  return toDataStreamResponse(stream, init);
 }
 
 function btStreamToAISDKTransformStream(

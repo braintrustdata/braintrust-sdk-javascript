@@ -1,11 +1,7 @@
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
-import {
-  BRAINTRUST_CURRENT_SPAN_STORE,
-  _internalGetGlobalState,
-  startSpan,
-} from "../../logger";
-import type { CurrentSpanStore, Span } from "../../logger";
+import { _internalGetGlobalState, startSpan } from "../../logger";
+import type { Span } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
@@ -63,13 +59,7 @@ class CloudflareThinkInstrumentationConsumer {
     const states = new WeakMap<object, ThinkRunState>();
     const state = _internalGetGlobalState();
     const contextManager = state?.contextManager;
-    const currentSpanStore = contextManager
-      ? (
-          contextManager as {
-            [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-          }
-        )[BRAINTRUST_CURRENT_SPAN_STORE]
-      : undefined;
+    const currentSpanStore = contextManager?.getCurrentSpanStore();
 
     const ensureState = (
       event: ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>,

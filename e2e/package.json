@@ -8,6 +8,7 @@
     "test:e2e:record": "node ./scripts/run-record-tests.mjs"
   },
   "devDependencies": {
+    "@braintrust/browser": "workspace:^",
     "@braintrust/langchain-js": "workspace:^",
     "@braintrust/otel": "workspace:^",
     "@braintrust/seinfeld": "workspace:^",

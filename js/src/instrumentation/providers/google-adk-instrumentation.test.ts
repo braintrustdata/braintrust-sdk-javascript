@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const {
-  mockCurrentSpanStoreSymbol: MOCK_CURRENT_SPAN_STORE_SYMBOL,
-  mockInternalGetGlobalState,
-} = vi.hoisted(() => ({
-  mockCurrentSpanStoreSymbol: Symbol.for("braintrust.currentSpanStore"),
+const { mockInternalGetGlobalState } = vi.hoisted(() => ({
   mockInternalGetGlobalState: vi.fn(() => undefined),
 }));
 
@@ -31,7 +27,6 @@ vi.mock("../../logger", () => ({
   startSpan: (...args: any[]) => (mockStartSpan as any)(...args),
   _internalGetGlobalState: (...args: any[]) =>
     (mockInternalGetGlobalState as any)(...args),
-  BRAINTRUST_CURRENT_SPAN_STORE: MOCK_CURRENT_SPAN_STORE_SYMBOL,
   withCurrent: (_span: any, callback: () => unknown) => callback(),
   Attachment: class MockAttachment {
     reference: any;
@@ -183,7 +178,7 @@ describe("registerGoogleADKInstrumentation", () => {
       const wrapSpanForStore = vi.fn(() => "wrapped-runner-store");
       mockInternalGetGlobalState.mockReturnValue({
         contextManager: {
-          [MOCK_CURRENT_SPAN_STORE_SYMBOL]: currentSpanStore,
+          getCurrentSpanStore: () => currentSpanStore,
           wrapSpanForStore,
         },
       } as any);
@@ -492,7 +487,7 @@ describe("registerGoogleADKInstrumentation", () => {
       const wrapSpanForStore = vi.fn(() => "wrapped-agent-store");
       mockInternalGetGlobalState.mockReturnValue({
         contextManager: {
-          [MOCK_CURRENT_SPAN_STORE_SYMBOL]: currentSpanStore,
+          getCurrentSpanStore: () => currentSpanStore,
           wrapSpanForStore,
         },
       } as any);

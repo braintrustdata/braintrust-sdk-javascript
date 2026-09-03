@@ -32,18 +32,22 @@ vi.mock("../core/stream-patcher", () => ({
 
 import { registerClaudeAgentSDKInstrumentation } from "./claude-agent-sdk-instrumentation";
 import iso from "../../isomorph";
-import { startSpan } from "../../logger";
+import { _internalStartSpan as startSpan } from "../../logger";
 
 const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
 
 // Mock the logger module
-vi.mock("../../logger", () => ({
-  startSpan: vi.fn(() => ({
+vi.mock("../../logger", () => {
+  const startSpan = vi.fn(() => ({
     log: vi.fn(),
     end: vi.fn(),
     export: vi.fn(() => Promise.resolve({})),
-  })),
-}));
+  }));
+  return {
+    startSpan,
+    _internalStartSpan: startSpan,
+  };
+});
 
 // Mock utility modules
 vi.mock("../../../util/index", () => ({

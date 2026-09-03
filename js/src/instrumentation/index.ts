@@ -15,3 +15,6 @@ export { braintrustEveInstrumentation } from "./providers/eve-instrumentation";
 // Configuration API
 export { configureInstrumentation } from "./registry";
 export type { InstrumentationConfig } from "./registry";
+
+// Integration hook used by @braintrust/otel so core flushes also drain OTEL.
+export { registerOtelFlush } from "../logger";

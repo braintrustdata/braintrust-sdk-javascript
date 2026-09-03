@@ -1,4 +1,4 @@
-import { initExperiment } from "../../logger";
+import { init } from "../../logger";
 import type {
   TestConfig,
   TestContext,
@@ -215,11 +215,12 @@ export function wrapDescribe(
             const experimentName = `${suiteName}-${new Date().toISOString()}`;
 
             const experiment = config.projectId
-              ? initExperiment({
+              ? init({
                   projectId: config.projectId,
                   experiment: experimentName,
                 })
-              : initExperiment(config.projectName || suiteName, {
+              : init({
+                  project: config.projectName || suiteName,
                   experiment: experimentName,
                 });
 

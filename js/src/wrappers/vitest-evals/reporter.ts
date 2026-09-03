@@ -1,11 +1,6 @@
 import type { Reporter, TestCase, TestModule, Vitest } from "vitest/node";
 import { SpanTypeAttribute, isObject } from "../../../util";
-import {
-  initExperiment,
-  logError,
-  type Experiment,
-  type Span,
-} from "../../logger";
+import { init, logError, type Experiment, type Span } from "../../logger";
 import { configureNode } from "../../node/config";
 import { summarizeAndFlush } from "../shared/flush";
 
@@ -202,7 +197,7 @@ export default class BraintrustVitestEvalsReporter implements Reporter {
     const experimentName =
       this.options.experimentName ?? `vitest-evals-${new Date().toISOString()}`;
 
-    this.experiment = initExperiment({
+    this.experiment = init({
       ...(projectId ? { projectId } : { project: projectName }),
       experiment: experimentName,
       metadata: this.options.metadata,

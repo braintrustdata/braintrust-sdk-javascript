@@ -11,9 +11,11 @@ import {
 } from "vitest";
 import {
   _exportsForTestingOnly,
+  _internalStartSpan,
   init,
   initDataset,
   initLogger,
+  extractTraceContextFromHeaders,
   Prompt,
   BraintrustState,
   loadPrompt,
@@ -898,7 +900,8 @@ test("legacy initDataset applies bt eval internal BTQL runtime value", async () 
       },
     });
 
-    const dataset = initDataset("test-project", {
+    const dataset = initDataset({
+      project: "test-project",
       dataset: "test-dataset",
       state,
     });
@@ -2997,7 +3000,7 @@ describe("parent precedence", () => {
   test("withParent + wrapTraced: child spans attach to current span (not directly to withParent)", async () => {
     const logger = initLogger({ projectName: "test", projectId: "pid" });
     const outer = logger.startSpan({ name: "outer" });
-    const parentStr = await outer.export();
+    const parentContext = extractTraceContextFromHeaders(outer.inject())!;
     outer.end();
 
     const inner = wrapTraced(
@@ -3007,7 +3010,7 @@ describe("parent precedence", () => {
       { name: "inner" },
     );
 
-    await withParent(parentStr, () => inner());
+    await withParent(parentContext, () => inner());
 
     await memory.flush();
     const events = await memory.drain();
@@ -3051,7 +3054,7 @@ describe("parent precedence", () => {
 
     const inner = wrapTraced(
       async function inner() {
-        startSpan({ name: "forced", parent: parentStr }).end();
+        _internalStartSpan({ name: "forced", parent: parentStr }).end();
       },
       { name: "inner" },
     );
@@ -3083,7 +3086,7 @@ describe("parent precedence", () => {
 
     const child = secondaryLogger.startSpan({
       name: "child",
-      parent: parentStr,
+      parent: parentStr as never,
     });
     child.end();
 
@@ -3114,7 +3117,7 @@ describe("parent precedence", () => {
 
     const child = secondaryExperiment.startSpan({
       name: "child",
-      parent: parentStr,
+      parent: parentStr as never,
     });
     child.end();
 

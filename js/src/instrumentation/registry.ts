@@ -135,7 +135,7 @@ export const registry = new InstrumentationRegistry();
  *
  * @example
  * ```typescript
- * import { configureInstrumentation } from 'braintrust';
+ * import { configureInstrumentation } from 'braintrust/instrumentation';
  *
  * // Disable OpenAI instrumentation
  * configureInstrumentation({

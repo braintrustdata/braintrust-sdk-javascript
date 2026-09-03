@@ -10,7 +10,7 @@ import {
   BaseAttachment,
   Attachment,
   ExternalAttachment,
-  initExperiment,
+  init,
   initLogger,
   NOOP_SPAN,
   permalink,
@@ -368,7 +368,7 @@ describe("span.link", () => {
     expect(state.appUrl).toBeDefined();
 
     // Create a test experiment
-    const experiment = initExperiment("test-experiment");
+    const experiment = init({ project: "test-experiment" });
 
     // Get a span within the experiment context
     const span = experiment.startSpan({
@@ -417,7 +417,7 @@ describe("span.link", () => {
 
   test("span.link handles missing experiment id", async () => {
     await _exportsForTestingOnly.simulateLoginForTests();
-    const experiment = initExperiment("test-experiment");
+    const experiment = init({ project: "test-experiment" });
     const span = experiment.startSpan({ name: "test-span" });
     span.end();
     // Force parentObjectId to be undefined

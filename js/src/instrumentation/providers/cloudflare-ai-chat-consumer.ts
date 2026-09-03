@@ -1,12 +1,11 @@
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
-  BRAINTRUST_CURRENT_SPAN_STORE,
   _internalGetGlobalState,
   startSpan as startBaseSpan,
   withCurrent,
 } from "../../logger";
-import type { CurrentSpanStore, Span } from "../../logger";
+import type { Span } from "../../logger";
 import { debugLogger } from "../../debug-logger";
 import {
   INSTRUMENTATION_NAMES,
@@ -134,13 +133,7 @@ class CloudflareAIChatInstrumentationConsumer {
     const globalState = _internalGetGlobalState();
     const contextManager = globalState?.contextManager;
     const startChannel = tracingChannel.start;
-    const currentSpanStore = contextManager
-      ? (
-          contextManager as {
-            [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-          }
-        )[BRAINTRUST_CURRENT_SPAN_STORE]
-      : undefined;
+    const currentSpanStore = contextManager?.getCurrentSpanStore();
 
     if (!startChannel || !currentSpanStore || !contextManager) {
       return;

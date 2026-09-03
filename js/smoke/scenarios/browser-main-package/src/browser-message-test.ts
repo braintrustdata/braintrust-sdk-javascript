@@ -5,8 +5,8 @@ declare global {
       consoleMessages: string[];
       importSuccessful: boolean;
       hasInit: boolean;
-      hasNewId: boolean;
-      hasTraceable: boolean;
+      hasFlush: boolean;
+      removedLegacyExports: boolean;
     };
   }
 }
@@ -22,13 +22,14 @@ console.info = (...args: any[]) => {
 
 // Import from main package browser export AFTER setting up console capture
 // This must be done dynamically to ensure console.info is overridden first
-const braintrust = await import("braintrust/browser");
+const braintrust = await import("braintrust");
 
 // Test that imports work
 const importSuccessful = true;
 const hasInit = typeof braintrust.init === "function";
-const hasNewId = typeof braintrust.newId === "function";
-const hasTraceable = typeof braintrust.traceable === "function";
+const hasFlush = typeof braintrust.flush === "function";
+const removedLegacyExports =
+  !("newId" in braintrust) && !("traceable" in braintrust);
 
 // Store results
 window.__btBrowserMessageTest = {
@@ -36,8 +37,8 @@ window.__btBrowserMessageTest = {
   consoleMessages: capturedMessages,
   importSuccessful,
   hasInit,
-  hasNewId,
-  hasTraceable,
+  hasFlush,
+  removedLegacyExports,
 };
 
 // Display results
@@ -48,8 +49,8 @@ if (output) {
     <ul>
       <li>Import successful: ${importSuccessful ? "✓" : "✗"}</li>
       <li>Has init function: ${hasInit ? "✓" : "✗"}</li>
-      <li>Has newId function: ${hasNewId ? "✓" : "✗"}</li>
-      <li>Has traceable function: ${hasTraceable ? "✓" : "✗"}</li>
+      <li>Has flush function: ${hasFlush ? "✓" : "✗"}</li>
+      <li>Legacy exports removed: ${removedLegacyExports ? "✓" : "✗"}</li>
       <li>Console messages captured: ${capturedMessages.length}</li>
     </ul>
     <h3>Console Messages:</h3>

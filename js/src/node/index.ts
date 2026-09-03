@@ -56,4 +56,3 @@ import { configureNode } from "./config";
 configureNode();
 
 export * from "../exports";
-export * as default from "../exports";

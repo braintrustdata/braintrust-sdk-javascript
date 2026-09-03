@@ -1,11 +1,7 @@
 import { debugLogger } from "../../debug-logger";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
-import {
-  _internalGetGlobalState,
-  BRAINTRUST_CURRENT_SPAN_STORE,
-  startSpan,
-} from "../../logger";
-import type { CurrentSpanStore, Span } from "../../logger";
+import { _internalGetGlobalState, startSpan } from "../../logger";
+import type { Span } from "../../logger";
 import {
   withSpanInstrumentationName,
   type SpanInstrumentationName,
@@ -316,13 +312,7 @@ function bindCurrentSpanStoreToStart<
   const state = _internalGetGlobalState();
   const startChannel = tracingChannel.start;
   const contextManager = state?.contextManager;
-  const currentSpanStore = contextManager
-    ? (
-        contextManager as {
-          [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-        }
-      )[BRAINTRUST_CURRENT_SPAN_STORE]
-    : undefined;
+  const currentSpanStore = contextManager?.getCurrentSpanStore();
 
   if (!currentSpanStore || !startChannel) {
     return;

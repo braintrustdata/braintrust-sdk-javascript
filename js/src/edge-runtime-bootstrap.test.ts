@@ -67,19 +67,19 @@ describe.each([
       });
 
       const braintrust = await import(entrypoint);
+      const { _exportsForTestingOnly } = await import("./logger");
 
-      braintrust._exportsForTestingOnly.setInitialTestState();
-      await braintrust._exportsForTestingOnly.simulateLoginForTests();
+      _exportsForTestingOnly.setInitialTestState();
+      await _exportsForTestingOnly.simulateLoginForTests();
 
-      const backgroundLogger =
-        braintrust._exportsForTestingOnly.useTestBackgroundLogger();
+      const backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
       const logger = braintrust.initLogger({
         projectId: "test-project-id",
         projectName,
       });
 
       const root = logger.startSpan({ name: "root", type: "task" });
-      const parent = await root.export();
+      const parent = braintrust.extractTraceContextFromHeaders(root.inject())!;
 
       const result = await braintrust.traced(
         async (span: unknown) => {
@@ -113,12 +113,12 @@ describe.each([
 
     test("wrapAISDK logs spans in edge runtimes", async () => {
       const braintrust = await import(entrypoint);
+      const { _exportsForTestingOnly } = await import("./logger");
 
-      braintrust._exportsForTestingOnly.setInitialTestState();
-      await braintrust._exportsForTestingOnly.simulateLoginForTests();
+      _exportsForTestingOnly.setInitialTestState();
+      await _exportsForTestingOnly.simulateLoginForTests();
 
-      const backgroundLogger =
-        braintrust._exportsForTestingOnly.useTestBackgroundLogger();
+      const backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
       braintrust.initLogger({
         projectId: "test-project-id",
         projectName,

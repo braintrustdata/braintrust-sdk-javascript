@@ -16,7 +16,7 @@ beforeAll(async () => {
   await _exportsForTestingOnly.simulateLoginForTests();
   backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
 
-  vi.spyOn(logger, "initExperiment").mockImplementation(
+  vi.spyOn(logger, "init").mockImplementation(
     (projectOrOptions: string | any, options?: any) => {
       const experimentOptions =
         typeof projectOrOptions === "string" ? options : projectOrOptions;

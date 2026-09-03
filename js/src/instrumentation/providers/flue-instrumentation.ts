@@ -1,11 +1,10 @@
 import { toLoggedError } from "../core";
 import { debugLogger } from "../../debug-logger";
 import {
-  BRAINTRUST_CURRENT_SPAN_STORE,
   NOOP_SPAN,
   flush,
   _internalGetGlobalState,
-  startSpan as startBaseSpan,
+  _internalStartSpan as startBaseSpan,
   withCurrent,
 } from "../../logger";
 import type { Span, StartSpanArgs } from "../../logger";
@@ -1308,9 +1307,7 @@ function runWithCurrentSpanStore<T>(
 ): Promise<T> {
   const state = _internalGetGlobalState();
   const contextManager = state?.contextManager;
-  const currentSpanStore = contextManager
-    ? Reflect.get(contextManager, BRAINTRUST_CURRENT_SPAN_STORE)
-    : undefined;
+  const currentSpanStore = contextManager?.getCurrentSpanStore();
 
   if (contextManager && typeof currentSpanStore?.run === "function") {
     return currentSpanStore.run(contextManager.wrapSpanForStore(span), next);

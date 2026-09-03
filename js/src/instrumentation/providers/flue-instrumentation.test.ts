@@ -3,17 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const {
   mockDebugLog,
   mockCurrentParentSpan,
-  mockCurrentSpanStoreSymbol,
   mockCurrentSpanStore,
   mockFlush,
   mockStartSpan,
 } = vi.hoisted(() => {
   const currentParentSpan = { current: undefined as any };
-  const currentSpanStoreSymbol = Symbol.for("braintrust.currentSpanStore");
   return {
     mockDebugLog: vi.fn(),
     mockCurrentParentSpan: currentParentSpan,
-    mockCurrentSpanStoreSymbol: currentSpanStoreSymbol,
     mockCurrentSpanStore: {
       getStore: vi.fn(() => currentParentSpan.current),
       run: vi.fn((span: unknown, callback: () => unknown) => {
@@ -38,12 +35,11 @@ vi.mock("../../debug-logger", () => ({
 }));
 
 vi.mock("../../logger", () => ({
-  BRAINTRUST_CURRENT_SPAN_STORE: mockCurrentSpanStoreSymbol,
   NOOP_SPAN: {},
   flush: (...args: unknown[]) => mockFlush(...args),
   _internalGetGlobalState: () => ({
     contextManager: {
-      [mockCurrentSpanStoreSymbol]: mockCurrentSpanStore,
+      getCurrentSpanStore: () => mockCurrentSpanStore,
       wrapSpanForStore: (span: unknown) => span,
     },
     idGenerator: {
@@ -53,6 +49,7 @@ vi.mock("../../logger", () => ({
     },
   }),
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
+  _internalStartSpan: (...args: unknown[]) => mockStartSpan(...args),
   withCurrent: (span: unknown, callback: () => unknown) => {
     const previous = mockCurrentParentSpan.current;
     mockCurrentParentSpan.current = span;

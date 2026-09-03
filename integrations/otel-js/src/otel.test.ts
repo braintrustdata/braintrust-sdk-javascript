@@ -26,13 +26,14 @@ import {
   parentFromHeaders,
   isRootSpan,
 } from "./otel";
-import { _exportsForTestingOnly, initLogger } from "braintrust";
+import { initLogger } from "braintrust";
+import { SpanComponentsV3, SpanComponentsV4 } from "../../../js/util";
+import { _exportsForTestingOnly } from "../../../js/src/logger";
 import {
   base64ToUint8Array,
   getExportVersion,
   createTracerProvider,
 } from "../tests/utils";
-import { SpanComponentsV3, SpanComponentsV4 } from "braintrust/util";
 import { setupOtelCompat, resetOtelCompat } from ".";
 
 const packageJson = JSON.parse(
@@ -59,6 +60,13 @@ async function withEmptyBraintrustEnvFile<T>(
   fn: () => T | Promise<T>,
 ): Promise<T> {
   return withBraintrustEnvFile("", fn);
+}
+
+function restoreEnvironment(snapshot: NodeJS.ProcessEnv): void {
+  for (const name of Object.keys(process.env)) {
+    if (!(name in snapshot)) delete process.env[name];
+  }
+  Object.assign(process.env, snapshot);
 }
 
 describe("AISpanProcessor", () => {
@@ -605,7 +613,7 @@ describe("BraintrustSpanProcessor", () => {
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    restoreEnvironment(originalEnv);
     vi.restoreAllMocks();
     _exportsForTestingOnly.clearTestBackgroundLogger();
     _exportsForTestingOnly.simulateLogoutForTests();
@@ -1008,7 +1016,7 @@ describe("BraintrustExporter", () => {
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    restoreEnvironment(originalEnv);
     vi.restoreAllMocks();
     _exportsForTestingOnly.clearTestBackgroundLogger();
     _exportsForTestingOnly.simulateLogoutForTests();
@@ -1392,180 +1400,35 @@ describe("otel namespace helpers", () => {
   });
 
   describe("parentFromHeaders", () => {
-    describe("valid inputs", () => {
-      it("should extract parent from headers with valid traceparent and braintrust.parent baggage", () => {
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-1234567890123456-01",
-          baggage: "braintrust.parent=project_name:test",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeDefined();
-        // Parent string is base64-encoded SpanComponentsV4
-        expect(typeof parent).toBe("string");
-        expect(parent!.length).toBeGreaterThan(0);
-      });
-
-      it("should extract parent with project_id", () => {
-        const headers = {
-          traceparent:
-            "00-abcdef12345678901234567890123456-fedcba9876543210-01",
-          baggage: "braintrust.parent=project_id:my-project-id",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeDefined();
-        expect(typeof parent).toBe("string");
-        expect(parent!.length).toBeGreaterThan(0);
-      });
-
-      it("should extract parent with experiment_id", () => {
-        const headers = {
-          traceparent:
-            "00-11111111111111111111111111111111-2222222222222222-01",
-          baggage: "braintrust.parent=experiment_id:my-experiment-id",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeDefined();
-        expect(typeof parent).toBe("string");
-        expect(parent!.length).toBeGreaterThan(0);
-      });
+    it("returns the opaque W3C context", () => {
+      const headers = {
+        traceparent: "00-12345678901234567890123456789012-1234567890123456-01",
+        tracestate: "vendor=value",
+        baggage: "braintrust.parent=project_name%3Atest",
+      };
+      expect(parentFromHeaders(headers)).toEqual(headers);
     });
 
-    describe("invalid inputs", () => {
-      it("should return undefined when traceparent is missing", () => {
-        const consoleSpy = vi
-          .spyOn(console, "error")
-          .mockImplementation(() => {});
-        const headers = {
-          baggage: "braintrust.parent=project_name:test",
-        };
+    it("keeps a valid trace context without Braintrust baggage", () => {
+      const headers = {
+        traceparent: "00-12345678901234567890123456789012-1234567890123456-01",
+      };
+      expect(parentFromHeaders(headers)).toEqual(headers);
+    });
 
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "parentFromHeaders: No valid span context in headers",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when baggage is missing", () => {
-        const consoleSpy = vi
-          .spyOn(console, "warn")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-1234567890123456-01",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        expect(consoleSpy).toHaveBeenCalled();
-        expect(consoleSpy.mock.calls[0][0]).toContain(
-          "braintrust.parent not found",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when braintrust.parent is missing from baggage", () => {
-        const consoleSpy = vi
-          .spyOn(console, "warn")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-1234567890123456-01",
-          baggage: "foo=bar,baz=qux",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        expect(consoleSpy).toHaveBeenCalled();
-        expect(consoleSpy.mock.calls[0][0]).toContain(
-          "braintrust.parent not found",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when traceparent format is invalid", () => {
-        const consoleSpy = vi
-          .spyOn(console, "error")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent: "invalid-traceparent",
-          baggage: "braintrust.parent=project_name:test",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "parentFromHeaders: No valid span context in headers",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when trace_id is all zeros", () => {
-        const consoleSpy = vi
-          .spyOn(console, "error")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent:
-            "00-00000000000000000000000000000000-1234567890123456-01",
-          baggage: "braintrust.parent=project_name:test",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        // OTEL's extract() validates and rejects invalid trace_id
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "parentFromHeaders: No valid span context in headers",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when span_id is all zeros", () => {
-        const consoleSpy = vi
-          .spyOn(console, "error")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-0000000000000000-01",
-          baggage: "braintrust.parent=project_name:test",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        // OTEL's extract() validates and rejects invalid span_id
-        expect(consoleSpy).toHaveBeenCalledWith(
-          "parentFromHeaders: No valid span context in headers",
-        );
-
-        consoleSpy.mockRestore();
-      });
-
-      it("should return undefined when braintrust.parent format is invalid", () => {
-        const consoleSpy = vi
-          .spyOn(console, "error")
-          .mockImplementation(() => {});
-        const headers = {
-          traceparent:
-            "00-12345678901234567890123456789012-1234567890123456-01",
-          baggage: "braintrust.parent=invalid",
-        };
-
-        const parent = parentFromHeaders(headers);
-        expect(parent).toBeUndefined();
-        // Should reach our validation if span context is valid, otherwise OTEL rejects it
-        expect(consoleSpy).toHaveBeenCalled();
-
-        consoleSpy.mockRestore();
-      });
+    it.each([
+      {},
+      { traceparent: "invalid-traceparent" },
+      {
+        traceparent: "00-00000000000000000000000000000000-1234567890123456-01",
+      },
+      {
+        traceparent: "00-12345678901234567890123456789012-0000000000000000-01",
+      },
+    ])("returns undefined for an invalid traceparent", (headers) => {
+      expect(
+        parentFromHeaders(headers as Record<string, string>),
+      ).toBeUndefined();
     });
   });
 });
@@ -1735,7 +1598,9 @@ describe("Otel Compat tests Integration", () => {
       expect(uuidSpan.spanId).toMatch(uuidRegex);
       uuidSpan.end();
 
-      // Switch to OTEL compat (hex, wins over legacy).
+      // Switch to the default hex ID mode. OTEL compat only changes context
+      // management now; it does not override the core ID generator.
+      delete process.env.BRAINTRUST_LEGACY_IDS;
       setupOtelCompat();
       _exportsForTestingOnly.resetIdGenStateForTests();
 
@@ -1939,26 +1804,6 @@ describe("export() format selection based on if otel is initialized", () => {
 
     const v4Parsed = SpanComponentsV4.fromStr(exportedV4);
     expect(v4Parsed.data.object_type).toBeDefined();
-  });
-
-  test("exported V4 span can be used as parent", async () => {
-    const testLogger = initLogger({
-      projectName: "test-v4-parent",
-      apiKey: "test-key",
-    });
-
-    const parentSpan = testLogger.startSpan({ name: "parent-span-v4" });
-    const exported = await parentSpan.export();
-    parentSpan.end();
-
-    // Should be able to use V4 exported string as parent
-    const childSpan = testLogger.startSpan({
-      name: "child-span-v4",
-      parent: exported,
-    });
-
-    expect(childSpan.rootSpanId).toBe(parentSpan.rootSpanId);
-    childSpan.end();
   });
 
   test("V4 format uses hex IDs (not UUIDs) when otel is initialized", async () => {

@@ -1,7 +1,14 @@
-import { BraintrustStreamChunk } from "braintrust";
+import { BraintrustStream } from "braintrust";
 import { ReadableStream, WritableStream } from "stream/web";
 import { expect, test } from "vitest";
 import { BraintrustAdapter } from ".";
+
+type BraintrustStreamChunk =
+  ReturnType<BraintrustStream["toReadableStream"]> extends ReadableStream<
+    infer Chunk
+  >
+    ? Chunk
+    : never;
 
 test("text callbacks", async () => {
   const textStream = new ReadableStream<BraintrustStreamChunk>({

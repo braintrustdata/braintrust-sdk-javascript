@@ -2,7 +2,6 @@ import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
-  BRAINTRUST_CURRENT_SPAN_STORE,
   _internalGetGlobalState,
   startSpan as startBaseSpan,
   withCurrent,
@@ -518,13 +517,7 @@ function bindCurrentSpanStoreToStart<
         ) => void;
       } & object)
     | undefined;
-  const currentSpanStore = contextManager
-    ? (
-        contextManager as {
-          [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-        }
-      )[BRAINTRUST_CURRENT_SPAN_STORE]
-    : undefined;
+  const currentSpanStore = contextManager?.getCurrentSpanStore();
 
   if (!startChannel?.bindStore || !currentSpanStore) {
     return;

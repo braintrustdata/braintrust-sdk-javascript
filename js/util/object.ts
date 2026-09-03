@@ -23,7 +23,6 @@ export type OtherExperimentLogFields = {
   classifications?: Record<string, { id: string; label?: string }[]>;
   metadata: Record<string, unknown>;
   metrics: Record<string, unknown>;
-  datasetRecordId: string;
   origin: ObjectReferenceType;
   span_attributes: Record<string, unknown>;
   [ASYNC_SCORING_CONTROL_FIELD]: AsyncScoringControl;
@@ -43,7 +42,7 @@ export type ExperimentLogFullArgs = Partial<
 
 export type LogFeedbackFullArgs = IdField &
   Partial<
-    Omit<OtherExperimentLogFields, "output" | "metrics" | "datasetRecordId"> & {
+    Omit<OtherExperimentLogFields, "output" | "metrics"> & {
       comment: string;
       source: Source;
     }

@@ -10,4 +10,3 @@ import { configureWorkerd } from "./config";
 configureWorkerd();
 
 export * from "../exports";
-export * as default from "../exports";

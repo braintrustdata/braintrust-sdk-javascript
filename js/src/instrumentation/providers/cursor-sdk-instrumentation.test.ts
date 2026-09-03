@@ -12,6 +12,7 @@ vi.mock("../../isomorph", () => ({
 
 vi.mock("../../logger", () => ({
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
+  _internalStartSpan: (...args: unknown[]) => mockStartSpan(...args),
 }));
 
 import iso from "../../isomorph";

@@ -19,14 +19,12 @@ export async function setupNodeTestEnv(): Promise<TestBackgroundLogger> {
   await _exportsForTestingOnly.simulateLoginForTests();
   const bgLogger = _exportsForTestingOnly.useTestBackgroundLogger();
 
-  vi.spyOn(logger, "initExperiment").mockImplementation(
-    (projectName: string, options?: any) => {
-      return _exportsForTestingOnly.initTestExperiment(
-        options?.experiment || "test-experiment",
-        projectName,
-      );
-    },
-  );
+  vi.spyOn(logger, "init").mockImplementation((options) => {
+    return _exportsForTestingOnly.initTestExperiment(
+      options.experiment || "test-experiment",
+      options.project ?? options.projectId ?? "test-project",
+    );
+  });
 
   return bgLogger;
 }

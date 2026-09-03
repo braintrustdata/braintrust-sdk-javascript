@@ -4,21 +4,8 @@
  * This is a webpack loader (not a plugin) for compatibility with tools that only support loaders,
  * such as Next.js Turbopack.
  *
- * Usage in next.config.js / next.config.ts:
- * ```javascript
- * const nextConfig: NextConfig = {
- *   turbopack: {
- *     rules: {
- *       // Apply the loader to all JS/MJS/CJS files from node_modules.
- *       // condition: "foreign" restricts the rule to third-party packages only.
- *       "*.{js,mjs,cjs}": {
- *         condition: "foreign",
- *         loaders: [{ loader: require.resolve("braintrust/webpack-loader") }],
- *       },
- *     },
- *   },
- * };
- * ```
+ * The `braintrust/next` entrypoint resolves this implementation directly when
+ * configuring Turbopack; it is not a user-facing package entrypoint.
  */
 
 import { create } from "../orchestrion-js";
@@ -130,7 +117,7 @@ function codeTransformerLoader(
     modulePath: normalizedModulePath,
     source: code,
     format: isModule ? "esm" : "cjs",
-    browser: options.browser ?? options.useDiagnosticChannelCompatShim ?? false,
+    browser: options.browser ?? false,
   });
   if (patched !== null) {
     return callback(null, patched);

@@ -45,10 +45,8 @@ test("meta (write) is passed to task", async () => {
       projectName: "proj",
       evalName: "eval",
       data: [{ input: 1, metadata }],
-      task: async (input: number, { meta }) => {
-        meta({
-          foo: "barbar",
-        });
+      task: async (input: number, { metadata }) => {
+        metadata.foo = "barbar";
         return input * 2;
       },
       scores: [],

@@ -46,11 +46,6 @@
       "require": "./dist/edge-light.js",
       "default": "./dist/edge-light.mjs"
     },
-    "./browser": {
-      "import": "./dist/browser.mjs",
-      "require": "./dist/browser.js",
-      "default": "./dist/browser.mjs"
-    },
     "./apply-auto-instrumentation": {
       "types": "./dist/apply-auto-instrumentation.d.ts",
       "edge-light": "./dist/apply-auto-instrumentation.browser.mjs",
@@ -75,12 +70,6 @@
       "import": "./dist/index.mjs",
       "module": "./dist/index.mjs",
       "require": "./dist/index.js"
-    },
-    "./util": {
-      "types": "./util/dist/index.d.ts",
-      "import": "./util/dist/index.mjs",
-      "module": "./util/dist/index.mjs",
-      "require": "./util/dist/index.js"
     },
     "./instrumentation": {
       "types": "./dist/instrumentation/index.d.ts",
@@ -107,10 +96,6 @@
       "module": "./dist/auto-instrumentations/bundler/next.mjs",
       "require": "./dist/auto-instrumentations/bundler/next.cjs"
     },
-    "./webpack-loader": {
-      "types": "./dist/auto-instrumentations/bundler/webpack-loader.d.ts",
-      "require": "./dist/auto-instrumentations/bundler/webpack-loader.cjs"
-    },
     "./esbuild": {
       "types": "./dist/auto-instrumentations/bundler/esbuild.d.ts",
       "import": "./dist/auto-instrumentations/bundler/esbuild.mjs",
@@ -126,7 +111,6 @@
   },
   "files": [
     "dist/**/*",
-    "util/dist/**/*",
     "bin/bt",
     "scripts/bt-helper.js",
     "scripts/install.js",
@@ -138,7 +122,7 @@
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" tsup",
     "check:typings": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "watch": "tsup --watch",
-    "clean": "rm -r dist/* && rm -r util/dist/*",
+    "clean": "rm -r dist/*",
     "docs": "typedoc --options typedoc.json src/node/index.ts",
     "test": "vitest run --exclude \"src/wrappers/**/*.test.ts\" --exclude \"src/otel/**/*.test.ts\" --exclude \"smoke/**/*.test.ts\" --exclude \"tests/api-compatibility/**\"",
     "test:core": "pnpm prune && pnpm test",

@@ -7,10 +7,3 @@ export function braintrustWebpackPlugin(
 ): WebpackPluginInstance {
   return unplugin.webpack(options);
 }
-
-export type WebpackPluginOptions = BundlerPluginOptions;
-
-/**
- * @deprecated Use {@link braintrustWebpackPlugin} instead.
- */
-export const webpackPlugin = unplugin.webpack;

@@ -8,7 +8,6 @@ import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
   _internalGetGlobalState,
   Attachment,
-  BRAINTRUST_CURRENT_SPAN_STORE,
   startSpan as startBaseSpan,
   type CurrentSpanStore,
   type Span,
@@ -356,13 +355,7 @@ function bindCurrentSpanStoreToStart<
         ) => void;
       } & object)
     | undefined;
-  const currentSpanStore = contextManager
-    ? (
-        contextManager as {
-          [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-        }
-      )[BRAINTRUST_CURRENT_SPAN_STORE]
-    : undefined;
+  const currentSpanStore = contextManager?.getCurrentSpanStore();
 
   if (!startChannel?.bindStore || !currentSpanStore) {
     return;

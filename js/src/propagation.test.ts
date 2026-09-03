@@ -10,6 +10,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import {
   _exportsForTestingOnly,
+  _internalStartSpan,
   _injectIntoCarrier,
   extractTraceContextFromHeaders,
   initLogger,
@@ -1026,14 +1027,14 @@ describe("inject / extract / round-trip", () => {
       root_span_id: pRoot,
     }).toStr();
 
-    const child = logger.startSpan({ name: "child", parent: slug });
+    const child = _internalStartSpan({ name: "child", parent: slug });
     expect(child.rootSpanId).toBe(pRoot);
     expect(child.spanParents).toEqual([pSpan]);
     child.end();
   });
 
   test("legacy parent slug (UUID) linked in hex mode", () => {
-    const logger = makeLogger();
+    makeLogger();
     const pSpan = uuidv4();
     const pRoot = uuidv4();
     const legacySlug = new SpanComponentsV3({
@@ -1044,7 +1045,7 @@ describe("inject / extract / round-trip", () => {
       root_span_id: pRoot,
     }).toStr();
 
-    const child = logger.startSpan({ name: "child", parent: legacySlug });
+    const child = _internalStartSpan({ name: "child", parent: legacySlug });
     // Links to the slug's UUID ids; the child's own span id stays hex.
     expect(child.rootSpanId).toBe(pRoot);
     expect(child.spanParents).toEqual([pSpan]);
@@ -1064,7 +1065,7 @@ describe("inject / extract / round-trip", () => {
       root_span_id: pRoot,
     }).toStr();
 
-    const child = startSpan({ name: "child", parent: legacySlug });
+    const child = _internalStartSpan({ name: "child", parent: legacySlug });
     expect(child.rootSpanId).toBe(pRoot);
     expect(child.spanParents).toEqual([pSpan]);
     expect(child.spanId.length).toBe(16);
@@ -1221,7 +1222,7 @@ describe("legacy UUID mode", () => {
   });
 
   test("legacy parent slug (UUID) linked in legacy mode", () => {
-    const logger = initLogger({ projectName: "legacy-proj" });
+    initLogger({ projectName: "legacy-proj" });
     const pSpan = uuidv4();
     const pRoot = uuidv4();
     const legacySlug = new SpanComponentsV3({
@@ -1232,14 +1233,14 @@ describe("legacy UUID mode", () => {
       root_span_id: pRoot,
     }).toStr();
 
-    const child = logger.startSpan({ name: "child", parent: legacySlug });
+    const child = _internalStartSpan({ name: "child", parent: legacySlug });
     expect(child.rootSpanId).toBe(pRoot);
     expect(child.spanParents).toEqual([pSpan]);
     child.end();
   });
 
   test("hex parent slug linked in legacy mode", () => {
-    const logger = initLogger({ projectName: "legacy-proj" });
+    initLogger({ projectName: "legacy-proj" });
     const pSpan = "00f067aa0ba902b7"; // 8-byte hex
     const pRoot = "4bf92f3577b34da6a3ce929d0e0e4736"; // 16-byte hex
     const hexSlug = new SpanComponentsV4({
@@ -1250,7 +1251,7 @@ describe("legacy UUID mode", () => {
       root_span_id: pRoot,
     }).toStr();
 
-    const child = logger.startSpan({ name: "child", parent: hexSlug });
+    const child = _internalStartSpan({ name: "child", parent: hexSlug });
     // Links to the slug's hex ids; the child's own span id stays UUID.
     expect(child.rootSpanId).toBe(pRoot);
     expect(child.spanParents).toEqual([pSpan]);

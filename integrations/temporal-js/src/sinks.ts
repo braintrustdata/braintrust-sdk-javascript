@@ -6,24 +6,26 @@ import * as braintrust from "braintrust";
 // NOTE: WorkflowInfo is NOT included here - it's automatically injected by the runtime
 export interface BraintrustSinks extends Sinks {
   braintrust: {
-    workflowStarted(parentContext?: string, workflowSpanId?: string): void;
+    workflowStarted(
+      parentContext?: braintrust.PropagationContext,
+      workflowSpanId?: string,
+    ): void;
     workflowCompleted(error?: string): void;
   };
 }
 
 // Active workflow spans tracked by run ID
 const workflowSpans = new Map<string, braintrust.Span>();
-// Workflow span exports tracked by run ID (as promises for async export)
-const workflowSpanExports = new Map<string, Promise<string>>();
+const workflowTraceContexts = new Map<string, braintrust.PropagationContext>();
 
 /**
  * Get the exported span context for a workflow by run ID.
  * Activities on the same worker can use this to parent to the workflow span.
  */
-export function getWorkflowSpanExport(
+export function getWorkflowTraceContext(
   runId: string,
-): Promise<string> | undefined {
-  return workflowSpanExports.get(runId);
+): braintrust.PropagationContext | undefined {
+  return workflowTraceContexts.get(runId);
 }
 
 /**
@@ -36,7 +38,7 @@ export function createBraintrustSinks(): InjectedSinks<BraintrustSinks> {
       workflowStarted: {
         fn: (
           info: WorkflowInfo,
-          parentContext?: string,
+          parentContext?: braintrust.PropagationContext,
           workflowSpanId?: string,
         ) => {
           const span = braintrust.startSpan({
@@ -53,7 +55,7 @@ export function createBraintrustSinks(): InjectedSinks<BraintrustSinks> {
             },
           });
           workflowSpans.set(info.runId, span);
-          workflowSpanExports.set(info.runId, span.export());
+          workflowTraceContexts.set(info.runId, span.inject());
         },
         callDuringReplay: false,
       },
@@ -66,7 +68,7 @@ export function createBraintrustSinks(): InjectedSinks<BraintrustSinks> {
             }
             span.end();
             workflowSpans.delete(info.runId);
-            workflowSpanExports.delete(info.runId);
+            workflowTraceContexts.delete(info.runId);
           }
         },
         callDuringReplay: false,

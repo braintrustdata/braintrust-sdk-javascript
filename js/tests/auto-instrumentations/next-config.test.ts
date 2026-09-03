@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../src/auto-instrumentations/bundler/webpack.js", () => ({
-  webpackPlugin: vi.fn((options: unknown) => ({
+  braintrustWebpackPlugin: vi.fn((options: unknown) => ({
     apply: () => {},
     name: "braintrust-test-webpack-plugin",
     options,
   })),
 }));
 
-import { webpackPlugin } from "../../src/auto-instrumentations/bundler/webpack.js";
+import { braintrustWebpackPlugin } from "../../src/auto-instrumentations/bundler/webpack.js";
 import { wrapNextjsConfigWithBraintrust } from "../../src/auto-instrumentations/bundler/next.js";
 
 const originalArgv = [...process.argv];
@@ -45,7 +45,7 @@ describe("wrapNextjsConfigWithBraintrust", () => {
     const result = config.webpack({ plugins: [] }, { isServer: false });
 
     expect(userWebpack).toHaveBeenCalledOnce();
-    expect(webpackPlugin).toHaveBeenCalledWith({ browser: true });
+    expect(braintrustWebpackPlugin).toHaveBeenCalledWith({ browser: true });
     expect(result.plugins).toHaveLength(2);
     expect(result.plugins[0]).toEqual({ name: "user-plugin" });
     expect(result.plugins[1].options).toEqual({ browser: true });
@@ -183,8 +183,8 @@ describe("wrapNextjsConfigWithBraintrust", () => {
         },
         {
           resolve: (specifier: string) => {
-            if (specifier === "braintrust/webpack-loader") {
-              return "/braintrust/webpack-loader.cjs";
+            if (specifier === "braintrust/package.json") {
+              return "/braintrust/package.json";
             }
 
             throw new Error(`Cannot resolve module ${specifier}`);

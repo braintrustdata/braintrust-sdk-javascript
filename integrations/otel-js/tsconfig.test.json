@@ -6,7 +6,9 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@braintrust/otel": ["src/index.ts"]
+      "@braintrust/otel": ["src/index.ts"],
+      "braintrust": ["../../js/src/node/index.ts"],
+      "braintrust/instrumentation": ["../../js/src/instrumentation/index.ts"]
     }
   },
   "include": ["src/**/*.test.ts", "tests/**/*.ts"],
