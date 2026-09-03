@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 9963a3f7375263a4) -- do not modify
+// Auto-generated file (content hash 719572142fc24803) -- do not modify
 
 export type AclObjectTypeType =
   /**
@@ -4514,6 +4514,17 @@ export type ProjectSettingsType = Partial<{
      * If true, use metrics.start rather than created for monitor chart time bucket dimensions.
      */
     | null;
+  /**
+   * If true, hide peer review scores, comments, and aggregate results from reviewers without project update permissions until they submit their own review.
+   */
+  blind_reviews: /**
+     * If true, hide peer review scores, comments, and aggregate results from reviewers without project update permissions until they submit their own review.
+     */
+    | boolean
+    /**
+     * If true, hide peer review scores, comments, and aggregate results from reviewers without project update permissions until they submit their own review.
+     */
+    | null;
   default_preprocessor: NullableSavedFunctionIdType;
 }> | null;
 export type ProjectType = {
@@ -4813,6 +4824,10 @@ export type WindowedAutomationConfigType = {
            * @minLength 1
            */
           string | undefined;
+        endpoint_name?: /**
+           * @minLength 1
+           */
+          string | undefined;
         reasoning_effort?:
           | /**
            * @enum none, minimal, low, medium, high, xhigh, max
@@ -4869,11 +4884,20 @@ export type WindowedAutomationConfigType = {
            */
           string | undefined;
         formatting_prompt?: /**
-           * Instructions for Loop to format content sent to this destination
-           *
-           * @minLength 1
-           * @maxLength 10000
-           */
+         * Publish a Slack mrkdwn digest.
+        
+        Include a complete "*Pattern outcomes*" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.
+        
+        Use this row format exactly:
+        • <pattern_url|Pattern title> — `outcome`
+        
+        If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say "No pattern outcomes."
+        
+        After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report.
+         *
+         * @minLength 1
+         * @maxLength 10000
+         */
           string | undefined;
       }
   >;
@@ -5084,11 +5108,20 @@ export type TopicDigestAutomationConfigType = {
        */
       string | undefined;
     formatting_prompt?: /**
-       * Instructions for Loop to format content sent to this destination
-       *
-       * @minLength 1
-       * @maxLength 10000
-       */
+         * Publish a Slack mrkdwn digest.
+        
+        Include a complete "*Pattern outcomes*" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.
+        
+        Use this row format exactly:
+        • <pattern_url|Pattern title> — `outcome`
+        
+        If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say "No pattern outcomes."
+        
+        After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report.
+         *
+         * @minLength 1
+         * @maxLength 10000
+         */
       string | undefined;
   };
   topic_map_function_ids?: /**
@@ -5217,11 +5250,20 @@ export type ProjectAutomationType = {
                  */
                 string | undefined;
               formatting_prompt?: /**
-                 * Instructions for Loop to format content sent to this destination
-                 *
-                 * @minLength 1
-                 * @maxLength 10000
-                 */
+             * Publish a Slack mrkdwn digest.
+            
+            Include a complete "*Pattern outcomes*" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.
+            
+            Use this row format exactly:
+            • <pattern_url|Pattern title> — `outcome`
+            
+            If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say "No pattern outcomes."
+            
+            After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report.
+             *
+             * @minLength 1
+             * @maxLength 10000
+             */
                 string | undefined;
             };
       }
@@ -5449,11 +5491,20 @@ export type ProjectAutomationType = {
                  */
                 string | undefined;
               formatting_prompt?: /**
-                 * Instructions for Loop to format content sent to this destination
-                 *
-                 * @minLength 1
-                 * @maxLength 10000
-                 */
+             * Publish a Slack mrkdwn digest.
+            
+            Include a complete "*Pattern outcomes*" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.
+            
+            Use this row format exactly:
+            • <pattern_url|Pattern title> — `outcome`
+            
+            If a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say "No pattern outcomes."
+            
+            After the outcome list, include a "*Highlights*" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report.
+             *
+             * @minLength 1
+             * @maxLength 10000
+             */
                 string | undefined;
             };
       }
