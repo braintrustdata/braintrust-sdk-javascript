@@ -17,19 +17,13 @@
                   {
                     "role": "user"
                   }
-                ],
-                "model": {
-                  "modelId": "gpt-5.4-mini",
-                  "provider": "codex"
-                }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
-                },
-                "model": "gpt-5.4-mini",
-                "provider": "codex"
+                }
               }
             }
           ],
@@ -39,19 +33,13 @@
               {
                 "role": "user"
               }
-            ],
-            "model": {
-              "modelId": "gpt-5.4-mini",
-              "provider": "codex"
-            }
+            ]
           },
           "metadata": {
             "braintrust": {
               "integration_name": "ai-sdk",
               "sdk_language": "typescript"
-            },
-            "model": "gpt-5.4-mini",
-            "provider": "codex"
+            }
           }
         },
         {
@@ -67,46 +55,39 @@
                   {
                     "role": "user"
                   }
-                ],
-                "model": {
-                  "modelId": "gpt-5.4-mini",
-                  "provider": "codex"
-                }
+                ]
               },
               "output": {
-                "finishReason": {
-                  "raw": "stop",
-                  "unified": "stop"
-                },
+                "finishReason": "stop",
                 "response": {
                   "id": "<span:1>"
                 },
                 "usage": {
-                  "inputTokens": {
-                    "cacheRead": 14336,
-                    "cacheWrite": 0,
-                    "noCache": 8021,
-                    "total": 22357
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 14336,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 8049
                   },
-                  "outputTokens": {
-                    "total": 189
-                  }
+                  "inputTokens": 22385,
+                  "outputTokenDetails": {
+                    "textTokens": 202
+                  },
+                  "outputTokens": 202,
+                  "totalTokens": 22587
                 }
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
-                },
-                "model": "gpt-5.4-mini",
-                "provider": "codex"
+                }
               },
               "metrics": {
-                "completion_tokens": 189,
+                "completion_tokens": 202,
                 "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 14336,
-                "prompt_tokens": 22357,
-                "tokens": 22546
+                "prompt_tokens": 22385,
+                "tokens": 22587
               }
             }
           ],
@@ -116,53 +97,48 @@
               {
                 "role": "user"
               }
-            ],
-            "model": {
-              "modelId": "gpt-5.4-mini",
-              "provider": "codex"
-            }
+            ]
           },
           "output": {
-            "finishReason": {
-              "raw": "stop",
-              "unified": "stop"
-            },
+            "finishReason": "stop",
             "response": {
               "id": "<span:1>",
               "messages": [],
-              "modelId": "gpt-5.4-mini",
+              "modelId": "",
               "timestamp": "<timestamp>"
             },
             "totalUsage": {
-              "inputTokens": {
-                "cacheRead": 14336,
-                "cacheWrite": 0,
-                "noCache": 8021,
-                "total": 22357
+              "inputTokenDetails": {
+                "cacheReadTokens": 14336,
+                "cacheWriteTokens": 0,
+                "noCacheTokens": 8049
               },
-              "outputTokens": {
-                "total": 189
-              }
+              "inputTokens": 22385,
+              "outputTokenDetails": {
+                "textTokens": 202
+              },
+              "outputTokens": 202,
+              "totalTokens": 22587
             },
             "usage": {
-              "inputTokens": {
-                "cacheRead": 14336,
-                "cacheWrite": 0,
-                "noCache": 8021,
-                "total": 22357
+              "inputTokenDetails": {
+                "cacheReadTokens": 14336,
+                "cacheWriteTokens": 0,
+                "noCacheTokens": 8049
               },
-              "outputTokens": {
-                "total": 189
-              }
+              "inputTokens": 22385,
+              "outputTokenDetails": {
+                "textTokens": 202
+              },
+              "outputTokens": 202,
+              "totalTokens": 22587
             }
           },
           "metadata": {
             "braintrust": {
               "integration_name": "ai-sdk",
               "sdk_language": "typescript"
-            },
-            "model": "gpt-5.4-mini",
-            "provider": "codex"
+            }
           }
         }
       ],
@@ -181,27 +157,27 @@
           "inputTokenDetails": {
             "cacheReadTokens": 14336,
             "cacheWriteTokens": 0,
-            "noCacheTokens": 8021
+            "noCacheTokens": 8049
           },
-          "inputTokens": 22357,
+          "inputTokens": 22385,
           "outputTokenDetails": {
-            "textTokens": 189
+            "textTokens": 202
           },
-          "outputTokens": 189,
-          "totalTokens": 22546
+          "outputTokens": 202,
+          "totalTokens": 22587
         },
         "usage": {
           "inputTokenDetails": {
             "cacheReadTokens": 14336,
             "cacheWriteTokens": 0,
-            "noCacheTokens": 8021
+            "noCacheTokens": 8049
           },
-          "inputTokens": 22357,
+          "inputTokens": 22385,
           "outputTokenDetails": {
-            "textTokens": 189
+            "textTokens": 202
           },
-          "outputTokens": 189,
-          "totalTokens": 22546
+          "outputTokens": 202,
+          "totalTokens": 22587
         },
         "warnings": []
       },
@@ -257,11 +233,11 @@
         }
       },
       "metrics": {
-        "completion_tokens": 189,
+        "completion_tokens": 202,
         "prompt_cache_creation_tokens": 0,
         "prompt_cached_tokens": 14336,
-        "prompt_tokens": 22357,
-        "tokens": 22546
+        "prompt_tokens": 22385,
+        "tokens": 22587
       }
     },
     {
@@ -281,19 +257,13 @@
                   {
                     "role": "user"
                   }
-                ],
-                "model": {
-                  "modelId": "gpt-5.4-mini",
-                  "provider": "codex"
-                }
+                ]
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
-                },
-                "model": "gpt-5.4-mini",
-                "provider": "codex"
+                }
               }
             }
           ],
@@ -303,19 +273,13 @@
               {
                 "role": "user"
               }
-            ],
-            "model": {
-              "modelId": "gpt-5.4-mini",
-              "provider": "codex"
-            }
+            ]
           },
           "metadata": {
             "braintrust": {
               "integration_name": "ai-sdk",
               "sdk_language": "typescript"
-            },
-            "model": "gpt-5.4-mini",
-            "provider": "codex"
+            }
           }
         },
         {
@@ -331,46 +295,39 @@
                   {
                     "role": "user"
                   }
-                ],
-                "model": {
-                  "modelId": "gpt-5.4-mini",
-                  "provider": "codex"
-                }
+                ]
               },
               "output": {
-                "finishReason": {
-                  "raw": "stop",
-                  "unified": "stop"
-                },
+                "finishReason": "stop",
                 "response": {
                   "id": "<span:1>"
                 },
                 "usage": {
-                  "inputTokens": {
-                    "cacheRead": 14336,
-                    "cacheWrite": 0,
-                    "noCache": 7973,
-                    "total": 22309
+                  "inputTokenDetails": {
+                    "cacheReadTokens": 21504,
+                    "cacheWriteTokens": 0,
+                    "noCacheTokens": 852
                   },
-                  "outputTokens": {
-                    "total": 153
-                  }
+                  "inputTokens": 22356,
+                  "outputTokenDetails": {
+                    "textTokens": 188
+                  },
+                  "outputTokens": 188,
+                  "totalTokens": 22544
                 }
               },
               "metadata": {
                 "braintrust": {
                   "integration_name": "ai-sdk",
                   "sdk_language": "typescript"
-                },
-                "model": "gpt-5.4-mini",
-                "provider": "codex"
+                }
               },
               "metrics": {
-                "completion_tokens": 153,
+                "completion_tokens": 188,
                 "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 14336,
-                "prompt_tokens": 22309,
-                "tokens": 22462
+                "prompt_cached_tokens": 21504,
+                "prompt_tokens": 22356,
+                "tokens": 22544
               }
             }
           ],
@@ -380,53 +337,48 @@
               {
                 "role": "user"
               }
-            ],
-            "model": {
-              "modelId": "gpt-5.4-mini",
-              "provider": "codex"
-            }
+            ]
           },
           "output": {
-            "finishReason": {
-              "raw": "stop",
-              "unified": "stop"
-            },
+            "finishReason": "stop",
             "response": {
               "id": "<span:1>",
               "messages": [],
-              "modelId": "gpt-5.4-mini",
+              "modelId": "",
               "timestamp": "<timestamp>"
             },
             "totalUsage": {
-              "inputTokens": {
-                "cacheRead": 14336,
-                "cacheWrite": 0,
-                "noCache": 7973,
-                "total": 22309
+              "inputTokenDetails": {
+                "cacheReadTokens": 21504,
+                "cacheWriteTokens": 0,
+                "noCacheTokens": 852
               },
-              "outputTokens": {
-                "total": 153
-              }
+              "inputTokens": 22356,
+              "outputTokenDetails": {
+                "textTokens": 188
+              },
+              "outputTokens": 188,
+              "totalTokens": 22544
             },
             "usage": {
-              "inputTokens": {
-                "cacheRead": 14336,
-                "cacheWrite": 0,
-                "noCache": 7973,
-                "total": 22309
+              "inputTokenDetails": {
+                "cacheReadTokens": 21504,
+                "cacheWriteTokens": 0,
+                "noCacheTokens": 852
               },
-              "outputTokens": {
-                "total": 153
-              }
+              "inputTokens": 22356,
+              "outputTokenDetails": {
+                "textTokens": 188
+              },
+              "outputTokens": 188,
+              "totalTokens": 22544
             }
           },
           "metadata": {
             "braintrust": {
               "integration_name": "ai-sdk",
               "sdk_language": "typescript"
-            },
-            "model": "gpt-5.4-mini",
-            "provider": "codex"
+            }
           }
         }
       ],
@@ -492,12 +444,12 @@
         }
       },
       "metrics": {
-        "completion_tokens": 153,
+        "completion_tokens": 188,
         "prompt_cache_creation_tokens": 0,
-        "prompt_cached_tokens": 14336,
-        "prompt_tokens": 22309,
+        "prompt_cached_tokens": 21504,
+        "prompt_tokens": 22356,
         "time_to_first_token": 0,
-        "tokens": 22462
+        "tokens": 22544
       }
     }
   ]

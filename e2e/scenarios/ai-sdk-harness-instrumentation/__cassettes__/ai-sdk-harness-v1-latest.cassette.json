@@ -2,15 +2,15 @@
   "entries": [
     {
       "callIndex": 0,
-      "id": "1da261629c0d745f",
+      "id": "7c0e162d6794cf5d",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-15T14:11:09.827Z",
+      "recordedAt": "2026-09-03T04:29:01.807Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "7db76234-3028-4b39-91de-7bdde2bd9ba3"
+              "x-codex-installation-id": "64c2d70a-6559-40f6-8364-6fdb7e466be3"
             },
             "include": ["reasoning.encrypted_content"],
             "input": [
@@ -31,7 +31,7 @@
               {
                 "content": [
                   {
-                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-07-15</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-09-03</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -454,19 +454,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "ai-sdk-harness-v1-latest.cassette.blobs/1d4e39d53d3f64ab387ffb61d9e3e6297eeb9734f3784451f8b5fdb111b5cc26.bin",
-          "sha256": "1d4e39d53d3f64ab387ffb61d9e3e6297eeb9734f3784451f8b5fdb111b5cc26"
+          "path": "ai-sdk-harness-v1-latest.cassette.blobs/e88ce9f3abf9293686c4b0d1918a1f9832b5d45720b8b79a43dbc1df1862c212.bin",
+          "sha256": "e88ce9f3abf9293686c4b0d1918a1f9832b5d45720b8b79a43dbc1df1862c212"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1b95ac9e8c390bb-VIE",
+          "cf-ray": "a35202c4ef1dd6cf-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Wed, 15 Jul 2026 14:11:08 GMT",
+          "date": "Thu, 03 Sep 2026 04:28:59 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "280",
+          "openai-processing-ms": "308",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -477,10 +477,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "180000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "179992239",
+          "x-ratelimit-remaining-tokens": "179992236",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "2ms",
-          "x-request-id": "req_76435a5407474d438ee7c4edca41b1ef"
+          "x-request-id": "req_e02ebc674f254be69892d5fcfa4ba173"
         },
         "status": 200,
         "statusText": "OK"
@@ -488,15 +488,15 @@
     },
     {
       "callIndex": 1,
-      "id": "9a87126b0f86a371",
+      "id": "f12aff3913439248",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-15T14:11:12.216Z",
+      "recordedAt": "2026-09-03T04:29:05.206Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "7db76234-3028-4b39-91de-7bdde2bd9ba3"
+              "x-codex-installation-id": "64c2d70a-6559-40f6-8364-6fdb7e466be3"
             },
             "include": ["reasoning.encrypted_content"],
             "input": [
@@ -517,7 +517,7 @@
               {
                 "content": [
                   {
-                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-07-15</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-09-03</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -535,14 +535,14 @@
                 "type": "message"
               },
               {
-                "encrypted_content": "gAAAAABqV5T9Q5C5zC0Vr0YEkavyMn1RkIRmN907rJqLcuCVKjdiFs0AFUcANQvz0WmYY-75svkruAwrTjMUv1CvGqBKd86Ll56dNSQD6ZXaEoSQcDqGDJgl_sB1p0bYWsVGyt6Xt452fkKZqtioiqnB4sEnS_Atw2PqAQ0vyoT-7463wAU86FrHFDr0p4EL_i0fw39uV6TOlTIyKMskLNoEM5Aj_mi8jqFEI7TFDmAo_3I2Oo46wLJp1EzEJgXmkQQEmi5Br105hXumJJCtRmweQ-zC6pw-7AT31AUYb58og75QKXhYYwzqStm6IpMZ-aqshN8dR6HvAybHJ6DyunYldowRW1EamxmCECmATleT4vbrZiyYEBDmyY3SeuV4MNR-niEjnXsM90yHlhl3r0FWROgPfRpmmT_BNPtj7cyfpR8adt_TJ3PbmWf-C3TQlYmcY9GD7_k7KycD_RBVPwqWMOs4ppbmG1WfK6JDxN-0pwnDPkholMabD2S67EUbI-4oS80hynonxM4hu29ZCc6l-n3oC8H4XhQ_sobndNbhuCn6ty-060jr4efaiBGPQ5HsLVwBKSyEI1q3JOwdlTELnwF5ipAKXdtkZpW8qNVD0PK90t1H-DMYqKY-rIt1yc3jB0-Aytq48irwz9yosKVWid7ZgdJZ8khqcBt-1z5F1m_XFEHGmTApHHD9dsl2z22YHoQ28FbBmppAxBuEefX3rw2xt2fb15vqLqPODcMXZBhHUI2J9amCBpwWc7wp_BiKcxUW9u2g2wE7KhLuh55-iHqvNo3GHAR3ycAh8Ff-LX9XLtKeSjyOfJOxjAlJV_yLL-a-g08NQRNSSvUb7ip0_tK8Mt3HSbqRVK9dSvG_TPfVsxKGVZyhip3x1F6UzPddBJuM0cnciMoshgCTuDjKnc7E1h9gzG74qZ2KPdiTFry7TDJ6z9ZCAx90zbclmci7gVldIX102Kp-KvpM7tk5lNi1PiWvR6O4QBa-Ok-tcSdnhO-YN9Nafrzzzxf6RVttDRCxrveNJKdlD93fGjRamVMguScNlaTQpTq68BC-BhHP2C0aydp0uF22uex7hhoETzl088EU",
+                "encrypted_content": "gAAAAABqmPeMMzH2tEfzzhWc_T4JPcSUTVGWONrgmiA88v64yAIwZdvxRN0yAVoLBsuwyxi8v674gLf5pgvglSqaYup4mhoyWTS_jzni0pEhxVzbRDmJXU_TNjpjfkPMFRiW_psP7Vgv9nYoonBdHEkvUcMznQ4z61e45NsfBWo0rerWGHM38Tq3LW3CUNkvMZoSn8C8qxJ3VUadjDWI1hKIJby-Fd330LFuMhAacvX8WFR-rUFBrJYVMHtfHZEXfcq8ogE4TsGr10g-ETwytY4alGpWZ0QYEhnd0PRql6TtKREbyCf_jTFKR8lreHPexf_FEXTBJP0P3yEKT02Ht8z9FL9fwxiLAds2sL2s85FwkFNOjlQcZfa9P5ccY97Z8wwOt8wiuxsCyDWfKGlXpRfnl2he1GIw_bYCnsvrPqkhTpU0Ult5T_GRv2cfjoMH0KABuhGuGRYeoL6DRGX6wi5HiYaWpb7St1CkYfb3bQbp0O_B11icJHSadQvtRMPXZxdDmMUW3_ooNmpi7tQ_ELp5GCNgX2WXXzVfyRjgsjJ7d7311H51SGCns6ulSzsq5ikHu7hE6SORTnY52aXJsaGJdnFcsus2y8DpsMhLOwhR-nJz_cPDltdZvWF6vyOxMmSObM2s2JEhO-tfjIUPFgPUjeia3JMXh8EJ7UnPr4Pi96LV6g8m83lvlT5z6NU2vJ2Tz5wILjS41VTR8sUUiEFvlgVrrhyPeOD3vedg8jfbKk9FWrhI0t7jxzzgOih0eInytZZTlyec_bJ4tYJJHGrgZ33aqhQ-GYfs8Jvagvq8gZxdpctU8s-Q6H17zj8AgqM3-hkLXXcQvVumcKuzb2hM_eb_Gadfi_Mqdm4T144tr3jDgGlS5RB8rmDJ41dsVhobagNNPI9VuafMlDaCJsT0wKcgXRAsWWgSkYnGtw5whMgKRz2p5UYeu_EgFfVdBUS0t63RRyVUYQ-86CWyfdQDYGb-IosggHI-vQ5N4WBKUx0vrEc09to_ftuMLOhO-pMuwu9-ShnfWvG6Ace5c12APqIXHNiD2SvB-GzCpyPLNCQw6_KyDSaFz-UHHdXPk6vrgiyD9TPcTk38LOPqT035VS18dVl9aETt9PqWNfSykJSbEv4wkLsLzHi20OWlYCFsqBrfekV1p0umMaXfqaCpcyOiMO1PM_FUG67UUtXiNBmxJqrqXpm1qZlQCibUV2QBSTE8yTLzt_QZAf9avlopDf4pU33V7qcv6wIhJeBTvaL_CoTGv7wA1DS1Yo5LWY7gRHRwz2LKDyUWhXFlXhHrSQGzvQoU5qErLI_kP7EHITK6iz14oa0agXeAT0dr_WbDs5Ap1TmZ",
                 "summary": [],
                 "type": "reasoning"
               },
               {
                 "content": [
                   {
-                    "text": "Running the requested shell command once, then I’ll return only its result.",
+                    "text": "I’m running the requested shell command exactly once and will return the command’s final output verbatim.",
                     "type": "output_text"
                   }
                 ],
@@ -551,14 +551,14 @@
                 "type": "message"
               },
               {
-                "arguments": "{\"cmd\":\"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\",\"workdir\":\"/workspace/codex-shared-harness-session\",\"yield_time_ms\":1000,\"max_output_tokens\":200}",
-                "call_id": "call_kqqS8c4pdfn5xCoAr2eklvpE",
+                "arguments": "{\"cmd\":\"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\",\"workdir\":\"/workspace/codex-shared-harness-session\",\"login\":true,\"tty\":true,\"yield_time_ms\":1000,\"max_output_tokens\":200}",
+                "call_id": "call_CUwk90QQANAb5i2FdJTK77GC",
                 "name": "exec_command",
                 "type": "function_call"
               },
               {
-                "call_id": "call_kqqS8c4pdfn5xCoAr2eklvpE",
-                "output": "Chunk ID: 63eabb\nWall time: 1.0012 seconds\nProcess running with session ID 80743\nOriginal token count: 0\nOutput:\n",
+                "call_id": "call_CUwk90QQANAb5i2FdJTK77GC",
+                "output": "Chunk ID: 22bcb4\nWall time: 1.0010 seconds\nProcess running with session ID 61718\nOriginal token count: 0\nOutput:\n",
                 "type": "function_call_output"
               }
             ],
@@ -967,19 +967,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "ai-sdk-harness-v1-latest.cassette.blobs/57a23d9e8d0958da1239f982144e7ba54f15e2193111c22769f4d43964460da1.bin",
-          "sha256": "57a23d9e8d0958da1239f982144e7ba54f15e2193111c22769f4d43964460da1"
+          "path": "ai-sdk-harness-v1-latest.cassette.blobs/af78bcf5ad0f0931c7eba878ee8a65ec5f691cbf0737578a45d776c3ac2a0703.bin",
+          "sha256": "af78bcf5ad0f0931c7eba878ee8a65ec5f691cbf0737578a45d776c3ac2a0703"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1b95ada9ce990bb-VIE",
+          "cf-ray": "a35202dd8a52d6cf-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Wed, 15 Jul 2026 14:11:11 GMT",
+          "date": "Thu, 03 Sep 2026 04:29:04 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "246",
+          "openai-processing-ms": "1432",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -990,10 +990,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "180000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "179992083",
+          "x-ratelimit-remaining-tokens": "179992068",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "2ms",
-          "x-request-id": "req_01b8c50d62be4f77b0af47275f884d71"
+          "x-request-id": "req_c6b1935f124f41cd8e7027efbb6ce7b7"
         },
         "status": 200,
         "statusText": "OK"
@@ -1001,15 +1001,15 @@
     },
     {
       "callIndex": 2,
-      "id": "12050dbbfe2d6073",
+      "id": "5d2312f425df9f2f",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-15T14:11:16.282Z",
+      "recordedAt": "2026-09-03T04:29:07.911Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "7db76234-3028-4b39-91de-7bdde2bd9ba3"
+              "x-codex-installation-id": "64c2d70a-6559-40f6-8364-6fdb7e466be3"
             },
             "include": ["reasoning.encrypted_content"],
             "input": [
@@ -1030,7 +1030,7 @@
               {
                 "content": [
                   {
-                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-07-15</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-09-03</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -1048,14 +1048,14 @@
                 "type": "message"
               },
               {
-                "encrypted_content": "gAAAAABqV5T9Q5C5zC0Vr0YEkavyMn1RkIRmN907rJqLcuCVKjdiFs0AFUcANQvz0WmYY-75svkruAwrTjMUv1CvGqBKd86Ll56dNSQD6ZXaEoSQcDqGDJgl_sB1p0bYWsVGyt6Xt452fkKZqtioiqnB4sEnS_Atw2PqAQ0vyoT-7463wAU86FrHFDr0p4EL_i0fw39uV6TOlTIyKMskLNoEM5Aj_mi8jqFEI7TFDmAo_3I2Oo46wLJp1EzEJgXmkQQEmi5Br105hXumJJCtRmweQ-zC6pw-7AT31AUYb58og75QKXhYYwzqStm6IpMZ-aqshN8dR6HvAybHJ6DyunYldowRW1EamxmCECmATleT4vbrZiyYEBDmyY3SeuV4MNR-niEjnXsM90yHlhl3r0FWROgPfRpmmT_BNPtj7cyfpR8adt_TJ3PbmWf-C3TQlYmcY9GD7_k7KycD_RBVPwqWMOs4ppbmG1WfK6JDxN-0pwnDPkholMabD2S67EUbI-4oS80hynonxM4hu29ZCc6l-n3oC8H4XhQ_sobndNbhuCn6ty-060jr4efaiBGPQ5HsLVwBKSyEI1q3JOwdlTELnwF5ipAKXdtkZpW8qNVD0PK90t1H-DMYqKY-rIt1yc3jB0-Aytq48irwz9yosKVWid7ZgdJZ8khqcBt-1z5F1m_XFEHGmTApHHD9dsl2z22YHoQ28FbBmppAxBuEefX3rw2xt2fb15vqLqPODcMXZBhHUI2J9amCBpwWc7wp_BiKcxUW9u2g2wE7KhLuh55-iHqvNo3GHAR3ycAh8Ff-LX9XLtKeSjyOfJOxjAlJV_yLL-a-g08NQRNSSvUb7ip0_tK8Mt3HSbqRVK9dSvG_TPfVsxKGVZyhip3x1F6UzPddBJuM0cnciMoshgCTuDjKnc7E1h9gzG74qZ2KPdiTFry7TDJ6z9ZCAx90zbclmci7gVldIX102Kp-KvpM7tk5lNi1PiWvR6O4QBa-Ok-tcSdnhO-YN9Nafrzzzxf6RVttDRCxrveNJKdlD93fGjRamVMguScNlaTQpTq68BC-BhHP2C0aydp0uF22uex7hhoETzl088EU",
+                "encrypted_content": "gAAAAABqmPeMMzH2tEfzzhWc_T4JPcSUTVGWONrgmiA88v64yAIwZdvxRN0yAVoLBsuwyxi8v674gLf5pgvglSqaYup4mhoyWTS_jzni0pEhxVzbRDmJXU_TNjpjfkPMFRiW_psP7Vgv9nYoonBdHEkvUcMznQ4z61e45NsfBWo0rerWGHM38Tq3LW3CUNkvMZoSn8C8qxJ3VUadjDWI1hKIJby-Fd330LFuMhAacvX8WFR-rUFBrJYVMHtfHZEXfcq8ogE4TsGr10g-ETwytY4alGpWZ0QYEhnd0PRql6TtKREbyCf_jTFKR8lreHPexf_FEXTBJP0P3yEKT02Ht8z9FL9fwxiLAds2sL2s85FwkFNOjlQcZfa9P5ccY97Z8wwOt8wiuxsCyDWfKGlXpRfnl2he1GIw_bYCnsvrPqkhTpU0Ult5T_GRv2cfjoMH0KABuhGuGRYeoL6DRGX6wi5HiYaWpb7St1CkYfb3bQbp0O_B11icJHSadQvtRMPXZxdDmMUW3_ooNmpi7tQ_ELp5GCNgX2WXXzVfyRjgsjJ7d7311H51SGCns6ulSzsq5ikHu7hE6SORTnY52aXJsaGJdnFcsus2y8DpsMhLOwhR-nJz_cPDltdZvWF6vyOxMmSObM2s2JEhO-tfjIUPFgPUjeia3JMXh8EJ7UnPr4Pi96LV6g8m83lvlT5z6NU2vJ2Tz5wILjS41VTR8sUUiEFvlgVrrhyPeOD3vedg8jfbKk9FWrhI0t7jxzzgOih0eInytZZTlyec_bJ4tYJJHGrgZ33aqhQ-GYfs8Jvagvq8gZxdpctU8s-Q6H17zj8AgqM3-hkLXXcQvVumcKuzb2hM_eb_Gadfi_Mqdm4T144tr3jDgGlS5RB8rmDJ41dsVhobagNNPI9VuafMlDaCJsT0wKcgXRAsWWgSkYnGtw5whMgKRz2p5UYeu_EgFfVdBUS0t63RRyVUYQ-86CWyfdQDYGb-IosggHI-vQ5N4WBKUx0vrEc09to_ftuMLOhO-pMuwu9-ShnfWvG6Ace5c12APqIXHNiD2SvB-GzCpyPLNCQw6_KyDSaFz-UHHdXPk6vrgiyD9TPcTk38LOPqT035VS18dVl9aETt9PqWNfSykJSbEv4wkLsLzHi20OWlYCFsqBrfekV1p0umMaXfqaCpcyOiMO1PM_FUG67UUtXiNBmxJqrqXpm1qZlQCibUV2QBSTE8yTLzt_QZAf9avlopDf4pU33V7qcv6wIhJeBTvaL_CoTGv7wA1DS1Yo5LWY7gRHRwz2LKDyUWhXFlXhHrSQGzvQoU5qErLI_kP7EHITK6iz14oa0agXeAT0dr_WbDs5Ap1TmZ",
                 "summary": [],
                 "type": "reasoning"
               },
               {
                 "content": [
                   {
-                    "text": "Running the requested shell command once, then I’ll return only its result.",
+                    "text": "I’m running the requested shell command exactly once and will return the command’s final output verbatim.",
                     "type": "output_text"
                   }
                 ],
@@ -1064,25 +1064,25 @@
                 "type": "message"
               },
               {
-                "arguments": "{\"cmd\":\"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\",\"workdir\":\"/workspace/codex-shared-harness-session\",\"yield_time_ms\":1000,\"max_output_tokens\":200}",
-                "call_id": "call_kqqS8c4pdfn5xCoAr2eklvpE",
+                "arguments": "{\"cmd\":\"touch /workspace/generate-started; sleep 5; printf GENERATE_OK\",\"workdir\":\"/workspace/codex-shared-harness-session\",\"login\":true,\"tty\":true,\"yield_time_ms\":1000,\"max_output_tokens\":200}",
+                "call_id": "call_CUwk90QQANAb5i2FdJTK77GC",
                 "name": "exec_command",
                 "type": "function_call"
               },
               {
-                "call_id": "call_kqqS8c4pdfn5xCoAr2eklvpE",
-                "output": "Chunk ID: 63eabb\nWall time: 1.0012 seconds\nProcess running with session ID 80743\nOriginal token count: 0\nOutput:\n",
+                "call_id": "call_CUwk90QQANAb5i2FdJTK77GC",
+                "output": "Chunk ID: 22bcb4\nWall time: 1.0010 seconds\nProcess running with session ID 61718\nOriginal token count: 0\nOutput:\n",
                 "type": "function_call_output"
               },
               {
-                "encrypted_content": "gAAAAABqV5T_e9-H0cz7ngFYZOBf1hJUzT5ZiDrsr5O1vkl02c1gzwAOaOowMDQoWGxsO6ynftSZMhlTLmI3whiQAjA5w8CcmogiiZXFk9JSJctx8ew6hgDHeoOohINZ_RQJ4BOhwL2_PETEU6N1-3pIoP7729kNqX7zs1HKIl653pGNPqwZXnEjmEYqby4PZk1VS8IL8s6ecw-SEo-kVdeWElwrMC9CWfaZ8ZHgsAeLHpYk8hTj1yIsvnKRiui22PI1ydeDpm3bwV_Xa51g968RNyAkqfV3xmVJcGQf5_0gAT3Hw82b_5XdMyx8zeTxx0_AlqFyfHUzxbMEEkyWgZ3dm3aDxxJ7j6L-AIC2Hhqq1QLC_36Rc3I95y2-mHK8NO4BPzznnXyxkyg5XqHDjPQIygjvuZCBZmIh74IND804WmSDFXAluAdiuEgAm8yzo_e37CjW3cq_60thB_1ikncEziVZtVt2V243HD7c9md9b8FkYobEkkCgqwgPVc2cSKIP5cARlXYFAioU3izFT5CCMtmLIc673On8kKdMtiEe4xl-Gzyq3yLWhhgJ6hZcqu863uqsUe1618xvWQbpPqlCZ1p2fOJbRn2cTzONuXQqq99rQK35vz7oEYn7UaemxCy-ioMIea4a3lE94ZKR8s7FN9envQG-Vtl8WVBLtZEtWF2rDnFyJpG-8quoel-hjPjsdLqm72EEJbAtthSP9cxn3OpfdmuUEyJyL4f9Ah_eyqlMoBmnvpe9_rvntvNLWyI3Xidgm9n_YezCjPY_IvzMAgCkcR36sOP8vZYdFGpnXVpLsma-3tcLXbhbkVfMWdZvO5INr5DoaQ5yH2oeHwITKwlqWyBIhLqxGJh35GrRxRnxxck8Vjwj53hnbb4R9sr-M5JGVQthgWx0qoCzsTN6J-KaG6o91M8kf60iJxTB7irONr6nC3JS540INWbRr1EGpsVbk7PsVN6Zqx0tAj3lQr1L_HAOkg==",
+                "encrypted_content": "gAAAAABqmPeQLxXSXa2OID2i6xXfTG0j49YjeArFHpJSQRl88fxUyYTuQ38e318ynUFH-CKgPZ9PWnRuV5lfkNeVJGPWePBjtPFZZXgXxf-7dGjhbW5wRlduGm7VQhzJWSTilHS9AhVGuAO4_HZE4N6cWMBNwFniRrNijnnYYTu1Ud9hEiMhmZGX2ELClaJ_atfIaAAjUtaCFr7uGGjcDskDd_eHw0BgR1-gWUG9KMH-JfuRs8Fp_v6-zJ8h9dVqB1DbJk5myQZQCJTzDRYxvIAv7XtX3qYVaGllzsP7rEipXpF26pYQW8SvcjmvDPxV-OTWwRiI92pgjiJSvfJgB_ZxoiJRyfOwzbnksSq_HDI-ji6FpN3tZ7kwh9Mt9En_WmeIxNuDSbo-faKZD3PQv7-dt5KRt55vIr7dRZ4FTdaZAar52lrK-1aYnhP05vAXtW9jtX5FiL3b48naMtgwT1KQnwqLMUWUsH0jlGOpruAto_qjzLoQGq81xqyI9Ih8tYMzm0BdsoY8duRnAjDfVqFJyAvAQu99cMIkjbEu010hf3Xv9HB_9H0Qjjlnu9RmftNQRqaqOqmFLz2J9h-dp3I9xdmsSeiY-jaPQi_H5HlScU_xLrDynTR-nlUmwUw4sMCjBppsH9jQqwoMMQhEMpcXGfch0zREjfEI-awOsuQeJaJBvRjz8hx7uzAYKRSc5PO1HuO4EnYXkeaKypjJrhCEoixr7kTEDwK2FSwcnUghBY9VfS1GNbfTfTfCaq8-K9CKWl-Zq9HtQElflu9zya98T2XJ1d1dX2cpJZBeFV15-_N59f1DNHK5f7PkwDP8m7MCmhNIvapD4_DRUbethRxFo8kIlwLpTVHN496X1TKsbBNoWSrFkK2xrdZ6xIT4LKweH1YaL1xxku0DNjQ4cPy9Mh1K2Rx3ruhyaQ_1lslbJcD7KqMe3AJPj2YHWCFDLlfZeqmRz4_e7NusZn_s6JoN5WBFFE_lcxXCXg_yH7l3nRsy4hjq_WU0HWZ7VrBKGo9bPlz3k0vhx98oe5uPZ5QE-mGNxEBUAACDXML10kVXlY8PLqQpodcgkULBO3lnck-Z90XuG02R-vK2dqaKcKMh08Pg3W8a-cnmR5vNuUZhXAMP3BztVeALSn-hew8fbUpeppWyKkkzBxtoISnZfDfM2ATLaSj56Up8iGnALlki_oF8x4nUe_8usdwOWwrQgKSTE1pZp-l0",
                 "summary": [],
                 "type": "reasoning"
               },
               {
                 "content": [
                   {
-                    "text": "The command is still running; I’m waiting for it to complete so I can return the exact output.",
+                    "text": "The command is still running; I’m waiting for it to finish and then I’ll return only its output.",
                     "type": "output_text"
                   }
                 ],
@@ -1091,14 +1091,14 @@
                 "type": "message"
               },
               {
-                "arguments": "{\"session_id\":80743,\"chars\":\"\",\"yield_time_ms\":6000,\"max_output_tokens\":200}",
-                "call_id": "call_jeHiTYakUCTC5aMm9I4CRB1E",
+                "arguments": "{\"session_id\":61718,\"chars\":\"\",\"yield_time_ms\":6000,\"max_output_tokens\":200}",
+                "call_id": "call_hMy3XVZGtmHRyJRVAbPZD4Xl",
                 "name": "write_stdin",
                 "type": "function_call"
               },
               {
-                "call_id": "call_jeHiTYakUCTC5aMm9I4CRB1E",
-                "output": "Chunk ID: c51f2a\nWall time: 2.6329 seconds\nProcess exited with code 0\nOriginal token count: 3\nOutput:\nGENERATE_OK",
+                "call_id": "call_hMy3XVZGtmHRyJRVAbPZD4Xl",
+                "output": "Chunk ID: 95413b\nWall time: 1.6226 seconds\nProcess exited with code 0\nOriginal token count: 3\nOutput:\nGENERATE_OK",
                 "type": "function_call_output"
               }
             ],
@@ -1507,19 +1507,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "ai-sdk-harness-v1-latest.cassette.blobs/c1027da2a33e8a593c25b7797f6a9d6def033c5a42287ad05d76d3ade125641c.bin",
-          "sha256": "c1027da2a33e8a593c25b7797f6a9d6def033c5a42287ad05d76d3ade125641c"
+          "path": "ai-sdk-harness-v1-latest.cassette.blobs/8df3833c5984dcdb82e704449bf189ec1a54ec9af67fce4909bce778f4140585.bin",
+          "sha256": "8df3833c5984dcdb82e704449bf189ec1a54ec9af67fce4909bce778f4140585"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1b95af2cc3290bb-VIE",
+          "cf-ray": "a35202f5afebd6cf-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Wed, 15 Jul 2026 14:11:16 GMT",
+          "date": "Thu, 03 Sep 2026 04:29:07 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "285",
+          "openai-processing-ms": "620",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -1530,10 +1530,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "180000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "179991957",
+          "x-ratelimit-remaining-tokens": "179991945",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "2ms",
-          "x-request-id": "req_5499bde84c4c428b8a6b18fa775bf388"
+          "x-request-id": "req_e06a118f4fc34019a67f71269b439f89"
         },
         "status": 200,
         "statusText": "OK"
@@ -1541,15 +1541,15 @@
     },
     {
       "callIndex": 3,
-      "id": "6edb3c14e8c1225b",
+      "id": "83cbbf6da482c905",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-15T14:11:18.997Z",
+      "recordedAt": "2026-09-03T04:29:09.887Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "7db76234-3028-4b39-91de-7bdde2bd9ba3"
+              "x-codex-installation-id": "64c2d70a-6559-40f6-8364-6fdb7e466be3"
             },
             "include": ["reasoning.encrypted_content"],
             "input": [
@@ -1570,7 +1570,7 @@
               {
                 "content": [
                   {
-                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-07-15</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-09-03</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -1993,19 +1993,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "ai-sdk-harness-v1-latest.cassette.blobs/2af2016a3bd9ff36aea48f27a59e6ffefa7398a356fb3d0fcf8474c3c5bdaf7e.bin",
-          "sha256": "2af2016a3bd9ff36aea48f27a59e6ffefa7398a356fb3d0fcf8474c3c5bdaf7e"
+          "path": "ai-sdk-harness-v1-latest.cassette.blobs/cb0289d238cdc479ada716927cab728bb46876704e925eebbb5e1e344057e033.bin",
+          "sha256": "cb0289d238cdc479ada716927cab728bb46876704e925eebbb5e1e344057e033"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1b95b02fb8890bb-VIE",
+          "cf-ray": "a35202ffa8d7d6cf-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Wed, 15 Jul 2026 14:11:18 GMT",
+          "date": "Thu, 03 Sep 2026 04:29:08 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "281",
+          "openai-processing-ms": "503",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2019,7 +2019,7 @@
           "x-ratelimit-remaining-tokens": "179992239",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "2ms",
-          "x-request-id": "req_0d0a9943dad24da2add58ceaf6ee629f"
+          "x-request-id": "req_4b2c7293b91d467d853522e279d70c04"
         },
         "status": 200,
         "statusText": "OK"
@@ -2027,15 +2027,15 @@
     },
     {
       "callIndex": 4,
-      "id": "01333e2dfe6a936a",
+      "id": "417e64addcf59da7",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-15T14:11:21.226Z",
+      "recordedAt": "2026-09-03T04:29:12.465Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "7db76234-3028-4b39-91de-7bdde2bd9ba3"
+              "x-codex-installation-id": "64c2d70a-6559-40f6-8364-6fdb7e466be3"
             },
             "include": ["reasoning.encrypted_content"],
             "input": [
@@ -2056,7 +2056,7 @@
               {
                 "content": [
                   {
-                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-07-15</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-09-03</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -2074,14 +2074,14 @@
                 "type": "message"
               },
               {
-                "encrypted_content": "gAAAAABqV5UGaeaQ7tfV1nMalmzyLpd4jsvci0mI9SSKoV_LsivDd-cxdQTcy3TcbV6F48-ljGBhHkRNo8do4JoucyAfW-XRL8AjlFCgjPW1m-5KsGjhkTh6Zn-wou1TjHM1nDbV-Jpi3sBTQUMEEPXCuhTz079-8URf9WVLK6gY_rE8k2no1jhofFzmWxw0kj-O5a1E3QbpUHskBCb7-5B07WXsciwD7nJl__RWiDSYnLkPajM5v0i4Jps33MeSf2LRNAqvtQYlWxBJVVxM85IY8ufdMZaTTqNvqtHWGlXURuga4YNcbuSzp1OZ6U3a7ZNWSbLh0NgMC7bj9Ly5ZVhkNN3FKai3f3zAEtuXXUEvWso4SS6jmv8xoNvKYbkvnLIJCkDZHuZkRvbEowduVhQYv4swshKgNhKaTn4Je9b3Ux0jM-OrGnHZgh8wpOemfQlnfaO-XYNXnjh1yjXa6PsA6jHN93XPUFih3pNup-uUqqZUeDYjNH0u4PfkFdLDexygpPPzPrDxKA0mXmpxLADh07dGtRnGFbQbIz6vXES3ZYoPVTXdzDoqyZGp63p2Z0s4amPaiLDJfnXcFIiiYSmdkzhuUKYkaDpozznYxKSXatJqZt2oOaCvJiQrD3Vq7SA7CeDoMrDrdyeIEOBbb0jxkf9tQzISrqr2VUWt1qG-sz6uPJYLpznR9pDrAz2PIS7-Q6mtMAVIFbZpKgkM1eW_f_uk9iTHh4GKhLIsgq7e4Gkrz4G1lAiOY0M9wsT7E-pm3lcYMJaKBChQMqY0sLXtp2V6LvAqY_GDbSuxdeIzwcz4NHj6Sr5b5KDedaGRNHJhEiefU83WzI7PrOjhDLAuCl2ENXFuOIfR3D0A5q7tbkxqOEnASJ_aBdTNz-kVP3yC94SY9jdyDsImLOvSRboJgbSme8iE1rllDdGqHmwUnJdUFySmIWp9HxiXEhz-IUfpnoi7PgCTiVWPUtAEl9cn1eLIAfYKZGRFR7UTnR_6_-RNU3_K_t3olRebzYalHXGYIRSmTNpO88AO0Kdv518BLb1Wv7BTQBNMZYwXDxfSGI8eT-wIo2rZpB5REVolb-xi2CxdBqJf",
+                "encrypted_content": "gAAAAABqmPeVZUOMb9iB_VxR-RelaJTd9hMItvC3E9D_fCsRyJZxYTmtzxv5cGsBSpBvPox7pLvtzWheQWG3oj9Zi5GisA1Pm540Jgn4RL90sHYdBVdXHtbrmKBuEQEViML7MdHsKIemIMnKGfWSl9iIjLriToNo0EbOeWQsrOLnu-8kuSPOOWNMr22JpCEMHz0QxvAofIt7BWVGzbtVGZsLI0Y4ygnIieM4BAQ_cqLDwWm3aozS769rpyOX7-TMV8jMtS-MKJSmPjc0eqXXsSe16nwDZZAGjba5xTrTuUbAdnutRD5lcbZq-wqISw8fTIPc7A3dhvRGEMAXM6kFx0NU6_uk7RkE--84BYGt9kcwO222JT6UwrVlxNcvSEwA_8JnR7Z_dJAYEJI9zRNCV9kVzzP7Gerz8lNq98XvMvuGyks-HjcdmUBDSmlQT1Jwkq8LL5ZdfvpOYSDMGBTZSTjkIhVyIQeeXLy4VpUUgT6Uy9mjR0kvCFojxdEyHWFziUUN99BevjouP9qtTx1VcMRsb0vbug7dT7fF5wQVTGJz_NAhBMP9fnhTiXy7JH2S7ykTByqOA8uuquS3bydjsRC0ILEdEKKnfKB92hQQC-Nwk_KhtxOdAptSTX6sOgzlAqQijYG__W3qerxmw0QsNCOGTqSqaozgsjWpl_qHBYaRE8uF0GvKN-pnAYYKW3KULaJCc-GX1YLEkXK6eNWTyi3q9mHPylPpevLvfYIVluSy4f3jD1meJq5mguX0XRR2aoTgSzeaejnJ1YJIhN2p2Y1e-knbyF-ZRwV3zqU8KF4hdR-cio7dBlZHmN6Tyk_Decw5Moeqw2y7n222VwLttE2NtTSYqIguprcj_jccO5Ei2IMx45HyN-b3WoLNj2DzRnGTweitruo46ope6AERD_QgBpIO95qMFg9-puQ7fPKKyzJ8pmNHA92u5THiGN7zON-WidG7_qjfxfS5ZsaX4MBQTjgKLnirnP1Hh05AAAA7qiZkamP8sF0hDlh1CZSJg82Z28Hlq4tyQnrYmRIJgfVS9gQTetpdkaMgxb_nHqeQsd5FzhS5RrAfgDVkPXCyoXxKdK57dmzUjWPrWVXzEVEQ1ltGHoxpBEBGeAvLUqULVv_QC5Nj98SsU3WKAAXogikJwwo7R6aMhHrtu_Ovb7ryZ7UQGYsdryX8rQXLyWNntiESGClL__bl5k6NeXqWJFnSRCrLaNBlQJi3CQCZEcnsuXm1bTJYEEu8mVynzU1cNxKrpjUcNF7_KYf5HmWjUKGaUbkzprYE",
                 "summary": [],
                 "type": "reasoning"
               },
               {
                 "content": [
                   {
-                    "text": "I’m running the requested bash command once and will return only its final output.",
+                    "text": "Running the requested bash command exactly once, then I’ll return only the result.",
                     "type": "output_text"
                   }
                 ],
@@ -2090,14 +2090,14 @@
                 "type": "message"
               },
               {
-                "arguments": "{\"cmd\":\"touch /workspace/stream-started; sleep 5; printf STREAM_OK\",\"login\":true,\"tty\":false,\"yield_time_ms\":1000,\"max_output_tokens\":100}",
-                "call_id": "call_tMooZiG91pUFlwDaQCkjuk5t",
+                "arguments": "{\"cmd\":\"touch /workspace/stream-started; sleep 5; printf STREAM_OK\",\"login\":true,\"tty\":false,\"workdir\":\"/workspace/codex-shared-harness-session\",\"yield_time_ms\":1000,\"max_output_tokens\":2000}",
+                "call_id": "call_IWQYgJiUs5BCAftrUZPFP49A",
                 "name": "exec_command",
                 "type": "function_call"
               },
               {
-                "call_id": "call_tMooZiG91pUFlwDaQCkjuk5t",
-                "output": "Chunk ID: 572d28\nWall time: 1.0045 seconds\nProcess running with session ID 91269\nOriginal token count: 0\nOutput:\n",
+                "call_id": "call_IWQYgJiUs5BCAftrUZPFP49A",
+                "output": "Chunk ID: 9c4bf3\nWall time: 1.0013 seconds\nProcess running with session ID 79166\nOriginal token count: 0\nOutput:\n",
                 "type": "function_call_output"
               }
             ],
@@ -2506,19 +2506,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "ai-sdk-harness-v1-latest.cassette.blobs/85414e2813f6b0986a563776d10cf107220ac2ea7e5d4ec746eb1d9ecef33e14.bin",
-          "sha256": "85414e2813f6b0986a563776d10cf107220ac2ea7e5d4ec746eb1d9ecef33e14"
+          "path": "ai-sdk-harness-v1-latest.cassette.blobs/6f41ae8e978bf6341b857d5034505d90ce922cfc76bcb5dae9eba74ea9606dba.bin",
+          "sha256": "6f41ae8e978bf6341b857d5034505d90ce922cfc76bcb5dae9eba74ea9606dba"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1b95b13fdd390bb-VIE",
+          "cf-ray": "a35203100afad6cf-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Wed, 15 Jul 2026 14:11:20 GMT",
+          "date": "Thu, 03 Sep 2026 04:29:11 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "278",
+          "openai-processing-ms": "245",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -2529,10 +2529,10 @@
           "x-ratelimit-limit-requests": "30000",
           "x-ratelimit-limit-tokens": "180000000",
           "x-ratelimit-remaining-requests": "29999",
-          "x-ratelimit-remaining-tokens": "179992089",
+          "x-ratelimit-remaining-tokens": "179992080",
           "x-ratelimit-reset-requests": "2ms",
           "x-ratelimit-reset-tokens": "2ms",
-          "x-request-id": "req_7598475b4a844c59922f0996c2ae84fb"
+          "x-request-id": "req_a738498dedde44208352d80bb5e61286"
         },
         "status": 200,
         "statusText": "OK"
@@ -2540,15 +2540,15 @@
     },
     {
       "callIndex": 5,
-      "id": "053aecea894ba541",
+      "id": "341675a0a1a88c63",
       "matchKey": "POST api.openai.com/v1/responses",
-      "recordedAt": "2026-07-15T14:11:26.433Z",
+      "recordedAt": "2026-09-03T04:29:15.510Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
             "client_metadata": {
-              "x-codex-installation-id": "7db76234-3028-4b39-91de-7bdde2bd9ba3"
+              "x-codex-installation-id": "64c2d70a-6559-40f6-8364-6fdb7e466be3"
             },
             "include": ["reasoning.encrypted_content"],
             "input": [
@@ -2569,7 +2569,7 @@
               {
                 "content": [
                   {
-                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-07-15</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
+                    "text": "<environment_context>\n  <cwd>/workspace/codex-shared-harness-session</cwd>\n  <shell>bash</shell>\n  <current_date>2026-09-03</current_date>\n  <timezone>Etc/UTC</timezone>\n</environment_context>",
                     "type": "input_text"
                   }
                 ],
@@ -2587,14 +2587,14 @@
                 "type": "message"
               },
               {
-                "encrypted_content": "gAAAAABqV5UGaeaQ7tfV1nMalmzyLpd4jsvci0mI9SSKoV_LsivDd-cxdQTcy3TcbV6F48-ljGBhHkRNo8do4JoucyAfW-XRL8AjlFCgjPW1m-5KsGjhkTh6Zn-wou1TjHM1nDbV-Jpi3sBTQUMEEPXCuhTz079-8URf9WVLK6gY_rE8k2no1jhofFzmWxw0kj-O5a1E3QbpUHskBCb7-5B07WXsciwD7nJl__RWiDSYnLkPajM5v0i4Jps33MeSf2LRNAqvtQYlWxBJVVxM85IY8ufdMZaTTqNvqtHWGlXURuga4YNcbuSzp1OZ6U3a7ZNWSbLh0NgMC7bj9Ly5ZVhkNN3FKai3f3zAEtuXXUEvWso4SS6jmv8xoNvKYbkvnLIJCkDZHuZkRvbEowduVhQYv4swshKgNhKaTn4Je9b3Ux0jM-OrGnHZgh8wpOemfQlnfaO-XYNXnjh1yjXa6PsA6jHN93XPUFih3pNup-uUqqZUeDYjNH0u4PfkFdLDexygpPPzPrDxKA0mXmpxLADh07dGtRnGFbQbIz6vXES3ZYoPVTXdzDoqyZGp63p2Z0s4amPaiLDJfnXcFIiiYSmdkzhuUKYkaDpozznYxKSXatJqZt2oOaCvJiQrD3Vq7SA7CeDoMrDrdyeIEOBbb0jxkf9tQzISrqr2VUWt1qG-sz6uPJYLpznR9pDrAz2PIS7-Q6mtMAVIFbZpKgkM1eW_f_uk9iTHh4GKhLIsgq7e4Gkrz4G1lAiOY0M9wsT7E-pm3lcYMJaKBChQMqY0sLXtp2V6LvAqY_GDbSuxdeIzwcz4NHj6Sr5b5KDedaGRNHJhEiefU83WzI7PrOjhDLAuCl2ENXFuOIfR3D0A5q7tbkxqOEnASJ_aBdTNz-kVP3yC94SY9jdyDsImLOvSRboJgbSme8iE1rllDdGqHmwUnJdUFySmIWp9HxiXEhz-IUfpnoi7PgCTiVWPUtAEl9cn1eLIAfYKZGRFR7UTnR_6_-RNU3_K_t3olRebzYalHXGYIRSmTNpO88AO0Kdv518BLb1Wv7BTQBNMZYwXDxfSGI8eT-wIo2rZpB5REVolb-xi2CxdBqJf",
+                "encrypted_content": "gAAAAABqmPeVZUOMb9iB_VxR-RelaJTd9hMItvC3E9D_fCsRyJZxYTmtzxv5cGsBSpBvPox7pLvtzWheQWG3oj9Zi5GisA1Pm540Jgn4RL90sHYdBVdXHtbrmKBuEQEViML7MdHsKIemIMnKGfWSl9iIjLriToNo0EbOeWQsrOLnu-8kuSPOOWNMr22JpCEMHz0QxvAofIt7BWVGzbtVGZsLI0Y4ygnIieM4BAQ_cqLDwWm3aozS769rpyOX7-TMV8jMtS-MKJSmPjc0eqXXsSe16nwDZZAGjba5xTrTuUbAdnutRD5lcbZq-wqISw8fTIPc7A3dhvRGEMAXM6kFx0NU6_uk7RkE--84BYGt9kcwO222JT6UwrVlxNcvSEwA_8JnR7Z_dJAYEJI9zRNCV9kVzzP7Gerz8lNq98XvMvuGyks-HjcdmUBDSmlQT1Jwkq8LL5ZdfvpOYSDMGBTZSTjkIhVyIQeeXLy4VpUUgT6Uy9mjR0kvCFojxdEyHWFziUUN99BevjouP9qtTx1VcMRsb0vbug7dT7fF5wQVTGJz_NAhBMP9fnhTiXy7JH2S7ykTByqOA8uuquS3bydjsRC0ILEdEKKnfKB92hQQC-Nwk_KhtxOdAptSTX6sOgzlAqQijYG__W3qerxmw0QsNCOGTqSqaozgsjWpl_qHBYaRE8uF0GvKN-pnAYYKW3KULaJCc-GX1YLEkXK6eNWTyi3q9mHPylPpevLvfYIVluSy4f3jD1meJq5mguX0XRR2aoTgSzeaejnJ1YJIhN2p2Y1e-knbyF-ZRwV3zqU8KF4hdR-cio7dBlZHmN6Tyk_Decw5Moeqw2y7n222VwLttE2NtTSYqIguprcj_jccO5Ei2IMx45HyN-b3WoLNj2DzRnGTweitruo46ope6AERD_QgBpIO95qMFg9-puQ7fPKKyzJ8pmNHA92u5THiGN7zON-WidG7_qjfxfS5ZsaX4MBQTjgKLnirnP1Hh05AAAA7qiZkamP8sF0hDlh1CZSJg82Z28Hlq4tyQnrYmRIJgfVS9gQTetpdkaMgxb_nHqeQsd5FzhS5RrAfgDVkPXCyoXxKdK57dmzUjWPrWVXzEVEQ1ltGHoxpBEBGeAvLUqULVv_QC5Nj98SsU3WKAAXogikJwwo7R6aMhHrtu_Ovb7ryZ7UQGYsdryX8rQXLyWNntiESGClL__bl5k6NeXqWJFnSRCrLaNBlQJi3CQCZEcnsuXm1bTJYEEu8mVynzU1cNxKrpjUcNF7_KYf5HmWjUKGaUbkzprYE",
                 "summary": [],
                 "type": "reasoning"
               },
               {
                 "content": [
                   {
-                    "text": "I’m running the requested bash command once and will return only its final output.",
+                    "text": "Running the requested bash command exactly once, then I’ll return only the result.",
                     "type": "output_text"
                   }
                 ],
@@ -2603,30 +2603,41 @@
                 "type": "message"
               },
               {
-                "arguments": "{\"cmd\":\"touch /workspace/stream-started; sleep 5; printf STREAM_OK\",\"login\":true,\"tty\":false,\"yield_time_ms\":1000,\"max_output_tokens\":100}",
-                "call_id": "call_tMooZiG91pUFlwDaQCkjuk5t",
+                "arguments": "{\"cmd\":\"touch /workspace/stream-started; sleep 5; printf STREAM_OK\",\"login\":true,\"tty\":false,\"workdir\":\"/workspace/codex-shared-harness-session\",\"yield_time_ms\":1000,\"max_output_tokens\":2000}",
+                "call_id": "call_IWQYgJiUs5BCAftrUZPFP49A",
                 "name": "exec_command",
                 "type": "function_call"
               },
               {
-                "call_id": "call_tMooZiG91pUFlwDaQCkjuk5t",
-                "output": "Chunk ID: 572d28\nWall time: 1.0045 seconds\nProcess running with session ID 91269\nOriginal token count: 0\nOutput:\n",
+                "call_id": "call_IWQYgJiUs5BCAftrUZPFP49A",
+                "output": "Chunk ID: 9c4bf3\nWall time: 1.0013 seconds\nProcess running with session ID 79166\nOriginal token count: 0\nOutput:\n",
                 "type": "function_call_output"
               },
               {
-                "encrypted_content": "gAAAAABqV5UIejhsp2V5pTvEmkot6PDSgOGyIGm72PjnYfE4bJosi8P6I2OQzCO5SwNAkjoMm0xeuyOx9m27kVrEENMzcRJ_QH_VRW4Gqsk1AbhRQ4uDLOfM5biA7eL9Ll5Pys22enQiHy08BKFAzDQ8v5858jbimB7faQyDBm07SndgWaA7dzQ3k6yoEEknhrRpHkuiH7AybU1UGP3Lteh_tiIGtW3c2pPncjvV6eQF6LkIfo6r_DDjPjhM9KUsvG6TtTuNEdRAdKyCqJnBAstGnF01JzZsTEJitt3whxET9_XUwGYU8PaPfsvkHHQ_ZyYJ0f9dxcfNouZijN9xYWfzU9-5vcrT7aQYTMDfRt75CCbx4K6nbShoepWNyZN6H5fZZ6t1ND7jijeZJOq8YpEW9spExBkoxheyFxjs9T_wPi9fwLegdmAjnC3dX0iaRcPloc18K0NDh8LW5DS-IJKccubl9uCXAdx-fGXyWddWpZ7ZWGVaViOl4ECxWKV1ETjwk7e5XkCxH8hF2jEEsp1MUZ8ZoIg8A2vfI6zi9EmcB30IGoMLzdRuwS4NX17QpgfN6vJi53J1upVRxjXfCCKoPuKlTbgLcesOZdULsCKNzuah_WEYscobC4vyu9OVg67tQzgJjmMveR9Z0XdD8HGIkk3iZDqSqT2knEdORh8_Ufm3b3Cz-kRDwUqEvHsKLr-Ibk1yz0BktkoV8YFgEAZXcWOae62vCSbsxsRrdgbds7Nwh9ox3hChoYSvt6j4Iw3Ex-zqflmH_GEj9KlKo2k-BQTRdBSBd_yS5W3pFWVv3FliYzdKcFG1aHB27y_qVsUNGNvnBVaFgB9CtIBxE0T0sDycHX9rvKBusvZ3_9wJPk3j08gNgf7GdZX3j7yPWclY5omnHja-m9cIqvuM62D3AflslSDPEYV3-NdjSirRmE1pn2w_hJvQ_L3AIab2mB1t8cq1X-3w",
+                "encrypted_content": "gAAAAABqmPeXVV2IG40LWXgQ6jwnj_TIqS-P8qW3Im4oLv1u-rQy44Aw8jWescSSAyfgb_H5D4duKdqMnJL8vcxum7mQ_VXU3cuGB5bZfnDAkoF2KT2l5fKlAPszHHE-pxCng1wuxpAaozCkTOpQ0ZXUJdcwwN1NM7T1uPrHv2cal2BUs5HhvlDf1LdxUfMgREw5TmPQs1TL0m5l-t6WFfm-aw1ozAxqbJCO7udkru5oZIOPHsaJyBPpePgMV91ZXpt3tfjl5H1p-zuohv7AAfLsnfmEcv0-UjAmuDfx-A93rFK3OOn3_DDXkl1H5nWl8aRW41ANvMbHgaewO6E_HHFoXC-HSGO-Ga4umaJFljXvf8ClC9DFU2otOluLM-XAh6NZ4pbIxmh3I7-8OB9L5mI-8Jbo-pxR7PRaXUcx9hToU73fYI7cs7NsIqqZnQRz5ACq1cp7NUi37YDXYF4TeqC3laX7EhLZ6awDLSDRHah4fTu-UZvzMl9BOkswdCS1kiglirkmGHRqkvrBAg1BydmwnvXwioO8ZTaOnik4FpbBWcTrliwPiHrOlTSBrZoMWd0wHAIn5ombLRc5FmKZ7Qap-T_LO9pQVjapfsc-uQnFD3d6nnZe3wLtrhJvuYDhta2gqy7pgLtD6cJ3opoxaR0UCwYEmyMuolQTLBpFX7v9EoqfFDpVY9yBuynTkuG-fTCxo5f6Qddoka3UUFO_5h-P8_zFFLY96S1cDi8SASLNOLu0wZEIn1sa4-pgBqcMF9q1eVCvXk9nUWBW61QjiGbhGaFy2j8uYZRuAzBKcDPsrl-amwaELRejE0qK_kGLywUL9yuFRN8Y6lWXZMP6ou_nCsXy7il53WDgwcn-h76C6sCxejP7dvOObzcSnpNedvnRobTPzPD5HrAnQFSuONZ6pWStu2faVZPKJKxeillqbQvPeBzwlUJQQ4i-A6v9GPsYKQn0TcyWHK7-BM_yI4rZyk8-5WVkNQNfQNR157iQCdanGUedl96_zBnaYYHMMWJh53oPi4wFq495GcGuRUZjEgoy3cUfGLLtuVuIof9Gu_jVw61eOuP1wiNuezPt12CsWKPc5eIqs6drF345gpmkloyEu23jQzv_NNUN69Ia1ieOBjKuV10aNllAMUwPN5Uvs1j7bcTZI-VOaeNowQ7EIsV4YYHDeGHSpuyBGq2lqnLxi5gzwZLVJJl0upEvda4RDn5-0LbEEJH3n7mmSU1UYR2PrrHf-g==",
                 "summary": [],
                 "type": "reasoning"
               },
               {
-                "arguments": "{\"session_id\":91269,\"chars\":\"\",\"yield_time_ms\":1000,\"max_output_tokens\":100}",
-                "call_id": "call_FOaYcBGm51fuTLhwTk7G4reV",
+                "content": [
+                  {
+                    "text": "The command is still running; I’m waiting for it to finish before replying.",
+                    "type": "output_text"
+                  }
+                ],
+                "phase": "commentary",
+                "role": "assistant",
+                "type": "message"
+              },
+              {
+                "arguments": "{\"session_id\":79166,\"chars\":\"\",\"yield_time_ms\":6000,\"max_output_tokens\":2000}",
+                "call_id": "call_OvzJsJ1Ka8L8SAd6vhTZaNfX",
                 "name": "write_stdin",
                 "type": "function_call"
               },
               {
-                "call_id": "call_FOaYcBGm51fuTLhwTk7G4reV",
-                "output": "Chunk ID: 01630d\nWall time: 2.7935 seconds\nProcess exited with code 0\nOriginal token count: 3\nOutput:\nSTREAM_OK",
+                "call_id": "call_OvzJsJ1Ka8L8SAd6vhTZaNfX",
+                "output": "Chunk ID: d04345\nWall time: 2.4441 seconds\nProcess exited with code 0\nOriginal token count: 3\nOutput:\nSTREAM_OK",
                 "type": "function_call_output"
               }
             ],
@@ -3035,19 +3046,19 @@
         "body": {
           "contentType": "text/event-stream; charset=utf-8",
           "kind": "binary",
-          "path": "ai-sdk-harness-v1-latest.cassette.blobs/807b2c7288ee483e290190c1dcb7b52afea600373ecfef4f0ec55bb15c41fa3f.bin",
-          "sha256": "807b2c7288ee483e290190c1dcb7b52afea600373ecfef4f0ec55bb15c41fa3f"
+          "path": "ai-sdk-harness-v1-latest.cassette.blobs/36b398373d99e1448bb58e15f005d16f9916f4d626584d3cddae86372bb201e4.bin",
+          "sha256": "36b398373d99e1448bb58e15f005d16f9916f4d626584d3cddae86372bb201e4"
         },
         "headers": {
           "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
           "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a1b95b2bf92b90bb-VIE",
+          "cf-ray": "a35203281846d6cf-IAD",
           "connection": "keep-alive",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Wed, 15 Jul 2026 14:11:26 GMT",
+          "date": "Thu, 03 Sep 2026 04:29:15 GMT",
           "openai-organization": "braintrust-data",
-          "openai-processing-ms": "1866",
+          "openai-processing-ms": "247",
           "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
           "openai-version": "2020-10-01",
           "server": "cloudflare",
@@ -3055,7 +3066,13 @@
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
           "transfer-encoding": "chunked",
           "x-content-type-options": "nosniff",
-          "x-request-id": "req_91af150a229241e6b4db9de2ed9ce21c"
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179991960",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "2ms",
+          "x-request-id": "req_553c0204025745069f12459efe005865"
         },
         "status": 200,
         "statusText": "OK"

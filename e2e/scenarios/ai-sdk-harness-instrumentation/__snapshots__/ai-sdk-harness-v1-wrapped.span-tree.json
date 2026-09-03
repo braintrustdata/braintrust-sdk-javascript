@@ -83,13 +83,13 @@
                 },
                 "usage": {
                   "inputTokens": {
-                    "cacheRead": 7168,
+                    "cacheRead": 14336,
                     "cacheWrite": 0,
-                    "noCache": 7603,
-                    "total": 14771
+                    "noCache": 8011,
+                    "total": 22347
                   },
                   "outputTokens": {
-                    "total": 112
+                    "total": 169
                   }
                 }
               },
@@ -102,11 +102,11 @@
                 "provider": "codex"
               },
               "metrics": {
-                "completion_tokens": 112,
+                "completion_tokens": 169,
                 "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 7168,
-                "prompt_tokens": 14771,
-                "tokens": 14883
+                "prompt_cached_tokens": 14336,
+                "prompt_tokens": 22347,
+                "tokens": 22516
               }
             }
           ],
@@ -135,24 +135,24 @@
             },
             "totalUsage": {
               "inputTokens": {
-                "cacheRead": 7168,
+                "cacheRead": 14336,
                 "cacheWrite": 0,
-                "noCache": 7603,
-                "total": 14771
+                "noCache": 8011,
+                "total": 22347
               },
               "outputTokens": {
-                "total": 112
+                "total": 169
               }
             },
             "usage": {
               "inputTokens": {
-                "cacheRead": 7168,
+                "cacheRead": 14336,
                 "cacheWrite": 0,
-                "noCache": 7603,
-                "total": 14771
+                "noCache": 8011,
+                "total": 22347
               },
               "outputTokens": {
-                "total": 112
+                "total": 169
               }
             }
           },
@@ -179,29 +179,29 @@
         },
         "totalUsage": {
           "inputTokenDetails": {
-            "cacheReadTokens": 7168,
+            "cacheReadTokens": 14336,
             "cacheWriteTokens": 0,
-            "noCacheTokens": 7603
+            "noCacheTokens": 8011
           },
-          "inputTokens": 14771,
+          "inputTokens": 22347,
           "outputTokenDetails": {
-            "textTokens": 112
+            "textTokens": 169
           },
-          "outputTokens": 112,
-          "totalTokens": 14883
+          "outputTokens": 169,
+          "totalTokens": 22516
         },
         "usage": {
           "inputTokenDetails": {
-            "cacheReadTokens": 7168,
+            "cacheReadTokens": 14336,
             "cacheWriteTokens": 0,
-            "noCacheTokens": 7603
+            "noCacheTokens": 8011
           },
-          "inputTokens": 14771,
+          "inputTokens": 22347,
           "outputTokenDetails": {
-            "textTokens": 112
+            "textTokens": 169
           },
-          "outputTokens": 112,
-          "totalTokens": 14883
+          "outputTokens": 169,
+          "totalTokens": 22516
         },
         "warnings": []
       },
@@ -257,11 +257,11 @@
         }
       },
       "metrics": {
-        "completion_tokens": 112,
+        "completion_tokens": 169,
         "prompt_cache_creation_tokens": 0,
-        "prompt_cached_tokens": 7168,
-        "prompt_tokens": 14771,
-        "tokens": 14883
+        "prompt_cached_tokens": 14336,
+        "prompt_tokens": 22347,
+        "tokens": 22516
       }
     },
     {
@@ -349,11 +349,11 @@
                   "inputTokens": {
                     "cacheRead": 14336,
                     "cacheWrite": 0,
-                    "noCache": 8035,
-                    "total": 22371
+                    "noCache": 444,
+                    "total": 14780
                   },
                   "outputTokens": {
-                    "total": 196
+                    "total": 125
                   }
                 }
               },
@@ -366,11 +366,11 @@
                 "provider": "codex"
               },
               "metrics": {
-                "completion_tokens": 196,
+                "completion_tokens": 125,
                 "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 14336,
-                "prompt_tokens": 22371,
-                "tokens": 22567
+                "prompt_tokens": 14780,
+                "tokens": 14905
               }
             }
           ],
@@ -401,22 +401,22 @@
               "inputTokens": {
                 "cacheRead": 14336,
                 "cacheWrite": 0,
-                "noCache": 8035,
-                "total": 22371
+                "noCache": 444,
+                "total": 14780
               },
               "outputTokens": {
-                "total": 196
+                "total": 125
               }
             },
             "usage": {
               "inputTokens": {
                 "cacheRead": 14336,
                 "cacheWrite": 0,
-                "noCache": 8035,
-                "total": 22371
+                "noCache": 444,
+                "total": 14780
               },
               "outputTokens": {
-                "total": 196
+                "total": 125
               }
             }
           },
@@ -492,12 +492,12 @@
         }
       },
       "metrics": {
-        "completion_tokens": 196,
+        "completion_tokens": 125,
         "prompt_cache_creation_tokens": 0,
         "prompt_cached_tokens": 14336,
-        "prompt_tokens": 22371,
+        "prompt_tokens": 14780,
         "time_to_first_token": 0,
-        "tokens": 22567
+        "tokens": 14905
       }
     }
   ]
