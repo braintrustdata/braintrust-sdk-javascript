@@ -1,16 +1,13 @@
 export interface InstrumentationIntegrationsConfig {
   openai?: boolean;
   anthropic?: boolean;
-  vercel?: boolean;
   aisdk?: boolean;
-  google?: boolean;
   googleGenAI?: boolean;
   googleADK?: boolean;
   huggingface?: boolean;
   claudeAgentSDK?: boolean;
   cloudflareAIChat?: boolean;
   cloudflareThink?: boolean;
-  cursor?: boolean;
   cursorSDK?: boolean;
   mastra?: boolean;
   openAIAgents?: boolean;
@@ -20,8 +17,6 @@ export interface InstrumentationIntegrationsConfig {
   ollama?: boolean;
   cohere?: boolean;
   groq?: boolean;
-  bedrock?: boolean;
-  awsBedrock?: boolean;
   awsBedrockRuntime?: boolean;
   genkit?: boolean;
   gitHubCopilot?: boolean;
@@ -69,14 +64,14 @@ const envIntegrationAliases: Record<
   aisdk: "aisdk",
   "ai-sdk": "aisdk",
   "vercel-ai": "aisdk",
-  vercel: "vercel",
+  vercel: "aisdk",
   claudeagentsdk: "claudeAgentSDK",
   "claude-agent-sdk": "claudeAgentSDK",
   cloudflareaichat: "cloudflareAIChat",
   "cloudflare-ai-chat": "cloudflareAIChat",
   "@cloudflare/ai-chat": "cloudflareAIChat",
   cloudflarethink: "cloudflareThink",
-  cursor: "cursor",
+  cursor: "cursorSDK",
   "cursor-sdk": "cursorSDK",
   cursorsdk: "cursorSDK",
   mastra: "mastra",
@@ -84,7 +79,7 @@ const envIntegrationAliases: Record<
   openaiagents: "openAIAgents",
   "openai-agents-core": "openAIAgents",
   openaiagentscore: "openAIAgents",
-  google: "google",
+  google: "googleGenAI",
   "google-genai": "googleGenAI",
   googlegenai: "googleGenAI",
   huggingface: "huggingface",
@@ -100,9 +95,9 @@ const envIntegrationAliases: Record<
   cohere: "cohere",
   groq: "groq",
   "groq-sdk": "groq",
-  bedrock: "bedrock",
-  "aws-bedrock": "awsBedrock",
-  awsbedrock: "awsBedrock",
+  bedrock: "awsBedrockRuntime",
+  "aws-bedrock": "awsBedrockRuntime",
+  awsbedrock: "awsBedrockRuntime",
   "aws-bedrock-runtime": "awsBedrockRuntime",
   awsbedrockruntime: "awsBedrockRuntime",
   "@aws-sdk/client-bedrock-runtime": "awsBedrockRuntime",
@@ -129,16 +124,13 @@ export function getDefaultInstrumentationIntegrations(): Record<
     openai: true,
     openaiCodexSDK: true,
     anthropic: true,
-    vercel: true,
     aisdk: true,
-    google: true,
     googleGenAI: true,
     googleADK: true,
     huggingface: true,
     claudeAgentSDK: true,
     cloudflareAIChat: true,
     cloudflareThink: true,
-    cursor: true,
     cursorSDK: true,
     mastra: true,
     openAIAgents: true,
@@ -148,8 +140,6 @@ export function getDefaultInstrumentationIntegrations(): Record<
     ollama: true,
     cohere: true,
     groq: true,
-    bedrock: true,
-    awsBedrock: true,
     awsBedrockRuntime: true,
     genkit: true,
     gitHubCopilot: true,

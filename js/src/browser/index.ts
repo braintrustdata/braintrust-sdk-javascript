@@ -14,4 +14,3 @@ import { configureBrowser } from "./config";
 configureBrowser();
 
 export * from "../exports";
-export * as default from "../exports";

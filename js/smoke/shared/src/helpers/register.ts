@@ -18,7 +18,10 @@ export interface TestContext {
   backgroundLogger: BackgroundLogger;
 }
 
-export type TestFn = (braintrust: BraintrustModule) => Promise<TestResult>;
+export type TestFn = ((braintrust: BraintrustModule) => Promise<TestResult>) & {
+  testName: string;
+  requiresTestHarness?: boolean;
+};
 
 type RegisteredTestFn = (
   braintrust: BraintrustModule,
@@ -35,24 +38,32 @@ type RegisteredTestFn = (
  * - Return a partial TestResult -> merged with pass status
  * - Throw an error -> fail with error details
  */
-export function register(name: string, fn: RegisteredTestFn): TestFn {
+export function register(
+  name: string,
+  fn: RegisteredTestFn,
+  { requiresTestHarness = false }: { requiresTestHarness?: boolean } = {},
+): TestFn {
   registeredTests.add(name);
 
-  return async (braintrust: BraintrustModule): Promise<TestResult> => {
-    const testing = braintrust._exportsForTestingOnly as {
-      setInitialTestState: () => void;
-      simulateLoginForTests: () => Promise<unknown> | unknown;
-      simulateLogoutForTests?: () => Promise<unknown> | unknown;
-      useTestBackgroundLogger: () => BackgroundLogger;
-      clearTestBackgroundLogger: () => void;
-    };
+  const test = async (braintrust: BraintrustModule): Promise<TestResult> => {
+    const testing = braintrust._exportsForTestingOnly as
+      | {
+          setInitialTestState: () => void;
+          simulateLoginForTests: () => Promise<unknown> | unknown;
+          simulateLogoutForTests?: () => Promise<unknown> | unknown;
+          useTestBackgroundLogger: () => BackgroundLogger;
+          clearTestBackgroundLogger: () => void;
+        }
+      | undefined;
 
-    testing.setInitialTestState();
-    await testing.simulateLoginForTests();
-    const backgroundLogger = testing.useTestBackgroundLogger();
+    testing?.setInitialTestState();
+    await testing?.simulateLoginForTests();
+    const backgroundLogger = testing?.useTestBackgroundLogger();
 
     try {
-      const result = await fn(braintrust, { backgroundLogger });
+      const result = await fn(braintrust, {
+        backgroundLogger: backgroundLogger!,
+      });
 
       if (typeof result === "string") {
         return { status: "pass", name, message: result };
@@ -71,12 +82,15 @@ export function register(name: string, fn: RegisteredTestFn): TestFn {
         },
       };
     } finally {
-      testing.clearTestBackgroundLogger();
-      if (typeof testing.simulateLogoutForTests === "function") {
+      testing?.clearTestBackgroundLogger();
+      if (typeof testing?.simulateLogoutForTests === "function") {
         await testing.simulateLogoutForTests();
       }
     }
   };
+  test.testName = name;
+  test.requiresTestHarness = requiresTestHarness;
+  return test;
 }
 
 /**
@@ -146,9 +160,21 @@ export async function runTests({
   skipCoverage = false,
 }: RunTestsOptions): Promise<TestRunResults> {
   const results: TestResult[] = [];
+  const testModule: BraintrustModule = {
+    ...braintrust,
+    __publicModule: braintrust,
+  };
 
   for (const test of tests) {
-    results.push(await test(braintrust));
+    if (!testModule._exportsForTestingOnly && test.requiresTestHarness) {
+      results.push({
+        status: "xfail",
+        name: test.testName,
+        message: "Requires the private SDK test harness",
+      });
+    } else {
+      results.push(await test(testModule));
+    }
   }
 
   if (!skipCoverage) {
@@ -186,7 +212,7 @@ export function expectFailure(
   predicate: ErrorPredicate,
   reason: string,
 ): TestFn {
-  return async (braintrust: BraintrustModule): Promise<TestResult> => {
+  const wrapped = async (braintrust: BraintrustModule): Promise<TestResult> => {
     const result = await test(braintrust);
 
     if (result.status === "fail" && result.error) {
@@ -200,4 +226,7 @@ export function expectFailure(
     }
     return result;
   };
+  wrapped.testName = test.testName;
+  wrapped.requiresTestHarness = test.requiresTestHarness;
+  return wrapped;
 }

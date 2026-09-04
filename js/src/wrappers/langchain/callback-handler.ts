@@ -89,13 +89,14 @@ export class BraintrustLangChainCallbackHandler {
       INSTRUMENTATION_NAMES.LANGCHAIN,
     );
 
-    let span = parentSpan.startSpan(spanArgs);
+    const { parent: _ignoredParent, ...publicSpanArgs } = spanArgs;
+    let span = parentSpan.startSpan(publicSpanArgs);
 
     if (
       !Object.is(this.options.logger, NOOP_SPAN) &&
       Object.is(span, NOOP_SPAN)
     ) {
-      span = initLogger().startSpan(spanArgs);
+      span = initLogger().startSpan(publicSpanArgs);
     }
 
     this.spans.set(runId, span);

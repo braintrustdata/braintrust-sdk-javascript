@@ -630,7 +630,7 @@ describe("Orchestrion Transformation Tests", () => {
 
     it.each([
       ["browser", "browser", { browser: true }],
-      ["legacy-browser", "browser", { useDiagnosticChannelCompatShim: true }],
+      ["legacy-browser", "browser", { browser: true }],
       ["edge", "neutral", { browser: true }],
     ] as const)(
       "should keep Mastra %s bundles free of Node-only patches",
@@ -933,13 +933,7 @@ describe("Orchestrion Transformation Tests", () => {
     });
 
     it.each([
-      [
-        "skip",
-        "legacy browser",
-        "web",
-        { useDiagnosticChannelCompatShim: true },
-        false,
-      ],
+      ["skip", "legacy browser", "web", { browser: true }, false],
       ["skip", "browser", "web", { browser: true }, false],
       ["apply", "node", "node", { browser: false }, true],
     ] as const)(

@@ -14,6 +14,7 @@ export default defineConfig([
   {
     entry: {
       index: "src/node/index.ts",
+      "instrumentation/index": "src/instrumentation/index.ts",
       "apply-auto-instrumentation":
         "src/node/apply-auto-instrumentation-entry.ts",
       "vitest-evals-reporter": "src/wrappers/vitest-evals/reporter.ts",
@@ -21,22 +22,6 @@ export default defineConfig([
     format: ["cjs", "esm"],
     outDir: "dist",
     external: ["zod"],
-    removeNodeProtocol: false,
-    dts: {
-      // Split DTS generation to reduce memory usage
-      compilerOptions: {
-        skipLibCheck: true,
-      },
-    },
-    splitting: true,
-    define,
-    clean: true,
-  },
-  {
-    entry: ["util/index.ts"],
-    format: ["cjs", "esm"],
-    outDir: "util/dist",
-    external: ["esbuild", "prettier", "typescript", "zod"],
     removeNodeProtocol: false,
     dts: {
       // Split DTS generation to reduce memory usage
@@ -66,20 +51,6 @@ export default defineConfig([
     dts: true,
     define,
     clean: false,
-  },
-  {
-    entry: ["src/instrumentation/index.ts"],
-    format: ["cjs", "esm"],
-    outDir: "dist/instrumentation",
-    external: ["@braintrust/instrumentation-core", "zod"],
-    dts: {
-      compilerOptions: {
-        skipLibCheck: true,
-      },
-    },
-    splitting: false,
-    define,
-    clean: true,
   },
   {
     entry: [

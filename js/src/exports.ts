@@ -1,210 +1,79 @@
-import type { z } from "zod/v3";
-import { AttachmentReference as attachmentReferenceSchema } from "./generated_types";
-import type { AttachmentReferenceType } from "./generated_plain_types";
+/**
+ * The public `braintrust` package surface.
+ *
+ * Keep this file as an explicit allowlist. Implementation details should stay
+ * private; integrations belong on narrow, intentional extension points.
+ */
 
 export type {
-  AnyDataset,
-  AttachmentParams,
-  BackgroundLoggerOpts,
-  BaseMetadata,
-  ChatPrompt,
-  CompiledPrompt,
-  CompiledPromptParams,
-  CompletionPrompt,
   ContextParentSpanIds,
-  DatasetRestorePreviewResult,
-  DatasetRestoreResult,
-  DatasetSnapshot,
-  DataSummary,
-  DatasetSummary,
-  DefaultMetadataType,
-  DefaultPromptArgs,
-  EndSpanArgs,
-  EvalCase,
-  ExperimentSummary,
-  Exportable,
-  ExternalAttachmentParams,
-  FullInitDatasetOptions,
-  FullInitOptions,
-  FullLoginOptions,
-  InitDatasetOptions,
-  InitLoggerOptions,
-  InitOptions,
-  LoadPromptOptions,
-  LoginOptions,
-  Logs3OverflowInputRow,
-  Logs3OverflowUpload,
-  MetricSummary,
-  ObjectMetadata,
+  CurrentSpanStore,
   PropagationContext,
-  PromptRowWithId,
-  ScoreSummary,
-  SerializedBraintrustState,
-  SetCurrentArg,
   Span,
   StartSpanArgs,
-  WithTransactionId,
 } from "./logger";
-
-export type {
-  SandboxConfig,
-  RegisterSandboxOptions,
-  RegisterSandboxResult,
-} from "./sandbox";
-
 export {
   Attachment,
   BaseAttachment,
-  BRAINTRUST_CURRENT_SPAN_STORE,
   BraintrustState,
-  ContextManager,
-  CurrentSpanStore,
-  DEFAULT_FETCH_BATCH_SIZE,
-  DEFAULT_MAX_REQUEST_SIZE,
   Dataset,
-  ObjectFetcher,
-  ERR_PERMALINK,
   Experiment,
   ExternalAttachment,
-  FailedHTTPResponse,
   JSONAttachment,
-  LOGS3_OVERFLOW_REFERENCE_TYPE,
   Logger,
-  LoginInvalidOrgError,
   NOOP_SPAN,
-  NOOP_SPAN_PERMALINK,
-  NoopSpan,
   Prompt,
   ReadonlyAttachment,
   ReadonlyExperiment,
-  SpanImpl,
-  TestBackgroundLogger,
-  _exportsForTestingOnly,
-  _internalGetGlobalState,
-  _internalSetInitialState,
-  constructLogs3OverflowRequest,
   currentExperiment,
   currentLogger,
   currentSpan,
-  deepCopyEvent,
-  deserializePlainStringAsJSON,
+  configureContextManager,
+  ContextManager,
   extractTraceContextFromHeaders,
   flush,
-  getContextManager,
   getPromptVersions,
-  getSpanParentObject,
   init,
   injectTraceContext,
   initDataset,
-  initExperiment,
   initLogger,
   loadParameters,
   loadPrompt,
-  log,
   logError,
   login,
   loginToState,
-  logs3OverflowUploadSchema,
-  newId,
-  permalink,
-  pickLogs3OverflowObjectIds,
-  uploadLogs3OverflowPayload,
-  utf8ByteLength,
-  renderMessage,
-  renderPromptParams,
   setFetch,
   setMaskingFunction,
-  spanComponentsToObjectId,
   startSpan,
-  summarize,
-  traceable,
   traced,
   updateSpan,
   withCurrent,
-  withDataset,
-  withExperiment,
   withParent,
   wrapTraced,
-  registerOtelFlush,
 } from "./logger";
 
 export { registerSandbox } from "./sandbox";
 
-// Internal isomorph layer for platform-specific implementations
-import _internalIso from "./isomorph";
-export { _internalIso };
-
+export type { TemplateRendererPlugin } from "./template/registry";
+export { registerTemplatePlugin } from "./template/registry";
 export {
   isTemplateFormat,
   parseTemplateFormat,
   renderTemplateContent,
 } from "./template/renderer";
-export type { TemplateFormat } from "./template/registry";
 
-export type {
-  TemplateRenderer,
-  TemplateRendererPlugin,
-} from "./template/registry";
-export {
-  registerTemplatePlugin,
-  getTemplateRenderer,
-  templateRegistry,
-} from "./template/registry";
-
-export type { InvokeFunctionArgs, InvokeReturn } from "./functions/invoke";
 export { initFunction, invoke } from "./functions/invoke";
+export { BraintrustStream } from "./functions/stream";
 
-export type { BraintrustStreamChunk } from "./functions/stream";
-export {
-  BraintrustStream,
-  braintrustStreamChunkSchema,
-  createFinalValuePassThroughStream,
-  devNullWritableStream,
-} from "./functions/stream";
-
-export {
-  IDGenerator,
-  UUIDGenerator,
-  OTELIDGenerator,
-  getIdGenerator,
-} from "./id-gen";
-
-export {
-  TRACEPARENT_HEADER,
-  TRACESTATE_HEADER,
-  BAGGAGE_HEADER,
-  BRAINTRUST_PARENT_KEY,
-} from "./propagation";
-export type {
-  ParsedTraceparent,
-  PropagatedState,
-  TraceContextCarrier,
-  TraceContextHeaders,
-} from "./propagation";
-
-export {
-  LEGACY_CACHED_HEADER,
-  X_CACHED_HEADER,
-  parseCachedHeader,
-  wrapOpenAI,
-  wrapOpenAIv4,
-} from "./wrappers/oai";
-
+export { wrapOpenAI } from "./wrappers/oai";
 export {
   braintrustAISDKTelemetry,
   wrapAISDK,
   wrapAgentClass,
-  BraintrustMiddleware,
-  wrapAISDKModel,
 } from "./wrappers/ai-sdk";
-export { braintrustEveInstrumentation } from "./instrumentation";
 export { collectAnthropicSession } from "./wrappers/anthropic-session-collector";
 export { wrapAnthropic } from "./wrappers/anthropic";
-export {
-  BraintrustObservabilityExporter,
-  wrapMastraAgent,
-} from "./wrappers/mastra";
-export type { MastraObservabilityExporter } from "./wrappers/mastra";
+export { BraintrustObservabilityExporter } from "./wrappers/mastra";
 export { wrapClaudeAgentSDK } from "./wrappers/claude-agent-sdk/claude-agent-sdk";
 export { wrapCloudflareThink } from "./wrappers/cloudflare-think";
 export { wrapOpenAICodexSDK } from "./wrappers/openai-codex";
@@ -234,37 +103,24 @@ export {
 } from "./wrappers/langsmith";
 export { wrapVitest } from "./wrappers/vitest";
 export { initNodeTestSuite } from "./wrappers/node-test";
-export {
-  BRAINTRUST_LANGCHAIN_CALLBACK_HANDLER_NAME,
-  BraintrustLangChainCallbackHandler,
-} from "./wrappers/langchain/callback-handler";
+export { BraintrustLangChainCallbackHandler } from "./wrappers/langchain/callback-handler";
 export type { LangChainCallbackHandlerOptions } from "./vendor-sdk-types/langchain";
-
-export * as graph from "./graph-framework";
 
 export type {
   Evaluator,
   EvalTask,
-  EvalHooks,
-  EvalResult,
-  EvalScorerArgs,
   EvalScorer,
   EvalClassifier,
-  EvaluatorDef,
   ReporterBody,
-  SpanContext,
 } from "./framework";
-
 export {
   BaseExperiment,
   Eval,
-  EvalResultWithSummary,
   Reporter,
   defaultErrorScoreHandler,
 } from "./framework";
 
 export type { DurableEvalStore } from "./durable-eval";
-
 export {
   BatchScorer,
   BatchTask,
@@ -274,61 +130,8 @@ export {
 } from "./durable-eval";
 
 export { agentAssertionScorer } from "./agent-assertions";
-
 export { DatasetPipeline } from "./dataset-pipeline";
+export { projects } from "./framework2";
 
-export type {
-  CodeOpts,
-  CreateProjectOpts,
-  PromptOpts,
-  ScorerOpts,
-} from "./framework2";
-
-export {
-  CodeFunction,
-  CodePrompt,
-  Project,
-  PromptBuilder,
-  ScorerBuilder,
-  ToolBuilder,
-  projects,
-} from "./framework2";
-
-export {
-  promptContentsSchema,
-  promptDefinitionSchema,
-  promptDefinitionToPromptData,
-  promptDefinitionWithToolsSchema,
-  PromptContents,
-  PromptDefinition,
-  PromptDefinitionWithTools,
-} from "./prompt-schemas";
-
-export type { Trace, SpanData, GetThreadOptions } from "./trace";
-export { SpanFetcher, CachedSpanFetcher, LocalTrace } from "./trace";
-
-export type {
-  ParentExperimentIds,
-  ParentProjectLogIds,
-  IdField,
-  InputField,
-  OtherExperimentLogFields,
-  ExperimentLogPartialArgs,
-  ExperimentLogFullArgs,
-  LogFeedbackFullArgs,
-  LogCommentFullArgs,
-  CommentEvent,
-  DatasetRecord,
-} from "../util";
-
-export { addAzureBlobHeaders, LazyValue } from "./util";
-
-export const AttachmentReference: z.ZodType<AttachmentReferenceType> =
-  attachmentReferenceSchema;
-
-export type { EvalParameters } from "./eval-parameters";
-
-// Auto-instrumentation configuration
-export { configureInstrumentation } from "./instrumentation";
-export { braintrustFlueInstrumentation } from "./instrumentation";
-export type { InstrumentationConfig } from "./instrumentation";
+export type { Trace } from "./trace";
+export { LocalTrace } from "./trace";

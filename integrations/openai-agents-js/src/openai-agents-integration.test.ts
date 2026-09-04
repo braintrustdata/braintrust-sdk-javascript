@@ -11,14 +11,16 @@ import { z } from "zod/v3";
 
 // Import necessary types and functions from braintrust
 import {
-  _exportsForTestingOnly,
   initLogger,
   Logger,
-  TestBackgroundLogger,
   Span as BraintrustSpan,
   wrapTraced,
   currentSpan,
 } from "braintrust";
+import {
+  _exportsForTestingOnly,
+  type TestBackgroundLogger,
+} from "@braintrust-test/logger";
 
 // Test helper functions for backward compatibility
 function getSpansMap(

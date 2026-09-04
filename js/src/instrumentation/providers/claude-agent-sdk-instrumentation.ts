@@ -1,7 +1,7 @@
 import type { ChannelMessage } from "../core/channel-definitions";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import type { IsoChannelHandlers } from "../../isomorph";
-import { startSpan as startBaseSpan } from "../../logger";
+import { _internalStartSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,

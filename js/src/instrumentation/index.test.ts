@@ -8,6 +8,7 @@ describe("instrumentation public API", () => {
       "braintrustEveInstrumentation",
       "braintrustFlueInstrumentation",
       "configureInstrumentation",
+      "registerOtelFlush",
     ]);
   });
 });

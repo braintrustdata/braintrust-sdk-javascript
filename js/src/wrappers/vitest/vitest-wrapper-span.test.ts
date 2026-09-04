@@ -11,7 +11,7 @@ await _exportsForTestingOnly.simulateLoginForTests();
 const moduleBackgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
 
 vitest.vi
-  .spyOn(logger, "initExperiment")
+  .spyOn(logger, "init")
   .mockImplementation((projectName: string, options?: any) => {
     return _exportsForTestingOnly.initTestExperiment(
       options?.experiment || "test-experiment",

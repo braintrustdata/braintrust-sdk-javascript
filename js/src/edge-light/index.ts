@@ -10,4 +10,3 @@ import { configureEdgeLight } from "./config";
 configureEdgeLight();
 
 export * from "../exports";
-export * as default from "../exports";

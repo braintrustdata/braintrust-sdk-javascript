@@ -37,8 +37,7 @@ import {
   batchItems,
   constructJsonArray,
   DatasetRecord,
-  DEFAULT_IS_LEGACY_DATASET,
-  ensureDatasetRecord,
+  ensureNewDatasetRecord,
   ExperimentEvent,
   ExperimentLogFullArgs,
   ExperimentLogPartialArgs,
@@ -313,15 +312,18 @@ export type StartSpanArgs = {
   spanAttributes?: Record<any, any>;
   startTime?: number;
   /**
-   * The parent to start this span under. May be an exported span slug string
-   * (from `span.export()`) or an opaque W3C trace-context (from
-   * {@link extractTraceContextFromHeaders}).
+   * An opaque W3C trace context returned by
+   * {@link extractTraceContextFromHeaders}.
    */
-  parent?: string | PropagationContext;
+  parent?: PropagationContext;
   event?: StartSpanEventArgs;
   propagatedEvent?: StartSpanEventArgs;
   spanId?: string;
   parentSpanIds?: ParentSpanIds | MultiParentSpanIds;
+};
+
+type InternalStartSpanArgs = Omit<StartSpanArgs, "parent"> & {
+  parent?: string | PropagationContext;
 };
 
 export type EndSpanArgs = {
@@ -431,8 +433,8 @@ export interface Span extends Exportable {
    * parameters of {@link Span.startSpan} for usage details.
    *
    * Callers should treat the return value as opaque. The serialization format
-   * may change from time to time. If parsing is needed, use
-   * `SpanComponentsV3.fromStr`.
+   * may change from time to time. For cross-service propagation, prefer
+   * {@link Span.inject} and {@link extractTraceContextFromHeaders}.
    *
    * @returns Serialized representation of this span's identifiers.
    */
@@ -490,11 +492,6 @@ export interface Span extends Exportable {
   flush(): Promise<void>;
 
   /**
-   * Alias for `end`.
-   */
-  close(args?: EndSpanArgs): number;
-
-  /**
    * Set the span's name, type, or other attributes after it's created.
    */
   setAttributes(args: Omit<StartSpanArgs, "event">): void;
@@ -518,12 +515,8 @@ export interface Span extends Exportable {
   kind: "span";
 }
 
-export const BRAINTRUST_CURRENT_SPAN_STORE = Symbol.for(
-  "braintrust.currentSpanStore",
-);
-
 /**
- * The type of AsyncLocalStorage exposed via {@link BRAINTRUST_CURRENT_SPAN_STORE}.
+ * The AsyncLocalStorage contract used by context-manager integrations.
  *
  * The stored value is intentionally opaque (`unknown`) because the concrete type
  * depends on the active context manager:
@@ -541,6 +534,14 @@ export abstract class ContextManager {
   abstract getCurrentSpan(): Span | undefined;
 
   /**
+   * Return the store used by instrumentation hooks to propagate the current
+   * span, when the context manager supports direct store binding.
+   */
+  getCurrentSpanStore(): CurrentSpanStore | undefined {
+    return undefined;
+  }
+
+  /**
    * Returns the value to store in the ALS bound to a global hook's start event.
    * In default mode this is the Span itself; in OTEL mode it is the OTEL Context
    * containing the span so that OTEL's own ALS stores a proper Context object.
@@ -553,12 +554,14 @@ export abstract class ContextManager {
 
 class BraintrustContextManager extends ContextManager {
   private _currentSpan: IsoAsyncLocalStorage<Span>;
-  [BRAINTRUST_CURRENT_SPAN_STORE]: IsoAsyncLocalStorage<Span>;
 
   constructor() {
     super();
     this._currentSpan = iso.newAsyncLocalStorage();
-    this[BRAINTRUST_CURRENT_SPAN_STORE] = this._currentSpan;
+  }
+
+  getCurrentSpanStore(): CurrentSpanStore {
+    return this._currentSpan;
   }
 
   getParentSpanIds(): ContextParentSpanIds | undefined {
@@ -582,11 +585,8 @@ class BraintrustContextManager extends ContextManager {
   }
 }
 
-// make sure to update @braintrust/otel package
 declare global {
   var BRAINTRUST_CONTEXT_MANAGER: (new () => ContextManager) | undefined;
-  var BRAINTRUST_ID_GENERATOR: (new () => IDGenerator) | undefined;
-  var BRAINTRUST_SPAN_COMPONENT: SpanComponent | undefined;
 }
 
 type SpanComponent = typeof SpanComponentsV3 | typeof SpanComponentsV4;
@@ -597,11 +597,7 @@ type SpanComponent = typeof SpanComponentsV3 | typeof SpanComponentsV4;
 // serialize as V4, legacy UUID IDs serialize as V3. These must move together --
 // serializing hex IDs via V3 would lose the compact encoding and risk
 // corrupting hex values that happen to parse as UUIDs. An explicit
-// `globalThis.BRAINTRUST_SPAN_COMPONENT` (e.g. from `@braintrust/otel`) wins.
 function getSpanComponentsClass(): SpanComponent {
-  if (globalThis.BRAINTRUST_SPAN_COMPONENT) {
-    return globalThis.BRAINTRUST_SPAN_COMPONENT;
-  }
   return resolveUseLegacyUuidIds() ? SpanComponentsV3 : SpanComponentsV4;
 }
 
@@ -609,6 +605,20 @@ export function getContextManager(): ContextManager {
   return globalThis.BRAINTRUST_CONTEXT_MANAGER
     ? new globalThis.BRAINTRUST_CONTEXT_MANAGER()
     : new BraintrustContextManager();
+}
+
+/**
+ * Configure the context manager used by Braintrust.
+ *
+ * This extension point is intended for runtime integrations such as
+ * `@braintrust/otel` and `@braintrust/browser`. Passing `undefined` restores
+ * Braintrust's default context manager.
+ */
+export function configureContextManager(
+  contextManager: (new () => ContextManager) | undefined,
+): void {
+  globalThis.BRAINTRUST_CONTEXT_MANAGER = contextManager;
+  _globalState?.[RESET_CONTEXT_MANAGER_STATE]();
 }
 
 /**
@@ -673,10 +683,6 @@ export class NoopSpan implements Span {
   }
 
   public async flush(): Promise<void> {}
-
-  public close(args?: EndSpanArgs): number {
-    return this.end(args);
-  }
 
   public setAttributes(_args: Omit<StartSpanArgs, "event">) {}
 
@@ -3851,38 +3857,7 @@ type InitializedExperiment<IsOpen extends boolean | undefined> =
  */
 export function init<IsOpen extends boolean = false>(
   options: Readonly<FullInitOptions<IsOpen>>,
-): InitializedExperiment<IsOpen>;
-
-/**
- * Legacy form of `init` which accepts the project name as the first parameter,
- * separately from the remaining options. See `init(options)` for full details.
- */
-export function init<IsOpen extends boolean = false>(
-  project: string,
-  options?: Readonly<InitOptions<IsOpen>>,
-): InitializedExperiment<IsOpen>;
-
-/**
- * Combined overload implementation of `init`. Do not call this directly.
- * Instead, call `init(options)` or `init(project, options)`.
- */
-export function init<IsOpen extends boolean = false>(
-  projectOrOptions: string | Readonly<FullInitOptions<IsOpen>>,
-  optionalOptions?: Readonly<InitOptions<IsOpen>>,
 ): InitializedExperiment<IsOpen> {
-  const options = ((): Readonly<FullInitOptions<IsOpen>> => {
-    if (typeof projectOrOptions === "string") {
-      return { ...optionalOptions, project: projectOrOptions };
-    } else {
-      if (optionalOptions !== undefined) {
-        throw new Error(
-          "Cannot specify options struct as both parameters. Must call either init(project, options) or init(options).",
-        );
-      }
-      return projectOrOptions;
-    }
-  })();
-
   const {
     project,
     experiment,
@@ -4111,66 +4086,6 @@ export function init<IsOpen extends boolean = false>(
   return ret as InitializedExperiment<IsOpen>;
 }
 
-/**
- * Alias for init(options).
- */
-export function initExperiment<IsOpen extends boolean = false>(
-  options: Readonly<InitOptions<IsOpen>>,
-): InitializedExperiment<IsOpen>;
-
-/**
- * Alias for init(project, options).
- */
-export function initExperiment<IsOpen extends boolean = false>(
-  project: string,
-  options?: Readonly<InitOptions<IsOpen>>,
-): InitializedExperiment<IsOpen>;
-
-/**
- * Combined overload implementation of `initExperiment`, which is an alias for
- * `init`. Do not call this directly. Instead, call `initExperiment(options)` or
- * `initExperiment(project, options)`.
- */
-export function initExperiment<IsOpen extends boolean = false>(
-  projectOrOptions: string | Readonly<InitOptions<IsOpen>>,
-  optionalOptions?: Readonly<InitOptions<IsOpen>>,
-): InitializedExperiment<IsOpen> {
-  const options = ((): Readonly<FullInitOptions<IsOpen>> => {
-    if (typeof projectOrOptions === "string") {
-      return { ...optionalOptions, project: projectOrOptions };
-    } else {
-      if (optionalOptions !== undefined) {
-        throw new Error(
-          "Cannot specify options struct as both parameters. Must call either init(project, options) or init(options).",
-        );
-      }
-      return projectOrOptions;
-    }
-  })();
-  return init(options);
-}
-
-/**
- * @deprecated Use {@link init} instead.
- */
-export function withExperiment<R>(
-  project: string,
-  callback: (experiment: Experiment) => R,
-  options: Readonly<InitOptions<false> & SetCurrentArg> = {},
-): R {
-  debugLogger
-    .forState(options.state)
-    .warn(
-      "withExperiment is deprecated and will be removed in a future version of braintrust. Simply create the experiment with `init`.",
-    );
-  const experiment = init(project, options);
-  return callback(experiment);
-}
-
-type UseOutputOption<IsLegacyDataset extends boolean> = {
-  useOutput?: IsLegacyDataset;
-};
-
 declare global {
   // Set by the bt eval runner when CLI-controlled BTQL should be pushed down
   // into dataset-backed evals.
@@ -4178,22 +4093,21 @@ declare global {
   var __bt_eval_internal_btql: Record<string, unknown> | undefined;
 }
 
-export type InitDatasetOptions<IsLegacyDataset extends boolean> =
-  FullLoginOptions & {
-    dataset?: string;
-    description?: string;
-    version?: string;
-    environment?: string;
-    snapshotName?: string;
-    projectId?: string;
-    metadata?: Record<string, unknown>;
-    state?: BraintrustState;
-    _internal_btql?: Record<string, unknown>;
-  } & UseOutputOption<IsLegacyDataset>;
+export type InitDatasetOptions = FullLoginOptions & {
+  dataset?: string;
+  description?: string;
+  version?: string;
+  environment?: string;
+  snapshotName?: string;
+  projectId?: string;
+  metadata?: Record<string, unknown>;
+  state?: BraintrustState;
+  _internal_btql?: Record<string, unknown>;
+};
 
-export type FullInitDatasetOptions<IsLegacyDataset extends boolean> = {
+export type FullInitDatasetOptions = {
   project?: string;
-} & InitDatasetOptions<IsLegacyDataset>;
+} & InitDatasetOptions;
 
 async function getDatasetSnapshots(
   params:
@@ -4416,52 +4330,11 @@ async function serializeDatasetForExperiment({
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @param options.projectId The id of the project to create the dataset in. This takes precedence over `project` if specified.
  * @param options.metadata A dictionary with additional data about the dataset. The values in `metadata` can be any JSON-serializable type, but its keys must be strings.
- * @param options.useOutput (Deprecated) If true, records will be fetched from this dataset in the legacy format, with the "expected" field renamed to "output". This option will be removed in a future version of Braintrust.
  * @returns The newly created Dataset.
  */
-export function initDataset<
-  IsLegacyDataset extends boolean = typeof DEFAULT_IS_LEGACY_DATASET,
->(
-  options: Readonly<FullInitDatasetOptions<IsLegacyDataset>>,
-): Dataset<IsLegacyDataset>;
-
-/**
- * Legacy form of `initDataset` which accepts the project name as the first
- * parameter, separately from the remaining options.
- *
- * See `initDataset(options)` for full details.
- */
-export function initDataset<
-  IsLegacyDataset extends boolean = typeof DEFAULT_IS_LEGACY_DATASET,
->(
-  project: string,
-  options?: Readonly<InitDatasetOptions<IsLegacyDataset>>,
-): Dataset<IsLegacyDataset>;
-
-/**
- * Combined overload implementation of `initDataset`. Do not call this
- * directly. Instead, call `initDataset(options)` or `initDataset(project,
- * options)`.
- */
-export function initDataset<
-  IsLegacyDataset extends boolean = typeof DEFAULT_IS_LEGACY_DATASET,
->(
-  projectOrOptions: string | Readonly<FullInitDatasetOptions<IsLegacyDataset>>,
-  optionalOptions?: Readonly<InitDatasetOptions<IsLegacyDataset>>,
-): Dataset<IsLegacyDataset> {
-  const options = ((): Readonly<FullInitDatasetOptions<IsLegacyDataset>> => {
-    if (typeof projectOrOptions === "string") {
-      return { ...optionalOptions, project: projectOrOptions };
-    } else {
-      if (optionalOptions !== undefined) {
-        throw new Error(
-          "Cannot specify options struct as both parameters. Must call either initDataset(project, options) or initDataset(options).",
-        );
-      }
-      return projectOrOptions;
-    }
-  })();
-
+export function initDataset(
+  options: Readonly<FullInitDatasetOptions>,
+): Dataset {
   const {
     project,
     dataset,
@@ -4476,7 +4349,6 @@ export function initDataset<
     forceLogin,
     projectId,
     metadata,
-    useOutput: legacy,
     state: stateArg,
     _internal_btql,
   } = options;
@@ -4563,7 +4435,6 @@ export function initDataset<
     stateArg ?? _globalState,
     lazyMetadata,
     typeof resolvedVersion === "string" ? resolvedVersion : undefined,
-    legacy,
     internalBtql,
     resolvedVersion instanceof LazyValue ||
       normalizedEnvironment !== undefined ||
@@ -4589,26 +4460,6 @@ export function initDataset<
   );
 
   return datasetObject;
-}
-
-/**
- * @deprecated Use {@link initDataset} instead.
- */
-export function withDataset<
-  R,
-  IsLegacyDataset extends boolean = typeof DEFAULT_IS_LEGACY_DATASET,
->(
-  project: string,
-  callback: (dataset: Dataset<IsLegacyDataset>) => R,
-  options: Readonly<InitDatasetOptions<IsLegacyDataset>> = {},
-): R {
-  debugLogger
-    .forState(options.state)
-    .warn(
-      "withDataset is deprecated and will be removed in a future version of braintrust. Simply create the dataset with `initDataset`.",
-    );
-  const dataset = initDataset<IsLegacyDataset>(project, options);
-  return callback(dataset);
 }
 
 // Note: the argument names *must* serialize the same way as the argument names
@@ -6243,12 +6094,6 @@ export function wrapTraced<F extends (...args: any[]) => any>(
 }
 
 /**
- * A synonym for `wrapTraced`. If you're porting from systems that use `traceable`, you can use this to
- * make your codebase more consistent.
- */
-export const traceable = wrapTraced;
-
-/**
  * Lower-level alternative to `traced`. This allows you to start a span yourself, and can be useful in situations
  * where you cannot use callbacks. However, spans started with `startSpan` will not be marked as the "current span",
  * so `currentSpan()` and `traced()` will be no-ops. If you want to mark a span as current, use `traced` instead.
@@ -6259,19 +6104,25 @@ export function startSpan(args?: StartSpanArgs & OptionalStateArg): Span {
   return startSpanImpl(args);
 }
 
+export function _internalStartSpan(
+  args?: InternalStartSpanArgs & OptionalStateArg,
+): Span {
+  return startSpanImpl(args);
+}
+
 /** @internal Start a span whose initial row is merged with concurrent writes. */
 export function _internalStartSpanWithInitialMerge(
-  args?: StartSpanArgs & OptionalStateArg,
+  args?: InternalStartSpanArgs & OptionalStateArg,
 ): Span {
   return startSpanImpl({
     ...args,
     [INITIAL_SPAN_WRITE_AS_MERGE]: true,
-  } as StartSpanArgs & OptionalStateArg & InitialSpanWriteAsMergeArg);
+  } as InternalStartSpanArgs & OptionalStateArg & InitialSpanWriteAsMergeArg);
 }
 
 /** @internal Start a span with SDK-controlled context fields. */
 export function _internalStartSpanWithContext(
-  args: StartSpanArgs & OptionalStateArg,
+  args: InternalStartSpanArgs & OptionalStateArg,
   context: Record<string, unknown>,
 ): Span {
   return startSpanImpl({
@@ -6299,7 +6150,7 @@ export function setFetch(fetch: typeof globalThis.fetch): void {
 }
 
 function startSpanImpl(
-  args?: StartSpanArgs & OptionalStateArg & InternalSpanContextArg,
+  args?: InternalStartSpanArgs & OptionalStateArg & InternalSpanContextArg,
 ): Span {
   const state = args?.state ?? _globalState;
 
@@ -6346,7 +6197,10 @@ function startSpanImpl(
       propagatedState,
     });
   } else {
-    return parentObject.startSpan(args);
+    // The internal entrypoint still accepts exported Braintrust parent slugs.
+    // Span implementations support that runtime form even though it is no
+    // longer part of their public method signature.
+    return parentObject.startSpan(args as StartSpanArgs);
   }
 }
 
@@ -6433,6 +6287,14 @@ async function* asyncGeneratorWithCurrent<T>(
 }
 
 export function withParent<R>(
+  parent: PropagationContext,
+  callback: () => R,
+  state: BraintrustState | undefined = undefined,
+): R {
+  return (state ?? _globalState).currentParent.run(parent, () => callback());
+}
+
+export function _internalWithParent<R>(
   parent: string | PropagationContext,
   callback: () => R,
   state: BraintrustState | undefined = undefined,
@@ -6536,22 +6398,11 @@ function validateAndSanitizeExperimentLogPartialArgs(
     }
   }
 
-  if ("input" in event && event.input && "inputs" in event && event.inputs) {
-    throw new Error(
-      "Only one of input or inputs (deprecated) can be specified. Prefer input.",
-    );
-  }
-
   if ("tags" in event && event.tags) {
     validateTags(event.tags);
   }
 
-  if ("inputs" in event) {
-    const { inputs, ...rest } = event;
-    return { input: inputs, ...rest };
-  } else {
-    return { ...event };
-  }
+  return { ...event };
 }
 
 /**
@@ -6762,18 +6613,9 @@ async function resolveAttachmentsToBase64<T extends Record<string, any>>(
 // handling special fields like 'id').
 function validateAndSanitizeExperimentLogFullArgs(
   event: ExperimentLogFullArgs,
-  hasDataset: boolean,
 ): ExperimentLogFullArgs {
-  if (
-    ("input" in event &&
-      !isEmpty(event.input) &&
-      "inputs" in event &&
-      !isEmpty(event.inputs)) ||
-    (!("input" in event) && !("inputs" in event))
-  ) {
-    throw new Error(
-      "Exactly one of input or inputs (deprecated) must be specified. Prefer input.",
-    );
+  if (!("input" in event)) {
+    throw new Error("input must be specified");
   }
 
   if (isEmpty(event.output)) {
@@ -6781,14 +6623,6 @@ function validateAndSanitizeExperimentLogFullArgs(
   }
   if (isEmpty(event.scores)) {
     throw new Error("scores must be specified");
-  }
-
-  if (hasDataset && event.datasetRecordId === undefined) {
-    throw new Error("datasetRecordId must be specified when using a dataset");
-  } else if (!hasDataset && event.datasetRecordId !== undefined) {
-    throw new Error(
-      "datasetRecordId cannot be specified when not using a dataset",
-    );
   }
 
   return event;
@@ -7122,7 +6956,7 @@ export class Experiment
       );
     }
 
-    event = validateAndSanitizeExperimentLogFullArgs(event, !!this.dataset);
+    event = validateAndSanitizeExperimentLogFullArgs(event);
     const span = this.startSpanImpl({ startTime: this.lastStartTime, event });
     this.lastStartTime = span.end();
     return span.id;
@@ -7366,18 +7200,6 @@ export class Experiment
    */
   async flush(): Promise<void> {
     return await this.state.bgLogger().flush();
-  }
-
-  /**
-   * @deprecated This function is deprecated. You can simply remove it from your code.
-   */
-  public async close(): Promise<string> {
-    debugLogger
-      .forState(this.state)
-      .warn(
-        "close is deprecated and will be removed in a future version of braintrust. It is now a no-op and can be removed",
-      );
-    return this.id;
   }
 }
 
@@ -8002,10 +7824,6 @@ export class SpanImpl implements Span {
     return await this._state.bgLogger().flush();
   }
 
-  public close(args?: EndSpanArgs): number {
-    return this.end(args);
-  }
-
   public state(): BraintrustState {
     return this._state;
   }
@@ -8086,9 +7904,7 @@ function splitLoggingData({
  *
  * You should not create `Dataset` objects directly. Instead, use the `braintrust.initDataset()` method.
  */
-export class Dataset<
-  IsLegacyDataset extends boolean = typeof DEFAULT_IS_LEGACY_DATASET,
-> extends ObjectFetcher<DatasetRecord<IsLegacyDataset>> {
+export class Dataset extends ObjectFetcher<DatasetRecord> {
   private readonly lazyMetadata: LazyValue<ProjectDatasetMetadata>;
   private readonly __braintrust_dataset_marker = true;
   private newRecords = 0;
@@ -8100,29 +7916,16 @@ export class Dataset<
     private state: BraintrustState,
     lazyMetadata: LazyValue<ProjectDatasetMetadata>,
     pinnedVersion?: string,
-    legacy?: IsLegacyDataset,
     _internal_btql?: Record<string, unknown>,
     pinState?: DatasetPinState,
   ) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const isLegacyDataset = (legacy ??
-      DEFAULT_IS_LEGACY_DATASET) as IsLegacyDataset;
-    if (isLegacyDataset) {
-      debugLogger
-        .forState(state)
-        .warn(
-          `Records will be fetched from this dataset in the legacy format, with the "expected" field renamed to "output". Please update your code to use "expected", and use \`braintrust.initDataset()\` with \`{ useOutput: false }\`, which will become the default in a future version of Braintrust.`,
-        );
-    }
     super(
       "dataset",
       pinnedVersion,
       (r: AnyDatasetRecord) =>
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        ensureDatasetRecord(
+        ensureNewDatasetRecord(
           enrichAttachments(r, this.state),
-          isLegacyDataset,
-        ) as WithTransactionId<DatasetRecord<IsLegacyDataset>>,
+        ) as WithTransactionId<DatasetRecord>,
       _internal_btql,
     );
     void this.__braintrust_dataset_marker;
@@ -8213,13 +8016,9 @@ export class Dataset<
 
   private validateEvent({
     metadata,
-    expected,
-    output,
     tags,
   }: {
     metadata?: Record<string, unknown>;
-    expected?: unknown;
-    output?: unknown;
     tags?: string[];
   }) {
     if (metadata !== undefined) {
@@ -8228,12 +8027,6 @@ export class Dataset<
           throw new Error("metadata keys must be strings");
         }
       }
-    }
-
-    if (expected !== undefined && output !== undefined) {
-      throw new Error(
-        "Only one of expected or output (deprecated) can be specified. Prefer expected.",
-      );
     }
 
     if (tags) {
@@ -8247,7 +8040,6 @@ export class Dataset<
     expected,
     metadata,
     tags,
-    output,
     origin,
     isMerge,
   }: {
@@ -8256,18 +8048,15 @@ export class Dataset<
     expected?: unknown;
     metadata?: Record<string, unknown>;
     tags?: string[];
-    output?: unknown;
     origin?: ObjectReference;
     isMerge?: boolean;
   }): LazyValue<BackgroundLogEvent> {
     return new LazyValue(async () => {
       const dataset_id = await this.id;
-      const expectedValue = expected === undefined ? output : expected;
-
       const args: BackgroundLogEvent = {
         id,
         input,
-        expected: expectedValue,
+        expected,
         tags,
         dataset_id,
         created: !isMerge ? new Date().toISOString() : undefined, //if we're merging/updating an event we will not add this ts
@@ -8298,7 +8087,6 @@ export class Dataset<
    * JSON-serializable type, but its keys must be strings.
    * @param event.origin (Optional) a reference to the source object this dataset record was derived from.
    * @param event.id (Optional) a unique identifier for the event. If you don't provide one, Braintrust will generate one for you.
-   * @param event.output: (Deprecated) The output of your application. Use `expected` instead.
    * @returns The `id` of the logged record.
    */
   public insert({
@@ -8307,7 +8095,6 @@ export class Dataset<
     metadata,
     tags,
     id,
-    output,
     origin,
   }: {
     readonly input?: unknown;
@@ -8315,10 +8102,9 @@ export class Dataset<
     readonly tags?: string[];
     readonly metadata?: Record<string, unknown>;
     readonly id?: string;
-    readonly output?: unknown;
     readonly origin?: ObjectReference;
   }): string {
-    this.validateEvent({ metadata, expected, output, tags });
+    this.validateEvent({ metadata, tags });
 
     const rowId = id || uuidv4();
     const args = this.createArgs(
@@ -8328,7 +8114,6 @@ export class Dataset<
         expected,
         metadata,
         tags,
-        output,
         origin,
         isMerge: false,
       }),
@@ -8365,7 +8150,7 @@ export class Dataset<
     readonly tags?: string[];
     readonly metadata?: Record<string, unknown>;
   }): string {
-    this.validateEvent({ metadata, expected, tags });
+    this.validateEvent({ metadata, tags });
 
     const args = this.createArgs(
       deepCopyEvent({
@@ -8559,18 +8344,6 @@ export class Dataset<
    */
   async flush(): Promise<void> {
     return await this.state.bgLogger().flush();
-  }
-
-  /**
-   * @deprecated This function is deprecated. You can simply remove it from your code.
-   */
-  public async close(): Promise<string> {
-    debugLogger
-      .forState(this.state)
-      .warn(
-        "close is deprecated and will be removed in a future version of braintrust. It is now a no-op and can be removed",
-      );
-    return this.id;
   }
 
   public static isDataset(data: unknown): data is Dataset {
@@ -9337,7 +9110,7 @@ export class RemoteEvalParameters<
   }
 }
 
-export type AnyDataset = Dataset<boolean>;
+export type AnyDataset = Dataset;
 
 /**
  * Summary of a score's performance.

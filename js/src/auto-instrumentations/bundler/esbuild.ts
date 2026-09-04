@@ -7,10 +7,3 @@ export function braintrustEsbuildPlugin(
 ): EsbuildPlugin {
   return unplugin.esbuild(options);
 }
-
-export type EsbuildPluginOptions = BundlerPluginOptions;
-
-/**
- * @deprecated Use {@link braintrustEsbuildPlugin} instead.
- */
-export const esbuildPlugin = unplugin.esbuild;

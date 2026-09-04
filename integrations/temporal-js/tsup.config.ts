@@ -7,7 +7,6 @@ export default defineConfig([
     outDir: "dist",
     external: [
       "braintrust",
-      "braintrust/util",
       "@braintrust/temporal/workflow-interceptors",
       "@temporalio/activity",
       "@temporalio/client",

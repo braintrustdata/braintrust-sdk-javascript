@@ -75,7 +75,7 @@ interface MastraTracingEvent {
 }
 
 /** Subset of the `ObservabilityExporter` contract from `@mastra/core`. */
-export interface MastraObservabilityExporter {
+interface MastraObservabilityExporter {
   name: string;
   init?(options: unknown): void;
   __setLogger?(logger: unknown): void;
@@ -328,11 +328,12 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
       }
     }
 
+    const { parent: _ignoredParent, ...publicArgs } = args;
     const span = parentRecord
-      ? parentRecord.span.startSpan(args)
+      ? parentRecord.span.startSpan(publicArgs)
       : this.capturedParent
-        ? this.capturedParent.startSpan(args)
-        : startSpan(args);
+        ? this.capturedParent.startSpan(publicArgs)
+        : startSpan(publicArgs);
 
     const record: SpanRecord = { span, hasLoggedInput: false };
     this.logPayload(record, exported);
@@ -407,41 +408,4 @@ export class BraintrustObservabilityExporter implements MastraObservabilityExpor
 
 function logExporterError(err: unknown): void {
   debugLogger.warn("Mastra exporter failure:", err);
-}
-
-/**
- * @deprecated Mastra is now instrumented through its own `ObservabilityExporter`
- * contract instead of by wrapping the agent. This function does nothing and
- * will be removed in the next major release.
- *
- * To capture Mastra spans in Braintrust, do one of:
- *
- * - **Auto-instrumentation**: run your app with
- *   `node --import braintrust/hook.mjs`. The loader installs
- *   `BraintrustObservabilityExporter` into every `new Mastra(...)`
- *   automatically.
- * - **Manual wiring**: pass the exporter yourself:
- *
- *   ```ts
- *   import { Mastra } from "@mastra/core";
- *   import { Observability } from "@mastra/observability";
- *   import { BraintrustObservabilityExporter } from "braintrust";
- *
- *   const mastra = new Mastra({
- *     observability: new Observability({
- *       configs: {
- *         default: {
- *           serviceName: "my-service",
- *           exporters: [new BraintrustObservabilityExporter()],
- *         },
- *       },
- *     }),
- *   });
- *   ```
- */
-export function wrapMastraAgent<T>(
-  agent: T,
-  _options?: { name?: string; span_name?: string },
-): T {
-  return agent;
 }

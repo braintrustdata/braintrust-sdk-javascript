@@ -139,7 +139,20 @@ export function logOtelVersions(version: "v1" | "v2" | "parent"): void {
  * which is critical for testing with different OpenTelemetry versions.
  */
 export function createOtelAliases(cwd: string): Record<string, string> {
+  const repositoryRoot =
+    detectOtelVersion(cwd) === "parent"
+      ? path.resolve(cwd, "../..")
+      : path.resolve(cwd, "../../..");
   return {
+    "@braintrust/otel": path.resolve(
+      repositoryRoot,
+      "integrations/otel-js/src/index.ts",
+    ),
+    "braintrust/instrumentation": path.resolve(
+      repositoryRoot,
+      "js/src/instrumentation/index.ts",
+    ),
+    braintrust: path.resolve(repositoryRoot, "js/src/node/index.ts"),
     "@opentelemetry/api": path.resolve(cwd, "node_modules/@opentelemetry/api"),
     "@opentelemetry/core": path.resolve(
       cwd,

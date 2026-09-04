@@ -1,25 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  mockInternalGetGlobalState,
-  mockStartSpan,
-  mockWithCurrent,
-  mockCurrentSpanStoreSymbol,
-} = vi.hoisted(() => ({
-  mockCurrentSpanStoreSymbol: Symbol.for("braintrust.currentSpanStore"),
-  mockInternalGetGlobalState: vi.fn(() => undefined),
-  mockStartSpan: vi.fn(),
-  mockWithCurrent: vi.fn((_span: unknown, callback: () => unknown) =>
-    callback(),
-  ),
-}));
+const { mockInternalGetGlobalState, mockStartSpan, mockWithCurrent } =
+  vi.hoisted(() => ({
+    mockInternalGetGlobalState: vi.fn(() => undefined),
+    mockStartSpan: vi.fn(),
+    mockWithCurrent: vi.fn((_span: unknown, callback: () => unknown) =>
+      callback(),
+    ),
+  }));
 
 vi.mock("../../isomorph", () => ({
   default: { newTracingChannel: vi.fn() },
 }));
 
 vi.mock("../../logger", () => ({
-  BRAINTRUST_CURRENT_SPAN_STORE: mockCurrentSpanStoreSymbol,
   _internalGetGlobalState: () => mockInternalGetGlobalState(),
   startSpan: (...args: unknown[]) => (mockStartSpan as any)(...args),
   withCurrent: (...args: unknown[]) => (mockWithCurrent as any)(...args),

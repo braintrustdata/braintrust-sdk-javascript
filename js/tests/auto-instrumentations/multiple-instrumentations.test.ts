@@ -101,7 +101,7 @@ describe("Multiple Instrumentations", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -110,7 +110,7 @@ describe("Multiple Instrumentations", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -169,7 +169,7 @@ describe("Multiple Instrumentations", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -178,7 +178,7 @@ describe("Multiple Instrumentations", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -234,7 +234,7 @@ describe("Multiple Instrumentations", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -243,7 +243,7 @@ describe("Multiple Instrumentations", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -314,7 +314,7 @@ describe("Multiple Instrumentations", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -323,7 +323,7 @@ describe("Multiple Instrumentations", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -402,7 +402,7 @@ describe("Multiple Instrumentations", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       // Add custom instrumentation config
@@ -427,7 +427,7 @@ describe("Multiple Instrumentations", () => {
         outfile,
         format: "esm",
         plugins: [
-          esbuildPlugin({
+          braintrustEsbuildPlugin({
             browser: false,
             instrumentations: [customConfig],
           }),
@@ -488,7 +488,7 @@ describe("Multiple Instrumentations", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -497,7 +497,7 @@ describe("Multiple Instrumentations", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,

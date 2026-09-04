@@ -1,4 +1,4 @@
-import { mergeDicts } from "braintrust/util";
+import { mergeDicts } from "../../../../js/util/object_util";
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
 import { LogsRequest } from "./types";
 

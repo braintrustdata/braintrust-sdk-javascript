@@ -39,10 +39,3 @@ export function braintrustVitePlugin(
     ...(Array.isArray(transformPlugin) ? transformPlugin : [transformPlugin]),
   ];
 }
-
-export type VitePluginOptions = BundlerPluginOptions;
-
-/**
- * @deprecated Use {@link braintrustVitePlugin} instead.
- */
-export const vitePlugin = unplugin.vite;

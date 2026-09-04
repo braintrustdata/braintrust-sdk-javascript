@@ -2,7 +2,6 @@ const {
   Eval,
   JSONAttachment,
   Prompt,
-  _exportsForTestingOnly,
   currentSpan,
   initLogger,
   startSpan,
@@ -40,10 +39,8 @@ test("jest exposes the core braintrust runtime surface in CommonJS", () => {
     "initLogger",
     "currentSpan",
     "startSpan",
-    "log",
     "flush",
     "initDataset",
-    "initExperiment",
     "loadPrompt",
     "Prompt",
     "Eval",
@@ -53,18 +50,10 @@ test("jest exposes the core braintrust runtime surface in CommonJS", () => {
     "Attachment",
     "invoke",
     "initFunction",
-    "Project",
-    "PromptBuilder",
-    "IDGenerator",
+    "projects",
     "BraintrustState",
     "login",
-    "_exportsForTestingOnly",
   ]);
-});
-
-test("jest resolves the node build in CommonJS mode", () => {
-  expect(_exportsForTestingOnly).toBeDefined();
-  expect(_exportsForTestingOnly.isomorph.buildType).toBe("node");
 });
 
 test("jest renders mustache prompts and fails clearly for nunjucks without the extra package", () => {

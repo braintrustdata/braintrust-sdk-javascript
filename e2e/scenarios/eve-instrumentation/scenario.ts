@@ -80,7 +80,7 @@ async function main() {
     );
     // Eve emits session.waiting just before its durable session snapshot is
     // visible to the continuation route.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     const followUp = await fetch(
       `${baseUrl}/eve/v1/session/${body.sessionId}`,
       {

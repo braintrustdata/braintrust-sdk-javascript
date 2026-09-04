@@ -1,4 +1,4 @@
-import { initExperiment, type Experiment } from "../../logger";
+import { init, type Experiment } from "../../logger";
 import { runTracedEval } from "../shared/traced-eval";
 import { summarizeAndFlush } from "../shared/flush";
 import type {
@@ -40,7 +40,8 @@ export function initNodeTestSuite(config: NodeTestSuiteConfig): NodeTestSuite {
     const experimentName =
       config.experimentName ||
       `${config.projectName}-${new Date().toISOString()}`;
-    experiment = initExperiment(config.projectName, {
+    experiment = init({
+      project: config.projectName,
       experiment: experimentName,
     });
     return experiment;

@@ -1,10 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { CompiledPrompt } from "../logger";
-import {
-  LEGACY_CACHED_HEADER,
-  parseCachedHeader,
-  X_CACHED_HEADER,
-} from "../openai-utils";
 import { responsesProxy } from "./oai_responses";
 import type {
   ArgsOf,
@@ -72,7 +67,7 @@ globalThis.__inherited_braintrust_wrap_openai = wrapOpenAI;
 
 type OpenAILike = OpenAIV4Client;
 
-export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
+function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const typedOpenai = openai as OpenAIV4Client;
   // Recover `this` for fallback methods so private fields and internal slots
@@ -237,8 +232,6 @@ function wrapBetaChatCompletionStream<P extends OpenAIChatCreateParams, C>(
     );
   };
 }
-
-export { LEGACY_CACHED_HEADER, parseCachedHeader, X_CACHED_HEADER };
 
 function wrapChatCompletion<
   P extends OpenAIChatCreateParams,

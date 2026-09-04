@@ -32,13 +32,13 @@ _exportsForTestingOnly.setInitialTestState();
 await _exportsForTestingOnly.simulateLoginForTests();
 _exportsForTestingOnly.useTestBackgroundLogger();
 
-// ✅ STEP 2: Mock initDataset and initExperiment to avoid network calls
+// ✅ STEP 2: Mock initDataset and init to avoid network calls
 vi.spyOn(logger, "initDataset").mockReturnValue({
   insert: vi.fn(() => "test-example-id"),
 } as any);
 
-const initExperimentSpy = vi
-  .spyOn(logger, "initExperiment")
+const initSpy = vi
+  .spyOn(logger, "init")
   .mockImplementation((projectOrOptions: string | any, options?: any) => {
     const experimentOptions =
       typeof projectOrOptions === "string" ? options : projectOrOptions;
@@ -451,11 +451,11 @@ describe("Project selection", () => {
   }
 
   beforeEach(() => {
-    initExperimentSpy.mockClear();
+    initSpy.mockClear();
     _resetContextManager();
   });
 
-  test("wrapVitest passes projectId to initExperiment", async () => {
+  test("wrapVitest passes projectId to init", async () => {
     const bt = wrapVitest(makeFakeVitestMethods(), {
       projectId: "project-id-123",
       displaySummary: false,
@@ -465,7 +465,7 @@ describe("Project selection", () => {
       bt.test("uses project id", async () => undefined);
     });
 
-    expect(initExperimentSpy).toHaveBeenCalledWith(
+    expect(initSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         projectId: "project-id-123",
         experiment: expect.stringMatching(/^project id suite-/),
@@ -484,15 +484,12 @@ describe("Project selection", () => {
       bt.test("uses project id", async () => undefined);
     });
 
-    expect(initExperimentSpy).toHaveBeenCalledWith(
+    expect(initSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         projectId: "project-id-123",
       }),
     );
-    expect(initExperimentSpy).not.toHaveBeenCalledWith(
-      "project-name",
-      expect.anything(),
-    );
+    expect(initSpy).not.toHaveBeenCalledWith("project-name", expect.anything());
   });
 
   test("wrapVitest preserves projectName behavior when projectId is absent", async () => {
@@ -505,9 +502,9 @@ describe("Project selection", () => {
       bt.test("uses project name", async () => undefined);
     });
 
-    expect(initExperimentSpy).toHaveBeenCalledWith(
-      "project-name",
+    expect(initSpy).toHaveBeenCalledWith(
       expect.objectContaining({
+        project: "project-name",
         experiment: expect.stringMatching(/^project name suite-/),
       }),
     );
@@ -522,9 +519,9 @@ describe("Project selection", () => {
       bt.test("uses suite name", async () => undefined);
     });
 
-    expect(initExperimentSpy).toHaveBeenCalledWith(
-      "fallback suite",
+    expect(initSpy).toHaveBeenCalledWith(
       expect.objectContaining({
+        project: "fallback suite",
         experiment: expect.stringMatching(/^fallback suite-/),
       }),
     );

@@ -2,15 +2,15 @@ import { expect, test, describe } from "vitest";
 import {
   serializeHeaderValue,
   deserializeHeaderValue,
-  BRAINTRUST_SPAN_HEADER,
-  BRAINTRUST_WORKFLOW_SPAN_HEADER,
-  BRAINTRUST_WORKFLOW_SPAN_ID_HEADER,
+  deserializeTraceContext,
+  serializeTraceContext,
+  withParentSpanId,
 } from "./utils";
 import {
   SpanComponentsV3,
   SpanComponentsV4,
   SpanObjectTypeV3,
-} from "braintrust/util";
+} from "../../../js/util";
 import {
   BraintrustTemporalPlugin,
   createBraintrustTemporalPlugin,
@@ -69,12 +69,29 @@ describe("temporal header utilities", () => {
     }
   });
 
-  test("header constants are defined", () => {
-    expect(BRAINTRUST_SPAN_HEADER).toBe("_braintrust-span");
-    expect(BRAINTRUST_WORKFLOW_SPAN_HEADER).toBe("_braintrust-workflow-span");
-    expect(BRAINTRUST_WORKFLOW_SPAN_ID_HEADER).toBe(
-      "_braintrust-workflow-span-id",
+  test("round-trips W3C trace context through Temporal payloads", () => {
+    const context = {
+      traceparent: "00-12345678901234567890123456789012-1234567890123456-01",
+      tracestate: "vendor=value",
+      baggage: "braintrust.parent=project_name%3Atest",
+    };
+    expect(deserializeTraceContext(serializeTraceContext(context))).toEqual(
+      context,
     );
+  });
+
+  test("reparents W3C context to the workflow span", () => {
+    const context = withParentSpanId(
+      {
+        traceparent: "00-12345678901234567890123456789012-1234567890123456-01",
+        baggage: "braintrust.parent=project_name%3Atest",
+      },
+      "abcdefabcdefabcd",
+    );
+    expect(context).toEqual({
+      traceparent: "00-12345678901234567890123456789012-abcdefabcdefabcd-01",
+      baggage: "braintrust.parent=project_name%3Atest",
+    });
   });
 });
 

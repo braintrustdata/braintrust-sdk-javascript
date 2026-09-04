@@ -46,8 +46,7 @@ export function registerInstrumentationConsumers(
     registerAnthropicInstrumentation();
   }
 
-  // Support both 'aisdk' and legacy 'vercel' config keys
-  if (integrations.aisdk !== false && integrations.vercel !== false) {
+  if (integrations.aisdk !== false) {
     registerAISDKInstrumentation();
   }
 
@@ -59,7 +58,7 @@ export function registerInstrumentationConsumers(
     registerCloudflareThinkInstrumentation();
   }
 
-  if (integrations.cursorSDK !== false && integrations.cursor !== false) {
+  if (integrations.cursorSDK !== false) {
     registerCursorSDKInstrumentation();
   }
 
@@ -67,8 +66,7 @@ export function registerInstrumentationConsumers(
     registerOpenAIAgentsInstrumentation();
   }
 
-  // Support both 'googleGenAI' and legacy 'google' config keys
-  if (integrations.googleGenAI !== false && integrations.google !== false) {
+  if (integrations.googleGenAI !== false) {
     registerGoogleGenAIInstrumentation();
   }
 
@@ -109,11 +107,7 @@ export function registerInstrumentationConsumers(
     registerGroqInstrumentation();
   }
 
-  if (
-    integrations.bedrock !== false &&
-    integrations.awsBedrock !== false &&
-    integrations.awsBedrockRuntime !== false
-  ) {
+  if (integrations.awsBedrockRuntime !== false) {
     registerBedrockRuntimeInstrumentation();
   }
 

@@ -20,7 +20,7 @@ import type { Options } from "tsup";
  * ## How It Works
  *
  * 1. Downloads the latest published version from npm
- * 2. Extracts the .d.ts files for each entrypoint (main, browser, util)
+ * 2. Extracts the .d.ts files for each built entrypoint
  * 3. Parses both published and current .d.ts files using TypeScript Compiler API
  * 4. Compares exported symbols (functions, classes, interfaces, types, etc.)
  * 5. Fails if breaking changes are detected in non-major version bumps
@@ -77,10 +77,10 @@ async function getEntrypointsFromTsupConfig(): Promise<
         entrypoints.push({ name, typesPath });
       }
     } else if (typeof entry === "object") {
-      // entry is a record like { main: 'src/index.ts' }
-      for (const [key, entryFile] of Object.entries(entry)) {
+      // Object entry keys determine the emitted path, including nested paths.
+      for (const key of Object.keys(entry)) {
         const name = key;
-        const typesPath = getTypesPath(String(entryFile), outDir);
+        const typesPath = path.join(outDir, `${key}.d.ts`);
         entrypoints.push({ name, typesPath });
       }
     }
@@ -97,10 +97,8 @@ function getEntrypointName(entryFile: string, outDir: string): string {
 
   // Map common patterns to friendly names
   if (entryFile.includes("src/node/index.ts")) return "main";
-  if (entryFile.includes("src/browser/index.ts")) return "browser";
   if (entryFile.includes("src/edge-light/index.ts")) return "edge-light";
   if (entryFile.includes("src/workerd/index.ts")) return "workerd";
-  if (entryFile.includes("util/index.ts")) return "util";
 
   // Default to basename
   return basename;
@@ -2951,13 +2949,14 @@ describe("API Compatibility", () => {
   test("keeps public declarations free of expanded Zod schema graphs", () => {
     const declarationRoot = path.join(__dirname, "..", "..");
     const publicDeclarationPaths = [
-      "dist/index.d.ts",
-      "dist/browser.d.ts",
-      "util/dist/index.d.ts",
+      ...new Set(ENTRYPOINTS.map(({ typesPath }) => typesPath)),
     ];
 
     for (const declarationTypesPath of publicDeclarationPaths) {
       const declarationPath = path.join(declarationRoot, declarationTypesPath);
+      if (!fs.existsSync(declarationPath)) {
+        continue;
+      }
       const declaration = fs.readFileSync(declarationPath, "utf8");
 
       expect(declaration).not.toMatch(/z\.infer<typeof/);
@@ -2978,22 +2977,8 @@ describe("API Compatibility", () => {
       "promptDefinitionSchema",
       "promptDefinitionWithToolsSchema",
     ]) {
-      expect(mainDeclaration).toMatch(
-        new RegExp(`declare const ${schemaName}: z\\.ZodType<`),
-      );
-    }
-
-    const utilDeclaration = fs.readFileSync(
-      path.join(declarationRoot, "util/dist/index.d.ts"),
-      "utf8",
-    );
-    for (const schemaName of [
-      "spanComponentsV3Schema",
-      "spanComponentsV4Schema",
-      "spanObjectTypeV3EnumSchema",
-    ]) {
-      expect(utilDeclaration).toMatch(
-        new RegExp(`declare const ${schemaName}: z\\.ZodType<`),
+      expect(mainDeclaration).not.toMatch(
+        new RegExp(`(?:declare|export) const ${schemaName}(?::|\\s*=)`),
       );
     }
   });

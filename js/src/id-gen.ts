@@ -136,15 +136,10 @@ export function resolveUseLegacyUuidIds(): boolean {
  * This eliminates global state and makes tests parallelizable.
  * Each caller gets their own generator instance.
  *
- * Honors an explicitly-installed `globalThis.BRAINTRUST_ID_GENERATOR` (e.g. set
- * by `@braintrust/otel`'s `setupOtelCompat()`). Otherwise it defaults to
- * OpenTelemetry-compatible hex IDs, falling back to legacy UUID IDs when
- * BRAINTRUST_LEGACY_IDS is set.
+ * Defaults to OpenTelemetry-compatible hex IDs, falling back to legacy UUID
+ * IDs when BRAINTRUST_LEGACY_IDS is set.
  */
 export function getIdGenerator(): IDGenerator {
-  if (globalThis.BRAINTRUST_ID_GENERATOR !== undefined) {
-    return new globalThis.BRAINTRUST_ID_GENERATOR();
-  }
   return resolveUseLegacyUuidIds()
     ? new UUIDGenerator()
     : new OTELIDGenerator();

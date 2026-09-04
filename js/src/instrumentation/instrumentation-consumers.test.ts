@@ -128,7 +128,7 @@ const integrationCases: Array<
 > = [
   ["aisdk", [registrations.aiSDK]],
   ["anthropic", [registrations.anthropic]],
-  ["bedrock", [registrations.bedrockRuntime]],
+  ["awsBedrockRuntime", [registrations.bedrockRuntime]],
   ["claudeAgentSDK", [registrations.claudeAgentSDK]],
   ["cloudflareAgents", [registrations.cloudflareAgents]],
   ["cloudflareAIChat", [registrations.cloudflareAIChat]],
@@ -187,15 +187,8 @@ describe("registerInstrumentationConsumers", () => {
     },
   );
 
-  it.each([
-    ["vercel", registrations.aiSDK],
-    ["google", registrations.googleGenAI],
-    ["cursor", registrations.cursorSDK],
-    ["awsBedrock", registrations.bedrockRuntime],
-    ["awsBedrockRuntime", registrations.bedrockRuntime],
-    ["langgraph", registrations.langChain],
-  ] as const)(
-    "honors the legacy or related %s disable flag",
+  it.each([["langgraph", registrations.langChain]] as const)(
+    "honors the related %s disable flag",
     (integration, register) => {
       registerInstrumentationConsumers({
         integrations: { [integration]: false },

@@ -63,7 +63,7 @@ describe("Function Behavior Preservation", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -72,7 +72,7 @@ describe("Function Behavior Preservation", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -131,7 +131,7 @@ describe("Function Behavior Preservation", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -140,7 +140,7 @@ describe("Function Behavior Preservation", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -178,7 +178,7 @@ describe("Function Behavior Preservation", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -187,7 +187,7 @@ describe("Function Behavior Preservation", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -230,7 +230,7 @@ describe("Function Behavior Preservation", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -239,7 +239,7 @@ describe("Function Behavior Preservation", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -284,7 +284,7 @@ describe("Function Behavior Preservation", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -293,7 +293,7 @@ describe("Function Behavior Preservation", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -338,7 +338,7 @@ describe("Function Behavior Preservation", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -347,7 +347,7 @@ describe("Function Behavior Preservation", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -392,7 +392,7 @@ describe("Function Behavior Preservation", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -401,7 +401,7 @@ describe("Function Behavior Preservation", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -438,7 +438,7 @@ describe("Function Behavior Preservation", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -447,7 +447,7 @@ describe("Function Behavior Preservation", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,
@@ -489,7 +489,7 @@ describe("Function Behavior Preservation", () => {
 
       fs.writeFileSync(entryPoint, testCode);
 
-      const { esbuildPlugin } =
+      const { braintrustEsbuildPlugin } =
         await import("../../src/auto-instrumentations/bundler/esbuild.js");
 
       await esbuild.build({
@@ -498,7 +498,7 @@ describe("Function Behavior Preservation", () => {
         write: true,
         outfile,
         format: "esm",
-        plugins: [esbuildPlugin({ browser: false })],
+        plugins: [braintrustEsbuildPlugin({ browser: false })],
         logLevel: "error",
         absWorkingDir: fixturesDir,
         preserveSymlinks: true,

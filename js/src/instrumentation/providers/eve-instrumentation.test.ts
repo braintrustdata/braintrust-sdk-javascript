@@ -93,9 +93,9 @@ describe("braintrustEveInstrumentation", () => {
     ]);
   });
 
-  it("exports only the Eve instrumentation provider API", () => {
-    expect(braintrustExports.braintrustEveInstrumentation).toBe(
-      braintrustEveInstrumentation,
+  it("exports the Eve provider only from the instrumentation entrypoint", () => {
+    expect(braintrustExports).not.toHaveProperty(
+      "braintrustEveInstrumentation",
     );
     expect(instrumentationExports.braintrustEveInstrumentation).toBe(
       braintrustEveInstrumentation,

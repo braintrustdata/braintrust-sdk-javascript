@@ -7,7 +7,7 @@ import { type BraintrustState, _internalGetGlobalState } from "./logger";
  * Configuration for a sandbox runtime.
  * @internal
  */
-export interface SandboxConfig {
+interface SandboxConfig {
   /** The sandbox provider. Currently only "modal" is supported. */
   provider: "modal";
   /** Reference to the sandbox snapshot. */
@@ -18,7 +18,7 @@ export interface SandboxConfig {
  * Options for registering a sandbox function.
  * @internal
  */
-export interface RegisterSandboxOptions {
+interface RegisterSandboxOptions {
   /** Group name for the sandbox functions. */
   name: string;
   /** Name of the project to register the sandbox in. */
@@ -47,7 +47,7 @@ export interface RegisterSandboxOptions {
  * Result of registering a sandbox.
  * @internal
  */
-export interface RegisterSandboxResult {
+interface RegisterSandboxResult {
   /** Project ID the sandbox is registered in. */
   projectId: string;
   /** Registered eval functions discovered from this sandbox. */

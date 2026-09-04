@@ -1,4 +1,5 @@
-import { braintrustFlueInstrumentation, flush, initLogger } from "braintrust";
+import { flush, initLogger } from "braintrust";
+import { braintrustFlueInstrumentation } from "braintrust/instrumentation";
 import { Hono } from "hono";
 
 const runtimePackageName =

@@ -128,11 +128,15 @@ test(
           phase: "child",
           ok: true,
         });
-        expect(childSpan?.span.parentIds).toEqual([]);
-        expect(nestedChild?.span.parentIds).toEqual([]);
-        expect(nestedGrandchild?.span.parentIds).toEqual([]);
-        expect(nestedGrandchild?.output).toBeUndefined();
-        expect(currentSpan?.output).toBeUndefined();
+        expect(childSpan?.span.parentIds).toEqual([parentSpan?.span.id]);
+        expect(nestedChild?.span.parentIds).toEqual([nestedParent?.span.id]);
+        expect(nestedGrandchild?.span.parentIds).toEqual([
+          nestedChild?.span.id,
+        ]);
+        expect(nestedGrandchild?.output).toEqual({ depth: 3 });
+        expect(currentSpan?.output).toMatchObject({
+          observedSpanId: currentSpan?.span.id,
+        });
 
         const requests = requestsAfter(
           cursor,

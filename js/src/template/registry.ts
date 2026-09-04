@@ -97,7 +97,7 @@ class TemplatePluginRegistry {
   }
 }
 
-export const templateRegistry = new TemplatePluginRegistry();
+const templateRegistry = new TemplatePluginRegistry();
 
 /**
  * Register a template plugin and optionally activate it

@@ -2,8 +2,8 @@ import { toLoggedError } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import type { IsoChannelHandlers } from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
-import { startSpan as startBaseSpan } from "../../logger";
-import type { Span, StartSpanArgs } from "../../logger";
+import { _internalStartSpan as startBaseSpan } from "../../logger";
+import type { Span } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
@@ -26,6 +26,8 @@ import type {
   OpenAICodexUsage,
   OpenAICodexWebSearchItem,
 } from "../../vendor-sdk-types/openai-codex";
+
+type InternalStartSpanArgs = NonNullable<Parameters<typeof startBaseSpan>[0]>;
 
 type CodexRunState = {
   activeLlmSpan?: CodexLlmSpanState;
@@ -565,7 +567,7 @@ async function itemSpanArgs(
   item: OpenAICodexThreadItem,
 ): Promise<
   | {
-      start: StartSpanArgs;
+      start: InternalStartSpanArgs;
       end: Parameters<Span["log"]>[0];
     }
   | undefined

@@ -47,11 +47,11 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     },
     { integrations: ["anthropic"], configs: anthropicConfigs },
     {
-      integrations: ["bedrock", "awsBedrock", "awsBedrockRuntime"],
+      integrations: ["awsBedrockRuntime"],
       configs: bedrockRuntimeConfigs,
     },
     {
-      integrations: ["aisdk", "vercel"],
+      integrations: ["aisdk"],
       configs: aiSDKConfigs,
     },
     {
@@ -70,13 +70,13 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       integrations: ["cloudflareThink"],
       configs: cloudflareThinkConfigs,
     },
-    { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
+    { integrations: ["cursorSDK"], configs: cursorSDKConfigs },
     {
       integrations: ["openAIAgents"],
       configs: openAIAgentsCoreConfigs,
     },
     {
-      integrations: ["google", "googleGenAI"],
+      integrations: ["googleGenAI"],
       configs: googleGenAIConfigs,
     },
     {
