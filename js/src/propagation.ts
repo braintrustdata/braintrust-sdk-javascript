@@ -26,7 +26,7 @@ const DEFAULT_TRACE_FLAGS = "01";
  * not sampled), kept raw so any future flag bits survive a parse -> format
  * round trip without per-bit handling.
  */
-export interface ParsedTraceparent {
+interface ParsedTraceparent {
   traceId: string;
   spanId: string;
   traceFlags: string;

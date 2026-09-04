@@ -525,7 +525,7 @@ export function callEvaluatorData<
   };
 }
 
-export type SpanContext = {
+type SpanContext = {
   currentSpan: typeof currentSpan;
   startSpan: typeof startSpan;
   withCurrent: typeof withCurrent;

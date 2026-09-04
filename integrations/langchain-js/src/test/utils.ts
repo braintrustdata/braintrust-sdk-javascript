@@ -1,4 +1,4 @@
-import { mergeDicts } from "../../../../js/util/object";
+import { mergeDicts } from "../../../../js/util/object_util";
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
 import { LogsRequest } from "./types";
 

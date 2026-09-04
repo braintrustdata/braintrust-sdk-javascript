@@ -16,7 +16,7 @@ type SpanRecord = any;
  * Fetcher for spans by root_span_id, using the ObjectFetcher pattern.
  * Handles pagination automatically via cursor-based iteration.
  */
-export class SpanFetcher extends ObjectFetcher<SpanRecord> {
+class SpanFetcher extends ObjectFetcher<SpanRecord> {
   constructor(
     objectType: "experiment" | "project_logs" | "playground_logs",
     private readonly _objectId: string,

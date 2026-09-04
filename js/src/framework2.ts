@@ -41,7 +41,7 @@ const currentFilename =
 
 type NameOrId = { name: string } | { id: string };
 
-export type CreateProjectOpts = NameOrId;
+type CreateProjectOpts = NameOrId;
 class ProjectBuilder {
   create(opts: CreateProjectOpts) {
     return new Project(opts);
@@ -49,7 +49,7 @@ class ProjectBuilder {
 }
 export const projects = new ProjectBuilder();
 
-export class Project {
+class Project {
   public readonly name?: string;
   public readonly id?: string;
   public tools: ToolBuilder;
@@ -142,7 +142,7 @@ export class Project {
   }
 }
 
-export class ToolBuilder {
+class ToolBuilder {
   private taskCounter = 0;
   constructor(private readonly project: Project) {}
 
@@ -212,7 +212,7 @@ export class ToolBuilder {
   }
 }
 
-export class ScorerBuilder {
+class ScorerBuilder {
   private taskCounter = 0;
   constructor(private readonly project: Project) {}
 
@@ -335,7 +335,7 @@ type Schema<Input, Output> = Partial<{
   returns: z.ZodSchema<Output>;
 }>;
 
-export type CodeOpts<
+type CodeOpts<
   Params,
   Returns,
   Fn extends GenericFunction<Params, Returns>,
@@ -376,7 +376,7 @@ type ScorerOptsUnion<
   | CodeOpts<Exact<Params, ScorerArgs<Output, Input>>, Returns, Fn>
   | ScorerPromptOpts;
 
-export type ScorerOpts<
+type ScorerOpts<
   Output,
   Input,
   Params,
@@ -561,7 +561,7 @@ interface PromptNoTrace {
   noTrace: boolean;
 }
 
-export type PromptOpts<
+type PromptOpts<
   HasId extends boolean,
   HasVersion extends boolean,
   HasTools extends boolean = true,
@@ -575,7 +575,7 @@ export type PromptOpts<
   (HasNoTrace extends true ? Partial<PromptNoTrace> : {}) &
   PromptDefinition;
 
-export class PromptBuilder {
+class PromptBuilder {
   constructor(private readonly project: Project) {}
 
   public create<

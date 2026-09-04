@@ -30,41 +30,40 @@ export type BraintrustStreamChunk =
   | { type: "start"; data: string }
   | { type: "done"; data: string };
 
-export const braintrustStreamChunkSchema: z.ZodType<BraintrustStreamChunk> =
-  z.union([
-    z.object({
-      type: z.literal("text_delta"),
-      data: z.string(),
-    }),
-    z.object({
-      type: z.literal("reasoning_delta"),
-      data: z.string(),
-    }),
-    z.object({
-      type: z.literal("json_delta"),
-      data: z.string(),
-    }),
-    z.object({
-      type: z.literal("error"),
-      data: z.string(),
-    }),
-    z.object({
-      type: z.literal("console"),
-      data: sseConsoleEventDataSchema,
-    }),
-    z.object({
-      type: z.literal("progress"),
-      data: sseProgressEventDataSchema,
-    }),
-    z.object({
-      type: z.literal("start"),
-      data: z.string(),
-    }),
-    z.object({
-      type: z.literal("done"),
-      data: z.string(),
-    }),
-  ]);
+const braintrustStreamChunkSchema: z.ZodType<BraintrustStreamChunk> = z.union([
+  z.object({
+    type: z.literal("text_delta"),
+    data: z.string(),
+  }),
+  z.object({
+    type: z.literal("reasoning_delta"),
+    data: z.string(),
+  }),
+  z.object({
+    type: z.literal("json_delta"),
+    data: z.string(),
+  }),
+  z.object({
+    type: z.literal("error"),
+    data: z.string(),
+  }),
+  z.object({
+    type: z.literal("console"),
+    data: sseConsoleEventDataSchema,
+  }),
+  z.object({
+    type: z.literal("progress"),
+    data: sseProgressEventDataSchema,
+  }),
+  z.object({
+    type: z.literal("start"),
+    data: z.string(),
+  }),
+  z.object({
+    type: z.literal("done"),
+    data: z.string(),
+  }),
+]);
 
 /**
  * A Braintrust stream. This is a wrapper around a ReadableStream of `BraintrustStreamChunk`,

@@ -75,7 +75,7 @@ interface MastraTracingEvent {
 }
 
 /** Subset of the `ObservabilityExporter` contract from `@mastra/core`. */
-export interface MastraObservabilityExporter {
+interface MastraObservabilityExporter {
   name: string;
   init?(options: unknown): void;
   __setLogger?(logger: unknown): void;

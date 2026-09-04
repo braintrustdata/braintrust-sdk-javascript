@@ -19,8 +19,8 @@ import {
 } from "braintrust";
 import {
   _exportsForTestingOnly,
-  TestBackgroundLogger,
-} from "../../../js/src/logger";
+  type TestBackgroundLogger,
+} from "@braintrust-test/logger";
 
 // Test helper functions for backward compatibility
 function getSpansMap(
