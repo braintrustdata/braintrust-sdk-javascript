@@ -104,6 +104,28 @@ If you use TypeScript or other transpilation plugins, place the Braintrust plugi
 
 For deeper details, see the [auto-instrumentation architecture docs](src/auto-instrumentations/README.md).
 
+### Console logging
+
+Console logging instrumentation is opt-in. It forwards console calls to a project logger while preserving the original console behavior:
+
+```typescript
+import { initLogger, instrumentConsole } from "braintrust";
+
+const logger = initLogger({ projectName: "my-project" });
+const stop = instrumentConsole({
+  logger,
+  levels: ["info", "warn", "error"],
+});
+
+console.info("Payment %s", "started");
+console.error("Payment failed", { paymentId: "pay_123" });
+
+// Stop forwarding console calls when they no longer need to be captured.
+stop();
+```
+
+By default, `instrumentConsole` captures `debug`, `info`, `warn`, `error`, `log`, `trace`, and failed `assert` calls. If `logger` is omitted, calls are sent to the current project logger.
+
 ### LangSmith tracing
 
 Braintrust supports LangSmith `>=0.3.30 <1.0.0`. LangSmith tracing remains authoritative: LangSmith must be enabled, and it continues exporting traces to LangSmith while Braintrust mirrors the same run lifecycle. This integration covers tracing only; LangSmith eval, Jest, and Vitest APIs are not instrumented.
