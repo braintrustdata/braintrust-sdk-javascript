@@ -7,6 +7,8 @@ description: Write, run, and debug end-to-end tests for the Braintrust SDK. Use 
 
 E2E tests run SDK scenarios in subprocesses against a mock Braintrust server. Prefer extending the closest existing scenario over inventing a new pattern.
 
+The goal for provider e2e tests is always to exercise actual models with real, valid input data, either live during recording or through cassettes populated with actual model responses. The mock Braintrust server captures telemetry; provider behavior should come from the real provider.
+
 Read first:
 
 - `e2e/README.md`
@@ -40,8 +42,10 @@ Try not to use specific test narrowing commands unless hunting down a very nasty
 
 Cassettes mock provider HTTP responses (OpenAI, Anthropic, ...) so external-provider scenarios replay in CI without provider keys. The harness starts a local `@braintrust/seinfeld` cassette server and points provider SDK base URL env vars at that server, so subprocesses and SDK-launched binaries are covered too.
 
+- Record cassettes by calling actual provider models through the real SDK. Do not hand-author model responses, embedding vectors, or usage data, or replace the provider with a synthetic HTTP server or fetch stub to make an e2e scenario pass. Synthetic responses belong in focused unit tests and do not satisfy provider e2e coverage.
+- Use real, valid inputs that the model can process. Multimodal scenarios need decodable images, audio, video, and documents; arbitrary bytes labeled with a media MIME type do not qualify.
+- If recording is blocked by missing credentials, model access, or provider availability, report the blocker and the remaining recording work. Do not fabricate cassette data or silently substitute synthetic provider responses.
 - Default to cheap provider models for real API calls and cassette recordings, unless the user explicitly requests otherwise. Choose a model that supports the behavior under test, and keep prompts, output limits, and media duration small while preserving meaningful coverage.
-
 - External-provider tests should thread `runContext: { variantKey: "...", originalScenarioDir }` into the scenario runner. In normal replay mode, missing cassette entries fail loudly instead of skipping or falling back to live providers. In `record` / `record-missing` mode, they run so new cassettes can be authored.
 - Thread `runContext: { variantKey: "...", originalScenarioDir }` into `runScenarioDir`/`runNodeScenarioDir`. Cassettes live at `e2e/scenarios/<name>/__cassettes__/<variantKey>.cassette.json` (parallel to `__snapshots__/`). Only set `runContext.cassette` explicitly for unusual cases, such as `cassette: false` on a non-provider mode inside an otherwise provider-backed scenario.
 - To re-record after changing a scenario:
