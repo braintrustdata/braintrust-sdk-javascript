@@ -9,8 +9,398 @@ interface TraceOptions {
   state: BraintrustState;
 }
 
+/** Inclusive span duration bounds, in seconds. */
+export interface SpanDurationFilter {
+  /** Minimum value of metrics.end - metrics.start. */
+  min?: number;
+  /** Maximum value of metrics.end - metrics.start. */
+  max?: number;
+}
+
+/**
+ * Filters supported by Trace.getSpans(). Different fields combine with AND.
+ *
+ * Empty name/spanType arrays match no spans. Empty metadata/duration objects
+ * add no constraints. Omit a field to leave it unfiltered.
+ */
+export interface SpanFilters {
+  /** Match spans whose span_attributes.type equals any of these. */
+  spanType?: string[];
+  /** Match spans whose span_attributes.name equals any of these. */
+  name?: string[];
+  /** Match spans based on whether they recorded an error. */
+  hasError?: boolean;
+  /**
+   * Match metadata keys at any depth without type coercion. `null` matches a
+   * null or missing path.
+   */
+  metadata?: Record<string, unknown>;
+  /** Bound how long the span took. */
+  duration?: SpanDurationFilter;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpanRecord = any;
+
+type BtqlExpression = Record<string, unknown>;
+
+const spanFilterFields = new Set([
+  "spanType",
+  "name",
+  "hasError",
+  "metadata",
+  "duration",
+]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+type MetadataLeaf = [path: string[], value: unknown];
+
+interface CompiledSpanFilters {
+  filters: SpanFilters;
+  metadataLeaves: MetadataLeaf[];
+}
+
+function validateMetadataValue(
+  value: unknown,
+  ancestors: WeakSet<object>,
+): void {
+  if (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "boolean"
+  ) {
+    return;
+  }
+  if (typeof value === "number") {
+    if (Number.isFinite(value)) {
+      return;
+    }
+    throw new Error("filters.metadata numbers must be finite");
+  }
+  if (typeof value !== "object" || value === null) {
+    throw new Error("filters.metadata values must be JSON-serializable");
+  }
+  if (!Array.isArray(value) && !isRecord(value)) {
+    throw new Error("filters.metadata values must be JSON-serializable");
+  }
+  if (ancestors.has(value)) {
+    throw new Error("filters.metadata must not contain cycles");
+  }
+  ancestors.add(value);
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index++) {
+      validateMetadataValue(value[index], ancestors);
+    }
+  } else {
+    if (Object.getOwnPropertySymbols(value).length > 0) {
+      throw new Error("filters.metadata keys must be strings");
+    }
+    for (const nested of Object.values(value)) {
+      validateMetadataValue(nested, ancestors);
+    }
+  }
+  ancestors.delete(value);
+}
+
+function compileMetadataLeaves(
+  metadata: Record<string, unknown>,
+  path: string[] = [],
+  ancestors = new WeakSet<object>(),
+): MetadataLeaf[] {
+  if (Object.getOwnPropertySymbols(metadata).length > 0) {
+    throw new Error("filters.metadata keys must be strings");
+  }
+  if (ancestors.has(metadata)) {
+    throw new Error("filters.metadata must not contain cycles");
+  }
+  ancestors.add(metadata);
+
+  const leaves: MetadataLeaf[] = [];
+  for (const [key, value] of Object.entries(metadata)) {
+    const childPath = [...path, key];
+    if (isRecord(value)) {
+      leaves.push(...compileMetadataLeaves(value, childPath, ancestors));
+    } else {
+      validateMetadataValue(value, ancestors);
+      leaves.push([childPath, value]);
+    }
+  }
+
+  ancestors.delete(metadata);
+  return leaves;
+}
+
+function normalizeSpanFilters(
+  filters: unknown,
+  spanType?: string[],
+): CompiledSpanFilters {
+  if (filters != null && !isRecord(filters)) {
+    throw new Error("filters must be an object");
+  }
+
+  const values: Record<string, unknown> = { ...(filters ?? {}) };
+  if (spanType !== undefined) {
+    if (
+      !Array.isArray(spanType) ||
+      !spanType.every((item: unknown) => typeof item === "string")
+    ) {
+      throw new Error("spanType must be an array of strings");
+    }
+    if (Object.hasOwn(values, "spanType")) {
+      throw new Error(
+        "spanType cannot be provided both directly and in filters",
+      );
+    }
+    // Preserve the original API's spanType: [] meaning of no constraint.
+    if (spanType.length > 0) {
+      values.spanType = spanType;
+    }
+  }
+
+  if (Object.keys(values).some((field) => !spanFilterFields.has(field))) {
+    throw new Error("Unsupported span filter fields");
+  }
+
+  for (const field of ["spanType", "name"] as const) {
+    if (Object.hasOwn(values, field)) {
+      const items = values[field];
+      if (
+        !Array.isArray(items) ||
+        !items.every((item: unknown) => typeof item === "string")
+      ) {
+        throw new Error(`filters.${field} must be an array of strings`);
+      }
+    }
+  }
+
+  if (
+    Object.hasOwn(values, "hasError") &&
+    typeof values.hasError !== "boolean"
+  ) {
+    throw new Error("filters.hasError must be a boolean");
+  }
+
+  let compiledMetadataLeaves: MetadataLeaf[] = [];
+  if (Object.hasOwn(values, "metadata")) {
+    if (!isRecord(values.metadata)) {
+      throw new Error("filters.metadata must be an object");
+    }
+    compiledMetadataLeaves = compileMetadataLeaves(values.metadata);
+  }
+
+  if (Object.hasOwn(values, "duration")) {
+    if (
+      !isRecord(values.duration) ||
+      Object.keys(values.duration).some(
+        (bound) => bound !== "min" && bound !== "max",
+      )
+    ) {
+      throw new Error("filters.duration must contain only min and/or max");
+    }
+    if (
+      Object.values(values.duration).some(
+        (bound) => typeof bound !== "number" || !Number.isFinite(bound),
+      )
+    ) {
+      throw new Error("filters.duration bounds must be finite numbers");
+    }
+  }
+
+  const normalized: SpanFilters = {};
+  if (Array.isArray(values.spanType)) {
+    normalized.spanType = values.spanType;
+  }
+  if (Array.isArray(values.name)) {
+    normalized.name = values.name;
+  }
+  if (typeof values.hasError === "boolean") {
+    normalized.hasError = values.hasError;
+  }
+  if (isRecord(values.metadata)) {
+    normalized.metadata = values.metadata;
+  }
+  if (isRecord(values.duration)) {
+    normalized.duration = {};
+    if (typeof values.duration.min === "number") {
+      normalized.duration.min = values.duration.min;
+    }
+    if (typeof values.duration.max === "number") {
+      normalized.duration.max = values.duration.max;
+    }
+  }
+  return { filters: normalized, metadataLeaves: compiledMetadataLeaves };
+}
+
+function metadataEqual(actual: unknown, expected: unknown): boolean {
+  if (expected === null) {
+    return actual === null || actual === undefined;
+  }
+  if (Array.isArray(expected)) {
+    return (
+      Array.isArray(actual) &&
+      actual.length === expected.length &&
+      expected.every((value, index) => metadataEqual(actual[index], value))
+    );
+  }
+  if (isRecord(expected)) {
+    if (!isRecord(actual)) {
+      return false;
+    }
+    const expectedKeys = Object.keys(expected);
+    const actualKeys = Object.keys(actual);
+    return (
+      actualKeys.length === expectedKeys.length &&
+      expectedKeys.every(
+        (key) =>
+          Object.hasOwn(actual, key) &&
+          metadataEqual(actual[key], expected[key]),
+      )
+    );
+  }
+  return actual === expected;
+}
+
+function matchesSpanFilters(
+  span: SpanData,
+  compiledFilters: CompiledSpanFilters,
+): boolean {
+  const { filters, metadataLeaves } = compiledFilters;
+  if (
+    filters.spanType !== undefined &&
+    !filters.spanType.includes(span.span_attributes?.type ?? "")
+  ) {
+    return false;
+  }
+  if (
+    filters.name !== undefined &&
+    !filters.name.includes(span.span_attributes?.name ?? "")
+  ) {
+    return false;
+  }
+  if (
+    filters.hasError !== undefined &&
+    (span.error !== null && span.error !== undefined) !== filters.hasError
+  ) {
+    return false;
+  }
+
+  for (const [path, expected] of metadataLeaves) {
+    let actual: unknown = span.metadata;
+    for (const key of path) {
+      actual =
+        isRecord(actual) && Object.hasOwn(actual, key)
+          ? actual[key]
+          : undefined;
+    }
+    if (!metadataEqual(actual, expected)) {
+      return false;
+    }
+  }
+
+  if (filters.duration && Object.keys(filters.duration).length > 0) {
+    const metrics = span.metrics;
+    const start = isRecord(metrics) ? metrics.start : undefined;
+    const end = isRecord(metrics) ? metrics.end : undefined;
+    if (
+      typeof start !== "number" ||
+      !Number.isFinite(start) ||
+      typeof end !== "number" ||
+      !Number.isFinite(end)
+    ) {
+      return false;
+    }
+    const elapsed = end - start;
+    if (filters.duration.min !== undefined && elapsed < filters.duration.min) {
+      return false;
+    }
+    if (filters.duration.max !== undefined && elapsed > filters.duration.max) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function btqlComparison(
+  op: string,
+  name: string[],
+  value: unknown,
+): BtqlExpression {
+  return {
+    op,
+    left: { op: "ident", name },
+    right: { op: "literal", value },
+  };
+}
+
+function btqlNullCheck(op: string, name: string[]): BtqlExpression {
+  return { op, expr: { op: "ident", name } };
+}
+
+function spanFilterClauses(
+  compiledFilters: CompiledSpanFilters,
+): BtqlExpression[] {
+  const { filters, metadataLeaves } = compiledFilters;
+  const children: BtqlExpression[] = [];
+  for (const [field, attribute] of [
+    ["spanType", "type"],
+    ["name", "name"],
+  ] as const) {
+    const values = filters[field];
+    if (values !== undefined) {
+      // BTQL rejects IN []; an empty set of alternatives is always false.
+      children.push(
+        values.length > 0
+          ? btqlComparison("in", ["span_attributes", attribute], values)
+          : { op: "literal", value: false },
+      );
+    }
+  }
+
+  if (filters.hasError !== undefined) {
+    children.push(
+      btqlNullCheck(filters.hasError ? "isnotnull" : "isnull", ["error"]),
+    );
+  }
+
+  for (const [path, value] of metadataLeaves) {
+    const name = ["metadata", ...path];
+    children.push(
+      value === null
+        ? btqlNullCheck("isnull", name)
+        : btqlComparison("eq", name, value),
+    );
+  }
+
+  const elapsed = {
+    op: "sub",
+    left: { op: "ident", name: ["metrics", "end"] },
+    right: { op: "ident", name: ["metrics", "start"] },
+  };
+  if (filters.duration?.min !== undefined) {
+    children.push({
+      op: "ge",
+      left: elapsed,
+      right: { op: "literal", value: filters.duration.min },
+    });
+  }
+  if (filters.duration?.max !== undefined) {
+    children.push({
+      op: "le",
+      left: elapsed,
+      right: { op: "literal", value: filters.duration.max },
+    });
+  }
+
+  return children;
+}
 
 /**
  * Fetcher for spans by root_span_id, using the ObjectFetcher pattern.
@@ -20,18 +410,19 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
   constructor(
     objectType: "experiment" | "project_logs" | "playground_logs",
     private readonly _objectId: string,
-    // @ts-expect-error unused
+    // @ts-expect-error retained for constructor compatibility
     private readonly rootSpanId: string,
     private readonly _state: BraintrustState,
-    // @ts-expect-error unused
+    // @ts-expect-error retained for constructor compatibility
     private readonly spanTypeFilter?: string[],
     includeScorers = false,
     brainstoreRealtime = true,
+    filters?: SpanFilters,
   ) {
-    // Build the filter expression for root_span_id and optionally span_attributes.type
+    const normalizedFilters = normalizeSpanFilters(filters, spanTypeFilter);
     const filterExpr = SpanFetcher.buildFilter(
       rootSpanId,
-      spanTypeFilter,
+      normalizedFilters,
       includeScorers,
     );
 
@@ -48,50 +439,26 @@ export class SpanFetcher extends ObjectFetcher<SpanRecord> {
 
   private static buildFilter(
     rootSpanId: string,
-    spanTypeFilter?: string[],
+    filters: CompiledSpanFilters,
     includeScorers = false,
-  ): Record<string, unknown> {
-    const children: Record<string, unknown>[] = [
-      // Base filter: root_span_id = 'value'
-      {
-        op: "eq",
-        left: { op: "ident", name: ["root_span_id"] },
-        right: { op: "literal", value: rootSpanId },
-      },
+  ): BtqlExpression {
+    const purpose = ["span_attributes", "purpose"];
+    const children: BtqlExpression[] = [
+      btqlComparison("eq", ["root_span_id"], rootSpanId),
     ];
 
     if (!includeScorers) {
       children.push({
         op: "or",
         children: [
-          {
-            op: "isnull",
-            expr: { op: "ident", name: ["span_attributes", "purpose"] },
-          },
-          {
-            op: "ne",
-            left: { op: "ident", name: ["span_attributes", "purpose"] },
-            right: { op: "literal", value: "scorer" },
-          },
+          btqlNullCheck("isnull", purpose),
+          btqlComparison("ne", purpose, "scorer"),
         ],
       });
     }
 
-    // If no spanType filter, just return root_span_id filter
-    if (spanTypeFilter && spanTypeFilter.length > 0) {
-      // Add span_attributes.type IN [...] filter
-      children.push({
-        op: "in",
-        left: { op: "ident", name: ["span_attributes", "type"] },
-        right: { op: "literal", value: spanTypeFilter },
-      });
-    }
-
-    // Combine with AND
-    return {
-      op: "and",
-      children,
-    };
+    children.push(...spanFilterClauses(filters));
+    return { op: "and", children };
   }
 
   public get id(): Promise<string> {
@@ -120,22 +487,19 @@ export interface SpanData {
   [key: string]: unknown;
 }
 
-/** Function signature for fetching spans by type */
+/** Function signature for fetching spans by type. */
 export type SpanFetchFn = (
   spanType: string[] | undefined,
 ) => Promise<SpanData[]>;
 type SpanFetchWithOptionsFn = (
-  spanType: string[] | undefined,
+  filters: CompiledSpanFilters,
   includeScorers: boolean,
 ) => Promise<SpanData[]>;
 
 /**
- * Cached span fetcher that handles fetching and caching spans by type.
- *
- * Caching strategy:
- * - Cache spans by span type (Map<spanType, SpanData[]>)
- * - Track if all spans have been fetched (allFetched flag)
- * - When filtering by spanType, only fetch types not already in cache
+ * Fetches spans for one root span, reusing complete results and results that
+ * are authoritative for a requested span type. Advanced filtered results are
+ * never cached because they do not represent every span of their type.
  */
 export class CachedSpanFetcher {
   private spanCache = new Map<string, SpanData[]>();
@@ -162,84 +526,106 @@ export class CachedSpanFetcher {
     brainstoreRealtime = true,
   ) {
     if (typeof objectTypeOrFetchFn === "function") {
-      // Direct fetch function injection (for testing)
-      this.fetchFn = (spanType) => objectTypeOrFetchFn(spanType);
+      // Preserve the original test/custom fetcher contract while applying
+      // advanced filters locally to its returned spans.
+      this.fetchFn = async (filters) =>
+        (await objectTypeOrFetchFn(filters.filters.spanType)).filter((span) =>
+          matchesSpanFilters(span, filters),
+        );
     } else {
-      // Standard constructor with SpanFetcher
       const objectType = objectTypeOrFetchFn;
-      this.fetchFn = async (spanType, includeScorers) => {
+      this.fetchFn = async (filters, includeScorers) => {
         const state = await getState!();
         const fetcher = new SpanFetcher(
           objectType,
           objectId!,
           rootSpanId!,
           state,
-          spanType,
+          undefined,
           includeScorers,
           brainstoreRealtime,
+          filters.filters,
         );
-        const rows: WithTransactionId<SpanRecord>[] =
-          await fetcher.fetchedData();
-        return rows.map((row) => ({
-          input: row.input,
-          output: row.output,
-          expected: row.expected,
-          error: row.error,
-          scores: row.scores,
-          metrics: row.metrics,
-          metadata: row.metadata,
-          span_id: row.span_id,
-          span_parents: row.span_parents,
-          is_root: row.is_root,
-          span_attributes: row.span_attributes,
-          id: row.id,
-          _xact_id: row._xact_id,
-          _pagination_key: row._pagination_key,
-          root_span_id: row.root_span_id,
-          created: row.created,
-          tags: row.tags,
-        }));
+        let spans: SpanData[] = (await fetcher.fetchedData()).map(
+          (row: WithTransactionId<SpanRecord>) => ({ ...row }),
+        );
+        // Backend metadata comparisons can coerce types. Keep exact local and
+        // remote behavior aligned while still pushing the filter down.
+        if (filters.filters.metadata !== undefined) {
+          spans = spans.filter((span) => matchesSpanFilters(span, filters));
+        }
+        return spans;
       };
     }
   }
 
   async getSpans({
-    spanType,
+    spanType: requestedSpanType,
+    filters,
     includeScorers = false,
-  }: { spanType?: string[]; includeScorers?: boolean } = {}): Promise<
-    SpanData[]
-  > {
+  }: GetSpansOptions = {}): Promise<SpanData[]> {
+    const normalizedFilters = normalizeSpanFilters(filters, requestedSpanType);
+    const spanType = normalizedFilters.filters.spanType;
+    const hasAdvancedFilters = Object.keys(normalizedFilters.filters).some(
+      (field) => field !== "spanType",
+    );
+
+    if (spanType?.length === 0) {
+      return [];
+    }
+
     if (includeScorers) {
-      return this.fetchFn(spanType, true);
+      return this.fetchFn(normalizedFilters, true);
     }
 
-    // If we've fetched all spans, just filter from cache
+    // A complete cache can answer every supported filter locally.
     if (this.allFetched) {
-      return this.getFromCache(spanType);
+      const spans = this.getFromCache(spanType);
+      return hasAdvancedFilters
+        ? spans.filter((span) => matchesSpanFilters(span, normalizedFilters))
+        : spans;
     }
 
-    // If no filter requested, fetch everything
-    if (!spanType || spanType.length === 0) {
+    // A typed cache is authoritative for each type it contains, so it can
+    // answer advanced queries when every requested type is already present.
+    if (
+      hasAdvancedFilters &&
+      spanType &&
+      spanType.every((type) => this.spanCache.has(type))
+    ) {
+      return this.getFromCache(spanType).filter((span) =>
+        matchesSpanFilters(span, normalizedFilters),
+      );
+    }
+
+    // Other partial advanced results are pushed down and used once rather
+    // than cached.
+    if (hasAdvancedFilters) {
+      return this.fetchFn(normalizedFilters, false);
+    }
+
+    if (!spanType) {
+      // Avoid duplicating spans from an earlier typed fetch.
+      this.spanCache.clear();
       await this.fetchSpans(undefined);
-      this.allFetched = true;
+      if (this.spanCache.size > 0) {
+        this.allFetched = true;
+      }
       return this.getFromCache(undefined);
     }
 
-    // Find which spanTypes we don't have in cache yet
-    const missingTypes = spanType.filter((t) => !this.spanCache.has(t));
-
-    // If all requested types are cached, return from cache
-    if (missingTypes.length === 0) {
-      return this.getFromCache(spanType);
+    const missingTypes = spanType.filter((type) => !this.spanCache.has(type));
+    if (missingTypes.length > 0) {
+      await this.fetchSpans(missingTypes);
     }
-
-    // Fetch only the missing types
-    await this.fetchSpans(missingTypes);
     return this.getFromCache(spanType);
   }
 
   private async fetchSpans(spanType: string[] | undefined): Promise<void> {
-    const spans = await this.fetchFn(spanType, false);
+    const spans = await this.fetchFn(
+      normalizeSpanFilters(spanType ? { spanType } : undefined),
+      false,
+    );
 
     for (const span of spans) {
       const type = span.span_attributes?.type ?? "";
@@ -276,7 +662,10 @@ export interface GetThreadOptions {
 }
 
 export interface GetSpansOptions {
+  /** Optional top-level span type filter. */
   spanType?: string[];
+  /** Filters for span type, name, error state, metadata, and duration. */
+  filters?: SpanFilters;
   includeScorers?: boolean;
 }
 
@@ -372,41 +761,27 @@ export class LocalTrace implements Trace {
    */
   async getSpans({
     spanType,
+    filters,
     includeScorers = false,
   }: GetSpansOptions = {}): Promise<SpanData[]> {
-    // Try local span cache first (for recently logged spans not yet flushed)
+    const normalizedFilters = normalizeSpanFilters(filters, spanType);
+
+    // Try local span cache first (for recently logged spans not yet flushed).
     const cachedSpans = this.state.spanCache.getByRootSpanId(this.rootSpanId);
     if (cachedSpans && cachedSpans.length > 0) {
-      let spans = includeScorers
-        ? cachedSpans
-        : cachedSpans.filter(
-            (span) => span.span_attributes?.purpose !== "scorer",
-          );
-
-      if (spanType && spanType.length > 0) {
-        spans = spans.filter((span) =>
-          spanType.includes(span.span_attributes?.type ?? ""),
-        );
-      }
-
-      return spans.map((span) => ({
-        input: span.input,
-        output: span.output,
-        expected: span.expected,
-        error: span.error,
-        scores: span.scores,
-        metrics: span.metrics,
-        metadata: span.metadata,
-        span_id: span.span_id,
-        span_parents: span.span_parents,
-        is_root: span.is_root,
-        span_attributes: span.span_attributes,
-        tags: span.tags,
-      }));
+      return cachedSpans
+        .filter(
+          (span) =>
+            (includeScorers || span.span_attributes?.purpose !== "scorer") &&
+            matchesSpanFilters({ ...span }, normalizedFilters),
+        )
+        .map((span) => ({ ...span }));
     }
 
-    // Fall back to CachedSpanFetcher for BTQL fetching with caching
-    return this.cachedFetcher.getSpans({ spanType, includeScorers });
+    return this.cachedFetcher.getSpans({
+      filters: normalizedFilters.filters,
+      includeScorers,
+    });
   }
 
   /**
