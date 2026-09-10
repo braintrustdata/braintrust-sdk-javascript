@@ -44,7 +44,7 @@ import { LRUCache } from "./lru-cache";
 
 configureNode();
 
-test("renderMessage with file content parts", () => {
+test("renderMessage renders templates in structured content parts", () => {
   const message = {
     role: "user" as const,
     content: [
@@ -56,6 +56,13 @@ test("renderMessage with file content parts", () => {
         type: "image_url" as const,
         image_url: {
           url: "{{image_url}}",
+        },
+      },
+      {
+        type: "input_audio" as const,
+        input_audio: {
+          data: "{{audio_data}}",
+          format: "wav" as const,
         },
       },
       {
@@ -72,6 +79,7 @@ test("renderMessage with file content parts", () => {
   const variables = {
     item: "document",
     image_url: "https://example.com/image.png",
+    audio_data: "base64audio",
     file_data: "base64data",
     file_id: "file-456",
     filename: "report.pdf",
@@ -82,6 +90,7 @@ test("renderMessage with file content parts", () => {
       template
         .replace("{{item}}", "document")
         .replace("{{image_url}}", "https://example.com/image.png")
+        .replace("{{audio_data}}", "base64audio")
         .replace("{{file_data}}", "base64data")
         .replace("{{file_id}}", "file-456")
         .replace("{{filename}}", "report.pdf"),
@@ -98,6 +107,13 @@ test("renderMessage with file content parts", () => {
       type: "image_url",
       image_url: {
         url: "https://example.com/image.png",
+      },
+    },
+    {
+      type: "input_audio",
+      input_audio: {
+        data: "base64audio",
+        format: "wav",
       },
     },
     {

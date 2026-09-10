@@ -743,6 +743,9 @@ span_tree:
 │                 "condition": "sunny",
 │                 "marker": "WEATHER_TOOL_EXECUTED"
 │               }
+│               metadata: {
+│                 "toolCallId": "<toolCallId:1>"
+│               }
 └── cloudflare-ai-chat-error-root [task]
     metadata: {
       "mode": "manual",

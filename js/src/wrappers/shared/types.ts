@@ -1,4 +1,4 @@
-import type { Score } from "../../../util/score";
+import type { OneOrMoreScores } from "../../framework";
 
 // Scorer function type
 export type ScorerFunction<Output = unknown> = (args: {
@@ -6,7 +6,7 @@ export type ScorerFunction<Output = unknown> = (args: {
   expected?: unknown;
   input?: unknown;
   metadata?: Record<string, unknown>;
-}) => Score | Promise<Score> | number | null | Array<Score>;
+}) => OneOrMoreScores | Promise<OneOrMoreScores>;
 
 // Progress event types for real-time test reporting
 export type ProgressEvent =

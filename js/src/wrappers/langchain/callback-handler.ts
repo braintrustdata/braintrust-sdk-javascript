@@ -522,18 +522,25 @@ function getMetricsFromResponse(
       continue;
     }
 
-    const inputTokenDetails = usageMetadata.input_token_details;
+    const inputTokenDetails = isRecord(usageMetadata.input_token_details)
+      ? usageMetadata.input_token_details
+      : {};
     const outputTokenDetails = usageMetadata.output_token_details;
     return normalizeTokenMetrics({
       total_tokens: usageMetadata.total_tokens,
       prompt_tokens: usageMetadata.input_tokens,
       completion_tokens: usageMetadata.output_tokens,
-      prompt_cache_creation_tokens: isRecord(inputTokenDetails)
-        ? inputTokenDetails.cache_creation
-        : undefined,
-      prompt_cached_tokens: isRecord(inputTokenDetails)
-        ? inputTokenDetails.cache_read
-        : undefined,
+      // Prefer TTL-specific cache writes over the aggregate when available.
+      prompt_cache_creation_tokens:
+        inputTokenDetails.ephemeral_5m_input_tokens == null &&
+        inputTokenDetails.ephemeral_1h_input_tokens == null
+          ? inputTokenDetails.cache_creation
+          : undefined,
+      prompt_cache_creation_5m_tokens:
+        inputTokenDetails.ephemeral_5m_input_tokens,
+      prompt_cache_creation_1h_tokens:
+        inputTokenDetails.ephemeral_1h_input_tokens,
+      prompt_cached_tokens: inputTokenDetails.cache_read,
       completion_reasoning_tokens: isRecord(outputTokenDetails)
         ? outputTokenDetails.reasoning
         : undefined,

@@ -1,0 +1,32 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      google-generative-ai-sdk-v0:
+        specifier: npm:@google/generative-ai@0.24.0
+        version: '@google/generative-ai@0.24.0'
+      google-generative-ai-sdk-v0-latest:
+        specifier: npm:@google/generative-ai@0.24.1
+        version: '@google/generative-ai@0.24.1'
+
+packages:
+
+  '@google/generative-ai@0.24.0':
+    resolution: {integrity: sha512-fnEITCGEB7NdX0BhoYZ/cq/7WPZ1QS5IzJJfC3Tg/OwkvBetMiVJciyaan297OvE4B9Jg1xvo0zIazX/9sGu1Q==}
+    engines: {node: '>=18.0.0'}
+
+  '@google/generative-ai@0.24.1':
+    resolution: {integrity: sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q==}
+    engines: {node: '>=18.0.0'}
+
+snapshots:
+
+  '@google/generative-ai@0.24.0': {}
+
+  '@google/generative-ai@0.24.1': {}

@@ -1,6 +1,7 @@
 import type { Span } from "../../logger";
 import type { Score } from "../../../util/score";
 import type { ScorerFunction } from "./types";
+import type { OneOrMoreScores } from "../../framework";
 
 export async function runScorers(args: {
   scorers: ScorerFunction[];
@@ -60,7 +61,7 @@ function isScore(val: object): val is Score {
   return "name" in val && "score" in val;
 }
 
-function normalizeScores(result: unknown): Score[] {
+function normalizeScores(result: OneOrMoreScores): Score[] {
   if (result === null || result === undefined) {
     return [];
   }
@@ -76,8 +77,8 @@ function normalizeScores(result: unknown): Score[] {
     );
   }
 
-  if (typeof result === "object" && result !== null && isScore(result)) {
-    return [result];
+  if (typeof result === "object" && result !== null && "score" in result) {
+    return [{ ...result, name: result.name ?? "score" }];
   }
 
   return [];

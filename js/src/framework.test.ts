@@ -12,6 +12,8 @@ import {
   Eval,
   EvalScorer,
   runEvaluator,
+  _internalPrepareEvaluatorScore,
+  type OneOrMoreScores,
 } from "./framework";
 import {
   _exportsForTestingOnly,
@@ -2178,6 +2180,101 @@ test("scorer-only evaluator populates scores field", async () => {
   expect(result.results).toHaveLength(1);
   expect(result.results[0].scores?.exact_match).toBe(1);
   expect(result.results[0].classifications).toBeUndefined();
+});
+
+test("single score objects use the same names as numeric returns", async () => {
+  const result = await Eval(
+    "test-nameless-scores",
+    {
+      data: [{ input: "hello" }],
+      task: (input) => input,
+      scores: [
+        function accuracy() {
+          return { score: 0.8 };
+        },
+        async function relevance() {
+          return { score: 1, metadata: { reason: "relevant" } };
+        },
+        () => ({ score: 0 }),
+        () => ({ name: "explicit", score: 0.5 }),
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results[0].scores).toEqual({
+    accuracy: 0.8,
+    relevance: 1,
+    scorer_2: 0,
+    explicit: 0.5,
+  });
+});
+
+describe("scorer result normalization", () => {
+  test.each([0, 0.8, null])(
+    "defaults the name and preserves fields for %s",
+    (score) => {
+      const value = Object.freeze({ score, metadata: { reason: "test" } });
+      expect(_internalPrepareEvaluatorScore(value, "accuracy")).toEqual({
+        results: [{ ...value, name: "accuracy" }],
+        output: { score },
+        metadata: value.metadata,
+        scores: { accuracy: score },
+      });
+      expect(value).not.toHaveProperty("name");
+    },
+  );
+
+  test.each(["explicit", ""])("preserves an explicit name %j", (name) => {
+    expect(
+      _internalPrepareEvaluatorScore({ name, score: 1 }, "fallback").scores,
+    ).toEqual({ [name]: 1 });
+  });
+
+  test("keeps named arrays and numeric returns working", () => {
+    expect(_internalPrepareEvaluatorScore(0.8, "accuracy").scores).toEqual({
+      accuracy: 0.8,
+    });
+    expect(_internalPrepareEvaluatorScore(null, "accuracy")).toEqual({
+      results: null,
+    });
+    expect(
+      _internalPrepareEvaluatorScore(
+        [
+          { name: "accuracy", score: 0.8 },
+          { name: "relevance", score: 1 },
+        ],
+        "fallback",
+      ).scores,
+    ).toEqual({ accuracy: 0.8, relevance: 1 });
+  });
+
+  test("requires names in arrays at typecheck and runtime", () => {
+    // @ts-expect-error A single-element array still requires a named score.
+    const unnamed: OneOrMoreScores = [{ score: 1 }];
+    const mixed: OneOrMoreScores = [
+      { name: "accuracy", score: 1 },
+      // @ts-expect-error Every entry in a mixed array must have a name.
+      { score: 0.5 },
+    ];
+    for (const value of [unnamed, mixed]) {
+      expect(() => _internalPrepareEvaluatorScore(value, "fallback")).toThrow(
+        "each score must have a name",
+      );
+    }
+  });
+
+  test("rejects duplicate array names", () => {
+    expect(() =>
+      _internalPrepareEvaluatorScore(
+        [
+          { name: "accuracy", score: 1 },
+          { name: "accuracy", score: 0.5 },
+        ],
+        "fallback",
+      ),
+    ).toThrow("Duplicate score name 'accuracy'");
+  });
 });
 
 test("multiple classifiers returning the same name append items correctly", async () => {

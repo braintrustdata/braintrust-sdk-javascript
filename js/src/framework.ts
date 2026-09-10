@@ -7,6 +7,7 @@ import {
   SpanTypeAttribute,
   spanObjectTypeV3ToTypedString,
 } from "../util/index";
+import type { SingleScore } from "../util/score";
 import {
   type GitMetadataSettingsType as GitMetadataSettings,
   ObjectReference as ObjectReferenceSchema,
@@ -177,7 +178,7 @@ export type EvalScorerArgs<
   trace?: Trace;
 };
 
-export type OneOrMoreScores = Score | number | null | Array<Score>;
+export type OneOrMoreScores = SingleScore | number | null | Array<Score>;
 
 export type EvalScorer<
   Input,
@@ -1045,19 +1046,29 @@ export function _internalPrepareEvaluatorScore(
 } {
   if (scoreValue === null) return { results: null };
   if (Array.isArray(scoreValue)) {
+    const names = new Set<string>();
     for (const score of scoreValue) {
       if (!(typeof score === "object" && !isEmpty(score))) {
         throw new Error(
           `When returning an array of scores, each score must be a non-empty object. Got: ${JSON.stringify(score)}`,
         );
       }
+      if (typeof score.name !== "string") {
+        throw new Error(
+          `When returning an array of scores, each score must have a name. Got: ${JSON.stringify(score)}`,
+        );
+      }
+      if (names.has(score.name)) {
+        throw new Error(`Duplicate score name '${score.name}' in score array`);
+      }
+      names.add(score.name);
     }
   }
   let results: Score[];
   if (Array.isArray(scoreValue)) {
     results = scoreValue;
   } else if (typeof scoreValue === "object" && !isEmpty(scoreValue)) {
-    results = [scoreValue];
+    results = [{ ...scoreValue, name: scoreValue.name ?? name }];
   } else {
     results = [{ name, score: scoreValue }];
   }

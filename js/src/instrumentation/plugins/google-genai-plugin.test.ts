@@ -481,6 +481,230 @@ describe("GoogleGenAIPlugin", () => {
     });
   });
 
+  describe("embedContent channel subscription", () => {
+    it.each([
+      ["gemini-embedding-001", "hello", [{ content: "hello" }]],
+      [
+        "gemini-embedding-001",
+        ["first", "second"],
+        [{ content: "first" }, { content: "second" }],
+      ],
+      [
+        "gemini-embedding-2-preview",
+        ["first", "second"],
+        [
+          {
+            content: [
+              { type: "text", text: "first" },
+              { type: "text", text: "second" },
+            ],
+          },
+        ],
+      ],
+      [
+        "gemini-embedding-2-preview",
+        [{ parts: [{ text: "first" }] }, { parts: [{ text: "second" }] }],
+        [{ content: "first" }, { content: "second" }],
+      ],
+    ])(
+      "preserves embedding boundaries for %s with %j",
+      (model, contents, inputs) => {
+        plugin.enable();
+        const handlers = subscribeSpy.mock.calls[2][0];
+        handlers.start({
+          arguments: [
+            {
+              model,
+              contents,
+              config: {
+                outputDimensionality: 8,
+                taskType: "RETRIEVAL_DOCUMENT",
+                httpOptions: { headers: { authorization: "secret" } },
+              },
+            },
+          ],
+        });
+        expect(mockStartSpan).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: "embed_content",
+            spanAttributes: { type: "llm" },
+            event: expect.objectContaining({
+              input: { inputs, output_dimensions: 8 },
+              metadata: { model, provider: "google" },
+            }),
+          }),
+        );
+      },
+    );
+
+    it("normalizes inline and remote media without mutating the request", () => {
+      plugin.enable();
+      const handlers = subscribeSpy.mock.calls[2][0];
+      const params = {
+        model: "gemini-embedding-2-preview",
+        contents: [
+          {
+            parts: [
+              { text: "image and files" },
+              ...["image/png", "audio/wav", "video/mp4", "application/pdf"].map(
+                (mimeType) => ({ inlineData: { mimeType, data: "aGVsbG8=" } }),
+              ),
+              {
+                inlineData: {
+                  mimeType: "audio/wav",
+                  data: new Uint8Array([1, 2, 3]),
+                },
+              },
+              {
+                fileData: {
+                  mimeType: "application/pdf",
+                  fileUri: "gs://bucket/document.pdf",
+                  displayName: "report.pdf",
+                },
+              },
+            ],
+          },
+        ],
+      };
+      const original = structuredClone(params);
+      handlers.start({ arguments: [params] });
+      const input = mockStartSpan.mock.calls[0][0]?.event?.input;
+      expect(input).toMatchObject({
+        inputs: [
+          {
+            content: [
+              { type: "text", text: "image and files" },
+              {
+                type: "image_url",
+                image_url: {
+                  url: { reference: { content_type: "image/png" } },
+                },
+              },
+              ...["audio/wav", "video/mp4", "application/pdf", "audio/wav"].map(
+                (content_type) => ({
+                  type: "file",
+                  file: { file_data: { reference: { content_type } } },
+                }),
+              ),
+              {
+                type: "file",
+                file: {
+                  file_data: "gs://bucket/document.pdf",
+                  filename: "report.pdf",
+                },
+              },
+            ],
+          },
+        ],
+      });
+      expect(params).toEqual(original);
+    });
+
+    it("retains all inline media when any attachment conversion fails", () => {
+      plugin.enable();
+      const handlers = subscribeSpy.mock.calls[2][0];
+      handlers.start({
+        arguments: [
+          {
+            model: "gemini-embedding-2-preview",
+            contents: {
+              parts: [
+                { inlineData: { mimeType: "image/png", data: "aGVsbG8=" } },
+                {
+                  inlineData: {
+                    mimeType: "audio/wav",
+                    data: "invalid base64!",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      expect(mockStartSpan.mock.calls[0][0]?.event?.input).toEqual({
+        inputs: [
+          {
+            content: [
+              {
+                type: "image_url",
+                image_url: { url: "data:image/png;base64,aGVsbG8=" },
+              },
+              {
+                type: "file",
+                file: { file_data: "data:audio/wav;base64,invalid base64!" },
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it.each([
+      [{ embeddings: [{ values: [0.1] }, { values: [0.2] }] }, 2, {}],
+      [{ embeddings: [{}] }, 1, {}],
+      [{ embeddings: [] }, 0, {}],
+      [{}, 0, {}],
+      [
+        { embedding: { statistics: { tokenCount: 5 } } },
+        1,
+        { prompt_tokens: 5, tokens: 5 },
+      ],
+      [{ embeddings: [{ statistics: { tokenCount: 5 } }, {}] }, 2, {}],
+      [
+        {
+          usageMetadata: {
+            promptTokenCount: 10,
+            totalTokenCount: 12,
+            candidatesTokenCount: 2,
+            promptTokensDetails: [{ modality: "AUDIO", tokenCount: 4 }],
+          },
+        },
+        0,
+        { prompt_tokens: 10, tokens: 12, prompt_audio_tokens: 4 },
+      ],
+      [{ usageMetadata: { totalTokenCount: 12 } }, 0, { tokens: 12 }],
+    ])(
+      "logs count and only reported embedding usage for %j",
+      (result, count, metrics) => {
+        plugin.enable();
+        const handlers = subscribeSpy.mock.calls[2][0];
+        const event = {
+          arguments: [
+            { model: "gemini-embedding-2-preview", contents: "hello" },
+          ],
+          result,
+        };
+        handlers.start(event);
+        handlers.asyncEnd(event);
+        const span = mockStartSpan.mock.results[0].value;
+        expect(span.log).toHaveBeenCalledWith({
+          output: { count },
+          metrics: {
+            ...metrics,
+            start: expect.any(Number),
+            end: expect.any(Number),
+          },
+        });
+        expect(span.end).toHaveBeenCalledOnce();
+      },
+    );
+
+    it("logs provider errors without exposing vectors", () => {
+      plugin.enable();
+      const handlers = subscribeSpy.mock.calls[2][0];
+      const error = new Error("unsupported input");
+      const event = {
+        arguments: [{ model: "gemini-embedding-2-preview", contents: "hello" }],
+        error,
+      };
+      handlers.start(event);
+      handlers.error(event);
+      const span = mockStartSpan.mock.results[0].value;
+      expect(span.log).toHaveBeenCalledWith({ error, output: { count: 0 } });
+      expect(span.end).toHaveBeenCalledOnce();
+    });
+  });
+
   describe("interactions.create channel subscription", () => {
     it("subscribes to the interactions.create channel", () => {
       plugin.enable();

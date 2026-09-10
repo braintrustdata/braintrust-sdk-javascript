@@ -67,6 +67,10 @@ export const googleGenAIChannels = defineChannels(
       channelName: "models.embedContent",
       kind: "async",
     }),
+    httpResponseJson: channel<[], GoogleGenAIEmbedContentResponse>({
+      channelName: "httpResponse.json",
+      kind: "async",
+    }),
     interactionsCreate: channel<
       [GoogleGenAIInteractionCreateParams, Record<string, unknown>?],
       GoogleGenAIInteractionResult,

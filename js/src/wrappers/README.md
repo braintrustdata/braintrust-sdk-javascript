@@ -11,6 +11,7 @@ Most wrappers are single files that live directly in this directory:
 - `anthropic.ts` - Anthropic SDK wrapper
 - `oai.ts` - OpenAI SDK wrapper
 - `google-genai.ts` - Google GenAI wrapper
+- `google-generative-ai.ts` - Legacy `@google/generative-ai` 0.24.x wrapper
 - etc.
 
 ### Private Test Workspaces

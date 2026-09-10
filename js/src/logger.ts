@@ -9349,6 +9349,16 @@ export function renderMessageImpl<T extends Message>(
                           },
                         },
                       ];
+                    case "input_audio":
+                      return [
+                        {
+                          ...c,
+                          input_audio: {
+                            ...c.input_audio,
+                            data: render(c.input_audio.data),
+                          },
+                        },
+                      ];
                     case "file":
                       return [
                         {

@@ -2625,6 +2625,15 @@ function prepareAISDKChildTracing(
         return result;
       }
 
+      const executionOptions = args[1];
+      const toolCallId = isObject(executionOptions)
+        ? executionOptions.toolCallId
+        : undefined;
+      const toolInput = {
+        input: serializeToolExecutionInput(args),
+        ...(typeof toolCallId === "string" ? { metadata: { toolCallId } } : {}),
+      };
+
       if (isAsyncGenerator(result)) {
         return (async function* () {
           const span = activeEntry.parentSpan.startSpan(
@@ -2638,7 +2647,7 @@ function prepareAISDKChildTracing(
               INSTRUMENTATION_NAMES.AI_SDK,
             ),
           );
-          span.log({ input: serializeToolExecutionInput(args) });
+          span.log(toolInput);
 
           try {
             let lastValue: unknown;
@@ -2658,7 +2667,7 @@ function prepareAISDKChildTracing(
 
       return activeEntry.parentSpan.traced(
         async (span) => {
-          span.log({ input: serializeToolExecutionInput(args) });
+          span.log(toolInput);
           const awaitedResult = await result;
           span.log({ output: awaitedResult });
           return awaitedResult;

@@ -219,6 +219,7 @@ export { wrapPiCodingAgentSDK } from "./wrappers/pi-coding-agent";
 export { wrapCloudflareAgent } from "./wrappers/cloudflare-agent";
 export { wrapStrandsAgentSDK } from "./wrappers/strands-agent-sdk";
 export { wrapCloudflareAIChat } from "./wrappers/cloudflare-ai-chat";
+export { wrapGoogleGenerativeAI } from "./wrappers/google-generative-ai";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";
 export {
   completeGoogleGenAIBatchTrace,
@@ -278,15 +279,15 @@ export {
   defaultErrorScoreHandler,
 } from "./framework";
 
-export type { DurableEvalStore } from "./durable-eval";
+export type { WorkflowEvalStore } from "./workflow-eval";
 
 export {
-  BatchScorer,
-  BatchTask,
-  defineDurableEval,
-  DurableEvalMemoryStore,
-  DurableEvalRedisStore,
-} from "./durable-eval";
+  WorkflowScorer,
+  WorkflowTask,
+  defineWorkflowEval,
+  WorkflowEvalMemoryStore,
+  WorkflowEvalRedisStore,
+} from "./workflow-eval";
 
 export { agentAssertionScorer } from "./agent-assertions";
 
@@ -365,3 +366,5 @@ export {
   braintrustFlueInstrumentation,
 } from "./instrumentation";
 export type { InstrumentationConfig } from "./instrumentation";
+
+export { wrapElevenLabs } from "./wrappers/elevenlabs";

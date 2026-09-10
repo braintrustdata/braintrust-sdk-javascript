@@ -18,6 +18,7 @@ import { flueChannels } from "./flue-channels";
 import { genkitChannels, genkitCoreChannels } from "./genkit-channels";
 import { gitHubCopilotChannels } from "./github-copilot-channels";
 import { googleADKChannels } from "./google-adk-channels";
+import { googleGenerativeAIChannels } from "./google-generative-ai-channels";
 import { googleGenAIChannels } from "./google-genai-channels";
 import { groqChannels } from "./groq-channels";
 import { huggingFaceChannels } from "./huggingface-channels";
@@ -61,6 +62,10 @@ describe("built-in instrumentation provenance names", () => {
     [genkitCoreChannels.actionSpan, INSTRUMENTATION_NAMES.GENKIT],
     [gitHubCopilotChannels.createSession, INSTRUMENTATION_NAMES.GITHUB_COPILOT],
     [googleADKChannels.runnerRunAsync, INSTRUMENTATION_NAMES.GOOGLE_ADK],
+    [
+      googleGenerativeAIChannels.generateContent,
+      INSTRUMENTATION_NAMES.GOOGLE_GENERATIVE_AI,
+    ],
     [googleGenAIChannels.generateContent, INSTRUMENTATION_NAMES.GOOGLE_GENAI],
     [groqChannels.chatCompletionsCreate, INSTRUMENTATION_NAMES.GROQ],
     [huggingFaceChannels.chatCompletion, INSTRUMENTATION_NAMES.HUGGINGFACE],
