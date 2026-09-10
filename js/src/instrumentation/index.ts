@@ -25,6 +25,7 @@ export {
 } from "./plugins/flue-plugin";
 export { braintrustEveHook } from "./plugins/eve-plugin";
 export { braintrustEveInstrumentation } from "./plugins/eve-instrumentation";
+export { instrumentConsole } from "./console";
 
 // Re-export core types for external instrumentation packages
 export type {

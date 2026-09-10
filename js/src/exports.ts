@@ -355,7 +355,7 @@ export {
 } from "../dev/types";
 
 // Auto-instrumentation configuration
-export { configureInstrumentation } from "./instrumentation";
+export { configureInstrumentation, instrumentConsole } from "./instrumentation";
 export {
   braintrustFlueObserver,
   braintrustFlueInstrumentation,
