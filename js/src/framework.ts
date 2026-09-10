@@ -975,6 +975,24 @@ export function classifierName(
   return classifier.name || `classifier_${classifier_idx}`;
 }
 
+const REVIEW_ASSIGNMENT_METADATA_KEYS = new Set([
+  "~__bt_assignments",
+  "~__bt_review_lists",
+]);
+
+function stripReviewAssignmentMetadata(
+  metadata: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  if (metadata === undefined) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(metadata).filter(
+      ([key]) => !REVIEW_ASSIGNMENT_METADATA_KEYS.has(key),
+    ),
+  );
+}
+
 export async function _internalRunEvaluatorTask(
   task: EvalTask<any, any, any, any, any>,
   datum: EvalCase<any, any, any>,
@@ -987,9 +1005,9 @@ export async function _internalRunEvaluatorTask(
   metadata: Record<string, unknown>;
   tags: string[];
 }> {
-  const metadata: Record<string, unknown> = {
-    ...("metadata" in datum ? datum.metadata : {}),
-  };
+  const metadata = stripReviewAssignmentMetadata(
+    "metadata" in datum ? datum.metadata : undefined,
+  );
   const hooks: EvalHooks<unknown, Record<string, unknown>, EvalParameters> = {
     meta(value) {
       Object.assign(metadata, value);
