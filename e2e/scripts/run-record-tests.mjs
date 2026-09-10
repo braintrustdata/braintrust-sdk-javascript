@@ -136,7 +136,7 @@ async function cleanupStaleCassettes(scenarioNames, records) {
 
     const variants =
       variantsByScenario.get(record.scenarioDirName) ?? new Set();
-    variants.add(record.cassetteVariantKey ?? record.variantKey);
+    variants.add(record.variantKey);
     variantsByScenario.set(record.scenarioDirName, variants);
   }
 
