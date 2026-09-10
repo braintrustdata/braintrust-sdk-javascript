@@ -10,7 +10,7 @@ const scenarioDir = await prepareScenarioDir({
   scenarioDir: resolveScenarioDir(import.meta.url),
 });
 
-test("durable eval collects task and scorer webhook sub-batches", async () => {
+test("workflow eval advances individual task and scorer submissions", async () => {
   await withScenarioHarness(
     async ({ events, runScenarioDir, testRunEvents }) => {
       await runScenarioDir({ scenarioDir });
@@ -30,17 +30,17 @@ test("durable eval collects task and scorer webhook sub-batches", async () => {
             JSON.stringify(left).localeCompare(JSON.stringify(right)),
           ),
       ).toEqual([
-        { batch_exact: 1, exact: 1 },
-        { batch_exact: 1, exact: 1 },
-        { batch_exact: 1, exact: 1 },
+        { workflow_exact: 1, exact: 1 },
+        { workflow_exact: 1, exact: 1 },
+        { workflow_exact: 1, exact: 1 },
       ]);
-      expect(webhookSpans.map((event) => event.metadata?.durable_eval)).toEqual(
-        [
-          expect.objectContaining({ run_id: expect.any(String) }),
-          expect.objectContaining({ run_id: expect.any(String) }),
-          expect.objectContaining({ run_id: expect.any(String) }),
-        ],
-      );
+      expect(
+        webhookSpans.map((event) => event.metadata?.workflow_eval),
+      ).toEqual([
+        expect.objectContaining({ run_id: expect.any(String) }),
+        expect.objectContaining({ run_id: expect.any(String) }),
+        expect.objectContaining({ run_id: expect.any(String) }),
+      ]);
 
       const taskSpans = findAllSpans(events(), "task");
       expect(taskSpans).toHaveLength(3);
@@ -59,18 +59,16 @@ test("durable eval collects task and scorer webhook sub-batches", async () => {
         "shared-eval-runtime",
       ]);
 
-      const batchScoreSpans = findAllSpans(events(), "batch_exact");
-      expect(batchScoreSpans).toHaveLength(3);
-      expect(batchScoreSpans.map((event) => event.scores)).toEqual([
-        { batch_exact: 1 },
-        { batch_exact: 1 },
-        { batch_exact: 1 },
+      const workflowScoreSpans = findAllSpans(events(), "workflow_exact");
+      expect(workflowScoreSpans).toHaveLength(3);
+      expect(workflowScoreSpans.map((event) => event.scores)).toEqual([
+        { workflow_exact: 1 },
+        { workflow_exact: 1 },
+        { workflow_exact: 1 },
       ]);
-      expect(batchScoreSpans.map((event) => event.metadata?.method)).toEqual([
-        "batch-provider",
-        "batch-provider",
-        "batch-provider",
-      ]);
+      expect(workflowScoreSpans.map((event) => event.metadata?.method)).toEqual(
+        ["workflow-provider", "workflow-provider", "workflow-provider"],
+      );
 
       const classifierSpans = findAllSpans(events(), "quality");
       expect(classifierSpans).toHaveLength(3);

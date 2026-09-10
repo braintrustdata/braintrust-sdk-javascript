@@ -1,3 +1,4 @@
+import { queue } from "async";
 import {
   base64ToUint8Array,
   makeScorerPropagatedEvent,
@@ -45,21 +46,20 @@ import {
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
-const BATCH_TASK_KIND = "braintrust.durable.batch-task";
-const BATCH_SCORER_KIND = "braintrust.durable.batch-scorer";
-const DEFAULT_BATCH_SIZE = 1_000;
+const WORKFLOW_TASK_KIND = "braintrust.workflow.task";
+const WORKFLOW_SCORER_KIND = "braintrust.workflow.scorer";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 /**
- * Minimal persistence used to reconnect provider webhooks with submitted
- * batches. Each run, case, and batch is stored under its own key. Durable
+ * Minimal persistence used to reconnect provider webhooks with provider
+ * submissions. Each run, case, and submission is stored under its own key. Workflow
  * evaluations do not require any Braintrust backend changes.
  *
  * @experimental - The API for this interface is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
  */
-export interface DurableEvalStore {
+export interface WorkflowEvalStore {
   read(key: string): Promise<Uint8Array | undefined>;
   write(key: string, value: Uint8Array): Promise<void>;
   /** Atomically stores `value` when `key` is absent and returns its stored value. */
@@ -67,16 +67,24 @@ export interface DurableEvalStore {
     key: string,
     value: Uint8Array,
   ): Promise<{ value: Uint8Array; created: boolean }>;
+  /**
+   * Atomically adds a unique member to a set. Repeated additions are harmless.
+   * Set keys are separate from byte-record keys. Implementations must retain sets
+   * for the same lifetime as run records.
+   */
+  addToSet(key: string, member: string): Promise<void>;
+  getSetSize(key: string): Promise<number>;
 }
 
 /**
- * Stores durable evaluation state in memory. State is lost when the current
+ * Stores workflow evaluation state in memory. State is lost when the current
  * JavaScript process exits.
  *
  * @experimental - The API for this class is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
  */
-export class DurableEvalMemoryStore implements DurableEvalStore {
+export class WorkflowEvalMemoryStore implements WorkflowEvalStore {
   private readonly values = new Map<string, Uint8Array>();
+  private readonly sets = new Map<string, Set<string>>();
 
   async read(key: string): Promise<Uint8Array | undefined> {
     return this.values.get(key)?.slice();
@@ -92,17 +100,26 @@ export class DurableEvalMemoryStore implements DurableEvalStore {
     this.values.set(key, value.slice());
     return { value: value.slice(), created: true };
   }
+
+  async addToSet(key: string, member: string) {
+    let members = this.sets.get(key);
+    if (!members) this.sets.set(key, (members = new Set()));
+    members.add(member);
+  }
+
+  async getSetSize(key: string) {
+    return this.sets.get(key)?.size ?? 0;
+  }
 }
 
 /**
- * Stores durable evaluation state in Redis using an existing Redis client.
- * Values are base64 encoded so only string `GET` and `SET` operations are
- * required from the client. Clients from `redis` (node-redis), `ioredis`, and
+ * Stores workflow evaluation state in Redis using an existing Redis client.
+ * Records are base64 encoded. Atomic progress sets use Redis Lua scripts. Clients from `redis` (node-redis), `ioredis`, and
  * `@upstash/redis` can be passed directly.
  *
  * @experimental - The API for this class is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
  */
-export class DurableEvalRedisStore implements DurableEvalStore {
+export class WorkflowEvalRedisStore implements WorkflowEvalStore {
   private readonly client: {
     get(key: string): Promise<unknown>;
     set(key: string, value: string): Promise<unknown>;
@@ -125,7 +142,9 @@ export class DurableEvalRedisStore implements DurableEvalStore {
     this.keyPrefix = options.keyPrefix ?? "braintrust-eval:";
     this.ttlMs = options.ttlMs ?? 1000 * 60 * 60 * 24 * 7;
     if (!Number.isInteger(this.ttlMs) || this.ttlMs < 1) {
-      throw new Error("DurableEvalRedisStore ttlMs must be a positive integer");
+      throw new Error(
+        "WorkflowEvalRedisStore ttlMs must be a positive integer",
+      );
     }
   }
 
@@ -133,7 +152,7 @@ export class DurableEvalRedisStore implements DurableEvalStore {
     const value = await this.client.get(`${this.keyPrefix}${key}`);
     if (value == null) return undefined;
     if (typeof value !== "string") {
-      throw new Error("DurableEvalRedisStore expected GET to return a string");
+      throw new Error("WorkflowEvalRedisStore expected GET to return a string");
     }
     return base64ToUint8Array(value);
   }
@@ -157,7 +176,7 @@ export class DurableEvalRedisStore implements DurableEvalStore {
       await set.call(client, redisKey, encoded, { px: this.ttlMs });
     } else {
       throw new Error(
-        "DurableEvalRedisStore requires a node-redis, ioredis, or @upstash/redis client",
+        "WorkflowEvalRedisStore requires a node-redis, ioredis, or @upstash/redis client",
       );
     }
   }
@@ -182,55 +201,89 @@ export class DurableEvalRedisStore implements DurableEvalStore {
       setOptions = [{ px: this.ttlMs, nx: true, get: true }];
     } else {
       throw new Error(
-        "DurableEvalRedisStore getOrSet requires a node-redis, ioredis, or @upstash/redis client",
+        "WorkflowEvalRedisStore getOrSet requires a node-redis, ioredis, or @upstash/redis client",
       );
     }
     const existing = await set.call(client, redisKey, encoded, ...setOptions);
     if (existing === null) return { value: value.slice(), created: true };
     if (typeof existing !== "string") {
       throw new Error(
-        "DurableEvalRedisStore expected atomic SET to return a string or null",
+        "WorkflowEvalRedisStore expected atomic SET to return a string or null",
       );
     }
     return { value: base64ToUint8Array(existing), created: false };
   }
+
+  async addToSet(key: string, member: string) {
+    await this.evalSet(
+      "redis.call('SADD', KEYS[1], ARGV[1]); redis.call('PEXPIRE', KEYS[1], ARGV[2]); return 1",
+      key,
+      [member, String(this.ttlMs)],
+    );
+  }
+
+  async getSetSize(key: string) {
+    return this.evalSet("return redis.call('SCARD', KEYS[1])", key, []);
+  }
+
+  private async evalSet(script: string, key: string, args: string[]) {
+    const client = this.client as typeof this.client & {
+      eval: (...args: unknown[]) => Promise<unknown>;
+      defineCommand?: unknown;
+      sendCommand?: unknown;
+      createScript?: unknown;
+    };
+    const redisKey = `${this.keyPrefix}${key}`;
+    const result =
+      typeof client.defineCommand === "function"
+        ? await client.eval(script, 1, redisKey, ...args)
+        : typeof client.sendCommand === "function"
+          ? await client.eval(script, { keys: [redisKey], arguments: args })
+          : await client.eval(script, [redisKey], args);
+    if (typeof result !== "number") {
+      throw new Error(
+        "WorkflowEvalRedisStore expected EVAL to return a number",
+      );
+    }
+    return result;
+  }
 }
 
-interface DurableBatchContext {
+interface WorkflowSubmissionContext {
   runId: string;
-  batchId: string;
+  submissionId: string;
 }
 
-type DurableBatchPoll =
+type WorkflowSubmissionPoll =
   | { status: "pending" }
   | { status: "complete" }
   | { status: "failed"; error: unknown };
 
-type DurableBatchCompletion<SubmissionData extends JsonValue> =
+type WorkflowSubmissionCompletion<SubmissionData extends JsonValue> =
   | {
       mode: "poll";
-      /** Checks whether the submitted provider batch is ready to collect. */
+      /** Checks whether the provider submission is ready to collect. */
       poll(
         submissionData: SubmissionData,
-        context: DurableBatchContext,
-      ): Promise<DurableBatchPoll>;
+        context: WorkflowSubmissionContext,
+      ): Promise<WorkflowSubmissionPoll>;
     }
   | {
       mode: "webhook";
-      /** Returns the provider ID used to match an incoming webhook to this batch. */
+      /** Returns the provider ID used to match an incoming webhook to this submission. */
       getExternalId(
         submissionData: SubmissionData,
-        context: DurableBatchContext,
+        context: WorkflowSubmissionContext,
       ): string;
     };
 
-export interface DurableBatchTaskItem<
+export interface WorkflowTaskItem<
   Input,
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 > {
-  /** Stable identifier for this case and trial within the durable run. */
+  /** Stable identifier for this case and trial within the workflow run. */
   id: string;
   /** Input value from the evaluation case. */
   input: Input;
@@ -240,15 +293,13 @@ export interface DurableBatchTaskItem<
   metadata: Metadata;
   /** Tags associated with the evaluation case. */
   tags: string[] | undefined;
-  /** Parameters supplied when the durable evaluation started. */
+  /** Parameters supplied when the workflow evaluation started. */
   parameters: InferParameters<Parameters>;
   /** Zero-based trial index for this case. */
   trialIndex: number;
 }
 
-type DurableBatchTaskResult<Output, Metadata extends BaseMetadata> = {
-  /** ID of the submitted item this result belongs to. */
-  id: string;
+type WorkflowTaskResult<Output, Metadata extends BaseMetadata> = {
   /** Task output for the item. */
   output: Output;
   /** Metadata to merge into the evaluation case. */
@@ -257,44 +308,43 @@ type DurableBatchTaskResult<Output, Metadata extends BaseMetadata> = {
   tags?: string[];
 };
 
-export type DurableBatchScorerItem<
+export type WorkflowScorerItem<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata,
 > = EvalScorerArgs<Input, Output, Expected, Metadata> & {
-  /** Stable identifier for this case and trial within the durable run. */
+  /** Stable identifier for this case and trial within the workflow run. */
   id: string;
   /** Zero-based trial index for this case. */
   trialIndex: number;
 };
 
-type DurableBatchScorerResult = {
-  /** ID of the submitted item this result belongs to. */
-  id: string;
+type WorkflowScorerResult = {
   /** Score or named scores produced for the item. */
   score: OneOrMoreScores;
 };
 
-interface DurableBatchProcessor<
+interface WorkflowSubmissionProcessor<
   Item,
   Result,
   SubmissionData extends JsonValue,
 > {
-  /** Maximum items submitted in one provider batch. Defaults to 1,000. */
-  batchSize?: number;
-  /** Submits a batch and returns the provider-specific submission data. */
-  submit(items: Item[], context: DurableBatchContext): Promise<SubmissionData>;
-  /** Configures how the SDK learns that the submitted batch completed. */
-  completion: DurableBatchCompletion<SubmissionData>;
-  /** Collects one result for every item in a completed provider batch. */
+  /** Submits one case/trial and returns JSON-serializable provider data. */
+  submit(
+    item: Item,
+    context: WorkflowSubmissionContext,
+  ): Promise<SubmissionData>;
+  /** Configures how the SDK learns that the submission completed. */
+  completion: WorkflowSubmissionCompletion<SubmissionData>;
+  /** Collects the result for a completed submission. May be called again on replay. */
   collect(
     submissionData: SubmissionData,
-    context: DurableBatchContext,
-  ): Promise<Result[]>;
+    context: WorkflowSubmissionContext,
+  ): Promise<Result>;
 }
 
-interface DurableBatchTask<
+interface WorkflowTaskDefinition<
   Input,
   Output,
   Expected,
@@ -302,43 +352,43 @@ interface DurableBatchTask<
   Parameters extends EvalParameters,
   SubmissionData extends JsonValue,
 > {
-  readonly kind: typeof BATCH_TASK_KIND;
-  readonly processor: DurableBatchProcessor<
-    DurableBatchTaskItem<Input, Expected, Metadata, Parameters>,
-    DurableBatchTaskResult<Output, Metadata>,
+  readonly kind: typeof WORKFLOW_TASK_KIND;
+  readonly processor: WorkflowSubmissionProcessor<
+    WorkflowTaskItem<Input, Expected, Metadata, Parameters>,
+    WorkflowTaskResult<Output, Metadata>,
     SubmissionData
   >;
 }
 
-interface DurableBatchScorer<
+interface WorkflowScorerDefinition<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata,
   SubmissionData extends JsonValue,
 > {
-  readonly kind: typeof BATCH_SCORER_KIND;
+  readonly kind: typeof WORKFLOW_SCORER_KIND;
   name: string;
-  readonly processor: DurableBatchProcessor<
-    DurableBatchScorerItem<Input, Output, Expected, Metadata>,
-    DurableBatchScorerResult,
+  readonly processor: WorkflowSubmissionProcessor<
+    WorkflowScorerItem<Input, Output, Expected, Metadata>,
+    WorkflowScorerResult,
     SubmissionData
   >;
 }
 
 /**
- * Defines a task that runs through asynchronous provider batch operations.
+ * Defines a task that submits one asynchronous provider operation per case/trial.
  *
  * @experimental - The API for this class is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
  */
-export class BatchTask<
+export class WorkflowTask<
   Input,
   Output,
   Expected = void,
   Metadata extends BaseMetadata = DefaultMetadataType,
   Parameters extends EvalParameters = EvalParameters,
   SubmissionData extends JsonValue = JsonValue,
-> implements DurableBatchTask<
+> implements WorkflowTaskDefinition<
   Input,
   Output,
   Expected,
@@ -346,42 +396,42 @@ export class BatchTask<
   Parameters,
   SubmissionData
 > {
-  readonly kind: typeof BATCH_TASK_KIND = BATCH_TASK_KIND;
+  readonly kind: typeof WORKFLOW_TASK_KIND = WORKFLOW_TASK_KIND;
 
   constructor(
-    readonly processor: DurableBatchProcessor<
-      DurableBatchTaskItem<Input, Expected, Metadata, Parameters>,
-      DurableBatchTaskResult<Output, Metadata>,
+    readonly processor: WorkflowSubmissionProcessor<
+      WorkflowTaskItem<Input, Expected, Metadata, Parameters>,
+      WorkflowTaskResult<Output, Metadata>,
       SubmissionData
     >,
   ) {}
 }
 
 /**
- * Defines a scorer that runs through asynchronous provider batch operations.
+ * Defines a scorer that submits one asynchronous provider operation per case/trial.
  *
  * @experimental - The API for this class is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
  */
-export class BatchScorer<
+export class WorkflowScorer<
   Input,
   Output,
   Expected = void,
   Metadata extends BaseMetadata = DefaultMetadataType,
   SubmissionData extends JsonValue = JsonValue,
-> implements DurableBatchScorer<
+> implements WorkflowScorerDefinition<
   Input,
   Output,
   Expected,
   Metadata,
   SubmissionData
 > {
-  readonly kind: typeof BATCH_SCORER_KIND = BATCH_SCORER_KIND;
+  readonly kind: typeof WORKFLOW_SCORER_KIND = WORKFLOW_SCORER_KIND;
   readonly name: string;
 
   constructor(
-    readonly processor: DurableBatchProcessor<
-      DurableBatchScorerItem<Input, Output, Expected, Metadata>,
-      DurableBatchScorerResult,
+    readonly processor: WorkflowSubmissionProcessor<
+      WorkflowScorerItem<Input, Output, Expected, Metadata>,
+      WorkflowScorerResult,
       SubmissionData
     > & { name: string },
   ) {
@@ -389,7 +439,7 @@ export class BatchScorer<
   }
 }
 
-type DurableEvaluator<
+type WorkflowEvaluator<
   Input,
   Output,
   Expected = void,
@@ -399,7 +449,9 @@ type DurableEvaluator<
   Evaluator<Input, Output, Expected, Metadata, Parameters>,
   "task" | "scores" | "timeout" | "signal" | "maxConcurrency" | "update"
 > & {
-  store: DurableEvalStore;
+  store: WorkflowEvalStore;
+  /** Maximum concurrent provider callbacks per invocation. Defaults to 10. */
+  maxConcurrency?: number;
   /**
    * Returns a stable case ID when a data item has neither `id` nor `upsert_id`.
    * The ID is shared by all trials of the same case.
@@ -409,7 +461,7 @@ type DurableEvaluator<
   ) => string | Promise<string>;
   task:
     | EvalTask<Input, Output, Expected, Metadata, Parameters>
-    | DurableBatchTask<
+    | WorkflowTaskDefinition<
         Input,
         Output,
         Expected,
@@ -419,24 +471,24 @@ type DurableEvaluator<
       >;
   scores?: Array<
     | EvalScorer<Input, Output, Expected, Metadata>
-    | DurableBatchScorer<Input, Output, Expected, Metadata, JsonValue>
+    | WorkflowScorerDefinition<Input, Output, Expected, Metadata, JsonValue>
   >;
 };
 
-interface DurableEvalStartOptions<
+interface WorkflowEvalStartOptions<
   Parameters extends EvalParameters = EvalParameters,
 > {
   parameters?: InferParameters<Parameters>;
   noSendLogs?: boolean;
 }
 
-type DurableBatchResult = {
+type WorkflowSubmissionResult = {
   runId: string;
-  batchId?: string;
+  submissionId?: string;
   externalId?: string;
 };
 
-type DurableEvalResult =
+type WorkflowEvalResult =
   | {
       status: "waiting";
       runId: string;
@@ -455,7 +507,7 @@ type DurableEvalResult =
       summary: ExperimentSummary;
     };
 
-interface DurableEvalRuntimeDefinition<
+interface WorkflowEvalRuntimeDefinition<
   Input,
   Output,
   Expected = void,
@@ -464,7 +516,7 @@ interface DurableEvalRuntimeDefinition<
 > {
   readonly projectName: string;
   readonly evalName: string;
-  readonly evaluator: DurableEvaluator<
+  readonly evaluator: WorkflowEvaluator<
     Input,
     Output,
     Expected,
@@ -473,16 +525,18 @@ interface DurableEvalRuntimeDefinition<
   >;
 }
 
-interface DurableEvalDefinition<Parameters extends EvalParameters> {
+interface WorkflowEvalDefinition<Parameters extends EvalParameters> {
   start(
-    options?: DurableEvalStartOptions<Parameters>,
-  ): Promise<DurableEvalResult>;
-  status(options: { runId: string }): Promise<DurableEvalResult>;
-  poll(options: { runId: string }): Promise<DurableEvalResult>;
-  processBatchResult(result: DurableBatchResult): Promise<DurableEvalResult>;
+    options?: WorkflowEvalStartOptions<Parameters>,
+  ): Promise<WorkflowEvalResult>;
+  status(options: { runId: string }): Promise<WorkflowEvalResult>;
+  poll(options: { runId: string }): Promise<WorkflowEvalResult>;
+  processSubmissionResult(
+    result: WorkflowSubmissionResult,
+  ): Promise<WorkflowEvalResult>;
 }
 
-type DurableCaseRecord = {
+type WorkflowCaseRecord = {
   id: string;
   caseId: string;
   trialIndex: number;
@@ -499,68 +553,67 @@ type DurableCaseRecord = {
   loggedClassifications: Record<string, boolean>;
 };
 
-type DurableCaseBaseRecord = Pick<
-  DurableCaseRecord,
+type WorkflowCaseBaseRecord = Pick<
+  WorkflowCaseRecord,
   "id" | "caseId" | "trialIndex" | "datum" | "metadata" | "tags"
 >;
 
-type DurableTaskResultRecord = Pick<
-  DurableCaseRecord,
+type WorkflowTaskResultRecord = Pick<
+  WorkflowCaseRecord,
   "output" | "metadata" | "tags"
 > & { taskComplete: true };
 
-type DurableTaskLogRecord = Pick<DurableCaseRecord, "rootSpan"> & {
+type WorkflowTaskLogRecord = Pick<WorkflowCaseRecord, "rootSpan"> & {
   taskLogged: true;
 };
 
-type DurableBatchRecord = {
+type WorkflowSubmissionRecord = {
   id: string;
   kind: "task" | "score";
   scorerName?: string;
-  itemIds: string[];
+  itemId: string;
   submissionData: JsonValue;
   externalId?: string;
   status: "submitted" | "complete";
+  completionMode: "poll" | "webhook";
 };
 
-type DurableRunState = {
+type WorkflowRunState = {
   runId: string;
   experimentName: string;
   noSendLogs: boolean;
   parameters: JsonValue;
   status: "running" | "completed";
   summary?: ExperimentSummary;
-  cases: DurableCaseRecord[];
-  batches: DurableBatchRecord[];
+  caseCount: number;
+  cases: WorkflowCaseRecord[];
+  submissions: WorkflowSubmissionRecord[];
 };
 
-type DurableRunRecord = Omit<DurableRunState, "cases" | "batches"> & {
-  caseIds: string[];
-};
+type WorkflowRunRecord = Omit<WorkflowRunState, "cases" | "submissions">;
 
 /*
  * Internal usage notes. Keep these out of the public README while
- * defineDurableEval() is experimental.
+ * defineWorkflowEval() is experimental.
  *
- * ## Durable evaluations
+ * ## Workflow evaluations
  *
- * `defineDurableEval()` runs tasks and scorers through asynchronous provider
- * batch APIs.
- * `batchSize` splits a dataset into provider-sized sub-batches. A small external
- * store connects submitted jobs with later webhook callbacks; it is required on
+ * `defineWorkflowEval()` runs tasks and scorers through asynchronous provider
+ * operations, one submission per case/trial. A small external store connects
+ * submitted jobs with later webhook callbacks; it is required on
  * the eval definition so every invocation uses the same persistence authority.
  * No Braintrust backend changes are required.
  *
  * Every case needs a stable `id` (or a `caseId` function).
  *
- * For local or single-process runs, use the built-in memory store. For durable
+ * For local or single-process runs, use the built-in memory store. For workflow
  * deployments, the Redis adapter accepts any existing client with asynchronous
  * `get(key)` and `set(key, value)` methods. The adapter itself adds no Redis
  * dependency, so install and configure whichever client your application already
  * uses.
  *
  * The following popular clients can be passed directly to
- * `DurableEvalRedisStore`:
+ * `WorkflowEvalRedisStore`:
  *
  * - [`redis`](https://github.com/redis/node-redis) (node-redis), including the
  *   lower-level `@redis/client` package
@@ -574,190 +627,104 @@ type DurableRunRecord = Omit<DurableRunState, "cases" | "batches"> & {
  *
  * ```typescript
  * import { createClient } from "redis";
- * import { DurableEvalRedisStore } from "braintrust";
+ * import { WorkflowEvalRedisStore } from "braintrust";
  *
  * const nodeRedis = await createClient({ url: process.env.REDIS_URL! }).connect();
- * const redisStore = new DurableEvalRedisStore({ client: nodeRedis });
+ * const redisStore = new WorkflowEvalRedisStore({ client: nodeRedis });
  * ```
  *
  * ioredis:
  *
  * ```typescript
  * import Redis from "ioredis";
- * import { DurableEvalRedisStore } from "braintrust";
+ * import { WorkflowEvalRedisStore } from "braintrust";
  *
  * const ioRedis = new Redis(process.env.REDIS_URL!);
- * const redisStore = new DurableEvalRedisStore({ client: ioRedis });
+ * const redisStore = new WorkflowEvalRedisStore({ client: ioRedis });
  * ```
  *
  * Upstash:
  *
  * ```typescript
  * import { Redis } from "@upstash/redis";
- * import { DurableEvalRedisStore } from "braintrust";
+ * import { WorkflowEvalRedisStore } from "braintrust";
  *
  * const upstashRedis = Redis.fromEnv();
- * const redisStore = new DurableEvalRedisStore({ client: upstashRedis });
+ * const redisStore = new WorkflowEvalRedisStore({ client: upstashRedis });
  * ```
  *
  * Redis entries expire after seven days by default. Set `ttlMs` in the store
  * options to use a different lifetime. For local testing,
- * `new DurableEvalMemoryStore()` requires no external client, but is
+ * `new WorkflowEvalMemoryStore()` requires no external client, but is
  * process-local and loses its state when the process exits, so it should not be
  * used to reconnect webhooks across serverless invocations.
  *
  * ```typescript
- * import { BatchTask, defineDurableEval } from "braintrust";
+ * import { WorkflowTask, defineWorkflowEval } from "braintrust";
  *
- * const supportEval = defineDurableEval("Support bot", {
+ * const supportEval = defineWorkflowEval("Support bot", {
  *   store: redisStore,
- *   data: [
- *     {
- *       id: "password-reset",
- *       input: "How do I reset my password?",
- *       expected: "Open account settings...",
- *     },
- *   ],
- *   task: new BatchTask({
- *     // Each provider job contains at most 500 eval cases.
- *     batchSize: 500,
- *
- *     // Submit one sub-batch and return JSON-serializable submission data.
- *     async submit(items, context) {
- *       const batch = await provider.submit({
- *         idempotencyKey: context.batchId,
- *         metadata: {
- *           durableRunId: context.runId,
- *           durableBatchId: context.batchId,
- *         },
- *         items,
+ *   data: [{ id: "password-reset", input: "How do I reset my password?" }],
+ *   task: new WorkflowTask({
+ *     async submit(item, { runId, submissionId }) {
+ *       const request = await provider.submit({
+ *         input: item.input,
+ *         idempotencyKey: submissionId,
+ *         metadata: { runId, submissionId },
  *       });
- *       return { id: batch.id };
+ *       return { id: request.id };
  *     },
- *
  *     completion: {
- *       // "webhook" waits for processBatchResult(). Use "poll" with a poll()
- *       // callback when the provider does not send completion events.
  *       mode: "webhook",
- *       getExternalId: (submissionData) => submissionData.id,
+ *       getExternalId: (submission) => submission.id,
  *     },
- *
- *     async collect(submissionData) {
- *       return (await provider.results(submissionData.id)).map((item) => ({
- *         id: item.id,
- *         output: item.output,
- *       }));
+ *     async collect(submission) {
+ *       return { output: await provider.result(submission.id) };
  *     },
  *   }),
- *   scores: [
- *     function exact({ output, expected }) {
- *       return output === expected ? 1 : 0;
- *     },
- *   ],
+ *   scores: [({ output }) => output.length > 0 ? 1 : 0],
  * });
  *
- * const result = await supportEval.start();
- * const { runId } = result;
+ * const { runId } = await supportEval.start();
+ * await supportEval.processSubmissionResult({ runId, externalId: event.id });
  * ```
  *
- * `start()` initializes the run, submits every ready task sub-batch, and returns.
- * It never waits in a polling loop. When all task results are available, scoring
- * begins. `BatchScorer` uses the same `batchSize`, `submit`, `completion`, and
- * array-returning `collect` contract.
+ * Each submission belongs to one case/trial. `WorkflowScorer` has the same
+ * lifecycle, requires a `name`, and collects `{ score }` instead of `{ output }`.
+ * Task results may include `metadata` to merge and `tags` to replace case tags.
+ * Submission data and collected values must be JSON serializable.
  *
- * ### Polling
+ * Use `completion: { mode: "poll", poll }` for polling providers. The callback
+ * receives submission data and `{ runId, submissionId }`, and returns
+ * `{ status: "pending" }`, `{ status: "complete" }`, or
+ * `{ status: "failed", error }`. Invoke `poll({ runId })` from a cron or worker;
+ * it checks each existing polling submission once without sleeping. Newly
+ * submitted work is polled on a later invocation.
  *
- * Polling adapters report the provider's current status through `completion`:
+ * `processSubmissionResult()` accepts either the provider's `externalId` or the
+ * SDK's `submissionId`, plus `runId`. Collection callbacks must tolerate repeated
+ * invocation, including concurrent webhook deliveries. Provider webhook failure
+ * handling remains the application's responsibility.
  *
- * ```typescript
- * completion: {
- *   mode: "poll",
- *   async poll(submissionData) {
- *     const batch = await provider.getBatch(submissionData.id);
- *     if (batch.status === "completed") return { status: "complete" };
- *     if (batch.status === "failed") {
- *       return { status: "failed", error: batch.error };
- *     }
- *     return { status: "pending" };
- *   },
- * },
- * ```
+ * `start()`, `poll()`, and `processSubmissionResult()` return the current status.
+ * Waiting statuses include `pending: { poll, webhook }`, counting outstanding
+ * submissions. Completed statuses include the saved experiment summary and zero
+ * pending submissions. `status({ runId })` reads status without advancing work.
  *
- * Call `poll()` from a cron, queue worker, or another short-lived invocation. It
- * checks every previously submitted polling batch once, collects completed
- * results, submits newly ready work, and returns without sleeping:
+ * Once a task result is persisted and logged, that case's scorers and classifiers
+ * can start even while other tasks are pending. The run completes only after all
+ * cases finish. Ordinary task and scorer functions are also supported.
  *
- * ```typescript
- * const result = await supportEval.poll({
- *   runId,
- * });
- *
- * if (result.status === "waiting" && result.pending.poll > 0) {
- *   scheduleAnotherPoll();
- * }
- * ```
- *
- * `start()`, `poll()`, and `processBatchResult()` return the current eval status.
- * A waiting result includes the number of submitted batches using each completion
- * mode:
- *
- * ```typescript
- * {
- *   status: "waiting",
- *   runId,
- *   pending: { poll: 2, webhook: 1 },
- * }
- * ```
- *
- * Use `status()` to read the same information without polling providers,
- * collecting results, or advancing the evaluation:
- *
- * ```typescript
- * const status = await supportEval.status({
- *   runId,
- * });
- * ```
- *
- * Completed statuses have zero pending batches and include the saved experiment
- * summary. They can be read repeatedly without logging the eval again.
- *
- * ### Webhook processing
- *
- * When the provider reports that any task or scorer batch completed, fetch and
- * store its results through `processBatchResult()`:
- *
- * ```typescript
- * app.post("/webhooks/provider", async (request, response) => {
- *   const event = request.body;
- *   const batch = await provider.getBatch(event.batchId);
- *   const runId = batch.metadata.durableRunId;
- *
- *   const result = await supportEval.processBatchResult({
- *     // Returned by start() and saved alongside the provider job.
- *     runId,
- *     // The provider's batch ID. The durable eval saved it from submit()'s result.
- *     externalId: batch.id,
- *     // The SDK-generated ID passed to submit(); include it in provider metadata
- *     // when the webhook cannot provide the external ID used by the submission data.
- *     batchId: batch.metadata?.durableBatchId,
- *   });
- *
- *   response.status(result.status === "waiting" ? 202 : 200).end();
- * });
- * ```
- *
- * The method accepts either `externalId` or `batchId`. The stored batch locator
- * identifies the task or scorer batch, whose `collect()` results are stored
- * before the eval advances. Provider failure handling remains the application's
- * responsibility for now.
+ * Provider submissions and polling use `maxConcurrency` (default 10). A failed
+ * provider callback is reported after independent submissions have advanced.
  */
 
 /**
- * Defines a durable evaluation backed by a user-provided store.
+ * Defines a workflow evaluation backed by a user-provided store.
  *
  * @experimental - The API for this function is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
  */
-export function defineDurableEval<
+export function defineWorkflowEval<
   Input,
   Output,
   Expected = void,
@@ -765,9 +732,16 @@ export function defineDurableEval<
   Parameters extends EvalParameters = EvalParameters,
 >(
   projectName: string,
-  evaluator: DurableEvaluator<Input, Output, Expected, Metadata, Parameters>,
-): DurableEvalDefinition<Parameters> {
-  const definition: DurableEvalRuntimeDefinition<
+  evaluator: WorkflowEvaluator<Input, Output, Expected, Metadata, Parameters>,
+): WorkflowEvalDefinition<Parameters> {
+  if (
+    evaluator.maxConcurrency !== undefined &&
+    (!Number.isInteger(evaluator.maxConcurrency) ||
+      evaluator.maxConcurrency < 1)
+  ) {
+    throw new Error("maxConcurrency must be a positive integer");
+  }
+  const definition: WorkflowEvalRuntimeDefinition<
     Input,
     Output,
     Expected,
@@ -779,30 +753,30 @@ export function defineDurableEval<
     evaluator,
   };
   return {
-    start: (options = {}) => startDurableEval(definition, options),
-    status: (options) => getDurableEvalStatus(definition, options),
-    poll: (options) => pollDurableEval(definition, options),
-    processBatchResult: (result) =>
-      processDurableBatchResult(definition, result),
+    start: (options = {}) => startWorkflowEval(definition, options),
+    status: (options) => getWorkflowEvalStatus(definition, options),
+    poll: (options) => pollWorkflowEval(definition, options),
+    processSubmissionResult: (result) =>
+      processWorkflowSubmissionResult(definition, result),
   };
 }
 
-async function startDurableEval<
+async function startWorkflowEval<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 >(
-  definition: DurableEvalRuntimeDefinition<
+  definition: WorkflowEvalRuntimeDefinition<
     Input,
     Output,
     Expected,
     Metadata,
     Parameters
   >,
-  options: DurableEvalStartOptions<Parameters>,
-): Promise<DurableEvalResult> {
+  options: WorkflowEvalStartOptions<Parameters>,
+): Promise<WorkflowEvalResult> {
   const store = definition.evaluator.store;
   const runId = newId();
   const key = runKey(definition.projectName, definition.evalName, runId);
@@ -830,8 +804,8 @@ async function startDurableEval<
     },
   );
   if (
-    !isBatchTask(definition.evaluator.task) &&
-    !(definition.evaluator.scores ?? []).some(isBatchScorer)
+    !isWorkflowTask(definition.evaluator.task) &&
+    !(definition.evaluator.scores ?? []).some(isWorkflowScorer)
   ) {
     const result = await runEvaluator(
       experiment,
@@ -858,42 +832,50 @@ async function startDurableEval<
       true,
       true,
     );
-    const state: DurableRunState = {
+    const state: WorkflowRunState = {
       runId,
       experimentName,
       noSendLogs: options.noSendLogs ?? false,
       parameters: assertJsonValue(parameters, "eval parameters"),
       status: "completed",
       summary: result.summary,
+      caseCount: 0,
       cases: [],
-      batches: [],
+      submissions: [],
     };
     await experiment?.flush();
     await writeRunRecord(store, key, state);
     return currentStatus(definition, state);
   }
-  const state: DurableRunState = {
+  const cases = await materializeCases(definition, data, experiment);
+  const state: WorkflowRunState = {
     runId,
     experimentName,
     noSendLogs: options.noSendLogs ?? false,
     parameters: assertJsonValue(parameters, "eval parameters"),
     status: "running",
-    cases: await materializeCases(definition, data, experiment),
-    batches: [],
+    caseCount: cases.length,
+    cases,
+    submissions: [],
   };
+  await writeJson(
+    store,
+    `${key}/case-ids`,
+    cases.map(({ id }) => id),
+  );
   await writeCaseBaseRecords(store, key, state.cases);
   await writeRunRecord(store, key, state);
-  return advanceDurableEval(definition, state, store, key, experiment);
+  return advanceWorkflowEval(definition, state, store, key, experiment);
 }
 
-async function getDurableEvalStatus<
+async function getWorkflowEvalStatus<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 >(
-  definition: DurableEvalRuntimeDefinition<
+  definition: WorkflowEvalRuntimeDefinition<
     Input,
     Output,
     Expected,
@@ -901,75 +883,96 @@ async function getDurableEvalStatus<
     Parameters
   >,
   options: { runId: string },
-): Promise<DurableEvalResult> {
+): Promise<WorkflowEvalResult> {
   const store = definition.evaluator.store;
-  const state = await readRunState(
-    definition,
-    store,
-    runKey(definition.projectName, definition.evalName, options.runId),
+  const key = runKey(
+    definition.projectName,
+    definition.evalName,
+    options.runId,
   );
-  if (!state) throw new Error(`Durable eval run ${options.runId} is missing`);
+  const state = await readJson<WorkflowRunRecord>(store, key);
+  if (!state) throw new Error(`Workflow eval run ${options.runId} is missing`);
   return currentStatus(definition, state);
 }
 
-async function processDurableBatchResult<
+async function processWorkflowSubmissionResult<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 >(
-  definition: DurableEvalRuntimeDefinition<
+  definition: WorkflowEvalRuntimeDefinition<
     Input,
     Output,
     Expected,
     Metadata,
     Parameters
   >,
-  result: DurableBatchResult,
-): Promise<DurableEvalResult> {
-  if (!result.batchId && !result.externalId) {
-    throw new Error("Batch results require batchId or externalId");
+  result: WorkflowSubmissionResult,
+): Promise<WorkflowEvalResult> {
+  if (!result.submissionId && !result.externalId) {
+    throw new Error("Submission results require submissionId or externalId");
   }
   const store = definition.evaluator.store;
   const key = runKey(definition.projectName, definition.evalName, result.runId);
-  const state = await readRunState(definition, store, key);
-  if (!state) throw new Error(`Durable eval run ${result.runId} is missing`);
-  const byBatch = result.batchId
-    ? state.batches.find((candidate) => candidate.id === result.batchId)
-    : undefined;
-  const byExternal = result.externalId
-    ? state.batches.find(
-        (candidate) => candidate.externalId === result.externalId,
+  const run = await readJson<WorkflowRunRecord>(store, key);
+  if (!run) throw new Error(`Workflow eval run ${result.runId} is missing`);
+  const externalSubmissionId = result.externalId
+    ? await readJson<string>(
+        store,
+        `${key}/external/${encodedKeyPart(result.externalId)}`,
       )
     : undefined;
-  if (byBatch && byExternal && byBatch.id !== byExternal.id) {
-    throw new Error("batchId and externalId identify different batches");
+  if (
+    result.submissionId &&
+    externalSubmissionId &&
+    result.submissionId !== externalSubmissionId
+  ) {
+    throw new Error(
+      "submissionId and externalId identify different submissions",
+    );
   }
-  const batch = byBatch ?? byExternal;
-  if (!batch) throw new Error("No submitted batch matches this result");
-  if (batch.status !== "complete") {
-    const records = await collectBatch(definition, state, batch);
-    batch.status = "complete";
-    await writeCaseRecords(store, key, records);
-    await writeBatchRecords(store, key, [batch]);
+  const submissionId = result.submissionId ?? externalSubmissionId;
+  const submission = submissionId
+    ? await readJson<WorkflowSubmissionRecord>(
+        store,
+        submissionRecordKey(key, submissionId),
+      )
+    : undefined;
+  if (!submission) throw new Error("No submission matches this result");
+  if (result.externalId && submission.externalId !== result.externalId) {
+    throw new Error(
+      "submissionId and externalId identify different submissions",
+    );
   }
-  return advanceDurableEval(
+  if (run.status === "completed") return currentStatus(definition, run);
+  const state = (await readRunState(definition, store, key, [
+    submission.itemId,
+  ]))!;
+  if (submission.status !== "complete") {
+    const record = await collectSubmission(definition, state, submission);
+    await writeCaseRecords(store, key, [record]);
+    submission.status = "complete";
+  }
+  // Repeat progress writes on replay to recover an interrupted persistence step.
+  await writeSubmissionRecords(store, key, [submission]);
+  return advanceWorkflowEval(
     definition,
-    (await readRunState(definition, store, key))!,
+    (await readRunState(definition, store, key, [submission.itemId]))!,
     store,
     key,
   );
 }
 
-async function pollDurableEval<
+async function pollWorkflowEval<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 >(
-  definition: DurableEvalRuntimeDefinition<
+  definition: WorkflowEvalRuntimeDefinition<
     Input,
     Output,
     Expected,
@@ -977,7 +980,7 @@ async function pollDurableEval<
     Parameters
   >,
   options: { runId: string },
-): Promise<DurableEvalResult> {
+): Promise<WorkflowEvalResult> {
   const store = definition.evaluator.store;
   const key = runKey(
     definition.projectName,
@@ -985,55 +988,61 @@ async function pollDurableEval<
     options.runId,
   );
   const state = await readRunState(definition, store, key);
-  if (!state) throw new Error(`Durable eval run ${options.runId} is missing`);
+  if (!state) throw new Error(`Workflow eval run ${options.runId} is missing`);
 
-  const batches = state.batches.filter((batch) => {
-    if (batch.status === "complete") return false;
+  const submissions = state.submissions.filter((submission) => {
+    if (submission.status === "complete") return false;
     return (
-      processorForStage(definition, batch.kind, batch.scorerName).completion
-        .mode === "poll"
+      processorForStage(definition, submission.kind, submission.scorerName)
+        .completion.mode === "poll"
     );
   });
-  const results = await Promise.all(
-    batches.map(async (batch) => ({
-      batch,
-      result: await (
-        processorForStage(definition, batch.kind, batch.scorerName)
-          .completion as Extract<
-          DurableBatchCompletion<JsonValue>,
-          { mode: "poll" }
-        >
-      ).poll(batch.submissionData, {
-        runId: state.runId,
-        batchId: batch.id,
-      }),
-    })),
-  );
-  const changedCases = new Map<string, DurableCaseRecord>();
-  const changedBatches: DurableBatchRecord[] = [];
-  for (const { batch, result } of results) {
+  const workers = queue(async (submission: WorkflowSubmissionRecord) => {
+    const completion = processorForStage(
+      definition,
+      submission.kind,
+      submission.scorerName,
+    ).completion;
+    if (completion.mode !== "poll") return;
+    const result = await completion.poll(submission.submissionData, {
+      runId: state.runId,
+      submissionId: submission.id,
+    });
     if (result.status === "failed") throw asError(result.error);
-    if (result.status !== "complete") continue;
-    for (const record of await collectBatch(definition, state, batch)) {
-      changedCases.set(record.id, record);
+    if (result.status === "complete") {
+      const record = await collectSubmission(definition, state, submission);
+      await writeCaseRecords(store, key, [record]);
+      submission.status = "complete";
+      await writeSubmissionRecords(store, key, [submission]);
     }
-    batch.status = "complete";
-    changedBatches.push(batch);
+  }, definition.evaluator.maxConcurrency ?? 10);
+  const results = await Promise.allSettled(
+    submissions.map((submission) => workers.pushAsync(submission)),
+  );
+  // Advance persisted work even when an unrelated provider callback failed.
+  let status: WorkflowEvalResult | undefined;
+  const errors = results.flatMap((result) =>
+    result.status === "rejected" ? [asError(result.reason)] : [],
+  );
+  try {
+    status = await advanceWorkflowEval(
+      definition,
+      (await readRunState(definition, store, key))!,
+      store,
+      key,
+    );
+  } catch (error) {
+    errors.push(asError(error));
   }
-  if (changedBatches.length > 0) {
-    await writeCaseRecords(store, key, [...changedCases.values()]);
-    await writeBatchRecords(store, key, changedBatches);
-  }
-  const currentState =
-    changedBatches.length > 0
-      ? (await readRunState(definition, store, key))!
-      : state;
-  return advanceDurableEval(definition, currentState, store, key);
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1)
+    throw new AggregateError(errors, "Workflow submission callbacks failed");
+  return status!;
 }
 
-async function openDurableExperiment(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  state: DurableRunState,
+async function openWorkflowExperiment(
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
 ) {
   const data: EvalCase<unknown, unknown, BaseMetadata>[] = [];
   return await _internalInitEvaluatorExperiment(
@@ -1054,80 +1063,82 @@ async function openDurableExperiment(
   );
 }
 
-async function advanceDurableEval<
+async function advanceWorkflowEval<
   Input,
   Output,
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 >(
-  definition: DurableEvalRuntimeDefinition<
+  definition: WorkflowEvalRuntimeDefinition<
     Input,
     Output,
     Expected,
     Metadata,
     Parameters
   >,
-  state: DurableRunState,
-  store: DurableEvalStore,
+  state: WorkflowRunState,
+  store: WorkflowEvalStore,
   key: string,
   existingExperiment?: Experiment | null,
-): Promise<DurableEvalResult> {
+): Promise<WorkflowEvalResult> {
   if (state.status === "completed") return currentStatus(definition, state);
   const experiment =
     existingExperiment === undefined
-      ? await openDurableExperiment(definition, state)
+      ? await openWorkflowExperiment(definition, state)
       : existingExperiment;
+  const caseIds = state.cases.map(({ id }) => id);
   await runTaskStage(definition, state, store, key, experiment);
   await logCompletedTasks(definition, state, store, key, experiment);
-  state = (await readRunState(definition, store, key)) ?? state;
-  if (
-    state.cases.some((record) => !record.taskComplete || !record.taskLogged)
-  ) {
-    return currentStatus(definition, state);
-  }
-
+  state = (await readRunState(definition, store, key, caseIds)) ?? state;
   await runScoreStages(definition, state, store, key, experiment);
-  state = (await readRunState(definition, store, key)) ?? state;
+  state = (await readRunState(definition, store, key, caseIds)) ?? state;
   const scorerNames = resolveScorers(definition.evaluator.scores ?? []).map(
     ({ name }) => name,
   );
   const classifierNames = (definition.evaluator.classifiers ?? []).map(
     classifierName,
   );
-  if (
-    state.cases.some(
-      (record) =>
-        scorerNames.some(
+  await Promise.all(
+    state.cases.map(async (record) => {
+      if (
+        record.taskComplete &&
+        record.taskLogged &&
+        scorerNames.every(
           (name) =>
-            !Object.hasOwn(record.scores, name) ||
-            !Object.hasOwn(record.loggedScores, name),
-        ) ||
-        classifierNames.some(
-          (name) => !Object.hasOwn(record.loggedClassifications, name),
-        ),
-    )
-  ) {
+            Object.hasOwn(record.scores, name) &&
+            Object.hasOwn(record.loggedScores, name),
+        ) &&
+        classifierNames.every((name) =>
+          Object.hasOwn(record.loggedClassifications, name),
+        )
+      ) {
+        await store.addToSet(`${key}/progress/cases`, record.id);
+      }
+    }),
+  );
+  if ((await store.getSetSize(`${key}/progress/cases`)) !== state.caseCount) {
     return currentStatus(definition, state);
   }
 
   if (!(await claimAction(store, key, "finish"))) {
-    const latest = await readRunState(definition, store, key);
+    const latest = await readJson<WorkflowRunRecord>(store, key);
     return currentStatus(definition, latest ?? state);
   }
+  state = (await readRunState(definition, store, key))!;
   state.summary = await finishExperiment(definition, state, experiment);
   state.status = "completed";
   await writeRunRecord(store, key, state);
   return currentStatus(definition, state);
 }
 
-function currentStatus(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  state: DurableRunState,
-): DurableEvalResult {
+async function currentStatus(
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunRecord,
+): Promise<WorkflowEvalResult> {
   if (state.status === "completed") {
     if (!state.summary) {
-      throw new Error(`Durable eval run ${state.runId} has no saved summary`);
+      throw new Error(`Workflow eval run ${state.runId} has no saved summary`);
     }
     return {
       status: "completed",
@@ -1136,21 +1147,28 @@ function currentStatus(
       summary: state.summary,
     };
   }
+  const key = runKey(definition.projectName, definition.evalName, state.runId);
+  const store = definition.evaluator.store;
   const pending = { poll: 0, webhook: 0 };
-  for (const batch of state.batches) {
-    if (batch.status === "complete") continue;
-    pending[
-      processorForStage(definition, batch.kind, batch.scorerName).completion
-        .mode
-    ]++;
-  }
+  await Promise.all(
+    (["poll", "webhook"] as const).map(async (mode) => {
+      // Read completions first so an in-flight submission cannot yield a negative count.
+      const completed = await store.getSetSize(
+        `${key}/progress/${mode}/complete`,
+      );
+      const submitted = await store.getSetSize(
+        `${key}/progress/${mode}/submitted`,
+      );
+      pending[mode] = submitted - completed;
+    }),
+  );
   return { status: "waiting", runId: state.runId, pending };
 }
 
 async function startCaseRoot(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  state: DurableRunState,
-  record: DurableCaseRecord,
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
+  record: WorkflowCaseRecord,
   experiment: Experiment | null,
 ): Promise<Span> {
   if (!experiment) return NOOP_SPAN;
@@ -1174,9 +1192,9 @@ async function startCaseRoot(
 }
 
 async function logTaskResult(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  state: DurableRunState,
-  record: DurableCaseRecord,
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
+  record: WorkflowCaseRecord,
   experiment: Experiment | null,
   task?: EvalTask<any, any, any, any, any>,
 ) {
@@ -1220,7 +1238,7 @@ async function logTaskResult(
       expected: "expected" in datum ? datum.expected : undefined,
       metadata: {
         ...(record.metadata as Record<string, unknown>),
-        durable_eval: {
+        workflow_eval: {
           run_id: state.runId,
           case_id: record.caseId,
           trial_index: record.trialIndex,
@@ -1239,13 +1257,13 @@ async function logTaskResult(
 }
 
 async function logCompletedTasks(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  state: DurableRunState,
-  store: DurableEvalStore,
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
+  store: WorkflowEvalStore,
   key: string,
   experiment: Experiment | null,
 ) {
-  const changed: DurableCaseRecord[] = [];
+  const changed: WorkflowCaseRecord[] = [];
   for (const record of state.cases) {
     if (!record.taskComplete || record.taskLogged) continue;
     if (!(await claimAction(store, key, "task-log", record.id))) continue;
@@ -1265,20 +1283,20 @@ async function runTaskStage<
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 >(
-  definition: DurableEvalRuntimeDefinition<
+  definition: WorkflowEvalRuntimeDefinition<
     Input,
     Output,
     Expected,
     Metadata,
     Parameters
   >,
-  state: DurableRunState,
-  store: DurableEvalStore,
+  state: WorkflowRunState,
+  store: WorkflowEvalStore,
   key: string,
   experiment: Experiment | null,
 ) {
-  if (isBatchTask(definition.evaluator.task)) {
-    await ensureBatches(definition, state, store, key, "task");
+  if (isWorkflowTask(definition.evaluator.task)) {
+    await ensureSubmissions(definition, state, store, key, "task");
     return;
   }
 
@@ -1289,7 +1307,7 @@ async function runTaskStage<
     Metadata,
     Parameters
   >;
-  const changed: DurableCaseRecord[] = [];
+  const changed: WorkflowCaseRecord[] = [];
   for (const record of state.cases) {
     if (record.taskComplete) continue;
     if (!(await claimAction(store, key, "task", record.id))) continue;
@@ -1309,20 +1327,20 @@ async function runScoreStages<
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 >(
-  definition: DurableEvalRuntimeDefinition<
+  definition: WorkflowEvalRuntimeDefinition<
     Input,
     Output,
     Expected,
     Metadata,
     Parameters
   >,
-  state: DurableRunState,
-  store: DurableEvalStore,
+  state: WorkflowRunState,
+  store: WorkflowEvalStore,
   key: string,
   experiment: Experiment | null,
 ) {
   const scorers = resolveScorers(definition.evaluator.scores ?? []);
-  const changed = new Map<string, DurableCaseRecord>();
+  const changed = new Map<string, WorkflowCaseRecord>();
   const persistChangedCases = async () => {
     if (changed.size === 0) return;
     await experiment?.flush();
@@ -1330,8 +1348,9 @@ async function runScoreStages<
     changed.clear();
   };
   for (const { name, scorer } of scorers) {
-    if (isBatchScorer(scorer)) {
+    if (isWorkflowScorer(scorer)) {
       for (const record of state.cases) {
+        if (!record.taskComplete || !record.taskLogged) continue;
         if (
           Object.hasOwn(record.scores, name) &&
           !Object.hasOwn(record.loggedScores, name)
@@ -1350,10 +1369,11 @@ async function runScoreStages<
         }
       }
       await persistChangedCases();
-      await ensureBatches(definition, state, store, key, "score", name);
+      await ensureSubmissions(definition, state, store, key, "score", name);
       continue;
     }
     for (const record of state.cases) {
+      if (!record.taskComplete || !record.taskLogged) continue;
       if (Object.hasOwn(record.loggedScores, name)) continue;
       if (!(await claimAction(store, key, "score", record.id, name))) continue;
       await evaluateAndLogScore(
@@ -1373,6 +1393,7 @@ async function runScoreStages<
   ).entries()) {
     const name = classifierName(classifier, index);
     for (const record of state.cases) {
+      if (!record.taskComplete || !record.taskLogged) continue;
       if (Object.hasOwn(record.loggedClassifications, name)) continue;
       if (!(await claimAction(store, key, "classification", record.id, name))) {
         continue;
@@ -1391,23 +1412,24 @@ async function runScoreStages<
   await persistChangedCases();
 }
 
-function scorerArgs(record: DurableCaseRecord) {
+function scorerArgs(record: WorkflowCaseRecord) {
   const datum = record.datum as EvalCase<unknown, unknown, BaseMetadata>;
   return {
     ...datum,
     metadata: record.metadata,
+    tags: record.tags,
     output: record.output,
   } as EvalScorerArgs<unknown, unknown, unknown, BaseMetadata>;
 }
 
 function resumeCaseRoot(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  record: DurableCaseRecord,
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  record: WorkflowCaseRecord,
   experiment: Experiment | null,
 ) {
   if (!experiment) return NOOP_SPAN;
   if (!record.rootSpan) {
-    throw new Error(`Durable eval case ${record.caseId} has no root span`);
+    throw new Error(`Workflow eval case ${record.caseId} has no root span`);
   }
   return _internalResumeSpan({
     exported: record.rootSpan,
@@ -1416,9 +1438,9 @@ function resumeCaseRoot(
 }
 
 async function evaluateAndLogScore(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  state: DurableRunState,
-  record: DurableCaseRecord,
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
+  record: WorkflowCaseRecord,
   name: string,
   experiment: Experiment | null,
   scorer?: EvalScorer<any, any, any, any>,
@@ -1466,9 +1488,9 @@ async function evaluateAndLogScore(
 }
 
 async function evaluateAndLogClassification(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  state: DurableRunState,
-  record: DurableCaseRecord,
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
+  record: WorkflowCaseRecord,
   name: string,
   classifier: EvalClassifier<any, any, any, any>,
   experiment: Experiment | null,
@@ -1514,136 +1536,133 @@ async function evaluateAndLogClassification(
   }
 }
 
-async function ensureBatches(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  state: DurableRunState,
-  store: DurableEvalStore,
+async function ensureSubmissions(
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
+  store: WorkflowEvalStore,
   key: string,
   kind: "task" | "score",
   scorerName?: string,
 ) {
   const processor = processorForStage(definition, kind, scorerName);
-  const plans = plannedBatches(
+  const plans = plannedSubmissions(
     definition,
     state.runId,
     state.cases.map(({ id }) => id),
   );
   const casesById = new Map(state.cases.map((record) => [record.id, record]));
-  for (const plan of plans) {
-    if (plan.kind !== kind || plan.scorerName !== scorerName) continue;
-    if (state.batches.some(({ id }) => id === plan.id)) continue;
-    const records = plan.itemIds.map((id) => casesById.get(id)!);
-    const ready = records.every((record) =>
+  const existingIds = new Set(state.submissions.map(({ id }) => id));
+  const workers = queue(async (plan: WorkflowSubmissionPlan) => {
+    if (plan.kind !== kind || plan.scorerName !== scorerName) return;
+    if (existingIds.has(plan.id)) return;
+    const record = casesById.get(plan.itemId)!;
+    const ready =
       kind === "task"
         ? !record.taskComplete
-        : !Object.hasOwn(record.scores, scorerName!),
-    );
-    if (!ready) continue;
-    const batchId = plan.id;
+        : record.taskComplete &&
+          record.taskLogged &&
+          !Object.hasOwn(record.scores, scorerName!);
+    if (!ready) return;
+    const submissionId = plan.id;
     const claim = await store.getOrSet(
-      claimRecordKey(key, "batch", batchId),
-      encoder.encode(batchId),
+      claimRecordKey(key, "submission", submissionId),
+      encoder.encode(submissionId),
     );
-    if (!claim.created) continue;
-    const context = { runId: state.runId, batchId };
-    const items = records.map((record) =>
+    if (!claim.created) return;
+    const context = { runId: state.runId, submissionId };
+    const item =
       kind === "task"
-        ? taskBatchItem(record, state.parameters)
-        : scorerBatchItem(record),
-    );
+        ? taskSubmissionItem(record, state.parameters)
+        : scorerSubmissionItem(record);
     const submissionData = assertJsonValue(
-      await processor.submit(items, context),
-      `submission data for batch ${batchId}`,
+      await processor.submit(item, context),
+      `submission data for submission ${submissionId}`,
     );
     const externalId =
       processor.completion.mode === "webhook"
         ? processor.completion.getExternalId(submissionData, context)
         : undefined;
     if (externalId !== undefined && !externalId.trim()) {
-      throw new Error(`Batch ${batchId} produced an empty externalId`);
+      throw new Error(
+        `Submission ${submissionId} produced an empty externalId`,
+      );
     }
-    const batch: DurableBatchRecord = {
-      id: batchId,
+    const submission: WorkflowSubmissionRecord = {
+      id: submissionId,
       kind,
       scorerName,
-      itemIds: records.map((record) => record.id),
+      itemId: record.id,
       submissionData,
       externalId,
       status: "submitted",
+      completionMode: processor.completion.mode,
     };
-    state.batches.push(batch);
-    await writeBatchRecords(store, key, [batch]);
-  }
+    state.submissions.push(submission);
+    await writeSubmissionRecords(store, key, [submission]);
+  }, definition.evaluator.maxConcurrency ?? 10);
+  const results = await Promise.allSettled(
+    plans.map((plan) => workers.pushAsync(plan)),
+  );
+  const errors = results.flatMap((result) =>
+    result.status === "rejected" ? [asError(result.reason)] : [],
+  );
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1)
+    throw new AggregateError(errors, "Workflow submissions failed");
 }
 
-async function collectBatch(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  state: DurableRunState,
-  batch: DurableBatchRecord,
+async function collectSubmission(
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
+  submission: WorkflowSubmissionRecord,
 ) {
-  const processor = processorForStage(definition, batch.kind, batch.scorerName);
-  const context = { runId: state.runId, batchId: batch.id };
-  const results = await processor.collect(batch.submissionData, context);
-  if (!Array.isArray(results)) {
-    throw new Error(`collect for batch ${batch.id} must return an array`);
-  }
-  const expectedIds = new Set(batch.itemIds);
-  const seen = new Set<string>();
-  const records: DurableCaseRecord[] = [];
-  for (const result of results) {
-    const id = resultItemId(result);
-    if (!expectedIds.has(id)) {
-      throw new Error(`Batch ${batch.id} returned unknown item ${id}`);
-    }
-    if (seen.has(id)) {
-      throw new Error(`Batch ${batch.id} returned item ${id} more than once`);
-    }
-    seen.add(id);
-    const record = state.cases.find((candidate) => candidate.id === id)!;
-    records.push(record);
-    if (batch.kind === "task") {
-      record.output = assertJsonValue(
-        result.output,
-        `task output for item ${id}`,
-      );
-      if ("metadata" in result && result.metadata !== undefined) {
-        record.metadata = assertJsonValue(
-          {
-            ...(record.metadata as Record<string, unknown>),
-            ...result.metadata,
-          },
-          `metadata for ${id}`,
-        );
-      }
-      if ("tags" in result && result.tags !== undefined)
-        record.tags = result.tags;
-      record.taskComplete = true;
-    } else {
-      record.scores[batch.scorerName!] = assertJsonValue(
-        result.score,
-        `score output for item ${id}`,
-      );
-    }
-  }
-  const missing = batch.itemIds.filter((id) => !seen.has(id));
-  if (missing.length > 0) {
+  const processor = processorForStage(
+    definition,
+    submission.kind,
+    submission.scorerName,
+  );
+  const context = { runId: state.runId, submissionId: submission.id };
+  const result = await processor.collect(submission.submissionData, context);
+  if (typeof result !== "object" || result === null || Array.isArray(result)) {
     throw new Error(
-      `Batch ${batch.id} did not return results for: ${missing.join(", ")}`,
+      `collect for submission ${submission.id} must return a result object`,
     );
   }
-  return records;
+  const record = state.cases.find(
+    (candidate) => candidate.id === submission.itemId,
+  )!;
+  if (submission.kind === "task") {
+    record.output = assertJsonValue(
+      result.output,
+      `task output for item ${record.id}`,
+    );
+    if (result.metadata !== undefined) {
+      record.metadata = assertJsonValue(
+        { ...(record.metadata as Record<string, unknown>), ...result.metadata },
+        `metadata for ${record.id}`,
+      );
+    }
+    if (result.tags !== undefined) record.tags = result.tags;
+    record.taskComplete = true;
+  } else {
+    record.scores[submission.scorerName!] = assertJsonValue(
+      result.score,
+      `score output for item ${record.id}`,
+    );
+  }
+  return record;
 }
 
 function processorForStage(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
   kind: "task" | "score",
   scorerName?: string,
-): DurableBatchProcessor<any, any, JsonValue> {
+): WorkflowSubmissionProcessor<any, any, JsonValue> {
   if (kind === "task") {
-    if (!isBatchTask(definition.evaluator.task)) {
-      throw new Error("Definition no longer contains the batch task");
+    if (!isWorkflowTask(definition.evaluator.task)) {
+      throw new Error("Definition no longer contains the submission task");
     }
-    return definition.evaluator.task.processor as DurableBatchProcessor<
+    return definition.evaluator.task.processor as WorkflowSubmissionProcessor<
       any,
       any,
       JsonValue
@@ -1652,10 +1671,10 @@ function processorForStage(
   const scorer = resolveScorers(definition.evaluator.scores ?? []).find(
     ({ name }) => name === scorerName,
   )?.scorer;
-  if (!isBatchScorer(scorer)) {
+  if (!isWorkflowScorer(scorer)) {
     throw new Error(`Definition no longer contains scorer ${scorerName}`);
   }
-  return scorer.processor as DurableBatchProcessor<any, any, JsonValue>;
+  return scorer.processor as WorkflowSubmissionProcessor<any, any, JsonValue>;
 }
 
 async function materializeCases<
@@ -1665,7 +1684,7 @@ async function materializeCases<
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
 >(
-  definition: DurableEvalRuntimeDefinition<
+  definition: WorkflowEvalRuntimeDefinition<
     Input,
     Output,
     Expected,
@@ -1674,7 +1693,7 @@ async function materializeCases<
   >,
   data: Evaluator<Input, Output, Expected, Metadata, Parameters>["data"],
   experiment: Experiment | null,
-): Promise<DurableCaseRecord[]> {
+): Promise<WorkflowCaseRecord[]> {
   const evaluator = definition.evaluator;
   const iterable = await _internalResolveEvaluatorData(
     {
@@ -1685,7 +1704,7 @@ async function materializeCases<
     },
     experiment,
   );
-  const records: DurableCaseRecord[] = [];
+  const records: WorkflowCaseRecord[] = [];
   const seen = new Set<string>();
   for await (const datum of iterable) {
     const caseId =
@@ -1696,15 +1715,15 @@ async function materializeCases<
         : undefined);
     if (!caseId) {
       throw new Error(
-        "Every durable eval case requires id, upsert_id, or caseId",
+        "Every workflow eval case requires id, upsert_id, or caseId",
       );
     }
     if (seen.has(caseId))
-      throw new Error(`Duplicate durable eval case id: ${caseId}`);
+      throw new Error(`Duplicate workflow eval case id: ${caseId}`);
     seen.add(caseId);
     const trialCount = datum.trialCount ?? evaluator.trialCount ?? 1;
     if (!Number.isInteger(trialCount) || trialCount < 1) {
-      throw new Error(`Invalid trialCount for durable eval case ${caseId}`);
+      throw new Error(`Invalid trialCount for workflow eval case ${caseId}`);
     }
     for (let trialIndex = 0; trialIndex < trialCount; trialIndex++) {
       records.push({
@@ -1729,7 +1748,7 @@ async function materializeCases<
   return records;
 }
 
-function taskBatchItem(record: DurableCaseRecord, parameters: JsonValue) {
+function taskSubmissionItem(record: WorkflowCaseRecord, parameters: JsonValue) {
   const datum = record.datum as EvalCase<unknown, unknown, BaseMetadata>;
   return {
     id: record.id,
@@ -1742,7 +1761,7 @@ function taskBatchItem(record: DurableCaseRecord, parameters: JsonValue) {
   };
 }
 
-function scorerBatchItem(record: DurableCaseRecord) {
+function scorerSubmissionItem(record: WorkflowCaseRecord) {
   const datum = record.datum as EvalCase<unknown, unknown, BaseMetadata>;
   return {
     id: record.id,
@@ -1756,8 +1775,8 @@ function scorerBatchItem(record: DurableCaseRecord) {
 }
 
 async function finishExperiment(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  state: DurableRunState,
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
   experiment: Experiment | null,
 ) {
   const scorerNames = resolveScorers(definition.evaluator.scores ?? []).map(
@@ -1821,11 +1840,11 @@ async function finishExperiment(
 function resolveScorers(
   scorers: Array<
     | EvalScorer<any, any, any, any>
-    | DurableBatchScorer<any, any, any, any, JsonValue>
+    | WorkflowScorerDefinition<any, any, any, any, JsonValue>
   >,
 ) {
   return scorers.map((scorer, index) => ({
-    name: isBatchScorer(scorer)
+    name: isWorkflowScorer(scorer)
       ? scorer.name
       : scorer.name || `scorer_${index}`,
     scorer,
@@ -1833,7 +1852,7 @@ function resolveScorers(
 }
 
 function runKey(projectName: string, evalName: string, runId: string) {
-  return `durable-eval/v1/runs/${contentVersion(encoder.encode(`${projectName}\0${evalName}\0${runId}`))}`;
+  return `workflow-eval/v1/runs/${contentVersion(encoder.encode(`${projectName}\0${evalName}\0${runId}`))}`;
 }
 
 function encodedKeyPart(value: string) {
@@ -1860,8 +1879,8 @@ function caseRecordKey(
   return `${key}/cases/${encodedKeyPart(caseId)}/${kind}${suffix ? `/${suffix}` : ""}`;
 }
 
-function batchRecordKey(key: string, batchId: string) {
-  return `${key}/batches/${encodedKeyPart(batchId)}`;
+function submissionRecordKey(key: string, submissionId: string) {
+  return `${key}/submissions/${encodedKeyPart(submissionId)}`;
 }
 
 function claimRecordKey(key: string, kind: string, ...parts: string[]) {
@@ -1870,7 +1889,7 @@ function claimRecordKey(key: string, kind: string, ...parts: string[]) {
 }
 
 async function claimAction(
-  store: DurableEvalStore,
+  store: WorkflowEvalStore,
   key: string,
   kind: string,
   ...parts: string[]
@@ -1883,44 +1902,33 @@ async function claimAction(
   ).created;
 }
 
-type DurableBatchPlan = Omit<
-  DurableBatchRecord,
-  "submissionData" | "externalId" | "status"
+type WorkflowSubmissionPlan = Omit<
+  WorkflowSubmissionRecord,
+  "submissionData" | "externalId" | "status" | "completionMode"
 >;
 
-function plannedBatches(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
+function plannedSubmissions(
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
   runId: string,
   caseIds: string[],
 ) {
   const stages: Array<{ kind: "task" | "score"; scorerName?: string }> = [];
-  if (isBatchTask(definition.evaluator.task)) stages.push({ kind: "task" });
+  if (isWorkflowTask(definition.evaluator.task)) stages.push({ kind: "task" });
   for (const { name, scorer } of resolveScorers(
     definition.evaluator.scores ?? [],
   )) {
-    if (isBatchScorer(scorer)) {
+    if (isWorkflowScorer(scorer)) {
       stages.push({ kind: "score", scorerName: name });
     }
   }
-  const plans: DurableBatchPlan[] = [];
+  const plans: WorkflowSubmissionPlan[] = [];
   for (const { kind, scorerName } of stages) {
-    const batchSize =
-      processorForStage(definition, kind, scorerName).batchSize ??
-      DEFAULT_BATCH_SIZE;
-    if (!Number.isInteger(batchSize) || batchSize < 1) {
-      throw new Error(
-        `Invalid batchSize for ${scorerName ?? "task"}: ${batchSize}`,
-      );
-    }
-    for (let offset = 0; offset < caseIds.length; offset += batchSize) {
-      const itemIds = caseIds.slice(offset, offset + batchSize);
+    for (const itemId of caseIds) {
       plans.push({
-        id: deterministicId(
-          stableStringify([runId, kind, scorerName, itemIds]),
-        ),
+        id: deterministicId(stableStringify([runId, kind, scorerName, itemId])),
         kind,
         scorerName,
-        itemIds,
+        itemId,
       });
     }
   }
@@ -1928,8 +1936,8 @@ function plannedBatches(
 }
 
 async function readCaseRecord(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  store: DurableEvalStore,
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  store: WorkflowEvalStore,
   key: string,
   id: string,
 ) {
@@ -1946,9 +1954,9 @@ async function readCaseRecord(
     classificationValues,
     classificationLogValues,
   ] = await Promise.all([
-    readJson<DurableCaseBaseRecord>(store, caseRecordKey(key, id, "base")),
-    readJson<DurableTaskResultRecord>(store, caseRecordKey(key, id, "task")),
-    readJson<DurableTaskLogRecord>(store, caseRecordKey(key, id, "task-log")),
+    readJson<WorkflowCaseBaseRecord>(store, caseRecordKey(key, id, "base")),
+    readJson<WorkflowTaskResultRecord>(store, caseRecordKey(key, id, "task")),
+    readJson<WorkflowTaskLogRecord>(store, caseRecordKey(key, id, "task-log")),
     Promise.all(
       scorers.map(async ({ name }) => ({
         name,
@@ -1986,7 +1994,7 @@ async function readCaseRecord(
       })),
     ),
   ]);
-  if (!base) throw new Error(`Durable eval case ${id} is missing`);
+  if (!base) throw new Error(`Workflow eval case ${id} is missing`);
   const scores: Record<string, JsonValue> = Object.create(null);
   for (const { name, value } of scoreValues) {
     if (value !== undefined) scores[name] = value;
@@ -2015,50 +2023,57 @@ async function readCaseRecord(
     loggedScores,
     classifications,
     loggedClassifications,
-  } satisfies DurableCaseRecord;
+  } satisfies WorkflowCaseRecord;
 }
 
 async function readRunState(
-  definition: DurableEvalRuntimeDefinition<any, any, any, any, any>,
-  store: DurableEvalStore,
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  store: WorkflowEvalStore,
   key: string,
+  caseIds?: string[],
 ) {
-  const record = await readJson<DurableRunRecord>(store, key);
+  const record = await readJson<WorkflowRunRecord>(store, key);
   if (!record) return undefined;
-  const plans = plannedBatches(definition, record.runId, record.caseIds);
-  const [cases, batchRecords] = await Promise.all([
+  const selectedIds =
+    caseIds ??
+    (record.caseCount === 0
+      ? []
+      : await readJson<string[]>(store, `${key}/case-ids`));
+  if (!selectedIds)
+    throw new Error(`Workflow eval run ${record.runId} has no case index`);
+  const plans = plannedSubmissions(definition, record.runId, selectedIds);
+  const [cases, submissionRecords] = await Promise.all([
     Promise.all(
-      record.caseIds.map((id) => readCaseRecord(definition, store, key, id)),
+      selectedIds.map((id) => readCaseRecord(definition, store, key, id)),
     ),
     Promise.all(
       plans.map(async ({ id }) => {
-        return readJson<DurableBatchRecord>(store, batchRecordKey(key, id));
+        return readJson<WorkflowSubmissionRecord>(
+          store,
+          submissionRecordKey(key, id),
+        );
       }),
     ),
   ]);
-  const batches = batchRecords.filter(
-    (value): value is DurableBatchRecord => value !== undefined,
+  const submissions = submissionRecords.filter(
+    (value): value is WorkflowSubmissionRecord => value !== undefined,
   );
-  const { caseIds: _caseIds, ...state } = record;
-  return { ...state, cases, batches };
+  return { ...record, cases, submissions };
 }
 
 async function writeRunRecord(
-  store: DurableEvalStore,
+  store: WorkflowEvalStore,
   key: string,
-  state: DurableRunState,
+  state: WorkflowRunState,
 ) {
-  const { cases, batches: _batches, ...record } = state;
-  await writeJson(store, key, {
-    ...record,
-    caseIds: cases.map(({ id }) => id),
-  } satisfies DurableRunRecord);
+  const { cases: _cases, submissions: _submissions, ...record } = state;
+  await writeJson(store, key, record);
 }
 
 async function writeCaseBaseRecords(
-  store: DurableEvalStore,
+  store: WorkflowEvalStore,
   key: string,
-  records: DurableCaseRecord[],
+  records: WorkflowCaseRecord[],
 ) {
   await Promise.all(
     records.map(({ id, caseId, trialIndex, datum, metadata, tags }) =>
@@ -2069,15 +2084,15 @@ async function writeCaseBaseRecords(
         datum,
         metadata,
         tags,
-      } satisfies DurableCaseBaseRecord),
+      } satisfies WorkflowCaseBaseRecord),
     ),
   );
 }
 
 async function writeCaseRecords(
-  store: DurableEvalStore,
+  store: WorkflowEvalStore,
   key: string,
-  records: DurableCaseRecord[],
+  records: WorkflowCaseRecord[],
 ) {
   const writes: Promise<void>[] = [];
   for (const record of records) {
@@ -2088,7 +2103,7 @@ async function writeCaseRecords(
           metadata: record.metadata,
           tags: record.tags,
           taskComplete: true,
-        } satisfies DurableTaskResultRecord),
+        } satisfies WorkflowTaskResultRecord),
       );
     }
     if (record.taskLogged) {
@@ -2096,7 +2111,7 @@ async function writeCaseRecords(
         writeJson(store, caseRecordKey(key, record.id, "task-log"), {
           rootSpan: record.rootSpan,
           taskLogged: true,
-        } satisfies DurableTaskLogRecord),
+        } satisfies WorkflowTaskLogRecord),
       );
     }
     for (const [name, value] of Object.entries(record.scores)) {
@@ -2135,15 +2150,31 @@ async function writeCaseRecords(
   await Promise.all(writes);
 }
 
-async function writeBatchRecords(
-  store: DurableEvalStore,
+async function writeSubmissionRecords(
+  store: WorkflowEvalStore,
   key: string,
-  records: DurableBatchRecord[],
+  records: WorkflowSubmissionRecord[],
 ) {
   await Promise.all(
-    records.map((record) =>
-      writeJson(store, batchRecordKey(key, record.id), record),
-    ),
+    records.map(async (record) => {
+      if (record.externalId !== undefined) {
+        const locator = await store.getOrSet(
+          `${key}/external/${encodedKeyPart(record.externalId)}`,
+          encoder.encode(JSON.stringify(record.id)),
+        );
+        if (JSON.parse(decoder.decode(locator.value)) !== record.id) {
+          throw new Error(`Duplicate externalId: ${record.externalId}`);
+        }
+      }
+      const progressKey = `${key}/progress/${record.completionMode}`;
+      await store.addToSet(`${progressKey}/submitted`, record.id);
+      if (record.status === "complete") {
+        await store.addToSet(`${progressKey}/complete`, record.id);
+      }
+      // Mark completion only after progress is saved, so polling can retry an
+      // interrupted progress update instead of permanently skipping it.
+      await writeJson(store, submissionRecordKey(key, record.id), record);
+    }),
   );
 }
 
@@ -2164,12 +2195,16 @@ function contentVersion(value: Uint8Array) {
   return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
-async function readJson<T>(store: DurableEvalStore, key: string) {
+async function readJson<T>(store: WorkflowEvalStore, key: string) {
   const value = await store.read(key);
   return value ? (JSON.parse(decoder.decode(value)) as T) : undefined;
 }
 
-async function writeJson(store: DurableEvalStore, key: string, value: unknown) {
+async function writeJson(
+  store: WorkflowEvalStore,
+  key: string,
+  value: unknown,
+) {
   await store.write(key, encoder.encode(stableStringify(value)));
 }
 
@@ -2197,37 +2232,25 @@ function assertJsonValue(value: unknown, label: string): JsonValue {
   }
 }
 
-function resultItemId(value: unknown) {
-  if (
-    typeof value !== "object" ||
-    value === null ||
-    !("id" in value) ||
-    typeof value.id !== "string"
-  ) {
-    throw new Error("Batch results must contain a string id");
-  }
-  return value.id;
-}
-
-function isBatchTask(
+function isWorkflowTask(
   value: unknown,
-): value is DurableBatchTask<any, any, any, any, any, JsonValue> {
+): value is WorkflowTaskDefinition<any, any, any, any, any, JsonValue> {
   return (
     typeof value === "object" &&
     value !== null &&
     "kind" in value &&
-    value.kind === BATCH_TASK_KIND
+    value.kind === WORKFLOW_TASK_KIND
   );
 }
 
-function isBatchScorer(
+function isWorkflowScorer(
   value: unknown,
-): value is DurableBatchScorer<any, any, any, any, JsonValue> {
+): value is WorkflowScorerDefinition<any, any, any, any, JsonValue> {
   return (
     typeof value === "object" &&
     value !== null &&
     "kind" in value &&
-    value.kind === BATCH_SCORER_KIND
+    value.kind === WORKFLOW_SCORER_KIND
   );
 }
 

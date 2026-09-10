@@ -684,12 +684,12 @@
     ]
   },
   {
-    "scenarioDirName": "durable-eval-webhook",
-    "label": "Durable Eval Webhook",
-    "metadataScenario": "durable-eval-webhook",
+    "scenarioDirName": "workflow-eval-webhook",
+    "label": "Workflow Eval Webhook",
+    "metadataScenario": "workflow-eval-webhook",
     "evals": [
       {
-        "experimentNameTemplate": "durable-eval-webhook-{testRunId}",
+        "experimentNameTemplate": "workflow-eval-webhook-{testRunId}",
         "label": "webhook"
       }
     ]

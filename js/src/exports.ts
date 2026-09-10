@@ -274,15 +274,15 @@ export {
   defaultErrorScoreHandler,
 } from "./framework";
 
-export type { DurableEvalStore } from "./durable-eval";
+export type { WorkflowEvalStore } from "./workflow-eval";
 
 export {
-  BatchScorer,
-  BatchTask,
-  defineDurableEval,
-  DurableEvalMemoryStore,
-  DurableEvalRedisStore,
-} from "./durable-eval";
+  WorkflowScorer,
+  WorkflowTask,
+  defineWorkflowEval,
+  WorkflowEvalMemoryStore,
+  WorkflowEvalRedisStore,
+} from "./workflow-eval";
 
 export { agentAssertionScorer } from "./agent-assertions";
 
