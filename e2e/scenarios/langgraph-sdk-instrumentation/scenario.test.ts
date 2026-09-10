@@ -126,10 +126,7 @@ describe.concurrent("variants", () => {
                     completion_tokens: usage.output_tokens,
                     tokens: usage.total_tokens,
                   });
-                  const output = event.output as {
-                    messages: Array<{ role: string; content: string }>;
-                  };
-                  expect(output.messages.at(-1)).toEqual({
+                  expect(event.output).toEqual({
                     role: "assistant",
                     content:
                       name === "left" || name === "right"
@@ -141,16 +138,19 @@ describe.concurrent("variants", () => {
                   expect(
                     cases[name].metrics?.time_to_first_token,
                   ).toBeGreaterThanOrEqual(0);
-                expect(cases.messages.output).toEqual(cases.updates.output);
-                expect(waits[1].output).toMatchObject({
-                  __interrupt__: [{ value: "Approve the model call?" }],
+                for (const name of ["values", "messages", "updates"] as const)
+                  expect(cases[name].output).toEqual(cases.wait.output);
+                expect(waits[1].output).toBeUndefined();
+                expect(waits[1].metadata).toMatchObject({
+                  "langgraph.interrupts": [
+                    { value: "Approve the model call?" },
+                  ],
                 });
                 expect(waits[2].input).toEqual({ command: { resume: "yes" } });
                 expect(waits[3].row.error).toContain("HTTP 404");
                 expect(waits[4].row.error).toBe("Agent failed");
-                expect(waits[5].output).toEqual({
-                  __error__: { error: "Error", message: "Agent failed" },
-                });
+                expect(waits[5].output).toBeUndefined();
+                expect(waits[5].row.error).toBe("Agent failed");
                 const parallel = events.find(
                   (event) => event.span.name === "Concurrent runs",
                 )!;

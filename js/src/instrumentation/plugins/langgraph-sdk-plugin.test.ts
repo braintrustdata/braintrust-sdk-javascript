@@ -175,7 +175,7 @@ describe("LangGraph SDK instrumentation", () => {
     expect(await backgroundLogger.drain()).toMatchObject([{ output: null }]);
   });
 
-  it("normalizes messages without changing model responses or unrelated graph state", async () => {
+  it("logs generated tool calls without repeating input or unrelated graph state", async () => {
     const content = [
       {
         type: "image_url",
@@ -219,7 +219,7 @@ describe("LangGraph SDK instrumentation", () => {
     const result = await langGraphSDKChannels.wait.invoke(
       async () => state,
       undefined,
-      [null, "agent", { input: state }],
+      [null, "agent", { input: { ...state, messages: [state.messages[0]] } }],
       {},
     );
     expect(result).toBe(state);
@@ -248,11 +248,14 @@ describe("LangGraph SDK instrumentation", () => {
       ],
       application_state: state.application_state,
     };
-    expect(span).toHaveProperty("input", normalized);
-    expect(span).toHaveProperty("output", normalized);
+    expect(span).toHaveProperty("input", {
+      ...normalized,
+      messages: [normalized.messages[0]],
+    });
+    expect(span).toHaveProperty("output", normalized.messages[1]);
   });
 
-  it("combines message deltas and update snapshots without duplication or losing state updates", async () => {
+  it("combines message deltas and update snapshots into the generated response", async () => {
     const usage = { input_tokens: 3, output_tokens: 2, total_tokens: 5 };
     const stream = langGraphSDKChannels.stream.invoke(
       async function* () {
@@ -301,8 +304,8 @@ describe("LangGraph SDK instrumentation", () => {
     }
     const [span] = await backgroundLogger.drain();
     expect(span).toHaveProperty("output", {
-      messages: [{ role: "assistant", content: "hello world" }],
-      updates: [{ agent: { score: 0.9 } }],
+      role: "assistant",
+      content: "hello world",
     });
     expect(span).toMatchObject({
       metrics: { prompt_tokens: 3, completion_tokens: 2, tokens: 5 },
@@ -341,11 +344,219 @@ describe("LangGraph SDK instrumentation", () => {
       expect(spans).toHaveLength(2);
       for (const span of spans)
         expect(span).toHaveProperty("error", "Agent failed");
-      expect(spans[1]).toHaveProperty("output", {
-        __error__: { error: "ValueError", message: "Agent failed" },
+      expect(spans[1]).not.toHaveProperty("output");
+    },
+  );
+
+  it.each(["wait", "values", "updates", "messages"])(
+    "logs only the final generated response for %s, preserving media and total usage",
+    async (mode) => {
+      const input = {
+        messages: [
+          {
+            id: "old",
+            type: "ai",
+            content: "Earlier answer",
+            usage_metadata: { total_tokens: 100 },
+          },
+          { id: "prompt", type: "human", content: "New question" },
+        ],
+      };
+      const generated = [
+        {
+          id: "plan",
+          type: "ai",
+          content: "",
+          tool_calls: [{ id: "call", name: "search", args: {} }],
+          usage_metadata: { total_tokens: 4 },
+        },
+        {
+          id: "tool",
+          type: "tool",
+          content: "Internal tool result",
+          tool_call_id: "call",
+        },
+        {
+          id: "answer",
+          type: "ai",
+          content: [
+            { type: "text", text: "Final answer" },
+            {
+              type: "image_url",
+              image_url: { url: "https://example.com/generated.png" },
+            },
+          ],
+          usage_metadata: { total_tokens: 9 },
+        },
+      ];
+      const state = {
+        messages: [...input.messages, ...generated],
+        internal_state: "Do not display",
+      };
+      if (mode === "wait") {
+        const result = await langGraphSDKChannels.wait.invoke(
+          async () => state,
+          undefined,
+          [null, "agent", { input }],
+          {},
+        );
+        expect(result).toBe(state);
+      } else {
+        const stream = langGraphSDKChannels.stream.invoke(
+          async function* () {
+            if (mode === "values") {
+              yield { event: "values", data: input };
+              yield { event: "values", data: state };
+            } else if (mode === "updates") {
+              yield {
+                event: "updates",
+                data: {
+                  agent: {
+                    messages: generated,
+                    internal_state: state.internal_state,
+                  },
+                },
+              };
+            } else {
+              for (const message of generated.filter(
+                (message) => message.type === "ai",
+              ))
+                yield { event: "messages", data: [message, {}] };
+            }
+          },
+          undefined,
+          [null, "agent", { input }],
+          {},
+        );
+        for await (const _ of stream) {
+          /* drain */
+        }
+      }
+      const [span] = await backgroundLogger.drain();
+      expect(span).toHaveProperty("output", {
+        role: "assistant",
+        content: generated[2].content,
+      });
+      expect(span).toMatchObject({ metrics: { tokens: 13 } });
+      expect(state.messages).toHaveLength(5);
+      expect(state.internal_state).toBe("Do not display");
+    },
+  );
+
+  it.each([
+    {
+      input: [{ role: "assistant", content: "same" }],
+      messages: [{ role: "assistant", content: "same" }],
+      output: undefined,
+    },
+    {
+      input: [
+        { role: "assistant", content: "same" },
+        { role: "user", content: "again" },
+      ],
+      messages: [
+        { role: "assistant", content: "same" },
+        { role: "user", content: "again" },
+        { role: "assistant", content: "same" },
+      ],
+      output: { role: "assistant", content: "same" },
+    },
+    {
+      input: [{ id: "old", role: "assistant", content: "same" }],
+      messages: [{ id: "new", role: "assistant", content: "same" }],
+      output: { role: "assistant", content: "same" },
+    },
+    {
+      input: [{ id: "answer", role: "assistant", content: "old" }],
+      messages: [{ id: "answer", role: "assistant", content: "updated" }],
+      output: { role: "assistant", content: "updated" },
+    },
+  ])(
+    "distinguishes echoed history from generated or edited messages ($output)",
+    async ({ input, messages, output }) => {
+      await langGraphSDKChannels.wait.invoke(
+        async () => ({ messages }),
+        undefined,
+        [null, "agent", { input: { messages: input } }],
+        {},
+      );
+      const [span] = await backgroundLogger.drain();
+      if (output === undefined) expect(span).not.toHaveProperty("output");
+      else expect(span).toHaveProperty("output", output);
+    },
+  );
+
+  it.each(["wait", "values", "updates"])(
+    "records %s interrupts as metadata without presenting history as output",
+    async (mode) => {
+      const input = {
+        messages: [{ id: "old", role: "assistant", content: "Earlier answer" }],
+      };
+      const interrupts = [{ id: "approval", value: "Approve?" }];
+      const state = { ...input, __interrupt__: interrupts };
+      if (mode === "wait") {
+        expect(
+          await langGraphSDKChannels.wait.invoke(
+            async () => state,
+            undefined,
+            ["existing-thread", "agent", { command: { resume: "yes" } }],
+            {},
+          ),
+        ).toBe(state);
+      } else {
+        const stream = langGraphSDKChannels.stream.invoke(
+          async function* () {
+            yield {
+              event: mode,
+              data: mode === "values" ? state : { __interrupt__: interrupts },
+            };
+          },
+          undefined,
+          ["existing-thread", "agent", { command: { resume: "yes" } }],
+          {},
+        );
+        for await (const _ of stream) {
+          /* drain */
+        }
+      }
+      const [span] = await backgroundLogger.drain();
+      expect(span).not.toHaveProperty("output");
+      expect(span).not.toHaveProperty("error");
+      expect(span).toMatchObject({
+        metadata: { "langgraph.interrupts": interrupts },
+        metrics: { end: expect.any(Number) },
       });
     },
   );
+
+  it("keeps generated stream content when the last state snapshot contains only input", async () => {
+    const input = { messages: [{ role: "user", content: "Question" }] };
+    const stream = langGraphSDKChannels.stream.invoke(
+      async function* () {
+        yield { event: "values", data: input };
+        yield {
+          event: "messages",
+          data: [
+            { id: "answer", type: "AIMessageChunk", content: "Partial answer" },
+            {},
+          ],
+        };
+        throw new Error("Connection closed");
+      },
+      undefined,
+      [null, "agent", { input }],
+      {},
+    );
+    await stream.next();
+    await stream.next();
+    await expect(stream.next()).rejects.toThrow("Connection closed");
+    const [span] = await backgroundLogger.drain();
+    expect(span).toHaveProperty("output", {
+      role: "assistant",
+      content: "Partial answer",
+    });
+    expect(span).toHaveProperty("error", "Connection closed");
+  });
 
   it("leaves unsupported wrapper inputs untouched", () => {
     for (const value of [null, undefined, {}, { runs: {} }])

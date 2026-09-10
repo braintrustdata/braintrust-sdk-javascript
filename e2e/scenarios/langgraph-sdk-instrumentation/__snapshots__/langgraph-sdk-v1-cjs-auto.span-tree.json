@@ -17,16 +17,8 @@
             ]
           },
           "output": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
-              },
-              {
-                "content": "hello from langgraph",
-                "role": "assistant"
-              }
-            ]
+            "content": "hello from langgraph",
+            "role": "assistant"
           },
           "metadata": {
             "langgraph.assistant_id": "agent",
@@ -50,16 +42,14 @@
               }
             ]
           },
-          "output": {
-            "__interrupt__": [
-              {
-                "id": "<span:1>",
-                "value": "Approve the model call?"
-              }
-            ]
-          },
           "metadata": {
             "langgraph.assistant_id": "approval",
+            "langgraph.interrupts": [
+              {
+                "id": "<span:2>",
+                "value": "Approve the model call?"
+              }
+            ],
             "langgraph.thread_id": "<uuid:1>"
           }
         },
@@ -73,16 +63,8 @@
             }
           },
           "output": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
-              },
-              {
-                "content": "hello from langgraph",
-                "role": "assistant"
-              }
-            ]
+            "content": "hello from langgraph",
+            "role": "assistant"
           },
           "metadata": {
             "langgraph.assistant_id": "approval",
@@ -142,12 +124,6 @@
               }
             ]
           },
-          "output": {
-            "__error__": {
-              "error": "Error",
-              "message": "Agent failed"
-            }
-          },
           "metadata": {
             "langgraph.assistant_id": "failing",
             "langgraph.thread_id": null
@@ -167,16 +143,8 @@
             ]
           },
           "output": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
-              },
-              {
-                "content": "hello from langgraph",
-                "role": "assistant"
-              }
-            ]
+            "content": "hello from langgraph",
+            "role": "assistant"
           },
           "metadata": {
             "langgraph.assistant_id": "agent",
@@ -209,12 +177,8 @@
             ]
           },
           "output": {
-            "messages": [
-              {
-                "content": "hello from langgraph",
-                "role": "assistant"
-              }
-            ]
+            "content": "hello from langgraph",
+            "role": "assistant"
           },
           "metadata": {
             "langgraph.assistant_id": "agent",
@@ -245,12 +209,8 @@
             ]
           },
           "output": {
-            "messages": [
-              {
-                "content": "hello from langgraph",
-                "role": "assistant"
-              }
-            ]
+            "content": "hello from langgraph",
+            "role": "assistant"
           },
           "metadata": {
             "langgraph.assistant_id": "agent",
@@ -273,14 +233,6 @@
           "type": "task",
           "children": [],
           "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
-              }
-            ]
-          },
-          "output": {
             "messages": [
               {
                 "content": "Reply with exactly: hello from langgraph",
@@ -337,16 +289,8 @@
                 ]
               },
               "output": {
-                "messages": [
-                  {
-                    "content": "Reply with exactly: left",
-                    "role": "user"
-                  },
-                  {
-                    "content": "left",
-                    "role": "assistant"
-                  }
-                ]
+                "content": "left",
+                "role": "assistant"
               },
               "metadata": {
                 "langgraph.assistant_id": "agent",
@@ -371,16 +315,8 @@
                 ]
               },
               "output": {
-                "messages": [
-                  {
-                    "content": "Reply with exactly: right",
-                    "role": "user"
-                  },
-                  {
-                    "content": "right",
-                    "role": "assistant"
-                  }
-                ]
+                "content": "right",
+                "role": "assistant"
               },
               "metadata": {
                 "langgraph.assistant_id": "agent",

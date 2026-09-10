@@ -154,6 +154,72 @@ function normalizeState(value: unknown): unknown {
   );
 }
 
+function normalizeRunOutput(value: unknown, input: unknown): unknown {
+  if (!isObject(value)) return value;
+  if (Array.isArray(value.messages)) {
+    // A paused/failed state can contain only a previous turn's answer.
+    // Any generated streaming content is retained separately by the caller.
+    if (value.__interrupt__ !== undefined || value.__error__ !== undefined)
+      return undefined;
+    const inputMessages =
+      isObject(input) && Array.isArray(input.messages) ? input.messages : [];
+    let inputPrefixLength = 0;
+    while (inputPrefixLength < inputMessages.length) {
+      const previous = inputMessages[inputPrefixLength];
+      const message = value.messages[inputPrefixLength];
+      if (
+        (isObject(previous) &&
+          isObject(message) &&
+          previous.id !== undefined &&
+          message.id !== undefined &&
+          previous.id !== message.id) ||
+        JSON.stringify(normalizeMessage(previous)) !==
+          JSON.stringify(normalizeMessage(message))
+      )
+        break;
+      inputPrefixLength++;
+    }
+    // Agent spans show the final generated response, not the conversation or
+    // intermediate tool results carried in the graph's state.
+    for (
+      let index = value.messages.length - 1;
+      index >= inputPrefixLength;
+      index--
+    ) {
+      const message = value.messages[index];
+      const normalized = normalizeMessage(message);
+      if (!isObject(normalized)) continue;
+      if (normalized.role === "user") return undefined;
+      if (normalized.role !== "assistant") continue;
+      if (
+        inputMessages.some((previous) => {
+          if (!isObject(previous) || !isObject(message)) return false;
+          return (
+            previous.id !== undefined &&
+            previous.id === message.id &&
+            JSON.stringify(normalizeMessage(previous)) ===
+              JSON.stringify(normalized)
+          );
+        })
+      )
+        continue;
+      return normalized;
+    }
+    return undefined;
+  }
+  // Graphs with non-message output still have a useful structured result.
+  // Interrupts and errors are run status, rather than generated content.
+  const result = Object.fromEntries(
+    Object.entries(value).filter(
+      ([key]) => key !== "__interrupt__" && key !== "__error__",
+    ),
+  );
+  return !Object.keys(result).length &&
+    (value.__interrupt__ !== undefined || value.__error__ !== undefined)
+    ? undefined
+    : result;
+}
+
 function instrumentRun<T>(
   operation: "wait" | "stream",
   [threadId, assistantId, options]: LangGraphRunArgs,
@@ -245,18 +311,26 @@ function instrumentRun<T>(
       const finalMessages = [
         ...new Map([...messages, ...messageSnapshots]).values(),
       ];
+      let loggedOutput = normalizeRunOutput(output, options?.input);
+      if (loggedOutput === undefined && finalMessages.length)
+        loggedOutput = normalizeRunOutput(
+          { messages: finalMessages },
+          undefined,
+        );
+      if (output === undefined && !finalMessages.length && updates.length) {
+        const results = updates
+          .map((update) => normalizeRunOutput(update, options?.input))
+          .filter((update) => update !== undefined);
+        if (results.length) loggedOutput = { updates: results };
+      }
+      const interrupted = [output, ...updates].find(
+        (state) => isObject(state) && state.__interrupt__ !== undefined,
+      );
       span.log({
-        output:
-          output !== undefined
-            ? normalizeState(output)
-            : finalMessages.length || updates.length
-              ? {
-                  ...(finalMessages.length
-                    ? { messages: finalMessages.map(normalizeMessage) }
-                    : {}),
-                  ...(updates.length ? { updates } : {}),
-                }
-              : undefined,
+        ...(loggedOutput !== undefined ? { output: loggedOutput } : {}),
+        ...(isObject(interrupted)
+          ? { metadata: { "langgraph.interrupts": interrupted.__interrupt__ } }
+          : {}),
         ...(error !== undefined || streamError !== undefined
           ? { error: normalizeRunError(error ?? streamError) }
           : {}),
