@@ -94,7 +94,7 @@ async function logRegressionSpan(
   gitRegressionCase: string,
 ): Promise<void> {
   const experiment = init({
-    project: "e2e-git-metadata",
+    project: process.env.BRAINTRUST_E2E_PROJECT_NAME || "e2e-git-metadata",
     experiment: experimentName,
     gitMetadataSettings,
     setCurrent: false,

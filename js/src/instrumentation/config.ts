@@ -5,6 +5,7 @@ export interface InstrumentationIntegrationsConfig {
   aisdk?: boolean;
   google?: boolean;
   googleGenAI?: boolean;
+  googleGenerativeAI?: boolean;
   googleADK?: boolean;
   huggingface?: boolean;
   claudeAgentSDK?: boolean;
@@ -34,6 +35,7 @@ export interface InstrumentationIntegrationsConfig {
   langgraph?: boolean;
   langsmith?: boolean;
   voyageai?: boolean;
+  elevenlabs?: boolean;
 }
 
 export interface InstrumentationConfig {
@@ -88,6 +90,8 @@ const envIntegrationAliases: Record<
   "openai-agents-core": "openAIAgents",
   openaiagentscore: "openAIAgents",
   google: "google",
+  "google-generative-ai": "googleGenerativeAI",
+  googlegenerativeai: "googleGenerativeAI",
   "google-genai": "googleGenAI",
   googlegenai: "googleGenAI",
   huggingface: "huggingface",
@@ -122,6 +126,8 @@ const envIntegrationAliases: Record<
   voyage: "voyageai",
   "voyage-ai": "voyageai",
   voyageai: "voyageai",
+  elevenlabs: "elevenlabs",
+  "@elevenlabs/elevenlabs-js": "elevenlabs",
 };
 
 export function getDefaultInstrumentationIntegrations(): Record<
@@ -136,6 +142,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     aisdk: true,
     google: true,
     googleGenAI: true,
+    googleGenerativeAI: true,
     googleADK: true,
     huggingface: true,
     claudeAgentSDK: true,
@@ -161,6 +168,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     langgraph: true,
     langsmith: true,
     voyageai: true,
+    elevenlabs: true,
     piCodingAgent: true,
     strandsAgentSDK: true,
     cloudflareAgents: true,

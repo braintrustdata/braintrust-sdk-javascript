@@ -61,9 +61,15 @@ export interface GoogleGenAIGenerateContentParams {
   [key: string]: unknown;
 }
 
+export type GoogleGenAIEmbeddingContent =
+  | string
+  | GoogleGenAIPart
+  | GoogleGenAIContent
+  | (string | GoogleGenAIPart)[];
+
 export interface GoogleGenAIEmbedContentParams {
   model: string;
-  contents: string | GoogleGenAIContent | GoogleGenAIContent[];
+  contents: GoogleGenAIEmbeddingContent | GoogleGenAIEmbeddingContent[];
   config?: {
     outputDimensionality?: number;
     taskType?: string;
@@ -111,6 +117,12 @@ export interface GoogleGenAIPart {
   inlineData?: {
     data: Uint8Array | string;
     mimeType: string;
+    displayName?: string;
+  };
+  fileData?: {
+    fileUri: string;
+    mimeType?: string;
+    displayName?: string;
   };
   functionCall?: Record<string, unknown>;
   codeExecutionResult?: Record<string, unknown>;
@@ -162,11 +174,18 @@ export interface GoogleGenAIEmbedContentMetadata {
   billableCharacterCount?: number;
 }
 
+export interface GoogleGenAIHttpResponse {
+  json(): Promise<GoogleGenAIEmbedContentResponse>;
+}
+
 export interface GoogleGenAIEmbedContentResponse {
   embedding?: GoogleGenAIEmbedding;
   embeddings?: GoogleGenAIEmbedding[];
   metadata?: GoogleGenAIEmbedContentMetadata;
-  usageMetadata?: GoogleGenAIUsageMetadata;
+  usageMetadata?: GoogleGenAIUsageMetadata & {
+    // Embeddings use the singular "Token", unlike generateContent responses.
+    promptTokenDetails?: GoogleGenAIModalityTokenCount[];
+  };
   [key: string]: unknown;
 }
 

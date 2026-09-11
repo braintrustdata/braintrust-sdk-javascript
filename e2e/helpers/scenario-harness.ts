@@ -301,6 +301,7 @@ function getCassetteServerRoutes(): CassetteServerRoute[] {
       prefix: "/aws-bedrock-runtime",
       upstreamOrigin: `https://bedrock-runtime.${getBedrockRegion()}.amazonaws.com`,
     },
+    { prefix: "/elevenlabs", upstreamOrigin: "https://api.elevenlabs.io" },
     { prefix: "/cohere", upstreamOrigin: "https://api.cohere.com" },
     { prefix: "/cursor/v1", upstreamOrigin: "https://api.cursor.com/v1" },
     { prefix: "/cursor", upstreamOrigin: "https://api2.cursor.sh" },
@@ -336,6 +337,7 @@ function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
     ANTHROPIC_BASE_URL: `${serverUrl}/anthropic`,
     ANTHROPIC_BEDROCK_BASE_URL: `${serverUrl}/anthropic-bedrock`,
     AWS_BEDROCK_RUNTIME_BASE_URL: `${serverUrl}/aws-bedrock-runtime`,
+    ELEVENLABS_BASE_URL: `${serverUrl}/elevenlabs`,
     COHERE_BASE_URL: `${serverUrl}/cohere`,
     COHERE_API_URL: `${serverUrl}/cohere`,
     CURSOR_BACKEND_URL: `${serverUrl}/cursor`,
@@ -392,6 +394,7 @@ const CASSETTE_PROVIDER_KEYS: Array<{
     envVars: ["COHERE_API_KEY", "CO_API_KEY"],
     placeholder: "cassette-placeholder",
   },
+  { envVars: ["ELEVENLABS_API_KEY"], placeholder: "cassette-placeholder" },
   { envVars: ["CURSOR_API_KEY"], placeholder: "key_cassette-placeholder" },
   {
     envVars: ["GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GEMINI_API_KEY"],

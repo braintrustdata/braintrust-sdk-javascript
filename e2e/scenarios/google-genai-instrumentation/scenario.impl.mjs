@@ -1,3 +1,4 @@
+import { runMultimodalEmbeddings } from "./embeddings.mjs";
 import { readFile } from "node:fs/promises";
 import { wrapGoogleGenAI } from "braintrust";
 import {
@@ -171,6 +172,8 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           });
         });
       });
+
+      await runMultimodalEmbeddings(client, imageBase64);
 
       if (options.includeInteractions) {
         await runOperation(

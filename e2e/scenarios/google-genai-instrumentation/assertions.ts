@@ -1,3 +1,7 @@
+import {
+  EMBEDDING_DIMENSIONS,
+  GOOGLE_MULTIMODAL_EMBEDDING_MODEL,
+} from "./embeddings.mjs";
 import { beforeAll, describe, expect, test } from "vitest";
 import type { Json } from "../../helpers/normalize";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
@@ -437,6 +441,12 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
       "generate_content",
       "google-genai.generateContent",
     ]),
+    findLatestSpan(events, "google-multimodal-embed-operation"),
+    findGoogleSpan(
+      events,
+      findLatestSpan(events, "google-multimodal-embed-operation")?.span.id,
+      ["embed_content"],
+    ),
     embedOperation,
     findGoogleSpan(events, embedOperation?.span.id, [
       "embed_content",
@@ -493,7 +503,11 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
 
 function buildSpanTree(events: CapturedLogEvent[]): SpanTreeEntry[] {
   return buildRelevantEvents(events).map((event) => {
-    const summary = summarizeGooglePayload(event) as Record<string, Json>;
+    const summary = (
+      event.span.name === "embed_content"
+        ? { ...spanTreeFields(event), context: event.row.context }
+        : summarizeGooglePayload(event)
+    ) as Record<string, Json>;
     const { name: _name, type: _type, ...fields } = summary;
 
     return {
@@ -647,15 +661,77 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         model: GOOGLE_EMBEDDING_MODEL,
       });
       expect(span?.output).toMatchObject({
-        embedding_count: expect.any(Number),
-        embedding_length: expect.any(Number),
+        count: 1,
       });
       expect(span?.metrics).toMatchObject({
-        duration: expect.any(Number),
         end: expect.any(Number),
         start: expect.any(Number),
       });
     });
+
+    test(
+      "captures multimodal embedding batches without vectors",
+      testConfig,
+      () => {
+        const operation = findLatestSpan(
+          events,
+          "google-multimodal-embed-operation",
+        );
+        const spans = findChildSpans(
+          events,
+          "embed_content",
+          operation?.span.id,
+        );
+        expect(spans).toHaveLength(1);
+        const span = spans[0];
+        expect(span?.row.metadata).toEqual({
+          provider: "google",
+          model: GOOGLE_MULTIMODAL_EMBEDDING_MODEL,
+        });
+        expect(span?.output).toEqual({ count: 4 });
+        expect(span?.metrics).toMatchObject({
+          prompt_tokens: 699,
+          tokens: 699,
+          prompt_audio_tokens: 45,
+        });
+        expect(span?.input).toMatchObject({
+          output_dimensions: EMBEDDING_DIMENSIONS,
+          inputs: [
+            {
+              content: [
+                { type: "text", text: "A sailing ship in a storm" },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: {
+                      type: "braintrust_attachment",
+                      content_type: "image/png",
+                    },
+                  },
+                },
+              ],
+            },
+            ...["audio/wav", "video/mp4", "application/pdf"].map(
+              (content_type) => ({
+                content: [
+                  {
+                    type: "file",
+                    file: {
+                      file_data: {
+                        type: "braintrust_attachment",
+                        content_type,
+                      },
+                    },
+                  },
+                ],
+              }),
+            ),
+          ],
+        });
+        expect(span?.metrics).not.toHaveProperty("completion_tokens");
+        expect(span?.metrics).not.toHaveProperty("time_to_first_token");
+      },
+    );
 
     test("captures trace for client.interactions.create()", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);

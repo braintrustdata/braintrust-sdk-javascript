@@ -38,6 +38,7 @@ export { cloudflareAgentsConfigs } from "./configs/cloudflare-agents";
 export { cloudflareThinkConfigs } from "./configs/cloudflare-think";
 export { cursorSDKConfigs } from "./configs/cursor-sdk";
 export { openAIAgentsCoreConfigs } from "./configs/openai-agents";
+export { googleGenerativeAIConfigs } from "./configs/google-generative-ai";
 export { googleGenAIConfigs } from "./configs/google-genai";
 export { huggingFaceConfigs } from "./configs/huggingface";
 export { openRouterAgentConfigs } from "./configs/openrouter-agent";
