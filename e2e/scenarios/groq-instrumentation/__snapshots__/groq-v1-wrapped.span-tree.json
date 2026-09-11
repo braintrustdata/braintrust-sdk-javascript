@@ -24,25 +24,27 @@
                   "logprobs": null,
                   "message": {
                     "content": "OK",
+                    "reasoning": "The user says: \"Reply with exactly OK.\" So we must reply with exactly \"OK\". No extra spaces, no punctuation. Just OK.",
                     "role": "assistant"
                   }
                 }
               ],
               "metadata": {
-                "max_completion_tokens": 12,
-                "model": "llama-3.3-70b-versatile",
+                "max_completion_tokens": 64,
+                "model": "openai/gpt-oss-20b",
                 "provider": "groq",
                 "temperature": 0
               },
               "metrics": {
-                "completion_time": 0.0072439,
-                "completion_tokens": 2,
-                "prompt_time": 0.001728151,
-                "prompt_tokens": 40,
-                "queue_time": 0.054452998,
+                "completion_reasoning_tokens": 30,
+                "completion_time": 0.042629994,
+                "completion_tokens": 40,
+                "prompt_time": 0.005368606,
+                "prompt_tokens": 76,
+                "queue_time": 0.0949907,
                 "time_to_first_token": 0,
-                "tokens": 42,
-                "total_time": 0.008972051
+                "tokens": 116,
+                "total_time": 0.0479986
               }
             }
           ],
@@ -71,25 +73,27 @@
                   "logprobs": null,
                   "message": {
                     "content": "STREAM",
+                    "reasoning": "The user says: \"Reply with exactly STREAM.\" So we must output exactly the word \"STREAM\". No extra spaces, no newline? Usually we output the word. The instruction: \"Reply with exactly STREAM.\" So we output \"STREAM\". Probably no punctuation. Just that.",
                     "role": "assistant"
                   }
                 }
               ],
               "metadata": {
-                "model": "llama-3.3-70b-versatile",
+                "model": "openai/gpt-oss-20b",
                 "provider": "groq",
                 "stream": true,
                 "temperature": 0
               },
               "metrics": {
-                "completion_time": 0.006718869,
-                "completion_tokens": 2,
-                "prompt_time": 0.003972294,
-                "prompt_tokens": 40,
-                "queue_time": 0.095351581,
+                "completion_reasoning_tokens": 56,
+                "completion_time": 0.074590863,
+                "completion_tokens": 66,
+                "prompt_time": 0.004261973,
+                "prompt_tokens": 76,
+                "queue_time": 0.063093756,
                 "time_to_first_token": 0,
-                "tokens": 42,
-                "total_time": 0.010691163
+                "tokens": 142,
+                "total_time": 0.078852836
               }
             }
           ],
@@ -118,7 +122,7 @@
                   "logprobs": null,
                   "message": {
                     "content": "14",
-                    "reasoning": "The problem: \"Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number.\"\n\nWe need to compute: She has 3 boxes with 4 marbles each, so 3*4 = 12 marbles. She gives away 5 marbles, so remaining = 12 - 5 = 7. Then doubles what remains: 7 * 2 = 14. So final number is 14. The answer should just be the number. So output \"14\".\n\nCheck if any nuance: \"doubles what remains\" means double the number of marbles remaining after giving away 5. Yes. So final answer 14.\n\nThus respond with \"14\".",
+                    "reasoning": "We need to solve step by step. The question: \"Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number.\"\n\nWe need to compute: She has 3 boxes, each with 4 marbles. So total marbles initially = 3*4 = 12.\n\nShe gives away 5 marbles. So remaining = 12 - 5 = 7.\n\nThen she doubles what remains. Doubling 7 gives 14.\n\nThus final number is 14.\n\nWe must reply with just the final number. So output: \"14\".",
                     "role": "assistant"
                   }
                 }
@@ -132,15 +136,15 @@
                 "temperature": 0.6
               },
               "metrics": {
-                "completion_reasoning_tokens": 158,
-                "completion_time": 0.270633239,
-                "completion_tokens": 168,
-                "prompt_time": 0.005148062,
+                "completion_reasoning_tokens": 133,
+                "completion_time": 0.181738536,
+                "completion_tokens": 143,
+                "prompt_time": 0.005268961,
                 "prompt_tokens": 108,
-                "queue_time": 0.103912089,
+                "queue_time": 0.003499083,
                 "time_to_first_token": 0,
-                "tokens": 276,
-                "total_time": 0.275781301
+                "tokens": 251,
+                "total_time": 0.187007497
               }
             }
           ],
@@ -168,6 +172,7 @@
                   "index": 0,
                   "logprobs": null,
                   "message": {
+                    "reasoning": "We need to use the get_weather function.",
                     "role": "assistant",
                     "tool_calls": [
                       {
@@ -183,7 +188,7 @@
                 }
               ],
               "metadata": {
-                "model": "llama-3.3-70b-versatile",
+                "model": "openai/gpt-oss-20b",
                 "provider": "groq",
                 "temperature": 0,
                 "tool_choice": {
@@ -215,19 +220,177 @@
                 ]
               },
               "metrics": {
-                "completion_time": 0.039504246,
-                "completion_tokens": 11,
-                "prompt_time": 0.020812356,
-                "prompt_tokens": 246,
-                "queue_time": 0.091778475,
+                "completion_reasoning_tokens": 10,
+                "completion_time": 0.039514464,
+                "completion_tokens": 34,
+                "prompt_time": 0.006474723,
+                "prompt_tokens": 134,
+                "queue_time": 0.117272509,
                 "time_to_first_token": 0,
-                "tokens": 257,
-                "total_time": 0.060316602
+                "tokens": 168,
+                "total_time": 0.045989187
               }
             }
           ],
           "metadata": {
             "operation": "tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "groq-transcription-operation",
+          "children": [
+            {
+              "name": "groq.audio.transcriptions.create",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "content": [
+                  {
+                    "file": {
+                      "file_data": {
+                        "content_type": "audio/wav",
+                        "filename": "brooklyn_bridge.wav",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "filename": "brooklyn_bridge.wav"
+                    },
+                    "type": "file"
+                  }
+                ],
+                "operation": "transcribe",
+                "parameters": {
+                  "format": "verbose_json",
+                  "language": "en",
+                  "timestamp_granularities": [
+                    "word",
+                    "segment"
+                  ]
+                }
+              },
+              "output": {
+                "annotations": {
+                  "duration": 0,
+                  "language": "English",
+                  "segments": [
+                    {
+                      "avg_logprob": -0.043135762,
+                      "compression_ratio": 0.84210527,
+                      "end": 0,
+                      "id": 0,
+                      "no_speech_prob": 0,
+                      "seek": 0,
+                      "start": 0,
+                      "temperature": 0,
+                      "text": " How old is the Brooklyn Bridge?",
+                      "tokens": [
+                        50365,
+                        1012,
+                        1331,
+                        307,
+                        264,
+                        21872,
+                        18917,
+                        30,
+                        50456
+                      ]
+                    }
+                  ],
+                  "words": [
+                    {
+                      "end": 0,
+                      "start": 0,
+                      "word": "How"
+                    },
+                    {
+                      "end": 0,
+                      "start": 0,
+                      "word": "old"
+                    },
+                    {
+                      "end": 0,
+                      "start": 0,
+                      "word": "is"
+                    },
+                    {
+                      "end": 0,
+                      "start": 0,
+                      "word": "the"
+                    },
+                    {
+                      "end": 0,
+                      "start": 0,
+                      "word": "Brooklyn"
+                    },
+                    {
+                      "end": 0,
+                      "start": 0,
+                      "word": "Bridge?"
+                    }
+                  ]
+                },
+                "content": [
+                  {
+                    "text": " How old is the Brooklyn Bridge?",
+                    "type": "text"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "whisper-large-v3-turbo",
+                "provider": "groq"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "transcription",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "groq-translation-operation",
+          "children": [
+            {
+              "name": "groq.audio.translations.create",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "content": [
+                  {
+                    "file": {
+                      "file_data": {
+                        "content_type": "audio/wav",
+                        "filename": "brooklyn_bridge.wav",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "filename": "brooklyn_bridge.wav"
+                    },
+                    "type": "file"
+                  }
+                ],
+                "operation": "translate",
+                "parameters": {
+                  "format": "json"
+                }
+              },
+              "output": {
+                "content": [
+                  {
+                    "text": " How old is the Brooklyn Bridge?",
+                    "type": "text"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "whisper-large-v3",
+                "provider": "groq"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "translation",
             "testRunId": "<run:1>"
           }
         }

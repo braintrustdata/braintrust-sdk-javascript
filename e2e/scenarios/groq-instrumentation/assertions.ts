@@ -7,7 +7,13 @@ import {
 } from "../../helpers/scenario-harness";
 import { matchSpanTreeSnapshot } from "../../helpers/span-tree";
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
-import { REASONING_MODEL, ROOT_NAME, SCENARIO_NAME } from "./constants.mjs";
+import {
+  AUDIO_MODEL,
+  REASONING_MODEL,
+  ROOT_NAME,
+  SCENARIO_NAME,
+  TRANSLATION_MODEL,
+} from "./constants.mjs";
 
 type RunGroqScenario = (harness: {
   runNodeScenarioDir: (options: {
@@ -42,6 +48,14 @@ function spanTreeEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
     "groq-reasoning-stream-operation",
   );
   const toolOperation = findLatestSpan(events, "groq-tool-operation");
+  const transcriptionOperation = findLatestSpan(
+    events,
+    "groq-transcription-operation",
+  );
+  const translationOperation = findLatestSpan(
+    events,
+    "groq-translation-operation",
+  );
 
   return [
     findLatestSpan(events, ROOT_NAME),
@@ -68,6 +82,18 @@ function spanTreeEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
       events,
       toolOperation?.span.id,
       "groq.chat.completions.create",
+    ),
+    transcriptionOperation,
+    findGroqSpan(
+      events,
+      transcriptionOperation?.span.id,
+      "groq.audio.transcriptions.create",
+    ),
+    translationOperation,
+    findGroqSpan(
+      events,
+      translationOperation?.span.id,
+      "groq.audio.translations.create",
     ),
   ].map((event) => event!);
 }
@@ -184,6 +210,68 @@ export function defineGroqInstrumentationAssertions(options: {
           }),
         ]),
       );
+    });
+
+    test("captures transcription and translation", testConfig, () => {
+      const transcriptionOperation = findLatestSpan(
+        events,
+        "groq-transcription-operation",
+      );
+      const transcriptionSpan = findGroqSpan(
+        events,
+        transcriptionOperation?.span.id,
+        "groq.audio.transcriptions.create",
+      );
+      const translationOperation = findLatestSpan(
+        events,
+        "groq-translation-operation",
+      );
+      const translationSpan = findGroqSpan(
+        events,
+        translationOperation?.span.id,
+        "groq.audio.translations.create",
+      );
+
+      for (const span of [transcriptionSpan, translationSpan]) {
+        expect(span?.row.metadata).toMatchObject({
+          provider: "groq",
+        });
+        expect(span?.input).toMatchObject({
+          content: [
+            {
+              file: {
+                file_data: expect.objectContaining({
+                  type: "braintrust_attachment",
+                }),
+                filename: "brooklyn_bridge.wav",
+              },
+              type: "file",
+            },
+          ],
+        });
+        expect(span?.output?.content?.[0]).toMatchObject({
+          text: expect.any(String),
+          type: "text",
+        });
+      }
+      expect(transcriptionSpan?.row.metadata).toMatchObject({
+        model: AUDIO_MODEL,
+      });
+      expect(translationSpan?.row.metadata).toMatchObject({
+        model: TRANSLATION_MODEL,
+      });
+      expect(transcriptionSpan?.input).toMatchObject({
+        operation: "transcribe",
+        parameters: {
+          format: "verbose_json",
+          language: "en",
+          timestamp_granularities: ["word", "segment"],
+        },
+      });
+      expect(translationSpan?.input).toMatchObject({
+        operation: "translate",
+        parameters: { format: "json" },
+      });
     });
 
     test("matches span tree snapshot", testConfig, async () => {
