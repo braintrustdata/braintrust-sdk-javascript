@@ -9,6 +9,12 @@ import type {
   GoogleGenAIInteractionCreateParams,
   GoogleGenAIInteractionSSEEvent,
 } from "../../vendor-sdk-types/google-genai";
+import type {
+  CompleteGoogleGenAIBatchTraceArgs,
+  GeminiDeveloperBatchLike,
+  GoogleGenAIBatchesCreateTraceArgs,
+  GoogleGenAIBatchesGetTraceArgs,
+} from "../../google-genai-batch-types";
 
 type GoogleGenAIStreamingResult =
   | GoogleGenAIGenerateContentResponse
@@ -20,6 +26,24 @@ type GoogleGenAIInteractionResult =
 export const googleGenAIChannels = defineChannels(
   "@google/genai",
   {
+    batchesCreateTraced: channel<
+      [GoogleGenAIBatchesCreateTraceArgs],
+      GeminiDeveloperBatchLike
+    >({
+      channelName: "batches.create-traced",
+      kind: "async",
+    }),
+    batchesGetTraced: channel<
+      [GoogleGenAIBatchesGetTraceArgs],
+      GeminiDeveloperBatchLike
+    >({
+      channelName: "batches.get-traced",
+      kind: "async",
+    }),
+    batchesCompleteTrace: channel<[CompleteGoogleGenAIBatchTraceArgs], void>({
+      channelName: "batches.complete-trace",
+      kind: "async",
+    }),
     generateContent: channel<
       [GoogleGenAIGenerateContentParams],
       GoogleGenAIGenerateContentResponse
