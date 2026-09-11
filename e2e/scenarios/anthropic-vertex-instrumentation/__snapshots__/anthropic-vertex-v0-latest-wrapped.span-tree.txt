@@ -1,0 +1,188 @@
+span_tree:
+└── anthropic-vertex-instrumentation-root [task]
+    metadata: {
+      "scenario": "anthropic-vertex-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── anthropic-vertex-create-operation
+    │   metadata: {
+    │     "operation": "create",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.messages.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly OK.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "OK",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "max_tokens": 32,
+    │         "model": "claude-haiku-4-5@20251001",
+    │         "provider": "anthropic",
+    │         "stop_reason": "end_turn",
+    │         "stop_sequence": null,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 3,
+    │         "prompt_tokens": 10,
+    │         "time_to_first_token": 0,
+    │         "tokens": 13
+    │       }
+    ├── anthropic-vertex-stream-operation
+    │   metadata: {
+    │     "operation": "stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.messages.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Count from one to three.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: "one two three"
+    │       metadata: {
+    │         "max_tokens": 32,
+    │         "model": "claude-haiku-4-5@20251001",
+    │         "provider": "anthropic",
+    │         "stop_reason": "end_turn",
+    │         "stop_sequence": null,
+    │         "stream": true,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 3,
+    │         "prompt_tokens": 10,
+    │         "time_to_first_token": 0,
+    │         "tokens": 13
+    │       }
+    ├── anthropic-vertex-stream-helper-operation
+    │   metadata: {
+    │     "operation": "stream-helper",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.messages.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly Hello.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: "Hello"
+    │       metadata: {
+    │         "max_tokens": 32,
+    │         "model": "claude-haiku-4-5@20251001",
+    │         "provider": "anthropic",
+    │         "stop_reason": "end_turn",
+    │         "stop_sequence": null,
+    │         "stream": true,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 3,
+    │         "prompt_tokens": 10,
+    │         "time_to_first_token": 0,
+    │         "tokens": 13
+    │       }
+    ├── anthropic-vertex-beta-create-operation
+    │   metadata: {
+    │     "operation": "create",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.messages.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Reply with exactly OK.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: {
+    │         "content": [
+    │           {
+    │             "text": "OK",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "max_tokens": 32,
+    │         "model": "claude-haiku-4-5@20251001",
+    │         "provider": "anthropic",
+    │         "stop_reason": "end_turn",
+    │         "stop_sequence": null,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 3,
+    │         "prompt_tokens": 10,
+    │         "time_to_first_token": 0,
+    │         "tokens": 13
+    │       }
+    ├── anthropic-vertex-beta-stream-operation
+    │   metadata: {
+    │     "operation": "stream",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── anthropic.messages.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Count from one to three.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: "one two three"
+    │       metadata: {
+    │         "max_tokens": 32,
+    │         "model": "claude-haiku-4-5@20251001",
+    │         "provider": "anthropic",
+    │         "stop_reason": "end_turn",
+    │         "stop_sequence": null,
+    │         "stream": true,
+    │         "temperature": 0
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 3,
+    │         "prompt_tokens": 10,
+    │         "time_to_first_token": 0,
+    │         "tokens": 13
+    │       }
+    └── anthropic-vertex-beta-stream-helper-operation
+        metadata: {
+          "operation": "stream-helper",
+          "testRunId": "<run:1>"
+        }
+        └── anthropic.messages.create [llm]
+            input: [
+              {
+                "content": "Reply with exactly Hello.",
+                "role": "user"
+              }
+            ]
+            output: "Hello"
+            metadata: {
+              "max_tokens": 32,
+              "model": "claude-haiku-4-5@20251001",
+              "provider": "anthropic",
+              "stop_reason": "end_turn",
+              "stop_sequence": null,
+              "stream": true,
+              "temperature": 0
+            }
+            metrics: {
+              "completion_tokens": 3,
+              "prompt_tokens": 10,
+              "time_to_first_token": 0,
+              "tokens": 13
+            }

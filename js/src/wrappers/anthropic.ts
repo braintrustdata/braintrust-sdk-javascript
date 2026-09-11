@@ -15,6 +15,9 @@ import type {
  * Wrap an `Anthropic` object (created with `new Anthropic(...)`) so calls emit
  * tracing-channel events that Braintrust plugins can consume.
  *
+ * Also supports `AnthropicBedrock` and `AnthropicVertex` clients through their
+ * shared Anthropic message resources.
+ *
  * Currently, this only supports the `v4` API. Sessions streams are eligible
  * for collection only after being passed to `collectAnthropicSession()`;
  * wrapping and consuming a Sessions stream alone does not emit spans.
