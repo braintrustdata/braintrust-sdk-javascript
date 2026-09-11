@@ -290,7 +290,7 @@ export async function startMockBraintrustServer(
   >();
   let serverUrl = "";
   let xactCursor = 0;
-  const pendingProdForwarding = new Set<Promise<void>>();
+  let prodForwardingTail = Promise.resolve();
 
   if (prodForwarding) {
     projectsByName.set(prodForwarding.projectName, {
@@ -402,17 +402,15 @@ export async function startMockBraintrustServer(
     );
   }
 
-  function trackProdForwarding(context: string, promise: Promise<void>): void {
-    pendingProdForwarding.add(promise);
-    void promise.then(
-      () => {
-        pendingProdForwarding.delete(promise);
-      },
-      (error) => {
-        recordProdForwardingError(context, error);
-        pendingProdForwarding.delete(promise);
-      },
-    );
+  function trackProdForwarding(
+    context: string,
+    send: () => Promise<void>,
+  ): void {
+    // A later upsert can overwrite an earlier merge. Acknowledge the local
+    // request promptly, but preserve ingestion order when forwarding upstream.
+    prodForwardingTail = prodForwardingTail.then(send).catch((error) => {
+      recordProdForwardingError(context, error);
+    });
   }
 
   function requestForProdForwarding(
@@ -734,8 +732,7 @@ export async function startMockBraintrustServer(
             persistPayload(payload);
           }
           if (prodForwarding) {
-            trackProdForwarding(
-              "POST /logs3",
+            trackProdForwarding("POST /logs3", () =>
               forwardProdRequest(capturedRequest, {
                 drainResponseBody: true,
               }).then(() => undefined),
@@ -750,8 +747,7 @@ export async function startMockBraintrustServer(
           capturedRequest.path === "/otel/v1/traces"
         ) {
           if (prodForwarding) {
-            trackProdForwarding(
-              "POST /otel/v1/traces",
+            trackProdForwarding("POST /otel/v1/traces", () =>
               forwardProdRequest(capturedRequest, {
                 drainResponseBody: true,
               }).then(() => undefined),
@@ -785,9 +781,7 @@ export async function startMockBraintrustServer(
       await new Promise<void>((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));
       });
-      while (pendingProdForwarding.size > 0) {
-        await Promise.allSettled([...pendingProdForwarding]);
-      }
+      await prodForwardingTail;
       if (prodForwardingErrors.length > 0) {
         throw new Error(
           [

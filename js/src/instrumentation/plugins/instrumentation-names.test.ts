@@ -22,6 +22,7 @@ import { googleGenerativeAIChannels } from "./google-generative-ai-channels";
 import { googleGenAIChannels } from "./google-genai-channels";
 import { groqChannels } from "./groq-channels";
 import { huggingFaceChannels } from "./huggingface-channels";
+import { langGraphSDKChannels } from "./langgraph-sdk-channels";
 import { langChainChannels } from "./langchain-channels";
 import { langSmithChannels } from "./langsmith-channels";
 import { mistralChannels } from "./mistral-channels";
@@ -69,6 +70,7 @@ describe("built-in instrumentation provenance names", () => {
     [googleGenAIChannels.generateContent, INSTRUMENTATION_NAMES.GOOGLE_GENAI],
     [groqChannels.chatCompletionsCreate, INSTRUMENTATION_NAMES.GROQ],
     [huggingFaceChannels.chatCompletion, INSTRUMENTATION_NAMES.HUGGINGFACE],
+    [langGraphSDKChannels.wait, INSTRUMENTATION_NAMES.LANGGRAPH_SDK],
     [langChainChannels.configure, INSTRUMENTATION_NAMES.LANGCHAIN],
     [langSmithChannels.createRun, INSTRUMENTATION_NAMES.LANGSMITH],
     [mistralChannels.chatComplete, INSTRUMENTATION_NAMES.MISTRAL],

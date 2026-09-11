@@ -209,6 +209,10 @@ async function readRunContextRecords(runContextDir) {
         continue;
       }
 
+      // These runs still provide local assertions and cassette coverage.
+      // Only published runs belong in the production trace links.
+      if (parsed.forwardToProduction === false) continue;
+
       const scenarioDirName = parsed.scenarioDirName;
       const variantKey =
         typeof parsed.variantKey === "string" && parsed.variantKey.trim()

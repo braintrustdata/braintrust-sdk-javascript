@@ -779,6 +779,21 @@
     ]
   },
   {
+    "scenarioDirName": "langgraph-sdk-instrumentation",
+    "label": "LangGraph Platform SDK Instrumentation",
+    "metadataScenario": "langgraph-sdk-instrumentation",
+    "variants": [
+      {
+        "variantKey": "langgraph-sdk-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "langgraph-sdk-v1-latest",
+        "label": "v1 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "elevenlabs-instrumentation",
     "label": "ElevenLabs Instrumentation",
     "metadataScenario": "elevenlabs-instrumentation",
