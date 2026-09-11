@@ -7,6 +7,8 @@ runMain(async () =>
   runAutoMistralInstrumentation(Mistral, {
     supportsClassifiers: false,
     supportsClassify: false,
+    supportsInlineBatch: false,
+    supportsSignedBatch: false,
     supportsThinkingStream: false,
   }),
 );

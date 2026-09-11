@@ -8,11 +8,17 @@ import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
 import { getCurrentUnixTimestamp } from "../../util";
 import { mistralChannels } from "./mistral-channels";
+import {
+  extractMistralChatInput,
+  extractMistralRequestMetadata,
+  extractMistralResponseMetadata,
+  normalizeMistralChatChoices,
+  parseMistralMetricsFromUsage,
+} from "./mistral-span-data";
 import type {
   MistralChatCompletionChunk,
   MistralChatCompletionChunkChoice,
   MistralChatCompletionEvent,
-  MistralChatCompletionResponse,
   MistralContentPart,
   MistralTextContentPart,
   MistralThinkingContentPart,
@@ -33,10 +39,8 @@ export class MistralPlugin extends BasePlugin {
       traceStreamingChannel(mistralChannels.chatComplete, {
         name: "mistral.chat.complete",
         type: SpanTypeAttribute.LLM,
-        extractInput: extractMessagesInputWithMetadata,
-        extractOutput: (result) => {
-          return result?.choices;
-        },
+        extractInput: extractMistralChatInputFromArgs,
+        extractOutput: (result) => normalizeMistralChatChoices(result?.choices),
         extractMetadata: (result) => extractMistralResponseMetadata(result),
         extractMetrics: (result, startTime) =>
           extractMistralMetrics(result?.usage, startTime),
@@ -47,7 +51,7 @@ export class MistralPlugin extends BasePlugin {
       traceStreamingChannel(mistralChannels.chatStream, {
         name: "mistral.chat.stream",
         type: SpanTypeAttribute.LLM,
-        extractInput: extractMessagesInputWithMetadata,
+        extractInput: extractMistralChatInputFromArgs,
         extractOutput: extractMistralStreamOutput,
         extractMetadata: (result) => extractMistralResponseMetadata(result),
         extractMetrics: (result, startTime) =>
@@ -121,9 +125,7 @@ export class MistralPlugin extends BasePlugin {
         name: "mistral.fim.complete",
         type: SpanTypeAttribute.LLM,
         extractInput: extractPromptInputWithMetadata,
-        extractOutput: (result) => {
-          return result?.choices;
-        },
+        extractOutput: (result) => normalizeMistralChatChoices(result?.choices),
         extractMetadata: (result) => extractMistralResponseMetadata(result),
         extractMetrics: (result, startTime) =>
           extractMistralMetrics(result?.usage, startTime),
@@ -147,10 +149,8 @@ export class MistralPlugin extends BasePlugin {
       traceStreamingChannel(mistralChannels.agentsComplete, {
         name: "mistral.agents.complete",
         type: SpanTypeAttribute.LLM,
-        extractInput: extractMessagesInputWithMetadata,
-        extractOutput: (result) => {
-          return result?.choices;
-        },
+        extractInput: extractMistralChatInputFromArgs,
+        extractOutput: (result) => normalizeMistralChatChoices(result?.choices),
         extractMetadata: (result) => extractMistralResponseMetadata(result),
         extractMetrics: (result, startTime) =>
           extractMistralMetrics(result?.usage, startTime),
@@ -161,7 +161,7 @@ export class MistralPlugin extends BasePlugin {
       traceStreamingChannel(mistralChannels.agentsStream, {
         name: "mistral.agents.stream",
         type: SpanTypeAttribute.LLM,
-        extractInput: extractMessagesInputWithMetadata,
+        extractInput: extractMistralChatInputFromArgs,
         extractOutput: extractMistralStreamOutput,
         extractMetadata: (result) => extractMistralResponseMetadata(result),
         extractMetrics: (result, startTime) =>
@@ -170,75 +170,6 @@ export class MistralPlugin extends BasePlugin {
       }),
     );
   }
-}
-
-const TOKEN_NAME_MAP: Record<string, string> = {
-  promptTokens: "prompt_tokens",
-  inputTokens: "prompt_tokens",
-  completionTokens: "completion_tokens",
-  outputTokens: "completion_tokens",
-  totalTokens: "tokens",
-  prompt_tokens: "prompt_tokens",
-  input_tokens: "prompt_tokens",
-  completion_tokens: "completion_tokens",
-  output_tokens: "completion_tokens",
-  total_tokens: "tokens",
-  promptAudioSeconds: "prompt_audio_seconds",
-  prompt_audio_seconds: "prompt_audio_seconds",
-};
-
-const TOKEN_DETAIL_PREFIX_MAP: Record<string, string> = {
-  promptTokensDetails: "prompt",
-  inputTokensDetails: "prompt",
-  completionTokensDetails: "completion",
-  outputTokensDetails: "completion",
-  prompt_tokens_details: "prompt",
-  input_tokens_details: "prompt",
-  completion_tokens_details: "completion",
-  output_tokens_details: "completion",
-};
-
-const MISTRAL_REQUEST_METADATA_ALLOWLIST = new Set([
-  "agentId",
-  "agent_id",
-  "encodingFormat",
-  "encoding_format",
-  "frequencyPenalty",
-  "frequency_penalty",
-  "maxTokens",
-  "max_tokens",
-  "model",
-  "n",
-  "presencePenalty",
-  "presence_penalty",
-  "randomSeed",
-  "random_seed",
-  "reasoningEffort",
-  "reasoning_effort",
-  "responseFormat",
-  "response_format",
-  "safePrompt",
-  "safe_prompt",
-  "stream",
-  "stop",
-  "temperature",
-  "toolChoice",
-  "tool_choice",
-  "topP",
-  "top_p",
-]);
-
-const MISTRAL_RESPONSE_METADATA_ALLOWLIST = new Set([
-  "agentId",
-  "agent_id",
-  "created",
-  "id",
-  "model",
-  "object",
-]);
-
-function camelToSnake(value: string): string {
-  return value.replace(/[A-Z]/g, (match) => `_${match.toLowerCase()}`);
 }
 
 function normalizeArgs(args: unknown[] | unknown): unknown[] {
@@ -279,30 +210,6 @@ function addMistralProviderMetadata(
   };
 }
 
-function pickAllowedMetadata(
-  metadata: Record<string, unknown> | undefined,
-  allowlist: ReadonlySet<string>,
-): Record<string, unknown> {
-  if (!metadata) {
-    return {};
-  }
-
-  const picked: Record<string, unknown> = {};
-  for (const key of allowlist) {
-    const value = metadata[key];
-    if (value !== undefined) {
-      picked[key] = value;
-    }
-  }
-  return picked;
-}
-
-export function extractMistralRequestMetadata(
-  metadata: Record<string, unknown> | undefined,
-): Record<string, unknown> {
-  return pickAllowedMetadata(metadata, MISTRAL_REQUEST_METADATA_ALLOWLIST);
-}
-
 function isMistralChatCompletionChunk(
   value: unknown,
 ): value is MistralChatCompletionChunk {
@@ -315,19 +222,8 @@ function isMistralChunkChoice(
   return isObject(value);
 }
 
-function extractMessagesInputWithMetadata(args: unknown[] | unknown): {
-  input: unknown;
-  metadata: Record<string, unknown>;
-} {
-  const params = getMistralRequestArg(args);
-  const { messages, ...rawMetadata } = params || {};
-
-  return {
-    input: processInputAttachments(messages),
-    metadata: addMistralProviderMetadata(
-      extractMistralRequestMetadata(rawMetadata),
-    ),
-  };
+function extractMistralChatInputFromArgs(args: unknown[] | unknown) {
+  return extractMistralChatInput(getMistralRequestArg(args) ?? {});
 }
 
 function extractEmbeddingInputWithMetadata(args: unknown[] | unknown): {
@@ -375,22 +271,6 @@ function extractPromptInputWithMetadata(args: unknown[] | unknown): {
   };
 }
 
-export function extractMistralResponseMetadata(
-  result: unknown,
-): Record<string, unknown> | undefined {
-  if (!isObject(result)) {
-    return undefined;
-  }
-
-  const { choices: _choices, usage: _usage, data: _data, ...metadata } = result;
-  const picked = pickAllowedMetadata(
-    metadata,
-    MISTRAL_RESPONSE_METADATA_ALLOWLIST,
-  );
-
-  return Object.keys(picked).length > 0 ? picked : undefined;
-}
-
 function extractMistralMetrics(
   usage: unknown,
   startTime?: number,
@@ -403,7 +283,9 @@ function extractMistralMetrics(
 }
 
 function extractMistralStreamOutput(result: unknown): unknown {
-  return isObject(result) ? result.choices : undefined;
+  return isObject(result)
+    ? normalizeMistralChatChoices(result.choices)
+    : undefined;
 }
 
 function extractClassifierOutput(result: unknown): unknown {
@@ -414,13 +296,10 @@ function extractMistralStreamingMetrics(
   result: unknown,
   startTime?: number,
 ): Record<string, number> {
-  const metrics = isObject(result)
-    ? parseMistralMetricsFromUsage(result.usage)
-    : {};
-  if (startTime) {
-    metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-  }
-  return metrics;
+  return extractMistralMetrics(
+    isObject(result) ? result.usage : undefined,
+    startTime,
+  );
 }
 
 function extractDeltaText(content: unknown): string | undefined {
@@ -757,46 +636,10 @@ type MistralChoiceAccumulator = {
   toolCalls?: MistralToolCallDelta[];
 };
 
-export function parseMistralMetricsFromUsage(
-  usage: unknown,
-): Record<string, number> {
-  if (!isObject(usage)) {
-    return {};
-  }
-
-  const metrics: Record<string, number> = {};
-
-  for (const [name, value] of Object.entries(usage)) {
-    if (typeof value === "number") {
-      metrics[TOKEN_NAME_MAP[name] || camelToSnake(name)] = value;
-      continue;
-    }
-
-    if (!isObject(value)) {
-      continue;
-    }
-
-    const prefix = TOKEN_DETAIL_PREFIX_MAP[name];
-    if (!prefix) {
-      continue;
-    }
-
-    for (const [nestedName, nestedValue] of Object.entries(value)) {
-      if (typeof nestedValue !== "number") {
-        continue;
-      }
-
-      metrics[`${prefix}_${camelToSnake(nestedName)}`] = nestedValue;
-    }
-  }
-
-  return metrics;
-}
-
 export function aggregateMistralStreamChunks(
   chunks: MistralChatCompletionEvent[],
 ): {
-  output: MistralChatCompletionResponse["choices"];
+  output: Record<string, unknown>[] | undefined;
   metrics: Record<string, number>;
   metadata?: Record<string, unknown>;
 } {
@@ -885,23 +728,25 @@ export function aggregateMistralStreamChunks(
     }
   }
 
-  const output = Array.from(choiceAccumulators.values())
-    .sort((left, right) =>
-      left.index === right.index
-        ? left.order - right.order
-        : left.index - right.index,
-    )
-    .map((choice) => ({
-      index: choice.index,
-      message: {
-        ...(choice.role ? { role: choice.role } : {}),
-        content: choice.contentParts ?? choice.content ?? null,
-        ...(choice.toolCalls ? { toolCalls: choice.toolCalls } : {}),
-      },
-      ...(choice.finishReason !== undefined
-        ? { finishReason: choice.finishReason }
-        : {}),
-    }));
+  const output = normalizeMistralChatChoices(
+    Array.from(choiceAccumulators.values())
+      .sort((left, right) =>
+        left.index === right.index
+          ? left.order - right.order
+          : left.index - right.index,
+      )
+      .map((choice) => ({
+        index: choice.index,
+        message: {
+          ...(choice.role ? { role: choice.role } : {}),
+          content: choice.contentParts ?? choice.content ?? null,
+          ...(choice.toolCalls ? { toolCalls: choice.toolCalls } : {}),
+        },
+        ...(choice.finishReason !== undefined
+          ? { finishReason: choice.finishReason }
+          : {}),
+      })),
+  );
 
   return {
     output,

@@ -28,7 +28,15 @@ const mistralScenarios = await Promise.all(
 describe.concurrent("variants", () => {
   for (const scenario of mistralScenarios) {
     describe.sequential(`mistral sdk ${scenario.version}`, () => {
+      const assertionCapabilities = {
+        supportsClassifiers: scenario.supportsClassifiers,
+        supportsClassify: scenario.supportsClassify,
+        supportsInlineBatch: scenario.supportsInlineBatch,
+        supportsThinkingStream: scenario.supportsThinkingStream,
+      };
+
       defineMistralInstrumentationAssertions({
+        ...assertionCapabilities,
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
@@ -43,20 +51,12 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: scenario.snapshotName,
-        ...(scenario.supportsThinkingStream === false
-          ? { supportsThinkingStream: false }
-          : {}),
-        ...(scenario.supportsClassifiers === false
-          ? { supportsClassifiers: false }
-          : {}),
-        ...(scenario.supportsClassify === false
-          ? { supportsClassify: false }
-          : {}),
         testFileUrl: import.meta.url,
         timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
       });
 
       defineMistralInstrumentationAssertions({
+        ...assertionCapabilities,
         name: "auto-hook instrumentation",
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
@@ -72,15 +72,6 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: scenario.snapshotName,
-        ...(scenario.supportsThinkingStream === false
-          ? { supportsThinkingStream: false }
-          : {}),
-        ...(scenario.supportsClassifiers === false
-          ? { supportsClassifiers: false }
-          : {}),
-        ...(scenario.supportsClassify === false
-          ? { supportsClassify: false }
-          : {}),
         testFileUrl: import.meta.url,
         timeoutMs: MISTRAL_SCENARIO_TIMEOUT_MS,
       });
