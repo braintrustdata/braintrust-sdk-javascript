@@ -702,12 +702,12 @@
     ]
   },
   {
-    "scenarioDirName": "durable-eval-webhook",
-    "label": "Durable Eval Webhook",
-    "metadataScenario": "durable-eval-webhook",
+    "scenarioDirName": "workflow-eval-webhook",
+    "label": "Workflow Eval Webhook",
+    "metadataScenario": "workflow-eval-webhook",
     "evals": [
       {
-        "experimentNameTemplate": "durable-eval-webhook-{testRunId}",
+        "experimentNameTemplate": "workflow-eval-webhook-{testRunId}",
         "label": "webhook"
       }
     ]
@@ -808,6 +808,21 @@
       {
         "variantKey": "anthropic-vertex-v0-latest",
         "label": "v0 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "langgraph-sdk-instrumentation",
+    "label": "LangGraph Platform SDK Instrumentation",
+    "metadataScenario": "langgraph-sdk-instrumentation",
+    "variants": [
+      {
+        "variantKey": "langgraph-sdk-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "langgraph-sdk-v1-latest",
+        "label": "v1 latest"
       }
     ]
   },

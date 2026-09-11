@@ -228,6 +228,7 @@ export { wrapHuggingFaceTransformers } from "./wrappers/huggingface-transformers
 export { wrapOpenRouterAgent } from "./wrappers/openrouter-agent";
 export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
+export { wrapLangGraphSDK } from "./wrappers/langgraph-sdk";
 export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapVoyageAI } from "./wrappers/voyageai";
@@ -274,15 +275,15 @@ export {
   defaultErrorScoreHandler,
 } from "./framework";
 
-export type { DurableEvalStore } from "./durable-eval";
+export type { WorkflowEvalStore } from "./workflow-eval";
 
 export {
-  BatchScorer,
-  BatchTask,
-  defineDurableEval,
-  DurableEvalMemoryStore,
-  DurableEvalRedisStore,
-} from "./durable-eval";
+  WorkflowScorer,
+  WorkflowTask,
+  defineWorkflowEval,
+  WorkflowEvalMemoryStore,
+  WorkflowEvalRedisStore,
+} from "./workflow-eval";
 
 export { agentAssertionScorer } from "./agent-assertions";
 
