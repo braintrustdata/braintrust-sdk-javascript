@@ -109,6 +109,16 @@ const RESET_CONTEXT_MANAGER_STATE = Symbol.for(
 // 6 MB for the AWS lambda gateway (from our own testing).
 export const DEFAULT_MAX_REQUEST_SIZE = 6 * 1024 * 1024;
 
+type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
+const OTEL_LOG_LEVELS: Record<LogLevel, number> = {
+  trace: 1,
+  debug: 5,
+  info: 9,
+  warn: 13,
+  error: 17,
+  fatal: 21,
+};
+
 export type { DatasetSnapshot };
 
 const datasetSnapshotRegisterResponseSchema = z.object({
@@ -2803,6 +2813,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
   private lastStartTime: number;
   private lazyId: LazyValue<string>;
   private calledStartSpan: boolean;
+  private baselineTraceId: string;
 
   // For type identification.
   public kind = "logger" as const;
@@ -2820,6 +2831,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
     this.lazyId = new LazyValue(async () => await this.id);
     this.calledStartSpan = false;
     this.state = state;
+    this.baselineTraceId = state.idGenerator.getTraceId();
   }
 
   public get org_id(): Promise<string> {
@@ -2887,6 +2899,121 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
   }
 
   /**
+   * Capture a log record, associating it with the active span when one exists.
+   *
+   * The log is stored as an independent row. If a Braintrust or OpenTelemetry
+   * span is active, the row reuses its span and trace IDs for correlation.
+   * Otherwise, the row uses this logger's baseline trace ID.
+   *
+   * @param body The JSON-serializable log body.
+   * @param level The OpenTelemetry log severity.
+   * @param metadata Optional JSON-serializable attributes for the log.
+   * @returns The unique ID of the captured log row.
+   */
+  public emitLog(
+    body: unknown,
+    level: LogLevel,
+    metadata?: Record<string, unknown>,
+  ): PromiseUnless<IsAsyncFlush, string> {
+    if (!Object.prototype.hasOwnProperty.call(OTEL_LOG_LEVELS, level)) {
+      throw new Error(
+        `Invalid log level ${JSON.stringify(level)}. Expected one of: ${Object.keys(OTEL_LOG_LEVELS).join(", ")}`,
+      );
+    }
+
+    const capturedAt = getCurrentUnixTimestamp();
+    const spanInfo = this.state.contextManager.getParentSpanIds();
+    const activeSpanId = spanInfo?.spanParents[0];
+    const severityNumber = OTEL_LOG_LEVELS[level];
+    const span = this.startSpanImpl({
+      name: "Log",
+      type: SpanTypeAttribute.LOG,
+      startTime: capturedAt,
+      spanId: activeSpanId,
+      parentSpanIds: {
+        parentSpanIds: [],
+        rootSpanId: activeSpanId ? spanInfo.rootSpanId : this.baselineTraceId,
+      },
+      event: {
+        output: body,
+        ...(severityNumber >= OTEL_LOG_LEVELS.error && typeof body === "string"
+          ? { error: body }
+          : {}),
+        ...(metadata === undefined ? {} : { metadata }),
+      },
+      [INTERNAL_SPAN_CONTEXT]: {
+        otel: {
+          signal: "logs",
+          log: {
+            time_unix_nano: String(Math.round(capturedAt * 1_000_000_000)),
+            severity_number: severityNumber,
+            severity_text: level.toUpperCase(),
+          },
+        },
+      },
+    });
+    span.end({ endTime: capturedAt });
+
+    const ret = span.id;
+    type Ret = PromiseUnless<IsAsyncFlush, string>;
+    if (this.asyncFlush === true) {
+      return ret as Ret;
+    }
+    return (async () => {
+      await this.flush();
+      return ret;
+    })() as Ret;
+  }
+
+  /** Capture a log at OpenTelemetry TRACE severity. */
+  public trace(
+    body: unknown,
+    metadata?: Record<string, unknown>,
+  ): PromiseUnless<IsAsyncFlush, string> {
+    return this.emitLog(body, "trace", metadata);
+  }
+
+  /** Capture a log at OpenTelemetry DEBUG severity. */
+  public debug(
+    body: unknown,
+    metadata?: Record<string, unknown>,
+  ): PromiseUnless<IsAsyncFlush, string> {
+    return this.emitLog(body, "debug", metadata);
+  }
+
+  /** Capture a log at OpenTelemetry INFO severity. */
+  public info(
+    body: unknown,
+    metadata?: Record<string, unknown>,
+  ): PromiseUnless<IsAsyncFlush, string> {
+    return this.emitLog(body, "info", metadata);
+  }
+
+  /** Capture a log at OpenTelemetry WARN severity. */
+  public warn(
+    body: unknown,
+    metadata?: Record<string, unknown>,
+  ): PromiseUnless<IsAsyncFlush, string> {
+    return this.emitLog(body, "warn", metadata);
+  }
+
+  /** Capture a log at OpenTelemetry ERROR severity. */
+  public error(
+    body: unknown,
+    metadata?: Record<string, unknown>,
+  ): PromiseUnless<IsAsyncFlush, string> {
+    return this.emitLog(body, "error", metadata);
+  }
+
+  /** Capture a log at OpenTelemetry FATAL severity. */
+  public fatal(
+    body: unknown,
+    metadata?: Record<string, unknown>,
+  ): PromiseUnless<IsAsyncFlush, string> {
+    return this.emitLog(body, "fatal", metadata);
+  }
+
+  /**
    * Create a new toplevel span underneath the logger. The name defaults to "root".
    *
    * See {@link Span.traced} for full details.
@@ -2937,7 +3064,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
     return this.startSpanImpl(args);
   }
 
-  private startSpanImpl(args?: StartSpanArgs): Span {
+  private startSpanImpl(args?: StartSpanArgs & InternalSpanContextArg): Span {
     return new SpanImpl({
       ...args,
       // Sometimes `args` gets passed directly into this function, and it contains an undefined value for `state`.

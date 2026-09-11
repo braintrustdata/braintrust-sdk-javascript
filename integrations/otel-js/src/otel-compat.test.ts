@@ -203,6 +203,35 @@ describe("OTEL compatibility mode", () => {
     expect(otelSpans.length).toBeGreaterThanOrEqual(1);
   });
 
+  test("Logger.emitLog reuses the active OTEL span and trace IDs", async () => {
+    const { tracer } = setupOtelFixture("emit-log-otel-parent");
+    const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    const logger = initLogger({
+      projectName: "emit-log-otel-parent",
+      projectId: "emit-log-otel-parent-id",
+    });
+
+    let logId: string | undefined;
+    let ownerSpanId: string | undefined;
+    let ownerTraceId: string | undefined;
+    await tracer.startActiveSpan("owner", async (owner: any) => {
+      logId = logger.emitLog("Inside OTel span", "info");
+      const ownerContext = owner.spanContext();
+      ownerSpanId = ownerContext.spanId;
+      ownerTraceId = ownerContext.traceId;
+      owner.end();
+    });
+
+    await memoryLogger.flush();
+    const [logRow] = (await memoryLogger.drain()) as Array<
+      Record<string, unknown>
+    >;
+    expect(logRow.id).toBe(logId);
+    expect(logRow.span_id).toBe(ownerSpanId);
+    expect(logRow.root_span_id).toBe(ownerTraceId);
+    expect(logRow.span_parents ?? []).toEqual([]);
+  });
+
   test("mixed BT/OTEL with startSpan (matching Python pattern)", async () => {
     const { tracer, exporter, processor } = setupOtelFixture(
       "mixed-start-span-test",
