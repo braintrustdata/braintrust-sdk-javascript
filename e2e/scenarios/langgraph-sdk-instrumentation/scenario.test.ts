@@ -1,4 +1,8 @@
-import { findAllSpans } from "../../helpers/trace-selectors";
+import {
+  findAllSpans,
+  findChildSpans,
+  findLatestSpan,
+} from "../../helpers/trace-selectors";
 import { describe, expect, it } from "vitest";
 import {
   prepareScenarioDir,
@@ -82,12 +86,56 @@ describe.concurrent("variants", () => {
                   expected_error_cases: 4,
                 });
                 expect(events.every((event) => event.span.ended)).toBe(true);
+                const operationSpecs = [
+                  [
+                    "background",
+                    "Uninstrumented background APIs",
+                    "background-apis",
+                  ],
+                  ["wait", "Wait for final result", "wait"],
+                  [
+                    "interruptResume",
+                    "Interrupt and resume",
+                    "interrupt-resume",
+                  ],
+                  ["values", "Stream values mode", "values"],
+                  ["messages", "Stream messages mode", "messages"],
+                  ["updates", "Stream updates mode", "updates"],
+                  ["streamError", "Stream error", "stream-error"],
+                  ["cancel", "Cancel stream", "cancel"],
+                  [
+                    "missingAssistant",
+                    "Missing assistant error",
+                    "missing-assistant-error",
+                  ],
+                  ["thrownError", "Thrown graph error", "thrown-error"],
+                  ["returnedError", "Returned graph error", "returned-error"],
+                  ["concurrent", "Concurrent waits", "concurrent-waits"],
+                ] as const;
+                const operations = Object.fromEntries(
+                  operationSpecs.map(([key, spanName, operation]) => {
+                    const event = findLatestSpan(rawEvents, spanName)!;
+                    expect(event.span.parentIds).toEqual([root.span.id]);
+                    expect(event.metadata).toMatchObject({ operation });
+                    return [key, event];
+                  }),
+                ) as Record<
+                  (typeof operationSpecs)[number][0],
+                  (typeof events)[number]
+                >;
+                expect(
+                  events.filter((event) =>
+                    event.span.parentIds.includes(
+                      operations.background.span.id!,
+                    ),
+                  ),
+                ).toEqual([]);
                 if (mode === "disabled") {
                   expect(instrumented).toHaveLength(0);
-                  expect(events).toHaveLength(2);
+                  expect(events).toHaveLength(13);
                   return;
                 }
-                expect(events).toHaveLength(15);
+                expect(events).toHaveLength(26);
                 expect(instrumented).toHaveLength(13);
                 expect(
                   instrumented.filter((event) => event.row.error),
@@ -99,23 +147,85 @@ describe.concurrent("variants", () => {
                   });
                   expect(event.span.parentIds).toHaveLength(1);
                 }
-                const waits = findAllSpans(rawEvents, "langgraph.runs.wait");
-                const streams = findAllSpans(
+                const wait = findChildSpans(
+                  rawEvents,
+                  "langgraph.runs.wait",
+                  operations.wait.span.id,
+                );
+                const interruptResume = findChildSpans(
+                  rawEvents,
+                  "langgraph.runs.wait",
+                  operations.interruptResume.span.id,
+                );
+                const values = findChildSpans(
                   rawEvents,
                   "langgraph.runs.stream",
+                  operations.values.span.id,
                 );
-                expect(waits).toHaveLength(8);
-                expect(streams).toHaveLength(5);
+                const messages = findChildSpans(
+                  rawEvents,
+                  "langgraph.runs.stream",
+                  operations.messages.span.id,
+                );
+                const updates = findChildSpans(
+                  rawEvents,
+                  "langgraph.runs.stream",
+                  operations.updates.span.id,
+                );
+                const streamError = findChildSpans(
+                  rawEvents,
+                  "langgraph.runs.stream",
+                  operations.streamError.span.id,
+                );
+                const cancel = findChildSpans(
+                  rawEvents,
+                  "langgraph.runs.stream",
+                  operations.cancel.span.id,
+                );
+                const missingAssistant = findChildSpans(
+                  rawEvents,
+                  "langgraph.runs.wait",
+                  operations.missingAssistant.span.id,
+                );
+                const thrownError = findChildSpans(
+                  rawEvents,
+                  "langgraph.runs.wait",
+                  operations.thrownError.span.id,
+                );
+                const returnedError = findChildSpans(
+                  rawEvents,
+                  "langgraph.runs.wait",
+                  operations.returnedError.span.id,
+                );
+                const concurrent = findChildSpans(
+                  rawEvents,
+                  "langgraph.runs.wait",
+                  operations.concurrent.span.id,
+                );
+                for (const group of [
+                  wait,
+                  values,
+                  messages,
+                  updates,
+                  streamError,
+                  cancel,
+                  missingAssistant,
+                  thrownError,
+                  returnedError,
+                ])
+                  expect(group).toHaveLength(1);
+                expect(interruptResume).toHaveLength(2);
+                expect(concurrent).toHaveLength(2);
                 const cases = {
-                  wait: waits[0],
-                  resume: waits[2],
-                  values: streams[0],
-                  messages: streams[1],
-                  updates: streams[2],
-                  left: waits.find((event) =>
+                  wait: wait[0],
+                  resume: interruptResume[1],
+                  values: values[0],
+                  messages: messages[0],
+                  updates: updates[0],
+                  left: concurrent.find((event) =>
                     JSON.stringify(event.input).includes("exactly: left"),
                   )!,
-                  right: waits.find((event) =>
+                  right: concurrent.find((event) =>
                     JSON.stringify(event.input).includes("exactly: right"),
                   )!,
                 };
@@ -140,28 +250,19 @@ describe.concurrent("variants", () => {
                   ).toBeGreaterThanOrEqual(0);
                 for (const name of ["values", "messages", "updates"] as const)
                   expect(cases[name].output).toEqual(cases.wait.output);
-                expect(waits[1].output).toBeUndefined();
-                expect(waits[1].metadata).toMatchObject({
+                expect(interruptResume[0].output).toBeUndefined();
+                expect(interruptResume[0].metadata).toMatchObject({
                   "langgraph.interrupts": [
                     { value: "Approve the model call?" },
                   ],
                 });
-                expect(waits[2].input).toEqual({ command: { resume: "yes" } });
-                expect(waits[3].row.error).toContain("HTTP 404");
-                expect(waits[4].row.error).toBe("Agent failed");
-                expect(waits[5].output).toBeUndefined();
-                expect(waits[5].row.error).toBe("Agent failed");
-                const parallel = events.find(
-                  (event) => event.span.name === "Concurrent runs",
-                )!;
-                for (const event of [cases.left, cases.right])
-                  expect(event.span.parentIds).toEqual([parallel.span.id]);
-                for (const event of instrumented.filter(
-                  (event) =>
-                    event.span.id !== cases.left.span.id &&
-                    event.span.id !== cases.right.span.id,
-                ))
-                  expect(event.span.parentIds).toEqual([root.span.id]);
+                expect(interruptResume[1].input).toEqual({
+                  command: { resume: "yes" },
+                });
+                expect(missingAssistant[0].row.error).toContain("HTTP 404");
+                expect(thrownError[0].row.error).toBe("Agent failed");
+                expect(returnedError[0].output).toBeUndefined();
+                expect(returnedError[0].row.error).toBe("Agent failed");
                 const serialized = JSON.stringify(instrumented);
                 for (const field of [
                   "DO_NOT_CAPTURE",

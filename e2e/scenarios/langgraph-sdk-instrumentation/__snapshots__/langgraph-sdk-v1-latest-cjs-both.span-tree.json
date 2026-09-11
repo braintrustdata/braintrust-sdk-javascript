@@ -5,276 +5,429 @@
       "type": "task",
       "children": [
         {
-          "name": "langgraph.runs.wait",
-          "type": "task",
+          "name": "Uninstrumented background APIs",
           "children": [],
-          "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
-              }
-            ]
-          },
-          "output": {
-            "content": "hello from langgraph",
-            "role": "assistant"
-          },
           "metadata": {
-            "langgraph.assistant_id": "agent",
-            "langgraph.thread_id": null
+            "operation": "background-apis",
+            "testRunId": "<run:1>"
           },
-          "metrics": {
-            "completion_tokens": 4,
-            "prompt_tokens": 15,
-            "tokens": 19
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
-          "name": "langgraph.runs.wait",
-          "type": "task",
-          "children": [],
-          "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
+          "name": "Wait for final result",
+          "children": [
+            {
+              "name": "langgraph.runs.wait",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "content": "hello from langgraph",
+                "role": "assistant"
+              },
+              "metadata": {
+                "langgraph.assistant_id": "agent",
+                "langgraph.thread_id": null
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "prompt_tokens": 15,
+                "tokens": 19
               }
-            ]
-          },
-          "metadata": {
-            "langgraph.assistant_id": "approval",
-            "langgraph.interrupts": [
-              {
-                "id": "<span:2>",
-                "value": "Approve the model call?"
-              }
-            ],
-            "langgraph.thread_id": "<uuid:1>"
-          }
-        },
-        {
-          "name": "langgraph.runs.wait",
-          "type": "task",
-          "children": [],
-          "input": {
-            "command": {
-              "resume": "yes"
             }
-          },
-          "output": {
-            "content": "hello from langgraph",
-            "role": "assistant"
-          },
+          ],
           "metadata": {
-            "langgraph.assistant_id": "approval",
-            "langgraph.thread_id": "<uuid:1>"
+            "operation": "wait",
+            "testRunId": "<run:1>"
           },
-          "metrics": {
-            "completion_tokens": 4,
-            "prompt_tokens": 15,
-            "tokens": 19
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
-          "name": "langgraph.runs.wait",
-          "type": "task",
-          "children": [],
-          "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
+          "name": "Interrupt and resume",
+          "children": [
+            {
+              "name": "langgraph.runs.wait",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "metadata": {
+                "langgraph.assistant_id": "approval",
+                "langgraph.interrupts": [
+                  {
+                    "id": "<span:2>",
+                    "value": "Approve the model call?"
+                  }
+                ],
+                "langgraph.thread_id": "<uuid:1>"
               }
-            ]
-          },
-          "metadata": {
-            "langgraph.assistant_id": "missing-assistant",
-            "langgraph.thread_id": null
-          },
-          "error": "HTTP 404: No assistant found for \"missing-assistant\". Make sure the assistant ID is for a valid assistant or a valid graph ID."
-        },
-        {
-          "name": "langgraph.runs.wait",
-          "type": "task",
-          "children": [],
-          "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
+            },
+            {
+              "name": "langgraph.runs.wait",
+              "type": "task",
+              "children": [],
+              "input": {
+                "command": {
+                  "resume": "yes"
+                }
+              },
+              "output": {
+                "content": "hello from langgraph",
+                "role": "assistant"
+              },
+              "metadata": {
+                "langgraph.assistant_id": "approval",
+                "langgraph.thread_id": "<uuid:1>"
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "prompt_tokens": 15,
+                "tokens": 19
               }
-            ]
-          },
+            }
+          ],
           "metadata": {
-            "langgraph.assistant_id": "failing",
-            "langgraph.thread_id": null
+            "operation": "interrupt-resume",
+            "testRunId": "<run:1>"
           },
-          "error": "Agent failed"
-        },
-        {
-          "name": "langgraph.runs.wait",
-          "type": "task",
-          "children": [],
-          "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
-              }
-            ]
-          },
-          "metadata": {
-            "langgraph.assistant_id": "failing",
-            "langgraph.thread_id": null
-          },
-          "error": "Agent failed"
-        },
-        {
-          "name": "langgraph.runs.stream",
-          "type": "task",
-          "children": [],
-          "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
-              }
-            ]
-          },
-          "output": {
-            "content": "hello from langgraph",
-            "role": "assistant"
-          },
-          "metadata": {
-            "langgraph.assistant_id": "agent",
-            "langgraph.run_id": "<uuid:1>",
-            "langgraph.thread_id": null,
-            "streamMode": [
-              "values",
-              "messages",
-              "updates"
-            ],
-            "streamSubgraphs": true
-          },
-          "metrics": {
-            "completion_tokens": 4,
-            "prompt_tokens": 15,
-            "time_to_first_token": 0,
-            "tokens": 19
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
-          "name": "langgraph.runs.stream",
-          "type": "task",
-          "children": [],
-          "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
+          "name": "Stream values mode",
+          "children": [
+            {
+              "name": "langgraph.runs.stream",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "content": "hello from langgraph",
+                "role": "assistant"
+              },
+              "metadata": {
+                "langgraph.assistant_id": "agent",
+                "langgraph.run_id": "<uuid:1>",
+                "langgraph.thread_id": null,
+                "streamMode": [
+                  "values",
+                  "messages",
+                  "updates"
+                ],
+                "streamSubgraphs": true
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "prompt_tokens": 15,
+                "time_to_first_token": 0,
+                "tokens": 19
               }
-            ]
-          },
-          "output": {
-            "content": "hello from langgraph",
-            "role": "assistant"
-          },
+            }
+          ],
           "metadata": {
-            "langgraph.assistant_id": "agent",
-            "langgraph.run_id": "<uuid:1>",
-            "langgraph.thread_id": null,
-            "streamMode": [
-              "messages"
-            ],
-            "streamSubgraphs": true
+            "operation": "values",
+            "testRunId": "<run:1>"
           },
-          "metrics": {
-            "completion_tokens": 4,
-            "prompt_tokens": 15,
-            "time_to_first_token": 0,
-            "tokens": 19
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
-          "name": "langgraph.runs.stream",
-          "type": "task",
-          "children": [],
-          "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
+          "name": "Stream messages mode",
+          "children": [
+            {
+              "name": "langgraph.runs.stream",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "content": "hello from langgraph",
+                "role": "assistant"
+              },
+              "metadata": {
+                "langgraph.assistant_id": "agent",
+                "langgraph.run_id": "<uuid:1>",
+                "langgraph.thread_id": null,
+                "streamMode": [
+                  "messages"
+                ],
+                "streamSubgraphs": true
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "prompt_tokens": 15,
+                "time_to_first_token": 0,
+                "tokens": 19
               }
-            ]
-          },
-          "output": {
-            "content": "hello from langgraph",
-            "role": "assistant"
-          },
+            }
+          ],
           "metadata": {
-            "langgraph.assistant_id": "agent",
-            "langgraph.run_id": "<uuid:1>",
-            "langgraph.thread_id": null,
-            "streamMode": [
-              "updates"
-            ],
-            "streamSubgraphs": true
+            "operation": "messages",
+            "testRunId": "<run:1>"
           },
-          "metrics": {
-            "completion_tokens": 4,
-            "prompt_tokens": 15,
-            "time_to_first_token": 0,
-            "tokens": 19
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
-          "name": "langgraph.runs.stream",
-          "type": "task",
-          "children": [],
-          "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
+          "name": "Stream updates mode",
+          "children": [
+            {
+              "name": "langgraph.runs.stream",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "output": {
+                "content": "hello from langgraph",
+                "role": "assistant"
+              },
+              "metadata": {
+                "langgraph.assistant_id": "agent",
+                "langgraph.run_id": "<uuid:1>",
+                "langgraph.thread_id": null,
+                "streamMode": [
+                  "updates"
+                ],
+                "streamSubgraphs": true
+              },
+              "metrics": {
+                "completion_tokens": 4,
+                "prompt_tokens": 15,
+                "time_to_first_token": 0,
+                "tokens": 19
               }
-            ]
-          },
+            }
+          ],
           "metadata": {
-            "langgraph.assistant_id": "failing",
-            "langgraph.run_id": "<uuid:1>",
-            "langgraph.thread_id": null,
-            "streamMode": [
-              "values",
-              "messages"
-            ],
-            "streamSubgraphs": true
+            "operation": "updates",
+            "testRunId": "<run:1>"
           },
-          "error": "Agent failed"
-        },
-        {
-          "name": "langgraph.runs.stream",
-          "type": "task",
-          "children": [],
-          "input": {
-            "messages": [
-              {
-                "content": "Reply with exactly: hello from langgraph",
-                "role": "user"
-              }
-            ]
-          },
-          "metadata": {
-            "interruptBefore": [
-              "agent"
-            ],
-            "langgraph.assistant_id": "agent",
-            "langgraph.run_id": "<uuid:1>",
-            "langgraph.thread_id": null
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
           }
         },
         {
-          "name": "Concurrent runs",
+          "name": "Stream error",
+          "children": [
+            {
+              "name": "langgraph.runs.stream",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "metadata": {
+                "langgraph.assistant_id": "failing",
+                "langgraph.run_id": "<uuid:1>",
+                "langgraph.thread_id": null,
+                "streamMode": [
+                  "values",
+                  "messages"
+                ],
+                "streamSubgraphs": true
+              },
+              "error": "Agent failed"
+            }
+          ],
+          "metadata": {
+            "operation": "stream-error",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "Cancel stream",
+          "children": [
+            {
+              "name": "langgraph.runs.stream",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "metadata": {
+                "interruptBefore": [
+                  "agent"
+                ],
+                "langgraph.assistant_id": "agent",
+                "langgraph.run_id": "<uuid:1>",
+                "langgraph.thread_id": null
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "cancel",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "Missing assistant error",
+          "children": [
+            {
+              "name": "langgraph.runs.wait",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "metadata": {
+                "langgraph.assistant_id": "missing-assistant",
+                "langgraph.thread_id": null
+              },
+              "error": "HTTP 404: No assistant found for \"missing-assistant\". Make sure the assistant ID is for a valid assistant or a valid graph ID."
+            }
+          ],
+          "metadata": {
+            "operation": "missing-assistant-error",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "Thrown graph error",
+          "children": [
+            {
+              "name": "langgraph.runs.wait",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "metadata": {
+                "langgraph.assistant_id": "failing",
+                "langgraph.thread_id": null
+              },
+              "error": "Agent failed"
+            }
+          ],
+          "metadata": {
+            "operation": "thrown-error",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "Returned graph error",
+          "children": [
+            {
+              "name": "langgraph.runs.wait",
+              "type": "task",
+              "children": [],
+              "input": {
+                "messages": [
+                  {
+                    "content": "Reply with exactly: hello from langgraph",
+                    "role": "user"
+                  }
+                ]
+              },
+              "metadata": {
+                "langgraph.assistant_id": "failing",
+                "langgraph.thread_id": null
+              },
+              "error": "Agent failed"
+            }
+          ],
+          "metadata": {
+            "operation": "returned-error",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "Concurrent waits",
           "children": [
             {
               "name": "langgraph.runs.wait",
@@ -329,17 +482,13 @@
               }
             }
           ],
-          "input": [
-            "left",
-            "right"
-          ],
-          "output": [
-            "left",
-            "right"
-          ],
+          "metadata": {
+            "operation": "concurrent-waits",
+            "testRunId": "<run:1>"
+          },
           "context": {
-            "caller_filename": "<repo>/e2e/scenarios/langgraph-sdk-instrumentation/scenario.mjs",
-            "caller_functionname": "Object.callback",
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
             "caller_lineno": 0
           }
         }
