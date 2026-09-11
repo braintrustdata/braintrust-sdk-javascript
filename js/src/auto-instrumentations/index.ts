@@ -44,6 +44,7 @@ export { huggingFaceConfigs } from "./configs/huggingface";
 export { openRouterAgentConfigs } from "./configs/openrouter-agent";
 export { openRouterConfigs } from "./configs/openrouter";
 export { mistralConfigs } from "./configs/mistral";
+export { langGraphSDKConfigs } from "./configs/langgraph-sdk";
 export { ollamaConfigs } from "./configs/ollama";
 export { googleADKConfigs } from "./configs/google-adk";
 export { cloudflareAIChatConfigs } from "./configs/cloudflare-ai-chat";

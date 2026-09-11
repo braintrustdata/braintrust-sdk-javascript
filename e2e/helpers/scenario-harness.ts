@@ -80,6 +80,7 @@ export interface ScenarioRunContext {
 }
 
 interface ScenarioRunContextRecord {
+  forwardToProduction?: boolean;
   entry: string;
   runner: ScenarioRunner;
   scenarioDirName: string;
@@ -700,9 +701,13 @@ interface ScenarioHarness {
 
 export async function withScenarioHarness(
   body: (harness: ScenarioHarness) => Promise<void>,
+  optionsForHarness: { forwardToProduction?: boolean } = {},
 ): Promise<void> {
   const { getProdForwarding } = await import("./prod-forwarding");
-  const prodForwarding = getProdForwarding();
+  const prodForwarding =
+    optionsForHarness.forwardToProduction === false
+      ? null
+      : getProdForwarding();
   const testRunId = createTestRunId();
   const server = await startMockBraintrustServer({
     prodForwarding,
@@ -832,6 +837,7 @@ export async function withScenarioHarness(
   ): Promise<ScenarioResult> => {
     const result = await run();
     await recordScenarioRunContext({
+      forwardToProduction: optionsForHarness.forwardToProduction,
       entry: options.entry ?? defaultEntry,
       runner,
       scenarioDirName: path.basename(

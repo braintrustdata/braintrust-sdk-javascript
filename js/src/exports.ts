@@ -228,6 +228,7 @@ export { wrapHuggingFaceTransformers } from "./wrappers/huggingface-transformers
 export { wrapOpenRouterAgent } from "./wrappers/openrouter-agent";
 export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
+export { wrapLangGraphSDK } from "./wrappers/langgraph-sdk";
 export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapVoyageAI } from "./wrappers/voyageai";
