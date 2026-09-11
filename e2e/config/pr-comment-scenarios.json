@@ -532,14 +532,6 @@
     "metadataScenario": "ai-sdk-instrumentation",
     "variants": [
       {
-        "variantKey": "ai-sdk-v3",
-        "label": "v3 pinned"
-      },
-      {
-        "variantKey": "ai-sdk-v3-latest",
-        "label": "v3 latest"
-      },
-      {
         "variantKey": "ai-sdk-v4",
         "label": "v4 pinned"
       },

@@ -39,9 +39,7 @@ type ThinkRunState = {
   startTime: number;
 };
 
-type AISDKStreamEvent =
-  | ChannelMessage<typeof aiSDKChannels.streamText>
-  | ChannelMessage<typeof aiSDKChannels.streamTextSync>;
+type AISDKStreamEvent = ChannelMessage<typeof aiSDKChannels.streamTextSync>;
 
 const THINK_STATE_ID = Symbol.for("braintrust.cloudflare-think.state-id");
 
@@ -51,7 +49,6 @@ class CloudflareThinkInstrumentationConsumer {
   public register(): void {
     this.subscribeToThinkRuns();
     this.subscribeToAISDKStreamTextSync();
-    this.subscribeToAISDKStreamTextAsync();
   }
 
   private subscribeToThinkRuns(): void {
@@ -151,25 +148,6 @@ class CloudflareThinkInstrumentationConsumer {
         this.startAISDKStream(event);
       },
       end: (event) => {
-        this.endAISDKStream(event);
-      },
-      error: (event) => {
-        this.errorAISDKStream(event);
-      },
-    };
-
-    channel.subscribe(handlers);
-  }
-
-  private subscribeToAISDKStreamTextAsync(): void {
-    const channel = aiSDKChannels.streamText.tracingChannel();
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof aiSDKChannels.streamText>
-    > = {
-      start: (event) => {
-        this.startAISDKStream(event);
-      },
-      asyncEnd: (event) => {
         this.endAISDKStream(event);
       },
       error: (event) => {
