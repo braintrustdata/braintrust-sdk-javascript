@@ -284,7 +284,16 @@ describe("BedrockRuntimePlugin", () => {
         }),
       ]),
     );
-    expect(spans[0]?.metrics).not.toHaveProperty("completion_tokens");
+    expect(spans).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_tokens: expect.anything(),
+          }),
+          output: { count: 1 },
+        }),
+      ]),
+    );
   });
 
   it("captures canonical Cohere batch embedding data without vectors", async () => {
