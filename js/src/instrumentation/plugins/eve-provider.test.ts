@@ -1,4 +1,12 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+} from "vitest";
 import * as braintrustExports from "../../exports";
 import { configureNode } from "../../node/config";
 import { _exportsForTestingOnly, initLogger } from "../../logger";
@@ -52,6 +60,7 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
   it("exports an Eve content provider from public entrypoints", () => {
     const setup = () => undefined;
     const instrumentation = braintrustEveInstrumentation({ setup });
+    expectTypeOf(instrumentation).toBeAny();
     expect(instrumentation).toMatchObject({
       capture: "content",
       setup,
@@ -450,5 +459,93 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
     ).resolves.toBeUndefined();
 
     expect(await backgroundLogger.drain()).toEqual([]);
+  });
+
+  it("validates every provider handler before dispatch", async () => {
+    const provider = braintrustEveInstrumentation({});
+    for (const [type, handler] of Object.entries(provider.events)) {
+      expect(typeof handler).toBe("function");
+      if (typeof handler !== "function") {
+        throw new Error(`Expected an Eve provider handler for ${type}`);
+      }
+      await expect(handler({ type }, {})).resolves.toBeUndefined();
+    }
+
+    const throwingEvent = Object.defineProperty({}, "idempotencyKey", {
+      get() {
+        throw new Error("hostile event getter");
+      },
+    });
+    await expect(
+      provider.events["turn.started"](throwingEvent, providerContext()),
+    ).resolves.toBeUndefined();
+    expect(await backgroundLogger.drain()).toEqual([]);
+  });
+
+  it("omits malformed provider payload fields while keeping valid content", async () => {
+    const provider = braintrustEveInstrumentation({});
+    const context = providerContext();
+    const scope = {
+      attemptId: "attempt-partial",
+      attemptIndex: 0,
+      sessionId: "session-partial",
+      stepIndex: 0,
+      turnId: "turn-partial",
+    };
+
+    await provider.events["model.call.started"](
+      {
+        idempotencyKey: "model-partial",
+        input: {
+          messages: [
+            { content: 42, role: "user" },
+            { content: "Keep this input", role: "user" },
+          ],
+        },
+        model: { modelId: "qwen/qwen3", provider: "openrouter" },
+        scope,
+        type: "model.call.started",
+      },
+      context,
+    );
+    await provider.events["model.call.completed"](
+      {
+        content: [
+          null,
+          { text: 42, type: "reasoning" },
+          { text: "Keep this output", type: "text" },
+          { type: "future-content" },
+        ],
+        finishReason: "stop",
+        idempotencyKey: "model-partial",
+        scope,
+        type: "model.call.completed",
+        usage: { inputTokens: "invalid", outputTokens: -1 },
+      },
+      context,
+    );
+
+    const writes = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
+    const spans = mergeRowBatch([...writes].reverse());
+    const model = spans.find(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+    expect(model?.input).toEqual([
+      { content: "Keep this input", role: "user" },
+    ]);
+    expect(model?.output).toEqual([
+      {
+        finish_reason: "stop",
+        index: 0,
+        message: {
+          content: "Keep this output",
+          role: "assistant",
+        },
+      },
+    ]);
+    expect(model?.metrics).not.toHaveProperty("prompt_tokens");
+    expect(model?.metrics).not.toHaveProperty("completion_tokens");
   });
 });

@@ -9,10 +9,18 @@ import {
   unlink,
 } from "node:fs/promises";
 import net from "node:net";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { runMain } from "../../helpers/scenario-runtime";
 
 async function main() {
+  const tscBin = createRequire(import.meta.url).resolve("typescript/bin/tsc");
+  await runProcess(
+    process.execPath,
+    [tscBin, "--project", path.join(process.cwd(), "tsconfig.typecheck.json")],
+    90_000,
+  );
+
   const evePackageName = process.env.EVE_PACKAGE_NAME ?? "eve-v0-latest";
   const evePackageDir = path.join(
     process.cwd(),
