@@ -29,8 +29,10 @@ test("preserves git metadata on experiment spans", async () => {
           ancestor_commits: [baseCommit],
           experiment_name: "git-metadata-base",
           repo_info: {
-            author_email: "git-regression@braintrust.dev",
-            author_name: "Braintrust Git Regression",
+            author_email:
+              process.env.GIT_AUTHOR_EMAIL || "git-regression@braintrust.dev",
+            author_name:
+              process.env.GIT_AUTHOR_NAME || "Braintrust Git Regression",
             branch: "main",
             commit: baseCommit,
             commit_message: "Deterministic base commit",
@@ -46,8 +48,10 @@ test("preserves git metadata on experiment spans", async () => {
           ancestor_commits: [featureCommit],
           experiment_name: "git-metadata-feature",
           repo_info: {
-            author_email: "git-regression@braintrust.dev",
-            author_name: "Braintrust Git Regression",
+            author_email:
+              process.env.GIT_AUTHOR_EMAIL || "git-regression@braintrust.dev",
+            author_name:
+              process.env.GIT_AUTHOR_NAME || "Braintrust Git Regression",
             branch: "feature/git-metadata-regression",
             commit: featureCommit,
             commit_message: "Deterministic feature commit",
