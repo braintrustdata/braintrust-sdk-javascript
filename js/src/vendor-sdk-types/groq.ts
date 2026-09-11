@@ -47,7 +47,7 @@ export interface GroqEmbeddingResponse {
   [key: string]: unknown;
 }
 
-interface GroqTranscriptionCreateParams {
+export interface GroqAudioTranscriptionCreateParams {
   file?: unknown;
   language?: string | null;
   model: string;
@@ -59,8 +59,32 @@ interface GroqTranscriptionCreateParams {
   [key: string]: unknown;
 }
 
-interface GroqTranscription {
+export interface GroqAudioTranslationCreateParams {
+  file?: unknown;
+  model: string;
+  prompt?: string;
+  response_format?: string;
+  temperature?: number;
+  url?: string;
+  [key: string]: unknown;
+}
+
+export interface GroqAudioSpeechCreateParams {
+  input: string;
+  model: string;
+  response_format?: string;
+  sample_rate?: number;
+  speed?: number;
+  voice: string;
+  [key: string]: unknown;
+}
+
+export interface GroqAudioTextResult {
+  duration?: number;
+  language?: string;
+  segments?: unknown[];
   text?: string;
+  words?: unknown[];
   [key: string]: unknown;
 }
 
@@ -82,15 +106,31 @@ export interface GroqEmbeddings {
   ) => OpenAIAPIPromise<GroqEmbeddingResponse>;
 }
 
-interface GroqAudioTranscriptions {
+export interface GroqAudioSpeech {
   create: (
-    params: GroqTranscriptionCreateParams,
+    params: GroqAudioSpeechCreateParams,
     options?: unknown,
-  ) => OpenAIAPIPromise<GroqTranscription>;
+  ) => OpenAIAPIPromise<Response>;
+}
+
+export interface GroqAudioTranscriptions {
+  create: (
+    params: GroqAudioTranscriptionCreateParams,
+    options?: unknown,
+  ) => OpenAIAPIPromise<GroqAudioTextResult | string>;
+}
+
+export interface GroqAudioTranslations {
+  create: (
+    params: GroqAudioTranslationCreateParams,
+    options?: unknown,
+  ) => OpenAIAPIPromise<GroqAudioTextResult | string>;
 }
 
 export interface GroqAudio {
-  transcriptions: GroqAudioTranscriptions;
+  speech?: GroqAudioSpeech;
+  transcriptions?: GroqAudioTranscriptions;
+  translations?: GroqAudioTranslations;
 }
 
 export interface GroqClient {

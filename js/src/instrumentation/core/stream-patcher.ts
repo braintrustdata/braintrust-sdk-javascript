@@ -64,6 +64,14 @@ interface StreamPatchOptions<TChunk = unknown, TFinal = unknown> {
   aroundNext?: <T>(callback: () => PromiseLike<T>) => PromiseLike<T> | T;
 }
 
+interface ByteStreamObserverOptions {
+  aroundRead?: <T>(callback: () => PromiseLike<T>) => PromiseLike<T> | T;
+  debugLabel: string;
+  onCancel: (error?: unknown) => void;
+  onChunk: (chunk: Uint8Array) => void;
+  onComplete: () => void;
+}
+
 type AsyncIteratorLike<TChunk> = AsyncIterable<TChunk> &
   Partial<AsyncIterator<TChunk>>;
 
@@ -435,6 +443,201 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
     console.warn("Failed to patch stream:", error);
     return stream;
   }
+}
+
+/** Observe reads in place without draining or teeing a one-shot byte stream. */
+export function observeByteStream(
+  value: unknown,
+  options: ByteStreamObserverOptions,
+): void {
+  let ended = false;
+  const safeObserve = (chunk: Uint8Array) => {
+    if (ended) return;
+    try {
+      options.onChunk(chunk);
+    } catch (error) {
+      debugLogger.error(`Error collecting ${options.debugLabel}`, error);
+      end(false);
+    }
+  };
+  const end = (success: boolean, error?: unknown) => {
+    if (ended) return;
+    ended = true;
+    try {
+      if (success) options.onComplete();
+      else options.onCancel(error);
+    } catch (loggingError) {
+      debugLogger.error(`Error logging ${options.debugLabel}`, loggingError);
+      options.onCancel();
+    }
+  };
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    !Object.isExtensible(value)
+  ) {
+    end(false);
+    return;
+  }
+  // node-fetch returns a Node Readable. Observing data emission does not put
+  // it into flowing mode, and snapshots bytes before application listeners run.
+  if (
+    "read" in value &&
+    typeof value.read === "function" &&
+    "on" in value &&
+    typeof value.on === "function"
+  ) {
+    value.on("end", () => end(true));
+    value.on("close", () => end(false));
+    const emit =
+      "emit" in value ? (value as { emit?: unknown }).emit : undefined;
+    if (typeof emit === "function")
+      (value as { emit?: unknown }).emit = function (
+        event: string | symbol,
+        ...args: unknown[]
+      ) {
+        if (event === "data" && args[0] instanceof Uint8Array)
+          safeObserve(args[0]);
+        if (event === "error") end(false, args[0]);
+        return Reflect.apply(emit, this, [event, ...args]);
+      };
+    return;
+  }
+  if ("getReader" in value && typeof value.getReader === "function") {
+    const webStream = value as unknown as ReadableStream<Uint8Array>;
+    const pipeTo = webStream.pipeTo;
+    const pipeThrough = webStream.pipeThrough;
+    // Native piping bypasses getReader()/iteration. Add the observation only
+    // when the application starts piping, preserving downstream backpressure.
+    webStream.pipeTo = function (destination, streamOptions) {
+      if (
+        destination === null ||
+        typeof destination !== "object" ||
+        this.locked ||
+        destination.locked
+      )
+        return pipeTo.call(this, destination, streamOptions);
+      const tap = new TransformStream<Uint8Array, Uint8Array>({
+        transform(chunk, controller) {
+          safeObserve(chunk);
+          controller.enqueue(chunk);
+        },
+        flush() {
+          end(true);
+        },
+      });
+      const observed = pipeThrough.call(
+        this,
+        tap,
+        streamOptions,
+      ) as ReadableStream<Uint8Array>;
+      return observed.pipeTo(destination, streamOptions).catch((error) => {
+        end(false, error);
+        throw error;
+      });
+    };
+    webStream.pipeThrough = function <T>(
+      transform: ReadableWritablePair<T, Uint8Array>,
+      streamOptions?: StreamPipeOptions,
+    ): ReadableStream<T> {
+      if (this.locked || transform.writable.locked || transform.readable.locked)
+        return pipeThrough.call(
+          this,
+          transform,
+          streamOptions,
+        ) as ReadableStream<T>;
+      const result = webStream.pipeTo.call(
+        this,
+        transform.writable,
+        streamOptions,
+      );
+      // pipeThrough marks its internal pipe promise handled, just like the
+      // native implementation. Errors still propagate through the transform.
+      void result.catch(() => {});
+      return transform.readable;
+    };
+    const getReader = value.getReader;
+    value.getReader = function (...args: unknown[]) {
+      const reader = Reflect.apply(getReader, this, args);
+      const read = reader.read as (
+        ...args: unknown[]
+      ) => Promise<ReadableStreamReadResult<Uint8Array>>;
+      reader.read = function (...readArgs: unknown[]) {
+        const readValue = () => Reflect.apply(read, this, readArgs);
+        return Promise.resolve(
+          options.aroundRead ? options.aroundRead(readValue) : readValue(),
+        ).then(
+          (result: ReadableStreamReadResult<Uint8Array>) => {
+            if (result.value) safeObserve(result.value);
+            if (result.done) end(true);
+            return result;
+          },
+          (error: unknown) => {
+            end(false, error);
+            throw error;
+          },
+        );
+      };
+      const readerCancel = reader.cancel;
+      reader.cancel = function (...cancelArgs: unknown[]) {
+        const result = Reflect.apply(readerCancel, this, cancelArgs);
+        end(false);
+        return result;
+      };
+      return reader;
+    };
+    const streamCancel = (value as { cancel?: unknown }).cancel;
+    if (typeof streamCancel === "function")
+      (value as unknown as { cancel: (...args: unknown[]) => unknown }).cancel =
+        function (...args: unknown[]) {
+          const result = Reflect.apply(streamCancel, this, args);
+          void Promise.resolve(result).then(
+            () => end(false),
+            () => {},
+          );
+          return result;
+        };
+  }
+  if (
+    "getReader" in value &&
+    typeof value.getReader === "function" &&
+    "values" in value &&
+    typeof value.values === "function"
+  ) {
+    const values = value.values;
+    const iterate = function (this: unknown, ...args: unknown[]) {
+      const iterator = Reflect.apply(values, this, args);
+      patchStreamIfNeeded<Uint8Array>(iterator, {
+        shouldCollect(chunk) {
+          safeObserve(chunk);
+          return false;
+        },
+        onComplete: () => end(true),
+        onCancel: () => end(false),
+        onError: (error) => end(false, error),
+        aroundNext: options.aroundRead,
+      });
+      return iterator;
+    };
+    value.values = iterate;
+    Object.defineProperty(value, Symbol.asyncIterator, {
+      configurable: true,
+      writable: true,
+      value: iterate,
+    });
+  } else if (isAsyncIterable(value)) {
+    patchStreamIfNeeded<Uint8Array>(value, {
+      shouldCollect: (chunk) => {
+        safeObserve(chunk);
+        return false;
+      },
+      onComplete: () => end(true),
+      onCancel: () => end(false),
+      onError: (error) => end(false, error),
+      aroundNext: options.aroundRead,
+    });
+  } else if (!("getReader" in value) || typeof value.getReader !== "function")
+    end(false);
 }
 
 function runNextWithWrapper<T, TChunk, TFinal>(

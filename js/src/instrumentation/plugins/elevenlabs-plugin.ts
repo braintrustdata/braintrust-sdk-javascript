@@ -19,7 +19,11 @@ import {
 } from "../auto-instrumentation-suppression";
 import { BasePlugin } from "../core";
 import { unsubscribeAll } from "../core/channel-tracing";
-import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
+import {
+  isAsyncIterable,
+  observeByteStream,
+  patchStreamIfNeeded,
+} from "../core/stream-patcher";
 import { elevenLabsChannels } from "./elevenlabs-channels";
 
 export class ElevenLabsPlugin extends BasePlugin {
@@ -137,10 +141,9 @@ export class ElevenLabsPlugin extends BasePlugin {
             isObject(file) && typeof file.path === "string"
               ? file.path.split(/[\\/]/).pop() || "audio"
               : "audio";
-          observeAudioStream(
-            file,
-            (chunk) => chunks.push(new Uint8Array(chunk)),
-            () => {
+          observeByteStream(file, {
+            onChunk: (chunk) => chunks.push(new Uint8Array(chunk)),
+            onComplete: () => {
               const contentType = "application/octet-stream";
               const data = new Blob(chunks as BlobPart[], {
                 type: contentType,
@@ -164,11 +167,12 @@ export class ElevenLabsPlugin extends BasePlugin {
                 },
               });
             },
-            () => {
+            onCancel: () => {
               chunks.length = 0;
             },
-            span,
-          );
+            aroundRead: (next) => withCurrent(span, next),
+            debugLabel: "ElevenLabs audio",
+          });
         },
       ),
     );
@@ -408,173 +412,12 @@ function captureSpeech(
       aroundNext: (next) => withCurrent(span, next),
     });
   } else {
-    observeAudioStream(value, observe, complete, cancel, span);
-  }
-}
-
-/** Observe reads in place; never drain or tee a provider's one-shot audio. */
-function observeAudioStream(
-  value: unknown,
-  observe: (chunk: Uint8Array) => void,
-  complete: () => void,
-  cancel: Finish,
-  span: Span,
-): void {
-  let ended = false;
-  const safeObserve = (chunk: Uint8Array) => {
-    if (ended) return;
-    try {
-      observe(chunk);
-    } catch (error) {
-      debugLogger.error("Error collecting ElevenLabs audio", error);
-      end(false);
-    }
-  };
-  const end = (success: boolean, error?: unknown) => {
-    if (ended) return;
-    ended = true;
-    try {
-      if (success) complete();
-      else cancel(error);
-    } catch (loggingError) {
-      debugLogger.error("Error logging ElevenLabs audio", loggingError);
-      cancel();
-    }
-  };
-  if (!isObject(value) || !Object.isExtensible(value)) {
-    end(false);
-    return;
-  }
-  // node-fetch returns a Node Readable. Observing data emission does not put
-  // it into flowing mode, and snapshots bytes before application listeners run.
-  if (typeof value.read === "function" && typeof value.on === "function") {
-    value.on("end", () => end(true));
-    value.on("close", () => end(false));
-    const emit = value.emit;
-    if (typeof emit === "function")
-      value.emit = function (event: string | symbol, ...args: unknown[]) {
-        if (event === "data" && args[0] instanceof Uint8Array)
-          safeObserve(args[0]);
-        if (event === "error") end(false, args[0]);
-        return Reflect.apply(emit, this, [event, ...args]);
-      };
-    return;
-  }
-  if (typeof value.getReader === "function") {
-    const webStream = value as unknown as ReadableStream<Uint8Array>;
-    const pipeTo = webStream.pipeTo;
-    const pipeThrough = webStream.pipeThrough;
-    // Native piping bypasses getReader()/iteration. Add the observation only
-    // when the application starts piping, preserving downstream backpressure.
-    webStream.pipeTo = function (destination, options) {
-      if (!isObject(destination) || this.locked || destination.locked)
-        return pipeTo.call(this, destination, options);
-      const tap = new TransformStream<Uint8Array, Uint8Array>({
-        transform(chunk, controller) {
-          safeObserve(chunk);
-          controller.enqueue(chunk);
-        },
-        flush() {
-          end(true);
-        },
-      });
-      const observed = pipeThrough.call(
-        this,
-        tap,
-        options,
-      ) as ReadableStream<Uint8Array>;
-      return observed.pipeTo(destination, options).catch((error) => {
-        end(false, error);
-        throw error;
-      });
-    };
-    webStream.pipeThrough = function <T>(
-      transform: ReadableWritablePair<T, Uint8Array>,
-      options?: StreamPipeOptions,
-    ): ReadableStream<T> {
-      if (this.locked || transform.writable.locked || transform.readable.locked)
-        return pipeThrough.call(this, transform, options) as ReadableStream<T>;
-      const result = webStream.pipeTo.call(this, transform.writable, options);
-      // pipeThrough marks its internal pipe promise handled, just like the
-      // native implementation. Errors still propagate through the transform.
-      void result.catch(() => {});
-      return transform.readable;
-    };
-    const getReader = value.getReader;
-    value.getReader = function (...args: unknown[]) {
-      const reader = Reflect.apply(getReader, this, args);
-      const read = reader.read as (
-        ...args: unknown[]
-      ) => Promise<ReadableStreamReadResult<Uint8Array>>;
-      reader.read = function (...readArgs: unknown[]) {
-        return Promise.resolve(
-          withCurrent(span, () => Reflect.apply(read, this, readArgs)),
-        ).then(
-          (result: ReadableStreamReadResult<Uint8Array>) => {
-            if (result.value) safeObserve(result.value);
-            if (result.done) end(true);
-            return result;
-          },
-          (error: unknown) => {
-            end(false, error);
-            throw error;
-          },
-        );
-      };
-      const readerCancel = reader.cancel;
-      reader.cancel = function (...cancelArgs: unknown[]) {
-        const result = Reflect.apply(readerCancel, this, cancelArgs);
-        end(false);
-        return result;
-      };
-      return reader;
-    };
-    const streamCancel = value.cancel;
-    if (typeof streamCancel === "function")
-      value.cancel = function (...args: unknown[]) {
-        const result = Reflect.apply(streamCancel, this, args);
-        void Promise.resolve(result).then(
-          () => end(false),
-          () => {},
-        );
-        return result;
-      };
-  }
-  if (
-    typeof value.getReader === "function" &&
-    typeof value.values === "function"
-  ) {
-    const values = value.values;
-    const iterate = function (this: unknown, ...args: unknown[]) {
-      const iterator = Reflect.apply(values, this, args);
-      patchStreamIfNeeded<Uint8Array>(iterator, {
-        shouldCollect(chunk) {
-          safeObserve(chunk);
-          return false;
-        },
-        onComplete: () => end(true),
-        onCancel: () => end(false),
-        onError: (error) => end(false, error),
-        aroundNext: (next) => withCurrent(span, next),
-      });
-      return iterator;
-    };
-    value.values = iterate;
-    Object.defineProperty(value, Symbol.asyncIterator, {
-      configurable: true,
-      writable: true,
-      value: iterate,
+    observeByteStream(value, {
+      onChunk: observe,
+      onComplete: complete,
+      onCancel: cancel,
+      aroundRead: (next) => withCurrent(span, next),
+      debugLabel: "ElevenLabs audio",
     });
-  } else if (isAsyncIterable(value)) {
-    patchStreamIfNeeded<Uint8Array>(value, {
-      shouldCollect: (chunk) => {
-        safeObserve(chunk);
-        return false;
-      },
-      onComplete: () => end(true),
-      onCancel: () => end(false),
-      onError: (error) => end(false, error),
-      aroundNext: (next) => withCurrent(span, next),
-    });
-  } else if (typeof value.getReader !== "function") end(false);
+  }
 }
