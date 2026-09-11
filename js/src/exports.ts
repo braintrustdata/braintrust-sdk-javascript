@@ -319,7 +319,13 @@ export {
   PromptDefinitionWithTools,
 } from "./prompt-schemas";
 
-export type { Trace, SpanData, GetThreadOptions } from "./trace";
+export type {
+  Trace,
+  SpanData,
+  SpanDurationFilter,
+  SpanFilters,
+  GetThreadOptions,
+} from "./trace";
 export { SpanFetcher, CachedSpanFetcher, LocalTrace } from "./trace";
 
 export type {
