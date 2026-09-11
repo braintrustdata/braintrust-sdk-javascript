@@ -301,13 +301,6 @@ function getCassetteServerRoutes(): CassetteServerRoute[] {
       prefix: "/aws-bedrock-runtime",
       upstreamOrigin: `https://bedrock-runtime.${getBedrockRegion()}.amazonaws.com`,
     },
-    {
-      prefix: "/anthropic-vertex",
-      upstreamOrigin:
-        process.env.CLOUD_ML_REGION && process.env.CLOUD_ML_REGION !== "global"
-          ? `https://${process.env.CLOUD_ML_REGION}-aiplatform.googleapis.com`
-          : "https://aiplatform.googleapis.com",
-    },
     { prefix: "/elevenlabs", upstreamOrigin: "https://api.elevenlabs.io" },
     { prefix: "/cohere", upstreamOrigin: "https://api.cohere.com" },
     { prefix: "/cursor/v1", upstreamOrigin: "https://api.cursor.com/v1" },
@@ -343,7 +336,6 @@ function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
     BRAINTRUST_E2E_MODEL_BASE_URL: `${serverUrl}/openai/v1`,
     ANTHROPIC_BASE_URL: `${serverUrl}/anthropic`,
     ANTHROPIC_BEDROCK_BASE_URL: `${serverUrl}/anthropic-bedrock`,
-    ANTHROPIC_VERTEX_BASE_URL: `${serverUrl}/anthropic-vertex/v1`,
     AWS_BEDROCK_RUNTIME_BASE_URL: `${serverUrl}/aws-bedrock-runtime`,
     ELEVENLABS_BASE_URL: `${serverUrl}/elevenlabs`,
     COHERE_BASE_URL: `${serverUrl}/cohere`,

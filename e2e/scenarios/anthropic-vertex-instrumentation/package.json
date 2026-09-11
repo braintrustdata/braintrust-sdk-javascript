@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "anthropic-vertex-sdk-v0": "npm:@anthropic-ai/vertex-sdk@0.14.3",
-    "anthropic-vertex-sdk-v0-latest": "npm:@anthropic-ai/vertex-sdk@0.19.7",
-    "google-auth-library": "10.2.0"
+    "anthropic-vertex-sdk-v0-latest": "npm:@anthropic-ai/vertex-sdk@0.19.7"
   }
 }

@@ -42,6 +42,7 @@ describe.concurrent("variants", () => {
               ANTHROPIC_VERTEX_PACKAGE_NAME: scenario.dependencyName,
             },
             runContext: {
+              cassette: false,
               variantKey: scenario.snapshotName,
               originalScenarioDir,
             },
@@ -64,6 +65,7 @@ describe.concurrent("variants", () => {
             },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
+              cassette: false,
               variantKey: scenario.snapshotName,
               originalScenarioDir,
             },
@@ -86,6 +88,7 @@ describe.concurrent("variants", () => {
             },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
+              cassette: false,
               variantKey: scenario.snapshotName,
               originalScenarioDir,
             },
