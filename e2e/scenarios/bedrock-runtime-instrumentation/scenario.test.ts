@@ -40,8 +40,9 @@ describe.concurrent("variants", () => {
             entry: "scenario.ts",
             env: { BEDROCK_RUNTIME_PACKAGE_NAME: scenario.dependencyName },
             runContext: {
-              variantKey: scenario.snapshotName,
+              cassette: { variantKey: scenario.snapshotName },
               originalScenarioDir,
+              variantKey: `${scenario.snapshotName}-wrapped`,
             },
             scenarioDir,
             timeoutMs: BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS,
@@ -60,8 +61,9 @@ describe.concurrent("variants", () => {
             env: { BEDROCK_RUNTIME_PACKAGE_NAME: scenario.dependencyName },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
-              variantKey: scenario.snapshotName,
+              cassette: { variantKey: scenario.snapshotName },
               originalScenarioDir,
+              variantKey: `${scenario.snapshotName}-auto`,
             },
             scenarioDir,
             timeoutMs: BEDROCK_RUNTIME_SCENARIO_TIMEOUT_MS,

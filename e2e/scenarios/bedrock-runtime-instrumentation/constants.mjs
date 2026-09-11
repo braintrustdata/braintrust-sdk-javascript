@@ -15,6 +15,7 @@ function getModel() {
 }
 
 export const MODEL = getModel();
+export const EMBEDDING_MODEL = "amazon.titan-embed-text-v2:0";
 export const REGION =
   process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? "us-east-1";
 export const CACHE_PROMPT_MARKER = "BRAINTRUST_BEDROCK_CACHE_CONTEXT";

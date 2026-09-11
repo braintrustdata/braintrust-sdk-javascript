@@ -126,6 +126,43 @@
           }
         },
         {
+          "name": "bedrock-embedding-operation",
+          "children": [
+            {
+              "name": "bedrock.invokeModel",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inputs": [
+                  {
+                    "content": "Embed this short Braintrust test sentence."
+                  }
+                ],
+                "output_dimensions": 256
+              },
+              "output": {
+                "count": 1
+              },
+              "metadata": {
+                "accept": "application/json",
+                "command": "InvokeModelCommand",
+                "contentType": "application/json",
+                "model": "amazon.titan-embed-text-v2:0",
+                "operation": "invokeModel",
+                "provider": "aws-bedrock"
+              },
+              "metrics": {
+                "prompt_tokens": 9,
+                "tokens": 9
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embedding",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "bedrock-invoke-model-operation",
           "children": [
             {

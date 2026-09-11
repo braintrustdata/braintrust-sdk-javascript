@@ -25,6 +25,10 @@ class InvokeModelWithBidirectionalStreamCommand {
   constructor(public input: Record<string, unknown>) {}
 }
 
+class InvokeModelCommand {
+  constructor(public input: Record<string, unknown>) {}
+}
+
 class GetObjectCommand {
   constructor(public input: Record<string, unknown>) {}
 }
@@ -228,6 +232,176 @@ describe("BedrockRuntimePlugin", () => {
           span_attributes: expect.objectContaining({
             name: "bedrock.invokeModelWithBidirectionalStream",
           }),
+        }),
+      ]),
+    );
+  });
+
+  it("captures canonical Titan embedding data and token metrics", async () => {
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            embedding: [0.1, 0.2, 0.3],
+            embeddingsByType: {
+              float: [0.1, 0.2, 0.3],
+            },
+            inputTextTokenCount: 4,
+          }),
+        ),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              dimensions: 3,
+              inputText: "Embed this sentence.",
+              normalize: true,
+            }),
+            modelId: "amazon.titan-embed-text-v2:0",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          input: {
+            inputs: [{ content: "Embed this sentence." }],
+            output_dimensions: 3,
+          },
+          metadata: expect.objectContaining({
+            model: "amazon.titan-embed-text-v2:0",
+            provider: "aws-bedrock",
+          }),
+          metrics: expect.objectContaining({
+            prompt_tokens: 4,
+            tokens: 4,
+          }),
+          output: { count: 1 },
+        }),
+      ]),
+    );
+    expect(spans).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_tokens: expect.anything(),
+          }),
+          output: { count: 1 },
+        }),
+      ]),
+    );
+  });
+
+  it("captures canonical Cohere batch embedding data without vectors", async () => {
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            embeddings: [
+              [0.1, 0.2, 0.3],
+              [0.4, 0.5, 0.6],
+            ],
+            id: "response-id",
+            response_type: "embeddings_floats",
+            texts: ["First", "Second"],
+          }),
+        ),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              input_type: "search_document",
+              texts: ["First", "Second"],
+            }),
+            modelId: "cohere.embed-english-v3",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          input: {
+            inputs: [{ content: "First" }, { content: "Second" }],
+          },
+          output: { count: 2 },
+        }),
+      ]),
+    );
+  });
+
+  it("counts Cohere v4 multi-type embeddings once per input", async () => {
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: JSON.stringify({
+          embeddings: {
+            float: [
+              [0.1, 0.2],
+              [0.3, 0.4],
+            ],
+            int8: [
+              [1, 2],
+              [3, 4],
+            ],
+          },
+          response_type: "embeddings_by_type",
+        }),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              input_type: "search_document",
+              output_dimension: 2,
+              texts: ["First", "Second"],
+            }),
+            modelId: "us.cohere.embed-v4:0",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          input: {
+            inputs: [{ content: "First" }, { content: "Second" }],
+            output_dimensions: 2,
+          },
+          output: { count: 2 },
+        }),
+      ]),
+    );
+  });
+
+  it("never logs provider-native output for malformed embedding responses", async () => {
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: JSON.stringify({ unexpected: "response" }),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({ inputText: "Embed this." }),
+            modelId: "amazon.titan-embed-text-v2:0",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          output: { count: 0 },
         }),
       ]),
     );

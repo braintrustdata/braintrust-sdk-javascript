@@ -62,6 +62,7 @@ export interface BedrockRuntimeConverseRequest {
 
 export interface BedrockRuntimeTokenUsage {
   inputTokens?: number;
+  inputTextTokenCount?: number;
   outputTokens?: number;
   totalTokens?: number;
   cacheReadInputTokens?: number;

@@ -52,8 +52,8 @@
               "metrics": {
                 "completion_tokens": 2,
                 "latency_ms": 0,
-                "prompt_cache_creation_tokens": 14921,
-                "prompt_cached_tokens": 0,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14921,
                 "prompt_tokens": 6,
                 "tokens": 14929
               }
@@ -122,6 +122,43 @@
           ],
           "metadata": {
             "operation": "converse-stream",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "bedrock-embedding-operation",
+          "children": [
+            {
+              "name": "bedrock.invokeModel",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inputs": [
+                  {
+                    "content": "Embed this short Braintrust test sentence."
+                  }
+                ],
+                "output_dimensions": 256
+              },
+              "output": {
+                "count": 1
+              },
+              "metadata": {
+                "accept": "application/json",
+                "command": "InvokeModelCommand",
+                "contentType": "application/json",
+                "model": "amazon.titan-embed-text-v2:0",
+                "operation": "invokeModel",
+                "provider": "aws-bedrock"
+              },
+              "metrics": {
+                "prompt_tokens": 9,
+                "tokens": 9
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embedding",
             "testRunId": "<run:1>"
           }
         },
@@ -242,16 +279,16 @@
                 "provider": "aws-bedrock",
                 "trace": {},
                 "usage": {
-                  "cacheReadInputTokenCount": 14922,
-                  "cacheWriteInputTokenCount": 0,
+                  "cacheReadInputTokenCount": 0,
+                  "cacheWriteInputTokenCount": 14922,
                   "inputTokens": 6,
                   "outputTokens": 3
                 }
               },
               "metrics": {
                 "completion_tokens": 3,
-                "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 14922,
+                "prompt_cache_creation_tokens": 14922,
+                "prompt_cached_tokens": 0,
                 "prompt_tokens": 6,
                 "time_to_first_token": 0,
                 "tokens": 14931
