@@ -13,6 +13,11 @@ import {
   processAttachmentsInInput,
   coalesceInput,
 } from "./anthropic-plugin";
+import {
+  extractAnthropicInput,
+  extractAnthropicInputMetadata,
+  extractAnthropicOutputMetadata,
+} from "./anthropic-span-data";
 import { Attachment } from "../../logger";
 
 const parseMetricsFromUsageForTest = (usage: unknown) =>
@@ -195,11 +200,17 @@ describe("parseMetricsFromUsage", () => {
     ).toEqual({ prompt_tokens: 100, completion_tokens: 80 });
   });
 
-  it("should ignore non-number token values", () => {
+  it("should ignore invalid token values", () => {
     const usage = {
       input_tokens: "not a number",
       output_tokens: 50,
-      cache_read_input_tokens: null,
+      cache_read_input_tokens: Number.NaN,
+      cache_creation_input_tokens: Number.POSITIVE_INFINITY,
+      cache_creation: {
+        ephemeral_1h_input_tokens: -1,
+        ephemeral_5m_input_tokens: 1.5,
+      },
+      output_tokens_details: { thinking_tokens: -1 },
     };
 
     const result = parseMetricsFromUsageForTest(usage);
@@ -213,7 +224,7 @@ describe("parseMetricsFromUsage", () => {
     expect(parseMetricsFromUsageForTest({})).toEqual({});
   });
 
-  it("should flatten server_tool_use metrics", () => {
+  it("should omit server_tool_use metrics", () => {
     const usage = {
       input_tokens: 100,
       output_tokens: 50,
@@ -228,11 +239,10 @@ describe("parseMetricsFromUsage", () => {
     expect(result).toEqual({
       prompt_tokens: 100,
       completion_tokens: 50,
-      server_tool_use_web_search_requests: 3,
     });
   });
 
-  it("should flatten web_fetch and tool_search server tool metrics", () => {
+  it("should not turn future server tool fields into custom metrics", () => {
     const usage = {
       input_tokens: 100,
       output_tokens: 50,
@@ -247,9 +257,187 @@ describe("parseMetricsFromUsage", () => {
     expect(result).toEqual({
       prompt_tokens: 100,
       completion_tokens: 50,
-      server_tool_use_web_fetch_requests: 2,
-      server_tool_use_tool_search_requests: 4,
     });
+  });
+});
+
+describe("extractAnthropicOutputMetadata", () => {
+  it("uses the resolved response model", () => {
+    expect(
+      extractAnthropicOutputMetadata({
+        model: "claude-resolved",
+        stop_reason: "end_turn",
+        stop_sequence: null,
+      } as any),
+    ).toEqual({
+      model: "claude-resolved",
+      stop_reason: "end_turn",
+      stop_sequence: null,
+    });
+  });
+});
+
+describe("extractAnthropicInput", () => {
+  it("can omit tools while retaining allowlisted request metadata", () => {
+    expect(
+      extractAnthropicInputMetadata(
+        {
+          max_iterations: 3,
+          max_tokens: 64,
+          messages: [],
+          model: "claude-test",
+          secret_future_field: "do not capture",
+          tools: [
+            {
+              input_schema: { type: "object" },
+              name: "get_weather",
+            },
+          ],
+        },
+        { includeTools: false },
+      ),
+    ).toEqual({
+      max_tokens: 64,
+      model: "claude-test",
+      provider: "anthropic",
+    });
+  });
+
+  it("allowlists request metadata and normalizes tool configuration", () => {
+    const { metadata } = extractAnthropicInput({
+      max_tokens: 64,
+      messages: [{ role: "user", content: "weather" }],
+      model: "claude-test",
+      secret_future_field: "do not capture",
+      tool_choice: {
+        disable_parallel_tool_use: true,
+        name: "get_weather",
+        type: "tool",
+      },
+      tools: [
+        {
+          description: "Get weather",
+          input_schema: {
+            properties: { location: { type: "string" } },
+            type: "object",
+          },
+          name: "get_weather",
+          type: null,
+        },
+      ],
+    });
+
+    expect(metadata).toEqual({
+      max_tokens: 64,
+      model: "claude-test",
+      parallel_tool_calls: false,
+      provider: "anthropic",
+      tool_choice: {
+        function: { name: "get_weather" },
+        type: "function",
+      },
+      tools: [
+        {
+          function: {
+            description: "Get weather",
+            name: "get_weather",
+            parameters: {
+              properties: { location: { type: "string" } },
+              type: "object",
+            },
+          },
+          type: "function",
+        },
+      ],
+    });
+    expect(metadata).not.toHaveProperty("secret_future_field");
+  });
+
+  it("keeps allowlisted Anthropic built-in tools provider-native", () => {
+    const { metadata } = extractAnthropicInput({
+      max_tokens: 64,
+      messages: [{ role: "user", content: "search" }],
+      model: "claude-test",
+      tool_choice: { type: "any" },
+      tools: [
+        {
+          allowed_callers: ["direct"],
+          defer_loading: true,
+          max_uses: 1,
+          name: "web_search",
+          provider_future_field: "omit",
+          response_inclusion: "excluded",
+          strict: true,
+          type: "web_search_20250305",
+          user_location: { city: "Paris", type: "approximate" },
+        },
+        {
+          allowed_domains: ["example.com"],
+          citations: { enabled: true },
+          max_content_tokens: 2048,
+          name: "web_fetch",
+          type: "web_fetch_20260318",
+          use_cache: false,
+        },
+        {
+          display_height_px: 768,
+          display_width_px: 1024,
+          enable_zoom: true,
+          input_examples: [{ action: "screenshot" }],
+          name: "computer",
+          type: "computer_20251124",
+        },
+        {
+          cache_control: { type: "ephemeral" },
+          configs: { search: { defer_loading: true } },
+          default_config: { enabled: true },
+          mcp_server_name: "docs",
+          type: "mcp_toolset",
+        },
+      ],
+    });
+
+    expect(metadata).toMatchObject({
+      tool_choice: "required",
+      tools: [
+        {
+          allowed_callers: ["direct"],
+          defer_loading: true,
+          max_uses: 1,
+          name: "web_search",
+          response_inclusion: "excluded",
+          strict: true,
+          type: "web_search_20250305",
+          user_location: { city: "Paris", type: "approximate" },
+        },
+        {
+          allowed_domains: ["example.com"],
+          citations: { enabled: true },
+          max_content_tokens: 2048,
+          name: "web_fetch",
+          type: "web_fetch_20260318",
+          use_cache: false,
+        },
+        {
+          display_height_px: 768,
+          display_width_px: 1024,
+          enable_zoom: true,
+          input_examples: [{ action: "screenshot" }],
+          name: "computer",
+          type: "computer_20251124",
+        },
+        {
+          cache_control: { type: "ephemeral" },
+          configs: { search: { defer_loading: true } },
+          default_config: { enabled: true },
+          mcp_server_name: "docs",
+          type: "mcp_toolset",
+        },
+      ],
+    });
+    expect((metadata.tools as unknown[])[0]).not.toHaveProperty(
+      "provider_future_field",
+    );
   });
 });
 
@@ -296,11 +484,12 @@ describe("aggregateAnthropicStreamChunks", () => {
     });
   });
 
-  it("should extract initial usage from message_start", () => {
+  it("should extract the resolved model and initial usage from message_start", () => {
     const chunks = [
       {
         type: "message_start",
         message: {
+          model: "claude-resolved",
           usage: {
             input_tokens: 100,
             cache_read_input_tokens: 50,
@@ -311,6 +500,7 @@ describe("aggregateAnthropicStreamChunks", () => {
 
     const result = aggregateAnthropicStreamChunksForTest(chunks);
 
+    expect(result.metadata).toEqual({ model: "claude-resolved" });
     // finalizeAnthropicTokens adds all cache tokens to prompt_tokens
     expect(result.metrics).toMatchObject({
       prompt_tokens: 150, // 100 + 50
@@ -417,6 +607,7 @@ describe("aggregateAnthropicStreamChunks", () => {
       {
         type: "message_delta",
         delta: {
+          secret_future_field: "do not capture",
           stop_reason: "end_turn",
         },
       },
@@ -1035,6 +1226,21 @@ describe("processAttachmentsInInput", () => {
 
     // Should not crash, just return as-is or with minimal processing
     expect(result[0].type).toBe("image");
+  });
+
+  it("should preserve invalid base64 content when attachment conversion fails", () => {
+    const input = [
+      {
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: "image/png",
+          data: "%%%invalid-base64%%%",
+        },
+      },
+    ];
+
+    expect(processAttachmentsInInput(input)).toEqual(input);
   });
 });
 

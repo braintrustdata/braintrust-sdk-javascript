@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import iso from "../isomorph";
+import { BraintrustState } from "../logger";
 import { configureNode } from "./config";
 
 describe("configureNode .env.braintrust API key lookup", () => {
@@ -126,6 +127,17 @@ describe("configureNode .env.braintrust API key lookup", () => {
 
     await expect(iso.getBraintrustApiKey()).resolves.toBe("file-key");
     expect(process.env.BRAINTRUST_API_KEY).toBeUndefined();
+  });
+
+  test("resolves trace-context signing credentials from .env.braintrust", async () => {
+    await writeBraintrustEnv(tempDir!, "BRAINTRUST_API_KEY=signing-key\n");
+    process.chdir(tempDir!);
+    const state = new BraintrustState({});
+
+    await expect(
+      state._internalResolveTraceContextSigningSecret(),
+    ).resolves.toBe("signing-key");
+    expect(state._internalGetTraceContextSigningSecret()).toBe("signing-key");
   });
 
   test("returns undefined when the nearest .env.braintrust cannot be read", async () => {

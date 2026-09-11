@@ -141,6 +141,7 @@ export interface AnthropicBase64Source {
 export interface AnthropicMessage {
   role: string;
   content: AnthropicOutputContentBlock[];
+  model?: string;
   usage?: AnthropicUsage;
   stop_reason?: string;
   stop_sequence?: string | null;
