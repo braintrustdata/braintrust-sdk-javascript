@@ -72,7 +72,7 @@ describe("groq wrapper", () => {
     const wrapped = wrapGroq({
       audio: {
         speech: {
-          create: vi.fn(async () =>
+          create: vi.fn(async (_request: Record<string, unknown>) =>
             Promise.resolve(
               new Response(new Uint8Array([1, 2, 3]), {
                 headers: { "content-type": "audio/wav" },
@@ -81,7 +81,7 @@ describe("groq wrapper", () => {
           ),
         },
         transcriptions: {
-          create: vi.fn(async () => ({
+          create: vi.fn(async (_request: Record<string, unknown>) => ({
             duration: 1.5,
             language: "en",
             segments: [{ text: "Hello from Braintrust." }],
@@ -90,7 +90,10 @@ describe("groq wrapper", () => {
           })),
         },
         translations: {
-          create: vi.fn(async () => "Hello from Braintrust."),
+          create: vi.fn(
+            async (_request: Record<string, unknown>) =>
+              "Hello from Braintrust.",
+          ),
         },
       },
       chat: {
