@@ -123,3 +123,18 @@ See the [Migrate from v1.x to v2.x guide](https://www.braintrust.dev/docs/refere
 ## Compatibility
 
 The `braintrust` package is compatible with Node.js versions 20.12.0, 22.13.0, for the respective major Node.js release lines and above.
+
+## OpenAI images and audio
+
+`wrapOpenAI(client)` traces `images.generate()`, `images.edit()`,
+`images.createVariation()`, and `audio.speech.create()`,
+`audio.transcriptions.create()`, and `audio.translations.create()`. The Node
+import hook instruments the same methods automatically. Instrumentation accepts
+any model supported by the installed OpenAI SDK and endpoint.
+
+Media calls produce one LLM span, including streamed image generation and edits,
+streamed transcripts, and speech SSE responses. Inputs and outputs use media
+content parts, with inline media stored as Braintrust attachments. Remote image
+URLs remain URLs. Speech responses retain their original response and stream
+interfaces; audio is captured as the application reads it. Unread or cancelled
+speech does not produce a partial audio attachment.

@@ -1,3 +1,4 @@
+import type { OpenAIMediaClient } from "./openai-media";
 import type {
   OpenAIBeta,
   OpenAIChat,
@@ -6,7 +7,7 @@ import type {
   OpenAIResponses,
 } from "./openai-common";
 
-export interface OpenAIV4Client {
+export interface OpenAIV4Client extends OpenAIMediaClient {
   chat: OpenAIChat;
   embeddings: OpenAIEmbeddings;
   moderations: OpenAIModerations;

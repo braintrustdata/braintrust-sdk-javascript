@@ -499,6 +499,80 @@ describe("aggregateChatCompletionChunks", () => {
     });
   });
 
+  describe("audio aggregation", () => {
+    it("should aggregate audio transcripts without logging base64 data", () => {
+      const chunks = [
+        {
+          choices: [
+            {
+              index: 0,
+              delta: {
+                role: "assistant",
+                audio: {
+                  id: "audio_123",
+                  data: "UklGRg==",
+                  expires_at: 1_740_000_000,
+                  transcript: "Hello",
+                },
+              },
+            },
+          ],
+        },
+        {
+          choices: [
+            {
+              index: 0,
+              delta: {
+                audio: {
+                  data: "AAAAAA==",
+                  transcript: " world",
+                },
+              },
+            },
+          ],
+        },
+        {
+          choices: [
+            {
+              index: 0,
+              delta: {
+                audio: {
+                  data: "AQEBAQ==",
+                  transcript: "!",
+                },
+              },
+            },
+            {
+              index: 1,
+              delta: {
+                role: "assistant",
+                audio: {
+                  id: "audio_456",
+                  transcript: "Bonjour",
+                },
+              },
+            },
+          ],
+        },
+      ];
+
+      const result = aggregateChatCompletionChunks(chunks);
+
+      expect(result.output[0].message.audio).toEqual({
+        id: "audio_123",
+        expires_at: 1_740_000_000,
+        transcript: "Hello world!",
+      });
+      expect(result.output[1].message.audio).toEqual({
+        id: "audio_456",
+        transcript: "Bonjour",
+      });
+      expect(JSON.stringify(result.output)).not.toContain("UklGRg==");
+      expect(JSON.stringify(result.output)).not.toContain("AAAAAA==");
+      expect(JSON.stringify(result.output)).not.toContain("AQEBAQ==");
+    });
+  });
+
   describe("tool calls aggregation", () => {
     it("should aggregate parallel tool calls across multiple choices", () => {
       const chunks = [

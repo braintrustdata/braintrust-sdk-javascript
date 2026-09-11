@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, test } from "vitest";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
+import type { Json } from "../../helpers/normalize";
 import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
 import {
   withScenarioHarness,
@@ -24,6 +25,7 @@ import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
 type RunOpenAIScenario = (harness: {
   runNodeScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     nodeArgs: string[];
     runContext?: ScenarioRunContext;
     scenarioDir: string;
@@ -31,6 +33,7 @@ type RunOpenAIScenario = (harness: {
   }) => Promise<unknown>;
   runScenarioDir: (options: {
     entry: string;
+    env?: Record<string, string>;
     runContext?: ScenarioRunContext;
     scenarioDir: string;
     timeoutMs: number;
@@ -48,6 +51,7 @@ type OperationSpec = {
   expectsOutput: boolean;
   expectsModel?: boolean;
   expectsTimeToFirstToken: boolean;
+  expectsError?: boolean;
   minOpenAIMajorVersion?: number;
   name: string;
   operation: string;
@@ -141,6 +145,18 @@ function validateMultipleChoicesStreamOutput(
   ]);
 }
 
+function validateAudioStreamOutput(span: CapturedLogEvent | undefined): void {
+  const firstChoice = Array.isArray(span?.output) ? span.output[0] : undefined;
+  const message = asRecord(asRecord(firstChoice)?.message);
+  const audio = asRecord(message?.audio);
+
+  expect(typeof audio?.id).toBe("string");
+  expect(typeof audio?.expires_at).toBe("number");
+  expect(typeof audio?.transcript).toBe("string");
+  expect((audio?.transcript as string).length).toBeGreaterThan(0);
+  expect(audio).not.toHaveProperty("data");
+}
+
 function validateAttachmentInput(
   span: CapturedLogEvent | undefined,
   contentType: string,
@@ -149,6 +165,20 @@ function validateAttachmentInput(
 
   expect(serialized).toContain("braintrust_attachment");
   expect(serialized).toContain(contentType);
+}
+
+function validateAttachmentOutput(
+  span: CapturedLogEvent | undefined,
+  contentType: string,
+): void {
+  const serialized = JSON.stringify(span?.output);
+
+  expect(serialized).toContain("braintrust_attachment");
+  expect(serialized).toContain(contentType);
+}
+
+function validateEmptyMediaOutput(span: CapturedLogEvent | undefined): void {
+  expect(span?.output).toEqual({ content: [] });
 }
 
 function validateToolOutput(span: CapturedLogEvent | undefined): void {
@@ -224,6 +254,15 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     operation: "stream",
     testName:
       "captures trace for client.chat.completions.create({ stream: true })",
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-stream-audio-operation",
+    operation: "stream-audio",
+    testName: "captures streamed chat audio transcript",
+    validate: validateAudioStreamOutput,
   },
   {
     childNames: ["Chat Completion"],
@@ -305,6 +344,150 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     validate: (span) => {
       expect(Array.isArray(span?.output)).toBe(true);
     },
+  },
+  {
+    childNames: ["openai.images.generate"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    name: "openai-images-generate-operation",
+    operation: "images-generate",
+    testName: "captures trace for client.images.generate()",
+    validate: (span) => validateAttachmentOutput(span, "image/png"),
+  },
+  {
+    childNames: ["openai.images.edit"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    name: "openai-images-edit-operation",
+    operation: "images-edit",
+    testName: "captures trace for client.images.edit()",
+    validate: (span) => {
+      validateAttachmentInput(span, "image/png");
+      validateAttachmentOutput(span, "image/png");
+    },
+  },
+  {
+    childNames: ["openai.images.createVariation"],
+    expectsError: true,
+    expectsOutput: false,
+    expectsTimeToFirstToken: false,
+    name: "openai-images-variation-operation",
+    operation: "images-variation",
+    testName: "captures provider errors for client.images.createVariation()",
+    validate: (span) => validateAttachmentInput(span, "image/png"),
+  },
+  {
+    childNames: ["openai.images.generate"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    minOpenAIMajorVersion: 5,
+    name: "openai-images-generate-stream-operation",
+    operation: "images-generate-stream",
+    testName: "captures trace for streamed image generation",
+    validate: (span) => validateAttachmentOutput(span, "image/png"),
+  },
+  {
+    childNames: ["openai.images.edit"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    minOpenAIMajorVersion: 5,
+    name: "openai-images-edit-stream-operation",
+    operation: "images-edit-stream",
+    testName: "captures trace for streamed image edits",
+    validate: (span) => {
+      validateAttachmentInput(span, "image/png");
+      validateAttachmentOutput(span, "image/png");
+    },
+  },
+  {
+    childNames: ["openai.audio.speech.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-audio-speech-operation",
+    operation: "audio-speech",
+    testName: "captures trace for client.audio.speech.create()",
+    validate: (span) => validateAttachmentOutput(span, "audio/wav"),
+  },
+  {
+    childNames: ["openai.audio.transcriptions.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    name: "openai-audio-transcription-operation",
+    operation: "audio-transcription",
+    testName: "captures trace for client.audio.transcriptions.create()",
+    validate: (span) => validateAttachmentInput(span, "audio/wav"),
+  },
+  {
+    childNames: ["openai.audio.transcriptions.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-audio-transcription-stream-operation",
+    operation: "audio-transcription-stream",
+    testName: "captures trace for streamed audio transcription",
+    validate: (span) => validateAttachmentInput(span, "audio/wav"),
+  },
+  {
+    childNames: ["openai.audio.translations.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    name: "openai-audio-translation-operation",
+    operation: "audio-translation",
+    testName: "captures trace for client.audio.translations.create()",
+    validate: (span) => validateAttachmentInput(span, "audio/wav"),
+  },
+  {
+    childNames: ["openai.audio.speech.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-audio-speech-reader-operation",
+    operation: "audio-speech-reader",
+    testName: "captures speech audio consumed through a reader",
+    validate: (span) => validateAttachmentOutput(span, "audio/mpeg"),
+  },
+  {
+    childNames: ["openai.audio.speech.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-audio-speech-iterate-operation",
+    operation: "audio-speech-iterate",
+    testName: "captures speech audio consumed through async iteration",
+    validate: (span) => validateAttachmentOutput(span, "audio/mpeg"),
+  },
+  {
+    childNames: ["openai.audio.speech.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-audio-speech-pipe-operation",
+    operation: "audio-speech-pipe",
+    testName: "captures speech audio consumed through a pipe",
+    validate: (span) => validateAttachmentOutput(span, "audio/mpeg"),
+  },
+  {
+    childNames: ["openai.audio.speech.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    name: "openai-audio-speech-cancel-operation",
+    operation: "audio-speech-cancel",
+    testName: "does not capture partial speech audio after cancellation",
+    validate: validateEmptyMediaOutput,
+  },
+  {
+    childNames: ["openai.audio.speech.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: false,
+    name: "openai-audio-speech-unread-operation",
+    operation: "audio-speech-unread",
+    testName: "does not capture an unread speech response",
+    validate: validateEmptyMediaOutput,
+  },
+  {
+    childNames: ["openai.audio.speech.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-audio-speech-sse-operation",
+    operation: "audio-speech-sse",
+    testName: "captures trace for speech SSE responses",
+    validate: (span) => validateAttachmentOutput(span, "audio/mpeg"),
   },
   {
     childNames: ["openai.batch"],
@@ -857,6 +1040,12 @@ export function defineOpenAIInstrumentationAssertions(options: {
           // faster than the consumer can `break` out of the iteration.
           // Only enforce the strict expectation against the live API.
           expect(span?.output).toBeUndefined();
+        }
+
+        if (spec.expectsError) {
+          expect(span?.row.error).toEqual(expect.any(String));
+        } else {
+          expect(span?.row.error).toBeUndefined();
         }
 
         if (spec.expectsTimeToFirstToken) {
