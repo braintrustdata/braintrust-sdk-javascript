@@ -6856,19 +6856,21 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
     parentObject instanceof SpanComponentsV3 ||
     parentObject instanceof SpanComponentsV4
   ) {
-    const parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined =
+    let parentSpanIds: ParentSpanIds | MultiParentSpanIds | undefined;
+    if (
       parentObject.data.row_id &&
       parentSpanIdsUsable(
         parentObject.data.span_id,
         parentObject.data.root_span_id,
       )
-        ? {
-            spanId: parentObject.data.span_id,
-            rootSpanId: parentObject.data.root_span_id,
-          }
-        : internalOptions?.useParentSpanIdsForObjectParent
-          ? args?.parentSpanIds
-          : undefined;
+    ) {
+      parentSpanIds = {
+        spanId: parentObject.data.span_id,
+        rootSpanId: parentObject.data.root_span_id,
+      };
+    } else if (internalOptions?.useParentSpanIdsForObjectParent) {
+      parentSpanIds = args?.parentSpanIds;
+    }
     // The parent object/state are already resolved from `parent` above; drop
     // the raw `parent` so it isn't re-normalized.
     const { parent: _ignoredParent, ...spanArgs } = args ?? {};

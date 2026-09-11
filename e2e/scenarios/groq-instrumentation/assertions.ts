@@ -34,6 +34,22 @@ function findGroqSpan(
   return spans.find((candidate) => candidate.output !== undefined) ?? spans[0];
 }
 
+function batchPrompt(span: CapturedLogEvent): string {
+  const firstMessage = Array.isArray(span.input) ? span.input[0] : undefined;
+  return typeof firstMessage?.content === "string" ? firstMessage.content : "";
+}
+
+function findBatchTrace(events: CapturedLogEvent[], operationName: string) {
+  const operation = findLatestSpan(events, operationName);
+  const task = findChildSpans(events, "groq.batch", operation?.span.id)[0];
+  const children = findChildSpans(
+    events,
+    "groq.chat.completions.create",
+    task?.span.id,
+  ).sort((left, right) => batchPrompt(left).localeCompare(batchPrompt(right)));
+  return { operation, task, children };
+}
+
 function spanTreeEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
   const chatOperation = findLatestSpan(events, "groq-chat-operation");
   const streamOperation = findLatestSpan(events, "groq-stream-operation");
@@ -42,6 +58,15 @@ function spanTreeEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
     "groq-reasoning-stream-operation",
   );
   const toolOperation = findLatestSpan(events, "groq-tool-operation");
+  const batchTrace = findBatchTrace(events, "groq-batch-operation");
+  const collectOnlyBatchTrace = findBatchTrace(
+    events,
+    "groq-batch-collect-only-operation",
+  );
+  const failedBatchTrace = findBatchTrace(
+    events,
+    "groq-batch-submission-failure-operation",
+  );
 
   return [
     findLatestSpan(events, ROOT_NAME),
@@ -69,6 +94,15 @@ function spanTreeEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
       toolOperation?.span.id,
       "groq.chat.completions.create",
     ),
+    batchTrace.operation,
+    batchTrace.task,
+    ...batchTrace.children,
+    collectOnlyBatchTrace.operation,
+    collectOnlyBatchTrace.task,
+    ...collectOnlyBatchTrace.children,
+    failedBatchTrace.operation,
+    failedBatchTrace.task,
+    ...failedBatchTrace.children,
   ].map((event) => event!);
 }
 
@@ -184,6 +218,95 @@ export function defineGroqInstrumentationAssertions(options: {
           }),
         ]),
       );
+    });
+
+    test(
+      "captures resumable Groq Batch task and child spans",
+      testConfig,
+      () => {
+        const { operation, task, children } = findBatchTrace(
+          events,
+          "groq-batch-operation",
+        );
+
+        expect(task?.span.parentIds).toEqual([operation?.span.id ?? ""]);
+        expect(task?.row.span_attributes?.type).toBe("task");
+        expect(task?.row.metadata).toMatchObject({ provider: "groq" });
+        expect(task?.input).toBeUndefined();
+        expect(task?.output).toBeUndefined();
+        expect(children).toHaveLength(3);
+        expect(children.map(batchPrompt)).toEqual([
+          "Reply with ALPHA.",
+          "Reply with BRAVO.",
+          "This request should fail.",
+        ]);
+
+        for (const child of children) {
+          expect(child.span.parentIds).toEqual([task?.span.id ?? ""]);
+          expect(child.row.metadata).toMatchObject({
+            model: expect.any(String),
+            provider: "groq",
+          });
+          expect(child.metrics?.time_to_first_token).toBeUndefined();
+        }
+        expect(children[0]?.output?.[0]?.message?.content).toBe("ALPHA");
+        expect(children[1]?.output?.[0]?.message?.content).toBe("BRAVO");
+        expect(children[0]?.metrics).toMatchObject({
+          completion_tokens: 1,
+          prompt_cached_tokens: 3,
+          prompt_tokens: 5,
+          tokens: 6,
+        });
+        expect(children[2]?.row.error).toContain(
+          "Groq batch fixture request failed",
+        );
+      },
+    );
+
+    test(
+      "closes pending spans after batch submission failure",
+      testConfig,
+      () => {
+        const { operation, task, children } = findBatchTrace(
+          events,
+          "groq-batch-submission-failure-operation",
+        );
+
+        expect(task?.span.parentIds).toEqual([operation?.span.id ?? ""]);
+        expect(task?.row.error).toContain("Groq batch submission failed");
+        expect(children).toHaveLength(2);
+        expect(children.map(batchPrompt)).toEqual([
+          "First pending request.",
+          "Second pending request.",
+        ]);
+        for (const child of children) {
+          expect(child.span.parentIds).toEqual([task?.span.id ?? ""]);
+          expect(child.row.error).toContain("Groq batch submission failed");
+          expect(child.metrics?.end).toEqual(expect.any(Number));
+        }
+      },
+    );
+
+    test("captures collect-only Groq Batch spans", testConfig, () => {
+      const { operation, task, children } = findBatchTrace(
+        events,
+        "groq-batch-collect-only-operation",
+      );
+
+      expect(task?.span.parentIds).toEqual([operation?.span.id ?? ""]);
+      expect(operation?.span.rootId).toEqual(expect.any(String));
+      expect(task?.span.rootId).toBe(operation?.span.rootId);
+      expect(task?.metrics?.end).toEqual(expect.any(Number));
+      expect(children).toHaveLength(1);
+      expect(children[0]?.input).toEqual([
+        { role: "user", content: "Collect this response." },
+      ]);
+      expect(children[0]?.output?.[0]?.message?.content).toBe("COLLECTED");
+      expect(children[0]?.metrics).toMatchObject({
+        completion_tokens: 1,
+        prompt_tokens: 4,
+        tokens: 5,
+      });
     });
 
     test("matches span tree snapshot", testConfig, async () => {
