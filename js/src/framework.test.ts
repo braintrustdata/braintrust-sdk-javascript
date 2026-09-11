@@ -212,6 +212,7 @@ describe("runEvaluator", () => {
     datum: {
       input: number;
       id: string;
+      metadata?: Record<string, unknown>;
       _xact_id?: string;
       created?: string;
       origin?: {
@@ -307,6 +308,41 @@ describe("runEvaluator", () => {
       _xact_id: "dataset-xact",
       created: "2026-06-02T00:00:00.000Z",
     });
+  });
+
+  test("strips review assignment metadata from dataset-backed eval rows", async () => {
+    const data = makeDatasetData("00000000-0000-0000-0000-000000000001", {
+      input: 1,
+      id: "dataset-row-1",
+      metadata: {
+        keep: "yes",
+        "~__bt_assignments": ["user-id"],
+        "~__bt_review_lists": {
+          __bt_default_review_list: { status: "PENDING" },
+        },
+      },
+    });
+    let taskMetadata: Record<string, unknown> | null = null;
+
+    const out = await runEvaluator(
+      null,
+      {
+        projectName: "proj",
+        evalName: "eval",
+        data,
+        task: async (input: number, { metadata }) => {
+          taskMetadata = { ...metadata };
+          return input * 2;
+        },
+        scores: [],
+      },
+      new NoopProgressReporter(),
+      [],
+      undefined,
+    );
+
+    expect(taskMetadata).toEqual({ keep: "yes" });
+    expect(out.results[0].metadata).toEqual({ keep: "yes" });
   });
 
   test("falls back to source origin when dataset row origin is incomplete", async () => {
