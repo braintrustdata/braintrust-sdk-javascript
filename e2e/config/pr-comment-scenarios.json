@@ -167,6 +167,21 @@
     ]
   },
   {
+    "scenarioDirName": "openai-agents-api-instrumentation",
+    "label": "OpenAI Agents API Instrumentation",
+    "metadataScenario": "openai-agents-api-instrumentation",
+    "variants": [
+      {
+        "variantKey": "openai-agents-api-v7",
+        "label": "v7 pinned"
+      },
+      {
+        "variantKey": "openai-agents-api-v7-latest",
+        "label": "v7 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "anthropic-instrumentation",
     "label": "Anthropic Instrumentation",
     "metadataScenario": "anthropic-instrumentation",

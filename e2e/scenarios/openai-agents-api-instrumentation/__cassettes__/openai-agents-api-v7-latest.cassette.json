@@ -1,0 +1,92 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "49d07f1d39cd5c3d",
+      "matchKey": "POST api.openai.com/v1/agents/sessions",
+      "recordedAt": "2026-09-11T11:18:39.262Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "agent": {
+              "instructions": "You must use web search exactly once before answering. After searching, answer exactly: Sunny in Vienna",
+              "model": "gpt-5.6-luna",
+              "reasoning": {
+                "effort": "none"
+              },
+              "tools": [
+                {
+                  "type": "web_search"
+                }
+              ]
+            },
+            "environment": {
+              "type": "none"
+            },
+            "input": "Use web search once for Vienna weather, then answer exactly: Sunny in Vienna",
+            "metadata": {
+              "braintrust_correlation_id": "agents-e2e-correlation"
+            },
+            "stream": true
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/agents/sessions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: agent.session.created\ndata: {\"type\":\"agent.session.created\",\"event_id\":\"evt_e6596ea1eca04f4e8cdafe16280ecbb5b6fbcfd5807247799f\",\"session\":{\"metadata\":{\"braintrust_correlation_id\":\"agents-e2e-correlation\"},\"id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"object\":\"agent.session\",\"created_at\":1789125508,\"last_active_at\":1789125508,\"status\":\"in_progress\",\"required_actions\":[],\"error\":null,\"agent\":{\"id\":\"agent_df435bc8b75f497698093b919cbada68a6ca027cf3ae4c46ad\",\"name\":null,\"model\":\"gpt-5.6-luna\",\"reasoning\":{\"effort\":\"none\",\"summary\":null},\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"service_tier\":\"auto\",\"instructions\":\"You must use web search exactly once before answering. After searching, answer exactly: Sunny in Vienna\",\"tools\":[{\"type\":\"web_search\",\"mode\":\"live\",\"context_size\":\"medium\",\"allowed_domains\":null,\"location\":null}],\"multi_agent\":{\"enabled\":false,\"max_concurrent_subagents\":null}},\"environment\":{\"type\":\"none\"},\"vault_ids\":[],\"usage\":null}}",
+            "event: agent.session.turn.created\ndata: {\"type\":\"agent.session.turn.created\",\"event_id\":\"evt_87681e2e4a2b470e986c30869a57a8235c349da455c54797b1\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"turn\":{\"id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"object\":\"agent.session.turn\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"agent_id\":\"agent_df435bc8b75f497698093b919cbada68a6ca027cf3ae4c46ad\",\"subagent_id\":null,\"status\":\"queued\",\"created_at\":1789125511,\"started_at\":null,\"completed_at\":null,\"error\":null,\"usage\":null}}",
+            "event: agent.session.turn.item.added\ndata: {\"type\":\"agent.session.turn.item.added\",\"event_id\":\"evt_3e3aa15ed8164c22af8d98c12f9ac7012c52f492acff46bfbd\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"output_index\":null,\"item\":{\"type\":\"message\",\"id\":\"msg_e9e732621495fdbc83229e8052ff025d1e7db9580130517e82\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Use web search once for Vienna weather, then answer exactly: Sunny in Vienna\"}],\"status\":\"completed\",\"phase\":null}}",
+            "event: agent.session.in_progress\ndata: {\"type\":\"agent.session.in_progress\",\"event_id\":\"evt_afc3e19ad879464dbfe043c51293383050323b216d584c458e\",\"session\":{\"metadata\":{\"braintrust_correlation_id\":\"agents-e2e-correlation\"},\"id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"object\":\"agent.session\",\"created_at\":1789125508,\"last_active_at\":1789125508,\"status\":\"in_progress\",\"required_actions\":[],\"error\":null,\"agent\":{\"id\":\"agent_df435bc8b75f497698093b919cbada68a6ca027cf3ae4c46ad\",\"name\":null,\"model\":\"gpt-5.6-luna\",\"reasoning\":{\"effort\":\"none\",\"summary\":null},\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"service_tier\":\"auto\",\"instructions\":\"You must use web search exactly once before answering. After searching, answer exactly: Sunny in Vienna\",\"tools\":[{\"type\":\"web_search\",\"mode\":\"live\",\"context_size\":\"medium\",\"allowed_domains\":null,\"location\":null}],\"multi_agent\":{\"enabled\":false,\"max_concurrent_subagents\":null}},\"environment\":{\"type\":\"none\"},\"vault_ids\":[],\"usage\":null}}",
+            "event: agent.session.turn.in_progress\ndata: {\"type\":\"agent.session.turn.in_progress\",\"event_id\":\"evt_09d03742146a40079750d2919f9c79ce84439eb416c545a398\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"turn\":{\"id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"object\":\"agent.session.turn\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"agent_id\":\"agent_df435bc8b75f497698093b919cbada68a6ca027cf3ae4c46ad\",\"subagent_id\":null,\"status\":\"in_progress\",\"created_at\":1789125511,\"started_at\":1789125511,\"completed_at\":null,\"error\":null,\"usage\":null}}",
+            "event: agent.session.turn.item.added\ndata: {\"type\":\"agent.session.turn.item.added\",\"event_id\":\"evt_4b7385a801de4a6fb20add136d871ff09713865086d7468eb4\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"output_index\":0,\"item\":{\"type\":\"web_search_call\",\"id\":\"exec-e6e064e0-faa6-4cfd-9892-13ccb553983d\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"status\":\"in_progress\",\"action\":{\"type\":\"search\",\"query\":\"\",\"queries\":null}}}",
+            "event: agent.session.turn.item.done\ndata: {\"type\":\"agent.session.turn.item.done\",\"event_id\":\"evt_0bd2db80117e4d639f0407395398af78a9baa2f24b1f4a9ab0\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"output_index\":0,\"item\":{\"type\":\"web_search_call\",\"id\":\"exec-e6e064e0-faa6-4cfd-9892-13ccb553983d\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"status\":\"completed\",\"action\":{\"type\":\"other\"}}}",
+            "event: agent.session.turn.item.added\ndata: {\"type\":\"agent.session.turn.item.added\",\"event_id\":\"evt_9809d861f43d495e93fb718674d81185419a568fb7514ab2a0\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"output_index\":1,\"item\":{\"type\":\"message\",\"id\":\"msg_00e8337f37800baf016aa3e389dd9487d19273d5cb18760362\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"role\":\"assistant\",\"content\":[],\"status\":\"in_progress\",\"phase\":\"final_answer\"}}",
+            "event: agent.session.turn.content_part.added\ndata: {\"type\":\"agent.session.turn.content_part.added\",\"event_id\":\"evt_f6cdbe6fcbc74e14905caf9466d89efc4bfaac8b44a247a5a0\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"item_id\":\"msg_00e8337f37800baf016aa3e389dd9487d19273d5cb18760362\",\"output_index\":1,\"content_index\":0,\"part\":{\"type\":\"output_text\",\"text\":\"\"}}",
+            "event: agent.session.turn.output_text.delta\ndata: {\"type\":\"agent.session.turn.output_text.delta\",\"event_id\":\"evt_98ec87d5e36941a7947d6f9eac3e19ae8efe61a94e1c43049f\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"item_id\":\"msg_00e8337f37800baf016aa3e389dd9487d19273d5cb18760362\",\"output_index\":1,\"content_index\":0,\"delta\":\"Sunny\"}",
+            "event: agent.session.turn.output_text.delta\ndata: {\"type\":\"agent.session.turn.output_text.delta\",\"event_id\":\"evt_83c6091929cc47c68ee7fe8335294b9d70831f362e9d4da6ae\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"item_id\":\"msg_00e8337f37800baf016aa3e389dd9487d19273d5cb18760362\",\"output_index\":1,\"content_index\":0,\"delta\":\" in\"}",
+            "event: agent.session.turn.output_text.delta\ndata: {\"type\":\"agent.session.turn.output_text.delta\",\"event_id\":\"evt_fb483f6b0de442a2b80b6ab730ebab8fafb2556c50f74ebd83\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"item_id\":\"msg_00e8337f37800baf016aa3e389dd9487d19273d5cb18760362\",\"output_index\":1,\"content_index\":0,\"delta\":\" Vienna\"}",
+            "event: agent.session.turn.output_text.done\ndata: {\"type\":\"agent.session.turn.output_text.done\",\"event_id\":\"evt_4d14d6fa4db74db89ea585edd4d20fb20e1461d354f34cf5ad\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"item_id\":\"msg_00e8337f37800baf016aa3e389dd9487d19273d5cb18760362\",\"output_index\":1,\"content_index\":0,\"text\":\"Sunny in Vienna\"}",
+            "event: agent.session.turn.content_part.done\ndata: {\"type\":\"agent.session.turn.content_part.done\",\"event_id\":\"evt_50131ead637d47dcad2b9a25c4007a72cb0d2bdcc25748e28e\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"item_id\":\"msg_00e8337f37800baf016aa3e389dd9487d19273d5cb18760362\",\"output_index\":1,\"content_index\":0,\"part\":{\"type\":\"output_text\",\"text\":\"Sunny in Vienna\"}}",
+            "event: agent.session.turn.item.done\ndata: {\"type\":\"agent.session.turn.item.done\",\"event_id\":\"evt_5fa955358fac43f1acc8a5d54ff2990aa85c207ac9c7422084\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"output_index\":1,\"item\":{\"type\":\"message\",\"id\":\"msg_00e8337f37800baf016aa3e389dd9487d19273d5cb18760362\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"role\":\"assistant\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"text\":\"Sunny in Vienna\"}],\"phase\":\"final_answer\"}}",
+            "event: agent.session.turn.completed\ndata: {\"type\":\"agent.session.turn.completed\",\"event_id\":\"evt_4de21872928049a5a2b9132414ce4af733cf7a0b44c2493483\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"turn_id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"turn\":{\"id\":\"turn_0f562f48483591c5006aa3e389ed788191a53f9b1d288596a2\",\"object\":\"agent.session.turn\",\"session_id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"agent_id\":\"agent_df435bc8b75f497698093b919cbada68a6ca027cf3ae4c46ad\",\"subagent_id\":null,\"status\":\"completed\",\"created_at\":1789125511,\"started_at\":1789125511,\"completed_at\":1789125515,\"error\":null,\"usage\":null},\"usage\":null}",
+            "event: agent.session.idle\ndata: {\"type\":\"agent.session.idle\",\"event_id\":\"evt_04b8c75ce34a46ceafc4782d6e7c1fc891befe70ef77443bbf\",\"session\":{\"metadata\":{\"braintrust_correlation_id\":\"agents-e2e-correlation\"},\"id\":\"sess_0f562f48483591c5006aa3e3840810819197f2ea12b5a0b4db\",\"object\":\"agent.session\",\"created_at\":1789125508,\"last_active_at\":1789125508,\"status\":\"idle\",\"required_actions\":[],\"error\":null,\"agent\":{\"id\":\"agent_df435bc8b75f497698093b919cbada68a6ca027cf3ae4c46ad\",\"name\":null,\"model\":\"gpt-5.6-luna\",\"reasoning\":{\"effort\":\"none\",\"summary\":null},\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"service_tier\":\"auto\",\"instructions\":\"You must use web search exactly once before answering. After searching, answer exactly: Sunny in Vienna\",\"tools\":[{\"type\":\"web_search\",\"mode\":\"live\",\"context_size\":\"medium\",\"allowed_domains\":null,\"location\":null}],\"multi_agent\":{\"enabled\":false,\"max_concurrent_subagents\":null}},\"environment\":{\"type\":\"none\"},\"vault_ids\":[],\"usage\":null}}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "x-request-id,openai-processing-ms,openai-version,openai-organization,openai-project, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cache-control": "no-cache",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a396458fa865ad9e-IAD",
+          "connection": "keep-alive",
+          "content-type": "text/event-stream",
+          "date": "Fri, 11 Sep 2026 11:18:29 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "2423",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "transfer-encoding": "chunked",
+          "vary": "origin, access-control-request-method, access-control-request-headers",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-request-id": "req_53ab6e36f3884f0b8fe1ee0be1818c2e"
+        },
+        "status": 201,
+        "statusText": "Created"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-09-11T09:56:45.830Z"
+  }
+}

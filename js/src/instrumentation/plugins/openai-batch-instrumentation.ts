@@ -25,6 +25,11 @@ import {
   extractOpenAIBatchInput,
   processImagesInOutput,
 } from "./openai-span-data";
+import {
+  deterministicDigest,
+  digestHex,
+  digestUuid,
+} from "./openai-manual-instrumentation-utils";
 
 const SUPPORTED_ENDPOINTS = new Set(["/v1/chat/completions", "/v1/responses"]);
 const TERMINAL_STATUSES = new Set([
@@ -111,26 +116,6 @@ async function exportParent(
     return await parent.export();
   }
   return undefined;
-}
-
-async function deterministicDigest(namespace: string, ...parts: string[]) {
-  const encoded = new TextEncoder().encode(
-    [namespace, ...parts].map((part) => `${part.length}:${part}`).join("\0"),
-  );
-  return new Uint8Array(
-    await globalThis.crypto.subtle.digest("SHA-256", encoded),
-  );
-}
-
-function digestHex(bytes: Uint8Array, length: number): string {
-  return Array.from(bytes.slice(0, length))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function digestUuid(bytes: Uint8Array): string {
-  const hex = digestHex(bytes, 16);
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 async function batchSpanIds(inputFileId: string): Promise<{
