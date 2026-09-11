@@ -4,6 +4,7 @@ import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import type { Span } from "../../logger";
+import { processInputAttachments } from "../../wrappers/attachment-utils";
 import type { AnyAsyncChannel } from "../core/channel-definitions";
 import type {
   BedrockRuntimeConverseRequest,
@@ -24,6 +25,9 @@ import {
   getBedrockRuntimeCommandName,
   getBedrockRuntimeOperation,
 } from "./bedrock-runtime-common";
+
+const BEDROCK_EMBEDDING_MODEL_PATTERN =
+  /(?:^|[./])(?:amazon\.titan-embed-text|cohere\.embed-)/;
 
 export class BedrockRuntimePlugin extends BasePlugin {
   protected onEnable(): void {
@@ -102,10 +106,11 @@ function extractBedrockRuntimeInput(command: unknown): {
     const invokeRequest = isObject(request)
       ? (request as BedrockRuntimeInvokeModelRequest)
       : undefined;
+    const parsedBody = parseJsonBody(invokeRequest?.body);
     return {
-      input:
-        parseJsonBody(invokeRequest?.body) ??
-        summarizeBody(invokeRequest?.body),
+      input: isBedrockEmbeddingModel(invokeRequest?.modelId)
+        ? extractBedrockEmbeddingInput(parsedBody)
+        : (parsedBody ?? summarizeBody(invokeRequest?.body)),
       metadata,
     };
   }
@@ -161,7 +166,16 @@ function extractBedrockRuntimeOutput(
 
   if (operation === "invokeModel") {
     const response = isObject(result) ? result : undefined;
-    return parseJsonBody(response?.body) ?? summarizeBody(response?.body);
+    const parsedBody = parseJsonBody(response?.body);
+    const request = getBedrockRuntimeCommandInput(command);
+    const modelId = isObject(request) ? request.modelId : undefined;
+    if (
+      isBedrockEmbeddingModel(modelId) ||
+      isBedrockEmbeddingResponse(parsedBody)
+    ) {
+      return summarizeBedrockEmbeddingOutput(parsedBody);
+    }
+    return parsedBody ?? summarizeBody(response?.body);
   }
 
   return sanitizeBedrockValue(result);
@@ -215,7 +229,9 @@ function extractBedrockRuntimeResponseMetrics(
       ? parsedBody.metadata
       : undefined;
     const metrics = parseBedrockRuntimeMetrics(
-      parsedBody.usage ?? metadata?.usage,
+      parsedBody.usage ??
+        metadata?.usage ??
+        (parsedBody.inputTextTokenCount !== undefined ? parsedBody : undefined),
       parsedBody.metrics ?? metadata?.metrics,
     );
     if (Object.keys(metrics).length > 0) {
@@ -238,6 +254,7 @@ export function parseBedrockRuntimeMetrics(
   const promptTokens = firstNumber(
     usageRecord.inputTokens,
     usageRecord.inputTokenCount,
+    usageRecord.inputTextTokenCount,
     usageRecord.input_tokens,
     usageRecord.prompt_tokens,
   );
@@ -306,6 +323,142 @@ export function parseBedrockRuntimeMetrics(
   }
 
   return metrics;
+}
+
+type BedrockEmbeddingContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: unknown } };
+
+type BedrockEmbeddingInput = {
+  inputs: Array<{
+    content: string | BedrockEmbeddingContentPart[];
+  }>;
+  output_dimensions?: number;
+};
+
+function isBedrockEmbeddingModel(modelId: unknown): boolean {
+  return (
+    typeof modelId === "string" && BEDROCK_EMBEDDING_MODEL_PATTERN.test(modelId)
+  );
+}
+
+function extractBedrockEmbeddingInput(body: unknown): BedrockEmbeddingInput {
+  const request = isObject(body) ? body : undefined;
+  let inputs: BedrockEmbeddingInput["inputs"] = [];
+
+  if (typeof request?.inputText === "string") {
+    inputs = [{ content: request.inputText }];
+  } else if (Array.isArray(request?.inputs)) {
+    inputs = request.inputs.flatMap((input) => {
+      const content = isObject(input) ? input.content : undefined;
+      if (!Array.isArray(content)) {
+        return [];
+      }
+
+      const parts = content.flatMap((part): BedrockEmbeddingContentPart[] => {
+        if (!isObject(part)) {
+          return [];
+        }
+        if (part.type === "text" && typeof part.text === "string") {
+          return [{ type: "text", text: part.text }];
+        }
+        if (
+          part.type === "image_url" &&
+          isObject(part.image_url) &&
+          typeof part.image_url.url === "string"
+        ) {
+          return [
+            {
+              type: "image_url",
+              image_url: { url: part.image_url.url },
+            },
+          ];
+        }
+        return [];
+      });
+      return parts.length > 0 ? [{ content: parts }] : [];
+    });
+  } else {
+    if (Array.isArray(request?.texts)) {
+      inputs.push(
+        ...request.texts.flatMap((text) =>
+          typeof text === "string" ? [{ content: text }] : [],
+        ),
+      );
+    }
+    if (Array.isArray(request?.images)) {
+      for (const image of request.images) {
+        if (typeof image === "string") {
+          inputs.push({
+            content: [
+              {
+                type: "image_url",
+                image_url: { url: image },
+              },
+            ],
+          });
+        }
+      }
+    }
+  }
+
+  const outputDimensions = request?.dimensions ?? request?.output_dimension;
+  return processInputAttachments({
+    inputs,
+    ...(typeof outputDimensions === "number" &&
+    Number.isFinite(outputDimensions)
+      ? { output_dimensions: outputDimensions }
+      : {}),
+  });
+}
+
+function isBedrockEmbeddingResponse(body: unknown): boolean {
+  return (
+    isObject(body) &&
+    (Array.isArray(body.embedding) ||
+      Array.isArray(body.embeddings) ||
+      isObject(body.embeddings) ||
+      isObject(body.embeddingsByType))
+  );
+}
+
+function summarizeBedrockEmbeddingOutput(body: unknown): { count: number } {
+  if (!isObject(body)) {
+    return { count: 0 };
+  }
+
+  if (Array.isArray(body.embedding)) {
+    return { count: body.embedding.length > 0 ? 1 : 0 };
+  }
+
+  if (Array.isArray(body.embeddings)) {
+    return {
+      count:
+        body.embeddings.length > 0 && !Array.isArray(body.embeddings[0])
+          ? 1
+          : body.embeddings.length,
+    };
+  }
+
+  for (const embeddingGroup of [body.embeddings, body.embeddingsByType]) {
+    if (!isObject(embeddingGroup)) {
+      continue;
+    }
+    const counts = Object.values(embeddingGroup).flatMap((embeddings) =>
+      Array.isArray(embeddings)
+        ? [
+            embeddings.length > 0 && !Array.isArray(embeddings[0])
+              ? 1
+              : embeddings.length,
+          ]
+        : [],
+    );
+    if (counts.length > 0) {
+      return { count: Math.max(...counts) };
+    }
+  }
+
+  return { count: 0 };
 }
 
 function firstNumber(...values: unknown[]): number | undefined {

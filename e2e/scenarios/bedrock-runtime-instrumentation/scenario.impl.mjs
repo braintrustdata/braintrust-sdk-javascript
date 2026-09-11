@@ -6,6 +6,7 @@ import {
 } from "../../helpers/provider-runtime.mjs";
 import {
   CACHE_PROMPT_MARKER,
+  EMBEDDING_MODEL,
   MODEL,
   REGION,
   ROOT_NAME,
@@ -151,6 +152,25 @@ export async function runBedrockRuntimeInstrumentationScenario(options) {
               body: JSON.stringify(novaMessageBody("Reply with exactly RAW.")),
               contentType: "application/json",
               modelId: MODEL,
+            }),
+          );
+        },
+      );
+
+      await runOperation(
+        "bedrock-embedding-operation",
+        "embedding",
+        async () => {
+          await client.send(
+            new options.InvokeModelCommand({
+              accept: "application/json",
+              body: JSON.stringify({
+                dimensions: 256,
+                inputText: "Embed this short Braintrust test sentence.",
+                normalize: true,
+              }),
+              contentType: "application/json",
+              modelId: EMBEDDING_MODEL,
             }),
           );
         },
