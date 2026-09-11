@@ -16,6 +16,7 @@ import { once } from "node:events";
 import { Writable } from "node:stream";
 
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
+const OPENAI_AUDIO_MODEL = "gpt-audio-1.5";
 const OPENAI_IMAGE_MODEL = "gpt-image-2";
 const EMBEDDING_MODEL = "text-embedding-3-small";
 const MODERATION_MODEL = "omni-moderation-2024-09-26";
@@ -684,6 +685,34 @@ export async function runOpenAIInstrumentationScenario(options) {
         });
         await collectAsync(chatStream);
       });
+
+      await runOperation(
+        "openai-stream-audio-operation",
+        "stream-audio",
+        async () => {
+          const chatStream = await client.chat.completions.create({
+            model: OPENAI_AUDIO_MODEL,
+            messages: [{ role: "user", content: "Say exactly: Hello." }],
+            modalities: ["text", "audio"],
+            audio: { format: "pcm16", voice: "alloy" },
+            stream: true,
+            stream_options: {
+              include_usage: true,
+            },
+          });
+          const chunks = await collectAsync(chatStream);
+          if (
+            !chunks.some(
+              (chunk) =>
+                typeof chunk.choices?.[0]?.delta?.audio?.transcript ===
+                  "string" &&
+                chunk.choices[0].delta.audio.transcript.length > 0,
+            )
+          ) {
+            throw new Error("Expected streamed chat audio transcript");
+          }
+        },
+      );
 
       await runOperation(
         "openai-stream-with-response-operation",

@@ -398,6 +398,7 @@ type AggregatedChatChoice = {
   role: string | undefined;
   content: string | undefined;
   refusal: string | undefined;
+  audio: NonNullable<OpenAIChatChoice["message"]["audio"]> | undefined;
   toolCallsByIndex: Map<
     number,
     NonNullable<OpenAIChatChoice["message"]["tool_calls"]>[number]
@@ -412,6 +413,7 @@ function createAggregatedChatChoice(index: number): AggregatedChatChoice {
     role: undefined,
     content: undefined,
     refusal: undefined,
+    audio: undefined,
     toolCallsByIndex: new Map(),
     logprobs: undefined,
     finish_reason: undefined,
@@ -429,6 +431,7 @@ function toChatChoice(choice: AggregatedChatChoice): OpenAIChatChoice {
       role: choice.role,
       content: choice.content,
       ...(choice.refusal !== undefined ? { refusal: choice.refusal } : {}),
+      ...(choice.audio !== undefined ? { audio: choice.audio } : {}),
       tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
     },
     logprobs: choice.logprobs ?? null,
@@ -438,8 +441,8 @@ function toChatChoice(choice: AggregatedChatChoice): OpenAIChatChoice {
 
 /**
  * Aggregate chat completion chunks into a single response.
- * Combines role (first), content (concatenated), tool_calls (by index),
- * finish_reason (last), and usage (last chunk).
+ * Combines role (first), content and audio transcripts (concatenated),
+ * tool_calls (by index), finish_reason (last), and usage (last chunk).
  */
 export function aggregateChatCompletionChunks(
   chunks: OpenAIChatCompletionChunk[],
@@ -503,6 +506,27 @@ export function aggregateChatCompletionChunks(
       if (delta.refusal) {
         aggregatedChoice.refusal =
           (aggregatedChoice.refusal || "") + delta.refusal;
+      }
+
+      if (delta.audio) {
+        const { id, expires_at: expiresAt, transcript } = delta.audio;
+        if (
+          id !== undefined ||
+          expiresAt !== undefined ||
+          transcript !== undefined
+        ) {
+          aggregatedChoice.audio ??= {};
+          if (id !== undefined) {
+            aggregatedChoice.audio.id = id;
+          }
+          if (expiresAt !== undefined) {
+            aggregatedChoice.audio.expires_at = expiresAt;
+          }
+          if (transcript !== undefined) {
+            aggregatedChoice.audio.transcript =
+              (aggregatedChoice.audio.transcript || "") + transcript;
+          }
+        }
       }
 
       if (delta.tool_calls) {

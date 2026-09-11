@@ -145,6 +145,18 @@ function validateMultipleChoicesStreamOutput(
   ]);
 }
 
+function validateAudioStreamOutput(span: CapturedLogEvent | undefined): void {
+  const firstChoice = Array.isArray(span?.output) ? span.output[0] : undefined;
+  const message = asRecord(asRecord(firstChoice)?.message);
+  const audio = asRecord(message?.audio);
+
+  expect(typeof audio?.id).toBe("string");
+  expect(typeof audio?.expires_at).toBe("number");
+  expect(typeof audio?.transcript).toBe("string");
+  expect((audio?.transcript as string).length).toBeGreaterThan(0);
+  expect(audio).not.toHaveProperty("data");
+}
+
 function validateAttachmentInput(
   span: CapturedLogEvent | undefined,
   contentType: string,
@@ -242,6 +254,15 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     operation: "stream",
     testName:
       "captures trace for client.chat.completions.create({ stream: true })",
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-stream-audio-operation",
+    operation: "stream-audio",
+    testName: "captures streamed chat audio transcript",
+    validate: validateAudioStreamOutput,
   },
   {
     childNames: ["Chat Completion"],

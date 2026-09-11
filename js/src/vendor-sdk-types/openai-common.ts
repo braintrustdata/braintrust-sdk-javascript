@@ -87,10 +87,19 @@ interface OpenAIChatToolCallDelta {
   [key: string]: unknown;
 }
 
+interface OpenAIChatAudio {
+  id?: string;
+  data?: string;
+  expires_at?: number;
+  transcript?: string;
+  [key: string]: unknown;
+}
+
 export interface OpenAIChatMessage {
   role?: string;
   content?: unknown;
   refusal?: string;
+  audio?: OpenAIChatAudio | null;
   tool_calls?: OpenAIChatToolCall[];
   [key: string]: unknown;
 }
@@ -127,6 +136,7 @@ interface OpenAIChatDelta {
   role?: string;
   content?: string;
   refusal?: string;
+  audio?: OpenAIChatAudio | null;
   tool_calls?: OpenAIChatToolCallDelta[];
   finish_reason?: string | null;
   [key: string]: unknown;
