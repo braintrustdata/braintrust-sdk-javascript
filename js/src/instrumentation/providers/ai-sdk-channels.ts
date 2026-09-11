@@ -47,15 +47,6 @@ export const aiSDKChannels = defineChannels(
       channelName: "generateImage",
       kind: "async",
     }),
-    streamText: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "streamText",
-      kind: "async",
-    }),
     streamTextSync: channel<
       [AISDKCallParams],
       AISDKResult,
@@ -72,15 +63,6 @@ export const aiSDKChannels = defineChannels(
       unknown
     >({
       channelName: "generateObject",
-      kind: "async",
-    }),
-    streamObject: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "streamObject",
       kind: "async",
     }),
     streamObjectSync: channel<

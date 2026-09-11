@@ -133,7 +133,7 @@ describe("AI SDK streaming instrumentation", () => {
       prompt: "Say hello.",
       maxOutputTokens: 16,
     };
-    const result = (await aiSDKChannels.streamText.tracePromise(
+    const result = (await aiSDKChannels.generateText.tracePromise(
       async () => params.model.doStream(params),
       {
         arguments: [params],
@@ -196,7 +196,7 @@ describe("AI SDK streaming instrumentation", () => {
       prompt: "Say hello.",
       maxOutputTokens: 16,
     };
-    const result = (await aiSDKChannels.streamText.tracePromise(
+    const result = (await aiSDKChannels.generateText.tracePromise(
       async () => params.model.doStream(params),
       {
         arguments: [params],
@@ -829,8 +829,8 @@ describe("AI SDK streaming instrumentation", () => {
 
     const contentDelayMs = 80;
     let sentContent = false;
-    const result = (await aiSDKChannels.streamText.tracePromise(
-      async () => ({
+    const result = aiSDKChannels.streamTextSync.traceSync(
+      () => ({
         baseStream: new ReadableStream({
           start(controller) {
             controller.enqueue({ type: "stream-start", warnings: [] });
@@ -866,7 +866,7 @@ describe("AI SDK streaming instrumentation", () => {
           },
         ],
       } as any,
-    )) as any;
+    ) as any;
 
     const reader = result.baseStream.getReader();
     while (true) {
@@ -890,8 +890,8 @@ describe("AI SDK streaming instrumentation", () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
     let chunkSent = false;
-    const result = (await aiSDKChannels.streamText.tracePromise(
-      async () => {
+    const result = aiSDKChannels.streamTextSync.traceSync(
+      () => {
         const resultRecord = {
           baseStream: new ReadableStream({
             pull(controller) {
@@ -939,7 +939,7 @@ describe("AI SDK streaming instrumentation", () => {
           },
         ],
       } as any,
-    )) as any;
+    ) as any;
 
     expect(Object.getOwnPropertyDescriptor(result, "textStream")?.get).toEqual(
       expect.any(Function),
@@ -962,8 +962,8 @@ describe("AI SDK streaming instrumentation", () => {
   test("async iterable stream accessors preserve ReadableStream methods", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
-    const result = (await aiSDKChannels.streamText.tracePromise(
-      async () => {
+    const result = aiSDKChannels.streamTextSync.traceSync(
+      () => {
         const resultRecord = {
           stream: new ReadableStream({
             start(controller) {
@@ -998,7 +998,7 @@ describe("AI SDK streaming instrumentation", () => {
           },
         ],
       } as any,
-    )) as any;
+    ) as any;
 
     expect(result.stream.pipeThrough).toEqual(expect.any(Function));
     expect(result.stream.getReader).toEqual(expect.any(Function));
