@@ -1,0 +1,36 @@
+span_tree:
+└── openai-agents-api-instrumentation-root [task]
+    metadata: {
+      "scenario": "openai-agents-api-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    └── openai.agents.turn [task]
+        input: "Use web search once for Vienna weather, then answer exactly: Sunny in Vienna"
+        output: "Sunny in Vienna"
+        metadata: {
+          "agent_id": "agent_5560e9ac401c4be3a7eb1600fbdbb5ffcecbbe89173b47e59f",
+          "api": "agents",
+          "braintrust_correlation_id": "agents-e2e-correlation",
+          "model": "gpt-5.6-luna",
+          "provider": "openai",
+          "session_id": "sess_0fc64a67f5ebbfcf006aa3e373bef88191b89c12edfdbec0e2"
+        }
+        metrics: {
+          "time_to_first_token": 0
+        }
+        └── Web search [tool]
+            input: {
+              "queries": null,
+              "query": "",
+              "type": "other"
+            }
+            output: {
+              "type": "other"
+            }
+            metadata: {
+              "item_id": "exec-<uuid:1>",
+              "provider": "openai",
+              "status": "completed",
+              "tool_type": "web_search_call",
+              "turn_id": "turn_0fc64a67f5ebbfcf006aa3e379f5bc81918596295e24a4e9c0"
+            }

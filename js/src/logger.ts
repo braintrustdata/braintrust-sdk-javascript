@@ -5950,6 +5950,61 @@ export function getSpanParentObject<IsAsyncFlush extends boolean>(
   return getSpanParentObjectAndPropagatedState(options).parentObject;
 }
 
+/** @internal */
+export function _internalExportParentSynchronously(
+  parent: ReturnType<typeof getSpanParentObject>,
+): string | undefined {
+  try {
+    const toStr = Reflect.get(parent, "toStr");
+    if (typeof toStr === "function") {
+      return Reflect.apply(toStr, parent, []);
+    }
+
+    if (
+      "getParentInfo" in parent &&
+      typeof parent.getParentInfo === "function"
+    ) {
+      const parentInfo = parent.getParentInfo();
+      if (parentInfo) {
+        const objectId = parentInfo.objectId.getSync().value;
+        if (objectId || parentInfo.computeObjectMetadataArgs) {
+          return new SpanComponentsV4({
+            object_type: parentInfo.objectType,
+            ...(objectId
+              ? { object_id: objectId }
+              : {
+                  compute_object_metadata_args:
+                    parentInfo.computeObjectMetadataArgs,
+                }),
+            row_id: parent.id,
+            root_span_id: parent.rootSpanId,
+            span_id: parent.spanId,
+          }).toStr();
+        }
+      }
+    }
+
+    const getOtelParent = Reflect.get(parent, "_getOtelParent");
+    if (typeof getOtelParent !== "function") {
+      return undefined;
+    }
+    const components = braintrustParentToComponents(
+      Reflect.apply(getOtelParent, parent, []),
+    );
+    if (!components) {
+      return undefined;
+    }
+    return new SpanComponentsV4({
+      object_type: components.objectType,
+      ...(components.objectId
+        ? { object_id: components.objectId }
+        : { compute_object_metadata_args: components.computeArgs ?? {} }),
+    }).toStr();
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Return the Braintrust parent string for the current logger/experiment, if any.
  *
