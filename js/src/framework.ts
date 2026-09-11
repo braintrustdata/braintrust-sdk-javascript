@@ -16,6 +16,7 @@ import {
   type SSEProgressEventDataType as SSEProgressEventData,
 } from "./generated_types";
 import { queue } from "async";
+import { v5 as uuidv5 } from "uuid";
 
 import iso from "./isomorph";
 import { debugLogger } from "./debug-logger";
@@ -1328,6 +1329,13 @@ async function runEvaluatorInternal(
         const origin =
           inlineDatasetOrigin ??
           (parsedDatumOrigin?.success ? parsedDatumOrigin.data : undefined);
+        const upsertId =
+          datum.upsert_id && trialIndex > 0
+            ? uuidv5(
+                `braintrust:eval:${datum.upsert_id}:trial:${trialIndex}`,
+                uuidv5.URL,
+              )
+            : datum.upsert_id;
 
         const baseEvent: StartSpanArgs = {
           name: "eval",
@@ -1339,7 +1347,7 @@ async function runEvaluatorInternal(
             expected: "expected" in datum ? datum.expected : undefined,
             tags: datum.tags,
             origin,
-            ...(datum.upsert_id ? { id: datum.upsert_id } : {}),
+            ...(upsertId ? { id: upsertId } : {}),
           },
         };
 
