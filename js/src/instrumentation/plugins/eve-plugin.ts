@@ -18,18 +18,13 @@ import type {
   EveAssistantStepFinishReason,
   EveActionResultError,
   EveHandleMessageStreamEvent,
-  EveHookContext,
-  EveHookDefinition,
   EveInstrumentationDefinition,
-  EveInstrumentationModelInput,
   EveInstrumentationStepStartedEventInput,
   EveModelMessage,
-  EveModelMessageContentPart,
   EveRuntimeActionRequest,
   EveRuntimeActionResult,
   EveRuntimeToolCallActionRequest,
   EveRuntimeToolResultActionResult,
-  EveSystemModelMessage,
 } from "../../vendor-sdk-types/eve";
 
 type SpanState = {
@@ -115,6 +110,25 @@ const MAX_STORED_LLM_INPUTS = 100;
 const MAX_STORED_REASONING_BLOCKS = 100;
 const MAX_STORED_SPAN_REFERENCES = 10_000;
 const MAX_STORED_STEP_STARTS = 10_000;
+const EVE_HANDLED_EVENT_TYPES = new Set([
+  "action.result",
+  "actions.requested",
+  "message.completed",
+  "message.received",
+  "reasoning.completed",
+  "result.completed",
+  "session.completed",
+  "session.failed",
+  "session.started",
+  "step.completed",
+  "step.failed",
+  "step.started",
+  "subagent.called",
+  "subagent.completed",
+  "turn.completed",
+  "turn.failed",
+  "turn.started",
+]);
 
 type CapturedEveModelMessage = {
   content: string | readonly Record<string, unknown>[];
@@ -124,35 +138,54 @@ type CapturedEveModelMessage = {
 type CapturedEveModelInput = readonly CapturedEveModelMessage[];
 
 /** Manual hook instrumentation for eve runtime stream events. */
+/* eslint-disable @typescript-eslint/no-explicit-any -- Eve compatibility boundary. */
 export function braintrustEveHook(options: {
   defineState: EveDefineState;
   metadata?: Record<string, unknown>;
-}): EveHookDefinition {
+}): any {
+  if (!options || typeof options.defineState !== "function") {
+    throw new TypeError(
+      "braintrustEveHook requires Eve's defineState function",
+    );
+  }
   const state = options.defineState(EVE_TRACE_STATE_KEY, emptyEveTraceState);
   const bridge = new EveBridge(state);
   return {
     events: {
-      "*": async (event: EveHandleMessageStreamEvent, ctx: EveHookContext) => {
+      "*": async (event: unknown, ctx: unknown) => {
         await bridge.handle(event, ctx, options.metadata);
       },
     },
   };
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /** Legacy Eve instrumentation helper for durable LLM input capture. */
 export function createLegacyEveInstrumentation(options: {
   defineState: EveDefineState;
   setup?: EveInstrumentationDefinition["setup"];
 }): EveInstrumentationDefinition {
+  if (!options || typeof options.defineState !== "function") {
+    throw new TypeError(
+      "braintrustEveInstrumentation requires Eve's defineState function",
+    );
+  }
   const state = options.defineState(EVE_TRACE_STATE_KEY, emptyEveTraceState);
   return {
     events: {
-      "step.started": (input: EveInstrumentationStepStartedEventInput) => {
+      "step.started": (input: unknown) => {
         try {
+          if (!isEveInstrumentationStepStartedEventInput(input)) {
+            debugLogger.warn(
+              "Ignoring malformed Eve instrumentation step.started event",
+            );
+            return undefined;
+          }
           captureEveModelInput(state, input);
         } catch (error) {
           debugLogger.warn("Error in Eve LLM input capture:", error);
         }
+        return undefined;
       },
     },
     recordInputs: false,
@@ -164,7 +197,129 @@ export function createLegacyEveInstrumentation(options: {
 function isEveHandleMessageStreamEvent(
   event: unknown,
 ): event is EveHandleMessageStreamEvent {
-  return isObject(event) && typeof event["type"] === "string";
+  if (!isObject(event) || typeof event["type"] !== "string") {
+    return false;
+  }
+  const type = event["type"];
+  if (type === "session.completed") {
+    return true;
+  }
+  if (!isObject(event["data"])) {
+    return false;
+  }
+  const data = event["data"];
+  if (type === "session.started") {
+    return true;
+  }
+  if (type === "session.failed") {
+    return (
+      typeof data["sessionId"] === "string" &&
+      typeof data["code"] === "string" &&
+      typeof data["message"] === "string"
+    );
+  }
+  if (type === "session.waiting") {
+    return data["wait"] === "next-user-message";
+  }
+  if (
+    typeof data["turnId"] !== "string" ||
+    typeof data["sequence"] !== "number" ||
+    !Number.isFinite(data["sequence"])
+  ) {
+    return false;
+  }
+  if (
+    type === "turn.started" ||
+    type === "turn.completed" ||
+    type === "subagent.called" ||
+    type === "subagent.completed"
+  ) {
+    if (type === "subagent.called") {
+      return (
+        typeof data["callId"] === "string" &&
+        typeof data["childSessionId"] === "string" &&
+        typeof data["name"] === "string"
+      );
+    }
+    if (type === "subagent.completed") {
+      return (
+        typeof data["callId"] === "string" &&
+        typeof data["subagentName"] === "string"
+      );
+    }
+    return true;
+  }
+  if (type === "turn.failed") {
+    return (
+      typeof data["code"] === "string" && typeof data["message"] === "string"
+    );
+  }
+  if (type === "message.received") {
+    return typeof data["message"] === "string";
+  }
+  if (
+    typeof data["stepIndex"] !== "number" ||
+    !Number.isFinite(data["stepIndex"]) ||
+    data["stepIndex"] < 0
+  ) {
+    return false;
+  }
+  switch (type) {
+    case "step.started":
+      return true;
+    case "message.completed":
+      return (
+        typeof data["finishReason"] === "string" &&
+        (typeof data["message"] === "string" || data["message"] === null)
+      );
+    case "reasoning.completed":
+      return typeof data["reasoning"] === "string";
+    case "result.completed":
+      return true;
+    case "step.completed":
+      return typeof data["finishReason"] === "string";
+    case "step.failed":
+      return (
+        typeof data["code"] === "string" && typeof data["message"] === "string"
+      );
+    case "actions.requested":
+      return Array.isArray(data["actions"]);
+    case "action.result":
+      return (
+        isObject(data["result"]) &&
+        (data["status"] === "completed" ||
+          data["status"] === "failed" ||
+          data["status"] === "rejected")
+      );
+    default:
+      return false;
+  }
+}
+
+function isEveInstrumentationStepStartedEventInput(
+  input: unknown,
+): input is EveInstrumentationStepStartedEventInput {
+  if (!isObject(input)) {
+    return false;
+  }
+  const modelInput = input["modelInput"];
+  const session = input["session"];
+  const step = input["step"];
+  const turn = input["turn"];
+  return (
+    isObject(modelInput) &&
+    Array.isArray(modelInput["messages"]) &&
+    isObject(session) &&
+    typeof session["id"] === "string" &&
+    isObject(step) &&
+    typeof step["index"] === "number" &&
+    Number.isFinite(step["index"]) &&
+    step["index"] >= 0 &&
+    isObject(turn) &&
+    typeof turn["id"] === "string" &&
+    typeof turn["sequence"] === "number" &&
+    Number.isFinite(turn["sequence"])
+  );
 }
 
 class ResumedEveSpan implements EveSpan {
@@ -366,7 +521,26 @@ class EveBridge {
     ctx: unknown,
     hookMetadata?: Record<string, unknown>,
   ): Promise<void> {
+    try {
+      await this.handleUnchecked(event, ctx, hookMetadata);
+    } catch (error) {
+      debugLogger.warn("Error in Eve hook instrumentation:", error);
+    }
+  }
+
+  private async handleUnchecked(
+    event: unknown,
+    ctx: unknown,
+    hookMetadata?: Record<string, unknown>,
+  ): Promise<void> {
     if (!isEveHandleMessageStreamEvent(event)) {
+      if (
+        isObject(event) &&
+        typeof event["type"] === "string" &&
+        EVE_HANDLED_EVENT_TYPES.has(event["type"])
+      ) {
+        debugLogger.warn(`Ignoring malformed Eve hook ${event["type"]} event`);
+      }
       return;
     }
     const run = async () => {
@@ -765,9 +939,15 @@ class EveBridge {
         action.kind === "tool-call"
           ? action.toolName
           : (action.subagentName ?? action.name ?? "agent");
+      let args = "null";
+      try {
+        args = JSON.stringify(action.input) ?? "null";
+      } catch {
+        // Preserve the tool call while omitting malformed, non-JSON input.
+      }
       toolCallsById.set(action.callId, {
         function: {
-          arguments: JSON.stringify(action.input),
+          arguments: args,
           name,
         },
         id: action.callId,
@@ -1958,20 +2138,36 @@ function consumeCapturedEveModelInput(
 }
 
 export function capturedModelInput(
-  modelInput: EveInstrumentationModelInput,
+  modelInput: unknown,
 ): CapturedEveModelInput | undefined {
-  const { instructions, messages } = modelInput;
-  const value: CapturedEveModelMessage[] = [];
-  if (typeof instructions === "string") {
-    value.push({ content: instructions, role: "system" });
-  } else if (Array.isArray(instructions)) {
-    value.push(...instructions.map(capturedEveModelMessage));
-  } else if (instructions) {
-    value.push(capturedEveModelMessage(instructions as EveSystemModelMessage));
-  }
-  value.push(...messages.map(capturedEveModelMessage));
-
   try {
+    if (!isObject(modelInput) || !Array.isArray(modelInput["messages"])) {
+      return undefined;
+    }
+    const value: CapturedEveModelMessage[] = [];
+    const instructions = modelInput["instructions"];
+    if (typeof instructions === "string") {
+      value.push({ content: instructions, role: "system" });
+    } else if (Array.isArray(instructions)) {
+      for (const instruction of instructions) {
+        const captured = capturedEveModelMessage(instruction);
+        if (captured?.role === "system") {
+          value.push(captured);
+        }
+      }
+    } else {
+      const captured = capturedEveModelMessage(instructions);
+      if (captured?.role === "system") {
+        value.push(captured);
+      }
+    }
+    for (const message of modelInput["messages"]) {
+      const captured = capturedEveModelMessage(message);
+      if (captured) {
+        value.push(captured);
+      }
+    }
+
     const cloned: unknown = JSON.parse(JSON.stringify(value));
     if (!Array.isArray(cloned)) {
       return undefined;
@@ -1983,133 +2179,254 @@ export function capturedModelInput(
 }
 
 function capturedEveModelMessage(
-  message: EveModelMessage,
-): CapturedEveModelMessage {
-  const { content, role } = message;
+  message: unknown,
+): CapturedEveModelMessage | undefined {
+  if (!isObject(message)) {
+    return undefined;
+  }
+  const role = message["role"];
+  if (
+    role !== "system" &&
+    role !== "user" &&
+    role !== "assistant" &&
+    role !== "tool"
+  ) {
+    return undefined;
+  }
+  const content = message["content"];
   if (typeof content === "string") {
     return { content, role };
   }
-  return { content: content.map(capturedEveModelContentPart), role };
+  if (!Array.isArray(content)) {
+    return undefined;
+  }
+  const capturedContent: Record<string, unknown>[] = [];
+  for (const part of content) {
+    const captured = capturedEveModelContentPart(part);
+    if (captured) {
+      capturedContent.push(captured);
+    }
+  }
+  return { content: capturedContent, role };
 }
 
 function capturedEveModelContentPart(
-  part: EveModelMessageContentPart,
-): Record<string, unknown> {
-  switch (part.type) {
+  part: unknown,
+): Record<string, unknown> | undefined {
+  if (!isObject(part) || typeof part["type"] !== "string") {
+    return undefined;
+  }
+  switch (part["type"]) {
     case "text":
-    case "reasoning":
-      return { text: part.text, type: part.type };
+    case "reasoning": {
+      const text = part["text"];
+      return typeof text === "string"
+        ? { text, type: part["type"] }
+        : undefined;
+    }
     case "image":
+      if (!Object.hasOwn(part, "image")) {
+        return undefined;
+      }
       return {
-        image: part.image,
-        ...(part.mediaType !== undefined ? { mediaType: part.mediaType } : {}),
+        image: part["image"],
+        ...(typeof part["mediaType"] === "string"
+          ? { mediaType: part["mediaType"] }
+          : {}),
         type: "image",
       };
     case "file":
-    case "reasoning-file":
+    case "reasoning-file": {
+      if (
+        !Object.hasOwn(part, "data") ||
+        typeof part["mediaType"] !== "string"
+      ) {
+        return undefined;
+      }
       return {
-        data: part.data,
-        ...(part.type === "file" && part.filename !== undefined
-          ? { filename: part.filename }
+        data: part["data"],
+        ...(part["type"] === "file" && typeof part["filename"] === "string"
+          ? { filename: part["filename"] }
           : {}),
-        mediaType: part.mediaType,
-        type: part.type,
+        mediaType: part["mediaType"],
+        type: part["type"],
       };
+    }
     case "custom":
       return {
-        ...("kind" in part ? { kind: part.kind } : {}),
+        ...(typeof part["kind"] === "string" ? { kind: part["kind"] } : {}),
         type: "custom",
       };
-    case "tool-call":
+    case "tool-call": {
+      if (
+        typeof part["toolCallId"] !== "string" ||
+        typeof part["toolName"] !== "string"
+      ) {
+        return undefined;
+      }
       return {
-        input: part.input,
-        ...(part.providerExecuted !== undefined
-          ? { providerExecuted: part.providerExecuted }
+        input: part["input"],
+        ...(typeof part["providerExecuted"] === "boolean"
+          ? { providerExecuted: part["providerExecuted"] }
           : {}),
-        toolCallId: part.toolCallId,
-        toolName: part.toolName,
+        toolCallId: part["toolCallId"],
+        toolName: part["toolName"],
         type: "tool-call",
       };
+    }
     case "tool-result": {
-      const output = part.output;
+      const output = part["output"];
+      if (
+        typeof part["toolCallId"] !== "string" ||
+        typeof part["toolName"] !== "string" ||
+        !isObject(output) ||
+        typeof output["type"] !== "string"
+      ) {
+        return undefined;
+      }
       let capturedOutput: Record<string, unknown>;
-      switch (output.type) {
+      switch (output["type"]) {
         case "text":
-        case "error-text":
-          capturedOutput = { type: output.type, value: output.value };
+        case "error-text": {
+          if (typeof output["value"] !== "string") {
+            return undefined;
+          }
+          capturedOutput = {
+            type: output["type"],
+            value: output["value"],
+          };
           break;
+        }
         case "json":
         case "error-json":
-          capturedOutput = { type: output.type, value: output.value };
+          capturedOutput = {
+            type: output["type"],
+            value: output["value"],
+          };
           break;
         case "execution-denied":
           capturedOutput = {
-            ...(output.reason !== undefined ? { reason: output.reason } : {}),
+            ...(typeof output["reason"] === "string"
+              ? { reason: output["reason"] }
+              : {}),
             type: "execution-denied",
           };
           break;
-        case "content":
+        case "content": {
+          if (!Array.isArray(output["value"])) {
+            return undefined;
+          }
+          const value: Record<string, unknown>[] = [];
+          for (const outputPart of output["value"]) {
+            const captured = capturedEveModelContentPart(outputPart);
+            if (captured) {
+              value.push(captured);
+            }
+          }
           capturedOutput = {
             type: "content",
-            value: output.value.map(capturedEveModelContentPart),
+            value,
           };
           break;
+        }
+        default:
+          return undefined;
       }
       return {
         output: capturedOutput,
-        toolCallId: part.toolCallId,
-        toolName: part.toolName,
+        toolCallId: part["toolCallId"],
+        toolName: part["toolName"],
         type: "tool-result",
       };
     }
-    case "tool-approval-request":
+    case "tool-approval-request": {
+      if (
+        typeof part["approvalId"] !== "string" ||
+        typeof part["toolCallId"] !== "string"
+      ) {
+        return undefined;
+      }
       return {
-        approvalId: part.approvalId,
-        ...(part.isAutomatic !== undefined
-          ? { isAutomatic: part.isAutomatic }
+        approvalId: part["approvalId"],
+        ...(typeof part["isAutomatic"] === "boolean"
+          ? { isAutomatic: part["isAutomatic"] }
           : {}),
-        ...(part.signature !== undefined ? { signature: part.signature } : {}),
-        toolCallId: part.toolCallId,
+        ...(typeof part["signature"] === "string"
+          ? { signature: part["signature"] }
+          : {}),
+        toolCallId: part["toolCallId"],
         type: "tool-approval-request",
       };
-    case "tool-approval-response":
+    }
+    case "tool-approval-response": {
+      if (
+        typeof part["approvalId"] !== "string" ||
+        typeof part["approved"] !== "boolean"
+      ) {
+        return undefined;
+      }
       return {
-        approvalId: part.approvalId,
-        approved: part.approved,
-        ...(part.providerExecuted !== undefined
-          ? { providerExecuted: part.providerExecuted }
+        approvalId: part["approvalId"],
+        approved: part["approved"],
+        ...(typeof part["providerExecuted"] === "boolean"
+          ? { providerExecuted: part["providerExecuted"] }
           : {}),
-        ...(part.reason !== undefined ? { reason: part.reason } : {}),
+        ...(typeof part["reason"] === "string"
+          ? { reason: part["reason"] }
+          : {}),
         type: "tool-approval-response",
       };
+    }
     case "file-data":
-    case "image-data":
+    case "image-data": {
+      if (
+        typeof part["data"] !== "string" ||
+        typeof part["mediaType"] !== "string"
+      ) {
+        return undefined;
+      }
       return {
-        data: part.data,
-        ...(part.type === "file-data" && part.filename !== undefined
-          ? { filename: part.filename }
+        data: part["data"],
+        ...(part["type"] === "file-data" && typeof part["filename"] === "string"
+          ? { filename: part["filename"] }
           : {}),
-        mediaType: part.mediaType,
-        type: part.type,
+        mediaType: part["mediaType"],
+        type: part["type"],
       };
+    }
     case "file-url":
-    case "image-url":
+    case "image-url": {
+      if (typeof part["url"] !== "string") {
+        return undefined;
+      }
       return {
-        ...(part.type === "file-url" && part.mediaType !== undefined
-          ? { mediaType: part.mediaType }
+        ...(part["type"] === "file-url" && typeof part["mediaType"] === "string"
+          ? { mediaType: part["mediaType"] }
           : {}),
-        type: part.type,
-        url: part.url,
+        type: part["type"],
+        url: part["url"],
       };
+    }
     case "file-id":
-    case "image-file-id":
-      return { fileId: part.fileId, type: part.type };
+    case "image-file-id": {
+      const fileId = part["fileId"];
+      if (typeof fileId !== "string" && !isObject(fileId)) {
+        return undefined;
+      }
+      return { fileId, type: part["type"] };
+    }
     case "file-reference":
-    case "image-file-reference":
+    case "image-file-reference": {
+      if (!isObject(part["providerReference"])) {
+        return undefined;
+      }
       return {
-        providerReference: part.providerReference,
-        type: part.type,
+        providerReference: part["providerReference"],
+        type: part["type"],
       };
+    }
+    default:
+      return undefined;
   }
 }
 
