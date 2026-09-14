@@ -67,7 +67,7 @@
     "@types/node": "^22.15.21",
     "tsup": "^8.5.1",
     "typescript": "^5.5.4",
-    "vitest": "4.1.5"
+    "vitest": "4.1.11"
   },
   "repository": {
     "type": "git",
