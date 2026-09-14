@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { _exportsForTestingOnly, initLogger } from "../../logger";
+import { Attachment, _exportsForTestingOnly, initLogger } from "../../logger";
 import { configureNode } from "../../node/config";
 import type { BedrockRuntimeMiddlewareStack } from "../../vendor-sdk-types/bedrock-runtime";
 import {
@@ -298,6 +298,153 @@ describe("BedrockRuntimePlugin", () => {
         }),
       ]),
     );
+  });
+
+  it("captures Titan multimodal embeddings without logging raw images", async () => {
+    const inputImage = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: JSON.stringify({
+          embedding: [0.1, 0.2, 0.3],
+          inputTextTokenCount: 4,
+        }),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              embeddingConfig: { outputEmbeddingLength: 3 },
+              inputImage,
+              inputText: "Embed this image.",
+            }),
+            modelId: "amazon.titan-embed-image-v1",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    const span = spans.find(
+      (candidate: any) =>
+        candidate.metadata?.model === "amazon.titan-embed-image-v1",
+    ) as Record<string, any> | undefined;
+    expect(span).toMatchObject({
+      input: {
+        inputs: [
+          {
+            content: [
+              { text: "Embed this image.", type: "text" },
+              { type: "image_url" },
+            ],
+          },
+        ],
+        output_dimensions: 3,
+      },
+      metrics: {
+        prompt_tokens: 4,
+        tokens: 4,
+      },
+      output: { count: 1 },
+    });
+    const attachment = span?.input?.inputs?.[0]?.content?.[1]?.image_url?.url;
+    expect(attachment).toBeInstanceOf(Attachment);
+    expect(attachment.reference).toMatchObject({
+      content_type: "image/png",
+      type: "braintrust_attachment",
+    });
+    expect(JSON.stringify(span?.input)).not.toContain(inputImage);
+  });
+
+  it("captures Nova multimodal embedding requests and response counts", async () => {
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: JSON.stringify({
+          embeddings: [
+            { embedding: [0.1, 0.2], embeddingType: "AUDIO" },
+            { embedding: [0.3, 0.4], embeddingType: "VIDEO" },
+          ],
+        }),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              schemaVersion: "nova-multimodal-embed-v1",
+              singleEmbeddingParams: {
+                embeddingDimension: 2,
+                embeddingPurpose: "GENERIC_INDEX",
+                text: { value: "Embed this sentence." },
+              },
+              taskType: "SINGLE_EMBEDDING",
+            }),
+            modelId: "amazon.nova-2-multimodal-embeddings-v1:0",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          input: {
+            inputs: [{ content: "Embed this sentence." }],
+            output_dimensions: 2,
+          },
+          output: { count: 2 },
+        }),
+      ]),
+    );
+  });
+
+  it("captures Marengo multimodal embeddings without provider-native data", async () => {
+    const base64String = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: JSON.stringify({
+          data: {
+            embedding: [0.1, 0.2, 0.3],
+          },
+        }),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              inputType: "text_image",
+              text_image: {
+                inputText: "Embed this image.",
+                mediaSource: { base64String },
+              },
+            }),
+            modelId: "us.twelvelabs.marengo-embed-3-0-v1:0",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    const span = spans.find(
+      (candidate: any) =>
+        candidate.metadata?.model === "us.twelvelabs.marengo-embed-3-0-v1:0",
+    ) as Record<string, any> | undefined;
+    expect(span).toMatchObject({
+      input: {
+        inputs: [
+          {
+            content: [
+              { text: "Embed this image.", type: "text" },
+              { type: "image_url" },
+            ],
+          },
+        ],
+      },
+      output: { count: 1 },
+    });
+    expect(
+      span?.input?.inputs?.[0]?.content?.[1]?.image_url?.url,
+    ).toBeInstanceOf(Attachment);
+    expect(JSON.stringify(span?.input)).not.toContain(base64String);
   });
 
   it("captures canonical Cohere batch embedding data without vectors", async () => {

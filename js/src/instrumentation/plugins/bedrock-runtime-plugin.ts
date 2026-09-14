@@ -5,7 +5,10 @@ import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
 import { getCurrentUnixTimestamp } from "../../util";
 import type { Span } from "../../logger";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
+import {
+  inferImageMediaType,
+  processInputAttachments,
+} from "../../wrappers/attachment-utils";
 import type { AnyAsyncChannel } from "../core/channel-definitions";
 import type {
   BedrockRuntimeCommandLike,
@@ -28,8 +31,13 @@ import {
   getBedrockRuntimeOperation,
 } from "./bedrock-runtime-common";
 
-const BEDROCK_EMBEDDING_MODEL_PATTERN =
-  /(?:^|[./])(?:amazon\.titan-embed-text|cohere\.embed-)/;
+const BEDROCK_EMBEDDING_MODEL_PATTERNS = {
+  cohere: /(?:^|[./])cohere\.embed-/,
+  marengo: /(?:^|[./])twelvelabs\.marengo-embed-/,
+  novaMultimodal: /(?:^|[./])amazon\.nova-2-multimodal-embeddings(?:[-.:]|$)/,
+  titanMultimodal: /(?:^|[./])amazon\.titan-embed-image(?:[-.:]|$)/,
+  titanText: /(?:^|[./])amazon\.titan-embed-text(?:[-.:]|$)/,
+} as const;
 const BEDROCK_INPUT_TOKEN_COUNT_HEADER = "x-amzn-bedrock-input-token-count";
 const BEDROCK_OUTPUT_TOKEN_COUNT_HEADER = "x-amzn-bedrock-output-token-count";
 const bedrockResponseHeaderMetrics = new WeakMap<
@@ -118,9 +126,12 @@ function extractBedrockRuntimeInput(command: unknown): {
       ? (request as BedrockRuntimeInvokeModelRequest)
       : undefined;
     const parsedBody = parseJsonBody(invokeRequest?.body);
+    const embeddingModelFamily = getBedrockEmbeddingModelFamily(
+      invokeRequest?.modelId,
+    );
     return {
-      input: isBedrockEmbeddingModel(invokeRequest?.modelId)
-        ? extractBedrockEmbeddingInput(parsedBody)
+      input: embeddingModelFamily
+        ? extractBedrockEmbeddingInput(parsedBody, embeddingModelFamily)
         : (parsedBody ?? summarizeBody(invokeRequest?.body)),
       metadata,
     };
@@ -180,11 +191,9 @@ function extractBedrockRuntimeOutput(
     const parsedBody = parseJsonBody(response?.body);
     const request = getBedrockRuntimeCommandInput(command);
     const modelId = isObject(request) ? request.modelId : undefined;
-    if (
-      isBedrockEmbeddingModel(modelId) ||
-      isBedrockEmbeddingResponse(parsedBody)
-    ) {
-      return summarizeBedrockEmbeddingOutput(parsedBody);
+    const embeddingModelFamily = getBedrockEmbeddingModelFamily(modelId);
+    if (embeddingModelFamily || isBedrockEmbeddingResponse(parsedBody)) {
+      return summarizeBedrockEmbeddingOutput(parsedBody, embeddingModelFamily);
     }
     return parsedBody ?? summarizeBody(response?.body);
   }
@@ -258,7 +267,9 @@ function extractBedrockRuntimeResponseMetrics(
   const mergedMetrics = { ...headerMetrics, ...metrics };
   const request = getBedrockRuntimeCommandInput(command);
   const isEmbeddingRequest =
-    isObject(request) && isBedrockEmbeddingModel(request.modelId);
+    (isObject(request) &&
+      getBedrockEmbeddingModelFamily(request.modelId) !== undefined) ||
+    isBedrockEmbeddingResponse(parsedBody);
 
   if (isEmbeddingRequest) {
     delete mergedMetrics.completion_tokens;
@@ -449,7 +460,8 @@ export function parseBedrockRuntimeMetrics(
 
 type BedrockEmbeddingContentPart =
   | { type: "text"; text: string }
-  | { type: "image_url"; image_url: { url: unknown } };
+  | { type: "image_url"; image_url: { url: unknown } }
+  | { type: "file"; file: { file_data: unknown } };
 
 type BedrockEmbeddingInput = {
   inputs: Array<{
@@ -458,17 +470,139 @@ type BedrockEmbeddingInput = {
   output_dimensions?: number;
 };
 
-function isBedrockEmbeddingModel(modelId: unknown): boolean {
-  return (
-    typeof modelId === "string" && BEDROCK_EMBEDDING_MODEL_PATTERN.test(modelId)
-  );
+type BedrockEmbeddingModelFamily =
+  keyof typeof BEDROCK_EMBEDDING_MODEL_PATTERNS;
+
+function getBedrockEmbeddingModelFamily(
+  modelId: unknown,
+): BedrockEmbeddingModelFamily | undefined {
+  if (typeof modelId !== "string") {
+    return undefined;
+  }
+  if (BEDROCK_EMBEDDING_MODEL_PATTERNS.cohere.test(modelId)) {
+    return "cohere";
+  }
+  if (BEDROCK_EMBEDDING_MODEL_PATTERNS.marengo.test(modelId)) {
+    return "marengo";
+  }
+  if (BEDROCK_EMBEDDING_MODEL_PATTERNS.novaMultimodal.test(modelId)) {
+    return "novaMultimodal";
+  }
+  if (BEDROCK_EMBEDDING_MODEL_PATTERNS.titanMultimodal.test(modelId)) {
+    return "titanMultimodal";
+  }
+  if (BEDROCK_EMBEDDING_MODEL_PATTERNS.titanText.test(modelId)) {
+    return "titanText";
+  }
+  return undefined;
 }
 
-function extractBedrockEmbeddingInput(body: unknown): BedrockEmbeddingInput {
+function extractBedrockEmbeddingInput(
+  body: unknown,
+  family: BedrockEmbeddingModelFamily,
+): BedrockEmbeddingInput {
   const request = isObject(body) ? body : undefined;
   let inputs: BedrockEmbeddingInput["inputs"] = [];
 
-  if (typeof request?.inputText === "string") {
+  if (family === "titanMultimodal") {
+    const parts: BedrockEmbeddingContentPart[] = [];
+    if (typeof request?.inputText === "string") {
+      parts.push({ type: "text", text: request.inputText });
+    }
+    const imagePart = bedrockImagePart(request?.inputImage);
+    if (imagePart) {
+      parts.push(imagePart);
+    }
+    if (parts.length === 1 && parts[0].type === "text") {
+      inputs = [{ content: parts[0].text }];
+    } else if (parts.length > 0) {
+      inputs = [{ content: parts }];
+    }
+  } else if (family === "novaMultimodal") {
+    const params = isObject(request?.singleEmbeddingParams)
+      ? request.singleEmbeddingParams
+      : undefined;
+    const textParams = isObject(params?.text) ? params.text : undefined;
+    const text = textParams?.value;
+    if (typeof text === "string") {
+      inputs = [{ content: text }];
+    } else {
+      const textSource = extractBedrockMediaSource(textParams?.source);
+      const media: BedrockEmbeddingContentPart[] =
+        textSource === undefined
+          ? []
+          : [
+              {
+                type: "file",
+                file: { file_data: toDataUrl(textSource, "text/plain") },
+              },
+            ];
+      media.push(
+        ...["image", "audio", "video"].flatMap<BedrockEmbeddingContentPart>(
+          (key) => {
+            const value = params?.[key];
+            if (!isObject(value)) {
+              return [];
+            }
+            const source = extractBedrockMediaSource(value.source);
+            if (source === undefined) {
+              return [];
+            }
+            const mediaType = bedrockMediaType(key, value.format, source);
+            return key === "image"
+              ? [bedrockImagePart(source, mediaType)].filter(
+                  (part): part is BedrockEmbeddingContentPart =>
+                    part !== undefined,
+                )
+              : [
+                  {
+                    type: "file",
+                    file: {
+                      file_data: toDataUrl(source, mediaType),
+                    },
+                  },
+                ];
+          },
+        ),
+      );
+      if (media.length > 0) {
+        inputs = [{ content: media }];
+      }
+    }
+  } else if (family === "marengo") {
+    const parts: BedrockEmbeddingContentPart[] = [];
+    const textContainer = isObject(request?.text)
+      ? request.text
+      : isObject(request?.text_image)
+        ? request.text_image
+        : isObject(request?.multi_input)
+          ? request.multi_input
+          : request;
+    if (typeof textContainer?.inputText === "string") {
+      parts.push({ type: "text", text: textContainer.inputText });
+    }
+    const mediaSources = isObject(request?.multi_input)
+      ? request.multi_input.mediaSources
+      : [
+          isObject(request?.image)
+            ? request.image.mediaSource
+            : isObject(request?.text_image)
+              ? request.text_image.mediaSource
+              : request?.mediaSource,
+        ];
+    for (const mediaSource of Array.isArray(mediaSources) ? mediaSources : []) {
+      const source = extractBedrockMediaSource(mediaSource);
+      const imagePart = bedrockImagePart(source);
+      if (imagePart) {
+        parts.push(imagePart);
+      }
+    }
+    if (parts.length === 1 && parts[0].type === "text") {
+      inputs = [{ content: parts[0].text }];
+    } else if (parts.length > 0) {
+      inputs = [{ content: parts }];
+    }
+  } else if (typeof request?.inputText === "string") {
     inputs = [{ content: request.inputText }];
   } else if (Array.isArray(request?.inputs)) {
     inputs = request.inputs.flatMap((input) => {
@@ -524,7 +658,17 @@ function extractBedrockEmbeddingInput(body: unknown): BedrockEmbeddingInput {
     }
   }
 
-  const outputDimensions = request?.dimensions ?? request?.output_dimension;
+  const novaParams = isObject(request?.singleEmbeddingParams)
+    ? request.singleEmbeddingParams
+    : undefined;
+  const titanConfig = isObject(request?.embeddingConfig)
+    ? request.embeddingConfig
+    : undefined;
+  const outputDimensions =
+    request?.dimensions ??
+    request?.output_dimension ??
+    novaParams?.embeddingDimension ??
+    titanConfig?.outputEmbeddingLength;
   return processInputAttachments({
     inputs,
     ...(typeof outputDimensions === "number" &&
@@ -534,19 +678,94 @@ function extractBedrockEmbeddingInput(body: unknown): BedrockEmbeddingInput {
   });
 }
 
+function extractBedrockMediaSource(source: unknown): unknown {
+  if (!isObject(source)) {
+    return undefined;
+  }
+  if (source.bytes !== undefined) {
+    return source.bytes;
+  }
+  if (source.base64String !== undefined) {
+    return source.base64String;
+  }
+  return isObject(source.s3Location) ? source.s3Location.uri : undefined;
+}
+
+function bedrockImagePart(
+  source: unknown,
+  mediaType = inferImageMediaType(source),
+): BedrockEmbeddingContentPart | undefined {
+  if (typeof source !== "string" || source.length === 0) {
+    return undefined;
+  }
+  return {
+    type: "image_url",
+    image_url: { url: toDataUrl(source, mediaType) },
+  };
+}
+
+function toDataUrl(source: unknown, mediaType: string | undefined): unknown {
+  return typeof source === "string" &&
+    mediaType &&
+    !source.startsWith("data:") &&
+    !source.includes("://")
+    ? `data:${mediaType};base64,${source}`
+    : source;
+}
+
+function bedrockMediaType(
+  modality: string,
+  format: unknown,
+  source: unknown,
+): string | undefined {
+  if (modality === "image") {
+    return typeof format === "string"
+      ? `image/${format === "jpg" ? "jpeg" : format}`
+      : inferImageMediaType(source);
+  }
+  if (typeof format !== "string") {
+    return undefined;
+  }
+  if (modality === "audio") {
+    return format === "mp3" ? "audio/mpeg" : `audio/${format}`;
+  }
+  return format === "mkv" ? "video/x-matroska" : `video/${format}`;
+}
+
 function isBedrockEmbeddingResponse(body: unknown): boolean {
   return (
     isObject(body) &&
     (Array.isArray(body.embedding) ||
       Array.isArray(body.embeddings) ||
       isObject(body.embeddings) ||
-      isObject(body.embeddingsByType))
+      isObject(body.embeddingsByType) ||
+      (isObject(body.data) && Array.isArray(body.data.embedding)) ||
+      (Array.isArray(body.data) &&
+        body.data.some(
+          (item) => isObject(item) && Array.isArray(item.embedding),
+        )))
   );
 }
 
-function summarizeBedrockEmbeddingOutput(body: unknown): { count: number } {
+function summarizeBedrockEmbeddingOutput(
+  body: unknown,
+  family?: BedrockEmbeddingModelFamily,
+): { count: number } {
   if (!isObject(body)) {
     return { count: 0 };
+  }
+
+  if (family === "marengo" || body.data !== undefined) {
+    if (isObject(body.data) && Array.isArray(body.data.embedding)) {
+      return { count: 1 };
+    }
+    if (Array.isArray(body.data)) {
+      return {
+        count: body.data.filter(
+          (item) => isObject(item) && Array.isArray(item.embedding),
+        ).length,
+      };
+    }
   }
 
   if (Array.isArray(body.embedding)) {
@@ -554,6 +773,19 @@ function summarizeBedrockEmbeddingOutput(body: unknown): { count: number } {
   }
 
   if (Array.isArray(body.embeddings)) {
+    if (
+      body.embeddings.some(
+        (embedding) =>
+          isObject(embedding) && Array.isArray(embedding.embedding),
+      )
+    ) {
+      return {
+        count: body.embeddings.filter(
+          (embedding) =>
+            isObject(embedding) && Array.isArray(embedding.embedding),
+        ).length,
+      };
+    }
     return {
       count:
         body.embeddings.length > 0 && !Array.isArray(body.embeddings[0])
