@@ -159,14 +159,18 @@ function traceFunction(
     (!methodName && !privateMethodName && !functionName);
   const type = isConstructor ? "ArrowFunctionExpression" : "FunctionExpression";
 
-  node.body = wrap(state, {
-    type,
-    params: node.params,
-    body: node.body,
-    async: node.async,
-    expression: false,
-    generator: node.generator,
-  });
+  node.body = wrap(
+    state,
+    {
+      type,
+      params: node.params,
+      body: node.body,
+      async: node.async,
+      expression: false,
+      generator: node.generator,
+    },
+    isArrowFunction ? "__bt$args" : "arguments",
+  );
 
   // Arrow functions do not have their own `arguments` object. Give the
   // generated wrapper an explicit rest parameter so it forwards the call's
@@ -230,21 +234,26 @@ function traceInstanceMethod(
   const fn = ctorBody[1].expression.right;
 
   fn.async = operator === "tracePromise";
-  fn.body = wrap(state, {
-    type: "Identifier",
-    name: `__bt$${methodName}`,
-  });
+  fn.body = wrap(
+    state,
+    {
+      type: "Identifier",
+      name: `__bt$${methodName}`,
+    },
+    "arguments",
+  );
 
   wrapSuper(fn);
 
   ctor.value.body.body.push(...ctorBody);
 }
 
-function wrap(state: TransformState, node: AnyNode): AnyNode {
-  const wrapper = wrapInvocation(
-    state,
-    node.type === "ArrowFunctionExpression" ? "__bt$args" : "arguments",
-  );
+function wrap(
+  state: TransformState,
+  node: AnyNode,
+  argsExpression: string,
+): AnyNode {
+  const wrapper = wrapInvocation(state, argsExpression);
 
   const block = wrapper.body[0].body;
   const common = parse(
