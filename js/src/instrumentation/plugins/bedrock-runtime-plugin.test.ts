@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { _exportsForTestingOnly, initLogger } from "../../logger";
 import { configureNode } from "../../node/config";
+import type { BedrockRuntimeMiddlewareStack } from "../../vendor-sdk-types/bedrock-runtime";
 import {
   smithyClientChannels,
   smithyCoreChannels,
@@ -26,7 +27,10 @@ class InvokeModelWithBidirectionalStreamCommand {
 }
 
 class InvokeModelCommand {
-  constructor(public input: Record<string, unknown>) {}
+  constructor(
+    public input: Record<string, unknown>,
+    public middlewareStack?: BedrockRuntimeMiddlewareStack,
+  ) {}
 }
 
 class GetObjectCommand {
@@ -337,33 +341,65 @@ describe("BedrockRuntimePlugin", () => {
     );
   });
 
-  it("counts Cohere v4 multi-type embeddings once per input", async () => {
-    await smithyCoreChannels.clientSend.tracePromise(
-      async () => ({
-        body: JSON.stringify({
-          embeddings: {
-            float: [
-              [0.1, 0.2],
-              [0.3, 0.4],
-            ],
-            int8: [
-              [1, 2],
-              [3, 4],
-            ],
-          },
-          response_type: "embeddings_by_type",
-        }),
+  it("captures Cohere v4 embedding token metrics from response headers", async () => {
+    let responseMiddleware:
+      | Parameters<BedrockRuntimeMiddlewareStack["add"]>[0]
+      | undefined;
+    const middlewareStack: BedrockRuntimeMiddlewareStack = {
+      add(middleware, options) {
+        responseMiddleware = middleware;
+        expect(options).toEqual({
+          name: "braintrustBedrockResponseHeaderMetrics",
+          priority: "high",
+          step: "deserialize",
+        });
+      },
+    };
+    const output = {
+      body: JSON.stringify({
+        embeddings: {
+          float: [
+            [0.1, 0.2],
+            [0.3, 0.4],
+          ],
+          int8: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
+        response_type: "embeddings_by_type",
       }),
+    };
+
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => {
+        if (!responseMiddleware) {
+          throw new Error("Expected response middleware to be installed");
+        }
+        const result = await responseMiddleware(async () => ({
+          output,
+          response: {
+            headers: {
+              "x-amzn-bedrock-input-token-count": "112",
+              "x-amzn-bedrock-output-token-count": "17",
+            },
+          },
+        }))({});
+        return result.output;
+      },
       {
         arguments: [
-          new InvokeModelCommand({
-            body: JSON.stringify({
-              input_type: "search_document",
-              output_dimension: 2,
-              texts: ["First", "Second"],
-            }),
-            modelId: "us.cohere.embed-v4:0",
-          }) as any,
+          new InvokeModelCommand(
+            {
+              body: JSON.stringify({
+                input_type: "search_document",
+                output_dimension: 2,
+                texts: ["First", "Second"],
+              }),
+              modelId: "us.cohere.embed-v4:0",
+            },
+            middlewareStack,
+          ) as any,
         ],
       },
     );
@@ -376,6 +412,20 @@ describe("BedrockRuntimePlugin", () => {
             inputs: [{ content: "First" }, { content: "Second" }],
             output_dimensions: 2,
           },
+          metrics: expect.objectContaining({
+            prompt_tokens: 112,
+            tokens: 112,
+          }),
+          output: { count: 2 },
+        }),
+      ]),
+    );
+    expect(spans).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_tokens: expect.anything(),
+          }),
           output: { count: 2 },
         }),
       ]),

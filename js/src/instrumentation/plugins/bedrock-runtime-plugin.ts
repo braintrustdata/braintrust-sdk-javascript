@@ -2,11 +2,13 @@ import { BasePlugin } from "../core";
 import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
+import { debugLogger } from "../../debug-logger";
 import { getCurrentUnixTimestamp } from "../../util";
 import type { Span } from "../../logger";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
 import type { AnyAsyncChannel } from "../core/channel-definitions";
 import type {
+  BedrockRuntimeCommandLike,
   BedrockRuntimeConverseRequest,
   BedrockRuntimeConverseResponse,
   BedrockRuntimeConverseStreamEvent,
@@ -28,6 +30,13 @@ import {
 
 const BEDROCK_EMBEDDING_MODEL_PATTERN =
   /(?:^|[./])(?:amazon\.titan-embed-text|cohere\.embed-)/;
+const BEDROCK_INPUT_TOKEN_COUNT_HEADER = "x-amzn-bedrock-input-token-count";
+const BEDROCK_OUTPUT_TOKEN_COUNT_HEADER = "x-amzn-bedrock-output-token-count";
+const bedrockResponseHeaderMetrics = new WeakMap<
+  object,
+  Record<string, number>
+>();
+const instrumentedBedrockMiddlewareStacks = new WeakSet<object>();
 
 export class BedrockRuntimePlugin extends BasePlugin {
   protected onEnable(): void {
@@ -60,7 +69,8 @@ function traceBedrockRuntimeClientSendChannel(
       extractBedrockRuntimeOutput(endEvent?.arguments?.[0], result),
     extractMetadata: (result, endEvent) =>
       extractBedrockRuntimeResponseMetadata(endEvent?.arguments?.[0], result),
-    extractMetrics: (result) => extractBedrockRuntimeResponseMetrics(result),
+    extractMetrics: (result, _startTime, endEvent) =>
+      extractBedrockRuntimeResponseMetrics(endEvent?.arguments?.[0], result),
     patchResult: ({ endEvent, result, span, startTime }) =>
       patchBedrockRuntimeStreamingResult({
         command: endEvent.arguments?.[0],
@@ -75,6 +85,7 @@ function extractBedrockRuntimeInput(command: unknown): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
+  captureBedrockResponseHeaderMetrics(command);
   const operation = getBedrockRuntimeOperation(command);
   const commandName = getBedrockRuntimeCommandName(command);
   const request = getBedrockRuntimeCommandInput(command);
@@ -217,29 +228,140 @@ function extractBedrockRuntimeResponseMetadata(
 }
 
 function extractBedrockRuntimeResponseMetrics(
+  command: unknown,
   result: unknown,
 ): Record<string, number> {
   if (!isObject(result)) {
     return {};
   }
 
+  let metrics: Record<string, number> = {};
   const parsedBody = parseJsonBody(result.body);
   if (isObject(parsedBody)) {
     const metadata = isObject(parsedBody.metadata)
       ? parsedBody.metadata
       : undefined;
-    const metrics = parseBedrockRuntimeMetrics(
+    metrics = parseBedrockRuntimeMetrics(
       parsedBody.usage ??
         metadata?.usage ??
         (parsedBody.inputTextTokenCount !== undefined ? parsedBody : undefined),
       parsedBody.metrics ?? metadata?.metrics,
     );
-    if (Object.keys(metrics).length > 0) {
-      return metrics;
+  }
+
+  if (Object.keys(metrics).length === 0) {
+    metrics = parseBedrockRuntimeMetrics(result.usage, result.metrics);
+  }
+
+  const headerMetrics = bedrockResponseHeaderMetrics.get(result) ?? {};
+  bedrockResponseHeaderMetrics.delete(result);
+  const mergedMetrics = { ...headerMetrics, ...metrics };
+  const request = getBedrockRuntimeCommandInput(command);
+  const isEmbeddingRequest =
+    isObject(request) && isBedrockEmbeddingModel(request.modelId);
+
+  if (isEmbeddingRequest) {
+    delete mergedMetrics.completion_tokens;
+    if (
+      mergedMetrics.tokens === undefined &&
+      mergedMetrics.prompt_tokens !== undefined
+    ) {
+      mergedMetrics.tokens = mergedMetrics.prompt_tokens;
+    }
+  } else if (mergedMetrics.tokens === undefined) {
+    if (
+      mergedMetrics.prompt_tokens !== undefined &&
+      mergedMetrics.completion_tokens !== undefined
+    ) {
+      mergedMetrics.tokens =
+        mergedMetrics.prompt_tokens + mergedMetrics.completion_tokens;
     }
   }
 
-  return parseBedrockRuntimeMetrics(result.usage, result.metrics);
+  return mergedMetrics;
+}
+
+function captureBedrockResponseHeaderMetrics(command: unknown): void {
+  if (!isObject(command)) {
+    return;
+  }
+
+  const middlewareStack = (command as BedrockRuntimeCommandLike)
+    .middlewareStack;
+  if (
+    !isObject(middlewareStack) ||
+    typeof middlewareStack.add !== "function" ||
+    instrumentedBedrockMiddlewareStacks.has(middlewareStack)
+  ) {
+    return;
+  }
+
+  try {
+    middlewareStack.add(
+      (next) => async (args) => {
+        const middlewareResult = await next(args);
+        try {
+          const output = middlewareResult.output;
+          const response = middlewareResult.response;
+          const headers = isObject(response) ? response.headers : undefined;
+          if (isObject(output) && isObject(headers)) {
+            const headerMetrics: Record<string, number> = {};
+            for (const [headerName, headerValue] of Object.entries(headers)) {
+              const normalizedName = headerName.toLowerCase();
+              const metricName =
+                normalizedName === BEDROCK_INPUT_TOKEN_COUNT_HEADER
+                  ? "prompt_tokens"
+                  : normalizedName === BEDROCK_OUTPUT_TOKEN_COUNT_HEADER
+                    ? "completion_tokens"
+                    : undefined;
+              if (metricName === undefined) {
+                continue;
+              }
+              const tokenCount = parseBedrockTokenHeader(headerValue);
+              if (tokenCount === undefined) {
+                continue;
+              }
+              headerMetrics[metricName] = tokenCount;
+            }
+            if (Object.keys(headerMetrics).length > 0) {
+              bedrockResponseHeaderMetrics.set(output, headerMetrics);
+            }
+          }
+        } catch (error) {
+          debugLogger.debug(
+            "Failed to capture Bedrock response header metrics:",
+            error,
+          );
+        }
+        return middlewareResult;
+      },
+      {
+        name: "braintrustBedrockResponseHeaderMetrics",
+        priority: "high",
+        step: "deserialize",
+      },
+    );
+    instrumentedBedrockMiddlewareStacks.add(middlewareStack);
+  } catch (error) {
+    debugLogger.debug(
+      "Failed to install Bedrock response header metrics middleware:",
+      error,
+    );
+  }
+}
+
+function parseBedrockTokenHeader(value: unknown): number | undefined {
+  const normalizedValue = typeof value === "string" ? value.trim() : value;
+  if (
+    typeof normalizedValue !== "number" &&
+    (typeof normalizedValue !== "string" || !/^\d+$/.test(normalizedValue))
+  ) {
+    return undefined;
+  }
+  const tokenCount = Number(normalizedValue);
+  return Number.isSafeInteger(tokenCount) && tokenCount >= 0
+    ? tokenCount
+    : undefined;
 }
 
 export function parseBedrockRuntimeMetrics(

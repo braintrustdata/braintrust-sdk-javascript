@@ -240,6 +240,10 @@ export function defineBedrockRuntimeInstrumentationAssertions(options: {
           output_dimensions: 256,
         });
         expect(embeddingSpan?.output).toEqual({ count: 1 });
+        expect(embeddingSpan?.metrics).toMatchObject({
+          prompt_tokens: expect.any(Number),
+          tokens: expect.any(Number),
+        });
         expect(embeddingSpan?.metrics).not.toHaveProperty("completion_tokens");
         expect(embeddingSpan?.metrics).not.toHaveProperty(
           "time_to_first_token",

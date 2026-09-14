@@ -179,6 +179,10 @@ span_tree:
     │         "operation": "invokeModel",
     │         "provider": "aws-bedrock"
     │       }
+    │       metrics: {
+    │         "prompt_tokens": 112,
+    │         "tokens": 112
+    │       }
     ├── bedrock-invoke-model-operation
     │   metadata: {
     │     "operation": "invoke-model",

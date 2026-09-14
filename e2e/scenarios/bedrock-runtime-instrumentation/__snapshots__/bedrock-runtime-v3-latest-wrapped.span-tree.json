@@ -203,6 +203,10 @@
                 "model": "us.cohere.embed-v4:0",
                 "operation": "invokeModel",
                 "provider": "aws-bedrock"
+              },
+              "metrics": {
+                "prompt_tokens": 112,
+                "tokens": 112
               }
             }
           ],

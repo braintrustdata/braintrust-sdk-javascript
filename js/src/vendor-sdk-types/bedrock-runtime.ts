@@ -9,10 +9,29 @@ export type BedrockRuntimeCommandName =
 
 export interface BedrockRuntimeCommandLike {
   input?: unknown;
+  middlewareStack?: BedrockRuntimeMiddlewareStack;
   constructor?: {
     name?: string;
   };
   [key: string]: unknown;
+}
+
+export interface BedrockRuntimeMiddlewareResult {
+  output?: unknown;
+  response?: unknown;
+}
+
+export interface BedrockRuntimeMiddlewareStack {
+  add(
+    middleware: (
+      next: (args: unknown) => Promise<BedrockRuntimeMiddlewareResult>,
+    ) => (args: unknown) => Promise<BedrockRuntimeMiddlewareResult>,
+    options: {
+      name: string;
+      priority: "high";
+      step: "deserialize";
+    },
+  ): void;
 }
 
 export interface BedrockRuntimeClient {
