@@ -12,6 +12,9 @@ export const SCENARIO_NAME = "anthropic-vertex-instrumentation";
 const MODEL = "claude-haiku-4-5@20251001";
 const PROJECT_ID = "vertex-e2e-project";
 
+// Vertex API responses are mocked in-process because live Vertex tests depend
+// on external credentials and quota. The real SDK still builds and consumes
+// the non-streaming and streaming requests exercised below.
 function createVertexFetch() {
   return async (input, init) => {
     const url = new URL(
