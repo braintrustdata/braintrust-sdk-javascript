@@ -70,6 +70,7 @@ interface ByteStreamObserverOptions {
   onCancel: (error?: unknown) => void;
   onChunk: (chunk: Uint8Array) => void;
   onComplete: () => void;
+  onStart?: () => void;
 }
 
 type AsyncIteratorLike<TChunk> = AsyncIterable<TChunk> &
@@ -451,6 +452,16 @@ export function observeByteStream(
   options: ByteStreamObserverOptions,
 ): void {
   let ended = false;
+  let started = false;
+  const start = () => {
+    if (started || ended) return;
+    started = true;
+    try {
+      options.onStart?.();
+    } catch (error) {
+      debugLogger.error(`Error starting ${options.debugLabel} observer`, error);
+    }
+  };
   const safeObserve = (chunk: Uint8Array) => {
     if (ended) return;
     try {
@@ -468,7 +479,15 @@ export function observeByteStream(
       else options.onCancel(error);
     } catch (loggingError) {
       debugLogger.error(`Error logging ${options.debugLabel}`, loggingError);
-      options.onCancel();
+      if (success)
+        try {
+          options.onCancel();
+        } catch (cancelError) {
+          debugLogger.error(
+            `Error cancelling ${options.debugLabel} observer`,
+            cancelError,
+          );
+        }
     }
   };
   if (
@@ -496,8 +515,10 @@ export function observeByteStream(
         event: string | symbol,
         ...args: unknown[]
       ) {
-        if (event === "data" && args[0] instanceof Uint8Array)
+        if (event === "data" && args[0] instanceof Uint8Array) {
+          start();
           safeObserve(args[0]);
+        }
         if (event === "error") end(false, args[0]);
         return Reflect.apply(emit, this, [event, ...args]);
       };
@@ -517,24 +538,51 @@ export function observeByteStream(
         destination.locked
       )
         return pipeTo.call(this, destination, streamOptions);
-      const tap = new TransformStream<Uint8Array, Uint8Array>({
-        transform(chunk, controller) {
+      start();
+      const writer = destination.getWriter();
+      let writerReleased = false;
+      const releaseWriter = () => {
+        if (writerReleased) return;
+        writerReleased = true;
+        writer.releaseLock();
+      };
+      const observedDestination = new WritableStream<Uint8Array>({
+        write(chunk) {
           safeObserve(chunk);
-          controller.enqueue(chunk);
+          return writer.write(chunk);
         },
-        flush() {
-          end(true);
+        async close() {
+          try {
+            if (!streamOptions?.preventClose) await writer.close();
+            end(true);
+          } finally {
+            releaseWriter();
+          }
+        },
+        async abort(reason) {
+          try {
+            if (!streamOptions?.preventAbort) await writer.abort(reason);
+            end(false, reason);
+          } finally {
+            releaseWriter();
+          }
         },
       });
-      const observed = pipeThrough.call(
-        this,
-        tap,
-        streamOptions,
-      ) as ReadableStream<Uint8Array>;
-      return observed.pipeTo(destination, streamOptions).catch((error) => {
-        end(false, error);
+      try {
+        return pipeTo
+          .call(this, observedDestination, {
+            preventCancel: streamOptions?.preventCancel,
+            signal: streamOptions?.signal,
+          })
+          .catch((error) => {
+            end(false, error);
+            throw error;
+          })
+          .finally(releaseWriter);
+      } catch (error) {
+        releaseWriter();
         throw error;
-      });
+      }
     };
     webStream.pipeThrough = function <T>(
       transform: ReadableWritablePair<T, Uint8Array>,
@@ -563,6 +611,7 @@ export function observeByteStream(
         ...args: unknown[]
       ) => Promise<ReadableStreamReadResult<Uint8Array>>;
       reader.read = function (...readArgs: unknown[]) {
+        start();
         const readValue = () => Reflect.apply(read, this, readArgs);
         return Promise.resolve(
           options.aroundRead ? options.aroundRead(readValue) : readValue(),
@@ -615,7 +664,10 @@ export function observeByteStream(
         onComplete: () => end(true),
         onCancel: () => end(false),
         onError: (error) => end(false, error),
-        aroundNext: options.aroundRead,
+        aroundNext: (next) => {
+          start();
+          return options.aroundRead ? options.aroundRead(next) : next();
+        },
       });
       return iterator;
     };
@@ -634,7 +686,10 @@ export function observeByteStream(
       onComplete: () => end(true),
       onCancel: () => end(false),
       onError: (error) => end(false, error),
-      aroundNext: options.aroundRead,
+      aroundNext: (next) => {
+        start();
+        return options.aroundRead ? options.aroundRead(next) : next();
+      },
     });
   } else if (!("getReader" in value) || typeof value.getReader !== "function")
     end(false);

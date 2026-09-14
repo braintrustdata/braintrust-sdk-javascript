@@ -7,6 +7,7 @@ import {
   test,
   vi,
 } from "vitest";
+import { Readable } from "node:stream";
 import { configureNode } from "../node/config";
 import { Attachment, _exportsForTestingOnly, initLogger } from "../logger";
 import { wrapGroq } from "./groq";
@@ -336,5 +337,128 @@ describe("groq wrapper", () => {
         content: [{ text: "Hello from Braintrust.", type: "text" }],
       },
     });
+  });
+
+  test("captures Response and Readable transcription inputs from consumed bytes", async () => {
+    const create = vi.fn(
+      async (request: {
+        file: Response | Readable;
+        [key: string]: unknown;
+      }) => {
+        if (request.file instanceof Response) await request.file.blob();
+        else for await (const _chunk of request.file) void _chunk;
+        return { text: "Hello from Braintrust." };
+      },
+    );
+    const wrapped = wrapGroq({
+      audio: { transcriptions: { create } },
+    });
+    const response = new Response(new Uint8Array([1, 2, 3]), {
+      headers: {
+        "content-disposition": 'attachment; filename="response.wav"',
+        "content-type": "audio/wav",
+      },
+    });
+    const stream = Readable.from([Buffer.from([4, 5]), Buffer.from([6])]);
+    Object.defineProperty(stream, "path", { value: "/tmp/stream.wav" });
+
+    await wrapped.audio.transcriptions.create({
+      file: response,
+      model: "whisper-large-v3-turbo",
+    });
+    await wrapped.audio.transcriptions.create({
+      file: stream,
+      model: "whisper-large-v3-turbo",
+    });
+
+    const spans = (await backgroundLogger.drain()) as Record<string, any>[];
+    const inputs = spans
+      .filter(
+        (span) =>
+          span.span_attributes?.name === "groq.audio.transcriptions.create",
+      )
+      .map((span) => span.input);
+    const responseAttachment = inputs.find(
+      (input) => input.content?.[0]?.file?.filename === "response.wav",
+    ).content[0].file.file_data as Attachment;
+    const streamAttachment = inputs.find(
+      (input) => input.content?.[0]?.file?.filename === "stream.wav",
+    ).content[0].file.file_data as Attachment;
+
+    expect(
+      new Uint8Array(await (await responseAttachment.data()).arrayBuffer()),
+    ).toEqual(new Uint8Array([1, 2, 3]));
+    expect(
+      new Uint8Array(await (await streamAttachment.data()).arrayBuffer()),
+    ).toEqual(new Uint8Array([4, 5, 6]));
+  });
+
+  test("ends speech spans when the response body is not consumed", async () => {
+    const wrapped = wrapGroq({
+      audio: {
+        speech: {
+          create: vi.fn(async (_request: Record<string, unknown>) =>
+            Promise.resolve(
+              new Response(new Uint8Array([1, 2, 3]), {
+                headers: { "content-type": "audio/wav" },
+              }),
+            ),
+          ),
+        },
+      },
+    });
+
+    const response = await wrapped.audio.speech.create({
+      input: "Hello from Braintrust.",
+      model: "playai-tts",
+      voice: "Fritz-PlayAI",
+    });
+    expect(response.bodyUsed).toBe(false);
+    await Promise.resolve();
+
+    const spans = (await backgroundLogger.drain()) as Record<string, any>[];
+    const speechSpan = spans.find(
+      (span) => span.span_attributes?.name === "groq.audio.speech.create",
+    )!;
+    expect(speechSpan).toMatchObject({
+      metrics: { end: expect.any(Number) },
+      output: { content: [] },
+    });
+  });
+
+  test("captures speech consumed through a cloned response", async () => {
+    const wrapped = wrapGroq({
+      audio: {
+        speech: {
+          create: vi.fn(async (_request: Record<string, unknown>) =>
+            Promise.resolve(
+              new Response(new Uint8Array([1, 2, 3]), {
+                headers: { "content-type": "audio/wav" },
+              }),
+            ),
+          ),
+        },
+      },
+    });
+
+    const response = await wrapped.audio.speech.create({
+      input: "Hello from Braintrust.",
+      model: "playai-tts",
+      voice: "Fritz-PlayAI",
+    });
+    expect(new Uint8Array(await response.clone().arrayBuffer())).toEqual(
+      new Uint8Array([1, 2, 3]),
+    );
+    expect(response.bodyUsed).toBe(false);
+
+    const spans = (await backgroundLogger.drain()) as Record<string, any>[];
+    const speechSpan = spans.find(
+      (span) => span.span_attributes?.name === "groq.audio.speech.create",
+    )!;
+    const attachment = speechSpan.output.content[0].file
+      .file_data as Attachment;
+    expect(
+      new Uint8Array(await (await attachment.data()).arrayBuffer()),
+    ).toEqual(new Uint8Array([1, 2, 3]));
   });
 });

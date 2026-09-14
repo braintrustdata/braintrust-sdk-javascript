@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   isAsyncIterable,
+  observeByteStream,
   patchStreamIfNeeded,
   wrapStreamResult,
 } from "./stream-patcher";
@@ -515,6 +516,95 @@ describe("patchStreamIfNeeded", () => {
     );
 
     errorSpy.mockRestore();
+  });
+});
+
+describe("observeByteStream", () => {
+  it("applies preventClose only to the caller's destination", async () => {
+    const chunks: number[] = [];
+    const close = vi.fn();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array([1, 2, 3]));
+        controller.close();
+      },
+    });
+    const destination = new WritableStream<Uint8Array>({
+      write(chunk) {
+        chunks.push(...chunk);
+      },
+      close,
+    });
+    const observed: number[] = [];
+    const onComplete = vi.fn();
+
+    observeByteStream(stream, {
+      debugLabel: "test bytes",
+      onCancel: vi.fn(),
+      onChunk: (chunk) => observed.push(...chunk),
+      onComplete,
+    });
+
+    await stream.pipeTo(destination, { preventClose: true });
+
+    expect(chunks).toEqual([1, 2, 3]);
+    expect(observed).toEqual([1, 2, 3]);
+    expect(onComplete).toHaveBeenCalledOnce();
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it("preserves preventAbort when the source errors", async () => {
+    const sourceError = new Error("source failed");
+    const abort = vi.fn();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.error(sourceError);
+      },
+    });
+    const destination = new WritableStream<Uint8Array>({ abort });
+
+    observeByteStream(stream, {
+      debugLabel: "test bytes",
+      onCancel: vi.fn(),
+      onChunk: vi.fn(),
+      onComplete: vi.fn(),
+    });
+
+    await expect(
+      stream.pipeTo(destination, { preventAbort: true }),
+    ).rejects.toBe(sourceError);
+    expect(abort).not.toHaveBeenCalled();
+  });
+
+  it("preserves preventCancel when the destination errors", async () => {
+    const destinationError = new Error("destination failed");
+    const cancel = vi.fn();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array([1, 2, 3]));
+      },
+      cancel,
+    });
+    const destination = new WritableStream<Uint8Array>({
+      write() {
+        throw destinationError;
+      },
+    });
+
+    observeByteStream(stream, {
+      debugLabel: "test bytes",
+      onCancel: vi.fn(),
+      onChunk: vi.fn(),
+      onComplete: vi.fn(),
+    });
+
+    await expect(
+      stream.pipeTo(destination, { preventCancel: true }),
+    ).rejects.toBe(destinationError);
+    expect(cancel).not.toHaveBeenCalled();
+    expect(stream.locked).toBe(false);
+
+    await stream.cancel();
   });
 });
 

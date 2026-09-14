@@ -21,7 +21,8 @@ import {
   parseMetricsFromUsage,
 } from "./openai-plugin";
 import { groqChannels } from "./groq-channels";
-import { observeByteStream } from "../core/stream-patcher";
+import { isAsyncIterable, observeByteStream } from "../core/stream-patcher";
+import { debugLogger } from "../../debug-logger";
 import type {
   GroqAudioSpeechCreateParams,
   GroqAudioTextResult,
@@ -109,7 +110,8 @@ export class GroqPlugin extends BasePlugin {
       traceAsyncChannel(groqChannels.audioTranscriptionsCreate, {
         name: "groq.audio.transcriptions.create",
         type: SpanTypeAttribute.LLM,
-        extractInput: ([params]) => extractGroqAudioInput(params, "transcribe"),
+        extractInput: ([params], _event, span) =>
+          extractGroqAudioInput(params, "transcribe", span),
         extractOutput: extractGroqAudioTextOutput,
         extractMetrics: (result) => parseGroqMetricsObject(result),
       }),
@@ -119,7 +121,8 @@ export class GroqPlugin extends BasePlugin {
       traceAsyncChannel(groqChannels.audioTranslationsCreate, {
         name: "groq.audio.translations.create",
         type: SpanTypeAttribute.LLM,
-        extractInput: ([params]) => extractGroqAudioInput(params, "translate"),
+        extractInput: ([params], _event, span) =>
+          extractGroqAudioInput(params, "translate", span),
         extractOutput: extractGroqAudioTextOutput,
         extractMetrics: (result) => parseGroqMetricsObject(result),
       }),
@@ -138,24 +141,28 @@ type GroqAudioTextParams =
 function extractGroqAudioInput(
   params: GroqAudioTextParams,
   operation: "transcribe" | "translate",
+  span: Span,
 ): { input: unknown; metadata: Record<string, unknown> } {
-  const filePart = groqAudioFilePart(params.file ?? params.url);
-  return {
-    input: {
-      operation,
-      ...(params.prompt !== undefined ? { prompt: params.prompt } : {}),
-      content: filePart ? [filePart] : [],
-      parameters: {
-        ...(params.language !== undefined ? { language: params.language } : {}),
-        ...(params.response_format !== undefined
-          ? { format: params.response_format }
-          : {}),
-        ...("timestamp_granularities" in params &&
-        params.timestamp_granularities !== undefined
-          ? { timestamp_granularities: params.timestamp_granularities }
-          : {}),
-      },
+  const source = params.file ?? params.url;
+  const filePart = groqAudioFilePart(source);
+  const input = {
+    operation,
+    ...(params.prompt !== undefined ? { prompt: params.prompt } : {}),
+    content: filePart ? [filePart] : [],
+    parameters: {
+      ...(params.language !== undefined ? { language: params.language } : {}),
+      ...(params.response_format !== undefined
+        ? { format: params.response_format }
+        : {}),
+      ...("timestamp_granularities" in params &&
+      params.timestamp_granularities !== undefined
+        ? { timestamp_granularities: params.timestamp_granularities }
+        : {}),
     },
+  };
+  if (!filePart) observeGroqAudioInput(source, input, span);
+  return {
+    input,
     metadata: { model: params.model, provider: "groq" },
   };
 }
@@ -197,21 +204,122 @@ function groqAudioFilePart(source: unknown): unknown | undefined {
     typeof source.type === "string" && source.type
       ? source.type
       : audioContentTypeFromFilename(filename);
-  const data =
-    source instanceof Blob
-      ? source
-      : typeof source.path === "string"
-        ? source.path
-        : undefined;
+  const data = source instanceof Blob ? source : undefined;
 
-  if (!filename || !contentType || data === undefined) return undefined;
+  if (!contentType || data === undefined) return undefined;
+  const resolvedFilename =
+    filename ?? `audio.${getExtensionFromMediaType(contentType)}`;
   return {
     type: "file",
     file: {
-      filename,
-      file_data: new Attachment({ data, filename, contentType }),
+      filename: resolvedFilename,
+      file_data: new Attachment({
+        data,
+        filename: resolvedFilename,
+        contentType,
+      }),
     },
   };
+}
+
+function observeGroqAudioInput(
+  source: unknown,
+  input: Record<string, unknown>,
+  span: Span,
+): void {
+  if (!isObject(source)) return;
+
+  const body = isObject(source.body)
+    ? source.body
+    : isAsyncIterable(source)
+      ? source
+      : undefined;
+  if (!body) return;
+
+  const contentType =
+    responseHeader(source, "content-type")?.split(";", 1)[0]?.trim() ||
+    (typeof source.type === "string" && source.type
+      ? source.type
+      : audioContentTypeFromFilename(filenameForAudioSource(source)));
+  if (!contentType) return;
+
+  const filename =
+    filenameFromContentDisposition(
+      responseHeader(source, "content-disposition"),
+    ) ??
+    filenameForAudioSource(source) ??
+    `audio.${getExtensionFromMediaType(contentType)}`;
+  const chunks: Uint8Array[] = [];
+  let finished = false;
+  const observer: Parameters<typeof observeByteStream>[1] = {
+    onChunk(chunk: Uint8Array) {
+      if (!finished && chunk.byteLength > 0) chunks.push(new Uint8Array(chunk));
+    },
+    onComplete() {
+      if (finished) return;
+      finished = true;
+      const data = concatUint8Arrays(...chunks);
+      chunks.length = 0;
+      if (data.byteLength === 0) return;
+      span.log({
+        input: {
+          ...input,
+          content: [
+            {
+              type: "file",
+              file: {
+                filename,
+                byte_size: data.byteLength,
+                file_data: new Attachment({
+                  data: data.buffer,
+                  filename,
+                  contentType,
+                }),
+              },
+            },
+          ],
+        },
+      });
+    },
+    onCancel() {
+      finished = true;
+      chunks.length = 0;
+    },
+    aroundRead: (next) => withCurrent(span, next),
+    debugLabel: "Groq input audio",
+  };
+
+  if (body === source) observeByteStream(body, observer);
+  else observeResponseBytes(source, observer);
+}
+
+function filenameForAudioSource(source: Record<string, unknown>) {
+  if (typeof source.name === "string" && source.name)
+    return filenameFromPath(source.name);
+  if (typeof source.path === "string" && source.path)
+    return filenameFromPath(source.path);
+  if (typeof source.url === "string" && source.url)
+    return filenameFromPath(source.url);
+  return undefined;
+}
+
+function responseHeader(
+  response: Record<string, unknown>,
+  name: string,
+): string | undefined {
+  if (!isObject(response.headers) || typeof response.headers.get !== "function")
+    return undefined;
+  try {
+    const value = Reflect.apply(response.headers.get, response.headers, [name]);
+    return typeof value === "string" ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function filenameFromContentDisposition(value: string | undefined) {
+  const match = value?.match(/filename="([^"]+)"|filename=([^;]+)/i);
+  return match?.[1] ?? match?.[2]?.trim();
 }
 
 function filenameFromPath(value: string): string | undefined {
@@ -272,18 +380,32 @@ function captureGroqSpeechResponse(
 ): boolean {
   if (!isObject(response)) return false;
 
-  const headerContentType =
-    isObject(response.headers) && typeof response.headers.get === "function"
-      ? response.headers.get("content-type")?.split(";", 1)[0]
-      : undefined;
+  const headerContentType = responseHeader(response, "content-type")?.split(
+    ";",
+    1,
+  )[0];
   const contentType = headerContentType?.startsWith("audio/")
     ? headerContentType
     : audioContentTypeFromFormat(request.response_format ?? "wav");
   if (!contentType) return false;
 
-  const filename = `speech.${getExtensionFromMediaType(contentType)}`;
+  const filename =
+    filenameFromContentDisposition(
+      responseHeader(response, "content-disposition"),
+    ) ?? `speech.${getExtensionFromMediaType(contentType)}`;
   const chunks: Uint8Array[] = [];
   let finished = false;
+  let started = false;
+  let spanEnded = false;
+  const endSpan = () => {
+    if (spanEnded) return;
+    spanEnded = true;
+    try {
+      span.end();
+    } catch (error) {
+      debugLogger.error("Error ending Groq speech span", error);
+    }
+  };
   let firstChunk = true;
   const onChunk = (chunk: Uint8Array) => {
     if (finished || chunk.byteLength === 0) return;
@@ -302,82 +424,131 @@ function captureGroqSpeechResponse(
     finished = true;
     const data = concatUint8Arrays(...chunks);
     chunks.length = 0;
-    span.log({
-      output: {
-        content:
-          data.byteLength > 0
-            ? [
-                {
-                  type: "file",
-                  file: {
-                    filename,
-                    byte_size: data.byteLength,
-                    file_data: new Attachment({
-                      data: data.buffer,
+    try {
+      span.log({
+        output: {
+          content:
+            data.byteLength > 0
+              ? [
+                  {
+                    type: "file",
+                    file: {
                       filename,
-                      contentType,
-                    }),
+                      byte_size: data.byteLength,
+                      file_data: new Attachment({
+                        data: data.buffer,
+                        filename,
+                        contentType,
+                      }),
+                    },
                   },
-                },
-              ]
-            : [],
-      },
-    });
-    span.end();
+                ]
+              : [],
+        },
+      });
+    } finally {
+      endSpan();
+    }
   };
   const cancel = (error?: unknown) => {
     if (finished) return;
     finished = true;
     chunks.length = 0;
-    if (error !== undefined) span.log({ error });
-    span.end();
+    try {
+      if (error !== undefined) span.log({ error });
+    } finally {
+      endSpan();
+    }
   };
 
-  if (isObject(response.body)) {
-    observeByteStream(response.body, {
-      onChunk,
-      onComplete: complete,
-      onCancel: cancel,
-      aroundRead: (next) => withCurrent(span, next),
-      debugLabel: "Groq speech audio",
+  const patched = observeResponseBytes(response, {
+    onChunk,
+    onComplete: complete,
+    onCancel: cancel,
+    onStart: () => {
+      started = true;
+    },
+    aroundRead: (next) => withCurrent(span, next),
+    debugLabel: "Groq speech audio",
+  });
+  if (patched)
+    queueMicrotask(() => {
+      if (!started) {
+        try {
+          span.log({ output: { content: [] } });
+        } catch (error) {
+          debugLogger.error("Error logging unread Groq speech response", error);
+        } finally {
+          endSpan();
+        }
+      }
     });
+  return patched;
+}
+
+function observeResponseBytes(
+  response: Record<string, unknown>,
+  options: Parameters<typeof observeByteStream>[1],
+): boolean {
+  const onStart = options.onStart;
+  const safely = (callback: () => void) => {
+    try {
+      callback();
+    } catch (error) {
+      debugLogger.error(`Error observing ${options.debugLabel}`, error);
+    }
+  };
+  const safeOptions: Parameters<typeof observeByteStream>[1] = {
+    ...options,
+    onStart: onStart
+      ? () => {
+          safely(onStart);
+        }
+      : undefined,
+    onChunk: (chunk) => safely(() => options.onChunk(chunk)),
+    onComplete: () => safely(options.onComplete),
+    onCancel: (error) => safely(() => options.onCancel(error)),
+  };
+  let patched = false;
+  if (isObject(response.body)) {
+    observeByteStream(response.body, safeOptions);
+    patched = true;
   }
 
-  let patched = isObject(response.body);
   patched =
-    patchResponseBytesMethod(
-      response,
-      "arrayBuffer",
-      onChunk,
-      complete,
-      cancel,
-    ) || patched;
-  patched =
-    patchResponseBytesMethod(response, "bytes", onChunk, complete, cancel) ||
-    patched;
-  patched =
-    patchResponseBlobMethod(response, onChunk, complete, cancel) || patched;
+    patchResponseBytesMethod(response, "arrayBuffer", safeOptions) || patched;
+  patched = patchResponseBytesMethod(response, "bytes", safeOptions) || patched;
+  patched = patchResponseBlobMethod(response, safeOptions) || patched;
+  for (const method of ["formData", "json", "text"] as const)
+    patched =
+      patchResponseCompletionMethod(response, method, safeOptions) || patched;
+  patched = patchResponseCloneMethod(response, safeOptions) || patched;
   return patched;
 }
 
 function patchResponseBytesMethod(
   response: object,
   method: "arrayBuffer" | "bytes",
-  onChunk: (chunk: Uint8Array) => void,
-  complete: () => void,
-  cancel: (error?: unknown) => void,
+  options: Parameters<typeof observeByteStream>[1],
 ): boolean {
   const responseRecord = response as Record<string, unknown>;
   const original = responseRecord[method];
   if (!Object.isExtensible(response) || typeof original !== "function")
     return false;
   responseRecord[method] = function (this: unknown, ...args: unknown[]) {
-    const result = Reflect.apply(original, this, args);
+    options.onStart?.();
+    let result: unknown;
+    try {
+      result = Reflect.apply(original, this, args);
+    } catch (error) {
+      options.onCancel(error);
+      throw error;
+    }
     void Promise.resolve(result).then((value) => {
-      if (value instanceof ArrayBuffer) onChunk(new Uint8Array(value));
-      else if (value instanceof Uint8Array) onChunk(value);
-      complete();
-    }, cancel);
+      if (value instanceof ArrayBuffer) options.onChunk(new Uint8Array(value));
+      else if (value instanceof Uint8Array) options.onChunk(value);
+      options.onComplete();
+    }, options.onCancel);
     return result;
   };
   return true;
@@ -385,27 +556,75 @@ function patchResponseBytesMethod(
 
 function patchResponseBlobMethod(
   response: object,
-  onChunk: (chunk: Uint8Array) => void,
-  complete: () => void,
-  cancel: (error?: unknown) => void,
+  options: Parameters<typeof observeByteStream>[1],
 ): boolean {
   const responseRecord = response as Record<string, unknown>;
   const original = responseRecord.blob;
   if (!Object.isExtensible(response) || typeof original !== "function")
     return false;
   responseRecord.blob = function (this: unknown, ...args: unknown[]) {
-    const result = Reflect.apply(original, this, args);
+    options.onStart?.();
+    let result: unknown;
+    try {
+      result = Reflect.apply(original, this, args);
+    } catch (error) {
+      options.onCancel(error);
+      throw error;
+    }
     void Promise.resolve(result).then((value) => {
       if (!(value instanceof Blob)) {
-        complete();
+        options.onComplete();
         return;
       }
       void value.arrayBuffer().then((bytes) => {
-        onChunk(new Uint8Array(bytes));
-        complete();
-      }, cancel);
-    }, cancel);
+        options.onChunk(new Uint8Array(bytes));
+        options.onComplete();
+      }, options.onCancel);
+    }, options.onCancel);
     return result;
+  };
+  return true;
+}
+
+function patchResponseCompletionMethod(
+  response: object,
+  method: "formData" | "json" | "text",
+  options: Parameters<typeof observeByteStream>[1],
+): boolean {
+  const responseRecord = response as Record<string, unknown>;
+  const original = responseRecord[method];
+  if (!Object.isExtensible(response) || typeof original !== "function")
+    return false;
+  responseRecord[method] = function (this: unknown, ...args: unknown[]) {
+    options.onStart?.();
+    let result: unknown;
+    try {
+      result = Reflect.apply(original, this, args);
+    } catch (error) {
+      options.onCancel(error);
+      throw error;
+    }
+    void Promise.resolve(result).then(
+      () => options.onCancel(),
+      options.onCancel,
+    );
+    return result;
+  };
+  return true;
+}
+
+function patchResponseCloneMethod(
+  response: object,
+  options: Parameters<typeof observeByteStream>[1],
+): boolean {
+  const responseRecord = response as Record<string, unknown>;
+  const original = responseRecord.clone;
+  if (!Object.isExtensible(response) || typeof original !== "function")
+    return false;
+  responseRecord.clone = function (this: unknown, ...args: unknown[]) {
+    const clone = Reflect.apply(original, this, args);
+    if (isObject(clone)) observeResponseBytes(clone, options);
+    return clone;
   };
   return true;
 }
