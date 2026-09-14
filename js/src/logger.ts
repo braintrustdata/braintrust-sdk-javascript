@@ -5954,55 +5954,43 @@ export function getSpanParentObject<IsAsyncFlush extends boolean>(
 export function _internalExportParentSynchronously(
   parent: ReturnType<typeof getSpanParentObject>,
 ): string | undefined {
-  try {
-    const toStr = Reflect.get(parent, "toStr");
-    if (typeof toStr === "function") {
-      return Reflect.apply(toStr, parent, []);
-    }
+  if ("toStr" in parent) {
+    return parent.toStr();
+  }
 
-    if (
-      "getParentInfo" in parent &&
-      typeof parent.getParentInfo === "function"
-    ) {
-      const parentInfo = parent.getParentInfo();
-      if (parentInfo) {
-        const objectId = parentInfo.objectId.getSync().value;
-        if (objectId || parentInfo.computeObjectMetadataArgs) {
-          return new SpanComponentsV4({
-            object_type: parentInfo.objectType,
-            ...(objectId
-              ? { object_id: objectId }
-              : {
-                  compute_object_metadata_args:
-                    parentInfo.computeObjectMetadataArgs,
-                }),
-            row_id: parent.id,
-            root_span_id: parent.rootSpanId,
-            span_id: parent.spanId,
-          }).toStr();
-        }
-      }
-    }
-
-    const getOtelParent = Reflect.get(parent, "_getOtelParent");
-    if (typeof getOtelParent !== "function") {
+  if ("getParentInfo" in parent) {
+    const parentInfo = parent.getParentInfo();
+    if (!parentInfo) {
       return undefined;
     }
-    const components = braintrustParentToComponents(
-      Reflect.apply(getOtelParent, parent, []),
-    );
-    if (!components) {
+    const objectId = parentInfo.objectId.getSync().value;
+    if (!objectId && !parentInfo.computeObjectMetadataArgs) {
       return undefined;
     }
     return new SpanComponentsV4({
-      object_type: components.objectType,
-      ...(components.objectId
-        ? { object_id: components.objectId }
-        : { compute_object_metadata_args: components.computeArgs ?? {} }),
+      object_type: parentInfo.objectType,
+      ...(objectId
+        ? { object_id: objectId }
+        : {
+            compute_object_metadata_args:
+              parentInfo.computeObjectMetadataArgs ?? {},
+          }),
+      row_id: parent.id,
+      root_span_id: parent.rootSpanId,
+      span_id: parent.spanId,
     }).toStr();
-  } catch {
+  }
+
+  const components = braintrustParentToComponents(parent._getOtelParent());
+  if (!components) {
     return undefined;
   }
+  return new SpanComponentsV4({
+    object_type: components.objectType,
+    ...(components.objectId
+      ? { object_id: components.objectId }
+      : { compute_object_metadata_args: components.computeArgs ?? {} }),
+  }).toStr();
 }
 
 /**

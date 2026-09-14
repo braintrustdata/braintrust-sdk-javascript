@@ -14,9 +14,6 @@ import type {
   StartOpenAIAgentsTraceArgs,
 } from "./openai-agents-api-types";
 
-const TOKEN_PREFIX = "bt-openai-agents-v1:";
-const MAX_TOKEN_LENGTH = 1_000_000;
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -62,106 +59,12 @@ function validateStartArgs(value: unknown): StartOpenAIAgentsTraceArgs {
   return value;
 }
 
-function validTraceState(value: unknown): value is OpenAIAgentsTraceState {
-  if (!isRecord(value)) {
-    return false;
-  }
-  return (
-    value.version === 1 &&
-    typeof value.root === "string" &&
-    value.root.length > 0 &&
-    typeof value.rootKey === "string" &&
-    value.rootKey.length > 0 &&
-    typeof value.rootParent === "string" &&
-    value.rootParent.length > 0 &&
-    typeof value.ended === "boolean" &&
-    typeof value.startTime === "number" &&
-    Number.isFinite(value.startTime) &&
-    (value.firstTokenAt === undefined ||
-      (typeof value.firstTokenAt === "number" &&
-        Number.isFinite(value.firstTokenAt))) &&
-    Array.isArray(value.eventIds) &&
-    value.eventIds.every((eventId) => typeof eventId === "string") &&
-    isRecord(value.callItems) &&
-    Object.values(value.callItems).every(
-      (itemId) => typeof itemId === "string",
-    ) &&
-    isRecord(value.openTools) &&
-    Object.values(value.openTools).every(
-      (tool) =>
-        isRecord(tool) &&
-        typeof tool.itemId === "string" &&
-        typeof tool.name === "string" &&
-        typeof tool.startTime === "number" &&
-        Number.isFinite(tool.startTime) &&
-        typeof tool.toolType === "string" &&
-        (tool.turnId === undefined || typeof tool.turnId === "string"),
-    ) &&
-    isRecord(value.subagents) &&
-    Object.values(value.subagents).every(
-      (subagent) =>
-        isRecord(subagent) &&
-        typeof subagent.openedAt === "number" &&
-        Number.isFinite(subagent.openedAt) &&
-        (subagent.closedAt === undefined ||
-          (typeof subagent.closedAt === "number" &&
-            Number.isFinite(subagent.closedAt))) &&
-        (subagent.parentAgentId === undefined ||
-          typeof subagent.parentAgentId === "string"),
-    ) &&
-    isRecord(value.turnSubagents) &&
-    Object.values(value.turnSubagents).every(
-      (subagentId) => typeof subagentId === "string",
-    )
-  );
-}
-
-function decodeToken(token: string): OpenAIAgentsTraceState | null {
-  if (
-    typeof token !== "string" ||
-    !token.startsWith(TOKEN_PREFIX) ||
-    token.length > MAX_TOKEN_LENGTH
-  ) {
-    throw new TypeError("Invalid OpenAI Agents trace token");
-  }
-  let decoded: unknown;
-  try {
-    decoded = JSON.parse(token.slice(TOKEN_PREFIX.length));
-  } catch {
-    throw new TypeError("Invalid OpenAI Agents trace token");
-  }
-  if (!isRecord(decoded) || decoded.version !== 1) {
-    throw new TypeError("Invalid OpenAI Agents trace token");
-  }
-  if (decoded.state === null) {
-    return null;
-  }
-  if (!validTraceState(decoded.state)) {
-    throw new TypeError("Invalid OpenAI Agents trace token");
-  }
-  return decoded.state;
-}
-
-function encodeToken(state: OpenAIAgentsTraceState | null): string {
-  const token: OpenAIAgentsTraceToken = {
-    state,
-    version: 1,
-  };
-  const encoded = `${TOKEN_PREFIX}${JSON.stringify(token)}`;
-  if (encoded.length > MAX_TOKEN_LENGTH) {
-    throw new RangeError("OpenAI Agents trace token is too large");
-  }
-  return encoded;
-}
-
 function validateEvent(event: unknown): unknown {
-  let eventType: unknown;
-  try {
-    eventType = isRecord(event) ? Reflect.get(event, "type") : undefined;
-  } catch {
-    eventType = undefined;
-  }
-  if (typeof eventType !== "string" || eventType.length === 0) {
+  if (
+    !isRecord(event) ||
+    typeof event.type !== "string" ||
+    event.type.length === 0
+  ) {
     throw new TypeError(
       "updateOpenAIAgentsTrace expected an OpenAI Agents event object",
     );
@@ -169,25 +72,10 @@ function validateEvent(event: unknown): unknown {
   return event;
 }
 
-/**
- * Start a manual trace for one asynchronous OpenAI Agents API turn.
- *
- * This helper performs no OpenAI API requests. Pass it the same `input`,
- * `agent`, and `agent_id` values used to create or continue the turn. `metadata`
- * is copied to the Braintrust span and can also contain an application
- * correlation ID when the same parameters are sent to OpenAI. The returned
- * token can be persisted immediately before submission and passed with later events to
- * `updateOpenAIAgentsTrace`. The trace closes when a root turn reaches a
- * terminal state.
- */
-export function startOpenAIAgentsTrace(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Provider types vary between OpenAI SDK versions; validate the narrow surface at runtime.
-  args: any,
-): string {
-  const validatedArgs = validateStartArgs(args);
+function createTraceState(): OpenAIAgentsTraceState | null {
   const parent = _internalExportParentSynchronously(getSpanParentObject());
   if (!parent) {
-    return encodeToken(null);
+    return null;
   }
   const parentComponents = SpanComponentsV4.fromStr(parent);
   const rowId = newId();
@@ -209,7 +97,7 @@ export function startOpenAIAgentsTrace(
     row_id: rowId,
     span_id: spanId,
   }).toStr();
-  const state: OpenAIAgentsTraceState = {
+  return {
     callItems: {},
     ended: false,
     eventIds: [],
@@ -222,6 +110,28 @@ export function startOpenAIAgentsTrace(
     turnSubagents: {},
     version: 1,
   };
+}
+
+/**
+ * Start a manual trace for one asynchronous OpenAI Agents API turn.
+ *
+ * This helper performs no OpenAI API requests. Pass it the same `input`,
+ * `agent`, and `agent_id` values used to create or continue the turn. `metadata`
+ * is copied to the Braintrust span and can also contain an application
+ * correlation ID when the same parameters are sent to OpenAI. The returned
+ * token can be persisted immediately before submission and passed with later events to
+ * `updateOpenAIAgentsTrace`. The trace closes when a root turn reaches a
+ * terminal state.
+ */
+export function startOpenAIAgentsTrace(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Provider types vary between OpenAI SDK versions; validate the narrow surface at runtime.
+  args: any,
+): OpenAIAgentsTraceToken {
+  const validatedArgs = validateStartArgs(args);
+  const state = createTraceState();
+  if (!state) {
+    return null;
+  }
   try {
     void openAIChannels.agentsTraceStart
       .invoke(
@@ -242,7 +152,7 @@ export function startOpenAIAgentsTrace(
       error,
     );
   }
-  return encodeToken(state);
+  return state;
 }
 
 /**
@@ -253,20 +163,18 @@ export function startOpenAIAgentsTrace(
  * be applied in order, passing the returned token to the next call.
  */
 export async function updateOpenAIAgentsTrace(
-  token: string,
+  token: OpenAIAgentsTraceToken,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Provider event types vary between OpenAI SDK versions; validate the narrow surface at runtime.
   event: any,
-): Promise<string> {
-  const state = decodeToken(token);
+): Promise<OpenAIAgentsTraceToken> {
+  const state = token;
   const validatedEvent = validateEvent(event);
   try {
-    return encodeToken(
-      await openAIChannels.agentsTraceCapture.invoke(
-        async () => state,
-        undefined,
-        [{ state, event: validatedEvent }],
-        {},
-      ),
+    return await openAIChannels.agentsTraceCapture.invoke(
+      async () => state,
+      undefined,
+      [{ state, event: validatedEvent }],
+      {},
     );
   } catch (error) {
     debugLogger.debug(
@@ -284,18 +192,16 @@ export async function updateOpenAIAgentsTrace(
  * repeated delivery can remain idempotent.
  */
 export async function failOpenAIAgentsTrace(
-  token: string,
+  token: OpenAIAgentsTraceToken,
   error: unknown,
-): Promise<string> {
-  const state = decodeToken(token);
+): Promise<OpenAIAgentsTraceToken> {
+  const state = token;
   try {
-    return encodeToken(
-      await openAIChannels.agentsTraceFail.invoke(
-        async () => state,
-        undefined,
-        [{ state, error }],
-        {},
-      ),
+    return await openAIChannels.agentsTraceFail.invoke(
+      async () => state,
+      undefined,
+      [{ state, error }],
+      {},
     );
   } catch (instrumentationError) {
     debugLogger.debug(

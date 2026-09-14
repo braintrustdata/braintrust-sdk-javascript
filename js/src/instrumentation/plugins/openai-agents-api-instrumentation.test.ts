@@ -88,7 +88,8 @@ describe("OpenAI Agents API instrumentation", () => {
       type: "agent.session.turn.output_text.delta",
     });
 
-    expect(token).not.toContain("streamed answer text");
+    expect(JSON.stringify(token)).not.toContain("streamed answer text");
+    token = JSON.parse(JSON.stringify(token));
     token = await updateOpenAIAgentsTrace(token, {
       event_id: "evt-result",
       item: {
@@ -136,7 +137,7 @@ describe("OpenAI Agents API instrumentation", () => {
     };
     token = await updateOpenAIAgentsTrace(token, completed);
     token = await updateOpenAIAgentsTrace(token, completed);
-    expect(token).toEqual(expect.any(String));
+    expect(token).toMatchObject({ ended: true, version: 1 });
 
     const rows = (await backgroundLogger.drain()) as Array<Record<string, any>>;
     expect(rows).toHaveLength(2);
@@ -265,7 +266,7 @@ describe("OpenAI Agents API instrumentation", () => {
       type: "agent.session.turn.completed",
       usage: { input_tokens: 2, output_tokens: 1, total_tokens: 3 },
     });
-    expect(token).toEqual(expect.any(String));
+    expect(token).toMatchObject({ ended: true, version: 1 });
 
     const rows = (await backgroundLogger.drain()) as Array<Record<string, any>>;
     const root = rows.find(
@@ -296,7 +297,7 @@ describe("OpenAI Agents API instrumentation", () => {
     });
   });
 
-  it("closes open work on explicit failure and rejects invalid tokens", async () => {
+  it("closes open work on explicit failure", async () => {
     let token = startOpenAIAgentsTrace({ input: "fail" });
     token = await updateOpenAIAgentsTrace(token, {
       event_id: "evt-command",
@@ -323,9 +324,6 @@ describe("OpenAI Agents API instrumentation", () => {
       rows.find((row) => row.span_attributes?.name === "Command execution")
         ?.error,
     ).toContain("network failed");
-    await expect(
-      updateOpenAIAgentsTrace("invalid", { type: "agent.session.created" }),
-    ).rejects.toThrow("Invalid OpenAI Agents trace token");
   });
 
   it("preserves the active Braintrust span as its parent", async () => {
@@ -338,7 +336,7 @@ describe("OpenAI Agents API instrumentation", () => {
       turn: { completed_at: 200, id: "turn-1", subagent_id: null },
       type: "agent.session.turn.completed",
     });
-    expect(token).toEqual(expect.any(String));
+    expect(token).toMatchObject({ ended: true, version: 1 });
     parent.end();
 
     const rows = (await backgroundLogger.drain()) as Array<Record<string, any>>;
@@ -373,7 +371,7 @@ describe("OpenAI Agents API instrumentation", () => {
       future_session_field: { supported: true },
       input: [{ future_input_type: "provider-version-specific" }],
     });
-    expect(token).toEqual(expect.any(String));
+    expect(token).toMatchObject({ ended: false, version: 1 });
     await expect(updateOpenAIAgentsTrace(token, null)).rejects.toThrow(
       "expected an OpenAI Agents event object",
     );
@@ -388,7 +386,7 @@ describe("OpenAI Agents API instrumentation", () => {
       type: "agent.session.future_event",
     });
     token = await failOpenAIAgentsTrace(token, new Error("done"));
-    expect(token).toEqual(expect.any(String));
+    expect(token).toMatchObject({ ended: true, version: 1 });
 
     const rows = (await backgroundLogger.drain()) as Array<Record<string, any>>;
     expect(rows).toHaveLength(1);

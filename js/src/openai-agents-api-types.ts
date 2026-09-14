@@ -44,7 +44,4 @@ export type OpenAIAgentsTraceState = {
   version: 1;
 };
 
-export type OpenAIAgentsTraceToken = {
-  state: OpenAIAgentsTraceState | null;
-  version: 1;
-};
+export type OpenAIAgentsTraceToken = OpenAIAgentsTraceState | null;
