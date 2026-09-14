@@ -879,32 +879,6 @@ describe("AI SDK utility functions", () => {
       const result = omit(obj, []);
       expect(result).toEqual({ a: 1, b: 2 });
     });
-
-    it("should handle complex AI SDK paths", () => {
-      const obj = {
-        roundtrips: [
-          {
-            request: { body: "sensitive" },
-            response: { headers: "sensitive" },
-          },
-        ],
-        rawResponse: { headers: "sensitive" },
-      };
-      const result = omit(obj, [
-        "roundtrips[].request.body",
-        "roundtrips[].response.headers",
-        "rawResponse.headers",
-      ]);
-      expect(result).toEqual({
-        roundtrips: [
-          {
-            request: { body: "<omitted>" },
-            response: { headers: "<omitted>" },
-          },
-        ],
-        rawResponse: { headers: "<omitted>" },
-      });
-    });
   });
 
   describe("extractGetterValues", () => {
@@ -1477,16 +1451,16 @@ describe("AI SDK utility functions", () => {
     it("should omit specified paths", () => {
       const output = {
         text: "Hello",
-        roundtrips: [
+        steps: [
           {
             request: { body: "sensitive" },
             response: { data: "ok" },
           },
         ],
       };
-      const result = processAISDKOutput(output, ["roundtrips[].request.body"]);
-      expect(result.roundtrips[0].request.body).toBe("<omitted>");
-      expect(result.roundtrips[0].response.data).toBe("ok");
+      const result = processAISDKOutput(output, ["steps[].request.body"]);
+      expect(result.steps[0].request.body).toBe("<omitted>");
+      expect(result.steps[0].response.data).toBe("ok");
     });
 
     it("preserves user headers fields while omitting configured transport headers", () => {
@@ -1537,21 +1511,6 @@ describe("AI SDK utility functions", () => {
           {
             headers: { authorization: "secret" },
             id: "provider-response-id",
-          },
-        ],
-        roundtrips: [
-          {
-            request: {
-              headers: { authorization: "secret" },
-              body: "secret-roundtrip-request-body",
-              providerPayload: {
-                headers: { authorization: "nested-roundtrip-request-secret" },
-              },
-            },
-            response: {
-              headers: { authorization: "secret" },
-              id: "roundtrip-response-id",
-            },
           },
         ],
         steps: [
@@ -1607,7 +1566,6 @@ describe("AI SDK utility functions", () => {
       });
       const serializedResult = JSON.stringify(result);
       expect(serializedResult).not.toContain("secret-request-body");
-      expect(serializedResult).not.toContain("secret-roundtrip-request-body");
       expect(serializedResult).not.toContain("secret-step-request-body");
       expect(serializedResult).not.toContain("authorization");
       expect(result.request).not.toHaveProperty("headers");
@@ -1623,13 +1581,6 @@ describe("AI SDK utility functions", () => {
       );
       expect(result.rawResponse).not.toHaveProperty("headers");
       expect(result.responses[0]).not.toHaveProperty("headers");
-      if (result.roundtrips) {
-        expect(result.roundtrips[0].request).not.toHaveProperty("headers");
-        expect(result.roundtrips[0].request.providerPayload).not.toHaveProperty(
-          "headers",
-        );
-        expect(result.roundtrips[0].response).not.toHaveProperty("headers");
-      }
       expect(result.steps[0].request).not.toHaveProperty("headers");
       expect(result.steps[0].request.providerPayload).not.toHaveProperty(
         "headers",

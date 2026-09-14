@@ -625,8 +625,8 @@ const wrapRerank = (
 
 const makeStreamWrapper = (
   channel:
-    | typeof aiSDKChannels.streamText
-    | typeof aiSDKChannels.streamObject
+    | typeof aiSDKChannels.streamTextSync
+    | typeof aiSDKChannels.streamObjectSync
     | typeof aiSDKChannels.agentStream
     | typeof harnessAgentChannels.stream
     | typeof harnessAgentChannels.continueStream
@@ -656,6 +656,10 @@ const makeStreamWrapper = (
       }),
     });
 
+    if ("traceSync" in channel) {
+      return channel.traceSync(() => streamText(tracedParams) as any, context);
+    }
+
     return channel.tracePromise(() => streamText(tracedParams) as any, context);
   };
   Object.defineProperty(wrapper, "name", { value: name, writable: false });
@@ -668,7 +672,7 @@ const wrapStreamText = (
   aiSDK?: AISDK,
 ) => {
   return makeStreamWrapper(
-    aiSDKChannels.streamText,
+    aiSDKChannels.streamTextSync,
     "streamText",
     streamText,
     { aiSDK },
@@ -682,7 +686,7 @@ const wrapStreamObject = (
   aiSDK?: AISDK,
 ) => {
   return makeStreamWrapper(
-    aiSDKChannels.streamObject,
+    aiSDKChannels.streamObjectSync,
     "streamObject",
     streamObject,
     { aiSDK },

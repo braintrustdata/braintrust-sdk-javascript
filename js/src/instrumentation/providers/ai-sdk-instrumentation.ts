@@ -79,7 +79,7 @@ import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from ".
 interface AISDKInstrumentationConfig {
   /**
    * List of JSON paths to remove from output field.
-   * Uses dot notation with array wildcards: "roundtrips[].request.body"
+   * Uses dot notation with array wildcards: "steps[].request.body"
    */
   denyOutputPaths?: string[];
 }
@@ -89,10 +89,6 @@ interface AISDKInstrumentationConfig {
  * These contain redundant or verbose data that's not useful for tracing.
  */
 export const DEFAULT_DENY_OUTPUT_PATHS: string[] = [
-  // v3
-  "roundtrips[].request.body",
-  "roundtrips[].request.headers",
-  "roundtrips[].response.headers",
   "rawResponse.headers",
   "responseMessages",
   // v5
@@ -122,8 +118,6 @@ const TRANSPORT_PAYLOAD_ROOT_PATHS = [
   "request",
   "response",
   "responses[]",
-  "roundtrips[].request",
-  "roundtrips[].response",
   "steps[].request",
   "steps[].response",
   "steps[].responses[]",
@@ -232,32 +226,7 @@ class AISDKInstrumentationConsumer {
       extractMetrics: (result) => extractTokenMetrics(result),
     });
 
-    // streamText - function returning stream
-    traceStreamingChannel(aiSDKChannels.streamText, {
-      name: "streamText",
-      type: SpanTypeAttribute.FUNCTION,
-      shouldTrace: () => currentCloudflareThinkSpan() === undefined,
-      extractInput: ([params], event, span) =>
-        prepareAISDKCallInput(params, event, span, denyOutputPaths),
-      extractOutput: (result, endEvent) =>
-        processAISDKOutput(
-          result,
-          resolveDenyOutputPaths(endEvent, denyOutputPaths),
-        ),
-      extractMetrics: (result, startTime, endEvent) =>
-        extractTopLevelAISDKMetrics(result, endEvent, startTime),
-      aggregateChunks: aggregateAISDKChunks,
-      patchResult: ({ endEvent, result, span, startTime }) =>
-        patchAISDKStreamingResult({
-          defaultDenyOutputPaths: denyOutputPaths,
-          endEvent,
-          result,
-          span,
-          startTime,
-        }),
-    });
-
-    // streamText - sync function returning stream (v4+, used by auto-hook)
+    // streamText - sync function returning stream
     traceSyncStreamChannel(aiSDKChannels.streamTextSync, {
       name: "streamText",
       type: SpanTypeAttribute.FUNCTION,
@@ -292,31 +261,7 @@ class AISDKInstrumentationConsumer {
       aggregateChunks: aggregateAISDKChunks,
     });
 
-    // streamObject - function returning stream
-    traceStreamingChannel(aiSDKChannels.streamObject, {
-      name: "streamObject",
-      type: SpanTypeAttribute.FUNCTION,
-      extractInput: ([params], event, span) =>
-        prepareAISDKCallInput(params, event, span, denyOutputPaths),
-      extractOutput: (result, endEvent) =>
-        processAISDKOutput(
-          result,
-          resolveDenyOutputPaths(endEvent, denyOutputPaths),
-        ),
-      extractMetrics: (result, startTime, endEvent) =>
-        extractTopLevelAISDKMetrics(result, endEvent, startTime),
-      aggregateChunks: aggregateAISDKChunks,
-      patchResult: ({ endEvent, result, span, startTime }) =>
-        patchAISDKStreamingResult({
-          defaultDenyOutputPaths: denyOutputPaths,
-          endEvent,
-          result,
-          span,
-          startTime,
-        }),
-    });
-
-    // streamObject - sync function returning stream (v4+, used by auto-hook)
+    // streamObject - sync function returning stream
     traceSyncStreamChannel(aiSDKChannels.streamObjectSync, {
       name: "streamObject",
       type: SpanTypeAttribute.FUNCTION,
