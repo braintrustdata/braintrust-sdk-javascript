@@ -44,3 +44,5 @@ Map the change before editing:
 ## Process
 
 Before implementing or changing instrumentation it is advisable to add or adjust the e2e tests for the desired change, make it fail, then implement the new instrumentation until the test passes.
+
+When validating instrumentation with real provider APIs or recording e2e cassettes, default to cheap models that support the behavior under test, unless the user explicitly requests otherwise. Keep prompts, output limits, and media duration small while preserving meaningful coverage.

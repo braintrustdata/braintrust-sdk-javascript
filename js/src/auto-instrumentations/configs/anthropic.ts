@@ -14,9 +14,9 @@ import { anthropicChannels } from "../../instrumentation/plugins/anthropic-chann
  */
 export const anthropicConfigs: InstrumentationConfig[] = [
   // Each logical target is listed for both published module formats:
-  // `.mjs` covers ESM imports, while `.js` covers CJS requires. The Bedrock
-  // SDK delegates CJS `messages.create` calls through these Anthropic SDK
-  // `.js` resource files.
+  // `.mjs` covers ESM imports, while `.js` covers CJS requires. Both
+  // @anthropic-ai/bedrock-sdk and @anthropic-ai/vertex-sdk instantiate these
+  // shared Anthropic resources, so they use the same targets and channels.
 
   // Messages API - create in older SDK layouts (supports streaming via stream=true parameter)
   {

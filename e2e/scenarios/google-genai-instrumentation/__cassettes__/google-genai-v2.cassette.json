@@ -1277,6 +1277,46 @@
         "status": 200,
         "statusText": "OK"
       }
+    },
+    {
+      "callIndex": 0,
+      "id": "3189e926fc51a6a1",
+      "matchKey": "POST generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:batchEmbedContents",
+      "recordedAt": "2026-09-08T13:46:11.853Z",
+      "request": {
+        "body": {
+          "contentType": "application/json",
+          "kind": "binary",
+          "path": "google-genai-v2.cassette.blobs/4020edac394fbb183260402bc95c4d5592d75a71a36fd0327d5fc593daeb9166.bin",
+          "sha256": "4020edac394fbb183260402bc95c4d5592d75a71a36fd0327d5fc593daeb9166"
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:batchEmbedContents"
+      },
+      "response": {
+        "body": {
+          "contentType": "application/json; charset=UTF-8",
+          "kind": "binary",
+          "path": "google-genai-v2.cassette.blobs/3598c78889c71c38f0789ffad5854e353be5524c8ba4f096a11dc9aa94dd6525.bin",
+          "sha256": "3598c78889c71c38f0789ffad5854e353be5524c8ba4f096a11dc9aa94dd6525"
+        },
+        "headers": {
+          "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+          "content-encoding": "gzip",
+          "content-type": "application/json; charset=UTF-8",
+          "date": "Tue, 08 Sep 2026 13:46:10 GMT",
+          "server": "scaffolding on HTTPServer2",
+          "server-timing": "gfet4t7; dur=1119",
+          "transfer-encoding": "chunked",
+          "vary": "Origin, X-Origin, Referer",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "x-xss-protection": "0"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
     }
   ],
   "meta": {

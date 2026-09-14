@@ -1,5 +1,12 @@
 # @braintrust/otel
 
+## 1.0.1
+
+### Patch Changes
+
+- deps: Bump deps and fix old OTEL baggage header parsing vulnerability (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2415)
+- Updated dependencies: braintrust@3.30.0
+
 ## 1.0.0
 
 This release promotes `@braintrust/otel` to semver major version 1.0.0. There are no breaking changes in this release.

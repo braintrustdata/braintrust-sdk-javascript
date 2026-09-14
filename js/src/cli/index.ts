@@ -381,8 +381,9 @@ async function initFile({
           tsconfig,
           plugins: [],
           externalPackages,
+          markKnownPackagesExternal: false,
         }),
-        external: ["fsevents", "chokidar"],
+        external: ["fsevents", "chokidar", ...(externalPackages ?? [])],
         write: true,
         minify: true,
         sourcemap: true,
@@ -820,17 +821,21 @@ function buildOpts({
   tsconfig,
   plugins: argPlugins,
   externalPackages,
+  markKnownPackagesExternal = true,
 }: {
   fileName: string;
   outFile: string;
   tsconfig?: string;
   plugins?: PluginMaker[];
   externalPackages?: string[];
+  markKnownPackagesExternal?: boolean;
 }): esbuild.BuildOptions {
   const plugins = [
     braintrustEsbuildPlugin(),
     nativeNodeModulesPlugin,
-    createMarkKnownPackagesExternalPlugin(externalPackages),
+    ...(markKnownPackagesExternal
+      ? [createMarkKnownPackagesExternalPlugin(externalPackages)]
+      : []),
     ...(argPlugins || []).map((fn) => fn(fileName)),
   ];
   return {

@@ -291,21 +291,6 @@ export type EveHandleMessageStreamEvent =
       readonly type: "session.completed";
     };
 
-export interface EveHookDefinition {
-  readonly events?: {
-    readonly "*"?: (
-      event: EveHandleMessageStreamEvent,
-      ctx: EveHookContext,
-    ) => void | Promise<void>;
-    readonly [eventType: string]:
-      | ((
-          event: EveHandleMessageStreamEvent,
-          ctx: EveHookContext,
-        ) => void | Promise<void>)
-      | undefined;
-  };
-}
-
 export interface EveInstrumentationSetupContext {
   readonly agentName: string;
 }
@@ -425,19 +410,6 @@ type EveToolApprovalResponse = {
   readonly reason?: string;
   readonly type: "tool-approval-response";
 };
-
-export type EveModelMessageContentPart =
-  | EveTextPart
-  | EveImagePart
-  | EveFilePart
-  | EveReasoningPart
-  | EveReasoningFilePart
-  | EveCustomPart
-  | EveToolCallPart
-  | EveToolResultPart
-  | EveToolApprovalRequest
-  | EveToolApprovalResponse
-  | EveToolResultContentPart;
 
 export type EveSystemModelMessage = {
   readonly content: string;
@@ -694,8 +666,29 @@ type EveProviderHandler<TEvent> = (
   context: EveProviderContext,
 ) => void | PromiseLike<void>;
 
+type EveChannelAudience = "private" | "public" | "unknown";
+
+interface EveTraceCaptureContext {
+  readonly agentName?: string;
+  readonly audience: EveChannelAudience;
+  readonly channelType?: string;
+}
+
+type EveTracePolicyDecision =
+  | { readonly emit: false }
+  | {
+      readonly emit: true;
+      readonly recordInputs: boolean;
+      readonly recordOutputs: boolean;
+    };
+
+type EveTraceCapturePolicy = (
+  trace: EveTraceCaptureContext,
+) => EveTracePolicyDecision | boolean;
+
 export interface EveProviderDefinition {
   readonly capture?: "content" | "metadata";
+  readonly tracePolicy?: EveTraceCapturePolicy;
   readonly events?: {
     readonly "action.completed"?: EveProviderHandler<EveProviderActionTerminalEvent>;
     readonly "action.failed"?: EveProviderHandler<EveProviderActionTerminalEvent>;

@@ -225,6 +225,7 @@ export { wrapPiCodingAgentSDK } from "./wrappers/pi-coding-agent";
 export { wrapCloudflareAgent } from "./wrappers/cloudflare-agent";
 export { wrapStrandsAgentSDK } from "./wrappers/strands-agent-sdk";
 export { wrapCloudflareAIChat } from "./wrappers/cloudflare-ai-chat";
+export { wrapGoogleGenerativeAI } from "./wrappers/google-generative-ai";
 export { wrapGoogleGenAI } from "./wrappers/google-genai";
 export { wrapGoogleADK } from "./wrappers/google-adk";
 export { wrapGenkit } from "./wrappers/genkit";
@@ -233,6 +234,7 @@ export { wrapHuggingFaceTransformers } from "./wrappers/huggingface-transformers
 export { wrapOpenRouterAgent } from "./wrappers/openrouter-agent";
 export { wrapOpenRouter } from "./wrappers/openrouter";
 export { wrapMistral } from "./wrappers/mistral";
+export { wrapLangGraphSDK } from "./wrappers/langgraph-sdk";
 export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapVoyageAI } from "./wrappers/voyageai";
@@ -279,15 +281,15 @@ export {
   defaultErrorScoreHandler,
 } from "./framework";
 
-export type { DurableEvalStore } from "./durable-eval";
+export type { WorkflowEvalStore } from "./workflow-eval";
 
 export {
-  BatchScorer,
-  BatchTask,
-  defineDurableEval,
-  DurableEvalMemoryStore,
-  DurableEvalRedisStore,
-} from "./durable-eval";
+  WorkflowScorer,
+  WorkflowTask,
+  defineWorkflowEval,
+  WorkflowEvalMemoryStore,
+  WorkflowEvalRedisStore,
+} from "./workflow-eval";
 
 export { agentAssertionScorer } from "./agent-assertions";
 
@@ -323,7 +325,13 @@ export {
   PromptDefinitionWithTools,
 } from "./prompt-schemas";
 
-export type { Trace, SpanData, GetThreadOptions } from "./trace";
+export type {
+  Trace,
+  SpanData,
+  SpanDurationFilter,
+  SpanFilters,
+  GetThreadOptions,
+} from "./trace";
 export { SpanFetcher, CachedSpanFetcher, LocalTrace } from "./trace";
 
 export type {
@@ -366,3 +374,5 @@ export {
   braintrustFlueInstrumentation,
 } from "./instrumentation";
 export type { InstrumentationConfig } from "./instrumentation";
+
+export { wrapElevenLabs } from "./wrappers/elevenlabs";

@@ -50,6 +50,61 @@ describe("AI SDK streaming instrumentation", () => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
 
+  describe.each(["promise", "generator"])("%s tool execution", (kind) => {
+    test.each([
+      { options: { toolCallId: "tool-1" }, expectedId: "tool-1" },
+      { options: undefined, expectedId: undefined },
+      { options: null, expectedId: undefined },
+      { options: {}, expectedId: undefined },
+      { options: { toolCallId: 123 }, expectedId: undefined },
+    ])("logs toolCallId from $options", async ({ options, expectedId }) => {
+      const input = { location: "Paris" };
+      const output = { temperature: 22 };
+      const params = {
+        tools: {
+          get_weather: {
+            execute:
+              kind === "generator"
+                ? async function* (..._args: unknown[]) {
+                    yield { temperature: 20 };
+                    yield output;
+                  }
+                : async (..._args: unknown[]) => output,
+          },
+        },
+      };
+
+      await aiSDKChannels.generateText.tracePromise(
+        async () => {
+          const result = params.tools.get_weather.execute(input, options);
+          if (Symbol.asyncIterator in result) {
+            const values = [];
+            for await (const value of result) {
+              values.push(value);
+            }
+            expect(values).toEqual([{ temperature: 20 }, output]);
+          } else {
+            expect(await result).toEqual(output);
+          }
+          return { text: "done" };
+        },
+        { arguments: [params] } as any,
+      );
+
+      const spans = (await backgroundLogger.drain()) as any[];
+      const toolSpans = spans.filter(
+        (span) => span.span_attributes?.type === "tool",
+      );
+      expect(toolSpans).toHaveLength(1);
+      expect(toolSpans[0]).toMatchObject({ input, output });
+      if (expectedId === undefined) {
+        expect(toolSpans[0].metadata ?? {}).not.toHaveProperty("toolCallId");
+      } else {
+        expect(toolSpans[0].metadata).toMatchObject({ toolCallId: expectedId });
+      }
+    });
+  });
+
   test("generateText child span logs missing usage diagnostic when output has no usage", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 

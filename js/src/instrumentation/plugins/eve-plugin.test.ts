@@ -4,6 +4,7 @@ import {
   beforeEach,
   describe,
   expect,
+  expectTypeOf,
   it,
   vi,
 } from "vitest";
@@ -18,7 +19,7 @@ import {
 } from "../../logger";
 import * as instrumentationExports from "../index";
 import { braintrustEveInstrumentation } from "./eve-instrumentation";
-import { braintrustEveHook } from "./eve-plugin";
+import { braintrustEveHook, capturedModelInput } from "./eve-plugin";
 import type {
   EveHandleMessageStreamEvent,
   EveHookContext,
@@ -84,6 +85,7 @@ describe("braintrustEveHook", () => {
   it("returns an Eve hook definition", () => {
     const hook = braintrustEveHook({ defineState });
 
+    expectTypeOf(hook).toBeAny();
     expect(Object.keys(hook)).toEqual(["events"]);
     expect(typeof hook.events?.["*"]).toBe("function");
   });
@@ -95,6 +97,7 @@ describe("braintrustEveHook", () => {
       setup,
     });
 
+    expectTypeOf(instrumentation).toBeAny();
     expect(instrumentation).toMatchObject({
       recordInputs: false,
       recordOutputs: false,
@@ -107,8 +110,12 @@ describe("braintrustEveHook", () => {
   });
 
   it("requires Eve's defineState API", () => {
-    expect(() => braintrustEveHook(undefined as never)).toThrow();
-    expect(() => braintrustEveInstrumentation(undefined as never)).toThrow();
+    expect(() => braintrustEveHook(undefined as never)).toThrow(
+      "braintrustEveHook requires Eve's defineState function",
+    );
+    expect(() => braintrustEveInstrumentation(undefined as never)).toThrow(
+      "braintrustEveInstrumentation requires an options object",
+    );
   });
 
   it("exports Eve APIs from root and instrumentation entrypoints", () => {
@@ -322,6 +329,72 @@ describe("braintrustEveHook", () => {
     expect(fakeEve.values.get("braintrust.eve.tracing")).toMatchObject({
       llmInputs: [],
     });
+  });
+
+  it("captures only runtime-validated model messages and content", () => {
+    expect(
+      capturedModelInput({
+        instructions: [
+          { content: "Keep this", role: "system" },
+          { content: "Not an instruction", role: "user" },
+          { content: 42, role: "system" },
+        ],
+        messages: [
+          null,
+          { content: "Ignore unknown roles", role: "future" },
+          { content: 42, role: "user" },
+          {
+            content: [
+              { text: "Keep this text", type: "text" },
+              { text: 42, type: "reasoning" },
+              { payload: "ignore", type: "future-part" },
+              {
+                input: { query: "eve" },
+                providerExecuted: "yes",
+                toolCallId: "call-1",
+                toolName: "search",
+                type: "tool-call",
+              },
+            ],
+            role: "assistant",
+          },
+        ],
+      }),
+    ).toEqual([
+      { content: "Keep this", role: "system" },
+      {
+        content: [
+          { text: "Keep this text", type: "text" },
+          {
+            input: { query: "eve" },
+            toolCallId: "call-1",
+            toolName: "search",
+            type: "tool-call",
+          },
+        ],
+        role: "assistant",
+      },
+    ]);
+
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    expect(
+      capturedModelInput({
+        messages: [
+          {
+            content: [
+              {
+                input: circular,
+                toolCallId: "call-circular",
+                toolName: "search",
+                type: "tool-call",
+              },
+            ],
+            role: "assistant",
+          },
+        ],
+      }),
+    ).toBeUndefined();
   });
 
   it("skips missing or malformed Eve instrumentation state without throwing", async () => {
@@ -2242,6 +2315,15 @@ describe("braintrustEveHook", () => {
     await expect(
       wildcard?.({ bad: true } as never, {} as never),
     ).resolves.toBeUndefined();
+    await expect(
+      wildcard?.({ type: "step.started" }, {}),
+    ).resolves.toBeUndefined();
+    const throwingEvent = Object.defineProperty({}, "type", {
+      get() {
+        throw new Error("hostile event getter");
+      },
+    });
+    await expect(wildcard?.(throwingEvent, {})).resolves.toBeUndefined();
     await expect(
       wildcard?.(
         {

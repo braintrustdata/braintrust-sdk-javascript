@@ -1,0 +1,646 @@
+{
+  "span_tree": [
+    {
+      "name": "elevenlabs-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "speech",
+          "children": [
+            {
+              "name": "elevenlabs.textToSpeech.convert",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "speech",
+                "parameters": {
+                  "format": "mp3_44100_128",
+                  "voice": "JBFqnCBsd6RMkjVDRZzb"
+                },
+                "prompt": "Hello from Braintrust."
+              },
+              "output": {
+                "content": [
+                  {
+                    "file": {
+                      "byte_size": 24285,
+                      "file_data": {
+                        "content_type": "audio/mpeg",
+                        "filename": "speech.mp3",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "filename": "speech.mp3"
+                    },
+                    "type": "file"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "eleven_flash_v2_5",
+                "provider": "elevenlabs"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "speech",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "stream",
+          "children": [
+            {
+              "name": "elevenlabs.textToSpeech.stream",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "speech",
+                "parameters": {
+                  "format": "mp3_44100_128",
+                  "voice": "JBFqnCBsd6RMkjVDRZzb"
+                },
+                "prompt": "Streaming from Braintrust."
+              },
+              "output": {
+                "content": [
+                  {
+                    "file": {
+                      "byte_size": 29720,
+                      "file_data": {
+                        "content_type": "audio/mpeg",
+                        "filename": "speech.mp3",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "filename": "speech.mp3"
+                    },
+                    "type": "file"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "eleven_flash_v2_5",
+                "provider": "elevenlabs"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "timestamps",
+          "children": [
+            {
+              "name": "elevenlabs.textToSpeech.convertWithTimestamps",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "speech",
+                "parameters": {
+                  "format": "mp3_44100_128",
+                  "voice": "JBFqnCBsd6RMkjVDRZzb"
+                },
+                "prompt": "Timestamped speech."
+              },
+              "output": {
+                "annotations": [
+                  {
+                    "alignment": {
+                      "characterEndTimesSeconds": [
+                        0.081,
+                        0.197,
+                        0.255,
+                        0.325,
+                        0.36,
+                        0.43,
+                        0.488,
+                        0.546,
+                        0.604,
+                        0.65,
+                        0.673,
+                        0.731,
+                        0.778,
+                        0.848,
+                        0.906,
+                        0.975,
+                        1.045,
+                        1.115,
+                        1.393
+                      ],
+                      "characterStartTimesSeconds": [
+                        0,
+                        0.081,
+                        0.197,
+                        0.255,
+                        0.325,
+                        0.36,
+                        0.43,
+                        0.488,
+                        0.546,
+                        0.604,
+                        0.65,
+                        0.673,
+                        0.731,
+                        0.778,
+                        0.848,
+                        0.906,
+                        0.975,
+                        1.045,
+                        1.115
+                      ],
+                      "characters": [
+                        "T",
+                        "i",
+                        "m",
+                        "e",
+                        "s",
+                        "t",
+                        "a",
+                        "m",
+                        "p",
+                        "e",
+                        "d",
+                        " ",
+                        "s",
+                        "p",
+                        "e",
+                        "e",
+                        "c",
+                        "h",
+                        "."
+                      ]
+                    },
+                    "normalized_alignment": {
+                      "characterEndTimesSeconds": [
+                        0.023,
+                        0.081,
+                        0.197,
+                        0.255,
+                        0.325,
+                        0.36,
+                        0.43,
+                        0.488,
+                        0.546,
+                        0.604,
+                        0.65,
+                        0.673,
+                        0.731,
+                        0.778,
+                        0.848,
+                        0.906,
+                        0.975,
+                        1.045,
+                        1.115,
+                        1.231,
+                        1.393
+                      ],
+                      "characterStartTimesSeconds": [
+                        0,
+                        0.023,
+                        0.081,
+                        0.197,
+                        0.255,
+                        0.325,
+                        0.36,
+                        0.43,
+                        0.488,
+                        0.546,
+                        0.604,
+                        0.65,
+                        0.673,
+                        0.731,
+                        0.778,
+                        0.848,
+                        0.906,
+                        0.975,
+                        1.045,
+                        1.115,
+                        1.231
+                      ],
+                      "characters": [
+                        " ",
+                        "T",
+                        "i",
+                        "m",
+                        "e",
+                        "s",
+                        "t",
+                        "a",
+                        "m",
+                        "p",
+                        "e",
+                        "d",
+                        " ",
+                        "s",
+                        "p",
+                        "e",
+                        "e",
+                        "c",
+                        "h",
+                        ".",
+                        " "
+                      ]
+                    }
+                  }
+                ],
+                "content": [
+                  {
+                    "file": {
+                      "byte_size": 23449,
+                      "file_data": {
+                        "content_type": "audio/mpeg",
+                        "filename": "speech.mp3",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "filename": "speech.mp3"
+                    },
+                    "type": "file"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "eleven_flash_v2_5",
+                "provider": "elevenlabs"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "timestamps",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "stream-timestamps",
+          "children": [
+            {
+              "name": "elevenlabs.textToSpeech.streamWithTimestamps",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "speech",
+                "parameters": {
+                  "format": "mp3_44100_128",
+                  "voice": "JBFqnCBsd6RMkjVDRZzb"
+                },
+                "prompt": "Streaming timestamps."
+              },
+              "output": {
+                "annotations": [
+                  {
+                    "alignment": {
+                      "characterEndTimesSeconds": [
+                        0.104,
+                        0.174,
+                        0.232,
+                        0.279,
+                        0.337,
+                        0.383,
+                        0.441,
+                        0.476,
+                        0.511,
+                        0.58,
+                        0.65,
+                        0.743,
+                        0.813,
+                        0.882,
+                        0.917,
+                        0.987,
+                        1.057,
+                        1.115,
+                        1.184,
+                        1.277,
+                        1.533
+                      ],
+                      "characterStartTimesSeconds": [
+                        0,
+                        0.104,
+                        0.174,
+                        0.232,
+                        0.279,
+                        0.337,
+                        0.383,
+                        0.441,
+                        0.476,
+                        0.511,
+                        0.58,
+                        0.65,
+                        0.743,
+                        0.813,
+                        0.882,
+                        0.917,
+                        0.987,
+                        1.057,
+                        1.115,
+                        1.184,
+                        1.277
+                      ],
+                      "characters": [
+                        "S",
+                        "t",
+                        "r",
+                        "e",
+                        "a",
+                        "m",
+                        "i",
+                        "n",
+                        "g",
+                        " ",
+                        "t",
+                        "i",
+                        "m",
+                        "e",
+                        "s",
+                        "t",
+                        "a",
+                        "m",
+                        "p",
+                        "s",
+                        "."
+                      ]
+                    },
+                    "normalized_alignment": {
+                      "characterEndTimesSeconds": [
+                        0.035,
+                        0.104,
+                        0.174,
+                        0.232,
+                        0.279,
+                        0.337,
+                        0.383,
+                        0.441,
+                        0.476,
+                        0.511,
+                        0.58,
+                        0.65,
+                        0.743,
+                        0.813,
+                        0.882,
+                        0.917,
+                        0.987,
+                        1.057,
+                        1.115,
+                        1.184,
+                        1.277,
+                        1.358,
+                        1.533
+                      ],
+                      "characterStartTimesSeconds": [
+                        0,
+                        0.035,
+                        0.104,
+                        0.174,
+                        0.232,
+                        0.279,
+                        0.337,
+                        0.383,
+                        0.441,
+                        0.476,
+                        0.511,
+                        0.58,
+                        0.65,
+                        0.743,
+                        0.813,
+                        0.882,
+                        0.917,
+                        0.987,
+                        1.057,
+                        1.115,
+                        1.184,
+                        1.277,
+                        1.358
+                      ],
+                      "characters": [
+                        " ",
+                        "S",
+                        "t",
+                        "r",
+                        "e",
+                        "a",
+                        "m",
+                        "i",
+                        "n",
+                        "g",
+                        " ",
+                        "t",
+                        "i",
+                        "m",
+                        "e",
+                        "s",
+                        "t",
+                        "a",
+                        "m",
+                        "p",
+                        "s",
+                        ".",
+                        " "
+                      ]
+                    }
+                  }
+                ],
+                "content": [
+                  {
+                    "file": {
+                      "byte_size": 25122,
+                      "file_data": {
+                        "content_type": "audio/mpeg",
+                        "filename": "speech.mp3",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "filename": "speech.mp3"
+                    },
+                    "type": "file"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "eleven_flash_v2_5",
+                "provider": "elevenlabs"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream-timestamps",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "transcribe",
+          "children": [
+            {
+              "name": "elevenlabs.speechToText.convert",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "content": [
+                  {
+                    "file": {
+                      "file_data": {
+                        "content_type": "audio/mpeg",
+                        "filename": "speech.mp3",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "filename": "speech.mp3"
+                    },
+                    "type": "file"
+                  }
+                ],
+                "operation": "transcribe",
+                "parameters": {
+                  "language": "en",
+                  "timestamp_granularities": "word"
+                }
+              },
+              "output": {
+                "annotations": {
+                  "language": "eng",
+                  "words": [
+                    {
+                      "end": 0,
+                      "logprob": -0.0000029802276912960224,
+                      "start": 0,
+                      "text": "Hello",
+                      "type": "word"
+                    },
+                    {
+                      "end": 0,
+                      "logprob": -0.000008106198947643861,
+                      "start": 0,
+                      "text": " ",
+                      "type": "spacing"
+                    },
+                    {
+                      "end": 0,
+                      "logprob": -0.000008106198947643861,
+                      "start": 0,
+                      "text": "from",
+                      "type": "word"
+                    },
+                    {
+                      "end": 0,
+                      "logprob": -0.008965237997472286,
+                      "start": 0,
+                      "text": " ",
+                      "type": "spacing"
+                    },
+                    {
+                      "end": 0,
+                      "logprob": -0.07695267302915454,
+                      "start": 0,
+                      "text": "BrainTrust",
+                      "type": "word"
+                    }
+                  ]
+                },
+                "content": [
+                  {
+                    "text": "Hello from BrainTrust",
+                    "type": "text"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "scribe_v2",
+                "provider": "elevenlabs"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "transcribe",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "untraced-apis",
+          "children": [],
+          "metadata": {
+            "operation": "untraced-apis",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "error",
+          "children": [
+            {
+              "name": "elevenlabs.textToSpeech.convert",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "operation": "speech",
+                "parameters": {
+                  "format": "mp3_44100_128",
+                  "voice": "JBFqnCBsd6RMkjVDRZzb"
+                },
+                "prompt": "Hello from Braintrust."
+              },
+              "metadata": {
+                "model": "braintrust-invalid-model",
+                "provider": "elevenlabs"
+              },
+              "error": "Status code: 400\nBody: {\n  \"detail\": {\n    \"code\": \"bad_request\",\n    \"message\": \"An invalid ID has been received: 'braintrust-invalid-model'. Make sure to provide a correct one.\",\n    \"request_id\": \"2cfb9ec542f7c98598858949c40de108\",\n    \"status\": \"invalid_uid\",\n    \"type\": \"invalid_request\"\n  }\n}"
+            }
+          ],
+          "metadata": {
+            "operation": "error",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "elevenlabs-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+        "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
+      }
+    }
+  ]
+}

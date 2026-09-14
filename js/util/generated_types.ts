@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 9963a3f7375263a4) -- do not modify
+// Auto-generated file (content hash 48f2c828cb95730e) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -424,6 +424,19 @@ export const ChatCompletionContentPartImageWithTitle = z.object({
 export type ChatCompletionContentPartImageWithTitleType = z.infer<
   typeof ChatCompletionContentPartImageWithTitle
 >;
+export const ChatCompletionContentPartInputAudioWithTitle = z.object({
+  input_audio: z.object({ data: z.string(), format: z.enum(["wav", "mp3"]) }),
+  type: z.literal("input_audio"),
+  cache_control: z
+    .object({
+      type: z.literal("ephemeral"),
+      ttl: z.enum(["5m", "1h"]).optional(),
+    })
+    .optional(),
+});
+export type ChatCompletionContentPartInputAudioWithTitleType = z.infer<
+  typeof ChatCompletionContentPartInputAudioWithTitle
+>;
 export const ChatCompletionContentPartFileFile = z
   .object({ file_data: z.string(), filename: z.string(), file_id: z.string() })
   .partial();
@@ -446,6 +459,7 @@ export type ChatCompletionContentPartFileWithTitleType = z.infer<
 export const ChatCompletionContentPart = z.union([
   ChatCompletionContentPartTextWithTitle,
   ChatCompletionContentPartImageWithTitle,
+  ChatCompletionContentPartInputAudioWithTitle,
   ChatCompletionContentPartFileWithTitle,
 ]);
 export type ChatCompletionContentPartType = z.infer<
@@ -1635,6 +1649,7 @@ export const ProjectSettings = z.union([
       ]),
       disable_realtime_queries: z.union([z.boolean(), z.null()]),
       monitor_charts_use_metrics_start: z.union([z.boolean(), z.null()]),
+      blind_reviews: z.union([z.boolean(), z.null()]),
       default_preprocessor: NullableSavedFunctionId,
     })
     .partial(),
@@ -1702,6 +1717,7 @@ export const WindowedAutomationConfig = z.object({
       auto_approve_tools: z.array(z.string().min(1)).optional().default([]),
       harness: z.enum(["native", "codex", "claude-code"]).optional(),
       model: z.string().min(1).optional(),
+      endpoint_name: z.string().min(1).optional(),
       reasoning_effort: z
         .enum(["none", "minimal", "low", "medium", "high", "xhigh", "max"])
         .optional(),

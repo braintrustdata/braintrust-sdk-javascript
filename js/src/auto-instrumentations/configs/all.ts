@@ -17,6 +17,7 @@ import { flueConfigs } from "./flue";
 import { genkitConfigs } from "./genkit";
 import { gitHubCopilotConfigs } from "./github-copilot";
 import { googleADKConfigs } from "./google-adk";
+import { googleGenerativeAIConfigs } from "./google-generative-ai";
 import { googleGenAIConfigs } from "./google-genai";
 import { groqConfigs } from "./groq";
 import { huggingFaceConfigs } from "./huggingface";
@@ -24,6 +25,7 @@ import { huggingFaceTransformersConfigs } from "./huggingface-transformers";
 import { langchainConfigs } from "./langchain";
 import { langSmithConfigs } from "./langsmith";
 import { mistralConfigs } from "./mistral";
+import { langGraphSDKConfigs } from "./langgraph-sdk";
 import { ollamaConfigs } from "./ollama";
 import { openAIAgentsCoreConfigs } from "./openai-agents";
 import { openaiConfigs } from "./openai";
@@ -32,6 +34,7 @@ import { openRouterConfigs } from "./openrouter";
 import { openRouterAgentConfigs } from "./openrouter-agent";
 import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
+import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
 
 interface InstrumentationConfigGroup {
@@ -77,6 +80,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: openAIAgentsCoreConfigs,
     },
     {
+      integrations: ["googleGenerativeAI"],
+      configs: googleGenerativeAIConfigs,
+    },
+    {
       integrations: ["google", "googleGenAI"],
       configs: googleGenAIConfigs,
     },
@@ -95,6 +102,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: openRouterAgentConfigs,
     },
     { integrations: ["mistral"], configs: mistralConfigs },
+    { integrations: ["langgraphSDK"], configs: langGraphSDKConfigs },
     { integrations: ["ollama"], configs: ollamaConfigs },
     { integrations: ["googleADK"], configs: googleADKConfigs },
     { integrations: ["cohere"], configs: cohereConfigs },
@@ -118,6 +126,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["flue"],
       configs: flueConfigs,
+    },
+    {
+      integrations: ["elevenlabs"],
+      configs: elevenLabsConfigs,
     },
     {
       integrations: ["voyageai"],
