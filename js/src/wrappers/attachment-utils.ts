@@ -1,4 +1,14 @@
 import { Attachment } from "../logger";
+import iso from "../isomorph";
+
+export const CAPTURE_ATTACHMENTS_ENV_VAR = "BRAINTRUST_CAPTURE_ATTACHMENTS";
+
+export function isAutoCaptureAttachmentsEnabled(): boolean {
+  const value = iso.getEnv(CAPTURE_ATTACHMENTS_ENV_VAR);
+  return (
+    value !== undefined && ["1", "true"].includes(value.trim().toLowerCase())
+  );
+}
 
 /**
  * Get file extension from IANA media type
@@ -74,7 +84,10 @@ export function convertDataToBlob(data: any, mediaType: string): Blob | null {
  * Process input to extract and convert image/file content parts to Attachments
  * Similar to processImagesInOutput in oai_responses.ts - replaces data in-place
  */
-export function processInputAttachments(input: any): any {
+export function processInputAttachments(
+  input: any,
+  captureAttachments = true,
+): any {
   if (!input) {
     return input;
   }
@@ -128,7 +141,9 @@ export function processInputAttachments(input: any): any {
         "image/png",
       );
       const filename = `image.${getExtensionFromMediaType(mediaType)}`;
-      const attachment = toAttachment(node.image_url.url, mediaType, filename);
+      const attachment = captureAttachments
+        ? toAttachment(node.image_url.url, mediaType, filename)
+        : "<omitted>";
 
       if (attachment) {
         return {
@@ -165,7 +180,9 @@ export function processInputAttachments(input: any): any {
         node.type === "video_base64" ? "video/mp4" : "image/png",
       );
       const filename = `${node.type === "video_base64" ? "video" : "image"}.${getExtensionFromMediaType(mediaType)}`;
-      const attachment = toAttachment(voyageBase64Value, mediaType, filename);
+      const attachment = captureAttachments
+        ? toAttachment(voyageBase64Value, mediaType, filename)
+        : "<omitted>";
 
       if (attachment) {
         return {
@@ -191,7 +208,9 @@ export function processInputAttachments(input: any): any {
         typeof node.file.filename === "string" && node.file.filename
           ? node.file.filename
           : `document.${getExtensionFromMediaType(mediaType)}`;
-      const attachment = toAttachment(node.file.file_data, mediaType, filename);
+      const attachment = captureAttachments
+        ? toAttachment(node.file.file_data, mediaType, filename)
+        : "<omitted>";
 
       if (attachment) {
         return {
@@ -214,7 +233,12 @@ export function processInputAttachments(input: any): any {
       }
 
       const filename = `input_image_${attachmentIndex}.${getExtensionFromMediaType(mediaType)}`;
-      const attachment = toAttachment(node.image, mediaType, filename);
+      const attachment = captureAttachments
+        ? toAttachment(node.image, mediaType, filename)
+        : node.image instanceof URL ||
+            (typeof node.image === "string" && /^https?:/.test(node.image))
+          ? null
+          : "<omitted>";
 
       if (attachment) {
         attachmentIndex++;
@@ -231,7 +255,12 @@ export function processInputAttachments(input: any): any {
       const filename =
         node.filename ||
         `input_file_${attachmentIndex}.${getExtensionFromMediaType(mediaType)}`;
-      const attachment = toAttachment(node.data, mediaType, filename);
+      const attachment = captureAttachments
+        ? toAttachment(node.data, mediaType, filename)
+        : node.data instanceof URL ||
+            (typeof node.data === "string" && /^https?:/.test(node.data))
+          ? null
+          : "<omitted>";
 
       if (attachment) {
         attachmentIndex++;

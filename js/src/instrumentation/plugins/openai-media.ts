@@ -8,6 +8,7 @@ import {
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
+  isAutoCaptureAttachmentsEnabled,
 } from "../../wrappers/attachment-utils";
 import { isObject } from "../../../util/index";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
@@ -55,9 +56,11 @@ function mediaAttachment(
   value: unknown,
   contentType: string,
   filename: string,
+  captureAttachments: boolean,
 ): unknown {
   if (value instanceof URL) return value.toString();
   if (typeof value === "string" && /^https?:/.test(value)) return value;
+  if (!captureAttachments) return "<omitted>";
   const blob =
     value instanceof Blob ? value : convertDataToBlob(value, contentType);
   if (blob)
@@ -101,7 +104,11 @@ function mediaUsage(usage: unknown): Record<string, number> {
   return metrics;
 }
 
-async function mediaInput(params: OpenAIMediaParams, operation: string) {
+async function mediaInput(
+  params: OpenAIMediaParams,
+  operation: string,
+  captureAttachments: boolean,
+) {
   const pendingContent: Array<Promise<MediaPart>> = [];
   for (const [key, purpose] of [
     ["image", "reference"],
@@ -137,6 +144,7 @@ async function mediaInput(params: OpenAIMediaParams, operation: string) {
             sourceName ?? `input.${getExtensionFromMediaType(contentType)}`;
           let data = item;
           if (
+            captureAttachments &&
             !(item instanceof Blob) &&
             isObject(item) &&
             typeof item.arrayBuffer === "function" &&
@@ -150,6 +158,7 @@ async function mediaInput(params: OpenAIMediaParams, operation: string) {
             }
           }
           if (
+            captureAttachments &&
             isObject(item) &&
             typeof item.read === "function" &&
             typeof item.pipe === "function" &&
@@ -198,7 +207,12 @@ async function mediaInput(params: OpenAIMediaParams, operation: string) {
               };
             });
           }
-          const attachment = mediaAttachment(data, contentType, filename);
+          const attachment = mediaAttachment(
+            data,
+            contentType,
+            filename,
+            captureAttachments,
+          );
           return isImage
             ? { type: "image_url", image_url: { url: attachment }, purpose }
             : { type: "file", file: { filename, file_data: attachment } };
@@ -234,6 +248,7 @@ async function mediaInput(params: OpenAIMediaParams, operation: string) {
 function mediaOutput(
   result: OpenAIMediaResult | string,
   params: OpenAIMediaParams,
+  captureAttachments: boolean,
 ) {
   if (typeof result === "string")
     return { content: [{ type: "text", text: result }] };
@@ -245,6 +260,7 @@ function mediaOutput(
           item.b64_json,
           `image/${format}`,
           `generated-image.${format}`,
+          captureAttachments,
         )
       : item.url;
     if (url !== undefined)
@@ -645,6 +661,7 @@ export function interceptOpenAIMedia(
   return channel.intercept((target, thisArg, args, additional) => {
     if (isAutoInstrumentationSuppressed()) return target.apply(thisArg, args);
     const params = args[0];
+    const captureAttachments = isAutoCaptureAttachmentsEnabled();
     let span: Span;
     try {
       const { name, spanAttributes, spanInfoMetadata } = buildStartSpanArgs(
@@ -676,7 +693,7 @@ export function interceptOpenAIMedia(
       debugLogger.debug("OpenAI media span failed", error);
       return target.apply(thisArg, args);
     }
-    void mediaInput(params, operation)
+    void mediaInput(params, operation, captureAttachments)
       .then((input) => span.log({ input }))
       .catch((error) => debugLogger.debug("OpenAI media input failed", error));
     const start = getCurrentUnixTimestamp();
@@ -696,7 +713,7 @@ export function interceptOpenAIMedia(
       try {
         if (result !== undefined)
           span.log({
-            output: mediaOutput(result, params),
+            output: mediaOutput(result, params, captureAttachments),
             ...(typeof result === "object"
               ? {
                   metrics: mediaUsage(result.usage),
@@ -729,7 +746,8 @@ export function interceptOpenAIMedia(
             Reflect.get(value, "headers"))
         ) {
           span.log({ output: { content: [] } });
-          observeSpeech(value as Response, params, span, first);
+          if (captureAttachments)
+            observeSpeech(value as Response, params, span, first);
           finish();
         } else if (isAsyncIterable(value)) {
           const accumulated: OpenAIMediaResult = {};
@@ -743,7 +761,9 @@ export function interceptOpenAIMedia(
               if (event.type.endsWith(".completed") && event.b64_json) {
                 accumulated.data = [
                   ...(accumulated.data ?? []),
-                  { b64_json: event.b64_json },
+                  {
+                    b64_json: captureAttachments ? event.b64_json : "<omitted>",
+                  },
                 ];
                 accumulated.output_format = event.output_format;
               }
@@ -754,7 +774,7 @@ export function interceptOpenAIMedia(
                 accumulated.text = event.text ?? accumulated.text;
               if (event.type === "transcript.text.segment")
                 accumulated.segments = [...(accumulated.segments ?? []), event];
-              if (event.audio) {
+              if (captureAttachments && event.audio) {
                 const blob = convertDataToBlob(
                   event.audio,
                   AUDIO_TYPES.get(params.response_format ?? "mp3") ??
@@ -765,7 +785,7 @@ export function interceptOpenAIMedia(
             },
             onComplete: () => {
               finish(accumulated);
-              if (audio.length) {
+              if (captureAttachments && audio.length) {
                 const contentType =
                   AUDIO_TYPES.get(params.response_format ?? "mp3") ??
                   "application/octet-stream";

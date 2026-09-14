@@ -4,6 +4,8 @@ import { Attachment, _exportsForTestingOnly, initLogger } from "../../logger";
 import { configureNode } from "../../node/config";
 import { openAIChannels } from "./openai-channels";
 configureNode();
+const originalAutoCaptureAttachments =
+  process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
 let background: ReturnType<
   typeof _exportsForTestingOnly.useTestBackgroundLogger
 >;
@@ -11,6 +13,7 @@ beforeAll(async () => {
   await _exportsForTestingOnly.simulateLoginForTests();
 });
 beforeEach(() => {
+  process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = "true";
   background = _exportsForTestingOnly.useTestBackgroundLogger();
   initLogger({
     projectName: "tmp-luca-openai-media-tests",
@@ -18,6 +21,11 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  if (originalAutoCaptureAttachments === undefined) {
+    delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+  } else {
+    process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = originalAutoCaptureAttachments;
+  }
   _exportsForTestingOnly.clearTestBackgroundLogger();
 });
 
@@ -116,6 +124,59 @@ it("does not upload incomplete speech and preserves response identity", async ()
     span_attributes?: { name?: string };
   }>;
   expect(rows.find((row) => row.output)?.output).toEqual({ content: [] });
+});
+
+it("does not capture speech response bytes without attachment opt-in", async () => {
+  delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+  const response = new Response(new Uint8Array([1, 2, 3]), {
+    headers: { "content-type": "audio/mpeg" },
+  });
+  const originalArrayBuffer = response.arrayBuffer;
+
+  await openAIChannels.audioSpeechCreate.invoke(
+    async () => response,
+    undefined,
+    [{ model: "tts", input: "hello" }],
+    {},
+  );
+
+  expect(response.arrayBuffer).toBe(originalArrayBuffer);
+  expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+    new Uint8Array([1, 2, 3]),
+  );
+  const rows = (await background.drain()) as Array<{ output?: unknown }>;
+  expect(rows.find((row) => row.output)?.output).toEqual({ content: [] });
+  expect(JSON.stringify(rows)).not.toContain("braintrust_attachment");
+});
+
+it("does not read media upload values without attachment opt-in", async () => {
+  delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+  let reads = 0;
+  const image = {
+    name: "input.png",
+    type: "image/png",
+    size: 3,
+    async arrayBuffer() {
+      reads++;
+      return new Uint8Array([1, 2, 3]).buffer;
+    },
+  };
+
+  await openAIChannels.imagesEdit.invoke(
+    async () => ({ data: [] }),
+    undefined,
+    [{ model: "image-model", image, prompt: "edit" }],
+    {},
+  );
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const rows = (await background.drain()) as Array<{
+    input?: { content?: Array<{ image_url?: { url?: unknown } }> };
+  }>;
+  expect(reads).toBe(0);
+  expect(
+    rows.find((row) => row.input?.content)?.input?.content?.[0]?.image_url?.url,
+  ).toBe("<omitted>");
 });
 
 it("copies consumed audio before application mutations", async () => {

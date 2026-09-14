@@ -3,8 +3,11 @@ import {
   parseMetricsFromUsage,
   aggregateChatCompletionChunks,
 } from "./openai-plugin";
-import { processImagesInOutput } from "./openai-span-data";
+import { processImagesInOutput as processImagesInOutputWithFlag } from "./openai-span-data";
 import { Attachment } from "../../logger";
+
+const processImagesInOutput = (output: unknown, captureAttachments = true) =>
+  processImagesInOutputWithFlag(output, captureAttachments);
 
 describe("parseMetricsFromUsage", () => {
   describe("null/undefined handling", () => {
@@ -1201,6 +1204,20 @@ describe("aggregateChatCompletionChunks", () => {
 });
 
 describe("processImagesInOutput", () => {
+  it("omits generated image data without attachment opt-in", () => {
+    const output = {
+      type: "image_generation_call",
+      result: "AQID",
+      output_format: "png",
+      revised_prompt: "A red pixel",
+    };
+
+    expect(processImagesInOutput(output, false)).toEqual({
+      ...output,
+      result: "<omitted>",
+    });
+  });
+
   describe("image_generation_call conversion", () => {
     it("should convert image_generation_call type to Attachment", () => {
       // Create a small 1x1 red PNG base64
