@@ -1,5 +1,8 @@
 import { uint8ArrayToBase64 } from "../../../util/bytes";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
+import {
+  getExtensionFromMediaType,
+  processInputAttachments,
+} from "../../wrappers/attachment-utils";
 import { debugLogger } from "../../debug-logger";
 import { BasePlugin } from "../core";
 import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
@@ -15,6 +18,7 @@ import {
   currentSpan,
   BRAINTRUST_CURRENT_SPAN_STORE,
   startSpan as startBaseSpan,
+  withCurrent,
   type CurrentSpanStore,
   type Span,
   type StartSpanArgs,
@@ -26,13 +30,25 @@ import {
 import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import { googleGenAIChannels } from "./google-genai-channels";
+import {
+  isAutoInstrumentationSuppressed,
+  runWithAutoInstrumentationSuppressed,
+} from "../auto-instrumentation-suppression";
 import type {
   GoogleGenAIEmbedContentParams,
   GoogleGenAIEmbedContentResponse,
+  GoogleGenAIEditImageParams,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateContentResponse,
+  GoogleGenAIGenerateImagesParams,
+  GoogleGenAIGenerateImagesResponse,
+  GoogleGenAIGenerateVideosOperation,
+  GoogleGenAIGenerateVideosParams,
+  GoogleGenAIImage,
+  GoogleGenAIVideo,
   GoogleGenAIContent,
   GoogleGenAIInteraction,
+  GoogleGenAIInteractionContent,
   GoogleGenAIInteractionCreateParams,
   GoogleGenAIInteractionSSEEvent,
   GoogleGenAIInteractionUsage,
@@ -85,6 +101,9 @@ function createWrapperParityEvent(args: {
  * - models.generateContent (non-streaming)
  * - models.generateContentStream (streaming)
  * - models.embedContent (embeddings)
+ * - models.generateImages (image generation)
+ * - models.editImage (image editing)
+ * - models.generateVideos (video job submission)
  *
  * The plugin handles:
  * - Google-specific token metrics (promptTokenCount, candidatesTokenCount, cachedContentTokenCount)
@@ -106,6 +125,9 @@ export class GoogleGenAIPlugin extends BasePlugin {
     this.subscribeToGenerateContentStreamChannel();
     this.subscribeToEmbedContentChannel();
     this.subscribeToInteractionsCreateChannel();
+    this.subscribeToGenerateImagesChannel();
+    this.subscribeToEditImageChannel();
+    this.subscribeToGenerateVideosChannel();
   }
 
   private subscribeToGenerateContentChannel(): void {
@@ -183,7 +205,7 @@ export class GoogleGenAIPlugin extends BasePlugin {
                   spanState.startTime,
                 ),
               ),
-              output: event.result,
+              output: serializeGenerateContentOutput(event.result),
             });
           } finally {
             spanState.span.end();
@@ -376,14 +398,25 @@ export class GoogleGenAIPlugin extends BasePlugin {
       traceStreamingChannel(
         googleGenAIChannels.interactionsCreate as InteractionsCreateChannel,
         {
-          name: "create_interaction",
+          name: ([params]) =>
+            isVideoInteractionCreate(params)
+              ? "generate_video"
+              : "create_interaction",
           shouldTrace: ([params]) => !isBackgroundInteractionCreate(params),
           type: SpanTypeAttribute.LLM,
           extractInput: ([params]) => ({
-            input: serializeInteractionInput(params),
-            metadata: extractInteractionMetadata(params),
+            input: isVideoInteractionCreate(params)
+              ? serializeVideoInteractionInput(params)
+              : serializeInteractionInput(params),
+            metadata: isVideoInteractionCreate(params)
+              ? { model: params.model, provider: "google" }
+              : extractInteractionMetadata(params),
           }),
-          extractOutput: (result) => serializeInteractionValue(result),
+          extractOutput: (result, event) =>
+            isVideoInteractionCreate(event?.arguments?.[0]) ||
+            getInteractionVideoOutput(result).length > 0
+              ? serializeVideoInteractionOutput(result)
+              : serializeInteractionValue(result),
           extractMetadata: (result) =>
             extractInteractionResponseMetadata(result),
           extractMetrics: (result, startTime) =>
@@ -394,6 +427,139 @@ export class GoogleGenAIPlugin extends BasePlugin {
       ),
     );
   }
+
+  private subscribeToGenerateImagesChannel(): void {
+    this.unsubscribers.push(
+      interceptGoogleGenAIMediaCall(
+        googleGenAIChannels.generateImages,
+        "generate_images",
+        serializeGenerateImagesInput,
+        serializeGenerateImagesOutput,
+      ),
+    );
+  }
+
+  private subscribeToEditImageChannel(): void {
+    this.unsubscribers.push(
+      interceptGoogleGenAIMediaCall(
+        googleGenAIChannels.editImage,
+        "edit_image",
+        serializeEditImageInput,
+        serializeGenerateImagesOutput,
+      ),
+    );
+  }
+
+  private subscribeToGenerateVideosChannel(): void {
+    this.unsubscribers.push(
+      interceptGoogleGenAIMediaCall(
+        googleGenAIChannels.generateVideos,
+        "generate_videos",
+        serializeGenerateVideosInput,
+        serializeGenerateVideosOutput,
+      ),
+    );
+  }
+}
+
+type GoogleGenAIMediaChannel<TParams extends { model: string }, TResult> = {
+  intercept(
+    interceptor: (
+      target: (this: unknown, params: TParams) => PromiseLike<TResult>,
+      thisArg: unknown,
+      args: [TParams],
+    ) => PromiseLike<TResult>,
+  ): () => void;
+};
+
+function interceptGoogleGenAIMediaCall<
+  TParams extends { model: string },
+  TResult,
+>(
+  channel: GoogleGenAIMediaChannel<TParams, TResult>,
+  name: string,
+  serializeInput: (params: TParams) => Record<string, unknown>,
+  serializeOutput: (
+    response: TResult,
+    params: TParams,
+  ) => Record<string, unknown>,
+): () => void {
+  return channel.intercept((target, thisArg, args) => {
+    const invoke = () => Reflect.apply(target, thisArg, args);
+    if (isAutoInstrumentationSuppressed()) {
+      return invoke();
+    }
+
+    const [params] = args;
+    let span: Span;
+    try {
+      span = startBaseSpan(
+        withSpanInstrumentationName(
+          {
+            name,
+            spanAttributes: { type: SpanTypeAttribute.LLM },
+            event: createWrapperParityEvent({
+              input: serializeInput(params),
+              metadata: { model: params.model, provider: "google" },
+            }),
+          },
+          INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+        ),
+      );
+    } catch (error) {
+      debugLogger.error(`Error starting Google GenAI ${name} span:`, error);
+      return invoke();
+    }
+
+    let ended = false;
+    const finish = (error?: unknown) => {
+      if (ended) {
+        return;
+      }
+      ended = true;
+      try {
+        if (error !== undefined) {
+          span.log({ error });
+        }
+        span.end();
+      } catch (loggingError) {
+        debugLogger.error(
+          `Error ending Google GenAI ${name} span:`,
+          loggingError,
+        );
+      }
+    };
+
+    let result: PromiseLike<TResult>;
+    try {
+      result = withCurrent(span, () =>
+        runWithAutoInstrumentationSuppressed(invoke),
+      );
+    } catch (error) {
+      finish(error);
+      throw error;
+    }
+
+    try {
+      void Promise.resolve(result).then((response) => {
+        try {
+          span.log({ output: serializeOutput(response, params) });
+        } catch (error) {
+          debugLogger.error(
+            `Error capturing Google GenAI ${name} output:`,
+            error,
+          );
+        } finally {
+          finish();
+        }
+      }, finish);
+    } catch (error) {
+      debugLogger.error(`Error observing Google GenAI ${name} result:`, error);
+      finish();
+    }
+
+    return result;
+  });
 }
 
 function isBackgroundInteractionCreate(params: unknown): boolean {
@@ -721,6 +887,277 @@ function serializeGenerateContentInput(
   return input;
 }
 
+function serializeGenerateContentOutput(
+  response: GoogleGenAIGenerateContentResponse | undefined,
+): GoogleGenAIGenerateContentResponse | undefined {
+  if (!response?.candidates) {
+    return response;
+  }
+
+  return {
+    ...response,
+    candidates: response.candidates.map((candidate) => ({
+      ...candidate,
+      ...(candidate.content?.parts
+        ? {
+            content: {
+              ...candidate.content,
+              parts: candidate.content.parts.map((part) => serializePart(part)),
+            },
+          }
+        : {}),
+    })),
+  } as GoogleGenAIGenerateContentResponse;
+}
+
+function serializeGenerateImagesInput(
+  params: GoogleGenAIGenerateImagesParams,
+): Record<string, unknown> {
+  const parameters: Record<string, unknown> = {};
+  const config = params.config;
+  if (config?.numberOfImages !== undefined) {
+    parameters.n = config.numberOfImages;
+  }
+  if (config?.imageSize !== undefined) {
+    parameters.size = config.imageSize;
+  }
+  if (config?.aspectRatio !== undefined) {
+    parameters.aspect_ratio = config.aspectRatio;
+  }
+  if (config?.seed !== undefined) {
+    parameters.seed = config.seed;
+  }
+  if (config?.outputMimeType !== undefined) {
+    parameters.output_format = config.outputMimeType;
+  }
+
+  return {
+    operation: "generate",
+    prompt: params.prompt,
+    ...(Object.keys(parameters).length > 0 ? { parameters } : {}),
+  };
+}
+
+function serializeGenerateImagesOutput(
+  response: GoogleGenAIGenerateImagesResponse,
+  params: GoogleGenAIGenerateImagesParams | GoogleGenAIEditImageParams,
+): Record<string, unknown> {
+  const content: Record<string, unknown>[] = [];
+  for (const [index, generatedImage] of (
+    response.generatedImages ?? []
+  ).entries()) {
+    const image = generatedImage?.image;
+    if (!image) {
+      continue;
+    }
+
+    const imagePart = serializeGoogleGenAIImage(
+      image,
+      `generated-image-${index + 1}`,
+      params.config?.outputMimeType,
+    );
+    if (!imagePart) {
+      continue;
+    }
+
+    content.push({
+      ...imagePart,
+      ...(generatedImage.enhancedPrompt
+        ? { revised_prompt: generatedImage.enhancedPrompt }
+        : {}),
+    });
+  }
+
+  return { content };
+}
+
+function serializeEditImageInput(
+  params: GoogleGenAIEditImageParams,
+): Record<string, unknown> {
+  const parameters: Record<string, unknown> = {};
+  const config = params.config;
+  if (config?.numberOfImages !== undefined) {
+    parameters.n = config.numberOfImages;
+  }
+  if (config?.aspectRatio !== undefined) {
+    parameters.aspect_ratio = config.aspectRatio;
+  }
+  if (config?.outputCompressionQuality !== undefined) {
+    parameters.quality = config.outputCompressionQuality;
+  }
+  if (config?.seed !== undefined) {
+    parameters.seed = config.seed;
+  }
+  if (config?.outputMimeType !== undefined) {
+    parameters.output_format = config.outputMimeType;
+  }
+
+  const content = params.referenceImages.flatMap((reference, index) => {
+    if (!reference.referenceImage) {
+      return [];
+    }
+    const purpose = reference.referenceType?.toUpperCase().includes("MASK")
+      ? "mask"
+      : "reference";
+    const image = serializeGoogleGenAIImage(
+      reference.referenceImage,
+      `${purpose}-image-${index + 1}`,
+      undefined,
+      purpose,
+    );
+    return image ? [image] : [];
+  });
+
+  return {
+    operation: "edit",
+    prompt: params.prompt,
+    ...(content.length > 0 ? { content } : {}),
+    ...(Object.keys(parameters).length > 0 ? { parameters } : {}),
+  };
+}
+
+function serializeGenerateVideosInput(
+  params: GoogleGenAIGenerateVideosParams,
+): Record<string, unknown> {
+  const parameters: Record<string, unknown> = {};
+  const config = params.config;
+  if (config?.durationSeconds !== undefined) {
+    parameters.duration = config.durationSeconds;
+  }
+  if (config?.resolution !== undefined) {
+    parameters.size = config.resolution;
+  }
+  if (config?.aspectRatio !== undefined) {
+    parameters.aspect_ratio = config.aspectRatio;
+  }
+  if (config?.seed !== undefined) {
+    parameters.seed = config.seed;
+  }
+
+  const content: Record<string, unknown>[] = [];
+  const sourceImage = params.image ?? params.source?.image;
+  if (sourceImage) {
+    const image = serializeGoogleGenAIImage(
+      sourceImage,
+      "input-image",
+      undefined,
+      "input",
+    );
+    if (image) {
+      content.push(image);
+    }
+  }
+  const sourceVideo = params.video ?? params.source?.video;
+  if (sourceVideo) {
+    const video = serializeGoogleGenAIVideo(sourceVideo, "input-video");
+    if (video) {
+      content.push(video);
+    }
+  }
+  if (config?.lastFrame) {
+    const image = serializeGoogleGenAIImage(
+      config.lastFrame,
+      "last-frame",
+      undefined,
+      "reference",
+    );
+    if (image) {
+      content.push(image);
+    }
+  }
+  for (const [index, reference] of (config?.referenceImages ?? []).entries()) {
+    if (!reference.image) {
+      continue;
+    }
+    const image = serializeGoogleGenAIImage(
+      reference.image,
+      `reference-image-${index + 1}`,
+      undefined,
+      "reference",
+    );
+    if (image) {
+      content.push(image);
+    }
+  }
+  if (config?.mask?.image) {
+    const image = serializeGoogleGenAIImage(
+      config.mask.image,
+      "mask-image",
+      undefined,
+      "mask",
+    );
+    if (image) {
+      content.push(image);
+    }
+  }
+
+  return {
+    operation: "generate",
+    ...((params.prompt ?? params.source?.prompt)
+      ? { prompt: params.prompt ?? params.source?.prompt }
+      : {}),
+    ...(content.length > 0 ? { content } : {}),
+    ...(Object.keys(parameters).length > 0 ? { parameters } : {}),
+  };
+}
+
+function serializeGenerateVideosOutput(
+  operation: GoogleGenAIGenerateVideosOperation,
+): Record<string, unknown> {
+  return {
+    content: (operation.response?.generatedVideos ?? []).flatMap(
+      (generatedVideo, index) => {
+        const video = generatedVideo.video
+          ? serializeGoogleGenAIVideo(
+              generatedVideo.video,
+              `generated-video-${index + 1}`,
+            )
+          : undefined;
+        return video ? [video] : [];
+      },
+    ),
+  };
+}
+
+function serializeGoogleGenAIImage(
+  image: GoogleGenAIImage,
+  filenameStem: string,
+  fallbackMimeType?: string,
+  purpose?: "input" | "reference" | "mask",
+): Record<string, unknown> | undefined {
+  const mimeType = image.mimeType ?? fallbackMimeType ?? "image/png";
+  const filename = `${filenameStem}.${getExtensionFromMediaType(mimeType)}`;
+  const media =
+    image.gcsUri ??
+    (image.imageBytes
+      ? createAttachmentFromInlineData(image.imageBytes, mimeType, filename)
+      : undefined);
+  if (!media) {
+    return undefined;
+  }
+  return {
+    type: "image_url",
+    image_url: { url: media },
+    ...(purpose ? { purpose } : {}),
+  };
+}
+
+function serializeGoogleGenAIVideo(
+  video: GoogleGenAIVideo,
+  filenameStem: string,
+): Record<string, unknown> | undefined {
+  const mimeType = video.mimeType ?? "video/mp4";
+  const filename = `${filenameStem}.${getExtensionFromMediaType(mimeType)}`;
+  const media =
+    video.uri ??
+    (video.videoBytes
+      ? createAttachmentFromInlineData(video.videoBytes, mimeType, filename)
+      : undefined);
+  return media
+    ? { type: "file", file: { filename, file_data: media } }
+    : undefined;
+}
+
 type EmbeddingContentPart =
   | { type: "text"; text: string }
   | { type: "image_url"; image_url: { url: string | Attachment } }
@@ -856,7 +1293,7 @@ function serializeInteractionInput(
 function extractInteractionMetadata(
   params: GoogleGenAIInteractionCreateParams,
 ): Record<string, unknown> {
-  const metadata: Record<string, unknown> = {};
+  const metadata: Record<string, unknown> = { provider: "google" };
 
   for (const key of [
     "model",
@@ -935,13 +1372,192 @@ function serializePart(part: GoogleGenAIPart): unknown {
     const attachment = createAttachmentFromInlineData(data, mimeType);
 
     if (attachment) {
-      return {
-        image_url: { url: attachment },
-      };
+      return mimeType.startsWith("image/")
+        ? { image_url: { url: attachment } }
+        : {
+            file: {
+              file_data: attachment,
+              filename: attachment.reference.filename,
+            },
+          };
     }
   }
 
   return part;
+}
+
+function isVideoInteractionCreate(params: unknown): boolean {
+  const paramsDict = tryToDict(params);
+  if (!paramsDict) {
+    return false;
+  }
+
+  const responseFormat = tryToDict(paramsDict.response_format);
+  return (
+    responseFormat?.type === "video" ||
+    (typeof paramsDict.model === "string" &&
+      paramsDict.model.startsWith("gemini-omni-"))
+  );
+}
+
+function serializeVideoInteractionInput(
+  params: GoogleGenAIInteractionCreateParams,
+): Record<string, unknown> {
+  const prompt: string[] = [];
+  const content: Array<
+    | { type: "image_url"; image_url: { url: string | Attachment } }
+    | {
+        type: "file";
+        file: { filename: string; file_data: string | Attachment };
+      }
+  > = [];
+
+  const collect = (value: unknown): void => {
+    if (typeof value === "string") {
+      prompt.push(value);
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach(collect);
+      return;
+    }
+
+    const item = tryToDict(value);
+    if (!item) {
+      return;
+    }
+    if (item.type === "text" && typeof item.text === "string") {
+      prompt.push(item.text);
+      return;
+    }
+    if (Array.isArray(item.content)) {
+      collect(item.content);
+      return;
+    }
+
+    const mimeType =
+      typeof item.mime_type === "string"
+        ? item.mime_type
+        : typeof item.mimeType === "string"
+          ? item.mimeType
+          : item.type === "video"
+            ? "video/mp4"
+            : undefined;
+    const attachment =
+      mimeType && item.data !== undefined
+        ? createAttachmentFromInlineData(
+            item.data,
+            mimeType,
+            typeof item.name === "string" ? item.name : undefined,
+          )
+        : null;
+    const media =
+      attachment ?? (typeof item.uri === "string" ? item.uri : null);
+    if (!media || !mimeType) {
+      return;
+    }
+
+    if (mimeType.startsWith("image/")) {
+      content.push({ type: "image_url", image_url: { url: media } });
+    } else {
+      content.push({
+        type: "file",
+        file: {
+          filename:
+            typeof item.name === "string"
+              ? item.name
+              : `file.${getExtensionFromMediaType(mimeType)}`,
+          file_data: media,
+        },
+      });
+    }
+  };
+  collect(params.input);
+
+  const responseFormat = tryToDict(params.response_format);
+  const generationConfig = tryToDict(params.generation_config);
+  const videoConfig = tryToDict(
+    generationConfig?.video_config ?? generationConfig?.videoConfig,
+  );
+  const parameters: Record<string, unknown> = {};
+  const aspectRatio =
+    responseFormat?.aspect_ratio ?? responseFormat?.aspectRatio;
+  const size = responseFormat?.resolution;
+  const seed = videoConfig?.seed ?? generationConfig?.seed;
+  const outputFormat =
+    responseFormat?.mime_type ??
+    responseFormat?.mimeType ??
+    params.response_mime_type;
+  if (aspectRatio !== undefined) parameters.aspect_ratio = aspectRatio;
+  if (size !== undefined) parameters.size = size;
+  if (seed !== undefined) parameters.seed = seed;
+  if (outputFormat !== undefined) parameters.output_format = outputFormat;
+
+  return {
+    operation: "generate",
+    ...(prompt.length > 0 ? { prompt: prompt.join("\n") } : {}),
+    ...(content.length > 0 ? { content } : {}),
+    ...(Object.keys(parameters).length > 0 ? { parameters } : {}),
+  };
+}
+
+function getInteractionVideoOutput(
+  response: GoogleGenAIInteraction | undefined,
+): GoogleGenAIInteractionContent[] {
+  const responseDict = tryToDict(response);
+  if (!responseDict) {
+    return [];
+  }
+
+  const directOutput = tryToDict(responseDict.output_video);
+  if (directOutput) {
+    return [directOutput];
+  }
+
+  if (!Array.isArray(responseDict.steps)) {
+    return [];
+  }
+
+  return responseDict.steps.flatMap((step) => {
+    const stepDict = tryToDict(step);
+    const stepContent = Array.isArray(stepDict?.content)
+      ? stepDict.content
+      : stepDict?.content
+        ? [stepDict.content]
+        : [];
+    return stepContent.flatMap((part) => {
+      const partDict = tryToDict(part);
+      return partDict?.type === "video" ? [partDict] : [];
+    });
+  });
+}
+
+function serializeVideoInteractionOutput(
+  response: GoogleGenAIInteraction | undefined,
+): Record<string, unknown> {
+  return {
+    content: getInteractionVideoOutput(response).flatMap((video, index) => {
+      const mimeType =
+        typeof video.mime_type === "string"
+          ? video.mime_type
+          : typeof video.mimeType === "string"
+            ? video.mimeType
+            : "video/mp4";
+      const filename =
+        typeof video.name === "string"
+          ? video.name
+          : `generated-video-${index + 1}.${getExtensionFromMediaType(mimeType)}`;
+      const attachment =
+        video.data !== undefined
+          ? createAttachmentFromInlineData(video.data, mimeType, filename)
+          : null;
+      const media =
+        attachment ?? (typeof video.uri === "string" ? video.uri : null);
+      return media
+        ? [{ type: "file", file: { filename, file_data: media } }]
+        : [];
+    }),
+  };
 }
 
 function serializeInteractionValue(
@@ -1000,6 +1616,7 @@ function serializeInteractionValue(
 function createAttachmentFromInlineData(
   data: unknown,
   mimeType?: string,
+  filename = `file.${mimeType ? getExtensionFromMediaType(mimeType) : "bin"}`,
 ): Attachment | null {
   if (
     !(
@@ -1011,8 +1628,6 @@ function createAttachmentFromInlineData(
     return null;
   }
 
-  const extension = mimeType ? mimeType.split("/")[1] : "bin";
-  const filename = `file.${extension}`;
   const buffer =
     typeof data === "string"
       ? typeof Buffer !== "undefined"
@@ -1407,6 +2022,11 @@ function aggregateGenerateContentChunks(
               });
             } else if (part.executableCode) {
               otherParts.push({ executableCode: part.executableCode });
+            } else if (part.inlineData || part.fileData) {
+              const serializedPart = tryToDict(serializePart(part));
+              if (serializedPart) {
+                otherParts.push(serializedPart);
+              }
             }
           }
         }

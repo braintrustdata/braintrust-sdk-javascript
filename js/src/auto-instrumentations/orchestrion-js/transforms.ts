@@ -143,6 +143,8 @@ function traceFunction(
 ): void {
   transforms.tracingHookDeclaration(state, program, null, []);
 
+  const isArrowFunction = node.type === "ArrowFunctionExpression";
+
   const { functionQuery } = state;
   const methodName =
     "methodName" in functionQuery ? functionQuery.methodName : undefined;
@@ -165,6 +167,18 @@ function traceFunction(
     expression: false,
     generator: node.generator,
   });
+
+  // Arrow functions do not have their own `arguments` object. Give the
+  // generated wrapper an explicit rest parameter so it forwards the call's
+  // arguments rather than capturing the enclosing scope's `arguments`.
+  if (isArrowFunction) {
+    node.params = [
+      {
+        type: "RestElement",
+        argument: { type: "Identifier", name: "__bt$args" },
+      },
+    ];
+  }
 
   node.generator = false;
   node.async = false;
@@ -227,7 +241,10 @@ function traceInstanceMethod(
 }
 
 function wrap(state: TransformState, node: AnyNode): AnyNode {
-  const wrapper = wrapInvocation(state);
+  const wrapper = wrapInvocation(
+    state,
+    node.type === "ArrowFunctionExpression" ? "__bt$args" : "arguments",
+  );
 
   const block = wrapper.body[0].body;
   const common = parse(
@@ -301,7 +318,10 @@ function wrapSuper(node: AnyNode): void {
   }
 }
 
-function wrapInvocation(state: TransformState): AnyNode {
+function wrapInvocation(
+  state: TransformState,
+  argsExpression: string,
+): AnyNode {
   const { channelName, moduleVersion, operator, functionQuery } = state;
   const channelGetter = formatChannelGetter(channelName);
   const callbackIndex = functionQuery.callbackIndex ?? -1;
@@ -309,12 +329,12 @@ function wrapInvocation(state: TransformState): AnyNode {
   return parse(`
     function wrapper () {
       const __bt$hook = ${channelGetter}();
-      if (!__bt$hook) return __bt$target.apply(this, arguments);
+      if (!__bt$hook) return __bt$target.apply(this, ${argsExpression});
       return __bt$hook.traceInvocation(
         ${JSON.stringify(operator)},
         __bt$target,
         this,
-        arguments,
+        ${argsExpression},
         { moduleVersion: ${JSON.stringify(moduleVersion)} },
         ${callbackIndex}
       );
