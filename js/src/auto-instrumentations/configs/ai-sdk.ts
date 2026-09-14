@@ -39,31 +39,26 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
   })),
 
-  // generateText - async function
-  {
-    channelName: aiSDKChannels.generateText.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <7.0.0",
-      filePath: "dist/index.mjs",
-    },
-    functionQuery: {
-      functionName: "generateText",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: aiSDKChannels.generateText.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <7.0.0",
-      filePath: "dist/index.js",
-    },
-    functionQuery: {
-      functionName: "generateText",
-      kind: "Async",
-    },
-  },
+  // Async generation and embedding functions supported by AI SDK v4-v6.
+  ...[
+    ["generateText", aiSDKChannels.generateText.channelName],
+    ["generateObject", aiSDKChannels.generateObject.channelName],
+    ["embed", aiSDKChannels.embed.channelName],
+    ["embedMany", aiSDKChannels.embedMany.channelName],
+  ].flatMap(([functionName, channelName]) =>
+    ["dist/index.mjs", "dist/index.js"].map((filePath) => ({
+      channelName,
+      module: {
+        name: "ai",
+        versionRange: ">=4.0.0 <7.0.0",
+        filePath,
+      },
+      functionQuery: {
+        functionName,
+        kind: "Async" as const,
+      },
+    })),
+  ),
 
   // generateImage - stable in v6+, experimental alias in v5
   ...[
@@ -93,135 +88,24 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     })),
   ),
 
-  // streamText - async function (v3 only, before the sync refactor in v4)
-  {
-    channelName: aiSDKChannels.streamText.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <4.0.0",
-      filePath: "dist/index.mjs",
-    },
-    functionQuery: {
-      functionName: "streamText",
-      kind: "Async",
-    },
-  },
-
-  // streamText - sync function returning stream (v4+)
-  {
-    channelName: aiSDKChannels.streamTextSync.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=4.0.0 <7.0.0",
-      filePath: "dist/index.mjs",
-    },
-    functionQuery: {
-      functionName: "streamText",
-      kind: "Sync",
-    },
-  },
-  {
-    channelName: aiSDKChannels.streamText.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <4.0.0",
-      filePath: "dist/index.js",
-    },
-    functionQuery: {
-      functionName: "streamText",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: aiSDKChannels.streamTextSync.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=4.0.0 <7.0.0",
-      filePath: "dist/index.js",
-    },
-    functionQuery: {
-      functionName: "streamText",
-      kind: "Sync",
-    },
-  },
-
-  // generateObject - async function
-  {
-    channelName: aiSDKChannels.generateObject.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <7.0.0",
-      filePath: "dist/index.mjs",
-    },
-    functionQuery: {
-      functionName: "generateObject",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: aiSDKChannels.generateObject.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <7.0.0",
-      filePath: "dist/index.js",
-    },
-    functionQuery: {
-      functionName: "generateObject",
-      kind: "Async",
-    },
-  },
-
-  // embed - async function
-  {
-    channelName: aiSDKChannels.embed.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <7.0.0",
-      filePath: "dist/index.mjs",
-    },
-    functionQuery: {
-      functionName: "embed",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: aiSDKChannels.embed.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <7.0.0",
-      filePath: "dist/index.js",
-    },
-    functionQuery: {
-      functionName: "embed",
-      kind: "Async",
-    },
-  },
-
-  // embedMany - async function
-  {
-    channelName: aiSDKChannels.embedMany.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <7.0.0",
-      filePath: "dist/index.mjs",
-    },
-    functionQuery: {
-      functionName: "embedMany",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: aiSDKChannels.embedMany.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <7.0.0",
-      filePath: "dist/index.js",
-    },
-    functionQuery: {
-      functionName: "embedMany",
-      kind: "Async",
-    },
-  },
+  // Streaming functions are synchronous starting in AI SDK v4.
+  ...[
+    ["streamText", aiSDKChannels.streamTextSync.channelName],
+    ["streamObject", aiSDKChannels.streamObjectSync.channelName],
+  ].flatMap(([functionName, channelName]) =>
+    ["dist/index.mjs", "dist/index.js"].map((filePath) => ({
+      channelName,
+      module: {
+        name: "ai",
+        versionRange: ">=4.0.0 <7.0.0",
+        filePath,
+      },
+      functionQuery: {
+        functionName,
+        kind: "Sync" as const,
+      },
+    })),
+  ),
 
   // rerank - async function
   {
@@ -273,58 +157,6 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "createTelemetryDispatcher",
-      kind: "Sync",
-    },
-  },
-
-  // streamObject - async function (v3 only, before the sync refactor in v4)
-  {
-    channelName: aiSDKChannels.streamObject.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <4.0.0",
-      filePath: "dist/index.mjs",
-    },
-    functionQuery: {
-      functionName: "streamObject",
-      kind: "Async",
-    },
-  },
-
-  // streamObject - sync function returning stream (v4+)
-  {
-    channelName: aiSDKChannels.streamObjectSync.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=4.0.0 <7.0.0",
-      filePath: "dist/index.mjs",
-    },
-    functionQuery: {
-      functionName: "streamObject",
-      kind: "Sync",
-    },
-  },
-  {
-    channelName: aiSDKChannels.streamObject.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=3.0.0 <4.0.0",
-      filePath: "dist/index.js",
-    },
-    functionQuery: {
-      functionName: "streamObject",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: aiSDKChannels.streamObjectSync.channelName,
-    module: {
-      name: "ai",
-      versionRange: ">=4.0.0 <7.0.0",
-      filePath: "dist/index.js",
-    },
-    functionQuery: {
-      functionName: "streamObject",
       kind: "Sync",
     },
   },

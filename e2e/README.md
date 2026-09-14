@@ -80,7 +80,7 @@ Wrapper scenarios often create a root span with `testRunId` metadata and then le
 - Find the scenario root span first.
 - Scope raw payload snapshots by `root_span_id` using `payloadRowsForRootSpan(...)`.
 - Prefer normalized span-tree snapshots from `matchSpanTreeSnapshot(...)`. The `.json` sibling is the structural contract, and the `.txt` sibling is the ASCII tree for review; both are asserted and should be updated together.
-- If the wrapper has an explicit support matrix, reuse one shared test across version-specific scenario entries instead of duplicating the assertions. The AI SDK wrapper scenario uses this for supported v3-v6 package combinations.
+- If the wrapper has an explicit support matrix, reuse one shared test across version-specific scenario entries instead of duplicating the assertions. The AI SDK wrapper scenario uses this for its supported package combinations.
 
 ### Runner-wrapper scenario pattern
 
