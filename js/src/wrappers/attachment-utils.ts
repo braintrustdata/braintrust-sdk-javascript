@@ -1,7 +1,7 @@
 import { Attachment } from "../logger";
 import iso from "../isomorph";
 
-export const CAPTURE_ATTACHMENTS_ENV_VAR = "BRAINTRUST_CAPTURE_ATTACHMENTS";
+const CAPTURE_ATTACHMENTS_ENV_VAR = "BRAINTRUST_CAPTURE_ATTACHMENTS";
 
 export function isAutoCaptureAttachmentsEnabled(): boolean {
   const value = iso.getEnv(CAPTURE_ATTACHMENTS_ENV_VAR);
