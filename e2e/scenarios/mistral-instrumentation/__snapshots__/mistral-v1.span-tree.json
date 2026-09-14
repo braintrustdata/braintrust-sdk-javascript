@@ -181,7 +181,7 @@
               ],
               "output": [
                 {
-                  "finish_reason": null,
+                  "finish_reason": "stop",
                   "index": 0,
                   "message": {
                     "content": "streamed output",
@@ -200,7 +200,10 @@
                 "temperature": 0
               },
               "metrics": {
-                "time_to_first_token": 0
+                "completion_tokens": 4,
+                "prompt_tokens": 22,
+                "time_to_first_token": 0,
+                "tokens": 26
               }
             }
           ],
@@ -224,10 +227,10 @@
               ],
               "output": [
                 {
-                  "finish_reason": null,
+                  "finish_reason": "stop",
                   "index": 0,
                   "message": {
-                    "content": "Let's break down the problem step by step to find John's age.\n\n1. **First Sister's Age:**\n   - Given: The first sister is **4 years old**.\n\n2. **Second Sister's Age Next Year:**\n   - Next year, the second sister will be twice as old as the first sister.\n   - First sister's age next year: \\(4 + 1 = 5\\) years.\n   - Therefore, second sister's age next year: \\(2 \\times 5 = 10\\) years.\n   - **Current age of the second sister:** \\(10 - 1 = 9\\) years.\n\n3. **Third Sister's Age:**\n   - The third sister is two years older than the second sister.\n   - **Current age of the third sister:** \\(9 + 2 = 11\\) years.\n\n4. **John's Age:**\n   - The third sister is half the age of her older brother (John).\n   - Therefore, John's age: \\(11 \\times 2 = 22\\) years.\n\n**Final Answer:**\n\\[\n\\box",
+                    "content": "Let's break down the problem step by step to find John's age.\n\n1. **First Sister's Age:**\n   - Given: The first sister is **4 years old**.\n\n2. **Second Sister's Age Next Year:**\n   - Next year, the second sister will be twice as old as the first sister.\n   - First sister's age next year: \\(4 + 1 = 5\\) years.\n   - Therefore, second sister's age next year: \\(2 \\times 5 = 10\\) years.\n   - **Current age of the second sister:** \\(10 - 1 = 9\\) years.\n\n3. **Third Sister's Age:**\n   - The third sister is two years older than the second sister.\n   - **Current age of the third sister:** \\(9 + 2 = 11\\) years.\n\n4. **John's Age:**\n   - The third sister is half the age of her older brother (John).\n   - Therefore, John's age: \\(11 \\times 2 = 22\\) years.\n\n**Final Answer:**\n\\[\n\\boxed{22}\n\\]",
                     "role": "assistant"
                   }
                 }
@@ -244,7 +247,10 @@
                 "temperature": 0
               },
               "metrics": {
-                "time_to_first_token": 0
+                "completion_tokens": 234,
+                "prompt_tokens": 83,
+                "time_to_first_token": 0,
+                "tokens": 317
               }
             }
           ],
