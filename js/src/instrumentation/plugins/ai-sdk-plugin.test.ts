@@ -287,7 +287,7 @@ describe("AISDKPlugin", () => {
         type: "braintrust_attachment",
         content_type: "image/png",
       });
-      expect(JSON.stringify(result)).not.toContain("137");
+      expect(result.images[0]).not.toHaveProperty("uint8Array");
     });
 
     it("converts inline image-edit inputs while preserving remote URLs", () => {
