@@ -1,9 +1,7 @@
 import { spawn } from "node:child_process";
-import net from "node:net";
+import { stripVTControlCharacters } from "node:util";
 
 const scenarioDir = new URL(".", import.meta.url).pathname;
-const port = await reservePort();
-const baseUrl = `http://127.0.0.1:${port}`;
 const build = await runCommand([
   "exec",
   "vite",
@@ -25,7 +23,7 @@ const vite = spawn(
     "--host",
     "127.0.0.1",
     "--port",
-    String(port),
+    "0",
     "--strictPort",
   ],
   {
@@ -41,15 +39,15 @@ vite.stdout.on("data", (chunk) => (output += chunk.toString()));
 vite.stderr.on("data", (chunk) => (output += chunk.toString()));
 
 try {
-  await waitForServer();
-  const success = await run("success");
+  const baseUrl = await waitForServer();
+  const success = await run("success", baseUrl);
   if (!JSON.stringify(success).includes("CLOUDFLARE_AI_CHAT_TOOL_OK")) {
     throw new Error(
       `Successful chat result was incomplete: ${JSON.stringify(success)}`,
     );
   }
 
-  const failure = await run("error");
+  const failure = await run("error", baseUrl);
   if (!JSON.stringify(failure).includes("CLOUDFLARE_AI_CHAT_STREAM_ERROR")) {
     throw new Error(
       `Error chat result was incomplete: ${JSON.stringify(failure)}`,
@@ -59,7 +57,7 @@ try {
   await stopVite();
 }
 
-async function run(kind) {
+async function run(kind, baseUrl) {
   const response = await fetch(`${baseUrl}/run?kind=${kind}`, {
     signal: AbortSignal.timeout(60_000),
   });
@@ -79,12 +77,19 @@ async function waitForServer() {
         `Vite exited before startup (${vite.exitCode}):\n${output}`,
       );
     }
+    const baseUrl = stripVTControlCharacters(output).match(
+      /Local:\s+(http:\/\/127\.0\.0\.1:\d+)\//,
+    )?.[1];
+    if (!baseUrl) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      continue;
+    }
     try {
       const response = await fetch(`${baseUrl}/health`, {
         signal: AbortSignal.timeout(1_000),
       });
       if (response.ok) {
-        return;
+        return baseUrl;
       }
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -116,18 +121,6 @@ async function stopVite() {
       }
     } catch {}
   }
-}
-
-async function reservePort() {
-  const server = net.createServer();
-  await new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-  const address = server.address();
-  const selected = typeof address === "object" && address ? address.port : 0;
-  await new Promise((resolve) => server.close(resolve));
-  return selected;
 }
 
 async function runCommand(args) {
