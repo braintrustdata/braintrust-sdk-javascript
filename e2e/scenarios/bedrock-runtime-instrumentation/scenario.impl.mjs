@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { wrapBedrockRuntime } from "braintrust";
 import {
   collectAsync,
@@ -8,6 +9,7 @@ import {
   CACHE_PROMPT_MARKER,
   EMBEDDING_MODEL,
   MODEL,
+  MULTIMODAL_EMBEDDING_MODEL,
   REGION,
   ROOT_NAME,
   SCENARIO_NAME,
@@ -88,6 +90,9 @@ function assertBedrockAuthEnv() {
 export async function runBedrockRuntimeInstrumentationScenario(options) {
   assertBedrockAuthEnv();
 
+  const imageBase64 = (
+    await readFile(new URL("./test-image.png", import.meta.url))
+  ).toString("base64");
   const baseClient = new options.BedrockRuntimeClient(
     bedrockClientConfig(options.NodeHttpHandler),
   );
@@ -171,6 +176,41 @@ export async function runBedrockRuntimeInstrumentationScenario(options) {
               }),
               contentType: "application/json",
               modelId: EMBEDDING_MODEL,
+            }),
+          );
+        },
+      );
+
+      await runOperation(
+        "bedrock-multimodal-embedding-operation",
+        "multimodal-embedding",
+        async () => {
+          await client.send(
+            new options.InvokeModelCommand({
+              accept: "application/json",
+              body: JSON.stringify({
+                embedding_types: ["float"],
+                input_type: "search_document",
+                inputs: [
+                  {
+                    content: [
+                      {
+                        text: "A sailing ship in a storm",
+                        type: "text",
+                      },
+                      {
+                        image_url: {
+                          url: `data:image/png;base64,${imageBase64}`,
+                        },
+                        type: "image_url",
+                      },
+                    ],
+                  },
+                ],
+                output_dimension: 256,
+              }),
+              contentType: "application/json",
+              modelId: MULTIMODAL_EMBEDDING_MODEL,
             }),
           );
         },

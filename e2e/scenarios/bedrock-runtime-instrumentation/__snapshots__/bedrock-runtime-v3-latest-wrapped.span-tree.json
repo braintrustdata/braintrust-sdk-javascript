@@ -163,6 +163,55 @@
           }
         },
         {
+          "name": "bedrock-multimodal-embedding-operation",
+          "children": [
+            {
+              "name": "bedrock.invokeModel",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inputs": [
+                  {
+                    "content": [
+                      {
+                        "text": "A sailing ship in a storm",
+                        "type": "text"
+                      },
+                      {
+                        "image_url": {
+                          "url": {
+                            "content_type": "image/png",
+                            "filename": "image.png",
+                            "key": "<uuid:1>",
+                            "type": "braintrust_attachment"
+                          }
+                        },
+                        "type": "image_url"
+                      }
+                    ]
+                  }
+                ],
+                "output_dimensions": 256
+              },
+              "output": {
+                "count": 1
+              },
+              "metadata": {
+                "accept": "application/json",
+                "command": "InvokeModelCommand",
+                "contentType": "application/json",
+                "model": "us.cohere.embed-v4:0",
+                "operation": "invokeModel",
+                "provider": "aws-bedrock"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "multimodal-embedding",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "bedrock-invoke-model-operation",
           "children": [
             {
@@ -279,16 +328,16 @@
                 "provider": "aws-bedrock",
                 "trace": {},
                 "usage": {
-                  "cacheReadInputTokenCount": 0,
-                  "cacheWriteInputTokenCount": 14922,
+                  "cacheReadInputTokenCount": 14922,
+                  "cacheWriteInputTokenCount": 0,
                   "inputTokens": 6,
                   "outputTokens": 3
                 }
               },
               "metrics": {
                 "completion_tokens": 3,
-                "prompt_cache_creation_tokens": 14922,
-                "prompt_cached_tokens": 0,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 14922,
                 "prompt_tokens": 6,
                 "time_to_first_token": 0,
                 "tokens": 14931
