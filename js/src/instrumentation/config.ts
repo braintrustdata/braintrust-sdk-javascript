@@ -1,40 +1,26 @@
 import type { Span } from "../logger";
 
-/**
- * Borrowed provider objects used by an instrumentation to create a span.
- *
- * Do not mutate or retain this context or its values after the callback returns.
- * Copy any data that needs to outlive the callback.
- */
+/** information used by braintrust instrumentation to create a span */
 export interface InstrumentationContext {
-  /** Stable instrumentation name, such as "openai" or "anthropic". */
+  /**
+   * name of the instrumentation that produced a span. e.g. `langchain`, `openai`, etc
+   *
+   * this is the same value as `span_origin.instrumentation.name` on the exported span
+   */
   readonly name: string;
 
   /**
-   * Get an instrumentation-specific object, or undefined when unavailable.
-   * Key names and value types are defined by each instrumentation.
+   * get a specific object by name used to gather instrumentation data
+   *
+   * for example: get("request") could return `OpenAIRequest request`
+   *
+   * NOTE: the exact key names and their values are specific to the instrumentation
    */
   get(key: string): unknown;
 }
 
-/**
- * One span's outgoing record, with lazy values resolved, before JSON
- * serialization. This is an incremental update, not necessarily a complete
- * span; a span can produce multiple records, including before it ends.
- *
- * All fields are available for inspection and mutation. Returned data must
- * remain JSON-serializable. Identity and routing fields, including id,
- * span_id, root_span_id, and span_parents, must not be changed or removed.
- */
 export type SpanExportData = Record<string, unknown>;
 
-/**
- * Customize spans created by Braintrust instrumentation.
- *
- * Callbacks are synchronous and run in registration order. Exceptions are
- * swallowed and processing continues without changing provider results or
- * preventing span finalization.
- */
 export interface SpanCustomizer {
   /**
    * Called after final output, metrics, or error capture, immediately before
@@ -42,24 +28,17 @@ export interface SpanCustomizer {
    * the provider returns an iterator.
    *
    * Use span.log() or span.setAttributes() to customize the span; do not end it.
-   * Earlier updates may already be uploaded, so this is not a redaction hook.
    *
    * @remarks API declaration only; this callback is not invoked yet.
    */
-  onSpanEnding?(span: Span, ctx: InstrumentationContext): void;
+  onBraintrustSpanEnding?(span: Span, ctx: InstrumentationContext): void;
 
   /**
-   * Inspect and transform a span's outgoing record before JSON serialization
-   * and upload. This can be used to redact sensitive data.
+   * Hook a span's outgoing record, with lazy values resolved, before JSON serialization
    *
-   * Mutate the data in place and return it, or return a replacement record.
-   * Each customizer receives the previous customizer's returned record.
-   * A record must be returned; dropping records is not supported.
+   * You may add/remove/delete most fields on the span.
    *
-   * Preserve identity and routing fields and return JSON-serializable data.
-   * Called once per outgoing record, not per transport retry. No provider
-   * context is retained for this callback. Runs before attachment processing,
-   * merging, and masking.
+   * The follow fields may NOT be altered: trace id, span id, parent id
    */
   onSpanExport?(data: SpanExportData): SpanExportData;
 }
