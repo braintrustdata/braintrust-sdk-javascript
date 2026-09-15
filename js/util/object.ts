@@ -22,7 +22,7 @@ export type OtherExperimentLogFields = {
   scores: Record<string, number | null>;
   classifications?: Record<string, { id: string; label?: string }[]>;
   metadata: Record<string, unknown>;
-  metrics: Record<string, unknown>;
+  metrics: Record<string, unknown> | null;
   datasetRecordId: string;
   origin: ObjectReferenceType;
   span_attributes: Record<string, unknown>;
