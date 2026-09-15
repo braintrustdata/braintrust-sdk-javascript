@@ -1,5 +1,24 @@
 # braintrust
 
+## 3.33.0
+
+### Minor Changes
+
+- feat: Add advanced filters to `Trace.getSpans()` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2466)
+- feat: Add utilities for custom views (push + preview) (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2191)
+- feat: Add `@langchain/langgraph-sdk` instrumentation (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2441)
+- feat: Instrument OpenAI agents api (`openai.beta.agents`) (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2471)
+- feat: Turn batch evals API into API for evals deferred AI provider calls (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2433)
+
+### Patch Changes
+
+- fix(eve): Use `any` as return type to ensure eve version compat (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2470)
+- fix: Bump e2e tested versions for HarnessAgent, bedrock and google adk and fix orchestrion query for harness agent (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2428)
+- fix(cli): Don't externalize braintrust package on push Thanks @evanmkeith! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2477)
+- feat: Add instrumentation for google genai multimodal embeddings (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2442)
+- fix: Prevent eval trial upsert collisions Thanks @paultancre-bt! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2476)
+- fix: Fix OTEL trace context propagation race Thanks @delner! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2450)
+
 ## 3.32.0
 
 ### Minor Changes
