@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 48f2c828cb95730e) -- do not modify
+// Auto-generated file (content hash 71b5715e9b2fb9f0) -- do not modify
 
 export type AclObjectTypeType =
   /**
@@ -1040,33 +1040,6 @@ export type ChatCompletionContentPartImageWithTitleType = {
       }
     | undefined;
 };
-export type ChatCompletionContentPartInputAudioWithTitleType = {
-  input_audio: {
-    data: string;
-    /**
-     * @enum wav, mp3
-     */
-    format: "wav" | "mp3";
-  };
-  /**
-   * @enum input_audio
-   */
-  type: "input_audio";
-  cache_control?:
-    | {
-        /**
-         * @enum ephemeral
-         */
-        type: "ephemeral";
-        ttl?:
-          | /**
-           * @enum 5m, 1h
-           */
-          ("5m" | "1h")
-          | undefined;
-      }
-    | undefined;
-};
 export type ChatCompletionContentPartFileFileType = Partial<{
   file_data: string;
   filename: string;
@@ -1096,7 +1069,6 @@ export type ChatCompletionContentPartFileWithTitleType = {
 export type ChatCompletionContentPartType =
   | ChatCompletionContentPartTextWithTitleType
   | ChatCompletionContentPartImageWithTitleType
-  | ChatCompletionContentPartInputAudioWithTitleType
   | ChatCompletionContentPartFileWithTitleType;
 export type ChatCompletionContentPartTextType = {
   /**
@@ -2228,12 +2200,12 @@ export type SpanTypeType =
   /**
    * Type of the span, for display purposes only
    *
-   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review
+   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, log
    */
   | /**
    * Type of the span, for display purposes only
    *
-   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review
+   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, log
    */
   (| "llm"
       | "score"
@@ -2246,11 +2218,12 @@ export type SpanTypeType =
       | "preprocessor"
       | "classifier"
       | "review"
+      | "log"
     )
   /**
    * Type of the span, for display purposes only
    *
-   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review
+   * @enum llm, score, function, eval, task, tool, automation, facet, preprocessor, classifier, review, log
    */
   | null;
 export type SpanAttributesType =
@@ -4177,6 +4150,17 @@ export type MessageRoleType =
    * @enum system, user, assistant, function, tool, model, developer
    */
   "system" | "user" | "assistant" | "function" | "tool" | "model" | "developer";
+export type NamedScoreType = {
+  name: string;
+  score?:
+    | /**
+     * @minimum 0
+     * @maximum 1
+     */
+    (number | boolean | null)
+    | undefined;
+  metadata?: {} | undefined;
+};
 export type NullableSavedFunctionIdType =
   /**
    * Default preprocessor for this project. When set, functions that use preprocessors will use this instead of their built-in default.
@@ -5059,18 +5043,18 @@ export type TopicAutomationConfigType = {
     | undefined;
   relabel_overlap_seconds?:
     | /**
-     * How much recent history to relabel after a new topic map version becomes active
+     * Deprecated. How much recent history to relabel after a new topic map version becomes active. Data planes v2.15.0 and later ignore this and apply a topic map version after the first only to traces classified once it is active.
      *
      * @minimum 60
      */
     /**
-     * How much recent history to relabel after a new topic map version becomes active
+     * Deprecated. How much recent history to relabel after a new topic map version becomes active. Data planes v2.15.0 and later ignore this and apply a topic map version after the first only to traces classified once it is active.
      *
      * @minimum 60
      */
     (| number
         /**
-         * How much recent history to relabel after a new topic map version becomes active
+         * Deprecated. How much recent history to relabel after a new topic map version becomes active. Data planes v2.15.0 and later ignore this and apply a topic map version after the first only to traces classified once it is active.
          *
          * @minimum 60
          */
@@ -6692,6 +6676,34 @@ export type RunEvalType = {
       )
     | undefined;
 };
+export type ScoreObjectType = {
+  name?: /**
+     * The score name. Defaults to the function name for a single score.
+     */
+    string | undefined;
+  score: /**
+     * @minimum 0
+     * @maximum 1
+     */
+    number | boolean | null;
+  metadata?: {} | undefined;
+};
+export type ScoreResultType =
+  /**
+   * The return value of a scorer function.
+   */
+  | ScoreObjectType
+  | NamedScoreType
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  | (number | boolean)
+  /**
+   * Multiple scores. Each score must have a unique name.
+   */
+  | Array<NamedScoreType>
+  | null;
 export type ServiceTokenType = {
   /**
    * Unique identifier for the service token
