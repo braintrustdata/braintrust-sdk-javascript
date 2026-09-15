@@ -31,7 +31,11 @@ import {
   digestUuid,
 } from "./openai-manual-instrumentation-utils";
 
-const SUPPORTED_ENDPOINTS = new Set(["/v1/chat/completions", "/v1/responses"]);
+const SUPPORTED_ENDPOINTS = new Set([
+  "/v1/chat/completions",
+  "/v1/responses",
+  "/v1/embeddings",
+]);
 const TERMINAL_STATUSES = new Set([
   "completed",
   "failed",

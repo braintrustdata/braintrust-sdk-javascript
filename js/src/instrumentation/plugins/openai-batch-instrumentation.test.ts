@@ -394,4 +394,33 @@ describe("OpenAI Batch instrumentation", () => {
     expect(received).toBe(content);
     expect(await backgroundLogger.drain()).toEqual([]);
   });
+
+  it("supports /v1/embeddings batch requests", async () => {
+    const embeddingsInput = [
+      {
+        custom_id: "emb1",
+        method: "POST",
+        url: "/v1/embeddings",
+        body: {
+          model: "text-embedding-3-small",
+          input: "hello world",
+        },
+      },
+    ];
+
+    let received = "";
+    const result = await openaiFilesCreateTraced({
+      create(params: { file: Blob; purpose: string }) {
+        return asyncAPIPromise(
+          Promise.resolve({ id: "file_emb" }).then(async (file) => {
+            received = await params.file.text();
+            return file;
+          }),
+        );
+      },
+    })({ file: new Blob([jsonl(embeddingsInput)]), purpose: "batch" });
+
+    expect(result).toEqual({ id: "file_emb" });
+    expect(received).toBe(jsonl(embeddingsInput));
+  });
 });
