@@ -1,3 +1,17 @@
+export type SpanExportData = Record<string, unknown>;
+
+export interface SpanCustomizer {
+  /**
+   * Customize an outgoing span record after lazy values resolve, before JSON
+   * serialization. Records are incremental and may not contain every span field.
+   *
+   * Add, change, or delete fields, then return the record or a replacement.
+   * Preserve identity and routing fields, including id, span_id, root_span_id,
+   * and span_parents.
+   */
+  onSpanExport?(data: SpanExportData): SpanExportData;
+}
+
 export interface InstrumentationIntegrationsConfig {
   openai?: boolean;
   anthropic?: boolean;
@@ -46,6 +60,12 @@ export interface InstrumentationConfig {
    * Set to false to disable instrumentation for that SDK.
    */
   integrations?: InstrumentationIntegrationsConfig;
+
+  /**
+   * Instrumentation-wide customizers, in callback execution order.
+   * Configure before instrumentation is enabled.
+   */
+  spanCustomizers?: readonly SpanCustomizer[];
 }
 
 const envIntegrationAliases: Record<

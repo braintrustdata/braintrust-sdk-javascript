@@ -180,6 +180,49 @@ termination, and async context.
 - Use narrow vendored provider interfaces shared by wrappers and plugins.
 - Keep enable, disable, subscription, and patching behavior idempotent.
 
+## Export Customizers
+
+Configure `spanCustomizers` through the standalone instrumentation entrypoint
+before importing the main SDK, which enables instrumentation during platform
+initialization. Use a bootstrap module before any auto-instrumentation preload
+that initializes the SDK. Static imports of the main SDK are hoisted; use a
+dynamic import after configuration:
+
+```ts
+import { configureInstrumentation } from "braintrust/instrumentation";
+
+configureInstrumentation({
+  spanCustomizers: [
+    {
+      onSpanExport(data) {
+        data.tags = ["reviewed"];
+        if ("output" in data) data.output = "[redacted]";
+        delete data.error;
+        return data;
+      },
+    },
+  ],
+});
+
+const { initLogger } = await import("braintrust");
+initLogger({ projectName: "my-project" });
+// Import and use instrumented provider SDKs here.
+```
+
+`onSpanExport` receives each incremental record from an instrumentation-created
+span after lazy values resolve, before attachment processing, merging, masking,
+and JSON serialization. It can run before the span ends; fields may be absent.
+Ordinary manually created spans, dataset rows, and feedback are not customized.
+
+Callbacks run synchronously in registration order. Mutate and return the record,
+or return a replacement for the next callback. Preserve identity and routing
+fields and return JSON-serializable data. Exceptions are swallowed; remaining
+customizers and export continue. Export retries reuse the transformed record
+without invoking callbacks again. Configuration is shared across SDK bundles.
+
+Customizers receive only the outgoing record, not a live span or provider
+instrumentation context.
+
 ## Testing
 
 Test at the narrowest useful layers:
