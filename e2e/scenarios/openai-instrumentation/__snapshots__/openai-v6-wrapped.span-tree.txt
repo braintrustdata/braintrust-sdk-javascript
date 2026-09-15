@@ -370,6 +370,68 @@ span_tree:
 │   │         "time_to_first_token": 0,
 │   │         "tokens": 13
 │   │       }
+│   ├── openai-stream-audio-operation
+│   │   metadata: {
+│   │     "operation": "stream-audio",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── Chat Completion [llm]
+│   │       input: [
+│   │         {
+│   │           "content": "Say exactly: Hello.",
+│   │           "role": "user"
+│   │         }
+│   │       ]
+│   │       output: [
+│   │         {
+│   │           "index": 0,
+│   │           "logprobs": null,
+│   │           "message": {
+│   │             "audio": {
+│   │               "expires_at": 0,
+│   │               "id": "<span:1>",
+│   │               "transcript": "Hello."
+│   │             },
+│   │             "role": "assistant"
+│   │           }
+│   │         }
+│   │       ]
+│   │       metadata: {
+│   │         "audio": {
+│   │           "format": "pcm16",
+│   │           "voice": "alloy"
+│   │         },
+│   │         "modalities": [
+│   │           "text",
+│   │           "audio"
+│   │         ],
+│   │         "model": "gpt-audio-1.5",
+│   │         "provider": "openai",
+│   │         "stream": true,
+│   │         "stream_options": {
+│   │           "include_usage": true
+│   │         }
+│   │       }
+│   │       metrics: {
+│   │         "completion_accepted_prediction_tokens": 0,
+│   │         "completion_audio_tokens": 17,
+│   │         "completion_reasoning_tokens": 0,
+│   │         "completion_rejected_prediction_tokens": 0,
+│   │         "completion_text_tokens": 6,
+│   │         "completion_tokens": 23,
+│   │         "prompt_audio_tokens": 0,
+│   │         "prompt_cached_tokens": 0,
+│   │         "prompt_image_tokens": 0,
+│   │         "prompt_text_tokens": 12,
+│   │         "prompt_tokens": 12,
+│   │         "time_to_first_token": 0,
+│   │         "tokens": 35
+│   │       }
 │   ├── openai-stream-with-response-operation
 │   │   metadata: {
 │   │     "operation": "stream-with-response",
@@ -908,6 +970,671 @@ span_tree:
 │   │       metadata: {
 │   │         "model": "omni-moderation-2024-09-26",
 │   │         "provider": "openai"
+│   │       }
+│   ├── openai-images-generate-operation
+│   │   metadata: {
+│   │     "operation": "images-generate",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.images.generate [llm]
+│   │       input: {
+│   │         "operation": "generate",
+│   │         "parameters": {
+│   │           "n": 2,
+│   │           "quality": "low",
+│   │           "size": "1024x1024"
+│   │         },
+│   │         "prompt": "A plain red square on white."
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "image_url": {
+│   │               "url": {
+│   │                 "content_type": "image/png",
+│   │                 "filename": "generated-image.png",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               }
+│   │             },
+│   │             "type": "image_url"
+│   │           },
+│   │           {
+│   │             "image_url": {
+│   │               "url": {
+│   │                 "content_type": "image/png",
+│   │                 "filename": "generated-image.png",
+│   │                 "key": "<uuid:2>",
+│   │                 "type": "braintrust_attachment"
+│   │               }
+│   │             },
+│   │             "type": "image_url"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-image-2",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "completion_image_tokens": 391,
+│   │         "completion_text_tokens": 0,
+│   │         "completion_tokens": 391,
+│   │         "prompt_image_tokens": 0,
+│   │         "prompt_text_tokens": 26,
+│   │         "prompt_tokens": 26,
+│   │         "tokens": 417
+│   │       }
+│   ├── openai-images-edit-operation
+│   │   metadata: {
+│   │     "operation": "images-edit",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.images.edit [llm]
+│   │       input: {
+│   │         "content": [
+│   │           {
+│   │             "image_url": {
+│   │               "url": {
+│   │                 "content_type": "image/png",
+│   │                 "filename": "input.png",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               }
+│   │             },
+│   │             "purpose": "reference",
+│   │             "type": "image_url"
+│   │           }
+│   │         ],
+│   │         "operation": "edit",
+│   │         "parameters": {
+│   │           "quality": "low",
+│   │           "size": "1024x1024"
+│   │         },
+│   │         "prompt": "Make a plain blue square on white."
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "image_url": {
+│   │               "url": {
+│   │                 "content_type": "image/png",
+│   │                 "filename": "generated-image.png",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               }
+│   │             },
+│   │             "type": "image_url"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-image-2",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "completion_image_tokens": 196,
+│   │         "completion_text_tokens": 0,
+│   │         "completion_tokens": 196,
+│   │         "prompt_image_tokens": 1,
+│   │         "prompt_text_tokens": 14,
+│   │         "prompt_tokens": 15,
+│   │         "tokens": 211
+│   │       }
+│   ├── openai-images-variation-operation
+│   │   metadata: {
+│   │     "operation": "images-variation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.images.createVariation [llm]
+│   │       input: {
+│   │         "content": [
+│   │           {
+│   │             "image_url": {
+│   │               "url": {
+│   │                 "content_type": "image/png",
+│   │                 "filename": "input.png",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               }
+│   │             },
+│   │             "purpose": "reference",
+│   │             "type": "image_url"
+│   │           }
+│   │         ],
+│   │         "operation": "variation"
+│   │       }
+│   │       metadata: {
+│   │         "model": "dall-e-2",
+│   │         "provider": "openai"
+│   │       }
+│   │       error: "404 status code (no body)"
+│   ├── openai-images-generate-stream-operation
+│   │   metadata: {
+│   │     "operation": "images-generate-stream",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.images.generate [llm]
+│   │       input: {
+│   │         "operation": "generate",
+│   │         "parameters": {
+│   │           "quality": "low",
+│   │           "size": "1024x1024"
+│   │         },
+│   │         "prompt": "A plain green square on white."
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "image_url": {
+│   │               "url": {
+│   │                 "content_type": "image/png",
+│   │                 "filename": "generated-image.png",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               }
+│   │             },
+│   │             "type": "image_url"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-image-2",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "completion_image_tokens": 273,
+│   │         "completion_text_tokens": 0,
+│   │         "completion_tokens": 273,
+│   │         "prompt_image_tokens": 0,
+│   │         "prompt_text_tokens": 13,
+│   │         "prompt_tokens": 13,
+│   │         "time_to_first_token": 0,
+│   │         "tokens": 286
+│   │       }
+│   ├── openai-images-edit-stream-operation
+│   │   metadata: {
+│   │     "operation": "images-edit-stream",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.images.edit [llm]
+│   │       input: {
+│   │         "content": [
+│   │           {
+│   │             "image_url": {
+│   │               "url": {
+│   │                 "content_type": "image/png",
+│   │                 "filename": "input.png",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               }
+│   │             },
+│   │             "purpose": "reference",
+│   │             "type": "image_url"
+│   │           }
+│   │         ],
+│   │         "operation": "edit",
+│   │         "parameters": {
+│   │           "quality": "low",
+│   │           "size": "1024x1024"
+│   │         },
+│   │         "prompt": "A plain green square on white."
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "image_url": {
+│   │               "url": {
+│   │                 "content_type": "image/png",
+│   │                 "filename": "generated-image.png",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               }
+│   │             },
+│   │             "type": "image_url"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-image-2",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "completion_image_tokens": 273,
+│   │         "completion_text_tokens": 0,
+│   │         "completion_tokens": 273,
+│   │         "prompt_image_tokens": 1,
+│   │         "prompt_text_tokens": 13,
+│   │         "prompt_tokens": 14,
+│   │         "time_to_first_token": 0,
+│   │         "tokens": 287
+│   │       }
+│   ├── openai-audio-speech-operation
+│   │   metadata: {
+│   │     "operation": "audio-speech",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.audio.speech.create [llm]
+│   │       input: {
+│   │         "operation": "speech",
+│   │         "parameters": {
+│   │           "format": "wav",
+│   │           "voice": "coral"
+│   │         },
+│   │         "prompt": "Hello."
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "file": {
+│   │               "byte_size": 76844,
+│   │               "file_data": {
+│   │                 "content_type": "audio/wav",
+│   │                 "filename": "speech.wav",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               },
+│   │               "filename": "speech.wav"
+│   │             },
+│   │             "type": "file"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-4o-mini-tts",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "time_to_first_token": 0
+│   │       }
+│   ├── openai-audio-transcription-operation
+│   │   metadata: {
+│   │     "operation": "audio-transcription",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.audio.transcriptions.create [llm]
+│   │       input: {
+│   │         "content": [
+│   │           {
+│   │             "file": {
+│   │               "file_data": {
+│   │                 "content_type": "audio/wav",
+│   │                 "filename": "hello.wav",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               },
+│   │               "filename": "hello.wav"
+│   │             },
+│   │             "type": "file"
+│   │           }
+│   │         ],
+│   │         "operation": "transcribe",
+│   │         "parameters": {
+│   │           "language": "en"
+│   │         }
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "text": "Hello",
+│   │             "type": "text"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-4o-transcribe",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "completion_tokens": 3,
+│   │         "prompt_audio_tokens": 16,
+│   │         "prompt_text_tokens": 0,
+│   │         "prompt_tokens": 16,
+│   │         "tokens": 19
+│   │       }
+│   ├── openai-audio-transcription-stream-operation
+│   │   metadata: {
+│   │     "operation": "audio-transcription-stream",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.audio.transcriptions.create [llm]
+│   │       input: {
+│   │         "content": [
+│   │           {
+│   │             "file": {
+│   │               "file_data": {
+│   │                 "content_type": "audio/wav",
+│   │                 "filename": "hello.wav",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               },
+│   │               "filename": "hello.wav"
+│   │             },
+│   │             "type": "file"
+│   │           }
+│   │         ],
+│   │         "operation": "transcribe"
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "text": "Hello",
+│   │             "type": "text"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-4o-transcribe",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "completion_tokens": 3,
+│   │         "prompt_audio_tokens": 16,
+│   │         "prompt_text_tokens": 0,
+│   │         "prompt_tokens": 16,
+│   │         "time_to_first_token": 0,
+│   │         "tokens": 19
+│   │       }
+│   ├── openai-audio-translation-operation
+│   │   metadata: {
+│   │     "operation": "audio-translation",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.audio.translations.create [llm]
+│   │       input: {
+│   │         "content": [
+│   │           {
+│   │             "file": {
+│   │               "file_data": {
+│   │                 "content_type": "audio/wav",
+│   │                 "filename": "hello.wav",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               },
+│   │               "filename": "hello.wav"
+│   │             },
+│   │             "type": "file"
+│   │           }
+│   │         ],
+│   │         "operation": "translate"
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "text": "Hello.",
+│   │             "type": "text"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "whisper-1",
+│   │         "provider": "openai"
+│   │       }
+│   ├── openai-audio-speech-reader-operation
+│   │   metadata: {
+│   │     "operation": "audio-speech-reader",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.audio.speech.create [llm]
+│   │       input: {
+│   │         "operation": "speech",
+│   │         "parameters": {
+│   │           "voice": "coral"
+│   │         },
+│   │         "prompt": "Hello reader."
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "file": {
+│   │               "byte_size": 28800,
+│   │               "file_data": {
+│   │                 "content_type": "audio/mpeg",
+│   │                 "filename": "speech.mp3",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               },
+│   │               "filename": "speech.mp3"
+│   │             },
+│   │             "type": "file"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-4o-mini-tts",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "time_to_first_token": 0
+│   │       }
+│   ├── openai-audio-speech-iterate-operation
+│   │   metadata: {
+│   │     "operation": "audio-speech-iterate",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.audio.speech.create [llm]
+│   │       input: {
+│   │         "operation": "speech",
+│   │         "parameters": {
+│   │           "voice": "coral"
+│   │         },
+│   │         "prompt": "Hello iterate."
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "file": {
+│   │               "byte_size": 41088,
+│   │               "file_data": {
+│   │                 "content_type": "audio/mpeg",
+│   │                 "filename": "speech.mp3",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               },
+│   │               "filename": "speech.mp3"
+│   │             },
+│   │             "type": "file"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-4o-mini-tts",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "time_to_first_token": 0
+│   │       }
+│   ├── openai-audio-speech-pipe-operation
+│   │   metadata: {
+│   │     "operation": "audio-speech-pipe",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.audio.speech.create [llm]
+│   │       input: {
+│   │         "operation": "speech",
+│   │         "parameters": {
+│   │           "voice": "coral"
+│   │         },
+│   │         "prompt": "Hello pipe."
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "file": {
+│   │               "byte_size": 21120,
+│   │               "file_data": {
+│   │                 "content_type": "audio/mpeg",
+│   │                 "filename": "speech.mp3",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               },
+│   │               "filename": "speech.mp3"
+│   │             },
+│   │             "type": "file"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-4o-mini-tts",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "time_to_first_token": 0
+│   │       }
+│   ├── openai-audio-speech-cancel-operation
+│   │   metadata: {
+│   │     "operation": "audio-speech-cancel",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.audio.speech.create [llm]
+│   │       input: {
+│   │         "operation": "speech",
+│   │         "parameters": {
+│   │           "voice": "coral"
+│   │         },
+│   │         "prompt": "Hello cancel."
+│   │       }
+│   │       output: {
+│   │         "content": []
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-4o-mini-tts",
+│   │         "provider": "openai"
+│   │       }
+│   ├── openai-audio-speech-unread-operation
+│   │   metadata: {
+│   │     "operation": "audio-speech-unread",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.audio.speech.create [llm]
+│   │       input: {
+│   │         "operation": "speech",
+│   │         "parameters": {
+│   │           "voice": "coral"
+│   │         },
+│   │         "prompt": "Hello unread."
+│   │       }
+│   │       output: {
+│   │         "content": []
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-4o-mini-tts",
+│   │         "provider": "openai"
+│   │       }
+│   ├── openai-audio-speech-sse-operation
+│   │   metadata: {
+│   │     "operation": "audio-speech-sse",
+│   │     "testRunId": "<run:1>"
+│   │   }
+│   │   context: {
+│   │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+│   │     "caller_functionname": "runOperation",
+│   │     "caller_lineno": 0
+│   │   }
+│   │   └── openai.audio.speech.create [llm]
+│   │       input: {
+│   │         "operation": "speech",
+│   │         "parameters": {
+│   │           "voice": "coral"
+│   │         },
+│   │         "prompt": "Hello streaming."
+│   │       }
+│   │       output: {
+│   │         "content": [
+│   │           {
+│   │             "file": {
+│   │               "byte_size": 30720,
+│   │               "file_data": {
+│   │                 "content_type": "audio/mpeg",
+│   │                 "filename": "speech.mp3",
+│   │                 "key": "<uuid:1>",
+│   │                 "type": "braintrust_attachment"
+│   │               },
+│   │               "filename": "speech.mp3"
+│   │             },
+│   │             "type": "file"
+│   │           }
+│   │         ]
+│   │       }
+│   │       metadata: {
+│   │         "model": "gpt-4o-mini-tts",
+│   │         "provider": "openai"
+│   │       }
+│   │       metrics: {
+│   │         "completion_tokens": 50,
+│   │         "prompt_tokens": 3,
+│   │         "time_to_first_token": 0,
+│   │         "tokens": 53
 │   │       }
 │   ├── openai-batch-operation
 │   │   metadata: {

@@ -1,3 +1,8 @@
+import type {
+  OpenAIMediaClient,
+  OpenAIMediaMethod,
+  OpenAIMediaParams,
+} from "../vendor-sdk-types/openai-media";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { CompiledPrompt } from "../logger";
 import {
@@ -148,9 +153,68 @@ export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
     });
   }
 
+  const mediaProxy = (
+    resource:
+      | NonNullable<OpenAIMediaClient["images"]>
+      | {
+          create: OpenAIMediaMethod;
+        },
+    channels: Record<string, typeof openAIChannels.imagesGenerate>,
+  ) =>
+    new Proxy(resource, {
+      get(target, key) {
+        const value = Reflect.get(target, key, target);
+        const channel =
+          typeof key === "string" && Object.hasOwn(channels, key)
+            ? channels[key]
+            : undefined;
+        if (channel && typeof value === "function")
+          return (allParams: OpenAIMediaParams, options?: unknown) => {
+            const { span_info, params } = splitSpanInfo<
+              OpenAIMediaParams,
+              SpanInfo["span_info"]
+            >(allParams);
+            return channel.invoke(value, target, [params, options], {
+              span_info,
+            });
+          };
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+  const imagesProxy =
+    typedOpenai.images &&
+    mediaProxy(typedOpenai.images, {
+      generate: openAIChannels.imagesGenerate,
+      edit: openAIChannels.imagesEdit,
+      createVariation: openAIChannels.imagesCreateVariation,
+    });
+  const audioProxy =
+    typedOpenai.audio &&
+    new Proxy(typedOpenai.audio, {
+      get(target, key) {
+        if (key === "speech")
+          return mediaProxy(target.speech, {
+            create: openAIChannels.audioSpeechCreate,
+          });
+        if (key === "transcriptions")
+          return mediaProxy(target.transcriptions, {
+            create: openAIChannels.audioTranscriptionsCreate,
+          });
+        if (key === "translations")
+          return mediaProxy(target.translations, {
+            create: openAIChannels.audioTranslationsCreate,
+          });
+        return Reflect.get(target, key, target);
+      },
+    });
+
   const topLevelProxy = new Proxy(typedOpenai, {
     get(target, name) {
       switch (name) {
+        case "images":
+          return imagesProxy;
+        case "audio":
+          return audioProxy;
         case "chat":
           return chatProxy;
         case "embeddings":

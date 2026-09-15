@@ -38,6 +38,10 @@ Map the change before editing:
 - Use the SDK `debugLogger` for SDK instrumentation diagnostics. Do not call `console.*` directly from instrumentation code; direct console use should stay inside the debug logger implementation or another explicitly justified exception.
 - Pass `Error` objects directly as `span.log({ error })` values. The SDK serializes errors correctly, so do not add local helpers that manually turn errors into message/stack strings unless an external API requires a non-`Error` representation.
 - Log only the useful surface. Prefer narrow, stable payloads over dumping full request/response objects; exclude redundant or overly large data when possible.
+- Automatic capture of inline multimodal bytes as Braintrust attachments must be opt-in.
+  Guard attachment creation and binary observation with `BRAINTRUST_CAPTURE_ATTACHMENTS`, and enable them only when its value is `1` or `true`.
+  Preserve useful text, metadata, metrics, and remote references when attachment capture is disabled, and omit inline bytes from logged payloads.
+- Do not modify package READMEs during instrumentation work unless the user specifically requests it or the change corrects outdated information.
 - We want to limit our instrumentation to operations that are relevant for AI generations and operations (LLMs, embeddings, media generation, ...). Things like creating entities on platforms (CRUD for Workflows of Agent entities) is irrelevant to us.
 - When building instrumentation, we should always have a vendored type/interface for what we are wrapping. The type or interface should not be larger than what is relevant to the instrumentation. The type or interface should be used for typing tracing channels and also should be used to assert the type on whatever is passed into wrappers as soon as the wrapper has verified that the passed in value is plausibly what should be wrapped.
 
