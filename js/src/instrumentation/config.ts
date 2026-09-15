@@ -1,3 +1,68 @@
+import type { Span } from "../logger";
+
+/**
+ * Borrowed provider objects used by an instrumentation to create a span.
+ *
+ * Do not mutate or retain this context or its values after the callback returns.
+ * Copy any data that needs to outlive the callback.
+ */
+export interface InstrumentationContext {
+  /** Stable instrumentation name, such as "openai" or "anthropic". */
+  readonly name: string;
+
+  /**
+   * Get an instrumentation-specific object, or undefined when unavailable.
+   * Key names and value types are defined by each instrumentation.
+   */
+  get(key: string): unknown;
+}
+
+/**
+ * One span's outgoing record, with lazy values resolved, before JSON
+ * serialization. This is an incremental update, not necessarily a complete
+ * span; a span can produce multiple records, including before it ends.
+ *
+ * All fields are available for inspection and mutation. Returned data must
+ * remain JSON-serializable. Identity and routing fields, including id,
+ * span_id, root_span_id, and span_parents, must not be changed or removed.
+ */
+export type SpanExportData = Record<string, unknown>;
+
+/**
+ * Customize spans created by Braintrust instrumentation.
+ *
+ * Callbacks are synchronous and run in registration order. Exceptions are
+ * swallowed and processing continues without changing provider results or
+ * preventing span finalization.
+ *
+ * @remarks API declaration only; customizer execution is not implemented yet.
+ */
+export interface SpanCustomizer {
+  /**
+   * Called after final output, metrics, or error capture, immediately before
+   * the instrumented span ends. For streams, this is at termination, not when
+   * the provider returns an iterator.
+   *
+   * Use span.log() or span.setAttributes() to customize the span; do not end it.
+   * Earlier updates may already be uploaded, so this is not a redaction hook.
+   */
+  onSpanEnding?(span: Span, ctx: InstrumentationContext): void;
+
+  /**
+   * Inspect and transform a span's outgoing record before JSON serialization
+   * and upload. This can be used to redact sensitive data.
+   *
+   * Mutate the data in place and return it, or return a replacement record.
+   * Each customizer receives the previous customizer's returned record.
+   * A record must be returned; dropping records is not supported.
+   *
+   * Preserve identity and routing fields and return JSON-serializable data.
+   * Called once per outgoing record, not per transport retry. No provider
+   * context is retained for this callback.
+   */
+  onSpanExport?(data: SpanExportData): SpanExportData;
+}
+
 export interface InstrumentationIntegrationsConfig {
   openai?: boolean;
   anthropic?: boolean;
@@ -45,6 +110,14 @@ export interface InstrumentationConfig {
    * Set to false to disable instrumentation for that SDK.
    */
   integrations?: InstrumentationIntegrationsConfig;
+
+  /**
+   * Instrumentation-wide customizers, in callback execution order.
+   * Configure before instrumentation is enabled.
+   *
+   * @remarks API declaration only; these callbacks are not invoked yet.
+   */
+  spanCustomizers?: readonly SpanCustomizer[];
 }
 
 const envIntegrationAliases: Record<

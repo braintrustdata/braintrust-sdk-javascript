@@ -45,3 +45,8 @@ export {
 // Configuration API
 export { configureInstrumentation } from "./registry";
 export type { InstrumentationConfig } from "./registry";
+export type {
+  InstrumentationContext,
+  SpanCustomizer,
+  SpanExportData,
+} from "./config";
