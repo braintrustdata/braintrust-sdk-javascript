@@ -1,3 +1,48 @@
+import type { Span } from "../logger";
+
+/** information used by braintrust instrumentation to create a span */
+export interface InstrumentationContext {
+  /**
+   * name of the instrumentation that produced a span. e.g. `langchain`, `openai`, etc
+   *
+   * this is the same value as `span_origin.instrumentation.name` on the exported span
+   */
+  readonly name: string;
+
+  /**
+   * get a specific object by name used to gather instrumentation data
+   *
+   * for example: get("request") could return `OpenAIRequest request`
+   *
+   * NOTE: the exact key names and their values are specific to the instrumentation
+   */
+  get(key: string): unknown;
+}
+
+export type SpanExportData = Record<string, unknown>;
+
+export interface SpanCustomizer {
+  /**
+   * Called after final output, metrics, or error capture, immediately before
+   * the instrumented span ends. For streams, this is at termination, not when
+   * the provider returns an iterator.
+   *
+   * Use span.log() or span.setAttributes() to customize the span; do not end it.
+   *
+   * @remarks API declaration only; this callback is not invoked yet.
+   */
+  onBraintrustSpanEnding?(span: Span, ctx: InstrumentationContext): void;
+
+  /**
+   * Hook a span's outgoing record, with lazy values resolved, before JSON serialization
+   *
+   * You may add/remove/delete most fields on the span.
+   *
+   * The follow fields may NOT be altered: trace id, span id, parent id
+   */
+  onSpanExport?(data: SpanExportData): SpanExportData;
+}
+
 export interface InstrumentationIntegrationsConfig {
   openai?: boolean;
   anthropic?: boolean;
@@ -45,6 +90,14 @@ export interface InstrumentationConfig {
    * Set to false to disable instrumentation for that SDK.
    */
   integrations?: InstrumentationIntegrationsConfig;
+
+  /**
+   * Instrumentation-wide customizers, in callback execution order.
+   * Configure before instrumentation is enabled.
+   *
+   * Only onSpanExport is currently invoked; onSpanEnding is not implemented.
+   */
+  spanCustomizers?: readonly SpanCustomizer[];
 }
 
 const envIntegrationAliases: Record<
