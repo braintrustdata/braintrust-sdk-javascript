@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 48f2c828cb95730e) -- do not modify
+// Auto-generated file (content hash 71b5715e9b2fb9f0) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -424,19 +424,6 @@ export const ChatCompletionContentPartImageWithTitle = z.object({
 export type ChatCompletionContentPartImageWithTitleType = z.infer<
   typeof ChatCompletionContentPartImageWithTitle
 >;
-export const ChatCompletionContentPartInputAudioWithTitle = z.object({
-  input_audio: z.object({ data: z.string(), format: z.enum(["wav", "mp3"]) }),
-  type: z.literal("input_audio"),
-  cache_control: z
-    .object({
-      type: z.literal("ephemeral"),
-      ttl: z.enum(["5m", "1h"]).optional(),
-    })
-    .optional(),
-});
-export type ChatCompletionContentPartInputAudioWithTitleType = z.infer<
-  typeof ChatCompletionContentPartInputAudioWithTitle
->;
 export const ChatCompletionContentPartFileFile = z
   .object({ file_data: z.string(), filename: z.string(), file_id: z.string() })
   .partial();
@@ -459,7 +446,6 @@ export type ChatCompletionContentPartFileWithTitleType = z.infer<
 export const ChatCompletionContentPart = z.union([
   ChatCompletionContentPartTextWithTitle,
   ChatCompletionContentPartImageWithTitle,
-  ChatCompletionContentPartInputAudioWithTitle,
   ChatCompletionContentPartFileWithTitle,
 ]);
 export type ChatCompletionContentPartType = z.infer<
@@ -816,6 +802,7 @@ export const SpanType = z.union([
     "preprocessor",
     "classifier",
     "review",
+    "log",
   ]),
   z.null(),
 ]);
@@ -1535,6 +1522,12 @@ export const MessageRole = z.enum([
   "developer",
 ]);
 export type MessageRoleType = z.infer<typeof MessageRole>;
+export const NamedScore = z.object({
+  name: z.string(),
+  score: z.union([z.number(), z.boolean(), z.null()]).optional(),
+  metadata: z.object({}).partial().passthrough().optional(),
+});
+export type NamedScoreType = z.infer<typeof NamedScore>;
 export const NullableSavedFunctionId = z.union([
   z.object({
     type: z.literal("function"),
@@ -2218,6 +2211,20 @@ export const RunEval = z.object({
   endpoint_name: z.union([z.string(), z.null()]).optional(),
 });
 export type RunEvalType = z.infer<typeof RunEval>;
+export const ScoreObject = z.object({
+  name: z.string().optional(),
+  score: z.union([z.number(), z.boolean(), z.null()]),
+  metadata: z.object({}).partial().passthrough().optional(),
+});
+export type ScoreObjectType = z.infer<typeof ScoreObject>;
+export const ScoreResult = z.union([
+  ScoreObject,
+  NamedScore,
+  z.union([z.number(), z.boolean()]),
+  z.array(NamedScore),
+  z.null(),
+]);
+export type ScoreResultType = z.infer<typeof ScoreResult>;
 export const ServiceToken = z.object({
   id: z.string().uuid(),
   created: z.union([z.string(), z.null()]).optional(),
