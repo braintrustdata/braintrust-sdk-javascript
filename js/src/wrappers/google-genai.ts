@@ -6,9 +6,12 @@ import type {
   GoogleGenAIEmbedContentParams,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIInteractionCreateParams,
+  GoogleGenAIHttpResponse,
   GoogleGenAIInteractions,
   GoogleGenAIModels,
 } from "../vendor-sdk-types/google-genai";
+
+const patchedHttpResponses = new WeakSet<object>();
 
 /**
  * Wrap a Google GenAI module (imported with `import * as googleGenAI from '@google/genai'`) to add tracing.
@@ -42,6 +45,31 @@ export function wrapGoogleGenAI<T extends Record<string, any>>(
       "GoogleGenAI class not found in module. Not wrapping. Make sure you're passing the module itself (import * as googleGenAI from '@google/genai').",
     );
     return googleGenAI;
+  }
+
+  // Preserve the public HttpResponse.json method and its promise semantics.
+  // The shared plugin observes usage only while an embedding span is active.
+  const httpResponse = googleGenAI.HttpResponse;
+  if (
+    typeof httpResponse === "function" &&
+    isObject(httpResponse.prototype) &&
+    typeof httpResponse.prototype.json === "function" &&
+    !patchedHttpResponses.has(httpResponse.prototype)
+  ) {
+    const prototype = httpResponse.prototype as GoogleGenAIHttpResponse;
+    const originalJson = prototype.json;
+    if (
+      Reflect.set(prototype, "json", function (this: GoogleGenAIHttpResponse) {
+        return googleGenAIChannels.httpResponseJson.invoke(
+          originalJson,
+          this,
+          [],
+          {},
+        );
+      })
+    ) {
+      patchedHttpResponses.add(prototype);
+    }
   }
 
   return new Proxy(googleGenAI, {

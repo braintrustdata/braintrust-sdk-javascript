@@ -300,6 +300,9 @@
                     "city": "Vienna",
                     "condition": "sunny",
                     "marker": "WEATHER_TOOL_EXECUTED"
+                  },
+                  "metadata": {
+                    "toolCallId": "<toolCallId:1>"
                   }
                 }
               ],

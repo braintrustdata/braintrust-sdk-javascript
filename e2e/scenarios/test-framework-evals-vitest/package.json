@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "tinyrainbow": "3.1.0",
-    "vitest": "4.1.5",
+    "vitest": "4.1.11",
     "vitest-evals": "0.13.1",
     "vitest-v2": "npm:vitest@2.1.9",
     "vitest-v2-latest": "npm:vitest@2.1.9",

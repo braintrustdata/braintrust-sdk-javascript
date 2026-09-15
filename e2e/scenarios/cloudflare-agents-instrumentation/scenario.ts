@@ -1,8 +1,8 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { once } from "node:events";
 import { writeFile } from "node:fs/promises";
-import net from "node:net";
 import path from "node:path";
+import { stripVTControlCharacters } from "node:util";
 import {
   getTestRunId,
   runMain,
@@ -10,7 +10,6 @@ import {
 } from "../../helpers/scenario-runtime";
 
 async function main() {
-  const port = await getFreePort();
   const viteBin = path.join(
     process.cwd(),
     "node_modules",
@@ -21,7 +20,7 @@ async function main() {
   await buildWorker(viteBin);
   const server = spawn(
     viteBin,
-    ["preview", "--host", "127.0.0.1", "--port", String(port), "--strictPort"],
+    ["preview", "--host", "127.0.0.1", "--port", "0", "--strictPort"],
     {
       cwd: process.cwd(),
       env: process.env,
@@ -31,8 +30,7 @@ async function main() {
   const output = captureOutput(server);
 
   try {
-    const baseUrl = `http://127.0.0.1:${port}`;
-    await waitForServer(baseUrl, server, output);
+    const baseUrl = await waitForServer(server, output);
     const testRunId = getTestRunId();
     const projectName = scopedName(
       "e2e-cloudflare-agents-instrumentation",
@@ -99,22 +97,6 @@ async function buildWorker(viteBin: string): Promise<void> {
   }
 }
 
-async function getFreePort(): Promise<number> {
-  const server = net.createServer();
-  await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-  const address = server.address();
-  await new Promise<void>((resolve, reject) => {
-    server.close((error) => (error ? reject(error) : resolve()));
-  });
-  if (!address || typeof address === "string") {
-    throw new Error("Could not allocate a Vite preview-server port");
-  }
-  return address.port;
-}
-
 function captureOutput(child: ChildProcessWithoutNullStreams): () => string {
   let stdout = "";
   let stderr = "";
@@ -128,10 +110,9 @@ function captureOutput(child: ChildProcessWithoutNullStreams): () => string {
 }
 
 async function waitForServer(
-  baseUrl: string,
   server: ChildProcessWithoutNullStreams,
   output: () => string,
-): Promise<void> {
+): Promise<string> {
   const startedAt = Date.now();
   while (Date.now() - startedAt < 60_000) {
     if (server.exitCode !== null) {
@@ -139,13 +120,19 @@ async function waitForServer(
         `Vite exited early with code ${server.exitCode}\n${output()}`,
       );
     }
-    try {
-      const response = await fetch(`${baseUrl}/health`);
-      if (response.ok) {
-        return;
+    // Vite binds port 0 and reports the assigned URL, avoiding a port reservation race.
+    const baseUrl = stripVTControlCharacters(output()).match(
+      /Local:\s+(http:\/\/127\.0\.0\.1:\d+)\//,
+    )?.[1];
+    if (baseUrl) {
+      try {
+        const response = await fetch(`${baseUrl}/health`);
+        if (response.ok) {
+          return baseUrl;
+        }
+      } catch {
+        // Continue until workerd accepts requests.
       }
-    } catch {
-      // Continue until workerd accepts requests.
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }

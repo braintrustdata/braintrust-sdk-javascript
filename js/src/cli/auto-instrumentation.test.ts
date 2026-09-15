@@ -139,6 +139,41 @@ describe("eval auto-instrumentation", () => {
     expect(output).toContain(googleGenAIChannel);
   });
 
+  it("inlines the Braintrust SDK in the final uploaded bundle", async () => {
+    const sourceFile = path.join(fixtureDir, "braintrust-scorer.ts");
+    await fs.writeFile(
+      sourceFile,
+      `import { marker } from "braintrust";
+      export const value = marker;`,
+    );
+
+    handles = await initializeHandles({ files: [sourceFile], mode: "bundle" });
+    await handles[sourceFile].bundle();
+    const output = await fs.readFile(handles[sourceFile].bundleFile!, "utf8");
+
+    expect(output).toContain("bundled-braintrust");
+    expect(output).not.toMatch(/require\(["']braintrust["']\)/);
+  });
+
+  it("keeps explicitly external packages external in the final uploaded bundle", async () => {
+    const sourceFile = path.join(fixtureDir, "external-package-scorer.ts");
+    await fs.writeFile(
+      sourceFile,
+      `import { value } from "some-native-package";
+      export const result = value;`,
+    );
+
+    handles = await initializeHandles({
+      files: [sourceFile],
+      mode: "bundle",
+      externalPackages: ["some-native-package"],
+    });
+    await handles[sourceFile].bundle();
+    const output = await fs.readFile(handles[sourceFile].bundleFile!, "utf8");
+
+    expect(output).toMatch(/require\(["']some-native-package["']\)/);
+  });
+
   it.each([
     ["instruments", undefined, ["start", "end", "asyncStart", "asyncEnd"]],
     ["respects opt-out for", "anthropic", []],
@@ -231,6 +266,7 @@ process.stdout.write("loaded");`,
 });
 
 async function writeFixturePackages(fixtureDir: string) {
+  const braintrustPackageDir = path.join(fixtureDir, "node_modules/braintrust");
   const googlePackageDir = path.join(fixtureDir, "node_modules/@google/genai");
   const indirectPackageDir = path.join(
     fixtureDir,
@@ -240,6 +276,7 @@ async function writeFixturePackages(fixtureDir: string) {
     fixtureDir,
     "node_modules/@anthropic-ai/sdk",
   );
+  await fs.mkdir(braintrustPackageDir, { recursive: true });
   await fs.mkdir(path.join(googlePackageDir, "dist/node"), {
     recursive: true,
   });
@@ -249,6 +286,18 @@ async function writeFixturePackages(fixtureDir: string) {
   });
 
   await Promise.all([
+    fs.writeFile(
+      path.join(braintrustPackageDir, "package.json"),
+      JSON.stringify({
+        name: "braintrust",
+        version: "1.0.0",
+        main: "./index.js",
+      }),
+    ),
+    fs.writeFile(
+      path.join(braintrustPackageDir, "index.js"),
+      `exports.marker = "bundled-braintrust";`,
+    ),
     fs.writeFile(
       path.join(googlePackageDir, "package.json"),
       JSON.stringify({

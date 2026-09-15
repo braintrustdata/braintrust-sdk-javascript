@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 719572142fc24803) -- do not modify
+// Auto-generated file (content hash 48f2c828cb95730e) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -424,6 +424,19 @@ export const ChatCompletionContentPartImageWithTitle = z.object({
 export type ChatCompletionContentPartImageWithTitleType = z.infer<
   typeof ChatCompletionContentPartImageWithTitle
 >;
+export const ChatCompletionContentPartInputAudioWithTitle = z.object({
+  input_audio: z.object({ data: z.string(), format: z.enum(["wav", "mp3"]) }),
+  type: z.literal("input_audio"),
+  cache_control: z
+    .object({
+      type: z.literal("ephemeral"),
+      ttl: z.enum(["5m", "1h"]).optional(),
+    })
+    .optional(),
+});
+export type ChatCompletionContentPartInputAudioWithTitleType = z.infer<
+  typeof ChatCompletionContentPartInputAudioWithTitle
+>;
 export const ChatCompletionContentPartFileFile = z
   .object({ file_data: z.string(), filename: z.string(), file_id: z.string() })
   .partial();
@@ -446,6 +459,7 @@ export type ChatCompletionContentPartFileWithTitleType = z.infer<
 export const ChatCompletionContentPart = z.union([
   ChatCompletionContentPartTextWithTitle,
   ChatCompletionContentPartImageWithTitle,
+  ChatCompletionContentPartInputAudioWithTitle,
   ChatCompletionContentPartFileWithTitle,
 ]);
 export type ChatCompletionContentPartType = z.infer<

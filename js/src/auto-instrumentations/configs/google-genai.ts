@@ -76,6 +76,22 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
     },
   },
 
+  // The SDK's embedding response converter drops usageMetadata. Observe the
+  // parsed HTTP response before conversion; the plugin scopes this to embeddings.
+  {
+    channelName: googleGenAIChannels.httpResponseJson.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.0.0",
+      filePath: "dist/node/index.mjs",
+    },
+    functionQuery: {
+      className: "HttpResponse",
+      methodName: "json",
+      kind: "Async",
+    },
+  },
+
   // BaseInteractions.create - Interactions API entry point
   {
     channelName: googleGenAIChannels.interactionsCreate.channelName,

@@ -70,7 +70,17 @@ function createConfigObject(
   nextConfig: NextConfigObject | undefined,
 ): NextConfigObject {
   const config = { ...(nextConfig ?? {}) };
-  const activeBundler = detectBundler();
+  const nextMajorVersion = getNextMajorVersion();
+  const activeBundler = detectBundler(nextMajorVersion);
+
+  // Instrumentation is enabled by default in Next 15+. Earlier versions need
+  // this flag for instrumentation.ts to load and register the SDK.
+  if (nextMajorVersion !== undefined && nextMajorVersion < 15) {
+    config.experimental = {
+      ...config.experimental,
+      instrumentationHook: true,
+    };
+  }
 
   if (activeBundler === "turbopack") {
     // Next has used both `experimental.turbo` and `turbopack`; patch the stable
@@ -97,7 +107,9 @@ function createConfigObject(
   };
 }
 
-function detectBundler(): "turbopack" | "webpack" {
+function detectBundler(
+  nextMajorVersion: number | undefined,
+): "turbopack" | "webpack" {
   if (process.argv.includes("--webpack")) {
     return "webpack";
   }
@@ -117,7 +129,6 @@ function detectBundler(): "turbopack" | "webpack" {
   // Next 16 defaults production builds to Turbopack unless the user passes
   // `--webpack`, so use the installed Next major as a final auto-detection
   // signal when no explicit bundler flag is present.
-  const nextMajorVersion = getNextMajorVersion();
   if (nextMajorVersion !== undefined && nextMajorVersion >= 16) {
     return "turbopack";
   }

@@ -1,3 +1,6 @@
+import { uint8ArrayToBase64 } from "../../../util/bytes";
+import { processInputAttachments } from "../../wrappers/attachment-utils";
+import { debugLogger } from "../../debug-logger";
 import { BasePlugin } from "../core";
 import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
 import type {
@@ -9,6 +12,7 @@ import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
   _internalGetGlobalState,
   Attachment,
+  currentSpan,
   BRAINTRUST_CURRENT_SPAN_STORE,
   startSpan as startBaseSpan,
   type CurrentSpanStore,
@@ -239,13 +243,48 @@ export class GoogleGenAIPlugin extends BasePlugin {
         ChannelMessage<EmbedContentChannel>
       >;
     const states = new WeakMap<object, SpanState>();
+    const embeddingSpans = new WeakSet<Span>();
+    this.unsubscribers.push(
+      googleGenAIChannels.httpResponseJson.intercept(
+        (target, thisArg, args) => {
+          const span = currentSpan();
+          const result = Reflect.apply(target, thisArg, args);
+          if (embeddingSpans.has(span)) {
+            // Observe the SDK's own JSON parsing, without cloning/consuming the
+            // response again or retaining the embedding vectors.
+            void Promise.resolve(result).then(
+              (response) => {
+                try {
+                  const metrics = cleanMetrics(
+                    extractEmbedContentMetrics(response),
+                  );
+                  if (
+                    embeddingSpans.has(span) &&
+                    Object.keys(metrics).length > 0
+                  ) {
+                    span.log({ metrics });
+                  }
+                } catch (error) {
+                  debugLogger.error(
+                    "Error reading Google GenAI embedding usage:",
+                    error,
+                  );
+                }
+              },
+              () => {}, // The embedding channel handles the original rejection.
+            );
+          }
+          return result;
+        },
+      ),
+    );
     const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
       tracingChannel,
       states,
       (event) => {
         const params = event.arguments[0];
         const input = serializeEmbedContentInput(params);
-        const metadata = extractEmbedContentMetadata(params);
+        const metadata = { provider: "google", model: params.model };
         const span = startBaseSpan(
           withSpanInstrumentationName(
             {
@@ -259,6 +298,7 @@ export class GoogleGenAIPlugin extends BasePlugin {
           ),
         );
 
+        embeddingSpans.add(span);
         return {
           span,
           startTime: getCurrentUnixTimestamp(),
@@ -271,7 +311,7 @@ export class GoogleGenAIPlugin extends BasePlugin {
         ensureSpanState(states, event, () => {
           const params = event.arguments[0];
           const input = serializeEmbedContentInput(params);
-          const metadata = extractEmbedContentMetadata(params);
+          const metadata = { provider: "google", model: params.model };
           const span = startBaseSpan(
             withSpanInstrumentationName(
               {
@@ -285,6 +325,7 @@ export class GoogleGenAIPlugin extends BasePlugin {
             ),
           );
 
+          embeddingSpans.add(span);
           return {
             span,
             startTime: getCurrentUnixTimestamp(),
@@ -298,20 +339,28 @@ export class GoogleGenAIPlugin extends BasePlugin {
         }
 
         try {
-          const output = summarizeEmbedContentOutput(event.result);
           spanState.span.log({
-            ...(output ? { output } : {}),
+            output: summarizeEmbedContentOutput(event.result),
             metrics: cleanMetrics(
               extractEmbedContentMetrics(event.result, spanState.startTime),
             ),
           });
         } finally {
+          embeddingSpans.delete(spanState.span);
           spanState.span.end();
           states.delete(event as object);
         }
       },
       error: (event) => {
-        logErrorAndEndSpan(states, event as ErrorOf<EmbedContentChannel>);
+        const spanState = states.get(event as object);
+        if (!spanState) return;
+        try {
+          spanState.span.log({ error: event.error, output: { count: 0 } });
+        } finally {
+          embeddingSpans.delete(spanState.span);
+          spanState.span.end();
+          states.delete(event as object);
+        }
       },
     };
 
@@ -672,20 +721,102 @@ function serializeGenerateContentInput(
   return input;
 }
 
+type EmbeddingContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string | Attachment } }
+  | {
+      type: "file";
+      file: { file_data: string | Attachment; filename?: string };
+    };
+
 function serializeEmbedContentInput(
   params: GoogleGenAIEmbedContentParams,
 ): Record<string, unknown> {
-  const input: Record<string, unknown> = {
-    model: params.model,
-    contents: serializeContentCollection(params.contents),
-  };
-
-  const config = params.config ? tryToDict(params.config) : null;
-  if (config) {
-    input.config = config;
+  let contents = Array.isArray(params.contents)
+    ? params.contents
+    : [params.contents];
+  // Gemini Embedding 2 aggregates a list of parts into one content. Explicit
+  // content objects remain separate batch items, as in the provider's tContents.
+  if (
+    params.model.includes("gemini-embedding-2") &&
+    contents.length > 0 &&
+    contents.every(
+      (content): content is string | GoogleGenAIPart =>
+        typeof content === "string" ||
+        (!Array.isArray(content) && !("parts" in content)),
+    )
+  ) {
+    contents = [contents];
   }
-
-  return input;
+  const input = {
+    inputs: contents.map((content) => {
+      const parts =
+        typeof content === "string"
+          ? [content]
+          : Array.isArray(content)
+            ? content
+            : "parts" in content
+              ? content.parts
+              : [content];
+      const normalized = parts.flatMap((part): EmbeddingContentPart[] => {
+        if (typeof part === "string") return [{ type: "text", text: part }];
+        if (part.text !== undefined) return [{ type: "text", text: part.text }];
+        const media = part.inlineData ?? part.fileData;
+        if (!media) return [];
+        const data =
+          "data" in media
+            ? `data:${media.mimeType};base64,${typeof media.data === "string" ? media.data : uint8ArrayToBase64(media.data)}`
+            : media.fileUri;
+        return media.mimeType?.startsWith("image/")
+          ? [{ type: "image_url", image_url: { url: data } }]
+          : [
+              {
+                type: "file",
+                file: {
+                  file_data: data,
+                  ...("displayName" in media && media.displayName
+                    ? { filename: media.displayName }
+                    : {}),
+                },
+              },
+            ];
+      });
+      return {
+        content:
+          normalized.length === 1 && normalized[0].type === "text"
+            ? normalized[0].text
+            : normalized,
+      };
+    }),
+    ...(params.config?.outputDimensionality !== undefined
+      ? { output_dimensions: params.config.outputDimensionality }
+      : {}),
+  };
+  try {
+    const processed: typeof input = processInputAttachments(input);
+    // Conversion must succeed for every inline part; otherwise retain the
+    // entire original payload for backend attachment processing.
+    const hasInlineMedia = processed.inputs.some(
+      ({ content }) =>
+        Array.isArray(content) &&
+        content.some((part) => {
+          const data =
+            part.type === "image_url"
+              ? part.image_url.url
+              : part.type === "file"
+                ? part.file.file_data
+                : undefined;
+          return typeof data === "string" && data.startsWith("data:");
+        }),
+    );
+    return hasInlineMedia ? input : processed;
+  } catch (error) {
+    debugLogger.error(
+      "Error processing Google GenAI embedding attachments:",
+      error,
+    );
+    return input;
+  }
 }
 
 function serializeInteractionInput(
@@ -960,25 +1091,6 @@ function extractGenerateContentMetadata(
   return metadata;
 }
 
-function extractEmbedContentMetadata(
-  params: GoogleGenAIEmbedContentParams,
-): Record<string, unknown> {
-  const metadata: Record<string, unknown> = {};
-
-  if (params.model) {
-    metadata.model = params.model;
-  }
-
-  const config = params.config ? tryToDict(params.config) : null;
-  if (config) {
-    Object.keys(config).forEach((key) => {
-      metadata[key] = config[key];
-    });
-  }
-
-  return metadata;
-}
-
 /**
  * Extract metrics from non-streaming generateContent response.
  */
@@ -1012,17 +1124,28 @@ function extractEmbedContentMetrics(
     const end = getCurrentUnixTimestamp();
     metrics.start = startTime;
     metrics.end = end;
-    metrics.duration = end - startTime;
-  }
-
-  if (response?.usageMetadata) {
-    populateUsageMetrics(metrics, response.usageMetadata);
   }
 
   const embeddingTokenCount = extractEmbedPromptTokenCount(response);
   if (embeddingTokenCount !== undefined) {
     metrics.prompt_tokens = embeddingTokenCount;
-    metrics.tokens = embeddingTokenCount;
+  }
+  const totalTokens =
+    response?.usageMetadata?.totalTokenCount ?? embeddingTokenCount;
+  if (totalTokens !== undefined) {
+    metrics.tokens = totalTokens;
+  }
+  const audioTokens = (
+    response?.usageMetadata?.promptTokenDetails ??
+    response?.usageMetadata?.promptTokensDetails
+  )?.filter(
+    (detail) => detail.modality === "AUDIO" && detail.tokenCount !== undefined,
+  );
+  if (audioTokens?.length) {
+    metrics.prompt_audio_tokens = audioTokens.reduce(
+      (sum, detail) => sum + (detail.tokenCount ?? 0),
+      0,
+    );
   }
 
   return metrics;
@@ -1074,22 +1197,13 @@ function extractEmbedPromptTokenCount(
     return undefined;
   }
 
-  // Embedding token counts are available only on Vertex responses via usageMetadata
-  // and/or embedding.statistics.tokenCount; Gemini Developer API embed responses omit them.
+  // Older Vertex models report usage on individual embedding statistics.
   const usagePromptTokens = response.usageMetadata?.promptTokenCount;
   if (
     typeof usagePromptTokens === "number" &&
     Number.isFinite(usagePromptTokens)
   ) {
     return usagePromptTokens;
-  }
-
-  const usageTotalTokens = response.usageMetadata?.totalTokenCount;
-  if (
-    typeof usageTotalTokens === "number" &&
-    Number.isFinite(usageTotalTokens)
-  ) {
-    return usageTotalTokens;
   }
 
   const embeddings = Array.isArray(response.embeddings)
@@ -1102,43 +1216,28 @@ function extractEmbedPromptTokenCount(
   }
 
   let total = 0;
-  let sawAny = false;
   for (const embedding of embeddings) {
     const embeddingStats = tryToDict(tryToDict(embedding)?.statistics);
     const tokenCount = embeddingStats?.tokenCount;
     if (typeof tokenCount === "number" && Number.isFinite(tokenCount)) {
       total += tokenCount;
-      sawAny = true;
+    } else {
+      return undefined;
     }
   }
 
-  return sawAny ? total : undefined;
+  return total;
 }
 
 function summarizeEmbedContentOutput(
   response: GoogleGenAIEmbedContentResponse | undefined,
-): Record<string, number> | undefined {
-  if (!response) {
-    return undefined;
-  }
-
-  const embeddings = Array.isArray(response.embeddings)
-    ? response.embeddings
-    : response.embedding
-      ? [response.embedding]
-      : [];
-  if (embeddings.length === 0) {
-    return undefined;
-  }
-
-  const firstValues = embeddings[0]?.values;
-  if (!Array.isArray(firstValues)) {
-    return undefined;
-  }
-
+): Record<string, number> {
   return {
-    embedding_count: embeddings.length,
-    embedding_length: firstValues.length,
+    count: Array.isArray(response?.embeddings)
+      ? response.embeddings.length
+      : response?.embedding
+        ? 1
+        : 0,
   };
 }
 

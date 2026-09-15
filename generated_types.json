@@ -865,6 +865,9 @@
             "$ref": "#/components/schemas/ChatCompletionContentPartImageWithTitle"
           },
           {
+            "$ref": "#/components/schemas/ChatCompletionContentPartInputAudioWithTitle"
+          },
+          {
             "$ref": "#/components/schemas/ChatCompletionContentPartFileWithTitle"
           }
         ],
@@ -965,6 +968,44 @@
         },
         "required": ["image_url", "type"],
         "title": "image_url"
+      },
+      "ChatCompletionContentPartInputAudioWithTitle": {
+        "type": "object",
+        "properties": {
+          "input_audio": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "string"
+              },
+              "format": {
+                "type": "string",
+                "enum": ["wav", "mp3"]
+              }
+            },
+            "required": ["data", "format"]
+          },
+          "type": {
+            "type": "string",
+            "enum": ["input_audio"]
+          },
+          "cache_control": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["ephemeral"]
+              },
+              "ttl": {
+                "type": "string",
+                "enum": ["5m", "1h"]
+              }
+            },
+            "required": ["type"]
+          }
+        },
+        "required": ["input_audio", "type"],
+        "title": "input_audio"
       },
       "ChatCompletionContentPartText": {
         "type": "object",

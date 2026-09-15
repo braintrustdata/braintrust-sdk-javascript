@@ -1,5 +1,25 @@
 # braintrust
 
+## 3.32.0
+
+### Minor Changes
+
+- feat: Add instrumentation for synchronous elevenlabs SDK APIs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2443)
+- feat: Add instrumentation for `@google/generative-ai` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2435)
+- feat: Support input audio content in prompt templates Thanks @knjiang! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2451)
+
+## 3.31.0
+
+### Minor Changes
+
+- feat: Allow nameless scorer results (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2444)
+
+### Patch Changes
+
+- feat: Track tool ids for ai SDK v6 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2447)
+- fix: Fix Langchain anthropic token metrics (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2446)
+- fix: Inject instrumentation hook on Next.js versions <15 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2445)
+
 ## 3.30.0
 
 ### Minor Changes

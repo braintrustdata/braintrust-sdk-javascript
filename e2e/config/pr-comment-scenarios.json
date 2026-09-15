@@ -167,6 +167,21 @@
     ]
   },
   {
+    "scenarioDirName": "openai-agents-api-instrumentation",
+    "label": "OpenAI Agents API Instrumentation",
+    "metadataScenario": "openai-agents-api-instrumentation",
+    "variants": [
+      {
+        "variantKey": "openai-agents-api-v7",
+        "label": "v7 pinned"
+      },
+      {
+        "variantKey": "openai-agents-api-v7-latest",
+        "label": "v7 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "anthropic-instrumentation",
     "label": "Anthropic Instrumentation",
     "metadataScenario": "anthropic-instrumentation",
@@ -702,12 +717,12 @@
     ]
   },
   {
-    "scenarioDirName": "durable-eval-webhook",
-    "label": "Durable Eval Webhook",
-    "metadataScenario": "durable-eval-webhook",
+    "scenarioDirName": "workflow-eval-webhook",
+    "label": "Workflow Eval Webhook",
+    "metadataScenario": "workflow-eval-webhook",
     "evals": [
       {
-        "experimentNameTemplate": "durable-eval-webhook-{testRunId}",
+        "experimentNameTemplate": "workflow-eval-webhook-{testRunId}",
         "label": "webhook"
       }
     ]
@@ -793,6 +808,66 @@
       {
         "variantKey": "wrap-langchain-js-traces-v1-latest",
         "label": "v1 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "anthropic-vertex-instrumentation",
+    "label": "Anthropic Vertex Instrumentation",
+    "metadataScenario": "anthropic-vertex-instrumentation",
+    "variants": [
+      {
+        "variantKey": "anthropic-vertex-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "anthropic-vertex-v0-latest",
+        "label": "v0 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "langgraph-sdk-instrumentation",
+    "label": "LangGraph Platform SDK Instrumentation",
+    "metadataScenario": "langgraph-sdk-instrumentation",
+    "variants": [
+      {
+        "variantKey": "langgraph-sdk-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "langgraph-sdk-v1-latest",
+        "label": "v1 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "elevenlabs-instrumentation",
+    "label": "ElevenLabs Instrumentation",
+    "metadataScenario": "elevenlabs-instrumentation",
+    "variants": [
+      {
+        "variantKey": "elevenlabs-v2",
+        "label": "v2 pinned"
+      },
+      {
+        "variantKey": "elevenlabs-v2-latest",
+        "label": "v2 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "google-generative-ai-instrumentation",
+    "label": "Google Generative AI Instrumentation",
+    "metadataScenario": "google-generative-ai-instrumentation",
+    "variants": [
+      {
+        "variantKey": "google-generative-ai-v0",
+        "label": "v0.24 pinned"
+      },
+      {
+        "variantKey": "google-generative-ai-v0-latest",
+        "label": "v0.24 latest"
       }
     ]
   }

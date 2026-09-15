@@ -1,5 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const { requireFromProject } = vi.hoisted(() => ({
+  requireFromProject: Object.assign(vi.fn(), {
+    resolve: vi.fn(() => "/braintrust/webpack-loader.cjs"),
+  }),
+}));
+
+vi.mock("node:module", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("node:module")>()),
+  createRequire: () => requireFromProject,
+}));
+
 vi.mock("../../src/auto-instrumentations/bundler/webpack.js", () => ({
   webpackPlugin: vi.fn((options: unknown) => ({
     apply: () => {},
@@ -22,6 +33,9 @@ describe("wrapNextjsConfigWithBraintrust", () => {
         arg !== "--turbo" && arg !== "--turbopack" && arg !== "--webpack",
     );
     vi.clearAllMocks();
+    requireFromProject.mockImplementation(() => {
+      throw new Error("Cannot find module next/package.json");
+    });
   });
 
   afterEach(() => {
@@ -168,48 +182,102 @@ describe("wrapNextjsConfigWithBraintrust", () => {
     expect(config.turbopack.rules).toEqual({});
   });
 
-  it("uses Turbopack by default for Next versions that default to Turbopack builds", async () => {
-    vi.resetModules();
-    vi.doMock("node:module", async () => {
-      const actual =
-        await vi.importActual<typeof import("node:module")>("node:module");
-      const mockedRequire = Object.assign(
-        (specifier: string) => {
-          if (specifier === "next/package.json") {
-            return { version: "16.2.1" };
-          }
+  it("uses Turbopack by default for Next versions that default to Turbopack builds", () => {
+    requireFromProject.mockReturnValue({ version: "16.2.1" });
 
-          throw new Error(`Cannot find module ${specifier}`);
-        },
-        {
-          resolve: (specifier: string) => {
-            if (specifier === "braintrust/webpack-loader") {
-              return "/braintrust/webpack-loader.cjs";
-            }
+    const config = wrapNextjsConfigWithBraintrust({}) as any;
 
-            throw new Error(`Cannot resolve module ${specifier}`);
-          },
-        },
+    expect(config.turbopack.rules["*.{js,mjs,cjs}"]).toHaveLength(3);
+    expect(config.webpack).toBeUndefined();
+  });
+
+  it.each(["13.2.0", "13.5.11", "14.2.35", "14.3.0-canary.87"])(
+    "enables the instrumentation hook on Next %s",
+    (version) => {
+      requireFromProject.mockReturnValue({ version });
+
+      const config = wrapNextjsConfigWithBraintrust({}) as any;
+
+      expect(config.experimental.instrumentationHook).toBe(true);
+    },
+  );
+
+  it.each(["15.0.0", "15.0.0-rc.1", "16.2.1", "16.3.0-canary.1"])(
+    "does not add the experimental instrumentation hook on Next %s",
+    (version) => {
+      requireFromProject.mockReturnValue({ version });
+
+      const config = wrapNextjsConfigWithBraintrust({}) as any;
+
+      expect(config.experimental).toBeUndefined();
+    },
+  );
+
+  it.each([{}, { version: 14 }, { version: "invalid" }])(
+    "does not add the instrumentation hook when the Next version is invalid: %j",
+    (packageJson) => {
+      requireFromProject.mockReturnValue(packageJson);
+
+      const config = wrapNextjsConfigWithBraintrust({}) as any;
+
+      expect(config.experimental).toBeUndefined();
+    },
+  );
+
+  it("does not add the instrumentation hook when Next cannot be resolved", () => {
+    const config = wrapNextjsConfigWithBraintrust({}) as any;
+
+    expect(config.experimental).toBeUndefined();
+  });
+
+  it.each([undefined, false, true])(
+    "enables the hook while preserving experimental options without mutation (existing flag: %s)",
+    (instrumentationHook) => {
+      requireFromProject.mockReturnValue({ version: "14.2.35" });
+      process.argv.push("--webpack");
+      const original = Object.freeze({
+        experimental: Object.freeze({ instrumentationHook, cpus: 2 }),
+      });
+
+      const config = wrapNextjsConfigWithBraintrust(original);
+
+      expect(config.experimental).toEqual({
+        instrumentationHook: true,
+        cpus: 2,
+      });
+      expect(original.experimental.instrumentationHook).toBe(
+        instrumentationHook,
+      );
+    },
+  );
+
+  it.each([false, true])(
+    "enables the hook for function configs (async: %s)",
+    async (asyncConfig) => {
+      requireFromProject.mockReturnValue({ version: "14.2.35" });
+      const userConfig = { experimental: { cpus: 2 } };
+      const config = wrapNextjsConfigWithBraintrust(
+        asyncConfig ? async () => userConfig : () => userConfig,
       );
 
-      return {
-        ...actual,
-        createRequire: () => mockedRequire,
-      };
-    });
+      expect((await config()).experimental).toEqual({
+        instrumentationHook: true,
+        cpus: 2,
+      });
+      expect(userConfig.experimental).toEqual({ cpus: 2 });
+    },
+  );
 
-    try {
-      const { wrapNextjsConfigWithBraintrust: withMockedBraintrust } =
-        await import("../../src/auto-instrumentations/bundler/next.js");
+  it("preserves the injected hook when wrapping experimental Turbopack options", () => {
+    requireFromProject.mockReturnValue({ version: "14.2.35" });
+    process.argv.push("--turbo");
 
-      const config = withMockedBraintrust({}) as any;
+    const config = wrapNextjsConfigWithBraintrust({
+      experimental: { turbo: {} },
+    }) as any;
 
-      expect(config.turbopack.rules["*.{js,mjs,cjs}"]).toHaveLength(3);
-      expect(config.webpack).toBeUndefined();
-    } finally {
-      vi.doUnmock("node:module");
-      vi.resetModules();
-    }
+    expect(config.experimental.instrumentationHook).toBe(true);
+    expect(config.experimental.turbo.rules["*.{js,mjs,cjs}"]).toHaveLength(3);
   });
 
   it("appends to an existing Turbopack rule", () => {

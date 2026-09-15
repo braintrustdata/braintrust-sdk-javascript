@@ -5950,6 +5950,49 @@ export function getSpanParentObject<IsAsyncFlush extends boolean>(
   return getSpanParentObjectAndPropagatedState(options).parentObject;
 }
 
+/** @internal */
+export function _internalExportParentSynchronously(
+  parent: ReturnType<typeof getSpanParentObject>,
+): string | undefined {
+  if ("toStr" in parent) {
+    return parent.toStr();
+  }
+
+  if ("getParentInfo" in parent) {
+    const parentInfo = parent.getParentInfo();
+    if (!parentInfo) {
+      return undefined;
+    }
+    const objectId = parentInfo.objectId.getSync().value;
+    if (!objectId && !parentInfo.computeObjectMetadataArgs) {
+      return undefined;
+    }
+    return new SpanComponentsV4({
+      object_type: parentInfo.objectType,
+      ...(objectId
+        ? { object_id: objectId }
+        : {
+            compute_object_metadata_args:
+              parentInfo.computeObjectMetadataArgs ?? {},
+          }),
+      row_id: parent.id,
+      root_span_id: parent.rootSpanId,
+      span_id: parent.spanId,
+    }).toStr();
+  }
+
+  const components = braintrustParentToComponents(parent._getOtelParent());
+  if (!components) {
+    return undefined;
+  }
+  return new SpanComponentsV4({
+    object_type: components.objectType,
+    ...(components.objectId
+      ? { object_id: components.objectId }
+      : { compute_object_metadata_args: components.computeArgs ?? {} }),
+  }).toStr();
+}
+
 /**
  * Return the Braintrust parent string for the current logger/experiment, if any.
  *
@@ -8462,11 +8505,24 @@ export class SpanImpl implements Span {
   ): T | Record<string, string> {
     const resolvedCarrier = carrier ?? {};
     try {
+      const braintrustParent =
+        this._getOtelParent() ?? this._propagatedState?.braintrustParent;
+      if (!braintrustParent) {
+        // Symmetric with the receive-side warning in resolveW3cParent:
+        // surface this in the process that caused it, rather than leaving the
+        // consumer to debug a trace that arrived with no destination.
+        debugLogger
+          .forState(this._state)
+          .warn(
+            "Injecting trace context without braintrust.parent because the span's " +
+              "destination is not available yet. The receiver will start a new " +
+              "local trace instead of continuing this one.",
+          );
+      }
       _injectIntoCarrier(resolvedCarrier, {
         traceId: this._rootSpanId,
         spanId: this._spanId,
-        braintrustParent:
-          this._getOtelParent() ?? this._propagatedState?.braintrustParent,
+        braintrustParent,
         propagatedState: this._propagatedState,
       });
     } catch (e) {
@@ -9321,6 +9377,16 @@ export function renderMessageImpl<T extends Message>(
                           image_url: {
                             ...c.image_url,
                             url: render(c.image_url.url),
+                          },
+                        },
+                      ];
+                    case "input_audio":
+                      return [
+                        {
+                          ...c,
+                          input_audio: {
+                            ...c.input_audio,
+                            data: render(c.input_audio.data),
                           },
                         },
                       ];

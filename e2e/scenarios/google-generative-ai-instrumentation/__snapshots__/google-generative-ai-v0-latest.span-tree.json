@@ -1,0 +1,803 @@
+{
+  "span_tree": [
+    {
+      "name": "google-generative-ai-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "generation",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "contents": [
+                  {
+                    "parts": [
+                      {
+                        "text": "Give short, factual answers."
+                      }
+                    ],
+                    "role": "system"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "What is the capital of France?"
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "Paris"
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ]
+              },
+              "metadata": {
+                "maxOutputTokens": 128,
+                "model": "gemini-2.5-flash",
+                "provider": "google",
+                "safetySettings": [],
+                "temperature": 0,
+                "thinkingConfig": {
+                  "thinkingBudget": 0
+                }
+              },
+              "metrics": {
+                "completion_tokens": 1,
+                "prompt_tokens": 15,
+                "tokens": 16
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "generation",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "image",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "contents": [
+                  {
+                    "parts": [
+                      {
+                        "text": "Give short, factual answers."
+                      }
+                    ],
+                    "role": "system"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "Describe this image briefly."
+                      },
+                      {
+                        "inlineData": {
+                          "data": {
+                            "content_type": "image/png",
+                            "filename": "document.png",
+                            "key": "<uuid:1>",
+                            "type": "braintrust_attachment"
+                          },
+                          "mimeType": "image/png"
+                        }
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "A tall ship with full sails navigates a stormy sea with large waves and lightning strikes."
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ]
+              },
+              "metadata": {
+                "maxOutputTokens": 128,
+                "model": "gemini-2.5-flash",
+                "provider": "google",
+                "safetySettings": [],
+                "temperature": 0,
+                "thinkingConfig": {
+                  "thinkingBudget": 0
+                }
+              },
+              "metrics": {
+                "completion_tokens": 18,
+                "prompt_tokens": 271,
+                "tokens": 289
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "image",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "stream",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "contents": [
+                  {
+                    "parts": [
+                      {
+                        "text": "Give short, factual answers."
+                      }
+                    ],
+                    "role": "system"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "Count from one to three."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "One"
+                        },
+                        {
+                          "text": ", two, three."
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ]
+              },
+              "metadata": {
+                "maxOutputTokens": 128,
+                "model": "gemini-2.5-flash",
+                "provider": "google",
+                "safetySettings": [],
+                "temperature": 0,
+                "thinkingConfig": {
+                  "thinkingBudget": 0
+                }
+              },
+              "metrics": {
+                "completion_tokens": 6,
+                "prompt_tokens": 14,
+                "time_to_first_token": 0,
+                "tokens": 20
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "stream",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "response-only",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "contents": [
+                  {
+                    "parts": [
+                      {
+                        "text": "Give short, factual answers."
+                      }
+                    ],
+                    "role": "system"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "Say hello."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "Hello."
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ]
+              },
+              "metadata": {
+                "maxOutputTokens": 128,
+                "model": "gemini-2.5-flash",
+                "provider": "google",
+                "safetySettings": [],
+                "temperature": 0,
+                "thinkingConfig": {
+                  "thinkingBudget": 0
+                }
+              },
+              "metrics": {
+                "completion_tokens": 2,
+                "prompt_tokens": 11,
+                "tokens": 13
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "response-only",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "chat",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "contents": [
+                  {
+                    "parts": [
+                      {
+                        "text": "Give short, factual answers."
+                      }
+                    ],
+                    "role": "system"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "My name is Ada."
+                      }
+                    ],
+                    "role": "user"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "Hello, Ada."
+                      }
+                    ],
+                    "role": "model"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "What is my name?"
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "Your name is Ada."
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ]
+              },
+              "metadata": {
+                "maxOutputTokens": 128,
+                "model": "gemini-2.5-flash",
+                "provider": "google",
+                "safetySettings": [],
+                "temperature": 0,
+                "thinkingConfig": {
+                  "thinkingBudget": 0
+                }
+              },
+              "metrics": {
+                "completion_tokens": 5,
+                "prompt_tokens": 24,
+                "tokens": 29
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "chat-stream",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "contents": [
+                  {
+                    "parts": [
+                      {
+                        "text": "Give short, factual answers."
+                      }
+                    ],
+                    "role": "system"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "My name is Ada."
+                      }
+                    ],
+                    "role": "user"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "Hello, Ada."
+                      }
+                    ],
+                    "role": "model"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "What is my name?"
+                      }
+                    ],
+                    "role": "user"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "Your name is Ada."
+                      }
+                    ],
+                    "role": "model"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "Spell my name letter by letter."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "text": "A."
+                        },
+                        {
+                          "text": " D. A."
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ]
+              },
+              "metadata": {
+                "maxOutputTokens": 128,
+                "model": "gemini-2.5-flash",
+                "provider": "google",
+                "safetySettings": [],
+                "temperature": 0,
+                "thinkingConfig": {
+                  "thinkingBudget": 0
+                }
+              },
+              "metrics": {
+                "completion_tokens": 6,
+                "prompt_tokens": 38,
+                "time_to_first_token": 0,
+                "tokens": 44
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "chat-stream",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "tools",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "contents": [
+                  {
+                    "parts": [
+                      {
+                        "text": "Give short, factual answers."
+                      }
+                    ],
+                    "role": "system"
+                  },
+                  {
+                    "parts": [
+                      {
+                        "text": "Get the weather in Paris."
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": "gemini-2.5-flash"
+              },
+              "output": {
+                "candidates": [
+                  {
+                    "content": {
+                      "parts": [
+                        {
+                          "functionCall": {
+                            "args": {
+                              "city": "Paris"
+                            },
+                            "name": "get_weather"
+                          }
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "finishMessage": "Model generated function call(s).",
+                    "finishReason": "STOP",
+                    "index": 0
+                  }
+                ]
+              },
+              "metadata": {
+                "maxOutputTokens": 128,
+                "model": "gemini-2.5-flash",
+                "provider": "google",
+                "safetySettings": [],
+                "temperature": 0,
+                "thinkingConfig": {
+                  "thinkingBudget": 0
+                },
+                "toolConfig": {
+                  "functionCallingConfig": {
+                    "mode": "ANY"
+                  }
+                },
+                "tools": [
+                  {
+                    "functionDeclarations": [
+                      {
+                        "description": "Get weather for a city",
+                        "name": "get_weather",
+                        "parameters": {
+                          "properties": {
+                            "city": {
+                              "type": "STRING"
+                            }
+                          },
+                          "required": [
+                            "city"
+                          ],
+                          "type": "OBJECT"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_tokens": 15,
+                "prompt_tokens": 51,
+                "tokens": 66
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "tools",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "embedding",
+          "children": [
+            {
+              "name": "embed_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inputs": [
+                  {
+                    "content": "Braintrust tracing"
+                  }
+                ],
+                "output_dimensions": 32
+              },
+              "output": {
+                "count": 1
+              },
+              "metadata": {
+                "model": "gemini-embedding-001",
+                "provider": "google"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embedding",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "batch-embedding",
+          "children": [
+            {
+              "name": "batch_embed_contents",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inputs": [
+                  {
+                    "content": "Hello"
+                  },
+                  {
+                    "content": "World"
+                  }
+                ],
+                "output_dimensions": 32
+              },
+              "output": {
+                "count": 2
+              },
+              "metadata": {
+                "model": "gemini-embedding-001",
+                "provider": "google"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "batch-embedding",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "embedding-with-usage",
+          "children": [
+            {
+              "name": "embed_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inputs": [
+                  {
+                    "content": "Braintrust tracing"
+                  }
+                ],
+                "output_dimensions": 32
+              },
+              "output": {
+                "count": 1
+              },
+              "metadata": {
+                "model": "gemini-embedding-2",
+                "provider": "google"
+              },
+              "metrics": {
+                "prompt_tokens": 3,
+                "tokens": 3
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embedding",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "batch-embedding-with-usage",
+          "children": [
+            {
+              "name": "batch_embed_contents",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "inputs": [
+                  {
+                    "content": "Hello"
+                  },
+                  {
+                    "content": "World"
+                  }
+                ],
+                "output_dimensions": 32
+              },
+              "output": {
+                "count": 2
+              },
+              "metadata": {
+                "model": "gemini-embedding-2",
+                "provider": "google"
+              },
+              "metrics": {
+                "prompt_tokens": 2,
+                "tokens": 2
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "batch-embedding",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "error",
+          "children": [
+            {
+              "name": "generate_content",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "contents": [
+                  {
+                    "parts": [
+                      {
+                        "text": "Hello"
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "model": "braintrust-nonexistent-model"
+              },
+              "metadata": {
+                "model": "braintrust-nonexistent-model",
+                "provider": "google",
+                "safetySettings": []
+              },
+              "error": "[GoogleGenerativeAI Error]: Error fetching from <mock-server>/google-generative-language/v1beta/models/braintrust-nonexistent-model:generateContent: [404 Not Found] models/braintrust-nonexistent-model is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods."
+            }
+          ],
+          "metadata": {
+            "operation": "error",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "google-generative-ai-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+        "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
+      }
+    }
+  ]
+}

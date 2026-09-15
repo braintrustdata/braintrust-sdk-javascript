@@ -7,6 +7,7 @@ import {
   SpanTypeAttribute,
   spanObjectTypeV3ToTypedString,
 } from "../util/index";
+import type { SingleScore } from "../util/score";
 import {
   type GitMetadataSettingsType as GitMetadataSettings,
   ObjectReference as ObjectReferenceSchema,
@@ -15,6 +16,7 @@ import {
   type SSEProgressEventDataType as SSEProgressEventData,
 } from "./generated_types";
 import { queue } from "async";
+import { v5 as uuidv5 } from "uuid";
 
 import iso from "./isomorph";
 import { debugLogger } from "./debug-logger";
@@ -177,7 +179,7 @@ export type EvalScorerArgs<
   trace?: Trace;
 };
 
-export type OneOrMoreScores = Score | number | null | Array<Score>;
+export type OneOrMoreScores = SingleScore | number | null | Array<Score>;
 
 export type EvalScorer<
   Input,
@@ -814,14 +816,13 @@ export async function Eval<
       { disabled: Boolean(options.parent || options.noSendLogs) },
     );
 
-    // Ensure experiment ID is resolved before tasks start for OTEL parent attribute support
-    // The Experiment constructor starts resolution (fire-and-forget), but we await here to ensure completion
-    // Only needed when OTEL compat mode is enabled
-    if (
-      experiment &&
-      typeof process !== "undefined" &&
-      globalThis.BRAINTRUST_CONTEXT_MANAGER !== undefined
-    ) {
+    // Resolve the experiment ID before any task (and therefore any span) exists.
+    // Everything that reads the parent synchronously depends on it: OTEL parent
+    // attributes, and the `braintrust.parent` baggage entry that `Span.inject` /
+    // `injectTraceContext` emit. Without this, the first span of a run would
+    // propagate trace identity with no destination, and the receiving process
+    // would silently start a fresh local trace instead.
+    if (experiment) {
       await experiment._waitForId();
     }
 
@@ -1045,19 +1046,29 @@ export function _internalPrepareEvaluatorScore(
 } {
   if (scoreValue === null) return { results: null };
   if (Array.isArray(scoreValue)) {
+    const names = new Set<string>();
     for (const score of scoreValue) {
       if (!(typeof score === "object" && !isEmpty(score))) {
         throw new Error(
           `When returning an array of scores, each score must be a non-empty object. Got: ${JSON.stringify(score)}`,
         );
       }
+      if (typeof score.name !== "string") {
+        throw new Error(
+          `When returning an array of scores, each score must have a name. Got: ${JSON.stringify(score)}`,
+        );
+      }
+      if (names.has(score.name)) {
+        throw new Error(`Duplicate score name '${score.name}' in score array`);
+      }
+      names.add(score.name);
     }
   }
   let results: Score[];
   if (Array.isArray(scoreValue)) {
     results = scoreValue;
   } else if (typeof scoreValue === "object" && !isEmpty(scoreValue)) {
-    results = [scoreValue];
+    results = [{ ...scoreValue, name: scoreValue.name ?? name }];
   } else {
     results = [{ name, score: scoreValue }];
   }
@@ -1318,6 +1329,13 @@ async function runEvaluatorInternal(
         const origin =
           inlineDatasetOrigin ??
           (parsedDatumOrigin?.success ? parsedDatumOrigin.data : undefined);
+        const upsertId =
+          datum.upsert_id && trialIndex > 0
+            ? uuidv5(
+                `braintrust:eval:${datum.upsert_id}:trial:${trialIndex}`,
+                uuidv5.URL,
+              )
+            : datum.upsert_id;
 
         const baseEvent: StartSpanArgs = {
           name: "eval",
@@ -1329,7 +1347,7 @@ async function runEvaluatorInternal(
             expected: "expected" in datum ? datum.expected : undefined,
             tags: datum.tags,
             origin,
-            ...(datum.upsert_id ? { id: datum.upsert_id } : {}),
+            ...(upsertId ? { id: upsertId } : {}),
           },
         };
 

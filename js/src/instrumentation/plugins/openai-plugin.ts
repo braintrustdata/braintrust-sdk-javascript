@@ -21,6 +21,11 @@ import {
   interceptOpenAIFilesCreateTraced,
 } from "./openai-batch-instrumentation";
 import {
+  interceptOpenAIAgentsTraceCapture,
+  interceptOpenAIAgentsTraceFail,
+  interceptOpenAIAgentsTraceStart,
+} from "./openai-agents-api-instrumentation";
+import {
   BRAINTRUST_CACHED_STREAM_METRIC,
   getCachedMetricFromHeaders,
   parseMetricsFromUsage,
@@ -49,6 +54,13 @@ export class OpenAIPlugin extends BasePlugin {
 
   protected onEnable(): void {
     this.unsubscribers.push(
+      openAIChannels.agentsTraceStart.intercept(
+        interceptOpenAIAgentsTraceStart,
+      ),
+      openAIChannels.agentsTraceCapture.intercept(
+        interceptOpenAIAgentsTraceCapture,
+      ),
+      openAIChannels.agentsTraceFail.intercept(interceptOpenAIAgentsTraceFail),
       openAIChannels.filesCreateTraced.intercept(
         interceptOpenAIFilesCreateTraced,
       ),

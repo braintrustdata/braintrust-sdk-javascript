@@ -7,6 +7,7 @@ import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
 import { CloudflareThinkPlugin } from "./plugins/cloudflare-think-plugin";
 import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
+import { GoogleGenerativeAIPlugin } from "./plugins/google-generative-ai-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
 import { HuggingFacePlugin } from "./plugins/huggingface-plugin";
 import { HuggingFaceTransformersPlugin } from "./plugins/huggingface-transformers-plugin";
@@ -71,6 +72,10 @@ vi.mock("./plugins/cloudflare-think-plugin", () => ({
 
 vi.mock("./plugins/openai-agents-plugin", () => ({
   OpenAIAgentsPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/google-generative-ai-plugin", () => ({
+  GoogleGenerativeAIPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/google-genai-plugin", () => ({
@@ -537,6 +542,29 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
+    it("enables and disables legacy Google instrumentation idempotently", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+      plugin.enable();
+      expect(GoogleGenerativeAIPlugin).toHaveBeenCalledOnce();
+      const instance = vi.mocked(GoogleGenerativeAIPlugin).mock.results[0]
+        .value;
+      expect(instance.enable).toHaveBeenCalledOnce();
+      plugin.disable();
+      plugin.disable();
+      expect(instance.disable).toHaveBeenCalledOnce();
+    });
+
+    it("can disable legacy Google instrumentation independently", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { googleGenerativeAI: false },
+      });
+      plugin.enable();
+      expect(GoogleGenerativeAIPlugin).not.toHaveBeenCalled();
+      expect(GoogleGenAIPlugin).toHaveBeenCalledOnce();
+      plugin.disable();
+    });
+
     it("should not create Google GenAI plugin when googleGenAI: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { googleGenAI: false },
@@ -701,6 +729,7 @@ describe("BraintrustPlugin", () => {
           cloudflareThink: false,
           openAIAgents: false,
           googleGenAI: false,
+          googleGenerativeAI: false,
           huggingface: false,
           openrouter: false,
           openrouterAgent: false,
@@ -793,6 +822,7 @@ describe("BraintrustPlugin", () => {
           claudeAgentSDK: true,
           openAIAgents: true,
           googleGenAI: false,
+          googleGenerativeAI: false,
           huggingface: true,
           openrouter: true,
           mistral: false,

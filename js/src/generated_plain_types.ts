@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 719572142fc24803) -- do not modify
+// Auto-generated file (content hash 48f2c828cb95730e) -- do not modify
 
 export type AclObjectTypeType =
   /**
@@ -1040,6 +1040,33 @@ export type ChatCompletionContentPartImageWithTitleType = {
       }
     | undefined;
 };
+export type ChatCompletionContentPartInputAudioWithTitleType = {
+  input_audio: {
+    data: string;
+    /**
+     * @enum wav, mp3
+     */
+    format: "wav" | "mp3";
+  };
+  /**
+   * @enum input_audio
+   */
+  type: "input_audio";
+  cache_control?:
+    | {
+        /**
+         * @enum ephemeral
+         */
+        type: "ephemeral";
+        ttl?:
+          | /**
+           * @enum 5m, 1h
+           */
+          ("5m" | "1h")
+          | undefined;
+      }
+    | undefined;
+};
 export type ChatCompletionContentPartFileFileType = Partial<{
   file_data: string;
   filename: string;
@@ -1069,6 +1096,7 @@ export type ChatCompletionContentPartFileWithTitleType = {
 export type ChatCompletionContentPartType =
   | ChatCompletionContentPartTextWithTitleType
   | ChatCompletionContentPartImageWithTitleType
+  | ChatCompletionContentPartInputAudioWithTitleType
   | ChatCompletionContentPartFileWithTitleType;
 export type ChatCompletionContentPartTextType = {
   /**

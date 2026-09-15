@@ -1,0 +1,419 @@
+span_tree:
+└── LangGraph SDK 1.9.25 (cjs, auto) [task]
+    input: {
+      "description": "Verify synchronous LangGraph run APIs",
+      "prompt": {
+        "messages": [
+          {
+            "content": "Reply with exactly: hello from langgraph",
+            "role": "user"
+          }
+        ]
+      }
+    }
+    output: {
+      "expected_error_cases": 4,
+      "status": "passed"
+    }
+    metadata: {
+      "expected_error_cases": 4,
+      "instrumentation_mode": "auto",
+      "module": "cjs",
+      "scenario": "langgraph-sdk-instrumentation",
+      "sdk_version": "1.9.25",
+      "testRunId": "<run:1>"
+    }
+    context: {
+      "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+      "caller_functionname": "runTracedScenario",
+      "caller_lineno": 0
+    }
+    ├── Uninstrumented background APIs
+    │   metadata: {
+    │     "operation": "background-apis",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    ├── Wait for final result
+    │   metadata: {
+    │     "operation": "wait",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── langgraph.runs.wait [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly: hello from langgraph",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       output: {
+    │         "content": "hello from langgraph",
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "langgraph.assistant_id": "agent",
+    │         "langgraph.thread_id": null
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "prompt_tokens": 15,
+    │         "tokens": 19
+    │       }
+    ├── Interrupt and resume
+    │   metadata: {
+    │     "operation": "interrupt-resume",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   ├── langgraph.runs.wait [task]
+    │   │   input: {
+    │   │     "messages": [
+    │   │       {
+    │   │         "content": "Reply with exactly: hello from langgraph",
+    │   │         "role": "user"
+    │   │       }
+    │   │     ]
+    │   │   }
+    │   │   metadata: {
+    │   │     "langgraph.assistant_id": "approval",
+    │   │     "langgraph.interrupts": [
+    │   │       {
+    │   │         "id": "<span:2>",
+    │   │         "value": "Approve the model call?"
+    │   │       }
+    │   │     ],
+    │   │     "langgraph.thread_id": "<uuid:1>"
+    │   │   }
+    │   └── langgraph.runs.wait [task]
+    │       input: {
+    │         "command": {
+    │           "resume": "yes"
+    │         }
+    │       }
+    │       output: {
+    │         "content": "hello from langgraph",
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "langgraph.assistant_id": "approval",
+    │         "langgraph.thread_id": "<uuid:1>"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "prompt_tokens": 15,
+    │         "tokens": 19
+    │       }
+    ├── Stream values mode
+    │   metadata: {
+    │     "operation": "values",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── langgraph.runs.stream [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly: hello from langgraph",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       output: {
+    │         "content": "hello from langgraph",
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "langgraph.assistant_id": "agent",
+    │         "langgraph.run_id": "<uuid:1>",
+    │         "langgraph.thread_id": null,
+    │         "streamMode": [
+    │           "values",
+    │           "messages",
+    │           "updates"
+    │         ],
+    │         "streamSubgraphs": true
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "prompt_tokens": 15,
+    │         "time_to_first_token": 0,
+    │         "tokens": 19
+    │       }
+    ├── Stream messages mode
+    │   metadata: {
+    │     "operation": "messages",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── langgraph.runs.stream [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly: hello from langgraph",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       output: {
+    │         "content": "hello from langgraph",
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "langgraph.assistant_id": "agent",
+    │         "langgraph.run_id": "<uuid:1>",
+    │         "langgraph.thread_id": null,
+    │         "streamMode": [
+    │           "messages"
+    │         ],
+    │         "streamSubgraphs": true
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "prompt_tokens": 15,
+    │         "time_to_first_token": 0,
+    │         "tokens": 19
+    │       }
+    ├── Stream updates mode
+    │   metadata: {
+    │     "operation": "updates",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── langgraph.runs.stream [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly: hello from langgraph",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       output: {
+    │         "content": "hello from langgraph",
+    │         "role": "assistant"
+    │       }
+    │       metadata: {
+    │         "langgraph.assistant_id": "agent",
+    │         "langgraph.run_id": "<uuid:1>",
+    │         "langgraph.thread_id": null,
+    │         "streamMode": [
+    │           "updates"
+    │         ],
+    │         "streamSubgraphs": true
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 4,
+    │         "prompt_tokens": 15,
+    │         "time_to_first_token": 0,
+    │         "tokens": 19
+    │       }
+    ├── Stream error
+    │   metadata: {
+    │     "operation": "stream-error",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── langgraph.runs.stream [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly: hello from langgraph",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "langgraph.assistant_id": "failing",
+    │         "langgraph.run_id": "<uuid:1>",
+    │         "langgraph.thread_id": null,
+    │         "streamMode": [
+    │           "values",
+    │           "messages"
+    │         ],
+    │         "streamSubgraphs": true
+    │       }
+    │       error: "Agent failed"
+    ├── Cancel stream
+    │   metadata: {
+    │     "operation": "cancel",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── langgraph.runs.stream [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly: hello from langgraph",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "interruptBefore": [
+    │           "agent"
+    │         ],
+    │         "langgraph.assistant_id": "agent",
+    │         "langgraph.run_id": "<uuid:1>",
+    │         "langgraph.thread_id": null
+    │       }
+    ├── Missing assistant error
+    │   metadata: {
+    │     "operation": "missing-assistant-error",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── langgraph.runs.wait [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly: hello from langgraph",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "langgraph.assistant_id": "missing-assistant",
+    │         "langgraph.thread_id": null
+    │       }
+    │       error: "HTTP 404: No assistant found for \"missing-assistant\". Make sure the assistant ID is for a valid assistant or a valid graph ID."
+    ├── Thrown graph error
+    │   metadata: {
+    │     "operation": "thrown-error",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── langgraph.runs.wait [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly: hello from langgraph",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "langgraph.assistant_id": "failing",
+    │         "langgraph.thread_id": null
+    │       }
+    │       error: "Agent failed"
+    ├── Returned graph error
+    │   metadata: {
+    │     "operation": "returned-error",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+    │     "caller_functionname": "runOperation",
+    │     "caller_lineno": 0
+    │   }
+    │   └── langgraph.runs.wait [task]
+    │       input: {
+    │         "messages": [
+    │           {
+    │             "content": "Reply with exactly: hello from langgraph",
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "langgraph.assistant_id": "failing",
+    │         "langgraph.thread_id": null
+    │       }
+    │       error: "Agent failed"
+    └── Concurrent waits
+        metadata: {
+          "operation": "concurrent-waits",
+          "testRunId": "<run:1>"
+        }
+        context: {
+          "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+          "caller_functionname": "runOperation",
+          "caller_lineno": 0
+        }
+        ├── langgraph.runs.wait [task]
+        │   input: {
+        │     "messages": [
+        │       {
+        │         "content": "Reply with exactly: left",
+        │         "role": "user"
+        │       }
+        │     ]
+        │   }
+        │   output: {
+        │     "content": "left",
+        │     "role": "assistant"
+        │   }
+        │   metadata: {
+        │     "langgraph.assistant_id": "agent",
+        │     "langgraph.thread_id": null
+        │   }
+        │   metrics: {
+        │     "completion_tokens": 1,
+        │     "prompt_tokens": 12,
+        │     "tokens": 13
+        │   }
+        └── langgraph.runs.wait [task]
+            input: {
+              "messages": [
+                {
+                  "content": "Reply with exactly: right",
+                  "role": "user"
+                }
+              ]
+            }
+            output: {
+              "content": "right",
+              "role": "assistant"
+            }
+            metadata: {
+              "langgraph.assistant_id": "agent",
+              "langgraph.thread_id": null
+            }
+            metrics: {
+              "completion_tokens": 1,
+              "prompt_tokens": 12,
+              "tokens": 13
+            }

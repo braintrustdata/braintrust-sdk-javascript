@@ -49,6 +49,24 @@ type ActiveSpan = {
   turnKey: string;
 };
 
+type EveProviderEvent =
+  | EveProviderActionStartedEvent
+  | EveProviderActionTerminalEvent
+  | EveProviderModelCallStartedEvent
+  | EveProviderModelCallTerminalEvent
+  | EveProviderStepAttemptTerminalEvent
+  | EveProviderTurnStartedEvent
+  | EveProviderTurnTerminalEvent;
+
+type EveProviderEventForType<TType extends EveProviderEvent["type"]> =
+  EveProviderEvent extends infer TEvent
+    ? TEvent extends { type: infer TEventType }
+      ? TType extends TEventType
+        ? TEvent & { type: TType }
+        : never
+      : never
+    : never;
+
 /**
  * Braintrust-native instrumentation for Eve's provider lifecycle (eve@0.34+).
  *
@@ -71,29 +89,53 @@ export function createEveInstrumentationProvider(
       recordOutputs: true,
     }),
     events: {
-      "action.completed": (event, context) =>
-        bridge.handleActionTerminal(event, context),
-      "action.failed": (event, context) =>
-        bridge.handleActionTerminal(event, context),
-      "action.started": (event, context) =>
-        bridge.handleActionStarted(event, context),
-      "model.call.completed": (event, context) =>
-        bridge.handleModelTerminal(event, context),
-      "model.call.failed": (event, context) =>
-        bridge.handleModelTerminal(event, context),
-      "model.call.started": (event, context) =>
-        bridge.handleModelStarted(event, context),
-      "step.attempt.completed": (event) =>
+      "action.completed": providerHandler(
+        "action.completed",
+        bridge.handleActionTerminal.bind(bridge),
+      ),
+      "action.failed": providerHandler(
+        "action.failed",
+        bridge.handleActionTerminal.bind(bridge),
+      ),
+      "action.started": providerHandler(
+        "action.started",
+        bridge.handleActionStarted.bind(bridge),
+      ),
+      "model.call.completed": providerHandler(
+        "model.call.completed",
+        bridge.handleModelTerminal.bind(bridge),
+      ),
+      "model.call.failed": providerHandler(
+        "model.call.failed",
+        bridge.handleModelTerminal.bind(bridge),
+      ),
+      "model.call.started": providerHandler(
+        "model.call.started",
+        bridge.handleModelStarted.bind(bridge),
+      ),
+      "step.attempt.completed": providerHandler(
+        "step.attempt.completed",
+        (event) => bridge.handleStepAttemptTerminal(event),
+      ),
+      "step.attempt.failed": providerHandler("step.attempt.failed", (event) =>
         bridge.handleStepAttemptTerminal(event),
-      "step.attempt.failed": (event) => bridge.handleStepAttemptTerminal(event),
-      "turn.cancelled": (event, context) =>
-        bridge.handleTurnTerminal(event, context),
-      "turn.completed": (event, context) =>
-        bridge.handleTurnTerminal(event, context),
-      "turn.failed": (event, context) =>
-        bridge.handleTurnTerminal(event, context),
-      "turn.started": (event, context) =>
-        bridge.handleTurnStarted(event, context),
+      ),
+      "turn.cancelled": providerHandler(
+        "turn.cancelled",
+        bridge.handleTurnTerminal.bind(bridge),
+      ),
+      "turn.completed": providerHandler(
+        "turn.completed",
+        bridge.handleTurnTerminal.bind(bridge),
+      ),
+      "turn.failed": providerHandler(
+        "turn.failed",
+        bridge.handleTurnTerminal.bind(bridge),
+      ),
+      "turn.started": providerHandler(
+        "turn.started",
+        bridge.handleTurnStarted.bind(bridge),
+      ),
     },
     flush,
     setup: options.setup,
@@ -536,17 +578,28 @@ function modelOutput(
     type: "function";
   }[] = [];
   for (const part of content) {
-    if (part.type === "text") {
-      text += part.text;
-    } else if (part.type === "reasoning" && part.text.trim().length > 0) {
-      reasoning.push({ content: part.text });
-    } else if (part.type === "tool-call") {
+    if (!isObject(part)) {
+      continue;
+    }
+    if (part["type"] === "text" && typeof part["text"] === "string") {
+      text += part["text"];
+    } else if (
+      part["type"] === "reasoning" &&
+      typeof part["text"] === "string" &&
+      part["text"].trim().length > 0
+    ) {
+      reasoning.push({ content: part["text"] });
+    } else if (
+      part["type"] === "tool-call" &&
+      typeof part["toolName"] === "string" &&
+      typeof part["callId"] === "string"
+    ) {
       toolCalls.push({
         function: {
-          arguments: safeJsonStringify(part.input),
-          name: part.toolName,
+          arguments: safeJsonStringify(part["input"]),
+          name: part["toolName"],
         },
-        id: part.callId,
+        id: part["callId"],
         type: "function",
       });
     }
@@ -566,13 +619,13 @@ function modelOutput(
 }
 
 function usageMetrics(usage: EveProviderUsage): Record<string, number> {
-  const promptTokens = nonNegativeNumber(usage.inputTokens);
-  const completionTokens = nonNegativeNumber(usage.outputTokens);
+  const promptTokens = nonNegativeNumber(usage?.inputTokens);
+  const completionTokens = nonNegativeNumber(usage?.outputTokens);
   const cachedTokens = nonNegativeNumber(
-    usage.inputTokenDetails?.cacheReadTokens,
+    usage?.inputTokenDetails?.cacheReadTokens,
   );
   const cacheCreationTokens = nonNegativeNumber(
-    usage.inputTokenDetails?.cacheWriteTokens,
+    usage?.inputTokenDetails?.cacheWriteTokens,
   );
   return {
     ...(promptTokens !== undefined ? { prompt_tokens: promptTokens } : {}),
@@ -631,4 +684,145 @@ function actionIdempotencyKey(
   callId: string,
 ): string {
   return `action:${sessionId}:${turnId}:${callId}`;
+}
+
+function providerHandler<TType extends EveProviderEvent["type"]>(
+  type: TType,
+  handler: (
+    event: EveProviderEventForType<TType>,
+    context: EveProviderContext,
+  ) => void | Promise<void>,
+): (event: unknown, context: unknown) => Promise<void> {
+  return async (event, context) => {
+    try {
+      if (!isEveProviderEvent(event, type) || !isEveProviderContext(context)) {
+        debugLogger.warn(`Ignoring malformed Eve provider ${type} event`);
+        return;
+      }
+      await handler(event, context);
+    } catch (error) {
+      debugLogger.warn(`Error in Eve provider ${type}:`, error);
+    }
+  };
+}
+
+function isEveProviderEvent<TType extends EveProviderEvent["type"]>(
+  event: unknown,
+  type: TType,
+): event is EveProviderEventForType<TType> {
+  if (
+    !isObject(event) ||
+    event["type"] !== type ||
+    typeof event["idempotencyKey"] !== "string" ||
+    event["idempotencyKey"].length === 0
+  ) {
+    return false;
+  }
+  if (type === "turn.started") {
+    const parentLineage = event["parentLineage"];
+    return (
+      typeof event["rootSessionId"] === "string" &&
+      typeof event["sessionId"] === "string" &&
+      typeof event["turnId"] === "string" &&
+      typeof event["sequence"] === "number" &&
+      Number.isFinite(event["sequence"]) &&
+      (parentLineage === undefined || isEveProviderParentLineage(parentLineage))
+    );
+  }
+  if (
+    type === "turn.cancelled" ||
+    type === "turn.completed" ||
+    type === "turn.failed"
+  ) {
+    return (
+      typeof event["sessionId"] === "string" &&
+      typeof event["turnId"] === "string"
+    );
+  }
+  if (!isEveProviderScope(event["scope"])) {
+    return false;
+  }
+  if (type === "model.call.started") {
+    const model = event["model"];
+    return (
+      isObject(model) &&
+      typeof model["modelId"] === "string" &&
+      typeof model["provider"] === "string"
+    );
+  }
+  if (type === "model.call.completed") {
+    return (
+      typeof event["finishReason"] === "string" &&
+      isObject(event["usage"]) &&
+      (event["content"] === undefined || Array.isArray(event["content"]))
+    );
+  }
+  if (type === "model.call.failed") {
+    return true;
+  }
+  if (type === "action.started") {
+    return (
+      typeof event["callId"] === "string" &&
+      typeof event["name"] === "string" &&
+      (event["kind"] === "load-skill" ||
+        event["kind"] === "remote-agent-call" ||
+        event["kind"] === "subagent-call" ||
+        event["kind"] === "tool-call")
+    );
+  }
+  if (type === "action.completed") {
+    const output = event["output"];
+    return (
+      event["outcome"] === "completed" &&
+      isObject(output) &&
+      (output["type"] === "result" || output["type"] === "error")
+    );
+  }
+  if (type === "action.failed") {
+    return (
+      event["outcome"] === "abandoned" ||
+      event["outcome"] === "cancelled" ||
+      event["outcome"] === "failed" ||
+      event["outcome"] === "rejected"
+    );
+  }
+  return type === "step.attempt.completed" || type === "step.attempt.failed";
+}
+
+function isEveProviderContext(value: unknown): value is EveProviderContext {
+  if (!isObject(value) || !isObject(value["state"])) {
+    return false;
+  }
+  return (
+    typeof value["state"]["get"] === "function" &&
+    typeof value["state"]["set"] === "function"
+  );
+}
+
+function isEveProviderScope(
+  value: unknown,
+): value is EveInstrumentationAttemptScope {
+  return (
+    isObject(value) &&
+    typeof value["attemptId"] === "string" &&
+    typeof value["attemptIndex"] === "number" &&
+    Number.isFinite(value["attemptIndex"]) &&
+    typeof value["sessionId"] === "string" &&
+    typeof value["stepIndex"] === "number" &&
+    Number.isFinite(value["stepIndex"]) &&
+    typeof value["turnId"] === "string" &&
+    (value["rootSessionId"] === undefined ||
+      typeof value["rootSessionId"] === "string")
+  );
+}
+
+function isEveProviderParentLineage(
+  value: unknown,
+): value is EveProviderTurnStartedEvent["parentLineage"] {
+  return (
+    isObject(value) &&
+    typeof value["callId"] === "string" &&
+    typeof value["sessionId"] === "string" &&
+    typeof value["turnId"] === "string"
+  );
 }

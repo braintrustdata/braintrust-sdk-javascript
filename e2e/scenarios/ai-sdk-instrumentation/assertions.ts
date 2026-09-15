@@ -292,16 +292,11 @@ function findRerankTrace(events: CapturedLogEvent[]) {
 function findToolTrace(events: CapturedLogEvent[]) {
   const operation = findLatestSpan(events, "ai-sdk-tool-operation");
   const parent = findParentSpan(events, "generateText", operation?.span.id);
-  const toolSpans = findAllSpans(events, "get_weather").filter(
-    (event) => event.span.rootId === operation?.span.rootId,
-  );
-  const modelChildren = events
-    .filter((event) => event.span.rootId === operation?.span.rootId)
-    .filter((event) => {
-      const name = event.span.name ?? "";
-      return name === "doGenerate" || name === "doStream";
-    })
-    .filter((event) => event.span.parentIds[0] !== parent?.span.id);
+  const toolSpans = findChildSpans(events, "get_weather", parent?.span.id);
+  const modelChildren = [
+    ...findChildSpans(events, "doGenerate", parent?.span.id),
+    ...findChildSpans(events, "doStream", parent?.span.id),
+  ];
 
   return {
     modelChildren,
@@ -1010,6 +1005,31 @@ export function defineAISDKInstrumentationAssertions(options: {
         expect(trace.toolSpans.length).toBeGreaterThanOrEqual(1);
         expect(trace.toolSpans[0]?.input).toBeDefined();
         expect(trace.toolSpans[0]?.output).toBeDefined();
+        if (options.sdkMajorVersion >= 6) {
+          for (const toolSpan of trace.toolSpans) {
+            const toolCallId = toolSpan.metadata?.toolCallId;
+            expect(toolCallId).toEqual(expect.any(String));
+            const messages = expect.arrayContaining([
+              expect.objectContaining({
+                role: "tool",
+                content: expect.arrayContaining([
+                  expect.objectContaining({
+                    type: "tool-result",
+                    toolName: toolSpan.span.name,
+                    toolCallId,
+                  }),
+                ]),
+              }),
+            ]);
+            expect(trace.parent?.output).toMatchObject({
+              steps: expect.arrayContaining([
+                expect.objectContaining({
+                  response: expect.objectContaining({ messages }),
+                }),
+              ]),
+            });
+          }
+        }
         expect(collectToolCallNames(trace.parent?.output)).toContain(
           "get_weather",
         );
@@ -1339,7 +1359,12 @@ export function defineAISDKInstrumentationAssertions(options: {
       await matchSpanTreeSnapshot(events, spanSnapshotPath, {
         normalize: {
           additionalProviderIdKeys: ["callId"],
-          omittedKeys: ["id", "performance", "prompt_cache_key", "toolCallId"],
+          omittedKeys: [
+            "id",
+            "performance",
+            "prompt_cache_key",
+            ...(options.sdkMajorVersion < 6 ? ["toolCallId"] : []),
+          ],
         },
       });
     });

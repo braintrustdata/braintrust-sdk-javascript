@@ -19,9 +19,8 @@ RUN if [ -z "$NODE_VERSION" ] || [ "$NODE_VERSION" = "REQUIRED" ]; then echo "Er
 RUN if [ -z "$TEST_DIR" ]; then echo "Error: TEST_DIR build arg is required (e.g., --build-arg TEST_DIR=otel-v1)" && exit 1; fi
 RUN if [ "$TEST_DIR" != "otel-v1" ] && [ "$TEST_DIR" != "otel-v2" ]; then echo "Error: TEST_DIR must be either 'otel-v1' or 'otel-v2', got: '$TEST_DIR'" && exit 1; fi
 
-# Enable pnpm
-RUN corepack enable
-RUN corepack prepare pnpm@10 --activate
+# Install pnpm (Corepack is not included in Node.js 26 images)
+RUN npm install --global pnpm@10
 
 # Install build dependencies
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \

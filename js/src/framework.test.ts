@@ -7,18 +7,24 @@ import {
   afterEach,
   vi,
 } from "vitest";
+import { type ExperimentEvent } from "../util";
 import {
   defaultErrorScoreHandler,
   Eval,
   EvalScorer,
   runEvaluator,
+  _internalPrepareEvaluatorScore,
+  type OneOrMoreScores,
 } from "./framework";
 import {
   _exportsForTestingOnly,
   BraintrustState,
   initLogger,
+  injectTraceContext,
   TestBackgroundLogger,
+  withParent,
 } from "./logger";
+import { parseBaggage } from "./propagation";
 import { configureNode } from "./node/config";
 import type { ProgressReporter } from "./reporters/types";
 import { InternalAbortError } from "./util";
@@ -790,6 +796,95 @@ test("trialIndex is passed to task", async () => {
     expect(result.error).toBeUndefined();
   });
 });
+
+describe.each([false, true])(
+  "trial upsert IDs with parent context: %s",
+  (useParent) => {
+    test.each(
+      ["eval-row", undefined, ""].flatMap((upsertId) =>
+        [
+          { trialCount: 1, rowTrialCount: undefined },
+          { trialCount: 3, rowTrialCount: undefined },
+          { trialCount: 1, rowTrialCount: 3 },
+          { trialCount: 3, rowTrialCount: 1 },
+        ].map((counts) => ({ upsertId, ...counts })),
+      ),
+    )(
+      "preserves separate trial rows across reruns: %j",
+      async ({ upsertId, trialCount, rowTrialCount }) => {
+        await _exportsForTestingOnly.simulateLoginForTests();
+        const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+        const experiment =
+          _exportsForTestingOnly.initTestExperiment("trial-upsert");
+        const parent = await experiment.export();
+        const count = rowTrialCount ?? trialCount;
+        let previousIds: string[] = [];
+
+        for (const input of [1, 2]) {
+          await withParent(parent, () =>
+            runEvaluator(
+              useParent ? null : experiment,
+              {
+                projectName: "proj",
+                evalName: "trial-upsert",
+                state: experiment.loggingState,
+                data: [
+                  { input, upsert_id: upsertId, trialCount: rowTrialCount },
+                ],
+                task: (value, { trialIndex }) => value * 10 + trialIndex,
+                scores: [],
+                trialCount,
+                summarizeScores: false,
+              },
+              new NoopProgressReporter(),
+              [],
+              undefined,
+              undefined,
+              true,
+            ),
+          );
+
+          await memoryLogger.flush();
+          const spans = (await memoryLogger.drain()).filter(
+            (log): log is ExperimentEvent =>
+              "experiment_id" in log && "span_id" in log,
+          );
+          const roots = spans
+            .filter((span) => !span.span_parents?.length)
+            .sort((a, b) => Number(a.output) - Number(b.output));
+          expect(roots).toHaveLength(count);
+          expect(spans).toHaveLength(count * 2);
+          for (const [trialIndex, root] of roots.entries()) {
+            expect(root.output).toBe(input * 10 + trialIndex);
+            const children = spans.filter(
+              (span) => span.span_parents?.[0] === root.span_id,
+            );
+            expect(children).toHaveLength(1);
+            expect(children[0].output).toEqual(root.output);
+          }
+
+          const ids = roots.map((root) => root.id);
+          expect(new Set(ids).size).toBe(count);
+          if (upsertId) {
+            expect(ids).toEqual(
+              [
+                upsertId,
+                "0a452074-8534-5d0a-a418-8dc075187dd6",
+                "1df30387-03bd-5d6a-a651-d80f0b576e6e",
+              ].slice(0, count),
+            );
+            if (previousIds.length) {
+              expect(ids).toEqual(previousIds);
+            }
+          } else {
+            expect(ids.some((id) => previousIds.includes(id))).toBe(false);
+          }
+          previousIds = ids;
+        }
+      },
+    );
+  },
+);
 
 test("trialIndex with multiple inputs", async () => {
   const trialData: Array<{ input: number; trialIndex: number }> = [];
@@ -2129,6 +2224,64 @@ test("Eval with parent flushes evaluator state, not global state", async () => {
   _exportsForTestingOnly.simulateLogoutForTests();
 });
 
+// Regression: the experiment id resolves asynchronously (POST
+// /api/experiment/register), but `Span.inject` reads it synchronously to build
+// the `braintrust.parent` baggage entry. If Eval starts tasks before the id
+// lands, the first task propagates trace identity with no destination and the
+// receiving process silently starts a fresh local trace.
+test("Eval resolves the experiment id before tasks run so injected context is routable", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  vi.spyOn(state, "login").mockResolvedValue(state as never);
+  vi.spyOn(_exportsForTestingOnly.isomorph, "getRepoInfo").mockResolvedValue(
+    undefined,
+  );
+  vi.spyOn(
+    _exportsForTestingOnly.isomorph,
+    "getPastNAncestors",
+  ).mockResolvedValue([]);
+  vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: { id: "project-id", name: "test-inject-project" },
+    experiment: {
+      id: "experiment-id",
+      project_id: "project-id",
+      name: "test-inject-experiment",
+      public: false,
+    },
+  });
+  _exportsForTestingOnly.useTestBackgroundLogger();
+
+  const carriers: Record<string, string>[] = [];
+
+  await Eval(
+    "test-inject-project",
+    {
+      data: [{ input: 1 }, { input: 2 }],
+      task: (input: number) => {
+        carriers.push(injectTraceContext());
+        return input * 2;
+      },
+      scores: [],
+      state,
+      // Keep the run hermetic: score summarization is a separate server round trip.
+      summarizeScores: false,
+    },
+    { returnResults: false },
+  );
+
+  expect(carriers).toHaveLength(2);
+  for (const carrier of carriers) {
+    expect(carrier["traceparent"]).toBeDefined();
+    // The first task must carry the parent, not just the later ones.
+    expect(parseBaggage(carrier["baggage"])["braintrust.parent"]).toBe(
+      "experiment_id:experiment-id",
+    );
+  }
+
+  _exportsForTestingOnly.clearTestBackgroundLogger();
+  _exportsForTestingOnly.simulateLogoutForTests();
+  vi.restoreAllMocks();
+});
+
 test("classifier-only evaluator populates classifications field", async () => {
   const result = await Eval(
     "test-classifier-only",
@@ -2178,6 +2331,101 @@ test("scorer-only evaluator populates scores field", async () => {
   expect(result.results).toHaveLength(1);
   expect(result.results[0].scores?.exact_match).toBe(1);
   expect(result.results[0].classifications).toBeUndefined();
+});
+
+test("single score objects use the same names as numeric returns", async () => {
+  const result = await Eval(
+    "test-nameless-scores",
+    {
+      data: [{ input: "hello" }],
+      task: (input) => input,
+      scores: [
+        function accuracy() {
+          return { score: 0.8 };
+        },
+        async function relevance() {
+          return { score: 1, metadata: { reason: "relevant" } };
+        },
+        () => ({ score: 0 }),
+        () => ({ name: "explicit", score: 0.5 }),
+      ],
+    },
+    { noSendLogs: true, returnResults: true },
+  );
+
+  expect(result.results[0].scores).toEqual({
+    accuracy: 0.8,
+    relevance: 1,
+    scorer_2: 0,
+    explicit: 0.5,
+  });
+});
+
+describe("scorer result normalization", () => {
+  test.each([0, 0.8, null])(
+    "defaults the name and preserves fields for %s",
+    (score) => {
+      const value = Object.freeze({ score, metadata: { reason: "test" } });
+      expect(_internalPrepareEvaluatorScore(value, "accuracy")).toEqual({
+        results: [{ ...value, name: "accuracy" }],
+        output: { score },
+        metadata: value.metadata,
+        scores: { accuracy: score },
+      });
+      expect(value).not.toHaveProperty("name");
+    },
+  );
+
+  test.each(["explicit", ""])("preserves an explicit name %j", (name) => {
+    expect(
+      _internalPrepareEvaluatorScore({ name, score: 1 }, "fallback").scores,
+    ).toEqual({ [name]: 1 });
+  });
+
+  test("keeps named arrays and numeric returns working", () => {
+    expect(_internalPrepareEvaluatorScore(0.8, "accuracy").scores).toEqual({
+      accuracy: 0.8,
+    });
+    expect(_internalPrepareEvaluatorScore(null, "accuracy")).toEqual({
+      results: null,
+    });
+    expect(
+      _internalPrepareEvaluatorScore(
+        [
+          { name: "accuracy", score: 0.8 },
+          { name: "relevance", score: 1 },
+        ],
+        "fallback",
+      ).scores,
+    ).toEqual({ accuracy: 0.8, relevance: 1 });
+  });
+
+  test("requires names in arrays at typecheck and runtime", () => {
+    // @ts-expect-error A single-element array still requires a named score.
+    const unnamed: OneOrMoreScores = [{ score: 1 }];
+    const mixed: OneOrMoreScores = [
+      { name: "accuracy", score: 1 },
+      // @ts-expect-error Every entry in a mixed array must have a name.
+      { score: 0.5 },
+    ];
+    for (const value of [unnamed, mixed]) {
+      expect(() => _internalPrepareEvaluatorScore(value, "fallback")).toThrow(
+        "each score must have a name",
+      );
+    }
+  });
+
+  test("rejects duplicate array names", () => {
+    expect(() =>
+      _internalPrepareEvaluatorScore(
+        [
+          { name: "accuracy", score: 1 },
+          { name: "accuracy", score: 0.5 },
+        ],
+        "fallback",
+      ),
+    ).toThrow("Duplicate score name 'accuracy'");
+  });
 });
 
 test("multiple classifiers returning the same name append items correctly", async () => {

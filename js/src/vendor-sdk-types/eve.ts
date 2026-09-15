@@ -291,21 +291,6 @@ export type EveHandleMessageStreamEvent =
       readonly type: "session.completed";
     };
 
-export interface EveHookDefinition {
-  readonly events?: {
-    readonly "*"?: (
-      event: EveHandleMessageStreamEvent,
-      ctx: EveHookContext,
-    ) => void | Promise<void>;
-    readonly [eventType: string]:
-      | ((
-          event: EveHandleMessageStreamEvent,
-          ctx: EveHookContext,
-        ) => void | Promise<void>)
-      | undefined;
-  };
-}
-
 export interface EveInstrumentationSetupContext {
   readonly agentName: string;
 }
@@ -425,19 +410,6 @@ type EveToolApprovalResponse = {
   readonly reason?: string;
   readonly type: "tool-approval-response";
 };
-
-export type EveModelMessageContentPart =
-  | EveTextPart
-  | EveImagePart
-  | EveFilePart
-  | EveReasoningPart
-  | EveReasoningFilePart
-  | EveCustomPart
-  | EveToolCallPart
-  | EveToolResultPart
-  | EveToolApprovalRequest
-  | EveToolApprovalResponse
-  | EveToolResultContentPart;
 
 export type EveSystemModelMessage = {
   readonly content: string;

@@ -28,6 +28,10 @@ import type {
   OpenAIFileLike,
   OpenAIFilesCreateTraceArgs,
 } from "../../openai-batch-types";
+import type {
+  OpenAIAgentsTraceStartChannelArgs,
+  OpenAIAgentsTraceState,
+} from "../../openai-agents-api-types";
 
 type OpenAIChatSpanInfo = NonNullable<CompiledPrompt<"chat">["span_info"]>;
 
@@ -72,6 +76,34 @@ export const openAIChannels = defineChannels(
       OpenAIMediaResponse,
       OpenAIChannelExtras
     >({ channelName: "audio.translations.create", kind: "async" }),
+
+    agentsTraceStart: channel<
+      [OpenAIAgentsTraceStartChannelArgs],
+      OpenAIAgentsTraceState | null,
+      OpenAIChannelExtras
+    >({
+      channelName: "agents.trace.start",
+      kind: "async",
+    }),
+
+    agentsTraceCapture: channel<
+      [{ event: unknown; state: OpenAIAgentsTraceState | null }],
+      OpenAIAgentsTraceState | null,
+      OpenAIChannelExtras
+    >({
+      channelName: "agents.trace.capture",
+      kind: "async",
+    }),
+
+    agentsTraceFail: channel<
+      [{ error: unknown; state: OpenAIAgentsTraceState | null }],
+      OpenAIAgentsTraceState | null,
+      OpenAIChannelExtras
+    >({
+      channelName: "agents.trace.fail",
+      kind: "async",
+    }),
+
     filesCreateTraced: channel<
       [OpenAIFilesCreateTraceArgs],
       OpenAIFileLike,

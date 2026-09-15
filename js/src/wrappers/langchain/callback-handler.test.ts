@@ -129,6 +129,91 @@ describe("BraintrustLangChainCallbackHandler metrics", () => {
     });
   });
 
+  it.each([
+    {
+      name: "TTL buckets without an aggregate",
+      details: {
+        cache_creation: undefined,
+        ephemeral_5m_input_tokens: 4,
+        ephemeral_1h_input_tokens: 0,
+      },
+      expected: {
+        prompt_cache_creation_5m_tokens: 4,
+        prompt_cache_creation_1h_tokens: 0,
+      },
+    },
+    {
+      name: "both TTL buckets",
+      details: { ephemeral_5m_input_tokens: 4, ephemeral_1h_input_tokens: 6 },
+      expected: {
+        prompt_cache_creation_5m_tokens: 4,
+        prompt_cache_creation_1h_tokens: 6,
+      },
+    },
+    {
+      name: "a zero-valued TTL bucket",
+      details: { ephemeral_5m_input_tokens: 4, ephemeral_1h_input_tokens: 0 },
+      expected: {
+        prompt_cache_creation_5m_tokens: 4,
+        prompt_cache_creation_1h_tokens: 0,
+      },
+    },
+    {
+      name: "only the 5-minute bucket",
+      details: { ephemeral_5m_input_tokens: 4 },
+      expected: { prompt_cache_creation_5m_tokens: 4 },
+    },
+    {
+      name: "only the 1-hour bucket",
+      details: { ephemeral_1h_input_tokens: 6 },
+      expected: { prompt_cache_creation_1h_tokens: 6 },
+    },
+    {
+      name: "only a zero-valued bucket",
+      details: { ephemeral_1h_input_tokens: 0 },
+      expected: { prompt_cache_creation_1h_tokens: 0 },
+    },
+    {
+      name: "null TTL buckets",
+      details: {
+        ephemeral_5m_input_tokens: null,
+        ephemeral_1h_input_tokens: null,
+      },
+      expected: { prompt_cache_creation_tokens: 10 },
+    },
+  ])(
+    "preserves cache creation metrics with $name",
+    async ({ details, expected }) => {
+      const { endLog } = await finishChatModelRun({
+        generations: [
+          [
+            {
+              message: {
+                usage_metadata: {
+                  input_tokens: 20,
+                  output_tokens: 2,
+                  input_token_details: {
+                    cache_creation: 10,
+                    cache_read: 3,
+                    ...details,
+                  },
+                },
+              },
+            },
+          ],
+        ],
+      });
+
+      expect(endLog.metrics).toEqual({
+        prompt_tokens: 20,
+        completion_tokens: 2,
+        prompt_cached_tokens: 3,
+        tokens: 22,
+        ...expected,
+      });
+    },
+  );
+
   it("preserves reasoning metrics from message usage metadata", async () => {
     const { endLog } = await finishChatModelRun({
       generations: [

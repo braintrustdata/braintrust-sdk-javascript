@@ -264,20 +264,105 @@ span_tree:
     │   }
     │   └── embed_content [llm]
     │       input: {
-    │         "contents": {
-    │           "text": "Paris is the capital of France."
-    │         },
-    │         "model": "gemini-embedding-001"
+    │         "inputs": [
+    │           {
+    │             "content": "Paris is the capital of France."
+    │           }
+    │         ]
     │       }
     │       output: {
-    │         "embedding_count": 1,
-    │         "embedding_length": 3072
+    │         "count": 1
     │       }
     │       metadata: {
-    │         "model": "gemini-embedding-001"
+    │         "model": "gemini-embedding-001",
+    │         "provider": "google"
+    │       }
+    ├── google-multimodal-embed-operation
+    │   metadata: {
+    │     "operation": "multimodal-embed",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── embed_content [llm]
+    │       input: {
+    │         "inputs": [
+    │           {
+    │             "content": [
+    │               {
+    │                 "text": "A sailing ship in a storm",
+    │                 "type": "text"
+    │               },
+    │               {
+    │                 "image_url": {
+    │                   "url": {
+    │                     "content_type": "image/png",
+    │                     "filename": "image.png",
+    │                     "key": "<uuid:1>",
+    │                     "type": "braintrust_attachment"
+    │                   }
+    │                 },
+    │                 "type": "image_url"
+    │               }
+    │             ]
+    │           },
+    │           {
+    │             "content": [
+    │               {
+    │                 "file": {
+    │                   "file_data": {
+    │                     "content_type": "audio/wav",
+    │                     "filename": "document.wav",
+    │                     "key": "<uuid:2>",
+    │                     "type": "braintrust_attachment"
+    │                   }
+    │                 },
+    │                 "type": "file"
+    │               }
+    │             ]
+    │           },
+    │           {
+    │             "content": [
+    │               {
+    │                 "file": {
+    │                   "file_data": {
+    │                     "content_type": "video/mp4",
+    │                     "filename": "document.mp4",
+    │                     "key": "<uuid:3>",
+    │                     "type": "braintrust_attachment"
+    │                   }
+    │                 },
+    │                 "type": "file"
+    │               }
+    │             ]
+    │           },
+    │           {
+    │             "content": [
+    │               {
+    │                 "file": {
+    │                   "file_data": {
+    │                     "content_type": "application/pdf",
+    │                     "filename": "document.pdf",
+    │                     "key": "<uuid:4>",
+    │                     "type": "braintrust_attachment"
+    │                   }
+    │                 },
+    │                 "type": "file"
+    │               }
+    │             ]
+    │           }
+    │         ],
+    │         "output_dimensions": 768
+    │       }
+    │       output: {
+    │         "count": 4
+    │       }
+    │       metadata: {
+    │         "model": "gemini-embedding-2",
+    │         "provider": "google"
     │       }
     │       metrics: {
-    │         "duration": 0
+    │         "prompt_audio_tokens": 45,
+    │         "prompt_tokens": 699,
+    │         "tokens": 699
     │       }
     ├── google-attachment-operation
     │   metadata: {
