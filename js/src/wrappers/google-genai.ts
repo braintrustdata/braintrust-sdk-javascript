@@ -4,7 +4,10 @@ import type {
   GoogleGenAIClient,
   GoogleGenAIConstructor,
   GoogleGenAIEmbedContentParams,
+  GoogleGenAIEditImageParams,
   GoogleGenAIGenerateContentParams,
+  GoogleGenAIGenerateImagesParams,
+  GoogleGenAIGenerateVideosParams,
   GoogleGenAIInteractionCreateParams,
   GoogleGenAIHttpResponse,
   GoogleGenAIInteractions,
@@ -154,10 +157,55 @@ function wrapModels(models: GoogleGenAIModels): GoogleGenAIModels {
         );
       } else if (prop === "embedContent") {
         return wrapEmbedContent(target.embedContent.bind(target));
+      } else if (prop === "generateImages") {
+        return wrapGenerateImages(target.generateImages.bind(target));
+      } else if (prop === "editImage") {
+        return wrapEditImage(target.editImage.bind(target));
+      } else if (prop === "generateVideos") {
+        return wrapGenerateVideos(target.generateVideos.bind(target));
       }
       return Reflect.get(target, prop, receiver);
     },
   });
+}
+
+function wrapEditImage(
+  original: GoogleGenAIModels["editImage"],
+): GoogleGenAIModels["editImage"] {
+  return function (params: GoogleGenAIEditImageParams) {
+    return googleGenAIChannels.editImage.invoke(
+      original,
+      undefined,
+      [params],
+      {},
+    );
+  };
+}
+
+function wrapGenerateVideos(
+  original: GoogleGenAIModels["generateVideos"],
+): GoogleGenAIModels["generateVideos"] {
+  return function (params: GoogleGenAIGenerateVideosParams) {
+    return googleGenAIChannels.generateVideos.invoke(
+      original,
+      undefined,
+      [params],
+      {},
+    );
+  };
+}
+
+function wrapGenerateImages(
+  original: GoogleGenAIModels["generateImages"],
+): GoogleGenAIModels["generateImages"] {
+  return function (params: GoogleGenAIGenerateImagesParams) {
+    return googleGenAIChannels.generateImages.invoke(
+      original,
+      undefined,
+      [params],
+      {},
+    );
+  };
 }
 
 function wrapInteractions(
