@@ -5952,6 +5952,49 @@ export function getSpanParentObject<IsAsyncFlush extends boolean>(
   return getSpanParentObjectAndPropagatedState(options).parentObject;
 }
 
+/** @internal */
+export function _internalExportParentSynchronously(
+  parent: ReturnType<typeof getSpanParentObject>,
+): string | undefined {
+  if ("toStr" in parent) {
+    return parent.toStr();
+  }
+
+  if ("getParentInfo" in parent) {
+    const parentInfo = parent.getParentInfo();
+    if (!parentInfo) {
+      return undefined;
+    }
+    const objectId = parentInfo.objectId.getSync().value;
+    if (!objectId && !parentInfo.computeObjectMetadataArgs) {
+      return undefined;
+    }
+    return new SpanComponentsV4({
+      object_type: parentInfo.objectType,
+      ...(objectId
+        ? { object_id: objectId }
+        : {
+            compute_object_metadata_args:
+              parentInfo.computeObjectMetadataArgs ?? {},
+          }),
+      row_id: parent.id,
+      root_span_id: parent.rootSpanId,
+      span_id: parent.spanId,
+    }).toStr();
+  }
+
+  const components = braintrustParentToComponents(parent._getOtelParent());
+  if (!components) {
+    return undefined;
+  }
+  return new SpanComponentsV4({
+    object_type: components.objectType,
+    ...(components.objectId
+      ? { object_id: components.objectId }
+      : { compute_object_metadata_args: components.computeArgs ?? {} }),
+  }).toStr();
+}
+
 /**
  * Return the Braintrust parent string for the current logger/experiment, if any.
  *
