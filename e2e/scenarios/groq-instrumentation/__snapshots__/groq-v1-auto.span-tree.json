@@ -35,14 +35,10 @@
                 "temperature": 0
               },
               "metrics": {
-                "completion_time": 0.0072439,
                 "completion_tokens": 2,
-                "prompt_time": 0.001728151,
                 "prompt_tokens": 40,
-                "queue_time": 0.054452998,
                 "time_to_first_token": 0,
-                "tokens": 42,
-                "total_time": 0.008972051
+                "tokens": 42
               }
             }
           ],
@@ -78,18 +74,13 @@
               "metadata": {
                 "model": "llama-3.3-70b-versatile",
                 "provider": "groq",
-                "stream": true,
                 "temperature": 0
               },
               "metrics": {
-                "completion_time": 0.006718869,
                 "completion_tokens": 2,
-                "prompt_time": 0.003972294,
                 "prompt_tokens": 40,
-                "queue_time": 0.095351581,
                 "time_to_first_token": 0,
-                "tokens": 42,
-                "total_time": 0.010691163
+                "tokens": 42
               }
             }
           ],
@@ -128,19 +119,14 @@
                 "model": "openai/gpt-oss-20b",
                 "provider": "groq",
                 "reasoning_format": "parsed",
-                "stream": true,
                 "temperature": 0.6
               },
               "metrics": {
                 "completion_reasoning_tokens": 158,
-                "completion_time": 0.270633239,
                 "completion_tokens": 168,
-                "prompt_time": 0.005148062,
                 "prompt_tokens": 108,
-                "queue_time": 0.103912089,
                 "time_to_first_token": 0,
-                "tokens": 276,
-                "total_time": 0.275781301
+                "tokens": 276
               }
             }
           ],
@@ -215,19 +201,216 @@
                 ]
               },
               "metrics": {
-                "completion_time": 0.039504246,
                 "completion_tokens": 11,
-                "prompt_time": 0.020812356,
                 "prompt_tokens": 246,
-                "queue_time": 0.091778475,
                 "time_to_first_token": 0,
-                "tokens": 257,
-                "total_time": 0.060316602
+                "tokens": 257
               }
             }
           ],
           "metadata": {
             "operation": "tool",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "groq-batch-operation",
+          "children": [
+            {
+              "name": "groq.batch",
+              "type": "task",
+              "children": [
+                {
+                  "name": "groq.chat.completions.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "Reply with ALPHA.",
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "finish_reason": "stop",
+                      "index": 0,
+                      "message": {
+                        "content": "ALPHA",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "llama-3.3-70b-versatile",
+                    "provider": "groq",
+                    "temperature": 0
+                  },
+                  "metrics": {
+                    "completion_tokens": 1,
+                    "prompt_cached_tokens": 3,
+                    "prompt_tokens": 5,
+                    "tokens": 6
+                  }
+                },
+                {
+                  "name": "groq.chat.completions.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "Reply with BRAVO.",
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "finish_reason": "stop",
+                      "index": 0,
+                      "message": {
+                        "content": "BRAVO",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "llama-3.3-70b-versatile",
+                    "provider": "groq",
+                    "temperature": 0
+                  },
+                  "metrics": {
+                    "completion_tokens": 1,
+                    "prompt_cached_tokens": 3,
+                    "prompt_tokens": 5,
+                    "tokens": 6
+                  }
+                },
+                {
+                  "name": "groq.chat.completions.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "This request should fail.",
+                      "role": "user"
+                    }
+                  ],
+                  "metadata": {
+                    "model": "llama-3.3-70b-versatile",
+                    "provider": "groq",
+                    "temperature": 0
+                  },
+                  "error": "Groq batch fixture request failed"
+                }
+              ],
+              "metadata": {
+                "provider": "groq"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "batch",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "groq-batch-collect-only-operation",
+          "children": [
+            {
+              "name": "groq.batch",
+              "type": "task",
+              "children": [
+                {
+                  "name": "groq.chat.completions.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "Collect this response.",
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "finish_reason": "stop",
+                      "index": 0,
+                      "message": {
+                        "content": "COLLECTED",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "llama-3.3-70b-versatile",
+                    "provider": "groq",
+                    "temperature": 0
+                  },
+                  "metrics": {
+                    "completion_tokens": 1,
+                    "prompt_tokens": 4,
+                    "tokens": 5
+                  }
+                }
+              ],
+              "metadata": {
+                "provider": "groq"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "batch-collect-only",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "groq-batch-submission-failure-operation",
+          "children": [
+            {
+              "name": "groq.batch",
+              "type": "task",
+              "children": [
+                {
+                  "name": "groq.chat.completions.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "First pending request.",
+                      "role": "user"
+                    }
+                  ],
+                  "metadata": {
+                    "model": "llama-3.3-70b-versatile",
+                    "provider": "groq",
+                    "temperature": 0
+                  },
+                  "error": "Groq batch submission failed"
+                },
+                {
+                  "name": "groq.chat.completions.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "Second pending request.",
+                      "role": "user"
+                    }
+                  ],
+                  "metadata": {
+                    "model": "llama-3.3-70b-versatile",
+                    "provider": "groq",
+                    "temperature": 0
+                  },
+                  "error": "Groq batch submission failed"
+                }
+              ],
+              "metadata": {
+                "provider": "groq"
+              },
+              "error": "Groq batch submission failed"
+            }
+          ],
+          "metadata": {
+            "operation": "batch-submission-failure",
             "testRunId": "<run:1>"
           }
         }
