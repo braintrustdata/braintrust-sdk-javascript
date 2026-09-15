@@ -1,3 +1,29 @@
+export type SpanExportData = Record<string, unknown>;
+
+export interface SpanCustomizer {
+  /**
+   * Customize an outgoing span record after lazy values resolve, before JSON
+   * serialization. Records are incremental and may not contain every span field.
+   *
+   * Callbacks are synchronous. Add, change, or delete payload fields, then return
+   * the record or a replacement plain object. Payloads may still contain SDK
+   * Attachment objects; attachment processing and serialization happen later.
+   *
+   * The SDK restores identity and routing fields (id, span_id, root_span_id,
+   * span_parents, org_id, project_id, experiment_id, dataset_id, prompt_session_id,
+   * log_id, function_data) and transport controls (_is_merge, _merge_paths,
+   * _parent_id, _object_delete, _array_delete, _xact_id) after every callback.
+   *
+   * Exceptions and invalid return values are ignored; synchronous payload
+   * mutations remain. Promises are not awaited and their rejections are swallowed.
+   * Do not mutate the record after returning.
+   *
+   * This hook does not guarantee redaction of the local experiment/scorer cache,
+   * which is populated before export, and is not a fail-closed privacy boundary.
+   */
+  onSpanExport?(data: SpanExportData): SpanExportData;
+}
+
 export interface InstrumentationIntegrationsConfig {
   openai?: boolean;
   anthropic?: boolean;
@@ -46,6 +72,12 @@ export interface InstrumentationConfig {
    * Set to false to disable instrumentation for that SDK.
    */
   integrations?: InstrumentationIntegrationsConfig;
+
+  /**
+   * Instrumentation-wide customizers, in callback execution order.
+   * Configure before instrumentation is enabled.
+   */
+  spanCustomizers?: readonly SpanCustomizer[];
 }
 
 const envIntegrationAliases: Record<

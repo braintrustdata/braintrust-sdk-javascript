@@ -374,6 +374,10 @@ export {
   braintrustFlueObserver,
   braintrustFlueInstrumentation,
 } from "./instrumentation";
-export type { InstrumentationConfig } from "./instrumentation";
+export type {
+  InstrumentationConfig,
+  SpanCustomizer,
+  SpanExportData,
+} from "./instrumentation";
 
 export { wrapElevenLabs } from "./wrappers/elevenlabs";

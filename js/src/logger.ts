@@ -207,6 +207,7 @@ import {
   mergeSpanOriginContext,
   type SpanOriginEnvironment,
 } from "./span-origin";
+import { customizeSpanExport } from "./span-customizer";
 
 // Manual type definition for inline attachments (not in generated_types)
 const InlineAttachmentReferenceSchema = z.object({
@@ -8215,6 +8216,7 @@ export class SpanImpl implements Span {
 
   private isMerge: boolean;
   private loggedEndTime: number | undefined;
+  private readonly isInstrumented: boolean;
   private propagatedEvent: StartSpanEventArgs | undefined;
 
   // For internal use only.
@@ -8255,6 +8257,8 @@ export class SpanImpl implements Span {
     const instrumentationName =
       getSpanInstrumentationName(args) ??
       INSTRUMENTATION_NAMES.BRAINTRUST_JS_LOGGER;
+    this.isInstrumented =
+      instrumentationName !== INSTRUMENTATION_NAMES.BRAINTRUST_JS_LOGGER;
 
     const spanAttributes = args.spanAttributes ?? {};
     const rawEvent = args.event ?? {};
@@ -8422,21 +8426,28 @@ export class SpanImpl implements Span {
       );
     }
 
-    const computeRecord = async () => ({
-      ...partialRecord,
-      ...Object.fromEntries(
-        await Promise.all(
-          Object.entries(lazyInternalData).map(async ([key, value]) => [
-            key,
-            await value.get(),
-          ]),
+    const computeRecord = async () => {
+      const record = {
+        ...partialRecord,
+        ...Object.fromEntries(
+          await Promise.all(
+            Object.entries(lazyInternalData).map(async ([key, value]) => [
+              key,
+              await value.get(),
+            ]),
+          ),
         ),
-      ),
-      ...new SpanComponentsV3({
-        object_type: this.parentObjectType,
-        object_id: await this.parentObjectId.get(),
-      }).objectIdFields(),
-    });
+        ...new SpanComponentsV3({
+          object_type: this.parentObjectType,
+          object_id: await this.parentObjectId.get(),
+        }).objectIdFields(),
+      };
+      // Customize inside the memoized lazy value, before attachment processing,
+      // merging, and masking. Retries reuse the already-customized record.
+      return this.isInstrumented
+        ? (customizeSpanExport(record) as BackgroundLogEvent)
+        : record;
+    };
     this._state.bgLogger().log([new LazyValue(computeRecord)]);
   }
 

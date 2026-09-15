@@ -180,6 +180,68 @@ termination, and async context.
 - Use narrow vendored provider interfaces shared by wrappers and plugins.
 - Keep enable, disable, subscription, and patching behavior idempotent.
 
+## Export Customizers
+
+Configure `spanCustomizers` through the standalone instrumentation entrypoint
+before importing the main SDK, which enables instrumentation during platform
+initialization. Use a bootstrap module before any auto-instrumentation preload
+that initializes the SDK. Static imports of the main SDK are hoisted; use a
+dynamic import after configuration:
+
+```ts
+import { configureInstrumentation } from "braintrust/instrumentation";
+
+configureInstrumentation({
+  spanCustomizers: [
+    {
+      onSpanExport(data) {
+        data.tags = ["reviewed"];
+        if ("output" in data) data.output = "[redacted]";
+        delete data.error;
+        return data;
+      },
+    },
+  ],
+});
+
+const { initLogger } = await import("braintrust");
+initLogger({ projectName: "my-project" });
+// Import and use instrumented provider SDKs here.
+```
+
+`onSpanExport` receives each incremental record from an instrumentation-created
+span after lazy values resolve, before attachment processing, merging, masking,
+and JSON serialization. It can run before the span ends; fields may be absent.
+Ordinary manually created spans, dataset rows, and feedback are not customized.
+
+Callbacks run synchronously in registration order. Mutate and return the record,
+or return a replacement plain object for the next callback. Exceptions and invalid
+return values are ignored while synchronous payload mutations remain; promises
+are not awaited and their rejections are swallowed. Do not mutate the record after
+returning. Export retries reuse the transformed record without invoking callbacks
+again. Configuration is shared across SDK bundles.
+
+The SDK restores these fields after every callback, including removing injected
+fields that were absent from the original record:
+
+- Identity: `id`, `span_id`, `root_span_id`, `span_parents`.
+- Routing: `org_id`, `project_id`, `experiment_id`, `dataset_id`,
+  `prompt_session_id`, `log_id`, `function_data`.
+- Transport controls: `_is_merge`, `_merge_paths`, `_parent_id`, `_object_delete`,
+  `_array_delete`, `_xact_id`.
+
+Payload values must remain supported by the SDK logging pipeline. They can still
+include `Attachment` objects at this point; attachment processing and JSON
+serialization happen after customization.
+
+This is an export-only hook, not a fail-closed privacy boundary. The local
+experiment/scorer cache is populated before export and may retain unredacted
+values. Applications requiring secrets to stay off local disk must disable the
+span cache separately; export customization alone does not provide that guarantee.
+
+Customizers receive only the outgoing record, not a live span or provider
+instrumentation context.
+
 ## Testing
 
 Test at the narrowest useful layers:
