@@ -250,7 +250,7 @@ function extractBedrockRuntimeResponseMetrics(
     const metadata = isObject(parsedBody.metadata)
       ? parsedBody.metadata
       : undefined;
-    metrics = parseBedrockRuntimeMetrics(
+    metrics = parseBedrockRuntimeMetricParts(
       parsedBody.usage ??
         metadata?.usage ??
         (parsedBody.inputTextTokenCount !== undefined ? parsedBody : undefined),
@@ -259,7 +259,7 @@ function extractBedrockRuntimeResponseMetrics(
   }
 
   if (Object.keys(metrics).length === 0) {
-    metrics = parseBedrockRuntimeMetrics(result.usage, result.metrics);
+    metrics = parseBedrockRuntimeMetricParts(result.usage, result.metrics);
   }
 
   const headerMetrics = bedrockResponseHeaderMetrics.get(result) ?? {};
@@ -279,14 +279,8 @@ function extractBedrockRuntimeResponseMetrics(
     ) {
       mergedMetrics.tokens = mergedMetrics.prompt_tokens;
     }
-  } else if (mergedMetrics.tokens === undefined) {
-    if (
-      mergedMetrics.prompt_tokens !== undefined &&
-      mergedMetrics.completion_tokens !== undefined
-    ) {
-      mergedMetrics.tokens =
-        mergedMetrics.prompt_tokens + mergedMetrics.completion_tokens;
-    }
+  } else {
+    addBedrockRuntimeFallbackTotal(mergedMetrics);
   }
 
   return mergedMetrics;
@@ -379,6 +373,15 @@ export function parseBedrockRuntimeMetrics(
   usage: unknown,
   responseMetrics?: unknown,
 ): Record<string, number> {
+  const metrics = parseBedrockRuntimeMetricParts(usage, responseMetrics);
+  addBedrockRuntimeFallbackTotal(metrics);
+  return metrics;
+}
+
+function parseBedrockRuntimeMetricParts(
+  usage: unknown,
+  responseMetrics?: unknown,
+): Record<string, number> {
   const metrics: Record<string, number> = {};
   const usageRecord = isObject(usage)
     ? (usage as BedrockRuntimeTokenUsage)
@@ -436,18 +439,6 @@ export function parseBedrockRuntimeMetrics(
     metrics.prompt_cache_creation_tokens = cacheWriteInputTokens;
   }
 
-  if (metrics.tokens === undefined) {
-    const tokenParts = [
-      promptTokens,
-      completionTokens,
-      cacheReadInputTokens,
-      cacheWriteInputTokens,
-    ].filter((value): value is number => value !== undefined);
-    if (tokenParts.length > 0) {
-      metrics.tokens = tokenParts.reduce((total, value) => total + value, 0);
-    }
-  }
-
   if (
     isObject(responseMetrics) &&
     typeof responseMetrics.latencyMs === "number"
@@ -456,6 +447,21 @@ export function parseBedrockRuntimeMetrics(
   }
 
   return metrics;
+}
+
+function addBedrockRuntimeFallbackTotal(metrics: Record<string, number>): void {
+  if (metrics.tokens !== undefined) {
+    return;
+  }
+  const tokenParts = [
+    metrics.prompt_tokens,
+    metrics.completion_tokens,
+    metrics.prompt_cached_tokens,
+    metrics.prompt_cache_creation_tokens,
+  ].filter((value): value is number => value !== undefined);
+  if (tokenParts.length > 0) {
+    metrics.tokens = tokenParts.reduce((total, value) => total + value, 0);
+  }
 }
 
 type BedrockEmbeddingContentPart =

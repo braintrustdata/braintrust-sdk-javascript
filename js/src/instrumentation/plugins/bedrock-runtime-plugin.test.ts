@@ -579,6 +579,69 @@ describe("BedrockRuntimePlugin", () => {
     );
   });
 
+  it("combines Titan body and response header token metrics", async () => {
+    let responseMiddleware:
+      | Parameters<BedrockRuntimeMiddlewareStack["add"]>[0]
+      | undefined;
+    const middlewareStack: BedrockRuntimeMiddlewareStack = {
+      add(middleware) {
+        responseMiddleware = middleware;
+      },
+    };
+    const output = {
+      body: JSON.stringify({
+        inputTextTokenCount: 10,
+        results: [
+          {
+            completionReason: "FINISH",
+            outputText: "Done",
+          },
+        ],
+      }),
+    };
+
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => {
+        if (!responseMiddleware) {
+          throw new Error("Expected response middleware to be installed");
+        }
+        const result = await responseMiddleware(async () => ({
+          output,
+          response: {
+            headers: {
+              "x-amzn-bedrock-output-token-count": "20",
+            },
+          },
+        }))({});
+        return result.output;
+      },
+      {
+        arguments: [
+          new InvokeModelCommand(
+            {
+              body: JSON.stringify({ inputText: "Complete this sentence." }),
+              modelId: "amazon.titan-text-express-v1",
+            },
+            middlewareStack,
+          ) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_tokens: 20,
+            prompt_tokens: 10,
+            tokens: 30,
+          }),
+        }),
+      ]),
+    );
+  });
+
   it("never logs provider-native output for malformed embedding responses", async () => {
     await smithyCoreChannels.clientSend.tracePromise(
       async () => ({
