@@ -34,8 +34,6 @@ export type SpanExportData = Record<string, unknown>;
  * Callbacks are synchronous and run in registration order. Exceptions are
  * swallowed and processing continues without changing provider results or
  * preventing span finalization.
- *
- * @remarks API declaration only; customizer execution is not implemented yet.
  */
 export interface SpanCustomizer {
   /**
@@ -45,6 +43,8 @@ export interface SpanCustomizer {
    *
    * Use span.log() or span.setAttributes() to customize the span; do not end it.
    * Earlier updates may already be uploaded, so this is not a redaction hook.
+   *
+   * @remarks API declaration only; this callback is not invoked yet.
    */
   onSpanEnding?(span: Span, ctx: InstrumentationContext): void;
 
@@ -58,7 +58,8 @@ export interface SpanCustomizer {
    *
    * Preserve identity and routing fields and return JSON-serializable data.
    * Called once per outgoing record, not per transport retry. No provider
-   * context is retained for this callback.
+   * context is retained for this callback. Runs before attachment processing,
+   * merging, and masking.
    */
   onSpanExport?(data: SpanExportData): SpanExportData;
 }
@@ -115,7 +116,7 @@ export interface InstrumentationConfig {
    * Instrumentation-wide customizers, in callback execution order.
    * Configure before instrumentation is enabled.
    *
-   * @remarks API declaration only; these callbacks are not invoked yet.
+   * Only onSpanExport is currently invoked; onSpanEnding is not implemented.
    */
   spanCustomizers?: readonly SpanCustomizer[];
 }
