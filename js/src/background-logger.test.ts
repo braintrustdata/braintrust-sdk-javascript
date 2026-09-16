@@ -1,5 +1,3 @@
-/// <reference lib="esnext.promise" />
-
 import { expect, test, vi } from "vitest";
 import { BraintrustState } from "./logger";
 import { configureNode } from "./node/config";
@@ -7,6 +5,16 @@ import { LazyValue } from "./util";
 import type { BackgroundLogEvent } from "../util";
 
 configureNode();
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
 
 function jsonResponse(data: unknown): Response {
   return new Response(JSON.stringify(data), {
@@ -44,7 +52,7 @@ function enqueueEvents(state: BraintrustState, start: number, count: number) {
 }
 
 test("flush only waits for events enqueued before it was called", async () => {
-  const logRequests: Array<PromiseWithResolvers<Response>> = [];
+  const logRequests: Array<ReturnType<typeof deferred<Response>>> = [];
   const fetchMock = vi.fn((input: RequestInfo | URL) => {
     if (String(input).endsWith("/version")) {
       return Promise.resolve(
@@ -52,7 +60,7 @@ test("flush only waits for events enqueued before it was called", async () => {
       );
     }
 
-    const request = Promise.withResolvers<Response>();
+    const request = deferred<Response>();
     logRequests.push(request);
     return request.promise;
   });
@@ -91,7 +99,7 @@ test("failed events are discarded without stranding later events", async () => {
   const onFlushError = vi.fn(() => {
     throw new Error("callback failure");
   });
-  const logRequests: Array<PromiseWithResolvers<Response>> = [];
+  const logRequests: Array<ReturnType<typeof deferred<Response>>> = [];
   const fetchMock = vi.fn((input: RequestInfo | URL) => {
     if (String(input).endsWith("/version")) {
       return Promise.resolve(
@@ -99,7 +107,7 @@ test("failed events are discarded without stranding later events", async () => {
       );
     }
 
-    const request = Promise.withResolvers<Response>();
+    const request = deferred<Response>();
     logRequests.push(request);
     return request.promise;
   });
@@ -138,7 +146,7 @@ test("log request concurrency is limited to eight by default", async () => {
   let activeRequests = 0;
   let peakActiveRequests = 0;
   let logRequestCount = 0;
-  const gate = Promise.withResolvers<void>();
+  const gate = deferred<void>();
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
     if (String(input).endsWith("/version")) {
       return jsonResponse({ logs3_payload_max_bytes: 6 * 1024 * 1024 });
