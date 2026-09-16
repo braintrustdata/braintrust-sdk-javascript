@@ -60,6 +60,14 @@ test("Queue clear operation", () => {
   expect(queue.drain()).toEqual([]);
 });
 
+test("Queue drains a matching prefix", () => {
+  const queue = new Queue<number>(5);
+  queue.push(1, 2, 3, 4, 5);
+
+  expect(queue.drainWhile((item) => item <= 3)).toEqual([1, 2, 3]);
+  expect(queue.drain()).toEqual([4, 5]);
+});
+
 test("Queue size limit enforcement per instance", () => {
   const queue1 = new Queue<number>(2);
   const queue2 = new Queue<number>(3);

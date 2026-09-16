@@ -3206,6 +3206,7 @@ export interface BackgroundLoggerOpts {
 }
 
 const DEFAULT_FLUSH_BACKPRESSURE_BYTES = 10 * 1024 * 1024; // 10 MB
+const DEFAULT_MAX_CONCURRENT_LOG_REQUESTS = 8;
 
 interface BackgroundLogger {
   log(items: LazyValue<BackgroundLogEvent>[]): void;
@@ -3358,14 +3359,52 @@ async function waitForRetry(
 // 'BraintrustState._bgLogger'. Be careful about spawning multiple
 // instances of this class, because concurrent BackgroundLoggers will not log to
 // the backend in a deterministic order.
+class ConcurrencyLimiter {
+  private activeCount = 0;
+  private readonly waiters: Array<() => void> = [];
+
+  constructor(private readonly limit: number) {}
+
+  async run<T>(callback: () => Promise<T>): Promise<T> {
+    if (this.activeCount >= this.limit) {
+      await new Promise<void>((resolve) => this.waiters.push(resolve));
+    } else {
+      this.activeCount++;
+    }
+
+    try {
+      return await callback();
+    } finally {
+      const next = this.waiters.shift();
+      if (next) {
+        next();
+      } else {
+        this.activeCount--;
+      }
+    }
+  }
+}
+
+interface QueuedLogEvent {
+  sequence: number;
+  event: LazyValue<BackgroundLogEvent>;
+}
+
 class HTTPBackgroundLogger implements BackgroundLogger {
   private apiConn: LazyValue<HTTPConnection>;
-  private queue: Queue<LazyValue<BackgroundLogEvent>>;
+  private queue: Queue<QueuedLogEvent>;
   private activeFlush: Promise<void> = Promise.resolve();
   private activeFlushResolved = true;
-  private activeFlushError: unknown = undefined;
   private onFlushError?: (error: unknown) => void;
   private maskingFunction: ((value: unknown) => unknown) | null = null;
+  private readonly requestLimiter: ConcurrencyLimiter;
+  private lastEnqueuedSequence = 0;
+  private completedSequence = 0;
+  private readonly completedOutOfOrder = new Set<number>();
+  private flushWaiters: Array<{
+    targetSequence: number;
+    resolve: () => void;
+  }> = [];
 
   public syncFlush: boolean = false;
   private maxRequestSizeOverride: number | null = null;
@@ -3425,6 +3464,26 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     }
 
     this.queue = new Queue(this.queueDropExceedingMaxsize);
+
+    const maxConcurrentLogRequestsEnv = Number(
+      iso.getEnv("BRAINTRUST_MAX_CONCURRENT_LOG_REQUESTS"),
+    );
+    const maxConcurrentLogRequests = !isNaN(maxConcurrentLogRequestsEnv)
+      ? maxConcurrentLogRequestsEnv
+      : DEFAULT_MAX_CONCURRENT_LOG_REQUESTS;
+    if (
+      !Number.isInteger(maxConcurrentLogRequests) ||
+      maxConcurrentLogRequests < 1
+    ) {
+      debugLogger.warn(
+        `maxConcurrentLogRequests ${maxConcurrentLogRequests} is not a positive integer, using default ${DEFAULT_MAX_CONCURRENT_LOG_REQUESTS}`,
+      );
+      this.requestLimiter = new ConcurrencyLimiter(
+        DEFAULT_MAX_CONCURRENT_LOG_REQUESTS,
+      );
+    } else {
+      this.requestLimiter = new ConcurrencyLimiter(maxConcurrentLogRequests);
+    }
 
     const queueDropLoggingPeriodEnv = Number(
       iso.getEnv("BRAINTRUST_QUEUE_DROP_LOGGING_PERIOD"),
@@ -3492,7 +3551,14 @@ class HTTPBackgroundLogger implements BackgroundLogger {
       return;
     }
 
-    const droppedItems = this.queue.push(...items);
+    const queuedItems = items.map((event) => ({
+      sequence: ++this.lastEnqueuedSequence,
+      event,
+    }));
+    const droppedItems = this.queue.push(...queuedItems);
+    // Queue limits reject a suffix of newly pushed items, so their sequence
+    // numbers can be reused by the next accepted events.
+    this.lastEnqueuedSequence -= droppedItems.length;
 
     if (!this.syncFlush) {
       this.triggerActiveFlush();
@@ -3501,7 +3567,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     if (droppedItems.length) {
       this.registerDroppedItemCount(droppedItems.length);
       if (this.allPublishPayloadsDir || this.failedPublishPayloadsDir) {
-        this.dumpDroppedEvents(droppedItems);
+        this.dumpDroppedEvents(droppedItems.map((item) => item.event));
       }
     }
   }
@@ -3545,39 +3611,37 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   }
 
   async flush(): Promise<void> {
-    if (this.syncFlush) {
-      this.triggerActiveFlush();
-    }
-    await this.activeFlush;
-    if (this.activeFlushError) {
-      const err = this.activeFlushError;
-      this.activeFlushError = undefined;
-      if (this.syncFlush) {
-        throw err;
-      }
-    }
+    const targetSequence = this.lastEnqueuedSequence;
+    const completion = this.waitForSequence(targetSequence);
+    this.triggerActiveFlush();
+    await completion;
   }
 
-  private async flushOnce(args?: { batchSize?: number }): Promise<void> {
-    if (this._disabled) {
-      this.queue.clear();
-      return;
-    }
-
+  private async flushLoop(args?: { batchSize?: number }): Promise<void> {
     const batchSize = args?.batchSize ?? this.defaultBatchSize;
 
-    // Drain the queue.
-    const wrappedItems = this.queue.drain();
+    while (true) {
+      const flushBoundary = this.nextFlushBoundary();
+      const queuedItems =
+        flushBoundary === undefined
+          ? this.queue.drain()
+          : this.queue.drainWhile((item) => item.sequence <= flushBoundary);
+      if (queuedItems.length === 0) {
+        return;
+      }
 
-    if (wrappedItems.length === 0) {
-      return;
-    }
-
-    await this.flushWrappedItemsChunk(wrappedItems, batchSize);
-
-    // If more items were added while we were flushing, flush again
-    if (this.queue.length() > 0) {
-      await this.flushOnce(args);
+      try {
+        if (!this._disabled) {
+          await this.flushWrappedItemsChunk(
+            queuedItems.map((item) => item.event),
+            batchSize,
+          );
+        }
+      } catch (error) {
+        this.reportFlushError(error);
+      } finally {
+        this.markCompleted(queuedItems.map((item) => item.sequence));
+      }
     }
   }
 
@@ -3612,14 +3676,14 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     });
 
     const postPromises = batches.map((batch) =>
-      (async () => {
+      this.requestLimiter.run(async () => {
         try {
           await this.submitLogsRequest(batch, maxRequestSizeResult);
           return { type: "success" } as const;
         } catch (e) {
           return { type: "error", value: e } as const;
         }
-      })(),
+      }),
     );
     const results = await Promise.all(postPromises);
     this._pendingBytes = Math.max(0, this._pendingBytes - chunkBytes);
@@ -3954,27 +4018,76 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   private triggerActiveFlush() {
     if (this.activeFlushResolved) {
       this.activeFlushResolved = false;
-      this.activeFlushError = undefined;
       this.activeFlush = (async () => {
         try {
-          await this.flushOnce();
+          await this.flushLoop();
         } catch (err) {
-          if (err instanceof AggregateError) {
-            for (const e of err.errors) {
-              this.onFlushError?.(e);
-            }
-          } else {
-            this.onFlushError?.(err);
-          }
-
-          this.activeFlushError = err;
+          this.reportFlushError(err);
         } finally {
           this.activeFlushResolved = true;
         }
       })();
 
-      waitUntil(this.activeFlush);
+      try {
+        waitUntil(this.activeFlush);
+      } catch (error) {
+        debugLogger.error("Failed to register background flush", error);
+      }
     }
+  }
+
+  private reportFlushError(error: unknown) {
+    const errors = error instanceof AggregateError ? error.errors : [error];
+    for (const currentError of errors) {
+      try {
+        this.onFlushError?.(currentError);
+      } catch (callbackError) {
+        debugLogger.error("Error in onFlushError callback", callbackError);
+      }
+    }
+  }
+
+  private markCompleted(sequences: number[]) {
+    for (const sequence of sequences) {
+      if (sequence > this.completedSequence) {
+        this.completedOutOfOrder.add(sequence);
+      }
+    }
+
+    while (this.completedOutOfOrder.delete(this.completedSequence + 1)) {
+      this.completedSequence++;
+    }
+
+    const pendingWaiters = [];
+    for (const waiter of this.flushWaiters) {
+      if (waiter.targetSequence <= this.completedSequence) {
+        waiter.resolve();
+      } else {
+        pendingWaiters.push(waiter);
+      }
+    }
+    this.flushWaiters = pendingWaiters;
+  }
+
+  private waitForSequence(targetSequence: number): Promise<void> {
+    if (targetSequence <= this.completedSequence) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      this.flushWaiters.push({ targetSequence, resolve });
+    });
+  }
+
+  private nextFlushBoundary(): number | undefined {
+    let boundary: number | undefined;
+    for (const waiter of this.flushWaiters) {
+      boundary =
+        boundary === undefined
+          ? waiter.targetSequence
+          : Math.min(boundary, waiter.targetSequence);
+    }
+    return boundary;
   }
 
   private logFailedPayloadsDir() {
@@ -3990,6 +4103,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
 
   public disable() {
     this._disabled = true;
+    this.triggerActiveFlush();
   }
 
   public enforceQueueSizeLimit(enforce: boolean) {
