@@ -3400,11 +3400,6 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   private readonly requestLimiter: ConcurrencyLimiter;
   private lastEnqueuedSequence = 0;
   private completedSequence = 0;
-  private readonly completedOutOfOrder = new Set<number>();
-  private flushWaiters: Array<{
-    targetSequence: number;
-    resolve: () => void;
-  }> = [];
 
   public syncFlush: boolean = false;
   private maxRequestSizeOverride: number | null = null;
@@ -3612,36 +3607,37 @@ class HTTPBackgroundLogger implements BackgroundLogger {
 
   async flush(): Promise<void> {
     const targetSequence = this.lastEnqueuedSequence;
-    const completion = this.waitForSequence(targetSequence);
-    this.triggerActiveFlush();
-    await completion;
+
+    while (this.completedSequence < targetSequence) {
+      this.triggerActiveFlush();
+      await this.activeFlush;
+    }
   }
 
-  private async flushLoop(args?: { batchSize?: number }): Promise<void> {
+  private async flushThrough(
+    flushBoundary: number,
+    args?: { batchSize?: number },
+  ): Promise<void> {
     const batchSize = args?.batchSize ?? this.defaultBatchSize;
 
-    while (true) {
-      const flushBoundary = this.nextFlushBoundary();
-      const queuedItems =
-        flushBoundary === undefined
-          ? this.queue.drain()
-          : this.queue.drainWhile((item) => item.sequence <= flushBoundary);
-      if (queuedItems.length === 0) {
-        return;
-      }
+    const queuedItems = this.queue.drainWhile(
+      (item) => item.sequence <= flushBoundary,
+    );
+    if (queuedItems.length === 0) {
+      return;
+    }
 
-      try {
-        if (!this._disabled) {
-          await this.flushWrappedItemsChunk(
-            queuedItems.map((item) => item.event),
-            batchSize,
-          );
-        }
-      } catch (error) {
-        this.reportFlushError(error);
-      } finally {
-        this.markCompleted(queuedItems.map((item) => item.sequence));
+    try {
+      if (!this._disabled) {
+        await this.flushWrappedItemsChunk(
+          queuedItems.map((item) => item.event),
+          batchSize,
+        );
       }
+    } catch (error) {
+      this.reportFlushError(error);
+    } finally {
+      this.completedSequence = queuedItems[queuedItems.length - 1].sequence;
     }
   }
 
@@ -4017,14 +4013,22 @@ class HTTPBackgroundLogger implements BackgroundLogger {
 
   private triggerActiveFlush() {
     if (this.activeFlushResolved) {
+      const flushBoundary = this.lastEnqueuedSequence;
+      if (flushBoundary <= this.completedSequence) {
+        return;
+      }
+
       this.activeFlushResolved = false;
       this.activeFlush = (async () => {
         try {
-          await this.flushLoop();
+          await this.flushThrough(flushBoundary);
         } catch (err) {
           this.reportFlushError(err);
         } finally {
           this.activeFlushResolved = true;
+          if (!this.syncFlush && this.queue.length() > 0) {
+            this.triggerActiveFlush();
+          }
         }
       })();
 
@@ -4045,49 +4049,6 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         debugLogger.error("Error in onFlushError callback", callbackError);
       }
     }
-  }
-
-  private markCompleted(sequences: number[]) {
-    for (const sequence of sequences) {
-      if (sequence > this.completedSequence) {
-        this.completedOutOfOrder.add(sequence);
-      }
-    }
-
-    while (this.completedOutOfOrder.delete(this.completedSequence + 1)) {
-      this.completedSequence++;
-    }
-
-    const pendingWaiters = [];
-    for (const waiter of this.flushWaiters) {
-      if (waiter.targetSequence <= this.completedSequence) {
-        waiter.resolve();
-      } else {
-        pendingWaiters.push(waiter);
-      }
-    }
-    this.flushWaiters = pendingWaiters;
-  }
-
-  private waitForSequence(targetSequence: number): Promise<void> {
-    if (targetSequence <= this.completedSequence) {
-      return Promise.resolve();
-    }
-
-    return new Promise((resolve) => {
-      this.flushWaiters.push({ targetSequence, resolve });
-    });
-  }
-
-  private nextFlushBoundary(): number | undefined {
-    let boundary: number | undefined;
-    for (const waiter of this.flushWaiters) {
-      boundary =
-        boundary === undefined
-          ? waiter.targetSequence
-          : Math.min(boundary, waiter.targetSequence);
-    }
-    return boundary;
   }
 
   private logFailedPayloadsDir() {

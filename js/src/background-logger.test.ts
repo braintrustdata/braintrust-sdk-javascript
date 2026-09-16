@@ -1,6 +1,7 @@
 import { expect, test, vi } from "vitest";
 import { BraintrustState } from "./logger";
 import { configureNode } from "./node/config";
+import { Queue } from "./queue";
 import { LazyValue } from "./util";
 import type { BackgroundLogEvent } from "../util";
 
@@ -140,6 +141,38 @@ test("failed events are discarded without stranding later events", async () => {
 
   await expect(logger.flush()).resolves.toBeUndefined();
   expect(logRequests).toHaveLength(2);
+});
+
+test("events enqueued as an active flush stops are not stranded", async () => {
+  let logRequestCount = 0;
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    if (String(input).endsWith("/version")) {
+      return jsonResponse({ logs3_payload_max_bytes: 6 * 1024 * 1024 });
+    }
+
+    logRequestCount++;
+    return jsonResponse({});
+  });
+  const state = createState(fetchMock as unknown as typeof globalThis.fetch);
+  const logger = state.httpLogger();
+  const queue = Reflect.get(logger, "queue") as Queue<{
+    sequence: number;
+    event: LazyValue<BackgroundLogEvent>;
+  }>;
+  const originalDrainWhile = queue.drainWhile.bind(queue);
+  let enqueuedFollowup = false;
+  vi.spyOn(queue, "drainWhile").mockImplementation((predicate) => {
+    const items = originalDrainWhile(predicate);
+    if (items.length > 0 && !enqueuedFollowup) {
+      enqueuedFollowup = true;
+      enqueueEvents(state, 1, 1);
+    }
+    return items;
+  });
+
+  enqueueEvents(state, 0, 1);
+  await vi.waitFor(() => expect(logRequestCount).toBe(2));
+  await logger.flush();
 });
 
 test("log request concurrency is limited to eight by default", async () => {
