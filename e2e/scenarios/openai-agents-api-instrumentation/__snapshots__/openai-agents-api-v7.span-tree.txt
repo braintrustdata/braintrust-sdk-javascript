@@ -8,7 +8,7 @@ span_tree:
         input: "Use web search once for Vienna weather, then answer exactly: Sunny in Vienna"
         output: "Sunny in Vienna"
         metadata: {
-          "agent_id": "agent_5560e9ac401c4be3a7eb1600fbdbb5ffcecbbe89173b47e59f",
+          "agent_id": "<agent_id:1>",
           "api": "agents",
           "braintrust_correlation_id": "agents-e2e-correlation",
           "model": "gpt-5.6-luna",

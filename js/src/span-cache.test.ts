@@ -23,6 +23,7 @@ describe("SpanCache (disk-based)", () => {
 
   afterEach(() => {
     // Clean up temp file after each test
+    cache.stop();
     cache.dispose();
   });
 

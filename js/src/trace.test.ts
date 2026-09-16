@@ -586,8 +586,8 @@ describe("LocalTrace.getSpans", () => {
 
   afterEach(() => {
     const state = _internalGetGlobalState();
-    state.spanCache.clearAll();
     state.spanCache.stop();
+    state.spanCache.clearAll();
   });
 
   test("should apply filters consistently to locally cached spans", async () => {

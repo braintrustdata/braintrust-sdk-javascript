@@ -2172,6 +2172,7 @@ test("Eval with enableCache: true (default) uses span cache", async () => {
 
   const startSpy = vi.spyOn(state.spanCache, "start");
   const stopSpy = vi.spyOn(state.spanCache, "stop");
+  const disposeSpy = vi.spyOn(state.spanCache, "dispose");
 
   await Eval(
     "test-enable-cache-true",
@@ -2186,6 +2187,10 @@ test("Eval with enableCache: true (default) uses span cache", async () => {
 
   expect(startSpy).toHaveBeenCalled();
   expect(stopSpy).toHaveBeenCalled();
+  expect(disposeSpy).toHaveBeenCalled();
+  expect(stopSpy.mock.invocationCallOrder[0]).toBeLessThan(
+    disposeSpy.mock.invocationCallOrder[0]!,
+  );
 });
 
 test("Eval with parent flushes evaluator state, not global state", async () => {
