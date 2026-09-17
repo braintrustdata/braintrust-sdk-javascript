@@ -234,8 +234,17 @@ async function* jsonlRecords(
   onIssue: (error: Error) => void = () => {},
 ): AsyncGenerator<unknown> {
   const resolvedFile = await file;
-  if (typeof resolvedFile === "string") {
-    for (const line of resolvedFile.split("\n")) {
+  if (
+    typeof resolvedFile === "string" ||
+    resolvedFile instanceof Uint8Array ||
+    resolvedFile instanceof ArrayBuffer ||
+    (typeof Buffer !== "undefined" && Buffer.isBuffer(resolvedFile))
+  ) {
+    const text =
+      typeof resolvedFile === "string"
+        ? resolvedFile
+        : new TextDecoder().decode(resolvedFile);
+    for (const line of text.split("\n")) {
       if (!line.trim()) {
         continue;
       }

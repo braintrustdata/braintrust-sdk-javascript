@@ -864,6 +864,43 @@ export function defineOpenAIInstrumentationAssertions(options: {
       }
     });
 
+    test(
+      "accepts binary JSONL sources for OpenAI Batch traces",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "openai-batch-binary-jsonl-operation",
+        );
+        const task = findOpenAISpan(events, operation?.span.id, [
+          "openai.batch",
+        ]);
+        const children = findOpenAISpans(events, task?.span.id, [
+          "Chat Completion",
+        ]);
+
+        expect(operation).toBeDefined();
+        expect(operation?.row.metadata).toMatchObject({
+          operation: "batch-binary-jsonl",
+        });
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(task?.row.metadata).toMatchObject({
+          endpoint: "/v1/chat/completions",
+          input_file_id: "file_binary_batch_e2e_fixture",
+          provider: "openai",
+        });
+        expect(task?.span.parentIds).toEqual([operation?.span.id ?? ""]);
+        expect(spanInstrumentationName(task)).toBe("openai");
+        expect(children).toHaveLength(EXPECTED_BATCH_OUTPUTS.size);
+        for (const child of children) {
+          expect(child.span.parentIds).toEqual([task?.span.id ?? ""]);
+          expect(spanInstrumentationName(child)).toBe("openai");
+        }
+        validateChatBatchSpans(children);
+      },
+    );
+
     const scenarioDir = path.dirname(fileURLToPath(options.testFileUrl));
     const cassetteMode = process.env.BRAINTRUST_E2E_CASSETTE_MODE;
     const cassetteEngaged =

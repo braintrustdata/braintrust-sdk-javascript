@@ -820,6 +820,84 @@ export async function runOpenAIInstrumentationScenario(options) {
       });
 
       await runOperation(
+        "openai-batch-binary-jsonl-operation",
+        "batch-binary-jsonl",
+        async () => {
+          const batchItems = [
+            {
+              customId: "batch_binary_alpha",
+              prompt: "Reply with exactly ALPHA.",
+              response: "ALPHA",
+            },
+            {
+              customId: "batch_binary_bravo",
+              prompt: "Reply with exactly BRAVO.",
+              response: "BRAVO",
+            },
+            {
+              customId: "batch_binary_charlie",
+              prompt: "Reply with exactly CHARLIE.",
+              response: "CHARLIE",
+            },
+          ];
+          const input = batchItems
+            .map((item) =>
+              JSON.stringify({
+                custom_id: item.customId,
+                method: "POST",
+                url: "/v1/chat/completions",
+                body: {
+                  model: OPENAI_MODEL,
+                  messages: [{ role: "user", content: item.prompt }],
+                },
+              }),
+            )
+            .join("\n");
+          const output = [batchItems[1], batchItems[0]]
+            .map((item, index) =>
+              JSON.stringify({
+                custom_id: item.customId,
+                response: {
+                  status_code: 200,
+                  body: {
+                    choices: [
+                      {
+                        index: 0,
+                        finish_reason: "stop",
+                        message: {
+                          role: "assistant",
+                          content: item.response,
+                        },
+                      },
+                    ],
+                    usage: {
+                      prompt_tokens: 8 + index,
+                      completion_tokens: 1,
+                      total_tokens: 9 + index,
+                    },
+                  },
+                },
+              }),
+            )
+            .join("\n");
+          const error = JSON.stringify({
+            custom_id: batchItems[2].customId,
+            error: {
+              code: "fixture_error",
+              message: "Batch fixture request failed",
+            },
+          });
+
+          await completeOpenAIBatchTrace({
+            inputFileId: "file_binary_batch_e2e_fixture",
+            inputFileContent: new TextEncoder().encode(input),
+            outputFileContent: Promise.resolve(Buffer.from(output)),
+            errorFileContent: await new Blob([error]).arrayBuffer(),
+          });
+        },
+      );
+
+      await runOperation(
         "openai-embedding-batch-operation",
         "embedding-batch",
         async () => {
