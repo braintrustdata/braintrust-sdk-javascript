@@ -1,6 +1,5 @@
 import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
-  TypeSafeAPIPromise,
   TypeSafeSystemOneRequest,
   TypeSafeSystemOneResult,
 } from "../../vendor-sdk-types/typesafe";
@@ -19,6 +18,3 @@ export const typeSafeChannels = defineChannels(
   },
   { instrumentationName: INSTRUMENTATION_NAMES.TYPESAFE },
 );
-
-export type TypeSafeSystemOnePromise =
-  TypeSafeAPIPromise<TypeSafeSystemOneResult>;

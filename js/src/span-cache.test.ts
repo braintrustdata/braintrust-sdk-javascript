@@ -5,7 +5,9 @@ import {
   beforeEach,
   afterEach,
   beforeAll,
+  vi,
 } from "vitest";
+import iso from "./isomorph";
 import { SpanCache } from "./span-cache";
 import { configureNode } from "./node/config";
 
@@ -21,8 +23,10 @@ describe("SpanCache (disk-based)", () => {
     cache.start(); // Start for testing (cache is disabled by default)
   });
 
-  afterEach(() => {
-    // Clean up temp file after each test
+  afterEach(async () => {
+    // Finish pending file operations before closing and removing the cache.
+    await cache.waitForPendingWrites();
+    cache.stop();
     cache.dispose();
   });
 
@@ -149,6 +153,29 @@ describe("SpanCache (disk-based)", () => {
   });
 
   describe("dispose", () => {
+    test("closes a file handle when initialization finishes after disposal", async () => {
+      const close = vi.fn(async () => {});
+      let resolveOpen: (fileHandle: {
+        close: () => Promise<void>;
+      }) => void = () => {};
+      const openPromise = new Promise<{ close: () => Promise<void> }>(
+        (resolve) => {
+          resolveOpen = resolve;
+        },
+      );
+      const openFile = vi.spyOn(iso, "openFile").mockReturnValue(openPromise);
+      const racingCache = new SpanCache();
+
+      racingCache.start();
+      racingCache.queueWrite("root-1", "span-1", { span_id: "span-1" });
+      racingCache.stop();
+      racingCache.dispose();
+      resolveOpen({ close });
+
+      await vi.waitFor(() => expect(close).toHaveBeenCalledOnce());
+      openFile.mockRestore();
+    });
+
     test("should clean up and allow reuse", () => {
       cache.queueWrite("root-1", "span-1", { span_id: "span-1" });
       expect(cache.size).toBe(1);

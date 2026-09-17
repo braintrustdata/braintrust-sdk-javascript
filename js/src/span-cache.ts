@@ -72,6 +72,7 @@ export class SpanCache {
   private fileHandle: any | null = null; // type-erased fs.promises.FileHandle
   private initialized = false;
   private initPromise: Promise<void> | null = null;
+  private generation = 0;
   // Tracks whether the cache was explicitly disabled (via constructor or disable())
   private _explicitlyDisabled: boolean;
   // Tracks whether the cache has been enabled (for evals only)
@@ -142,6 +143,7 @@ export class SpanCache {
       return this.initPromise;
     }
 
+    const generation = this.generation;
     this.initPromise = (async () => {
       if (!iso.tmpdir || !iso.pathJoin || !iso.openFile) {
         // Filesystem not available - silently skip initialization
@@ -150,13 +152,31 @@ export class SpanCache {
 
       const tmpDir = iso.tmpdir();
       const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      this.cacheFilePath = iso.pathJoin(
+      const cacheFilePath = iso.pathJoin(
         tmpDir,
         `braintrust-span-cache-${uniqueId}.jsonl`,
       );
 
       // Open file for append+read
-      this.fileHandle = await iso.openFile(this.cacheFilePath, "a+");
+      const fileHandle = await iso.openFile(cacheFilePath, "a+");
+      if (generation !== this.generation) {
+        try {
+          await fileHandle.close();
+        } catch {
+          // Ignore cleanup errors after disposal.
+        }
+        if (iso.unlinkSync) {
+          try {
+            iso.unlinkSync(cacheFilePath);
+          } catch {
+            // Ignore cleanup errors after disposal.
+          }
+        }
+        return;
+      }
+
+      this.cacheFilePath = cacheFilePath;
+      this.fileHandle = fileHandle;
       this.initialized = true;
 
       // Register cleanup handler on first initialization
@@ -245,6 +265,7 @@ export class SpanCache {
    * Called automatically after queueWrite, but can also be called explicitly.
    */
   async flushWriteBuffer(): Promise<void> {
+    const generation = this.generation;
     // Take a snapshot of records to flush, but DON'T clear the buffer yet.
     // Records stay in writeBuffer until disk write succeeds so getByRootSpanId can find them.
     const recordsToFlush = [...this.writeBuffer];
@@ -256,7 +277,7 @@ export class SpanCache {
 
     await this.ensureInitialized();
 
-    if (!this.fileHandle) {
+    if (generation !== this.generation || !this.fileHandle) {
       return;
     }
 
@@ -402,6 +423,7 @@ export class SpanCache {
 
     // Remove from global registry
     activeCaches.delete(this);
+    this.generation++;
 
     // Clear pending writes
     this.writeBuffer = [];
