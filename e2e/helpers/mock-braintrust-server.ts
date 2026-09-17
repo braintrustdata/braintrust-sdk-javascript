@@ -6,6 +6,7 @@ import type {
   ServerResponse,
 } from "node:http";
 import type { AddressInfo } from "node:net";
+import { setTimeout } from "node:timers/promises";
 import type { ProdForwarding } from "./prod-forwarding";
 
 export type JsonValue =
@@ -470,14 +471,31 @@ export async function startMockBraintrustServer(
     }
     headers.set("authorization", `Bearer ${prodForwarding.apiKey}`);
 
-    const response = await fetch(url, {
+    const requestInit = {
       body:
         prodRequest.method === "GET" || prodRequest.method === "HEAD"
           ? undefined
           : prodRequest.rawBody,
       headers,
       method: prodRequest.method,
-    });
+    };
+    // Retry ingestion inside the forwarding queue so later merges cannot
+    // overtake the initial upsert. Registration requests remain single-attempt.
+    const maxAttempts =
+      prodRequest.method === "POST" &&
+      ["/logs3", "/otel/v1/traces"].includes(prodRequest.path)
+        ? 3
+        : 1;
+    let response = await fetch(url, requestInit);
+    for (
+      let attempt = 1;
+      attempt < maxAttempts && [500, 502, 503, 504].includes(response.status);
+      attempt++
+    ) {
+      await response.arrayBuffer().catch(() => {});
+      await setTimeout(500 * 2 ** (attempt - 1));
+      response = await fetch(url, requestInit);
+    }
 
     if (!response.ok) {
       const responseText = await response.text().catch(() => "");

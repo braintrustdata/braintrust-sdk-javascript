@@ -230,7 +230,8 @@
               "children": [],
               "output": "lookup-active",
               "metadata": {
-                "scenario": "flue-instrumentation"
+                "scenario": "flue-instrumentation",
+                "testRunId": "<run:1>"
               },
               "context": {
                 "caller_filename": "<repo>/e2e/scenarios/flue-instrumentation/scenario.v2.ts",

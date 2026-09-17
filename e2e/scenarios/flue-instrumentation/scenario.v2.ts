@@ -33,7 +33,12 @@ const lookup = defineTool({
       },
       {
         name: "flue.toolCurrentProbe",
-        event: { metadata: { scenario: SCENARIO_NAME } },
+        event: {
+          metadata: {
+            scenario: SCENARIO_NAME,
+            testRunId: process.env.BRAINTRUST_E2E_RUN_ID,
+          },
+        },
       },
     );
     return {
