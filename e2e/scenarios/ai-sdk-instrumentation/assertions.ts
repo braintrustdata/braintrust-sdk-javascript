@@ -674,6 +674,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
   supportsEmbedMany: boolean;
+  supportsEvaluate?: boolean;
   supportsGenerateObject: boolean;
   supportsGenerateImage: boolean;
   supportsOutputObjectScenario: boolean;
@@ -910,6 +911,76 @@ export function defineAISDKInstrumentationAssertions(options: {
           expect(output.embedding_length).toBeGreaterThan(0);
         }
       });
+    }
+
+    if (options.supportsEvaluate) {
+      test(
+        "captures native evaluation answers and confidence",
+        testConfig,
+        () => {
+          const operation = findLatestSpan(events, "ai-sdk-evaluate-operation");
+          expectOperationParentedByRoot(
+            operation,
+            findLatestSpan(events, ROOT_NAME),
+          );
+          const spans = findChildSpans(events, "evaluate", operation?.span.id);
+          expect(spans).toHaveLength(1);
+          const [span] = spans;
+          expect(span.span.type).toBe("llm");
+          expect(span.input).toMatchObject({
+            state: { message: expect.any(String) },
+            questions: {
+              category: { type: "choice" },
+              urgency: { type: "score" },
+              duplicate: { type: "boolean" },
+            },
+          });
+          expect(span.output).toMatchObject({
+            category: {
+              type: "choice",
+              choice: expect.any(String),
+              probabilities: expect.any(Object),
+            },
+            urgency: {
+              type: "score",
+              score: expect.any(Number),
+              probabilities: expect.any(Object),
+            },
+            duplicate: { type: "boolean", probability: expect.any(Number) },
+          });
+          expect(span.row.metadata).toMatchObject({
+            model: expect.stringMatching(/^jev-/),
+            provider: "typesafe",
+            providerMetadata: { typesafe: { confidence: expect.any(Object) } },
+          });
+          expect(span.metrics).toMatchObject({
+            prompt_tokens: expect.any(Number),
+            completion_tokens: expect.any(Number),
+            tokens: expect.any(Number),
+          });
+
+          const stringOperation = findLatestSpan(
+            events,
+            "ai-sdk-evaluate-string-operation",
+          );
+          const stringSpans = findChildSpans(
+            events,
+            "evaluate",
+            stringOperation?.span.id,
+          );
+          expect(stringSpans).toHaveLength(1);
+          expect(stringSpans[0].input).toMatchObject({
+            state: "The package arrived intact and on time.",
+          });
+          expect(stringSpans[0].output).toMatchObject({
+            positive: { type: "boolean", probability: expect.any(Number) },
+          });
+          expect(stringSpans[0].row.metadata).toMatchObject({
+            model: expect.stringMatching(/^jev-/),
+            provider: "typesafe-ai",
+          });
+        },
+      );
     }
 
     if (options.supportsRerank) {

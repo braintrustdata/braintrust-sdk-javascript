@@ -51,6 +51,8 @@ runMain(async () => {
     supportsDenyOutputOverrideScenario: false,
     supportsAgentToolLoop: true,
     supportsEmbedMany: true,
+    supportsEvaluate: true,
+    evaluate: wrapAISDK(ai).experimental_evaluate,
     supportsGenerateObject: true,
     supportsGenerateImage: false,
     supportsOpenAICacheScenario: false,

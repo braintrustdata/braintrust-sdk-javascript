@@ -90,6 +90,7 @@ describeVariants("variants", () => {
           scenario.supportsProviderCacheAssertions,
         supportsDenyOutputOverrideScenario,
         supportsEmbedMany: scenario.supportsEmbedMany !== false,
+        supportsEvaluate: scenario.supportsEvaluate === true,
         supportsGenerateObject: scenario.supportsGenerateObject,
         supportsGenerateImage:
           scenario.supportsGenerateImage ?? sdkMajorVersion >= 5,
@@ -146,6 +147,7 @@ describeVariants("variants", () => {
           scenario.supportsProviderCacheAssertions,
         supportsDenyOutputOverrideScenario,
         supportsEmbedMany: scenario.supportsEmbedMany !== false,
+        supportsEvaluate: scenario.supportsEvaluate === true,
         supportsGenerateObject: scenario.supportsGenerateObject,
         supportsGenerateImage:
           scenario.supportsGenerateImage ?? sdkMajorVersion >= 5,

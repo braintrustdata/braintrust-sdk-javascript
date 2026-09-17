@@ -79,6 +79,30 @@ export interface AISDKGeneratedFile {
   [key: string]: unknown;
 }
 
+export interface AISDKEvaluateParams {
+  model: string | { modelId: string; provider: string };
+  state: unknown;
+  questions: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface AISDKEvaluationResult {
+  answers: Record<string, unknown>;
+  usage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+  };
+  response?: { modelId?: string };
+  providerMetadata?: {
+    typesafe?: { confidence?: Record<string, number> };
+  };
+}
+
+export type AISDKEvaluateFunction = (
+  params: AISDKEvaluateParams,
+) => Promise<AISDKEvaluationResult>;
+
 export interface AISDKGenerateImageParams extends Omit<
   AISDKCallParams,
   "prompt"
@@ -370,6 +394,7 @@ export interface AISDKProviderResolver {
 }
 
 export interface AISDKNamespaceBase {
+  experimental_evaluate?: AISDKEvaluateFunction;
   generateText: AISDKGenerateFunction;
   generateImage?: AISDKGenerateImageFunction;
   experimental_generateImage?: AISDKGenerateImageFunction;

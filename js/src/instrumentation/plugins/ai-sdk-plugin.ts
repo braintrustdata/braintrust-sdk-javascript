@@ -19,6 +19,7 @@ import {
   _internalStartSpanWithInitialMerge,
   Attachment,
   currentSpan,
+  startSpan,
   type Span,
   withCurrent,
 } from "../../logger";
@@ -50,6 +51,10 @@ import {
 import { zodToJsonSchema } from "../../zod/utils";
 import { aiSDKChannels, harnessAgentChannels } from "./ai-sdk-channels";
 import { currentCloudflareThinkSpan } from "./cloudflare-think-context";
+import {
+  isAutoInstrumentationSuppressed,
+  runWithAutoInstrumentationSuppressed,
+} from "../auto-instrumentation-suppression";
 import type {
   AISDK,
   AISDKCallParams,
@@ -196,6 +201,7 @@ export class AISDKPlugin extends BasePlugin {
       this.config.denyOutputPaths || DEFAULT_DENY_OUTPUT_PATHS;
 
     this.unsubscribers.push(interceptAISDKV7TelemetryDispatcher());
+    this.unsubscribers.push(interceptAISDKEvaluate(denyOutputPaths));
     this.unsubscribers.push(subscribeToHarnessAgentCreateSession());
     this.unsubscribers.push(
       subscribeToHarnessContinuation(
@@ -676,6 +682,100 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
   }
+}
+
+function interceptAISDKEvaluate(defaultDenyOutputPaths: string[]): () => void {
+  return aiSDKChannels.evaluate.intercept(
+    (target, thisArg, args, additional) => {
+      if (isAutoInstrumentationSuppressed()) {
+        return Reflect.apply(target, thisArg, args);
+      }
+
+      let span: Span;
+      let denyOutputPaths: string[];
+      try {
+        const params = args[0];
+        const spanInfo = additional.span_info;
+        denyOutputPaths = resolveDenyOutputPaths(
+          { ...additional, arguments: args },
+          defaultDenyOutputPaths,
+        );
+        span = startSpan(
+          withSpanInstrumentationName(
+            {
+              name: spanInfo?.name ?? "evaluate",
+              spanAttributes: {
+                type: SpanTypeAttribute.LLM,
+                ...spanInfo?.spanAttributes,
+              },
+              event: {
+                input: { state: params.state, questions: params.questions },
+                metadata: {
+                  ...extractBaseMetadata(params.model),
+                  ...spanInfo?.metadata,
+                },
+              },
+            },
+            INSTRUMENTATION_NAMES.AI_SDK,
+          ),
+        );
+      } catch (error) {
+        debugLogger.error("Error starting span for evaluate:", error);
+        return Reflect.apply(target, thisArg, args);
+      }
+
+      const finish = (log: () => void) => {
+        try {
+          log();
+        } catch (error) {
+          debugLogger.error("Error logging span for evaluate:", error);
+        }
+        try {
+          span.end();
+        } catch (error) {
+          debugLogger.error("Error ending span for evaluate:", error);
+        }
+      };
+
+      try {
+        const result = withCurrent(span, () =>
+          runWithAutoInstrumentationSuppressed(() =>
+            Reflect.apply(target, thisArg, args),
+          ),
+        );
+        void Promise.resolve(result).then(
+          (value) =>
+            finish(() => {
+              const confidence = value.providerMetadata?.typesafe?.confidence;
+              const resolvedModel = value.response?.modelId;
+              span.log({
+                output: omit(value.answers, denyOutputPaths),
+                metrics: extractTokenMetrics({
+                  usage: {
+                    promptTokens: value.usage?.inputTokens,
+                    completionTokens: value.usage?.outputTokens,
+                    totalTokens: value.usage?.totalTokens,
+                  },
+                }),
+                metadata: {
+                  ...(resolvedModel
+                    ? { model: serializeModelWithProvider(resolvedModel).model }
+                    : {}),
+                  ...(confidence
+                    ? { providerMetadata: { typesafe: { confidence } } }
+                    : {}),
+                },
+              });
+            }),
+          (error) => finish(() => span.log({ error })),
+        );
+        return result;
+      } catch (error) {
+        finish(() => span.log({ error }));
+        throw error;
+      }
+    },
+  );
 }
 
 function subscribeToHarnessAgentCreateSession(): () => void {

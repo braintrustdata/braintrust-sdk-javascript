@@ -54,7 +54,7 @@
         },
         "ai-sdk-v7-latest": {
           "package": "ai",
-          "range": "7.0.0"
+          "range": "7"
         },
         "ai-sdk-openai-v7-latest": {
           "package": "@ai-sdk/openai",
@@ -98,8 +98,8 @@
     "ai-sdk-anthropic-v6-latest": "npm:@ai-sdk/anthropic@3.0.107",
     "ai-sdk-cohere-v6": "npm:@ai-sdk/cohere@3.0.7",
     "ai-sdk-cohere-v6-latest": "npm:@ai-sdk/cohere@3.0.51",
-    "ai-sdk-v7": "npm:ai@7.0.0",
-    "ai-sdk-v7-latest": "npm:ai@7.0.0",
+    "ai-sdk-v7": "npm:ai@7.0.105",
+    "ai-sdk-v7-latest": "npm:ai@7.0.105",
     "ai-sdk-openai-v7": "npm:@ai-sdk/openai@4.0.0",
     "ai-sdk-openai-v7-latest": "npm:@ai-sdk/openai@4.0.36",
     "ai-sdk-anthropic-v7": "npm:@ai-sdk/anthropic@4.0.0",

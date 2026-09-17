@@ -40,6 +40,7 @@ runAutoAISDKInstrumentationOrExit({
   supportsAgentToolLoop: true,
   supportsDenyOutputOverrideScenario: false,
   supportsEmbedMany: true,
+  supportsEvaluate: true,
   supportsGenerateObject: true,
   supportsGenerateImage: false,
   supportsOpenAICacheScenario: false,

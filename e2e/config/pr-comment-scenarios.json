@@ -601,11 +601,11 @@
       },
       {
         "variantKey": "ai-sdk-v7",
-        "label": "v7 pinned"
+        "label": "v7 pinned (including evaluate)"
       },
       {
         "variantKey": "ai-sdk-v7-latest",
-        "label": "v7 latest"
+        "label": "v7 latest (including evaluate)"
       }
     ]
   },
