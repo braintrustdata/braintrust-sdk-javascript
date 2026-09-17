@@ -18,7 +18,27 @@ const DEFAULT_OPENAI_CODEX_E2E_MODEL = "gpt-5.3-codex";
 
 const rawArgs = process.argv.slice(2).filter((arg) => arg !== "--");
 const updateSnapshots = rawArgs.includes("--update");
-const scenarioArgs = rawArgs.filter((arg) => arg !== "--update");
+const shardArgIndex = rawArgs.findIndex(
+  (arg) => arg === "--shard" || arg.startsWith("--shard="),
+);
+const shardArg = rawArgs[shardArgIndex];
+const shardValue =
+  shardArgIndex === -1
+    ? null
+    : shardArg === "--shard"
+      ? rawArgs[shardArgIndex + 1]
+      : shardArg.slice("--shard=".length);
+if (shardArgIndex !== -1 && !shardValue) {
+  console.error("[e2e] --shard requires a value in the form <index>/<count>.");
+  process.exit(1);
+}
+const shardArgs = shardValue ? [`--shard=${shardValue}`] : [];
+const scenarioArgs = rawArgs.filter(
+  (arg, index) =>
+    arg !== "--update" &&
+    index !== shardArgIndex &&
+    !(shardArg === "--shard" && index === shardArgIndex + 1),
+);
 const testTargets =
   scenarioArgs.length > 0
     ? scenarioArgs.map((arg) => scenarioPathArg(arg))
@@ -27,6 +47,7 @@ const vitestArgs = [
   "run",
   "--run",
   ...testTargets,
+  ...shardArgs,
   ...(updateSnapshots ? ["--update"] : []),
 ];
 const result = await runProcess(VITEST_COMMAND, vitestArgs, {
