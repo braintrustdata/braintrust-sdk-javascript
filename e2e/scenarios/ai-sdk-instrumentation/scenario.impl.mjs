@@ -167,6 +167,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     packageName: "ai-sdk-v7",
     snapshotName: "ai-sdk-v7",
     supportsEvaluate: true,
+    supportsEvaluateStringModel: false,
     anthropicModuleName: "ai-sdk-anthropic-v7",
     supportsAgentToolLoop: true,
     supportsDenyOutputOverrideScenario: false,
@@ -335,12 +336,12 @@ function createTypeSafeEvaluationModel(modelId = "jev-latest") {
           outputTokens: result.usage?.output_tokens,
         },
         warnings: [],
-        providerMetadata:
-          confidenceEntries.length > 0
-            ? {
-                typesafe: { confidence: Object.fromEntries(confidenceEntries) },
-              }
-            : undefined,
+        providerMetadata: {
+          typesafe:
+            confidenceEntries.length > 0
+              ? { confidence: Object.fromEntries(confidenceEntries) }
+              : {},
+        },
         response: {
           modelId: result.model,
           headers: Object.fromEntries(response.headers),
@@ -552,32 +553,34 @@ async function runAISDKInstrumentationScenario(
             });
           },
         );
-        const originalProvider = globalThis.AI_SDK_DEFAULT_PROVIDER;
-        try {
-          globalThis.AI_SDK_DEFAULT_PROVIDER = {
-            evaluationModel: (modelId) =>
-              createTypeSafeEvaluationModel(
-                modelId === "typesafe-ai/jev" ? "jev-latest" : modelId,
-              ),
-          };
-          await runOperation(
-            "ai-sdk-evaluate-string-operation",
-            "evaluate-string",
-            async () => {
-              await evaluate({
-                model: "typesafe-ai/jev",
-                state: "The package arrived intact and on time.",
-                questions: {
-                  positive: {
-                    type: "boolean",
-                    instructions: "Was the delivery successful?",
+        if (options.supportsEvaluateStringModel !== false) {
+          const originalProvider = globalThis.AI_SDK_DEFAULT_PROVIDER;
+          try {
+            globalThis.AI_SDK_DEFAULT_PROVIDER = {
+              evaluationModel: (modelId) =>
+                createTypeSafeEvaluationModel(
+                  modelId === "typesafe-ai/jev" ? "jev-latest" : modelId,
+                ),
+            };
+            await runOperation(
+              "ai-sdk-evaluate-string-operation",
+              "evaluate-string",
+              async () => {
+                await evaluate({
+                  model: "typesafe-ai/jev",
+                  state: "The package arrived intact and on time.",
+                  questions: {
+                    positive: {
+                      type: "boolean",
+                      instructions: "Was the delivery successful?",
+                    },
                   },
-                },
-              });
-            },
-          );
-        } finally {
-          globalThis.AI_SDK_DEFAULT_PROVIDER = originalProvider;
+                });
+              },
+            );
+          } finally {
+            globalThis.AI_SDK_DEFAULT_PROVIDER = originalProvider;
+          }
         }
       }
       await runOperation("ai-sdk-generate-operation", "generate", async () => {

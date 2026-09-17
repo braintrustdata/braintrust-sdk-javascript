@@ -675,6 +675,7 @@ export function defineAISDKInstrumentationAssertions(options: {
   supportsDenyOutputOverrideScenario: boolean;
   supportsEmbedMany: boolean;
   supportsEvaluate?: boolean;
+  supportsEvaluateStringModel?: boolean;
   supportsGenerateObject: boolean;
   supportsGenerateImage: boolean;
   supportsOutputObjectScenario: boolean;
@@ -969,35 +970,37 @@ export function defineAISDKInstrumentationAssertions(options: {
             tokens: expect.any(Number),
           });
 
-          const stringOperation = findLatestSpan(
-            events,
-            "ai-sdk-evaluate-string-operation",
-          );
-          const stringSpans = findChildSpans(
-            events,
-            "evaluate",
-            stringOperation?.span.id,
-          );
-          expect(stringSpans).toHaveLength(1);
-          expect(stringSpans[0].input).toMatchObject({
-            state: "The package arrived intact and on time.",
-            questions: [
-              expect.objectContaining({ id: "positive", type: "boolean" }),
-            ],
-          });
-          expect(stringSpans[0].output).toMatchObject({
-            answers: [
-              {
-                id: "positive",
-                type: "boolean",
-                probability: expect.any(Number),
-              },
-            ],
-          });
-          expect(stringSpans[0].row.metadata).toMatchObject({
-            model: expect.stringMatching(/^jev-/),
-            provider: "typesafe-ai",
-          });
+          if (options.supportsEvaluateStringModel !== false) {
+            const stringOperation = findLatestSpan(
+              events,
+              "ai-sdk-evaluate-string-operation",
+            );
+            const stringSpans = findChildSpans(
+              events,
+              "evaluate",
+              stringOperation?.span.id,
+            );
+            expect(stringSpans).toHaveLength(1);
+            expect(stringSpans[0].input).toMatchObject({
+              state: "The package arrived intact and on time.",
+              questions: [
+                expect.objectContaining({ id: "positive", type: "boolean" }),
+              ],
+            });
+            expect(stringSpans[0].output).toMatchObject({
+              answers: [
+                {
+                  id: "positive",
+                  type: "boolean",
+                  probability: expect.any(Number),
+                },
+              ],
+            });
+            expect(stringSpans[0].row.metadata).toMatchObject({
+              model: expect.stringMatching(/^jev-/),
+              provider: "typesafe",
+            });
+          }
         },
       );
     }

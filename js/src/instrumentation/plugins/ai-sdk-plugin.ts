@@ -750,7 +750,19 @@ function interceptAISDKEvaluate(defaultDenyOutputPaths: string[]): () => void {
           (value) =>
             finish(() => {
               const confidence = value.providerMetadata?.typesafe?.confidence;
-              const resolvedModel = value.response?.modelId;
+              const gatewayRouting = extractGatewayRoutingInfo(value);
+              const requestMetadata = serializeModelWithProvider(args[0].model);
+              const providerMetadataKeys = Object.keys(
+                value.providerMetadata ?? {},
+              ).filter((key) => key !== "gateway");
+              const resolvedModel = serializeModelWithProvider(
+                gatewayRouting?.model ?? value.response?.modelId,
+              );
+              const resolvedProvider =
+                gatewayRouting?.provider ??
+                (providerMetadataKeys.length === 1
+                  ? providerMetadataKeys[0]
+                  : (resolvedModel.provider ?? requestMetadata.provider));
               span.log({
                 output: omit(
                   {
@@ -758,17 +770,12 @@ function interceptAISDKEvaluate(defaultDenyOutputPaths: string[]): () => void {
                   },
                   denyOutputPaths,
                 ),
-                metrics: extractTokenMetrics({
-                  usage: {
-                    promptTokens: value.usage?.inputTokens,
-                    completionTokens: value.usage?.outputTokens,
-                    totalTokens: value.usage?.totalTokens,
-                  },
-                }),
+                metrics: extractTokenMetrics(value),
                 metadata: {
-                  ...(resolvedModel
-                    ? { model: serializeModelWithProvider(resolvedModel).model }
+                  ...(resolvedModel.model
+                    ? { model: resolvedModel.model }
                     : {}),
+                  ...(resolvedProvider ? { provider: resolvedProvider } : {}),
                   ...(confidence
                     ? { providerMetadata: { typesafe: { confidence } } }
                     : {}),

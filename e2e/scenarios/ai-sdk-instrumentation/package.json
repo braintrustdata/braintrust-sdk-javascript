@@ -98,7 +98,7 @@
     "ai-sdk-anthropic-v6-latest": "npm:@ai-sdk/anthropic@3.0.107",
     "ai-sdk-cohere-v6": "npm:@ai-sdk/cohere@3.0.7",
     "ai-sdk-cohere-v6-latest": "npm:@ai-sdk/cohere@3.0.51",
-    "ai-sdk-v7": "npm:ai@7.0.105",
+    "ai-sdk-v7": "npm:ai@7.0.103",
     "ai-sdk-v7-latest": "npm:ai@7.0.105",
     "ai-sdk-openai-v7": "npm:@ai-sdk/openai@4.0.0",
     "ai-sdk-openai-v7-latest": "npm:@ai-sdk/openai@4.0.36",

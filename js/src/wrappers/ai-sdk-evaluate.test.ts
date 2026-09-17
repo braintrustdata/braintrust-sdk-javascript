@@ -57,6 +57,13 @@ const result: AISDKEvaluationResult = {
   usage: { inputTokens: 20, outputTokens: 5, totalTokens: 25 },
   response: { modelId: "typesafe-ai/jev-1.13.0" },
   providerMetadata: {
+    gateway: {
+      cost: 0.012,
+      routing: {
+        resolvedProvider: "typesafe",
+        resolvedProviderApiModelId: "jev-1.13.0",
+      },
+    },
     typesafe: { confidence: { category: 0.9, urgency: 0.8 } },
   },
 };
@@ -135,10 +142,17 @@ describe("AI SDK evaluate instrumentation", () => {
       },
       metadata: {
         model: "jev-1.13.0",
-        provider: "typesafe-ai",
-        providerMetadata: result.providerMetadata,
+        provider: "typesafe",
+        providerMetadata: {
+          typesafe: result.providerMetadata?.typesafe,
+        },
       },
-      metrics: { prompt_tokens: 20, completion_tokens: 5, tokens: 25 },
+      metrics: {
+        prompt_tokens: 20,
+        completion_tokens: 5,
+        tokens: 25,
+        estimated_cost: 0.012,
+      },
     });
     expect(span?.metadata?.providerMetadata).not.toHaveProperty(
       "privateProvider",

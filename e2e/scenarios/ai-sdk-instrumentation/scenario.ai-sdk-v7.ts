@@ -38,6 +38,8 @@ runMain(async () => {
     supportsAgentToolLoop: true,
     supportsEmbedMany: true,
     supportsEvaluate: true,
+    supportsEvaluateStringModel:
+      process.env.AI_SDK_SUPPORTS_EVALUATE_STRING_MODEL !== "false",
     evaluate: wrapAISDK(ai).experimental_evaluate,
     supportsGenerateObject: true,
     supportsGenerateImage: false,

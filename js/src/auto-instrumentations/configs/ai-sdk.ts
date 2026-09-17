@@ -21,7 +21,7 @@ export const aiSDKConfigs: InstrumentationConfig[] = [
     channelName: aiSDKChannels.evaluate.channelName,
     module: {
       name: "ai",
-      versionRange: ">=7.0.105 <8.0.0",
+      versionRange: ">=7.0.103 <8.0.0",
       filePath: "dist/index.js",
     },
     functionQuery: {

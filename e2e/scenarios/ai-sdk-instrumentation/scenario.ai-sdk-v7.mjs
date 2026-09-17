@@ -41,6 +41,8 @@ runAutoAISDKInstrumentationOrExit({
   supportsDenyOutputOverrideScenario: false,
   supportsEmbedMany: true,
   supportsEvaluate: true,
+  supportsEvaluateStringModel:
+    process.env.AI_SDK_SUPPORTS_EVALUATE_STRING_MODEL !== "false",
   supportsGenerateObject: true,
   supportsGenerateImage: false,
   supportsOpenAICacheScenario: false,

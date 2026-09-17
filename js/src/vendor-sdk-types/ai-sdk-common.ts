@@ -86,15 +86,10 @@ export interface AISDKEvaluateParams {
   [key: string]: unknown;
 }
 
-export interface AISDKEvaluationResult {
+export interface AISDKEvaluationResult extends AISDKResult {
   answers: Record<string, unknown>;
-  usage?: {
-    inputTokens?: number;
-    outputTokens?: number;
-    totalTokens?: number;
-  };
-  response?: { modelId?: string };
-  providerMetadata?: {
+  response?: Record<string, unknown> & { modelId?: string };
+  providerMetadata?: AISDKProviderMetadata & {
     typesafe?: { confidence?: Record<string, number> };
   };
 }

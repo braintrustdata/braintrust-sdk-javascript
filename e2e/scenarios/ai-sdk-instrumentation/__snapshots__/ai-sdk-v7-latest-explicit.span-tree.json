@@ -124,7 +124,7 @@
                   "sdk_language": "typescript"
                 },
                 "model": "jev-1.13.0",
-                "provider": "typesafe-ai"
+                "provider": "typesafe"
               },
               "metrics": {
                 "completion_tokens": 20,
