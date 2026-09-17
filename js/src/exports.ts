@@ -130,6 +130,12 @@ export {
 export { registerSandbox } from "./sandbox";
 
 export {
+  completeMistralBatchTrace,
+  mistralBatchJobsCreateTraced,
+  mistralFilesUploadTraced,
+} from "./mistral-batch";
+
+export {
   completeOpenAIBatchTrace,
   openaiBatchesRetrieveTraced,
   openaiFilesCreateTraced,

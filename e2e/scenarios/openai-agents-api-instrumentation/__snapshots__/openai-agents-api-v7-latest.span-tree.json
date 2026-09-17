@@ -32,7 +32,7 @@
           "input": "Use web search once for Vienna weather, then answer exactly: Sunny in Vienna",
           "output": "Sunny in Vienna",
           "metadata": {
-            "agent_id": "agent_df435bc8b75f497698093b919cbada68a6ca027cf3ae4c46ad",
+            "agent_id": "<agent_id:1>",
             "api": "agents",
             "braintrust_correlation_id": "agents-e2e-correlation",
             "model": "gpt-5.6-luna",

@@ -19,3 +19,12 @@ test("deterministicReplacer basic", () => {
     JSON.stringify(obj2, deterministicReplacer),
   );
 });
+
+test("deterministicReplacer handles prototype keys safely", () => {
+  const value = JSON.parse('{"z":1,"__proto__":{"polluted":true},"a":2}');
+
+  expect(JSON.stringify(value, deterministicReplacer)).toBe(
+    '{"__proto__":{"polluted":true},"a":2,"z":1}',
+  );
+  expect(Object.prototype).not.toHaveProperty("polluted");
+});

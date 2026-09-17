@@ -1768,8 +1768,8 @@ async function runEvaluatorInternal(
     if (enableCache) {
       const spanCache = (evaluator.state ?? _internalGetGlobalState())
         ?.spanCache;
-      spanCache?.dispose();
       spanCache?.stop();
+      spanCache?.dispose();
     }
   }
 }
