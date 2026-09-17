@@ -154,16 +154,21 @@ describe("TypeSafe wrapper", () => {
     ) as Record<string, any> | undefined;
     expect(span).toMatchObject({
       input: {
-        questions: {
-          category: { type: "choice" },
-          urgent: { type: "noul" },
-        },
+        questions: [
+          { id: "category", type: "choice" },
+          { id: "urgent", type: "noul" },
+        ],
         state: { message: "Charged twice" },
       },
       metadata: { model: "jev-1.13.0", provider: "typesafe" },
       metrics: { completion_tokens: 5, prompt_tokens: 20, tokens: 25 },
-      output: result.answers,
-      span_attributes: { name: "typesafe.systemOne", type: "llm" },
+      output: {
+        answers: [
+          { ...result.answers.category, id: "category" },
+          { ...result.answers.urgent, id: "urgent" },
+        ],
+      },
+      span_attributes: { name: "typesafe.systemOne", type: "question" },
     });
   });
 

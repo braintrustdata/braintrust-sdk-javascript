@@ -74,30 +74,38 @@ export function defineTypeSafeInstrumentationAssertions(options: {
       );
 
       expect(root?.row.metadata).toMatchObject({ scenario: SCENARIO_NAME });
-      expect(span?.span.type).toBe("llm");
+      expect(span?.span.type).toBe("question");
       expect(span?.input).toMatchObject({
         state: { message: expect.any(String) },
-        questions: {
-          category: { type: "choice" },
-          urgency: { type: "score" },
-          duplicate_charge: { type: "noul" },
-        },
+        questions: expect.arrayContaining([
+          expect.objectContaining({ id: "category", type: "choice" }),
+          expect.objectContaining({ id: "urgency", type: "score" }),
+          expect.objectContaining({ id: "duplicate_charge", type: "noul" }),
+        ]),
       });
       expect(span?.output).toMatchObject({
-        category: {
-          type: "choice",
-          choice: expect.any(String),
-          confidence: expect.any(Number),
-          probabilities: expect.any(Object),
-        },
-        urgency: {
-          type: "score",
-          score: expect.any(Number),
-          confidence: expect.any(Number),
-          legend: expect.any(Object),
-          probabilities: expect.any(Object),
-        },
-        duplicate_charge: { type: "noul", noul: expect.any(Number) },
+        answers: expect.arrayContaining([
+          expect.objectContaining({
+            id: "category",
+            type: "choice",
+            choice: expect.any(String),
+            confidence: expect.any(Number),
+            probabilities: expect.any(Object),
+          }),
+          expect.objectContaining({
+            id: "urgency",
+            type: "score",
+            score: expect.any(Number),
+            confidence: expect.any(Number),
+            legend: expect.any(Object),
+            probabilities: expect.any(Object),
+          }),
+          expect.objectContaining({
+            id: "duplicate_charge",
+            type: "noul",
+            noul: expect.any(Number),
+          }),
+        ]),
       });
       expect(span?.row.metadata).toMatchObject({
         model: expect.stringMatching(/^jev-/),
@@ -120,10 +128,10 @@ export function defineTypeSafeInstrumentationAssertions(options: {
 
       expect(span?.input).toMatchObject({
         state: "The package arrived intact and on time.",
-        questions: { positive: { type: "noul" } },
+        questions: [{ id: "positive", type: "noul" }],
       });
       expect(span?.output).toMatchObject({
-        positive: { type: "noul", noul: expect.any(Number) },
+        answers: [{ id: "positive", type: "noul", noul: expect.any(Number) }],
       });
       expect(span?.row.metadata).toMatchObject({
         model: "jev-1.13.0",

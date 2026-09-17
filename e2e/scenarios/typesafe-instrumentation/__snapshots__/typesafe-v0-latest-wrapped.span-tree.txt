@@ -9,68 +9,76 @@ span_tree:
     │     "operation": "mixed",
     │     "testRunId": "<run:1>"
     │   }
-    │   └── typesafe.systemOne [llm]
+    │   └── typesafe.systemOne [question]
     │       input: {
-    │         "questions": {
-    │           "category": {
+    │         "questions": [
+    │           {
     │             "criteria": {
     │               "billing": null,
     │               "other": null,
     │               "technical": null
     │             },
+    │             "id": "<span:1>",
     │             "instructions": "Which team should handle this?",
     │             "type": "choice"
     │           },
-    │           "duplicate_charge": {
-    │             "instructions": {
-    │               "question": "Does the customer report a duplicate charge?"
-    │             },
-    │             "type": "noul"
-    │           },
-    │           "urgency": {
+    │           {
     │             "criteria": [
     │               "routine",
     │               "soon",
     │               "urgent"
     │             ],
+    │             "id": "<span:2>",
     │             "instructions": "How urgent is this request?",
     │             "type": "score"
+    │           },
+    │           {
+    │             "id": "<span:3>",
+    │             "instructions": {
+    │               "question": "Does the customer report a duplicate charge?"
+    │             },
+    │             "type": "noul"
     │           }
-    │         },
+    │         ],
     │         "state": {
     │           "message": "I was charged twice. Please refund the duplicate charge today."
     │         }
     │       }
     │       output: {
-    │         "category": {
-    │           "choice": "billing",
-    │           "confidence": 1,
-    │           "probabilities": {
-    │             "billing": 1,
-    │             "other": 0,
-    │             "technical": 0
+    │         "answers": [
+    │           {
+    │             "choice": "billing",
+    │             "confidence": 1,
+    │             "id": "<span:1>",
+    │             "probabilities": {
+    │               "billing": 1,
+    │               "other": 0,
+    │               "technical": 0
+    │             },
+    │             "type": "choice"
     │           },
-    │           "type": "choice"
-    │         },
-    │         "duplicate_charge": {
-    │           "noul": 0.99,
-    │           "type": "noul"
-    │         },
-    │         "urgency": {
-    │           "confidence": 0.66,
-    │           "legend": {
-    │             "0": "routine",
-    │             "1": "soon",
-    │             "2": "urgent"
+    │           {
+    │             "id": "<span:2>",
+    │             "noul": 0.99,
+    │             "type": "noul"
     │           },
-    │           "probabilities": {
-    │             "0": 0,
-    │             "1": 0.22,
-    │             "2": 0.78
-    │           },
-    │           "score": 1.78,
-    │           "type": "score"
-    │         }
+    │           {
+    │             "confidence": 0.66,
+    │             "id": "<span:3>",
+    │             "legend": {
+    │               "0": "routine",
+    │               "1": "soon",
+    │               "2": "urgent"
+    │             },
+    │             "probabilities": {
+    │               "0": 0,
+    │               "1": 0.22,
+    │               "2": 0.78
+    │             },
+    │             "score": 1.78,
+    │             "type": "score"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "model": "jev-1.13.0",
@@ -86,21 +94,25 @@ span_tree:
           "operation": "raw",
           "testRunId": "<run:1>"
         }
-        └── typesafe.systemOne [llm]
+        └── typesafe.systemOne [question]
             input: {
-              "questions": {
-                "positive": {
+              "questions": [
+                {
+                  "id": "<span:1>",
                   "instructions": "Is this feedback positive?",
                   "type": "noul"
                 }
-              },
+              ],
               "state": "The package arrived intact and on time."
             }
             output: {
-              "positive": {
-                "noul": 0.97,
-                "type": "noul"
-              }
+              "answers": [
+                {
+                  "id": "<span:1>",
+                  "noul": 0.97,
+                  "type": "noul"
+                }
+              ]
             }
             metadata: {
               "model": "jev-1.13.0",

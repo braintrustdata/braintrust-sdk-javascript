@@ -1,4 +1,4 @@
-import { SpanTypeAttribute, isObject } from "../../../util/index";
+import { isObject } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
 import { startSpan, withCurrent } from "../../logger";
 import type { Span } from "../../logger";
@@ -62,7 +62,7 @@ function interceptSystemOne(
           event: {
             input: {
               state: request?.state,
-              questions: request?.questions,
+              questions: addIds(request?.questions),
             },
             metadata: {
               ...(model ? { model } : {}),
@@ -70,7 +70,7 @@ function interceptSystemOne(
             },
           },
           name: "typesafe.systemOne",
-          spanAttributes: { type: SpanTypeAttribute.LLM },
+          spanAttributes: { type: "question" },
         },
         INSTRUMENTATION_NAMES.TYPESAFE,
       ),
@@ -225,13 +225,26 @@ function finishSuccessfulSpan(
   finishTypeSafeSpan(span, () => {
     const metrics = extractMetrics(result);
     span.log({
-      output: isObject(result) ? result.answers : undefined,
+      output:
+        isObject(result) && result.answers !== undefined
+          ? { answers: addIds(result.answers) }
+          : undefined,
       ...(isObject(result) && typeof result.model === "string"
         ? { metadata: { model: result.model } }
         : {}),
       ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
     });
   });
+}
+
+function addIds(value: unknown): unknown {
+  if (!isObject(value)) {
+    return value;
+  }
+
+  return Object.entries(value).map(([id, entry]) =>
+    isObject(entry) ? { ...entry, id } : { id, value: entry },
+  );
 }
 
 function extractMetrics(
