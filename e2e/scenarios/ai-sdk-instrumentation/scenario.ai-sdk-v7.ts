@@ -5,7 +5,7 @@ const coherePackageName =
   process.env.AI_SDK_COHERE_PACKAGE_NAME ?? "ai-sdk-cohere-v7-latest";
 const openaiPackageName =
   process.env.AI_SDK_OPENAI_PACKAGE_NAME ?? "ai-sdk-openai-v7-latest";
-import { braintrustAISDKTelemetry } from "braintrust";
+import { braintrustAISDKTelemetry, wrapAISDK } from "braintrust";
 import {
   getInstalledPackageVersion,
   runMain,
@@ -37,6 +37,10 @@ runMain(async () => {
     supportsDenyOutputOverrideScenario: false,
     supportsAgentToolLoop: true,
     supportsEmbedMany: true,
+    supportsEvaluate: true,
+    supportsEvaluateStringModel:
+      process.env.AI_SDK_SUPPORTS_EVALUATE_STRING_MODEL !== "false",
+    evaluate: wrapAISDK(ai).experimental_evaluate,
     supportsGenerateObject: true,
     supportsGenerateImage: false,
     supportsOpenAICacheScenario: false,

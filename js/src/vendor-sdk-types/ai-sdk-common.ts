@@ -12,7 +12,7 @@ interface AISDKTokenBucket {
   [key: string]: unknown;
 }
 
-type AISDKTokenCount = number & AISDKTokenBucket;
+type AISDKTokenCount = number | AISDKTokenBucket;
 
 export interface AISDKUsage {
   inputTokens?: AISDKTokenCount;
@@ -78,6 +78,25 @@ export interface AISDKGeneratedFile {
   uint8Array?: Uint8Array;
   [key: string]: unknown;
 }
+
+export interface AISDKEvaluateParams {
+  model: string | { modelId: string; provider: string };
+  state: unknown;
+  questions: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface AISDKEvaluationResult extends AISDKResult {
+  answers: Record<string, unknown>;
+  response?: Record<string, unknown> & { modelId?: string };
+  providerMetadata?: AISDKProviderMetadata & {
+    typesafe?: { confidence?: Record<string, number> };
+  };
+}
+
+export type AISDKEvaluateFunction = (
+  params: AISDKEvaluateParams,
+) => Promise<AISDKEvaluationResult>;
 
 export interface AISDKGenerateImageParams extends Omit<
   AISDKCallParams,
@@ -370,6 +389,7 @@ export interface AISDKProviderResolver {
 }
 
 export interface AISDKNamespaceBase {
+  experimental_evaluate?: AISDKEvaluateFunction;
   generateText: AISDKGenerateFunction;
   generateImage?: AISDKGenerateImageFunction;
   experimental_generateImage?: AISDKGenerateImageFunction;

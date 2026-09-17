@@ -1,4 +1,6 @@
 import type {
+  AISDKEvaluateParams,
+  AISDKEvaluationResult,
   AISDKAgentClass,
   AISDKAgentInstance,
   AISDKCallParams,
@@ -46,6 +48,8 @@ export type AISDKVersion =
 export type AISDK = AISDKVersion["sdk"];
 
 export type {
+  AISDKEvaluateParams,
+  AISDKEvaluationResult,
   AISDKAgentClass,
   AISDKAgentInstance,
   AISDKCallParams,
