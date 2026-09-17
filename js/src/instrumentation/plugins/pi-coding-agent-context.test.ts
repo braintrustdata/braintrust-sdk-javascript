@@ -76,7 +76,9 @@ describe("Pi tool execution context", () => {
         expect(isAutoInstrumentationSuppressed()).toBe(false);
       });
 
-      const rows = await background.drain();
+      const rows = (await background.drain()).flatMap((row) =>
+        "span_id" in row ? [row] : [],
+      );
       const automaticTool = rows.find(
         (row) => row.span_attributes?.name === "lookup",
       );
@@ -157,7 +159,9 @@ describe("Pi tool execution context", () => {
       }
 
       expect(seen.get("first")!.span).not.toBe(seen.get("second")!.span);
-      const rows = await background.drain();
+      const rows = (await background.drain()).flatMap((row) =>
+        "span_id" in row ? [row] : [],
+      );
       for (const label of ["first", "second"]) {
         const observation = seen.get(label)!;
         const child = rows.find((row) => row.span_attributes?.name === label);
