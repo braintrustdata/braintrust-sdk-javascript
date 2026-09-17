@@ -12,7 +12,7 @@ interface AISDKTokenBucket {
   [key: string]: unknown;
 }
 
-type AISDKTokenCount = number & AISDKTokenBucket;
+type AISDKTokenCount = number | AISDKTokenBucket;
 
 export interface AISDKUsage {
   inputTokens?: AISDKTokenCount;

@@ -3964,9 +3964,14 @@ export function extractTokenMetrics(
     return metrics;
   }
 
+  const inputTokenDetails =
+    typeof usage.inputTokens === "object" ? usage.inputTokens : undefined;
+  const outputTokenDetails =
+    typeof usage.outputTokens === "object" ? usage.outputTokens : undefined;
+
   // Extract token counts
   const promptTokens = firstNumber(
-    usage.inputTokens?.total,
+    inputTokenDetails?.total,
     usage.inputTokens,
     usage.promptTokens,
     usage.prompt_tokens,
@@ -3976,7 +3981,7 @@ export function extractTokenMetrics(
   }
 
   const completionTokens = firstNumber(
-    usage.outputTokens?.total,
+    outputTokenDetails?.total,
     usage.outputTokens,
     usage.completionTokens,
     usage.completion_tokens,
@@ -3997,7 +4002,7 @@ export function extractTokenMetrics(
   }
 
   const promptCachedTokens = firstNumber(
-    usage.inputTokens?.cacheRead,
+    inputTokenDetails?.cacheRead,
     usage.inputTokenDetails?.cacheReadTokens,
     usage.cachedInputTokens,
     usage.promptCachedTokens,
@@ -4008,7 +4013,7 @@ export function extractTokenMetrics(
   }
 
   const promptCacheCreationTokens = firstNumber(
-    usage.inputTokens?.cacheWrite,
+    inputTokenDetails?.cacheWrite,
     usage.inputTokenDetails?.cacheWriteTokens,
     usage.promptCacheCreationTokens,
     usage.prompt_cache_creation_tokens,
@@ -4035,7 +4040,7 @@ export function extractTokenMetrics(
   }
 
   const reasoningTokenCount = firstNumber(
-    usage.outputTokens?.reasoning,
+    outputTokenDetails?.reasoning,
     usage.reasoningTokens,
     usage.completionReasoningTokens,
     usage.completion_reasoning_tokens,

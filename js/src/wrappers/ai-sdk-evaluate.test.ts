@@ -19,41 +19,45 @@ import { wrapAISDK } from "./ai-sdk/ai-sdk";
 
 configureNode();
 
-const params: AISDKEvaluateParams = {
-  model: "typesafe-ai/jev",
-  state: { message: "Charged twice" },
-  questions: {
-    category: {
-      type: "choice",
-      instructions: "Which team should handle this request?",
-      criteria: { billing: null, technical: null },
-    },
-    urgency: {
-      type: "score",
-      instructions: "How urgent is this request?",
-      criteria: ["Low", "High"],
-    },
-    duplicate: {
-      type: "boolean",
-      instructions: "Was there a duplicate charge?",
-    },
+const questions = {
+  category: {
+    type: "choice",
+    instructions: "Which team should handle this request?",
+    criteria: { billing: null, technical: null },
+  },
+  urgency: {
+    type: "score",
+    instructions: "How urgent is this request?",
+    criteria: ["Low", "High"],
+  },
+  duplicate: {
+    type: "boolean",
+    instructions: "Was there a duplicate charge?",
   },
 };
 
-const result: AISDKEvaluationResult = {
-  answers: {
-    category: {
-      type: "choice",
-      choice: "billing",
-      probabilities: { billing: 0.9, technical: 0.1 },
-    },
-    urgency: {
-      type: "score",
-      score: 0.75,
-      probabilities: { 0: 0.25, 1: 0.75 },
-    },
-    duplicate: { type: "boolean", probability: 0.95 },
+const answers = {
+  category: {
+    type: "choice",
+    choice: "billing",
+    probabilities: { billing: 0.9, technical: 0.1 },
   },
+  urgency: {
+    type: "score",
+    score: 0.75,
+    probabilities: { 0: 0.25, 1: 0.75 },
+  },
+  duplicate: { type: "boolean", probability: 0.95 },
+};
+
+const params: AISDKEvaluateParams = {
+  model: "typesafe-ai/jev",
+  state: { message: "Charged twice" },
+  questions,
+};
+
+const result: AISDKEvaluationResult = {
+  answers,
   usage: { inputTokens: 20, outputTokens: 5, totalTokens: 25 },
   response: { modelId: "typesafe-ai/jev-1.13.0" },
   providerMetadata: {
@@ -120,24 +124,24 @@ describe("AI SDK evaluate instrumentation", () => {
       input: {
         state: params.state,
         questions: [
-          { ...params.questions.category, id: "category" },
-          { ...params.questions.urgency, id: "urgency" },
-          { ...params.questions.duplicate, id: "duplicate" },
+          { ...questions.category, id: "category" },
+          { ...questions.urgency, id: "urgency" },
+          { ...questions.duplicate, id: "duplicate" },
         ],
       },
       output: {
         answers: [
           {
-            ...result.answers.category,
+            ...answers.category,
             confidence: 0.9,
             id: "category",
           },
           {
-            ...result.answers.urgency,
+            ...answers.urgency,
             confidence: 0.8,
             id: "urgency",
           },
-          { ...result.answers.duplicate, id: "duplicate" },
+          { ...answers.duplicate, id: "duplicate" },
         ],
       },
       metadata: {
@@ -187,7 +191,7 @@ describe("AI SDK evaluate instrumentation", () => {
         }),
       ]),
     );
-    expect(result.answers.category).toHaveProperty("probabilities", {
+    expect(answers.category).toHaveProperty("probabilities", {
       billing: 0.9,
       technical: 0.1,
     });
