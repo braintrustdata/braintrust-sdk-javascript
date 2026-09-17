@@ -109,6 +109,7 @@ Provider credentials are only required when recording or explicitly running live
 - `HUGGINGFACE_API_KEY`
 - `COHERE_API_KEY`
 - `GROQ_API_KEY`
+- `TYPESAFE_API_KEY`
 
 `claude-agent-sdk-instrumentation` also uses `ANTHROPIC_API_KEY`, because it runs the real Claude Agent SDK against Anthropic in the same style as the existing live Anthropic wrapper coverage.
 
@@ -142,7 +143,7 @@ The mock Braintrust server captures **outbound** SDK→Braintrust traffic and sn
 
 The cassette layer is backed by the internal `@braintrust/seinfeld` workspace package. For e2e tests, the harness starts a local cassette HTTP server and points provider SDK base URLs at that server.
 
-- **Layer:** `withScenarioHarness(...)` starts a `createCassetteServer()` instance for cassette-enabled scenario runs. Provider base URL env vars (for OpenAI, Anthropic, Anthropic Bedrock, Google, Cohere, Cursor, Groq, HuggingFace, Mistral, OpenRouter, and the GitHub Copilot SDK's OpenAI provider mode) point at route prefixes on that server, so subprocesses and SDK-launched binaries can be captured too.
+- **Layer:** `withScenarioHarness(...)` starts a `createCassetteServer()` instance for cassette-enabled scenario runs. Provider base URL env vars (for OpenAI, Anthropic, Anthropic Bedrock, Google, Cohere, Cursor, Groq, HuggingFace, Mistral, OpenRouter, TypeSafe, and the GitHub Copilot SDK's OpenAI provider mode) point at route prefixes on that server, so subprocesses and SDK-launched binaries can be captured too.
 - **Auto-engage:** the harness automatically engages the cassette layer when (a) a scenario run has `runContext.variantKey`, (b) a cassette JSON exists for the scenario+variant on disk, OR (c) `BRAINTRUST_E2E_CASSETTE_MODE` is `record` / `record-missing`. Scenarios just need to thread `runContext: { variantKey, originalScenarioDir }` into their runner calls — no other code change required.
 - **Provider replay failures:** provider scenarios are not skipped when a cassette is missing. In replay mode, the cassette server still starts from `runContext.variantKey`, injects placeholder provider keys, and fails on cassette misses instead of silently calling a live provider.
 - **Mode** is set by `BRAINTRUST_E2E_CASSETTE_MODE`:
@@ -169,14 +170,14 @@ ANTHROPIC_API_KEY=... AWS_BEARER_TOKEN_BEDROCK=... \
 OPENAI_API_KEY=... GEMINI_API_KEY=... \
 COHERE_API_KEY=... GROQ_API_KEY=... HUGGINGFACE_API_KEY=... \
 MISTRAL_API_KEY=... OLLAMA_API_KEY=... OPENROUTER_API_KEY=... \
-CURSOR_API_KEY=... \
+CURSOR_API_KEY=... TYPESAFE_API_KEY=... \
   pnpm --filter=@braintrust/js-e2e-tests run test:e2e:record
 ```
 
 After recording, run again **without any provider keys** to confirm the cassette is sufficient:
 
 ```bash
-unset ANTHROPIC_API_KEY AWS_BEARER_TOKEN_BEDROCK OPENAI_API_KEY GEMINI_API_KEY GOOGLE_API_KEY GOOGLE_GENAI_API_KEY COHERE_API_KEY GROQ_API_KEY HUGGINGFACE_API_KEY MISTRAL_API_KEY OLLAMA_API_KEY OPENROUTER_API_KEY CURSOR_API_KEY
+unset ANTHROPIC_API_KEY AWS_BEARER_TOKEN_BEDROCK OPENAI_API_KEY GEMINI_API_KEY GOOGLE_API_KEY GOOGLE_GENAI_API_KEY COHERE_API_KEY GROQ_API_KEY HUGGINGFACE_API_KEY MISTRAL_API_KEY OLLAMA_API_KEY OPENROUTER_API_KEY CURSOR_API_KEY TYPESAFE_API_KEY
 pnpm --filter=@braintrust/js-e2e-tests run test:e2e
 ```
 
@@ -188,7 +189,7 @@ After any successful record run, stale cassette variants are cleaned only inside
 
 These scenarios have cassette wiring in place and will use cassettes once they're recorded:
 
-`anthropic-bedrock-instrumentation`, `anthropic-instrumentation`, `openai-instrumentation`, `openai-codex-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `cursor-sdk-instrumentation`, `github-copilot-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `ollama-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`, `wrap-langchain-js-traces`.
+`anthropic-bedrock-instrumentation`, `anthropic-instrumentation`, `openai-instrumentation`, `openai-codex-instrumentation`, `ai-sdk-instrumentation`, `ai-sdk-otel-export`, `claude-agent-sdk-instrumentation`, `cohere-instrumentation`, `cursor-sdk-instrumentation`, `github-copilot-instrumentation`, `google-adk-instrumentation`, `google-genai-instrumentation`, `groq-instrumentation`, `huggingface-instrumentation`, `mistral-instrumentation`, `ollama-instrumentation`, `openrouter-agent-instrumentation`, `openrouter-instrumentation`, `typesafe-instrumentation`, `wrap-langchain-js-traces`.
 
 ### Cassette format
 

@@ -238,6 +238,7 @@ export { wrapLangGraphSDK } from "./wrappers/langgraph-sdk";
 export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapVoyageAI } from "./wrappers/voyageai";
+export { wrapTypeSafe } from "./wrappers/typesafe";
 export { wrapGroq } from "./wrappers/groq";
 export { wrapBedrockRuntime } from "./wrappers/bedrock-runtime";
 export { wrapCopilotClient } from "./wrappers/github-copilot";

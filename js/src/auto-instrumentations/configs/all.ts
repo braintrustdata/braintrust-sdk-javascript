@@ -36,6 +36,7 @@ import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
 import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
+import { typeSafeConfigs } from "./typesafe";
 
 interface InstrumentationConfigGroup {
   integrations: readonly (keyof InstrumentationIntegrationsConfig)[];
@@ -134,6 +135,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["voyageai"],
       configs: voyageAIConfigs,
+    },
+    {
+      integrations: ["typesafe"],
+      configs: typeSafeConfigs,
     },
     // Note: `@mastra/core` is not listed here because its instrumentation
     // doesn't go through the AST `code-transformer` matcher — Mastra's
