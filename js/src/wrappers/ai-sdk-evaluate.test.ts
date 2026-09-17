@@ -108,10 +108,31 @@ describe("AI SDK evaluate instrumentation", () => {
       (span) => span.span_attributes?.name === "evaluate",
     );
     expect(span).toMatchObject({
-      span_attributes: { name: "evaluate", type: "llm" },
+      span_attributes: { name: "evaluate", type: "question" },
       span_parents: [parent?.span_id],
-      input: { state: params.state, questions: params.questions },
-      output: result.answers,
+      input: {
+        state: params.state,
+        questions: [
+          { ...params.questions.category, id: "category" },
+          { ...params.questions.urgency, id: "urgency" },
+          { ...params.questions.duplicate, id: "duplicate" },
+        ],
+      },
+      output: {
+        answers: [
+          {
+            ...result.answers.category,
+            confidence: 0.9,
+            id: "category",
+          },
+          {
+            ...result.answers.urgency,
+            confidence: 0.8,
+            id: "urgency",
+          },
+          { ...result.answers.duplicate, id: "duplicate" },
+        ],
+      },
       metadata: {
         model: "jev-1.13.0",
         provider: "typesafe-ai",
@@ -129,7 +150,7 @@ describe("AI SDK evaluate instrumentation", () => {
     const wrapped = wrapAISDK(
       { experimental_evaluate: evaluate },
       {
-        denyOutputPaths: ["category.probabilities"],
+        denyOutputPaths: ["answers[].probabilities"],
       },
     );
     expect(
@@ -144,9 +165,14 @@ describe("AI SDK evaluate instrumentation", () => {
       span_attributes: { name: "decision" },
       metadata: { customer: "test" },
     });
-    expect(span.output).toMatchObject({
-      category: { probabilities: "<omitted>" },
-    });
+    expect(span.output.answers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "category",
+          probabilities: "<omitted>",
+        }),
+      ]),
+    );
     expect(result.answers.category).toHaveProperty("probabilities", {
       billing: 0.9,
       technical: 0.1,

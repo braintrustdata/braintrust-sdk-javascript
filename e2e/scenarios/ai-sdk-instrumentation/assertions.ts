@@ -926,27 +926,37 @@ export function defineAISDKInstrumentationAssertions(options: {
           const spans = findChildSpans(events, "evaluate", operation?.span.id);
           expect(spans).toHaveLength(1);
           const [span] = spans;
-          expect(span.span.type).toBe("llm");
+          expect(span.span.type).toBe("question");
           expect(span.input).toMatchObject({
             state: { message: expect.any(String) },
-            questions: {
-              category: { type: "choice" },
-              urgency: { type: "score" },
-              duplicate: { type: "boolean" },
-            },
+            questions: expect.arrayContaining([
+              expect.objectContaining({ id: "category", type: "choice" }),
+              expect.objectContaining({ id: "urgency", type: "score" }),
+              expect.objectContaining({ id: "duplicate", type: "boolean" }),
+            ]),
           });
           expect(span.output).toMatchObject({
-            category: {
-              type: "choice",
-              choice: expect.any(String),
-              probabilities: expect.any(Object),
-            },
-            urgency: {
-              type: "score",
-              score: expect.any(Number),
-              probabilities: expect.any(Object),
-            },
-            duplicate: { type: "boolean", probability: expect.any(Number) },
+            answers: expect.arrayContaining([
+              expect.objectContaining({
+                id: "category",
+                type: "choice",
+                choice: expect.any(String),
+                confidence: expect.any(Number),
+                probabilities: expect.any(Object),
+              }),
+              expect.objectContaining({
+                id: "urgency",
+                type: "score",
+                score: expect.any(Number),
+                confidence: expect.any(Number),
+                probabilities: expect.any(Object),
+              }),
+              expect.objectContaining({
+                id: "duplicate",
+                type: "boolean",
+                probability: expect.any(Number),
+              }),
+            ]),
           });
           expect(span.row.metadata).toMatchObject({
             model: expect.stringMatching(/^jev-/),
@@ -971,9 +981,18 @@ export function defineAISDKInstrumentationAssertions(options: {
           expect(stringSpans).toHaveLength(1);
           expect(stringSpans[0].input).toMatchObject({
             state: "The package arrived intact and on time.",
+            questions: [
+              expect.objectContaining({ id: "positive", type: "boolean" }),
+            ],
           });
           expect(stringSpans[0].output).toMatchObject({
-            positive: { type: "boolean", probability: expect.any(Number) },
+            answers: [
+              {
+                id: "positive",
+                type: "boolean",
+                probability: expect.any(Number),
+              },
+            ],
           });
           expect(stringSpans[0].row.metadata).toMatchObject({
             model: expect.stringMatching(/^jev-/),

@@ -705,11 +705,14 @@ function interceptAISDKEvaluate(defaultDenyOutputPaths: string[]): () => void {
             {
               name: spanInfo?.name ?? "evaluate",
               spanAttributes: {
-                type: SpanTypeAttribute.LLM,
+                type: "question",
                 ...spanInfo?.spanAttributes,
               },
               event: {
-                input: { state: params.state, questions: params.questions },
+                input: {
+                  state: params.state,
+                  questions: addEvaluationIds(params.questions),
+                },
                 metadata: {
                   ...extractBaseMetadata(params.model),
                   ...spanInfo?.metadata,
@@ -749,7 +752,12 @@ function interceptAISDKEvaluate(defaultDenyOutputPaths: string[]): () => void {
               const confidence = value.providerMetadata?.typesafe?.confidence;
               const resolvedModel = value.response?.modelId;
               span.log({
-                output: omit(value.answers, denyOutputPaths),
+                output: omit(
+                  {
+                    answers: addEvaluationIds(value.answers, confidence),
+                  },
+                  denyOutputPaths,
+                ),
                 metrics: extractTokenMetrics({
                   usage: {
                     promptTokens: value.usage?.inputTokens,
@@ -776,6 +784,31 @@ function interceptAISDKEvaluate(defaultDenyOutputPaths: string[]): () => void {
       }
     },
   );
+}
+
+function addEvaluationIds(
+  value: unknown,
+  confidence: unknown = undefined,
+): unknown {
+  if (!isObject(value)) {
+    return value;
+  }
+
+  return Object.entries(value).map(([id, entry]) => {
+    if (!isObject(entry)) {
+      return { id, value: entry };
+    }
+
+    const answerConfidence = isObject(confidence) ? confidence[id] : undefined;
+    return {
+      ...entry,
+      ...(typeof answerConfidence === "number" &&
+      (entry.type === "choice" || entry.type === "score")
+        ? { confidence: answerConfidence }
+        : {}),
+      id,
+    };
+  });
 }
 
 function subscribeToHarnessAgentCreateSession(): () => void {

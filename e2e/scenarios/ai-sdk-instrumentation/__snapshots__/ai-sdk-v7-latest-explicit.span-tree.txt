@@ -10,10 +10,10 @@ span_tree:
     │     "operation": "evaluate",
     │     "testRunId": "<run:1>"
     │   }
-    │   └── evaluate [llm]
+    │   └── evaluate [question]
     │       input: {
-    │         "questions": {
-    │           "category": {
+    │         "questions": [
+    │           {
     │             "criteria": {
     │               "billing": "Payments and refunds",
     │               "technical": "Software problems"
@@ -21,11 +21,7 @@ span_tree:
     │             "instructions": "Which team should handle this request?",
     │             "type": "choice"
     │           },
-    │           "duplicate": {
-    │             "instructions": "Does the customer report a duplicate charge?",
-    │             "type": "boolean"
-    │           },
-    │           "urgency": {
+    │           {
     │             "criteria": [
     │               "Low",
     │               "Medium",
@@ -33,34 +29,42 @@ span_tree:
     │             ],
     │             "instructions": "How urgent is this request?",
     │             "type": "score"
+    │           },
+    │           {
+    │             "instructions": "Does the customer report a duplicate charge?",
+    │             "type": "boolean"
     │           }
-    │         },
+    │         ],
     │         "state": {
     │           "message": "I was charged twice for my subscription. Please refund the duplicate charge."
     │         }
     │       }
     │       output: {
-    │         "category": {
-    │           "choice": "billing",
-    │           "probabilities": {
-    │             "billing": 1,
-    │             "technical": 0
+    │         "answers": [
+    │           {
+    │             "choice": "billing",
+    │             "confidence": 1,
+    │             "probabilities": {
+    │               "billing": 1,
+    │               "technical": 0
+    │             },
+    │             "type": "choice"
     │           },
-    │           "type": "choice"
-    │         },
-    │         "duplicate": {
-    │           "probability": 0.99,
-    │           "type": "boolean"
-    │         },
-    │         "urgency": {
-    │           "probabilities": {
-    │             "0": 0.03,
-    │             "1": 0.82,
-    │             "2": 0.15
+    │           {
+    │             "probability": 0.99,
+    │             "type": "boolean"
     │           },
-    │           "score": 1.12,
-    │           "type": "score"
-    │         }
+    │           {
+    │             "confidence": 0.74,
+    │             "probabilities": {
+    │               "0": 0.03,
+    │               "1": 0.82,
+    │               "2": 0.15
+    │             },
+    │             "score": 1.12,
+    │             "type": "score"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "braintrust": {
@@ -88,21 +92,23 @@ span_tree:
     │     "operation": "evaluate-string",
     │     "testRunId": "<run:1>"
     │   }
-    │   └── evaluate [llm]
+    │   └── evaluate [question]
     │       input: {
-    │         "questions": {
-    │           "positive": {
+    │         "questions": [
+    │           {
     │             "instructions": "Was the delivery successful?",
     │             "type": "boolean"
     │           }
-    │         },
+    │         ],
     │         "state": "The package arrived intact and on time."
     │       }
     │       output: {
-    │         "positive": {
-    │           "probability": 0.97,
-    │           "type": "boolean"
-    │         }
+    │         "answers": [
+    │           {
+    │             "probability": 0.97,
+    │             "type": "boolean"
+    │           }
+    │         ]
     │       }
     │       metadata: {
     │         "braintrust": {
