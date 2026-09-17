@@ -12,7 +12,7 @@ interface AISDKTokenBucket {
   [key: string]: unknown;
 }
 
-type AISDKTokenCount = number & AISDKTokenBucket;
+type AISDKTokenCount = number | AISDKTokenBucket;
 
 export interface AISDKUsage {
   inputTokens?: AISDKTokenCount;
@@ -92,6 +92,7 @@ export interface AISDKGenerateImageParams extends Omit<
 }
 
 export interface AISDKLanguageModel {
+  specificationVersion?: string;
   modelId?: string;
   provider?: string;
   supportsStructuredOutputs?: boolean;
@@ -101,6 +102,7 @@ export interface AISDKLanguageModel {
   ) => Promise<AISDKResult & { stream: ReadableStream<AISDKModelStreamChunk> }>;
   _braintrustWrapped?: boolean;
   [key: string]: unknown;
+  [key: symbol]: unknown;
 }
 
 export type AISDKModel = string | AISDKLanguageModel;

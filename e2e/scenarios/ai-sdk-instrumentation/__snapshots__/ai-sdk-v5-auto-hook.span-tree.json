@@ -2873,8 +2873,8 @@
                 "completion_tokens": 7,
                 "prompt_cache_creation_tokens": 0,
                 "prompt_cached_tokens": 4516,
-                "prompt_tokens": 3,
-                "tokens": 10
+                "prompt_tokens": 4519,
+                "tokens": 4526
               }
             }
           ],
@@ -3121,8 +3121,8 @@
                     "completion_tokens": 7,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 4516,
-                    "prompt_tokens": 3,
-                    "tokens": 10
+                    "prompt_tokens": 4519,
+                    "tokens": 4526
                   }
                 }
               ],
@@ -3366,8 +3366,8 @@
                     "completion_tokens": 7,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 4516,
-                    "prompt_tokens": 3,
-                    "tokens": 10
+                    "prompt_tokens": 4519,
+                    "tokens": 4526
                   }
                 }
               ],

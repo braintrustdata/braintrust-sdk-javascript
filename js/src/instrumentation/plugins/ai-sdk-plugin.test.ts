@@ -31,6 +31,7 @@ import {
   processAISDKWorkflowAgentModelCallInput,
   processAISDKOutput as processAISDKOutputActual,
   processAISDKGenerateImageOutput,
+  extractTokenMetrics,
 } from "./ai-sdk-plugin";
 import iso from "../../isomorph";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
@@ -1072,6 +1073,98 @@ describe("AI SDK utility functions", () => {
       });
     });
 
+    it("should extract nested cache and reasoning usage", () => {
+      const metrics = extractTokenMetrics({
+        usage: {
+          inputTokens: {
+            total: 100,
+            cacheRead: 40,
+            cacheWrite: 10,
+          },
+          outputTokens: { total: 20, reasoning: 7 },
+        },
+      });
+
+      expect(metrics).toEqual({
+        prompt_tokens: 100,
+        completion_tokens: 20,
+        tokens: 120,
+        prompt_cached_tokens: 40,
+        prompt_cache_creation_tokens: 10,
+        completion_reasoning_tokens: 7,
+        reasoning_tokens: 7,
+      });
+    });
+
+    it("should preserve explicit zero values in nested usage", () => {
+      expect(
+        extractTokenMetrics({
+          usage: {
+            inputTokens: { total: 0, cacheRead: 0, cacheWrite: 0 },
+            outputTokens: { total: 0, reasoning: 0 },
+          },
+        }),
+      ).toMatchObject({
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        tokens: 0,
+        prompt_cached_tokens: 0,
+        prompt_cache_creation_tokens: 0,
+        completion_reasoning_tokens: 0,
+      });
+    });
+
+    it("should not add Anthropic cache tokens to nested inclusive totals", () => {
+      expect(
+        extractTokenMetrics({
+          usage: {
+            inputTokens: { total: 100, cacheRead: 40, cacheWrite: 10 },
+            outputTokens: { total: 20 },
+          },
+          providerMetadata: {
+            anthropic: {
+              usage: {
+                cache_read_input_tokens: 40,
+                cache_creation_input_tokens: 10,
+              },
+            },
+          },
+        }),
+      ).toMatchObject({
+        prompt_tokens: 100,
+        completion_tokens: 20,
+        tokens: 120,
+      });
+    });
+
+    it("should add Anthropic cache tokens to explicitly exclusive totals", () => {
+      expect(
+        extractTokenMetrics({
+          usage: {
+            inputTokens: 3,
+            outputTokens: 7,
+            totalTokens: 10,
+          },
+          providerMetadata: {
+            anthropic: {
+              usage: {
+                input_tokens: 3,
+                output_tokens: 7,
+                cache_read_input_tokens: 4516,
+                cache_creation_input_tokens: 0,
+              },
+            },
+          },
+        }),
+      ).toMatchObject({
+        prompt_tokens: 4519,
+        completion_tokens: 7,
+        tokens: 4526,
+        prompt_cached_tokens: 4516,
+        prompt_cache_creation_tokens: 0,
+      });
+    });
+
     it("should handle flat inputTokens/outputTokens", () => {
       const result = {
         usage: {
@@ -1264,7 +1357,7 @@ describe("AI SDK utility functions", () => {
     });
 
     it("should return empty metrics for null result", () => {
-      const metrics = extractTokenMetrics(null);
+      const metrics = extractTokenMetrics(null as any);
       expect(metrics).toEqual({});
     });
 
@@ -1969,100 +2062,6 @@ function extractGetterValues(obj: any): any {
   }
 
   return getterValues;
-}
-
-function extractTokenMetrics(result: any): Record<string, number> {
-  const metrics: Record<string, number> = {};
-
-  let usage = result?.totalUsage || result?.usage;
-
-  if (!usage && result) {
-    try {
-      if ("totalUsage" in result && typeof result.totalUsage !== "function") {
-        usage = result.totalUsage;
-      } else if ("usage" in result && typeof result.usage !== "function") {
-        usage = result.usage;
-      }
-    } catch {
-      // Ignore errors accessing getters
-    }
-  }
-
-  if (!usage) {
-    return metrics;
-  }
-
-  const promptTokens = firstNumber(
-    usage.inputTokens?.total,
-    usage.inputTokens,
-    usage.promptTokens,
-    usage.prompt_tokens,
-  );
-  if (promptTokens !== undefined) {
-    metrics.prompt_tokens = promptTokens;
-  }
-
-  const completionTokens = firstNumber(
-    usage.outputTokens?.total,
-    usage.outputTokens,
-    usage.completionTokens,
-    usage.completion_tokens,
-  );
-  if (completionTokens !== undefined) {
-    metrics.completion_tokens = completionTokens;
-  }
-
-  const totalTokens = firstNumber(
-    usage.totalTokens,
-    usage.tokens,
-    usage.total_tokens,
-  );
-  if (totalTokens !== undefined) {
-    metrics.tokens = totalTokens;
-  } else if (promptTokens !== undefined && completionTokens !== undefined) {
-    metrics.tokens = promptTokens + completionTokens;
-  }
-
-  const promptCachedTokens = firstNumber(
-    usage.inputTokens?.cacheRead,
-    usage.inputTokenDetails?.cacheReadTokens,
-    usage.cachedInputTokens,
-    usage.promptCachedTokens,
-    usage.prompt_cached_tokens,
-  );
-  if (promptCachedTokens !== undefined) {
-    metrics.prompt_cached_tokens = promptCachedTokens;
-  }
-
-  const promptCacheCreationTokens = firstNumber(
-    usage.inputTokens?.cacheWrite,
-    usage.inputTokenDetails?.cacheWriteTokens,
-    usage.promptCacheCreationTokens,
-    usage.prompt_cache_creation_tokens,
-    extractAnthropicCacheCreationTokens(result),
-  );
-  if (promptCacheCreationTokens !== undefined) {
-    metrics.prompt_cache_creation_tokens = promptCacheCreationTokens;
-  }
-
-  const cost = extractCostFromResult(result);
-  if (cost !== undefined) {
-    metrics.estimated_cost = cost;
-  }
-
-  return metrics;
-}
-
-function extractAnthropicCacheCreationTokens(result: any): number | undefined {
-  const anthropicMetadata = result?.providerMetadata?.anthropic;
-  if (!anthropicMetadata || typeof anthropicMetadata !== "object") {
-    return undefined;
-  }
-
-  return firstNumber(
-    anthropicMetadata.cacheCreationInputTokens,
-    anthropicMetadata.usage?.cache_creation_input_tokens,
-  );
 }
 
 function extractCostFromResult(result: any): number | undefined {

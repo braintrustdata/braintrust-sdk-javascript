@@ -6,12 +6,12 @@ import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../../span-origin";
-import {
-  extractAnthropicCacheTokens,
-  finalizeAnthropicTokens,
-  toNumericMetrics,
-} from "../../anthropic-tokens-util";
 import { processInputAttachments } from "../../attachment-utils";
+import { extractTokenMetrics } from "../../../instrumentation/plugins/ai-sdk-metrics";
+import type {
+  AISDKProviderMetadata,
+  AISDKUsage,
+} from "../../../vendor-sdk-types/ai-sdk-common";
 
 function detectProviderFromResult(result: {
   providerMetadata?: Record<string, unknown>;
@@ -39,16 +39,6 @@ function extractModelFromResult(result: {
   return undefined;
 }
 
-function extractModelFromWrapGenerateCallback(model: {
-  modelId?: string;
-  config?: Record<string, unknown>;
-  specificationVersion?: string;
-  provider?: string;
-  supportedUrls?: Record<string, unknown>;
-}): string | undefined {
-  return model?.modelId;
-}
-
 function camelToSnake(str: string): string {
   return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 }
@@ -67,76 +57,6 @@ function extractModelParameters(
   }
 
   return modelParams;
-}
-
-function getNumberProperty(obj: unknown, key: string): number | undefined {
-  if (!obj || typeof obj !== "object" || !(key in obj)) {
-    return undefined;
-  }
-  const value = Reflect.get(obj, key);
-  return typeof value === "number" ? value : undefined;
-}
-
-function normalizeUsageMetrics(
-  usage: unknown,
-  provider?: string,
-  providerMetadata?: Record<string, unknown>,
-): Record<string, number> {
-  const metrics: Record<string, number> = {};
-
-  // Standard AI SDK usage fields
-  const inputTokens = getNumberProperty(usage, "inputTokens");
-  if (inputTokens !== undefined) {
-    metrics.prompt_tokens = inputTokens;
-  }
-
-  const outputTokens = getNumberProperty(usage, "outputTokens");
-  if (outputTokens !== undefined) {
-    metrics.completion_tokens = outputTokens;
-  }
-
-  const totalTokens = getNumberProperty(usage, "totalTokens");
-  if (totalTokens !== undefined) {
-    metrics.tokens = totalTokens;
-  }
-
-  const reasoningTokens = getNumberProperty(usage, "reasoningTokens");
-  if (reasoningTokens !== undefined) {
-    metrics.completion_reasoning_tokens = reasoningTokens;
-  }
-
-  const cachedInputTokens = getNumberProperty(usage, "cachedInputTokens");
-  if (cachedInputTokens !== undefined) {
-    metrics.prompt_cached_tokens = cachedInputTokens;
-  }
-
-  // Anthropic-specific cache token handling
-  if (provider === "anthropic") {
-    const anthropicMetadata = providerMetadata?.anthropic as any;
-
-    if (anthropicMetadata) {
-      const cacheReadTokens =
-        getNumberProperty(anthropicMetadata.usage, "cache_read_input_tokens") ||
-        0;
-      const cacheCreationTokens =
-        getNumberProperty(
-          anthropicMetadata.usage,
-          "cache_creation_input_tokens",
-        ) || 0;
-
-      const cacheTokens = extractAnthropicCacheTokens(
-        cacheReadTokens,
-        cacheCreationTokens,
-      );
-      Object.assign(metrics, cacheTokens);
-
-      // Use the returned object: finalization can drop cache-creation metrics,
-      // and merging it back over `metrics` would keep them.
-      return toNumericMetrics(finalizeAnthropicTokens(metrics));
-    }
-  }
-
-  return metrics;
 }
 
 function normalizeFinishReason(reason: any): string | undefined {
@@ -309,10 +229,7 @@ export function BraintrustMiddleware(
         if (model !== undefined) {
           metadata.model = model;
         } else if (modelFromWrapGenerate) {
-          // Use the model from the wrapGenerate call if it's not in the result
-          const modelId = extractModelFromWrapGenerateCallback(
-            modelFromWrapGenerate,
-          );
+          const modelId = modelFromWrapGenerate.modelId;
           if (modelId) {
             metadata.model = modelId;
           }
@@ -329,11 +246,10 @@ export function BraintrustMiddleware(
               ? buildAssistantOutputWithToolCalls(result, toolCalls)
               : (result as any)?.content,
           metadata,
-          metrics: normalizeUsageMetrics(
-            result.usage,
-            provider,
-            result.providerMetadata,
-          ),
+          metrics: extractTokenMetrics({
+            usage: result.usage,
+            providerMetadata: result.providerMetadata,
+          }),
         });
 
         return result;
@@ -375,9 +291,9 @@ export function BraintrustMiddleware(
 
         const textChunks: string[] = [];
         const toolBlocks: any[] = [];
-        let finalUsage: unknown = {};
+        let finalUsage: AISDKUsage = {};
         let finalFinishReason: unknown = undefined;
-        let providerMetadata: Record<string, unknown> = {};
+        let providerMetadata: AISDKProviderMetadata = {};
 
         const transformStream = new TransformStream({
           transform(chunk: any, controller: any) {
@@ -458,11 +374,10 @@ export function BraintrustMiddleware(
               span.log({
                 output,
                 metadata,
-                metrics: normalizeUsageMetrics(
-                  finalUsage,
-                  provider,
+                metrics: extractTokenMetrics({
+                  usage: finalUsage,
                   providerMetadata,
-                ),
+                }),
               });
 
               span.end();

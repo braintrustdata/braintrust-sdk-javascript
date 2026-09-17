@@ -2,6 +2,21 @@
 
 This wrapper provides Braintrust logging integration for the Vercel AI SDK.
 
+`wrapAISDK` accepts either the AI SDK namespace or an AI SDK 5–7 language model.
+Wrapping a model instruments direct `doGenerate()` and `doStream()` calls while preserving the model's type and method receiver.
+
+```typescript
+import { wrapAISDK } from "braintrust";
+import { openai } from "@ai-sdk/openai";
+
+const model = wrapAISDK(openai("gpt-4.1-mini"));
+const result = await model.doGenerate({
+  prompt: [{ role: "user", content: [{ type: "text", text: "Say hello" }] }],
+});
+```
+
+`BraintrustMiddleware` remains available for compatibility, but new direct-model integrations should use `wrapAISDK(model)`.
+
 ## Test Structure
 
 Tests are organized to support multiple AI SDK versions:
