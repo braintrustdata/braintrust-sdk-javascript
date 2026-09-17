@@ -16,6 +16,20 @@ import {
  * "orchestrion:ai-sdk:generateText"
  */
 export const aiSDKConfigs: InstrumentationConfig[] = [
+  // Evaluation does not emit v7 telemetry callbacks. Instrument its public export.
+  {
+    channelName: aiSDKChannels.evaluate.channelName,
+    module: {
+      name: "ai",
+      versionRange: ">=7.0.103 <8.0.0",
+      filePath: "dist/index.js",
+    },
+    functionQuery: {
+      functionName: "experimental_evaluate",
+      isExportAlias: true,
+      kind: "Async",
+    },
+  },
   // HarnessAgent turn methods are published only from the package's ESM
   // `./agent` entrypoint. Target the class binding so similarly named getters
   // on stream result classes are not mistaken for agent turn methods.

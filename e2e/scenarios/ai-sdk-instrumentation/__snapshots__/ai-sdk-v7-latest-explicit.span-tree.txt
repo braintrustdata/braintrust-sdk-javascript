@@ -1,7 +1,7 @@
 span_tree:
 └── ai-sdk-instrumentation-root [task]
     metadata: {
-      "aiSdkVersion": "7.0.0",
+      "aiSdkVersion": "7.0.105",
       "scenario": "ai-sdk-instrumentation",
       "testRunId": "<run:1>"
     }
@@ -296,7 +296,7 @@ span_tree:
     │   │           {
     │   │             "providerMetadata": {
     │   │               "openai": {
-    │   │                 "itemId": "<itemId:1>"
+    │   │                 "itemId": "<itemId:2>"
     │   │               }
     │   │             },
     │   │             "text": "PARIS",
@@ -304,6 +304,12 @@ span_tree:
     │   │           }
     │   │         ],
     │   │         "finishReason": "stop",
+    │   │         "providerMetadata": {
+    │   │           "openai": {
+    │   │             "responseId": "<responseId:1>",
+    │   │             "serviceTier": "default"
+    │   │           }
+    │   │         },
     │   │         "response": {},
     │   │         "usage": {
     │   │           "inputTokenDetails": {
@@ -436,6 +442,124 @@ span_tree:
     │         "prompt_tokens": 18,
     │         "reasoning_tokens": 0,
     │         "tokens": 21
+    │       }
+    ├── ai-sdk-evaluate-operation
+    │   metadata: {
+    │     "operation": "evaluate",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── evaluate [question]
+    │       input: {
+    │         "questions": [
+    │           {
+    │             "criteria": {
+    │               "billing": "Payments and refunds",
+    │               "technical": "Software problems"
+    │             },
+    │             "instructions": "Which team should handle this request?",
+    │             "type": "choice"
+    │           },
+    │           {
+    │             "criteria": [
+    │               "Low",
+    │               "Medium",
+    │               "High"
+    │             ],
+    │             "instructions": "How urgent is this request?",
+    │             "type": "score"
+    │           },
+    │           {
+    │             "instructions": "Does the customer report a duplicate charge?",
+    │             "type": "boolean"
+    │           }
+    │         ],
+    │         "state": {
+    │           "message": "I was charged twice for my subscription. Please refund the duplicate charge."
+    │         }
+    │       }
+    │       output: {
+    │         "answers": [
+    │           {
+    │             "choice": "billing",
+    │             "confidence": 1,
+    │             "probabilities": {
+    │               "billing": 1,
+    │               "technical": 0
+    │             },
+    │             "type": "choice"
+    │           },
+    │           {
+    │             "probability": 0.99,
+    │             "type": "boolean"
+    │           },
+    │           {
+    │             "confidence": 0.74,
+    │             "probabilities": {
+    │               "0": 0.03,
+    │               "1": 0.82,
+    │               "2": 0.15
+    │             },
+    │             "score": 1.12,
+    │             "type": "score"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "jev-1.13.0",
+    │         "provider": "typesafe",
+    │         "providerMetadata": {
+    │           "typesafe": {
+    │             "confidence": {
+    │               "category": 1,
+    │               "urgency": 0.74
+    │             }
+    │           }
+    │         }
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 62,
+    │         "prompt_tokens": 382,
+    │         "tokens": 444
+    │       }
+    ├── ai-sdk-evaluate-string-operation
+    │   metadata: {
+    │     "operation": "evaluate-string",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── evaluate [question]
+    │       input: {
+    │         "questions": [
+    │           {
+    │             "instructions": "Was the delivery successful?",
+    │             "type": "boolean"
+    │           }
+    │         ],
+    │         "state": "The package arrived intact and on time."
+    │       }
+    │       output: {
+    │         "answers": [
+    │           {
+    │             "probability": 0.97,
+    │             "type": "boolean"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "jev-1.13.0",
+    │         "provider": "typesafe"
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 20,
+    │         "prompt_tokens": 279,
+    │         "tokens": 299
     │       }
     ├── ai-sdk-generate-operation
     │   metadata: {
@@ -635,7 +759,7 @@ span_tree:
     │               {
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:1>"
+    │                     "itemId": "<itemId:2>"
     │                   }
     │                 },
     │                 "text": "PARIS",
@@ -643,6 +767,12 @@ span_tree:
     │               }
     │             ],
     │             "finishReason": "stop",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:1>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
     │             "response": {},
     │             "usage": {
     │               "inputTokenDetails": {
@@ -906,7 +1036,7 @@ span_tree:
     │               {
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:1>"
+    │                     "itemId": "<itemId:2>"
     │                   }
     │                 },
     │                 "text": "{\"answer\":\"4\"}",
@@ -914,6 +1044,12 @@ span_tree:
     │               }
     │             ],
     │             "finishReason": "stop",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:1>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
     │             "response": {},
     │             "usage": {
     │               "inputTokenDetails": {
@@ -1157,7 +1293,7 @@ span_tree:
     │               {
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:1>"
+    │                     "itemId": "<itemId:2>"
     │                   }
     │                 },
     │                 "text": "One, two, three.",
@@ -1165,6 +1301,12 @@ span_tree:
     │               }
     │             ],
     │             "finishReason": "stop",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:1>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
     │             "response": {},
     │             "usage": {
     │               "inputTokenDetails": {
@@ -1340,7 +1482,7 @@ span_tree:
     │       output: [
     │         {
     │           "index": 1,
-    │           "relevance_score": 0.06657539
+    │           "relevance_score": 0.06664825
     │         },
     │         {
     │           "index": 0,
@@ -1368,7 +1510,7 @@ span_tree:
     │           output: [
     │             {
     │               "index": 1,
-    │               "relevance_score": 0.06657539
+    │               "relevance_score": 0.06664825
     │             },
     │             {
     │               "index": 0,
@@ -2257,15 +2399,21 @@ span_tree:
     │       │         },
     │       │         "providerMetadata": {
     │       │           "openai": {
-    │       │             "itemId": "<itemId:2>"
+    │       │             "itemId": "<itemId:3>"
     │       │           }
     │       │         },
-    │       │         "toolCallId": "<toolCallId:1>",
+    │       │         "toolCallId": "<toolCallId:2>",
     │       │         "toolName": "get_weather",
     │       │         "type": "tool-call"
     │       │       }
     │       │     ],
     │       │     "finishReason": "tool-calls",
+    │       │     "providerMetadata": {
+    │       │       "openai": {
+    │       │         "responseId": "<responseId:1>",
+    │       │         "serviceTier": "default"
+    │       │       }
+    │       │     },
     │       │     "response": {},
     │       │     "usage": {
     │       │       "inputTokenDetails": {
@@ -2403,15 +2551,21 @@ span_tree:
     │       │         },
     │       │         "providerMetadata": {
     │       │           "openai": {
-    │       │             "itemId": "<itemId:2>"
+    │       │             "itemId": "<itemId:3>"
     │       │           }
     │       │         },
-    │       │         "toolCallId": "<toolCallId:1>",
+    │       │         "toolCallId": "<toolCallId:2>",
     │       │         "toolName": "get_weather",
     │       │         "type": "tool-call"
     │       │       }
     │       │     ],
     │       │     "finishReason": "tool-calls",
+    │       │     "providerMetadata": {
+    │       │       "openai": {
+    │       │         "responseId": "<responseId:1>",
+    │       │         "serviceTier": "default"
+    │       │       }
+    │       │     },
     │       │     "response": {},
     │       │     "usage": {
     │       │       "inputTokenDetails": {
@@ -2586,15 +2740,21 @@ span_tree:
     │       │         },
     │       │         "providerMetadata": {
     │       │           "openai": {
-    │       │             "itemId": "<itemId:2>"
+    │       │             "itemId": "<itemId:3>"
     │       │           }
     │       │         },
-    │       │         "toolCallId": "<toolCallId:1>",
+    │       │         "toolCallId": "<toolCallId:2>",
     │       │         "toolName": "get_weather",
     │       │         "type": "tool-call"
     │       │       }
     │       │     ],
     │       │     "finishReason": "tool-calls",
+    │       │     "providerMetadata": {
+    │       │       "openai": {
+    │       │         "responseId": "<responseId:1>",
+    │       │         "serviceTier": "default"
+    │       │       }
+    │       │     },
     │       │     "response": {},
     │       │     "usage": {
     │       │       "inputTokenDetails": {
@@ -2806,15 +2966,21 @@ span_tree:
     │       │         },
     │       │         "providerMetadata": {
     │       │           "openai": {
-    │       │             "itemId": "<itemId:2>"
+    │       │             "itemId": "<itemId:3>"
     │       │           }
     │       │         },
-    │       │         "toolCallId": "<toolCallId:1>",
+    │       │         "toolCallId": "<toolCallId:2>",
     │       │         "toolName": "get_weather",
     │       │         "type": "tool-call"
     │       │       }
     │       │     ],
     │       │     "finishReason": "tool-calls",
+    │       │     "providerMetadata": {
+    │       │       "openai": {
+    │       │         "responseId": "<responseId:1>",
+    │       │         "serviceTier": "default"
+    │       │       }
+    │       │     },
     │       │     "response": {},
     │       │     "usage": {
     │       │       "inputTokenDetails": {
@@ -3091,6 +3257,26 @@ span_tree:
     │           }
     │         ],
     │         "finishReason": "stop",
+    │         "providerMetadata": {
+    │           "anthropic": {
+    │             "container": null,
+    │             "contextManagement": null,
+    │             "iterations": null,
+    │             "stopSequence": null,
+    │             "usage": {
+    │               "cache_creation": {
+    │                 "ephemeral_1h_input_tokens": 0,
+    │                 "ephemeral_5m_input_tokens": 0
+    │               },
+    │               "cache_creation_input_tokens": 0,
+    │               "cache_read_input_tokens": 4516,
+    │               "inference_geo": "not_available",
+    │               "input_tokens": 3,
+    │               "output_tokens": 7,
+    │               "service_tier": "standard"
+    │             }
+    │           }
+    │         },
     │         "response": {},
     │         "usage": {
     │           "inputTokenDetails": {
@@ -3357,6 +3543,26 @@ span_tree:
     │   │           }
     │   │         ],
     │   │         "finishReason": "stop",
+    │   │         "providerMetadata": {
+    │   │           "anthropic": {
+    │   │             "container": null,
+    │   │             "contextManagement": null,
+    │   │             "iterations": null,
+    │   │             "stopSequence": null,
+    │   │             "usage": {
+    │   │               "cache_creation": {
+    │   │                 "ephemeral_1h_input_tokens": 0,
+    │   │                 "ephemeral_5m_input_tokens": 0
+    │   │               },
+    │   │               "cache_creation_input_tokens": 0,
+    │   │               "cache_read_input_tokens": 4516,
+    │   │               "inference_geo": "not_available",
+    │   │               "input_tokens": 3,
+    │   │               "output_tokens": 7,
+    │   │               "service_tier": "standard"
+    │   │             }
+    │   │           }
+    │   │         },
     │   │         "response": {},
     │   │         "usage": {
     │   │           "inputTokenDetails": {
@@ -3618,6 +3824,26 @@ span_tree:
     │               }
     │             ],
     │             "finishReason": "stop",
+    │             "providerMetadata": {
+    │               "anthropic": {
+    │                 "container": null,
+    │                 "contextManagement": null,
+    │                 "iterations": null,
+    │                 "stopSequence": null,
+    │                 "usage": {
+    │                   "cache_creation": {
+    │                     "ephemeral_1h_input_tokens": 0,
+    │                     "ephemeral_5m_input_tokens": 0
+    │                   },
+    │                   "cache_creation_input_tokens": 0,
+    │                   "cache_read_input_tokens": 4516,
+    │                   "inference_geo": "not_available",
+    │                   "input_tokens": 3,
+    │                   "output_tokens": 7,
+    │                   "service_tier": "standard"
+    │                 }
+    │               }
+    │             },
     │             "response": {},
     │             "usage": {
     │               "inputTokenDetails": {
@@ -4156,7 +4382,7 @@ span_tree:
     │               {
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:1>"
+    │                     "itemId": "<itemId:2>"
     │                   }
     │                 },
     │                 "text": "HELLO",
@@ -4164,6 +4390,12 @@ span_tree:
     │               }
     │             ],
     │             "finishReason": "stop",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:1>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
     │             "response": {},
     │             "usage": {
     │               "inputTokenDetails": {
@@ -4407,7 +4639,7 @@ span_tree:
     │               {
     │                 "providerMetadata": {
     │                   "openai": {
-    │                     "itemId": "<itemId:1>"
+    │                     "itemId": "<itemId:2>"
     │                   }
     │                 },
     │                 "text": "STREAM HELLO",
@@ -4415,6 +4647,12 @@ span_tree:
     │               }
     │             ],
     │             "finishReason": "stop",
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:1>",
+    │                 "serviceTier": "default"
+    │               }
+    │             },
     │             "response": {},
     │             "usage": {
     │               "inputTokenDetails": {
@@ -5011,16 +5249,16 @@ span_tree:
                     "inputTokenDetails": {
                       "cacheReadTokens": 0,
                       "cacheWriteTokens": 0,
-                      "noCacheTokens": 308
+                      "noCacheTokens": 305
                     },
-                    "inputTokens": 308,
+                    "inputTokens": 305,
                     "outputTokenDetails": {
                       "reasoningTokens": 0,
                       "textTokens": 62
                     },
                     "outputTokens": 62,
                     "raw": {
-                      "input_tokens": 308,
+                      "input_tokens": 305,
                       "input_tokens_details": {
                         "cache_write_tokens": 0,
                         "cached_tokens": 0
@@ -5030,7 +5268,7 @@ span_tree:
                         "reasoning_tokens": 0
                       }
                     },
-                    "totalTokens": 370
+                    "totalTokens": 367
                   },
                   "warnings": []
                 }
@@ -5134,29 +5372,29 @@ span_tree:
                 "inputTokenDetails": {
                   "cacheReadTokens": 0,
                   "cacheWriteTokens": 0,
-                  "noCacheTokens": 741
+                  "noCacheTokens": 738
                 },
-                "inputTokens": 741,
+                "inputTokens": 738,
                 "outputTokenDetails": {
                   "reasoningTokens": 0,
                   "textTokens": 142
                 },
                 "outputTokens": 142,
-                "totalTokens": 883
+                "totalTokens": 880
               },
               "usage": {
                 "inputTokenDetails": {
                   "cacheReadTokens": 0,
                   "cacheWriteTokens": 0,
-                  "noCacheTokens": 741
+                  "noCacheTokens": 738
                 },
-                "inputTokens": 741,
+                "inputTokens": 738,
                 "outputTokenDetails": {
                   "reasoningTokens": 0,
                   "textTokens": 142
                 },
                 "outputTokens": 142,
-                "totalTokens": 883
+                "totalTokens": 880
               },
               "warnings": []
             }
@@ -5251,10 +5489,10 @@ span_tree:
             │         },
             │         "providerMetadata": {
             │           "openai": {
-            │             "itemId": "<itemId:2>"
+            │             "itemId": "<itemId:3>"
             │           }
             │         },
-            │         "toolCallId": "<toolCallId:1>",
+            │         "toolCallId": "<toolCallId:2>",
             │         "toolName": "get_store_price",
             │         "type": "tool-call"
             │       },
@@ -5265,15 +5503,21 @@ span_tree:
             │         },
             │         "providerMetadata": {
             │           "openai": {
-            │             "itemId": "<itemId:4>"
+            │             "itemId": "<itemId:5>"
             │           }
             │         },
-            │         "toolCallId": "<toolCallId:3>",
+            │         "toolCallId": "<toolCallId:4>",
             │         "toolName": "get_store_price",
             │         "type": "tool-call"
             │       }
             │     ],
             │     "finishReason": "tool-calls",
+            │     "providerMetadata": {
+            │       "openai": {
+            │         "responseId": "<responseId:1>",
+            │         "serviceTier": "default"
+            │       }
+            │     },
             │     "response": {},
             │     "usage": {
             │       "inputTokenDetails": {
@@ -5493,15 +5737,21 @@ span_tree:
             │         },
             │         "providerMetadata": {
             │           "openai": {
-            │             "itemId": "<itemId:2>"
+            │             "itemId": "<itemId:3>"
             │           }
             │         },
-            │         "toolCallId": "<toolCallId:1>",
+            │         "toolCallId": "<toolCallId:2>",
             │         "toolName": "apply_discount",
             │         "type": "tool-call"
             │       }
             │     ],
             │     "finishReason": "tool-calls",
+            │     "providerMetadata": {
+            │       "openai": {
+            │         "responseId": "<responseId:1>",
+            │         "serviceTier": "default"
+            │       }
+            │     },
             │     "response": {},
             │     "usage": {
             │       "inputTokenDetails": {
@@ -5741,7 +5991,7 @@ span_tree:
                     {
                       "providerMetadata": {
                         "openai": {
-                          "itemId": "<itemId:1>"
+                          "itemId": "<itemId:2>"
                         }
                       },
                       "text": "Here are the prices for the laptop:\n\n- **Store A**: $999\n- **Store B**: $1099\n\nThe cheaper price is from **Store A** at $999. After applying the discount code **SAVE20**, the final total is **$799.20**.",
@@ -5749,21 +5999,27 @@ span_tree:
                     }
                   ],
                   "finishReason": "stop",
+                  "providerMetadata": {
+                    "openai": {
+                      "responseId": "<responseId:1>",
+                      "serviceTier": "default"
+                    }
+                  },
                   "response": {},
                   "usage": {
                     "inputTokenDetails": {
                       "cacheReadTokens": 0,
                       "cacheWriteTokens": 0,
-                      "noCacheTokens": 308
+                      "noCacheTokens": 305
                     },
-                    "inputTokens": 308,
+                    "inputTokens": 305,
                     "outputTokenDetails": {
                       "reasoningTokens": 0,
                       "textTokens": 62
                     },
                     "outputTokens": 62,
                     "raw": {
-                      "input_tokens": 308,
+                      "input_tokens": 305,
                       "input_tokens_details": {
                         "cache_write_tokens": 0,
                         "cached_tokens": 0
@@ -5773,7 +6029,7 @@ span_tree:
                         "reasoning_tokens": 0
                       }
                     },
-                    "totalTokens": 370
+                    "totalTokens": 367
                   }
                 }
                 metadata: {
@@ -5788,6 +6044,6 @@ span_tree:
                   "completion_tokens": 62,
                   "prompt_cache_creation_tokens": 0,
                   "prompt_cached_tokens": 0,
-                  "prompt_tokens": 308,
-                  "tokens": 370
+                  "prompt_tokens": 305,
+                  "tokens": 367
                 }

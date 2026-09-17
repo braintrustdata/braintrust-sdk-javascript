@@ -19,6 +19,7 @@ import {
   _internalStartSpanWithInitialMerge,
   Attachment,
   currentSpan,
+  startSpan,
   type Span,
   withCurrent,
 } from "../../logger";
@@ -55,6 +56,10 @@ import {
 } from "./ai-sdk-channels";
 import { extractTokenMetrics } from "./ai-sdk-metrics";
 import { currentCloudflareThinkSpan } from "./cloudflare-think-context";
+import {
+  isAutoInstrumentationSuppressed,
+  runWithAutoInstrumentationSuppressed,
+} from "../auto-instrumentation-suppression";
 import type {
   AISDK,
   AISDKCallParams,
@@ -202,6 +207,7 @@ export class AISDKPlugin extends BasePlugin {
 
     this.unsubscribers.push(
       interceptAISDKV7TelemetryDispatcher(),
+      interceptAISDKEvaluate(denyOutputPaths),
       interceptAISDKModelGenerate(denyOutputPaths),
       interceptAISDKModelStream(denyOutputPaths),
       subscribeToHarnessAgentCreateSession(),
@@ -685,6 +691,140 @@ export class AISDKPlugin extends BasePlugin {
       }),
     );
   }
+}
+
+function interceptAISDKEvaluate(defaultDenyOutputPaths: string[]): () => void {
+  return aiSDKChannels.evaluate.intercept(
+    (target, thisArg, args, additional) => {
+      if (isAutoInstrumentationSuppressed()) {
+        return Reflect.apply(target, thisArg, args);
+      }
+
+      let span: Span;
+      let denyOutputPaths: string[];
+      try {
+        const params = args[0];
+        const spanInfo = additional.span_info;
+        denyOutputPaths = resolveDenyOutputPaths(
+          { ...additional, arguments: args },
+          defaultDenyOutputPaths,
+        );
+        span = startSpan(
+          withSpanInstrumentationName(
+            {
+              name: spanInfo?.name ?? "evaluate",
+              spanAttributes: {
+                type: "question",
+                ...spanInfo?.spanAttributes,
+              },
+              event: {
+                input: {
+                  state: params.state,
+                  questions: addEvaluationIds(params.questions),
+                },
+                metadata: {
+                  ...extractBaseMetadata(params.model),
+                  ...spanInfo?.metadata,
+                },
+              },
+            },
+            INSTRUMENTATION_NAMES.AI_SDK,
+          ),
+        );
+      } catch (error) {
+        debugLogger.error("Error starting span for evaluate:", error);
+        return Reflect.apply(target, thisArg, args);
+      }
+
+      const finish = (log: () => void) => {
+        try {
+          log();
+        } catch (error) {
+          debugLogger.error("Error logging span for evaluate:", error);
+        }
+        try {
+          span.end();
+        } catch (error) {
+          debugLogger.error("Error ending span for evaluate:", error);
+        }
+      };
+
+      try {
+        const result = withCurrent(span, () =>
+          runWithAutoInstrumentationSuppressed(() =>
+            Reflect.apply(target, thisArg, args),
+          ),
+        );
+        void Promise.resolve(result).then(
+          (value) =>
+            finish(() => {
+              const confidence = value.providerMetadata?.typesafe?.confidence;
+              const gatewayRouting = extractGatewayRoutingInfo(value);
+              const requestMetadata = serializeModelWithProvider(args[0].model);
+              const providerMetadataKeys = Object.keys(
+                value.providerMetadata ?? {},
+              ).filter((key) => key !== "gateway");
+              const resolvedModel = serializeModelWithProvider(
+                gatewayRouting?.model ?? value.response?.modelId,
+              );
+              const resolvedProvider =
+                gatewayRouting?.provider ??
+                (providerMetadataKeys.length === 1
+                  ? providerMetadataKeys[0]
+                  : (resolvedModel.provider ?? requestMetadata.provider));
+              span.log({
+                output: omit(
+                  {
+                    answers: addEvaluationIds(value.answers, confidence),
+                  },
+                  denyOutputPaths,
+                ),
+                metrics: extractTokenMetrics(value),
+                metadata: {
+                  ...(resolvedModel.model
+                    ? { model: resolvedModel.model }
+                    : {}),
+                  ...(resolvedProvider ? { provider: resolvedProvider } : {}),
+                  ...(confidence
+                    ? { providerMetadata: { typesafe: { confidence } } }
+                    : {}),
+                },
+              });
+            }),
+          (error) => finish(() => span.log({ error })),
+        );
+        return result;
+      } catch (error) {
+        finish(() => span.log({ error }));
+        throw error;
+      }
+    },
+  );
+}
+
+function addEvaluationIds(
+  value: unknown,
+  confidence: unknown = undefined,
+): unknown {
+  if (!isObject(value)) {
+    return value;
+  }
+
+  return Object.entries(value).map(([id, entry]) => {
+    if (!isObject(entry)) {
+      return { id, value: entry };
+    }
+
+    const answerConfidence = isObject(confidence) ? confidence[id] : undefined;
+    return {
+      ...entry,
+      ...(typeof answerConfidence === "number" &&
+      (entry.type === "choice" || entry.type === "score")
+        ? { confidence: answerConfidence }
+        : {}),
+      id,
+    };
+  });
 }
 
 function subscribeToHarnessAgentCreateSession(): () => void {

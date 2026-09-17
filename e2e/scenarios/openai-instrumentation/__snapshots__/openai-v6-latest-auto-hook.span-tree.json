@@ -1037,6 +1037,65 @@
           }
         },
         {
+          "name": "openai-embedding-batch-operation",
+          "children": [
+            {
+              "name": "openai.batch",
+              "type": "task",
+              "children": [
+                {
+                  "name": "Embedding",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "inputs": [
+                      {
+                        "content": "Paris"
+                      }
+                    ]
+                  },
+                  "output": {
+                    "count": 1
+                  },
+                  "metadata": {
+                    "custom_id": "batch_embedding_paris",
+                    "model": "text-embedding-3-small",
+                    "provider": "openai"
+                  },
+                  "metrics": {
+                    "prompt_tokens": 1,
+                    "tokens": 1
+                  },
+                  "context": {
+                    "caller_filename": "<node-internal>",
+                    "caller_functionname": "<node-internal>",
+                    "caller_lineno": 0
+                  }
+                }
+              ],
+              "metadata": {
+                "endpoint": "/v1/embeddings",
+                "input_file_id": "file_embedding_batch_e2e_fixture",
+                "provider": "openai"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "embedding-batch",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+            "caller_functionname": "runOperation",
+            "caller_lineno": 0
+          }
+        },
+        {
           "name": "openai-responses-operation",
           "children": [
             {

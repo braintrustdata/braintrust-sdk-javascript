@@ -37,6 +37,21 @@ export function extractOpenAIBatchInput(
   endpoint: string,
   params: Record<string, unknown>,
 ): { input: unknown; metadata: Record<string, unknown> } {
+  if (endpoint === "/v1/embeddings") {
+    const inputs =
+      Array.isArray(params.input) && typeof params.input[0] !== "number"
+        ? params.input
+        : [params.input];
+    return {
+      input: {
+        inputs: inputs.map((content) => ({ content })),
+        ...(params.dimensions !== undefined
+          ? { output_dimensions: params.dimensions }
+          : {}),
+      },
+      metadata: { provider: "openai", model: params.model },
+    };
+  }
   const input =
     endpoint === "/v1/chat/completions" ? params.messages : params.input;
   return {

@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -9,7 +9,9 @@ import { expect, it } from "vitest";
 it("links published runs while preserving legacy records and excluding local-only runs", async () => {
   const dir = await mkdtemp(path.join(tmpdir(), "braintrust-e2e-links-"));
   const configPath = path.join(dir, "config.json");
+  const shardDir = path.join(dir, "shard-1");
   try {
+    await mkdir(shardDir);
     await writeFile(
       configPath,
       JSON.stringify([
@@ -21,7 +23,7 @@ it("links published runs while preserving legacy records and excluding local-onl
       ]),
     );
     await writeFile(
-      path.join(dir, "runs.ndjson"),
+      path.join(shardDir, "runs.ndjson"),
       [
         { testRunId: "e2e-published", forwardToProduction: true },
         { testRunId: "e2e-local-only", forwardToProduction: false },

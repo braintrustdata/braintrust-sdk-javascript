@@ -57,6 +57,9 @@ describeVariants("variants", () => {
             env: {
               AI_SDK_PACKAGE_NAME: scenario.packageName,
               AI_SDK_OPENAI_PACKAGE_NAME: scenario.openaiModuleName,
+              AI_SDK_SUPPORTS_EVALUATE_STRING_MODEL: String(
+                scenario.supportsEvaluateStringModel !== false,
+              ),
               ...(scenario.anthropicModuleName
                 ? {
                     AI_SDK_ANTHROPIC_PACKAGE_NAME: scenario.anthropicModuleName,
@@ -90,6 +93,9 @@ describeVariants("variants", () => {
           scenario.supportsProviderCacheAssertions,
         supportsDenyOutputOverrideScenario,
         supportsEmbedMany: scenario.supportsEmbedMany !== false,
+        supportsEvaluate: scenario.supportsEvaluate === true,
+        supportsEvaluateStringModel:
+          scenario.supportsEvaluateStringModel !== false,
         supportsGenerateObject: scenario.supportsGenerateObject,
         supportsGenerateImage:
           scenario.supportsGenerateImage ?? sdkMajorVersion >= 5,
@@ -112,6 +118,9 @@ describeVariants("variants", () => {
             env: {
               AI_SDK_PACKAGE_NAME: scenario.packageName,
               AI_SDK_OPENAI_PACKAGE_NAME: scenario.openaiModuleName,
+              AI_SDK_SUPPORTS_EVALUATE_STRING_MODEL: String(
+                scenario.supportsEvaluateStringModel !== false,
+              ),
               ...(scenario.anthropicModuleName
                 ? {
                     AI_SDK_ANTHROPIC_PACKAGE_NAME: scenario.anthropicModuleName,
@@ -146,6 +155,9 @@ describeVariants("variants", () => {
           scenario.supportsProviderCacheAssertions,
         supportsDenyOutputOverrideScenario,
         supportsEmbedMany: scenario.supportsEmbedMany !== false,
+        supportsEvaluate: scenario.supportsEvaluate === true,
+        supportsEvaluateStringModel:
+          scenario.supportsEvaluateStringModel !== false,
         supportsGenerateObject: scenario.supportsGenerateObject,
         supportsGenerateImage:
           scenario.supportsGenerateImage ?? sdkMajorVersion >= 5,

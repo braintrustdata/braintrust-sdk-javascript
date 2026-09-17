@@ -31,7 +31,17 @@ import {
   digestUuid,
 } from "./openai-manual-instrumentation-utils";
 
-const SUPPORTED_ENDPOINTS = new Set(["/v1/chat/completions", "/v1/responses"]);
+const SUPPORTED_ENDPOINTS = new Set([
+  "/v1/chat/completions",
+  "/v1/responses",
+  "/v1/embeddings",
+]);
+const EMBEDDING_METRICS = new Set([
+  "prompt_tokens",
+  "tokens",
+  "prompt_audio_tokens",
+  "estimated_cost",
+]);
 const TERMINAL_STATUSES = new Set([
   "completed",
   "failed",
@@ -194,7 +204,9 @@ async function startBatchChild(
           name:
             context.endpoint === "/v1/chat/completions"
               ? "Chat Completion"
-              : "openai.responses.create",
+              : context.endpoint === "/v1/embeddings"
+                ? "Embedding"
+                : "openai.responses.create",
           type: SpanTypeAttribute.LLM,
           parent: taskParent,
           spanId: ids.spanId,
@@ -222,8 +234,17 @@ async function* jsonlRecords(
   onIssue: (error: Error) => void = () => {},
 ): AsyncGenerator<unknown> {
   const resolvedFile = await file;
-  if (typeof resolvedFile === "string") {
-    for (const line of resolvedFile.split("\n")) {
+  if (
+    typeof resolvedFile === "string" ||
+    resolvedFile instanceof Uint8Array ||
+    resolvedFile instanceof ArrayBuffer ||
+    (typeof Buffer !== "undefined" && Buffer.isBuffer(resolvedFile))
+  ) {
+    const text =
+      typeof resolvedFile === "string"
+        ? resolvedFile
+        : new TextDecoder().decode(resolvedFile);
+    for (const line of text.split("\n")) {
       if (!line.trim()) {
         continue;
       }
@@ -513,17 +534,34 @@ async function completeBatchResult(
   try {
     const resultError = errorFromResult(result);
     const responseBody = read(read(result.value, "response"), "body");
+    const embeddings = read(responseBody, "data");
+    const embeddingOutput =
+      context.endpoint === "/v1/embeddings"
+        ? { count: Array.isArray(embeddings) ? embeddings.length : 0 }
+        : undefined;
     if (resultError) {
-      child.log({ error: resultError });
+      child.log({
+        error: resultError,
+        ...(embeddingOutput ? { output: embeddingOutput } : {}),
+      });
     } else if (isObject(responseBody)) {
       const model = read(responseBody, "model");
+      const metrics = parseMetricsFromUsage(read(responseBody, "usage"));
       child.log({
         output:
-          context.endpoint === "/v1/chat/completions"
+          embeddingOutput ??
+          (context.endpoint === "/v1/chat/completions"
             ? read(responseBody, "choices")
-            : processImagesInOutput(read(responseBody, "output")),
+            : processImagesInOutput(read(responseBody, "output"))),
         ...(typeof model === "string" ? { metadata: { model } } : {}),
-        metrics: parseMetricsFromUsage(read(responseBody, "usage")),
+        metrics:
+          context.endpoint === "/v1/embeddings"
+            ? Object.fromEntries(
+                Object.entries(metrics).filter(([name]) =>
+                  EMBEDDING_METRICS.has(name),
+                ),
+              )
+            : metrics,
       });
     } else {
       child.log({ error: new Error("OpenAI Batch response body is missing") });

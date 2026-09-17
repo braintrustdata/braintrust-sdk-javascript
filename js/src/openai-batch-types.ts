@@ -1,5 +1,6 @@
 export type OpenAIBatchJSONL =
   | string
+  | ArrayBuffer
   | Iterable<unknown>
   | AsyncIterable<unknown>;
 

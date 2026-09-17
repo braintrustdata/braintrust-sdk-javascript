@@ -13,6 +13,7 @@ import type {
   AISDKCallParams,
   AISDKEmbedFunction,
   AISDKEmbedParams,
+  AISDKEvaluateParams,
   AISDKGenerateImageFunction,
   AISDKGenerateImageParams,
   AISDKGenerateFunction,
@@ -136,6 +137,21 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
     get(target, prop, receiver) {
       const original = Reflect.get(target, prop, receiver);
       switch (prop) {
+        case "experimental_evaluate": {
+          const evaluate = typedAISDK.experimental_evaluate;
+          return typeof evaluate === "function"
+            ? function (
+                this: unknown,
+                allParams: AISDKEvaluateParams & SpanInfo,
+              ) {
+                const { span_info, ...params } = allParams;
+                return aiSDKChannels.evaluate.invoke(evaluate, this, [params], {
+                  denyOutputPaths: options.denyOutputPaths,
+                  span_info,
+                });
+              }
+            : original;
+        }
         case "generateText":
           return wrapGenerateText(typedAISDK.generateText, options, typedAISDK);
         case "generateImage":

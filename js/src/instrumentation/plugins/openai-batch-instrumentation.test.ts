@@ -1,4 +1,12 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterEach,
+  assert,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 import {
   _exportsForTestingOnly,
   initLogger,
@@ -394,4 +402,165 @@ describe("OpenAI Batch instrumentation", () => {
     expect(received).toBe(content);
     expect(await backgroundLogger.drain()).toEqual([]);
   });
+
+  it.each([0, 1])(
+    "captures embedding batch errors with %i partial results",
+    async (count) => {
+      await completeOpenAIBatchTrace({
+        inputFileId: "file_emb_error",
+        inputFileContent: jsonl([
+          {
+            custom_id: "emb-error",
+            method: "POST",
+            url: "/v1/embeddings",
+            body: {
+              model: "text-embedding-3-small",
+              input: ["hello", "world"],
+            },
+          },
+        ]),
+        errorFileContent: jsonl([
+          {
+            custom_id: "emb-error",
+            error: { message: "Embedding request failed" },
+            response:
+              count > 0
+                ? {
+                    body: { data: [{ embedding: [0.1, 0.2] }] },
+                  }
+                : null,
+          },
+        ]),
+      });
+
+      const rows = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      expect(rows).toHaveLength(2);
+      const child = rows.find(
+        (row) => row.span_attributes?.name === "Embedding",
+      );
+      assert(child);
+      expect(child.error).toContain("Embedding request failed");
+      expect(child.output).toEqual({ count });
+      expect(child.metrics.end).toEqual(expect.any(Number));
+      expect(child.metrics.prompt_tokens).toBeUndefined();
+      expect(child.metrics.tokens).toBeUndefined();
+      expect(child.metrics.completion_tokens).toBeUndefined();
+    },
+  );
+
+  it.each([
+    { input: "hello world", contents: ["hello world"], dimensions: undefined },
+    { input: ["hello", "world"], contents: ["hello", "world"], dimensions: 2 },
+    { input: [15339, 1917], contents: [[15339, 1917]], dimensions: undefined },
+    { input: [[15339], [1917]], contents: [[15339], [1917]], dimensions: 2 },
+  ])(
+    "captures embedding batch input $input and its result",
+    async ({ input, contents, dimensions }) => {
+      const embeddingsInput = [
+        {
+          custom_id: "emb1",
+          method: "POST",
+          url: "/v1/embeddings",
+          body: {
+            model: "text-embedding-3-small",
+            input,
+            dimensions,
+            encoding_format: "float",
+          },
+        },
+      ];
+
+      let received = "";
+      const result = await openaiFilesCreateTraced({
+        create(params: { file: Blob; purpose: string }) {
+          return asyncAPIPromise(
+            Promise.resolve({ id: "file_emb" }).then(async (file) => {
+              received = await params.file.text();
+              return file;
+            }),
+          );
+        },
+      })({ file: new Blob([jsonl(embeddingsInput)]), purpose: "batch" });
+
+      expect(result).toEqual({ id: "file_emb" });
+      expect(received).toBe(jsonl(embeddingsInput));
+      const pendingRows = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      expect(pendingRows).toHaveLength(2);
+      const task = pendingRows.find(
+        (row) => row.span_attributes?.name === "openai.batch",
+      );
+      assert(task);
+      expect(task).toMatchObject({
+        span_attributes: { type: "task" },
+        metadata: { endpoint: "/v1/embeddings", input_file_id: "file_emb" },
+      });
+      const child = pendingRows.find(
+        (row) => row.span_attributes?.name === "Embedding",
+      );
+      assert(child);
+      expect(child).toMatchObject({
+        span_attributes: { type: "llm" },
+        span_parents: [task.span_id],
+        input: {
+          inputs: contents.map((content) => ({ content })),
+          ...(dimensions !== undefined
+            ? { output_dimensions: dimensions }
+            : {}),
+        },
+      });
+      expect(child.metadata).toEqual({
+        model: "text-embedding-3-small",
+        provider: "openai",
+        custom_id: "emb1",
+      });
+      expect(child.metrics.end).toBeUndefined();
+
+      await completeOpenAIBatchTrace({
+        inputFileId: "file_emb",
+        inputFileContent: jsonl(embeddingsInput),
+        outputFileContent: jsonl([
+          {
+            custom_id: "emb1",
+            response: {
+              status_code: 200,
+              body: {
+                model: "resolved-embedding-model",
+                data: contents.map((_, index) => ({
+                  index,
+                  embedding: [0.1, 0.2],
+                })),
+                usage: {
+                  prompt_tokens: 2,
+                  completion_tokens: 99,
+                  total_tokens: 2,
+                  completion_tokens_details: { audio_tokens: 5 },
+                },
+              },
+            },
+          },
+        ]),
+      });
+      const completedRows = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      expect(completedRows).toHaveLength(2);
+      const completedChild = completedRows.find((row) => row.id === child.id);
+      assert(completedChild);
+      expect(completedChild).toMatchObject({
+        span_attributes: { name: "Embedding", type: "llm" },
+        span_parents: [task.span_id],
+        metadata: { model: "resolved-embedding-model", provider: "openai" },
+        metrics: { prompt_tokens: 2, tokens: 2, end: expect.any(Number) },
+      });
+      expect(completedChild.output).toEqual({ count: contents.length });
+      expect(completedChild.metrics.completion_tokens).toBeUndefined();
+      expect(
+        completedRows.find((row) => row.id === task.id)?.metrics.end,
+      ).toEqual(expect.any(Number));
+    },
+  );
 });

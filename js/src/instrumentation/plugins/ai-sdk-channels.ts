@@ -3,6 +3,8 @@ import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type { ChannelSpanInfo } from "../core/types";
 import type {
   AISDK,
+  AISDKEvaluateParams,
+  AISDKEvaluationResult,
   AISDKCallParams,
   AISDKEmbedParams,
   AISDKEmbeddingResult,
@@ -55,6 +57,14 @@ export const aiSDKChannels = defineChannels(
       AISDKModelChannelContext
     >({
       channelName: "model.doStream",
+      kind: "async",
+    }),
+    evaluate: channel<
+      [AISDKEvaluateParams],
+      AISDKEvaluationResult,
+      AISDKChannelContext
+    >({
+      channelName: "evaluate",
       kind: "async",
     }),
     generateText: channel<

@@ -32,6 +32,7 @@ const INSTALL_SECRET_ENV_VARS = [
   "MISTRAL_API_KEY",
   "OPENAI_API_KEY",
   "OPENROUTER_API_KEY",
+  "TYPESAFE_API_KEY",
 ];
 
 const rawArgs = process.argv.slice(2).filter((arg) => arg !== "--");

@@ -117,7 +117,14 @@ function createMockStreamingClient(options, responseBody) {
     : baseClient;
 }
 
-function createMockBatchClient(options) {
+function createMockBatchClient(
+  options,
+  {
+    batchId = "batch_e2e_fixture",
+    endpoint = "/v1/chat/completions",
+    inputFileId = "file_batch_e2e_fixture",
+  } = {},
+) {
   const batchCreatedAt = Date.now() / 1000;
   const baseClient = new options.OpenAI({
     apiKey: process.env.OPENAI_API_KEY ?? "test-openai-key",
@@ -127,7 +134,7 @@ function createMockBatchClient(options) {
       if (pathname.endsWith("/files")) {
         return new Response(
           JSON.stringify({
-            id: "file_batch_e2e_fixture",
+            id: inputFileId,
             object: "file",
             bytes: 1024,
             created_at: batchCreatedAt,
@@ -145,13 +152,13 @@ function createMockBatchClient(options) {
         );
       }
 
-      if (pathname.endsWith("/batches/batch_e2e_fixture")) {
+      if (pathname.endsWith(`/batches/${batchId}`)) {
         return new Response(
           JSON.stringify({
-            id: "batch_e2e_fixture",
+            id: batchId,
             object: "batch",
-            endpoint: "/v1/chat/completions",
-            input_file_id: "file_batch_e2e_fixture",
+            endpoint,
+            input_file_id: inputFileId,
             completion_window: "24h",
             status: "completed",
             created_at: batchCreatedAt,
@@ -172,7 +179,7 @@ function createMockBatchClient(options) {
       const params = JSON.parse(String(init?.body));
       return new Response(
         JSON.stringify({
-          id: "batch_e2e_fixture",
+          id: batchId,
           object: "batch",
           endpoint: params.endpoint,
           input_file_id: params.input_file_id,
@@ -562,11 +569,12 @@ export async function runOpenAIInstrumentationScenario(options) {
         },
       );
 
+      let embeddingResponse;
       await runOperation(
         "openai-embeddings-operation",
         "embeddings",
         async () => {
-          await client.embeddings.create({
+          embeddingResponse = await client.embeddings.create({
             model: EMBEDDING_MODEL,
             input: "Paris",
           });
@@ -810,6 +818,139 @@ export async function runOpenAIInstrumentationScenario(options) {
           throw new Error("Expected batch result responses to be consumed");
         }
       });
+
+      await runOperation(
+        "openai-batch-binary-jsonl-operation",
+        "batch-binary-jsonl",
+        async () => {
+          const batchItems = [
+            {
+              customId: "batch_binary_alpha",
+              prompt: "Reply with exactly ALPHA.",
+              response: "ALPHA",
+            },
+            {
+              customId: "batch_binary_bravo",
+              prompt: "Reply with exactly BRAVO.",
+              response: "BRAVO",
+            },
+            {
+              customId: "batch_binary_charlie",
+              prompt: "Reply with exactly CHARLIE.",
+              response: "CHARLIE",
+            },
+          ];
+          const input = batchItems
+            .map((item) =>
+              JSON.stringify({
+                custom_id: item.customId,
+                method: "POST",
+                url: "/v1/chat/completions",
+                body: {
+                  model: OPENAI_MODEL,
+                  messages: [{ role: "user", content: item.prompt }],
+                },
+              }),
+            )
+            .join("\n");
+          const output = [batchItems[1], batchItems[0]]
+            .map((item, index) =>
+              JSON.stringify({
+                custom_id: item.customId,
+                response: {
+                  status_code: 200,
+                  body: {
+                    choices: [
+                      {
+                        index: 0,
+                        finish_reason: "stop",
+                        message: {
+                          role: "assistant",
+                          content: item.response,
+                        },
+                      },
+                    ],
+                    usage: {
+                      prompt_tokens: 8 + index,
+                      completion_tokens: 1,
+                      total_tokens: 9 + index,
+                    },
+                  },
+                },
+              }),
+            )
+            .join("\n");
+          const error = JSON.stringify({
+            custom_id: batchItems[2].customId,
+            error: {
+              code: "fixture_error",
+              message: "Batch fixture request failed",
+            },
+          });
+
+          await completeOpenAIBatchTrace({
+            inputFileId: "file_binary_batch_e2e_fixture",
+            inputFileContent: new TextEncoder().encode(input),
+            outputFileContent: Promise.resolve(Buffer.from(output)),
+            errorFileContent: await new Blob([error]).arrayBuffer(),
+          });
+        },
+      );
+
+      await runOperation(
+        "openai-embedding-batch-operation",
+        "embedding-batch",
+        async () => {
+          if (!embeddingResponse) {
+            throw new Error("Expected the provider embedding response");
+          }
+          const embeddingBatchFixtureClient = createMockBatchClient(options, {
+            batchId: "batch_embedding_e2e_fixture",
+            endpoint: "/v1/embeddings",
+            inputFileId: "file_embedding_batch_e2e_fixture",
+          });
+          const input = JSON.stringify({
+            custom_id: "batch_embedding_paris",
+            method: "POST",
+            url: "/v1/embeddings",
+            body: {
+              model: EMBEDDING_MODEL,
+              input: "Paris",
+            },
+          });
+          const inputFile = await openaiFilesCreateTraced(
+            embeddingBatchFixtureClient.files,
+          )({
+            file: new File([input], "embedding-batch.jsonl"),
+            purpose: "batch",
+          });
+          const created = await embeddingBatchFixtureClient.batches.create({
+            input_file_id: inputFile.id,
+            completion_window: "24h",
+            endpoint: "/v1/embeddings",
+          });
+          const completed = await openaiBatchesRetrieveTraced(
+            embeddingBatchFixtureClient.batches,
+          )(created.id);
+          const outputFile = new Response(
+            JSON.stringify({
+              custom_id: "batch_embedding_paris",
+              response: {
+                status_code: 200,
+                body: embeddingResponse,
+              },
+            }),
+          );
+          await completeOpenAIBatchTrace({
+            inputFileId: completed.input_file_id,
+            inputFileContent: input,
+            outputFileContent: outputFile,
+          });
+          if (!outputFile.bodyUsed) {
+            throw new Error("Expected embedding batch results to be consumed");
+          }
+        },
+      );
     },
     metadata: {
       openaiSdkVersion: options.openaiSdkVersion,

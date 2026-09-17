@@ -1,0 +1,149 @@
+{
+  "span_tree": [
+    {
+      "name": "typesafe-instrumentation-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "typesafe-mixed-operation",
+          "children": [
+            {
+              "name": "typesafe.systemOne",
+              "type": "question",
+              "children": [],
+              "input": {
+                "questions": [
+                  {
+                    "criteria": {
+                      "billing": null,
+                      "other": null,
+                      "technical": null
+                    },
+                    "id": "<span:1>",
+                    "instructions": "Which team should handle this?",
+                    "type": "choice"
+                  },
+                  {
+                    "criteria": [
+                      "routine",
+                      "soon",
+                      "urgent"
+                    ],
+                    "id": "<span:2>",
+                    "instructions": "How urgent is this request?",
+                    "type": "score"
+                  },
+                  {
+                    "id": "<span:3>",
+                    "instructions": {
+                      "question": "Does the customer report a duplicate charge?"
+                    },
+                    "type": "noul"
+                  }
+                ],
+                "state": {
+                  "message": "I was charged twice. Please refund the duplicate charge today."
+                }
+              },
+              "output": {
+                "answers": [
+                  {
+                    "choice": "billing",
+                    "confidence": 1,
+                    "id": "<span:1>",
+                    "probabilities": {
+                      "billing": 1,
+                      "other": 0,
+                      "technical": 0
+                    },
+                    "type": "choice"
+                  },
+                  {
+                    "id": "<span:2>",
+                    "noul": 0.99,
+                    "type": "noul"
+                  },
+                  {
+                    "confidence": 0.66,
+                    "id": "<span:3>",
+                    "legend": {
+                      "0": "routine",
+                      "1": "soon",
+                      "2": "urgent"
+                    },
+                    "probabilities": {
+                      "0": 0,
+                      "1": 0.22,
+                      "2": 0.78
+                    },
+                    "score": 1.78,
+                    "type": "score"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "jev-1.13.0",
+                "provider": "typesafe"
+              },
+              "metrics": {
+                "completion_tokens": 70,
+                "prompt_tokens": 370,
+                "tokens": 440
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "mixed",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "typesafe-raw-operation",
+          "children": [
+            {
+              "name": "typesafe.systemOne",
+              "type": "question",
+              "children": [],
+              "input": {
+                "questions": [
+                  {
+                    "id": "<span:1>",
+                    "instructions": "Is this feedback positive?",
+                    "type": "noul"
+                  }
+                ],
+                "state": "The package arrived intact and on time."
+              },
+              "output": {
+                "answers": [
+                  {
+                    "id": "<span:1>",
+                    "noul": 0.97,
+                    "type": "noul"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "jev-1.13.0",
+                "provider": "typesafe"
+              },
+              "metrics": {
+                "completion_tokens": 20,
+                "prompt_tokens": 279,
+                "tokens": 299
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "raw",
+            "testRunId": "<run:1>"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "typesafe-instrumentation",
+        "testRunId": "<run:1>"
+      }
+    }
+  ]
+}

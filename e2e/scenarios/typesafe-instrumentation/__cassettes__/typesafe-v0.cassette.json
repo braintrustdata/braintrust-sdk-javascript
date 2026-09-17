@@ -1,0 +1,154 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "c89a379b9929505d",
+      "matchKey": "POST api.typesafe.ai/v1/systemone",
+      "recordedAt": "2026-09-17T09:28:43.925Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "model": "jev-latest",
+            "questions": {
+              "category": {
+                "criteria": {
+                  "billing": null,
+                  "other": null,
+                  "technical": null
+                },
+                "instructions": "Which team should handle this?",
+                "type": "choice"
+              },
+              "duplicate_charge": {
+                "instructions": {
+                  "question": "Does the customer report a duplicate charge?"
+                },
+                "type": "noul"
+              },
+              "urgency": {
+                "criteria": ["routine", "soon", "urgent"],
+                "instructions": "How urgent is this request?",
+                "type": "score"
+              }
+            },
+            "state": {
+              "message": "I was charged twice. Please refund the duplicate charge today."
+            }
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.typesafe.ai/v1/systemone"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "answers": {
+              "category": {
+                "choice": "billing",
+                "confidence": 1,
+                "probabilities": {
+                  "billing": 1,
+                  "other": 0,
+                  "technical": 0
+                },
+                "type": "choice"
+              },
+              "duplicate_charge": {
+                "noul": 0.99,
+                "type": "noul"
+              },
+              "urgency": {
+                "confidence": 0.71,
+                "legend": {
+                  "0": "routine",
+                  "1": "soon",
+                  "2": "urgent"
+                },
+                "probabilities": {
+                  "0": 0,
+                  "1": 0.19,
+                  "2": 0.81
+                },
+                "score": 1.8,
+                "type": "score"
+              }
+            },
+            "model": "jev-1.13.0",
+            "usage": {
+              "input_tokens": 370,
+              "output_tokens": 70
+            }
+          }
+        },
+        "headers": {
+          "content-length": "404",
+          "content-type": "application/json",
+          "date": "Thu, 17 Sep 2026 09:28:43 GMT",
+          "server": "istio-envoy",
+          "x-envoy-upstream-service-time": "117",
+          "x-typesafe-request-id": "req_01a0aeb26c037ff9bbe4e12634b1e4dc"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "f496f1d9a9324031",
+      "matchKey": "POST api.typesafe.ai/v1/systemone",
+      "recordedAt": "2026-09-17T09:28:44.134Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "model": "jev-1.13.0",
+            "questions": {
+              "positive": {
+                "instructions": "Is this feedback positive?",
+                "type": "noul"
+              }
+            },
+            "state": "The package arrived intact and on time."
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.typesafe.ai/v1/systemone"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "answers": {
+              "positive": {
+                "noul": 0.97,
+                "type": "noul"
+              }
+            },
+            "model": "jev-1.13.0",
+            "usage": {
+              "input_tokens": 279,
+              "output_tokens": 20
+            }
+          }
+        },
+        "headers": {
+          "content-length": "121",
+          "content-type": "application/json",
+          "date": "Thu, 17 Sep 2026 09:28:43 GMT",
+          "server": "istio-envoy",
+          "x-envoy-upstream-service-time": "144",
+          "x-typesafe-request-id": "req_01a0aeb26cb77f01bafc3f74fcb09908"
+        },
+        "status": 200,
+        "statusText": "OK"
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-09-17T09:28:42.423Z"
+  }
+}

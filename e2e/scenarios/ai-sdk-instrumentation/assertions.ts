@@ -674,6 +674,8 @@ export function defineAISDKInstrumentationAssertions(options: {
   supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
   supportsEmbedMany: boolean;
+  supportsEvaluate?: boolean;
+  supportsEvaluateStringModel?: boolean;
   supportsGenerateObject: boolean;
   supportsGenerateImage: boolean;
   supportsOutputObjectScenario: boolean;
@@ -910,6 +912,97 @@ export function defineAISDKInstrumentationAssertions(options: {
           expect(output.embedding_length).toBeGreaterThan(0);
         }
       });
+    }
+
+    if (options.supportsEvaluate) {
+      test(
+        "captures native evaluation answers and confidence",
+        testConfig,
+        () => {
+          const operation = findLatestSpan(events, "ai-sdk-evaluate-operation");
+          expectOperationParentedByRoot(
+            operation,
+            findLatestSpan(events, ROOT_NAME),
+          );
+          const spans = findChildSpans(events, "evaluate", operation?.span.id);
+          expect(spans).toHaveLength(1);
+          const [span] = spans;
+          expect(span.span.type).toBe("question");
+          expect(span.input).toMatchObject({
+            state: { message: expect.any(String) },
+            questions: expect.arrayContaining([
+              expect.objectContaining({ id: "category", type: "choice" }),
+              expect.objectContaining({ id: "urgency", type: "score" }),
+              expect.objectContaining({ id: "duplicate", type: "boolean" }),
+            ]),
+          });
+          expect(span.output).toMatchObject({
+            answers: expect.arrayContaining([
+              expect.objectContaining({
+                id: "category",
+                type: "choice",
+                choice: expect.any(String),
+                confidence: expect.any(Number),
+                probabilities: expect.any(Object),
+              }),
+              expect.objectContaining({
+                id: "urgency",
+                type: "score",
+                score: expect.any(Number),
+                confidence: expect.any(Number),
+                probabilities: expect.any(Object),
+              }),
+              expect.objectContaining({
+                id: "duplicate",
+                type: "boolean",
+                probability: expect.any(Number),
+              }),
+            ]),
+          });
+          expect(span.row.metadata).toMatchObject({
+            model: expect.stringMatching(/^jev-/),
+            provider: "typesafe",
+            providerMetadata: { typesafe: { confidence: expect.any(Object) } },
+          });
+          expect(span.metrics).toMatchObject({
+            prompt_tokens: expect.any(Number),
+            completion_tokens: expect.any(Number),
+            tokens: expect.any(Number),
+          });
+
+          if (options.supportsEvaluateStringModel !== false) {
+            const stringOperation = findLatestSpan(
+              events,
+              "ai-sdk-evaluate-string-operation",
+            );
+            const stringSpans = findChildSpans(
+              events,
+              "evaluate",
+              stringOperation?.span.id,
+            );
+            expect(stringSpans).toHaveLength(1);
+            expect(stringSpans[0].input).toMatchObject({
+              state: "The package arrived intact and on time.",
+              questions: [
+                expect.objectContaining({ id: "positive", type: "boolean" }),
+              ],
+            });
+            expect(stringSpans[0].output).toMatchObject({
+              answers: [
+                {
+                  id: "positive",
+                  type: "boolean",
+                  probability: expect.any(Number),
+                },
+              ],
+            });
+            expect(stringSpans[0].row.metadata).toMatchObject({
+              model: expect.stringMatching(/^jev-/),
+              provider: "typesafe",
+            });
+          }
+        },
+      );
     }
 
     if (options.supportsRerank) {

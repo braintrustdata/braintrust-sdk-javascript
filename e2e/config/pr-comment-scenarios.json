@@ -510,6 +510,21 @@
     ]
   },
   {
+    "scenarioDirName": "typesafe-instrumentation",
+    "label": "TypeSafe Instrumentation",
+    "metadataScenario": "typesafe-instrumentation",
+    "variants": [
+      {
+        "variantKey": "typesafe-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "typesafe-v0-latest",
+        "label": "v0 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "openrouter-instrumentation",
     "label": "OpenRouter Instrumentation",
     "metadataScenario": "openrouter-instrumentation",
@@ -586,11 +601,11 @@
       },
       {
         "variantKey": "ai-sdk-v7",
-        "label": "v7 pinned"
+        "label": "v7 pinned (including evaluate)"
       },
       {
         "variantKey": "ai-sdk-v7-latest",
-        "label": "v7 latest"
+        "label": "v7 latest (including evaluate)"
       }
     ]
   },
