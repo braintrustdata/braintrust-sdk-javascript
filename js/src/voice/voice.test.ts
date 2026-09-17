@@ -263,3 +263,216 @@ describe("no backend configured", () => {
     );
   });
 });
+
+describe("pass 3: a call on a real timeline", () => {
+  /** Two clips, one per side, so a mixdown has something to place. */
+  async function pacedCall(opts: Parameters<typeof newRoom>[0] = {}) {
+    const room = await newRoom({ renderer: placeholderAudio, ...opts });
+    room.onIncomingCall(async (call: Call) => {
+      await call.say("Acme support, how can I help?");
+      await call.listen();
+      await call.say("Refund processed.");
+      await call.listen();
+      call.hangUp();
+    });
+    const customer = await getActor("customer-backorder-refund");
+    await customer.dial(room);
+    return room.listen({ maxTurns: 6 });
+  }
+
+  test("turns carry a position and a duration", async () => {
+    const conversation = await pacedCall();
+    const turns = conversation.turns();
+    expect(turns[0].atMs).toBe(0);
+    expect(turns[0].durationMs).toBeGreaterThan(0);
+    // Each turn starts where the previous one finished.
+    for (let i = 1; i < turns.length; i++) {
+      expect(turns[i].atMs).toBe(turns[i - 1].atMs + turns[i - 1].durationMs);
+    }
+    expect(conversation.durationMs).toBe(
+      turns[turns.length - 1].atMs + turns[turns.length - 1].durationMs,
+    );
+  });
+
+  test("the whole call mixes down to one stereo file", async () => {
+    const conversation = await pacedCall();
+    const call = conversation.audio();
+    expect(call).toBeInstanceOf(Attachment);
+    expect(call!.reference.filename).toMatch(/^call_\d+hz_2ch\.wav$/);
+
+    const bytes = new Uint8Array(await (await call!.data()).arrayBuffer());
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    expect(view.getUint16(22, true)).toBe(2); // stereo
+    // Long enough to hold every turn back to back.
+    const seconds = view.getUint32(40, true) / view.getUint32(28, true);
+    expect(seconds).toBeGreaterThan(conversation.durationMs / 1000 - 0.1);
+  });
+
+  test("each side lands on its own channel", async () => {
+    const conversation = await pacedCall();
+    const bytes = new Uint8Array(
+      await (await conversation.audio()!.data()).arrayBuffer(),
+    );
+    const pcm = new Int16Array(
+      bytes.buffer.slice(
+        bytes.byteOffset + 44,
+        bytes.byteOffset + bytes.byteLength,
+      ),
+    );
+    let left = 0;
+    let right = 0;
+    for (let i = 0; i < pcm.length; i += 2) {
+      left += Math.abs(pcm[i]);
+      right += Math.abs(pcm[i + 1]);
+    }
+    // The caller is on the left and the agent on the right, so both carry
+    // sound and neither is silent.
+    expect(left).toBeGreaterThan(0);
+    expect(right).toBeGreaterThan(0);
+  });
+
+  test("an interruption cuts the agent short and is recorded", async () => {
+    const conversation = await pacedCall({ interruptAfter: 0.4 });
+    const overlaps = conversation.interruptions();
+    expect(overlaps.length).toBeGreaterThan(0);
+
+    const first = overlaps[0];
+    expect(first.by).toBe("actor");
+    expect(first.playedMs).toBeGreaterThan(0);
+    expect(first.overlapMs).toBeGreaterThan(0);
+
+    // The caller starts talking before the agent had finished.
+    const cut = conversation
+      .turns()
+      .find(
+        (t) =>
+          t.speaker === "agent" &&
+          t.atMs <= first.atMs &&
+          first.atMs < t.atMs + t.durationMs,
+      );
+    expect(cut).toBeDefined();
+  });
+
+  test("the opening turn is never cut into", async () => {
+    const conversation = await pacedCall({ interruptAfter: 0.4 });
+    const opening = conversation.turns()[0];
+    // Talking over the first thing said leaves the caller nothing to answer.
+    for (const overlap of conversation.interruptions()) {
+      expect(overlap.atMs).toBeGreaterThanOrEqual(
+        opening.atMs + opening.durationMs,
+      );
+    }
+  });
+});
+
+describe("pass 3: overlap is audible, not just recorded", () => {
+  test("both voices are on the line at once during a barge-in", async () => {
+    const room = await newRoom({
+      renderer: placeholderAudio,
+      interruptAfter: 0.4,
+      bargeInReactionMs: 300,
+    });
+    room.onIncomingCall(async (call: Call) => {
+      await call.say("Acme support, how can I help you today?");
+      await call.listen();
+      // A second turn, because the opening one is protected from barge-in.
+      await call.say("Let me look that up for you and see what I can do.");
+      await call.listen();
+      call.hangUp();
+    });
+    const customer = await getActor("customer-backorder-refund");
+    await customer.dial(room);
+    const conversation = await room.listen({ maxTurns: 6 });
+
+    const overlap = conversation.interruptions()[0];
+    expect(overlap.overlapMs).toBeGreaterThan(0);
+
+    // The caller's turn starts before the agent's finishes, which is what
+    // makes the two simultaneous rather than merely adjacent.
+    const turns = conversation.turns();
+    const agentTurn = turns.filter((t) => t.speaker === "agent")[1]!;
+    const callerTurn = turns.find(
+      (t) => t.speaker === "actor" && t.atMs >= agentTurn.atMs,
+    )!;
+    expect(callerTurn.atMs).toBeLessThan(agentTurn.atMs + agentTurn.durationMs);
+
+    // And the mixdown carries sound on both channels at the same instant.
+    const bytes = new Uint8Array(
+      await (await conversation.audio()!.data()).arrayBuffer(),
+    );
+    const pcm = new Int16Array(
+      bytes.buffer.slice(
+        bytes.byteOffset + 44,
+        bytes.byteOffset + bytes.byteLength,
+      ),
+    );
+    const rate = 24000;
+    const from = Math.round((callerTurn.atMs / 1000) * rate);
+    const to = Math.round(
+      ((agentTurn.atMs + agentTurn.durationMs) / 1000) * rate,
+    );
+    let bothLoud = 0;
+    for (let i = from; i < to; i++) {
+      if (Math.abs(pcm[i * 2]) > 100 && Math.abs(pcm[i * 2 + 1]) > 100)
+        bothLoud++;
+    }
+    expect(bothLoud).toBeGreaterThan(0);
+  });
+});
+
+describe("pass 3: turn spans carry the turn's real length", () => {
+  test("a span lasts as long as the turn did, and an interrupted one is shorter", async () => {
+    const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLoginForTests();
+    const logger = initLogger({
+      projectName: "voice-test",
+      projectId: "voice-test-project",
+    });
+
+    const room = await newRoom({
+      renderer: placeholderAudio,
+      interruptAfter: 0.4,
+      bargeInReactionMs: 100,
+    });
+    room.onIncomingCall(async (call: Call) => {
+      await call.say("Acme support, how can I help you today?");
+      await call.listen();
+      await call.say("Let me look that up for you.");
+      await call.listen();
+      call.hangUp();
+    });
+    const customer = await getActor("customer-backorder-refund");
+    await customer.dial(room);
+
+    const conversation = await logger.traced(
+      async () => room.listen({ maxTurns: 6 }),
+      { name: "task" },
+    );
+
+    const events = (await memoryLogger.drain()) as any[];
+    const spans = events.filter((e) =>
+      ["agent_turn", "user_turn"].includes(e?.span_attributes?.name),
+    );
+    expect(spans.length).toBeGreaterThan(0);
+
+    for (const span of spans) {
+      const lasted = span.metrics.end - span.metrics.start;
+      // A zero-width span is the bug this guards: it would draw as a mark
+      // rather than as the stretch of time the turn occupied.
+      expect(lasted).toBeGreaterThan(0);
+      expect(lasted * 1000).toBeCloseTo(span.output.duration_ms, 0);
+    }
+
+    // The turn that was cut short is shorter than the one that was not.
+    const agentSpans = spans
+      .filter((s) => s.span_attributes.name === "agent_turn")
+      .sort((a, b) => a.output.at_ms - b.output.at_ms);
+    const opening = agentSpans[0];
+    const interrupted = agentSpans[1];
+    expect(interrupted.output.duration_ms).toBeLessThan(
+      opening.output.duration_ms,
+    );
+
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+  });
+});

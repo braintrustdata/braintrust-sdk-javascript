@@ -89,3 +89,51 @@ export function placeholderTone({
   }
   return { data, sampleRate, numChannels: 1 };
 }
+
+/**
+ * Mix a call down to one stereo file on a real timeline.
+ *
+ * Caller left, agent right, each turn placed at the moment it was spoken, the
+ * way `voice-behaviors` records a call. Mono per-turn clips let you hear what
+ * each side said; this is what lets you hear a call, because two people
+ * talking over each other is only audible when both are on one timeline.
+ */
+export function mixToStereo(
+  parts: Array<{
+    /** Which channel: the caller on the left, the agent on the right. */
+    channel: "left" | "right";
+    /** Where this clip starts, in milliseconds from the start of the call. */
+    atMs: number;
+    frame: AudioFrame;
+  }>,
+): AudioFrame | null {
+  const voiced = parts.filter((p) => p.frame.data.length > 0);
+  if (voiced.length === 0) return null;
+
+  // Everything here is produced at one rate. A part at another rate is
+  // dropped rather than silently played at the wrong speed.
+  const sampleRate = voiced[0].frame.sampleRate;
+  const usable = voiced.filter((p) => p.frame.sampleRate === sampleRate);
+
+  const endSample = Math.max(
+    ...usable.map(
+      (p) => Math.round((p.atMs / 1000) * sampleRate) + p.frame.data.length,
+    ),
+  );
+  const stereo = new Int16Array(endSample * 2);
+
+  for (const part of usable) {
+    const offset = Math.round((part.atMs / 1000) * sampleRate);
+    const lane = part.channel === "left" ? 0 : 1;
+    for (let i = 0; i < part.frame.data.length; i++) {
+      const at = (offset + i) * 2 + lane;
+      if (at >= stereo.length) break;
+      // Add rather than assign, so a party talking twice in one place does
+      // not silently erase itself.
+      const sum = stereo[at] + part.frame.data[i];
+      stereo[at] = Math.max(-32768, Math.min(32767, sum));
+    }
+  }
+
+  return { data: stereo, sampleRate, numChannels: 2 };
+}

@@ -28,6 +28,14 @@ export interface SpeechOptions {
    * than truncating, which reads as a broken call.
    */
   maxTokens?: number;
+  /**
+   * How many times to retry a turn the far side could not serve.
+   *
+   * A call is many model calls in sequence, so a single rate limit or gateway
+   * hiccup otherwise ends the whole conversation. Prior art warns that audio
+   * endpoints degrade under burst load, which is exactly when this bites.
+   */
+  retries?: number;
 }
 
 export interface SpeechTurn {
@@ -72,27 +80,38 @@ export async function speak(
   options: SpeechOptions = {},
 ): Promise<SpeechTurn> {
   const { apiKey, baseUrl, model, voice } = resolve(options);
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      modalities: ["text", "audio"],
-      audio: { voice, format: "wav" },
-      max_completion_tokens: options.maxTokens ?? 4096,
-      ...(options.tools?.length ? { tools: options.tools } : {}),
-      messages,
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(
-      `Speech call failed: ${response.status} ${await response.text()}`,
-    );
+  const attempts = (options.retries ?? 2) + 1;
+  let response: Response | null = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        modalities: ["text", "audio"],
+        audio: { voice, format: "wav" },
+        max_completion_tokens: options.maxTokens ?? 4096,
+        ...(options.tools?.length ? { tools: options.tools } : {}),
+        messages,
+      }),
+    });
+    if (response.ok) break;
+    // A rate limit or a gateway error is worth another go; a bad request is
+    // not, because it will be just as bad next time.
+    const worthRetrying = response.status === 429 || response.status >= 500;
+    if (!worthRetrying || attempt === attempts) {
+      throw new Error(
+        `Speech call failed: ${response.status} ${await response.text()}`,
+      );
+    }
+    await new Promise((r) => setTimeout(r, 1000 * attempt));
   }
-  const body = (await response.json()) as any;
+
+  const body = (await response!.json()) as any;
   const message = body?.choices?.[0]?.message ?? {};
   const audio = message.audio ?? {};
   return {

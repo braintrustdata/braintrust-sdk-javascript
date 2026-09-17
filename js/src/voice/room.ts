@@ -110,6 +110,9 @@ export class Room {
   private brain: ActorBrain | null;
   private speaksFirst: Speaker;
   private readonly renderer: VoiceRenderer;
+  private readonly pacing: "realtime" | "none";
+  private readonly interruptAfter: number | null;
+  private readonly bargeInReactionMs: number;
   private readonly leg: AgentLeg;
   private direction: "inbound" | "outbound";
   private agentTask: Promise<void> | null = null;
@@ -120,6 +123,9 @@ export class Room {
     this.brain = init.brain ?? null;
     this.speaksFirst = init.speaksFirst ?? "agent";
     this.renderer = init.options.renderer ?? noAudio;
+    this.pacing = init.options.pacing ?? "none";
+    this.interruptAfter = init.options.interruptAfter ?? null;
+    this.bargeInReactionMs = init.options.bargeInReactionMs ?? 400;
     this.leg = init.leg;
     this.direction = init.direction ?? "inbound";
   }
@@ -173,30 +179,106 @@ export class Room {
     const interruptions: Interruption[] = [];
     let endReason: EndReason = "maxTurns";
 
+    // The call's own clock. Without one every turn happens at the same
+    // instant, so nobody is ever mid-utterance and overlap cannot exist.
+    let clockMs = 0;
+    // Wall-clock second the call started, so a turn span can be stamped with
+    // when it actually happened rather than when it was recorded.
+    const callStartedAt = Date.now() / 1000;
+    const wait = (ms: number) =>
+      this.pacing === "realtime" && ms > 0
+        ? // Deliberately not unref'd: this timer is the call happening, so
+          // the process must stay alive for it. The timeout guard below is a
+          // safety net and is unref'd, which is the opposite case.
+          new Promise<void>((resolve) => setTimeout(resolve, ms))
+        : Promise.resolve();
+
     const record = async (
       speaker: Speaker,
       text: string,
       spoken?: AudioFrame,
     ) => {
       const audio = spoken ?? (await this.renderer(text, speaker));
-      const turn = new VoiceTurn(speaker, text, audio);
+      const turn = new VoiceTurn(speaker, text, audio, clockMs);
       turns.push(turn);
-      // A turn primitive, so the call reads as a timeline rather than a pile
-      // of spans. Matches the shape our LiveKit and Pipecat integrations emit.
+      return turn;
+    };
+
+    /**
+     * Record a finished turn as a span on the call's timeline.
+     *
+     * Stamped with when the turn happened and how long it lasted, rather than
+     * opened and closed on the spot: a span that starts and ends in the same
+     * instant draws as a zero-width mark, so a nine-second utterance would be
+     * invisible on the timeline it is supposed to explain.
+     *
+     * Called once the turn is final, because a turn that was talked over is
+     * shorter than the one that started playing.
+     */
+    const stamp = (turn: VoiceTurn) => {
       try {
         const parent = currentSpan();
-        if (parent !== NOOP_SPAN) {
-          parent
-            .startSpan({
-              name: speaker === "agent" ? "agent_turn" : "user_turn",
-              event: { output: turn.toJSON() },
-            })
-            .end();
-        }
+        if (parent === NOOP_SPAN) return;
+        const startTime = callStartedAt + turn.atMs / 1000;
+        parent
+          .startSpan({
+            name: turn.speaker === "agent" ? "agent_turn" : "user_turn",
+            startTime,
+            event: { output: turn.toJSON() },
+          })
+          .end({ endTime: startTime + turn.durationMs / 1000 });
       } catch {
         // No tracing state. A call is still a call.
       }
-      return turn;
+    };
+
+    /**
+     * Let a turn play, and hand the floor over when it finishes.
+     *
+     * With an interruption configured the caller starts talking partway
+     * through the agent's turn instead. What the agent said past that point
+     * was never heard, so the turn is cut to what was played and the overlap
+     * is recorded.
+     */
+    const playOut = async (turn: VoiceTurn): Promise<void> => {
+      const full = turn.durationMs;
+      // Never cut into the opening turn. On an outbound call it carries the
+      // whole reason for calling, so talking over it leaves the caller with
+      // nothing to respond to and the scenario untested. Nobody barges in on
+      // a cold call's first sentence either.
+      const isOpening = turns.indexOf(turn) === 0;
+      const cutAt =
+        this.interruptAfter !== null &&
+        turn.speaker === "agent" &&
+        !isOpening &&
+        full > 0
+          ? Math.round(full * this.interruptAfter)
+          : null;
+
+      if (cutAt === null) {
+        await wait(full);
+        clockMs += full;
+        return;
+      }
+
+      // The caller starts talking at `cutAt`. The agent does not stop dead:
+      // it keeps going for a beat before it notices, and that beat is the
+      // overlap, the stretch where both voices are on the line at once.
+      const reactionMs = Math.min(this.bargeInReactionMs, full - cutAt);
+      const playedMs = cutAt + reactionMs;
+
+      await wait(playedMs);
+      turn._truncate(playedMs);
+      interruptions.push({
+        by: "actor",
+        atMs: turn.atMs + cutAt,
+        // What the caller heard of the agent before it gave up the floor.
+        playedMs,
+        overlapMs: reactionMs,
+      });
+      // The caller speaks from the moment it cut in, so its audio genuinely
+      // lands on top of the agent's last beat.
+      clockMs = turn.atMs + cutAt;
     };
 
     const TIMEOUT = Symbol("timeout");
@@ -222,6 +304,9 @@ export class Room {
         // not gets the room's renderer.
         const turn = await record("actor", said.text, said.audio ?? undefined);
         await this.leg.send(said.text, turn.frame());
+        await wait(turn.durationMs);
+        clockMs += turn.durationMs;
+        stamp(turn);
         expecting = "agent";
       } else {
         const heard = await withTimeout(this.leg.receive());
@@ -233,7 +318,17 @@ export class Room {
           endReason = "hangup";
           break;
         }
-        await record("agent", heard.text, heard.audio ?? undefined);
+        // An utterance with nothing in it is not a turn. Recording one puts a
+        // blank line in the transcript and leaves the other side replying to
+        // silence.
+        if (!heard.text.trim() && !heard.audio) continue;
+        const turn = await record(
+          "agent",
+          heard.text,
+          heard.audio ?? undefined,
+        );
+        await playOut(turn);
+        stamp(turn);
         expecting = "actor";
       }
     }
