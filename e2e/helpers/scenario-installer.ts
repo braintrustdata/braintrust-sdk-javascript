@@ -32,6 +32,7 @@ const INSTALL_SECRET_ENV_VARS = [
   "OPENAI_API_KEY",
   "OPENROUTER_API_KEY",
   "MISTRAL_API_KEY",
+  "TYPESAFE_API_KEY",
 ] as const;
 
 const cleanupDirs = new Set<string>();

@@ -86,14 +86,18 @@ function interceptSystemOne(
       runWithAutoInstrumentationSuppressed(invokeTarget),
     );
   } catch (error) {
-    finishTypeSafeSpan(span, () => span.log({ error }));
+    span.log({ error });
+    span.end();
     throw error;
   }
 
   if (!isTypeSafeAPIPromise(result)) {
     const finished = Promise.resolve(result).then(
       (value) => finishSuccessfulSpan(span, value),
-      (error) => finishTypeSafeSpan(span, () => span.log({ error })),
+      (error) => {
+        span.log({ error });
+        span.end();
+      },
     );
     void finished;
     return result;
@@ -113,10 +117,13 @@ function interceptSystemOne(
           "Error reading response for typesafe.systemOne:",
           error,
         );
-        finishTypeSafeSpan(span, () => {});
+        span.end();
       }
     },
-    (error) => finishTypeSafeSpan(span, () => span.log({ error })),
+    (error) => {
+      span.log({ error });
+      span.end();
+    },
   );
   preserveTypeSafePromise(result, captureFinished);
   return result;
@@ -222,19 +229,18 @@ function finishSuccessfulSpan(
   span: Span,
   result: TypeSafeSystemOneResult,
 ): void {
-  finishTypeSafeSpan(span, () => {
-    const metrics = extractMetrics(result);
-    span.log({
-      output:
-        isObject(result) && result.answers !== undefined
-          ? { answers: addIds(result.answers) }
-          : undefined,
-      ...(isObject(result) && typeof result.model === "string"
-        ? { metadata: { model: result.model } }
-        : {}),
-      ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
-    });
+  const metrics = extractMetrics(result);
+  span.log({
+    output:
+      isObject(result) && result.answers !== undefined
+        ? { answers: addIds(result.answers) }
+        : undefined,
+    ...(isObject(result) && typeof result.model === "string"
+      ? { metadata: { model: result.model } }
+      : {}),
+    ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
   });
+  span.end();
 }
 
 function addIds(value: unknown): unknown {
@@ -268,17 +274,4 @@ function validTokenCount(value: unknown): number | undefined {
   return typeof value === "number" && Number.isInteger(value) && value >= 0
     ? value
     : undefined;
-}
-
-function finishTypeSafeSpan(span: Span, log: () => void): void {
-  try {
-    log();
-  } catch (error) {
-    debugLogger.error("Error logging span for typesafe.systemOne:", error);
-  }
-  try {
-    span.end();
-  } catch (error) {
-    debugLogger.error("Error ending span for typesafe.systemOne:", error);
-  }
 }
