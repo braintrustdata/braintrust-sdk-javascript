@@ -34,7 +34,8 @@ Map the change before editing:
 - Maintain isomorphic behavior. Node and browser/bundled paths must use compatible channel implementations and avoid channel-registry mismatches.
 - Setup, teardown, and patching must be idempotent. Enabling twice, disabling twice, or applying a patch twice should remain safe.
 - Promise/stream behavior must be preserved. Patches need to keep subclass/helper semantics intact.
-- Contain instrumentation failures. Extraction/logging bugs should be logged or ignored as appropriate, but must not break the user call path.
+- Treat Braintrust logging and span-finalization methods, including `span.log()` and `span.end()`, as non-throwing.
+  Do not wrap these methods in defensive `try`/`catch` blocks or add fallback logic for hypothetical logging exceptions.
 - Use the SDK `debugLogger` for SDK instrumentation diagnostics. Do not call `console.*` directly from instrumentation code; direct console use should stay inside the debug logger implementation or another explicitly justified exception.
 - Pass `Error` objects directly as `span.log({ error })` values. The SDK serializes errors correctly, so do not add local helpers that manually turn errors into message/stack strings unless an external API requires a non-`Error` representation.
 - Log only the useful surface. Prefer narrow, stable payloads over dumping full request/response objects; exclude redundant or overly large data when possible.

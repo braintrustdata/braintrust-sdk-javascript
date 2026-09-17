@@ -510,6 +510,21 @@
     ]
   },
   {
+    "scenarioDirName": "typesafe-instrumentation",
+    "label": "TypeSafe Instrumentation",
+    "metadataScenario": "typesafe-instrumentation",
+    "variants": [
+      {
+        "variantKey": "typesafe-v0",
+        "label": "v0 pinned"
+      },
+      {
+        "variantKey": "typesafe-v0-latest",
+        "label": "v0 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "openrouter-instrumentation",
     "label": "OpenRouter Instrumentation",
     "metadataScenario": "openrouter-instrumentation",
