@@ -50,6 +50,7 @@
         "src/edge-light/index.ts",
         "src/workerd/index.ts",
         "src/instrumentation/index.ts",
+        "src/voice/index.ts",
         "src/auto-instrumentations/bundler/*.ts",
         "tests/**/*.{ts,tsx,mts,cts,cjs,mjs}",
         "scripts/**/*.ts",

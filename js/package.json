@@ -72,6 +72,12 @@
       "require": "./dist/apply-auto-instrumentation.js",
       "default": "./dist/apply-auto-instrumentation.mjs"
     },
+    "./voice": {
+      "types": "./dist/voice.d.ts",
+      "import": "./dist/voice.mjs",
+      "module": "./dist/voice.mjs",
+      "require": "./dist/voice.js"
+    },
     "./vitest-evals-reporter": {
       "types": "./dist/vitest-evals-reporter.d.ts",
       "import": "./dist/vitest-evals-reporter.mjs",
