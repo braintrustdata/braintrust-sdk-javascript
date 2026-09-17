@@ -37,7 +37,9 @@ function runAgentOverSocket(url: string, replies: string[]) {
   let buffered = "";
   socket.setEncoding("utf8");
   socket.on("connect", () => {
-    socket.write(JSON.stringify({ event: "text", text: replies[i++] }) + "\n");
+    socket.write(
+      JSON.stringify({ event: "utterance", text: replies[i++] }) + "\n",
+    );
   });
   socket.on("data", (chunk: string) => {
     buffered += chunk;
@@ -48,14 +50,14 @@ function runAgentOverSocket(url: string, replies: string[]) {
       if (!line.trim()) continue;
       const frame = JSON.parse(line);
       if (frame.event === "hangup") return socket.end();
-      if (frame.event !== "text" || !frame.text) continue;
+      if (frame.event !== "utterance" || !frame.text) continue;
       const reply = replies[i++];
       if (reply === undefined) {
         socket.write(JSON.stringify({ event: "hangup" }) + "\n");
         socket.end();
         return;
       }
-      socket.write(JSON.stringify({ event: "text", text: reply }) + "\n");
+      socket.write(JSON.stringify({ event: "utterance", text: reply }) + "\n");
     }
   });
   socket.on("error", () => {});

@@ -12,8 +12,12 @@ import { AudioFrame } from "./types";
 
 export type WireFrame =
   | { event: "start"; direction: "inbound" | "outbound" }
-  | { event: "text"; text: string }
-  | { event: "media"; payload: string; sampleRate: number }
+  /**
+   * One utterance. Text and audio travel together rather than as separate
+   * frames, because a turn is the unit both sides reason about and pairing
+   * them after the fact is guesswork.
+   */
+  | { event: "utterance"; text: string; payload?: string; sampleRate?: number }
   | { event: "hangup" };
 
 export function encode(frame: WireFrame): string {

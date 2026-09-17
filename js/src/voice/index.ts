@@ -38,12 +38,21 @@ export {
   configureVoice,
   resetVoiceForTesting,
   scriptedActors,
+  voiceActors,
   type ActorDefinition,
   type ScriptedActor,
   type VoiceBackend,
 } from "./backend";
 export { Actor } from "./actor";
-export { Call, Room, noAudio, type ActorBrain } from "./room";
+export { Call, Room, noAudio, type ActorBrain, type Utterance } from "./room";
+export {
+  speak,
+  heard,
+  wavToFrame,
+  DEFAULT_SPEECH_MODEL,
+  type SpeechOptions,
+  type SpeechTurn,
+} from "./speech";
 export { Conversation, VoiceTurn } from "./conversation";
 export { resolveFakeNumber, clearFakeNumbers } from "./phone";
 export { makeAddress } from "./address";

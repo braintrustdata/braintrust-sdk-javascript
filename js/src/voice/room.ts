@@ -21,10 +21,22 @@ import {
   VoiceRenderer,
 } from "./types";
 
-/** Decides what the actor says next. Null hangs up. */
+/** What one party says in one turn. */
+export interface Utterance {
+  text: string;
+  audio?: AudioFrame | null;
+}
+
+/**
+ * Decides what the actor says next. Null hangs up.
+ *
+ * A scripted actor returns text and lets the room render it. A voice-native
+ * actor returns the audio it actually produced, and the text is that audio's
+ * own transcript rather than a script the audio was made from.
+ */
 export type ActorBrain = (
   history: ReadonlyArray<VoiceTurn>,
-) => Promise<string | null>;
+) => Promise<Utterance | null>;
 
 export const noAudio: VoiceRenderer = async () => null;
 
@@ -161,8 +173,12 @@ export class Room {
     const interruptions: Interruption[] = [];
     let endReason: EndReason = "maxTurns";
 
-    const record = async (speaker: Speaker, text: string) => {
-      const audio = await this.renderer(text, speaker);
+    const record = async (
+      speaker: Speaker,
+      text: string,
+      spoken?: AudioFrame,
+    ) => {
+      const audio = spoken ?? (await this.renderer(text, speaker));
       const turn = new VoiceTurn(speaker, text, audio);
       turns.push(turn);
       // A turn primitive, so the call reads as a timeline rather than a pile
@@ -197,13 +213,15 @@ export class Room {
 
     while (turns.length < maxTurns) {
       if (expecting === "actor") {
-        const line = await brain(turns);
-        if (line === null) {
+        const said = await brain(turns);
+        if (said === null) {
           endReason = turns.length ? "goal" : "hangup";
           break;
         }
-        const turn = await record("actor", line);
-        await this.leg.send(line, turn.frame());
+        // An actor that speaks for itself keeps its own audio; one that does
+        // not gets the room's renderer.
+        const turn = await record("actor", said.text, said.audio ?? undefined);
+        await this.leg.send(said.text, turn.frame());
         expecting = "agent";
       } else {
         const heard = await withTimeout(this.leg.receive());
@@ -215,8 +233,7 @@ export class Room {
           endReason = "hangup";
           break;
         }
-        if (!heard.text) continue; // an audio-only frame; wait for its text
-        await record("agent", heard.text);
+        await record("agent", heard.text, heard.audio ?? undefined);
         expecting = "actor";
       }
     }

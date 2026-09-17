@@ -80,34 +80,72 @@ abstract class SocketLeg implements AgentLeg {
   protected socket: Socket | null = null;
   private readySignal = new Slot<void>();
   private readyOnce: Promise<void> | null = null;
-  private buffered = "";
+  private buffers = new WeakMap<Socket, string>();
+  /** True once the current socket has actually said something. */
+  private spoken = false;
+  /** Remembered until there is a socket to announce it to. */
+  private pendingBegin: "inbound" | "outbound" | null = null;
+
+  /**
+   * A listening socket gets connected to by things that are not the agent:
+   * health checks, port scanners, a retrying client. So a connection is only
+   * provisionally the far end, and only becomes the peer once it speaks our
+   * protocol. One that hangs up without speaking is forgotten rather than
+   * treated as a hangup, and the next connection gets the chance.
+   */
+  private onGone(socket: Socket): void {
+    if (socket !== this.socket) return;
+    if (this.spoken) {
+      this.inbox.put(null);
+      return;
+    }
+    this.socket = null;
+  }
 
   protected attach(socket: Socket): void {
+    // Hold the newest quiet connection; a peer that has spoken keeps its place.
+    if (this.spoken && this.socket && this.socket !== socket) {
+      socket.destroy();
+      return;
+    }
     this.socket = socket;
     socket.setEncoding("utf8");
+    if (this.pendingBegin)
+      this.write({ event: "start", direction: this.pendingBegin });
     socket.on("data", (chunk: string) => {
-      this.buffered += chunk;
+      this.buffers.set(socket, (this.buffers.get(socket) ?? "") + chunk);
       let newline: number;
-      while ((newline = this.buffered.indexOf("\n")) >= 0) {
-        const line = this.buffered.slice(0, newline);
-        this.buffered = this.buffered.slice(newline + 1);
+      for (;;) {
+        const buffered = this.buffers.get(socket) ?? "";
+        newline = buffered.indexOf("\n");
+        if (newline < 0) break;
+        const line = buffered.slice(0, newline);
+        this.buffers.set(socket, buffered.slice(newline + 1));
         if (!line.trim()) continue;
         const frame = decode(line);
         if (!frame) continue;
-        if (frame.event === "text") {
-          this.inbox.put({ text: frame.text, audio: null });
-        } else if (frame.event === "media") {
+        // Whoever speaks our protocol first is the far end of this call.
+        if (!this.spoken) {
+          this.spoken = true;
+          this.socket = socket;
+        } else if (socket !== this.socket) {
+          continue;
+        }
+        if (frame.event === "utterance") {
           this.inbox.put({
-            text: "",
-            audio: payloadToFrame(frame.payload, frame.sampleRate),
+            text: frame.text,
+            audio:
+              frame.payload && frame.sampleRate
+                ? payloadToFrame(frame.payload, frame.sampleRate)
+                : null,
           });
         } else if (frame.event === "hangup") {
           this.inbox.put(null);
         }
       }
     });
-    socket.on("close", () => this.inbox.put(null));
-    socket.on("error", () => this.inbox.put(null));
+    socket.on("close", () => this.onGone(socket));
+    socket.on("error", () => this.onGone(socket));
     this.readySignal.put();
   }
 
@@ -125,18 +163,18 @@ abstract class SocketLeg implements AgentLeg {
   }
 
   begin(direction: "inbound" | "outbound"): void {
+    this.pendingBegin = direction;
     this.write({ event: "start", direction });
   }
 
   async send(text: string, audio: AudioFrame | null): Promise<void> {
-    this.write({ event: "text", text });
-    if (audio) {
-      this.write({
-        event: "media",
-        payload: frameToPayload(audio),
-        sampleRate: audio.sampleRate,
-      });
-    }
+    this.write({
+      event: "utterance",
+      text,
+      ...(audio
+        ? { payload: frameToPayload(audio), sampleRate: audio.sampleRate }
+        : {}),
+    });
   }
 
   receive() {
