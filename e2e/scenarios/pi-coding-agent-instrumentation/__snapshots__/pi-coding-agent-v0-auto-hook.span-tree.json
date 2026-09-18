@@ -85,7 +85,12 @@
                 {
                   "name": "bash",
                   "type": "tool",
-                  "children": [],
+                  "children": [
+                    {
+                      "name": "pi-tool-child",
+                      "children": []
+                    }
+                  ],
                   "input": {
                     "command": "printf pi_tool_ok"
                   },

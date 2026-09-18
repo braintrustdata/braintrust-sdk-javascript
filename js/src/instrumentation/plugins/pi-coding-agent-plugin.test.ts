@@ -27,6 +27,7 @@ vi.mock("../../isomorph", async (importOriginal) => {
 
 vi.mock("../../logger", () => ({
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
+  withCurrent: (_span: unknown, callback: () => unknown) => callback(),
 }));
 
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
