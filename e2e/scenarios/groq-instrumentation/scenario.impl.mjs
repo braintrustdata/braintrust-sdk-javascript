@@ -1,20 +1,33 @@
 import { wrapGroq } from "braintrust";
+import { readFile } from "node:fs/promises";
 import {
   collectAsync,
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
 import {
+  AUDIO_MODEL,
   CHAT_MODEL,
   REASONING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
+  TRANSLATION_MODEL,
 } from "./constants.mjs";
 
 export const GROQ_SCENARIO_TIMEOUT_MS = 120_000;
 
 function getApiKey() {
   return process.env.GROQ_API_KEY;
+}
+
+async function getAudioFile() {
+  const path = process.env.GROQ_AUDIO_FILE;
+  if (!path) {
+    throw new Error("Expected GROQ_AUDIO_FILE to be set for e2e");
+  }
+  return new File([await readFile(path)], "brooklyn_bridge.wav", {
+    type: "audio/wav",
+  });
 }
 
 function getWeatherToolDefinition() {
@@ -55,7 +68,7 @@ export async function runGroqInstrumentationScenario(options) {
     callback: async () => {
       await runOperation("groq-chat-operation", "chat", async () => {
         await client.chat.completions.create({
-          max_completion_tokens: 12,
+          max_completion_tokens: 64,
           messages: [{ role: "user", content: "Reply with exactly OK." }],
           model: CHAT_MODEL,
           temperature: 0,
@@ -113,6 +126,32 @@ export async function runGroqInstrumentationScenario(options) {
           tools: [getWeatherToolDefinition()],
         });
       });
+
+      await runOperation(
+        "groq-transcription-operation",
+        "transcription",
+        async () => {
+          await client.audio.transcriptions.create({
+            file: await getAudioFile(),
+            language: "en",
+            model: AUDIO_MODEL,
+            response_format: "verbose_json",
+            timestamp_granularities: ["word", "segment"],
+          });
+        },
+      );
+
+      await runOperation(
+        "groq-translation-operation",
+        "translation",
+        async () => {
+          await client.audio.translations.create({
+            file: await getAudioFile(),
+            model: TRANSLATION_MODEL,
+            response_format: "json",
+          });
+        },
+      );
     },
     metadata: {
       scenario: SCENARIO_NAME,

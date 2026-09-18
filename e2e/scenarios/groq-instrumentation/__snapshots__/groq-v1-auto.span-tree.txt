@@ -23,25 +23,27 @@ span_tree:
     │           "logprobs": null,
     │           "message": {
     │             "content": "OK",
+    │             "reasoning": "The user says: \"Reply with exactly OK.\" So we must reply with exactly \"OK\". No extra spaces, no punctuation. Just OK.",
     │             "role": "assistant"
     │           }
     │         }
     │       ]
     │       metadata: {
-    │         "max_completion_tokens": 12,
-    │         "model": "llama-3.3-70b-versatile",
+    │         "max_completion_tokens": 64,
+    │         "model": "openai/gpt-oss-20b",
     │         "provider": "groq",
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_time": 0.0072439,
-    │         "completion_tokens": 2,
-    │         "prompt_time": 0.001728151,
-    │         "prompt_tokens": 40,
-    │         "queue_time": 0.054452998,
+    │         "completion_reasoning_tokens": 30,
+    │         "completion_time": 0.041597401,
+    │         "completion_tokens": 40,
+    │         "prompt_time": 0.004278014,
+    │         "prompt_tokens": 76,
+    │         "queue_time": 0.048675375,
     │         "time_to_first_token": 0,
-    │         "tokens": 42,
-    │         "total_time": 0.008972051
+    │         "tokens": 116,
+    │         "total_time": 0.045875415
     │       }
     ├── groq-stream-operation
     │   metadata: {
@@ -62,25 +64,27 @@ span_tree:
     │           "logprobs": null,
     │           "message": {
     │             "content": "STREAM",
+    │             "reasoning": "The user says: \"Reply with exactly STREAM.\" So we must output exactly the word \"STREAM\". No extra spaces, no newline? Probably just \"STREAM\". The instruction: \"Reply with exactly STREAM.\" So output \"STREAM\".",
     │             "role": "assistant"
     │           }
     │         }
     │       ]
     │       metadata: {
-    │         "model": "llama-3.3-70b-versatile",
+    │         "model": "openai/gpt-oss-20b",
     │         "provider": "groq",
     │         "stream": true,
     │         "temperature": 0
     │       }
     │       metrics: {
-    │         "completion_time": 0.006718869,
-    │         "completion_tokens": 2,
-    │         "prompt_time": 0.003972294,
-    │         "prompt_tokens": 40,
-    │         "queue_time": 0.095351581,
+    │         "completion_reasoning_tokens": 47,
+    │         "completion_time": 0.058963058,
+    │         "completion_tokens": 57,
+    │         "prompt_time": 0.004264335,
+    │         "prompt_tokens": 76,
+    │         "queue_time": 0.048763915,
     │         "time_to_first_token": 0,
-    │         "tokens": 42,
-    │         "total_time": 0.010691163
+    │         "tokens": 133,
+    │         "total_time": 0.063227393
     │       }
     ├── groq-reasoning-stream-operation
     │   metadata: {
@@ -101,7 +105,7 @@ span_tree:
     │           "logprobs": null,
     │           "message": {
     │             "content": "14",
-    │             "reasoning": "The problem: \"Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number.\"\n\nWe need to compute: She has 3 boxes with 4 marbles each, so 3*4 = 12 marbles. She gives away 5 marbles, so remaining = 12 - 5 = 7. Then doubles what remains: 7 * 2 = 14. So final number is 14. The answer should just be the number. So output \"14\".\n\nCheck if any nuance: \"doubles what remains\" means double the number of marbles remaining after giving away 5. Yes. So final answer 14.\n\nThus respond with \"14\".",
+    │             "reasoning": "We have a problem: \"Elena has 3 boxes with 4 marbles each, gives away 5 marbles, then doubles what remains. Reply with just the final number.\"\n\nWe need to compute: Initially 3 boxes, each with 4 marbles, so total = 3 * 4 = 12 marbles. She gives away 5 marbles, leaving 12 - 5 = 7 marbles. Then she doubles what remains: 7 * 2 = 14. Final number is 14. The instruction: \"Reply with just the final number.\" So output \"14\".",
     │             "role": "assistant"
     │           }
     │         }
@@ -115,87 +119,230 @@ span_tree:
     │         "temperature": 0.6
     │       }
     │       metrics: {
-    │         "completion_reasoning_tokens": 158,
-    │         "completion_time": 0.270633239,
-    │         "completion_tokens": 168,
-    │         "prompt_time": 0.005148062,
+    │         "completion_reasoning_tokens": 127,
+    │         "completion_time": 0.1495842,
+    │         "completion_tokens": 137,
+    │         "prompt_time": 0.063172734,
     │         "prompt_tokens": 108,
-    │         "queue_time": 0.103912089,
+    │         "queue_time": 0.07072994,
     │         "time_to_first_token": 0,
-    │         "tokens": 276,
-    │         "total_time": 0.275781301
+    │         "tokens": 245,
+    │         "total_time": 0.212756934
     │       }
-    └── groq-tool-operation
+    ├── groq-tool-operation
+    │   metadata: {
+    │     "operation": "tool",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── groq.chat.completions.create [llm]
+    │       input: [
+    │         {
+    │           "content": "Check the weather in Vienna and use the weather tool.",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: [
+    │         {
+    │           "finish_reason": "tool_calls",
+    │           "index": 0,
+    │           "logprobs": null,
+    │           "message": {
+    │             "reasoning": "We need to use the get_weather function.",
+    │             "role": "assistant",
+    │             "tool_calls": [
+    │               {
+    │                 "function": {
+    │                   "arguments": "{\"location\":\"Vienna\"}",
+    │                   "name": "get_weather"
+    │                 },
+    │                 "id": "<span:1>",
+    │                 "type": "function"
+    │               }
+    │             ]
+    │           }
+    │         }
+    │       ]
+    │       metadata: {
+    │         "model": "openai/gpt-oss-20b",
+    │         "provider": "groq",
+    │         "temperature": 0,
+    │         "tool_choice": {
+    │           "function": {
+    │             "name": "get_weather"
+    │           },
+    │           "type": "function"
+    │         },
+    │         "tools": [
+    │           {
+    │             "function": {
+    │               "description": "Get the weather for a city.",
+    │               "name": "get_weather",
+    │               "parameters": {
+    │                 "properties": {
+    │                   "location": {
+    │                     "description": "City name.",
+    │                     "type": "string"
+    │                   }
+    │                 },
+    │                 "required": [
+    │                   "location"
+    │                 ],
+    │                 "type": "object"
+    │               }
+    │             },
+    │             "type": "function"
+    │           }
+    │         ]
+    │       }
+    │       metrics: {
+    │         "completion_reasoning_tokens": 10,
+    │         "completion_time": 0.037314407,
+    │         "completion_tokens": 34,
+    │         "prompt_time": 0.007578807,
+    │         "prompt_tokens": 134,
+    │         "queue_time": 0.095902039,
+    │         "time_to_first_token": 0,
+    │         "tokens": 168,
+    │         "total_time": 0.044893214
+    │       }
+    ├── groq-transcription-operation
+    │   metadata: {
+    │     "operation": "transcription",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── groq.audio.transcriptions.create [llm]
+    │       input: {
+    │         "content": [
+    │           {
+    │             "file": {
+    │               "file_data": {
+    │                 "content_type": "audio/wav",
+    │                 "filename": "brooklyn_bridge.wav",
+    │                 "key": "<uuid:1>",
+    │                 "type": "braintrust_attachment"
+    │               },
+    │               "filename": "brooklyn_bridge.wav"
+    │             },
+    │             "type": "file"
+    │           }
+    │         ],
+    │         "operation": "transcribe",
+    │         "parameters": {
+    │           "format": "verbose_json",
+    │           "language": "en",
+    │           "timestamp_granularities": [
+    │             "word",
+    │             "segment"
+    │           ]
+    │         }
+    │       }
+    │       output: {
+    │         "annotations": {
+    │           "duration": 0,
+    │           "language": "English",
+    │           "segments": [
+    │             {
+    │               "avg_logprob": -0.043135762,
+    │               "compression_ratio": 0.84210527,
+    │               "end": 0,
+    │               "id": 0,
+    │               "no_speech_prob": 0,
+    │               "seek": 0,
+    │               "start": 0,
+    │               "temperature": 0,
+    │               "text": " How old is the Brooklyn Bridge?",
+    │               "tokens": [
+    │                 50365,
+    │                 1012,
+    │                 1331,
+    │                 307,
+    │                 264,
+    │                 21872,
+    │                 18917,
+    │                 30,
+    │                 50456
+    │               ]
+    │             }
+    │           ],
+    │           "words": [
+    │             {
+    │               "end": 0,
+    │               "start": 0,
+    │               "word": "How"
+    │             },
+    │             {
+    │               "end": 0,
+    │               "start": 0,
+    │               "word": "old"
+    │             },
+    │             {
+    │               "end": 0,
+    │               "start": 0,
+    │               "word": "is"
+    │             },
+    │             {
+    │               "end": 0,
+    │               "start": 0,
+    │               "word": "the"
+    │             },
+    │             {
+    │               "end": 0,
+    │               "start": 0,
+    │               "word": "Brooklyn"
+    │             },
+    │             {
+    │               "end": 0,
+    │               "start": 0,
+    │               "word": "Bridge?"
+    │             }
+    │           ]
+    │         },
+    │         "content": [
+    │           {
+    │             "text": " How old is the Brooklyn Bridge?",
+    │             "type": "text"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "model": "whisper-large-v3-turbo",
+    │         "provider": "groq"
+    │       }
+    └── groq-translation-operation
         metadata: {
-          "operation": "tool",
+          "operation": "translation",
           "testRunId": "<run:1>"
         }
-        └── groq.chat.completions.create [llm]
-            input: [
-              {
-                "content": "Check the weather in Vienna and use the weather tool.",
-                "role": "user"
-              }
-            ]
-            output: [
-              {
-                "finish_reason": "tool_calls",
-                "index": 0,
-                "logprobs": null,
-                "message": {
-                  "role": "assistant",
-                  "tool_calls": [
-                    {
-                      "function": {
-                        "arguments": "{\"location\":\"Vienna\"}",
-                        "name": "get_weather"
-                      },
-                      "id": "<span:1>",
-                      "type": "function"
-                    }
-                  ]
-                }
-              }
-            ]
-            metadata: {
-              "model": "llama-3.3-70b-versatile",
-              "provider": "groq",
-              "temperature": 0,
-              "tool_choice": {
-                "function": {
-                  "name": "get_weather"
-                },
-                "type": "function"
-              },
-              "tools": [
+        └── groq.audio.translations.create [llm]
+            input: {
+              "content": [
                 {
-                  "function": {
-                    "description": "Get the weather for a city.",
-                    "name": "get_weather",
-                    "parameters": {
-                      "properties": {
-                        "location": {
-                          "description": "City name.",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "location"
-                      ],
-                      "type": "object"
-                    }
+                  "file": {
+                    "file_data": {
+                      "content_type": "audio/wav",
+                      "filename": "brooklyn_bridge.wav",
+                      "key": "<uuid:1>",
+                      "type": "braintrust_attachment"
+                    },
+                    "filename": "brooklyn_bridge.wav"
                   },
-                  "type": "function"
+                  "type": "file"
+                }
+              ],
+              "operation": "translate",
+              "parameters": {
+                "format": "json"
+              }
+            }
+            output: {
+              "content": [
+                {
+                  "text": " How old is the Brooklyn Bridge?",
+                  "type": "text"
                 }
               ]
             }
-            metrics: {
-              "completion_time": 0.039504246,
-              "completion_tokens": 11,
-              "prompt_time": 0.020812356,
-              "prompt_tokens": 246,
-              "queue_time": 0.091778475,
-              "time_to_first_token": 0,
-              "tokens": 257,
-              "total_time": 0.060316602
+            metadata: {
+              "model": "whisper-large-v3",
+              "provider": "groq"
             }
