@@ -1,5 +1,11 @@
 # braintrust
 
+## Unreleased
+
+### Minor Changes
+
+- feat: Run configured `onSpanExport` customizers on incremental instrumentation span records, supporting field mutation, deletion, and replacement before export.
+
 ## 3.33.0
 
 ### Minor Changes
