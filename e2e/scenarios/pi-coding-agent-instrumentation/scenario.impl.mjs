@@ -1,4 +1,4 @@
-import { wrapPiCodingAgentSDK } from "braintrust";
+import { startSpan, wrapPiCodingAgentSDK } from "braintrust";
 import {
   runOperation,
   runTracedScenario,
@@ -6,6 +6,7 @@ import {
 
 export const ROOT_NAME = "pi-coding-agent-root";
 export const SCENARIO_NAME = "pi-coding-agent-instrumentation";
+export const TOOL_CHILD_SPAN_NAME = "pi-tool-child";
 
 async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
   const instrumentedSDK = decorateSDK ? decorateSDK(sdk) : sdk;
@@ -75,6 +76,22 @@ async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
             tools: ["bash"],
           });
           session = result.session;
+          const bashTool = session.agent.state.tools.find(
+            (tool) => tool.name === "bash",
+          );
+          if (!bashTool?.execute) {
+            throw new Error("Expected Pi Coding Agent bash tool executor");
+          }
+          const executeBashTool = bashTool.execute;
+          bashTool.execute = async function (...args) {
+            await Promise.resolve();
+            const childSpan = startSpan({ name: TOOL_CHILD_SPAN_NAME });
+            try {
+              return await Reflect.apply(executeBashTool, this, args);
+            } finally {
+              childSpan.end();
+            }
+          };
           if (useFakeStream) {
             let streamCallCount = 0;
             session.agent.streamFunction = async (streamModel) => {

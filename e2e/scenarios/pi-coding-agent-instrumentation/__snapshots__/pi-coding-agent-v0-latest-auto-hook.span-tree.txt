@@ -119,3 +119,4 @@ span_tree:
                   "gen_ai.tool.name": "bash",
                   "pi_coding_agent.tool.name": "bash"
                 }
+                └── pi-tool-child
