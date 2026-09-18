@@ -1,5 +1,18 @@
 # braintrust
 
+## 3.34.0
+
+### Minor Changes
+
+- feat: Add instrumentation for `@typesafe-ai/sdk` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2493)
+- feat: Add AI SDK instrumentation for typesafe ai jev (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2494)
+- feat: Streamline SDK flushing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2490)
+
+### Patch Changes
+
+- fix(js): Support Uint8Array and Buffer JSONL sources in OpenAI batch instrumentation Thanks @tyagiquamar! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2479)
+- fix(js): Support `/v1/embeddings` endpoint in OpenAI batch instrumentation Thanks @tyagiquamar! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2478)
+
 ## 3.33.0
 
 ### Minor Changes
