@@ -306,7 +306,17 @@ describe("provider wrapper", () => {
     expect(rawEvents[0]).not.toMatchObject({ _is_merge: true });
     expect(rawEvents[1]).toMatchObject({
       _is_merge: true,
-      output: { text: "One two" },
+      output: {
+        candidates: [
+          {
+            content: {
+              parts: [{ text: "One two" }],
+              role: "model",
+            },
+            finishReason: "STOP",
+          },
+        ],
+      },
       metrics: {
         prompt_tokens: 4,
         completion_tokens: 2,
