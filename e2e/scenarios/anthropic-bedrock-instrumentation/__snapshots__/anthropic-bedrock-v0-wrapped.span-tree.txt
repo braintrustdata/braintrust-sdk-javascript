@@ -27,7 +27,7 @@ span_tree:
     │       }
     │       metadata: {
     │         "max_tokens": 24,
-    │         "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    │         "model": "claude-sonnet-4-5-20250929",
     │         "provider": "anthropic",
     │         "stop_reason": "end_turn",
     │         "stop_sequence": null,
@@ -57,9 +57,8 @@ span_tree:
             output: "1 - one\n2 - two\n3 - three"
             metadata: {
               "max_tokens": 32,
-              "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+              "model": "claude-sonnet-4-5-20250929",
               "provider": "anthropic",
-              "stop_details": null,
               "stop_reason": "end_turn",
               "stop_sequence": null,
               "stream": true,

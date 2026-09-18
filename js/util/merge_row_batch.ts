@@ -1,5 +1,5 @@
-import { IS_MERGE_FIELD } from "./db_fields";
-import { mergeDicts } from "./object_util";
+import { IS_MERGE_FIELD, MERGE_PATHS_FIELD } from "./db_fields";
+import { mergeDictsWithPaths } from "./object_util";
 
 function generateMergedRowKey(row: Record<string, unknown>) {
   return JSON.stringify(
@@ -22,10 +22,37 @@ const MERGE_ROW_SKIP_FIELDS = [
   "root_span_id",
   "span_parents",
   "_parent_id",
-  // TODO: handle merge paths.
 ] as const;
 type MergeRowSkipField = (typeof MERGE_ROW_SKIP_FIELDS)[number];
 type MergeRowSkipFieldObj = { [K in MergeRowSkipField]?: unknown };
+
+function extractValidMergePaths(value: unknown): string[][] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter(
+    (path): path is string[] =>
+      Array.isArray(path) && path.every((part) => typeof part === "string"),
+  );
+}
+
+function removeRedundantMergePaths(paths: string[][]): string[][] {
+  return paths.filter(
+    (path, index) =>
+      !paths.some((candidate, candidateIndex) => {
+        if (candidateIndex === index || candidate.length > path.length) {
+          return false;
+        }
+        const candidateIsPrefix = candidate.every(
+          (part, partIndex) => part === path[partIndex],
+        );
+        return (
+          candidateIsPrefix &&
+          (candidate.length < path.length || candidateIndex < index)
+        );
+      }),
+  );
+}
 
 function popMergeRowSkipFields<T extends MergeRowSkipFieldObj>(
   row: T,
@@ -56,6 +83,7 @@ export function mergeRowBatch<
   T extends {
     id: string;
     [IS_MERGE_FIELD]?: boolean | null;
+    [MERGE_PATHS_FIELD]?: unknown;
   } & MergeRowSkipFieldObj,
 >(rows: T[]): T[] {
   for (const row of rows) {
@@ -73,7 +101,24 @@ export function mergeRowBatch<
     if (existingRow !== undefined && row[IS_MERGE_FIELD]) {
       const skipFields = popMergeRowSkipFields(existingRow);
       const preserveNoMerge = !existingRow[IS_MERGE_FIELD];
-      mergeDicts(existingRow, row);
+      const existingMergePaths = extractValidMergePaths(
+        existingRow[MERGE_PATHS_FIELD],
+      );
+      const incomingMergePaths = extractValidMergePaths(row[MERGE_PATHS_FIELD]);
+      const combinedMergePaths = removeRedundantMergePaths([
+        ...existingMergePaths,
+        ...incomingMergePaths,
+      ]);
+      mergeDictsWithPaths({
+        mergeFrom: row,
+        mergeInto: existingRow,
+        mergePaths: incomingMergePaths,
+      });
+      if (combinedMergePaths.length > 0) {
+        existingRow[MERGE_PATHS_FIELD] = combinedMergePaths;
+      } else {
+        delete existingRow[MERGE_PATHS_FIELD];
+      }
       restoreMergeRowSkipFields(existingRow, skipFields);
       if (preserveNoMerge) {
         delete existingRow[IS_MERGE_FIELD];
