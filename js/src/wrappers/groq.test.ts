@@ -163,9 +163,8 @@ describe("groq wrapper", () => {
     });
     expect(chatSpan?.metrics).toMatchObject({
       completion_tokens: 2,
-      dram_cached_tokens: 1,
+      prompt_cached_tokens: 3,
       prompt_tokens: 5,
-      sram_cached_tokens: 2,
       time_to_first_token: expect.any(Number),
       tokens: 7,
     });
