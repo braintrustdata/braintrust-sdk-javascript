@@ -3,8 +3,14 @@ import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
   GoogleGenAIEmbedContentParams,
   GoogleGenAIEmbedContentResponse,
+  GoogleGenAIEditImageParams,
+  GoogleGenAIEditImageResponse,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateContentResponse,
+  GoogleGenAIGenerateImagesParams,
+  GoogleGenAIGenerateImagesResponse,
+  GoogleGenAIGenerateVideosOperation,
+  GoogleGenAIGenerateVideosParams,
   GoogleGenAIInteraction,
   GoogleGenAIInteractionCreateParams,
   GoogleGenAIInteractionSSEEvent,
@@ -41,6 +47,27 @@ export const googleGenAIChannels = defineChannels(
       GoogleGenAIEmbedContentResponse
     >({
       channelName: "models.embedContent",
+      kind: "async",
+    }),
+    generateImages: channel<
+      [GoogleGenAIGenerateImagesParams],
+      GoogleGenAIGenerateImagesResponse
+    >({
+      channelName: "models.generateImages",
+      kind: "async",
+    }),
+    editImage: channel<
+      [GoogleGenAIEditImageParams],
+      GoogleGenAIEditImageResponse
+    >({
+      channelName: "models.editImage",
+      kind: "async",
+    }),
+    generateVideos: channel<
+      [GoogleGenAIGenerateVideosParams],
+      GoogleGenAIGenerateVideosOperation
+    >({
+      channelName: "models.generateVideos",
       kind: "async",
     }),
     httpResponseJson: channel<[], GoogleGenAIEmbedContentResponse>({

@@ -23,9 +23,14 @@ import {
 } from "../../helpers/trace-selectors";
 
 import {
+  GOOGLE_EDIT_IMAGE_MODEL,
   GOOGLE_EMBEDDING_MODEL,
+  GOOGLE_IMAGE_MODEL,
   GOOGLE_INTERACTIONS_MODEL,
+  GOOGLE_LEGACY_IMAGE_MODEL,
   GOOGLE_MODEL,
+  GOOGLE_VIDEO_MODEL,
+  GOOGLE_VEO_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./scenario.impl.mjs";
@@ -380,6 +385,30 @@ function summarizeGooglePayload(event: CapturedLogEvent): Json {
 
 function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
   const generateOperation = findLatestSpan(events, "google-generate-operation");
+  const imageGenerateOperation = findLatestSpan(
+    events,
+    "google-image-generate-operation",
+  );
+  const imageGenerateStreamOperation = findLatestSpan(
+    events,
+    "google-image-generate-stream-operation",
+  );
+  const nativeImageEditOperation = findLatestSpan(
+    events,
+    "google-native-image-edit-operation",
+  );
+  const editImageOperation = findLatestSpan(
+    events,
+    "google-edit-image-operation",
+  );
+  const generateVideosOperation = findLatestSpan(
+    events,
+    "google-generate-videos-operation",
+  );
+  const legacyImageGenerateOperation = findLatestSpan(
+    events,
+    "google-legacy-image-generate-operation",
+  );
   const systemInstructionOperation = findLatestSpan(
     events,
     "google-system-instruction-operation",
@@ -392,6 +421,10 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
   const interactionOperation = findLatestSpan(
     events,
     "google-interaction-operation",
+  );
+  const videoGenerateOperation = findLatestSpan(
+    events,
+    "google-video-generate-operation",
   );
   const interactionStreamOperation = findLatestSpan(
     events,
@@ -431,6 +464,31 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
       "generate_content",
       "google-genai.generateContent",
     ]),
+    imageGenerateOperation,
+    findGoogleSpan(events, imageGenerateOperation?.span.id, [
+      "generate_content",
+      "google-genai.generateContent",
+    ]),
+    imageGenerateStreamOperation,
+    findGoogleSpan(events, imageGenerateStreamOperation?.span.id, [
+      "generate_content_stream",
+      "google-genai.generateContentStream",
+    ]),
+    nativeImageEditOperation,
+    findGoogleSpan(events, nativeImageEditOperation?.span.id, [
+      "generate_content",
+      "google-genai.generateContent",
+    ]),
+    editImageOperation,
+    findGoogleSpan(events, editImageOperation?.span.id, ["edit_image"]),
+    generateVideosOperation,
+    findGoogleSpan(events, generateVideosOperation?.span.id, [
+      "generate_videos",
+    ]),
+    legacyImageGenerateOperation,
+    findGoogleSpan(events, legacyImageGenerateOperation?.span.id, [
+      "generate_images",
+    ]),
     systemInstructionOperation,
     findGoogleSpan(events, systemInstructionOperation?.span.id, [
       "generate_content",
@@ -452,6 +510,8 @@ function buildRelevantEvents(events: CapturedLogEvent[]): CapturedLogEvent[] {
       "embed_content",
       "google-genai.embedContent",
     ]),
+    videoGenerateOperation,
+    findGoogleSpan(events, videoGenerateOperation?.span.id, ["generate_video"]),
     interactionOperation,
     findGoogleSpan(events, interactionOperation?.span.id, [
       "create_interaction",
@@ -599,6 +659,267 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         expect(span?.row.metadata).toMatchObject({
           model: GOOGLE_MODEL,
         });
+      },
+    );
+
+    test("captures generated image output as an attachment", testConfig, () => {
+      const root = findLatestSpan(events, ROOT_NAME);
+      const operation = findLatestSpan(
+        events,
+        "google-image-generate-operation",
+      );
+      const span = findGoogleSpan(events, operation?.span.id, [
+        "generate_content",
+        "google-genai.generateContent",
+      ]);
+      const output = span?.output as
+        | {
+            candidates?: Array<{
+              content?: {
+                parts?: Array<{
+                  image_url?: {
+                    url?: {
+                      content_type?: string;
+                      type?: string;
+                    };
+                  };
+                }>;
+              };
+            }>;
+          }
+        | undefined;
+      const image = output?.candidates?.[0]?.content?.parts?.find(
+        (part) => part.image_url,
+      )?.image_url?.url;
+
+      expect(operation).toBeDefined();
+      expect(span).toBeDefined();
+      expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+      expect(span?.row.metadata).toMatchObject({ model: GOOGLE_IMAGE_MODEL });
+      expect(image).toMatchObject({
+        content_type: "image/png",
+        type: "braintrust_attachment",
+      });
+      expect(JSON.stringify(output)).not.toContain("inlineData");
+    });
+
+    test(
+      "captures streamed generated image output as an attachment",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "google-image-generate-stream-operation",
+        );
+        const span = findGoogleSpan(events, operation?.span.id, [
+          "generate_content_stream",
+          "google-genai.generateContentStream",
+        ]);
+        const output = span?.output as
+          | {
+              candidates?: Array<{
+                content?: {
+                  parts?: Array<{
+                    image_url?: {
+                      url?: {
+                        content_type?: string;
+                        type?: string;
+                      };
+                    };
+                  }>;
+                };
+              }>;
+            }
+          | undefined;
+        const image = output?.candidates?.[0]?.content?.parts?.find(
+          (part) => part.image_url,
+        )?.image_url?.url;
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({ model: GOOGLE_IMAGE_MODEL });
+        expect(image).toMatchObject({
+          content_type: "image/png",
+          type: "braintrust_attachment",
+        });
+        expect(span?.metrics).toMatchObject({
+          time_to_first_token: expect.any(Number),
+        });
+        expect(JSON.stringify(output)).not.toContain("inlineData");
+      },
+    );
+
+    test(
+      "captures native image editing input and output attachments",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "google-native-image-edit-operation",
+        );
+        const span = findGoogleSpan(events, operation?.span.id, [
+          "generate_content",
+          "google-genai.generateContent",
+        ]);
+        const input = span?.input as
+          | {
+              contents?: Array<{
+                parts?: Array<{
+                  image_url?: {
+                    url?: { content_type?: string; type?: string };
+                  };
+                }>;
+              }>;
+            }
+          | undefined;
+        const output = span?.output as
+          | {
+              candidates?: Array<{
+                content?: {
+                  parts?: Array<{
+                    image_url?: {
+                      url?: { content_type?: string; type?: string };
+                    };
+                  }>;
+                };
+              }>;
+            }
+          | undefined;
+        const inputImage = input?.contents?.[0]?.parts?.find(
+          (part) => part.image_url,
+        )?.image_url?.url;
+        const outputImage = output?.candidates?.[0]?.content?.parts?.find(
+          (part) => part.image_url,
+        )?.image_url?.url;
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          model: GOOGLE_IMAGE_MODEL,
+        });
+        expect(inputImage).toMatchObject({
+          content_type: "image/png",
+          type: "braintrust_attachment",
+        });
+        expect(outputImage).toMatchObject({
+          content_type: "image/png",
+          type: "braintrust_attachment",
+        });
+        expect(JSON.stringify({ input, output })).not.toContain("inlineData");
+      },
+    );
+
+    test(
+      "captures the client.models.editImage() surface canonically",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(events, "google-edit-image-operation");
+        const span = findGoogleSpan(events, operation?.span.id, ["edit_image"]);
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          model: GOOGLE_EDIT_IMAGE_MODEL,
+          provider: "google",
+        });
+        expect(span?.input).toMatchObject({
+          operation: "edit",
+          prompt: "Change the blue circle to green.",
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: {
+                  content_type: "image/png",
+                  type: "braintrust_attachment",
+                },
+              },
+              purpose: "reference",
+            },
+          ],
+          parameters: {
+            aspect_ratio: "1:1",
+            n: 1,
+            output_format: "image/png",
+          },
+        });
+        expect(span?.row.error).toBeDefined();
+      },
+    );
+
+    test(
+      "captures client.models.generateVideos() submission without polling",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "google-generate-videos-operation",
+        );
+        const span = findGoogleSpan(events, operation?.span.id, [
+          "generate_videos",
+        ]);
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          model: GOOGLE_VEO_MODEL,
+          provider: "google",
+        });
+        expect(span?.input).toEqual({
+          operation: "generate",
+          prompt:
+            "A blue circle moves slowly from left to right on a white background.",
+          parameters: {
+            aspect_ratio: "16:9",
+            duration: 4,
+            size: "720p",
+          },
+        });
+        if (span?.row.error === undefined) {
+          expect(span?.output).toEqual({ content: [] });
+        }
+      },
+    );
+
+    test(
+      "captures the deprecated client.models.generateImages() surface",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "google-legacy-image-generate-operation",
+        );
+        const span = findGoogleSpan(events, operation?.span.id, [
+          "generate_images",
+        ]);
+
+        expect(operation).toBeDefined();
+        expect(span).toBeDefined();
+        expect(operation?.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          model: GOOGLE_LEGACY_IMAGE_MODEL,
+          provider: "google",
+        });
+        expect(span?.input).toEqual({
+          operation: "generate",
+          prompt:
+            "Create a small solid blue circle centered on a white background.",
+          parameters: {
+            aspect_ratio: "1:1",
+            n: 1,
+            output_format: "image/png",
+          },
+        });
+        expect(span?.row.error).toBeDefined();
       },
     );
 
@@ -753,7 +1074,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
       expect(span?.input).toMatchObject({
         generation_config: expect.objectContaining({
           max_output_tokens: 256,
-          thinking_level: "minimal",
+          thinking_level: "low",
           temperature: 0,
         }),
         input: {
@@ -777,6 +1098,63 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         metrics.prompt_tokens + metrics.completion_tokens,
       );
     });
+
+    test(
+      "captures direct video generation as a file attachment",
+      testConfig,
+      () => {
+        const root = findLatestSpan(events, ROOT_NAME);
+        const operation = findLatestSpan(
+          events,
+          "google-video-generate-operation",
+        );
+        if (!operation) {
+          return;
+        }
+
+        const span = findGoogleSpan(events, operation.span.id, [
+          "generate_video",
+        ]);
+        const output = span?.output as
+          | {
+              content?: Array<{
+                file?: {
+                  file_data?: {
+                    content_type?: string;
+                    type?: string;
+                  };
+                  filename?: string;
+                };
+                type?: string;
+              }>;
+            }
+          | undefined;
+
+        expect(span).toBeDefined();
+        expect(operation.span.parentIds).toEqual([root?.span.id ?? ""]);
+        expect(span?.row.metadata).toMatchObject({
+          model: GOOGLE_VIDEO_MODEL,
+          provider: "google",
+        });
+        expect(span?.input).toEqual({
+          operation: "generate",
+          parameters: { aspect_ratio: "16:9", size: "360p" },
+          prompt:
+            "A solid blue circle rotates once on a plain white background.",
+        });
+        expect(output?.content).toHaveLength(1);
+        expect(output?.content?.[0]).toMatchObject({
+          file: {
+            file_data: {
+              content_type: "video/mp4",
+              type: "braintrust_attachment",
+            },
+            filename: "generated-video-1.mp4",
+          },
+          type: "file",
+        });
+      },
+    );
 
     test(
       "captures trace for streaming client.interactions.create()",
@@ -804,7 +1182,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         expect(span?.input).toMatchObject({
           generation_config: expect.objectContaining({
             max_output_tokens: 256,
-            thinking_level: "minimal",
+            thinking_level: "low",
             temperature: 0,
           }),
           input: {
@@ -872,7 +1250,7 @@ export function defineGoogleGenAIInstrumentationAssertions(options: {
         expect(secondSpan?.input).toMatchObject({
           generation_config: expect.objectContaining({
             max_output_tokens: 256,
-            thinking_level: "minimal",
+            thinking_level: "low",
             temperature: 0,
           }),
           input: {
