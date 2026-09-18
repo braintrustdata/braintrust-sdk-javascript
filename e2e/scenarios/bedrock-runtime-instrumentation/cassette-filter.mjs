@@ -1,8 +1,11 @@
 // @ts-check
+const IMAGE_DATA_URL_FIELD = "inputs.*.content.*.image_url.url";
+
 /** @type {import("@braintrust/seinfeld").FilterSpec} */
 export const filter = [
   "default",
   {
+    ignoreBodyFields: [IMAGE_DATA_URL_FIELD],
     normalizeRequest(req) {
       try {
         const url = new URL(req.url);
@@ -33,6 +36,7 @@ export const filter = [
 export const redact = [
   "paranoid",
   {
+    redactBodyFields: [IMAGE_DATA_URL_FIELD],
     redactResponse(response) {
       return {
         ...response,
