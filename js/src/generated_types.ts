@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 48f2c828cb95730e) -- do not modify
+// Auto-generated file (content hash 35872c3205e63d49) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -816,6 +816,8 @@ export const SpanType = z.union([
     "preprocessor",
     "classifier",
     "review",
+    "question",
+    "log",
   ]),
   z.null(),
 ]);
@@ -1535,6 +1537,12 @@ export const MessageRole = z.enum([
   "developer",
 ]);
 export type MessageRoleType = z.infer<typeof MessageRole>;
+export const NamedScore = z.object({
+  name: z.string(),
+  score: z.union([z.number(), z.boolean(), z.null()]).optional(),
+  metadata: z.object({}).partial().passthrough().optional(),
+});
+export type NamedScoreType = z.infer<typeof NamedScore>;
 export const NullableSavedFunctionId = z.union([
   z.object({
     type: z.literal("function"),
@@ -1596,6 +1604,8 @@ export const Organization = z.object({
   proxy_url: z.union([z.string(), z.null()]).optional(),
   realtime_url: z.union([z.string(), z.null()]).optional(),
   created: z.union([z.string(), z.null()]).optional(),
+  archived_at: z.union([z.string(), z.null()]).optional(),
+  deleted_at: z.union([z.string(), z.null()]).optional(),
   image_rendering_mode: ImageRenderingMode.optional(),
 });
 export type OrganizationType = z.infer<typeof Organization>;
@@ -1649,6 +1659,7 @@ export const ProjectSettings = z.union([
       ]),
       disable_realtime_queries: z.union([z.boolean(), z.null()]),
       monitor_charts_use_metrics_start: z.union([z.boolean(), z.null()]),
+      coding_agent_insights_dashboard: z.union([z.boolean(), z.null()]),
       blind_reviews: z.union([z.boolean(), z.null()]),
       default_preprocessor: NullableSavedFunctionId,
     })
@@ -1910,6 +1921,7 @@ export const ProjectAutomation = z.object({
     TopicAutomationConfig,
     TopicDigestAutomationConfig,
   ]),
+  runtime_block: z.object({ reason: z.string(), model: z.string() }).optional(),
 });
 export type ProjectAutomationType = z.infer<typeof ProjectAutomation>;
 export const ProjectGroup = z.object({
@@ -2218,6 +2230,20 @@ export const RunEval = z.object({
   endpoint_name: z.union([z.string(), z.null()]).optional(),
 });
 export type RunEvalType = z.infer<typeof RunEval>;
+export const ScoreObject = z.object({
+  name: z.string().optional(),
+  score: z.union([z.number(), z.boolean(), z.null()]),
+  metadata: z.object({}).partial().passthrough().optional(),
+});
+export type ScoreObjectType = z.infer<typeof ScoreObject>;
+export const ScoreResult = z.union([
+  ScoreObject,
+  NamedScore,
+  z.union([z.number(), z.boolean()]),
+  z.array(NamedScore),
+  z.null(),
+]);
+export type ScoreResultType = z.infer<typeof ScoreResult>;
 export const ServiceToken = z.object({
   id: z.string().uuid(),
   created: z.union([z.string(), z.null()]).optional(),
