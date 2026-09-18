@@ -6,6 +6,431 @@ span_tree:
       "testRunId": "<run:1>",
       "workflowVersion": "1.0.8"
     }
+    ├── ai-sdk-direct-model-generate-operation
+    │   metadata: {
+    │     "operation": "direct-model-generate",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── doGenerate [llm]
+    │       input: {
+    │         "maxOutputTokens": 24,
+    │         "prompt": [
+    │           {
+    │             "content": [
+    │               {
+    │                 "text": "Reply with the single token PARIS and no punctuation.",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "temperature": 0
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "text": "PARIS",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "finishReason": {
+    │           "unified": "stop"
+    │         },
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:1>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "response": {
+    │           "body": "<omitted>",
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "usage": {
+    │           "inputTokens": {
+    │             "cacheRead": 0,
+    │             "noCache": 18,
+    │             "total": 18
+    │           },
+    │           "outputTokens": {
+    │             "reasoning": 0,
+    │             "text": 3,
+    │             "total": 3
+    │           },
+    │           "raw": {
+    │             "input_tokens": 18,
+    │             "input_tokens_details": {
+    │               "cached_tokens": 0
+    │             },
+    │             "output_tokens": 3,
+    │             "output_tokens_details": {
+    │               "reasoning_tokens": 0
+    │             }
+    │           }
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "finish_reason": {
+    │           "unified": "stop"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       metrics: {
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_tokens": 3,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 18,
+    │         "reasoning_tokens": 0,
+    │         "tokens": 21
+    │       }
+    ├── ai-sdk-wrapped-model-generate-operation
+    │   metadata: {
+    │     "operation": "wrapped-model-generate",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   ├── generateText [function]
+    │   │   input: {
+    │   │     "maxOutputTokens": 24,
+    │   │     "maxRetries": 2,
+    │   │     "messages": [
+    │   │       {
+    │   │         "content": "Reply with the single token PARIS and no punctuation.",
+    │   │         "role": "user"
+    │   │       }
+    │   │     ],
+    │   │     "model": {
+    │   │       "modelId": "gpt-4o-mini-2024-07-18",
+    │   │       "provider": "openai.responses"
+    │   │     },
+    │   │     "temperature": 0
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "providerMetadata": {
+    │   │           "openai": {
+    │   │             "itemId": "<itemId:2>"
+    │   │           }
+    │   │         },
+    │   │         "text": "PARIS",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ],
+    │   │     "finishReason": "stop",
+    │   │     "providerMetadata": {
+    │   │       "openai": {
+    │   │         "responseId": "<responseId:3>",
+    │   │         "serviceTier": "default"
+    │   │       }
+    │   │     },
+    │   │     "response": {
+    │   │       "messages": [
+    │   │         {
+    │   │           "content": [
+    │   │             {
+    │   │               "providerOptions": {
+    │   │                 "openai": {
+    │   │                   "itemId": "<itemId:2>"
+    │   │                 }
+    │   │               },
+    │   │               "text": "PARIS",
+    │   │               "type": "text"
+    │   │             }
+    │   │           ],
+    │   │           "role": "assistant"
+    │   │         }
+    │   │       ],
+    │   │       "modelId": "gpt-4o-mini-2024-07-18",
+    │   │       "timestamp": "<timestamp>"
+    │   │     },
+    │   │     "responseMessages": "<omitted>",
+    │   │     "steps": [
+    │   │       {
+    │   │         "callId": "<callId:1>",
+    │   │         "content": [
+    │   │           {
+    │   │             "providerMetadata": {
+    │   │               "openai": {
+    │   │                 "itemId": "<itemId:2>"
+    │   │               }
+    │   │             },
+    │   │             "text": "PARIS",
+    │   │             "type": "text"
+    │   │           }
+    │   │         ],
+    │   │         "finishReason": "stop",
+    │   │         "model": {
+    │   │           "modelId": "gpt-4o-mini-2024-07-18",
+    │   │           "provider": "openai.responses"
+    │   │         },
+    │   │         "providerMetadata": {
+    │   │           "openai": {
+    │   │             "responseId": "<responseId:3>",
+    │   │             "serviceTier": "default"
+    │   │           }
+    │   │         },
+    │   │         "response": {
+    │   │           "messages": [
+    │   │             {
+    │   │               "content": [
+    │   │                 {
+    │   │                   "providerOptions": {
+    │   │                     "openai": {
+    │   │                       "itemId": "<itemId:2>"
+    │   │                     }
+    │   │                   },
+    │   │                   "text": "PARIS",
+    │   │                   "type": "text"
+    │   │                 }
+    │   │               ],
+    │   │               "role": "assistant"
+    │   │             }
+    │   │           ],
+    │   │           "modelId": "gpt-4o-mini-2024-07-18",
+    │   │           "timestamp": "<timestamp>"
+    │   │         },
+    │   │         "runtimeContext": {},
+    │   │         "stepNumber": 0,
+    │   │         "toolsContext": {},
+    │   │         "usage": {
+    │   │           "inputTokenDetails": {
+    │   │             "cacheReadTokens": 0,
+    │   │             "noCacheTokens": 18
+    │   │           },
+    │   │           "inputTokens": 18,
+    │   │           "outputTokenDetails": {
+    │   │             "reasoningTokens": 0,
+    │   │             "textTokens": 3
+    │   │           },
+    │   │           "outputTokens": 3,
+    │   │           "raw": {
+    │   │             "input_tokens": 18,
+    │   │             "input_tokens_details": {
+    │   │               "cached_tokens": 0
+    │   │             },
+    │   │             "output_tokens": 3,
+    │   │             "output_tokens_details": {
+    │   │               "reasoning_tokens": 0
+    │   │             }
+    │   │           },
+    │   │           "totalTokens": 21
+    │   │         },
+    │   │         "warnings": []
+    │   │       }
+    │   │     ],
+    │   │     "text": "PARIS",
+    │   │     "toolCalls": [],
+    │   │     "toolResults": [],
+    │   │     "totalUsage": {
+    │   │       "inputTokenDetails": {
+    │   │         "cacheReadTokens": 0,
+    │   │         "noCacheTokens": 18
+    │   │       },
+    │   │       "inputTokens": 18,
+    │   │       "outputTokenDetails": {
+    │   │         "reasoningTokens": 0,
+    │   │         "textTokens": 3
+    │   │       },
+    │   │       "outputTokens": 3,
+    │   │       "totalTokens": 21
+    │   │     },
+    │   │     "usage": {
+    │   │       "inputTokenDetails": {
+    │   │         "cacheReadTokens": 0,
+    │   │         "noCacheTokens": 18
+    │   │       },
+    │   │       "inputTokens": 18,
+    │   │       "outputTokenDetails": {
+    │   │         "reasoningTokens": 0,
+    │   │         "textTokens": 3
+    │   │       },
+    │   │       "outputTokens": 3,
+    │   │       "totalTokens": 21
+    │   │     },
+    │   │     "warnings": []
+    │   │   }
+    │   │   metadata: {
+    │   │     "braintrust": {
+    │   │       "integration_name": "ai-sdk",
+    │   │       "sdk_language": "typescript"
+    │   │     },
+    │   │     "model": "gpt-4o-mini-2024-07-18",
+    │   │     "provider": "openai.responses"
+    │   │   }
+    │   │   └── doGenerate [llm]
+    │   │       input: {
+    │   │         "maxOutputTokens": 24,
+    │   │         "messages": [
+    │   │           {
+    │   │             "content": "Reply with the single token PARIS and no punctuation.",
+    │   │             "role": "user"
+    │   │           }
+    │   │         ],
+    │   │         "model": {
+    │   │           "modelId": "gpt-4o-mini-2024-07-18",
+    │   │           "provider": "openai.responses"
+    │   │         },
+    │   │         "temperature": 0
+    │   │       }
+    │   │       output: {
+    │   │         "content": [
+    │   │           {
+    │   │             "providerMetadata": {
+    │   │               "openai": {
+    │   │                 "itemId": "<itemId:2>"
+    │   │               }
+    │   │             },
+    │   │             "text": "PARIS",
+    │   │             "type": "text"
+    │   │           }
+    │   │         ],
+    │   │         "finishReason": "stop",
+    │   │         "providerMetadata": {
+    │   │           "openai": {
+    │   │             "responseId": "<responseId:1>",
+    │   │             "serviceTier": "default"
+    │   │           }
+    │   │         },
+    │   │         "response": {},
+    │   │         "usage": {
+    │   │           "inputTokenDetails": {
+    │   │             "cacheReadTokens": 0,
+    │   │             "noCacheTokens": 18
+    │   │           },
+    │   │           "inputTokens": 18,
+    │   │           "outputTokenDetails": {
+    │   │             "reasoningTokens": 0,
+    │   │             "textTokens": 3
+    │   │           },
+    │   │           "outputTokens": 3,
+    │   │           "raw": {
+    │   │             "input_tokens": 18,
+    │   │             "input_tokens_details": {
+    │   │               "cached_tokens": 0
+    │   │             },
+    │   │             "output_tokens": 3,
+    │   │             "output_tokens_details": {
+    │   │               "reasoning_tokens": 0
+    │   │             }
+    │   │           },
+    │   │           "totalTokens": 21
+    │   │         }
+    │   │       }
+    │   │       metadata: {
+    │   │         "braintrust": {
+    │   │           "integration_name": "ai-sdk",
+    │   │           "sdk_language": "typescript"
+    │   │         },
+    │   │         "model": "gpt-4o-mini-2024-07-18",
+    │   │         "provider": "openai.responses"
+    │   │       }
+    │   │       metrics: {
+    │   │         "completion_tokens": 3,
+    │   │         "prompt_cached_tokens": 0,
+    │   │         "prompt_tokens": 18,
+    │   │         "tokens": 21
+    │   │       }
+    │   └── doGenerate [llm]
+    │       input: {
+    │         "maxOutputTokens": 24,
+    │         "prompt": [
+    │           {
+    │             "content": [
+    │               {
+    │                 "text": "Reply with the single token PARIS and no punctuation.",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "temperature": 0,
+    │         "toolChoice": {
+    │           "type": "auto"
+    │         }
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:2>"
+    │               }
+    │             },
+    │             "text": "PARIS",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "finishReason": {
+    │           "unified": "stop"
+    │         },
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:1>",
+    │             "serviceTier": "default"
+    │           }
+    │         },
+    │         "response": {
+    │           "body": "<omitted>",
+    │           "modelId": "gpt-4o-mini-2024-07-18",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "usage": {
+    │           "inputTokens": {
+    │             "cacheRead": 0,
+    │             "noCache": 18,
+    │             "total": 18
+    │           },
+    │           "outputTokens": {
+    │             "reasoning": 0,
+    │             "text": 3,
+    │             "total": 3
+    │           },
+    │           "raw": {
+    │             "input_tokens": 18,
+    │             "input_tokens_details": {
+    │               "cached_tokens": 0
+    │             },
+    │             "output_tokens": 3,
+    │             "output_tokens_details": {
+    │               "reasoning_tokens": 0
+    │             }
+    │           }
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "finish_reason": {
+    │           "unified": "stop"
+    │         },
+    │         "model": "gpt-4o-mini-2024-07-18",
+    │         "provider": "openai.responses"
+    │       }
+    │       metrics: {
+    │         "completion_reasoning_tokens": 0,
+    │         "completion_tokens": 3,
+    │         "prompt_cached_tokens": 0,
+    │         "prompt_tokens": 18,
+    │         "reasoning_tokens": 0,
+    │         "tokens": 21
+    │       }
     ├── ai-sdk-evaluate-operation
     │   metadata: {
     │     "operation": "evaluate",

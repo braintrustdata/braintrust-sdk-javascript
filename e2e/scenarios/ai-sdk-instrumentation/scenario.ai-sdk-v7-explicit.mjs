@@ -42,6 +42,7 @@ runMain(async () => {
     cohere,
     createCohere,
     createOpenAI,
+    directModelWrapping: true,
     maxTokensKey: "maxOutputTokens",
     openai,
     sdkVersion: await getInstalledPackageVersion(

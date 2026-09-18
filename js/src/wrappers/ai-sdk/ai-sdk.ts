@@ -3,6 +3,7 @@
 import { SpanTypeAttribute } from "../../../util";
 import {
   aiSDKChannels,
+  BRAINTRUST_WRAPPED_AI_SDK_MODEL,
   harnessAgentChannels,
 } from "../../instrumentation/plugins/ai-sdk-channels";
 import type {
@@ -21,8 +22,10 @@ import type {
   AISDKHarnessAgentGenerateFunction,
   AISDKHarnessAgentInstance,
   AISDKHarnessAgentStreamFunction,
+  AISDKLanguageModel,
   AISDKRerankFunction,
   AISDKRerankParams,
+  AISDKResult,
   AISDKStreamFunction,
   AISDKWorkflowAgentClass,
 } from "../../vendor-sdk-types/ai-sdk";
@@ -41,6 +44,9 @@ type SpanInfo = {
 };
 
 type AISDKNamespaceObject = Record<PropertyKey, unknown>;
+type SupportedAISDKLanguageModel = AISDKLanguageModel & {
+  doGenerate: NonNullable<AISDKLanguageModel["doGenerate"]>;
+};
 
 /**
  * Detects if an object is an ES module namespace (ModuleRecord).
@@ -109,6 +115,10 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
   // Handle null/undefined early - can't create Proxy with non-objects
   if (!aiSDK || typeof aiSDK !== "object") {
     return aiSDK;
+  }
+
+  if (isSupportedLanguageModel(aiSDK)) {
+    return wrapLanguageModel(aiSDK, options) as T;
   }
 
   const typedAISDK = aiSDK as unknown as AISDK;
@@ -180,6 +190,60 @@ export function wrapAISDK<T>(aiSDK: T, options: WrapAISDKOptions = {}): T {
       return original;
     },
   }) as T;
+}
+
+function isSupportedLanguageModel(
+  value: unknown,
+): value is SupportedAISDKLanguageModel {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const model = value as AISDKLanguageModel;
+  return (
+    ["v2", "v3", "v4"].includes(model.specificationVersion ?? "") &&
+    typeof model.doGenerate === "function"
+  );
+}
+
+function wrapLanguageModel(
+  model: SupportedAISDKLanguageModel,
+  options: WrapAISDKOptions,
+): AISDKLanguageModel {
+  if (model[BRAINTRUST_WRAPPED_AI_SDK_MODEL]) {
+    return model;
+  }
+
+  const wrapped = Object.create(
+    Object.getPrototypeOf(model),
+    Object.getOwnPropertyDescriptors(model),
+  ) as AISDKLanguageModel;
+  Object.defineProperty(wrapped, BRAINTRUST_WRAPPED_AI_SDK_MODEL, {
+    configurable: false,
+    enumerable: false,
+    value: true,
+  });
+
+  const doGenerate = model.doGenerate;
+  wrapped.doGenerate = (params: AISDKCallParams) =>
+    aiSDKChannels.modelGenerate.invoke(doGenerate, model, [params], {
+      model,
+      ...(options.denyOutputPaths
+        ? { denyOutputPaths: options.denyOutputPaths }
+        : {}),
+    }) as Promise<AISDKResult>;
+
+  if (typeof model.doStream === "function") {
+    const doStream = model.doStream;
+    wrapped.doStream = (params: AISDKCallParams) =>
+      aiSDKChannels.modelStream.invoke(doStream, model, [params], {
+        model,
+        ...(options.denyOutputPaths
+          ? { denyOutputPaths: options.denyOutputPaths }
+          : {}),
+      }) as ReturnType<NonNullable<AISDKLanguageModel["doStream"]>>;
+  }
+
+  return wrapped;
 }
 
 function isHarnessAgentInstance(

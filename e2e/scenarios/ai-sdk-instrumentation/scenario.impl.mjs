@@ -507,17 +507,63 @@ async function runAISDKInstrumentationScenario(
   const supportsGenerateImage =
     options.supportsGenerateImage ?? sdkMajorVersion >= 5;
   const outputObject = createOutputObjectIfSupported(options.ai);
-  const generateImage = supportsGenerateImage
-    ? typeof instrumentedAI.generateImage === "function"
-      ? instrumentedAI.generateImage
-      : instrumentedAI.experimental_generateImage
-    : undefined;
+  let generateImage;
+  if (supportsGenerateImage) {
+    generateImage =
+      typeof instrumentedAI.generateImage === "function"
+        ? instrumentedAI.generateImage
+        : instrumentedAI.experimental_generateImage;
+  }
   const openaiImageModel = supportsGenerateImage
     ? openai.image("gpt-image-1-mini")
     : undefined;
 
+  const runDirectModelCalls = async () => {
+    const model = wrapAISDK(openaiModel);
+    const callOptions = {
+      prompt: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Reply with the single token PARIS and no punctuation.",
+            },
+          ],
+        },
+      ],
+      temperature: 0,
+      maxOutputTokens: 24,
+    };
+
+    await runOperation(
+      "ai-sdk-direct-model-generate-operation",
+      "direct-model-generate",
+      async () => {
+        await model.doGenerate(callOptions);
+      },
+    );
+
+    await runOperation(
+      "ai-sdk-wrapped-model-generate-operation",
+      "wrapped-model-generate",
+      async () => {
+        await instrumentedAI.generateText({
+          model,
+          prompt: "Reply with the single token PARIS and no punctuation.",
+          temperature: 0,
+          ...tokenLimit(options.maxTokensKey, 24),
+        });
+      },
+    );
+  };
+
   await runTracedScenario({
     callback: async () => {
+      if (sdkMajorVersion >= 5 && options.directModelWrapping) {
+        await runDirectModelCalls();
+      }
+
       if (options.supportsEvaluate) {
         const evaluate =
           options.evaluate ?? instrumentedAI.experimental_evaluate;
@@ -994,9 +1040,12 @@ async function runAISDKInstrumentationScenario(
 }
 
 export async function runWrappedAISDKInstrumentation(options) {
-  await runAISDKInstrumentationScenario(options, {
-    decorateAI: wrapAISDK,
-  });
+  await runAISDKInstrumentationScenario(
+    { ...options, directModelWrapping: true },
+    {
+      decorateAI: wrapAISDK,
+    },
+  );
 }
 
 export async function runAutoAISDKInstrumentation(options) {
