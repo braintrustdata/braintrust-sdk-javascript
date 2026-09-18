@@ -29,5 +29,9 @@ jobs:
           node-version-file: .tool-versions
       - name: Fetch pull request base ref
         run: git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
+      - name: Validate changeset summaries
+        run: |
+          node --test scripts/release/validate-changesets.test.mjs
+          node scripts/release/validate-changesets.mjs
       - name: Enforce changeset requirement for publishable package changes
         run: node scripts/release/enforce-changeset.mjs
