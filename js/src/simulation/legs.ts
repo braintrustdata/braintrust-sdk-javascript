@@ -1,11 +1,12 @@
 /**
  * The agent's end of a call.
  *
- * Three implementations, one per way an agent is reachable:
+ * One implementation per way an agent is reachable:
  *
  *   ClientLeg     we dial the agent        -> "calls to the agent"
  *   ServerLeg     the agent dials us       -> "calls from the agent"
  *   InProcessLeg  the agent is right here  -> the appendix shortcut
+ *   AcpLeg        the agent is a process   -> acp.ts, prompt turns over stdio
  *
  * The room drives all three identically, which is the property that keeps
  * adding a transport an adapter rather than a change to the core.
@@ -47,6 +48,8 @@ export interface AgentLeg {
 export interface Heard {
   text: string;
   audio: AudioFrame | null;
+  /** Set where the agent asked to proceed and a policy answered for it. */
+  permissions?: { request: string; decision: string }[];
 }
 
 /** A tiny single-slot channel. One writer, one reader. */

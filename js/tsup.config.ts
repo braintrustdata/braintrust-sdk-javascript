@@ -18,7 +18,7 @@ export default defineConfig([
       "apply-auto-instrumentation":
         "src/node/apply-auto-instrumentation-entry.ts",
       "vitest-evals-reporter": "src/wrappers/vitest-evals/reporter.ts",
-      voice: "src/voice/index.ts",
+      simulation: "src/simulation/index.ts",
     },
     format: ["cjs", "esm"],
     outDir: "dist",
