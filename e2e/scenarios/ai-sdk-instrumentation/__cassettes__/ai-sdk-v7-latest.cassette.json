@@ -778,7 +778,7 @@
                   -0.007480621337890625, 0.04766845703125, -0.04901123046875,
                   0.0227203369140625, -0.0255889892578125, -0.014129638671875,
                   -0.0164337158203125, 0.0095062255859375, 0.01837158203125,
-                  0.01837158203125, 0.05340576171875, 0.00007402896881103516,
+                  0.01837158203125, 0.05340576171875, 7.402896881103516e-5,
                   0.03070068359375, 0.003925323486328125, -0.0161285400390625,
                   -0.00675201416015625, -0.0189666748046875,
                   -0.01511383056640625, -0.0167999267578125, 0.0219573974609375,
@@ -1122,7 +1122,7 @@
                   0.0257415771484375, 0.0307464599609375, 0.02386474609375,
                   0.0018949508666992188, -0.01251220703125, -0.010223388671875,
                   -0.035614013671875, 0.0228118896484375,
-                  -0.000028192996978759766, 0.0123138427734375, 0.005126953125,
+                  -2.8192996978759766e-5, 0.0123138427734375, 0.005126953125,
                   -0.010589599609375, 0.00533294677734375, 0.009490966796875,
                   0.00566864013671875, -0.005893707275390625,
                   0.01282501220703125, -0.0113372802734375, 0.00579071044921875,
@@ -3821,6 +3821,326 @@
         },
         "status": 200,
         "statusText": "OK"
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "92999d796ad4aa08",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-09-19T10:42:23.620Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "include": ["web_search_call.action.sources"],
+            "input": [
+              {
+                "content": [
+                  {
+                    "text": "Search the web for the official Braintrust website. Reply with its URL only.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 128,
+            "model": "gpt-4.1-mini",
+            "tool_choice": {
+              "type": "web_search"
+            },
+            "tools": [
+              {
+                "search_context_size": "low",
+                "type": "web_search"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1789814543,
+            "created_at": 1789814542,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_00a0521d4fe14a67006aae670e008c87d29e915c3cf701a9be",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 128,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4.1-mini-2025-04-14",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "action": {
+                  "queries": [
+                    "Search the web for the official Braintrust website. Reply with its URL only."
+                  ],
+                  "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+                  "sources": [
+                    {
+                      "type": "url",
+                      "url": "https://www.braintrust.com/?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://www.braintrust.dev/?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://www.usebraintrust.com/?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://www.usebraintrust.com/about?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://www.usebraintrust.com/for-talent?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://www.braintrustgroup.com/?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://braintrustagency.com/?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://braintrusttutors.com/?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://builtin.com/company/braintrust?utm_source=openai"
+                    },
+                    {
+                      "type": "url",
+                      "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+                    }
+                  ],
+                  "type": "search"
+                },
+                "id": "ws_00a0521d4fe14a67006aae670e28f087d28680ae3ce19ef359",
+                "status": "completed",
+                "type": "web_search_call"
+              },
+              {
+                "content": [
+                  {
+                    "annotations": [],
+                    "logprobs": [],
+                    "text": "https://www.usebraintrust.com/ ",
+                    "type": "output_text"
+                  }
+                ],
+                "id": "msg_00a0521d4fe14a67006aae670eec0c87d2b3d2114da66e12d0",
+                "role": "assistant",
+                "status": "completed",
+                "type": "message"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "auto",
+            "status": "completed",
+            "store": true,
+            "temperature": 1,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": {
+              "type": "web_search_preview"
+            },
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 1
+              }
+            },
+            "tools": [
+              {
+                "return_token_budget": "default",
+                "search_content_types": ["text"],
+                "search_context_size": "low",
+                "type": "web_search",
+                "user_location": {
+                  "city": null,
+                  "country": "US",
+                  "region": null,
+                  "timezone": null,
+                  "type": "approximate"
+                }
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 8517,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 0
+              },
+              "output_tokens": 9,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 8526
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a3d7fbb6e88ba5a9-IAD",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Sat, 19 Sep 2026 10:42:23 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "1586",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-request-id": "req_11eb93ead96f494bb6c32ca478a4397c"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "95feeaf13acfdd40",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-09-19T10:42:25.348Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "include": ["web_search_call.action.sources"],
+            "input": [
+              {
+                "content": [
+                  {
+                    "text": "Search the web for the official Braintrust website. Reply with its URL only.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 128,
+            "model": "gpt-4.1-mini",
+            "stream": true,
+            "tool_choice": {
+              "type": "web_search"
+            },
+            "tools": [
+              {
+                "search_context_size": "low",
+                "type": "web_search"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_07a855cbcb9a45a8006aae670fb64887d2bcb6d26ccc0be048\",\"object\":\"response\",\"created_at\":1789814543,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128,\"max_tool_calls\":null,\"model\":\"gpt-4.1-mini-2025-04-14\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":{\"type\":\"web_search_preview\"},\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"web_search\",\"return_token_budget\":\"default\",\"search_content_types\":[\"text\"],\"search_context_size\":\"low\",\"user_location\":{\"type\":\"approximate\",\"city\":null,\"country\":\"US\",\"region\":null,\"timezone\":null}}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_07a855cbcb9a45a8006aae670fb64887d2bcb6d26ccc0be048\",\"object\":\"response\",\"created_at\":1789814543,\"status\":\"in_progress\",\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128,\"max_tool_calls\":null,\"model\":\"gpt-4.1-mini-2025-04-14\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":{\"type\":\"web_search_preview\"},\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"web_search\",\"return_token_budget\":\"default\",\"search_content_types\":[\"text\"],\"search_context_size\":\"low\",\"user_location\":{\"type\":\"approximate\",\"city\":null,\"country\":\"US\",\"region\":null,\"timezone\":null}}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"ws_07a855cbcb9a45a8006aae670fde3487d29cd0db894715dc0b\",\"type\":\"web_search_call\",\"status\":\"in_progress\",\"action\":{\"type\":\"search\"}},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.web_search_call.in_progress\ndata: {\"type\":\"response.web_search_call.in_progress\",\"item_id\":\"ws_07a855cbcb9a45a8006aae670fde3487d29cd0db894715dc0b\",\"output_index\":0,\"sequence_number\":3}",
+            "event: response.web_search_call.searching\ndata: {\"type\":\"response.web_search_call.searching\",\"item_id\":\"ws_07a855cbcb9a45a8006aae670fde3487d29cd0db894715dc0b\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.web_search_call.completed\ndata: {\"type\":\"response.web_search_call.completed\",\"item_id\":\"ws_07a855cbcb9a45a8006aae670fde3487d29cd0db894715dc0b\",\"output_index\":0,\"sequence_number\":5}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"ws_07a855cbcb9a45a8006aae670fde3487d29cd0db894715dc0b\",\"type\":\"web_search_call\",\"status\":\"completed\",\"action\":{\"type\":\"search\",\"queries\":[\"Search the web for the official Braintrust website. Reply with its URL only.\"],\"query\":\"Search the web for the official Braintrust website. Reply with its URL only.\",\"sources\":[{\"type\":\"url\",\"url\":\"https://www.braintrust.com/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.braintrust.dev/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.usebraintrust.com/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.usebraintrust.com/about?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.usebraintrust.com/for-talent?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.braintrustgroup.com/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://braintrustagency.com/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://ai.engineer/orgs/braintrust?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://braintrusttutors.com/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.aiexplore.io/explore/braintrust?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://builtin.com/company/braintrust?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://digitalintelligence.review/company/braintrust?utm_source=openai\"}]}},\"output_index\":0,\"sequence_number\":6}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":1,\"sequence_number\":7}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"output_index\":1,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":8}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"https\",\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"logprobs\":[],\"obfuscation\":\"dlRv6OpmfZf\",\"output_index\":1,\"sequence_number\":9}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"://\",\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"logprobs\":[],\"obfuscation\":\"hPjm4RNp8xXdW\",\"output_index\":1,\"sequence_number\":10}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"www\",\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"logprobs\":[],\"obfuscation\":\"NrpshVAiqAWmr\",\"output_index\":1,\"sequence_number\":11}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".use\",\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"logprobs\":[],\"obfuscation\":\"DtlLbbnU7DnI\",\"output_index\":1,\"sequence_number\":12}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"brain\",\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"logprobs\":[],\"obfuscation\":\"Qa42lhZSAyo\",\"output_index\":1,\"sequence_number\":13}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"trust\",\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"logprobs\":[],\"obfuscation\":\"71BrwdapYJX\",\"output_index\":1,\"sequence_number\":14}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\".com\",\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"logprobs\":[],\"obfuscation\":\"ZejWln1xneAv\",\"output_index\":1,\"sequence_number\":15}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"/\",\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"logprobs\":[],\"obfuscation\":\"grb639zIsUZs2d8\",\"output_index\":1,\"sequence_number\":16}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\" \",\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"logprobs\":[],\"obfuscation\":\"cQO4X6NgfaZDF2y\",\"output_index\":1,\"sequence_number\":17}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"logprobs\":[],\"output_index\":1,\"sequence_number\":18,\"text\":\"https://www.usebraintrust.com/ \"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"output_index\":1,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"https://www.usebraintrust.com/ \"},\"sequence_number\":19}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"https://www.usebraintrust.com/ \"}],\"role\":\"assistant\"},\"output_index\":1,\"sequence_number\":20}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_07a855cbcb9a45a8006aae670fb64887d2bcb6d26ccc0be048\",\"object\":\"response\",\"created_at\":1789814543,\"status\":\"completed\",\"background\":false,\"completed_at\":1789814545,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128,\"max_tool_calls\":null,\"model\":\"gpt-4.1-mini-2025-04-14\",\"moderation\":null,\"output\":[{\"id\":\"ws_07a855cbcb9a45a8006aae670fde3487d29cd0db894715dc0b\",\"type\":\"web_search_call\",\"status\":\"completed\",\"action\":{\"type\":\"search\",\"queries\":[\"Search the web for the official Braintrust website. Reply with its URL only.\"],\"query\":\"Search the web for the official Braintrust website. Reply with its URL only.\",\"sources\":[{\"type\":\"url\",\"url\":\"https://www.braintrust.com/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.braintrust.dev/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.usebraintrust.com/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.usebraintrust.com/about?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.usebraintrust.com/for-talent?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.braintrustgroup.com/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://braintrustagency.com/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://ai.engineer/orgs/braintrust?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://braintrusttutors.com/?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://www.aiexplore.io/explore/braintrust?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://builtin.com/company/braintrust?utm_source=openai\"},{\"type\":\"url\",\"url\":\"https://digitalintelligence.review/company/braintrust?utm_source=openai\"}]}},{\"id\":\"msg_07a855cbcb9a45a8006aae6710b68887d2917aac265afe7ee2\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"https://www.usebraintrust.com/ \"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":true,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":{\"type\":\"web_search_preview\"},\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":1}},\"tools\":[{\"type\":\"web_search\",\"return_token_budget\":\"default\",\"search_content_types\":[\"text\"],\"search_context_size\":\"low\",\"user_location\":{\"type\":\"approximate\",\"city\":null,\"country\":\"US\",\"region\":null,\"timezone\":null}}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":8517,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":9,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":8526},\"user\":null,\"metadata\":{}},\"sequence_number\":21}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a3d7fbc1c8aba5a9-IAD",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Sat, 19 Sep 2026 10:42:25 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "1605",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-request-id": "req_574d1e4682494b8280265b43ae73233e"
+        },
+        "status": 200
       }
     }
   ],

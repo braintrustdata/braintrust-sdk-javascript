@@ -431,6 +431,1413 @@ span_tree:
     │         "reasoning_tokens": 0,
     │         "tokens": 21
     │       }
+    ├── ai-sdk-provider-tool-generateText-operation
+    │   metadata: {
+    │     "operation": "provider-tool-generateText",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── generateText [function]
+    │       input: {
+    │         "maxOutputTokens": 128,
+    │         "maxRetries": 2,
+    │         "messages": [
+    │           {
+    │             "content": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "model": {
+    │           "modelId": "gpt-4.1-mini",
+    │           "provider": "openai.responses"
+    │         },
+    │         "toolChoice": {
+    │           "toolName": "web_search",
+    │           "type": "tool"
+    │         },
+    │         "tools": {
+    │           "web_search": {
+    │             "args": {
+    │               "searchContextSize": "low"
+    │             },
+    │             "isProviderExecuted": true,
+    │             "type": "provider"
+    │           }
+    │         }
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "input": {},
+    │             "providerExecuted": true,
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "web_search",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "input": {},
+    │             "output": {
+    │               "action": {
+    │                 "queries": [
+    │                   "Search the web for the official Braintrust website. Reply with its URL only."
+    │                 ],
+    │                 "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │                 "type": "search"
+    │               },
+    │               "sources": [
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrust.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrust.dev/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.usebraintrust.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.usebraintrust.com/about?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.usebraintrust.com/for-talent?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrustgroup.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://braintrustagency.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://braintrusttutors.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://builtin.com/company/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+    │                 }
+    │               ]
+    │             },
+    │             "providerExecuted": true,
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "web_search",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:3>"
+    │               }
+    │             },
+    │             "text": "https://www.usebraintrust.com/ ",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "finishReason": "stop",
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:4>",
+    │             "serviceTier": "auto"
+    │           }
+    │         },
+    │         "response": {
+    │           "messages": [
+    │             {
+    │               "content": [
+    │                 {
+    │                   "input": {},
+    │                   "providerExecuted": true,
+    │                   "toolCallId": "<toolCallId:2>",
+    │                   "toolName": "web_search",
+    │                   "type": "tool-call"
+    │                 },
+    │                 {
+    │                   "output": {
+    │                     "type": "json",
+    │                     "value": {
+    │                       "action": {
+    │                         "queries": "[Object]",
+    │                         "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │                         "type": "search"
+    │                       },
+    │                       "sources": [
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]"
+    │                       ]
+    │                     }
+    │                   },
+    │                   "toolCallId": "<toolCallId:2>",
+    │                   "toolName": "web_search",
+    │                   "type": "tool-result"
+    │                 },
+    │                 {
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:3>"
+    │                     }
+    │                   },
+    │                   "text": "https://www.usebraintrust.com/ ",
+    │                   "type": "text"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             }
+    │           ],
+    │           "modelId": "gpt-4.1-mini-2025-04-14",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "responseMessages": "<omitted>",
+    │         "steps": [
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "input": {},
+    │                 "providerExecuted": true,
+    │                 "toolCallId": "<toolCallId:2>",
+    │                 "toolName": "web_search",
+    │                 "type": "tool-call"
+    │               },
+    │               {
+    │                 "input": {},
+    │                 "output": {
+    │                   "action": {
+    │                     "queries": [
+    │                       "Search the web for the official Braintrust website. Reply with its URL only."
+    │                     ],
+    │                     "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │                     "type": "search"
+    │                   },
+    │                   "sources": [
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.braintrust.com/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.braintrust.dev/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.usebraintrust.com/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.usebraintrust.com/about?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.usebraintrust.com/for-talent?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.braintrustgroup.com/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://braintrustagency.com/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://braintrusttutors.com/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://builtin.com/company/braintrust?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+    │                     }
+    │                   ]
+    │                 },
+    │                 "providerExecuted": true,
+    │                 "toolCallId": "<toolCallId:2>",
+    │                 "toolName": "web_search",
+    │                 "type": "tool-result"
+    │               },
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:3>"
+    │                   }
+    │                 },
+    │                 "text": "https://www.usebraintrust.com/ ",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "model": {
+    │               "modelId": "gpt-4.1-mini",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:4>",
+    │                 "serviceTier": "auto"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "input": {},
+    │                       "providerExecuted": true,
+    │                       "toolCallId": "<toolCallId:2>",
+    │                       "toolName": "web_search",
+    │                       "type": "tool-call"
+    │                     },
+    │                     {
+    │                       "output": {
+    │                         "type": "json",
+    │                         "value": {
+    │                           "action": {
+    │                             "queries": "[Object]",
+    │                             "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │                             "type": "search"
+    │                           },
+    │                           "sources": [
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]"
+    │                           ]
+    │                         }
+    │                       },
+    │                       "toolCallId": "<toolCallId:2>",
+    │                       "toolName": "web_search",
+    │                       "type": "tool-result"
+    │                     },
+    │                     {
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:3>"
+    │                         }
+    │                       },
+    │                       "text": "https://www.usebraintrust.com/ ",
+    │                       "type": "text"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4.1-mini-2025-04-14",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 0,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 8517
+    │               },
+    │               "inputTokens": 8517,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 9
+    │               },
+    │               "outputTokens": 9,
+    │               "raw": {
+    │                 "input_tokens": 8517,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 9,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 8526
+    │             },
+    │             "warnings": []
+    │           }
+    │         ],
+    │         "text": "https://www.usebraintrust.com/ ",
+    │         "toolCalls": [
+    │           {
+    │             "input": {},
+    │             "providerExecuted": true,
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "web_search",
+    │             "type": "tool-call"
+    │           }
+    │         ],
+    │         "toolResults": [
+    │           {
+    │             "input": {},
+    │             "output": {
+    │               "action": {
+    │                 "queries": [
+    │                   "Search the web for the official Braintrust website. Reply with its URL only."
+    │                 ],
+    │                 "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │                 "type": "search"
+    │               },
+    │               "sources": [
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrust.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrust.dev/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.usebraintrust.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.usebraintrust.com/about?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.usebraintrust.com/for-talent?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrustgroup.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://braintrustagency.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://braintrusttutors.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://builtin.com/company/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+    │                 }
+    │               ]
+    │             },
+    │             "providerExecuted": true,
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "web_search",
+    │             "type": "tool-result"
+    │           }
+    │         ],
+    │         "totalUsage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 8517
+    │           },
+    │           "inputTokens": 8517,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 9
+    │           },
+    │           "outputTokens": 9,
+    │           "totalTokens": 8526
+    │         },
+    │         "usage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 8517
+    │           },
+    │           "inputTokens": 8517,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 9
+    │           },
+    │           "outputTokens": 9,
+    │           "totalTokens": 8526
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4.1-mini",
+    │         "provider": "openai.responses"
+    │       }
+    │       ├── doGenerate [llm]
+    │       │   input: {
+    │       │     "maxOutputTokens": 128,
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │       │         "role": "user"
+    │       │       }
+    │       │     ],
+    │       │     "model": {
+    │       │       "modelId": "gpt-4.1-mini",
+    │       │       "provider": "openai.responses"
+    │       │     },
+    │       │     "tools": [
+    │       │       {
+    │       │         "args": {
+    │       │           "searchContextSize": "low"
+    │       │         },
+    │       │         "name": "web_search",
+    │       │         "type": "provider"
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "input": {},
+    │       │         "providerExecuted": true,
+    │       │         "toolCallId": "<toolCallId:2>",
+    │       │         "toolName": "web_search",
+    │       │         "type": "tool-call"
+    │       │       },
+    │       │       {
+    │       │         "input": {},
+    │       │         "output": {
+    │       │           "action": {
+    │       │             "queries": [
+    │       │               "Search the web for the official Braintrust website. Reply with its URL only."
+    │       │             ],
+    │       │             "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │       │             "type": "search"
+    │       │           },
+    │       │           "sources": [
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.braintrust.com/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.braintrust.dev/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.usebraintrust.com/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.usebraintrust.com/about?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.usebraintrust.com/for-talent?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.braintrustgroup.com/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://braintrustagency.com/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://braintrusttutors.com/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://builtin.com/company/braintrust?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+    │       │             }
+    │       │           ]
+    │       │         },
+    │       │         "providerExecuted": true,
+    │       │         "toolCallId": "<toolCallId:2>",
+    │       │         "toolName": "web_search",
+    │       │         "type": "tool-result"
+    │       │       },
+    │       │       {
+    │       │         "providerMetadata": {
+    │       │           "openai": {
+    │       │             "itemId": "<itemId:3>"
+    │       │           }
+    │       │         },
+    │       │         "text": "https://www.usebraintrust.com/ ",
+    │       │         "type": "text"
+    │       │       }
+    │       │     ],
+    │       │     "finishReason": "stop",
+    │       │     "providerMetadata": {
+    │       │       "openai": {
+    │       │         "responseId": "<responseId:1>",
+    │       │         "serviceTier": "auto"
+    │       │       }
+    │       │     },
+    │       │     "response": {},
+    │       │     "usage": {
+    │       │       "inputTokenDetails": {
+    │       │         "cacheReadTokens": 0,
+    │       │         "noCacheTokens": 8517
+    │       │       },
+    │       │       "inputTokens": 8517,
+    │       │       "outputTokenDetails": {
+    │       │         "reasoningTokens": 0,
+    │       │         "textTokens": 9
+    │       │       },
+    │       │       "outputTokens": 9,
+    │       │       "raw": {
+    │       │         "input_tokens": 8517,
+    │       │         "input_tokens_details": {
+    │       │           "cached_tokens": 0
+    │       │         },
+    │       │         "output_tokens": 9,
+    │       │         "output_tokens_details": {
+    │       │           "reasoning_tokens": 0
+    │       │         }
+    │       │       },
+    │       │       "totalTokens": 8526
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4.1-mini",
+    │       │     "provider": "openai.responses"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 9,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 8517,
+    │       │     "tokens": 8526
+    │       │   }
+    │       └── web_search [tool]
+    │           output: {
+    │             "action": {
+    │               "queries": [
+    │                 "Search the web for the official Braintrust website. Reply with its URL only."
+    │               ],
+    │               "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │               "type": "search"
+    │             },
+    │             "sources": [
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.braintrust.com/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.braintrust.dev/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.usebraintrust.com/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.usebraintrust.com/about?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.usebraintrust.com/for-talent?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.braintrustgroup.com/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://braintrustagency.com/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://braintrusttutors.com/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://builtin.com/company/braintrust?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+    │               }
+    │             ]
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "providerExecuted": true,
+    │             "toolCallId": "<toolCallId:1>",
+    │             "toolName": "web_search"
+    │           }
+    ├── ai-sdk-provider-tool-streamText-operation
+    │   metadata: {
+    │     "operation": "provider-tool-streamText",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   └── streamText [function]
+    │       input: {
+    │         "maxOutputTokens": 128,
+    │         "maxRetries": 2,
+    │         "messages": [
+    │           {
+    │             "content": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │             "role": "user"
+    │           }
+    │         ],
+    │         "model": {
+    │           "modelId": "gpt-4.1-mini",
+    │           "provider": "openai.responses"
+    │         },
+    │         "toolChoice": {
+    │           "toolName": "web_search",
+    │           "type": "tool"
+    │         },
+    │         "tools": {
+    │           "web_search": {
+    │             "args": {
+    │               "searchContextSize": "low"
+    │             },
+    │             "isProviderExecuted": true,
+    │             "type": "provider"
+    │           }
+    │         }
+    │       }
+    │       output: {
+    │         "content": [
+    │           {
+    │             "input": {},
+    │             "providerExecuted": true,
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "web_search",
+    │             "type": "tool-call"
+    │           },
+    │           {
+    │             "input": {},
+    │             "output": {
+    │               "action": {
+    │                 "queries": [
+    │                   "Search the web for the official Braintrust website. Reply with its URL only."
+    │                 ],
+    │                 "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │                 "type": "search"
+    │               },
+    │               "sources": [
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrust.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrust.dev/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.usebraintrust.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.usebraintrust.com/about?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrustgroup.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://braintrustagency.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://braintrusttutors.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://builtin.com/company/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://enterpriseleague.com/company/braintrust?utm_source=openai"
+    │                 }
+    │               ]
+    │             },
+    │             "providerExecuted": true,
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "web_search",
+    │             "type": "tool-result"
+    │           },
+    │           {
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "itemId": "<itemId:3>"
+    │               }
+    │             },
+    │             "text": "https://www.usebraintrust.com ",
+    │             "type": "text"
+    │           }
+    │         ],
+    │         "finishReason": "stop",
+    │         "providerMetadata": {
+    │           "openai": {
+    │             "responseId": "<responseId:4>",
+    │             "serviceTier": "auto"
+    │           }
+    │         },
+    │         "response": {
+    │           "messages": [
+    │             {
+    │               "content": [
+    │                 {
+    │                   "input": {},
+    │                   "providerExecuted": true,
+    │                   "toolCallId": "<toolCallId:2>",
+    │                   "toolName": "web_search",
+    │                   "type": "tool-call"
+    │                 },
+    │                 {
+    │                   "output": {
+    │                     "type": "json",
+    │                     "value": {
+    │                       "action": {
+    │                         "queries": "[Object]",
+    │                         "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │                         "type": "search"
+    │                       },
+    │                       "sources": [
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]",
+    │                         "[Object]"
+    │                       ]
+    │                     }
+    │                   },
+    │                   "toolCallId": "<toolCallId:2>",
+    │                   "toolName": "web_search",
+    │                   "type": "tool-result"
+    │                 },
+    │                 {
+    │                   "providerOptions": {
+    │                     "openai": {
+    │                       "itemId": "<itemId:3>"
+    │                     }
+    │                   },
+    │                   "text": "https://www.usebraintrust.com ",
+    │                   "type": "text"
+    │                 }
+    │               ],
+    │               "role": "assistant"
+    │             }
+    │           ],
+    │           "modelId": "gpt-4.1-mini-2025-04-14",
+    │           "timestamp": "<timestamp>"
+    │         },
+    │         "responseMessages": "<omitted>",
+    │         "steps": [
+    │           {
+    │             "callId": "<callId:1>",
+    │             "content": [
+    │               {
+    │                 "input": {},
+    │                 "providerExecuted": true,
+    │                 "toolCallId": "<toolCallId:2>",
+    │                 "toolName": "web_search",
+    │                 "type": "tool-call"
+    │               },
+    │               {
+    │                 "input": {},
+    │                 "output": {
+    │                   "action": {
+    │                     "queries": [
+    │                       "Search the web for the official Braintrust website. Reply with its URL only."
+    │                     ],
+    │                     "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │                     "type": "search"
+    │                   },
+    │                   "sources": [
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.braintrust.com/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.braintrust.dev/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.usebraintrust.com/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.usebraintrust.com/about?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.braintrustgroup.com/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://braintrustagency.com/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://braintrusttutors.com/?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://builtin.com/company/braintrust?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+    │                     },
+    │                     {
+    │                       "type": "url",
+    │                       "url": "https://enterpriseleague.com/company/braintrust?utm_source=openai"
+    │                     }
+    │                   ]
+    │                 },
+    │                 "providerExecuted": true,
+    │                 "toolCallId": "<toolCallId:2>",
+    │                 "toolName": "web_search",
+    │                 "type": "tool-result"
+    │               },
+    │               {
+    │                 "providerMetadata": {
+    │                   "openai": {
+    │                     "itemId": "<itemId:3>"
+    │                   }
+    │                 },
+    │                 "text": "https://www.usebraintrust.com ",
+    │                 "type": "text"
+    │               }
+    │             ],
+    │             "finishReason": "stop",
+    │             "model": {
+    │               "modelId": "gpt-4.1-mini",
+    │               "provider": "openai.responses"
+    │             },
+    │             "providerMetadata": {
+    │               "openai": {
+    │                 "responseId": "<responseId:4>",
+    │                 "serviceTier": "auto"
+    │               }
+    │             },
+    │             "response": {
+    │               "messages": [
+    │                 {
+    │                   "content": [
+    │                     {
+    │                       "input": {},
+    │                       "providerExecuted": true,
+    │                       "toolCallId": "<toolCallId:2>",
+    │                       "toolName": "web_search",
+    │                       "type": "tool-call"
+    │                     },
+    │                     {
+    │                       "output": {
+    │                         "type": "json",
+    │                         "value": {
+    │                           "action": {
+    │                             "queries": "[Object]",
+    │                             "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │                             "type": "search"
+    │                           },
+    │                           "sources": [
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]",
+    │                             "[Object]"
+    │                           ]
+    │                         }
+    │                       },
+    │                       "toolCallId": "<toolCallId:2>",
+    │                       "toolName": "web_search",
+    │                       "type": "tool-result"
+    │                     },
+    │                     {
+    │                       "providerOptions": {
+    │                         "openai": {
+    │                           "itemId": "<itemId:3>"
+    │                         }
+    │                       },
+    │                       "text": "https://www.usebraintrust.com ",
+    │                       "type": "text"
+    │                     }
+    │                   ],
+    │                   "role": "assistant"
+    │                 }
+    │               ],
+    │               "modelId": "gpt-4.1-mini-2025-04-14",
+    │               "timestamp": "<timestamp>"
+    │             },
+    │             "runtimeContext": {},
+    │             "stepNumber": 0,
+    │             "toolsContext": {},
+    │             "usage": {
+    │               "inputTokenDetails": {
+    │                 "cacheReadTokens": 0,
+    │                 "noCacheTokens": 8517
+    │               },
+    │               "inputTokens": 8517,
+    │               "outputTokenDetails": {
+    │                 "reasoningTokens": 0,
+    │                 "textTokens": 8
+    │               },
+    │               "outputTokens": 8,
+    │               "raw": {
+    │                 "input_tokens": 8517,
+    │                 "input_tokens_details": {
+    │                   "cached_tokens": 0
+    │                 },
+    │                 "output_tokens": 8,
+    │                 "output_tokens_details": {
+    │                   "reasoning_tokens": 0
+    │                 }
+    │               },
+    │               "totalTokens": 8525
+    │             },
+    │             "warnings": []
+    │           }
+    │         ],
+    │         "text": "https://www.usebraintrust.com ",
+    │         "toolCalls": [
+    │           {
+    │             "input": {},
+    │             "providerExecuted": true,
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "web_search",
+    │             "type": "tool-call"
+    │           }
+    │         ],
+    │         "toolResults": [
+    │           {
+    │             "input": {},
+    │             "output": {
+    │               "action": {
+    │                 "queries": [
+    │                   "Search the web for the official Braintrust website. Reply with its URL only."
+    │                 ],
+    │                 "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │                 "type": "search"
+    │               },
+    │               "sources": [
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrust.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrust.dev/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.usebraintrust.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.usebraintrust.com/about?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.braintrustgroup.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://braintrustagency.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://braintrusttutors.com/?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://builtin.com/company/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+    │                 },
+    │                 {
+    │                   "type": "url",
+    │                   "url": "https://enterpriseleague.com/company/braintrust?utm_source=openai"
+    │                 }
+    │               ]
+    │             },
+    │             "providerExecuted": true,
+    │             "toolCallId": "<toolCallId:2>",
+    │             "toolName": "web_search",
+    │             "type": "tool-result"
+    │           }
+    │         ],
+    │         "totalUsage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 8517
+    │           },
+    │           "inputTokens": 8517,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 8
+    │           },
+    │           "outputTokens": 8,
+    │           "totalTokens": 8525
+    │         },
+    │         "usage": {
+    │           "inputTokenDetails": {
+    │             "cacheReadTokens": 0,
+    │             "noCacheTokens": 8517
+    │           },
+    │           "inputTokens": 8517,
+    │           "outputTokenDetails": {
+    │             "reasoningTokens": 0,
+    │             "textTokens": 8
+    │           },
+    │           "outputTokens": 8,
+    │           "totalTokens": 8525
+    │         },
+    │         "warnings": []
+    │       }
+    │       metadata: {
+    │         "braintrust": {
+    │           "integration_name": "ai-sdk",
+    │           "sdk_language": "typescript"
+    │         },
+    │         "model": "gpt-4.1-mini",
+    │         "provider": "openai.responses"
+    │       }
+    │       metrics: {
+    │         "time_to_first_token": 0
+    │       }
+    │       ├── doStream [llm]
+    │       │   input: {
+    │       │     "maxOutputTokens": 128,
+    │       │     "messages": [
+    │       │       {
+    │       │         "content": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │       │         "role": "user"
+    │       │       }
+    │       │     ],
+    │       │     "model": {
+    │       │       "modelId": "gpt-4.1-mini",
+    │       │       "provider": "openai.responses"
+    │       │     },
+    │       │     "tools": [
+    │       │       {
+    │       │         "args": {
+    │       │           "searchContextSize": "low"
+    │       │         },
+    │       │         "name": "web_search",
+    │       │         "type": "provider"
+    │       │       }
+    │       │     ]
+    │       │   }
+    │       │   output: {
+    │       │     "content": [
+    │       │       {
+    │       │         "input": {},
+    │       │         "providerExecuted": true,
+    │       │         "toolCallId": "<toolCallId:2>",
+    │       │         "toolName": "web_search",
+    │       │         "type": "tool-call"
+    │       │       },
+    │       │       {
+    │       │         "input": {},
+    │       │         "output": {
+    │       │           "action": {
+    │       │             "queries": [
+    │       │               "Search the web for the official Braintrust website. Reply with its URL only."
+    │       │             ],
+    │       │             "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │       │             "type": "search"
+    │       │           },
+    │       │           "sources": [
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.braintrust.com/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.braintrust.dev/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.usebraintrust.com/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.usebraintrust.com/about?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.braintrustgroup.com/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://braintrustagency.com/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://braintrusttutors.com/?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://builtin.com/company/braintrust?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+    │       │             },
+    │       │             {
+    │       │               "type": "url",
+    │       │               "url": "https://enterpriseleague.com/company/braintrust?utm_source=openai"
+    │       │             }
+    │       │           ]
+    │       │         },
+    │       │         "providerExecuted": true,
+    │       │         "toolCallId": "<toolCallId:2>",
+    │       │         "toolName": "web_search",
+    │       │         "type": "tool-result"
+    │       │       },
+    │       │       {
+    │       │         "providerMetadata": {
+    │       │           "openai": {
+    │       │             "itemId": "<itemId:3>"
+    │       │           }
+    │       │         },
+    │       │         "text": "https://www.usebraintrust.com ",
+    │       │         "type": "text"
+    │       │       }
+    │       │     ],
+    │       │     "finishReason": "stop",
+    │       │     "providerMetadata": {
+    │       │       "openai": {
+    │       │         "responseId": "<responseId:1>",
+    │       │         "serviceTier": "auto"
+    │       │       }
+    │       │     },
+    │       │     "response": {},
+    │       │     "usage": {
+    │       │       "inputTokenDetails": {
+    │       │         "cacheReadTokens": 0,
+    │       │         "noCacheTokens": 8517
+    │       │       },
+    │       │       "inputTokens": 8517,
+    │       │       "outputTokenDetails": {
+    │       │         "reasoningTokens": 0,
+    │       │         "textTokens": 8
+    │       │       },
+    │       │       "outputTokens": 8,
+    │       │       "raw": {
+    │       │         "input_tokens": 8517,
+    │       │         "input_tokens_details": {
+    │       │           "cached_tokens": 0
+    │       │         },
+    │       │         "output_tokens": 8,
+    │       │         "output_tokens_details": {
+    │       │           "reasoning_tokens": 0
+    │       │         }
+    │       │       },
+    │       │       "totalTokens": 8525
+    │       │     }
+    │       │   }
+    │       │   metadata: {
+    │       │     "braintrust": {
+    │       │       "integration_name": "ai-sdk",
+    │       │       "sdk_language": "typescript"
+    │       │     },
+    │       │     "model": "gpt-4.1-mini",
+    │       │     "provider": "openai.responses"
+    │       │   }
+    │       │   metrics: {
+    │       │     "completion_tokens": 8,
+    │       │     "prompt_cached_tokens": 0,
+    │       │     "prompt_tokens": 8517,
+    │       │     "tokens": 8525
+    │       │   }
+    │       └── web_search [tool]
+    │           output: {
+    │             "action": {
+    │               "queries": [
+    │                 "Search the web for the official Braintrust website. Reply with its URL only."
+    │               ],
+    │               "query": "Search the web for the official Braintrust website. Reply with its URL only.",
+    │               "type": "search"
+    │             },
+    │             "sources": [
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.braintrust.com/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.braintrust.dev/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.usebraintrust.com/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.usebraintrust.com/about?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.braintrustgroup.com/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://braintrustagency.com/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://ai.engineer/orgs/braintrust?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://braintrusttutors.com/?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://www.aiexplore.io/explore/braintrust?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://builtin.com/company/braintrust?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://digitalintelligence.review/company/braintrust?utm_source=openai"
+    │               },
+    │               {
+    │                 "type": "url",
+    │                 "url": "https://enterpriseleague.com/company/braintrust?utm_source=openai"
+    │               }
+    │             ]
+    │           }
+    │           metadata: {
+    │             "braintrust": {
+    │               "integration_name": "ai-sdk",
+    │               "sdk_language": "typescript"
+    │             },
+    │             "providerExecuted": true,
+    │             "toolCallId": "<toolCallId:1>",
+    │             "toolName": "web_search"
+    │           }
     ├── ai-sdk-evaluate-operation
     │   metadata: {
     │     "operation": "evaluate",

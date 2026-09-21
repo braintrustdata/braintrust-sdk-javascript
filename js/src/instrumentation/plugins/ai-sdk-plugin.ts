@@ -4354,7 +4354,10 @@ export function serializeModelWithProvider(model: AISDKModel | undefined): {
   const parsed = parseGatewayModelString(modelId);
   return {
     model: parsed.model,
-    provider: explicitProvider || parsed.provider,
+    provider:
+      explicitProvider === "gateway"
+        ? parsed.provider || explicitProvider
+        : explicitProvider || parsed.provider,
   };
 }
 

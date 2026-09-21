@@ -32,6 +32,7 @@ import {
   processAISDKOutput as processAISDKOutputActual,
   processAISDKGenerateImageOutput,
   extractTokenMetrics,
+  serializeModelWithProvider,
 } from "./ai-sdk-plugin";
 import iso from "../../isomorph";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
@@ -666,6 +667,34 @@ describe("AI SDK utility functions", () => {
       });
     });
 
+    it.each([
+      ["openai/gpt-4", "openai", "gpt-4"],
+      ["anthropic/claude-3", "anthropic", "claude-3"],
+      ["openai/text-embedding-3-small", "openai", "text-embedding-3-small"],
+    ])(
+      "should resolve the gateway provider for %s",
+      (modelId, provider, model) => {
+        expect(
+          serializeModelWithProvider({ modelId, provider: "gateway" }),
+        ).toEqual({
+          model,
+          provider,
+        });
+      },
+    );
+
+    it.each(["gpt-4", "/gpt-4", "openai/", ""])(
+      "should retain gateway without a usable provider prefix in %s",
+      (modelId) => {
+        expect(
+          serializeModelWithProvider({ modelId, provider: "gateway" }),
+        ).toEqual({
+          model: modelId,
+          provider: "gateway",
+        });
+      },
+    );
+
     it("should prefer explicit provider over parsed provider", () => {
       const result = serializeModelWithProvider({
         modelId: "anthropic/claude-3",
@@ -678,6 +707,7 @@ describe("AI SDK utility functions", () => {
     });
 
     it("should handle null/undefined model", () => {
+      // @ts-expect-error Exercise malformed input outside the declared SDK types.
       const result1 = serializeModelWithProvider(null);
       expect(result1).toEqual({
         model: undefined,
@@ -1883,25 +1913,6 @@ describe("AI SDK utility functions", () => {
 
 // Helper functions exported for testing
 // These would normally be private but we're testing them through the module
-function serializeModelWithProvider(model: any): {
-  model: string;
-  provider?: string;
-} {
-  const modelId = typeof model === "string" ? model : model?.modelId;
-  const explicitProvider =
-    typeof model === "object" ? model?.provider : undefined;
-
-  if (!modelId) {
-    return { model: modelId, provider: explicitProvider };
-  }
-
-  const parsed = parseGatewayModelString(modelId);
-  return {
-    model: parsed.model,
-    provider: explicitProvider || parsed.provider,
-  };
-}
-
 function parseGatewayModelString(modelString: string): {
   model: string;
   provider?: string;
