@@ -33,6 +33,52 @@ const PROTECTED_FIELDS = new Set([
   TRANSACTION_ID_FIELD,
 ]);
 
+// Tags and record-level errors are intentionally outside the masking contract.
+const MASKING_FIELDS = [
+  "input",
+  "output",
+  "expected",
+  "metadata",
+  "context",
+  "scores",
+  "metrics",
+] as const;
+
+/**
+ * Adapt field-level masking to a record customizer. Unlike instrumentation
+ * customizers, this runs on all merged records and belongs to one logger state.
+ */
+export function createMaskingCustomizer(
+  maskingFunction: (value: unknown) => unknown,
+): SpanCustomizer {
+  return {
+    onSpanExport(data) {
+      const masked = { ...data };
+      for (const field of MASKING_FIELDS) {
+        if (data[field] === undefined) continue;
+        try {
+          masked[field] = maskingFunction(data[field]);
+        } catch (error) {
+          // Fail closed without including exception messages or stacks, which
+          // can themselves contain sensitive data.
+          const errorType =
+            error instanceof Error ? error.constructor.name : "Error";
+          const message = `ERROR: Failed to mask field '${field}' - ${errorType}`;
+          if (field === "scores" || field === "metrics") {
+            delete masked[field];
+            masked.error = masked.error
+              ? `${masked.error}; ${message}`
+              : message;
+          } else {
+            masked[field] = field === "metadata" ? { error: message } : message;
+          }
+        }
+      }
+      return masked;
+    },
+  };
+}
+
 function isPlainRecord(value: unknown): value is SpanExportData {
   if (value === null || typeof value !== "object") return false;
   const prototype = Object.getPrototypeOf(value);
@@ -82,8 +128,12 @@ export function setSpanCustomizers(
   shared[SPAN_CUSTOMIZERS_KEY] = customizers;
 }
 
-export function customizeSpanExport(data: SpanExportData): SpanExportData {
-  const customizers = shared[SPAN_CUSTOMIZERS_KEY];
+export function customizeSpanExport(
+  data: SpanExportData,
+  customizers: readonly SpanCustomizer[] | undefined = shared[
+    SPAN_CUSTOMIZERS_KEY
+  ],
+): SpanExportData {
   if (!customizers?.length) return data;
 
   let protectedFields: SpanExportData | undefined;
