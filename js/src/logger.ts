@@ -8782,8 +8782,64 @@ export class Dataset<
     if (pinnedVersion !== undefined) {
       return pinnedVersion;
     }
-    await this.getState();
-    return await super.version(options);
+    const state = await this.getState();
+    const objectId = await this.id;
+    const batchLimit = options?.batchSize ?? DEFAULT_FETCH_BATCH_SIZE;
+    let cursor = undefined;
+    let maxVersion: string | undefined = undefined;
+    let iterations = 0;
+    while (true) {
+      const resp = await state.apiConn().post(
+        `btql`,
+        {
+          query: {
+            select: [
+              {
+                op: "ident",
+                name: [TRANSACTION_ID_FIELD],
+              },
+            ],
+            from: {
+              op: "function",
+              name: {
+                op: "ident",
+                name: ["dataset"],
+              },
+              args: [
+                {
+                  op: "literal",
+                  value: objectId,
+                },
+              ],
+            },
+            cursor,
+            limit: batchLimit,
+          },
+          audit_log: true,
+          use_columnstore: false,
+          brainstore_realtime: true,
+          query_source: `js_sdk_dataset_version`,
+        },
+        { headers: { "Accept-Encoding": "gzip" } },
+        BTQL_HTTP_RETRIES,
+      );
+      const respJson = await resp.json();
+      for (const record of respJson.data ?? []) {
+        const xactId = String(record[TRANSACTION_ID_FIELD] ?? "0");
+        if (maxVersion === undefined || xactId > maxVersion) {
+          maxVersion = xactId;
+        }
+      }
+      if (!respJson.cursor) {
+        break;
+      }
+      cursor = respJson.cursor;
+      iterations++;
+      if (iterations > MAX_BTQL_ITERATIONS) {
+        throw new Error("Too many BTQL iterations");
+      }
+    }
+    return maxVersion;
   }
 
   private validateEvent({

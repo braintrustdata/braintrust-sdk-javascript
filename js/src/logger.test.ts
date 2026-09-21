@@ -1408,6 +1408,154 @@ test("dataset.version preserves pinned-version fast path", async () => {
   vi.restoreAllMocks();
 });
 
+test("dataset.version queries BTQL audit log and includes tombstone transaction IDs", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const login = vi.spyOn(state, "login").mockResolvedValue(state as any);
+  const postJson = vi.spyOn(state.appConn(), "post_json").mockResolvedValue({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "test-project",
+    },
+    dataset: {
+      id: "00000000-0000-0000-0000-000000000002",
+      name: "test-dataset",
+    },
+  });
+
+  let btqlBody: unknown;
+  const postApi = vi
+    .spyOn(state.apiConn(), "post")
+    .mockImplementation(async (_path, body) => {
+      btqlBody = body;
+      return new Response(
+        JSON.stringify({
+          data: [
+            { _xact_id: "1000197874935204590" },
+            { _xact_id: "1000197874935204592" },
+            { _xact_id: "1000197874946873171" },
+          ],
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    });
+
+  try {
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      state,
+    });
+
+    const version = await dataset.version();
+    expect(version).toBe("1000197874946873171");
+    expect(btqlBody).toEqual(
+      expect.objectContaining({
+        audit_log: true,
+        query: expect.objectContaining({
+          from: {
+            op: "function",
+            name: {
+              op: "ident",
+              name: ["dataset"],
+            },
+            args: [
+              {
+                op: "literal",
+                value: "00000000-0000-0000-0000-000000000002",
+              },
+            ],
+          },
+        }),
+      }),
+    );
+  } finally {
+    postJson.mockRestore();
+    postApi.mockRestore();
+    login.mockRestore();
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
+test("dataset.createSnapshot uses latest transaction id from audit log after deletes", async () => {
+  const state = await _exportsForTestingOnly.simulateLoginForTests();
+  const login = vi.spyOn(state, "login").mockResolvedValue(state as any);
+  const postJson = vi
+    .spyOn(state.appConn(), "post_json")
+    .mockResolvedValueOnce({
+      project: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "test-project",
+      },
+      dataset: {
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "test-dataset",
+      },
+    })
+    .mockResolvedValueOnce({
+      dataset_snapshot: {
+        id: "00000000-0000-0000-0000-000000000005",
+        dataset_id: "00000000-0000-0000-0000-000000000002",
+        name: "after-delete-snapshot",
+        description: null,
+        xact_id: "1000197874946873171",
+        created: "2026-03-31T00:00:00.000Z",
+      },
+      found_existing: false,
+    });
+
+  const postApi = vi
+    .spyOn(state.apiConn(), "post")
+    .mockImplementation(async () => {
+      return new Response(
+        JSON.stringify({
+          data: [
+            { _xact_id: "1000197874935204590" },
+            { _xact_id: "1000197874946873171" },
+          ],
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    });
+
+  try {
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      state,
+    });
+
+    await expect(
+      dataset.createSnapshot({
+        name: "after-delete-snapshot",
+      }),
+    ).resolves.toMatchObject({
+      id: "00000000-0000-0000-0000-000000000005",
+      xact_id: "1000197874946873171",
+    });
+
+    expect(postJson).toHaveBeenNthCalledWith(2, "api/dataset_snapshot/register", {
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      dataset_snapshot_name: "after-delete-snapshot",
+      description: undefined,
+      xact_id: "1000197874946873171",
+      update: undefined,
+    });
+  } finally {
+    postJson.mockRestore();
+    postApi.mockRestore();
+    login.mockRestore();
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  }
+});
+
 test("dataset.createSnapshot forwards update when requested", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
   vi.spyOn(state, "login").mockResolvedValue(state as any);
