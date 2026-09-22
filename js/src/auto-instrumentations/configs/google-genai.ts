@@ -45,6 +45,53 @@ export const googleGenAIConfigs: InstrumentationConfig[] = [
     },
   },
 
+  // Models.generateImages - public arrow-function property.
+  {
+    channelName: googleGenAIChannels.generateImages.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.0.0",
+      filePath: "dist/node/index.mjs",
+    },
+    functionQuery: {
+      objectName: "this",
+      propertyName: "generateImages",
+      kind: "Async",
+    },
+  },
+
+  // Models.editImage - public arrow-function property.
+  {
+    channelName: googleGenAIChannels.editImage.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.0.0",
+      filePath: "dist/node/index.mjs",
+    },
+    functionQuery: {
+      objectName: "this",
+      propertyName: "editImage",
+      kind: "Async",
+    },
+  },
+
+  // Models.generateVideos - public arrow-function property. This captures the
+  // submission response only and never polls or retrieves media on the user's
+  // behalf. Direct-result video generation is covered by BaseInteractions.create.
+  {
+    channelName: googleGenAIChannels.generateVideos.channelName,
+    module: {
+      name: "@google/genai",
+      versionRange: ">=1.0.0",
+      filePath: "dist/node/index.mjs",
+    },
+    functionQuery: {
+      objectName: "this",
+      propertyName: "generateVideos",
+      kind: "Async",
+    },
+  },
+
   // Models.embedContent - class method in older SDK versions
   {
     channelName: googleGenAIChannels.embedContent.channelName,

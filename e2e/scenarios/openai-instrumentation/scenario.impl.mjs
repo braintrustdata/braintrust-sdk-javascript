@@ -12,8 +12,12 @@ import {
   openaiBatchesRetrieveTraced,
   openaiFilesCreateTraced,
 } from "braintrust";
+import { once } from "node:events";
+import { Writable } from "node:stream";
 
 const OPENAI_MODEL = "gpt-4o-mini-2024-07-18";
+const OPENAI_AUDIO_MODEL = "gpt-audio-1.5";
+const OPENAI_IMAGE_MODEL = "gpt-image-2";
 const EMBEDDING_MODEL = "text-embedding-3-small";
 const MODERATION_MODEL = "omni-moderation-2024-09-26";
 const ROOT_NAME = "openai-instrumentation-root";
@@ -117,7 +121,14 @@ function createMockStreamingClient(options, responseBody) {
     : baseClient;
 }
 
-function createMockBatchClient(options) {
+function createMockBatchClient(
+  options,
+  {
+    batchId = "batch_e2e_fixture",
+    endpoint = "/v1/chat/completions",
+    inputFileId = "file_batch_e2e_fixture",
+  } = {},
+) {
   const batchCreatedAt = Date.now() / 1000;
   const baseClient = new options.OpenAI({
     apiKey: process.env.OPENAI_API_KEY ?? "test-openai-key",
@@ -127,7 +138,7 @@ function createMockBatchClient(options) {
       if (pathname.endsWith("/files")) {
         return new Response(
           JSON.stringify({
-            id: "file_batch_e2e_fixture",
+            id: inputFileId,
             object: "file",
             bytes: 1024,
             created_at: batchCreatedAt,
@@ -145,13 +156,13 @@ function createMockBatchClient(options) {
         );
       }
 
-      if (pathname.endsWith("/batches/batch_e2e_fixture")) {
+      if (pathname.endsWith(`/batches/${batchId}`)) {
         return new Response(
           JSON.stringify({
-            id: "batch_e2e_fixture",
+            id: batchId,
             object: "batch",
-            endpoint: "/v1/chat/completions",
-            input_file_id: "file_batch_e2e_fixture",
+            endpoint,
+            input_file_id: inputFileId,
             completion_window: "24h",
             status: "completed",
             created_at: batchCreatedAt,
@@ -172,7 +183,7 @@ function createMockBatchClient(options) {
       const params = JSON.parse(String(init?.body));
       return new Response(
         JSON.stringify({
-          id: "batch_e2e_fixture",
+          id: batchId,
           object: "batch",
           endpoint: params.endpoint,
           input_file_id: params.input_file_id,
@@ -198,10 +209,297 @@ function createMockBatchClient(options) {
     : baseClient;
 }
 
+async function runOpenAIMediaOperations(client, openAIMajorVersion) {
+  const inputImage = new File(
+    [Buffer.from(MINIMAL_PNG_BASE64, "base64")],
+    "input.png",
+    { type: "image/png" },
+  );
+
+  await runOperation(
+    "openai-images-generate-operation",
+    "images-generate",
+    async () => {
+      const request = client.images.generate({
+        model: OPENAI_IMAGE_MODEL,
+        prompt: "A plain red square on white.",
+        n: 2,
+        size: "1024x1024",
+        quality: "low",
+      });
+      if (typeof request.withResponse !== "function") {
+        throw new Error("Expected image generation to return an APIPromise");
+      }
+      const generation = await request.withResponse();
+      if (generation.data.data.length !== 2) {
+        throw new Error("Expected two generated images");
+      }
+      if ((await request.asResponse()) !== generation.response) {
+        throw new Error(
+          "Expected APIPromise response identity to be preserved",
+        );
+      }
+    },
+  );
+
+  await runOperation(
+    "openai-images-edit-operation",
+    "images-edit",
+    async () => {
+      const edited = await client.images.edit({
+        model: OPENAI_IMAGE_MODEL,
+        image: inputImage,
+        prompt: "Make a plain blue square on white.",
+        size: "1024x1024",
+        quality: "low",
+      });
+      if (!edited.data[0]?.b64_json) {
+        throw new Error("Expected an edited image");
+      }
+    },
+  );
+
+  await runOperation(
+    "openai-images-variation-operation",
+    "images-variation",
+    async () => {
+      try {
+        await client.images.createVariation({
+          model: "dall-e-2",
+          image: inputImage,
+        });
+      } catch (error) {
+        if (error?.status >= 400 && error.status < 500) {
+          return;
+        }
+        throw error;
+      }
+      throw new Error("Expected the retired image variation endpoint to fail");
+    },
+  );
+
+  if (openAIMajorVersion >= 5) {
+    for (const operation of ["generate", "edit"]) {
+      await runOperation(
+        `openai-images-${operation}-stream-operation`,
+        `images-${operation}-stream`,
+        async () => {
+          const stream = await client.images[operation]({
+            model: OPENAI_IMAGE_MODEL,
+            ...(operation === "edit" ? { image: inputImage } : {}),
+            prompt: "A plain green square on white.",
+            size: "1024x1024",
+            quality: "low",
+            stream: true,
+            partial_images: 1,
+          });
+          const events = await collectAsync(stream);
+          if (
+            !events.some(
+              (event) =>
+                event.type.endsWith(".completed") && Boolean(event.b64_json),
+            )
+          ) {
+            throw new Error(`Expected streamed image ${operation} output`);
+          }
+        },
+      );
+    }
+  }
+
+  let transcriptionWav;
+  await runOperation(
+    "openai-audio-speech-operation",
+    "audio-speech",
+    async () => {
+      const speech = await client.audio.speech.create({
+        model: "gpt-4o-mini-tts",
+        input: "Hello.",
+        voice: "coral",
+        response_format: "wav",
+      });
+      if (speech.bodyUsed) {
+        throw new Error("Expected an unread speech response");
+      }
+      const wav = Buffer.from(await speech.arrayBuffer());
+      if (wav.toString("ascii", 0, 4) !== "RIFF") {
+        throw new Error("Expected a WAV speech response");
+      }
+      let pcm;
+      for (let offset = 12; offset + 8 <= wav.length; ) {
+        const length = wav.readUInt32LE(offset + 4);
+        if (wav.toString("ascii", offset, offset + 4) === "data") {
+          pcm = wav.subarray(offset + 8);
+          break;
+        }
+        offset += 8 + length + (length % 2);
+      }
+      if (
+        !pcm?.length ||
+        wav.readUInt16LE(20) !== 1 ||
+        wav.readUInt16LE(22) !== 1 ||
+        wav.readUInt32LE(24) !== 24_000
+      ) {
+        throw new Error("Expected 24 kHz mono PCM speech audio");
+      }
+      transcriptionWav = Buffer.alloc(44 + Math.floor(pcm.length / 4) * 2);
+      wav.copy(transcriptionWav, 0, 0, 44);
+      transcriptionWav.writeUInt32LE(transcriptionWav.length - 8, 4);
+      transcriptionWav.writeUInt32LE(12_000, 24);
+      transcriptionWav.writeUInt32LE(24_000, 28);
+      transcriptionWav.writeUInt32LE(transcriptionWav.length - 44, 40);
+      for (let offset = 0; offset < transcriptionWav.length - 44; offset += 2) {
+        transcriptionWav.writeInt16LE(pcm.readInt16LE(offset * 2), 44 + offset);
+      }
+      if (transcriptionWav.length >= 60_000) {
+        throw new Error("Expected a cassette-safe transcription fixture");
+      }
+    },
+  );
+
+  const inputAudio = new File([transcriptionWav], "hello.wav", {
+    type: "audio/wav",
+  });
+  await runOperation(
+    "openai-audio-transcription-operation",
+    "audio-transcription",
+    async () => {
+      const transcript = await client.audio.transcriptions.create({
+        model: "gpt-4o-transcribe",
+        file: inputAudio,
+        language: "en",
+      });
+      if (!transcript.text.trim()) {
+        throw new Error("Expected transcription text");
+      }
+    },
+  );
+
+  await runOperation(
+    "openai-audio-transcription-stream-operation",
+    "audio-transcription-stream",
+    async () => {
+      const stream = await client.audio.transcriptions.create({
+        model: "gpt-4o-transcribe",
+        file: inputAudio,
+        stream: true,
+      });
+      const events = await collectAsync(stream);
+      if (
+        !events.some(
+          (event) =>
+            event.type === "transcript.text.done" && Boolean(event.text.trim()),
+        )
+      ) {
+        throw new Error("Expected completed streamed transcription text");
+      }
+    },
+  );
+
+  await runOperation(
+    "openai-audio-translation-operation",
+    "audio-translation",
+    async () => {
+      const translation = await client.audio.translations.create({
+        model: "whisper-1",
+        file: inputAudio,
+      });
+      if (!translation.text.trim()) {
+        throw new Error("Expected translated text");
+      }
+    },
+  );
+
+  for (const read of ["reader", "iterate", "pipe", "cancel", "unread"]) {
+    await runOperation(
+      `openai-audio-speech-${read}-operation`,
+      `audio-speech-${read}`,
+      async () => {
+        const response = await client.audio.speech.create({
+          model: "gpt-4o-mini-tts",
+          input: `Hello ${read}.`,
+          voice: "coral",
+        });
+        if (response.bodyUsed) {
+          throw new Error("Expected an unread speech response");
+        }
+        let size = 0;
+        if (
+          read === "reader" &&
+          typeof response.body.getReader === "function"
+        ) {
+          const reader = response.body.getReader();
+          for (;;) {
+            const chunk = await reader.read();
+            if (chunk.done) break;
+            size += chunk.value.byteLength;
+          }
+        }
+        if (
+          read === "iterate" ||
+          (read === "reader" && typeof response.body.getReader !== "function")
+        ) {
+          for await (const chunk of response.body) size += chunk.byteLength;
+        }
+        if (read === "pipe" && typeof response.body.pipeTo === "function") {
+          await response.body.pipeTo(
+            new WritableStream({
+              write(chunk) {
+                size += chunk.byteLength;
+              },
+            }),
+          );
+        }
+        if (read === "pipe" && typeof response.body.pipeTo !== "function") {
+          const destination = new Writable({
+            write(chunk, _encoding, callback) {
+              size += chunk.length;
+              callback();
+            },
+          });
+          const finished = once(destination, "finish");
+          response.body.pipe(destination);
+          await finished;
+        }
+        if (read === "cancel") {
+          if (typeof response.body.cancel === "function") {
+            await response.body.cancel();
+          } else {
+            response.body.destroy();
+          }
+        }
+        if (!["cancel", "unread"].includes(read) && size === 0) {
+          throw new Error(`Expected speech bytes consumed through ${read}`);
+        }
+      },
+    );
+  }
+
+  await runOperation(
+    "openai-audio-speech-sse-operation",
+    "audio-speech-sse",
+    async () => {
+      const response = await client.audio.speech.create({
+        model: "gpt-4o-mini-tts",
+        input: "Hello streaming.",
+        voice: "coral",
+        stream_format: "sse",
+      });
+      let size = 0;
+      for await (const chunk of response.body) size += chunk.byteLength;
+      if (size === 0) {
+        throw new Error("Expected streamed speech audio");
+      }
+    },
+  );
+}
+
 export async function runOpenAIInstrumentationScenario(options) {
   const baseClient = new options.OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
     baseURL: process.env.OPENAI_BASE_URL,
+    maxRetries: 0,
+    timeout: 180_000,
   });
   const client = options.decorateClient
     ? options.decorateClient(baseClient)
@@ -396,6 +694,34 @@ export async function runOpenAIInstrumentationScenario(options) {
       });
 
       await runOperation(
+        "openai-stream-audio-operation",
+        "stream-audio",
+        async () => {
+          const chatStream = await client.chat.completions.create({
+            model: OPENAI_AUDIO_MODEL,
+            messages: [{ role: "user", content: "Say exactly: Hello." }],
+            modalities: ["text", "audio"],
+            audio: { format: "pcm16", voice: "alloy" },
+            stream: true,
+            stream_options: {
+              include_usage: true,
+            },
+          });
+          const chunks = await collectAsync(chatStream);
+          if (
+            !chunks.some(
+              (chunk) =>
+                typeof chunk.choices?.[0]?.delta?.audio?.transcript ===
+                  "string" &&
+                chunk.choices[0].delta.audio.transcript.length > 0,
+            )
+          ) {
+            throw new Error("Expected streamed chat audio transcript");
+          }
+        },
+      );
+
+      await runOperation(
         "openai-stream-with-response-operation",
         "stream-with-response",
         async () => {
@@ -562,11 +888,12 @@ export async function runOpenAIInstrumentationScenario(options) {
         },
       );
 
+      let embeddingResponse;
       await runOperation(
         "openai-embeddings-operation",
         "embeddings",
         async () => {
-          await client.embeddings.create({
+          embeddingResponse = await client.embeddings.create({
             model: EMBEDDING_MODEL,
             input: "Paris",
           });
@@ -710,6 +1037,8 @@ export async function runOpenAIInstrumentationScenario(options) {
         );
       }
 
+      await runOpenAIMediaOperations(client, openAIMajorVersion);
+
       await runOperation("openai-batch-operation", "batch", async () => {
         const batchItems = [
           {
@@ -810,6 +1139,139 @@ export async function runOpenAIInstrumentationScenario(options) {
           throw new Error("Expected batch result responses to be consumed");
         }
       });
+
+      await runOperation(
+        "openai-batch-binary-jsonl-operation",
+        "batch-binary-jsonl",
+        async () => {
+          const batchItems = [
+            {
+              customId: "batch_binary_alpha",
+              prompt: "Reply with exactly ALPHA.",
+              response: "ALPHA",
+            },
+            {
+              customId: "batch_binary_bravo",
+              prompt: "Reply with exactly BRAVO.",
+              response: "BRAVO",
+            },
+            {
+              customId: "batch_binary_charlie",
+              prompt: "Reply with exactly CHARLIE.",
+              response: "CHARLIE",
+            },
+          ];
+          const input = batchItems
+            .map((item) =>
+              JSON.stringify({
+                custom_id: item.customId,
+                method: "POST",
+                url: "/v1/chat/completions",
+                body: {
+                  model: OPENAI_MODEL,
+                  messages: [{ role: "user", content: item.prompt }],
+                },
+              }),
+            )
+            .join("\n");
+          const output = [batchItems[1], batchItems[0]]
+            .map((item, index) =>
+              JSON.stringify({
+                custom_id: item.customId,
+                response: {
+                  status_code: 200,
+                  body: {
+                    choices: [
+                      {
+                        index: 0,
+                        finish_reason: "stop",
+                        message: {
+                          role: "assistant",
+                          content: item.response,
+                        },
+                      },
+                    ],
+                    usage: {
+                      prompt_tokens: 8 + index,
+                      completion_tokens: 1,
+                      total_tokens: 9 + index,
+                    },
+                  },
+                },
+              }),
+            )
+            .join("\n");
+          const error = JSON.stringify({
+            custom_id: batchItems[2].customId,
+            error: {
+              code: "fixture_error",
+              message: "Batch fixture request failed",
+            },
+          });
+
+          await completeOpenAIBatchTrace({
+            inputFileId: "file_binary_batch_e2e_fixture",
+            inputFileContent: new TextEncoder().encode(input),
+            outputFileContent: Promise.resolve(Buffer.from(output)),
+            errorFileContent: await new Blob([error]).arrayBuffer(),
+          });
+        },
+      );
+
+      await runOperation(
+        "openai-embedding-batch-operation",
+        "embedding-batch",
+        async () => {
+          if (!embeddingResponse) {
+            throw new Error("Expected the provider embedding response");
+          }
+          const embeddingBatchFixtureClient = createMockBatchClient(options, {
+            batchId: "batch_embedding_e2e_fixture",
+            endpoint: "/v1/embeddings",
+            inputFileId: "file_embedding_batch_e2e_fixture",
+          });
+          const input = JSON.stringify({
+            custom_id: "batch_embedding_paris",
+            method: "POST",
+            url: "/v1/embeddings",
+            body: {
+              model: EMBEDDING_MODEL,
+              input: "Paris",
+            },
+          });
+          const inputFile = await openaiFilesCreateTraced(
+            embeddingBatchFixtureClient.files,
+          )({
+            file: new File([input], "embedding-batch.jsonl"),
+            purpose: "batch",
+          });
+          const created = await embeddingBatchFixtureClient.batches.create({
+            input_file_id: inputFile.id,
+            completion_window: "24h",
+            endpoint: "/v1/embeddings",
+          });
+          const completed = await openaiBatchesRetrieveTraced(
+            embeddingBatchFixtureClient.batches,
+          )(created.id);
+          const outputFile = new Response(
+            JSON.stringify({
+              custom_id: "batch_embedding_paris",
+              response: {
+                status_code: 200,
+                body: embeddingResponse,
+              },
+            }),
+          );
+          await completeOpenAIBatchTrace({
+            inputFileId: completed.input_file_id,
+            inputFileContent: input,
+            outputFileContent: outputFile,
+          });
+          if (!outputFile.bodyUsed) {
+            throw new Error("Expected embedding batch results to be consumed");
+          }
+        },
+      );
     },
     metadata: {
       openaiSdkVersion: options.openaiSdkVersion,

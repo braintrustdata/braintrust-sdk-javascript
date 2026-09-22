@@ -2,7 +2,7 @@ import { BasePlugin, toLoggedError } from "../core";
 import type { ChannelMessage } from "../core/channel-definitions";
 import iso, { type IsoAsyncLocalStorage } from "../../isomorph";
 import { debugLogger } from "../../debug-logger";
-import { startSpan as startBaseSpan } from "../../logger";
+import { startSpan as startBaseSpan, withCurrent } from "../../logger";
 import type { Span } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
@@ -347,9 +347,20 @@ function wrapPiToolExecutors(tools: PiTool[] | undefined): void {
       }
 
       const wrappedExecute = function (this: unknown, ...args: unknown[]) {
-        return runWithAutoInstrumentationAllowed(() =>
-          Reflect.apply(execute, this, args),
-        );
+        const invokeOriginal = () =>
+          runWithAutoInstrumentationAllowed(() =>
+            Reflect.apply(execute, this, args),
+          );
+        const state = currentPiPromptState();
+        const toolCallId = args[0];
+        const toolState =
+          !state?.finalized && typeof toolCallId === "string"
+            ? state?.activeToolSpans.get(toolCallId)
+            : undefined;
+
+        return toolState
+          ? withCurrent(toolState.span, invokeOriginal)
+          : invokeOriginal();
       };
       Object.defineProperty(wrappedExecute, PI_TOOL_EXECUTE_WRAPPED, {
         configurable: false,

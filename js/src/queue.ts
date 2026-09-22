@@ -2,8 +2,8 @@ import { debugLogger } from "./debug-logger";
 
 export const DEFAULT_QUEUE_SIZE = 15000;
 
-// A simple queue that drops oldest items when full. Uses a plain array
-// that can grow for unlimited queues or drops oldest items for bounded queues.
+// A simple queue that drops new items when full. Uses a plain array
+// that can grow for unlimited queues or rejects new items for bounded queues.
 export class Queue<T> {
   private items: Array<T> = [];
   private maxSize: number;
@@ -55,6 +55,17 @@ export class Queue<T> {
   drain(): T[] {
     const items = [...this.items];
     this.items = [];
+    return items;
+  }
+
+  drainWhile(predicate: (item: T) => boolean): T[] {
+    let end = 0;
+    while (end < this.items.length && predicate(this.items[end])) {
+      end++;
+    }
+
+    const items = this.items.slice(0, end);
+    this.items = this.items.slice(end);
     return items;
   }
 

@@ -16,6 +16,7 @@ import {
   TestBackgroundLogger,
 } from "../../logger";
 import { wrapAISDK, wrapAgentClass } from "../../wrappers/ai-sdk";
+import { BraintrustMiddleware } from "../../wrappers/ai-sdk/deprecated/BraintrustMiddleware";
 import {
   captureHarnessCreateSessionParent,
   harnessContinuationParent,
@@ -48,6 +49,213 @@ describe("AI SDK streaming instrumentation", () => {
 
   afterEach(() => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
+  });
+
+  test("wrapAISDK traces direct model calls with nested usage", async () => {
+    const model = {
+      specificationVersion: "v3",
+      provider: "openai.responses",
+      modelId: "gpt-4.1-mini",
+      async doGenerate(this: unknown, _params: any) {
+        expect(this).toBe(model);
+        return {
+          content: [{ type: "text", text: "hello" }],
+          finishReason: "stop",
+          usage: {
+            inputTokens: { total: 12, cacheRead: 5, cacheWrite: 0 },
+            outputTokens: { total: 4, reasoning: 1 },
+          },
+        };
+      },
+    };
+
+    const wrapped = wrapAISDK(model);
+    expect(wrapAISDK(wrapped)).toBe(wrapped);
+    await wrapped.doGenerate({ prompt: "Say hello" });
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({
+      span_attributes: { name: "doGenerate", type: "llm" },
+      metadata: {
+        model: "gpt-4.1-mini",
+        provider: "openai.responses",
+      },
+      metrics: {
+        prompt_tokens: 12,
+        completion_tokens: 4,
+        tokens: 16,
+        prompt_cached_tokens: 5,
+        prompt_cache_creation_tokens: 0,
+        completion_reasoning_tokens: 1,
+      },
+    });
+  });
+
+  test("wrapAISDK traces direct model streams", async () => {
+    const model = {
+      specificationVersion: "v2",
+      provider: "openai.chat",
+      modelId: "gpt-4o-mini",
+      async doGenerate(_params: any) {
+        return {};
+      },
+      async doStream(_params: any) {
+        return {
+          stream: new ReadableStream({
+            start(controller) {
+              controller.enqueue({ type: "text-delta", textDelta: "hello" });
+              controller.enqueue({
+                type: "finish",
+                finishReason: "stop",
+                usage: { inputTokens: 3, outputTokens: 1 },
+              });
+              controller.close();
+            },
+          }),
+        };
+      },
+    };
+    const result = await wrapAISDK(model).doStream!({ prompt: "Say hello" });
+    const reader = result.stream.getReader();
+    for (;;) {
+      const next = await reader.read();
+      if (next.done) break;
+    }
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({
+      span_attributes: { name: "doStream", type: "llm" },
+      output: { text: "hello", finishReason: "stop" },
+      metrics: {
+        prompt_tokens: 3,
+        completion_tokens: 1,
+        tokens: 4,
+        time_to_first_token: expect.any(Number),
+      },
+    });
+  });
+
+  test("BraintrustMiddleware captures nested AI SDK usage", async () => {
+    await BraintrustMiddleware({}).wrapGenerate!({
+      doGenerate: async () => ({
+        content: [{ type: "text", text: "hello" }],
+        finishReason: "stop",
+        providerMetadata: { openai: {} },
+        usage: {
+          inputTokens: { total: 8, cacheRead: 3, cacheWrite: 1 },
+          outputTokens: { total: 2, reasoning: 1 },
+        },
+      }),
+      doStream: async () => ({}),
+      model: { modelId: "gpt-4.1-mini" },
+      params: { prompt: "Say hello" },
+    });
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(spans).toHaveLength(1);
+    expect(spans[0].metrics).toMatchObject({
+      prompt_tokens: 8,
+      completion_tokens: 2,
+      tokens: 10,
+      prompt_cached_tokens: 3,
+      prompt_cache_creation_tokens: 1,
+      completion_reasoning_tokens: 1,
+    });
+  });
+
+  test("wrapped models compose with higher-level AI SDK tracing without duplicate LLM spans", async () => {
+    const model = wrapAISDK({
+      specificationVersion: "v3",
+      provider: "openai.responses",
+      modelId: "gpt-4.1-mini",
+      async doGenerate(_params: any) {
+        return {
+          text: "hello",
+          finishReason: "stop",
+          usage: {
+            inputTokens: { total: 2 },
+            outputTokens: { total: 1 },
+          },
+        };
+      },
+    });
+    const params = { model, prompt: "Say hello" };
+
+    await aiSDKChannels.generateText.tracePromise(
+      () => model.doGenerate(params),
+      { arguments: [params] } as any,
+    );
+
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(
+      spans.filter((span) => span.span_attributes?.name === "doGenerate"),
+    ).toHaveLength(1);
+    expect(
+      spans.filter((span) => span.span_attributes?.name === "generateText"),
+    ).toHaveLength(1);
+  });
+
+  test("direct model errors propagate and close their span", async () => {
+    const error = new Error("provider failed");
+    const model = wrapAISDK({
+      specificationVersion: "v4",
+      provider: "mock",
+      modelId: "mock-model",
+      async doGenerate(_params: any) {
+        throw error;
+      },
+    });
+
+    await expect(model.doGenerate({ prompt: "hello" })).rejects.toBe(error);
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({
+      span_attributes: { name: "doGenerate", type: "llm" },
+      error: expect.stringContaining("provider failed"),
+      metrics: { end: expect.any(Number) },
+    });
+  });
+
+  test("cancelling a direct model stream cancels the provider stream and closes the span", async () => {
+    let cancelledWith: unknown;
+    const model = wrapAISDK({
+      specificationVersion: "v3",
+      provider: "mock",
+      modelId: "mock-model",
+      async doGenerate(_params: any) {
+        return {};
+      },
+      async doStream(_params: any) {
+        return {
+          stream: new ReadableStream({
+            start(controller) {
+              controller.enqueue({ type: "text-delta", textDelta: "hello" });
+            },
+            cancel(reason) {
+              cancelledWith = reason;
+            },
+          }),
+        };
+      },
+    });
+
+    const result = await model.doStream!({ prompt: "hello" });
+    const reader = result.stream.getReader();
+    await reader.read();
+    await reader.cancel("user stopped");
+
+    expect(cancelledWith).toBe("user stopped");
+    const spans = (await backgroundLogger.drain()) as any[];
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({
+      span_attributes: { name: "doStream", type: "llm" },
+      metadata: {
+        usage_unavailable_reason: "ai_sdk_stream_cancelled_without_usage",
+      },
+      metrics: { end: expect.any(Number) },
+    });
   });
 
   describe.each(["promise", "generator"])("%s tool execution", (kind) => {

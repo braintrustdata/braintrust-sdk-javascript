@@ -3,6 +3,8 @@ import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type { ChannelSpanInfo } from "../core/types";
 import type {
   AISDK,
+  AISDKEvaluateParams,
+  AISDKEvaluationResult,
   AISDKCallParams,
   AISDKEmbedParams,
   AISDKEmbeddingResult,
@@ -10,6 +12,8 @@ import type {
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentCreateSessionParams,
   AISDKHarnessAgentSession,
+  AISDKLanguageModel,
+  AISDKModelStreamChunk,
   AISDKRerankParams,
   AISDKRerankResult,
   AISDKResult,
@@ -27,9 +31,42 @@ type AISDKChannelContext = {
   span_info?: ChannelSpanInfo;
 };
 
+type AISDKModelChannelContext = {
+  denyOutputPaths?: string[];
+  model: AISDKLanguageModel;
+};
+
+export const BRAINTRUST_WRAPPED_AI_SDK_MODEL = Symbol.for(
+  "braintrust.ai-sdk.wrapped-model",
+);
+
 export const aiSDKChannels = defineChannels(
   "ai",
   {
+    modelGenerate: channel<
+      [AISDKCallParams],
+      AISDKResult,
+      AISDKModelChannelContext
+    >({
+      channelName: "model.doGenerate",
+      kind: "async",
+    }),
+    modelStream: channel<
+      [AISDKCallParams],
+      AISDKResult & { stream: ReadableStream<AISDKModelStreamChunk> },
+      AISDKModelChannelContext
+    >({
+      channelName: "model.doStream",
+      kind: "async",
+    }),
+    evaluate: channel<
+      [AISDKEvaluateParams],
+      AISDKEvaluationResult,
+      AISDKChannelContext
+    >({
+      channelName: "evaluate",
+      kind: "async",
+    }),
     generateText: channel<
       [AISDKCallParams],
       AISDKStreamResult,

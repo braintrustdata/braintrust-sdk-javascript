@@ -23,6 +23,7 @@ import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
+import { TypeSafePlugin } from "./plugins/typesafe-plugin";
 import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
 
@@ -136,6 +137,10 @@ vi.mock("./plugins/strands-agent-sdk-plugin", () => ({
 
 vi.mock("./plugins/voyageai-plugin", () => ({
   VoyageAIPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/typesafe-plugin", () => ({
+  TypeSafePlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/cloudflare-ai-chat-plugin", () => ({
@@ -283,6 +288,15 @@ describe("BraintrustPlugin", () => {
 
       expect(VoyageAIPlugin).toHaveBeenCalledTimes(1);
       const mockInstance = vi.mocked(VoyageAIPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable TypeSafe plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(TypeSafePlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(TypeSafePlugin).mock.results[0].value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -1198,16 +1212,28 @@ describe("BraintrustPlugin", () => {
 
       expect(VoyageAIPlugin).not.toHaveBeenCalled();
     });
+
+    it("should not create TypeSafe plugin when typesafe: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { typesafe: false },
+      });
+      plugin.enable();
+
+      expect(TypeSafePlugin).not.toHaveBeenCalled();
+    });
   });
 });
 
 // Re-exported utility function tests from OpenAI plugin
 import {
   parseMetricsFromUsage,
-  processImagesInOutput,
+  processImagesInOutput as processImagesInOutputWithFlag,
   aggregateChatCompletionChunks,
 } from "./braintrust-plugin";
 import { Attachment } from "../logger";
+
+const processImagesInOutput = (output: unknown) =>
+  processImagesInOutputWithFlag(output, true);
 
 describe("parseMetricsFromUsage", () => {
   it("should return empty object for null usage", () => {

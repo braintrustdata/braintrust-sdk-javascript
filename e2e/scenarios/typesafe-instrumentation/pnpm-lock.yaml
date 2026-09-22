@@ -1,0 +1,26 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      typesafe-sdk-v0:
+        specifier: npm:@typesafe-ai/sdk@0.6.0
+        version: '@typesafe-ai/sdk@0.6.0'
+      typesafe-sdk-v0-latest:
+        specifier: npm:@typesafe-ai/sdk@0.6.0
+        version: '@typesafe-ai/sdk@0.6.0'
+
+packages:
+
+  '@typesafe-ai/sdk@0.6.0':
+    resolution: {integrity: sha512-IddX+Q0XM+VagOUZFeP7wZjaO4SHMdvnh2zEBdrZZnXedWI3BNK1lKhMx3ayrkFWvVLbVcUHJy6AVZlY+e6Jaw==}
+    engines: {node: '>=20'}
+
+snapshots:
+
+  '@typesafe-ai/sdk@0.6.0': {}

@@ -5,6 +5,311 @@
       "type": "task",
       "children": [
         {
+          "name": "ai-sdk-direct-model-generate-operation",
+          "children": [
+            {
+              "name": "doGenerate",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "maxOutputTokens": 24,
+                "prompt": [
+                  {
+                    "content": [
+                      {
+                        "text": "Reply with the single token PARIS and no punctuation.",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "user"
+                  }
+                ],
+                "temperature": 0
+              },
+              "output": {
+                "content": [
+                  {
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:2>"
+                      }
+                    },
+                    "text": "PARIS",
+                    "type": "text"
+                  }
+                ],
+                "finishReason": "stop",
+                "providerMetadata": {
+                  "openai": {
+                    "responseId": "<responseId:1>",
+                    "serviceTier": "default"
+                  }
+                },
+                "response": {
+                  "body": "<omitted>",
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "timestamp": "<timestamp>"
+                },
+                "usage": {
+                  "cachedInputTokens": 0,
+                  "inputTokens": 18,
+                  "outputTokens": 3,
+                  "reasoningTokens": 0,
+                  "totalTokens": 21
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "finish_reason": "stop",
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.responses"
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 3,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 18,
+                "reasoning_tokens": 0,
+                "tokens": 21
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "direct-model-generate",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
+          "name": "ai-sdk-wrapped-model-generate-operation",
+          "children": [
+            {
+              "name": "generateText",
+              "type": "function",
+              "children": [
+                {
+                  "name": "doGenerate",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "maxOutputTokens": 24,
+                    "prompt": [
+                      {
+                        "content": [
+                          {
+                            "text": "Reply with the single token PARIS and no punctuation.",
+                            "type": "text"
+                          }
+                        ],
+                        "role": "user"
+                      }
+                    ],
+                    "temperature": 0
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:2>"
+                          }
+                        },
+                        "text": "PARIS",
+                        "type": "text"
+                      }
+                    ],
+                    "finishReason": "stop",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:1>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "body": "<omitted>",
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "usage": {
+                      "cachedInputTokens": 0,
+                      "inputTokens": 18,
+                      "outputTokens": 3,
+                      "reasoningTokens": 0,
+                      "totalTokens": 21
+                    },
+                    "warnings": []
+                  },
+                  "metadata": {
+                    "braintrust": {
+                      "integration_name": "ai-sdk",
+                      "sdk_language": "typescript"
+                    },
+                    "finish_reason": "stop",
+                    "model": "gpt-4o-mini-2024-07-18",
+                    "provider": "openai.responses"
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 3,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 18,
+                    "reasoning_tokens": 0,
+                    "tokens": 21
+                  }
+                }
+              ],
+              "input": {
+                "maxOutputTokens": 24,
+                "model": {
+                  "config": {
+                    "fileIdPrefixes": [
+                      "file-"
+                    ],
+                    "provider": "openai.responses"
+                  },
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "specificationVersion": "v2",
+                  "supportedUrls": {
+                    "application/pdf": [
+                      {}
+                    ],
+                    "image/*": [
+                      {}
+                    ]
+                  }
+                },
+                "prompt": "Reply with the single token PARIS and no punctuation.",
+                "temperature": 0
+              },
+              "output": {
+                "content": [
+                  {
+                    "providerMetadata": {
+                      "openai": {
+                        "itemId": "<itemId:1>"
+                      }
+                    },
+                    "text": "PARIS",
+                    "type": "text"
+                  }
+                ],
+                "finishReason": "stop",
+                "providerMetadata": {
+                  "openai": {
+                    "responseId": "<responseId:2>",
+                    "serviceTier": "default"
+                  }
+                },
+                "response": {
+                  "body": "<omitted>",
+                  "messages": [
+                    {
+                      "content": [
+                        {
+                          "providerOptions": {
+                            "openai": {
+                              "itemId": "<itemId:1>"
+                            }
+                          },
+                          "text": "PARIS",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "assistant"
+                    }
+                  ],
+                  "modelId": "gpt-4o-mini-2024-07-18",
+                  "timestamp": "<timestamp>"
+                },
+                "steps": [
+                  {
+                    "content": [
+                      {
+                        "providerMetadata": {
+                          "openai": {
+                            "itemId": "<itemId:1>"
+                          }
+                        },
+                        "text": "PARIS",
+                        "type": "text"
+                      }
+                    ],
+                    "finishReason": "stop",
+                    "providerMetadata": {
+                      "openai": {
+                        "responseId": "<responseId:2>",
+                        "serviceTier": "default"
+                      }
+                    },
+                    "response": {
+                      "body": "<omitted>",
+                      "messages": [
+                        {
+                          "content": [
+                            {
+                              "providerOptions": {
+                                "openai": {
+                                  "itemId": "<itemId:1>"
+                                }
+                              },
+                              "text": "PARIS",
+                              "type": "text"
+                            }
+                          ],
+                          "role": "assistant"
+                        }
+                      ],
+                      "modelId": "gpt-4o-mini-2024-07-18",
+                      "timestamp": "<timestamp>"
+                    },
+                    "usage": {
+                      "cachedInputTokens": 0,
+                      "inputTokens": 18,
+                      "outputTokens": 3,
+                      "reasoningTokens": 0,
+                      "totalTokens": 21
+                    },
+                    "warnings": []
+                  }
+                ],
+                "text": "PARIS",
+                "toolCalls": [],
+                "toolResults": [],
+                "totalUsage": {
+                  "cachedInputTokens": 0,
+                  "inputTokens": 18,
+                  "outputTokens": 3,
+                  "reasoningTokens": 0,
+                  "totalTokens": 21
+                },
+                "usage": {
+                  "cachedInputTokens": 0,
+                  "inputTokens": 18,
+                  "outputTokens": 3,
+                  "reasoningTokens": 0,
+                  "totalTokens": 21
+                },
+                "warnings": []
+              },
+              "metadata": {
+                "braintrust": {
+                  "integration_name": "ai-sdk",
+                  "sdk_language": "typescript"
+                },
+                "model": "gpt-4o-mini-2024-07-18",
+                "provider": "openai.responses"
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "wrapped-model-generate",
+            "testRunId": "<run:1>"
+          }
+        },
+        {
           "name": "ai-sdk-generate-operation",
           "children": [
             {
@@ -2649,8 +2954,8 @@
                     "completion_tokens": 7,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 4516,
-                    "prompt_tokens": 3,
-                    "tokens": 10
+                    "prompt_tokens": 4519,
+                    "tokens": 4526
                   }
                 }
               ],
@@ -2894,8 +3199,8 @@
                     "completion_tokens": 7,
                     "prompt_cache_creation_tokens": 0,
                     "prompt_cached_tokens": 4516,
-                    "prompt_tokens": 3,
-                    "tokens": 10
+                    "prompt_tokens": 4519,
+                    "tokens": 4526
                   }
                 }
               ],

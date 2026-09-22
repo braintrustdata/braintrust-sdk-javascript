@@ -1,3 +1,7 @@
+import type {
+  OpenAIMediaParams,
+  OpenAIMediaResponse,
+} from "../../vendor-sdk-types/openai-media";
 import type { CompiledPrompt } from "../../logger";
 import { channel, defineChannels } from "../core/channel-definitions";
 import { INSTRUMENTATION_NAMES } from "../../span-origin";
@@ -24,6 +28,10 @@ import type {
   OpenAIFileLike,
   OpenAIFilesCreateTraceArgs,
 } from "../../openai-batch-types";
+import type {
+  OpenAIAgentsTraceStartChannelArgs,
+  OpenAIAgentsTraceState,
+} from "../../openai-agents-api-types";
 
 type OpenAIChatSpanInfo = NonNullable<CompiledPrompt<"chat">["span_info"]>;
 
@@ -38,6 +46,64 @@ type OpenAIResponsesChannelExtras = OpenAIChannelExtras;
 export const openAIChannels = defineChannels(
   "openai",
   {
+    imagesGenerate: channel<
+      [OpenAIMediaParams, unknown?],
+      OpenAIMediaResponse,
+      OpenAIChannelExtras
+    >({ channelName: "images.generate", kind: "async" }),
+    imagesEdit: channel<
+      [OpenAIMediaParams, unknown?],
+      OpenAIMediaResponse,
+      OpenAIChannelExtras
+    >({ channelName: "images.edit", kind: "async" }),
+    imagesCreateVariation: channel<
+      [OpenAIMediaParams, unknown?],
+      OpenAIMediaResponse,
+      OpenAIChannelExtras
+    >({ channelName: "images.createVariation", kind: "async" }),
+    audioSpeechCreate: channel<
+      [OpenAIMediaParams, unknown?],
+      OpenAIMediaResponse,
+      OpenAIChannelExtras
+    >({ channelName: "audio.speech.create", kind: "async" }),
+    audioTranscriptionsCreate: channel<
+      [OpenAIMediaParams, unknown?],
+      OpenAIMediaResponse,
+      OpenAIChannelExtras
+    >({ channelName: "audio.transcriptions.create", kind: "async" }),
+    audioTranslationsCreate: channel<
+      [OpenAIMediaParams, unknown?],
+      OpenAIMediaResponse,
+      OpenAIChannelExtras
+    >({ channelName: "audio.translations.create", kind: "async" }),
+
+    agentsTraceStart: channel<
+      [OpenAIAgentsTraceStartChannelArgs],
+      OpenAIAgentsTraceState | null,
+      OpenAIChannelExtras
+    >({
+      channelName: "agents.trace.start",
+      kind: "async",
+    }),
+
+    agentsTraceCapture: channel<
+      [{ event: unknown; state: OpenAIAgentsTraceState | null }],
+      OpenAIAgentsTraceState | null,
+      OpenAIChannelExtras
+    >({
+      channelName: "agents.trace.capture",
+      kind: "async",
+    }),
+
+    agentsTraceFail: channel<
+      [{ error: unknown; state: OpenAIAgentsTraceState | null }],
+      OpenAIAgentsTraceState | null,
+      OpenAIChannelExtras
+    >({
+      channelName: "agents.trace.fail",
+      kind: "async",
+    }),
+
     filesCreateTraced: channel<
       [OpenAIFilesCreateTraceArgs],
       OpenAIFileLike,

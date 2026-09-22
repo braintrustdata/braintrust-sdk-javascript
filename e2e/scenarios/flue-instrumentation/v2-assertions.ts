@@ -36,9 +36,11 @@ export function defineFlueV2InstrumentationAssertions(options: {
 
   describe.sequential("explicit native instrumentation", () => {
     let events: CapturedLogEvent[] = [];
+    let testRunId: string;
 
     beforeAll(async () => {
       await withScenarioHarness(async (harness) => {
+        testRunId = harness.testRunId;
         await harness.runScenarioDir({
           entry: "scenario.v2.ts",
           env: {
@@ -121,6 +123,10 @@ export function defineFlueV2InstrumentationAssertions(options: {
       });
       expect(probe?.span.parentIds).toEqual([tool?.span.id]);
       expect(probe?.output).toBe("lookup-active");
+      expect(probe?.metadata).toMatchObject({
+        scenario: "flue-instrumentation",
+        testRunId,
+      });
     });
 
     test("matches the Flue 2 span tree snapshot", testConfig, async () => {

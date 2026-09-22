@@ -135,6 +135,12 @@ export {
   openaiFilesCreateTraced,
 } from "./openai-batch";
 
+export {
+  failOpenAIAgentsTrace,
+  startOpenAIAgentsTrace,
+  updateOpenAIAgentsTrace,
+} from "./openai-agents-api";
+
 // Internal isomorph layer for platform-specific implementations
 import _internalIso from "./isomorph";
 export { _internalIso };
@@ -232,6 +238,7 @@ export { wrapLangGraphSDK } from "./wrappers/langgraph-sdk";
 export { wrapOllama } from "./wrappers/ollama";
 export { wrapCohere } from "./wrappers/cohere";
 export { wrapVoyageAI } from "./wrappers/voyageai";
+export { wrapTypeSafe } from "./wrappers/typesafe";
 export { wrapGroq } from "./wrappers/groq";
 export { wrapBedrockRuntime } from "./wrappers/bedrock-runtime";
 export { wrapCopilotClient } from "./wrappers/github-copilot";
@@ -319,7 +326,13 @@ export {
   PromptDefinitionWithTools,
 } from "./prompt-schemas";
 
-export type { Trace, SpanData, GetThreadOptions } from "./trace";
+export type {
+  Trace,
+  SpanData,
+  SpanDurationFilter,
+  SpanFilters,
+  GetThreadOptions,
+} from "./trace";
 export { SpanFetcher, CachedSpanFetcher, LocalTrace } from "./trace";
 
 export type {

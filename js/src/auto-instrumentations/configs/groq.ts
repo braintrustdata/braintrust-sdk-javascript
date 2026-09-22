@@ -28,4 +28,43 @@ export const groqConfigs: InstrumentationConfig[] = [
       kind: "Async",
     },
   },
+  {
+    channelName: groqChannels.audioSpeechCreate.channelName,
+    module: {
+      name: "groq-sdk",
+      versionRange: ">=1.0.0",
+      filePath: "resources/audio/speech.mjs",
+    },
+    functionQuery: {
+      className: "Speech",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: groqChannels.audioTranscriptionsCreate.channelName,
+    module: {
+      name: "groq-sdk",
+      versionRange: ">=1.0.0",
+      filePath: "resources/audio/transcriptions.mjs",
+    },
+    functionQuery: {
+      className: "Transcriptions",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
+  {
+    channelName: groqChannels.audioTranslationsCreate.channelName,
+    module: {
+      name: "groq-sdk",
+      versionRange: ">=1.0.0",
+      filePath: "resources/audio/translations.mjs",
+    },
+    functionQuery: {
+      className: "Translations",
+      methodName: "create",
+      kind: "Async",
+    },
+  },
 ];

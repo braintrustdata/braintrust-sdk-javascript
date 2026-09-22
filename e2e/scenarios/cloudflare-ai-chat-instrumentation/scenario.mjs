@@ -40,14 +40,14 @@ vite.stderr.on("data", (chunk) => (output += chunk.toString()));
 
 try {
   const baseUrl = await waitForServer();
-  const success = await run("success", baseUrl);
+  const success = await run(baseUrl, "success");
   if (!JSON.stringify(success).includes("CLOUDFLARE_AI_CHAT_TOOL_OK")) {
     throw new Error(
       `Successful chat result was incomplete: ${JSON.stringify(success)}`,
     );
   }
 
-  const failure = await run("error", baseUrl);
+  const failure = await run(baseUrl, "error");
   if (!JSON.stringify(failure).includes("CLOUDFLARE_AI_CHAT_STREAM_ERROR")) {
     throw new Error(
       `Error chat result was incomplete: ${JSON.stringify(failure)}`,
@@ -57,7 +57,7 @@ try {
   await stopVite();
 }
 
-async function run(kind, baseUrl) {
+async function run(baseUrl, kind) {
   const response = await fetch(`${baseUrl}/run?kind=${kind}`, {
     signal: AbortSignal.timeout(60_000),
   });
@@ -80,18 +80,18 @@ async function waitForServer() {
     const baseUrl = stripVTControlCharacters(output).match(
       /Local:\s+(http:\/\/127\.0\.0\.1:\d+)\//,
     )?.[1];
-    if (!baseUrl) {
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      continue;
-    }
-    try {
-      const response = await fetch(`${baseUrl}/health`, {
-        signal: AbortSignal.timeout(1_000),
-      });
-      if (response.ok) {
-        return baseUrl;
+    if (baseUrl) {
+      try {
+        const response = await fetch(`${baseUrl}/health`, {
+          signal: AbortSignal.timeout(1_000),
+        });
+        if (response.ok) {
+          return baseUrl;
+        }
+      } catch {
+        // Continue until workerd accepts requests.
       }
-    } catch {}
+    }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
   throw new Error(`Timed out waiting for Vite:\n${output}`);

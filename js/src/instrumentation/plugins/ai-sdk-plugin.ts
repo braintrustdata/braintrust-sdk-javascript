@@ -19,6 +19,7 @@ import {
   _internalStartSpanWithInitialMerge,
   Attachment,
   currentSpan,
+  startSpan,
   type Span,
   withCurrent,
 } from "../../logger";
@@ -48,8 +49,17 @@ import {
   unregisterWorkflowAgentWrapperSpan,
 } from "../../wrappers/ai-sdk/workflow-agent-context";
 import { zodToJsonSchema } from "../../zod/utils";
-import { aiSDKChannels, harnessAgentChannels } from "./ai-sdk-channels";
+import {
+  aiSDKChannels,
+  BRAINTRUST_WRAPPED_AI_SDK_MODEL,
+  harnessAgentChannels,
+} from "./ai-sdk-channels";
+import { extractTokenMetrics } from "./ai-sdk-metrics";
 import { currentCloudflareThinkSpan } from "./cloudflare-think-context";
+import {
+  isAutoInstrumentationSuppressed,
+  runWithAutoInstrumentationSuppressed,
+} from "../auto-instrumentation-suppression";
 import type {
   AISDK,
   AISDKCallParams,
@@ -195,8 +205,13 @@ export class AISDKPlugin extends BasePlugin {
     const denyOutputPaths =
       this.config.denyOutputPaths || DEFAULT_DENY_OUTPUT_PATHS;
 
-    this.unsubscribers.push(interceptAISDKV7TelemetryDispatcher());
-    this.unsubscribers.push(subscribeToHarnessAgentCreateSession());
+    this.unsubscribers.push(
+      interceptAISDKV7TelemetryDispatcher(),
+      interceptAISDKEvaluate(denyOutputPaths),
+      interceptAISDKModelGenerate(denyOutputPaths),
+      interceptAISDKModelStream(denyOutputPaths),
+      subscribeToHarnessAgentCreateSession(),
+    );
     this.unsubscribers.push(
       subscribeToHarnessContinuation(
         harnessAgentChannels.continueGenerate,
@@ -678,6 +693,140 @@ export class AISDKPlugin extends BasePlugin {
   }
 }
 
+function interceptAISDKEvaluate(defaultDenyOutputPaths: string[]): () => void {
+  return aiSDKChannels.evaluate.intercept(
+    (target, thisArg, args, additional) => {
+      if (isAutoInstrumentationSuppressed()) {
+        return Reflect.apply(target, thisArg, args);
+      }
+
+      let span: Span;
+      let denyOutputPaths: string[];
+      try {
+        const params = args[0];
+        const spanInfo = additional.span_info;
+        denyOutputPaths = resolveDenyOutputPaths(
+          { ...additional, arguments: args },
+          defaultDenyOutputPaths,
+        );
+        span = startSpan(
+          withSpanInstrumentationName(
+            {
+              name: spanInfo?.name ?? "evaluate",
+              spanAttributes: {
+                type: "question",
+                ...spanInfo?.spanAttributes,
+              },
+              event: {
+                input: {
+                  state: params.state,
+                  questions: addEvaluationIds(params.questions),
+                },
+                metadata: {
+                  ...extractBaseMetadata(params.model),
+                  ...spanInfo?.metadata,
+                },
+              },
+            },
+            INSTRUMENTATION_NAMES.AI_SDK,
+          ),
+        );
+      } catch (error) {
+        debugLogger.error("Error starting span for evaluate:", error);
+        return Reflect.apply(target, thisArg, args);
+      }
+
+      const finish = (log: () => void) => {
+        try {
+          log();
+        } catch (error) {
+          debugLogger.error("Error logging span for evaluate:", error);
+        }
+        try {
+          span.end();
+        } catch (error) {
+          debugLogger.error("Error ending span for evaluate:", error);
+        }
+      };
+
+      try {
+        const result = withCurrent(span, () =>
+          runWithAutoInstrumentationSuppressed(() =>
+            Reflect.apply(target, thisArg, args),
+          ),
+        );
+        void Promise.resolve(result).then(
+          (value) =>
+            finish(() => {
+              const confidence = value.providerMetadata?.typesafe?.confidence;
+              const gatewayRouting = extractGatewayRoutingInfo(value);
+              const requestMetadata = serializeModelWithProvider(args[0].model);
+              const providerMetadataKeys = Object.keys(
+                value.providerMetadata ?? {},
+              ).filter((key) => key !== "gateway");
+              const resolvedModel = serializeModelWithProvider(
+                gatewayRouting?.model ?? value.response?.modelId,
+              );
+              const resolvedProvider =
+                gatewayRouting?.provider ??
+                (providerMetadataKeys.length === 1
+                  ? providerMetadataKeys[0]
+                  : (resolvedModel.provider ?? requestMetadata.provider));
+              span.log({
+                output: omit(
+                  {
+                    answers: addEvaluationIds(value.answers, confidence),
+                  },
+                  denyOutputPaths,
+                ),
+                metrics: extractTokenMetrics(value),
+                metadata: {
+                  ...(resolvedModel.model
+                    ? { model: resolvedModel.model }
+                    : {}),
+                  ...(resolvedProvider ? { provider: resolvedProvider } : {}),
+                  ...(confidence
+                    ? { providerMetadata: { typesafe: { confidence } } }
+                    : {}),
+                },
+              });
+            }),
+          (error) => finish(() => span.log({ error })),
+        );
+        return result;
+      } catch (error) {
+        finish(() => span.log({ error }));
+        throw error;
+      }
+    },
+  );
+}
+
+function addEvaluationIds(
+  value: unknown,
+  confidence: unknown = undefined,
+): unknown {
+  if (!isObject(value)) {
+    return value;
+  }
+
+  return Object.entries(value).map(([id, entry]) => {
+    if (!isObject(entry)) {
+      return { id, value: entry };
+    }
+
+    const answerConfidence = isObject(confidence) ? confidence[id] : undefined;
+    return {
+      ...entry,
+      ...(typeof answerConfidence === "number" &&
+      (entry.type === "choice" || entry.type === "score")
+        ? { confidence: answerConfidence }
+        : {}),
+      id,
+    };
+  });
+}
+
 function subscribeToHarnessAgentCreateSession(): () => void {
   const channel = harnessAgentChannels.createSession.tracingChannel();
   const parents = new WeakMap<object, HarnessTurnParent>();
@@ -878,6 +1027,191 @@ function interceptAISDKV7TelemetryDispatcher(): () => void {
         }
       }
       return dispatcher;
+    },
+  );
+}
+
+function buildAISDKModelSpanArgs(
+  name: "doGenerate" | "doStream",
+  params: AISDKCallParams,
+  model: AISDKLanguageModel,
+) {
+  return withSpanInstrumentationName(
+    {
+      name,
+      spanAttributes: { type: SpanTypeAttribute.LLM },
+      event: buildAISDKModelStartEvent(
+        params,
+        buildAISDKChildMetadata(model),
+        {},
+      ),
+    },
+    INSTRUMENTATION_NAMES.AI_SDK,
+  );
+}
+
+function interceptAISDKModelGenerate(
+  defaultDenyOutputPaths: string[],
+): () => void {
+  return aiSDKChannels.modelGenerate.intercept(
+    async (target, thisArg, [params], additional) => {
+      const span = _internalStartSpanWithInitialMerge(
+        buildAISDKModelSpanArgs("doGenerate", params, additional.model),
+      );
+      try {
+        const result = await withCurrent(span, () =>
+          Reflect.apply(target, thisArg, [params]),
+        );
+        const metrics = extractTokenMetrics(result);
+        span.log({
+          output: processAISDKOutput(
+            result,
+            additional.denyOutputPaths ?? defaultDenyOutputPaths,
+          ),
+          metrics,
+          ...mergeMetadataPayload(
+            buildResolvedMetadataPayload(result),
+            buildMissingUsageMetadata(
+              result,
+              metrics,
+              "ai_sdk_result_missing_usage",
+            ),
+          ),
+        });
+        return result;
+      } catch (error) {
+        span.log({ error: toLoggedError(error) });
+        throw error;
+      } finally {
+        span.end();
+      }
+    },
+  );
+}
+
+function interceptAISDKModelStream(
+  defaultDenyOutputPaths: string[],
+): () => void {
+  return aiSDKChannels.modelStream.intercept(
+    async (target, thisArg, [params], additional) => {
+      const span = _internalStartSpanWithInitialMerge(
+        buildAISDKModelSpanArgs("doStream", params, additional.model),
+      );
+      const startTime = getCurrentUnixTimestamp();
+      let result: AISDKResult & {
+        stream: ReadableStream<AISDKModelStreamChunk>;
+      };
+      try {
+        result = await withCurrent(span, () =>
+          Reflect.apply(target, thisArg, [params]),
+        );
+      } catch (error) {
+        span.log({ error: toLoggedError(error) });
+        span.end();
+        throw error;
+      }
+
+      const reader = result.stream.getReader();
+      const output: Record<string, unknown> = {};
+      const textParts: string[] = [];
+      const reasoningParts: string[] = [];
+      const toolCalls: unknown[] = [];
+      let firstChunkTime: number | undefined;
+      let ended = false;
+
+      const logAndEnd = (usageUnavailableReason?: string) => {
+        if (ended) {
+          return;
+        }
+        ended = true;
+        output.text = textParts.join("");
+        output.reasoning = reasoningParts.join("");
+        output.toolCalls = toolCalls;
+        const aggregatedResult = output as AISDKResult;
+        const metrics = extractTokenMetrics(aggregatedResult);
+        if (firstChunkTime !== undefined) {
+          metrics.time_to_first_token = Math.max(
+            firstChunkTime - startTime,
+            1e-6,
+          );
+        }
+        const missingUsageMetadata = usageUnavailableReason
+          ? { usage_unavailable_reason: usageUnavailableReason }
+          : buildMissingUsageMetadata(
+              aggregatedResult,
+              metrics,
+              "ai_sdk_result_missing_usage",
+            );
+        span.log({
+          output: processAISDKOutput(
+            aggregatedResult,
+            additional.denyOutputPaths ?? defaultDenyOutputPaths,
+          ),
+          metrics,
+          ...mergeMetadataPayload(
+            buildResolvedMetadataPayload(aggregatedResult),
+            missingUsageMetadata,
+          ),
+        });
+        span.end();
+      };
+
+      const processChunk = (chunk: AISDKModelStreamChunk) => {
+        if (firstChunkTime === undefined && isAISDKContentStreamChunk(chunk)) {
+          firstChunkTime = getCurrentUnixTimestamp();
+        }
+        switch (chunk.type) {
+          case "text-delta":
+            textParts.push(extractTextDelta(chunk));
+            break;
+          case "reasoning-delta":
+            reasoningParts.push(chunk.delta ?? chunk.text ?? "");
+            break;
+          case "tool-call":
+            toolCalls.push(chunk);
+            break;
+          case "object":
+            output.object = chunk.object;
+            break;
+          case "finish":
+            output.finishReason = chunk.finishReason;
+            output.usage = chunk.usage;
+            if (chunk.providerMetadata !== undefined) {
+              output.providerMetadata = chunk.providerMetadata;
+            }
+            logAndEnd();
+            break;
+        }
+      };
+
+      return {
+        ...result,
+        stream: new ReadableStream<AISDKModelStreamChunk>({
+          async pull(controller) {
+            try {
+              const next = await withCurrent(span, () => reader.read());
+              if (next.done) {
+                logAndEnd("ai_sdk_stream_finished_without_usage");
+                controller.close();
+                return;
+              }
+              processChunk(next.value);
+              controller.enqueue(next.value);
+            } catch (error) {
+              span.log({ error: toLoggedError(error) });
+              logAndEnd("ai_sdk_stream_errored_without_usage");
+              controller.error(error);
+            }
+          },
+          async cancel(reason) {
+            try {
+              await reader.cancel(reason);
+            } finally {
+              logAndEnd("ai_sdk_stream_cancelled_without_usage");
+            }
+          },
+        }),
+      };
     },
   );
 }
@@ -2230,6 +2564,15 @@ function prepareAISDKChildTracing(
       typeof resolvedModel !== "object" ||
       typeof resolvedModel.doGenerate !== "function"
     ) {
+      return resolvedModel;
+    }
+
+    if (
+      (resolvedModel as Record<PropertyKey, unknown>)[
+        BRAINTRUST_WRAPPED_AI_SDK_MODEL
+      ]
+    ) {
+      modelWrapped = true;
       return resolvedModel;
     }
 
@@ -3799,159 +4142,7 @@ export function processAISDKRerankOutput(
   return undefined;
 }
 
-/**
- * Extract token metrics from AI SDK result.
- */
-export function extractTokenMetrics(
-  result: AISDKResult,
-): Record<string, number> {
-  const metrics: Record<string, number> = {};
-
-  let usage: AISDKUsage | undefined;
-  const totalUsageValue = safeResultFieldRead(result, "totalUsage");
-  if (totalUsageValue !== undefined && !isPromiseLike(totalUsageValue)) {
-    usage = totalUsageValue as AISDKUsage;
-  }
-
-  if (!usage) {
-    const usageValue = safeResultFieldRead(result, "usage");
-    if (usageValue !== undefined && !isPromiseLike(usageValue)) {
-      usage = usageValue as AISDKUsage;
-    }
-  }
-
-  if (!usage) {
-    return metrics;
-  }
-
-  // Extract token counts
-  const promptTokens = firstNumber(
-    usage.inputTokens?.total,
-    usage.inputTokens,
-    usage.promptTokens,
-    usage.prompt_tokens,
-  );
-  if (promptTokens !== undefined) {
-    metrics.prompt_tokens = promptTokens;
-  }
-
-  const completionTokens = firstNumber(
-    usage.outputTokens?.total,
-    usage.outputTokens,
-    usage.completionTokens,
-    usage.completion_tokens,
-  );
-  if (completionTokens !== undefined) {
-    metrics.completion_tokens = completionTokens;
-  }
-
-  const totalTokens = firstNumber(
-    usage.totalTokens,
-    usage.tokens,
-    usage.total_tokens,
-  );
-  if (totalTokens !== undefined) {
-    metrics.tokens = totalTokens;
-  } else if (promptTokens !== undefined && completionTokens !== undefined) {
-    metrics.tokens = promptTokens + completionTokens;
-  }
-
-  const promptCachedTokens = firstNumber(
-    usage.inputTokens?.cacheRead,
-    usage.inputTokenDetails?.cacheReadTokens,
-    usage.cachedInputTokens,
-    usage.promptCachedTokens,
-    usage.prompt_cached_tokens,
-  );
-  if (promptCachedTokens !== undefined) {
-    metrics.prompt_cached_tokens = promptCachedTokens;
-  }
-
-  const promptCacheCreationTokens = firstNumber(
-    usage.inputTokens?.cacheWrite,
-    usage.inputTokenDetails?.cacheWriteTokens,
-    usage.promptCacheCreationTokens,
-    usage.prompt_cache_creation_tokens,
-    extractAnthropicCacheCreationTokens(result),
-  );
-  if (promptCacheCreationTokens !== undefined) {
-    metrics.prompt_cache_creation_tokens = promptCacheCreationTokens;
-  }
-
-  const promptReasoningTokens = firstNumber(
-    usage.promptReasoningTokens,
-    usage.prompt_reasoning_tokens,
-  );
-  if (promptReasoningTokens !== undefined) {
-    metrics.prompt_reasoning_tokens = promptReasoningTokens;
-  }
-
-  const completionCachedTokens = firstNumber(
-    usage.completionCachedTokens,
-    usage.completion_cached_tokens,
-  );
-  if (completionCachedTokens !== undefined) {
-    metrics.completion_cached_tokens = completionCachedTokens;
-  }
-
-  const reasoningTokenCount = firstNumber(
-    usage.outputTokens?.reasoning,
-    usage.reasoningTokens,
-    usage.completionReasoningTokens,
-    usage.completion_reasoning_tokens,
-    usage.reasoning_tokens,
-    usage.thinkingTokens,
-    usage.thinking_tokens,
-  );
-  if (reasoningTokenCount !== undefined) {
-    metrics.completion_reasoning_tokens = reasoningTokenCount;
-    metrics.reasoning_tokens = reasoningTokenCount;
-  }
-
-  const completionAudioTokens = firstNumber(
-    usage.completionAudioTokens,
-    usage.completion_audio_tokens,
-  );
-  if (completionAudioTokens !== undefined) {
-    metrics.completion_audio_tokens = completionAudioTokens;
-  }
-
-  // Extract cost from gateway routing if available
-  const cost = extractCostFromResult(result);
-  if (cost !== undefined) {
-    metrics.estimated_cost = cost;
-  }
-
-  return metrics;
-}
-
-function extractAnthropicCacheCreationTokens(
-  result: AISDKResult,
-): number | undefined {
-  const providerMetadata = safeSerializableFieldRead(
-    result,
-    "providerMetadata",
-  ) as Record<string, unknown> | undefined;
-  const anthropicMetadata = providerMetadata?.anthropic as
-    | Record<string, unknown>
-    | undefined;
-  if (!anthropicMetadata) {
-    return undefined;
-  }
-
-  return firstNumber(
-    anthropicMetadata.cacheCreationInputTokens,
-    (anthropicMetadata.usage as Record<string, unknown> | undefined)
-      ?.cache_creation_input_tokens,
-  );
-}
-
-function safeResultFieldRead(
-  result: AISDKResult,
-  field: "usage" | "totalUsage",
-): unknown {
-  return safeSerializableFieldRead(result, field);
-}
+export { extractTokenMetrics };
 
 function safeSerializableFieldRead(
   obj: Record<string, unknown> | AISDKResult,
@@ -4163,7 +4354,10 @@ export function serializeModelWithProvider(model: AISDKModel | undefined): {
   const parsed = parseGatewayModelString(modelId);
   return {
     model: parsed.model,
-    provider: explicitProvider || parsed.provider,
+    provider:
+      explicitProvider === "gateway"
+        ? parsed.provider || explicitProvider
+        : explicitProvider || parsed.provider,
   };
 }
 
@@ -4217,76 +4411,6 @@ function extractGatewayRoutingInfo(result: AISDKResult): {
   }
 
   return null;
-}
-
-/**
- * Extract cost from result's providerMetadata.
- */
-function extractCostFromResult(result: AISDKResult): number | undefined {
-  // Check for cost in steps (multi-step results)
-  const steps = safeSerializableFieldRead(result, "steps");
-  if (Array.isArray(steps) && steps.length > 0) {
-    let totalCost = 0;
-    let foundCost = false;
-    for (const step of steps) {
-      const gateway = step?.providerMetadata?.gateway;
-      const stepCost =
-        parseGatewayCost(gateway?.cost) ||
-        parseGatewayCost(gateway?.marketCost);
-      if (stepCost !== undefined && stepCost > 0) {
-        totalCost += stepCost;
-        foundCost = true;
-      }
-    }
-    if (foundCost) {
-      return totalCost;
-    }
-  }
-
-  // Check direct providerMetadata
-  const providerMetadata = safeSerializableFieldRead(
-    result,
-    "providerMetadata",
-  );
-  const gateway = (providerMetadata as { gateway?: any } | undefined)?.gateway;
-  const directCost =
-    parseGatewayCost(gateway?.cost) || parseGatewayCost(gateway?.marketCost);
-  if (directCost !== undefined && directCost > 0) {
-    return directCost;
-  }
-
-  return undefined;
-}
-
-/**
- * Parse gateway cost value.
- */
-function parseGatewayCost(cost: unknown): number | undefined {
-  if (cost === undefined || cost === null) {
-    return undefined;
-  }
-  if (typeof cost === "number") {
-    return cost;
-  }
-  if (typeof cost === "string") {
-    const parsed = parseFloat(cost);
-    if (!isNaN(parsed)) {
-      return parsed;
-    }
-  }
-  return undefined;
-}
-
-/**
- * Get first number from a list of values.
- */
-function firstNumber(...values: unknown[]): number | undefined {
-  for (const v of values) {
-    if (typeof v === "number") {
-      return v;
-    }
-  }
-  return undefined;
 }
 
 /**

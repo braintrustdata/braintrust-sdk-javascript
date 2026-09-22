@@ -31,6 +31,7 @@ import type {
 import type {
   AISDKV7LanguageModelCallStartEvent,
   AISDKV7OperationEvent,
+  AISDKV7ProviderToolPart,
   AISDKV7Telemetry,
   AISDKV7TelemetryOptions,
 } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
@@ -52,6 +53,9 @@ type OperationState = {
   ownsSpan: boolean;
   span: Span;
   startTime: number;
+  providerTools: Map<string, { span: Span; ended: boolean }>;
+  recordInputs?: boolean;
+  recordOutputs?: boolean;
 };
 
 type CallSpanState = {
@@ -130,6 +134,11 @@ export function braintrustAISDKTelemetry(): any {
       return;
     }
 
+    for (const tool of state.providerTools.values()) {
+      if (!tool.ended) {
+        tool.span.end();
+      }
+    }
     operations.delete(operationKey);
     const keys = operationKeysByCallId.get(state.callId);
     if (!keys) {
@@ -262,6 +271,16 @@ export function braintrustAISDKTelemetry(): any {
   };
 
   const closeOpenChildSpans = (operationKey: string, error?: unknown): void => {
+    for (const tool of operations.get(operationKey)?.providerTools.values() ??
+      []) {
+      if (!tool.ended) {
+        if (error !== undefined) {
+          tool.span.log({ error });
+        }
+        tool.span.end();
+        tool.ended = true;
+      }
+    }
     const openModelSpans = modelSpans.get(operationKey);
     if (openModelSpans) {
       for (const span of openModelSpans) {
@@ -499,6 +518,9 @@ export function braintrustAISDKTelemetry(): any {
           ownsSpan,
           span,
           startTime: getCurrentUnixTimestamp(),
+          providerTools: new Map(),
+          recordInputs: event.recordInputs,
+          recordOutputs: event.recordOutputs,
         });
 
         if (!ownsSpan) {
@@ -630,6 +652,68 @@ export function braintrustAISDKTelemetry(): any {
         const state = operationKey ? operations.get(operationKey) : undefined;
         if (shouldSkipTelemetryChildren(state)) {
           return;
+        }
+        // Provider-executed tools bypass the local execution callbacks. Both
+        // generateText and streamText expose their normalized parts here.
+        // Timestamps describe when we observe these parts, not server runtime.
+        if (state && Array.isArray(event.content)) {
+          for (const part of event.content) {
+            if (
+              !isObject(part) ||
+              part.providerExecuted !== true ||
+              typeof part.toolCallId !== "string" ||
+              typeof part.toolName !== "string" ||
+              typeof part.type !== "string" ||
+              !["tool-call", "tool-result", "tool-error"].includes(part.type)
+            ) {
+              continue;
+            }
+            const toolPart = part as AISDKV7ProviderToolPart;
+            let tool = state.providerTools.get(toolPart.toolCallId);
+            if (tool?.ended) {
+              continue;
+            }
+            if (!tool) {
+              tool = {
+                span: startChildSpan(
+                  state.operationKey,
+                  toolPart.toolName,
+                  SpanTypeAttribute.TOOL,
+                  {
+                    metadata: {
+                      ...createAISDKIntegrationMetadata(),
+                      toolCallId: toolPart.toolCallId,
+                      toolName: toolPart.toolName,
+                      providerExecuted: true,
+                    },
+                  },
+                  state.harnessTurnParent,
+                ),
+                ended: false,
+              };
+              state.providerTools.set(toolPart.toolCallId, tool);
+            }
+            if (
+              state.recordInputs !== false &&
+              shouldRecordInputs(event) &&
+              toolPart.input !== undefined
+            ) {
+              tool.span.log({ input: toolPart.input });
+            }
+            if (toolPart.type === "tool-call") {
+              continue;
+            }
+            if (toolPart.type === "tool-error") {
+              tool.span.log({ error: toolPart.error });
+            } else if (
+              state.recordOutputs !== false &&
+              shouldRecordOutputs(event)
+            ) {
+              tool.span.log({ output: toolPart.output });
+            }
+            tool.span.end();
+            tool.ended = true;
+          }
         }
         const span = operationKey
           ? shiftModelSpan(modelSpans, operationKey)

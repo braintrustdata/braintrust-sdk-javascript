@@ -1,0 +1,19 @@
+{
+  "name": "@braintrust/e2e-openai-agents-api-instrumentation",
+  "private": true,
+  "type": "module",
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "openai-agents-api-v7-latest": {
+          "package": "openai",
+          "range": "7"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "openai-agents-api-v7": "npm:openai@7.15.0",
+    "openai-agents-api-v7-latest": "npm:openai@7.15.0"
+  }
+}

@@ -13,7 +13,11 @@ import {
   type SpanTreeEntry,
   type SpanTreeFields,
 } from "../../helpers/span-tree";
-import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
+import {
+  ROOT_NAME,
+  SCENARIO_NAME,
+  TOOL_CHILD_SPAN_NAME,
+} from "./scenario.impl.mjs";
 
 type RunPiCodingAgentScenario = (harness: {
   runNodeScenarioDir: (options: {
@@ -104,6 +108,11 @@ function summarize(events: CapturedLogEvent[]): SpanTreeEntry[] {
     task?.span.id,
   ).at(-1);
   const tool = findChildSpans(events, "bash", task?.span.id).at(-1);
+  const toolChild = findChildSpans(
+    events,
+    TOOL_CHILD_SPAN_NAME,
+    tool?.span.id,
+  ).at(-1);
 
   return [
     findLatestSpan(events, ROOT_NAME),
@@ -111,6 +120,7 @@ function summarize(events: CapturedLogEvent[]): SpanTreeEntry[] {
     task,
     llm,
     tool,
+    toolChild,
   ].flatMap((event) =>
     event
       ? [
@@ -181,6 +191,11 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
           task?.span.id,
         ).at(-1);
         const tool = findChildSpans(events, "bash", task?.span.id).at(-1);
+        const toolChild = findChildSpans(
+          events,
+          TOOL_CHILD_SPAN_NAME,
+          tool?.span.id,
+        ).at(-1);
 
         expect(operation).toBeDefined();
         expect(task).toBeDefined();
@@ -221,6 +236,9 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
           expect.any(String),
         );
         expect(JSON.stringify(tool?.output)).toContain("pi_tool_ok");
+
+        expect(toolChild).toBeDefined();
+        expect(toolChild?.span.parentIds).toEqual([tool?.span.id ?? ""]);
       },
     );
 

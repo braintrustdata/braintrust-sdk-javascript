@@ -166,6 +166,8 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v7",
     packageName: "ai-sdk-v7",
     snapshotName: "ai-sdk-v7",
+    supportsEvaluate: true,
+    supportsEvaluateStringModel: false,
     anthropicModuleName: "ai-sdk-anthropic-v7",
     supportsAgentToolLoop: true,
     supportsDenyOutputOverrideScenario: false,
@@ -194,6 +196,7 @@ export const AI_SDK_SCENARIO_SPECS = [
     openaiModuleName: "ai-sdk-openai-v7-latest",
     packageName: "ai-sdk-v7-latest",
     snapshotName: "ai-sdk-v7-latest",
+    supportsEvaluate: true,
     anthropicModuleName: "ai-sdk-anthropic-v7-latest",
     supportsAgentToolLoop: true,
     supportsDenyOutputOverrideScenario: false,
@@ -250,6 +253,102 @@ function createOutputObjectIfSupported(ai) {
   }
 
   return undefined;
+}
+
+function createTypeSafeEvaluationModel(modelId = "jev-latest") {
+  return {
+    specificationVersion: "v4",
+    provider: "typesafe",
+    modelId,
+    supportedQuestionTypes: ["choice", "score", "boolean"],
+    async doEvaluate({ state, questions, abortSignal, headers }) {
+      const apiKey = process.env.TYPESAFE_API_KEY;
+      if (!apiKey) {
+        throw new Error(
+          "Expected TYPESAFE_API_KEY to be set for AI SDK evaluate e2e",
+        );
+      }
+      const baseURL = (
+        process.env.TYPESAFE_BASE_URL ?? "https://api.typesafe.ai"
+      ).replace(/\/+$/, "");
+      const typeSafeQuestions = Object.fromEntries(
+        Object.entries(questions).map(([id, question]) => [
+          id,
+          question.type === "boolean"
+            ? { ...question, type: "noul" }
+            : question,
+        ]),
+      );
+      const response = await fetch(`${baseURL}/v1/systemone`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${apiKey}`,
+          "content-type": "application/json",
+          ...headers,
+        },
+        body: JSON.stringify({
+          model: modelId,
+          state,
+          questions: typeSafeQuestions,
+        }),
+        signal: abortSignal,
+      });
+      if (!response.ok) {
+        throw new Error(
+          `TypeSafe evaluate request failed (${response.status}): ${await response.text()}`,
+        );
+      }
+      const result = await response.json();
+      const confidenceEntries = [];
+      const answers = Object.fromEntries(
+        Object.entries(result.answers).map(([id, answer]) => {
+          if (answer.type === "noul") {
+            return [id, { type: "boolean", probability: answer.noul }];
+          }
+          if (typeof answer.confidence === "number") {
+            confidenceEntries.push([id, answer.confidence]);
+          }
+          if (answer.type === "choice") {
+            return [
+              id,
+              {
+                type: "choice",
+                choice: answer.choice,
+                probabilities: answer.probabilities,
+              },
+            ];
+          }
+          return [
+            id,
+            {
+              type: "score",
+              score: answer.score,
+              probabilities: answer.probabilities,
+            },
+          ];
+        }),
+      );
+      return {
+        answers,
+        rounding: { probabilityDecimals: 2, scoreDecimals: 2 },
+        usage: {
+          inputTokens: result.usage?.input_tokens,
+          outputTokens: result.usage?.output_tokens,
+        },
+        warnings: [],
+        providerMetadata: {
+          typesafe:
+            confidenceEntries.length > 0
+              ? { confidence: Object.fromEntries(confidenceEntries) }
+              : {},
+        },
+        response: {
+          modelId: result.model,
+          headers: Object.fromEntries(response.headers),
+        },
+      };
+    },
+  };
 }
 
 async function assertOutputObjectResponseFormatShape(ai, sdkMajorVersion) {
@@ -408,17 +507,155 @@ async function runAISDKInstrumentationScenario(
   const supportsGenerateImage =
     options.supportsGenerateImage ?? sdkMajorVersion >= 5;
   const outputObject = createOutputObjectIfSupported(options.ai);
-  const generateImage = supportsGenerateImage
-    ? typeof instrumentedAI.generateImage === "function"
-      ? instrumentedAI.generateImage
-      : instrumentedAI.experimental_generateImage
-    : undefined;
+  let generateImage;
+  if (supportsGenerateImage) {
+    generateImage =
+      typeof instrumentedAI.generateImage === "function"
+        ? instrumentedAI.generateImage
+        : instrumentedAI.experimental_generateImage;
+  }
   const openaiImageModel = supportsGenerateImage
     ? openai.image("gpt-image-1-mini")
     : undefined;
 
+  const runDirectModelCalls = async () => {
+    const model = wrapAISDK(openaiModel);
+    const callOptions = {
+      prompt: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Reply with the single token PARIS and no punctuation.",
+            },
+          ],
+        },
+      ],
+      temperature: 0,
+      maxOutputTokens: 24,
+    };
+
+    await runOperation(
+      "ai-sdk-direct-model-generate-operation",
+      "direct-model-generate",
+      async () => {
+        await model.doGenerate(callOptions);
+      },
+    );
+
+    await runOperation(
+      "ai-sdk-wrapped-model-generate-operation",
+      "wrapped-model-generate",
+      async () => {
+        await instrumentedAI.generateText({
+          model,
+          prompt: "Reply with the single token PARIS and no punctuation.",
+          temperature: 0,
+          ...tokenLimit(options.maxTokensKey, 24),
+        });
+      },
+    );
+  };
+
   await runTracedScenario({
     callback: async () => {
+      if (sdkMajorVersion >= 5 && options.directModelWrapping) {
+        await runDirectModelCalls();
+      }
+
+      if (sdkMajorVersion >= 7) {
+        for (const operation of ["generateText", "streamText"]) {
+          await runOperation(
+            `ai-sdk-provider-tool-${operation}-operation`,
+            `provider-tool-${operation}`,
+            async () => {
+              const result = await instrumentedAI[operation]({
+                model: openai.responses("gpt-4.1-mini"),
+                prompt:
+                  "Search the web for the official Braintrust website. Reply with its URL only.",
+                tools: {
+                  web_search: openai.tools.webSearch({
+                    searchContextSize: "low",
+                  }),
+                },
+                toolChoice: { type: "tool", toolName: "web_search" },
+                maxOutputTokens: 128,
+              });
+              if (operation === "streamText") {
+                for await (const _chunk of result.fullStream) {
+                }
+              }
+            },
+          );
+        }
+      }
+
+      if (options.supportsEvaluate) {
+        const evaluate =
+          options.evaluate ?? instrumentedAI.experimental_evaluate;
+        await runOperation(
+          "ai-sdk-evaluate-operation",
+          "evaluate",
+          async () => {
+            await evaluate({
+              model: createTypeSafeEvaluationModel(),
+              state: {
+                message:
+                  "I was charged twice for my subscription. Please refund the duplicate charge.",
+              },
+              questions: {
+                category: {
+                  type: "choice",
+                  instructions: "Which team should handle this request?",
+                  criteria: {
+                    billing: "Payments and refunds",
+                    technical: "Software problems",
+                  },
+                },
+                urgency: {
+                  type: "score",
+                  instructions: "How urgent is this request?",
+                  criteria: ["Low", "Medium", "High"],
+                },
+                duplicate: {
+                  type: "boolean",
+                  instructions: "Does the customer report a duplicate charge?",
+                },
+              },
+            });
+          },
+        );
+        if (options.supportsEvaluateStringModel !== false) {
+          const originalProvider = globalThis.AI_SDK_DEFAULT_PROVIDER;
+          try {
+            globalThis.AI_SDK_DEFAULT_PROVIDER = {
+              evaluationModel: (modelId) =>
+                createTypeSafeEvaluationModel(
+                  modelId === "typesafe-ai/jev" ? "jev-latest" : modelId,
+                ),
+            };
+            await runOperation(
+              "ai-sdk-evaluate-string-operation",
+              "evaluate-string",
+              async () => {
+                await evaluate({
+                  model: "typesafe-ai/jev",
+                  state: "The package arrived intact and on time.",
+                  questions: {
+                    positive: {
+                      type: "boolean",
+                      instructions: "Was the delivery successful?",
+                    },
+                  },
+                });
+              },
+            );
+          } finally {
+            globalThis.AI_SDK_DEFAULT_PROVIDER = originalProvider;
+          }
+        }
+      }
       await runOperation("ai-sdk-generate-operation", "generate", async () => {
         await instrumentedAI.generateText({
           model: openaiModel,
@@ -830,9 +1067,12 @@ async function runAISDKInstrumentationScenario(
 }
 
 export async function runWrappedAISDKInstrumentation(options) {
-  await runAISDKInstrumentationScenario(options, {
-    decorateAI: wrapAISDK,
-  });
+  await runAISDKInstrumentationScenario(
+    { ...options, directModelWrapping: true },
+    {
+      decorateAI: wrapAISDK,
+    },
+  );
 }
 
 export async function runAutoAISDKInstrumentation(options) {

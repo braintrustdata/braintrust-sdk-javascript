@@ -74,7 +74,10 @@ describe("provider wrapper", () => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
 
-  test("OpenAI responses image outputs are converted to attachments", async () => {
+  test("OpenAI responses image outputs are converted to attachments when enabled", async () => {
+    const originalAutoCaptureAttachments =
+      process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+    process.env.BRAINTRUST_CAPTURE_ATTACHMENTS = "true";
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
     const rawClient = new OpenAI({ apiKey: "sk-test" });
@@ -118,6 +121,51 @@ describe("provider wrapper", () => {
       );
     } finally {
       client.responses.create = originalCreate;
+      if (originalAutoCaptureAttachments === undefined) {
+        delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+      } else {
+        process.env.BRAINTRUST_CAPTURE_ATTACHMENTS =
+          originalAutoCaptureAttachments;
+      }
+    }
+  });
+
+  test("OpenAI responses image data is omitted by default", async () => {
+    const originalAutoCaptureAttachments =
+      process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+    delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+    const rawClient = new OpenAI({ apiKey: "sk-test" });
+    const client = wrapOpenAI(rawClient);
+    const mockData = {
+      output: [
+        {
+          type: "image_generation_call",
+          result: "AQID",
+          output_format: "png",
+        },
+      ],
+    };
+    const originalCreate = client.responses.create;
+    client.responses.create = vi.fn(() => makeAPIResponse(mockData)) as any;
+
+    try {
+      expect(
+        await client.responses.create({
+          model: "gpt-4o-mini",
+          input: "Generate a simple test image",
+        }),
+      ).toEqual(mockData);
+      const spans = await backgroundLogger.drain();
+      expect(spans).toHaveLength(1);
+      expect(spans[0].output[0].result).toBe("<omitted>");
+    } finally {
+      client.responses.create = originalCreate;
+      if (originalAutoCaptureAttachments === undefined) {
+        delete process.env.BRAINTRUST_CAPTURE_ATTACHMENTS;
+      } else {
+        process.env.BRAINTRUST_CAPTURE_ATTACHMENTS =
+          originalAutoCaptureAttachments;
+      }
     }
   });
 

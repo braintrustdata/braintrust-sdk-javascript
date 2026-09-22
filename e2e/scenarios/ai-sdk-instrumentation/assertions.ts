@@ -674,6 +674,8 @@ export function defineAISDKInstrumentationAssertions(options: {
   supportsProviderCacheAssertions: boolean;
   supportsDenyOutputOverrideScenario: boolean;
   supportsEmbedMany: boolean;
+  supportsEvaluate?: boolean;
+  supportsEvaluateStringModel?: boolean;
   supportsGenerateObject: boolean;
   supportsGenerateImage: boolean;
   supportsOutputObjectScenario: boolean;
@@ -912,6 +914,97 @@ export function defineAISDKInstrumentationAssertions(options: {
       });
     }
 
+    if (options.supportsEvaluate) {
+      test(
+        "captures native evaluation answers and confidence",
+        testConfig,
+        () => {
+          const operation = findLatestSpan(events, "ai-sdk-evaluate-operation");
+          expectOperationParentedByRoot(
+            operation,
+            findLatestSpan(events, ROOT_NAME),
+          );
+          const spans = findChildSpans(events, "evaluate", operation?.span.id);
+          expect(spans).toHaveLength(1);
+          const [span] = spans;
+          expect(span.span.type).toBe("question");
+          expect(span.input).toMatchObject({
+            state: { message: expect.any(String) },
+            questions: expect.arrayContaining([
+              expect.objectContaining({ id: "category", type: "choice" }),
+              expect.objectContaining({ id: "urgency", type: "score" }),
+              expect.objectContaining({ id: "duplicate", type: "boolean" }),
+            ]),
+          });
+          expect(span.output).toMatchObject({
+            answers: expect.arrayContaining([
+              expect.objectContaining({
+                id: "category",
+                type: "choice",
+                choice: expect.any(String),
+                confidence: expect.any(Number),
+                probabilities: expect.any(Object),
+              }),
+              expect.objectContaining({
+                id: "urgency",
+                type: "score",
+                score: expect.any(Number),
+                confidence: expect.any(Number),
+                probabilities: expect.any(Object),
+              }),
+              expect.objectContaining({
+                id: "duplicate",
+                type: "boolean",
+                probability: expect.any(Number),
+              }),
+            ]),
+          });
+          expect(span.row.metadata).toMatchObject({
+            model: expect.stringMatching(/^jev-/),
+            provider: "typesafe",
+            providerMetadata: { typesafe: { confidence: expect.any(Object) } },
+          });
+          expect(span.metrics).toMatchObject({
+            prompt_tokens: expect.any(Number),
+            completion_tokens: expect.any(Number),
+            tokens: expect.any(Number),
+          });
+
+          if (options.supportsEvaluateStringModel !== false) {
+            const stringOperation = findLatestSpan(
+              events,
+              "ai-sdk-evaluate-string-operation",
+            );
+            const stringSpans = findChildSpans(
+              events,
+              "evaluate",
+              stringOperation?.span.id,
+            );
+            expect(stringSpans).toHaveLength(1);
+            expect(stringSpans[0].input).toMatchObject({
+              state: "The package arrived intact and on time.",
+              questions: [
+                expect.objectContaining({ id: "positive", type: "boolean" }),
+              ],
+            });
+            expect(stringSpans[0].output).toMatchObject({
+              answers: [
+                {
+                  id: "positive",
+                  type: "boolean",
+                  probability: expect.any(Number),
+                },
+              ],
+            });
+            expect(stringSpans[0].row.metadata).toMatchObject({
+              model: expect.stringMatching(/^jev-/),
+              provider: "typesafe",
+            });
+          }
+        },
+      );
+    }
+
     if (options.supportsRerank) {
       test("captures trace for rerank()", testConfig, () => {
         const root = findLatestSpan(events, ROOT_NAME);
@@ -986,6 +1079,60 @@ export function defineAISDKInstrumentationAssertions(options: {
           }
         },
       );
+    }
+
+    if (options.sdkMajorVersion >= 7) {
+      for (const operationName of ["generateText", "streamText"]) {
+        test(
+          `captures provider-executed tools in ${operationName}`,
+          testConfig,
+          () => {
+            const operation = findLatestSpan(
+              events,
+              `ai-sdk-provider-tool-${operationName}-operation`,
+            );
+            const parent = latestEvent(
+              findChildSpans(events, operationName, operation?.span.id),
+            );
+            expect(parent).toBeDefined();
+            const tools = findChildSpans(events, "web_search", parent?.span.id);
+            expect(tools).toHaveLength(1);
+            const tool = tools[0];
+            expect(tool.span.type).toBe("tool");
+            expect(tool.input).toBeDefined();
+            expect(tool.output).toBeDefined();
+            expect(tool.row.error).toBeUndefined();
+            expect(tool.metadata).toMatchObject({
+              providerExecuted: true,
+              toolCallId: expect.any(String),
+            });
+            expect(collectToolCallNames(parent?.output)).toContain(
+              "web_search",
+            );
+            expect(collectToolResultNames(parent?.output)).toContain(
+              "web_search",
+            );
+            expect(parent?.output).toMatchObject({
+              steps: expect.arrayContaining([
+                expect.objectContaining({
+                  content: expect.arrayContaining([
+                    expect.objectContaining({
+                      type: "tool-call",
+                      toolCallId: tool.metadata?.toolCallId,
+                      input: tool.input,
+                    }),
+                    expect.objectContaining({
+                      type: "tool-result",
+                      toolCallId: tool.metadata?.toolCallId,
+                      output: tool.output,
+                    }),
+                  ]),
+                }),
+              ]),
+            });
+          },
+        );
+      }
     }
 
     test("captures trace for generateText() with tools", testConfig, () => {

@@ -28,17 +28,23 @@ type EveProviderInstrumentationOptions = {
  * lifecycle and enable `experimental.instrumentationProviders` on the agent.
  * The result is ready to export directly from the instrumentation module.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any -- Eve compatibility boundary. */
 export function braintrustEveInstrumentation(
   options: EveProviderInstrumentationOptions,
-): EveProviderDefinition;
+): any;
 // Keep the legacy overload last so utility types retain the existing signature.
 export function braintrustEveInstrumentation(options: {
   defineState: EveDefineState;
   setup?: EveInstrumentationDefinition["setup"];
-}): EveInstrumentationDefinition;
+}): any;
 export function braintrustEveInstrumentation(
   options: LegacyEveInstrumentationOptions | EveProviderInstrumentationOptions,
-): EveInstrumentationDefinition | EveProviderDefinition {
+): any {
+  if (!options || typeof options !== "object") {
+    throw new TypeError(
+      "braintrustEveInstrumentation requires an options object",
+    );
+  }
   const definition =
     "defineState" in options
       ? createLegacyEveInstrumentation(options)
@@ -49,3 +55,4 @@ export function braintrustEveInstrumentation(
   };
   return declaration;
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */

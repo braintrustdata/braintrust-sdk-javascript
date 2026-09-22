@@ -7,6 +7,7 @@ import {
   afterEach,
   vi,
 } from "vitest";
+import { type ExperimentEvent } from "../util";
 import {
   defaultErrorScoreHandler,
   Eval,
@@ -21,6 +22,7 @@ import {
   initLogger,
   injectTraceContext,
   TestBackgroundLogger,
+  withParent,
 } from "./logger";
 import { parseBaggage } from "./propagation";
 import { configureNode } from "./node/config";
@@ -794,6 +796,95 @@ test("trialIndex is passed to task", async () => {
     expect(result.error).toBeUndefined();
   });
 });
+
+describe.each([false, true])(
+  "trial upsert IDs with parent context: %s",
+  (useParent) => {
+    test.each(
+      ["eval-row", undefined, ""].flatMap((upsertId) =>
+        [
+          { trialCount: 1, rowTrialCount: undefined },
+          { trialCount: 3, rowTrialCount: undefined },
+          { trialCount: 1, rowTrialCount: 3 },
+          { trialCount: 3, rowTrialCount: 1 },
+        ].map((counts) => ({ upsertId, ...counts })),
+      ),
+    )(
+      "preserves separate trial rows across reruns: %j",
+      async ({ upsertId, trialCount, rowTrialCount }) => {
+        await _exportsForTestingOnly.simulateLoginForTests();
+        const memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+        const experiment =
+          _exportsForTestingOnly.initTestExperiment("trial-upsert");
+        const parent = await experiment.export();
+        const count = rowTrialCount ?? trialCount;
+        let previousIds: string[] = [];
+
+        for (const input of [1, 2]) {
+          await withParent(parent, () =>
+            runEvaluator(
+              useParent ? null : experiment,
+              {
+                projectName: "proj",
+                evalName: "trial-upsert",
+                state: experiment.loggingState,
+                data: [
+                  { input, upsert_id: upsertId, trialCount: rowTrialCount },
+                ],
+                task: (value, { trialIndex }) => value * 10 + trialIndex,
+                scores: [],
+                trialCount,
+                summarizeScores: false,
+              },
+              new NoopProgressReporter(),
+              [],
+              undefined,
+              undefined,
+              true,
+            ),
+          );
+
+          await memoryLogger.flush();
+          const spans = (await memoryLogger.drain()).filter(
+            (log): log is ExperimentEvent =>
+              "experiment_id" in log && "span_id" in log,
+          );
+          const roots = spans
+            .filter((span) => !span.span_parents?.length)
+            .sort((a, b) => Number(a.output) - Number(b.output));
+          expect(roots).toHaveLength(count);
+          expect(spans).toHaveLength(count * 2);
+          for (const [trialIndex, root] of roots.entries()) {
+            expect(root.output).toBe(input * 10 + trialIndex);
+            const children = spans.filter(
+              (span) => span.span_parents?.[0] === root.span_id,
+            );
+            expect(children).toHaveLength(1);
+            expect(children[0].output).toEqual(root.output);
+          }
+
+          const ids = roots.map((root) => root.id);
+          expect(new Set(ids).size).toBe(count);
+          if (upsertId) {
+            expect(ids).toEqual(
+              [
+                upsertId,
+                "0a452074-8534-5d0a-a418-8dc075187dd6",
+                "1df30387-03bd-5d6a-a651-d80f0b576e6e",
+              ].slice(0, count),
+            );
+            if (previousIds.length) {
+              expect(ids).toEqual(previousIds);
+            }
+          } else {
+            expect(ids.some((id) => previousIds.includes(id))).toBe(false);
+          }
+          previousIds = ids;
+        }
+      },
+    );
+  },
+);
 
 test("trialIndex with multiple inputs", async () => {
   const trialData: Array<{ input: number; trialIndex: number }> = [];

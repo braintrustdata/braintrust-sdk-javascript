@@ -90,45 +90,111 @@ describe("production forwarding", () => {
     },
   );
 
-  it("reports a failed write without preventing later queued writes", async () => {
-    const received: number[] = [];
-    const upstream = createServer(async (req, res) => {
-      let body = "";
-      for await (const chunk of req) body += chunk;
-      const { sequence } = JSON.parse(body);
-      received.push(sequence);
-      res.statusCode = sequence === 1 ? 500 : 200;
-      res.end(sequence === 1 ? "initial write failed" : "{}");
-    });
-    await new Promise<void>((resolve) =>
-      upstream.listen(0, "127.0.0.1", resolve),
-    );
-    const url = `http://127.0.0.1:${(upstream.address() as AddressInfo).port}`;
-    const server = await startMockBraintrustServer({
-      prodForwarding: {
-        apiKey: "test-only-key",
-        apiUrl: url,
-        appUrl: url,
-        orgId: "org",
-        orgName: "org",
-        projectId: "project",
-        projectName: "tmp-luca-forwarding-test",
-      },
-    });
-    try {
-      for (const sequence of [1, 2]) {
-        const response = await fetch(`${server.url}/logs3`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sequence, api_version: 2, rows: [] }),
-        });
-        await response.text();
+  it.each(["/logs3", "/otel/v1/traces"])(
+    "retries transient failures for %s before forwarding later writes",
+    async (path) => {
+      const received: Array<{ sequence: number; rows: unknown[] }> = [];
+      let attempts = 0;
+      const upstream = createServer(async (req, res) => {
+        let body = "";
+        for await (const chunk of req) body += chunk;
+        const payload = JSON.parse(body);
+        received.push(payload);
+        // Reproduce a gateway outage followed by successful ingestion.
+        res.statusCode = payload.sequence === 1 && ++attempts <= 2 ? 502 : 200;
+        res.end(res.statusCode === 502 ? "Bad Gateway" : "{}");
+      });
+      await new Promise<void>((resolve) =>
+        upstream.listen(0, "127.0.0.1", resolve),
+      );
+      const url = `http://127.0.0.1:${(upstream.address() as AddressInfo).port}`;
+      const server = await startMockBraintrustServer({
+        prodForwarding: {
+          apiKey: "test-only-key",
+          apiUrl: url,
+          appUrl: url,
+          orgId: "org",
+          orgName: "org",
+          projectId: "project",
+          projectName: "tmp-luca-forwarding-test",
+        },
+      });
+      try {
+        for (const sequence of [1, 2]) {
+          const response = await fetch(`${server.url}${path}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sequence,
+              api_version: 2,
+              rows: [{ id: "span", _is_merge: sequence === 2 }],
+            }),
+          });
+          expect(response.ok).toBe(true);
+          await response.text();
+        }
+        await expect(server.close()).resolves.toBeUndefined();
+        expect(received.map((payload) => payload.sequence)).toEqual([
+          1, 1, 1, 2,
+        ]);
+        expect(received[1]).toEqual(received[0]);
+        expect(received[2]).toEqual(received[0]);
+      } finally {
+        upstream.closeAllConnections();
+        await new Promise<void>((resolve) => upstream.close(() => resolve()));
       }
-      await expect(server.close()).rejects.toThrow("initial write failed");
-      expect(received).toEqual([1, 2]);
-    } finally {
-      upstream.closeAllConnections();
-      await new Promise<void>((resolve) => upstream.close(() => resolve()));
-    }
-  });
+    },
+  );
+
+  it.each([
+    { status: 400, expectedSequence: [1, 2] },
+    { status: 401, expectedSequence: [1, 2] },
+    { status: 500, expectedSequence: [1, 1, 1, 2] },
+    { status: 502, expectedSequence: [1, 1, 1, 2] },
+    { status: 503, expectedSequence: [1, 1, 1, 2] },
+    { status: 504, expectedSequence: [1, 1, 1, 2] },
+  ])(
+    "reports HTTP $status failures without preventing later queued writes",
+    async ({ status, expectedSequence }) => {
+      const received: number[] = [];
+      const upstream = createServer(async (req, res) => {
+        let body = "";
+        for await (const chunk of req) body += chunk;
+        const { sequence } = JSON.parse(body);
+        received.push(sequence);
+        res.statusCode = sequence === 1 ? status : 200;
+        res.end(sequence === 1 ? "initial write failed" : "{}");
+      });
+      await new Promise<void>((resolve) =>
+        upstream.listen(0, "127.0.0.1", resolve),
+      );
+      const url = `http://127.0.0.1:${(upstream.address() as AddressInfo).port}`;
+      const server = await startMockBraintrustServer({
+        prodForwarding: {
+          apiKey: "test-only-key",
+          apiUrl: url,
+          appUrl: url,
+          orgId: "org",
+          orgName: "org",
+          projectId: "project",
+          projectName: "tmp-luca-forwarding-test",
+        },
+      });
+      try {
+        for (const sequence of [1, 2]) {
+          const response = await fetch(`${server.url}/logs3`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sequence, api_version: 2, rows: [] }),
+          });
+          await response.text();
+        }
+        await expect(server.close()).rejects.toThrow("initial write failed");
+        expect(received).toEqual(expectedSequence);
+      } finally {
+        upstream.closeAllConnections();
+        await new Promise<void>((resolve) => upstream.close(() => resolve()));
+      }
+    },
+  );
 });

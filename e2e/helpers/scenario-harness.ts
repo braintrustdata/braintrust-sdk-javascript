@@ -320,6 +320,7 @@ function getCassetteServerRoutes(): CassetteServerRoute[] {
     { prefix: "/ollama", upstreamOrigin: "https://ollama.com" },
     { prefix: "/openai", upstreamOrigin: "https://api.openai.com" },
     { prefix: "/openrouter", upstreamOrigin: "https://openrouter.ai" },
+    { prefix: "/typesafe", upstreamOrigin: "https://api.typesafe.ai" },
   ];
 }
 
@@ -356,6 +357,7 @@ function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
     OLLAMA_HOST: `${serverUrl}/ollama`,
     OPENAI_BASE_URL: `${serverUrl}/openai/v1`,
     OPENROUTER_BASE_URL: `${serverUrl}/openrouter/api/v1`,
+    TYPESAFE_BASE_URL: `${serverUrl}/typesafe`,
   };
 }
 
@@ -410,6 +412,7 @@ const CASSETTE_PROVIDER_KEYS: Array<{
     envVars: ["OPENROUTER_API_KEY"],
     placeholder: "sk-or-cassette-placeholder",
   },
+  { envVars: ["TYPESAFE_API_KEY"], placeholder: "cassette-placeholder" },
 ];
 
 function getProviderKeyPlaceholders(): Record<string, string> {

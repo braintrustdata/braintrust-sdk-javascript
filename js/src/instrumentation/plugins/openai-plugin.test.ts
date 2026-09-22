@@ -3,8 +3,11 @@ import {
   parseMetricsFromUsage,
   aggregateChatCompletionChunks,
 } from "./openai-plugin";
-import { processImagesInOutput } from "./openai-span-data";
+import { processImagesInOutput as processImagesInOutputWithFlag } from "./openai-span-data";
 import { Attachment } from "../../logger";
+
+const processImagesInOutput = (output: unknown, captureAttachments = true) =>
+  processImagesInOutputWithFlag(output, captureAttachments);
 
 describe("parseMetricsFromUsage", () => {
   describe("null/undefined handling", () => {
@@ -496,6 +499,80 @@ describe("aggregateChatCompletionChunks", () => {
       const result = aggregateChatCompletionChunks(chunks);
 
       expect(result.output[0].message.content).toBe("Hello!");
+    });
+  });
+
+  describe("audio aggregation", () => {
+    it("should aggregate audio transcripts without logging base64 data", () => {
+      const chunks = [
+        {
+          choices: [
+            {
+              index: 0,
+              delta: {
+                role: "assistant",
+                audio: {
+                  id: "audio_123",
+                  data: "UklGRg==",
+                  expires_at: 1_740_000_000,
+                  transcript: "Hello",
+                },
+              },
+            },
+          ],
+        },
+        {
+          choices: [
+            {
+              index: 0,
+              delta: {
+                audio: {
+                  data: "AAAAAA==",
+                  transcript: " world",
+                },
+              },
+            },
+          ],
+        },
+        {
+          choices: [
+            {
+              index: 0,
+              delta: {
+                audio: {
+                  data: "AQEBAQ==",
+                  transcript: "!",
+                },
+              },
+            },
+            {
+              index: 1,
+              delta: {
+                role: "assistant",
+                audio: {
+                  id: "audio_456",
+                  transcript: "Bonjour",
+                },
+              },
+            },
+          ],
+        },
+      ];
+
+      const result = aggregateChatCompletionChunks(chunks);
+
+      expect(result.output[0].message.audio).toEqual({
+        id: "audio_123",
+        expires_at: 1_740_000_000,
+        transcript: "Hello world!",
+      });
+      expect(result.output[1].message.audio).toEqual({
+        id: "audio_456",
+        transcript: "Bonjour",
+      });
+      expect(JSON.stringify(result.output)).not.toContain("UklGRg==");
+      expect(JSON.stringify(result.output)).not.toContain("AAAAAA==");
+      expect(JSON.stringify(result.output)).not.toContain("AQEBAQ==");
     });
   });
 
@@ -1127,6 +1204,20 @@ describe("aggregateChatCompletionChunks", () => {
 });
 
 describe("processImagesInOutput", () => {
+  it("omits generated image data without attachment opt-in", () => {
+    const output = {
+      type: "image_generation_call",
+      result: "AQID",
+      output_format: "png",
+      revised_prompt: "A red pixel",
+    };
+
+    expect(processImagesInOutput(output, false)).toEqual({
+      ...output,
+      result: "<omitted>",
+    });
+  });
+
   describe("image_generation_call conversion", () => {
     it("should convert image_generation_call type to Attachment", () => {
       // Create a small 1x1 red PNG base64
