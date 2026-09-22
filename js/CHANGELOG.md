@@ -1,5 +1,24 @@
 # braintrust
 
+## 3.34.0
+
+### Minor Changes
+
+- feat: Add instrumentation for `@typesafe-ai/sdk` (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2493)
+- feat: Add AI SDK instrumentation for typesafe ai jev (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2494)
+- feat: Fix token metrics with AI SDK middleware (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2497)
+- feat: Add instrumentation for openai multimodal APIs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2434)
+- feat: Streamline SDK flushing (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2490)
+
+### Patch Changes
+
+- fix(js): Support Uint8Array and Buffer JSONL sources in OpenAI batch instrumentation Thanks @tyagiquamar! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2479)
+- feat(groq): Instrument groq audio APIs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2473)
+- feat: Instrument Google GenAI multimodal APIs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2484)
+- fix(js): Support `/v1/embeddings` endpoint in OpenAI batch instrumentation Thanks @tyagiquamar! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2478)
+- fix: Keep Pi Coding Agent tool spans current during execution so nested spans attach to the tool span. Thanks @btaaron! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2499)
+- fix: Capture provider managed tool calls and capture right provider when using Vercel AI gateway (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2507)
+
 ## 3.33.0
 
 ### Minor Changes
