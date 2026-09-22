@@ -10,7 +10,12 @@ import {
 const GOOGLE_MODEL = "gemini-2.5-flash";
 const GOOGLE_EMBEDDING_MODEL = "gemini-embedding-001";
 const GOOGLE_GROUNDING_MODEL = "gemini-2.5-flash";
+const GOOGLE_IMAGE_MODEL = "gemini-2.5-flash-image";
+const GOOGLE_EDIT_IMAGE_MODEL = "imagen-3.0-capability-001";
 const GOOGLE_INTERACTIONS_MODEL = "gemini-2.5-flash";
+const GOOGLE_VIDEO_MODEL = "gemini-omni-1.1-flash";
+const GOOGLE_VEO_MODEL = "veo-3.1-lite-generate-preview";
+const GOOGLE_LEGACY_IMAGE_MODEL = "imagen-4.0-fast-generate-001";
 const ROOT_NAME = "google-genai-instrumentation-root";
 const SCENARIO_NAME = "google-genai-instrumentation";
 const WEATHER_TOOL = {
@@ -87,6 +92,42 @@ async function withGoogleGenAIRetry(callback) {
   }
 }
 
+async function generateImageWithRetry(client, params) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const response = await withGoogleGenAIRetry(async () =>
+      client.models.generateContent(params),
+    );
+    const generatedImage = response.candidates?.some((candidate) =>
+      candidate.content?.parts?.some((part) => part.inlineData?.data),
+    );
+    if (generatedImage) {
+      return response;
+    }
+    if (attempt === 3) {
+      throw new Error("Google GenAI returned no generated image");
+    }
+  }
+}
+
+async function generateImageStreamWithRetry(client, params) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const chunks = await withGoogleGenAIRetry(async () =>
+      collectAsync(await client.models.generateContentStream(params)),
+    );
+    const generatedImage = chunks.some((response) =>
+      response.candidates?.some((candidate) =>
+        candidate.content?.parts?.some((part) => part.inlineData?.data),
+      ),
+    );
+    if (generatedImage) {
+      return;
+    }
+    if (attempt === 3) {
+      throw new Error("Google GenAI stream returned no generated image");
+    }
+  }
+}
+
 async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
   const imageBase64 = (
     await readFile(new URL("./test-image.png", import.meta.url))
@@ -114,6 +155,163 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
           });
         });
       });
+
+      await runOperation(
+        "google-image-generate-operation",
+        "image-generate",
+        async () => {
+          await generateImageWithRetry(client, {
+            model: GOOGLE_IMAGE_MODEL,
+            contents:
+              "Create a small solid blue circle centered on a white background.",
+            config: {
+              imageConfig: { aspectRatio: "1:1" },
+              responseModalities: ["IMAGE"],
+            },
+          });
+        },
+      );
+
+      await runOperation(
+        "google-image-generate-stream-operation",
+        "image-generate-stream",
+        async () => {
+          await generateImageStreamWithRetry(client, {
+            model: GOOGLE_IMAGE_MODEL,
+            contents:
+              "Create a small solid red triangle centered on a white background.",
+            config: {
+              imageConfig: { aspectRatio: "1:1" },
+              responseModalities: ["IMAGE"],
+            },
+          });
+        },
+      );
+
+      await runOperation(
+        "google-native-image-edit-operation",
+        "native-image-edit",
+        async () => {
+          await generateImageWithRetry(client, {
+            model: GOOGLE_IMAGE_MODEL,
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    inlineData: {
+                      data: imageBase64,
+                      mimeType: "image/png",
+                    },
+                  },
+                  {
+                    text: "Edit this image so the ocean waves are emerald green. Preserve the ship, sky, and composition.",
+                  },
+                ],
+              },
+            ],
+            config: {
+              imageConfig: { aspectRatio: "1:1" },
+              responseModalities: ["IMAGE"],
+            },
+          });
+        },
+      );
+
+      await runOperation(
+        "google-edit-image-operation",
+        "edit-image",
+        async () => {
+          const referenceImage = new sdk.RawReferenceImage();
+          referenceImage.referenceImage = {
+            imageBytes: imageBase64,
+            mimeType: "image/png",
+          };
+          referenceImage.referenceId = 1;
+          try {
+            await withGoogleGenAIRetry(async () => {
+              await client.models.editImage({
+                model: GOOGLE_EDIT_IMAGE_MODEL,
+                prompt: "Change the blue circle to green.",
+                referenceImages: [referenceImage],
+                config: {
+                  aspectRatio: "1:1",
+                  numberOfImages: 1,
+                  outputMimeType: "image/png",
+                },
+              });
+            });
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error ?? "");
+            if (
+              getRetryStatus(error) !== 404 &&
+              !message.includes("only supported by")
+            ) {
+              throw error;
+            }
+          }
+        },
+      );
+
+      await runOperation(
+        "google-generate-videos-operation",
+        "generate-videos",
+        async () => {
+          try {
+            await withGoogleGenAIRetry(async () => {
+              await client.models.generateVideos({
+                model: GOOGLE_VEO_MODEL,
+                source: {
+                  prompt:
+                    "A blue circle moves slowly from left to right on a white background.",
+                },
+                config: {
+                  aspectRatio: "16:9",
+                  durationSeconds: 4,
+                  numberOfVideos: 1,
+                  resolution: "720p",
+                },
+              });
+            });
+          } catch (error) {
+            const status = getRetryStatus(error);
+            if (status !== 400 && status !== 403 && status !== 404) {
+              throw error;
+            }
+          }
+        },
+      );
+
+      await runOperation(
+        "google-legacy-image-generate-operation",
+        "legacy-image-generate",
+        async () => {
+          try {
+            await withGoogleGenAIRetry(async () => {
+              await client.models.generateImages({
+                model: GOOGLE_LEGACY_IMAGE_MODEL,
+                prompt:
+                  "Create a small solid blue circle centered on a white background.",
+                config: {
+                  aspectRatio: "1:1",
+                  numberOfImages: 1,
+                  outputMimeType: "image/png",
+                },
+              });
+            });
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error ?? "");
+            if (
+              getRetryStatus(error) !== 404 &&
+              !message.includes("only supported by the Gemini Enterprise")
+            ) {
+              throw error;
+            }
+          }
+        },
+      );
 
       await runOperation(
         "google-system-instruction-operation",
@@ -177,6 +375,25 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
 
       if (options.includeInteractions) {
         await runOperation(
+          "google-video-generate-operation",
+          "video-generate",
+          async () => {
+            await withGoogleGenAIRetry(async () => {
+              await client.interactions.create({
+                model: GOOGLE_VIDEO_MODEL,
+                input:
+                  "A solid blue circle rotates once on a plain white background.",
+                response_format: {
+                  aspect_ratio: "16:9",
+                  resolution: "360p",
+                  type: "video",
+                },
+              });
+            });
+          },
+        );
+
+        await runOperation(
           "google-interaction-operation",
           "interaction",
           async () => {
@@ -189,7 +406,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
                 },
                 generation_config: {
                   max_output_tokens: 256,
-                  thinking_level: "minimal",
+                  thinking_level: "low",
                   temperature: 0,
                 },
               });
@@ -210,7 +427,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
                 },
                 generation_config: {
                   max_output_tokens: 256,
-                  thinking_level: "minimal",
+                  thinking_level: "low",
                   temperature: 0,
                 },
                 stream: true,
@@ -234,7 +451,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
                 },
                 generation_config: {
                   max_output_tokens: 256,
-                  thinking_level: "minimal",
+                  thinking_level: "low",
                   temperature: 0,
                 },
               });
@@ -261,7 +478,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
                 previous_interaction_id: statefulInteractionId,
                 generation_config: {
                   max_output_tokens: 256,
-                  thinking_level: "minimal",
+                  thinking_level: "low",
                   temperature: 0,
                 },
               });
@@ -284,7 +501,7 @@ async function runGoogleGenAIInstrumentationScenario(sdk, options = {}) {
                   background: true,
                   generation_config: {
                     max_output_tokens: 256,
-                    thinking_level: "minimal",
+                    thinking_level: "low",
                     temperature: 0,
                   },
                 });
@@ -541,9 +758,14 @@ export async function runAutoGoogleGenAIInstrumentation(sdk, options = {}) {
 }
 
 export {
+  GOOGLE_EDIT_IMAGE_MODEL,
   GOOGLE_EMBEDDING_MODEL,
+  GOOGLE_IMAGE_MODEL,
   GOOGLE_INTERACTIONS_MODEL,
+  GOOGLE_LEGACY_IMAGE_MODEL,
   GOOGLE_MODEL,
+  GOOGLE_VIDEO_MODEL,
+  GOOGLE_VEO_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 };

@@ -30,6 +30,15 @@ export interface GoogleGenAIModels {
   embedContent: (
     params: GoogleGenAIEmbedContentParams,
   ) => Promise<GoogleGenAIEmbedContentResponse>;
+  generateImages: (
+    params: GoogleGenAIGenerateImagesParams,
+  ) => Promise<GoogleGenAIGenerateImagesResponse>;
+  editImage: (
+    params: GoogleGenAIEditImageParams,
+  ) => Promise<GoogleGenAIEditImageResponse>;
+  generateVideos: (
+    params: GoogleGenAIGenerateVideosParams,
+  ) => Promise<GoogleGenAIGenerateVideosOperation>;
 }
 
 export interface GoogleGenAIChats {
@@ -74,6 +83,77 @@ export interface GoogleGenAIEmbedContentParams {
     outputDimensionality?: number;
     taskType?: string;
     toJSON?: () => Record<string, unknown>;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIGenerateImagesParams {
+  model: string;
+  prompt: string;
+  config?: {
+    aspectRatio?: string;
+    imageSize?: string;
+    numberOfImages?: number;
+    outputMimeType?: string;
+    seed?: number;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIImage {
+  gcsUri?: string;
+  imageBytes?: string;
+  mimeType?: string;
+}
+
+export interface GoogleGenAIReferenceImage {
+  referenceImage?: GoogleGenAIImage;
+  referenceId?: number;
+  referenceType?: string;
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIEditImageParams {
+  model: string;
+  prompt: string;
+  referenceImages: GoogleGenAIReferenceImage[];
+  config?: {
+    aspectRatio?: string;
+    numberOfImages?: number;
+    outputCompressionQuality?: number;
+    outputMimeType?: string;
+    seed?: number;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIVideo {
+  uri?: string;
+  videoBytes?: string;
+  mimeType?: string;
+}
+
+export interface GoogleGenAIGenerateVideosParams {
+  model: string;
+  prompt?: string;
+  image?: GoogleGenAIImage;
+  video?: GoogleGenAIVideo;
+  source?: {
+    prompt?: string;
+    image?: GoogleGenAIImage;
+    video?: GoogleGenAIVideo;
+  };
+  config?: {
+    aspectRatio?: string;
+    durationSeconds?: number;
+    lastFrame?: GoogleGenAIImage;
+    mask?: { image?: GoogleGenAIImage };
+    referenceImages?: Array<{ image?: GoogleGenAIImage }>;
+    resolution?: string;
+    seed?: number;
     [key: string]: unknown;
   };
   [key: string]: unknown;
@@ -185,6 +265,39 @@ export interface GoogleGenAIEmbedContentResponse {
   usageMetadata?: GoogleGenAIUsageMetadata & {
     // Embeddings use the singular "Token", unlike generateContent responses.
     promptTokenDetails?: GoogleGenAIModalityTokenCount[];
+  };
+  [key: string]: unknown;
+}
+
+export interface GoogleGenAIGeneratedImage {
+  image?: {
+    gcsUri?: string;
+    imageBytes?: string;
+    mimeType?: string;
+  };
+  enhancedPrompt?: string;
+  raiFilteredReason?: string;
+  safetyAttributes?: Record<string, unknown>;
+}
+
+export interface GoogleGenAIGenerateImagesResponse {
+  generatedImages?: GoogleGenAIGeneratedImage[];
+  positivePromptSafetyAttributes?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export type GoogleGenAIEditImageResponse = GoogleGenAIGenerateImagesResponse;
+
+export interface GoogleGenAIGeneratedVideo {
+  video?: GoogleGenAIVideo;
+}
+
+export interface GoogleGenAIGenerateVideosOperation {
+  done?: boolean;
+  error?: Record<string, unknown>;
+  name?: string;
+  response?: {
+    generatedVideos?: GoogleGenAIGeneratedVideo[];
   };
   [key: string]: unknown;
 }

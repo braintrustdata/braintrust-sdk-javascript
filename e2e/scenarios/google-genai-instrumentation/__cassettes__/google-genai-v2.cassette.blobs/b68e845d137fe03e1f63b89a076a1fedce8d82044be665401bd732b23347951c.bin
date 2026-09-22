@@ -3093,12 +3093,12 @@
     "promptTokenCount": 699,
     "promptTokenDetails": [
       {
-        "modality": "IMAGE",
-        "tokenCount": 258
-      },
-      {
         "modality": "TEXT",
         "tokenCount": 6
+      },
+      {
+        "modality": "IMAGE",
+        "tokenCount": 258
       },
       {
         "modality": "AUDIO",

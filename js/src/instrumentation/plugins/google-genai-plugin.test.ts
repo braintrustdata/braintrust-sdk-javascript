@@ -36,6 +36,8 @@ vi.mock("../../logger", () => ({
     end: vi.fn(),
   })),
   _internalGetGlobalState: vi.fn(() => undefined),
+  currentSpan: vi.fn(() => undefined),
+  withCurrent: vi.fn((_span: unknown, callback: () => unknown) => callback()),
   Attachment: class MockAttachment {
     reference: any;
     constructor(params: any) {
@@ -50,13 +52,19 @@ vi.mock("../../logger", () => ({
 describe("GoogleGenAIPlugin", () => {
   let plugin: GoogleGenAIPlugin;
   let mockChannel: any;
+  let interceptSpy: any;
   let subscribeSpy: any;
   let unsubscribeSpy: any;
 
   beforeEach(() => {
+    interceptSpy = vi.fn((interceptor: unknown) => {
+      void interceptor;
+      return vi.fn();
+    });
     subscribeSpy = vi.fn();
     unsubscribeSpy = vi.fn();
     mockChannel = {
+      intercept: interceptSpy,
       subscribe: subscribeSpy,
       unsubscribe: unsubscribeSpy,
       hasSubscribers: false,
@@ -267,6 +275,630 @@ describe("GoogleGenAIPlugin", () => {
         prompt_tokens: 0,
         tokens: 0,
       });
+    });
+
+    it("converts generated inline images to attachments", () => {
+      plugin.enable();
+      const handlers = subscribeSpy.mock.calls[0][0];
+      const event: any = {
+        arguments: [
+          {
+            contents: "Generate a blue circle",
+            model: "gemini-2.5-flash-image",
+          },
+        ],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: "aGVsbG8=",
+                    mimeType: "image/png",
+                  },
+                },
+              ],
+              role: "model",
+            },
+          },
+        ],
+      };
+      handlers.asyncEnd(event);
+
+      expect(span.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          output: {
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      image_url: {
+                        url: expect.objectContaining({
+                          reference: {
+                            content_type: "image/png",
+                            filename: "file.png",
+                          },
+                        }),
+                      },
+                    },
+                  ],
+                  role: "model",
+                },
+              },
+            ],
+          },
+        }),
+      );
+    });
+
+    it("converts generated inline video to a file attachment", () => {
+      plugin.enable();
+      const handlers = subscribeSpy.mock.calls[0][0];
+      const event: any = {
+        arguments: [
+          {
+            contents: "Generate a short video",
+            model: "gemini-video",
+          },
+        ],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: "aGVsbG8=",
+                    mimeType: "video/mp4",
+                  },
+                },
+              ],
+              role: "model",
+            },
+          },
+        ],
+      };
+      handlers.asyncEnd(event);
+
+      expect(span.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          output: {
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      file: {
+                        file_data: expect.objectContaining({
+                          reference: {
+                            content_type: "video/mp4",
+                            filename: "file.mp4",
+                          },
+                        }),
+                        filename: "file.mp4",
+                      },
+                    },
+                  ],
+                  role: "model",
+                },
+              },
+            ],
+          },
+        }),
+      );
+    });
+  });
+
+  describe("generateContentStream channel subscription", () => {
+    it("aggregates streamed inline image and audio parts as attachments", async () => {
+      plugin.enable();
+      const handlers = subscribeSpy.mock.calls[1][0];
+      const event: any = {
+        arguments: [
+          {
+            contents: "Generate an image and audio",
+            model: "gemini-multimodal",
+          },
+        ],
+      };
+
+      async function* stream() {
+        yield {
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    inlineData: {
+                      data: "aGVsbG8=",
+                      mimeType: "image/png",
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        };
+        yield {
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    inlineData: {
+                      data: "aGVsbG8=",
+                      mimeType: "audio/wav",
+                    },
+                  },
+                ],
+              },
+              finishReason: "STOP",
+            },
+          ],
+          usageMetadata: {
+            candidatesTokenCount: 2,
+            promptTokenCount: 3,
+            totalTokenCount: 5,
+          },
+        };
+      }
+
+      handlers.start(event);
+      event.result = stream();
+      handlers.asyncEnd(event);
+      for await (const _chunk of event.result) {
+        // Consume the provider stream so the instrumentation finalizes it.
+      }
+
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+        log: ReturnType<typeof vi.fn>;
+      };
+      expect(span.log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_tokens: 2,
+            prompt_tokens: 3,
+            time_to_first_token: expect.any(Number),
+            tokens: 5,
+          }),
+          output: {
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      image_url: {
+                        url: expect.objectContaining({
+                          reference: {
+                            content_type: "image/png",
+                            filename: "file.png",
+                          },
+                        }),
+                      },
+                    },
+                    {
+                      file: {
+                        file_data: expect.objectContaining({
+                          reference: {
+                            content_type: "audio/wav",
+                            filename: "file.wav",
+                          },
+                        }),
+                        filename: "file.wav",
+                      },
+                    },
+                  ],
+                  role: "model",
+                },
+                finishReason: "STOP",
+              },
+            ],
+            usageMetadata: {
+              candidatesTokenCount: 2,
+              promptTokenCount: 3,
+              totalTokenCount: 5,
+            },
+          },
+        }),
+      );
+      expect(JSON.stringify(span.log.mock.calls)).not.toContain("aGVsbG8=");
+      expect(span.end).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("generateImages channel interception", () => {
+    it("captures canonical image generation input and all returned images", async () => {
+      plugin.enable();
+      const interceptor = interceptSpy.mock.calls[1]?.[0];
+      const params = {
+        model: "imagen-4.0-generate-001",
+        prompt: "A blue circle",
+        config: {
+          aspectRatio: "1:1",
+          imageSize: "1K",
+          numberOfImages: 2,
+          outputMimeType: "image/png",
+          personGeneration: "DONT_ALLOW",
+          seed: 42,
+        },
+      };
+      const response = {
+        generatedImages: [
+          {
+            enhancedPrompt: "A solid blue circle",
+            image: {
+              imageBytes: "aGVsbG8=",
+              mimeType: "image/png",
+            },
+          },
+          {
+            image: {
+              gcsUri: "gs://bucket/generated.png",
+              mimeType: "image/png",
+            },
+          },
+        ],
+      };
+      const providerPromise = Promise.resolve(response);
+      const target = vi.fn(() => providerPromise);
+
+      const result = interceptor(target, {}, [params], {});
+
+      expect(result).toBe(providerPromise);
+      await result;
+      await Promise.resolve();
+
+      expect(mockStartSpan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "generate_images",
+          spanAttributes: { type: "llm" },
+          event: expect.objectContaining({
+            input: {
+              operation: "generate",
+              prompt: "A blue circle",
+              parameters: {
+                aspect_ratio: "1:1",
+                n: 2,
+                output_format: "image/png",
+                seed: 42,
+                size: "1K",
+              },
+            },
+            metadata: {
+              model: "imagen-4.0-generate-001",
+              provider: "google",
+            },
+          }),
+        }),
+      );
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+        log: ReturnType<typeof vi.fn>;
+      };
+      expect(span.log).toHaveBeenCalledWith({
+        output: {
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: expect.objectContaining({
+                  reference: {
+                    content_type: "image/png",
+                    filename: "generated-image-1.png",
+                  },
+                }),
+              },
+              revised_prompt: "A solid blue circle",
+            },
+            {
+              type: "image_url",
+              image_url: { url: "gs://bucket/generated.png" },
+            },
+          ],
+        },
+      });
+      expect(span.end).toHaveBeenCalledTimes(1);
+    });
+
+    it("logs provider rejections without changing them", async () => {
+      plugin.enable();
+      const interceptor = interceptSpy.mock.calls[1]?.[0];
+      const providerError = new Error("Imagen is unavailable");
+      const providerPromise = Promise.reject(providerError);
+
+      const result = interceptor(
+        () => providerPromise,
+        {},
+        [
+          {
+            model: "imagen-4.0-generate-001",
+            prompt: "A blue circle",
+          },
+        ],
+        {},
+      );
+
+      expect(result).toBe(providerPromise);
+      await expect(result).rejects.toBe(providerError);
+      await Promise.resolve();
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+        log: ReturnType<typeof vi.fn>;
+      };
+      expect(span.log).toHaveBeenCalledWith({ error: providerError });
+      expect(span.end).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("editImage channel interception", () => {
+    it("captures reference images, masks, parameters, and edited images", async () => {
+      plugin.enable();
+      const interceptor = interceptSpy.mock.calls[2]?.[0];
+      const params = {
+        model: "imagen-3.0-capability-001",
+        prompt: "Turn the circle green",
+        referenceImages: [
+          {
+            referenceImage: {
+              imageBytes: "aGVsbG8=",
+              mimeType: "image/png",
+            },
+            referenceType: "REFERENCE_TYPE_RAW",
+          },
+          {
+            referenceImage: {
+              imageBytes: "aGVsbG8=",
+              mimeType: "image/png",
+            },
+            referenceType: "REFERENCE_TYPE_MASK",
+          },
+        ],
+        config: {
+          aspectRatio: "1:1",
+          numberOfImages: 1,
+          outputCompressionQuality: 80,
+          outputMimeType: "image/jpeg",
+          seed: 7,
+        },
+      };
+      const response = {
+        generatedImages: [
+          {
+            image: {
+              imageBytes: "aGVsbG8=",
+              mimeType: "image/jpeg",
+            },
+          },
+        ],
+      };
+      const providerPromise = Promise.resolve(response);
+
+      const result = interceptor(() => providerPromise, {}, [params], {});
+
+      expect(result).toBe(providerPromise);
+      await result;
+      await Promise.resolve();
+
+      expect(mockStartSpan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "edit_image",
+          spanAttributes: { type: "llm" },
+          event: expect.objectContaining({
+            input: {
+              operation: "edit",
+              prompt: "Turn the circle green",
+              content: [
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: expect.objectContaining({
+                      reference: {
+                        content_type: "image/png",
+                        filename: "reference-image-1.png",
+                      },
+                    }),
+                  },
+                  purpose: "reference",
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: expect.objectContaining({
+                      reference: {
+                        content_type: "image/png",
+                        filename: "mask-image-2.png",
+                      },
+                    }),
+                  },
+                  purpose: "mask",
+                },
+              ],
+              parameters: {
+                aspect_ratio: "1:1",
+                n: 1,
+                output_format: "image/jpeg",
+                quality: 80,
+                seed: 7,
+              },
+            },
+            metadata: {
+              model: "imagen-3.0-capability-001",
+              provider: "google",
+            },
+          }),
+        }),
+      );
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+        log: ReturnType<typeof vi.fn>;
+      };
+      expect(span.log).toHaveBeenCalledWith({
+        output: {
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: expect.objectContaining({
+                  reference: {
+                    content_type: "image/jpeg",
+                    filename: "generated-image-1.jpg",
+                  },
+                }),
+              },
+            },
+          ],
+        },
+      });
+      expect(span.end).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("generateVideos channel interception", () => {
+    it("captures submission input and immediately returned videos", async () => {
+      plugin.enable();
+      const interceptor = interceptSpy.mock.calls[3]?.[0];
+      const params = {
+        model: "veo-3.1-fast-generate-preview",
+        source: {
+          image: {
+            imageBytes: "aGVsbG8=",
+            mimeType: "image/png",
+          },
+          prompt: "Make the circle rotate once",
+        },
+        config: {
+          aspectRatio: "16:9",
+          durationSeconds: 4,
+          resolution: "720p",
+          seed: 12,
+        },
+      };
+      const response = {
+        done: true,
+        response: {
+          generatedVideos: [
+            {
+              video: {
+                mimeType: "video/mp4",
+                videoBytes: "aGVsbG8=",
+              },
+            },
+          ],
+        },
+      };
+      const providerPromise = Promise.resolve(response);
+
+      const result = interceptor(() => providerPromise, {}, [params], {});
+
+      expect(result).toBe(providerPromise);
+      await result;
+      await Promise.resolve();
+
+      expect(mockStartSpan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "generate_videos",
+          spanAttributes: { type: "llm" },
+          event: expect.objectContaining({
+            input: {
+              operation: "generate",
+              prompt: "Make the circle rotate once",
+              content: [
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: expect.objectContaining({
+                      reference: {
+                        content_type: "image/png",
+                        filename: "input-image.png",
+                      },
+                    }),
+                  },
+                  purpose: "input",
+                },
+              ],
+              parameters: {
+                aspect_ratio: "16:9",
+                duration: 4,
+                seed: 12,
+                size: "720p",
+              },
+            },
+            metadata: {
+              model: "veo-3.1-fast-generate-preview",
+              provider: "google",
+            },
+          }),
+        }),
+      );
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+        log: ReturnType<typeof vi.fn>;
+      };
+      expect(span.log).toHaveBeenCalledWith({
+        output: {
+          content: [
+            {
+              type: "file",
+              file: {
+                filename: "generated-video-1.mp4",
+                file_data: expect.objectContaining({
+                  reference: {
+                    content_type: "video/mp4",
+                    filename: "generated-video-1.mp4",
+                  },
+                }),
+              },
+            },
+          ],
+        },
+      });
+      expect(span.end).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not poll a pending video operation", async () => {
+      plugin.enable();
+      const interceptor = interceptSpy.mock.calls[3]?.[0];
+      const response = { done: false, name: "operations/video-1" };
+      const providerPromise = Promise.resolve(response);
+      const target = vi.fn(() => providerPromise);
+
+      const result = interceptor(
+        target,
+        {},
+        [
+          {
+            model: "veo-3.1-fast-generate-preview",
+            prompt: "A short wave",
+          },
+        ],
+        {},
+      );
+
+      expect(result).toBe(providerPromise);
+      await result;
+      await Promise.resolve();
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+        log: ReturnType<typeof vi.fn>;
+      };
+      expect(target).toHaveBeenCalledTimes(1);
+      expect(span.log).toHaveBeenCalledWith({ output: { content: [] } });
+      expect(span.end).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -629,6 +1261,107 @@ describe("GoogleGenAIPlugin", () => {
           }),
         }),
       );
+      expect(span.end).toHaveBeenCalledTimes(1);
+    });
+
+    it("captures direct interaction video generation canonically", () => {
+      plugin.enable();
+
+      const handlers = subscribeSpy.mock.calls[3][0];
+      const event: any = {
+        arguments: [
+          {
+            generation_config: {
+              video_config: { seed: 7, task: "text_to_video" },
+            },
+            input: [
+              {
+                data: "aGVsbG8=",
+                mime_type: "image/png",
+                type: "image",
+              },
+              { text: "Make the circle rotate once.", type: "text" },
+            ],
+            model: "gemini-omni-1.1-flash",
+            response_format: {
+              aspect_ratio: "16:9",
+              resolution: "360p",
+              type: "video",
+            },
+          },
+        ],
+      };
+
+      handlers.start(event);
+      const span = mockStartSpan.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+        log: ReturnType<typeof vi.fn>;
+      };
+      event.result = {
+        id: "interaction-video-1",
+        output_video: {
+          data: "aGVsbG8=",
+          mime_type: "video/mp4",
+          type: "video",
+        },
+        status: "completed",
+      };
+      handlers.asyncEnd(event);
+
+      expect(mockStartSpan).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          name: "generate_video",
+          spanAttributes: { type: "llm" },
+        }),
+      );
+      expect(span.log).toHaveBeenNthCalledWith(1, {
+        input: {
+          operation: "generate",
+          prompt: "Make the circle rotate once.",
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: expect.objectContaining({
+                  reference: {
+                    content_type: "image/png",
+                    filename: "file.png",
+                  },
+                }),
+              },
+            },
+          ],
+          parameters: { aspect_ratio: "16:9", seed: 7, size: "360p" },
+        },
+        metadata: { model: "gemini-omni-1.1-flash", provider: "google" },
+      });
+      expect(span.log).toHaveBeenNthCalledWith(2, {
+        metadata: {
+          interaction_id: "interaction-video-1",
+          status: "completed",
+        },
+        metrics: expect.objectContaining({
+          duration: expect.any(Number),
+          end: expect.any(Number),
+          start: expect.any(Number),
+        }),
+        output: {
+          content: [
+            {
+              type: "file",
+              file: {
+                filename: "generated-video-1.mp4",
+                file_data: expect.objectContaining({
+                  reference: {
+                    content_type: "video/mp4",
+                    filename: "generated-video-1.mp4",
+                  },
+                }),
+              },
+            },
+          ],
+        },
+      });
       expect(span.end).toHaveBeenCalledTimes(1);
     });
 
