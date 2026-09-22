@@ -1227,10 +1227,13 @@ describe("BraintrustPlugin", () => {
 // Re-exported utility function tests from OpenAI plugin
 import {
   parseMetricsFromUsage,
-  processImagesInOutput,
+  processImagesInOutput as processImagesInOutputWithFlag,
   aggregateChatCompletionChunks,
 } from "./braintrust-plugin";
 import { Attachment } from "../logger";
+
+const processImagesInOutput = (output: unknown) =>
+  processImagesInOutputWithFlag(output, true);
 
 describe("parseMetricsFromUsage", () => {
   it("should return empty object for null usage", () => {

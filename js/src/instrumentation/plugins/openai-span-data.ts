@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Attachment } from "../../logger";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
+import {
+  isAutoCaptureAttachmentsEnabled,
+  processInputAttachments,
+} from "../../wrappers/attachment-utils";
 import { isObject } from "../../../util/index";
 
 const OPENAI_METADATA_KEYS = [
@@ -55,7 +58,7 @@ export function extractOpenAIBatchInput(
   const input =
     endpoint === "/v1/chat/completions" ? params.messages : params.input;
   return {
-    input: processInputAttachments(input),
+    input: processInputAttachments(input, isAutoCaptureAttachmentsEnabled()),
     metadata: batchMetadata(params),
   };
 }
@@ -66,7 +69,7 @@ export function extractOpenAIChatInput(params: Record<string, unknown>): {
 } {
   const { messages, ...metadata } = params;
   return {
-    input: processInputAttachments(messages),
+    input: processInputAttachments(messages, isAutoCaptureAttachmentsEnabled()),
     metadata: { ...metadata, provider: "openai" },
   };
 }
@@ -77,7 +80,7 @@ export function extractOpenAIResponsesInput(params: Record<string, unknown>): {
 } {
   const { input, ...metadata } = params;
   return {
-    input: processInputAttachments(input),
+    input: processInputAttachments(input, isAutoCaptureAttachmentsEnabled()),
     metadata: { ...metadata, provider: "openai" },
   };
 }
@@ -93,9 +96,14 @@ export function extractOpenAIResponsesMetadata(
 }
 
 /** Convert Responses API base64 image outputs to Braintrust attachments. */
-export function processImagesInOutput(output: any): any {
+export function processImagesInOutput(
+  output: any,
+  captureAttachments = isAutoCaptureAttachmentsEnabled(),
+): any {
   if (Array.isArray(output)) {
-    return output.map(processImagesInOutput);
+    return output.map((item) =>
+      processImagesInOutput(item, captureAttachments),
+    );
   }
 
   if (
@@ -104,6 +112,9 @@ export function processImagesInOutput(output: any): any {
     typeof output.result === "string" &&
     output.result
   ) {
+    if (!captureAttachments) {
+      return { ...output, result: "<omitted>" };
+    }
     const fileExtension = output.output_format || "png";
     const contentType = `image/${fileExtension}`;
     const baseFilename =
