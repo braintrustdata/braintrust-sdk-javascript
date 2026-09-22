@@ -564,6 +564,33 @@ async function runAISDKInstrumentationScenario(
         await runDirectModelCalls();
       }
 
+      if (sdkMajorVersion >= 7) {
+        for (const operation of ["generateText", "streamText"]) {
+          await runOperation(
+            `ai-sdk-provider-tool-${operation}-operation`,
+            `provider-tool-${operation}`,
+            async () => {
+              const result = await instrumentedAI[operation]({
+                model: openai.responses("gpt-4.1-mini"),
+                prompt:
+                  "Search the web for the official Braintrust website. Reply with its URL only.",
+                tools: {
+                  web_search: openai.tools.webSearch({
+                    searchContextSize: "low",
+                  }),
+                },
+                toolChoice: { type: "tool", toolName: "web_search" },
+                maxOutputTokens: 128,
+              });
+              if (operation === "streamText") {
+                for await (const _chunk of result.fullStream) {
+                }
+              }
+            },
+          );
+        }
+      }
+
       if (options.supportsEvaluate) {
         const evaluate =
           options.evaluate ?? instrumentedAI.experimental_evaluate;

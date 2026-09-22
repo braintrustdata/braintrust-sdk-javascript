@@ -47,6 +47,17 @@ export interface AISDKV7LanguageModelCallEndEvent
   [key: string]: unknown;
 }
 
+export interface AISDKV7ProviderToolPart {
+  type: "tool-call" | "tool-result" | "tool-error";
+  providerExecuted: true;
+  toolCallId: string;
+  toolName: string;
+  input?: unknown;
+  output?: unknown;
+  error?: unknown;
+  [key: string]: unknown;
+}
+
 export interface AISDKV7ObjectStepStartEvent
   extends AISDKV7TelemetryOptions, AISDKV7ModelInfo {
   callId: string;

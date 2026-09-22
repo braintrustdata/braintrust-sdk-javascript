@@ -1081,6 +1081,60 @@ export function defineAISDKInstrumentationAssertions(options: {
       );
     }
 
+    if (options.sdkMajorVersion >= 7) {
+      for (const operationName of ["generateText", "streamText"]) {
+        test(
+          `captures provider-executed tools in ${operationName}`,
+          testConfig,
+          () => {
+            const operation = findLatestSpan(
+              events,
+              `ai-sdk-provider-tool-${operationName}-operation`,
+            );
+            const parent = latestEvent(
+              findChildSpans(events, operationName, operation?.span.id),
+            );
+            expect(parent).toBeDefined();
+            const tools = findChildSpans(events, "web_search", parent?.span.id);
+            expect(tools).toHaveLength(1);
+            const tool = tools[0];
+            expect(tool.span.type).toBe("tool");
+            expect(tool.input).toBeDefined();
+            expect(tool.output).toBeDefined();
+            expect(tool.row.error).toBeUndefined();
+            expect(tool.metadata).toMatchObject({
+              providerExecuted: true,
+              toolCallId: expect.any(String),
+            });
+            expect(collectToolCallNames(parent?.output)).toContain(
+              "web_search",
+            );
+            expect(collectToolResultNames(parent?.output)).toContain(
+              "web_search",
+            );
+            expect(parent?.output).toMatchObject({
+              steps: expect.arrayContaining([
+                expect.objectContaining({
+                  content: expect.arrayContaining([
+                    expect.objectContaining({
+                      type: "tool-call",
+                      toolCallId: tool.metadata?.toolCallId,
+                      input: tool.input,
+                    }),
+                    expect.objectContaining({
+                      type: "tool-result",
+                      toolCallId: tool.metadata?.toolCallId,
+                      output: tool.output,
+                    }),
+                  ]),
+                }),
+              ]),
+            });
+          },
+        );
+      }
+    }
+
     test("captures trace for generateText() with tools", testConfig, () => {
       const root = findLatestSpan(events, ROOT_NAME);
       const trace = findToolTrace(events);

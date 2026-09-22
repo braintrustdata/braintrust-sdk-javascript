@@ -41,6 +41,233 @@ describe("braintrustAISDKTelemetry", () => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
 
+  it.each(["generateText", "streamText"])(
+    "captures provider tools in %s alongside local tools",
+    async (operation) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const callId = "provider-tools";
+      telemetry.onStart({ callId, operationId: `ai.${operation}` });
+      telemetry.onLanguageModelCallStart({ callId });
+      const toolCall = {
+        type: "tool-call",
+        providerExecuted: true,
+        toolCallId: "search-1",
+        toolName: "exa_search",
+        input: { query: "Braintrust" },
+      };
+      const content = [
+        toolCall,
+        { ...toolCall, type: "tool-result", output: { results: ["found"] } },
+        {
+          ...toolCall,
+          providerExecuted: false,
+          toolCallId: "local-1",
+          toolName: "local",
+        },
+        null,
+        { ...toolCall, type: "text" },
+        { ...toolCall, toolCallId: 123 },
+      ];
+      telemetry.onLanguageModelCallEnd({ callId, content });
+      telemetry.onLanguageModelCallEnd({ callId, content });
+      const localCall = { toolCallId: "local-1", toolName: "local", input: {} };
+      telemetry.onToolExecutionStart({ callId, toolCall: localCall });
+      telemetry.onToolExecutionEnd({
+        callId,
+        toolCall: localCall,
+        output: "local result",
+      });
+      telemetry.onEnd({ callId, operationId: `ai.${operation}` });
+      telemetry.onLanguageModelCallEnd({ callId, content });
+      const spans = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const parent = spans.find(
+        (span) => span.span_attributes?.name === operation,
+      );
+      const tools = spans.filter(
+        (span) => span.span_attributes?.type === "tool",
+      );
+      expect(tools).toHaveLength(2);
+      const search = tools.find(
+        (span) => span.span_attributes?.name === "exa_search",
+      );
+      expect(search).toMatchObject({
+        span_parents: [parent?.span_id],
+        input: { query: "Braintrust" },
+        output: { results: ["found"] },
+        metadata: {
+          toolCallId: "search-1",
+          toolName: "exa_search",
+          providerExecuted: true,
+        },
+        metrics: { start: expect.any(Number), end: expect.any(Number) },
+      });
+      expect(search?.metrics).not.toHaveProperty("duration_ms");
+    },
+  );
+
+  it("correlates deferred provider results across overlapping operations", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    for (const key of ["first", "second"]) {
+      const event = { callId: "shared", [AI_SDK_V7_OPERATION_KEY]: key };
+      telemetry.onStart({ ...event, operationId: "ai.generateText" });
+      telemetry.onLanguageModelCallStart(event);
+      telemetry.onLanguageModelCallEnd({
+        ...event,
+        content: [
+          {
+            type: "tool-call",
+            providerExecuted: true,
+            toolCallId: "shared-tool",
+            toolName: "exa_search",
+            input: { query: key },
+          },
+        ],
+      });
+    }
+    for (const key of ["second", "first"]) {
+      const event = { callId: "shared", [AI_SDK_V7_OPERATION_KEY]: key };
+      telemetry.onLanguageModelCallStart(event);
+      telemetry.onLanguageModelCallEnd({
+        ...event,
+        content: [
+          {
+            type: "tool-result",
+            providerExecuted: true,
+            toolCallId: "shared-tool",
+            toolName: "exa_search",
+            output: { result: key },
+          },
+        ],
+      });
+      telemetry.onEnd({ ...event, operationId: "ai.generateText" });
+    }
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const tools = spans.filter((span) => span.span_attributes?.type === "tool");
+    expect(tools).toHaveLength(2);
+    for (const tool of tools) {
+      expect(tool.output.result).toBe(tool.input.query);
+      expect(tool.metrics.end).toEqual(expect.any(Number));
+    }
+    expect(tools[0].span_parents).not.toEqual(tools[1].span_parents);
+  });
+
+  it.each(["onEnd", "onAbort", "onError"])(
+    "closes unresolved provider tools on %s",
+    async (end) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const callId = "unresolved";
+      telemetry.onStart({ callId, operationId: "ai.streamText" });
+      telemetry.onLanguageModelCallStart({ callId });
+      telemetry.onLanguageModelCallEnd({
+        callId,
+        content: [
+          {
+            type: "tool-call",
+            providerExecuted: true,
+            toolCallId: "pending",
+            toolName: "exa_search",
+            input: { query: "test" },
+          },
+        ],
+      });
+      telemetry[end]({
+        callId,
+        operationId: "ai.streamText",
+        error: new Error("interrupted"),
+      });
+      const spans = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const tool = spans.find((span) => span.span_attributes?.type === "tool");
+      expect(tool).toMatchObject({
+        input: { query: "test" },
+        metrics: { end: expect.any(Number) },
+      });
+      expect(tool).not.toHaveProperty("output");
+      if (end !== "onEnd") expect(tool?.error).toContain("interrupted");
+      else expect(tool).not.toHaveProperty("error");
+    },
+  );
+
+  it("records provider errors and result-only parts", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const callId = "errors";
+    telemetry.onStart({ callId, operationId: "ai.generateText" });
+    telemetry.onLanguageModelCallStart({ callId });
+    telemetry.onLanguageModelCallEnd({
+      callId,
+      content: [
+        {
+          type: "tool-error",
+          providerExecuted: true,
+          toolCallId: "failed",
+          toolName: "exa_search",
+          error: new Error("search failed"),
+        },
+        {
+          type: "tool-result",
+          providerExecuted: true,
+          toolCallId: "result-only",
+          toolName: "exa_search",
+          output: "found",
+        },
+      ],
+    });
+    telemetry.onEnd({ callId, operationId: "ai.generateText" });
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    const failed = spans.find((span) => span.metadata?.toolCallId === "failed");
+    expect(failed?.error).toContain("search failed");
+    expect(failed).not.toHaveProperty("output");
+    const result = spans.find(
+      (span) => span.metadata?.toolCallId === "result-only",
+    );
+    expect(result?.output).toBe("found");
+    expect(result).not.toHaveProperty("input");
+  });
+
+  it.each(["operation", "model"])(
+    "honors %s recording settings for provider tools",
+    async (level) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const callId = "private-tools";
+      const privacy = { recordInputs: false, recordOutputs: false };
+      telemetry.onStart({
+        callId,
+        operationId: "ai.generateText",
+        ...(level === "operation" ? privacy : {}),
+      });
+      telemetry.onLanguageModelCallStart({ callId });
+      telemetry.onLanguageModelCallEnd({
+        callId,
+        ...(level === "model" ? privacy : {}),
+        content: [
+          {
+            type: "tool-result",
+            providerExecuted: true,
+            toolCallId: "secret",
+            toolName: "exa_search",
+            input: "secret input",
+            output: "secret output",
+          },
+        ],
+      });
+      telemetry.onEnd({ callId, operationId: "ai.generateText" });
+      const spans = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      const tool = spans.find((span) => span.span_attributes?.type === "tool");
+      expect(tool).toBeDefined();
+      expect(tool).not.toHaveProperty("input");
+      expect(tool).not.toHaveProperty("output");
+    },
+  );
+
   it("logs operations from AI SDK v7 end-family callbacks", async () => {
     const telemetry = braintrustAISDKTelemetry();
 
@@ -193,6 +420,74 @@ describe("braintrustAISDKTelemetry", () => {
     expect(
       spans.find((span) => span.span_attributes?.name === "doRerank"),
     ).toMatchObject({ output: [{ index: 0, relevance_score: 0.9 }] });
+  });
+
+  it.each(["generateText", "streamText"])(
+    "attributes gateway %s spans to the model provider",
+    async (operation) => {
+      const telemetry = braintrustAISDKTelemetry();
+      const event = {
+        callId: "gateway-generation",
+        provider: "gateway",
+        modelId: "anthropic/claude-3-haiku",
+      };
+      telemetry.onStart({ ...event, operationId: `ai.${operation}` });
+      telemetry.onLanguageModelCallStart(event);
+      telemetry.onLanguageModelCallEnd({ ...event, text: "OK" });
+      telemetry.onEnd({ ...event, operationId: `ai.${operation}`, text: "OK" });
+
+      const spans = (await backgroundLogger.drain()) as Array<
+        Record<string, any>
+      >;
+      expect(spans).toHaveLength(2);
+      for (const name of [
+        operation,
+        operation === "streamText" ? "doStream" : "doGenerate",
+      ]) {
+        expect(
+          spans.find((span) => span.span_attributes?.name === name),
+        ).toMatchObject({
+          metadata: { provider: "anthropic", model: "claude-3-haiku" },
+        });
+      }
+    },
+  );
+
+  it("attributes gateway embedding spans to the model provider", async () => {
+    const telemetry = braintrustAISDKTelemetry();
+    const event = {
+      callId: "gateway-embedding",
+      provider: "gateway",
+      modelId: "openai/text-embedding-3-small",
+    };
+    telemetry.onStart({ ...event, operationId: "ai.embed", value: "hello" });
+    telemetry.onEmbedStart({
+      ...event,
+      embedCallId: "gateway-embedding-child",
+      values: ["hello"],
+    });
+    telemetry.onEmbedEnd({
+      ...event,
+      embedCallId: "gateway-embedding-child",
+      embeddings: [[0.1, 0.2]],
+    });
+    telemetry.onEnd({
+      ...event,
+      operationId: "ai.embed",
+      embedding: [0.1, 0.2],
+    });
+
+    const spans = (await backgroundLogger.drain()) as Array<
+      Record<string, any>
+    >;
+    expect(spans).toHaveLength(2);
+    for (const name of ["embed", "doEmbed"]) {
+      expect(
+        spans.find((span) => span.span_attributes?.name === name),
+      ).toMatchObject({
+        metadata: { provider: "openai", model: "text-embedding-3-small" },
+      });
+    }
   });
 
   it("logs a generateText operation and model call", async () => {
