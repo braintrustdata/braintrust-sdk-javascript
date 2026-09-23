@@ -20,7 +20,7 @@ import {
   uint8ArrayToString,
 } from "./bytes";
 import { z } from "zod/v3";
-import type { InvokeFunctionType as InvokeFunctionRequest } from "./generated_plain_types";
+import type { InvokeFunction as InvokeFunctionRequest } from "../src/sdk-types";
 import { mergeDicts } from "./object_util";
 
 const ENCODING_VERSION_NUMBER_V4 = 4;

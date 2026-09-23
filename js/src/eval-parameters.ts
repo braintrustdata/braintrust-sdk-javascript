@@ -5,7 +5,7 @@ import {
   promptDefinitionToPromptData,
   type PromptDefinitionWithTools,
 } from "./prompt-schemas";
-import { PromptData as promptDataSchema } from "./generated_types";
+import { PromptData as promptDataSchema } from "./sdk-schemas";
 
 export type EvalParameters = Record<
   string,

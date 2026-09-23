@@ -1,4 +1,8 @@
-import { RemoteEvalParameters } from "../logger";
+import {
+  RemoteEvalParameters,
+  serializeParametersForCache,
+  type SerializedParameters,
+} from "../logger";
 import { LRUCache } from "../lru-cache";
 import { DiskCache } from "./disk-cache";
 
@@ -35,7 +39,7 @@ export type ParametersMemoryCacheEntry = {
 };
 
 export type ParametersDiskCacheEntry = {
-  value: ReturnType<RemoteEvalParameters["_internalSerializeForCache"]>;
+  value: SerializedParameters;
   resolvedOrgIdentity?: string;
 };
 
@@ -111,7 +115,7 @@ export class ParametersCache {
     this.memoryCache?.set(cacheKey, memoryEntry);
     if (this.diskCache) {
       await this.diskCache.set(cacheKey, {
-        value: value._internalSerializeForCache(),
+        value: serializeParametersForCache(value),
         resolvedOrgIdentity: this.expectedResolvedOrgIdentity,
       });
     }

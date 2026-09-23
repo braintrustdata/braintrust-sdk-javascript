@@ -171,6 +171,16 @@ export default [
           patterns: [
             {
               group: [
+                "**/generated_types",
+                "**/generated_plain_types",
+                "**/generated_types.ts",
+                "**/generated_plain_types.ts",
+              ],
+              message:
+                "Generated backend definitions are compatibility-test fixtures. Use SDK-owned types and validators instead.",
+            },
+            {
+              group: [
                 "./exports",
                 "./exports.ts",
                 "../exports",

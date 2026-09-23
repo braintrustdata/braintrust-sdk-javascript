@@ -3,17 +3,16 @@ import type { Trace } from "./trace";
 import iso from "./isomorph";
 import { slugify } from "../util/string_util";
 import { z } from "zod/v3";
-import { Project as projectSchema } from "./generated_types";
+import { Project as projectSchema } from "./sdk-schemas";
 import type {
-  FunctionTypeEnumType as FunctionType,
-  IfExistsType as IfExists,
-  SavedFunctionIdType as SavedFunctionId,
-  PromptBlockDataType as PromptBlockData,
-  PromptDataType as PromptData,
-  ToolFunctionDefinitionType as ToolFunctionDefinition,
-  ExtendedSavedFunctionIdType as ExtendedSavedFunctionId,
-  FunctionDataType,
-} from "./generated_plain_types";
+  FunctionTypeEnum as FunctionType,
+  IfExists,
+  SavedFunctionId,
+  PromptBlockData,
+  PromptData,
+  ToolFunctionDefinition,
+  ExtendedSavedFunctionId,
+} from "./sdk-types";
 import { loadPrettyXact, TransactionId } from "../util/index";
 import {
   _internalGetGlobalState,
@@ -121,7 +120,7 @@ class Project {
     }
     await login();
     const projectMap = new ProjectNameIdMap();
-    const functionDefinitions: FunctionEvent[] = [];
+    const functionDefinitions: PromptFunctionEvent[] = [];
     if (this._publishableCodeFunctions.length > 0) {
       // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
       console.warn(
@@ -499,7 +498,7 @@ export class CodePrompt {
 
   async toFunctionDefinition(
     projectNameToId: ProjectNameIdMap,
-  ): Promise<FunctionEvent> {
+  ): Promise<PromptFunctionEvent> {
     const prompt_data = {
       ...this.prompt,
     };
@@ -666,7 +665,7 @@ export class CodeParameters {
 
   async toFunctionDefinition(
     projectNameToId: ProjectNameIdMap,
-  ): Promise<FunctionEvent> {
+  ): Promise<ParametersFunctionEvent> {
     const schema = serializeEvalParameterstoParametersSchema(this.schema);
     return {
       project_id: await projectNameToId.resolve(this.project),
@@ -776,18 +775,30 @@ function getDefaultDataFromParametersSchema(
   );
 }
 
-interface FunctionEvent {
+interface FunctionEventBase {
   project_id: string;
   slug: string;
   name: string;
   description: string;
-  prompt_data?: PromptData;
-  function_data: FunctionDataType;
   function_type?: FunctionType;
   if_exists?: IfExists;
   tags?: string[];
   metadata?: Record<string, unknown>;
   environments?: { slug: string }[];
+}
+
+interface PromptFunctionEvent extends FunctionEventBase {
+  prompt_data: PromptData;
+  function_data: { type: "prompt" };
+}
+
+interface ParametersFunctionEvent extends FunctionEventBase {
+  function_type: "parameters";
+  function_data: {
+    type: "parameters";
+    data: Record<string, unknown>;
+    __schema: ParametersSchema;
+  };
 }
 
 class ProjectNameIdMap {
