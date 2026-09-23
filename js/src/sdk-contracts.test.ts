@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { posix, win32 } from "node:path";
 import ts from "typescript";
 import { expect, expectTypeOf, test } from "vitest";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -7,61 +7,70 @@ import * as backendSchemas from "./generated_types";
 import type * as SDK from "./sdk-types";
 import * as schemas from "./sdk-schemas";
 
-test("model parameters preserve provider field autocomplete", () => {
-  const suggestions = [];
-  for (const [module, name] of [
-    ["./sdk-types", "ModelParams"],
-    ["./generated_plain_types", "ModelParamsType"],
-  ]) {
-    const file = resolve(__dirname, "__model_params_completion.ts");
-    const source = `import type { ${name} as Params } from "${module}";\nconst params: Params = {\n\n};`;
-    const service = ts.createLanguageService({
-      getScriptFileNames: () => [file],
-      getScriptVersion: () => "0",
-      getScriptSnapshot: (path) => {
-        const text = path === file ? source : ts.sys.readFile(path);
-        return text === undefined
-          ? undefined
-          : ts.ScriptSnapshot.fromString(text);
-      },
-      getCurrentDirectory: () => __dirname,
-      getCompilationSettings: () => ({
-        strict: true,
-        target: ts.ScriptTarget.ES2022,
-      }),
-      getDefaultLibFileName: ts.getDefaultLibFilePath,
-      fileExists: ts.sys.fileExists,
-      readFile: ts.sys.readFile,
-      readDirectory: ts.sys.readDirectory,
-    });
-    try {
-      suggestions.push(
-        service
-          .getCompletionsAtPosition(file, source.lastIndexOf("\n};"), {})
-          ?.entries.filter(
-            (entry) =>
-              entry.kind === ts.ScriptElementKind.memberVariableElement,
-          )
-          .map((entry) => entry.name)
-          .sort(),
-      );
-    } finally {
-      service.dispose();
+test.each([
+  ["POSIX", posix],
+  ["Windows", win32],
+] as const)(
+  "model parameters preserve provider field autocomplete (%s paths)",
+  (_name, path) => {
+    const suggestions = [];
+    for (const [module, name] of [
+      ["./sdk-types", "ModelParams"],
+      ["./generated_plain_types", "ModelParamsType"],
+    ]) {
+      // TypeScript normalizes script names before requesting their snapshots.
+      const file = path
+        .join(__dirname, "__model_params_completion.ts")
+        .replaceAll("\\", "/");
+      const source = `import type { ${name} as Params } from "${module}";\nconst params: Params = {\n\n};`;
+      const service = ts.createLanguageService({
+        getScriptFileNames: () => [file],
+        getScriptVersion: () => "0",
+        getScriptSnapshot: (path) => {
+          const text = path === file ? source : ts.sys.readFile(path);
+          return text === undefined
+            ? undefined
+            : ts.ScriptSnapshot.fromString(text);
+        },
+        getCurrentDirectory: () => __dirname,
+        getCompilationSettings: () => ({
+          strict: true,
+          target: ts.ScriptTarget.ES2022,
+        }),
+        getDefaultLibFileName: ts.getDefaultLibFilePath,
+        fileExists: ts.sys.fileExists,
+        readFile: ts.sys.readFile,
+        readDirectory: ts.sys.readDirectory,
+      });
+      try {
+        suggestions.push(
+          service
+            .getCompletionsAtPosition(file, source.lastIndexOf("\n};"), {})
+            ?.entries.filter(
+              (entry) =>
+                entry.kind === ts.ScriptElementKind.memberVariableElement,
+            )
+            .map((entry) => entry.name)
+            .sort(),
+        );
+      } finally {
+        service.dispose();
+      }
     }
-  }
-  expect(suggestions[0]).toEqual(suggestions[1]);
-  expect(suggestions[0]).toEqual(
-    expect.arrayContaining([
-      "temperature",
-      "top_p",
-      "topP",
-      "topK",
-      "max_tokens",
-      "maxOutputTokens",
-      "response_format",
-    ]),
-  );
-});
+    expect(suggestions[0]).toEqual(suggestions[1]);
+    expect(suggestions[0]).toEqual(
+      expect.arrayContaining([
+        "temperature",
+        "top_p",
+        "topP",
+        "topK",
+        "max_tokens",
+        "maxOutputTokens",
+        "response_format",
+      ]),
+    );
+  },
+);
 
 // Backend definitions are compatibility fixtures, never production dependencies.
 test("SDK-owned contracts remain compatible with the backend", () => {
