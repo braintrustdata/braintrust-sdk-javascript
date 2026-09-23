@@ -97,13 +97,13 @@ export type EvalData<
   Metadata extends BaseMetadata = DefaultMetadataType,
 > =
   | EvalCase<Input, Expected, Metadata>[]
-  | (() => EvalCase<Input, Expected, Metadata>[])
   | Promise<EvalCase<Input, Expected, Metadata>[]>
-  | (() => Promise<EvalCase<Input, Expected, Metadata>[]>)
-  | AsyncGenerator<EvalCase<Input, Expected, Metadata>>
   | AsyncIterable<EvalCase<Input, Expected, Metadata>>
   | BaseExperiment<Input, Expected, Metadata>
-  | (() => BaseExperiment<Input, Expected, Metadata>);
+  | (() =>
+      | EvalCase<Input, Expected, Metadata>[]
+      | Promise<EvalCase<Input, Expected, Metadata>[]>
+      | BaseExperiment<Input, Expected, Metadata>);
 
 export type EvalTask<
   Input,
@@ -111,15 +111,10 @@ export type EvalTask<
   Expected,
   Metadata extends BaseMetadata,
   Parameters extends EvalParameters,
-> =
-  | ((
-      input: Input,
-      hooks: EvalHooks<Expected, Metadata, Parameters>,
-    ) => Promise<Output>)
-  | ((
-      input: Input,
-      hooks: EvalHooks<Expected, Metadata, Parameters>,
-    ) => Output);
+> = (
+  input: Input,
+  hooks: EvalHooks<Expected, Metadata, Parameters>,
+) => Output | Promise<Output>;
 
 type TaskProgressEvent = Omit<
   SSEProgressEventData,
