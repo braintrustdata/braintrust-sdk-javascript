@@ -207,6 +207,11 @@ import {
   mergeSpanOriginContext,
   type SpanOriginEnvironment,
 } from "./span-origin";
+import {
+  createMaskingCustomizer,
+  customizeSpanExport,
+} from "./span-customizer";
+import type { SpanCustomizer, SpanExportData } from "./instrumentation/config";
 
 // Manual type definition for inline attachments (not in generated_types)
 const InlineAttachmentReferenceSchema = z.object({
@@ -225,63 +230,6 @@ export interface ContextParentSpanIds {
 export class LoginInvalidOrgError extends Error {
   constructor(public message: string) {
     super(message);
-  }
-}
-
-// Fields that should be passed to the masking function
-// Note: "tags" field is intentionally excluded, but can be added if needed
-const REDACTION_FIELDS = [
-  "input",
-  "output",
-  "expected",
-  "metadata",
-  "context",
-  "scores",
-  "metrics",
-] as const;
-
-class MaskingError {
-  constructor(
-    public readonly fieldName: string,
-    public readonly errorType: string,
-  ) {}
-
-  get errorMsg(): string {
-    return `ERROR: Failed to mask field '${this.fieldName}' - ${this.errorType}`;
-  }
-}
-
-/**
- * Apply masking function to data and handle errors gracefully.
- * If the masking function raises an exception, returns an error message.
- * Returns MaskingError for scores/metrics fields to signal they should be dropped.
- */
-function applyMaskingToField(
-  maskingFunction: (value: unknown) => unknown,
-  data: unknown,
-  fieldName: string,
-): unknown {
-  try {
-    return maskingFunction(data);
-  } catch (error) {
-    // Return a generic error message without the stack trace to avoid leaking PII
-    const errorType = error instanceof Error ? error.constructor.name : "Error";
-
-    // For scores and metrics fields, return a special error object
-    // to signal the field should be dropped and error logged
-    if (fieldName === "scores" || fieldName === "metrics") {
-      return new MaskingError(fieldName, errorType);
-    }
-
-    // For metadata field that expects object type, return an object with error key
-    if (fieldName === "metadata") {
-      return {
-        error: `ERROR: Failed to mask field '${fieldName}' - ${errorType}`,
-      };
-    }
-
-    // For other fields, return the error message as a string
-    return `ERROR: Failed to mask field '${fieldName}' - ${errorType}`;
   }
 }
 
@@ -3220,7 +3168,7 @@ interface BackgroundLogger {
 
 export class TestBackgroundLogger implements BackgroundLogger {
   private items: LazyValue<BackgroundLogEvent>[][] = [];
-  private maskingFunction: ((value: unknown) => unknown) | null = null;
+  private exportCustomizers: readonly SpanCustomizer[] = [];
 
   log(items: LazyValue<BackgroundLogEvent>[]): void {
     this.items.push(items);
@@ -3229,7 +3177,9 @@ export class TestBackgroundLogger implements BackgroundLogger {
   setMaskingFunction(
     maskingFunction: ((value: unknown) => unknown) | null,
   ): void {
-    this.maskingFunction = maskingFunction;
+    this.exportCustomizers = maskingFunction
+      ? [createMaskingCustomizer(maskingFunction)]
+      : [];
   }
 
   async flush(): Promise<void> {
@@ -3258,43 +3208,14 @@ export class TestBackgroundLogger implements BackgroundLogger {
 
     let batch = mergeRowBatch(events);
 
-    // Apply masking after merge, similar to HTTPBackgroundLogger
-    if (this.maskingFunction) {
-      batch = batch.map((item) => {
-        const maskedItem = { ...item };
-
-        // Only mask specific fields if they exist
-        for (const field of REDACTION_FIELDS) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if ((item as any)[field] !== undefined) {
-            const maskedValue = applyMaskingToField(
-              this.maskingFunction!,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (item as any)[field],
-              field,
-            );
-            if (maskedValue instanceof MaskingError) {
-              // Drop the field and add error message
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              delete (maskedItem as any)[field];
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if ((maskedItem as any).error) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (maskedItem as any).error =
-                  `${(maskedItem as any).error}; ${maskedValue.errorMsg}`;
-              } else {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (maskedItem as any).error = maskedValue.errorMsg;
-              }
-            } else {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (maskedItem as any)[field] = maskedValue;
-            }
-          }
-        }
-
-        return maskedItem as BackgroundLogEvent;
-      });
+    if (this.exportCustomizers.length) {
+      batch = batch.map(
+        (item) =>
+          customizeSpanExport(
+            item as SpanExportData,
+            this.exportCustomizers,
+          ) as BackgroundLogEvent,
+      );
     }
 
     return batch;
@@ -3396,7 +3317,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   private activeFlush: Promise<void> = Promise.resolve();
   private activeFlushResolved = true;
   private onFlushError?: (error: unknown) => void;
-  private maskingFunction: ((value: unknown) => unknown) | null = null;
+  private exportCustomizers: readonly SpanCustomizer[] = [];
   private readonly requestLimiter: ConcurrencyLimiter;
   private lastEnqueuedSequence = 0;
   private completedSequence = 0;
@@ -3530,7 +3451,9 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   setMaskingFunction(
     maskingFunction: ((value: unknown) => unknown) | null,
   ): void {
-    this.maskingFunction = maskingFunction;
+    this.exportCustomizers = maskingFunction
+      ? [createMaskingCustomizer(maskingFunction)]
+      : [];
   }
 
   pendingFlushBytes(): number {
@@ -3732,43 +3655,14 @@ class HTTPBackgroundLogger implements BackgroundLogger {
 
         let mergedItems = mergeRowBatch(items);
 
-        // Apply masking after merge but before sending to backend
-        if (this.maskingFunction) {
-          mergedItems = mergedItems.map((item) => {
-            const maskedItem = { ...item };
-
-            // Only mask specific fields if they exist
-            for (const field of REDACTION_FIELDS) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if ((item as any)[field] !== undefined) {
-                const maskedValue = applyMaskingToField(
-                  this.maskingFunction!,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (item as any)[field],
-                  field,
-                );
-                if (maskedValue instanceof MaskingError) {
-                  // Drop the field and add error message
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  delete (maskedItem as any)[field];
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  if ((maskedItem as any).error) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (maskedItem as any).error =
-                      `${(maskedItem as any).error}; ${maskedValue.errorMsg}`;
-                  } else {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (maskedItem as any).error = maskedValue.errorMsg;
-                  }
-                } else {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (maskedItem as any)[field] = maskedValue;
-                }
-              }
-            }
-
-            return maskedItem as BackgroundLogEvent;
-          });
+        if (this.exportCustomizers.length) {
+          mergedItems = mergedItems.map(
+            (item) =>
+              customizeSpanExport(
+                item as SpanExportData,
+                this.exportCustomizers,
+              ) as BackgroundLogEvent,
+          );
         }
 
         return [mergedItems, attachments];
@@ -5677,6 +5571,8 @@ export type FullLoginOptions = LoginOptions & {
 /**
  * Set a global masking function that will be applied to all logged data before sending to Braintrust.
  * The masking function will be applied after records are merged but before they are sent to the backend.
+ * Internally, masking is a state-local export customizer that runs after any
+ * instrumentation customizers and also covers manually logged records.
  *
  * @param maskingFunction A function that takes a JSON-serializable object and returns a masked version.
  *                        Set to null to disable masking.
@@ -8215,6 +8111,7 @@ export class SpanImpl implements Span {
 
   private isMerge: boolean;
   private loggedEndTime: number | undefined;
+  private readonly isInstrumented: boolean;
   private propagatedEvent: StartSpanEventArgs | undefined;
 
   // For internal use only.
@@ -8255,6 +8152,8 @@ export class SpanImpl implements Span {
     const instrumentationName =
       getSpanInstrumentationName(args) ??
       INSTRUMENTATION_NAMES.BRAINTRUST_JS_LOGGER;
+    this.isInstrumented =
+      instrumentationName !== INSTRUMENTATION_NAMES.BRAINTRUST_JS_LOGGER;
 
     const spanAttributes = args.spanAttributes ?? {};
     const rawEvent = args.event ?? {};
@@ -8422,21 +8321,28 @@ export class SpanImpl implements Span {
       );
     }
 
-    const computeRecord = async () => ({
-      ...partialRecord,
-      ...Object.fromEntries(
-        await Promise.all(
-          Object.entries(lazyInternalData).map(async ([key, value]) => [
-            key,
-            await value.get(),
-          ]),
+    const computeRecord = async () => {
+      const record = {
+        ...partialRecord,
+        ...Object.fromEntries(
+          await Promise.all(
+            Object.entries(lazyInternalData).map(async ([key, value]) => [
+              key,
+              await value.get(),
+            ]),
+          ),
         ),
-      ),
-      ...new SpanComponentsV3({
-        object_type: this.parentObjectType,
-        object_id: await this.parentObjectId.get(),
-      }).objectIdFields(),
-    });
+        ...new SpanComponentsV3({
+          object_type: this.parentObjectType,
+          object_id: await this.parentObjectId.get(),
+        }).objectIdFields(),
+      };
+      // Customize inside the memoized lazy value, before attachment processing,
+      // merging, and masking. Retries reuse the already-customized record.
+      return this.isInstrumented
+        ? (customizeSpanExport(record) as BackgroundLogEvent)
+        : record;
+    };
     this._state.bgLogger().log([new LazyValue(computeRecord)]);
   }
 
