@@ -79,8 +79,6 @@ pnpm run test       # Run all workspace tests via turbo
 
 Run from the repo root. **Always run `fix:formatting` before committing** — there is a pre-commit hook that will reject unformatted code.
 
-Agents MUST run Prettier on every file they create or edit before handing work back, even when no commit is requested. Include Markdown, changelogs, config files, and generated files supported by Prettier—not just source code. From the repo root, run `pnpm exec prettier --write <edited-files>` followed by `pnpm exec prettier --check <edited-files>`. If further edits are made, repeat formatting and verification after the final edit. Do not rely on tests, typechecks, CI, or the pre-commit hook to catch formatting issues.
-
 ```bash
 pnpm run formatting      # Check formatting (prettier)
 pnpm run lint            # Run eslint checks

@@ -8,18 +8,6 @@ export interface SpanCustomizer {
    * Callbacks are synchronous. Add, change, or delete payload fields, then return
    * the record or a replacement plain object. Payloads may still contain SDK
    * Attachment objects; attachment processing and serialization happen later.
-   *
-   * The SDK restores identity and routing fields (id, span_id, root_span_id,
-   * span_parents, org_id, project_id, experiment_id, dataset_id, prompt_session_id,
-   * log_id, function_data) and transport controls (_is_merge, _merge_paths,
-   * _parent_id, _object_delete, _array_delete, _xact_id) after every callback.
-   *
-   * Exceptions and invalid return values are ignored; synchronous payload
-   * mutations remain. Promises are not awaited and their rejections are swallowed.
-   * Do not mutate the record after returning.
-   *
-   * This hook does not guarantee redaction of the local experiment/scorer cache,
-   * which is populated before export, and is not a fail-closed privacy boundary.
    */
   onSpanExport?(data: SpanExportData): SpanExportData;
 }
