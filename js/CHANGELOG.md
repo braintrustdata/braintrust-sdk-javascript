@@ -1,5 +1,21 @@
 # braintrust
 
+## 3.35.0
+
+### Minor Changes
+
+- feat: Fix token metrics with AI SDK middleware (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2497)
+- feat: Add instrumentation for openai multimodal APIs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2434)
+- feat: add span export hooks Support synchronous `onSpanExport` customizers for incremental instrumentation span records. Customizers can add, modify, delete, or replace fields before export, with callbacks applied once per record rather than once per transport retry. Thanks @realark! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2489)
+
+### Patch Changes
+
+- feat(groq): Instrument groq audio APIs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2473)
+- feat: Instrument Google GenAI multimodal APIs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2484)
+- fix: Keep Pi Coding Agent tool spans current during execution so nested spans attach to the tool span. Thanks @btaaron! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2499)
+- fix: Capture provider managed tool calls and capture right provider when using Vercel AI gateway (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2507)
+- fix: Fix dataset snapshots silently including deleted rows (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2512)
+
 ## 3.34.0
 
 ### Minor Changes
