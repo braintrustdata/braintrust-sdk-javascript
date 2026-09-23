@@ -6,7 +6,7 @@
 
 - feat: Fix token metrics with AI SDK middleware (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2497)
 - feat: Add instrumentation for openai multimodal APIs (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2434)
-- feat: add span export hooks Support synchronous `onSpanExport` customizers for incremental instrumentation span records. Customizers can add, modify, delete, or replace fields before export, with callbacks applied once per record rather than once per transport retry. Thanks @realark! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2489)
+- feat: add span export hooks (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2489)
 
 ### Patch Changes
 
