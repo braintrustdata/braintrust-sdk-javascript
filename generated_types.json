@@ -1979,7 +1979,7 @@
           },
           "object_type": {
             "type": "string",
-            "enum": ["organization", "project", "function"],
+            "enum": ["organization", "project", "function", "mcp_server"],
             "description": "The type of the object the environment variable is scoped for"
           },
           "object_id": {
@@ -3928,6 +3928,34 @@
           }
         ]
       },
+      "NamedScore": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": ["name"]
+      },
       "NullableSavedFunctionId": {
         "anyOf": [
           {
@@ -4132,6 +4160,14 @@
             "type": ["string", "null"],
             "format": "date-time",
             "description": "Date of organization creation"
+          },
+          "archived_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "deleted_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
           },
           "image_rendering_mode": {
             "$ref": "#/components/schemas/ImageRenderingMode"
@@ -4412,7 +4448,7 @@
                             "type": "string",
                             "minLength": 1,
                             "maxLength": 10000,
-                            "description": "Publish a Slack mrkdwn digest.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say \"No pattern outcomes.\"\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report."
+                            "description": "Publish a Slack mrkdwn digest.\n\nPattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say \"No current pattern outcomes.\" This requirement overrides conflicting formatting guidance.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every included Pattern.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report."
                           }
                         },
                         "required": ["type", "workspace_id", "channel"]
@@ -4699,7 +4735,7 @@
                             "type": "string",
                             "minLength": 1,
                             "maxLength": 10000,
-                            "description": "Publish a Slack mrkdwn digest.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say \"No pattern outcomes.\"\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report."
+                            "description": "Publish a Slack mrkdwn digest.\n\nPattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say \"No current pattern outcomes.\" This requirement overrides conflicting formatting guidance.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every included Pattern.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report."
                           }
                         },
                         "required": ["type", "workspace_id", "channel"]
@@ -4721,6 +4757,18 @@
               }
             ],
             "description": "The configuration for the automation rule"
+          },
+          "runtime_block": {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string"
+              },
+              "model": {
+                "type": "string"
+              }
+            },
+            "required": ["reason", "model"]
           }
         },
         "required": ["id", "project_id", "name", "config"]
@@ -5296,9 +5344,17 @@
             "type": ["boolean", "null"],
             "description": "If true, use metrics.start rather than created for monitor chart time bucket dimensions."
           },
+          "coding_agent_insights_dashboard": {
+            "type": ["boolean", "null"],
+            "description": "If true, enable the agent insights dashboard for this project."
+          },
           "blind_reviews": {
             "type": ["boolean", "null"],
             "description": "If true, hide peer review scores, comments, and aggregate results from reviewers without project update permissions until they submit their own review."
+          },
+          "require_all_human_review_scores": {
+            "type": ["boolean", "null"],
+            "description": "If true, automatically complete a review after every assigned reviewer fills all human review scores visible to them."
           },
           "default_preprocessor": {
             "$ref": "#/components/schemas/NullableSavedFunctionId"
@@ -6307,6 +6363,68 @@
           }
         ]
       },
+      "ScoreObject": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The score name. Defaults to the function name for a single score."
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": ["score"]
+      },
+      "ScoreResult": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/ScoreObject"
+          },
+          {
+            "$ref": "#/components/schemas/NamedScore"
+          },
+          {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NamedScore"
+            },
+            "description": "Multiple scores. Each score must have a unique name."
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The return value of a scorer function."
+      },
       "ServiceToken": {
         "type": "object",
         "properties": {
@@ -6367,6 +6485,11 @@
             "type": ["string", "null"],
             "enum": ["scorer"],
             "description": "A special value that indicates the span was generated by a scoring automation"
+          },
+          "log_level": {
+            "type": ["string", "null"],
+            "enum": ["trace", "debug", "info", "warn", "error", "fatal"],
+            "description": "Severity level of a log"
           }
         },
         "additionalProperties": {},
@@ -6443,7 +6566,9 @@
           "facet",
           "preprocessor",
           "classifier",
-          "review"
+          "review",
+          "question",
+          "log"
         ],
         "description": "Type of the span, for display purposes only"
       },
@@ -6616,7 +6741,7 @@
           "relabel_overlap_seconds": {
             "type": ["number", "null"],
             "minimum": 60,
-            "description": "How much recent history to relabel after a new topic map version becomes active"
+            "description": "Deprecated. How much recent history to relabel after a new topic map version becomes active. Data planes v2.15.0 and later ignore this and apply a topic map version after the first only to traces classified once it is active."
           },
           "backfill_time_range": {
             "anyOf": [
@@ -6743,7 +6868,7 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 10000,
-                "description": "Publish a Slack mrkdwn digest.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say \"No pattern outcomes.\"\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report."
+                "description": "Publish a Slack mrkdwn digest.\n\nPattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say \"No current pattern outcomes.\" This requirement overrides conflicting formatting guidance.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every included Pattern.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report."
               }
             },
             "required": ["type", "workspace_id", "channel"],
@@ -7615,7 +7740,7 @@
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 10000,
-                      "description": "Publish a Slack mrkdwn digest.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every selected Pattern from the run report, including created, updated, unchanged, failed, skipped, and newly inactive outcomes.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any selected Pattern. If there are no selected Patterns, say \"No pattern outcomes.\"\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out from this run. Do not introduce new claims beyond the run report."
+                      "description": "Publish a Slack mrkdwn digest.\n\nPattern selection requirement: include every selected Pattern whose final status is active at the end of this automation run, plus every selected Pattern that changed from active to inactive during this run (a newly inactive outcome). Exclude Patterns that were already inactive before this run and remained inactive. Do not mention excluded Patterns anywhere in the digest, including Highlights. If no selected Patterns meet these criteria, say \"No current pattern outcomes.\" This requirement overrides conflicting formatting guidance.\n\nInclude a complete \"*Pattern outcomes*\" section with one row for every included Pattern.\n\nUse this row format exactly:\n• <pattern_url|Pattern title> — `outcome`\n\nIf a Pattern has no URL, use the plain title instead. Do not use GitHub Markdown tables or code-block tables, because links must remain clickable. Do not omit any active selected Pattern.\n\nAfter the outcome list, include a \"*Highlights*\" section with one very short paragraph, 2-3 sentences maximum. Summarize what changed or what broadly stands out among the included active Patterns. Do not introduce new claims beyond the run report."
                     }
                   },
                   "required": ["type", "workspace_id", "channel"]
