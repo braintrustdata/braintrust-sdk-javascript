@@ -9099,10 +9099,12 @@ export class Dataset<
     await this.flush();
     const state = await this.getState();
     const datasetId = await this.id;
-    const currentVersion = await this.version();
-    if (currentVersion === undefined) {
-      throw new Error("Cannot create snapshot: dataset has no version");
-    }
+    // Live-row versions omit deletions. After flushing, get a server transaction
+    // boundary that includes every completed write, even if no live rows remain.
+    // getState() above also resolves versions pinned by snapshot or environment.
+    const currentVersion =
+      this.getPinnedVersion() ??
+      (await (await state.apiConn().get("xact-id")).text());
     const response = await state
       .appConn()
       .post_json("api/dataset_snapshot/register", {
