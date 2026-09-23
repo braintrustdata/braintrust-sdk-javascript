@@ -1286,6 +1286,7 @@ test("dataset.toEvalData preserves dataset_environment", async () => {
     state,
   });
 
+  await expect(dataset.version()).resolves.toBe("123");
   await expect(dataset.toEvalData()).resolves.toEqual({
     dataset_id: "00000000-0000-0000-0000-000000000002",
     dataset_environment: "production",
@@ -1328,6 +1329,7 @@ test("dataset.toEvalData preserves dataset_snapshot_name", async () => {
     state,
   });
 
+  await expect(dataset.version()).resolves.toBe("456");
   await expect(dataset.toEvalData()).resolves.toEqual({
     dataset_id: "00000000-0000-0000-0000-000000000002",
     dataset_snapshot_name: "123",
@@ -1408,22 +1410,96 @@ test("dataset.version preserves pinned-version fast path", async () => {
   vi.restoreAllMocks();
 });
 
-test("dataset.createSnapshot forwards update when requested", async () => {
-  const state = await _exportsForTestingOnly.simulateLoginForTests();
-  vi.spyOn(state, "login").mockResolvedValue(state as any);
-  const postJson = vi
-    .spyOn(state.appConn(), "post_json")
-    .mockResolvedValueOnce({
-      project: {
-        id: "00000000-0000-0000-0000-000000000001",
-        name: "test-project",
-      },
-      dataset: {
-        id: "00000000-0000-0000-0000-000000000002",
-        name: "test-dataset",
-      },
-    })
-    .mockResolvedValueOnce({
+test.each([
+  ["surviving rows", false, false],
+  ["all rows deleted", true, false],
+  ["cached rows", true, true],
+])(
+  "dataset.createSnapshot uses a server transaction after deletes (%s)",
+  async (_name, allDeleted, cacheRows) => {
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
+    const postJson = vi
+      .spyOn(state.appConn(), "post_json")
+      .mockResolvedValueOnce({
+        project: { id: "project-id", name: "test-project" },
+        dataset: { id: "dataset-id", name: "test-dataset" },
+      })
+      .mockResolvedValueOnce({
+        dataset_snapshot: {
+          id: "00000000-0000-0000-0000-000000000004",
+          dataset_id: "00000000-0000-0000-0000-000000000002",
+          name: "after-delete",
+          description: null,
+          xact_id: "1000197874946873171",
+          created: "2026-03-31T00:00:00.000Z",
+        },
+        found_existing: false,
+      });
+    vi.spyOn(state.apiConn(), "post").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data:
+            allDeleted && !cacheRows
+              ? []
+              : [{ id: "a", input: "a", _xact_id: "100" }],
+        }),
+      ),
+    );
+    const get = vi
+      .spyOn(state.apiConn(), "get")
+      .mockResolvedValue(new Response("1000197874946873171"));
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      state,
+    });
+    const flush = vi.spyOn(dataset, "flush").mockResolvedValue();
+    const version = vi.spyOn(dataset, "version");
+
+    try {
+      if (cacheRows) {
+        await dataset.fetchedData();
+      }
+      await dataset.createSnapshot({ name: "after-delete" });
+      expect(version).not.toHaveBeenCalled();
+      expect(get).toHaveBeenCalledWith("xact-id");
+      expect(flush.mock.invocationCallOrder[0]).toBeLessThan(
+        get.mock.invocationCallOrder[0],
+      );
+      expect(postJson).toHaveBeenLastCalledWith(
+        "api/dataset_snapshot/register",
+        expect.objectContaining({ xact_id: "1000197874946873171" }),
+      );
+    } finally {
+      _exportsForTestingOnly.simulateLogoutForTests();
+      vi.restoreAllMocks();
+    }
+  },
+);
+
+test.each([
+  { version: "123" },
+  { snapshotName: "saved" },
+  { environment: "production" },
+])(
+  "dataset.createSnapshot preserves pins and forwards update (%j)",
+  async (pin) => {
+    const state = await _exportsForTestingOnly.simulateLoginForTests();
+    vi.spyOn(state, "login").mockResolvedValue(state as any);
+    const postJson = vi
+      .spyOn(state.appConn(), "post_json")
+      .mockResolvedValueOnce({
+        project: {
+          id: "00000000-0000-0000-0000-000000000001",
+          name: "test-project",
+        },
+        dataset: {
+          id: "00000000-0000-0000-0000-000000000002",
+          name: "test-dataset",
+        },
+      });
+    const snapshot = {
       dataset_snapshot: {
         id: "00000000-0000-0000-0000-000000000004",
         dataset_id: "00000000-0000-0000-0000-000000000002",
@@ -1433,37 +1509,49 @@ test("dataset.createSnapshot forwards update when requested", async () => {
         created: "2026-03-31T00:00:00.000Z",
       },
       found_existing: true,
+    };
+    if (pin.snapshotName) {
+      postJson.mockResolvedValueOnce([snapshot.dataset_snapshot]);
+    }
+    postJson.mockResolvedValueOnce(snapshot);
+    vi.spyOn(state.apiConn(), "get_json").mockResolvedValue({
+      object_version: "123",
+    });
+    const get = vi
+      .spyOn(state.apiConn(), "get")
+      .mockRejectedValue(new Error("Unexpected transaction request"));
+
+    const dataset = initDataset({
+      project: "test-project",
+      dataset: "test-dataset",
+      ...pin,
+      state,
     });
 
-  const dataset = initDataset({
-    project: "test-project",
-    dataset: "test-dataset",
-    version: "123",
-    state,
-  });
+    await expect(
+      dataset.createSnapshot({
+        name: "snapshot",
+        description: "updated description",
+        update: true,
+      }),
+    ).resolves.toMatchObject({
+      id: "00000000-0000-0000-0000-000000000004",
+      xact_id: "123",
+    });
 
-  await expect(
-    dataset.createSnapshot({
-      name: "snapshot",
+    expect(get).not.toHaveBeenCalled();
+    expect(postJson).toHaveBeenLastCalledWith("api/dataset_snapshot/register", {
+      dataset_id: "00000000-0000-0000-0000-000000000002",
+      dataset_snapshot_name: "snapshot",
       description: "updated description",
+      xact_id: "123",
       update: true,
-    }),
-  ).resolves.toMatchObject({
-    id: "00000000-0000-0000-0000-000000000004",
-    xact_id: "123",
-  });
+    });
 
-  expect(postJson).toHaveBeenNthCalledWith(2, "api/dataset_snapshot/register", {
-    dataset_id: "00000000-0000-0000-0000-000000000002",
-    dataset_snapshot_name: "snapshot",
-    description: "updated description",
-    xact_id: "123",
-    update: true,
-  });
-
-  _exportsForTestingOnly.simulateLogoutForTests();
-  vi.restoreAllMocks();
-});
+    _exportsForTestingOnly.simulateLogoutForTests();
+    vi.restoreAllMocks();
+  },
+);
 
 test("dataset.getSnapshot looks up snapshots by name", async () => {
   const state = await _exportsForTestingOnly.simulateLoginForTests();
