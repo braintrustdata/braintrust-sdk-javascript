@@ -30,9 +30,9 @@
     "ai-sdk-openai-v6": "npm:@ai-sdk/openai@3.0.7",
     "ai-sdk-openai-v6-latest": "npm:@ai-sdk/openai@3.0.99",
     "ai-sdk-v5": "npm:ai@5.0.82",
-    "ai-sdk-v5-latest": "npm:ai@5.0.244",
+    "ai-sdk-v5-latest": "npm:ai@5.0.262",
     "ai-sdk-v6": "npm:ai@6.0.1",
-    "ai-sdk-v6-latest": "npm:ai@6.0.264",
+    "ai-sdk-v6-latest": "npm:ai@6.0.287",
     "zod": "3.25.76"
   },
   "pnpm": {
