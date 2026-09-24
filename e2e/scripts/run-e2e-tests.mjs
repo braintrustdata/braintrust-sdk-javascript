@@ -22,7 +22,7 @@ const scenarioArgs = rawArgs.filter((arg) => arg !== "--update");
 const testTargets =
   scenarioArgs.length > 0
     ? scenarioArgs.map((arg) => scenarioPathArg(arg))
-    : await defaultScenarioTestPaths();
+    : [...(await defaultScenarioTestPaths()), "helpers"];
 const vitestArgs = [
   "run",
   "--run",
