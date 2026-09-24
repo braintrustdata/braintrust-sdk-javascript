@@ -279,24 +279,20 @@ export class OpenAIAgentsTraceProcessor {
     // Detect parent span from current execution context
     let span: BraintrustSpan;
     const current = currentSpan();
+    const spanArgs = {
+      name: trace.name,
+      type: SpanTypeAttribute.TASK,
+      [Symbol.for("braintrust.spanInstrumentationName")]: "openai-agents",
+    };
 
     if (current && current !== NOOP_SPAN) {
       // Create as child of current span
-      span = current.startSpan({
-        name: trace.name,
-        type: SpanTypeAttribute.TASK,
-      });
+      span = current.startSpan(spanArgs);
     } else {
       // No parent span available, create as root
       span = this.logger
-        ? this.logger.startSpan({
-            name: trace.name,
-            type: SpanTypeAttribute.TASK,
-          })
-        : startSpan({
-            name: trace.name,
-            type: SpanTypeAttribute.TASK,
-          });
+        ? this.logger.startSpan(spanArgs)
+        : startSpan(spanArgs);
     }
 
     span.log({
@@ -620,6 +616,7 @@ export class OpenAIAgentsTraceProcessor {
       const childSpan = parentSpan.startSpan({
         name: spanNameFromAgents(span),
         type: spanTypeFromAgents(span),
+        [Symbol.for("braintrust.spanInstrumentationName")]: "openai-agents",
       });
       traceData.childSpans.set(span.spanId, childSpan);
     }
