@@ -20,6 +20,17 @@ const entryFiles = tsupConfig.flatMap((config) => {
   return entries;
 });
 
+const generatedTypeImports = {
+  group: [
+    "**/generated_types",
+    "**/generated_plain_types",
+    "**/generated_types.ts",
+    "**/generated_plain_types.ts",
+  ],
+  message:
+    "Generated backend definitions are compatibility-test fixtures. Use SDK-owned types and validators instead.",
+};
+
 export default [
   {
     ignores: [
@@ -162,6 +173,18 @@ export default [
     },
   },
   {
+    files: ["src/**/*.ts", "src/**/*.tsx", "util/**/*.ts"],
+    languageOptions: {
+      parser: tsparser,
+    },
+    plugins: {
+      "@typescript-eslint": tseslint,
+    },
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [generatedTypeImports] }],
+    },
+  },
+  {
     files: ["src/**/*.ts", "src/**/*.tsx"],
     ignores: [...entryFiles, "**/*.test.ts", "**/*.test.tsx"],
     rules: {
@@ -169,16 +192,7 @@ export default [
         "error",
         {
           patterns: [
-            {
-              group: [
-                "**/generated_types",
-                "**/generated_plain_types",
-                "**/generated_types.ts",
-                "**/generated_plain_types.ts",
-              ],
-              message:
-                "Generated backend definitions are compatibility-test fixtures. Use SDK-owned types and validators instead.",
-            },
+            generatedTypeImports,
             {
               group: [
                 "./exports",

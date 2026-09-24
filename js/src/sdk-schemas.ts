@@ -1,6 +1,6 @@
 /**
  * Runtime validators for the SDK-owned subset of the Braintrust API.
- * Compatibility with backend validators is checked in sdk-contracts.test.ts.
+ * Input/output type compatibility is checked in sdk-contracts.test.ts.
  */
 import { z } from "zod/v3";
 
