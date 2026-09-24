@@ -53,6 +53,8 @@ test("does not expose runtime schemas or implementation helpers", () => {
     "SpanImpl",
     "IDGenerator",
     "_exportsForTestingOnly",
+    "serializePromptForCache",
+    "serializeParametersForCache",
     "default",
   ]) {
     expect(publicExports).not.toHaveProperty(name);

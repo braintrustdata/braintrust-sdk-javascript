@@ -1,19 +1,19 @@
 import type {
-  ToolFunctionDefinitionType as ToolFunctionDefinition,
-  ChatCompletionMessageParamType,
-  ModelParamsType,
-  PromptBlockDataType as PromptBlockData,
-  PromptDataType as PromptData,
-} from "./generated_plain_types";
+  ToolFunctionDefinition,
+  ChatCompletionMessageParam,
+  ModelParams,
+  PromptBlockData,
+  PromptData,
+} from "./sdk-types";
 
 // This roughly maps to promptBlockDataSchema, but is more ergonomic for the user.
 export type PromptContents =
   | { prompt: string }
-  | { messages: ChatCompletionMessageParamType[] };
+  | { messages: ChatCompletionMessageParam[] };
 
 export type PromptDefinition = PromptContents & {
   model: string;
-  params?: ModelParamsType;
+  params?: ModelParams;
   templateFormat?: "mustache" | "nunjucks" | "none";
   environments?: string[];
 };

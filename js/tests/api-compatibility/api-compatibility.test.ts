@@ -2983,6 +2983,22 @@ describe("API Compatibility", () => {
     }
   });
 
+  test("keeps prompt implementation types out of declaration chunks", () => {
+    const dist = path.join(__dirname, "..", "..", "dist");
+    const declarations = fs
+      .readdirSync(dist, { recursive: true })
+      .filter((file) => /\.d\.(?:ts|mts)$/.test(String(file)))
+      .map((file) => fs.readFileSync(path.join(dist, String(file)), "utf8"))
+      .join("\n");
+
+    expect(declarations).toContain("interface CompiledPromptParams");
+    expect(declarations).not.toContain("_internalSerializeForCache");
+    expect(declarations).not.toMatch(/generated_(?:plain_)?types/);
+    expect(declarations).not.toMatch(
+      /\b(?:FunctionDataType|AnyModelParamsType|PromptType)\b/,
+    );
+  });
+
   test("should not regress public API surface for all entrypoints", async () => {
     if (!publishedVersion) {
       console.log("Skipping test: No published version available");
