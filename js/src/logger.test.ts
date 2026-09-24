@@ -455,6 +455,160 @@ test("verify MemoryBackgroundLogger intercepts logs", async () => {
   _exportsForTestingOnly.clearTestBackgroundLogger(); // can go back to normal
 });
 
+describe("Logger.emitLog", () => {
+  let memoryLogger: ReturnType<
+    typeof _exportsForTestingOnly.useTestBackgroundLogger
+  >;
+
+  beforeEach(async () => {
+    await _exportsForTestingOnly.simulateLoginForTests();
+    memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
+  });
+
+  afterEach(async () => {
+    await memoryLogger.flush();
+    _exportsForTestingOnly.clearTestBackgroundLogger();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  });
+
+  test("emits independent log rows on a logger baseline trace", async () => {
+    const logger = initLogger({
+      projectName: "test",
+      projectId: "test-project-id",
+    });
+
+    const firstId = logger.emitLog("Payment failed", "error", {
+      payment_id: "pay_123",
+    });
+    const secondId = logger.emitLog("Retrying payment", "info");
+
+    await memoryLogger.flush();
+    const [first, second] = (await memoryLogger.drain()) as any[];
+
+    expect(first.id).toBe(firstId);
+    expect(second.id).toBe(secondId);
+    expect(first.id).not.toBe(second.id);
+    expect(first.span_id).not.toBe(second.span_id);
+    expect(first.root_span_id).toBe(second.root_span_id);
+    expect(first.span_parents ?? []).toEqual([]);
+    expect(first.output).toBe("Payment failed");
+    expect(first.error).toBe("Payment failed");
+    expect(first.metadata).toEqual({ payment_id: "pay_123" });
+    expect(first.span_attributes).toMatchObject({ name: "Log", type: "log" });
+    expect(first.metrics.start).toBe(first.metrics.end);
+    expect(first.context.otel).toEqual({
+      signal: "logs",
+      log: {
+        time_unix_nano: String(Math.round(first.metrics.start * 1_000_000_000)),
+        severity_number: 17,
+        severity_text: "ERROR",
+      },
+    });
+    expect(second.error).toBeUndefined();
+    expect(second.context.otel.log.severity_number).toBe(9);
+  });
+
+  test("uses a distinct baseline trace for each logger", async () => {
+    const firstLogger = initLogger({
+      projectName: "first",
+      projectId: "first-project-id",
+    });
+    const secondLogger = initLogger({
+      projectName: "second",
+      projectId: "second-project-id",
+    });
+
+    firstLogger.info("first");
+    secondLogger.info("second");
+
+    await memoryLogger.flush();
+    const [first, second] = (await memoryLogger.drain()) as any[];
+    expect(first.root_span_id).not.toBe(second.root_span_id);
+  });
+
+  test("reuses the active Braintrust span and trace IDs", async () => {
+    const logger = initLogger({
+      projectName: "test",
+      projectId: "test-project-id",
+    });
+
+    let logId: string | undefined;
+    logger.traced(
+      (owner) => {
+        logId = logger.emitLog("Inside span", "debug", { attempt: 1 });
+        expect(logId).not.toBe(owner.id);
+      },
+      { name: "owner" },
+    );
+
+    await memoryLogger.flush();
+    const rows = (await memoryLogger.drain()) as any[];
+    const logRow = rows.find((row) => row.id === logId);
+    const ownerRow = rows.find((row) => row.span_attributes?.name === "owner");
+
+    expect(logRow.span_id).toBe(ownerRow.span_id);
+    expect(logRow.root_span_id).toBe(ownerRow.root_span_id);
+    expect(logRow.span_parents ?? []).toEqual([]);
+    expect(logRow.metadata).toEqual({ attempt: 1 });
+    expect(logRow.context.otel.log.severity_number).toBe(5);
+  });
+
+  test.each([
+    ["trace", 1],
+    ["debug", 5],
+    ["info", 9],
+    ["warn", 13],
+    ["error", 17],
+    ["fatal", 21],
+  ] as const)(
+    "maps the %s helper to OTel severity %i",
+    async (method, level) => {
+      const logger = initLogger({
+        projectName: "test",
+        projectId: "test-project-id",
+      });
+
+      const logId = logger[method]("message", { source: method });
+
+      await memoryLogger.flush();
+      const [row] = (await memoryLogger.drain()) as any[];
+      expect(row.id).toBe(logId);
+      expect(row.output).toBe("message");
+      expect(row.metadata).toEqual({ source: method });
+      expect(row.context.otel.log).toMatchObject({
+        severity_number: level,
+        severity_text: method.toUpperCase(),
+      });
+    },
+  );
+
+  test("rejects invalid levels without logging", async () => {
+    const logger = initLogger({
+      projectName: "test",
+      projectId: "test-project-id",
+    });
+
+    expect(() => logger.emitLog("message", "warning" as never)).toThrow(
+      "Invalid log level",
+    );
+
+    await memoryLogger.flush();
+    expect(await memoryLogger.drain()).toEqual([]);
+  });
+
+  test("flushes before resolving for synchronous-flush loggers", async () => {
+    const logger = initLogger({
+      projectName: "test",
+      projectId: "test-project-id",
+      asyncFlush: false,
+    });
+
+    const logId = await logger.info("message");
+    const [row] = (await memoryLogger.drain()) as any[];
+    expect(row.id).toBe(logId);
+  });
+});
+
 test("init validation", () => {
   expect(() => init({})).toThrow(
     "Must specify at least one of project or projectId",
