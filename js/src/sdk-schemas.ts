@@ -127,15 +127,15 @@ export const CallEvent = z.union([
   }),
 ]);
 
-const ChatCompletionContentPartTextWithTitle = z.object({
+const CacheControl = z.object({
+  type: z.literal("ephemeral"),
+  ttl: z.enum(["5m", "1h"]).optional(),
+});
+
+const ChatCompletionContentPartText = z.object({
   text: z.string().default(""),
   type: z.literal("text"),
-  cache_control: z
-    .object({
-      type: z.literal("ephemeral"),
-      ttl: z.enum(["5m", "1h"]).optional(),
-    })
-    .optional(),
+  cache_control: CacheControl.optional(),
 });
 
 const ChatCompletionContentPartImageWithTitle = z.object({
@@ -146,12 +146,7 @@ const ChatCompletionContentPartImageWithTitle = z.object({
       .optional(),
   }),
   type: z.literal("image_url"),
-  cache_control: z
-    .object({
-      type: z.literal("ephemeral"),
-      ttl: z.enum(["5m", "1h"]).optional(),
-    })
-    .optional(),
+  cache_control: CacheControl.optional(),
 });
 
 const ChatCompletionContentPartFileFile = z
@@ -161,30 +156,14 @@ const ChatCompletionContentPartFileFile = z
 const ChatCompletionContentPartFileWithTitle = z.object({
   file: ChatCompletionContentPartFileFile,
   type: z.literal("file"),
-  cache_control: z
-    .object({
-      type: z.literal("ephemeral"),
-      ttl: z.enum(["5m", "1h"]).optional(),
-    })
-    .optional(),
+  cache_control: CacheControl.optional(),
 });
 
 const ChatCompletionContentPart = z.union([
-  ChatCompletionContentPartTextWithTitle,
+  ChatCompletionContentPartText,
   ChatCompletionContentPartImageWithTitle,
   ChatCompletionContentPartFileWithTitle,
 ]);
-
-const ChatCompletionContentPartText = z.object({
-  text: z.string().default(""),
-  type: z.literal("text"),
-  cache_control: z
-    .object({
-      type: z.literal("ephemeral"),
-      ttl: z.enum(["5m", "1h"]).optional(),
-    })
-    .optional(),
-});
 
 const ChatCompletionMessageToolCall = z.object({
   id: z.string(),
@@ -250,23 +229,20 @@ export const ChatCompletionTool = z.object({
   type: z.literal("function"),
 });
 
-const ObjectReferenceNullish = z.union([
-  z.object({
-    object_type: z.enum([
-      "project_logs",
-      "experiment",
-      "dataset",
-      "prompt",
-      "function",
-      "prompt_session",
-    ]),
-    object_id: z.string().uuid(),
-    id: z.string(),
-    _xact_id: z.union([z.string(), z.null()]).optional(),
-    created: z.union([z.string(), z.null()]).optional(),
-  }),
-  z.null(),
-]);
+export const ObjectReference = z.object({
+  object_type: z.enum([
+    "project_logs",
+    "experiment",
+    "dataset",
+    "prompt",
+    "function",
+    "prompt_session",
+  ]),
+  object_id: z.string().uuid(),
+  id: z.string(),
+  _xact_id: z.union([z.string(), z.null()]).optional(),
+  created: z.union([z.string(), z.null()]).optional(),
+});
 
 export const DatasetSnapshot = z.object({
   id: z.string().uuid(),
@@ -288,82 +264,58 @@ const PromptBlockDataNullish = z.union([
 ]);
 
 const ModelParams = z.union([
-  z
-    .object({
-      use_cache: z.boolean(),
-      reasoning_enabled: z.boolean(),
-      reasoning_budget: z.number(),
-      temperature: z.number(),
-      top_p: z.number(),
-      max_tokens: z.number(),
-      max_completion_tokens: z.number(),
-      frequency_penalty: z.number(),
-      presence_penalty: z.number(),
-      response_format: ResponseFormatNullish,
-      tool_choice: z.union([
-        z.literal("auto"),
-        z.literal("none"),
-        z.literal("required"),
-        z.object({
-          type: z.literal("function"),
-          function: z.object({ name: z.string() }),
-        }),
-      ]),
-      function_call: z.union([
-        z.literal("auto"),
-        z.literal("none"),
-        z.object({ name: z.string() }),
-      ]),
-      n: z.number(),
-      stop: z.array(z.string()),
-      reasoning_effort: z.enum(["none", "minimal", "low", "medium", "high"]),
-      verbosity: z.enum(["low", "medium", "high"]),
-    })
+  BraintrustModelParams.extend({
+    temperature: z.number(),
+    top_p: z.number(),
+    max_tokens: z.number(),
+    max_completion_tokens: z.number(),
+    frequency_penalty: z.number(),
+    presence_penalty: z.number(),
+    response_format: ResponseFormatNullish,
+    tool_choice: z.union([
+      z.literal("auto"),
+      z.literal("none"),
+      z.literal("required"),
+      z.object({
+        type: z.literal("function"),
+        function: z.object({ name: z.string() }),
+      }),
+    ]),
+    function_call: z.union([
+      z.literal("auto"),
+      z.literal("none"),
+      z.object({ name: z.string() }),
+    ]),
+    n: z.number(),
+    stop: z.array(z.string()),
+    reasoning_effort: z.enum(["none", "minimal", "low", "medium", "high"]),
+    verbosity: z.enum(["low", "medium", "high"]),
+  })
     .partial()
     .passthrough(),
-  z
-    .object({
-      use_cache: z.boolean().optional(),
-      reasoning_enabled: z.boolean().optional(),
-      reasoning_budget: z.number().optional(),
-      max_tokens: z.number(),
-      temperature: z.number(),
-      top_p: z.number().optional(),
-      top_k: z.number().optional(),
-      stop_sequences: z.array(z.string()).optional(),
-      max_tokens_to_sample: z.number().optional(),
-    })
-    .passthrough(),
-  z
-    .object({
-      use_cache: z.boolean(),
-      reasoning_enabled: z.boolean(),
-      reasoning_budget: z.number(),
-      temperature: z.number(),
-      maxOutputTokens: z.number(),
-      topP: z.number(),
-      topK: z.number(),
-    })
+  BraintrustModelParams.extend({
+    max_tokens: z.number(),
+    temperature: z.number(),
+    top_p: z.number().optional(),
+    top_k: z.number().optional(),
+    stop_sequences: z.array(z.string()).optional(),
+    max_tokens_to_sample: z.number().optional(),
+  }).passthrough(),
+  BraintrustModelParams.extend({
+    temperature: z.number(),
+    maxOutputTokens: z.number(),
+    topP: z.number(),
+    topK: z.number(),
+  })
     .partial()
     .passthrough(),
-  z
-    .object({
-      use_cache: z.boolean(),
-      reasoning_enabled: z.boolean(),
-      reasoning_budget: z.number(),
-      temperature: z.number(),
-      topK: z.number(),
-    })
+  BraintrustModelParams.extend({
+    temperature: z.number(),
+    topK: z.number(),
+  })
     .partial()
     .passthrough(),
-  z
-    .object({
-      use_cache: z.boolean(),
-      reasoning_enabled: z.boolean(),
-      reasoning_budget: z.number(),
-    })
-    .partial()
-    .passthrough(),
+  BraintrustModelParams.passthrough(),
 ]);
 
 const PromptOptionsNullish = z.union([
@@ -402,73 +354,6 @@ const PreprocessorId = z.union([
     function_type: z.literal("preprocessor").optional().default("preprocessor"),
   }),
   z.object({ type: z.literal("inline"), code: z.string().min(1) }),
-  z.null(),
-]);
-
-const PromptDataNullish = z.union([
-  z
-    .object({
-      prompt: PromptBlockDataNullish,
-      options: PromptOptionsNullish,
-      parser: PromptParserNullish,
-      preprocessor: PreprocessorId,
-      tool_functions: z.union([z.array(SavedFunctionId), z.null()]),
-      template_format: z.union([
-        z.enum(["mustache", "nunjucks", "none"]),
-        z.null(),
-      ]),
-      mcp: z.union([
-        z.record(
-          z.union([
-            z.object({
-              type: z.literal("id"),
-              id: z.string().uuid(),
-              is_disabled: z.boolean().optional(),
-              enabled_tools: z
-                .union([z.array(z.string()), z.null()])
-                .optional(),
-            }),
-            z.object({
-              type: z.literal("url"),
-              url: z.string(),
-              is_disabled: z.boolean().optional(),
-              enabled_tools: z
-                .union([z.array(z.string()), z.null()])
-                .optional(),
-            }),
-          ]),
-        ),
-        z.null(),
-      ]),
-      origin: z.union([
-        z
-          .object({
-            prompt_id: z.string(),
-            project_id: z.string(),
-            prompt_version: z.string(),
-          })
-          .partial(),
-        z.null(),
-      ]),
-    })
-    .partial(),
-  z.null(),
-]);
-
-const FunctionTypeEnumNullish = z.union([
-  z.enum([
-    "llm",
-    "scorer",
-    "task",
-    "tool",
-    "custom_view",
-    "preprocessor",
-    "facet",
-    "classifier",
-    "tag",
-    "parameters",
-    "sandbox",
-  ]),
   z.null(),
 ]);
 
@@ -596,35 +481,6 @@ export const GitMetadataSettings = z.object({
     .optional(),
 });
 
-const NullableSavedFunctionId = z.union([
-  z.object({
-    type: z.literal("function"),
-    id: z.string(),
-    version: z.string().optional(),
-  }),
-  z.object({
-    type: z.literal("global"),
-    name: z.string(),
-    function_type: FunctionTypeEnum.optional().default("scorer"),
-  }),
-  z.null(),
-]);
-
-export const ObjectReference = z.object({
-  object_type: z.enum([
-    "project_logs",
-    "experiment",
-    "dataset",
-    "prompt",
-    "function",
-    "prompt_session",
-  ]),
-  object_id: z.string().uuid(),
-  id: z.string(),
-  _xact_id: z.union([z.string(), z.null()]).optional(),
-  created: z.union([z.string(), z.null()]).optional(),
-});
-
 const ProjectSettings = z.union([
   z
     .object({
@@ -656,7 +512,7 @@ const ProjectSettings = z.union([
       disable_realtime_queries: z.union([z.boolean(), z.null()]),
       monitor_charts_use_metrics_start: z.union([z.boolean(), z.null()]),
       blind_reviews: z.union([z.boolean(), z.null()]),
-      default_preprocessor: NullableSavedFunctionId,
+      default_preprocessor: z.union([...SavedFunctionId.options, z.null()]),
     })
     .partial(),
   z.null(),
@@ -683,12 +539,12 @@ export const Prompt = z.object({
   slug: z.string(),
   description: z.union([z.string(), z.null()]).optional(),
   created: z.union([z.string(), z.null()]).optional(),
-  prompt_data: PromptDataNullish.optional(),
+  prompt_data: z.union([PromptData, z.null()]).optional(),
   tags: z.union([z.array(z.string()), z.null()]).optional(),
   metadata: z
     .union([z.object({}).partial().passthrough(), z.null()])
     .optional(),
-  function_type: FunctionTypeEnumNullish.optional(),
+  function_type: z.union([FunctionTypeEnum, z.null()]).optional(),
 });
 
 export const SSEConsoleEventData = z.object({
@@ -699,7 +555,7 @@ export const SSEConsoleEventData = z.object({
 export const SSEProgressEventData = z.object({
   id: z.string(),
   object_type: FunctionObjectType,
-  origin: ObjectReferenceNullish.and(z.unknown()).optional(),
+  origin: z.union([ObjectReference, z.null()]).and(z.unknown()).optional(),
   format: FunctionFormat,
   output_type: FunctionOutputType,
   name: z.string(),
