@@ -14,6 +14,9 @@ Install the SDK:
 npm install braintrust
 ```
 
+The `bt` CLI is installed separately from the SDK.
+See the standalone installation instructions in the [CLI quickstart](https://www.braintrust.dev/docs/reference/cli/quickstart).
+
 ## Quickstart
 
 Run a simple experiment (replace `YOUR_API_KEY` with your Braintrust API key):
