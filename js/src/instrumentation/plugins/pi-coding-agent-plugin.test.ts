@@ -26,6 +26,9 @@ vi.mock("../../isomorph", async (importOriginal) => {
 });
 
 vi.mock("../../logger", () => ({
+  CAPTURE_ATTACHMENTS: Symbol.for("braintrust.captureAttachments"),
+  _internalGetGlobalState: () => undefined,
+  BaseAttachment: class {},
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
   withCurrent: (_span: unknown, callback: () => unknown) => callback(),
 }));

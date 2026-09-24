@@ -6,7 +6,11 @@ import {
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
+import {
+  isAutoCaptureAttachmentsEnabled,
+  omitMediaData,
+  processInputAttachments,
+} from "../../wrappers/attachment-utils";
 import type {
   GenerativeAIChat,
   GenerativeAIConfig,
@@ -182,9 +186,10 @@ function interceptCall<
               number,
               NonNullable<GenerativeAIResponse["candidates"]>[number]
             >();
+            const captureAttachments = isAutoCaptureAttachmentsEnabled(span);
             patchStreamIfNeeded<GenerativeAIResponse>(value.stream, {
               aroundNext: (callback) => withCurrent(span, callback),
-              onChunk: (chunk) => {
+              shouldCollect: (chunk) => {
                 for (const candidate of chunk.candidates ?? []) {
                   const index = candidate.index ?? 0;
                   const previous = candidates.get(index);
@@ -196,7 +201,12 @@ function interceptCall<
                         ...last,
                         text: last.text + part.text,
                       };
-                    } else parts.push(part);
+                    } else
+                      parts.push(
+                        !captureAttachments && part.inlineData
+                          ? convertAttachments(part, false)
+                          : part,
+                      );
                   }
                   candidates.set(index, {
                     ...previous,
@@ -230,6 +240,7 @@ function interceptCall<
                     },
                   });
                 }
+                return false;
               },
               onComplete: () => {},
               onError: (error) =>
@@ -393,16 +404,28 @@ function extractInput(
 
 // Convert Google's inlineData to the shared attachment processor's file shape,
 // then restore the native payload shape. Any conversion failure keeps all input.
-function convertAttachments<T>(value: T): T {
+function convertAttachments<T>(
+  value: T,
+  captureAttachments = isAutoCaptureAttachmentsEnabled(),
+): T {
   const convert = (node: unknown): unknown => {
-    if (Array.isArray(node)) return node.map(convert);
+    if (Array.isArray(node))
+      return node.map(convert).filter((item) => item !== undefined);
     if (!isObject(node)) return node;
     if (isObject(node.inlineData)) {
+      if (!captureAttachments)
+        return omitMediaData({
+          ...node,
+          inlineData: omitMediaData(node.inlineData, "data"),
+        });
       const { data, mimeType } = node.inlineData;
-      const processed = processInputAttachments({
-        type: "file",
-        file: { file_data: `data:${mimeType};base64,${data}` },
-      });
+      const processed = processInputAttachments(
+        {
+          type: "file",
+          file: { file_data: `data:${mimeType};base64,${data}` },
+        },
+        captureAttachments,
+      );
       if (typeof processed.file.file_data === "string")
         throw new Error("Unable to convert Google inline data");
       return {
@@ -445,10 +468,13 @@ function logResponse(span: Span, response: GenerativeAIResponse): void {
       metrics.completion_reasoning_tokens = usage.thoughtsTokenCount;
   }
   span.log({
-    output: convertAttachments({
-      candidates: response.candidates,
-      promptFeedback: response.promptFeedback,
-    }),
+    output: convertAttachments(
+      {
+        candidates: response.candidates,
+        promptFeedback: response.promptFeedback,
+      },
+      isAutoCaptureAttachmentsEnabled(span),
+    ),
     metrics,
     ...(response.modelVersion
       ? { metadata: { model: response.modelVersion } }

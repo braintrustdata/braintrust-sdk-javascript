@@ -1,3 +1,4 @@
+import { defineAttachmentCaptureTests } from "../../helpers/attachment-capture-assertions";
 import { describe, expect, test } from "vitest";
 import {
   prepareScenarioDir,
@@ -30,6 +31,7 @@ for (const variant of ["elevenlabs-v2", "elevenlabs-v2-latest"]) {
                 ? ["--import", "braintrust/hook.mjs"]
                 : [],
               env: {
+                BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
                 ELEVENLABS_PACKAGE_NAME: variant.replace(
                   "elevenlabs-",
                   "elevenlabs-sdk-",
@@ -141,5 +143,15 @@ for (const variant of ["elevenlabs-v2", "elevenlabs-v2-latest"]) {
         240_000,
       );
     }
+  });
+}
+
+for (const variant of ["elevenlabs-v2", "elevenlabs-v2-latest"]) {
+  defineAttachmentCaptureTests({
+    scenarioDir,
+    originalScenarioDir,
+    provider: "elevenlabs",
+    packageName: variant.replace("elevenlabs-", "elevenlabs-sdk-"),
+    variantKey: variant,
   });
 }

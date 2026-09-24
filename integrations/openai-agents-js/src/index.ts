@@ -7,6 +7,9 @@ import {
   currentSpan,
   NOOP_SPAN,
   Attachment,
+  _internalGetGlobalState,
+  getSpanParentObject,
+  withCurrent,
 } from "braintrust";
 import {
   SpanType,
@@ -143,12 +146,25 @@ export class OpenAIAgentsTraceProcessor {
 
   private processInputImages(input: any): any {
     if (Array.isArray(input)) {
-      return input.map((item) => this.processInputImages(item));
+      return input
+        .map((item) => this.processInputImages(item))
+        .filter((item) => item !== undefined);
     }
 
     if (input && typeof input === "object") {
       // Handle input_image type with base64 image data
       if (input.type === "input_image" && typeof input.image === "string") {
+        if (/^https?:\/\//i.test(input.image)) return input;
+        if (
+          !_internalGetGlobalState()._internalCaptureAttachmentsEnabled(
+            getSpanParentObject(),
+          )
+        ) {
+          const { image: _image, ...metadata } = input;
+          return Object.keys(metadata).some((key) => key !== "type")
+            ? metadata
+            : undefined;
+        }
         let imageData = input.image;
 
         // Strip data URI prefix if present (e.g., "data:image/png;base64,")
@@ -193,7 +209,8 @@ export class OpenAIAgentsTraceProcessor {
       // Recursively process nested objects
       const result: any = {};
       for (const [key, value] of Object.entries(input)) {
-        result[key] = this.processInputImages(value);
+        const processed = this.processInputImages(value);
+        if (processed !== undefined) result[key] = processed;
       }
       return result;
     }
@@ -203,12 +220,24 @@ export class OpenAIAgentsTraceProcessor {
 
   private processOutputImages(output: any): any {
     if (Array.isArray(output)) {
-      return output.map((item) => this.processOutputImages(item));
+      return output
+        .map((item) => this.processOutputImages(item))
+        .filter((item) => item !== undefined);
     }
 
     if (output && typeof output === "object") {
       // Handle image_generation_call type - convert result to attachment
       if (output.type === "image_generation_call" && output.result) {
+        if (
+          !_internalGetGlobalState()._internalCaptureAttachmentsEnabled(
+            getSpanParentObject(),
+          )
+        ) {
+          const { result: _result, ...metadata } = output;
+          return Object.keys(metadata).some((key) => key !== "type")
+            ? metadata
+            : undefined;
+        }
         let resultData = output.result;
 
         // Use output_format from the response
@@ -256,7 +285,8 @@ export class OpenAIAgentsTraceProcessor {
       // Recursively process nested objects
       const result: any = {};
       for (const [key, value] of Object.entries(output)) {
-        result[key] = this.processOutputImages(value);
+        const processed = this.processOutputImages(value);
+        if (processed !== undefined) result[key] = processed;
       }
       return result;
     }
@@ -635,7 +665,9 @@ export class OpenAIAgentsTraceProcessor {
     const braintrustSpan = traceData.childSpans.get(span.spanId);
 
     if (braintrustSpan) {
-      const logData = this.extractLogData(span);
+      const logData = withCurrent(braintrustSpan, () =>
+        this.extractLogData(span),
+      );
       braintrustSpan.log({
         error: span.error,
         ...logData,

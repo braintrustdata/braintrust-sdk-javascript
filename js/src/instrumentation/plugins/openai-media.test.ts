@@ -176,7 +176,7 @@ it("does not read media upload values without attachment opt-in", async () => {
   expect(reads).toBe(0);
   expect(
     rows.find((row) => row.input?.content)?.input?.content?.[0]?.image_url?.url,
-  ).toBe("<omitted>");
+  ).toBeUndefined();
 });
 
 it("copies consumed audio before application mutations", async () => {

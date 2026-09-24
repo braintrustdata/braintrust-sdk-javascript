@@ -30,6 +30,8 @@ import {
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
+  isAutoCaptureAttachmentsEnabled,
+  omitMediaData,
 } from "../../wrappers/attachment-utils";
 import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logged-output";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
@@ -1570,7 +1572,9 @@ const processMessage = (message: any): any => {
   if (Array.isArray(message.content)) {
     return {
       ...message,
-      content: message.content.map(processContentPart),
+      content: message.content
+        .map(processContentPart)
+        .filter((part: unknown) => part !== undefined),
     };
   }
 
@@ -1586,14 +1590,18 @@ const processMessage = (message: any): any => {
 
 const processPromptContent = (prompt: any): any => {
   if (Array.isArray(prompt)) {
-    return prompt.map(processContentPart);
+    return prompt
+      .map(processContentPart)
+      .filter((part: unknown) => part !== undefined);
   }
 
   if (prompt.content) {
     if (Array.isArray(prompt.content)) {
       return {
         ...prompt,
-        content: prompt.content.map(processContentPart),
+        content: prompt.content
+          .map(processContentPart)
+          .filter((part: unknown) => part !== undefined),
       };
     } else if (typeof prompt.content === "object") {
       return {
@@ -1615,6 +1623,7 @@ const processContentPart = (part: any): any => {
         part.image,
         part.mimeType || part.mediaType,
       );
+      if (imageAttachment === undefined) return omitMediaData(part, "image");
       if (imageAttachment) {
         return {
           ...part,
@@ -1633,6 +1642,7 @@ const processContentPart = (part: any): any => {
         part.mimeType || part.mediaType,
         part.name || part.filename,
       );
+      if (fileAttachment === undefined) return omitMediaData(part, "data");
       if (fileAttachment) {
         return {
           ...part,
@@ -1644,6 +1654,11 @@ const processContentPart = (part: any): any => {
     if (part.type === "image_url" && part.image_url) {
       if (typeof part.image_url === "object" && part.image_url.url) {
         const imageAttachment = convertImageToAttachment(part.image_url.url);
+        if (imageAttachment === undefined)
+          return omitMediaData({
+            ...part,
+            image_url: omitMediaData(part.image_url, "url"),
+          });
         if (imageAttachment) {
           return {
             ...part,
@@ -1666,7 +1681,15 @@ const processContentPart = (part: any): any => {
 const convertImageToAttachment = (
   image: any,
   explicitMimeType?: string,
-): Attachment | null => {
+): Attachment | undefined | null => {
+  if (!isAutoCaptureAttachmentsEnabled()) {
+    return image instanceof Attachment
+      ? image
+      : image instanceof URL ||
+          (typeof image === "string" && /^https?:/.test(image))
+        ? null
+        : undefined;
+  }
   try {
     if (typeof image === "string" && image.startsWith("data:")) {
       const [mimeTypeSection, base64Data] = image.split(",");
@@ -1717,7 +1740,15 @@ const convertDataToAttachment = (
   data: any,
   mimeType: string,
   filename?: string,
-): Attachment | null => {
+): Attachment | undefined | null => {
+  if (!isAutoCaptureAttachmentsEnabled()) {
+    return data instanceof Attachment
+      ? data
+      : data instanceof URL ||
+          (typeof data === "string" && /^https?:/.test(data))
+        ? null
+        : undefined;
+  }
   if (!mimeType) return null;
 
   try {
@@ -4030,9 +4061,10 @@ export function processAISDKGenerateImageOutput(
     omit(summarized, denyOutputPaths),
   ) as Record<string, unknown>;
   if (generatedFiles.length > 0) {
-    loggedOutput.images = generatedFiles.map((file, index) =>
-      convertAISDKGeneratedFileToAttachment(file, index),
-    );
+    const images = generatedFiles
+      .map((file, index) => convertAISDKGeneratedFileToAttachment(file, index))
+      .filter((image) => image !== undefined);
+    if (images.length) loggedOutput.images = images;
   }
 
   return loggedOutput;
@@ -4045,6 +4077,8 @@ function convertAISDKGeneratedFileToAttachment(
   if (!file || typeof file !== "object") {
     return file;
   }
+
+  if (!isAutoCaptureAttachmentsEnabled()) return undefined;
 
   const generatedFile = file as AISDKGeneratedFile & Record<string, unknown>;
   const generatedMediaType = safeSerializableFieldRead(

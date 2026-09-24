@@ -112,53 +112,56 @@ async function normalizeBlocks(
   blocks: readonly HarnessContentBlock[],
   resolveImage: (
     ref: HarnessImageAttachmentRef,
-  ) => Promise<Attachment | undefined>,
+  ) => Promise<Attachment | null | undefined>,
 ): Promise<unknown> {
   if (blocks.length === 0) return "";
   if (blocks.every((block) => block.type === "text")) {
     return contentText(blocks);
   }
-  return Promise.all(
-    blocks.map(async (block) => {
-      switch (block.type) {
-        case "text":
-          return { type: "text", text: block.text ?? "" };
-        case "reasoning":
-          return { type: "reasoning", text: block.text ?? "" };
-        case "tool-call":
-          return {
-            type: "tool_call",
-            id: block.id,
-            name: block.name,
-            arguments: block.arguments,
-          };
-        case "tool-result":
-          return {
-            type: "tool_result",
-            tool_call_id: block.toolCallId,
-            content: await normalizeBlocks(block.content ?? [], resolveImage),
-            ...(block.isError ? { is_error: true } : {}),
-          };
-        case "image": {
-          const attachment = block.attachment
-            ? await resolveImage(block.attachment)
-            : undefined;
-          return attachment
-            ? { type: "image_url", image_url: { url: attachment } }
-            : { type: "image", attachment: block.attachment };
+  return (
+    await Promise.all(
+      blocks.map(async (block) => {
+        switch (block.type) {
+          case "text":
+            return { type: "text", text: block.text ?? "" };
+          case "reasoning":
+            return { type: "reasoning", text: block.text ?? "" };
+          case "tool-call":
+            return {
+              type: "tool_call",
+              id: block.id,
+              name: block.name,
+              arguments: block.arguments,
+            };
+          case "tool-result":
+            return {
+              type: "tool_result",
+              tool_call_id: block.toolCallId,
+              content: await normalizeBlocks(block.content ?? [], resolveImage),
+              ...(block.isError ? { is_error: true } : {}),
+            };
+          case "image": {
+            const attachment = block.attachment
+              ? await resolveImage(block.attachment)
+              : undefined;
+            if (attachment === null) return undefined;
+            return attachment
+              ? { type: "image_url", image_url: { url: attachment } }
+              : { type: "image", attachment: block.attachment };
+          }
+          default:
+            return { type: block.type };
         }
-        default:
-          return { type: block.type };
-      }
-    }),
-  );
+      }),
+    )
+  ).filter((block) => block !== undefined);
 }
 
 async function normalizeMessage(
   message: HarnessMessage,
   resolveImage: (
     ref: HarnessImageAttachmentRef,
-  ) => Promise<Attachment | undefined>,
+  ) => Promise<Attachment | null | undefined>,
 ): Promise<Record<string, unknown>> {
   const toolResult = message.content.find(
     (block) => block.type === "tool-result",
@@ -199,7 +202,7 @@ async function normalizeInput(
   options: HarnessGenerateOptions,
   resolveImage: (
     ref: HarnessImageAttachmentRef,
-  ) => Promise<Attachment | undefined>,
+  ) => Promise<Attachment | null | undefined>,
 ): Promise<unknown[]> {
   return [
     ...(options.system ? [{ role: "system", content: options.system }] : []),
@@ -393,7 +396,9 @@ export function apply(ctx: Context, config: Config = {}): void {
 
   const resolveImage = async (
     ref: HarnessImageAttachmentRef,
-  ): Promise<Attachment | undefined> => {
+  ): Promise<Attachment | null | undefined> => {
+    if (!logger.loggingState._internalCaptureAttachmentsEnabled(logger))
+      return null;
     const attachmentStore = (
       ctx as Context & { attachments?: HarnessAttachmentStore }
     ).attachments;

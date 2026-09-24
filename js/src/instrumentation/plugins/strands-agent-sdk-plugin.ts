@@ -15,7 +15,11 @@ import {
 import { LRUCache } from "../../lru-cache";
 import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
-import { convertDataToBlob } from "../../wrappers/attachment-utils";
+import {
+  convertDataToBlob,
+  isAutoCaptureAttachmentsEnabled,
+  omitMediaData,
+} from "../../wrappers/attachment-utils";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { strandsAgentSDKChannels } from "./strands-agent-sdk-channels";
 import type {
@@ -91,10 +95,13 @@ type ActiveChildParents = WeakMap<object, Set<Span>>;
 
 const MAX_STRANDS_STRING_ATTACHMENT_CACHE_ENTRIES = 32;
 
-type StrandsAttachmentCache = {
-  objects: WeakMap<object, Map<string, Attachment>>;
-  strings: LRUCache<string, Map<string, Attachment>>;
-};
+type StrandsAttachmentCache =
+  | { captureAttachments: false }
+  | {
+      captureAttachments: true;
+      objects: WeakMap<object, Map<string, Attachment>>;
+      strings: LRUCache<string, Map<string, Attachment>>;
+    };
 
 export class StrandsAgentSDKPlugin extends BasePlugin {
   private readonly activeChildParents: ActiveChildParents = new WeakMap();
@@ -246,7 +253,7 @@ function startAgentStream(
   const parentSpan = agent
     ? getOnlyChildParent(activeChildParents, agent)
     : undefined;
-  const attachmentCache = createStrandsAttachmentCache();
+  const attachmentCache = createStrandsAttachmentCache(parentSpan);
   const processedInput = processStrandsInputAttachments(input, attachmentCache);
   const span = parentSpan
     ? withCurrent(parentSpan, () =>
@@ -788,7 +795,8 @@ function finalizeAgentStream(
     ...(output !== undefined ? { output } : {}),
   });
   state.span.end();
-  state.attachmentCache.strings.clear();
+  if (state.attachmentCache.captureAttachments)
+    state.attachmentCache.strings.clear();
 }
 
 function finalizeMultiAgentStream(
@@ -1013,8 +1021,11 @@ const STRANDS_MEDIA_TYPES: Record<string, string> = {
   xml: "application/xml",
 };
 
-function createStrandsAttachmentCache(): StrandsAttachmentCache {
+function createStrandsAttachmentCache(parent?: Span): StrandsAttachmentCache {
+  if (!isAutoCaptureAttachmentsEnabled(parent))
+    return { captureAttachments: false };
   return {
+    captureAttachments: true,
     objects: new WeakMap(),
     strings: new LRUCache({
       max: MAX_STRANDS_STRING_ATTACHMENT_CACHE_ENTRIES,
@@ -1141,35 +1152,44 @@ function createStrandsMediaAttachment(
     return undefined;
   }
 
-  const contentType = STRANDS_MEDIA_TYPES[format.toLowerCase()];
-  if (!contentType) {
-    return undefined;
+  let attachment: Attachment | undefined;
+  if (cache.captureAttachments) {
+    const contentType = STRANDS_MEDIA_TYPES[format.toLowerCase()];
+    if (!contentType) {
+      return undefined;
+    }
+    const filename =
+      mediaKey === "document" &&
+      typeof media.name === "string" &&
+      media.name.length > 0
+        ? media.name
+        : `${mediaKey}.${format.toLowerCase()}`;
+    attachment = getOrCreateStrandsAttachment(
+      source.bytes,
+      filename,
+      contentType,
+      cache,
+    );
+    if (!attachment) {
+      return undefined;
+    }
   }
-  const filename =
-    mediaKey === "document" &&
-    typeof media.name === "string" &&
-    media.name.length > 0
-      ? media.name
-      : `${mediaKey}.${format.toLowerCase()}`;
-  const attachment = getOrCreateStrandsAttachment(
-    source.bytes,
-    filename,
-    contentType,
-    cache,
-  );
-  if (!attachment) {
-    return undefined;
-  }
-  const { type: _type, ...serializedMedia } = media;
-  const { type: _sourceType, ...serializedSource } = source;
+  const { type: _type, source: _source, ...serializedMedia } = media;
+  const serializedSource = cache.captureAttachments
+    ? omitMediaData(source, "type")
+    : omitMediaData(source, "type", "bytes");
 
   return {
     [mediaKey]: {
       ...serializedMedia,
-      source: {
-        ...serializedSource,
-        bytes: attachment,
-      },
+      ...(serializedSource || attachment
+        ? {
+            source: {
+              ...serializedSource,
+              ...(attachment ? { bytes: attachment } : {}),
+            },
+          }
+        : {}),
     },
   };
 }
@@ -1180,6 +1200,7 @@ function getOrCreateStrandsAttachment(
   contentType: string,
   cache: StrandsAttachmentCache,
 ): Attachment | undefined {
+  if (!cache.captureAttachments) return undefined;
   const key = `${contentType}\0${filename}`;
   const attachments =
     typeof data === "string"

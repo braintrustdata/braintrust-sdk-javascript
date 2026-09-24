@@ -15,6 +15,9 @@ const telemetryMocks = vi.hoisted(() => ({
 vi.mock("../../isomorph", () => ({
   default: {
     newTracingChannel: vi.fn(),
+    getEnv: vi.fn((name: string) =>
+      name === "BRAINTRUST_CAPTURE_ATTACHMENTS" ? "true" : undefined,
+    ),
   },
 }));
 
