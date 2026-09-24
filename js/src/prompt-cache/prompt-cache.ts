@@ -1,4 +1,8 @@
-import { Prompt } from "../logger";
+import {
+  Prompt,
+  serializePromptForCache,
+  type SerializedPrompt,
+} from "../logger";
 import { LRUCache } from "../lru-cache";
 import { DiskCache } from "./disk-cache";
 
@@ -40,7 +44,7 @@ export type PromptMemoryCacheEntry = {
 };
 
 export type PromptDiskCacheEntry = {
-  value: ReturnType<Prompt["_internalSerializeForCache"]>;
+  value: SerializedPrompt;
   resolvedOrgIdentity?: string;
 };
 
@@ -168,7 +172,7 @@ export class PromptCache {
     this.memoryCache?.set(cacheKey, memoryEntry);
     if (this.diskCache) {
       await this.diskCache.set(cacheKey, {
-        value: value._internalSerializeForCache(),
+        value: serializePromptForCache(value),
         resolvedOrgIdentity: this.expectedResolvedOrgIdentity,
       });
     }

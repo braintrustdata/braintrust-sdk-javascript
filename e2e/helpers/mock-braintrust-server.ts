@@ -6,6 +6,7 @@ import type {
   ServerResponse,
 } from "node:http";
 import type { AddressInfo } from "node:net";
+import { setTimeout as sleep } from "node:timers/promises";
 import type { ProdForwarding } from "./prod-forwarding";
 
 export type JsonValue =
@@ -472,29 +473,41 @@ export async function startMockBraintrustServer(
     }
     headers.set("authorization", `Bearer ${prodForwarding.apiKey}`);
 
-    const response = await fetch(url, {
-      body:
-        prodRequest.method === "GET" || prodRequest.method === "HEAD"
-          ? undefined
-          : prodRequest.rawBody,
-      headers,
-      method: prodRequest.method,
-    });
+    // Log rows have stable IDs, so retrying an upload does not duplicate spans.
+    // Keep registration and other requests single-attempt.
+    const maxAttempts = prodRequest.path === "/logs3" ? 4 : 1;
+    for (let attempt = 1; ; attempt++) {
+      const response = await fetch(url, {
+        body:
+          prodRequest.method === "GET" || prodRequest.method === "HEAD"
+            ? undefined
+            : prodRequest.rawBody,
+        headers,
+        method: prodRequest.method,
+      });
 
-    if (!response.ok) {
-      const responseText = await response.text().catch(() => "");
-      throw new Error(
-        `prodForwarding failed for ${capturedRequest.method} ${capturedRequest.path}: ${response.status} ${response.statusText}${
-          responseText ? `: ${responseText.slice(0, 500)}` : ""
-        }`,
-      );
+      if (!response.ok) {
+        const responseText = await response.text().catch(() => "");
+        if (
+          attempt < maxAttempts &&
+          [502, 503, 504].includes(response.status)
+        ) {
+          await sleep(500 * 2 ** (attempt - 1));
+          continue;
+        }
+        throw new Error(
+          `prodForwarding failed for ${capturedRequest.method} ${capturedRequest.path}: ${response.status} ${response.statusText}${
+            responseText ? `: ${responseText.slice(0, 500)}` : ""
+          }`,
+        );
+      }
+
+      if (options.drainResponseBody) {
+        await response.arrayBuffer();
+      }
+
+      return response;
     }
-
-    if (options.drainResponseBody) {
-      await response.arrayBuffer();
-    }
-
-    return response;
   }
 
   const server = createServer((req, res) => {

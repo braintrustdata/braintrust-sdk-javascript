@@ -1,7 +1,4 @@
-import type {
-  AsyncScoringControlType as AsyncScoringControl,
-  ObjectReferenceType,
-} from "./generated_plain_types";
+import type { AsyncScoringControl, ObjectReference } from "../src/sdk-types";
 import {
   Source,
   ASYNC_SCORING_CONTROL_FIELD,
@@ -23,7 +20,7 @@ export type OtherExperimentLogFields = {
   classifications?: Record<string, { id: string; label?: string }[]>;
   metadata: Record<string, unknown>;
   metrics: Record<string, unknown>;
-  origin: ObjectReferenceType;
+  origin: ObjectReference;
   span_attributes: Record<string, unknown>;
   [ASYNC_SCORING_CONTROL_FIELD]: AsyncScoringControl;
   [MERGE_PATHS_FIELD]: string[][];
@@ -101,7 +98,7 @@ export type DatasetEvent = {
   tags?: string[];
   metadata?: unknown;
   created?: string;
-  origin?: ObjectReferenceType;
+  origin?: ObjectReference;
   id: string;
   dataset_id: string;
 } & ({ expected?: unknown } | { output?: unknown });

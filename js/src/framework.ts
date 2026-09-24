@@ -7,13 +7,13 @@ import {
   SpanTypeAttribute,
   spanObjectTypeV3ToTypedString,
 } from "../util/index";
-import { ObjectReference as ObjectReferenceSchema } from "./generated_types";
+import { ObjectReference as ObjectReferenceSchema } from "./sdk-schemas";
 import type {
-  GitMetadataSettingsType as GitMetadataSettings,
-  ObjectReferenceType as ObjectReference,
-  RepoInfoType as RepoInfo,
-  SSEProgressEventDataType as SSEProgressEventData,
-} from "./generated_plain_types";
+  GitMetadataSettings,
+  ObjectReference,
+  RepoInfo,
+  SSEProgressEventData,
+} from "./sdk-types";
 import { queue } from "async";
 
 import iso from "./isomorph";

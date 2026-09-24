@@ -2,12 +2,12 @@ import {
   CallEvent as callEventSchema,
   SSEConsoleEventData as sseConsoleEventDataSchema,
   SSEProgressEventData as sseProgressEventDataSchema,
-} from "../generated_types";
+} from "../sdk-schemas";
 import type {
-  CallEventType as CallEvent,
-  SSEConsoleEventDataType,
-  SSEProgressEventDataType,
-} from "../generated_plain_types";
+  CallEvent,
+  SSEConsoleEventData,
+  SSEProgressEventData,
+} from "../sdk-types";
 import {
   createParser,
   EventSourceParser,
@@ -25,8 +25,8 @@ export type BraintrustStreamChunk =
   | { type: "reasoning_delta"; data: string }
   | { type: "json_delta"; data: string }
   | { type: "error"; data: string }
-  | { type: "console"; data: SSEConsoleEventDataType }
-  | { type: "progress"; data: SSEProgressEventDataType }
+  | { type: "console"; data: SSEConsoleEventData }
+  | { type: "progress"; data: SSEProgressEventData }
   | { type: "start"; data: string }
   | { type: "done"; data: string };
 

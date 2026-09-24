@@ -76,27 +76,25 @@ import {
   DatasetSnapshot as datasetSnapshotSchema,
   PromptData as promptDataSchema,
   Prompt as promptSchema,
-} from "./generated_types";
+} from "./sdk-schemas";
 import type {
-  AnyModelParamsType as AnyModelParam,
-  AttachmentReferenceType as AttachmentReference,
-  BraintrustAttachmentReferenceType as BraintrustAttachmentReference,
-  ChatCompletionToolType as ChatCompletionTool,
-  ExternalAttachmentReferenceType as ExternalAttachmentReference,
-  ModelParamsType as ModelParams,
-  AttachmentStatusType as AttachmentStatus,
-  GitMetadataSettingsType as GitMetadataSettings,
-  ChatCompletionMessageParamType as Message,
-  ChatCompletionOpenAIMessageParamType as OpenAIMessage,
-  DatasetSnapshotType as DatasetSnapshot,
-  PromptDataType as PromptData,
-  PromptType as PromptRow,
-  PromptSessionEventType as PromptSessionEvent,
-  RepoInfoType as RepoInfo,
-  ObjectReferenceType as ObjectReference,
-  PromptBlockDataType as PromptBlockData,
-  ResponseFormatJsonSchemaType as ResponseFormatJsonSchema,
-} from "./generated_plain_types";
+  AttachmentReference,
+  BraintrustAttachmentReference,
+  ChatCompletionTool,
+  ExternalAttachmentReference,
+  ModelParams,
+  AttachmentStatus,
+  GitMetadataSettings,
+  ChatCompletionMessageParam as Message,
+  ChatCompletionOpenAIMessageParam as OpenAIMessage,
+  DatasetSnapshot,
+  PromptData,
+  FunctionTypeEnum,
+  PromptSessionEvent,
+  RepoInfo,
+  ObjectReference,
+  PromptBlockData,
+} from "./sdk-types";
 
 const BRAINTRUST_ATTACHMENT =
   BraintrustAttachmentReferenceSchema.shape.type.value;
@@ -8797,37 +8795,52 @@ export class Dataset extends ObjectFetcher<DatasetRecord> {
 }
 
 type CompiledPromptResponseFormat =
-  Exclude<AnyModelParam["response_format"], null> extends infer ResponseFormat
-    ? ResponseFormat extends {
-        type: "json_schema";
-        json_schema: infer JsonSchema;
-      }
-      ? Omit<ResponseFormat, "json_schema"> & {
-          json_schema: Omit<
-            Extract<JsonSchema, ResponseFormatJsonSchema>,
-            "schema"
-          > & {
-            schema?: Record<string, unknown>;
-          };
-        }
-      : ResponseFormat
-    : never;
+  | { type: "json_object" }
+  | { type: "text" }
+  | {
+      type: "json_schema";
+      json_schema: {
+        name: string;
+        description?: string;
+        schema?: Record<string, unknown>;
+        strict?: boolean | null;
+      };
+    };
 
-// "none" is not assignable to older openai clients so we gotta exclude it
-type CompiledPromptReasoningEffort = Exclude<
-  AnyModelParam["reasoning_effort"],
-  "none"
->;
-
-export type CompiledPromptParams = Omit<
-  NonNullable<PromptData["options"]>["params"],
-  "use_cache" | "response_format" | "reasoning_effort"
-> &
-  Omit<AnyModelParam, "use_cache" | "response_format" | "reasoning_effort"> & {
-    reasoning_effort?: CompiledPromptReasoningEffort;
-    response_format?: CompiledPromptResponseFormat;
-    model: NonNullable<NonNullable<PromptData["options"]>["model"]>;
-  };
+// Keep the compiled API independent of the backend's provider parameter union.
+// "none" is excluded from reasoning_effort for compatibility with older OpenAI clients.
+export interface CompiledPromptParams {
+  model: string;
+  max_tokens: number;
+  temperature?: number;
+  top_p?: number;
+  max_completion_tokens?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
+  response_format?: CompiledPromptResponseFormat;
+  tool_choice?:
+    | "auto"
+    | "none"
+    | "required"
+    | {
+        type: "function";
+        function: { name: string };
+      };
+  function_call?: "auto" | "none" | { name: string };
+  n?: number;
+  stop?: string[];
+  reasoning_effort?: "minimal" | "low" | "medium" | "high";
+  verbosity?: "low" | "medium" | "high";
+  top_k?: number;
+  stop_sequences?: string[];
+  reasoning_enabled?: boolean;
+  reasoning_budget?: number;
+  /** Legacy parameter; prefer max_tokens. */
+  max_tokens_to_sample?: number;
+  maxOutputTokens?: number;
+  topP?: number;
+  topK?: number;
+}
 
 export type ChatPrompt = {
   messages: OpenAIMessage[];
@@ -8858,9 +8871,13 @@ export type CompiledPrompt<Flavor extends "chat" | "completion"> =
         : // eslint-disable-next-line @typescript-eslint/no-empty-object-type
           {});
 
-export type DefaultPromptArgs = Partial<
-  CompiledPromptParams & AnyModelParam & ChatPrompt & CompletionPrompt
->;
+export interface DefaultPromptArgs
+  extends
+    Partial<CompiledPromptParams>,
+    Partial<ChatPrompt>,
+    Partial<CompletionPrompt> {
+  use_cache?: boolean;
+}
 
 function isAttachmentObject(value: unknown): boolean {
   return (
@@ -9024,17 +9041,26 @@ export function renderMessageImpl<T extends Message>(
   };
 }
 
+interface PromptMetadata {
+  name: string;
+  slug: string;
+  project_id?: string;
+  description?: string | null;
+  created?: string | null;
+  prompt_data?: PromptData | null;
+  tags?: string[] | null;
+  // Preserve the generated prompt row's permissive metadata contract.
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  metadata?: {} | null;
+  function_type?: FunctionTypeEnum | null;
+}
+
 export type PromptRowWithId<
   HasId extends boolean = true,
   HasVersion extends boolean = true,
-> = Omit<PromptRow, "log_id" | "org_id" | "project_id" | "id" | "_xact_id"> &
-  Partial<Pick<PromptRow, "project_id">> &
-  (HasId extends true
-    ? Pick<PromptRow, "id">
-    : Partial<Pick<PromptRow, "id">>) &
-  (HasVersion extends true
-    ? Pick<PromptRow, "_xact_id">
-    : Partial<Pick<PromptRow, "_xact_id">>);
+> = PromptMetadata &
+  (HasId extends true ? { id: string } : { id?: string }) &
+  (HasVersion extends true ? { _xact_id: string } : { _xact_id?: string });
 
 export function deserializePlainStringAsJSON(s: string) {
   if (s.trim() === "") {
@@ -9120,6 +9146,16 @@ export function renderPromptParams(
   }
   return params;
 }
+
+export interface SerializedPrompt {
+  metadata: PromptRowWithId | PromptSessionEvent;
+  defaults: DefaultPromptArgs;
+  noTrace: boolean;
+}
+
+// Initialized by the class so cache serialization can access private fields
+// without exposing a serialization method on the public Prompt API.
+export let serializePromptForCache: (prompt: Prompt) => SerializedPrompt;
 
 export class Prompt<
   HasId extends boolean = true,
@@ -9457,13 +9493,12 @@ export class Prompt<
     );
   }
 
-  /** @internal */
-  public _internalSerializeForCache() {
-    return {
-      metadata: this.metadata,
-      defaults: this.defaults,
-      noTrace: this.noTrace,
-    };
+  static {
+    serializePromptForCache = (prompt) => ({
+      metadata: prompt.metadata,
+      defaults: prompt.defaults,
+      noTrace: prompt.noTrace,
+    });
   }
 
   public static fromPromptData(
@@ -9481,6 +9516,14 @@ export class Prompt<
     );
   }
 }
+
+export interface SerializedParameters {
+  metadata: ParametersRow;
+}
+
+export let serializeParametersForCache: (
+  parameters: RemoteEvalParameters,
+) => SerializedParameters;
 
 export class RemoteEvalParameters<
   HasId extends boolean = true,
@@ -9528,9 +9571,10 @@ export class RemoteEvalParameters<
     return (this.metadata.function_data.data ?? {}) as T;
   }
 
-  /** @internal */
-  public _internalSerializeForCache() {
-    return { metadata: this.metadata };
+  static {
+    serializeParametersForCache = (parameters) => ({
+      metadata: parameters.metadata,
+    });
   }
 
   public validate(data: unknown): boolean {

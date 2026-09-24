@@ -1,10 +1,10 @@
-import { FunctionId as functionIdSchema } from "../generated_types";
+import { FunctionId as functionIdSchema } from "../sdk-schemas";
 import type {
-  InvokeFunctionType as InvokeFunctionRequest,
-  ChatCompletionMessageParamType as Message,
-  StreamingModeType as StreamingMode,
-  FunctionTypeEnumType as FunctionType,
-} from "../generated_plain_types";
+  InvokeFunction as InvokeFunctionRequest,
+  ChatCompletionMessageParam as Message,
+  StreamingMode,
+  FunctionTypeEnum as FunctionType,
+} from "../sdk-types";
 import {
   _internalGetGlobalState,
   BraintrustState,

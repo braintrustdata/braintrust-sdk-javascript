@@ -1,6 +1,6 @@
 import { z } from "zod/v3";
 import { slugify } from "../util/string_util";
-import type { IfExistsType } from "./generated_plain_types";
+import type { IfExists } from "./sdk-types";
 import { type BraintrustState, _internalGetGlobalState } from "./logger";
 
 /**
@@ -32,7 +32,7 @@ interface RegisterSandboxOptions {
   /** Optional metadata. */
   metadata?: Record<string, unknown>;
   /** What to do if function already exists. Defaults to "replace". */
-  ifExists?: IfExistsType;
+  ifExists?: IfExists;
   /** Braintrust API key. Uses BRAINTRUST_API_KEY env var if not provided. */
   apiKey?: string;
   /** Braintrust app URL. Uses default if not provided. */
