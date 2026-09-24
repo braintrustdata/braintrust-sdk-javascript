@@ -151,6 +151,7 @@ class BraintrustActivityInterceptor implements ActivityInboundCallsInterceptor {
     }
 
     const span = braintrust.startSpan({
+      [Symbol.for("braintrust.spanInstrumentationName")]: "temporal",
       name: `temporal.activity.${info.activityType}`,
       spanAttributes: { type: "task" },
       parent,
