@@ -34,25 +34,25 @@ Eval("Say Hi Bot", {
 });
 ```
 
-Run it:
+Install the `bt` CLI separately using the standalone installation instructions in the [CLI quickstart](https://www.braintrust.dev/docs/reference/cli/quickstart), then run it:
 
 ```bash
-BRAINTRUST_API_KEY=<YOUR_API_KEY> npx bt eval tutorial.eval.ts
+BRAINTRUST_API_KEY=<YOUR_API_KEY> bt eval tutorial.eval.ts
 ```
 
 ## Packages
 
 | Package                | Purpose                                                                         | npm                                                                                                                                           | Docs                                                                     |
 | ---------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `braintrust`           | Core JavaScript/TypeScript SDK for logging, tracing, evals, and CLI.            | [![npm: braintrust](https://img.shields.io/npm/v/braintrust.svg)](https://www.npmjs.com/package/braintrust)                                   | [js/README.md](js/README.md)                                             |
+| `braintrust`           | Core JavaScript/TypeScript SDK for logging, tracing, and evals.                 | [![npm: braintrust](https://img.shields.io/npm/v/braintrust.svg)](https://www.npmjs.com/package/braintrust)                                   | [js/README.md](js/README.md)                                             |
 | `@braintrust/browser`  | Browser-focused SDK integration with AsyncLocalStorage polyfill support.        | [![npm: @braintrust/browser](https://img.shields.io/npm/v/%40braintrust%2Fbrowser.svg)](https://www.npmjs.com/package/@braintrust/browser)    | [integrations/browser-js/README.md](integrations/browser-js/README.md)   |
 | `@braintrust/otel`     | OpenTelemetry span processor and compatibility helpers for Braintrust tracing.  | [![npm: @braintrust/otel](https://img.shields.io/npm/v/%40braintrust%2Fotel.svg)](https://www.npmjs.com/package/@braintrust/otel)             | [integrations/otel-js/README.md](integrations/otel-js/README.md)         |
 | `@braintrust/temporal` | Temporal client/worker plugin and workflow interceptors for Braintrust tracing. | [![npm: @braintrust/temporal](https://img.shields.io/npm/v/%40braintrust%2Ftemporal.svg)](https://www.npmjs.com/package/@braintrust/temporal) | [integrations/temporal-js/README.md](integrations/temporal-js/README.md) |
 
 ## CLI `bt`
 
-The `bt` cli is installed alongside `braintrust`, use it with `npx bt` or `pnpm exec bt`.
-See the [documentation](https://www.braintrust.dev/docs/reference/cli/quickstart).
+The `bt` CLI is installed separately from `braintrust`.
+See the standalone installation instructions in the [CLI quickstart](https://www.braintrust.dev/docs/reference/cli/quickstart).
 
 ## Documentation
 

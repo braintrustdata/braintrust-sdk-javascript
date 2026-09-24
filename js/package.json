@@ -18,9 +18,6 @@
     "./dist/index.mjs": "./dist/browser.mjs",
     "./dist/index.d.mts": "./dist/browser.d.mts"
   },
-  "bin": {
-    "bt": "./bin/bt"
-  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -111,14 +108,10 @@
   },
   "files": [
     "dist/**/*",
-    "bin/bt",
-    "scripts/bt-helper.js",
-    "scripts/install.js",
     "NOTICE",
     "licenses/**/*"
   ],
   "scripts": {
-    "postinstall": "node ./scripts/install.js",
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" tsup",
     "check:typings": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "watch": "tsup --watch",
@@ -200,15 +193,6 @@
   },
   "peerDependencies": {
     "zod": "^3.25.34 || ^4.0"
-  },
-  "optionalDependencies": {
-    "@braintrust/bt-darwin-arm64": "0.12.0",
-    "@braintrust/bt-darwin-x64": "0.12.0",
-    "@braintrust/bt-linux-arm64": "0.12.0",
-    "@braintrust/bt-linux-x64": "0.12.0",
-    "@braintrust/bt-linux-x64-musl": "0.12.0",
-    "@braintrust/bt-win32-arm64": "0.12.0",
-    "@braintrust/bt-win32-x64": "0.12.0"
   },
   "publishConfig": {
     "access": "public",
