@@ -4,6 +4,9 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("../../isomorph", () => ({
   default: {
     newTracingChannel: vi.fn(),
+    getEnv: vi.fn((name: string) =>
+      name === "BRAINTRUST_CAPTURE_ATTACHMENTS" ? "true" : undefined,
+    ),
   },
 }));
 
@@ -22,6 +25,7 @@ const aggregateAnthropicStreamChunksForTest = (chunks: unknown[]) =>
 
 // Mock startSpan from logger
 vi.mock("../../logger", () => ({
+  withCurrent: (_span: unknown, callback: () => unknown) => callback(),
   startSpan: vi.fn(() => ({
     log: vi.fn(),
     end: vi.fn(),

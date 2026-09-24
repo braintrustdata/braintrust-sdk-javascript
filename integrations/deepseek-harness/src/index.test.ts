@@ -45,6 +45,7 @@ const mock = vi.hoisted(() => {
   }
 
   const logger = {
+    loggingState: { _internalCaptureAttachmentsEnabled: vi.fn(() => true) },
     startSpan: (args: Record<PropertyKey, unknown>) => new MockSpan(args),
     flush: vi.fn(async () => undefined),
   };
@@ -61,6 +62,9 @@ const mock = vi.hoisted(() => {
       spans.length = 0;
       initLogger.mockClear();
       logger.flush.mockClear();
+      logger.loggingState._internalCaptureAttachmentsEnabled.mockReturnValue(
+        true,
+      );
     },
     spans,
   };
@@ -228,88 +232,105 @@ describe("DeepSeek Harness plugin", () => {
     }
   });
 
-  test("converts Harness image references to Braintrust attachments", async () => {
-    const harness = createContext();
-    const currentSession = session();
-    const image = {
-      attachmentId: "image-1",
-      mediaType: "image/png",
-      bytes: 3,
-      width: 1,
-      height: 1,
-      name: "diagram.png",
-    };
-    const message = {
-      role: "user",
-      content: [
-        { type: "text", text: "describe this" },
-        { type: "image", attachment: image },
-      ],
-      source: { kind: "user" },
-    };
+  test.each([true, false])(
+    "processes Harness images with capture=%s",
+    async (captureAttachments) => {
+      mock.logger.loggingState._internalCaptureAttachmentsEnabled.mockReturnValue(
+        captureAttachments,
+      );
+      const harness = createContext();
+      const currentSession = session();
+      const image = {
+        attachmentId: "image-1",
+        mediaType: "image/png",
+        bytes: 3,
+        width: 1,
+        height: 1,
+        name: "diagram.png",
+      };
+      const message = {
+        role: "user",
+        content: [
+          { type: "text", text: "describe this" },
+          { type: "image", attachment: image },
+        ],
+        source: { kind: "user" },
+      };
 
-    harness.listener("session/event")(currentSession, {
-      type: "turn/start",
-      data: { turn: 1 },
-    });
-    harness.listener("session/event")(currentSession, {
-      type: "user/message",
-      data: message,
-    });
-    await consume(
-      harness.listener("llm/stream")(
-        {
-          provider: "replay",
-          model: "replay-model",
-          messages: [message],
-          sessionId: currentSession.id,
-        },
-        () =>
-          (async function* () {
-            yield { type: "finish", reason: { kind: "stop" } };
-          })(),
-      ),
-    );
-    await harness.listener("session/flush")(currentSession);
+      harness.listener("session/event")(currentSession, {
+        type: "turn/start",
+        data: { turn: 1 },
+      });
+      harness.listener("session/event")(currentSession, {
+        type: "user/message",
+        data: message,
+      });
+      await consume(
+        harness.listener("llm/stream")(
+          {
+            provider: "replay",
+            model: "replay-model",
+            messages: [message],
+            sessionId: currentSession.id,
+          },
+          () =>
+            (async function* () {
+              yield { type: "finish", reason: { kind: "stop" } };
+            })(),
+        ),
+      );
+      await harness.listener("session/flush")(currentSession);
 
-    expect(harness.readImage).toHaveBeenCalledOnce();
-    expect(harness.readImage).toHaveBeenCalledWith(image);
-    expect(mock.attachments).toHaveLength(1);
-    expect(mock.attachments[0]?.params).toMatchObject({
-      filename: "diagram.png",
-      contentType: "image/png",
-    });
-    expect(new Uint8Array(mock.attachments[0]?.params.data ?? [])).toEqual(
-      new Uint8Array([1, 2, 3]),
-    );
+      if (!captureAttachments) {
+        expect(harness.readImage).not.toHaveBeenCalled();
+        expect(mock.attachments).toHaveLength(0);
+        return;
+      }
+      expect(harness.readImage).toHaveBeenCalledOnce();
+      expect(harness.readImage).toHaveBeenCalledWith(image);
+      expect(mock.attachments).toHaveLength(1);
+      expect(mock.attachments[0]?.params).toMatchObject({
+        filename: "diagram.png",
+        contentType: "image/png",
+      });
+      expect(new Uint8Array(mock.attachments[0]?.params.data ?? [])).toEqual(
+        new Uint8Array([1, 2, 3]),
+      );
 
-    const expectedImagePart = {
-      type: "image_url",
-      image_url: { url: mock.attachments[0] },
-    };
-    const turn = mock.spans.find(
-      (span) => span.args.name === "deepseek_harness.turn",
-    );
-    const model = mock.spans.find(
-      (span) => span.args.name === "deepseek_harness.step",
-    );
-    expect(turn?.logs).toContainEqual({
-      input: [
-        {
-          role: "user",
-          content: [{ type: "text", text: "describe this" }, expectedImagePart],
-        },
-      ],
-    });
-    expect(model?.logs).toContainEqual({
-      input: [
-        {
-          role: "user",
-          content: [{ type: "text", text: "describe this" }, expectedImagePart],
-        },
-      ],
-    });
-  });
+      const expectedImagePart = {
+        type: "image_url",
+        image_url: { url: mock.attachments[0] },
+      };
+      const turn = mock.spans.find(
+        (span) => span.args.name === "deepseek_harness.turn",
+      );
+      const model = mock.spans.find(
+        (span) => span.args.name === "deepseek_harness.step",
+      );
+      expect(turn?.logs).toContainEqual({
+        input: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "describe this" },
+              expectedImagePart,
+            ],
+          },
+        ],
+      });
+      expect(model?.logs).toContainEqual({
+        input: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "describe this" },
+              expectedImagePart,
+            ],
+          },
+        ],
+      });
+    },
+  );
 
   test("preserves Harness image references when attachment conversion fails", async () => {
     const harness = createContext();

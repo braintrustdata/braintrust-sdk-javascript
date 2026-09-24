@@ -12,7 +12,10 @@ import type {
   ElevenLabsTranscription,
   ElevenLabsTranscriptionRequest,
 } from "../../vendor-sdk-types/elevenlabs";
-import { getExtensionFromMediaType } from "../../wrappers/attachment-utils";
+import {
+  getExtensionFromMediaType,
+  isAutoCaptureAttachmentsEnabled,
+} from "../../wrappers/attachment-utils";
 import {
   isAutoInstrumentationSuppressed,
   runWithAutoInstrumentationSuppressed,
@@ -84,8 +87,10 @@ export class ElevenLabsPlugin extends BasePlugin {
             file instanceof Blob
               ? file.type || "application/octet-stream"
               : "application/octet-stream";
-          const blob =
-            file instanceof Blob
+          const captureAttachments = isAutoCaptureAttachmentsEnabled();
+          const blob = !captureAttachments
+            ? undefined
+            : file instanceof Blob
               ? file
               : file instanceof Uint8Array
                 ? new Blob([new Uint8Array(file)], { type: contentType })
@@ -135,7 +140,8 @@ export class ElevenLabsPlugin extends BasePlugin {
         },
         ([request], span) => {
           const file = request.file;
-          if (!isAsyncIterable(file)) return;
+          if (!isAutoCaptureAttachmentsEnabled(span) || !isAsyncIterable(file))
+            return;
           const chunks: Uint8Array[] = [];
           const filename =
             isObject(file) && typeof file.path === "string"
@@ -302,31 +308,8 @@ function captureSpeech(
   started: number,
   headers?: Headers,
 ): void {
-  const format = request.outputFormat ?? "mp3_44100_128";
-  const formatType = format.startsWith("mp3_")
-    ? "audio/mpeg"
-    : format.startsWith("pcm_")
-      ? "audio/pcm"
-      : format.startsWith("opus_")
-        ? "audio/ogg"
-        : format.startsWith("ulaw_")
-          ? "audio/basic"
-          : format.startsWith("alaw_")
-            ? "audio/x-alaw"
-            : undefined;
-  const headerType = headers?.get("content-type")?.split(";")[0];
-  const contentType = headerType?.startsWith("audio/")
-    ? headerType
-    : formatType;
-  const disposition = headers?.get("content-disposition");
-  const headerFilename = disposition?.match(
-    /filename="([^"]+)"|filename=([^;]+)/i,
-  );
-  const filename =
-    headerFilename?.[1] ??
-    headerFilename?.[2]?.trim() ??
-    `speech.${contentType ? getExtensionFromMediaType(contentType) : "bin"}`;
-  const chunks: Uint8Array[] = [];
+  const captureAttachments = isAutoCaptureAttachmentsEnabled(span);
+  const chunks: Uint8Array[] | undefined = captureAttachments ? [] : undefined;
   const alignments: unknown[] = [];
   let bytes = 0;
   let first = true;
@@ -339,7 +322,7 @@ function captureSpeech(
       });
     }
     first = false;
-    chunks.push(new Uint8Array(chunk));
+    if (chunks) chunks.push(new Uint8Array(chunk));
     bytes += chunk.byteLength;
   };
   const complete = () => {
@@ -347,25 +330,51 @@ function captureSpeech(
     stopped = true;
     try {
       const content = [];
-      if (contentType && bytes) {
-        const data = new Uint8Array(bytes);
-        let offset = 0;
-        for (const chunk of chunks) {
-          data.set(chunk, offset);
-          offset += chunk.length;
-        }
-        content.push({
-          type: "file",
-          file: {
-            filename,
-            byte_size: bytes,
-            file_data: new Attachment({
-              data: new Blob([data], { type: contentType }),
+      if (chunks && bytes) {
+        const format = request.outputFormat ?? "mp3_44100_128";
+        const formatType = format.startsWith("mp3_")
+          ? "audio/mpeg"
+          : format.startsWith("pcm_")
+            ? "audio/pcm"
+            : format.startsWith("opus_")
+              ? "audio/ogg"
+              : format.startsWith("ulaw_")
+                ? "audio/basic"
+                : format.startsWith("alaw_")
+                  ? "audio/x-alaw"
+                  : undefined;
+        const headerType = headers?.get("content-type")?.split(";")[0];
+        const contentType = headerType?.startsWith("audio/")
+          ? headerType
+          : formatType;
+        const disposition = headers?.get("content-disposition");
+        const headerFilename = disposition?.match(
+          /filename="([^"]+)"|filename=([^;]+)/i,
+        );
+        const filename =
+          headerFilename?.[1] ??
+          headerFilename?.[2]?.trim() ??
+          `speech.${contentType ? getExtensionFromMediaType(contentType) : "bin"}`;
+        if (contentType) {
+          const data = new Uint8Array(bytes);
+          let offset = 0;
+          for (const chunk of chunks) {
+            data.set(chunk, offset);
+            offset += chunk.length;
+          }
+          content.push({
+            type: "file",
+            file: {
               filename,
-              contentType,
-            }),
-          },
-        });
+              byte_size: bytes,
+              file_data: new Attachment({
+                data: new Blob([data], { type: contentType }),
+                filename,
+                contentType,
+              }),
+            },
+          });
+        }
       }
       span.log({
         output: {
@@ -374,18 +383,26 @@ function captureSpeech(
         },
       });
     } finally {
-      chunks.length = 0;
+      if (chunks) chunks.length = 0;
       finish();
     }
   };
   const cancel: Finish = (error) => {
     stopped = true;
-    chunks.length = 0;
+    if (chunks) chunks.length = 0;
     finish(error);
   };
   const timestampChunk = (chunk: ElevenLabsTimestampAudio) => {
-    const binary = atob(chunk.audioBase64);
-    observe(Uint8Array.from(binary, (character) => character.charCodeAt(0)));
+    if (captureAttachments) {
+      const binary = atob(chunk.audioBase64);
+      observe(Uint8Array.from(binary, (character) => character.charCodeAt(0)));
+    } else if (first && chunk.audioBase64) {
+      first = false;
+      if (method.startsWith("stream"))
+        span.log({
+          metrics: { time_to_first_token: Date.now() / 1000 - started },
+        });
+    }
     if (chunk.alignment || chunk.normalizedAlignment)
       alignments.push({
         alignment: chunk.alignment,

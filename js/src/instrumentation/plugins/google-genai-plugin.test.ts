@@ -19,6 +19,9 @@ vi.mock("../../isomorph", () => ({
       };
     }),
     newTracingChannel: vi.fn(),
+    getEnv: vi.fn((name: string) =>
+      name === "BRAINTRUST_CAPTURE_ATTACHMENTS" ? "true" : undefined,
+    ),
   },
 }));
 
@@ -31,6 +34,8 @@ const mockStartSpan = vi.mocked(startSpan);
 
 // Mock logger
 vi.mock("../../logger", () => ({
+  BaseAttachment: class {},
+  CAPTURE_ATTACHMENTS: Symbol.for("braintrust.captureAttachments"),
   startSpan: vi.fn(() => ({
     log: vi.fn(),
     end: vi.fn(),

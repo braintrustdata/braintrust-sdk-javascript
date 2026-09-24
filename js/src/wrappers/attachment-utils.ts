@@ -1,13 +1,41 @@
-import { Attachment } from "../logger";
 import iso from "../isomorph";
+import {
+  Attachment,
+  BaseAttachment,
+  _internalGetGlobalState,
+  getSpanParentObject,
+} from "../logger";
 
-const CAPTURE_ATTACHMENTS_ENV_VAR = "BRAINTRUST_CAPTURE_ATTACHMENTS";
+export function isAutoCaptureAttachmentsEnabled(parent?: object): boolean {
+  const state = _internalGetGlobalState();
+  return state
+    ? state._internalCaptureAttachmentsEnabled(parent ?? getSpanParentObject())
+    : ["1", "true"].includes(
+        iso.getEnv("BRAINTRUST_CAPTURE_ATTACHMENTS")?.trim().toLowerCase() ??
+          "",
+      );
+}
 
-export function isAutoCaptureAttachmentsEnabled(): boolean {
-  const value = iso.getEnv(CAPTURE_ATTACHMENTS_ENV_VAR);
-  return (
-    value !== undefined && ["1", "true"].includes(value.trim().toLowerCase())
-  );
+/** Remove media fields without reading their values, dropping type-only blocks. */
+export function omitMediaData(
+  value: object,
+  ...fields: string[]
+): Record<string, unknown> | undefined {
+  const result: Record<string, unknown> = {};
+  let hasContent = false;
+  for (const key of Object.keys(value)) {
+    if (fields.includes(key)) continue;
+    const item: unknown = Reflect.get(value, key);
+    if (item === undefined) continue;
+    Object.defineProperty(result, key, {
+      value: item,
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+    if (key !== "type") hasContent = true;
+  }
+  return hasContent ? result : undefined;
 }
 
 /**
@@ -90,7 +118,7 @@ export function convertDataToBlob(data: any, mediaType: string): Blob | null {
  */
 export function processInputAttachments(
   input: any,
-  captureAttachments = true,
+  captureAttachments = isAutoCaptureAttachmentsEnabled(),
 ): any {
   if (!input) {
     return input;
@@ -125,12 +153,14 @@ export function processInputAttachments(
 
   const processNode = (node: any): any => {
     if (Array.isArray(node)) {
-      return node.map(processNode);
+      return node.map(processNode).filter((item) => item !== undefined);
     }
 
     if (!node || typeof node !== "object") {
       return node;
     }
+
+    if (node instanceof BaseAttachment || node instanceof URL) return node;
 
     // OpenAI chat image_url content format
     if (
@@ -140,14 +170,17 @@ export function processInputAttachments(
       typeof node.image_url.url === "string" &&
       node.image_url.url.startsWith("data:")
     ) {
+      if (!captureAttachments)
+        return omitMediaData({
+          ...node,
+          image_url: omitMediaData(node.image_url, "url"),
+        });
       const mediaType = inferMediaTypeFromDataUrl(
         node.image_url.url,
         "image/png",
       );
       const filename = `image.${getExtensionFromMediaType(mediaType)}`;
-      const attachment = captureAttachments
-        ? toAttachment(node.image_url.url, mediaType, filename)
-        : "<omitted>";
+      const attachment = toAttachment(node.image_url.url, mediaType, filename);
 
       if (attachment) {
         return {
@@ -179,14 +212,13 @@ export function processInputAttachments(
       typeof voyageBase64Value === "string" &&
       voyageBase64Value.startsWith("data:")
     ) {
+      if (!captureAttachments) return omitMediaData(node, voyageBase64Key);
       const mediaType = inferMediaTypeFromDataUrl(
         voyageBase64Value,
         node.type === "video_base64" ? "video/mp4" : "image/png",
       );
       const filename = `${node.type === "video_base64" ? "video" : "image"}.${getExtensionFromMediaType(mediaType)}`;
-      const attachment = captureAttachments
-        ? toAttachment(voyageBase64Value, mediaType, filename)
-        : "<omitted>";
+      const attachment = toAttachment(voyageBase64Value, mediaType, filename);
 
       if (attachment) {
         return {
@@ -204,6 +236,11 @@ export function processInputAttachments(
       typeof node.file.file_data === "string" &&
       node.file.file_data.startsWith("data:")
     ) {
+      if (!captureAttachments)
+        return omitMediaData({
+          ...node,
+          file: omitMediaData(node.file, "file_data"),
+        });
       const mediaType = inferMediaTypeFromDataUrl(
         node.file.file_data,
         "application/octet-stream",
@@ -212,9 +249,7 @@ export function processInputAttachments(
         typeof node.file.filename === "string" && node.file.filename
           ? node.file.filename
           : `document.${getExtensionFromMediaType(mediaType)}`;
-      const attachment = captureAttachments
-        ? toAttachment(node.file.file_data, mediaType, filename)
-        : "<omitted>";
+      const attachment = toAttachment(node.file.file_data, mediaType, filename);
 
       if (attachment) {
         return {
@@ -229,6 +264,16 @@ export function processInputAttachments(
 
     // AI SDK image content format
     if (node.type === "image" && node.image) {
+      if (node.image instanceof BaseAttachment) {
+        if (captureAttachments) attachmentIndex++;
+        return node;
+      }
+      if (!captureAttachments) {
+        return node.image instanceof URL ||
+          (typeof node.image === "string" && /^https?:/.test(node.image))
+          ? node
+          : omitMediaData(node, "image");
+      }
       let mediaType = "image/png";
       if (typeof node.image === "string" && node.image.startsWith("data:")) {
         mediaType = inferMediaTypeFromDataUrl(node.image, mediaType);
@@ -237,12 +282,7 @@ export function processInputAttachments(
       }
 
       const filename = `input_image_${attachmentIndex}.${getExtensionFromMediaType(mediaType)}`;
-      const attachment = captureAttachments
-        ? toAttachment(node.image, mediaType, filename)
-        : node.image instanceof URL ||
-            (typeof node.image === "string" && /^https?:/.test(node.image))
-          ? null
-          : "<omitted>";
+      const attachment = toAttachment(node.image, mediaType, filename);
 
       if (attachment) {
         attachmentIndex++;
@@ -255,16 +295,21 @@ export function processInputAttachments(
 
     // AI SDK file content format
     if (node.type === "file" && node.data) {
+      if (node.data instanceof BaseAttachment) {
+        if (captureAttachments) attachmentIndex++;
+        return node;
+      }
+      if (!captureAttachments) {
+        return node.data instanceof URL ||
+          (typeof node.data === "string" && /^https?:/.test(node.data))
+          ? node
+          : omitMediaData(node, "data");
+      }
       const mediaType = node.mediaType || "application/octet-stream";
       const filename =
         node.filename ||
         `input_file_${attachmentIndex}.${getExtensionFromMediaType(mediaType)}`;
-      const attachment = captureAttachments
-        ? toAttachment(node.data, mediaType, filename)
-        : node.data instanceof URL ||
-            (typeof node.data === "string" && /^https?:/.test(node.data))
-          ? null
-          : "<omitted>";
+      const attachment = toAttachment(node.data, mediaType, filename);
 
       if (attachment) {
         attachmentIndex++;
@@ -277,13 +322,14 @@ export function processInputAttachments(
 
     const processed: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(node)) {
-      processed[key] = processNode(value);
+      const result = processNode(value);
+      if (result !== undefined) processed[key] = result;
     }
     return processed;
   };
 
   if (Array.isArray(input)) {
-    return input.map(processNode);
+    return input.map(processNode).filter((item) => item !== undefined);
   }
 
   return processNode(input);

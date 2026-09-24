@@ -85,6 +85,7 @@ describe(
     beforeEach(() => {
       backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
       _logger = initLogger({
+        captureAttachments: true,
         projectName: "openai-agents.test.ts",
         projectId: "test-openai-agents",
       });

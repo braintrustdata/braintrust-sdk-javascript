@@ -1213,9 +1213,21 @@ describe("processImagesInOutput", () => {
     };
 
     expect(processImagesInOutput(output, false)).toEqual({
-      ...output,
-      result: "<omitted>",
+      type: "image_generation_call",
+      output_format: "png",
+      revised_prompt: "A red pixel",
     });
+    expect(
+      processImagesInOutput(
+        [
+          { type: "image_generation_call", result: "AQID" },
+          { type: "message", content: [{ type: "output_text", text: "done" }] },
+        ],
+        false,
+      ),
+    ).toEqual([
+      { type: "message", content: [{ type: "output_text", text: "done" }] },
+    ]);
   });
 
   describe("image_generation_call conversion", () => {

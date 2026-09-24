@@ -30,6 +30,7 @@ describe("groq wrapper", () => {
   beforeEach(() => {
     backgroundLogger = _exportsForTestingOnly.useTestBackgroundLogger();
     initLogger({
+      captureAttachments: true,
       projectId: "test-project-id",
       projectName: "groq.test.ts",
     });

@@ -1,4 +1,12 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { Readable } from "node:stream";
 import {
   ReadableStream,
@@ -11,6 +19,8 @@ import { elevenLabsChannels } from "./elevenlabs-channels";
 import { wrapElevenLabs } from "../../wrappers/elevenlabs";
 
 configureNode();
+beforeEach(() => vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true"));
+afterEach(() => vi.unstubAllEnvs());
 const request = { text: "Hello", modelId: "eleven_flash_v2_5" };
 
 describe("ElevenLabs instrumentation", () => {

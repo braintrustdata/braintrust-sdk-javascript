@@ -49,7 +49,10 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
-            env: { STRANDS_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
+              STRANDS_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName,
+            },
             runContext: {
               variantKey: scenario.variantKey,
               originalScenarioDir,
@@ -68,7 +71,10 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
-            env: { STRANDS_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
+              STRANDS_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName,
+            },
             nodeArgs: ["--import", "braintrust/hook.mjs"],
             runContext: {
               variantKey: scenario.variantKey,

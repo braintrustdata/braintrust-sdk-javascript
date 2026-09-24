@@ -1,3 +1,7 @@
+import {
+  isAutoCaptureAttachmentsEnabled,
+  omitMediaData,
+} from "../../wrappers/attachment-utils";
 import { BasePlugin, toLoggedError } from "../core";
 import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
@@ -1651,15 +1655,25 @@ function convertBase64ToAttachment(
 /**
  * Process input to convert base64 attachments (images, PDFs, etc.) to Attachment objects.
  */
-export function processAttachmentsInInput(input: unknown): unknown {
+export function processAttachmentsInInput(
+  input: unknown,
+  captureAttachments = isAutoCaptureAttachmentsEnabled(),
+): unknown {
   if (Array.isArray(input)) {
-    return input.map(processAttachmentsInInput);
+    return input
+      .map((value) => processAttachmentsInInput(value, captureAttachments))
+      .filter((value) => value !== undefined);
   }
 
   if (isObject(input)) {
     // Check for Anthropic's content blocks with base64 data
     // Supports both "image" and "document" types (for PDFs, etc.)
     if (isAnthropicBase64ContentBlock(input)) {
+      if (!captureAttachments)
+        return omitMediaData({
+          ...input,
+          source: omitMediaData(input.source, "data"),
+        });
       return {
         ...input,
         source: convertBase64ToAttachment(input.source, input.type),
@@ -1669,7 +1683,8 @@ export function processAttachmentsInInput(input: unknown): unknown {
     // Recursively process nested objects
     const processed: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(input)) {
-      processed[key] = processAttachmentsInInput(value);
+      const result = processAttachmentsInInput(value, captureAttachments);
+      if (result !== undefined) processed[key] = result;
     }
     return processed;
   }

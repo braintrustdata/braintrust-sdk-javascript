@@ -2,6 +2,7 @@
 import { Attachment } from "../../logger";
 import {
   isAutoCaptureAttachmentsEnabled,
+  omitMediaData,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
 import { isObject } from "../../../util/index";
@@ -101,9 +102,9 @@ export function processImagesInOutput(
   captureAttachments = isAutoCaptureAttachmentsEnabled(),
 ): any {
   if (Array.isArray(output)) {
-    return output.map((item) =>
-      processImagesInOutput(item, captureAttachments),
-    );
+    return output
+      .map((item) => processImagesInOutput(item, captureAttachments))
+      .filter((item) => item !== undefined);
   }
 
   if (
@@ -113,7 +114,7 @@ export function processImagesInOutput(
     output.result
   ) {
     if (!captureAttachments) {
-      return { ...output, result: "<omitted>" };
+      return omitMediaData(output, "result");
     }
     const fileExtension = output.output_format || "png";
     const contentType = `image/${fileExtension}`;

@@ -32,13 +32,13 @@ type MediaPart =
   | { type: "text"; text: string }
   | {
       type: "image_url";
-      image_url: { url: unknown };
+      image_url?: { url: unknown };
       purpose?: string;
       revised_prompt?: string;
     }
   | {
       type: "file";
-      file: { filename: string; file_data: unknown; byte_size?: number };
+      file: { filename: string; file_data?: unknown; byte_size?: number };
     };
 
 const AUDIO_TYPES = new Map(
@@ -60,7 +60,7 @@ function mediaAttachment(
 ): unknown {
   if (value instanceof URL) return value.toString();
   if (typeof value === "string" && /^https?:/.test(value)) return value;
-  if (!captureAttachments) return "<omitted>";
+  if (!captureAttachments) return undefined;
   const blob =
     value instanceof Blob ? value : convertDataToBlob(value, contentType);
   if (blob)
@@ -109,7 +109,7 @@ async function mediaInput(
   operation: string,
   captureAttachments: boolean,
 ) {
-  const pendingContent: Array<Promise<MediaPart>> = [];
+  const pendingContent: Array<Promise<MediaPart | undefined>> = [];
   for (const [key, purpose] of [
     ["image", "reference"],
     ["mask", "mask"],
@@ -118,8 +118,23 @@ async function mediaInput(
     const value = params[key];
     if (value === undefined) continue;
     for (const item of Array.isArray(value) ? value : [value]) {
+      if (!captureAttachments && key !== "file") {
+        if (
+          item instanceof URL ||
+          (typeof item === "string" && /^https?:/.test(item))
+        ) {
+          pendingContent.push(
+            Promise.resolve({
+              type: "image_url",
+              image_url: { url: item instanceof URL ? item.toString() : item },
+              purpose,
+            }),
+          );
+        }
+        continue;
+      }
       pendingContent.push(
-        (async (): Promise<MediaPart> => {
+        (async (): Promise<MediaPart | undefined> => {
           const isImage = key !== "file";
           const sourceName =
             isObject(item) && typeof item.name === "string"
@@ -213,9 +228,18 @@ async function mediaInput(
             filename,
             captureAttachments,
           );
+          if (isImage && attachment === undefined) return undefined;
           return isImage
             ? { type: "image_url", image_url: { url: attachment }, purpose }
-            : { type: "file", file: { filename, file_data: attachment } };
+            : {
+                type: "file",
+                file: {
+                  filename,
+                  ...(attachment !== undefined
+                    ? { file_data: attachment }
+                    : {}),
+                },
+              };
         })(),
       );
     }
@@ -236,7 +260,9 @@ async function mediaInput(
   )
     parameters.format = params.response_format;
   const prompt = params.prompt ?? params.input;
-  const content = await Promise.all(pendingContent);
+  const content = (await Promise.all(pendingContent)).filter(
+    (part) => part !== undefined,
+  );
   return {
     operation,
     ...(prompt !== undefined ? { prompt } : {}),
@@ -263,10 +289,10 @@ function mediaOutput(
           captureAttachments,
         )
       : item.url;
-    if (url !== undefined)
+    if (url !== undefined || item.revised_prompt)
       content.push({
         type: "image_url",
-        image_url: { url },
+        ...(url !== undefined ? { image_url: { url } } : {}),
         ...(item.revised_prompt ? { revised_prompt: item.revised_prompt } : {}),
       });
   }
@@ -753,16 +779,20 @@ export function interceptOpenAIMedia(
           const accumulated: OpenAIMediaResult = {};
           const audio: Blob[] = [];
           patchStreamIfNeeded<OpenAIMediaEvent>(value, {
-            onChunk: (event) => {
+            shouldCollect: (event) => {
               if (event.b64_json || event.audio || event.delta || event.text)
                 first();
               if (event.usage) accumulated.usage = event.usage;
               if (event.model) accumulated.model = event.model;
-              if (event.type.endsWith(".completed") && event.b64_json) {
+              if (
+                captureAttachments &&
+                event.type.endsWith(".completed") &&
+                event.b64_json
+              ) {
                 accumulated.data = [
                   ...(accumulated.data ?? []),
                   {
-                    b64_json: captureAttachments ? event.b64_json : "<omitted>",
+                    b64_json: event.b64_json,
                   },
                 ];
                 accumulated.output_format = event.output_format;
@@ -782,6 +812,7 @@ export function interceptOpenAIMedia(
                 );
                 if (blob) audio.push(blob);
               }
+              return false;
             },
             onComplete: () => {
               finish(accumulated);

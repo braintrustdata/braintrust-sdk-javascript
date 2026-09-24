@@ -30,7 +30,10 @@ describe.concurrent("variants", () => {
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: "scenario.ts",
-            env: { GOOGLE_GENERATIVE_AI_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
+              GOOGLE_GENERATIVE_AI_PACKAGE_NAME: scenario.dependencyName,
+            },
             runContext: {
               originalScenarioDir,
               variantKey: scenario.snapshotName,
@@ -50,7 +53,10 @@ describe.concurrent("variants", () => {
           await runNodeScenarioDir({
             entry: "scenario.mjs",
             nodeArgs: ["--import", "braintrust/hook.mjs"],
-            env: { GOOGLE_GENERATIVE_AI_PACKAGE_NAME: scenario.dependencyName },
+            env: {
+              BRAINTRUST_CAPTURE_ATTACHMENTS: "true",
+              GOOGLE_GENERATIVE_AI_PACKAGE_NAME: scenario.dependencyName,
+            },
             runContext: {
               originalScenarioDir,
               variantKey: scenario.snapshotName,
