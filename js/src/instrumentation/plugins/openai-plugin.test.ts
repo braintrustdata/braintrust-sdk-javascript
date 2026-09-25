@@ -5,6 +5,7 @@ import {
 } from "./openai-plugin";
 import { processImagesInOutput as processImagesInOutputWithFlag } from "./openai-span-data";
 import { Attachment } from "../../logger";
+import type { OpenAIChatCompletionChunk } from "../../vendor-sdk-types/openai";
 
 const processImagesInOutput = (output: unknown, captureAttachments = true) =>
   processImagesInOutputWithFlag(output, captureAttachments);
@@ -499,6 +500,209 @@ describe("aggregateChatCompletionChunks", () => {
       const result = aggregateChatCompletionChunks(chunks);
 
       expect(result.output[0].message.content).toBe("Hello!");
+    });
+  });
+
+  describe("reasoning_content aggregation", () => {
+    // Constructed unit inputs, not recorded provider responses.
+    it("preserves reasoning_content across chunks and interleaved choices", () => {
+      const chunks = [
+        {
+          choices: [
+            {
+              index: 2,
+              delta: { role: "assistant", reasoning_content: "Two " },
+            },
+            {
+              index: 0,
+              delta: { role: "assistant", reasoning_content: "Zero " },
+            },
+          ],
+        },
+        {
+          choices: [
+            {
+              index: 0,
+              delta: { reasoning_content: "thinks. ", content: "A" },
+            },
+            {
+              index: 2,
+              delta: { reasoning_content: "thinks. ", content: "B" },
+            },
+          ],
+        },
+        {
+          choices: [
+            {
+              index: 2,
+              delta: { reasoning_content: "Done.", content: "2" },
+              finish_reason: "stop",
+            },
+          ],
+        },
+        {
+          choices: [
+            {
+              index: 0,
+              delta: { reasoning_content: "Done.", content: "0" },
+              finish_reason: "length",
+            },
+          ],
+        },
+        {
+          choices: [],
+          usage: { prompt_tokens: 4, completion_tokens: 6, total_tokens: 10 },
+        },
+      ];
+
+      const result = aggregateChatCompletionChunks(chunks);
+
+      expect(
+        result.output.map((choice) => [choice.index, choice.message.content]),
+      ).toEqual([
+        [0, "A0"],
+        [2, "B2"],
+      ]);
+      expect(
+        result.output.map((choice) => choice.message.reasoning_content),
+      ).toEqual(["Zero thinks. Done.", "Two thinks. Done."]);
+      expect(result.output.map((choice) => choice.finish_reason)).toEqual([
+        "length",
+        "stop",
+      ]);
+      expect(result.metrics).toEqual({
+        prompt_tokens: 4,
+        completion_tokens: 6,
+        tokens: 10,
+      });
+    });
+
+    it.each([
+      { name: "absent", values: [undefined, undefined], expected: undefined },
+      { name: "empty", values: ["", undefined, ""], expected: "" },
+      { name: "null", values: [null, undefined, null], expected: null },
+      { name: "null then empty", values: [null, "", null], expected: "" },
+      {
+        name: "strings interspersed with null and absent",
+        values: [null, "First", undefined, null, "", " last", null],
+        expected: "First last",
+      },
+    ])("preserves $name reasoning_content", ({ values, expected }) => {
+      const chunks = values.map((value) => ({
+        choices: [
+          {
+            index: 0,
+            delta: value === undefined ? {} : { reasoning_content: value },
+          },
+        ],
+      }));
+      const message = aggregateChatCompletionChunks(chunks).output[0].message;
+      if (expected === undefined) {
+        expect(message).not.toHaveProperty("reasoning_content");
+      } else {
+        expect(message).toHaveProperty("reasoning_content", expected);
+      }
+      expect(message.content).toBeUndefined();
+    });
+
+    it("ignores non-string reasoning_content values", () => {
+      const chunks = [false, 42, {}, []].map((value) => ({
+        choices: [{ index: 0, delta: { reasoning_content: value } }],
+      })) as unknown as OpenAIChatCompletionChunk[];
+      expect(
+        aggregateChatCompletionChunks(chunks).output[0].message,
+      ).not.toHaveProperty("reasoning_content");
+    });
+
+    it("does not copy unknown fields or other reasoning formats into output", () => {
+      const result = aggregateChatCompletionChunks([
+        {
+          choices: [
+            {
+              index: 0,
+              delta: {
+                content: "Answer",
+                reasoning: "Other format",
+                reasoning_details: [{ text: "Structured" }],
+                unknown_field: "Ignore",
+              },
+            },
+          ],
+        },
+      ]);
+      expect(result.output[0].message).toEqual({
+        role: undefined,
+        content: "Answer",
+        tool_calls: undefined,
+      });
+    });
+
+    it("preserves tool calls, refusal, audio, finish reasons, and usage alongside reasoning_content", () => {
+      const result = aggregateChatCompletionChunks([
+        {
+          choices: [
+            {
+              index: 0,
+              delta: {
+                reasoning_content: "Find ",
+                refusal: "Cannot ",
+                audio: { id: "audio-1", transcript: "Hello " },
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: "call-1",
+                    type: "function",
+                    function: { name: "weather", arguments: '{"city":' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+        {
+          choices: [
+            {
+              index: 0,
+              delta: {
+                reasoning_content: "weather.",
+                refusal: "answer.",
+                audio: { transcript: "world", expires_at: 123 },
+                tool_calls: [{ index: 0, function: { arguments: '"Paris"}' } }],
+              },
+              finish_reason: "tool_calls",
+            },
+          ],
+        },
+        { choices: [{ index: 0 }] },
+        {
+          choices: [],
+          usage: { prompt_tokens: 5, completion_tokens: 3, total_tokens: 8 },
+        },
+      ]);
+      expect(result.output[0]).toEqual({
+        index: 0,
+        finish_reason: "tool_calls",
+        logprobs: null,
+        message: {
+          role: undefined,
+          content: undefined,
+          reasoning_content: "Find weather.",
+          refusal: "Cannot answer.",
+          audio: { id: "audio-1", transcript: "Hello world", expires_at: 123 },
+          tool_calls: [
+            {
+              id: "call-1",
+              type: "function",
+              function: { name: "weather", arguments: '{"city":"Paris"}' },
+            },
+          ],
+        },
+      });
+      expect(result.metrics).toEqual({
+        prompt_tokens: 5,
+        completion_tokens: 3,
+        tokens: 8,
+      });
     });
   });
 

@@ -61,6 +61,37 @@
     ]
   },
   {
+    "scenarioDirName": "openai-compatible-reasoning-instrumentation",
+    "label": "OpenAI-compatible Reasoning Instrumentation",
+    "metadataScenario": "openai-compatible-reasoning-instrumentation",
+    "variants": [
+      {
+        "variantKey": "openai-v4",
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "openai-v4-latest",
+        "label": "v4 latest"
+      },
+      {
+        "variantKey": "openai-v5",
+        "label": "v5 pinned"
+      },
+      {
+        "variantKey": "openai-v5-latest",
+        "label": "v5 latest"
+      },
+      {
+        "variantKey": "openai-v6",
+        "label": "v6 pinned"
+      },
+      {
+        "variantKey": "openai-v6-latest",
+        "label": "v6 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "openai-codex-instrumentation",
     "label": "OpenAI Codex Instrumentation",
     "metadataScenario": "openai-codex-instrumentation",

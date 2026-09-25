@@ -98,6 +98,7 @@ interface OpenAIChatAudio {
 export interface OpenAIChatMessage {
   role?: string;
   content?: unknown;
+  reasoning_content?: string | null;
   refusal?: string;
   audio?: OpenAIChatAudio | null;
   tool_calls?: OpenAIChatToolCall[];
@@ -135,6 +136,7 @@ export interface OpenAIChatCompletion {
 interface OpenAIChatDelta {
   role?: string;
   content?: string;
+  reasoning_content?: string | null;
   refusal?: string;
   audio?: OpenAIChatAudio | null;
   tool_calls?: OpenAIChatToolCallDelta[];
