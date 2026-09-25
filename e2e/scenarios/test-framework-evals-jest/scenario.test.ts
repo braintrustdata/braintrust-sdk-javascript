@@ -182,6 +182,11 @@ for (const scenario of scenarios) {
               "/logs3",
             ]),
           );
+          expect(
+            requests.filter(
+              (request) => request.path === "/api/project/register",
+            ),
+          ).toHaveLength(1);
 
           await matchSpanTreeSnapshot(
             capturedEvents,

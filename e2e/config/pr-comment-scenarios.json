@@ -1,5 +1,10 @@
 [
   {
+    "scenarioDirName": "trace-primitives-basic",
+    "label": "Trace primitives and project caching",
+    "metadataScenario": "trace-primitives-basic"
+  },
+  {
     "scenarioDirName": "deepseek-harness-instrumentation",
     "label": "DeepSeek Harness Instrumentation",
     "metadataScenario": "deepseek-harness-instrumentation",
