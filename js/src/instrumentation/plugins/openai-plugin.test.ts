@@ -300,6 +300,108 @@ describe("parseMetricsFromUsage", () => {
 });
 
 describe("aggregateChatCompletionChunks", () => {
+  describe("reasoning_content", () => {
+    it("concatenates reasoning separately from content for each choice", () => {
+      const chunks = [
+        {
+          choices: [
+            {
+              index: 1,
+              delta: { role: "assistant", reasoning_content: "Let " },
+            },
+            {
+              index: 0,
+              delta: { role: "assistant", reasoning_content: "Think " },
+            },
+          ],
+        },
+        {
+          choices: [
+            { index: 0, delta: { reasoning_content: "first.", content: "An" } },
+            {
+              index: 1,
+              delta: { reasoning_content: "me think.", content: "Other" },
+            },
+          ],
+        },
+        {
+          choices: [
+            {
+              index: 1,
+              delta: { reasoning_content: null },
+              finish_reason: "length",
+            },
+            { index: 0, delta: { content: "swer" }, finish_reason: "stop" },
+          ],
+        },
+        {
+          choices: [],
+          usage: { prompt_tokens: 2, completion_tokens: 8, total_tokens: 10 },
+        },
+      ];
+      const originalChunks = structuredClone(chunks);
+
+      expect(aggregateChatCompletionChunks(chunks)).toEqual({
+        output: [
+          {
+            index: 0,
+            message: {
+              role: "assistant",
+              content: "Answer",
+              reasoning_content: "Think first.",
+            },
+            logprobs: null,
+            finish_reason: "stop",
+          },
+          {
+            index: 1,
+            message: {
+              role: "assistant",
+              content: "Other",
+              reasoning_content: "Let me think.",
+            },
+            logprobs: null,
+            finish_reason: "length",
+          },
+        ],
+        metrics: { prompt_tokens: 2, completion_tokens: 8, tokens: 10 },
+      });
+      expect(chunks).toEqual(originalChunks);
+    });
+
+    it.each([
+      { fragments: [undefined, undefined], expected: undefined },
+      { fragments: [null, undefined, null], expected: null },
+      { fragments: ["", undefined, ""], expected: "" },
+      { fragments: [null, "", null], expected: "" },
+      {
+        fragments: [null, "Think", undefined, null, "", " more", null],
+        expected: "Think more",
+      },
+    ])(
+      "preserves reasoning fragments $fragments as $expected",
+      ({ fragments, expected }) => {
+        const chunks = fragments.map((reasoning_content) => ({
+          choices: [
+            {
+              index: 0,
+              delta:
+                reasoning_content === undefined ? {} : { reasoning_content },
+            },
+          ],
+        }));
+        const { message } = aggregateChatCompletionChunks(chunks).output[0];
+
+        if (expected === undefined) {
+          expect(message).not.toHaveProperty("reasoning_content");
+        } else {
+          expect(message).toHaveProperty("reasoning_content", expected);
+        }
+        expect(message.content).toBeUndefined();
+      },
+    );
+  });
+
   describe("basic aggregation", () => {
     it("should aggregate simple text chunks", () => {
       const chunks = [
