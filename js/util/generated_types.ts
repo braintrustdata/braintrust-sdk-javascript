@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 38c1b7c6e847da09) -- do not modify
+// Auto-generated file (content hash 43fa4b11de97efd6) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -19,6 +19,7 @@ export const AclObjectType = z.union([
     "project_group",
     "ai_secret",
     "org_ai_secret",
+    "org_account",
   ]),
   z.null(),
 ]);
@@ -127,6 +128,11 @@ export const AnyModelParams = z.object({
   stop: z.array(z.string()).optional(),
   reasoning_effort: z
     .enum(["none", "minimal", "low", "medium", "high"])
+    .optional(),
+  chat_template_kwargs: z
+    .object({ enable_thinking: z.boolean() })
+    .partial()
+    .passthrough()
     .optional(),
   verbosity: z.enum(["low", "medium", "high"]).optional(),
   top_k: z.number().optional(),
@@ -990,6 +996,10 @@ export const ModelParams = z.union([
       n: z.number(),
       stop: z.array(z.string()),
       reasoning_effort: z.enum(["none", "minimal", "low", "medium", "high"]),
+      chat_template_kwargs: z
+        .object({ enable_thinking: z.boolean() })
+        .partial()
+        .passthrough(),
       verbosity: z.enum(["low", "medium", "high"]),
     })
     .partial()
