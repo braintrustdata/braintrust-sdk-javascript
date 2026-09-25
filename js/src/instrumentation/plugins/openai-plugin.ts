@@ -409,6 +409,7 @@ type AggregatedChatChoice = {
   index: number;
   role: string | undefined;
   content: string | undefined;
+  reasoning_content: string | null | undefined;
   refusal: string | undefined;
   audio: NonNullable<OpenAIChatChoice["message"]["audio"]> | undefined;
   toolCallsByIndex: Map<
@@ -424,6 +425,7 @@ function createAggregatedChatChoice(index: number): AggregatedChatChoice {
     index,
     role: undefined,
     content: undefined,
+    reasoning_content: undefined,
     refusal: undefined,
     audio: undefined,
     toolCallsByIndex: new Map(),
@@ -442,6 +444,9 @@ function toChatChoice(choice: AggregatedChatChoice): OpenAIChatChoice {
     message: {
       role: choice.role,
       content: choice.content,
+      ...(choice.reasoning_content !== undefined
+        ? { reasoning_content: choice.reasoning_content }
+        : {}),
       ...(choice.refusal !== undefined ? { refusal: choice.refusal } : {}),
       ...(choice.audio !== undefined ? { audio: choice.audio } : {}),
       tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
@@ -453,7 +458,7 @@ function toChatChoice(choice: AggregatedChatChoice): OpenAIChatChoice {
 
 /**
  * Aggregate chat completion chunks into a single response.
- * Combines role (first), content and audio transcripts (concatenated),
+ * Combines role (first), content, reasoning_content and audio transcripts (concatenated),
  * tool_calls (by index), finish_reason (last), and usage (last chunk).
  */
 export function aggregateChatCompletionChunks(
@@ -513,6 +518,14 @@ export function aggregateChatCompletionChunks(
       if (delta.content) {
         aggregatedChoice.content =
           (aggregatedChoice.content || "") + delta.content;
+      }
+
+      if (typeof delta.reasoning_content === "string") {
+        aggregatedChoice.reasoning_content =
+          (aggregatedChoice.reasoning_content ?? "") + delta.reasoning_content;
+      } else if (delta.reasoning_content === null) {
+        // Preserve null-only responses without erasing accumulated text.
+        aggregatedChoice.reasoning_content ??= null;
       }
 
       if (delta.refusal) {

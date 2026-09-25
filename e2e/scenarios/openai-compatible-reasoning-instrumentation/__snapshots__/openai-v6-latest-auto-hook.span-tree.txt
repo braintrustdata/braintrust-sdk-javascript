@@ -1,0 +1,54 @@
+span_tree:
+└── openai-compatible-reasoning-root [task]
+    metadata: {
+      "openaiSdkVersion": "6.49.0",
+      "scenario": "openai-compatible-reasoning-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    context: {
+      "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+      "caller_functionname": "runTracedScenario",
+      "caller_lineno": 0
+    }
+    └── Chat Completion [llm]
+        input: [
+          {
+            "content": "Which is greater, 9.11 or 9.8? Answer with the greater number only.",
+            "role": "user"
+          }
+        ]
+        output: [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "9.8",
+              "reasoning_content": "We need answer only greater number. Need compare 9.11 vs 9.8. As decimals: 9.8 = 9.80 > 9.11. So answer 9.8. Must only greater number.",
+              "role": "assistant"
+            }
+          }
+        ]
+        metadata: {
+          "max_tokens": 2048,
+          "model": "deepseek-flash",
+          "provider": "openai",
+          "reasoning_effort": "low",
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "thinking": {
+            "type": "enabled"
+          }
+        }
+        metrics: {
+          "completion_reasoning_tokens": 49,
+          "completion_tokens": 53,
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 51,
+          "prompt_cached_tokens": 0,
+          "prompt_tokens": 51,
+          "time_to_first_token": 0,
+          "tokens": 104
+        }

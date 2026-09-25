@@ -1,0 +1,66 @@
+{
+  "span_tree": [
+    {
+      "name": "openai-compatible-reasoning-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "Chat Completion",
+          "type": "llm",
+          "children": [],
+          "input": [
+            {
+              "content": "Which is greater, 9.11 or 9.8? Answer with the greater number only.",
+              "role": "user"
+            }
+          ],
+          "output": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "message": {
+                "content": "9.8",
+                "reasoning_content": "We need answer only greater number. Compare 9.11 vs 9.8. 9.8 = 9.80 > 9.11. Answer 9.8.",
+                "role": "assistant"
+              }
+            }
+          ],
+          "metadata": {
+            "max_tokens": 2048,
+            "model": "deepseek-flash",
+            "provider": "openai",
+            "reasoning_effort": "low",
+            "stream": true,
+            "stream_options": {
+              "include_usage": true
+            },
+            "thinking": {
+              "type": "enabled"
+            }
+          },
+          "metrics": {
+            "completion_reasoning_tokens": 39,
+            "completion_tokens": 43,
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 51,
+            "prompt_cached_tokens": 0,
+            "prompt_tokens": 51,
+            "time_to_first_token": 0,
+            "tokens": 94
+          }
+        }
+      ],
+      "metadata": {
+        "openaiSdkVersion": "5.23.2",
+        "scenario": "openai-compatible-reasoning-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+        "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
+      }
+    }
+  ]
+}
