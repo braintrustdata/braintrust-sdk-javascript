@@ -136,6 +136,11 @@
       "import": "./dist/auto-instrumentations/bundler/rollup.mjs",
       "module": "./dist/auto-instrumentations/bundler/rollup.mjs",
       "require": "./dist/auto-instrumentations/bundler/rollup.cjs"
+    },
+    "./experimental/voice": {
+      "types": "./dist/experimental/voice.d.ts",
+      "import": "./dist/experimental/voice.mjs",
+      "require": "./dist/experimental/voice.js"
     }
   },
   "files": [

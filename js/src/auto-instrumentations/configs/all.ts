@@ -27,6 +27,7 @@ import { langSmithConfigs } from "./langsmith";
 import { mistralConfigs } from "./mistral";
 import { langGraphSDKConfigs } from "./langgraph-sdk";
 import { ollamaConfigs } from "./ollama";
+import { twilioRealtimeConfigs } from "./twilio-realtime";
 import { openAIAgentsCoreConfigs } from "./openai-agents";
 import { openaiConfigs } from "./openai";
 import { openAICodexConfigs } from "./openai-codex";
@@ -78,7 +79,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     { integrations: ["cursor", "cursorSDK"], configs: cursorSDKConfigs },
     {
       integrations: ["openAIAgents"],
-      configs: openAIAgentsCoreConfigs,
+      configs: [...openAIAgentsCoreConfigs, ...twilioRealtimeConfigs],
     },
     {
       integrations: ["googleGenerativeAI"],

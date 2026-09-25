@@ -6,6 +6,7 @@ import { AISDKPlugin } from "./plugins/ai-sdk-plugin";
 import { ClaudeAgentSDKPlugin } from "./plugins/claude-agent-sdk-plugin";
 import { CloudflareThinkPlugin } from "./plugins/cloudflare-think-plugin";
 import { CursorSDKPlugin } from "./plugins/cursor-sdk-plugin";
+import { TwilioRealtimePlugin } from "./plugins/twilio-realtime-plugin";
 import { OpenAIAgentsPlugin } from "./plugins/openai-agents-plugin";
 import { GoogleGenerativeAIPlugin } from "./plugins/google-generative-ai-plugin";
 import { GoogleGenAIPlugin } from "./plugins/google-genai-plugin";
@@ -66,6 +67,7 @@ export class BraintrustPlugin extends BasePlugin {
   private claudeAgentSDKPlugin: ClaudeAgentSDKPlugin | null = null;
   private cloudflareThinkPlugin: CloudflareThinkPlugin | null = null;
   private cursorSDKPlugin: CursorSDKPlugin | null = null;
+  private twilioRealtimePlugin: TwilioRealtimePlugin | null = null;
   private openAIAgentsPlugin: OpenAIAgentsPlugin | null = null;
   private googleGenerativeAIPlugin: GoogleGenerativeAIPlugin | null = null;
   private googleGenAIPlugin: GoogleGenAIPlugin | null = null;
@@ -144,6 +146,8 @@ export class BraintrustPlugin extends BasePlugin {
 
     // Enable OpenAI Agents SDK integration (default: true)
     if (integrations.openAIAgents !== false) {
+      this.twilioRealtimePlugin = new TwilioRealtimePlugin();
+      this.twilioRealtimePlugin.enable();
       this.openAIAgentsPlugin = new OpenAIAgentsPlugin();
       this.openAIAgentsPlugin.enable();
     }
@@ -322,6 +326,8 @@ export class BraintrustPlugin extends BasePlugin {
       this.cursorSDKPlugin = null;
     }
 
+    this.twilioRealtimePlugin?.disable();
+    this.twilioRealtimePlugin = null;
     if (this.openAIAgentsPlugin) {
       this.openAIAgentsPlugin.disable();
       this.openAIAgentsPlugin = null;
