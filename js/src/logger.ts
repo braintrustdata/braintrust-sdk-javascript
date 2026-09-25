@@ -688,6 +688,11 @@ let stateNonce = 0;
 
 const V1_PROXY_SUFFIX = "/v1/proxy";
 const LOADER_LOGIN_CACHE_MAX = 16;
+const PROJECT_CACHE_TTL_MS = 15 * 60 * 1000;
+const projectMetadataCaches = new WeakMap<
+  BraintrustState,
+  LRUCache<string, { promise: Promise<OrgProjectMetadata>; expiresAt: number }>
+>();
 
 type ResolvedLoaderLoginOptions = Required<
   Pick<LoginOptions, "apiKey" | "appUrl" | "fetch">
@@ -762,6 +767,11 @@ export class BraintrustState {
 
   private readonly loginParams: LoginOptions;
   private activeLoginOrgNameSelector: string | undefined;
+  private loginGeneration = 0;
+  private pendingLogins = new WeakMap<
+    typeof globalThis.fetch,
+    Map<string, Promise<void>>
+  >();
 
   constructor(loginParams: LoginOptions) {
     this.loginParams = { ...loginParams };
@@ -855,6 +865,9 @@ export class BraintrustState {
   }
 
   public resetLoginInfo() {
+    this.loginGeneration++;
+    this.pendingLogins = new WeakMap();
+    projectMetadataCaches.delete(this);
     this.appUrl = null;
     this.appPublicUrl = null;
     this.loginToken = null;
@@ -1052,6 +1065,7 @@ export class BraintrustState {
   }
 
   public copyLoginInfo(other: BraintrustState) {
+    projectMetadataCaches.delete(this);
     this.appUrl = other.appUrl;
     this.appPublicUrl = other.appPublicUrl;
     this.loginToken = other.loginToken;
@@ -1157,6 +1171,9 @@ export class BraintrustState {
   }
 
   public setFetch(fetch: typeof globalThis.fetch) {
+    if (fetch !== this.fetch) {
+      projectMetadataCaches.delete(this);
+    }
     this.loginParams.fetch = fetch;
     this.fetch = fetch;
     this._apiConn?.setFetch(fetch);
@@ -1192,13 +1209,69 @@ export class BraintrustState {
     if (this.apiUrl && !loginParams.forceLogin) {
       return;
     }
-    const newState = await loginToState({
+    if (loginParams.forceLogin) {
+      // A forced login supersedes older attempts, even if they finish later.
+      this.loginGeneration++;
+      this.pendingLogins = new WeakMap();
+    }
+    const generation = this.loginGeneration;
+    const pendingLogins = this.pendingLogins;
+    const options = {
       ...this.loginParams,
       ...Object.fromEntries(
         Object.entries(loginParams).filter(([k, v]) => !isEmpty(v)),
       ),
+    };
+    const appUrl =
+      options.appUrl ??
+      (iso.getEnv("BRAINTRUST_APP_URL") || "https://www.braintrust.dev");
+    const orgName = options.orgName ?? iso.getEnv("BRAINTRUST_ORG_NAME");
+    const fetch = options.fetch ?? globalThis.fetch;
+    const apiKey = options.apiKey ?? (await iso.getBraintrustApiKey());
+    if (generation !== this.loginGeneration && !loginParams.forceLogin) {
+      throw new Error("Login cancelled by a reset or a newer forced login.");
+    }
+    // Another attempt may have finished while the credential was being read.
+    if (this.apiUrl && !loginParams.forceLogin) {
+      return;
+    }
+
+    let pending = pendingLogins.get(fetch);
+    if (!pending) {
+      pending = new Map();
+      pendingLogins.set(fetch, pending);
+    }
+    const key = JSON.stringify([
+      appUrl,
+      orgName,
+      apiKey,
+      options.debugLogLevel,
+    ]);
+    const existing = pending.get(key);
+    if (!loginParams.forceLogin && existing) {
+      return existing;
+    }
+
+    const loginPromise = loginToState({
+      ...options,
+      appUrl,
+      orgName,
+      apiKey,
+      fetch,
+    }).then((newState) => {
+      if (generation !== this.loginGeneration) {
+        throw new Error("Login cancelled by a reset or a newer forced login.");
+      }
+      this.copyLoginInfo(newState);
     });
-    this.copyLoginInfo(newState);
+    pending.set(key, loginPromise);
+    try {
+      await loginPromise;
+    } finally {
+      if (pending.get(key) === loginPromise) {
+        pending.delete(key);
+      }
+    }
   }
 
   public appConn(): HTTPConnection {
@@ -4937,36 +5010,71 @@ async function computeLoggerMetadata(
 ) {
   await state.login({});
   const org_id = state.orgId!;
-  if (isEmpty(project_id)) {
-    const response = await state.appConn().post_json("api/project/register", {
-      project_name: project_name || GLOBAL_PROJECT,
-      org_id,
-    });
-    return {
-      org_id,
-      project: {
-        id: response.project.id,
-        name: response.project.name,
-        fullInfo: response.project,
-      },
-    };
-  } else if (isEmpty(project_name)) {
-    const response = await state.appConn().get_json("api/project", {
-      id: project_id,
-    });
-    return {
-      org_id,
-      project: {
-        id: project_id,
-        name: response.name,
-        fullInfo: response.project,
-      },
-    };
-  } else {
+  if (!isEmpty(project_id) && !isEmpty(project_name)) {
     return {
       org_id,
       project: { id: project_id, name: project_name, fullInfo: {} },
     };
+  }
+
+  let cache = projectMetadataCaches.get(state);
+  if (!cache) {
+    cache = new LRUCache({ max: 1000 });
+    projectMetadataCaches.set(state, cache);
+  }
+  const key = JSON.stringify([
+    state.appUrl,
+    org_id,
+    state.loginToken,
+    isEmpty(project_id)
+      ? ["name", project_name || GLOBAL_PROJECT]
+      : ["id", project_id],
+  ]);
+  const cached = cache.get(key);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.promise;
+  }
+
+  const conn = state.appConn();
+  const entry = {
+    // Pending requests do not expire. The TTL starts when the lookup succeeds.
+    expiresAt: Infinity,
+    promise: (async (): Promise<OrgProjectMetadata> => {
+      if (isEmpty(project_id)) {
+        const response = await conn.post_json("api/project/register", {
+          project_name: project_name || GLOBAL_PROJECT,
+          org_id,
+        });
+        return {
+          org_id,
+          project: {
+            id: response.project.id,
+            name: response.project.name,
+            fullInfo: response.project,
+          },
+        };
+      }
+      const response = await conn.get_json("api/project", { id: project_id });
+      return {
+        org_id,
+        project: {
+          id: project_id,
+          name: response.name,
+          fullInfo: response.project,
+        },
+      };
+    })(),
+  };
+  cache.set(key, entry);
+  try {
+    const metadata = await entry.promise;
+    entry.expiresAt = Date.now() + PROJECT_CACHE_TTL_MS;
+    return metadata;
+  } catch (error) {
+    if (cache.get(key) === entry) {
+      cache.delete(key);
+    }
+    throw error;
   }
 }
 
