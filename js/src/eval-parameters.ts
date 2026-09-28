@@ -1,6 +1,5 @@
 import { z } from "zod/v3";
 import * as z4 from "zod/v4";
-import type { ZodSchema } from "./zod/utils";
 import Ajv from "ajv";
 import { Prompt, RemoteEvalParameters } from "./logger";
 import {
@@ -8,6 +7,7 @@ import {
   promptDefinitionToPromptData,
 } from "./prompt-schemas";
 import { PromptData as promptDataSchema } from "./generated_types";
+import type { ZodSchema } from "./zod/utils";
 
 // Schema for evaluation parameters
 export const evalParametersSchema = z.record(

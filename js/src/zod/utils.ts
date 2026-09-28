@@ -6,7 +6,7 @@ export type ZodSchema<Output = unknown> =
   | z3.ZodType<Output>
   | z4.ZodType<Output>;
 
-function isZodV4(zodObject: z3.ZodType | z4.ZodType): zodObject is z4.ZodType {
+function isZodV4(zodObject: ZodSchema): zodObject is z4.ZodType {
   return (
     typeof zodObject === "object" &&
     zodObject !== null &&
@@ -15,7 +15,7 @@ function isZodV4(zodObject: z3.ZodType | z4.ZodType): zodObject is z4.ZodType {
   );
 }
 
-export function zodToJsonSchema(schema: z4.ZodType | z3.ZodType) {
+export function zodToJsonSchema(schema: ZodSchema) {
   if (isZodV4(schema)) {
     return z4.toJSONSchema(schema, {
       target: "draft-7",

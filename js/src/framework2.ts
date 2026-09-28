@@ -334,19 +334,16 @@ class ClassifierBuilder {
   }
 }
 
-type Schema<Input, Output> = Partial<{
-  parameters: ZodSchema<Input>;
-  returns: ZodSchema<Output>;
-}>;
-
 export type CodeOpts<
   Params,
   Returns,
   Fn extends GenericFunction<Params, Returns>,
 > = Partial<BaseFnOpts> & {
   handler: Fn;
+  parameters?: ZodSchema<Params>;
+  returns?: ZodSchema<Returns>;
   metadata?: Record<string, unknown>;
-} & Schema<Params, Returns>;
+};
 
 type ScorerPromptOpts = Partial<BaseFnOpts> &
   PromptOpts<false, false, false, false> & {
@@ -736,14 +733,14 @@ export function serializeEvalParametersToStaticParametersSchema(
           },
         ];
       } else {
-        const schemaObj = zodToJsonSchema(value);
+        const jsonSchema = zodToJsonSchema(value);
         return [
           name,
           {
             type: "data",
-            schema: schemaObj,
-            default: schemaObj.default,
-            description: schemaObj.description,
+            schema: jsonSchema,
+            default: jsonSchema.default,
+            description: jsonSchema.description,
           },
         ];
       }
@@ -785,12 +782,11 @@ function serializeEvalParameterstoParametersSchema(
         required.push(name);
       }
     } else {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const schemaObj = zodToJsonSchema(value) as Record<string, unknown>;
+      const jsonSchema = zodToJsonSchema(value);
 
-      properties[name] = schemaObj;
+      properties[name] = jsonSchema;
 
-      if (!("default" in schemaObj)) {
+      if (!("default" in jsonSchema)) {
         required.push(name);
       }
     }
