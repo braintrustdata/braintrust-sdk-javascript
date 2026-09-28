@@ -57,30 +57,6 @@
       {
         "variantKey": "openai-v6-latest",
         "label": "v6 latest"
-      },
-      {
-        "variantKey": "openai-v4-reasoning",
-        "label": "v4 pinned reasoning"
-      },
-      {
-        "variantKey": "openai-v4-latest-reasoning",
-        "label": "v4 latest reasoning"
-      },
-      {
-        "variantKey": "openai-v5-reasoning",
-        "label": "v5 pinned reasoning"
-      },
-      {
-        "variantKey": "openai-v5-latest-reasoning",
-        "label": "v5 latest reasoning"
-      },
-      {
-        "variantKey": "openai-v6-reasoning",
-        "label": "v6 pinned reasoning"
-      },
-      {
-        "variantKey": "openai-v6-latest-reasoning",
-        "label": "v6 latest reasoning"
       }
     ]
   },
