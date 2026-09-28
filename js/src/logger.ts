@@ -688,6 +688,7 @@ let stateNonce = 0;
 
 const V1_PROXY_SUFFIX = "/v1/proxy";
 const LOADER_LOGIN_CACHE_MAX = 16;
+const LOGIN_TIMEOUT_MS = 30_000;
 const PROJECT_CACHE_TTL_MS = 15 * 60 * 1000;
 const projectMetadataCaches = new WeakMap<
   BraintrustState,
@@ -768,6 +769,7 @@ export class BraintrustState {
   private readonly loginParams: LoginOptions;
   private activeLoginOrgNameSelector: string | undefined;
   private loginGeneration = 0;
+  private loginQueueTail: Promise<void> | undefined;
   private pendingLogins = new WeakMap<
     typeof globalThis.fetch,
     Map<string, Promise<void>>
@@ -866,6 +868,7 @@ export class BraintrustState {
 
   public resetLoginInfo() {
     this.loginGeneration++;
+    this.loginQueueTail = undefined;
     this.pendingLogins = new WeakMap();
     projectMetadataCaches.delete(this);
     this.appUrl = null;
@@ -1209,11 +1212,6 @@ export class BraintrustState {
     if (this.apiUrl && !loginParams.forceLogin) {
       return;
     }
-    if (loginParams.forceLogin) {
-      // A forced login supersedes older attempts, even if they finish later.
-      this.loginGeneration++;
-      this.pendingLogins = new WeakMap();
-    }
     const generation = this.loginGeneration;
     const pendingLogins = this.pendingLogins;
     const options = {
@@ -1228,11 +1226,21 @@ export class BraintrustState {
     const orgName = options.orgName ?? iso.getEnv("BRAINTRUST_ORG_NAME");
     const fetch = options.fetch ?? globalThis.fetch;
     const apiKey = options.apiKey ?? (await iso.getBraintrustApiKey());
-    if (generation !== this.loginGeneration && !loginParams.forceLogin) {
-      throw new Error("Login cancelled by a reset or a newer forced login.");
+    if (generation !== this.loginGeneration) {
+      throw new Error("Login cancelled by a reset.");
     }
     // Another attempt may have finished while the credential was being read.
     if (this.apiUrl && !loginParams.forceLogin) {
+      if (
+        this.appUrl !== appUrl ||
+        this.loginToken !== (apiKey && HTTPConnection.sanitize_token(apiKey)) ||
+        this.activeLoginOrgNameSelector !== orgName ||
+        this.fetch !== fetch
+      ) {
+        throw new Error(
+          "Another login completed with different options during credential discovery. To force re-login, pass `forceLogin: true`.",
+        );
+      }
       return;
     }
 
@@ -1252,22 +1260,36 @@ export class BraintrustState {
       return existing;
     }
 
-    const loginPromise = loginToState({
-      ...options,
-      appUrl,
-      orgName,
-      apiKey,
-      fetch,
-    }).then((newState) => {
+    const previousLogin = this.loginQueueTail;
+    const loginPromise = (async () => {
+      // Each forced login still makes a fresh request, but must not invalidate
+      // the metadata promises of loggers already waiting for another login.
+      if (previousLogin) {
+        await previousLogin.catch(() => {});
+      }
       if (generation !== this.loginGeneration) {
-        throw new Error("Login cancelled by a reset or a newer forced login.");
+        throw new Error("Login cancelled by a reset.");
+      }
+      const newState = await loginToState({
+        ...options,
+        appUrl,
+        orgName,
+        apiKey,
+        fetch,
+      });
+      if (generation !== this.loginGeneration) {
+        throw new Error("Login cancelled by a reset.");
       }
       this.copyLoginInfo(newState);
-    });
+    })();
+    this.loginQueueTail = loginPromise;
     pending.set(key, loginPromise);
     try {
       await loginPromise;
     } finally {
+      if (this.loginQueueTail === loginPromise) {
+        this.loginQueueTail = undefined;
+      }
       if (pending.get(key) === loginPromise) {
         pending.delete(key);
       }
@@ -5032,7 +5054,7 @@ async function computeLoggerMetadata(
   ]);
   const cached = cache.get(key);
   if (cached && Date.now() < cached.expiresAt) {
-    return cached.promise;
+    return structuredClone(await cached.promise);
   }
 
   const conn = state.appConn();
@@ -5069,7 +5091,7 @@ async function computeLoggerMetadata(
   try {
     const metadata = await entry.promise;
     entry.expiresAt = Date.now() + PROJECT_CACHE_TTL_MS;
-    return metadata;
+    return structuredClone(metadata);
   } catch (error) {
     if (cache.get(key) === entry) {
       cache.delete(key);
@@ -5835,18 +5857,37 @@ export async function loginToState(options: LoginOptions = {}) {
     _saveOrgInfo(state, testOrgInfo, testOrgInfo[0].name);
     return state;
   } else {
-    const loginResponse = await fetch(
-      _urljoin(state.appUrl, `/api/apikey/login`),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-      },
-    );
-    const resp = await checkResponse(loginResponse);
-    const info = await readJSONResponse(resp);
+    const controller = new AbortController();
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let info;
+    try {
+      // Bound both headers and body reads, including custom fetches that ignore
+      // cancellation, so a stalled request cannot block subsequent logins.
+      info = await Promise.race([
+        (async () => {
+          const response = await fetch(_urljoin(appUrl, `/api/apikey/login`), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            signal: controller.signal,
+          });
+          return readJSONResponse(await checkResponse(response));
+        })(),
+        new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => {
+            const error = new Error(
+              "Braintrust login timed out after 30 seconds.",
+            );
+            reject(error);
+            controller.abort(error);
+          }, LOGIN_TIMEOUT_MS);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timeout);
+    }
 
     _saveOrgInfo(state, info.org_info, orgName);
     if (!state.apiUrl) {

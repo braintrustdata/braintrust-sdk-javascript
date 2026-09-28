@@ -57,6 +57,56 @@ afterEach(() => {
 });
 
 describe("project metadata caching", () => {
+  test.each(["name", "id"])(
+    "isolates metadata mutations across concurrent and later %s lookups",
+    async (lookup) => {
+      const { state, fetch } = createState();
+      await state.login({});
+      const project = {
+        id: projectId,
+        name: "project",
+        metadata: { labels: ["original"] },
+      };
+      fetch.mockResolvedValueOnce(Response.json({ name: "project", project }));
+      const options = {
+        state,
+        setCurrent: false,
+        ...(lookup === "name" ? { projectName: "project" } : { projectId }),
+      };
+      const first = initLogger(options);
+      const second = initLogger(options);
+      const [firstProject, secondProject] = await Promise.all([
+        first.project,
+        second.project,
+      ]);
+      firstProject.id = "changed-id";
+      firstProject.name = "changed-name";
+      (firstProject.fullInfo.metadata as typeof project.metadata).labels.push(
+        "changed",
+      );
+      expect(secondProject).toEqual({
+        id: projectId,
+        name: "project",
+        fullInfo: project,
+      });
+      expect(await second.id).toBe(projectId);
+      secondProject.id = "also-changed";
+      (secondProject.fullInfo.metadata as typeof project.metadata).labels.push(
+        "also-changed",
+      );
+      expect(await initLogger(options).project).toEqual({
+        id: projectId,
+        name: "project",
+        fullInfo: project,
+      });
+      const components = SpanComponentsV4.fromStr(await first.export());
+      expect(await spanComponentsToObjectId({ state, components })).toBe(
+        projectId,
+      );
+      expect(fetch).toHaveBeenCalledTimes(2);
+    },
+  );
+
   test("shares concurrent and sequential lookups across loggers and imported parents", async () => {
     const { state, fetch } = createState();
     const logger = initLogger({
@@ -302,6 +352,72 @@ describe("project metadata caching", () => {
 });
 
 describe("login deduplication", () => {
+  test.each(["headers", "body"])(
+    "times out stalled %s, unblocks forced login, and ignores late results",
+    async (stage) => {
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      const { state, fetch } = createState();
+      let signal: AbortSignal | null | undefined;
+      let completeFirst!: () => void;
+      fetch.mockImplementationOnce((_, init) => {
+        signal = init?.signal;
+        if (stage === "headers") {
+          return new Promise((resolve) => {
+            completeFirst = () => resolve(loginResponse("old-org"));
+          });
+        }
+        const response = loginResponse("old-org");
+        vi.spyOn(response, "text").mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              completeFirst = () =>
+                resolve(
+                  JSON.stringify({
+                    org_info: [
+                      {
+                        id: "old-org",
+                        name: "old-org",
+                        api_url: "https://api.test",
+                      },
+                    ],
+                  }),
+                );
+            }),
+        );
+        return Promise.resolve(response);
+      });
+      const first = state.login({});
+      const duplicate = state.login({});
+      const firstResults = Promise.allSettled([first, duplicate]);
+      const replacementFetch = vi.fn<typeof globalThis.fetch>(async () =>
+        loginResponse("new-org"),
+      );
+      const replacement = state.login({
+        forceLogin: true,
+        fetch: replacementFetch,
+      });
+      await vi.advanceTimersByTimeAsync(29_999);
+      expect(replacementFetch).not.toHaveBeenCalled();
+      expect(signal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      for (const result of await firstResults) {
+        expect(result).toMatchObject({
+          status: "rejected",
+          reason: new Error("Braintrust login timed out after 30 seconds."),
+        });
+      }
+      await replacement;
+      expect(signal?.aborted).toBe(true);
+      expect(replacementFetch).toHaveBeenCalledTimes(1);
+      expect(state.orgId).toBe("new-org");
+      completeFirst();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(state.orgId).toBe("new-org");
+      expect(state.fetch).toBe(replacementFetch);
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
   test("shares cold logins and keeps completed logins cached", async () => {
     const { state, fetch } = createState();
     await Promise.all(Array.from({ length: 10 }, () => state.login({})));
@@ -346,69 +462,51 @@ describe("login deduplication", () => {
     },
   );
 
-  test("forceLogin always starts a fresh request", async () => {
-    const { state, fetch } = createState();
-    await state.login({});
-    const results = await Promise.allSettled([
-      state.login({ forceLogin: true }),
-      state.login({ forceLogin: true }),
-    ]);
-    expect(results.map((result) => result.status)).toEqual([
-      "rejected",
-      "fulfilled",
-    ]);
-    expect(fetch).toHaveBeenCalledTimes(3);
-  });
-
-  test("forced logins remain independent during asynchronous credential discovery", async () => {
-    const { fetch } = createState();
-    const state = new BraintrustState({
-      appUrl: "https://app.test",
-      fetch,
-      noExitFlush: true,
-    });
-    vi.spyOn(iso, "getBraintrustApiKey").mockResolvedValue("test-credential");
-    const results = await Promise.allSettled([
-      state.login({ forceLogin: true }),
-      state.login({ forceLogin: true }),
-    ]);
-    expect(results.map((result) => result.status)).toEqual([
-      "rejected",
-      "fulfilled",
-    ]);
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(state.loggedIn).toBe(true);
-  });
-
-  test.each(["reset", "forceLogin"])(
-    "an older pending login cannot overwrite %s",
-    async (action) => {
-      const { state, fetch } = createState();
-      let resolve!: (value: Response) => void;
-      fetch.mockImplementationOnce(
-        () =>
-          new Promise((r) => {
-            resolve = r;
-          }),
+  test.each([false, true])(
+    "concurrent forced loggers remain usable (credential discovery: %s)",
+    async (discoverCredential) => {
+      const { fetch } = createState();
+      const state = new BraintrustState({
+        apiKey: discoverCredential ? undefined : "test-credential",
+        appUrl: "https://app.test",
+        fetch,
+        noExitFlush: true,
+      });
+      vi.spyOn(iso, "getBraintrustApiKey").mockResolvedValue("test-credential");
+      state.httpLogger().syncFlush = true;
+      const loggers = Array.from({ length: 2 }, () =>
+        initLogger({
+          state,
+          projectName: "project",
+          forceLogin: true,
+          setCurrent: false,
+        }),
       );
-      const first = state.login({});
-      expect(fetch).toHaveBeenCalledTimes(1);
-      if (action === "reset") {
-        state.resetLoginInfo();
-      } else {
-        fetch.mockResolvedValueOnce(loginResponse("new-org"));
-        await state.login({ forceLogin: true });
+      expect(await Promise.all(loggers.map((logger) => logger.id))).toEqual([
+        projectId,
+        projectId,
+      ]);
+      for (const [index, logger] of loggers.entries()) {
+        logger.startSpan({ name: `forced-${index}` }).end();
       }
-      resolve(loginResponse("old-org"));
-      await expect(first).rejects.toThrow(
-        "Login cancelled by a reset or a newer forced login.",
-      );
-      expect(state.orgId).toBe(action === "reset" ? null : "new-org");
+      await state.bgLogger().flush();
+      const rows = fetch.mock.calls
+        .filter(([url]) => String(url).endsWith("/logs3"))
+        .flatMap(([, init]) => JSON.parse(String(init?.body)).rows);
+      expect(rows.map((row) => row.span_attributes.name).sort()).toEqual([
+        "forced-0",
+        "forced-1",
+      ]);
+      expect(
+        fetch.mock.calls.filter(([url]) =>
+          String(url).endsWith("/api/apikey/login"),
+        ),
+      ).toHaveLength(2);
     },
   );
 
   test.each([false, true])(
-    "cancels an earlier login before its forced replacement completes (forceLogin: %s)",
+    "queues a forced login behind the earlier attempt (forceLogin: %s)",
     async (forceLogin) => {
       const { state, fetch } = createState();
       let resolveFirst!: (value: Response) => void;
@@ -428,21 +526,61 @@ describe("login deduplication", () => {
         );
       const first = state.login({ forceLogin });
       const replacement = state.login({ forceLogin: true });
+      expect(fetch).toHaveBeenCalledTimes(1);
       resolveFirst(loginResponse("old-org"));
-      await expect(first).rejects.toThrow(
-        "Login cancelled by a reset or a newer forced login.",
-      );
-      expect(state.loggedIn).toBe(false);
+      await first;
+      expect(state.orgId).toBe("old-org");
+      await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
       resolveReplacement(loginResponse("new-org"));
       await replacement;
       expect(state.orgId).toBe("new-org");
-      expect(state.loggedIn).toBe(true);
     },
   );
 
-  test.each(["reset", "forceLogin"])(
-    "cancels credential discovery superseded by %s",
-    async (action) => {
+  test("a failed login does not prevent the queued forced login from succeeding", async () => {
+    const { state, fetch } = createState();
+    fetch.mockRejectedValueOnce(new Error("login failed"));
+    const results = await Promise.allSettled([
+      state.login({ forceLogin: true }),
+      state.login({ forceLogin: true }),
+    ]);
+    expect(results.map((result) => result.status)).toEqual([
+      "rejected",
+      "fulfilled",
+    ]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(state.loggedIn).toBe(true);
+  });
+
+  test("reset cancels pending and queued logins without blocking a new login", async () => {
+    const { state, fetch } = createState();
+    let resolve!: (value: Response) => void;
+    fetch.mockImplementationOnce(
+      () =>
+        new Promise((r) => {
+          resolve = r;
+        }),
+    );
+    const first = state.login({});
+    const queued = state.login({ forceLogin: true });
+    const results = Promise.allSettled([first, queued]);
+    state.resetLoginInfo();
+    fetch.mockResolvedValueOnce(loginResponse("new-org"));
+    await state.login({});
+    resolve(loginResponse("old-org"));
+    for (const result of await results) {
+      expect(result).toMatchObject({
+        status: "rejected",
+        reason: new Error("Login cancelled by a reset."),
+      });
+    }
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(state.orgId).toBe("new-org");
+  });
+
+  test.each([false, true])(
+    "reset cancels credential discovery (forceLogin: %s)",
+    async (forceLogin) => {
       const { fetch } = createState();
       const state = new BraintrustState({
         appUrl: "https://app.test",
@@ -456,35 +594,53 @@ describe("login deduplication", () => {
             resolveCredential = resolve;
           }),
       );
-      let resolveReplacement!: (value: Response) => void;
-      fetch.mockImplementationOnce(
+      const first = state.login({ forceLogin });
+      state.resetLoginInfo();
+      resolveCredential("old-credential");
+      await expect(first).rejects.toThrow("Login cancelled by a reset.");
+      expect(state.loggedIn).toBe(false);
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
+
+  test.each(["apiKey", "appUrl", "orgName", "fetch"] as const)(
+    "rejects conflicting %s after credential discovery",
+    async (field) => {
+      const { fetch } = createState();
+      const state = new BraintrustState({
+        appUrl: "https://app.test",
+        fetch,
+        noExitFlush: true,
+      });
+      let resolveCredential!: (value: string) => void;
+      vi.spyOn(iso, "getBraintrustApiKey").mockImplementationOnce(
         () =>
           new Promise((resolve) => {
-            resolveReplacement = resolve;
+            resolveCredential = resolve;
           }),
       );
       const first = state.login({});
-      let replacement: Promise<void> | undefined;
-      if (action === "reset") {
-        state.resetLoginInfo();
-      } else {
-        replacement = state.login({
-          apiKey: "replacement-credential",
-          forceLogin: true,
-        });
-      }
-      resolveCredential("old-credential");
+      await state.login({
+        apiKey: "test-credential",
+        ...(field === "fetch"
+          ? { fetch: (...args: Parameters<typeof fetch>) => fetch(...args) }
+          : {
+              [field]:
+                field === "orgName"
+                  ? "org-id"
+                  : field === "appUrl"
+                    ? "https://other.test"
+                    : "different-credential",
+            }),
+      });
+      resolveCredential("test-credential");
       await expect(first).rejects.toThrow(
-        "Login cancelled by a reset or a newer forced login.",
+        "Another login completed with different options",
       );
-      expect(state.loggedIn).toBe(false);
-      expect(fetch).toHaveBeenCalledTimes(action === "reset" ? 0 : 1);
-      if (replacement) {
-        resolveReplacement(loginResponse("new-org"));
-        await replacement;
-        expect(state.orgId).toBe("new-org");
-        expect(state.loggedIn).toBe(true);
-      }
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(state.loginToken).toBe(
+        field === "apiKey" ? "different-credential" : "test-credential",
+      );
     },
   );
 
