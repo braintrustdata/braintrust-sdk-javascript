@@ -1,10 +1,17 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
   resolveScenarioDir,
   runNodeScenarioDir,
+  withScenarioHarness,
 } from "../../helpers/scenario-harness";
+import { resolveFileSnapshotPath } from "../../helpers/file-snapshot";
+import { matchSpanTreeSnapshot, spanTreeFields } from "../../helpers/span-tree";
+import {
+  findAllSpans,
+  spanInstrumentationName,
+} from "../../helpers/trace-selectors";
 import { defineOpenAIInstrumentationAssertions } from "./assertions";
 
 const originalScenarioDir = resolveScenarioDir(import.meta.url);
@@ -86,6 +93,82 @@ describe.concurrent("variants", () => {
       !scenario.disablePrivateFieldMethodsAssertion;
 
     describe.sequential(`openai sdk ${scenario.version}`, () => {
+      for (const mode of ["wrapped", "auto-hook"]) {
+        it(
+          `preserves DeepSeek streamed reasoning with ${mode} instrumentation`,
+          async () => {
+            await withScenarioHarness(async (harness) => {
+              const variantKey = `${scenario.snapshotName}-reasoning`;
+              const result = await harness.runNodeScenarioDir({
+                entry: "scenario.reasoning.mjs",
+                env: {
+                  OPENAI_PACKAGE_NAME: scenario.dependencyName,
+                  INSTRUMENTATION_MODE: mode,
+                },
+                nodeArgs:
+                  mode === "auto-hook"
+                    ? ["--import", "braintrust/hook.mjs"]
+                    : [],
+                runContext: { variantKey, originalScenarioDir },
+                scenarioDir,
+                timeoutMs: TIMEOUT_MS,
+              });
+              const received: {
+                reasoning: string[];
+                content: string[];
+                usage: {
+                  prompt_tokens: number;
+                  completion_tokens: number;
+                  total_tokens: number;
+                };
+              } = JSON.parse(result.stdout);
+              expect(received.reasoning.length).toBeGreaterThan(1);
+              expect(received.content.join("").trim()).toBe("9.8");
+
+              const events = harness.events();
+              const roots = findAllSpans(events, "openai-reasoning-root");
+              const spans = findAllSpans(events, "Chat Completion");
+              expect(roots).toHaveLength(1);
+              expect(spans).toHaveLength(1);
+              const span = spans[0];
+              expect(span.span.parentIds).toEqual([roots[0].span.id]);
+              expect(spanInstrumentationName(span)).toBe("openai");
+              expect(span.output).toMatchObject([
+                {
+                  index: 0,
+                  finish_reason: "stop",
+                  message: {
+                    role: "assistant",
+                    content: received.content.join(""),
+                  },
+                },
+              ]);
+              expect(span.output).toMatchObject([
+                {
+                  message: { reasoning_content: received.reasoning.join("") },
+                },
+              ]);
+              expect(span.metrics).toMatchObject({
+                prompt_tokens: received.usage.prompt_tokens,
+                completion_tokens: received.usage.completion_tokens,
+                tokens: received.usage.total_tokens,
+              });
+              await matchSpanTreeSnapshot(
+                [...roots, ...spans].map((event) => ({
+                  event,
+                  fields: { ...spanTreeFields(event), context: event.context },
+                })),
+                resolveFileSnapshotPath(
+                  import.meta.url,
+                  `${variantKey}-${mode}.span-tree.json`,
+                ),
+              );
+            });
+          },
+          TIMEOUT_MS,
+        );
+      }
+
       defineOpenAIInstrumentationAssertions({
         assertPrivateFieldMethodsOperation,
         name: "wrapped instrumentation",
