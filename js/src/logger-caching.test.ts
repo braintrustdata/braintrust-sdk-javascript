@@ -57,6 +57,49 @@ afterEach(() => {
 });
 
 describe("project metadata caching", () => {
+  test.each(["reset", "forceLogin", "fetch"])(
+    "shares lookups across SDK copies and invalidates on %s",
+    async (action) => {
+      vi.resetModules();
+      const otherSdk = await import("./logger");
+      const otherNode = await import("./node/config");
+      otherNode.configureNode();
+
+      const { state, fetch } = createState();
+      const options = { state, projectName: "project", setCurrent: false };
+      expect(
+        await Promise.all([
+          initLogger(options).id,
+          otherSdk.initLogger(options).id,
+        ]),
+      ).toEqual([projectId, projectId]);
+      expect(
+        fetch.mock.calls.filter(([url]) =>
+          String(url).endsWith("/api/project/register"),
+        ),
+      ).toHaveLength(1);
+
+      if (action === "reset") {
+        state.resetLoginInfo();
+        await state.login({});
+      } else if (action === "forceLogin") {
+        await state.login({ forceLogin: true });
+      } else {
+        state.setFetch((...args) => fetch(...args));
+      }
+      fetch.mockResolvedValueOnce(
+        Response.json({ project: { id: "replacement-id", name: "project" } }),
+      );
+      expect(await otherSdk.initLogger(options).id).toBe("replacement-id");
+      expect(await initLogger(options).id).toBe("replacement-id");
+      expect(
+        fetch.mock.calls.filter(([url]) =>
+          String(url).endsWith("/api/project/register"),
+        ),
+      ).toHaveLength(2);
+    },
+  );
+
   test.each(["name", "id"])(
     "isolates metadata mutations across concurrent and later %s lookups",
     async (lookup) => {
@@ -191,8 +234,8 @@ describe("project metadata caching", () => {
     expect(register).toHaveBeenCalledTimes(2);
   });
 
-  test("starts TTL on success and shares requests even when resolution takes over 15 minutes", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
+  test("starts TTL on success and shares pending requests", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
     vi.setSystemTime(0);
     const { state } = createState();
     await state.login({});
@@ -208,8 +251,8 @@ describe("project metadata caching", () => {
       projectName: "project",
       setCurrent: false,
     }).id;
-    await vi.waitFor(() => expect(register).toHaveBeenCalledTimes(1));
-    vi.setSystemTime(ttl * 2);
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(register).toHaveBeenCalledTimes(1);
     const second = initLogger({
       state,
       projectName: "project",
@@ -217,10 +260,82 @@ describe("project metadata caching", () => {
     }).id;
     resolve({ project: { id: projectId, name: "project" } });
     await Promise.all([first, second]);
-    vi.setSystemTime(ttl * 3 - 1);
+    expect(vi.getTimerCount()).toBe(0);
+    vi.setSystemTime(20_000 + ttl - 1);
     await initLogger({ state, projectName: "project", setCurrent: false }).id;
     expect(register).toHaveBeenCalledTimes(1);
   });
+
+  test.each([
+    ["name", "headers"],
+    ["name", "body"],
+    ["id", "headers"],
+    ["id", "body"],
+  ])(
+    "times out stalled %s lookup %s and allows retry",
+    async (lookup, stage) => {
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      const { state, fetch } = createState();
+      await state.login({});
+      let signal: AbortSignal | null | undefined;
+      let completeFirst!: () => void;
+      fetch.mockImplementationOnce((_, init) => {
+        signal = init?.signal;
+        const body = {
+          name: "project",
+          project: { id: "stale-id", name: "project" },
+        };
+        if (stage === "headers") {
+          return new Promise((resolve) => {
+            completeFirst = () => resolve(Response.json(body));
+          });
+        }
+        const response = Response.json(body);
+        vi.spyOn(response, "text").mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              completeFirst = () => resolve(JSON.stringify(body));
+            }),
+        );
+        return Promise.resolve(response);
+      });
+      const options = {
+        state,
+        setCurrent: false,
+        ...(lookup === "name" ? { projectName: "project" } : { projectId }),
+      };
+      const results = Promise.allSettled([
+        initLogger(options).project,
+        initLogger(options).project,
+      ]);
+      await vi.advanceTimersByTimeAsync(29_999);
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(signal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      for (const result of await results) {
+        expect(result).toMatchObject({
+          status: "rejected",
+          reason: new Error(
+            "Braintrust project lookup timed out after 30 seconds.",
+          ),
+        });
+      }
+      expect(signal?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+
+      const replacement = await initLogger(options).project;
+      expect(replacement.id).toBe(projectId);
+      expect(fetch).toHaveBeenCalledTimes(3);
+      expect(vi.getTimerCount()).toBe(0);
+
+      // A custom fetch can ignore cancellation and finish after the replacement.
+      completeFirst();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(await initLogger(options).project).toEqual(replacement);
+      expect(fetch).toHaveBeenCalledTimes(3);
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
 
   test("shares failures but permits retries from later loggers", async () => {
     const { state } = createState();

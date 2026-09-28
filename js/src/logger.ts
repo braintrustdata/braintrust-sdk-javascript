@@ -689,11 +689,8 @@ let stateNonce = 0;
 const V1_PROXY_SUFFIX = "/v1/proxy";
 const LOADER_LOGIN_CACHE_MAX = 16;
 const LOGIN_TIMEOUT_MS = 30_000;
+const PROJECT_LOOKUP_TIMEOUT_MS = 30_000;
 const PROJECT_CACHE_TTL_MS = 15 * 60 * 1000;
-const projectMetadataCaches = new WeakMap<
-  BraintrustState,
-  LRUCache<string, { promise: Promise<OrgProjectMetadata>; expiresAt: number }>
->();
 
 type ResolvedLoaderLoginOptions = Required<
   Pick<LoginOptions, "apiKey" | "appUrl" | "fetch">
@@ -756,6 +753,11 @@ export class BraintrustState {
   public promptCache: PromptCache;
   public parametersCache: ParametersCache;
   public spanCache: SpanCache;
+  /** @internal */
+  public readonly projectMetadataCache = new LRUCache<
+    string,
+    { promise: Promise<OrgProjectMetadata>; expiresAt: number }
+  >({ max: 1000 });
   private _idGenerator: IDGenerator | null = null;
   private _contextManager: ContextManager | null = null;
   private _otelFlushCallback: (() => Promise<void>) | null = null;
@@ -870,7 +872,7 @@ export class BraintrustState {
     this.loginGeneration++;
     this.loginQueueTail = undefined;
     this.pendingLogins = new WeakMap();
-    projectMetadataCaches.delete(this);
+    this.projectMetadataCache.clear();
     this.appUrl = null;
     this.appPublicUrl = null;
     this.loginToken = null;
@@ -1068,7 +1070,7 @@ export class BraintrustState {
   }
 
   public copyLoginInfo(other: BraintrustState) {
-    projectMetadataCaches.delete(this);
+    this.projectMetadataCache.clear();
     this.appUrl = other.appUrl;
     this.appPublicUrl = other.appPublicUrl;
     this.loginToken = other.loginToken;
@@ -1175,7 +1177,7 @@ export class BraintrustState {
 
   public setFetch(fetch: typeof globalThis.fetch) {
     if (fetch !== this.fetch) {
-      projectMetadataCaches.delete(this);
+      this.projectMetadataCache.clear();
     }
     this.loginParams.fetch = fetch;
     this.fetch = fetch;
@@ -1753,13 +1755,17 @@ class HTTPConnection {
     object_type: string,
     args: Record<string, string | string[] | undefined> | undefined = undefined,
     retries: number = 0,
+    signal?: AbortSignal,
   ) {
     const tries = retries + 1;
     for (let i = 0; i < tries; i++) {
       try {
-        const resp = await this.get(`${object_type}`, args);
+        const resp = await this.get(`${object_type}`, args, { signal });
         return await readJSONResponse(resp, this.classifyTransportErrors);
       } catch (e) {
+        if (signal?.aborted) {
+          throw getAbortReason(signal);
+        }
         if (i < tries - 1) {
           debugLogger.debug(
             `Retrying API request ${object_type} ${JSON.stringify(args)} ${
@@ -1770,9 +1776,7 @@ class HTTPConnection {
           debugLogger.info(
             `Sleeping for ${sleepTimeS}s before retrying API request`,
           );
-          await new Promise((resolve) =>
-            setTimeout(resolve, sleepTimeS * 1000),
-          );
+          await waitForRetry(sleepTimeS * 1000, signal);
           continue;
         }
         throw e;
@@ -1783,9 +1787,11 @@ class HTTPConnection {
   async post_json(
     object_type: string,
     args: Record<string, unknown> | string | undefined = undefined,
+    signal?: AbortSignal,
   ) {
     const resp = await this.post(`${object_type}`, args, {
       headers: { "Content-Type": "application/json" },
+      signal,
     });
     return await readJSONResponse(resp, this.classifyTransportErrors);
   }
@@ -5039,11 +5045,7 @@ async function computeLoggerMetadata(
     };
   }
 
-  let cache = projectMetadataCaches.get(state);
-  if (!cache) {
-    cache = new LRUCache({ max: 1000 });
-    projectMetadataCaches.set(state, cache);
-  }
+  const cache = state.projectMetadataCache;
   const key = JSON.stringify([
     state.appUrl,
     org_id,
@@ -5058,34 +5060,56 @@ async function computeLoggerMetadata(
   }
 
   const conn = state.appConn();
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   const entry = {
-    // Pending requests do not expire. The TTL starts when the lookup succeeds.
+    // The lookup timeout bounds pending requests; the cache TTL starts on success.
     expiresAt: Infinity,
-    promise: (async (): Promise<OrgProjectMetadata> => {
-      if (isEmpty(project_id)) {
-        const response = await conn.post_json("api/project/register", {
-          project_name: project_name || GLOBAL_PROJECT,
-          org_id,
-        });
+    promise: Promise.race([
+      (async (): Promise<OrgProjectMetadata> => {
+        if (isEmpty(project_id)) {
+          const response = await conn.post_json(
+            "api/project/register",
+            {
+              project_name: project_name || GLOBAL_PROJECT,
+              org_id,
+            },
+            controller.signal,
+          );
+          return {
+            org_id,
+            project: {
+              id: response.project.id,
+              name: response.project.name,
+              fullInfo: response.project,
+            },
+          };
+        }
+        const response = await conn.get_json(
+          "api/project",
+          { id: project_id },
+          0,
+          controller.signal,
+        );
         return {
           org_id,
           project: {
-            id: response.project.id,
-            name: response.project.name,
+            id: project_id,
+            name: response.name,
             fullInfo: response.project,
           },
         };
-      }
-      const response = await conn.get_json("api/project", { id: project_id });
-      return {
-        org_id,
-        project: {
-          id: project_id,
-          name: response.name,
-          fullInfo: response.project,
-        },
-      };
-    })(),
+      })(),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          const error = new Error(
+            "Braintrust project lookup timed out after 30 seconds.",
+          );
+          reject(error);
+          controller.abort(error);
+        }, PROJECT_LOOKUP_TIMEOUT_MS);
+      }),
+    ]),
   };
   cache.set(key, entry);
   try {
@@ -5097,6 +5121,8 @@ async function computeLoggerMetadata(
       cache.delete(key);
     }
     throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
