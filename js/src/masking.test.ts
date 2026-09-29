@@ -1,4 +1,4 @@
-import { expect, test, describe, beforeEach, afterEach } from "vitest";
+import { expect, test, describe, beforeEach, afterEach, vi } from "vitest";
 import {
   _exportsForTestingOnly,
   initLogger,
@@ -28,6 +28,7 @@ describe("masking functionality", () => {
     configureInstrumentation({ spanCustomizers: [] });
     setMaskingFunction(null); // Clear masking function
     _exportsForTestingOnly.clearTestBackgroundLogger();
+    vi.restoreAllMocks();
   });
 
   test("basic masking with logger", async () => {
@@ -546,46 +547,81 @@ describe("masking functionality", () => {
     ]);
   });
 
-  test("masking runs after customizers and can be replaced or disabled independently", async () => {
+  test("dropped customizer records never reach masking or merge into successful records", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
     configureInstrumentation({
       spanCustomizers: [
         {
           onSpanExport(data) {
-            if (typeof data.output === "string") data.output += ":customized";
+            if (data.output === "private") throw new Error("private failure");
             return data;
           },
         },
       ],
     });
-    const logger = initLogger({
+    const mask = vi.fn((data: unknown) => (data === "safe" ? "masked" : data));
+    setMaskingFunction(mask);
+    const span = initLogger({
       projectName: "test",
       projectId: "test-project-id",
-    });
-    const logOutput = () => {
-      const span = logger.startSpan(
-        withSpanInstrumentationName(
-          { name: "provider" },
-          INSTRUMENTATION_NAMES.OPENAI,
-        ),
-      );
-      span.log({ output: "private" });
-      span.end();
-    };
-    setMaskingFunction((data) =>
-      typeof data === "string" ? `${data}:obsolete` : data,
-    );
-    setMaskingFunction((data) =>
-      data === "private:customized" ? "redacted" : data,
-    );
-    logOutput();
-    expect(await memoryLogger.drain()).toEqual([
-      expect.objectContaining({ output: "redacted" }),
-    ]);
+    }).startSpan({ name: "manual" });
+    span.log({ output: "private", metadata: { secret: "private" } });
+    span.log({ output: "safe" });
+    span.end();
 
-    setMaskingFunction(null);
-    logOutput();
-    expect(await memoryLogger.drain()).toEqual([
-      expect.objectContaining({ output: "private:customized" }),
+    const events = await memoryLogger.drain();
+    expect(events).toEqual([
+      expect.objectContaining({ id: span.id, output: "masked" }),
     ]);
+    expect(JSON.stringify(events)).not.toContain("private");
+    expect(JSON.stringify(mask.mock.calls)).not.toContain("private");
   });
+
+  test.each(["manual", "instrumented"])(
+    "masking runs after %s span customizers and can be replaced or disabled independently",
+    async (origin) => {
+      configureInstrumentation({
+        spanCustomizers: [
+          {
+            onSpanExport(data) {
+              if (typeof data.output === "string") data.output += ":customized";
+              return data;
+            },
+          },
+        ],
+      });
+      const logger = initLogger({
+        projectName: "test",
+        projectId: "test-project-id",
+      });
+      const logOutput = () => {
+        const span = logger.startSpan(
+          origin === "instrumented"
+            ? withSpanInstrumentationName(
+                { name: "provider" },
+                INSTRUMENTATION_NAMES.OPENAI,
+              )
+            : { name: "manual" },
+        );
+        span.log({ output: "private" });
+        span.end();
+      };
+      setMaskingFunction((data) =>
+        typeof data === "string" ? `${data}:obsolete` : data,
+      );
+      setMaskingFunction((data) =>
+        data === "private:customized" ? "redacted" : data,
+      );
+      logOutput();
+      expect(await memoryLogger.drain()).toEqual([
+        expect.objectContaining({ output: "redacted" }),
+      ]);
+
+      setMaskingFunction(null);
+      logOutput();
+      expect(await memoryLogger.drain()).toEqual([
+        expect.objectContaining({ output: "private:customized" }),
+      ]);
+    },
+  );
 });

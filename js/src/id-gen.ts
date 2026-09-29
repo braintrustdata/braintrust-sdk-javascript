@@ -101,6 +101,18 @@ function parseEnvBool(name: string): boolean {
   );
 }
 
+/**
+ * Whether OpenTelemetry compat mode is active, either via BRAINTRUST_OTEL_COMPAT
+ * or because `@braintrust/otel`'s `setupOtelCompat()` installed its globals.
+ */
+export function isOtelCompatMode(): boolean {
+  return (
+    parseEnvBool("BRAINTRUST_OTEL_COMPAT") ||
+    globalThis.BRAINTRUST_CONTEXT_MANAGER !== undefined ||
+    globalThis.BRAINTRUST_ID_GENERATOR !== undefined
+  );
+}
+
 let _warnedLegacyUuidConflict = false;
 
 /**

@@ -2497,12 +2497,15 @@ function updateSpanImpl({
       object_id: await parentObjectId.get(),
     }).objectIdFields();
 
-  const record = new LazyValue(async () => ({
-    id,
-    ...updateEvent,
-    ...(await parentIds()),
-    [IS_MERGE_FIELD]: true,
-  }));
+  const record = new LazyValue(
+    async () =>
+      customizeSpanExport({
+        id,
+        ...updateEvent,
+        ...(await parentIds()),
+        [IS_MERGE_FIELD]: true,
+      }) as BackgroundLogEvent | null,
+  );
   state.bgLogger().log([record]);
 }
 
@@ -3270,7 +3273,7 @@ function getNumericEnv(name: string): number | undefined {
 }
 
 interface BackgroundLogger {
-  log(items: LazyValue<BackgroundLogEvent>[]): void;
+  log(items: LazyValue<BackgroundLogEvent | null>[]): void;
   flush(): Promise<void>;
   pendingFlushBytes(): number;
   flushBackpressureBytes(): number;
@@ -3280,10 +3283,10 @@ interface BackgroundLogger {
 }
 
 export class TestBackgroundLogger implements BackgroundLogger {
-  private items: LazyValue<BackgroundLogEvent>[][] = [];
+  private items: LazyValue<BackgroundLogEvent | null>[][] = [];
   private exportCustomizers: readonly SpanCustomizer[] = [];
 
-  log(items: LazyValue<BackgroundLogEvent>[]): void {
+  log(items: LazyValue<BackgroundLogEvent | null>[]): void {
     this.items.push(items);
   }
 
@@ -3315,20 +3318,23 @@ export class TestBackgroundLogger implements BackgroundLogger {
     const events: BackgroundLogEvent[] = [];
     for (const item of items) {
       for (const event of item) {
-        events.push(await event.get());
+        const value = await event.get();
+        if (value !== null) events.push(value);
       }
     }
 
     let batch = mergeRowBatch(events);
 
     if (this.exportCustomizers.length) {
-      batch = batch.map(
-        (item) =>
-          customizeSpanExport(
-            item as SpanExportData,
-            this.exportCustomizers,
-          ) as BackgroundLogEvent,
-      );
+      batch = batch
+        .map(
+          (item) =>
+            customizeSpanExport(
+              item as SpanExportData,
+              this.exportCustomizers,
+            ) as BackgroundLogEvent | null,
+        )
+        .filter((item): item is BackgroundLogEvent => item !== null);
     }
 
     return batch;
@@ -3421,7 +3427,7 @@ class ConcurrencyLimiter {
 
 interface QueuedLogEvent {
   sequence: number;
-  event: LazyValue<BackgroundLogEvent>;
+  event: LazyValue<BackgroundLogEvent | null>;
 }
 
 class HTTPBackgroundLogger implements BackgroundLogger {
@@ -3575,7 +3581,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     return this._flushBackpressureBytes;
   }
 
-  log(items: LazyValue<BackgroundLogEvent>[]) {
+  log(items: LazyValue<BackgroundLogEvent | null>[]) {
     if (this._disabled) {
       return;
     }
@@ -3676,7 +3682,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   }
 
   private async flushWrappedItemsChunk(
-    wrappedItems: LazyValue<BackgroundLogEvent>[],
+    wrappedItems: LazyValue<BackgroundLogEvent | null>[],
     batchSize: number,
   ) {
     if (!wrappedItems.length) {
@@ -3750,11 +3756,13 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   }
 
   private async unwrapLazyValues(
-    wrappedItems: LazyValue<BackgroundLogEvent>[],
+    wrappedItems: LazyValue<BackgroundLogEvent | null>[],
   ): Promise<[BackgroundLogEvent[], Attachment[]]> {
     for (let i = 0; i < this.numTries; ++i) {
       try {
-        const items = await Promise.all(wrappedItems.map((x) => x.get()));
+        const items = (
+          await Promise.all(wrappedItems.map((x) => x.get()))
+        ).filter((item): item is BackgroundLogEvent => item !== null);
 
         // TODO(kevin): `extractAttachments` should ideally come after
         // `mergeRowBatch`, since merge-overwriting could result in some
@@ -3767,13 +3775,15 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         let mergedItems = mergeRowBatch(items);
 
         if (this.exportCustomizers.length) {
-          mergedItems = mergedItems.map(
-            (item) =>
-              customizeSpanExport(
-                item as SpanExportData,
-                this.exportCustomizers,
-              ) as BackgroundLogEvent,
-          );
+          mergedItems = mergedItems
+            .map(
+              (item) =>
+                customizeSpanExport(
+                  item as SpanExportData,
+                  this.exportCustomizers,
+                ) as BackgroundLogEvent | null,
+            )
+            .filter((item): item is BackgroundLogEvent => item !== null);
         }
 
         return [mergedItems, attachments];
@@ -3958,7 +3968,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   }
 
   private async dumpDroppedEvents(
-    wrappedItems: LazyValue<BackgroundLogEvent>[],
+    wrappedItems: LazyValue<BackgroundLogEvent | null>[],
   ) {
     const publishPayloadsDir = [
       this.allPublishPayloadsDir,
@@ -5738,7 +5748,7 @@ export type FullLoginOptions = LoginOptions & {
  * Set a global masking function that will be applied to all logged data before sending to Braintrust.
  * The masking function will be applied after records are merged but before they are sent to the backend.
  * Internally, masking is a state-local export customizer that runs after any
- * instrumentation customizers and also covers manually logged records.
+ * span customizers and also covers non-span records such as dataset rows and feedback.
  *
  * @param maskingFunction A function that takes a JSON-serializable object and returns a masked version.
  *                        Set to null to disable masking.
@@ -8294,7 +8304,6 @@ export class SpanImpl implements Span {
 
   private isMerge: boolean;
   private loggedEndTime: number | undefined;
-  private readonly isInstrumented: boolean;
   private propagatedEvent: StartSpanEventArgs | undefined;
 
   // For internal use only.
@@ -8335,8 +8344,6 @@ export class SpanImpl implements Span {
     const instrumentationName =
       getSpanInstrumentationName(args) ??
       INSTRUMENTATION_NAMES.BRAINTRUST_JS_LOGGER;
-    this.isInstrumented =
-      instrumentationName !== INSTRUMENTATION_NAMES.BRAINTRUST_JS_LOGGER;
 
     const spanAttributes = args.spanAttributes ?? {};
     const rawEvent = args.event ?? {};
@@ -8521,10 +8528,8 @@ export class SpanImpl implements Span {
         }).objectIdFields(),
       };
       // Customize inside the memoized lazy value, before attachment processing,
-      // merging, and masking. Retries reuse the already-customized record.
-      return this.isInstrumented
-        ? (customizeSpanExport(record) as BackgroundLogEvent)
-        : record;
+      // merging, and masking. Retries reuse the customized record or drop result.
+      return customizeSpanExport(record) as BackgroundLogEvent | null;
     };
     this._state.bgLogger().log([new LazyValue(computeRecord)]);
   }
