@@ -2,12 +2,18 @@ export type SpanExportData = Record<string, unknown>;
 
 export interface SpanCustomizer {
   /**
-   * Customize an outgoing span record after lazy values resolve, before JSON
+   * Customize each outgoing native SDK span record, including manual, instrumented,
+   * logger, and experiment spans, after lazy values resolve and before JSON
    * serialization. Records are incremental and may not contain every span field.
+   * Dataset rows and feedback records are not customized.
    *
    * Callbacks are synchronous. Add, change, or delete payload fields, then return
    * the record or a replacement plain object. Payloads may still contain SDK
    * Attachment objects; attachment processing and serialization happen later.
+   * Throwing or returning an invalid value (including a promise) logs a safe
+   * error, stops the callback chain, and drops this outgoing record. Later
+   * records are evaluated independently; already exported records cannot be
+   * retracted. Handle recovery inside the callback if export should continue.
    */
   onSpanExport?(data: SpanExportData): SpanExportData;
 }
@@ -62,8 +68,11 @@ export interface InstrumentationConfig {
   integrations?: InstrumentationIntegrationsConfig;
 
   /**
-   * Instrumentation-wide customizers, in callback execution order.
-   * Configure before instrumentation is enabled.
+   * Customizers for all native SDK spans, in callback execution order.
+   * Configure before initializing the SDK or enabling instrumentation.
+   * Not yet supported with OpenTelemetry compat mode; registering a non-empty
+   * list while compat mode is active logs an error and leaves the previous
+   * registration unchanged. Clearing customizers is always allowed and silent.
    */
   spanCustomizers?: readonly SpanCustomizer[];
 }

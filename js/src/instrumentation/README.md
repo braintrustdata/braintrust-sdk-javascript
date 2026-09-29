@@ -206,20 +206,30 @@ configureInstrumentation({
 
 const { initLogger } = await import("braintrust");
 initLogger({ projectName: "my-project" });
-// Import and use instrumented provider SDKs here.
+// Create manual spans or import and use instrumented provider SDKs here.
 ```
 
-`onSpanExport` receives each incremental record from an instrumentation-created
-span after lazy values resolve, before attachment processing, merging, masking,
-and JSON serialization. It can run before the span ends; fields may be absent.
-Ordinary manually created spans, dataset rows, and feedback are not customized.
+`onSpanExport` receives each incremental record from every native SDK span,
+including manually created root and child spans, instrumented spans, and spans
+created by logger and experiment logging. It runs after lazy values resolve,
+before attachment processing, merging, masking, and JSON serialization. It can
+run before the span ends and multiple times for one span; fields may be absent.
+Dataset rows and feedback records are not customized.
 
 Callbacks run synchronously in registration order. Mutate and return the record,
-or return a replacement plain object for the next callback. Exceptions and invalid
-return values are ignored while synchronous payload mutations remain; promises
-are not awaited and their rejections are swallowed. Do not mutate the record after
-returning. Export retries reuse the transformed record without invoking callbacks
-again. Configuration is shared across SDK bundles.
+or return a replacement plain object for the next callback. If a callback throws
+or returns an invalid value (including a promise), the SDK logs a safe error,
+stops the callback chain, and drops that outgoing record. Diagnostics do not
+include the exception message, stack, or span payload, and are throttled to
+the first failure plus at most one report per minute with a suppressed count. Promise rejections are
+consumed without awaiting the result. Handle recovery inside the callback if
+export should continue, and do not mutate the record after returning.
+Export retries reuse the transformed record or drop result without invoking
+callbacks or logging the failure again. Unrelated records and future records
+from the same span are evaluated independently; previously exported records
+cannot be retracted. Dropping a span's first record, which carries
+`span_attributes` and `created`, while later merge records succeed can leave a
+partial row without a name or type. Configuration is shared across SDK bundles.
 
 The SDK restores these fields after every callback, including removing injected
 fields that were absent from the original record:
@@ -231,16 +241,28 @@ fields that were absent from the original record:
   `_array_delete`, `_xact_id`.
 
 Payload values must remain supported by the SDK logging pipeline. They can still
-include `Attachment` objects at this point; attachment processing and JSON
-serialization happen after customization.
+include SDK `Attachment` objects at this point, including ones instrumentation
+created from inline media at capture time; attachment processing and JSON
+serialization happen after customization. Remove or replace an attachment to
+prevent its upload.
 
-This is an export-only hook, not a fail-closed privacy boundary. The local
-experiment/scorer cache is populated before export and may retain unredacted
-values. Applications requiring secrets to stay off local disk must disable the
-span cache separately; export customization alone does not provide that guarantee.
+This is an export-only hook, not a local-cache privacy boundary. Callbacks
+receive copies of plain objects and arrays, so mutations never reach the local
+experiment/scorer cache, which is populated before export with the original,
+uncustomized values. Applications requiring secrets to stay off local disk must
+disable the span cache separately; export customization alone does not provide
+that guarantee.
 
 Customizers receive only the outgoing record, not a live span or provider
 instrumentation context.
+
+Span customizers are not yet supported with OpenTelemetry compat mode
+(`BRAINTRUST_OTEL_COMPAT` or `setupOtelCompat()`). Registering a non-empty list
+while compat mode is active logs an error and leaves the previous registration
+unchanged. Calling `setupOtelCompat()` after registering customizers logs an error
+and continues enabling compat mode without clearing the registered list. Each
+explicit registration or setup attempt logs once, not once per span or export.
+Clearing customizers is always allowed and silent.
 
 ## Testing
 

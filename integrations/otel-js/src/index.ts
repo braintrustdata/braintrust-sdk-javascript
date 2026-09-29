@@ -28,6 +28,17 @@ function resetBraintrustCompatCaches() {
 }
 
 export const setupOtelCompat = () => {
+  // Read braintrust's shared registration directly so this works with any
+  // supported braintrust version. Keep the message in sync with braintrust.
+  const spanCustomizers: unknown = (globalThis as Record<symbol, unknown>)[
+    Symbol.for("braintrust.spanCustomizers")
+  ];
+  if (Array.isArray(spanCustomizers) && spanCustomizers.length) {
+    // eslint-disable-next-line no-restricted-properties -- intentional always-visible configuration error.
+    console.error(
+      "Braintrust span customizers are not supported with OpenTelemetry compat mode yet.",
+    );
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
   (globalThis as any).BRAINTRUST_CONTEXT_MANAGER = OtelContextManager;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions

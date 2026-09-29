@@ -62,10 +62,10 @@ class PluginRegistry {
       );
       return;
     }
-    this.config = { ...this.config, ...config };
     if ("spanCustomizers" in config) {
       setSpanCustomizers(config.spanCustomizers);
     }
+    this.config = { ...this.config, ...config };
   }
 
   /**

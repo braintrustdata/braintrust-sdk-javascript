@@ -9,6 +9,7 @@ import {
   TRANSACTION_ID_FIELD,
 } from "../util/db_fields";
 import { isPromiseLike } from "../util/type_util";
+import { isOtelCompatMode } from "./id-gen";
 import type { SpanCustomizer, SpanExportData } from "./instrumentation/config";
 
 // Configuration can precede platform initialization and must be shared across
@@ -45,8 +46,9 @@ const MASKING_FIELDS = [
 ] as const;
 
 /**
- * Adapt field-level masking to a record customizer. Unlike instrumentation
- * customizers, this runs on all merged records and belongs to one logger state.
+ * Adapt field-level masking to a record customizer. Unlike configured span
+ * customizers, this also runs on non-span records, after merging, and belongs to
+ * one logger state.
  */
 export function createMaskingCustomizer(
   maskingFunction: (value: unknown) => unknown,
@@ -79,25 +81,29 @@ export function createMaskingCustomizer(
   };
 }
 
+// Accept null-prototype objects and objects from any realm's Object.prototype
+// (e.g. node:vm), whose own prototype is null. Arrays, Dates, and class
+// instances all have a longer prototype chain.
 function isPlainRecord(value: unknown): value is SpanExportData {
-  if (value === null || typeof value !== "object") return false;
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
   const prototype = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
+  return prototype === null || Object.getPrototypeOf(prototype) === null;
 }
 
-// Only protocol values are copied deeply; payloads may contain SDK objects such
+// Only plain containers are copied deeply; payloads may contain SDK objects such
 // as Attachments that must retain their identity and serialization behavior.
 function copyProtocolValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(copyProtocolValue);
-  if (isPlainRecord(value)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [
-        key,
-        copyProtocolValue(item),
-      ]),
-    );
-  }
+  if (isPlainRecord(value)) return copyPlainRecord(value);
   return value;
+}
+
+function copyPlainRecord(record: SpanExportData): SpanExportData {
+  return Object.fromEntries(
+    Object.entries(record).map(([key, item]) => [key, copyProtocolValue(item)]),
+  );
 }
 
 function restoreProtocolFields(
@@ -122,9 +128,51 @@ function restoreProtocolFields(
   return restored;
 }
 
+// Log the first failure immediately, then at most once per period with a count
+// of suppressed failures, mirroring the background logger's queue-drop logging.
+const FAILURE_LOGGING_PERIOD_MS = 60_000;
+const failureLoggingState = {
+  numSuppressed: 0,
+  lastLoggedTimestamp: -Infinity,
+};
+
+function registerCustomizerFailure(): void {
+  const timeNow = Date.now();
+  if (
+    timeNow - failureLoggingState.lastLoggedTimestamp <
+    FAILURE_LOGGING_PERIOD_MS
+  ) {
+    failureLoggingState.numSuppressed++;
+    return;
+  }
+  const suppressed = failureLoggingState.numSuppressed
+    ? ` ${failureLoggingState.numSuppressed} additional records were dropped since the last report.`
+    : "";
+  // Never log the exception or record: either can contain sensitive data.
+  // eslint-disable-next-line no-restricted-properties -- intentional always-visible export failure.
+  console.error(
+    `[braintrust] Span export customizer failed; dropping record.${suppressed}`,
+  );
+  failureLoggingState.numSuppressed = 0;
+  failureLoggingState.lastLoggedTimestamp = timeNow;
+}
+
+export function resetSpanCustomizerFailureLoggingForTests(): void {
+  failureLoggingState.numSuppressed = 0;
+  failureLoggingState.lastLoggedTimestamp = -Infinity;
+}
+
 export function setSpanCustomizers(
   customizers: readonly SpanCustomizer[] | undefined,
 ): void {
+  if (customizers?.length && isOtelCompatMode()) {
+    // Keep in sync with setupOtelCompat() in @braintrust/otel.
+    // eslint-disable-next-line no-restricted-properties -- intentional always-visible configuration error.
+    console.error(
+      "Braintrust span customizers are not supported with OpenTelemetry compat mode yet.",
+    );
+    return;
+  }
   shared[SPAN_CUSTOMIZERS_KEY] = customizers;
 }
 
@@ -133,16 +181,18 @@ export function customizeSpanExport(
   customizers: readonly SpanCustomizer[] | undefined = shared[
     SPAN_CUSTOMIZERS_KEY
   ],
-): SpanExportData {
+): SpanExportData | null {
   if (!customizers?.length) return data;
 
   let protectedFields: SpanExportData | undefined;
 
   for (const customizer of customizers) {
-    let candidate = data;
     try {
       if (!customizer.onSpanExport) continue;
       if (!protectedFields) {
+        // Records share nested payload objects with the local span cache, so
+        // hooks get their own plain containers to mutate.
+        data = copyPlainRecord(data);
         protectedFields = {};
         for (const key of PROTECTED_FIELDS) {
           if (Object.prototype.hasOwnProperty.call(data, key)) {
@@ -156,20 +206,18 @@ export function customizeSpanExport(
         // Hooks are synchronous, but accidental async hooks must not leak an
         // unhandled rejection or replace the record with a promise.
         void Promise.resolve(result).catch(() => {});
-      } else if (isPlainRecord(result)) {
-        candidate = result;
+        throw new TypeError("Span export customizers must be synchronous");
       }
+      if (!isPlainRecord(result)) {
+        throw new TypeError(
+          "Span export customizers must return a plain object",
+        );
+      }
+      // Always copy: hooks may freeze their input or return a frozen record.
+      data = restoreProtocolFields(result, protectedFields);
     } catch {
-      // Customization must not prevent export or later customizers from running.
-    }
-
-    if (protectedFields) {
-      try {
-        // Always copy: hooks may freeze their input or return a frozen record.
-        data = restoreProtocolFields(candidate, protectedFields);
-      } catch {
-        data = restoreProtocolFields(data, protectedFields);
-      }
+      registerCustomizerFailure();
+      return null;
     }
   }
   return data;
