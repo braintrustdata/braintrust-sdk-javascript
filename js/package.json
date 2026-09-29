@@ -44,6 +44,13 @@
       "require": "./dist/custom-views.js",
       "default": "./dist/custom-views.mjs"
     },
+    "./preprocessors": {
+      "types": "./dist/preprocessors.d.ts",
+      "import": "./dist/preprocessors.mjs",
+      "module": "./dist/preprocessors.mjs",
+      "require": "./dist/preprocessors.js",
+      "default": "./dist/preprocessors.mjs"
+    },
     "./workerd": {
       "import": "./dist/workerd.mjs",
       "require": "./dist/workerd.js",
