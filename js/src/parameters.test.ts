@@ -1,8 +1,13 @@
-import { expect, test, beforeAll } from "vitest";
-import { validateParameters } from "./eval-parameters";
-import { runEvaluator } from "./framework";
+import { expect, expectTypeOf, test, beforeAll } from "vitest";
+import {
+  evalParametersSchema,
+  type InferParameters,
+  validateParameters,
+} from "./eval-parameters";
+import { Eval, runEvaluator } from "./framework";
 import { RemoteEvalParameters } from "./logger";
 import { z } from "zod/v3";
+import * as z4 from "zod/v4";
 import { type ProgressReporter } from "./reporters/types";
 import { configureNode } from "./node/config";
 
@@ -15,6 +20,67 @@ class NoopProgressReporter implements ProgressReporter {
   public stop() {}
   public increment() {}
 }
+
+test("mixed Zod v3 and v4 parameters validate and infer parsed outputs", async () => {
+  const schema = {
+    prefix: z.string().default("start:"),
+    suffix: z4.string().default(":end"),
+    v3Length: z.string().transform((value) => value.length),
+    v4Length: z4.string().transform((value) => value.length),
+    optional: z4.boolean().optional(),
+    model: { type: "model" as const, default: "test-model" },
+  };
+  expectTypeOf<InferParameters<typeof schema>>().toEqualTypeOf<{
+    prefix: string;
+    suffix: string;
+    v3Length: number;
+    v4Length: number;
+    optional: boolean | undefined;
+    model: string;
+  }>();
+  expect(evalParametersSchema.parse(schema)).toEqual(schema);
+  expect(evalParametersSchema.safeParse({ invalid: {} }).success).toBe(false);
+  await expect(
+    validateParameters({ v3Length: "abc", v4Length: "abcd" }, schema),
+  ).resolves.toEqual({
+    prefix: "start:",
+    suffix: ":end",
+    v3Length: 3,
+    v4Length: 4,
+    optional: undefined,
+    model: "test-model",
+  });
+  await expect(
+    validateParameters(
+      { suffix: 42, v3Length: "abc", v4Length: "abcd" },
+      schema,
+    ),
+  ).rejects.toThrow("Invalid parameter 'suffix'");
+});
+
+test("mixed Zod v3 and v4 parameters are inferred and passed to tasks", async () => {
+  const out = await Eval(
+    "test-mixed-zod-parameters",
+    {
+      data: [{ input: "hello" }],
+      task: (input, { parameters }) => {
+        expectTypeOf(parameters).toEqualTypeOf<{
+          prefix: string;
+          suffix: string;
+        }>();
+        return `${parameters.prefix}${input}${parameters.suffix}`;
+      },
+      scores: [],
+      classifiers: [],
+      parameters: {
+        prefix: z.string().default("start:"),
+        suffix: z4.string().default(":end"),
+      },
+    },
+    { noSendLogs: true, progress: new NoopProgressReporter() },
+  );
+  expect(out.results[0].output).toBe("start:hello:end");
+});
 
 test("parameters are passed to task", async () => {
   const out = await runEvaluator(

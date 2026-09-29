@@ -29,7 +29,7 @@ import {
   promptDefinitionToPromptData,
   type PromptDefinition,
 } from "./prompt-schemas";
-import { zodToJsonSchema } from "./zod/utils";
+import { zodToJsonSchema, type ZodSchema } from "./zod/utils";
 import type {
   ParametersSchema,
   StaticParametersSchema,
@@ -334,19 +334,16 @@ class ClassifierBuilder {
   }
 }
 
-type Schema<Input, Output> = Partial<{
-  parameters: z.ZodSchema<Input>;
-  returns: z.ZodSchema<Output>;
-}>;
-
 export type CodeOpts<
   Params,
   Returns,
   Fn extends GenericFunction<Params, Returns>,
 > = Partial<BaseFnOpts> & {
   handler: Fn;
+  parameters?: ZodSchema<Params>;
+  returns?: ZodSchema<Returns>;
   metadata?: Record<string, unknown>;
-} & Schema<Params, Returns>;
+};
 
 type ScorerPromptOpts = Partial<BaseFnOpts> &
   PromptOpts<false, false, false, false> & {
@@ -410,8 +407,8 @@ export class CodeFunction<
   public readonly slug: string;
   public readonly type: FunctionType;
   public readonly description?: string;
-  public readonly parameters?: z.ZodSchema<Input>;
-  public readonly returns?: z.ZodSchema<Output>;
+  public readonly parameters?: ZodSchema<Input>;
+  public readonly returns?: ZodSchema<Output>;
   public readonly ifExists?: IfExists;
   public readonly tags?: string[];
   public readonly metadata?: Record<string, unknown>;
@@ -736,20 +733,14 @@ export function serializeEvalParametersToStaticParametersSchema(
           },
         ];
       } else {
-        // Since this schema is bundled, it won't pass an instanceof check. For
-        // some reason, aliasing it to `z.ZodSchema` leads to `error TS2589:
-        // Type instantiation is excessively deep and possibly infinite.` So
-        // just using `any` to turn off the typesystem.
-        //
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const schemaObj = zodToJsonSchema(value as unknown as z.ZodType);
+        const jsonSchema = zodToJsonSchema(value);
         return [
           name,
           {
             type: "data",
-            schema: schemaObj,
-            default: schemaObj.default,
-            description: schemaObj.description,
+            schema: jsonSchema,
+            default: jsonSchema.default,
+            description: jsonSchema.description,
           },
         ];
       }
@@ -791,15 +782,11 @@ function serializeEvalParameterstoParametersSchema(
         required.push(name);
       }
     } else {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const schemaObj = zodToJsonSchema(value as z.ZodType) as Record<
-        string,
-        unknown
-      >;
+      const jsonSchema = zodToJsonSchema(value);
 
-      properties[name] = schemaObj;
+      properties[name] = jsonSchema;
 
-      if (!("default" in schemaObj)) {
+      if (!("default" in jsonSchema)) {
         required.push(name);
       }
     }

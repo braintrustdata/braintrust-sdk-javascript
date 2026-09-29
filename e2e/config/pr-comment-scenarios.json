@@ -1,5 +1,10 @@
 [
   {
+    "scenarioDirName": "trace-primitives-basic",
+    "label": "Trace primitives and project caching",
+    "metadataScenario": "trace-primitives-basic"
+  },
+  {
     "scenarioDirName": "deepseek-harness-instrumentation",
     "label": "DeepSeek Harness Instrumentation",
     "metadataScenario": "deepseek-harness-instrumentation",
@@ -894,6 +899,21 @@
       {
         "variantKey": "default",
         "label": "Shared service and task state"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "langchain-anthropic",
+    "label": "LangChain Anthropic",
+    "metadataScenario": "langchain-anthropic",
+    "variants": [
+      {
+        "variantKey": "langchain-anthropic-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "langchain-anthropic-v1-latest",
+        "label": "v1 latest"
       }
     ]
   }

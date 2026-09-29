@@ -11,6 +11,23 @@ async function main() {
     projectName: scopedName("e2e-trace-primitives-basic", testRunId),
   });
 
+  // Concurrent cold initialization should share both login and project lookup.
+  await Promise.all([
+    logger.id,
+    ...Array.from(
+      { length: 10 },
+      () =>
+        initLogger({
+          projectName: scopedName("e2e-trace-primitives-basic", testRunId),
+          setCurrent: false,
+        }).id,
+    ),
+  ]);
+  await initLogger({
+    projectName: scopedName("e2e-trace-primitives-basic", testRunId),
+    setCurrent: false,
+  }).id;
+
   await logger.traced(
     async (rootSpan) => {
       const childSpan = startSpan({

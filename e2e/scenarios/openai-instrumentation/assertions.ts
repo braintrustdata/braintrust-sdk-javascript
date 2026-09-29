@@ -58,7 +58,10 @@ type OperationSpec = {
   operation: string;
   requiresResponsesCompact?: boolean;
   testName: string;
-  validate?: (span: CapturedLogEvent | undefined) => void;
+  validate?: (
+    span: CapturedLogEvent | undefined,
+    operation: CapturedLogEvent | undefined,
+  ) => void;
   validateNested?: (spans: CapturedLogEvent[]) => void;
 };
 
@@ -290,6 +293,46 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
     operation: "stream",
     testName:
       "captures trace for client.chat.completions.create({ stream: true })",
+  },
+  {
+    childNames: ["Chat Completion"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-stream-reasoning-operation",
+    operation: "stream-reasoning",
+    testName:
+      "preserves DeepSeek streamed reasoning separately from the answer",
+    validate: (span, operation) => {
+      const received = operation?.output as {
+        reasoning: string;
+        content: string;
+        reasoningChunks: number;
+        usage: {
+          prompt_tokens: number;
+          completion_tokens: number;
+          total_tokens: number;
+        };
+      };
+      expect(received.reasoningChunks).toBeGreaterThan(1);
+      expect(received.content.trim()).toBe("9.8");
+      expect(span?.output).toMatchObject([
+        {
+          index: 0,
+          finish_reason: "stop",
+          message: { role: "assistant", content: received.content },
+        },
+      ]);
+      expect(span?.output).toMatchObject([
+        {
+          message: { reasoning_content: received.reasoning },
+        },
+      ]);
+      expect(span?.metrics).toMatchObject({
+        prompt_tokens: received.usage.prompt_tokens,
+        completion_tokens: received.usage.completion_tokens,
+        tokens: received.usage.total_tokens,
+      });
+    },
   },
   {
     childNames: ["Chat Completion"],
@@ -1166,7 +1209,7 @@ export function defineOpenAIInstrumentationAssertions(options: {
           spec.validateNested?.(nested);
         }
 
-        spec.validate?.(span);
+        spec.validate?.(span, operation);
       });
     }
 

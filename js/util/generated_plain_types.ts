@@ -1,15 +1,15 @@
-// Auto-generated file (content hash 38c1b7c6e847da09) -- do not modify
+// Auto-generated file (content hash d52ddfd3ce0aa144) -- do not modify
 
 export type AclObjectTypeType =
   /**
    * The object type that the ACL applies to
    *
-   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, ai_secret, org_ai_secret
+   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, ai_secret, org_ai_secret, org_account
    */
   | /**
    * The object type that the ACL applies to
    *
-   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, ai_secret, org_ai_secret
+   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, ai_secret, org_ai_secret, org_account
    */
   (| "organization"
       | "project"
@@ -26,11 +26,12 @@ export type AclObjectTypeType =
       | "project_group"
       | "ai_secret"
       | "org_ai_secret"
+      | "org_account"
     )
   /**
    * The object type that the ACL applies to
    *
-   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, ai_secret, org_ai_secret
+   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, ai_secret, org_ai_secret, org_account
    */
   | null;
 export type PermissionType =
@@ -363,6 +364,15 @@ export type AnyModelParamsType = {
      * @enum none, minimal, low, medium, high
      */
     ("none" | "minimal" | "low" | "medium" | "high")
+    | undefined;
+  chat_template_kwargs?:
+    | Partial<
+        {
+          enable_thinking: boolean;
+        } & {
+          [key: string]: any;
+        }
+      >
     | undefined;
   verbosity?:
     | /**
@@ -2716,6 +2726,13 @@ export type ModelParamsType =
          * @enum none, minimal, low, medium, high
          */
         reasoning_effort: "none" | "minimal" | "low" | "medium" | "high";
+        chat_template_kwargs: Partial<
+          {
+            enable_thinking: boolean;
+          } & {
+            [key: string]: any;
+          }
+        >;
         /**
          * @enum low, medium, high
          */
@@ -4373,6 +4390,10 @@ export type OnlineScoreConfigType = {
      */
     (SpanScopeType | TraceScopeType | GroupScopeType | null)
     | undefined;
+  run_once?: /**
+     * Skip rerunning a completed scorer while its definition is unchanged. Failed scorers still retry. When omitted, behavior is unchanged.
+     */
+    boolean | undefined;
 } | null;
 export type OrganizationType = {
   /**
@@ -7229,15 +7250,15 @@ export type ViewOptionsType =
           }
         | null;
       /**
-       * @enum traces, spans, topics
+       * @enum traces, spans, logs, topics
        */
       queryShape:
         | /**
-         * @enum traces, spans, topics
+         * @enum traces, spans, logs, topics
          */
-        ("traces" | "spans" | "topics")
+        ("traces" | "spans" | "logs" | "topics")
         /**
-         * @enum traces, spans, topics
+         * @enum traces, spans, logs, topics
          */
         | null;
       cluster: string | null;

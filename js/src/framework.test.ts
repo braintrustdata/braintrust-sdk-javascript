@@ -1398,6 +1398,7 @@ test("scorer spans have purpose='scorer' attribute", async () => {
     {
       projectName: "test-scorer-purpose",
       evalName: "scorer-purpose-eval",
+      summarizeScores: false,
       data: [{ input: "hello", expected: "hello" }],
       task: async (input: string) => input,
       scores: [

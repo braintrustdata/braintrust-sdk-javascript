@@ -9,6 +9,7 @@ import {
 } from "../../helpers/provider-runtime.mjs";
 import {
   completeOpenAIBatchTrace,
+  currentSpan,
   openaiBatchesRetrieveTraced,
   openaiFilesCreateTraced,
 } from "braintrust";
@@ -692,6 +693,57 @@ export async function runOpenAIInstrumentationScenario(options) {
         });
         await collectAsync(chatStream);
       });
+
+      await runOperation(
+        "openai-stream-reasoning-operation",
+        "stream-reasoning",
+        async () => {
+          const baseReasoningClient = new options.OpenAI({
+            apiKey: process.env.DEEPSEEK_API_KEY,
+            baseURL: process.env.DEEPSEEK_BASE_URL,
+            maxRetries: 0,
+          });
+          const reasoningClient = options.decorateClient
+            ? options.decorateClient(baseReasoningClient)
+            : baseReasoningClient;
+          // Genuine DeepSeek recordings from PR #2522 (commit 43100efd0f2ee4fffe44b4e9a711aa6f66c71b0f).
+          // Reproduce #2511 with the plain OpenAI client pointed at a custom baseURL.
+          const stream = await reasoningClient.chat.completions.create({
+            model: "deepseek-flash",
+            messages: [
+              {
+                role: "user",
+                content:
+                  "Which is greater, 9.11 or 9.8? Answer with the greater number only.",
+              },
+            ],
+            thinking: { type: "enabled" },
+            reasoning_effort: "low",
+            max_tokens: 2048,
+            stream: true,
+            stream_options: { include_usage: true },
+          });
+          const reasoning = [];
+          const content = [];
+          let usage;
+          for await (const chunk of stream) {
+            const delta = chunk.choices[0]?.delta;
+            if (delta?.reasoning_content)
+              reasoning.push(delta.reasoning_content);
+            if (delta?.content) content.push(delta.content);
+            if (chunk.usage) usage = chunk.usage;
+          }
+          // Keep the application's result independent of the instrumentation's aggregation.
+          currentSpan().log({
+            output: {
+              reasoning: reasoning.join(""),
+              content: content.join(""),
+              reasoningChunks: reasoning.length,
+              usage,
+            },
+          });
+        },
+      );
 
       await runOperation(
         "openai-stream-audio-operation",

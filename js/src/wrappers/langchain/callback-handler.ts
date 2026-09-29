@@ -154,6 +154,7 @@ export class BraintrustLangChainCallbackHandler<
           name: runName,
           metadata,
           ...extraParams,
+          model: getModelNameFromInvocation(extraParams),
         },
       },
     });
@@ -191,9 +192,7 @@ export class BraintrustLangChainCallbackHandler<
       output,
       metrics,
       tags,
-      metadata: {
-        model: modelName,
-      },
+      metadata: modelName !== undefined ? { model: modelName } : undefined,
     });
   }
 
@@ -224,6 +223,7 @@ export class BraintrustLangChainCallbackHandler<
           name: runName,
           metadata,
           ...extraParams,
+          model: getModelNameFromInvocation(extraParams),
         },
       },
     });
@@ -483,6 +483,17 @@ function walkGenerations(
   return result;
 }
 
+function getModelNameFromInvocation(
+  extraParams: Record<string, unknown> | undefined,
+): string | undefined {
+  const params = extraParams?.invocation_params;
+  if (!isRecord(params)) {
+    return undefined;
+  }
+  const modelName = params.model ?? params.model_name;
+  return typeof modelName === "string" ? modelName : undefined;
+}
+
 function getModelNameFromResponse(
   response: LangChainLLMResult,
 ): string | undefined {
@@ -492,14 +503,17 @@ function getModelNameFromResponse(
       continue;
     }
 
-    const responseMetadata = message.response_metadata;
-    if (!isRecord(responseMetadata)) {
-      continue;
-    }
-
-    const modelName = responseMetadata.model_name ?? responseMetadata.model;
-    if (typeof modelName === "string") {
-      return modelName;
+    for (const metadata of [
+      message.response_metadata,
+      message.additional_kwargs,
+    ]) {
+      if (!isRecord(metadata)) {
+        continue;
+      }
+      const modelName = metadata.model_name ?? metadata.model;
+      if (typeof modelName === "string") {
+        return modelName;
+      }
     }
   }
 

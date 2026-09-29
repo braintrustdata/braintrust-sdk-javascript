@@ -1,4 +1,4 @@
-import { expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { BraintrustState } from "./logger";
 import { configureNode } from "./node/config";
 import { Queue } from "./queue";
@@ -207,4 +207,60 @@ test("log request concurrency is limited to eight by default", async () => {
   await flush;
   expect(logRequestCount).toBe(24);
   expect(peakActiveRequests).toBe(8);
+});
+
+describe("numeric environment variables", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test.each([
+    "BRAINTRUST_DEFAULT_BATCH_SIZE",
+    "BRAINTRUST_MAX_REQUEST_SIZE",
+    "BRAINTRUST_NUM_RETRIES",
+    "BRAINTRUST_QUEUE_DROP_EXCEEDING_MAXSIZE",
+    "BRAINTRUST_QUEUE_DROP_LOGGING_PERIOD",
+  ])("%s keeps its default when set to an empty string", (name) => {
+    const defaults = createState(
+      vi.fn() as unknown as typeof fetch,
+    ).httpLogger();
+
+    vi.stubEnv(name, "");
+    const logger = createState(vi.fn() as unknown as typeof fetch).httpLogger();
+
+    expect(logger.defaultBatchSize).toBe(defaults.defaultBatchSize);
+    expect(logger.numTries).toBe(defaults.numTries);
+    expect(logger.queueDropExceedingMaxsize).toBe(
+      defaults.queueDropExceedingMaxsize,
+    );
+    expect(logger.queueDropLoggingPeriod).toBe(defaults.queueDropLoggingPeriod);
+  });
+
+  test("an empty BRAINTRUST_MAX_REQUEST_SIZE does not split a flush into one request per event", async () => {
+    vi.stubEnv("BRAINTRUST_MAX_REQUEST_SIZE", "");
+    const logRequests: string[] = [];
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      if (String(input).endsWith("/version")) {
+        return Promise.resolve(
+          jsonResponse({ logs3_payload_max_bytes: 6 * 1024 * 1024 }),
+        );
+      }
+      logRequests.push(String(input));
+      return Promise.resolve(jsonResponse({}));
+    });
+    const state = createState(fetchMock as unknown as typeof fetch);
+    const logger = state.httpLogger();
+    logger.syncFlush = true;
+
+    enqueueEvents(state, 0, 3);
+    await logger.flush();
+
+    expect(logRequests).toHaveLength(1);
+  });
+
+  test("a numeric BRAINTRUST_NUM_RETRIES still applies", () => {
+    vi.stubEnv("BRAINTRUST_NUM_RETRIES", "5");
+    const logger = createState(vi.fn() as unknown as typeof fetch).httpLogger();
+    expect(logger.numTries).toBe(6);
+  });
 });

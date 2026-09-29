@@ -109,7 +109,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "error": "basic boom\n\nError: basic boom\n    at logger.traced.name (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/index.mjs:0:0)\n    at withCurrent (<repo>/js/dist/index.mjs:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at runCatchFinally (<repo>/js/dist/index.mjs:0:0)\n    at Logger.traced (<repo>/js/dist/index.mjs:0:0)\n    at main (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at runMain (<repo>/e2e/helpers/scenario-runtime.ts:0:0)",
+          "error": "basic boom\n\nError: basic boom\n    at logger.traced.name (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/index.mjs:0:0)\n    at withCurrent (<repo>/js/dist/index.mjs:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at runCatchFinally (<repo>/js/dist/index.mjs:0:0)\n    at Logger.traced (<repo>/js/dist/index.mjs:0:0)\n    at main (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at process.processTicksAndRejections (node:<internal>:0:0)",
           "id": "<span:8>",
           "log_id": "g",
           "metadata": {
@@ -214,7 +214,7 @@
             "caller_lineno": 0
           },
           "created": "<timestamp>",
-          "error": "basic boom\n\nError: basic boom\n    at logger.traced.name (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/index.mjs:0:0)\n    at withCurrent (<repo>/js/dist/index.mjs:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at runCatchFinally (<repo>/js/dist/index.mjs:0:0)\n    at Logger.traced (<repo>/js/dist/index.mjs:0:0)\n    at main (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at runMain (<repo>/e2e/helpers/scenario-runtime.ts:0:0)",
+          "error": "basic boom\n\nError: basic boom\n    at logger.traced.name (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at AsyncLocalStorage.run (node:<internal>:0:0)\n    at BraintrustContextManager.runInContext (<repo>/js/dist/index.mjs:0:0)\n    at withCurrent (<repo>/js/dist/index.mjs:0:0)\n    at <repo>/js/dist/index.mjs:0:0\n    at runCatchFinally (<repo>/js/dist/index.mjs:0:0)\n    at Logger.traced (<repo>/js/dist/index.mjs:0:0)\n    at main (<repo>/e2e/scenarios/trace-primitives-basic/scenario.ts:0:0)\n    at process.processTicksAndRejections (node:<internal>:0:0)",
           "id": "<span:8>",
           "log_id": "g",
           "metadata": {

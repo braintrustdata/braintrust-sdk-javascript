@@ -61,6 +61,13 @@ test("trace-primitives-basic collects a minimal manual trace tree", async () => 
           request.path === "/logs3",
       );
 
+      expect(
+        requests.filter((request) => request.path === "/api/apikey/login"),
+      ).toHaveLength(1);
+      expect(
+        requests.filter((request) => request.path === "/api/project/register"),
+      ).toHaveLength(1);
+
       await matchFileSnapshot(
         formatJsonFileSnapshot(
           requests.map((request) =>

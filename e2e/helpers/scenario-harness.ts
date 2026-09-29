@@ -306,6 +306,7 @@ function getCassetteServerRoutes(): CassetteServerRoute[] {
     { prefix: "/cohere", upstreamOrigin: "https://api.cohere.com" },
     { prefix: "/cursor/v1", upstreamOrigin: "https://api.cursor.com/v1" },
     { prefix: "/cursor", upstreamOrigin: "https://api2.cursor.sh" },
+    { prefix: "/deepseek", upstreamOrigin: "https://api.deepseek.com" },
     {
       prefix: "/google-generative-language",
       upstreamOrigin: "https://generativelanguage.googleapis.com",
@@ -343,6 +344,7 @@ function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
     COHERE_BASE_URL: `${serverUrl}/cohere`,
     COHERE_API_URL: `${serverUrl}/cohere`,
     CURSOR_BACKEND_URL: `${serverUrl}/cursor`,
+    DEEPSEEK_BASE_URL: `${serverUrl}/deepseek/v1`,
     GEMINI_BASE_URL: `${serverUrl}/google-generative-language`,
     GEMINI_NEXT_GEN_API_BASE_URL: `${serverUrl}/google-generative-language`,
     GOOGLE_GENERATIVE_AI_BASE_URL: `${serverUrl}/google-generative-language`,
@@ -399,6 +401,7 @@ const CASSETTE_PROVIDER_KEYS: Array<{
   },
   { envVars: ["ELEVENLABS_API_KEY"], placeholder: "cassette-placeholder" },
   { envVars: ["CURSOR_API_KEY"], placeholder: "key_cassette-placeholder" },
+  { envVars: ["DEEPSEEK_API_KEY"], placeholder: "sk-cassette-placeholder" },
   {
     envVars: ["GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GEMINI_API_KEY"],
     placeholder: "cassette-placeholder",

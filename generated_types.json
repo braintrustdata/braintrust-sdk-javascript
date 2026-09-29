@@ -91,7 +91,8 @@
           "org_audit_logs",
           "project_group",
           "ai_secret",
-          "org_ai_secret"
+          "org_ai_secret",
+          "org_account"
         ],
         "description": "The object type that the ACL applies to"
       },
@@ -292,6 +293,15 @@
           "reasoning_effort": {
             "type": "string",
             "enum": ["none", "minimal", "low", "medium", "high"]
+          },
+          "chat_template_kwargs": {
+            "type": "object",
+            "properties": {
+              "enable_thinking": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": {}
           },
           "verbosity": {
             "type": "string",
@@ -3813,6 +3823,15 @@
                 "type": "string",
                 "enum": ["none", "minimal", "low", "medium", "high"]
               },
+              "chat_template_kwargs": {
+                "type": "object",
+                "properties": {
+                  "enable_thinking": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": {}
+              },
               "verbosity": {
                 "type": "string",
                 "enum": ["low", "medium", "high"]
@@ -4125,6 +4144,10 @@
               }
             ],
             "description": "The scope at which to run the functions. Defaults to span-level execution."
+          },
+          "run_once": {
+            "type": "boolean",
+            "description": "Skip rerunning a completed scorer while its definition is unchanged. Failed scorers still retry. When omitted, behavior is unchanged."
           }
         },
         "required": ["sampling_rate", "scorers"]
@@ -7447,7 +7470,7 @@
               },
               "queryShape": {
                 "type": ["string", "null"],
-                "enum": ["traces", "spans", "topics"]
+                "enum": ["traces", "spans", "logs", "topics"]
               },
               "cluster": {
                 "type": ["string", "null"]

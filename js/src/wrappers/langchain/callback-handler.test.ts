@@ -276,3 +276,131 @@ describe("BraintrustLangChainCallbackHandler metrics", () => {
     });
   });
 });
+
+describe("BraintrustLangChainCallbackHandler model attribution", () => {
+  it.each(["handleChatModelStart", "handleLLMStart"] as const)(
+    "%s records the invocation model before completion and preserves it when the response omits it",
+    async (startMethod) => {
+      for (const invocationParams of [
+        { model: "requested-model" },
+        { model_name: "requested-model" },
+      ]) {
+        const { handler, logs, parent } = createHarness();
+        await handler[startMethod]({ name: "LLM" }, [], "run-1", undefined, {
+          invocation_params: invocationParams,
+        });
+        expect(parent.startSpan).toHaveBeenCalledWith(
+          expect.objectContaining({
+            event: expect.objectContaining({
+              metadata: expect.objectContaining({ model: "requested-model" }),
+            }),
+          }),
+        );
+        await handler.handleLLMEnd({}, "run-1");
+        expect(logs.at(-1)).not.toHaveProperty("metadata.model");
+      }
+    },
+  );
+
+  it.each([
+    {
+      generations: [
+        [{ message: { response_metadata: { model: "resolved-model" } } }],
+      ],
+    },
+    { llmOutput: { model_name: "resolved-model" } },
+    {
+      generations: [
+        [{ message: { additional_kwargs: { model: "resolved-model" } } }],
+      ],
+    },
+    {
+      generations: [
+        [
+          {
+            message: {
+              response_metadata: { model_provider: "anthropic" },
+              additional_kwargs: { model: "resolved-model" },
+            },
+          },
+        ],
+      ],
+    },
+    {
+      generations: [
+        [
+          {
+            message: {
+              response_metadata: { model: "resolved-model" },
+              additional_kwargs: { model: "other-model" },
+            },
+          },
+        ],
+      ],
+    },
+  ])(
+    "prefers the response model over the requested model",
+    async (response) => {
+      const { handler, logs } = createHarness();
+      await handler.handleChatModelStart(
+        { name: "LLM" },
+        [],
+        "run-1",
+        undefined,
+        {
+          invocation_params: { model: "requested-model" },
+        },
+      );
+      await handler.handleLLMEnd(response, "run-1");
+      expect(logs.at(-1)).toMatchObject({
+        metadata: { model: "resolved-model" },
+      });
+    },
+  );
+
+  it.each(["handleChatModelStart", "handleLLMStart"] as const)(
+    "%s preserves the invocation model when the call fails",
+    async (startMethod) => {
+      const { handler, logs, parent } = createHarness();
+      await handler[startMethod]({ name: "LLM" }, [], "run-1", undefined, {
+        invocation_params: { model: "requested-model" },
+      });
+      expect(parent.startSpan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: expect.objectContaining({
+            metadata: expect.objectContaining({ model: "requested-model" }),
+          }),
+        }),
+      );
+      const error = new Error("provider failed");
+      await handler.handleLLMError(error, "run-1");
+      expect(logs.at(-1)).toMatchObject({ error });
+      expect(logs.at(-1)).not.toHaveProperty("metadata.model");
+    },
+  );
+
+  it.each([undefined, null, "invalid", {}, { model: 42 }, { model: null }])(
+    "does not invent a model from invalid invocation parameters (%j)",
+    async (invocationParams) => {
+      const { handler, logs, parent } = createHarness();
+      await handler.handleChatModelStart(
+        { name: "LLM" },
+        [],
+        "run-1",
+        undefined,
+        {
+          invocation_params: invocationParams,
+        },
+      );
+      expect(parent.startSpan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: expect.objectContaining({
+            metadata: expect.objectContaining({ model: undefined }),
+          }),
+        }),
+      );
+      await handler.handleLLMEnd({}, "run-1");
+      expect(logs.at(-1)).not.toHaveProperty("metadata.model");
+    },
+  );
+});

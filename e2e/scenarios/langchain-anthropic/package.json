@@ -1,0 +1,19 @@
+{
+  "name": "@braintrust/e2e-langchain-anthropic",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "langchain-anthropic-v1-latest": {
+          "package": "@langchain/anthropic",
+          "range": "1"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "langchain-anthropic-v1": "npm:@langchain/anthropic@1.5.10",
+    "langchain-anthropic-v1-latest": "npm:@langchain/anthropic@1.5.11",
+    "@langchain/core": "1.2.13"
+  }
+}
