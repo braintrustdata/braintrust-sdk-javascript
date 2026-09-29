@@ -73,7 +73,7 @@ test("supports explicit span generics and standalone typed handlers", () => {
     expectTypeOf(span.input).toEqualTypeOf<string | undefined>();
     expectTypeOf(span.output).toEqualTypeOf<number | undefined>();
     expectTypeOf(span.metadata).toEqualTypeOf<{ source: string } | undefined>();
-    return span.output;
+    return span.output ?? null;
   });
 });
 
@@ -111,4 +111,58 @@ test("requires definition identifiers and the per-span handler contract", () => 
     // @ts-expect-error Custom preprocessors do not receive a config argument.
     (_span: PreprocessorSpanData, config: Record<string, unknown>) => config,
   );
+});
+
+test("infers nested serializable results, including readonly values", () => {
+  const result = {
+    messages: [{ role: "assistant", content: "Hello" }],
+    count: 1,
+    complete: true,
+    error: null,
+  } as const;
+  const preprocessor = customPreprocessor(
+    { name: "Conversation", slug: "conversation" },
+    () => result,
+  );
+
+  expectTypeOf(preprocessor.handler).returns.toEqualTypeOf<typeof result>();
+  expect(preprocessor.handler({ id: "row", root_span_id: "root" })).toBe(
+    result,
+  );
+});
+
+test("rejects asynchronous and nonserializable results", () => {
+  const definition = { name: "Text", slug: "text" };
+
+  // @ts-expect-error Preprocessors must return synchronously.
+  customPreprocessor(definition, async () => "text");
+  // @ts-expect-error Functions cannot be serialized as results.
+  customPreprocessor(definition, () => () => "text");
+  // @ts-expect-error Symbols cannot be serialized as results.
+  customPreprocessor(definition, () => Symbol("text"));
+  // @ts-expect-error Bigints cannot be serialized as JSON.
+  customPreprocessor(definition, () => 1n);
+  // @ts-expect-error Use null to skip a span instead of undefined.
+  customPreprocessor(definition, () => undefined);
+  // @ts-expect-error Nested object values must also be serializable.
+  customPreprocessor(definition, () => ({ value: Promise.resolve("text") }));
+  // @ts-expect-error Array elements must also be serializable.
+  customPreprocessor(definition, () => [Symbol("text")]);
+  // @ts-expect-error Explicit result generics cannot allow promises.
+  customPreprocessor<unknown, unknown, unknown, Promise<string>>(
+    definition,
+    async () => "text",
+  );
+
+  // @ts-expect-error Standalone handlers must also return synchronously.
+  const handler: PreprocessorHandler = async () => "text";
+  expectTypeOf(handler).toBeFunction();
+  expectTypeOf<
+    // @ts-expect-error Explicit handler result types cannot allow promises.
+    PreprocessorHandler<unknown, unknown, unknown, Promise<string>>
+  >();
+  expectTypeOf<
+    // @ts-expect-error Explicit definition result types cannot allow promises.
+    CustomPreprocessor<unknown, unknown, unknown, Promise<string>>
+  >();
 });
