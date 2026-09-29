@@ -1337,7 +1337,7 @@ export async function runEvaluator(
     );
   }
   const controller = new AbortController();
-  const scope = new EvalScope();
+  const runScope = new EvalScope();
   const abort = () =>
     controller.abort(new InternalAbortError("Evaluator aborted"));
   evaluator.signal?.addEventListener("abort", abort, { once: true });
@@ -1361,7 +1361,7 @@ export async function runEvaluator(
   try {
     controller.signal.throwIfAborted();
     const environment = await evaluator.environment?.({
-      onCleanup: scope.onCleanup,
+      onCleanup: runScope.onCleanup,
       signal: controller.signal,
     });
     controller.signal.throwIfAborted();
@@ -1382,7 +1382,7 @@ export async function runEvaluator(
     controller.abort(error);
   } finally {
     await pendingData;
-    errors.push(...(await scope.close()));
+    errors.push(...(await runScope.close()));
     if (timeoutId !== undefined) clearTimeout(timeoutId);
     evaluator.signal?.removeEventListener("abort", abort);
   }
@@ -1578,7 +1578,7 @@ async function runEvaluatorInternal(
             classifierName,
           );
           let unhandledScores: string[] | null = scorerNames;
-          const scope = new EvalScope(evaluator.snapshots);
+          const trialScope = new EvalScope(evaluator.snapshots);
           let taskFailed = false;
           try {
             const taskResult = await rootSpan.traced(
@@ -1601,8 +1601,8 @@ async function runEvaluatorInternal(
                   {
                     environment,
                     signal: controller.signal,
-                    onCleanup: scope.onCleanup,
-                    snapshot: scope.snapshot,
+                    onCleanup: trialScope.onCleanup,
+                    snapshot: trialScope.snapshot,
                   },
                 ),
               {
@@ -1635,6 +1635,18 @@ async function runEvaluatorInternal(
               trace,
             };
             const { trace: _trace, ...scoringArgsForLogging } = scoringArgs;
+            const createScoringArgs = () => {
+              const args = {
+                ...scoringArgs,
+                environment,
+                snapshots: trialScope.copySnapshots(),
+              };
+              // Local resources must not reach remote scorers or logs.
+              return Object.defineProperties(args, {
+                environment: { enumerable: false },
+                snapshots: { enumerable: false },
+              });
+            };
             const propagatedEvent = makeScorerPropagatedEvent(
               await rootSpan.export(),
             );
@@ -1651,20 +1663,7 @@ async function runEvaluatorInternal(
                     scoringArgsForLogging,
                     async (span) => {
                       const scoreValue = await Promise.resolve(
-                        score(
-                          Object.defineProperties(
-                            {
-                              ...scoringArgs,
-                              environment,
-                              snapshots: scope.copySnapshots(),
-                            },
-                            {
-                              // Local resources must not reach remote scorers or logs.
-                              environment: { enumerable: false },
-                              snapshots: { enumerable: false },
-                            },
-                          ),
-                        ),
+                        score(createScoringArgs()),
                       );
                       const prepared = _internalPrepareEvaluatorScore(
                         scoreValue,
@@ -1691,19 +1690,7 @@ async function runEvaluatorInternal(
                     scoringArgsForLogging,
                     async (span) => {
                       const classifierValue = await Promise.resolve(
-                        classifier(
-                          Object.defineProperties(
-                            {
-                              ...scoringArgs,
-                              environment,
-                              snapshots: scope.copySnapshots(),
-                            },
-                            {
-                              environment: { enumerable: false },
-                              snapshots: { enumerable: false },
-                            },
-                          ),
-                        ),
+                        classifier(createScoringArgs()),
                       );
                       const prepared = _internalPrepareEvaluatorClassification(
                         classifierValue,
@@ -1767,7 +1754,7 @@ async function runEvaluatorInternal(
             error = e;
             taskFailed = true;
           } finally {
-            const cleanupErrors = await scope.close();
+            const cleanupErrors = await trialScope.close();
             if (cleanupErrors.length) {
               for (const cleanupError of cleanupErrors) {
                 // Bound run-level retention even when results are discarded.
