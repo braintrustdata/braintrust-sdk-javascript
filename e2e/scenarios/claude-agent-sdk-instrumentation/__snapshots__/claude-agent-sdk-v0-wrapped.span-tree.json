@@ -167,9 +167,29 @@
               },
               "metadata": {
                 "model": "claude-haiku-4-5",
+                "model_usage": {
+                  "claude-haiku-4-5": {
+                    "cache_creation_input_tokens": 18988,
+                    "cache_read_input_tokens": 18783,
+                    "cost_usd": 0.026726299999999998,
+                    "input_tokens": 18,
+                    "output_tokens": 219
+                  }
+                },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
-                "session_id": "<uuid:1>"
+                "session_id": "<uuid:1>",
+                "total_cost_usd": 0.026726299999999998,
+                "total_usage": {
+                  "cache_creation": {
+                    "ephemeral_1h_input_tokens": 0,
+                    "ephemeral_5m_input_tokens": 18988
+                  },
+                  "cache_creation_input_tokens": 18988,
+                  "cache_read_input_tokens": 18783,
+                  "input_tokens": 18,
+                  "output_tokens": 219
+                }
               }
             }
           ],
@@ -303,17 +323,28 @@
               "metadata": {
                 "maxTurns": 1,
                 "model": "claude-haiku-4-5",
+                "model_usage": {
+                  "claude-haiku-4-5": {
+                    "cache_creation_input_tokens": 18834,
+                    "cache_read_input_tokens": 18650,
+                    "cost_usd": 0.0272325,
+                    "input_tokens": 20,
+                    "output_tokens": 361
+                  }
+                },
                 "num_turns": 1,
                 "permissionMode": "bypassPermissions",
                 "session_id": "<uuid:1>"
               },
               "metrics": {
-                "completion_tokens": 190,
+                "completion_tokens": 361,
+                "estimated_cost": 0.0272325,
                 "prompt_cache_creation_1h_tokens": 0,
                 "prompt_cache_creation_5m_tokens": 184,
+                "prompt_cache_creation_tokens": 18834,
                 "prompt_cached_tokens": 18650,
-                "prompt_tokens": 18844,
-                "tokens": 19034
+                "prompt_tokens": 37504,
+                "tokens": 37865
               }
             }
           ],
@@ -372,6 +403,13 @@
                   "metadata": {
                     "model": "claude-haiku-4-5-20251001",
                     "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 215,
+                    "prompt_cache_creation_1h_tokens": 0,
+                    "prompt_cache_creation_5m_tokens": 18811,
+                    "prompt_tokens": 18821,
+                    "tokens": 19036
                   }
                 },
                 {
@@ -420,6 +458,11 @@
                           "metadata": {
                             "model": "claude-haiku-4-5-20251001",
                             "provider": "anthropic"
+                          },
+                          "metrics": {
+                            "prompt_cache_creation_1h_tokens": 0,
+                            "prompt_cache_creation_5m_tokens": 26759,
+                            "prompt_tokens": 26762
                           }
                         },
                         {
@@ -570,6 +613,14 @@
                   "metadata": {
                     "model": "claude-haiku-4-5-20251001",
                     "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 82,
+                    "prompt_cache_creation_1h_tokens": 0,
+                    "prompt_cache_creation_5m_tokens": 307,
+                    "prompt_cached_tokens": 18811,
+                    "prompt_tokens": 19126,
+                    "tokens": 19208
                   }
                 }
               ],
@@ -588,17 +639,29 @@
                   "Task"
                 ],
                 "model": "claude-haiku-4-5",
+                "model_usage": {
+                  "claude-haiku-4-5": {
+                    "cache_creation_input_tokens": 46002,
+                    "cache_read_input_tokens": 45570,
+                    "cost_usd": 0.06419149999999998,
+                    "input_tokens": 27,
+                    "output_tokens": 421
+                  }
+                },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
-                "session_id": "<uuid:1>"
-              },
-              "metrics": {
-                "completion_tokens": 297,
-                "prompt_cache_creation_1h_tokens": 0,
-                "prompt_cache_creation_5m_tokens": 19118,
-                "prompt_cached_tokens": 18811,
-                "prompt_tokens": 37947,
-                "tokens": 38244
+                "session_id": "<uuid:1>",
+                "total_cost_usd": 0.06419149999999998,
+                "total_usage": {
+                  "cache_creation": {
+                    "ephemeral_1h_input_tokens": 0,
+                    "ephemeral_5m_input_tokens": 19118
+                  },
+                  "cache_creation_input_tokens": 46002,
+                  "cache_read_input_tokens": 45570,
+                  "input_tokens": 27,
+                  "output_tokens": 421
+                }
               }
             }
           ],
@@ -866,18 +929,37 @@
                   "Agent",
                   "Bash"
                 ],
-                "model": "claude-sonnet-4-5",
+                "model": null,
+                "model_usage": {
+                  "claude-haiku-4-5": {
+                    "cache_creation_input_tokens": 17315,
+                    "cache_read_input_tokens": 17229,
+                    "cost_usd": 0.023775650000000002,
+                    "input_tokens": 9,
+                    "output_tokens": 80
+                  },
+                  "claude-sonnet-4-5": {
+                    "cache_creation_input_tokens": 18961,
+                    "cache_read_input_tokens": 18711,
+                    "cost_usd": 0.08179605,
+                    "input_tokens": 18,
+                    "output_tokens": 335
+                  }
+                },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
+                "requested_model": "claude-sonnet-4-5",
                 "session_id": "<uuid:1>"
               },
               "metrics": {
-                "completion_tokens": 335,
+                "completion_tokens": 415,
+                "estimated_cost": 0.10557169999999999,
                 "prompt_cache_creation_1h_tokens": 0,
                 "prompt_cache_creation_5m_tokens": 18961,
-                "prompt_cached_tokens": 18711,
-                "prompt_tokens": 37690,
-                "tokens": 38025
+                "prompt_cache_creation_tokens": 36276,
+                "prompt_cached_tokens": 35940,
+                "prompt_tokens": 72243,
+                "tokens": 72658
               }
             }
           ],
@@ -1028,12 +1110,22 @@
               },
               "metadata": {
                 "model": "claude-haiku-4-5",
+                "model_usage": {
+                  "claude-haiku-4-5": {
+                    "cache_creation_input_tokens": 199,
+                    "cache_read_input_tokens": 37568,
+                    "cost_usd": 0.00518855,
+                    "input_tokens": 18,
+                    "output_tokens": 233
+                  }
+                },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
                 "session_id": "<uuid:1>"
               },
               "metrics": {
                 "completion_tokens": 233,
+                "estimated_cost": 0.00518855,
                 "prompt_cache_creation_1h_tokens": 0,
                 "prompt_cache_creation_5m_tokens": 199,
                 "prompt_cached_tokens": 37568,

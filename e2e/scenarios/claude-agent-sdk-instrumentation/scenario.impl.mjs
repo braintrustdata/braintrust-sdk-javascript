@@ -1,13 +1,12 @@
 import { startSpan, traced, wrapClaudeAgentSDK } from "braintrust";
 import {
-  collectAsync,
   runOperation,
   runTracedScenario,
 } from "../../helpers/provider-runtime.mjs";
 import { z } from "zod";
 
 const CLAUDE_AGENT_MODEL = "claude-haiku-4-5";
-const CLAUDE_AGENT_TOP_LEVEL_MODEL = "claude-sonnet-4-5";
+export const CLAUDE_AGENT_TOP_LEVEL_MODEL = "claude-sonnet-4-5";
 
 export const ROOT_NAME = "claude-agent-sdk-root";
 export const SCENARIO_NAME = "claude-agent-sdk-traces";
@@ -86,6 +85,19 @@ async function collectAsyncAndAssertMessagesUnchanged(records) {
   return messages;
 }
 
+function logResultUsage(messages) {
+  const result = messages.filter((message) => message.type === "result").at(-1);
+  const usageSpan = startSpan({ name: "claude-agent-result-usage" });
+  usageSpan.log({
+    output: {
+      modelUsage: result?.modelUsage,
+      usage: result?.usage,
+      total_cost_usd: result?.total_cost_usd,
+    },
+  });
+  usageSpan.end();
+}
+
 async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
   const instrumentedSDK = decorateSDK ? decorateSDK(sdk) : sdk;
   const { createSdkMcpServer, query, tool } = instrumentedSDK;
@@ -159,6 +171,7 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
           output: collectFinalPartialUsage(messages),
         });
         expectedUsageSpan.end();
+        logResultUsage(messages);
       });
 
       await runOperation(
@@ -192,6 +205,7 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
               prompt:
                 "Spawn a math-expert subagent to add 15 and 27 using the calculator tool. Report the result. Do not solve it yourself.",
               options: {
+                includePartialMessages: true,
                 agents: {
                   "math-expert": {
                     description: "Math specialist",
@@ -209,7 +223,7 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
               },
             }),
           );
-          assertNoPartialMessages(messages);
+          logResultUsage(messages);
         },
       );
 
@@ -217,7 +231,7 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
         "claude-agent-subagent-built-in-tool-operation",
         "subagent-built-in-tool",
         async () => {
-          await collectAsync(
+          const messages = await collectAsyncAndAssertMessagesUnchanged(
             query({
               prompt:
                 'You MUST call the Agent tool now with subagent_type="echo" and description "echo greeting". Do not call Bash yourself. Do not answer with text yourself; delegate to the echo sub-agent.',
@@ -237,6 +251,8 @@ async function runClaudeAgentSDKScenario({ decorateSDK, sdk }) {
               },
             }),
           );
+          assertNoPartialMessages(messages);
+          logResultUsage(messages);
         },
       );
 

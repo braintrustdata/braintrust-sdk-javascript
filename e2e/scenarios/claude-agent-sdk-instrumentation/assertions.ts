@@ -19,7 +19,11 @@ import {
 } from "../../helpers/span-tree";
 
 import { summarizeWrapperContract } from "../../helpers/wrapper-contract";
-import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
+import {
+  CLAUDE_AGENT_TOP_LEVEL_MODEL,
+  ROOT_NAME,
+  SCENARIO_NAME,
+} from "./scenario.impl.mjs";
 
 type ExpectedUsage = {
   message_id?: string;
@@ -222,10 +226,7 @@ function expectSpanUsageToMatch(
     prompt_tokens: expectedMetrics.prompt_tokens,
     tokens: expectedMetrics.tokens,
   });
-  if (
-    expectedMetrics.prompt_cache_creation_5m_tokens !== undefined ||
-    expectedMetrics.prompt_cache_creation_1h_tokens !== undefined
-  ) {
+  if (expectedMetrics.prompt_cache_creation_tokens === undefined) {
     expect(span?.metrics?.prompt_cache_creation_tokens).toBeUndefined();
   }
 }
@@ -701,7 +702,6 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         ).at(-1);
         const aggregateTasks = [
           "claude-agent-async-prompt-operation",
-          "claude-agent-subagent-operation",
           "claude-agent-subagent-built-in-tool-operation",
           "claude-agent-failure-operation",
         ].map((operationName) => {
@@ -734,6 +734,110 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
             Number(task?.metrics?.prompt_tokens) +
               Number(task?.metrics?.completion_tokens),
           );
+        }
+      },
+    );
+
+    test.each([
+      ["claude-agent-basic-operation", true],
+      ["claude-agent-subagent-operation", true],
+      ["claude-agent-subagent-built-in-tool-operation", false],
+    ])(
+      "preserves all-agent usage for %s",
+      testConfig,
+      (operationName, partial) => {
+        const operation = findLatestSpan(events, operationName);
+        const root = findOperationTaskRoot(events, operationName);
+        const usageSpan = findChildSpans(
+          events,
+          "claude-agent-result-usage",
+          operation?.span.id,
+        ).at(-1);
+        const result = usageSpan?.output as {
+          modelUsage: Record<
+            string,
+            {
+              inputTokens: number;
+              outputTokens: number;
+              cacheReadInputTokens: number;
+              cacheCreationInputTokens: number;
+              costUSD: number;
+            }
+          >;
+          usage: NonNullable<ExpectedUsage["usage"]>;
+          total_cost_usd: number;
+        };
+        const modelUsage = result?.modelUsage;
+        expect(modelUsage).toBeDefined();
+        const total = {
+          input_tokens: 0,
+          output_tokens: 0,
+          cache_read_input_tokens: 0,
+          cache_creation_input_tokens: 0,
+          ...(result.usage.cache_creation && {
+            cache_creation: result.usage.cache_creation,
+          }),
+        };
+        for (const usage of Object.values(modelUsage)) {
+          total.input_tokens += usage.inputTokens;
+          total.output_tokens += usage.outputTokens;
+          total.cache_read_input_tokens += usage.cacheReadInputTokens;
+          total.cache_creation_input_tokens += usage.cacheCreationInputTokens;
+        }
+        expect(root?.row.metadata).toHaveProperty(
+          "model_usage",
+          Object.fromEntries(
+            Object.entries(modelUsage).map(([model, usage]) => [
+              model,
+              {
+                input_tokens: usage.inputTokens,
+                output_tokens: usage.outputTokens,
+                cache_read_input_tokens: usage.cacheReadInputTokens,
+                cache_creation_input_tokens: usage.cacheCreationInputTokens,
+                cost_usd: usage.costUSD,
+              },
+            ]),
+          ),
+        );
+        const llms = findAllSpans(events, "anthropic.messages.create").filter(
+          (event) => isDescendantOf(events, event, root?.span.id),
+        );
+        expect(llms.length).toBeGreaterThan(0);
+        if (partial) {
+          expect(root?.row.metadata).toMatchObject({
+            total_usage: total,
+            total_cost_usd: result.total_cost_usd,
+          });
+          for (const key of [
+            "prompt_tokens",
+            "completion_tokens",
+            "tokens",
+            "estimated_cost",
+          ]) {
+            expect(root?.metrics?.[key]).toBeUndefined();
+          }
+          for (const llm of llms) {
+            expect(llm.metrics?.prompt_tokens).toBeGreaterThan(0);
+            if (llm.metrics?.completion_tokens === undefined) {
+              expect(llm.metrics?.tokens).toBeUndefined();
+            } else {
+              expect(llm.metrics.tokens).toBe(
+                Number(llm.metrics.prompt_tokens) +
+                  Number(llm.metrics.completion_tokens),
+              );
+            }
+          }
+        } else {
+          expectSpanUsageToMatch(root, { usage: total });
+          expect(root?.metrics?.estimated_cost).toBe(result.total_cost_usd);
+          expect(Object.keys(modelUsage).length).toBeGreaterThan(1);
+          expect(root?.row.metadata).toMatchObject({
+            model: null,
+            requested_model: CLAUDE_AGENT_TOP_LEVEL_MODEL,
+          });
+          for (const llm of llms) {
+            expect(llm.metrics?.tokens).toBeUndefined();
+          }
         }
       },
     );
@@ -967,7 +1071,9 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       async ({ expect }) => {
         await matchSpanTreeSnapshot(
           events.filter(
-            (event) => event.span.name !== "claude-agent-basic-partial-usage",
+            (event) =>
+              event.span.name !== "claude-agent-basic-partial-usage" &&
+              event.span.name !== "claude-agent-result-usage",
           ),
           snapshotPath,
           {

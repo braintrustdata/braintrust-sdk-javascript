@@ -267,6 +267,40 @@ function copyUsage(usage: unknown): ClaudeAgentSDKUsage | undefined {
   return Object.keys(copy).length > 0 ? copy : undefined;
 }
 
+/** Preserves each model's usage and sums the all-agent token totals. */
+function extractModelUsage(modelUsage: ClaudeAgentSDKMessage["modelUsage"]) {
+  const entries = Object.entries(modelUsage ?? {});
+  if (entries.length === 0) {
+    return undefined;
+  }
+
+  const models = Object.fromEntries(
+    entries.map(([model, usage]) => [
+      model,
+      {
+        input_tokens: usage.inputTokens,
+        output_tokens: usage.outputTokens,
+        cache_read_input_tokens: usage.cacheReadInputTokens,
+        cache_creation_input_tokens: usage.cacheCreationInputTokens,
+        cost_usd: usage.costUSD,
+      },
+    ]),
+  );
+  const totals = {
+    input_tokens: 0,
+    output_tokens: 0,
+    cache_read_input_tokens: 0,
+    cache_creation_input_tokens: 0,
+  };
+  for (const usage of Object.values(models)) {
+    totals.input_tokens += usage.input_tokens;
+    totals.output_tokens += usage.output_tokens;
+    totals.cache_read_input_tokens += usage.cache_read_input_tokens;
+    totals.cache_creation_input_tokens += usage.cache_creation_input_tokens;
+  }
+  return { models, totals };
+}
+
 /** Layers a newer usage snapshot over an older one, field by field. */
 function mergeUsage(
   base: ClaudeAgentSDKUsage | undefined,
@@ -1520,9 +1554,43 @@ async function handleStreamMessage(
   if (message.session_id !== undefined) {
     metadata.session_id = message.session_id;
   }
-  const metrics = state.options.includePartialMessages
-    ? {}
-    : extractUsage(copyUsage(message.usage), true);
+  const resultUsage = copyUsage(message.usage);
+  const modelUsage = extractModelUsage(message.modelUsage);
+  const usage = modelUsage
+    ? {
+        ...modelUsage.totals,
+        // Result usage can provide a partial TTL breakdown for the all-agent
+        // total. Keep the aggregate so pricing can fall back when incomplete.
+        ...(resultUsage?.cache_creation && {
+          cache_creation: resultUsage.cache_creation,
+        }),
+      }
+    : resultUsage;
+  if (modelUsage) {
+    metadata.model_usage = modelUsage.models;
+  }
+  let metrics: Record<string, number> = {};
+  if (state.options.includePartialMessages) {
+    // Keep available all-agent totals without counting them again alongside per-call metrics.
+    if (usage) {
+      metadata.total_usage = usage;
+    }
+    if (message.total_cost_usd !== undefined) {
+      metadata.total_cost_usd = message.total_cost_usd;
+    }
+  } else {
+    if (modelUsage && Object.keys(modelUsage.models).length > 1) {
+      // A mixed-model total must never be priced using the configured model.
+      metadata.model = null;
+      if (state.options.model !== undefined) {
+        metadata.requested_model = state.options.model;
+      }
+    }
+    metrics = extractUsage(usage, true);
+    if (message.total_cost_usd !== undefined) {
+      metrics.estimated_cost = message.total_cost_usd;
+    }
+  }
   if (Object.keys(metadata).length > 0 || Object.keys(metrics).length > 0) {
     state.span.log({
       ...(Object.keys(metadata).length > 0 ? { metadata } : {}),

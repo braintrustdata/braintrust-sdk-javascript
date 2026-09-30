@@ -168,9 +168,29 @@
               },
               "metadata": {
                 "model": "claude-haiku-4-5",
+                "model_usage": {
+                  "claude-haiku-4-5": {
+                    "cache_creation_input_tokens": 199,
+                    "cache_read_input_tokens": 48486,
+                    "cost_usd": 0.006647350000000001,
+                    "input_tokens": 375,
+                    "output_tokens": 235
+                  }
+                },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
-                "session_id": "<uuid:1>"
+                "session_id": "<uuid:1>",
+                "total_cost_usd": 0.006647350000000001,
+                "total_usage": {
+                  "cache_creation": {
+                    "ephemeral_1h_input_tokens": 0,
+                    "ephemeral_5m_input_tokens": 199
+                  },
+                  "cache_creation_input_tokens": 199,
+                  "cache_read_input_tokens": 48486,
+                  "input_tokens": 375,
+                  "output_tokens": 235
+                }
               }
             }
           ],
@@ -304,17 +324,27 @@
               "metadata": {
                 "maxTurns": 1,
                 "model": "claude-haiku-4-5",
+                "model_usage": {
+                  "claude-haiku-4-5": {
+                    "cache_creation_input_tokens": 488,
+                    "cache_read_input_tokens": 48220,
+                    "cost_usd": 0.008567,
+                    "input_tokens": 20,
+                    "output_tokens": 623
+                  }
+                },
                 "num_turns": 1,
                 "permissionMode": "bypassPermissions",
                 "session_id": "<uuid:1>"
               },
               "metrics": {
-                "completion_tokens": 148,
+                "completion_tokens": 623,
+                "estimated_cost": 0.008567,
                 "prompt_cache_creation_1h_tokens": 0,
                 "prompt_cache_creation_5m_tokens": 488,
-                "prompt_cached_tokens": 24110,
-                "prompt_tokens": 24608,
-                "tokens": 24756
+                "prompt_cached_tokens": 48220,
+                "prompt_tokens": 48728,
+                "tokens": 49351
               }
             }
           ],
@@ -373,6 +403,14 @@
                   "metadata": {
                     "model": "claude-haiku-4-5-20251001",
                     "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 234,
+                    "prompt_cache_creation_1h_tokens": 0,
+                    "prompt_cache_creation_5m_tokens": 0,
+                    "prompt_cached_tokens": 24271,
+                    "prompt_tokens": 24281,
+                    "tokens": 24515
                   }
                 },
                 {
@@ -421,6 +459,12 @@
                           "metadata": {
                             "model": "claude-haiku-4-5-20251001",
                             "provider": "anthropic"
+                          },
+                          "metrics": {
+                            "prompt_cache_creation_1h_tokens": 0,
+                            "prompt_cache_creation_5m_tokens": 2201,
+                            "prompt_cached_tokens": 16794,
+                            "prompt_tokens": 18998
                           }
                         },
                         {
@@ -593,6 +637,14 @@
                   "metadata": {
                     "model": "claude-haiku-4-5-20251001",
                     "provider": "anthropic"
+                  },
+                  "metrics": {
+                    "completion_tokens": 60,
+                    "prompt_cache_creation_1h_tokens": 0,
+                    "prompt_cache_creation_5m_tokens": 331,
+                    "prompt_cached_tokens": 24271,
+                    "prompt_tokens": 24610,
+                    "tokens": 24670
                   }
                 }
               ],
@@ -611,17 +663,29 @@
                   "Task"
                 ],
                 "model": "claude-haiku-4-5",
+                "model_usage": {
+                  "claude-haiku-4-5": {
+                    "cache_creation_input_tokens": 2657,
+                    "cache_read_input_tokens": 84331,
+                    "cost_usd": 0.01430235,
+                    "input_tokens": 398,
+                    "output_tokens": 430
+                  }
+                },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
-                "session_id": "<uuid:1>"
-              },
-              "metrics": {
-                "completion_tokens": 294,
-                "prompt_cache_creation_1h_tokens": 0,
-                "prompt_cache_creation_5m_tokens": 331,
-                "prompt_cached_tokens": 48542,
-                "prompt_tokens": 48891,
-                "tokens": 49185
+                "session_id": "<uuid:1>",
+                "total_cost_usd": 0.01430235,
+                "total_usage": {
+                  "cache_creation": {
+                    "ephemeral_1h_input_tokens": 0,
+                    "ephemeral_5m_input_tokens": 331
+                  },
+                  "cache_creation_input_tokens": 2657,
+                  "cache_read_input_tokens": 84331,
+                  "input_tokens": 398,
+                  "output_tokens": 430
+                }
               }
             }
           ],
@@ -911,18 +975,37 @@
                   "Agent",
                   "Bash"
                 ],
-                "model": "claude-sonnet-4-5",
+                "model": null,
+                "model_usage": {
+                  "claude-haiku-4-5": {
+                    "cache_creation_input_tokens": 1443,
+                    "cache_read_input_tokens": 10455,
+                    "cost_usd": 0.00324825,
+                    "input_tokens": 9,
+                    "output_tokens": 78
+                  },
+                  "claude-sonnet-4-5": {
+                    "cache_creation_input_tokens": 353,
+                    "cache_read_input_tokens": 48342,
+                    "cost_usd": 0.02275935,
+                    "input_tokens": 401,
+                    "output_tokens": 382
+                  }
+                },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
+                "requested_model": "claude-sonnet-4-5",
                 "session_id": "<uuid:1>"
               },
               "metrics": {
-                "completion_tokens": 368,
+                "completion_tokens": 460,
+                "estimated_cost": 0.0260076,
                 "prompt_cache_creation_1h_tokens": 0,
                 "prompt_cache_creation_5m_tokens": 353,
-                "prompt_cached_tokens": 48342,
-                "prompt_tokens": 48713,
-                "tokens": 49081
+                "prompt_cache_creation_tokens": 1796,
+                "prompt_cached_tokens": 58797,
+                "prompt_tokens": 61003,
+                "tokens": 61463
               }
             }
           ],
@@ -1073,17 +1156,27 @@
               },
               "metadata": {
                 "model": "claude-haiku-4-5",
+                "model_usage": {
+                  "claude-haiku-4-5": {
+                    "cache_creation_input_tokens": 2605,
+                    "cache_read_input_tokens": 46114,
+                    "cost_usd": 0.00964865,
+                    "input_tokens": 376,
+                    "output_tokens": 281
+                  }
+                },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
                 "session_id": "<uuid:1>"
               },
               "metrics": {
-                "completion_tokens": 267,
+                "completion_tokens": 281,
+                "estimated_cost": 0.00964865,
                 "prompt_cache_creation_1h_tokens": 0,
                 "prompt_cache_creation_5m_tokens": 2605,
                 "prompt_cached_tokens": 46114,
-                "prompt_tokens": 48737,
-                "tokens": 49004
+                "prompt_tokens": 49095,
+                "tokens": 49376
               }
             }
           ],
