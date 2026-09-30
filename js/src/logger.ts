@@ -4159,6 +4159,7 @@ export type InitOptions<IsOpen extends boolean> = FullLoginOptions & {
   tags?: string[];
   gitMetadataSettings?: GitMetadataSettings;
   projectId?: string;
+  projectGroupName?: string;
   baseExperimentId?: string;
   repoInfo?: RepoInfo;
   setCurrent?: boolean;
@@ -4217,6 +4218,7 @@ type InitializedExperiment<IsOpen extends boolean | undefined> =
  * @param setCurrent If true (the default), set the global current-experiment to the newly-created one.
  * @param options.open If the experiment already exists, open it in read-only mode. Throws an error if the experiment does not already exist.
  * @param options.projectId The id of the project to create the experiment in. This takes precedence over `project` if specified.
+ * @param options.projectGroupName (Optional) Create the project inside the project group with this name, if the project does not already exist. Requires permission to create projects in that group. Ignored if `projectId` is specified.
  * @param options.baseExperimentId An optional experiment id to use as a base. If specified, the new experiment will be summarized and compared to this. This takes precedence over `baseExperiment` if specified.
  * @param options.repoInfo (Optional) Explicitly specify the git metadata for this experiment. This takes precedence over `gitMetadataSettings` if specified.
  * @param options.tags (Optional) A list of tags to attach to the experiment.
@@ -4276,6 +4278,7 @@ export function init<IsOpen extends boolean = false>(
     tags,
     gitMetadataSettings,
     projectId,
+    projectGroupName,
     baseExperimentId,
     repoInfo,
     state: stateArg,
@@ -4354,6 +4357,18 @@ export function init<IsOpen extends boolean = false>(
         org_id: state.orgId,
         update,
       };
+
+      if (!isEmpty(projectGroupName) && isEmpty(projectId)) {
+        // `api/experiment/register` cannot create a project inside a project
+        // group, so resolve the project (creating it in the group if needed)
+        // up front and register the experiment against its id.
+        const { project: groupProject } = await computeLoggerMetadata(state, {
+          project_name: project,
+          project_group_name: projectGroupName,
+        });
+        delete args["project_name"];
+        args["project_id"] = groupProject.id;
+      }
 
       if (experiment) {
         args["experiment_name"] = experiment;
@@ -4576,6 +4591,7 @@ export type InitDatasetOptions<IsLegacyDataset extends boolean> =
     environment?: string;
     snapshotName?: string;
     projectId?: string;
+    projectGroupName?: string;
     metadata?: Record<string, unknown>;
     state?: BraintrustState;
     _internal_btql?: Record<string, unknown>;
@@ -4867,6 +4883,7 @@ export function initDataset<
     fetch,
     forceLogin,
     projectId,
+    projectGroupName,
     metadata,
     useOutput: legacy,
     state: stateArg,
@@ -4951,6 +4968,19 @@ export function initDataset<
         description,
         metadata,
       };
+
+      if (!isEmpty(projectGroupName) && isEmpty(projectId)) {
+        // `api/dataset/register` cannot create a project inside a project
+        // group, so resolve the project (creating it in the group if needed)
+        // up front and register the dataset against its id.
+        const { project: groupProject } = await computeLoggerMetadata(state, {
+          project_name: project,
+          project_group_name: projectGroupName,
+        });
+        delete args["project_name"];
+        args["project_id"] = groupProject.id;
+      }
+
       const response = await state
         .appConn()
         .post_json("api/dataset/register", args);
@@ -5051,9 +5081,11 @@ async function computeLoggerMetadata(
   {
     project_name,
     project_id,
+    project_group_name,
   }: {
     project_name?: string;
     project_id?: string;
+    project_group_name?: string;
   },
 ) {
   await state.login({});
@@ -5071,7 +5103,7 @@ async function computeLoggerMetadata(
     org_id,
     state.loginToken,
     isEmpty(project_id)
-      ? ["name", project_name || GLOBAL_PROJECT]
+      ? ["name", project_name || GLOBAL_PROJECT, project_group_name ?? null]
       : ["id", project_id],
   ]);
   const cached = cache.get(key);
@@ -5093,6 +5125,7 @@ async function computeLoggerMetadata(
             {
               project_name: project_name || GLOBAL_PROJECT,
               org_id,
+              ...(isEmpty(project_group_name) ? {} : { project_group_name }),
             },
             controller.signal,
           );
@@ -5153,6 +5186,7 @@ type AsyncFlushArg<IsAsyncFlush> = {
 export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
   projectName?: string;
   projectId?: string;
+  projectGroupName?: string;
   environment?: SpanOriginEnvironment;
   setCurrent?: boolean;
   state?: BraintrustState;
@@ -5165,6 +5199,7 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
  * @param options Additional options for configuring init().
  * @param options.projectName The name of the project to log into. If unspecified, will default to the Global project.
  * @param options.projectId The id of the project to log into. This takes precedence over projectName if specified.
+ * @param options.projectGroupName (Optional) Create the project inside the project group with this name, if the project does not already exist. Requires permission to create projects in that group. Ignored if `projectId` is specified.
  * @param options.asyncFlush If true, will log asynchronously in the background. Otherwise, will log synchronously. (true by default)
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js,
@@ -5181,6 +5216,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   const {
     projectName,
     projectId,
+    projectGroupName,
     asyncFlush: asyncFlushArg,
     appUrl,
     apiKey,
@@ -5198,6 +5234,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   const computeMetadataArgs = {
     project_name: projectName,
     project_id: projectId,
+    project_group_name: projectGroupName,
   };
 
   const linkArgs = {

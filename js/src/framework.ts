@@ -328,6 +328,13 @@ export interface Evaluator<
   projectId?: string;
 
   /**
+   * If specified, creates the project inside the project group with this name when the project does
+   * not already exist. Requires permission to create projects in that group. Ignored if `projectId`
+   * is specified.
+   */
+  projectGroupName?: string;
+
+  /**
    * If specified, uses the logger state to initialize Braintrust objects. If unspecified, falls back
    * to the global state (initialized using your API key).
    */
@@ -515,7 +522,10 @@ export async function _internalInitEvaluatorExperiment(
   return initExperiment(evaluator.state, {
     ...(evaluator.projectId
       ? { projectId: evaluator.projectId }
-      : { project: projectName }),
+      : {
+          project: projectName,
+          projectGroupName: evaluator.projectGroupName,
+        }),
     experiment: options.experimentName ?? evaluator.experimentName,
     description: evaluator.description,
     metadata: evaluator.metadata,
