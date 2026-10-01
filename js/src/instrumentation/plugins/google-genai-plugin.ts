@@ -1348,7 +1348,7 @@ function serializeInteractionInput(
   ]) {
     const value = params[key];
     if (value !== undefined) {
-      input[key] = serializeInteractionValue(value);
+      input[key] = serializeInteractionValue(value, false);
     }
   }
 
@@ -1373,13 +1373,13 @@ function extractInteractionMetadata(
   ]) {
     const value = params[key];
     if (value !== undefined) {
-      metadata[key] = serializeInteractionValue(value);
+      metadata[key] = serializeInteractionValue(value, false);
     }
   }
 
   if (Array.isArray(params.tools)) {
     metadata.tools = params.tools.map((tool) =>
-      serializeInteractionValue(tool),
+      serializeInteractionValue(tool, false),
     );
   }
 
@@ -1645,6 +1645,7 @@ function serializeVideoInteractionOutput(
 
 function serializeInteractionValue(
   value: unknown,
+  processMedia = true,
   seen = new WeakSet<object>(),
 ): unknown {
   if (value === null || value === undefined || typeof value !== "object") {
@@ -1652,7 +1653,9 @@ function serializeInteractionValue(
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => serializeInteractionValue(item, seen));
+    return value.map((item) =>
+      serializeInteractionValue(item, processMedia, seen),
+    );
   }
 
   const dict: unknown = tryToDict(value);
@@ -1661,7 +1664,9 @@ function serializeInteractionValue(
   }
 
   if (Array.isArray(dict)) {
-    return dict.map((item) => serializeInteractionValue(item, seen));
+    return dict.map((item) =>
+      serializeInteractionValue(item, processMedia, seen),
+    );
   }
 
   if (seen.has(dict)) {
@@ -1671,6 +1676,11 @@ function serializeInteractionValue(
   seen.add(dict);
   try {
     const serialized: Record<string, unknown> = {};
+    const isMedia =
+      processMedia &&
+      "type" in dict &&
+      typeof dict.type === "string" &&
+      ["image", "audio", "video", "document"].includes(dict.type);
     const mimeType =
       "mime_type" in dict && typeof dict.mime_type === "string"
         ? dict.mime_type
@@ -1680,6 +1690,7 @@ function serializeInteractionValue(
     const captureAttachments = isAutoCaptureAttachmentsEnabled();
     const attachment =
       captureAttachments &&
+      isMedia &&
       mimeType &&
       "data" in dict &&
       dict.data !== undefined
@@ -1687,12 +1698,27 @@ function serializeInteractionValue(
         : null;
 
     for (const key of Object.keys(dict)) {
-      if (key === "data" && mimeType && !captureAttachments) continue;
+      if (key === "data" && isMedia && !captureAttachments) continue;
       const entry: unknown = Reflect.get(dict, key);
       if (key === "data" && attachment) {
         serialized[key] = attachment;
       } else {
-        serialized[key] = serializeInteractionValue(entry, seen);
+        // Only descend into provider content containers for media conversion.
+        // Tool arguments/results and metadata remain ordinary application JSON.
+        serialized[key] = serializeInteractionValue(
+          entry,
+          processMedia &&
+            [
+              "input",
+              "content",
+              "steps",
+              "outputs",
+              "output_image",
+              "output_audio",
+              "output_video",
+            ].includes(key),
+          seen,
+        );
       }
     }
 
@@ -2268,7 +2294,7 @@ function aggregateInteractionEvents(
     output.output_text = outputText;
   }
   if (latestUsage) {
-    output.usage = serializeInteractionValue(latestUsage);
+    output.usage = serializeInteractionValue(latestUsage, false);
   }
 
   const compactSteps = Array.from(steps.values()).sort(
@@ -2330,7 +2356,10 @@ function compactInteractionStep(step: unknown): Record<string, unknown> {
     "is_error",
   ]) {
     if (stepDict[key] !== undefined) {
-      compact[key] = serializeInteractionValue(stepDict[key]);
+      compact[key] = serializeInteractionValue(
+        stepDict[key],
+        key === "content",
+      );
     }
   }
 

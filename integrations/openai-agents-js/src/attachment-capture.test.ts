@@ -171,3 +171,174 @@ it.each([true, false])(
     }
   },
 );
+
+it.each([false, true])(
+  "applies capture=%s to native Chat Completions generation inputs",
+  async (captureAttachments) => {
+    const options = {
+      projectId: "test-project-id",
+      projectName: "tmp-luca-agents-chat-capture",
+    };
+    const logger = initLogger({
+      ...options,
+      captureAttachments,
+      setCurrent: false,
+    });
+    const processor = new OpenAIAgentsTraceProcessor({ logger });
+    const trace: AgentsTrace = {
+      type: "trace",
+      traceId: "chat-input",
+      name: "chat input",
+      groupId: null,
+    };
+    const content = [
+      { type: "text", text: "Describe this media." },
+      {
+        type: "image_url",
+        image_url: { url: "data:image/png;base64,AQID", detail: "low" },
+      },
+      { type: "image_url", image_url: { url: "data:image/png;base64,AQID" } },
+      { type: "input_audio", input_audio: { data: "AQID", format: "mp3" } },
+      { type: "file", file: { file_data: "AQID", filename: "document.pdf" } },
+      {
+        type: "image_url",
+        image_url: { url: "https://example.com/image.png" },
+      },
+      { type: "file", file: { file_id: "file-123" } },
+    ];
+    const originalContent = structuredClone(content);
+    const span: AgentsSpan = {
+      type: "trace.span",
+      traceId: trace.traceId,
+      spanId: "generation",
+      parentId: null,
+      startedAt: null,
+      endedAt: null,
+      error: null,
+      spanData: {
+        type: "generation",
+        input: [{ role: "user", content }],
+      },
+    };
+    await processor.onTraceStart(trace);
+    await processor.onSpanStart(span);
+    initLogger({ ...options, captureAttachments: !captureAttachments });
+    await processor.onSpanEnd(span);
+    await processor.onTraceEnd(trace);
+    const rows = await background.drain();
+    const inputRows = rows.filter((row) => "input" in row);
+    expect(inputRows).toHaveLength(2);
+    for (const row of inputRows) {
+      expect(row).toHaveProperty("input.0.content", [
+        content[0],
+        {
+          type: "image_url",
+          image_url: {
+            detail: "low",
+            ...(captureAttachments ? { url: expect.any(Attachment) } : {}),
+          },
+        },
+        ...(captureAttachments
+          ? [{ type: "image_url", image_url: { url: expect.any(Attachment) } }]
+          : []),
+        {
+          type: "input_audio",
+          input_audio: {
+            format: "mp3",
+            ...(captureAttachments ? { data: expect.any(Attachment) } : {}),
+          },
+        },
+        {
+          type: "file",
+          file: {
+            filename: "document.pdf",
+            ...(captureAttachments
+              ? { file_data: expect.any(Attachment) }
+              : {}),
+          },
+        },
+        ...content.slice(5),
+      ]);
+    }
+    expect(content).toEqual(originalContent);
+    expect(JSON.stringify(inputRows)).not.toContain("AQID");
+  },
+);
+
+it.each([false, true])(
+  "captures generation and protocol audio with the owning policy (%s)",
+  async (captureAttachments) => {
+    const options = {
+      projectId: "test-project-id",
+      projectName: "tmp-luca-agents-audio-output",
+    };
+    const logger = initLogger({
+      ...options,
+      captureAttachments,
+      setCurrent: false,
+    });
+    const processor = new OpenAIAgentsTraceProcessor({ logger });
+    const trace: AgentsTrace = {
+      type: "trace",
+      traceId: "audio-output",
+      name: "audio output",
+      groupId: null,
+    };
+    const audio = {
+      data: "AQID",
+      transcript: "Hello",
+      id: "audio-1",
+      expires_at: 123,
+    };
+    const output = [{ choices: [{ message: { role: "assistant", audio } }] }];
+    const span: AgentsSpan = {
+      type: "trace.span",
+      traceId: trace.traceId,
+      spanId: "generation",
+      parentId: null,
+      startedAt: null,
+      endedAt: null,
+      error: null,
+      spanData: {
+        type: "generation",
+        output,
+        input: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "audio",
+                audio: "AQID",
+                format: "mp3",
+                transcript: "Hello",
+              },
+              { type: "audio", audio: { id: "file-123" } },
+            ],
+          },
+        ],
+      },
+    };
+    await processor.onTraceStart(trace);
+    await processor.onSpanStart(span);
+    initLogger({ ...options, captureAttachments: !captureAttachments });
+    await processor.onSpanEnd(span);
+    const rows = await background.drain();
+    const row = rows.find((row) => "output" in row && row.output !== undefined);
+    expect(row).toHaveProperty("output.0.choices.0.message.audio", {
+      transcript: "Hello",
+      id: "audio-1",
+      expires_at: 123,
+      ...(captureAttachments ? { data: expect.any(Attachment) } : {}),
+    });
+    expect(row).toHaveProperty("input.0.content", [
+      {
+        type: "audio",
+        format: "mp3",
+        transcript: "Hello",
+        ...(captureAttachments ? { audio: expect.any(Attachment) } : {}),
+      },
+      { type: "audio", audio: { id: "file-123" } },
+    ]);
+    expect(audio.data).toBe("AQID");
+  },
+);

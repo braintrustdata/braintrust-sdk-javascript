@@ -328,16 +328,9 @@ export class OpenAIAgentsTraceProcessor {
       return Promise.resolve();
     }
 
-    const logData = withCurrent(braintrustSpan, () => {
-      const data = this.extractLogData(span);
-      if (data.input !== undefined)
-        data.input = processInputAttachments(data.input);
-      if (data.output !== undefined)
-        data.output = processInputAttachments(
-          processImagesInOutput(data.output),
-        );
-      return data;
-    });
+    const logData = withCurrent(braintrustSpan, () =>
+      this.extractLogData(span),
+    );
     braintrustSpan.log({
       error: span.error,
       ...logData,
@@ -427,8 +420,8 @@ export class OpenAIAgentsTraceProcessor {
     };
 
     return {
-      input: spanData._input,
-      output,
+      input: processInputAttachments(spanData._input),
+      output: processInputAttachments(processImagesInOutput(output)),
       metadata: isObject(response)
         ? this.omitKeys(response, ["output", "usage"])
         : {},
@@ -471,8 +464,8 @@ export class OpenAIAgentsTraceProcessor {
     span: OpenAIAgentsSpan,
   ): Record<string, unknown> {
     return {
-      input: spanData.input,
-      output: spanData.output,
+      input: processInputAttachments(spanData.input),
+      output: processInputAttachments(processImagesInOutput(spanData.output)),
       metadata: {
         model: spanData.model,
         model_config: spanData.model_config,

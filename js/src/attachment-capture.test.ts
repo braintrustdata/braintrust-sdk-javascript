@@ -947,3 +947,284 @@ it.each([false, true])(
     );
   },
 );
+
+it.each([false, true])(
+  "captures Agents audio output using the owning policy (%s)",
+  async (captureAttachments) => {
+    const logger = initLogger({
+      ...loggerOptions,
+      captureAttachments,
+      setCurrent: false,
+    });
+    const processor = new OpenAIAgentsTraceProcessor({ logger });
+    const trace = {
+      type: "trace" as const,
+      traceId: "audio-output",
+      name: "audio output",
+      groupId: null,
+    };
+    const audio = {
+      data: "AQID",
+      transcript: "Hello",
+      id: "audio-1",
+      expires_at: 123,
+    };
+    const output = [{ choices: [{ message: { role: "assistant", audio } }] }];
+    const span: OpenAIAgentsSpan = {
+      type: "trace.span",
+      traceId: trace.traceId,
+      spanId: "generation",
+      parentId: null,
+      startedAt: null,
+      endedAt: null,
+      error: null,
+      spanData: { type: "generation", output },
+    };
+    await processor.onTraceStart(trace);
+    await processor.onSpanStart(span);
+    initLogger({ ...loggerOptions, captureAttachments: !captureAttachments });
+    await processor.onSpanEnd(span);
+    const rows = await background.drain();
+    const row = rows.find((row) => "output" in row && row.output !== undefined);
+    expect(row).toHaveProperty("output.0.choices.0.message.audio", {
+      transcript: "Hello",
+      id: "audio-1",
+      expires_at: 123,
+      ...(captureAttachments ? { data: expect.any(Attachment) } : {}),
+    });
+    expect(audio.data).toBe("AQID");
+    const protocolAudio = {
+      type: "audio",
+      audio: "AQID",
+      format: "mp3",
+      transcript: "Hello",
+    };
+    expect(processInputAttachments(protocolAudio, captureAttachments)).toEqual({
+      type: "audio",
+      format: "mp3",
+      transcript: "Hello",
+      ...(captureAttachments ? { audio: expect.any(Attachment) } : {}),
+    });
+    const remoteAudio = { type: "audio", audio: { id: "file-123" } };
+    expect(processInputAttachments(remoteAudio, captureAttachments)).toEqual(
+      remoteAudio,
+    );
+  },
+);
+
+it.each([false, true])(
+  "preserves custom Agents JSON without mutating SDK span data (%s)",
+  async (captureAttachments) => {
+    const logger = initLogger({ ...loggerOptions, captureAttachments });
+    const processor = new OpenAIAgentsTraceProcessor({ logger });
+    const trace = {
+      type: "trace" as const,
+      traceId: "custom-json",
+      name: "custom JSON",
+      groupId: null,
+    };
+    const data = Object.freeze({
+      input: Object.freeze({ type: "file", data: "report text" }),
+      output: Object.freeze({
+        type: "image_generation_call",
+        result: "ordinary result",
+      }),
+    });
+    const span: OpenAIAgentsSpan = {
+      type: "trace.span",
+      traceId: trace.traceId,
+      spanId: "custom",
+      parentId: null,
+      startedAt: null,
+      endedAt: null,
+      error: null,
+      spanData: { type: "custom", name: "report", data },
+    };
+    await processor.onTraceStart(trace);
+    await processor.onSpanStart(span);
+    await processor.onSpanEnd(span);
+    const rows = await background.drain();
+    expect(
+      rows.find((row) => "output" in row && row.output !== undefined),
+    ).toMatchObject(data);
+    expect(span.spanData).toHaveProperty("data", data);
+  },
+);
+
+it.each([false, true])(
+  "applies capture policy to Chat Completions audio (%s)",
+  async (captureAttachments) => {
+    initLogger({ ...loggerOptions, captureAttachments });
+    const audio = { data: "AQID", transcript: "Hello", id: "audio-1" };
+    const result = {
+      choices: [
+        {
+          index: 0,
+          message: { role: "assistant" as const, content: null, audio },
+          finish_reason: "stop",
+        },
+      ],
+    };
+    await openAIChannels.chatCompletionsCreate.tracePromise(
+      async () => result,
+      {
+        arguments: [{ model: "audio-model", messages: [] }],
+      },
+    );
+    const rows = await background.drain();
+    expect(rows.find((row) => "output" in row)).toHaveProperty(
+      "output.0.message.audio",
+      {
+        transcript: "Hello",
+        id: "audio-1",
+        ...(captureAttachments ? { data: expect.any(Attachment) } : {}),
+      },
+    );
+    expect(audio.data).toBe("AQID");
+  },
+);
+
+it.each([false, true])(
+  "handles raw base64 chat files without changing references (capture=%s)",
+  async (captureAttachments) => {
+    initLogger({ ...loggerOptions, captureAttachments });
+    const messages = [
+      {
+        role: "user",
+        content: [
+          {
+            type: "file",
+            file: { file_data: "AQID", filename: "document.pdf" },
+          },
+          { type: "file", file: { file_id: "file-123" } },
+          {
+            type: "file",
+            file: { file_data: "https://example.com/document.pdf" },
+          },
+          { type: "text", text: "Summarize this document." },
+        ],
+      },
+    ];
+    await openAIChannels.chatCompletionsCreate.tracePromise(
+      async () => ({ choices: [] }),
+      { arguments: [{ model: "model", messages }] },
+    );
+    const rows = await background.drain();
+    expect(rows.find((row) => "input" in row)).toHaveProperty("input", [
+      {
+        role: "user",
+        content: [
+          {
+            type: "file",
+            file: {
+              filename: "document.pdf",
+              ...(captureAttachments
+                ? { file_data: expect.any(Attachment) }
+                : {}),
+            },
+          },
+          ...messages[0].content.slice(1),
+        ],
+      },
+    ]);
+    expect(messages[0].content[0].file?.file_data).toBe("AQID");
+    if (!captureAttachments) expect(JSON.stringify(rows)).not.toContain("AQID");
+  },
+);
+
+it.each([false, true])(
+  "preserves parsed OpenAI output and tool arguments that resemble media (capture=%s)",
+  async (captureAttachments) => {
+    initLogger({ ...loggerOptions, captureAttachments });
+    const parsed = { type: "file", data: "report text" };
+    const parsedArguments = {
+      type: "input_image",
+      image_url: "ordinary input",
+    };
+    const choices = [
+      {
+        index: 0,
+        message: {
+          role: "assistant",
+          content: null,
+          parsed,
+          tool_calls: [
+            {
+              type: "function",
+              id: "call-1",
+              function: {
+                name: "report",
+                arguments: JSON.stringify(parsedArguments),
+                parsed_arguments: parsedArguments,
+              },
+            },
+          ],
+        },
+      },
+    ];
+    for (const channel of [
+      openAIChannels.chatCompletionsCreate,
+      openAIChannels.betaChatCompletionsParse,
+    ]) {
+      await channel.tracePromise(async () => ({ choices }), {
+        arguments: [{ model: "model", messages: [] }],
+      });
+      const rows = await background.drain();
+      expect(rows.find((row) => "output" in row)).toHaveProperty(
+        "output",
+        choices,
+      );
+    }
+    expect(choices[0].message.parsed).toBe(parsed);
+    expect(choices[0].message.tool_calls[0].function.parsed_arguments).toBe(
+      parsedArguments,
+    );
+  },
+);
+
+it.each([
+  ["mp3", "audio/mpeg", "mp3"],
+  ["wav", "audio/wav", "wav"],
+  ["flac", "audio/flac", "flac"],
+  ["aac", "audio/aac", "aac"],
+  ["opus", "audio/ogg", "ogg"],
+  ["pcm16", "audio/pcm", "pcm"],
+] as const)(
+  "uses the requested %s format for generated chat audio",
+  async (format, contentType, extension) => {
+    initLogger({ ...loggerOptions, captureAttachments: true });
+    const audio = { data: "AQID", transcript: "Hello", id: "audio-1" };
+    const choices = [
+      { index: 0, message: { role: "assistant", content: null, audio } },
+    ];
+    for (const channel of [
+      openAIChannels.chatCompletionsCreate,
+      openAIChannels.betaChatCompletionsParse,
+    ]) {
+      await channel.tracePromise(async () => ({ choices }), {
+        arguments: [
+          {
+            model: "audio-model",
+            messages: [],
+            audio: { format, voice: "alloy" },
+          },
+        ],
+      });
+      const rows = await background.drain();
+      expect(rows.find((row) => "output" in row)).toHaveProperty(
+        "output.0.message.audio",
+        {
+          transcript: "Hello",
+          id: "audio-1",
+          data: expect.objectContaining({
+            reference: expect.objectContaining({
+              content_type: contentType,
+              filename: `audio.${extension}`,
+            }),
+          }),
+        },
+      );
+    }
+    expect(audio).toEqual({ data: "AQID", transcript: "Hello", id: "audio-1" });
+  },
+);

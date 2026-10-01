@@ -1,5 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
+  Attachment,
   _exportsForTestingOnly,
   currentSpan,
   initLogger,
@@ -40,6 +41,61 @@ describe("braintrustAISDKTelemetry", () => {
   afterEach(() => {
     _exportsForTestingOnly.clearTestBackgroundLogger();
   });
+
+  it.each([false, true])(
+    "keeps the owning media policy in delayed telemetry callbacks (%s)",
+    async (captureAttachments) => {
+      initLogger({
+        projectName: "tmp-luca-telemetry-capture",
+        projectId: "test-project-id",
+        captureAttachments,
+      });
+      const telemetry = braintrustAISDKTelemetry();
+      const callId = "delayed-media";
+      telemetry.onStart({ callId, operationId: "ai.generateText" });
+      initLogger({
+        projectName: "tmp-luca-telemetry-capture",
+        projectId: "test-project-id",
+        captureAttachments: !captureAttachments,
+      });
+      const messages = [
+        {
+          role: "user",
+          content: [{ type: "image", image: "data:image/png;base64,AQID" }],
+        },
+      ];
+      telemetry.onLanguageModelCallStart({ callId, messages });
+      const content = [{ type: "file", mediaType: "image/png", data: "AQID" }];
+      telemetry.onLanguageModelCallEnd({ callId, content });
+      telemetry.onEnd({ callId, operationId: "ai.generateText", content });
+      const rows = await backgroundLogger.drain();
+      const outputs = rows.filter(
+        (row) => "output" in row && row.output !== undefined,
+      );
+      expect(outputs).toHaveLength(2);
+      for (const row of outputs)
+        expect(row).toHaveProperty("output.content", [
+          {
+            type: "file",
+            mediaType: "image/png",
+            ...(captureAttachments ? { data: expect.any(Attachment) } : {}),
+          },
+        ]);
+      const inputRow = rows.find(
+        (row) =>
+          "input" in row &&
+          row.input &&
+          typeof row.input === "object" &&
+          "messages" in row.input,
+      );
+      expect(inputRow).toHaveProperty(
+        "input.messages.0.content",
+        captureAttachments
+          ? [{ type: "image", image: expect.any(Attachment) }]
+          : [],
+      );
+    },
+  );
 
   it.each(["generateText", "streamText"])(
     "captures provider tools in %s alongside local tools",

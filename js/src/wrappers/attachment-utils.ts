@@ -49,6 +49,8 @@ export function getExtensionFromMediaType(mediaType: string): string {
     "image/webp": "webp",
     "image/svg+xml": "svg",
     "audio/mpeg": "mp3",
+    "audio/aac": "aac",
+    "audio/pcm": "pcm",
     "audio/flac": "flac",
     "audio/basic": "mulaw",
     "audio/mp4": "m4a",
@@ -123,6 +125,7 @@ export function convertDataToBlob(data: any, mediaType: string): Blob | null {
 export function processInputAttachments(
   input: any,
   captureAttachments = isAutoCaptureAttachmentsEnabled(),
+  audioOutputFormat?: string,
 ): any {
   if (!input) {
     return input;
@@ -223,25 +226,49 @@ export function processInputAttachments(
       }
     }
 
-    if (node.type === "input_audio" && node.input_audio) {
-      const audio = node.input_audio;
+    if (node.type === "audio" && typeof node.audio === "string") {
+      if (!captureAttachments) return omitMediaData(node, "audio");
+      const format = node.format || "wav";
+      const attachment = toAttachment(
+        node.audio,
+        format === "mp3" ? "audio/mpeg" : `audio/${format}`,
+        `audio.${format}`,
+      );
+      if (attachment) return { ...node, audio: attachment };
+    }
+
+    const audioField = node.type === "input_audio" ? "input_audio" : "audio";
+    if (
+      (node.type === "input_audio" || node.role === "assistant") &&
+      node[audioField] &&
+      typeof node[audioField] === "object"
+    ) {
+      const audio = node[audioField];
       if (audio.data instanceof BaseAttachment) return node;
       if (!captureAttachments)
         return omitMediaData({
           ...node,
-          input_audio: omitMediaData(audio, "data"),
+          [audioField]: omitMediaData(audio, "data"),
         });
+      const format =
+        audio.format ||
+        (node.role === "assistant" ? audioOutputFormat : undefined) ||
+        "wav";
       const mediaType =
-        audio.format === "mp3"
+        format === "mp3"
           ? "audio/mpeg"
-          : `audio/${audio.format || "wav"}`;
+          : format === "opus"
+            ? "audio/ogg"
+            : format === "pcm16"
+              ? "audio/pcm"
+              : `audio/${format}`;
       const attachment = toAttachment(
         audio.data,
         mediaType,
-        `audio.${audio.format || "wav"}`,
+        `audio.${getExtensionFromMediaType(mediaType)}`,
       );
       if (attachment)
-        return { ...node, input_audio: { ...audio, data: attachment } };
+        return { ...node, [audioField]: { ...audio, data: attachment } };
     }
 
     // AI SDK generateText/streamText file parts wrap a GeneratedFile instance.
@@ -335,7 +362,7 @@ export function processInputAttachments(
       node.file &&
       typeof node.file === "object" &&
       ((typeof node.file.file_data === "string" &&
-        node.file.file_data.startsWith("data:")) ||
+        !/^https?:/i.test(node.file.file_data)) ||
         (node.file.file_data instanceof URL &&
           node.file.file_data.protocol === "data:"))
     ) {

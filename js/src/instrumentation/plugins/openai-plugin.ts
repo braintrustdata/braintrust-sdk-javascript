@@ -1,3 +1,7 @@
+import {
+  isAutoCaptureAttachmentsEnabled,
+  processInputAttachments,
+} from "../../wrappers/attachment-utils";
 import { interceptOpenAIMedia } from "./openai-media";
 import { BasePlugin } from "../core";
 import {
@@ -90,8 +94,11 @@ export class OpenAIPlugin extends BasePlugin {
         name: "Chat Completion",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => extractOpenAIChatInput(params),
-        extractOutput: (result) => {
-          return result?.choices;
+        extractOutput: (result, event) => {
+          return processChatCompletionOutput(
+            result?.choices,
+            event?.arguments?.[0].audio?.format,
+          );
         },
         extractMetrics: (result, startTime, endEvent) => {
           const metrics = withCachedMetric(
@@ -142,8 +149,11 @@ export class OpenAIPlugin extends BasePlugin {
         name: "Chat Completion",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => extractOpenAIChatInput(params),
-        extractOutput: (result) => {
-          return result?.choices;
+        extractOutput: (result, event) => {
+          return processChatCompletionOutput(
+            result?.choices,
+            event?.arguments?.[0].audio?.format,
+          );
         },
         extractMetrics: (result, startTime, endEvent) => {
           const metrics = withCachedMetric(
@@ -301,6 +311,37 @@ export class OpenAIPlugin extends BasePlugin {
   protected onDisable(): void {
     this.unsubscribers = unsubscribeAll(this.unsubscribers);
   }
+}
+
+function processChatCompletionOutput(
+  choices: OpenAIChatChoice[] | undefined,
+  audioFormat: string | undefined,
+): unknown {
+  const captureAttachments = isAutoCaptureAttachmentsEnabled();
+  return choices?.map((choice) => ({
+    ...choice,
+    // Parsed outputs and tool arguments are application JSON, not media parts.
+    message: {
+      ...choice.message,
+      ...(Array.isArray(choice.message.content)
+        ? {
+            content: processInputAttachments(
+              choice.message.content,
+              captureAttachments,
+            ),
+          }
+        : {}),
+      ...(choice.message.audio
+        ? {
+            audio: processInputAttachments(
+              { role: "assistant", audio: choice.message.audio },
+              captureAttachments,
+              audioFormat,
+            ).audio,
+          }
+        : {}),
+    },
+  }));
 }
 
 function getCachedMetricFromEndEvent(endEvent: unknown): number | undefined {
