@@ -6,7 +6,7 @@ import {
 import { z } from "zod";
 
 const CLAUDE_AGENT_MODEL = "claude-haiku-4-5";
-export const CLAUDE_AGENT_TOP_LEVEL_MODEL = "claude-sonnet-4-5";
+const CLAUDE_AGENT_TOP_LEVEL_MODEL = "claude-sonnet-4-5";
 
 export const ROOT_NAME = "claude-agent-sdk-root";
 export const SCENARIO_NAME = "claude-agent-sdk-traces";
@@ -91,7 +91,6 @@ function logResultUsage(messages) {
   usageSpan.log({
     output: {
       modelUsage: result?.modelUsage,
-      usage: result?.usage,
       total_cost_usd: result?.total_cost_usd,
     },
   });

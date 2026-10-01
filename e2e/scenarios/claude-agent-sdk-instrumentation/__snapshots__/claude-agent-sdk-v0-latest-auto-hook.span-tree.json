@@ -182,10 +182,6 @@
                 "session_id": "<uuid:1>",
                 "total_cost_usd": 0.006647350000000001,
                 "total_usage": {
-                  "cache_creation": {
-                    "ephemeral_1h_input_tokens": 0,
-                    "ephemeral_5m_input_tokens": 199
-                  },
                   "cache_creation_input_tokens": 199,
                   "cache_read_input_tokens": 48486,
                   "input_tokens": 375,
@@ -340,8 +336,7 @@
               "metrics": {
                 "completion_tokens": 623,
                 "estimated_cost": 0.008567,
-                "prompt_cache_creation_1h_tokens": 0,
-                "prompt_cache_creation_5m_tokens": 488,
+                "prompt_cache_creation_tokens": 488,
                 "prompt_cached_tokens": 48220,
                 "prompt_tokens": 48728,
                 "tokens": 49351
@@ -677,10 +672,6 @@
                 "session_id": "<uuid:1>",
                 "total_cost_usd": 0.01430235,
                 "total_usage": {
-                  "cache_creation": {
-                    "ephemeral_1h_input_tokens": 0,
-                    "ephemeral_5m_input_tokens": 331
-                  },
                   "cache_creation_input_tokens": 2657,
                   "cache_read_input_tokens": 84331,
                   "input_tokens": 398,
@@ -975,7 +966,7 @@
                   "Agent",
                   "Bash"
                 ],
-                "model": null,
+                "model": "claude-sonnet-4-5",
                 "model_usage": {
                   "claude-haiku-4-5": {
                     "cache_creation_input_tokens": 1443,
@@ -994,14 +985,11 @@
                 },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
-                "requested_model": "claude-sonnet-4-5",
                 "session_id": "<uuid:1>"
               },
               "metrics": {
                 "completion_tokens": 460,
                 "estimated_cost": 0.0260076,
-                "prompt_cache_creation_1h_tokens": 0,
-                "prompt_cache_creation_5m_tokens": 353,
                 "prompt_cache_creation_tokens": 1796,
                 "prompt_cached_tokens": 58797,
                 "prompt_tokens": 61003,
@@ -1172,8 +1160,7 @@
               "metrics": {
                 "completion_tokens": 281,
                 "estimated_cost": 0.00964865,
-                "prompt_cache_creation_1h_tokens": 0,
-                "prompt_cache_creation_5m_tokens": 2605,
+                "prompt_cache_creation_tokens": 2605,
                 "prompt_cached_tokens": 46114,
                 "prompt_tokens": 49095,
                 "tokens": 49376

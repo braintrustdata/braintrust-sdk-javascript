@@ -1554,18 +1554,8 @@ async function handleStreamMessage(
   if (message.session_id !== undefined) {
     metadata.session_id = message.session_id;
   }
-  const resultUsage = copyUsage(message.usage);
   const modelUsage = extractModelUsage(message.modelUsage);
-  const usage = modelUsage
-    ? {
-        ...modelUsage.totals,
-        // Result usage can provide a partial TTL breakdown for the all-agent
-        // total. Keep the aggregate so pricing can fall back when incomplete.
-        ...(resultUsage?.cache_creation && {
-          cache_creation: resultUsage.cache_creation,
-        }),
-      }
-    : resultUsage;
+  const usage = modelUsage?.totals ?? copyUsage(message.usage);
   if (modelUsage) {
     metadata.model_usage = modelUsage.models;
   }
@@ -1579,13 +1569,6 @@ async function handleStreamMessage(
       metadata.total_cost_usd = message.total_cost_usd;
     }
   } else {
-    if (modelUsage && Object.keys(modelUsage.models).length > 1) {
-      // A mixed-model total must never be priced using the configured model.
-      metadata.model = null;
-      if (state.options.model !== undefined) {
-        metadata.requested_model = state.options.model;
-      }
-    }
     metrics = extractUsage(usage, true);
     if (message.total_cost_usd !== undefined) {
       metrics.estimated_cost = message.total_cost_usd;
