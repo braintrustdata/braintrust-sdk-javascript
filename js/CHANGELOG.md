@@ -1,5 +1,24 @@
 # braintrust
 
+## 3.36.0
+
+### Minor Changes
+
+- feat: Support zod v4 schemas for eval parameters and function parameters (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2533)
+- feat: Add `_createInProjectGroup` to logger options (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2558)
+- feat: Expose helper types for pushing pre-processors (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2539)
+- feat: Add `projectGroupName` to create projects inside a project group `projects.create({ name, projectGroupName })` now accepts a project group name. When `braintrust push` or `project.publish()` registers a project that does not exist yet, it is created inside that project group, which lets callers who only hold project-creation permission on a group (rather than on the whole organization) register projects. Thanks @elijah0528! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2541)
+- feat: Apply span export customizers to all native SDK span records and fail closed This changes `onSpanExport` behavior shipped in 3.35. Customizers previously ran only on instrumentation-created spans and failed open; they now run on every native SDK span record and drop the record when a callback fails. - Customizers run for manual, instrumented, logger, and experiment spans, including incremental `updateSpan` records, before attachment processing, merging, masking, and serialization. Dataset rows and feedback remain excluded. - Exceptions, asynchronous callbacks, and invalid return values stop the callback chain and drop the current record without uploading its attachments. Failure diagnostics omit record and exception details and are throttled. - Span customizers are not yet supported with OpenTelemetry compat mode. Registering a non-empty list while `BRAINTRUST_OTEL_COMPAT` or `setupOtelCompat()` is active logs one error per attempt and leaves the previous registration unchanged; clearing customizers is always allowed and silent. - Callbacks receive copies of plain objects and arrays, so in-place mutations no longer affect the local span cache. Span identity and routing fields are preserved, and customization results are memoized for retries. Existing customizers must now tolerate records from spans they did not previously see and records where fields are absent (guard before reading `input`, `output`, `metadata`, etc.), and must catch their own errors if a failure should not drop the record. Thanks @realark! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2536)
+
+### Patch Changes
+
+- fix: Add span provenance for temporal and openai agents sdk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2518)
+- fix: Ignore empty numeric environment variables such as `BRAINTRUST_NUM_RETRIES` and `BRAINTRUST_DEFAULT_BATCH_SIZE` instead of reading them as `0` Thanks @raphaelfakhri! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2538)
+- fix(flue): Stop resending span metadata on end rows (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2547)
+- fix: Fix `reasoning_content` for openai compatible responses (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2524)
+- fix: Preserve LangChain model attribution (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2537)
+- perf: Cache project lookup (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2523)
+
 ## 3.35.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # @braintrust/otel
 
+## 1.0.2
+
+### Patch Changes
+
+- fix: Log an error from `setupOtelCompat()` when Braintrust span customizers are registered, since they are not yet supported with OpenTelemetry compat mode. Log once per setup attempt and continue enabling compat mode without clearing the registered customizers. Thanks @realark! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2536)
+- Updated dependencies: braintrust@3.36.0
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @braintrust/openai-agents
 
+## 0.1.7
+
+### Patch Changes
+
+- fix: Add span provenance for temporal and openai agents sdk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2518)
+- Updated dependencies: braintrust@3.36.0
+
 ## 0.1.6
 
 - `@braintrust/openai-agents` is now deprecated. This release marks the last release for this package. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2383)
