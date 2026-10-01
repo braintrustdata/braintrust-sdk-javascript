@@ -344,6 +344,57 @@ interface WorkflowSubmissionProcessor<
   ): Promise<Result>;
 }
 
+interface WorkflowBatchingOptions {
+  /** Maximum number of items in one provider batch. */
+  maxSize: number;
+  /**
+   * Submits a partial batch once it has waited this long for more items. The
+   * wait is checked whenever the workflow advances; no timers are started.
+   * Defaults to waiting until either `maxSize` items are ready or no more items
+   * can become ready for this stage.
+   */
+  maxWaitMs?: number;
+}
+
+export type WorkflowBatchItem<Item> = Item & {
+  /**
+   * Provider-safe identifier for this item within its batch. Use it as the
+   * provider's `custom_id` and return it with the item's result.
+   */
+  customId: string;
+};
+
+export type WorkflowBatchItemResult<Result> =
+  | { customId: string; result: Result }
+  | { customId: string; error: unknown };
+
+interface WorkflowBatchProcessor<
+  Item,
+  Result,
+  SubmissionData extends JsonValue,
+> {
+  /** Configures how ready items are grouped into provider batches. */
+  batching: WorkflowBatchingOptions;
+  /** Submits one provider batch and returns JSON-serializable provider data. */
+  submit(
+    items: WorkflowBatchItem<Item>[],
+    context: WorkflowSubmissionContext,
+  ): Promise<SubmissionData>;
+  /** Configures how the SDK learns that the batch completed. */
+  completion: WorkflowSubmissionCompletion<SubmissionData>;
+  /**
+   * Returns per-item results for a completed batch. Items without a result are
+   * recorded as failed. May be called again on replay.
+   */
+  collect(
+    submissionData: SubmissionData,
+    context: WorkflowSubmissionContext,
+  ):
+    | AsyncIterable<WorkflowBatchItemResult<Result>>
+    | Iterable<WorkflowBatchItemResult<Result>>
+    | Promise<Iterable<WorkflowBatchItemResult<Result>>>;
+}
+
 interface WorkflowTaskDefinition<
   Input,
   Output,
@@ -353,11 +404,17 @@ interface WorkflowTaskDefinition<
   SubmissionData extends JsonValue,
 > {
   readonly kind: typeof WORKFLOW_TASK_KIND;
-  readonly processor: WorkflowSubmissionProcessor<
-    WorkflowTaskItem<Input, Expected, Metadata, Parameters>,
-    WorkflowTaskResult<Output, Metadata>,
-    SubmissionData
-  >;
+  readonly processor:
+    | WorkflowSubmissionProcessor<
+        WorkflowTaskItem<Input, Expected, Metadata, Parameters>,
+        WorkflowTaskResult<Output, Metadata>,
+        SubmissionData
+      >
+    | WorkflowBatchProcessor<
+        WorkflowTaskItem<Input, Expected, Metadata, Parameters>,
+        WorkflowTaskResult<Output, Metadata>,
+        SubmissionData
+      >;
 }
 
 interface WorkflowScorerDefinition<
@@ -369,11 +426,17 @@ interface WorkflowScorerDefinition<
 > {
   readonly kind: typeof WORKFLOW_SCORER_KIND;
   name: string;
-  readonly processor: WorkflowSubmissionProcessor<
-    WorkflowScorerItem<Input, Output, Expected, Metadata>,
-    WorkflowScorerResult,
-    SubmissionData
-  >;
+  readonly processor:
+    | WorkflowSubmissionProcessor<
+        WorkflowScorerItem<Input, Output, Expected, Metadata>,
+        WorkflowScorerResult,
+        SubmissionData
+      >
+    | WorkflowBatchProcessor<
+        WorkflowScorerItem<Input, Output, Expected, Metadata>,
+        WorkflowScorerResult,
+        SubmissionData
+      >;
 }
 
 /**
@@ -439,6 +502,86 @@ export class WorkflowScorer<
   }
 }
 
+/**
+ * Defines a task that submits many cases/trials in each asynchronous provider
+ * batch, such as the OpenAI Batch API or Anthropic Message Batches.
+ *
+ * @experimental - The API for this class is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
+ */
+export class WorkflowBatchTask<
+  Input,
+  Output,
+  Expected = void,
+  Metadata extends BaseMetadata = DefaultMetadataType,
+  Parameters extends EvalParameters = EvalParameters,
+  SubmissionData extends JsonValue = JsonValue,
+> implements WorkflowTaskDefinition<
+  Input,
+  Output,
+  Expected,
+  Metadata,
+  Parameters,
+  SubmissionData
+> {
+  readonly kind: typeof WORKFLOW_TASK_KIND = WORKFLOW_TASK_KIND;
+
+  constructor(
+    readonly processor: WorkflowBatchProcessor<
+      WorkflowTaskItem<Input, Expected, Metadata, Parameters>,
+      WorkflowTaskResult<Output, Metadata>,
+      SubmissionData
+    >,
+  ) {
+    validateBatchingOptions(processor.batching);
+  }
+}
+
+/**
+ * Defines a scorer that submits many cases/trials in each asynchronous provider
+ * batch, such as the OpenAI Batch API or Anthropic Message Batches.
+ *
+ * @experimental - The API for this class is not yet stabilized and may change or be removed across non-major versions. Functionality is not guaranteed.
+ */
+export class WorkflowBatchScorer<
+  Input,
+  Output,
+  Expected = void,
+  Metadata extends BaseMetadata = DefaultMetadataType,
+  SubmissionData extends JsonValue = JsonValue,
+> implements WorkflowScorerDefinition<
+  Input,
+  Output,
+  Expected,
+  Metadata,
+  SubmissionData
+> {
+  readonly kind: typeof WORKFLOW_SCORER_KIND = WORKFLOW_SCORER_KIND;
+  readonly name: string;
+
+  constructor(
+    readonly processor: WorkflowBatchProcessor<
+      WorkflowScorerItem<Input, Output, Expected, Metadata>,
+      WorkflowScorerResult,
+      SubmissionData
+    > & { name: string },
+  ) {
+    validateBatchingOptions(processor.batching);
+    this.name = processor.name;
+  }
+}
+
+function validateBatchingOptions({
+  maxSize,
+  maxWaitMs,
+}: WorkflowBatchingOptions) {
+  if (!Number.isInteger(maxSize) || maxSize < 1) {
+    throw new Error("batching.maxSize must be a positive integer");
+  }
+  if (maxWaitMs !== undefined && !(maxWaitMs >= 0)) {
+    throw new Error("batching.maxWaitMs must be a non-negative number");
+  }
+}
+
 type WorkflowEvaluator<
   Input,
   Output,
@@ -483,7 +626,8 @@ interface WorkflowEvalStartOptions<
 }
 
 type WorkflowSubmissionResult = {
-  runId: string;
+  /** Required with `submissionId`. Optional with `externalId`. */
+  runId?: string;
   submissionId?: string;
   externalId?: string;
 };
@@ -546,11 +690,17 @@ type WorkflowCaseRecord = {
   taskComplete: boolean;
   taskLogged: boolean;
   output?: JsonValue;
+  /** Set when a batch reported a failure for this item's task. */
+  taskError?: string;
   rootSpan?: string;
   scores: Record<string, JsonValue>;
+  /** Scorer failures reported by batches, keyed by scorer name. */
+  scoreErrors: Record<string, string>;
   loggedScores: Record<string, boolean>;
   classifications: Record<string, JsonValue>;
   loggedClassifications: Record<string, boolean>;
+  /** Batch submission IDs that claimed this item, keyed by stage. */
+  batchSubmissions: Record<string, string>;
 };
 
 type WorkflowCaseBaseRecord = Pick<
@@ -561,7 +711,7 @@ type WorkflowCaseBaseRecord = Pick<
 type WorkflowTaskResultRecord = Pick<
   WorkflowCaseRecord,
   "output" | "metadata" | "tags"
-> & { taskComplete: true };
+> & { taskComplete: true; error?: string };
 
 type WorkflowTaskLogRecord = Pick<WorkflowCaseRecord, "rootSpan"> & {
   taskLogged: true;
@@ -571,7 +721,10 @@ type WorkflowSubmissionRecord = {
   id: string;
   kind: "task" | "score";
   scorerName?: string;
-  itemId: string;
+  /** Item of a single-item submission. */
+  itemId?: string;
+  /** Items of a batch submission, keyed by `customId`. */
+  items?: Record<string, string>;
   submissionData: JsonValue;
   externalId?: string;
   status: "submitted" | "complete";
@@ -702,9 +855,47 @@ type WorkflowRunRecord = Omit<WorkflowRunState, "cases" | "submissions">;
  * submitted work is polled on a later invocation.
  *
  * `processSubmissionResult()` accepts either the provider's `externalId` or the
- * SDK's `submissionId`, plus `runId`. Collection callbacks must tolerate repeated
- * invocation, including concurrent webhook deliveries. Provider webhook failure
- * handling remains the application's responsibility.
+ * SDK's `submissionId`, plus `runId`. `runId` may be omitted with `externalId`
+ * when provider IDs are unique across runs of the eval. Collection callbacks
+ * must tolerate repeated invocation, including concurrent webhook deliveries.
+ * Provider webhook failure handling remains the application's responsibility.
+ *
+ * `WorkflowBatchTask` and `WorkflowBatchScorer` submit many cases/trials per
+ * provider batch, for batch APIs with per-batch rate limits. `submit` receives
+ * up to `batching.maxSize` items, each with a provider-safe `customId`.
+ * `collect` returns `{ customId, result }` or `{ customId, error }` entries as
+ * an array, iterable, or async iterable. Items with an error, or without an
+ * entry, are recorded as failed: a failed task skips that case's scorers, and a
+ * failed scorer omits its score. Return `complete` from `poll` for terminal
+ * provider states such as expired batches so `collect` can report them.
+ *
+ * ```typescript
+ * const task = new WorkflowBatchTask({
+ *   batching: { maxSize: 10_000 },
+ *   async submit(items, { runId }) {
+ *     const batch = await provider.createBatch({
+ *       requests: items.map((item) => ({ custom_id: item.customId, input: item.input })),
+ *       metadata: { runId },
+ *     });
+ *     return { id: batch.id };
+ *   },
+ *   completion: { mode: "webhook", getExternalId: (batch) => batch.id },
+ *   async *collect(batch) {
+ *     for await (const row of provider.batchResults(batch.id)) {
+ *       yield row.ok
+ *         ? { customId: row.custom_id, result: { output: row.output } }
+ *         : { customId: row.custom_id, error: row.error };
+ *     }
+ *   },
+ * });
+ *
+ * await supportEval.processSubmissionResult({ externalId: event.batchId });
+ * ```
+ *
+ * Batch tasks submit every case at start. Batch scorers submit once `maxSize`
+ * items are ready, once no more items can become ready, or, when
+ * `batching.maxWaitMs` is set, once a partial batch has waited that long. The
+ * wait is checked whenever the run advances, without timers.
  *
  * `start()`, `poll()`, and `processSubmissionResult()` return the current status.
  * Waiting statuses include `pending: { poll, webhook }`, counting outstanding
@@ -915,9 +1106,19 @@ async function processWorkflowSubmissionResult<
     throw new Error("Submission results require submissionId or externalId");
   }
   const store = definition.evaluator.store;
-  const key = runKey(definition.projectName, definition.evalName, result.runId);
+  if (!result.runId && !result.externalId) {
+    throw new Error("Submission results with a submissionId require runId");
+  }
+  const runId =
+    result.runId ??
+    (await readJson<string>(
+      store,
+      externalRunKey(definition, result.externalId!),
+    ));
+  if (!runId) throw new Error("No submission matches this result");
+  const key = runKey(definition.projectName, definition.evalName, runId);
   const run = await readJson<WorkflowRunRecord>(store, key);
-  if (!run) throw new Error(`Workflow eval run ${result.runId} is missing`);
+  if (!run) throw new Error(`Workflow eval run ${runId} is missing`);
   const externalSubmissionId = result.externalId
     ? await readJson<string>(
         store,
@@ -947,19 +1148,17 @@ async function processWorkflowSubmissionResult<
     );
   }
   if (run.status === "completed") return currentStatus(definition, run);
-  const state = (await readRunState(definition, store, key, [
-    submission.itemId,
-  ]))!;
+  const itemIds = submissionItemIds(submission);
+  const state = (await readRunState(definition, store, key, itemIds))!;
   if (submission.status !== "complete") {
-    const record = await collectSubmission(definition, state, submission);
-    await writeCaseRecords(store, key, [record]);
+    await collectSubmission(definition, state, store, key, submission);
     submission.status = "complete";
   }
   // Repeat progress writes on replay to recover an interrupted persistence step.
   await writeSubmissionRecords(store, key, [submission]);
   return advanceWorkflowEval(
     definition,
-    (await readRunState(definition, store, key, [submission.itemId]))!,
+    (await readRunState(definition, store, key, itemIds))!,
     store,
     key,
   );
@@ -1010,8 +1209,7 @@ async function pollWorkflowEval<
     });
     if (result.status === "failed") throw asError(result.error);
     if (result.status === "complete") {
-      const record = await collectSubmission(definition, state, submission);
-      await writeCaseRecords(store, key, [record]);
+      await collectSubmission(definition, state, store, key, submission);
       submission.status = "complete";
       await writeSubmissionRecords(store, key, [submission]);
     }
@@ -1091,28 +1289,48 @@ async function advanceWorkflowEval<
   await runTaskStage(definition, state, store, key, experiment);
   await logCompletedTasks(definition, state, store, key, experiment);
   state = (await readRunState(definition, store, key, caseIds)) ?? state;
+  const scorers = resolveScorers(definition.evaluator.scores ?? []);
+  const batchScoreStages = batchStageKeys(definition).filter(
+    (stage) => stage !== stageKey("task"),
+  );
+  // Batch scorers decide when to submit from these counts, so they avoid
+  // reading every case on each completion. Repeating additions repairs
+  // interrupted updates.
+  await Promise.all(
+    state.cases.map(async (record) => {
+      if (batchScoreStages.length === 0 || !record.taskLogged) return;
+      await store.addToSet(`${key}/progress/tasks`, record.id);
+      if (record.taskError !== undefined) return;
+      await Promise.all(
+        batchScoreStages.map((stage) =>
+          store.addToSet(`${batchProgressKey(key, stage)}/ready`, record.id),
+        ),
+      );
+    }),
+  );
   await runScoreStages(definition, state, store, key, experiment);
   state = (await readRunState(definition, store, key, caseIds)) ?? state;
-  const scorerNames = resolveScorers(definition.evaluator.scores ?? []).map(
-    ({ name }) => name,
-  );
   const classifierNames = (definition.evaluator.classifiers ?? []).map(
     classifierName,
   );
+  const isCaseDone = (record: WorkflowCaseRecord) => {
+    if (!record.taskComplete || !record.taskLogged) return false;
+    // A failed task skips its scorers and classifiers.
+    if (record.taskError !== undefined) return true;
+    return (
+      scorers.every(
+        ({ name }) =>
+          hasScoreOutcome(record, name) &&
+          Object.hasOwn(record.loggedScores, name),
+      ) &&
+      classifierNames.every((name) =>
+        Object.hasOwn(record.loggedClassifications, name),
+      )
+    );
+  };
   await Promise.all(
     state.cases.map(async (record) => {
-      if (
-        record.taskComplete &&
-        record.taskLogged &&
-        scorerNames.every(
-          (name) =>
-            Object.hasOwn(record.scores, name) &&
-            Object.hasOwn(record.loggedScores, name),
-        ) &&
-        classifierNames.every((name) =>
-          Object.hasOwn(record.loggedClassifications, name),
-        )
-      ) {
+      if (isCaseDone(record)) {
         await store.addToSet(`${key}/progress/cases`, record.id);
       }
     }),
@@ -1226,12 +1444,24 @@ async function logTaskResult(
       record.tags = result.tags;
       record.taskComplete = true;
     } else {
-      await root.traced((span) => span.log({ output: record.output }), {
-        name: "task",
-        spanId: deterministicId(`${state.runId}:${record.id}:task`),
-        spanAttributes: { type: SpanTypeAttribute.TASK },
-        event: { input: datum.input },
-      });
+      await root.traced(
+        (span) => {
+          if (record.taskError === undefined) {
+            span.log({ output: record.output });
+          } else {
+            logSpanError(span, record.taskError);
+          }
+        },
+        {
+          name: "task",
+          spanId: deterministicId(`${state.runId}:${record.id}:task`),
+          spanAttributes: { type: SpanTypeAttribute.TASK },
+          event: { input: datum.input },
+        },
+      );
+      if (record.taskError !== undefined) {
+        logSpanError(root, record.taskError);
+      }
     }
     root.log({
       output: record.output,
@@ -1242,6 +1472,7 @@ async function logTaskResult(
           run_id: state.runId,
           case_id: record.caseId,
           trial_index: record.trialIndex,
+          batch_submission_id: record.batchSubmissions[stageKey("task")],
         },
       },
       tags: record.tags,
@@ -1350,9 +1581,9 @@ async function runScoreStages<
   for (const { name, scorer } of scorers) {
     if (isWorkflowScorer(scorer)) {
       for (const record of state.cases) {
-        if (!record.taskComplete || !record.taskLogged) continue;
+        if (!isScorable(record)) continue;
         if (
-          Object.hasOwn(record.scores, name) &&
+          hasScoreOutcome(record, name) &&
           !Object.hasOwn(record.loggedScores, name)
         ) {
           if (!(await claimAction(store, key, "score-log", record.id, name))) {
@@ -1373,7 +1604,7 @@ async function runScoreStages<
       continue;
     }
     for (const record of state.cases) {
-      if (!record.taskComplete || !record.taskLogged) continue;
+      if (!isScorable(record)) continue;
       if (Object.hasOwn(record.loggedScores, name)) continue;
       if (!(await claimAction(store, key, "score", record.id, name))) continue;
       await evaluateAndLogScore(
@@ -1393,7 +1624,7 @@ async function runScoreStages<
   ).entries()) {
     const name = classifierName(classifier, index);
     for (const record of state.cases) {
-      if (!record.taskComplete || !record.taskLogged) continue;
+      if (!isScorable(record)) continue;
       if (Object.hasOwn(record.loggedClassifications, name)) continue;
       if (!(await claimAction(store, key, "classification", record.id, name))) {
         continue;
@@ -1410,6 +1641,19 @@ async function runScoreStages<
     }
   }
   await persistChangedCases();
+}
+
+function isScorable(record: WorkflowCaseRecord) {
+  return (
+    record.taskComplete && record.taskLogged && record.taskError === undefined
+  );
+}
+
+function hasScoreOutcome(record: WorkflowCaseRecord, scorerName: string) {
+  return (
+    Object.hasOwn(record.scores, scorerName) ||
+    Object.hasOwn(record.scoreErrors, scorerName)
+  );
 }
 
 function scorerArgs(record: WorkflowCaseRecord) {
@@ -1446,10 +1690,15 @@ async function evaluateAndLogScore(
   scorer?: EvalScorer<any, any, any, any>,
 ) {
   const root = resumeCaseRoot(definition, record, experiment);
+  const error = scorer ? undefined : record.scoreErrors[name];
   try {
     const rootExport = await root.export();
     const prepared = await root.traced(
       async (span) => {
+        if (error !== undefined) {
+          logSpanError(span, error);
+          return undefined;
+        }
         const value = scorer
           ? await scorer(scorerArgs(record))
           : (record.scores[name] as OneOrMoreScores);
@@ -1477,7 +1726,12 @@ async function evaluateAndLogScore(
         event: { input: scorerArgs(record) },
       },
     );
-    if (prepared.scores) root.log({ scores: prepared.scores });
+    if (error !== undefined) {
+      // Match Eval(), which records failed scorers in root metadata.
+      root.log({ metadata: { scorer_errors: { [name]: error } } });
+    } else if (prepared?.scores) {
+      root.log({ scores: prepared.scores });
+    }
     record.loggedScores[name] = true;
   } catch (error) {
     logSpanError(root, error);
@@ -1545,6 +1799,18 @@ async function ensureSubmissions(
   scorerName?: string,
 ) {
   const processor = processorForStage(definition, kind, scorerName);
+  if ("batching" in processor) {
+    await ensureBatchSubmissions(
+      definition,
+      state,
+      store,
+      key,
+      kind,
+      scorerName,
+      processor,
+    );
+    return;
+  }
   const plans = plannedSubmissions(
     definition,
     state.runId,
@@ -1552,56 +1818,191 @@ async function ensureSubmissions(
   );
   const casesById = new Map(state.cases.map((record) => [record.id, record]));
   const existingIds = new Set(state.submissions.map(({ id }) => id));
-  const workers = queue(async (plan: WorkflowSubmissionPlan) => {
+  await runWithConcurrency(definition, plans, async (plan) => {
     if (plan.kind !== kind || plan.scorerName !== scorerName) return;
     if (existingIds.has(plan.id)) return;
     const record = casesById.get(plan.itemId)!;
     const ready =
       kind === "task"
         ? !record.taskComplete
-        : record.taskComplete &&
-          record.taskLogged &&
-          !Object.hasOwn(record.scores, scorerName!);
+        : isScorable(record) && !Object.hasOwn(record.scores, scorerName!);
     if (!ready) return;
-    const submissionId = plan.id;
     const claim = await store.getOrSet(
-      claimRecordKey(key, "submission", submissionId),
-      encoder.encode(submissionId),
+      claimRecordKey(key, "submission", plan.id),
+      encoder.encode(plan.id),
     );
     if (!claim.created) return;
-    const context = { runId: state.runId, submissionId };
     const item =
       kind === "task"
         ? taskSubmissionItem(record, state.parameters)
         : scorerSubmissionItem(record);
-    const submissionData = assertJsonValue(
-      await processor.submit(item, context),
-      `submission data for submission ${submissionId}`,
+    await submitAndRecord(
+      definition,
+      state,
+      store,
+      key,
+      processor,
+      plan,
+      (context) => processor.submit(item, context),
     );
-    const externalId =
-      processor.completion.mode === "webhook"
-        ? processor.completion.getExternalId(submissionData, context)
-        : undefined;
-    if (externalId !== undefined && !externalId.trim()) {
-      throw new Error(
-        `Submission ${submissionId} produced an empty externalId`,
-      );
-    }
-    const submission: WorkflowSubmissionRecord = {
-      id: submissionId,
-      kind,
-      scorerName,
-      itemId: record.id,
-      submissionData,
-      externalId,
-      status: "submitted",
-      completionMode: processor.completion.mode,
-    };
-    state.submissions.push(submission);
-    await writeSubmissionRecords(store, key, [submission]);
-  }, definition.evaluator.maxConcurrency ?? 10);
+  });
+}
+
+async function ensureBatchSubmissions(
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
+  store: WorkflowEvalStore,
+  key: string,
+  kind: "task" | "score",
+  scorerName: string | undefined,
+  processor: WorkflowBatchProcessor<any, any, JsonValue>,
+) {
+  const { maxSize, maxWaitMs } = processor.batching;
+  const stage = stageKey(kind, scorerName);
+  const progressKey = batchProgressKey(key, stage);
+  // Decide from progress counts first, so most invocations skip reading every case.
+  const [ready, claimed, tasksDone] = await Promise.all([
+    kind === "task"
+      ? state.caseCount
+      : store.getSetSize(`${progressKey}/ready`),
+    store.getSetSize(`${progressKey}/claimed`),
+    kind === "task"
+      ? state.caseCount
+      : store.getSetSize(`${key}/progress/tasks`),
+  ]);
+  const waiting = ready - claimed;
+  if (waiting <= 0) return;
+  // Partial batches wait for more items until no more can become ready.
+  let submitPartial = tasksDone === state.caseCount;
+  if (!submitPartial && waiting < maxSize) {
+    if (maxWaitMs === undefined) return;
+    // A wait window starts when items first wait after the previous batch.
+    const window = await store.getOrSet(
+      `${progressKey}/window/${claimed}`,
+      encoder.encode(String(Date.now())),
+    );
+    if (Date.now() - Number(decoder.decode(window.value)) < maxWaitMs) return;
+    submitPartial = true;
+  }
+  const run =
+    state.cases.length === state.caseCount
+      ? state
+      : (await readRunState(definition, store, key))!;
+  const candidates = run.cases.filter((record) => {
+    if (Object.hasOwn(record.batchSubmissions, stage)) return false;
+    if (kind === "task") return !record.taskComplete;
+    return isScorable(record) && !hasScoreOutcome(record, scorerName!);
+  });
+  if (candidates.length < waiting) {
+    // Repair claim counts left behind by an interrupted batch submission.
+    await Promise.all(
+      run.cases
+        .filter((record) => Object.hasOwn(record.batchSubmissions, stage))
+        .map((record) => store.addToSet(`${progressKey}/claimed`, record.id)),
+    );
+  }
+  const batches: WorkflowCaseRecord[][] = [];
+  for (let index = 0; index < candidates.length; index += maxSize) {
+    const batch = candidates.slice(index, index + maxSize);
+    if (batch.length < maxSize && !submitPartial) break;
+    batches.push(batch);
+  }
+  await runWithConcurrency(definition, batches, async (batch) => {
+    const submissionId = newId();
+    const claims = await Promise.all(
+      batch.map((record) =>
+        store.getOrSet(
+          caseRecordKey(key, record.id, "batch", stage),
+          encoder.encode(JSON.stringify(submissionId)),
+        ),
+      ),
+    );
+    // Concurrent invocations may claim some of the same items first.
+    const members = batch.filter((_, index) => claims[index].created);
+    if (members.length === 0) return;
+    await Promise.all(
+      members.map((record) =>
+        store.addToSet(`${progressKey}/claimed`, record.id),
+      ),
+    );
+    const items = members.map((record, index) => ({
+      ...(kind === "task"
+        ? taskSubmissionItem(record, run.parameters)
+        : scorerSubmissionItem(record)),
+      // Positional IDs are unique within the batch and valid for every provider.
+      customId: `item-${index}`,
+    }));
+    for (const record of members) record.batchSubmissions[stage] = submissionId;
+    await submitAndRecord(
+      definition,
+      run,
+      store,
+      key,
+      processor,
+      {
+        id: submissionId,
+        kind,
+        scorerName,
+        items: Object.fromEntries(
+          items.map(({ customId }, index) => [customId, members[index].id]),
+        ),
+      },
+      (context) => processor.submit(items, context),
+    );
+  });
+}
+
+async function submitAndRecord(
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  state: WorkflowRunState,
+  store: WorkflowEvalStore,
+  key: string,
+  processor: { completion: WorkflowSubmissionCompletion<JsonValue> },
+  submission: Pick<
+    WorkflowSubmissionRecord,
+    "id" | "kind" | "scorerName" | "itemId" | "items"
+  >,
+  submit: (context: WorkflowSubmissionContext) => Promise<unknown>,
+) {
+  const context = { runId: state.runId, submissionId: submission.id };
+  const submissionData = assertJsonValue(
+    await submit(context),
+    `submission data for submission ${submission.id}`,
+  );
+  const externalId =
+    processor.completion.mode === "webhook"
+      ? processor.completion.getExternalId(submissionData, context)
+      : undefined;
+  if (externalId !== undefined && !externalId.trim()) {
+    throw new Error(`Submission ${submission.id} produced an empty externalId`);
+  }
+  const record: WorkflowSubmissionRecord = {
+    ...submission,
+    submissionData,
+    externalId,
+    status: "submitted",
+    completionMode: processor.completion.mode,
+  };
+  if (externalId !== undefined) {
+    // Lets webhook handlers omit runId when provider IDs are unique.
+    await writeJson(store, externalRunKey(definition, externalId), state.runId);
+  }
+  state.submissions.push(record);
+  await writeSubmissionRecords(store, key, [record]);
+}
+
+async function runWithConcurrency<T>(
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  values: T[],
+  worker: (value: T) => Promise<void>,
+) {
+  // Queue indexes because `async` would split array values into separate tasks.
+  const workers = queue(
+    async (index: number) => worker(values[index]),
+    definition.evaluator.maxConcurrency ?? 10,
+  );
   const results = await Promise.allSettled(
-    plans.map((plan) => workers.pushAsync(plan)),
+    values.map((_, index) => workers.pushAsync(index)),
   );
   const errors = results.flatMap((result) =>
     result.status === "rejected" ? [asError(result.reason)] : [],
@@ -1614,6 +2015,8 @@ async function ensureSubmissions(
 async function collectSubmission(
   definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
   state: WorkflowRunState,
+  store: WorkflowEvalStore,
+  key: string,
   submission: WorkflowSubmissionRecord,
 ) {
   const processor = processorForStage(
@@ -1622,51 +2025,127 @@ async function collectSubmission(
     submission.scorerName,
   );
   const context = { runId: state.runId, submissionId: submission.id };
-  const result = await processor.collect(submission.submissionData, context);
+  const casesById = new Map(state.cases.map((record) => [record.id, record]));
+  if (!("batching" in processor)) {
+    const record = casesById.get(submission.itemId!)!;
+    applySubmissionOutcome(submission, record, {
+      result: await processor.collect(submission.submissionData, context),
+    });
+    await writeCaseRecords(store, key, [record]);
+    return;
+  }
+  const items = submission.items!;
+  // Results persisted by an interrupted earlier collection are kept.
+  const pending = new Map<string, WorkflowCaseRecord>();
+  for (const [customId, itemId] of Object.entries(items)) {
+    const record = casesById.get(itemId)!;
+    const complete =
+      submission.kind === "task"
+        ? record.taskComplete
+        : hasScoreOutcome(record, submission.scorerName!);
+    if (!complete) pending.set(customId, record);
+  }
+  const seen = new Set<string>();
+  let changed: WorkflowCaseRecord[] = [];
+  for await (const entry of await processor.collect(
+    submission.submissionData,
+    context,
+  )) {
+    const customId = entry?.customId;
+    if (!Object.hasOwn(items, customId)) {
+      throw new Error(
+        `collect for submission ${submission.id} returned unknown customId ${customId}`,
+      );
+    }
+    if (seen.has(customId)) {
+      throw new Error(
+        `collect for submission ${submission.id} returned customId ${customId} more than once`,
+      );
+    }
+    seen.add(customId);
+    const record = pending.get(customId);
+    if (!record) continue;
+    if ("error" in entry) {
+      applySubmissionOutcome(submission, record, {
+        error: errorMessage(entry.error),
+      });
+    } else {
+      applySubmissionOutcome(submission, record, { result: entry.result });
+    }
+    changed.push(record);
+    // Persist progressively so large collections make durable progress.
+    if (changed.length >= 100) {
+      await writeCaseRecords(store, key, changed);
+      changed = [];
+    }
+  }
+  for (const [customId, record] of pending) {
+    if (seen.has(customId)) continue;
+    applySubmissionOutcome(submission, record, {
+      error: `Batch submission ${submission.id} returned no result for ${customId}`,
+    });
+    changed.push(record);
+  }
+  await writeCaseRecords(store, key, changed);
+}
+
+function applySubmissionOutcome(
+  submission: WorkflowSubmissionRecord,
+  record: WorkflowCaseRecord,
+  outcome: { result: unknown } | { error: string },
+) {
+  if ("error" in outcome) {
+    if (submission.kind === "task") {
+      record.taskError = outcome.error;
+      record.taskComplete = true;
+    } else {
+      record.scoreErrors[submission.scorerName!] = outcome.error;
+    }
+    return;
+  }
+  const result = outcome.result;
   if (typeof result !== "object" || result === null || Array.isArray(result)) {
     throw new Error(
       `collect for submission ${submission.id} must return a result object`,
     );
   }
-  const record = state.cases.find(
-    (candidate) => candidate.id === submission.itemId,
-  )!;
   if (submission.kind === "task") {
+    const { output, metadata, tags } = result as WorkflowTaskResult<
+      unknown,
+      BaseMetadata
+    >;
     record.output = assertJsonValue(
-      result.output,
+      output,
       `task output for item ${record.id}`,
     );
-    if (result.metadata !== undefined) {
+    if (metadata !== undefined) {
       record.metadata = assertJsonValue(
-        { ...(record.metadata as Record<string, unknown>), ...result.metadata },
+        { ...(record.metadata as Record<string, unknown>), ...metadata },
         `metadata for ${record.id}`,
       );
     }
-    if (result.tags !== undefined) record.tags = result.tags;
+    if (tags !== undefined) record.tags = tags;
     record.taskComplete = true;
   } else {
     record.scores[submission.scorerName!] = assertJsonValue(
-      result.score,
+      (result as WorkflowScorerResult).score,
       `score output for item ${record.id}`,
     );
   }
-  return record;
 }
 
 function processorForStage(
   definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
   kind: "task" | "score",
   scorerName?: string,
-): WorkflowSubmissionProcessor<any, any, JsonValue> {
+):
+  | WorkflowSubmissionProcessor<any, any, JsonValue>
+  | WorkflowBatchProcessor<any, any, JsonValue> {
   if (kind === "task") {
     if (!isWorkflowTask(definition.evaluator.task)) {
       throw new Error("Definition no longer contains the submission task");
     }
-    return definition.evaluator.task.processor as WorkflowSubmissionProcessor<
-      any,
-      any,
-      JsonValue
-    >;
+    return definition.evaluator.task.processor;
   }
   const scorer = resolveScorers(definition.evaluator.scores ?? []).find(
     ({ name }) => name === scorerName,
@@ -1674,7 +2153,7 @@ function processorForStage(
   if (!isWorkflowScorer(scorer)) {
     throw new Error(`Definition no longer contains scorer ${scorerName}`);
   }
-  return scorer.processor as WorkflowSubmissionProcessor<any, any, JsonValue>;
+  return scorer.processor;
 }
 
 async function materializeCases<
@@ -1739,9 +2218,11 @@ async function materializeCases<
         taskComplete: false,
         taskLogged: false,
         scores: Object.create(null),
+        scoreErrors: Object.create(null),
         loggedScores: Object.create(null),
         classifications: Object.create(null),
         loggedClassifications: Object.create(null),
+        batchSubmissions: Object.create(null),
       });
     }
   }
@@ -1786,12 +2267,14 @@ async function finishExperiment(
     const datum = record.datum as EvalCase<unknown, unknown, BaseMetadata>;
     const scores = Object.fromEntries(
       scorerNames.flatMap((name) =>
-        Object.entries(
-          _internalPrepareEvaluatorScore(
-            record.scores[name] as OneOrMoreScores,
-            name,
-          ).scores ?? {},
-        ),
+        !Object.hasOwn(record.scores, name)
+          ? []
+          : Object.entries(
+              _internalPrepareEvaluatorScore(
+                record.scores[name] as OneOrMoreScores,
+                name,
+              ).scores ?? {},
+            ),
       ),
     );
     const classifications = Object.fromEntries(
@@ -1808,7 +2291,7 @@ async function finishExperiment(
       metadata: record.metadata,
       tags: record.tags,
       scores,
-      error: undefined,
+      error: record.taskError,
       ...(Object.keys(classifications).length > 0 ? { classifications } : {}),
     } as EvalResult<unknown, unknown, unknown, BaseMetadata>;
   });
@@ -1855,6 +2338,48 @@ function runKey(projectName: string, evalName: string, runId: string) {
   return `workflow-eval/v1/runs/${contentVersion(encoder.encode(`${projectName}\0${evalName}\0${runId}`))}`;
 }
 
+function externalRunKey(
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+  externalId: string,
+) {
+  const evalKey = contentVersion(
+    encoder.encode(`${definition.projectName}\0${definition.evalName}`),
+  );
+  return `workflow-eval/v1/evals/${evalKey}/external/${encodedKeyPart(externalId)}`;
+}
+
+function stageKey(kind: "task" | "score", scorerName?: string) {
+  return kind === "task" ? "task" : `score:${scorerName}`;
+}
+
+function batchProgressKey(key: string, stage: string) {
+  return `${key}/progress/batch/${encodedKeyPart(stage)}`;
+}
+
+function batchStageKeys(
+  definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
+) {
+  const stages: string[] = [];
+  const task = definition.evaluator.task;
+  if (isWorkflowTask(task) && "batching" in task.processor) {
+    stages.push(stageKey("task"));
+  }
+  for (const { name, scorer } of resolveScorers(
+    definition.evaluator.scores ?? [],
+  )) {
+    if (isWorkflowScorer(scorer) && "batching" in scorer.processor) {
+      stages.push(stageKey("score", name));
+    }
+  }
+  return stages;
+}
+
+function submissionItemIds(submission: WorkflowSubmissionRecord) {
+  return submission.items
+    ? Object.values(submission.items)
+    : [submission.itemId!];
+}
+
 function encodedKeyPart(value: string) {
   return uint8ArrayToBase64(encoder.encode(value))
     .replaceAll("+", "-")
@@ -1870,9 +2395,11 @@ function caseRecordKey(
     | "task"
     | "task-log"
     | "score"
+    | "score-error"
     | "score-log"
     | "classification"
-    | "classification-log",
+    | "classification-log"
+    | "batch",
   ...names: string[]
 ) {
   const suffix = names.map(encodedKeyPart).join("/");
@@ -1902,22 +2429,26 @@ async function claimAction(
   ).created;
 }
 
-type WorkflowSubmissionPlan = Omit<
+type WorkflowSubmissionPlan = Pick<
   WorkflowSubmissionRecord,
-  "submissionData" | "externalId" | "status" | "completionMode"
->;
+  "id" | "kind" | "scorerName"
+> & { itemId: string };
 
 function plannedSubmissions(
   definition: WorkflowEvalRuntimeDefinition<any, any, any, any, any>,
   runId: string,
   caseIds: string[],
 ) {
+  // Batch submissions are located through each item's batch claim instead.
   const stages: Array<{ kind: "task" | "score"; scorerName?: string }> = [];
-  if (isWorkflowTask(definition.evaluator.task)) stages.push({ kind: "task" });
+  const task = definition.evaluator.task;
+  if (isWorkflowTask(task) && !("batching" in task.processor)) {
+    stages.push({ kind: "task" });
+  }
   for (const { name, scorer } of resolveScorers(
     definition.evaluator.scores ?? [],
   )) {
-    if (isWorkflowScorer(scorer)) {
+    if (isWorkflowScorer(scorer) && !("batching" in scorer.processor)) {
       stages.push({ kind: "score", scorerName: name });
     }
   }
@@ -1945,14 +2476,17 @@ async function readCaseRecord(
   const classifiers = (definition.evaluator.classifiers ?? []).map(
     classifierName,
   );
+  const batchStages = batchStageKeys(definition);
   const [
     base,
     task,
     taskLog,
     scoreValues,
+    scoreErrorValues,
     scoreLogValues,
     classificationValues,
     classificationLogValues,
+    batchValues,
   ] = await Promise.all([
     readJson<WorkflowCaseBaseRecord>(store, caseRecordKey(key, id, "base")),
     readJson<WorkflowTaskResultRecord>(store, caseRecordKey(key, id, "task")),
@@ -1963,6 +2497,15 @@ async function readCaseRecord(
         value: await readJson<JsonValue>(
           store,
           caseRecordKey(key, id, "score", name),
+        ),
+      })),
+    ),
+    Promise.all(
+      scorers.map(async ({ name }) => ({
+        name,
+        value: await readJson<string>(
+          store,
+          caseRecordKey(key, id, "score-error", name),
         ),
       })),
     ),
@@ -1993,11 +2536,24 @@ async function readCaseRecord(
         ),
       })),
     ),
+    Promise.all(
+      batchStages.map(async (stage) => ({
+        stage,
+        value: await readJson<string>(
+          store,
+          caseRecordKey(key, id, "batch", stage),
+        ),
+      })),
+    ),
   ]);
   if (!base) throw new Error(`Workflow eval case ${id} is missing`);
   const scores: Record<string, JsonValue> = Object.create(null);
   for (const { name, value } of scoreValues) {
     if (value !== undefined) scores[name] = value;
+  }
+  const scoreErrors: Record<string, string> = Object.create(null);
+  for (const { name, value } of scoreErrorValues) {
+    if (value !== undefined) scoreErrors[name] = value;
   }
   const loggedScores: Record<string, boolean> = Object.create(null);
   for (const { name, value } of scoreLogValues) {
@@ -2011,6 +2567,10 @@ async function readCaseRecord(
   for (const { name, value } of classificationLogValues) {
     if (value) loggedClassifications[name] = true;
   }
+  const batchSubmissions: Record<string, string> = Object.create(null);
+  for (const { stage, value } of batchValues) {
+    if (value !== undefined) batchSubmissions[stage] = value;
+  }
   return {
     ...base,
     metadata: task?.metadata ?? base.metadata,
@@ -2018,11 +2578,14 @@ async function readCaseRecord(
     taskComplete: task !== undefined,
     taskLogged: taskLog !== undefined,
     output: task?.output,
+    taskError: task?.error,
     rootSpan: taskLog?.rootSpan,
     scores,
+    scoreErrors,
     loggedScores,
     classifications,
     loggedClassifications,
+    batchSubmissions,
   } satisfies WorkflowCaseRecord;
 }
 
@@ -2055,7 +2618,16 @@ async function readRunState(
       }),
     ),
   ]);
-  const submissions = submissionRecords.filter(
+  const batchIds = new Set(
+    cases.flatMap(({ batchSubmissions }) => Object.values(batchSubmissions)),
+  );
+  const batchRecords = await Promise.all(
+    [...batchIds].map((id) =>
+      readJson<WorkflowSubmissionRecord>(store, submissionRecordKey(key, id)),
+    ),
+  );
+  // A batch record is missing while its submission is still in flight.
+  const submissions = [...submissionRecords, ...batchRecords].filter(
     (value): value is WorkflowSubmissionRecord => value !== undefined,
   );
   return { ...record, cases, submissions };
@@ -2103,6 +2675,7 @@ async function writeCaseRecords(
           metadata: record.metadata,
           tags: record.tags,
           taskComplete: true,
+          error: record.taskError,
         } satisfies WorkflowTaskResultRecord),
       );
     }
@@ -2117,6 +2690,15 @@ async function writeCaseRecords(
     for (const [name, value] of Object.entries(record.scores)) {
       writes.push(
         writeJson(store, caseRecordKey(key, record.id, "score", name), value),
+      );
+    }
+    for (const [name, error] of Object.entries(record.scoreErrors)) {
+      writes.push(
+        writeJson(
+          store,
+          caseRecordKey(key, record.id, "score-error", name),
+          error,
+        ),
       );
     }
     for (const name of Object.keys(record.loggedScores)) {
@@ -2252,6 +2834,13 @@ function isWorkflowScorer(
     "kind" in value &&
     value.kind === WORKFLOW_SCORER_KIND
   );
+}
+
+function errorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  // Provider error objects are logged as JSON.
+  return JSON.stringify(error) ?? String(error);
 }
 
 function asError(error: unknown) {

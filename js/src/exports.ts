@@ -285,6 +285,8 @@ export {
 export type { WorkflowEvalStore } from "./workflow-eval";
 
 export {
+  WorkflowBatchScorer,
+  WorkflowBatchTask,
   WorkflowScorer,
   WorkflowTask,
   defineWorkflowEval,

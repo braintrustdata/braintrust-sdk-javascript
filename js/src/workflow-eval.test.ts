@@ -1,11 +1,15 @@
 import { describe, expect, expectTypeOf, test, vi } from "vitest";
 import { configureNode } from "./node/config";
 import {
+  WorkflowBatchScorer,
+  WorkflowBatchTask,
   WorkflowScorer,
   WorkflowTask,
   defineWorkflowEval,
   WorkflowEvalMemoryStore,
   WorkflowEvalRedisStore,
+  type WorkflowBatchItem,
+  type WorkflowBatchItemResult,
   type WorkflowScorerItem,
   type WorkflowTaskItem,
   type WorkflowEvalStore,
@@ -945,6 +949,376 @@ describe("defineWorkflowEval", () => {
     expect(scorer.name).toBe("score");
   });
 });
+
+describe("workflow batch evals", () => {
+  test("groups tasks and scorers into provider batches", async () => {
+    const f = batchEval({ taskSize: 2, scoreSize: 3, cases: 5 });
+    const { runId } = await f.definition.start({ noSendLogs: true });
+    expect(f.taskSubmit).toHaveBeenCalledTimes(3);
+    expect(f.taskBatches.map((items) => items.map(({ id }) => id))).toEqual([
+      ["0:trial:0", "1:trial:0"],
+      ["2:trial:0", "3:trial:0"],
+      ["4:trial:0"],
+    ]);
+    expect(f.taskBatches[0].map(({ customId }) => customId)).toEqual([
+      "item-0",
+      "item-1",
+    ]);
+    await expect(f.definition.status({ runId })).resolves.toMatchObject({
+      status: "waiting",
+      pending: { poll: 0, webhook: 3 },
+    });
+
+    // A partial scorer batch waits while more tasks can still complete.
+    await f.definition.processSubmissionResult({ externalId: "task-batch-1" });
+    expect(f.localScore).toHaveBeenCalledTimes(2);
+    expect(f.scoreSubmit).not.toHaveBeenCalled();
+
+    // Repeated deliveries submit the next full batch only once.
+    await Promise.all([
+      f.definition.processSubmissionResult({ externalId: "task-batch-2" }),
+      f.definition.processSubmissionResult({ externalId: "task-batch-2" }),
+    ]);
+    expect(f.scoreSubmit).toHaveBeenCalledTimes(1);
+    expect(f.scoreBatches[0].map(({ id, output }) => [id, output])).toEqual([
+      ["0:trial:0", 0],
+      ["1:trial:0", 2],
+      ["2:trial:0", 4],
+    ]);
+
+    // The last task batch closes the stage and flushes the remainder.
+    await f.definition.processSubmissionResult({ externalId: "task-batch-3" });
+    expect(f.scoreSubmit).toHaveBeenCalledTimes(2);
+    expect(f.scoreBatches[1].map(({ id }) => id)).toEqual([
+      "3:trial:0",
+      "4:trial:0",
+    ]);
+    expect(f.taskCollect).toHaveBeenCalledTimes(4);
+
+    await f.definition.processSubmissionResult({ externalId: "score-batch-1" });
+    const completed = await f.definition.processSubmissionResult({
+      runId,
+      externalId: "score-batch-2",
+    });
+    expect(completed).toMatchObject({
+      status: "completed",
+      pending: { poll: 0, webhook: 0 },
+      summary: { scores: { batch_exact: { score: 1 }, local: { score: 1 } } },
+    });
+    expect(f.localScore).toHaveBeenCalledTimes(5);
+  });
+
+  test("records item failures without blocking the run", async () => {
+    const f = batchEval({ taskSize: 4, scoreSize: 4, cases: 4 });
+    f.taskResults.mockImplementation((items) => [
+      { customId: items[0].customId, result: { output: items[0].input * 2 } },
+      { customId: items[1].customId, error: new Error("rate limited") },
+      // items[2] is missing, as in a partially expired provider batch.
+      { customId: items[3].customId, result: { output: items[3].input * 2 } },
+    ]);
+    f.scoreResults.mockImplementation((items) => [
+      { customId: items[0].customId, result: { score: 1 } },
+      { customId: items[1].customId, error: { type: "overloaded" } },
+    ]);
+    const { runId } = await f.definition.start({ noSendLogs: true });
+    await f.definition.processSubmissionResult({ externalId: "task-batch-1" });
+    expect(f.scoreBatches).toHaveLength(1);
+    expect(f.scoreBatches[0].map(({ id }) => id)).toEqual([
+      "0:trial:0",
+      "3:trial:0",
+    ]);
+    expect(f.localScore).toHaveBeenCalledTimes(2);
+    const result = await f.definition.processSubmissionResult({
+      runId,
+      externalId: "score-batch-1",
+    });
+    expect(result).toMatchObject({
+      status: "completed",
+      summary: { scores: { batch_exact: { score: 1 }, local: { score: 1 } } },
+    });
+  });
+
+  test("submits partial scorer batches after maxWaitMs", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000);
+    try {
+      const f = workflowEval("poll");
+      const scoreSubmit = vi.fn(async (_items: Array<{ id: string }>) => ({
+        id: "score-batch",
+      }));
+      const definition = defineWorkflowEval("batch-wait", {
+        store: new WorkflowEvalMemoryStore(),
+        data: ["one", "two", "three"].map((id, index) => ({
+          id,
+          input: index + 1,
+          expected: (index + 1) * 2,
+        })),
+        task: f.task,
+        scores: [
+          new WorkflowBatchScorer<number, number, number, void, { id: string }>(
+            {
+              name: "batch_judge",
+              batching: { maxSize: 10, maxWaitMs: 500 },
+              submit: scoreSubmit,
+              completion: {
+                mode: "poll",
+                poll: async () => ({ status: "pending" }),
+              },
+              collect: () => [],
+            },
+          ),
+        ],
+      });
+      const { runId } = await definition.start({ noSendLogs: true });
+      f.ready.add("task-one:trial:0");
+      await definition.poll({ runId });
+      now.mockReturnValue(1_499);
+      await definition.poll({ runId });
+      expect(scoreSubmit).not.toHaveBeenCalled();
+      f.ready.add("task-two:trial:0");
+      now.mockReturnValue(1_500);
+      await definition.poll({ runId });
+      expect(scoreSubmit).toHaveBeenCalledTimes(1);
+      expect(scoreSubmit.mock.calls[0][0].map(({ id }) => id)).toEqual([
+        "one:trial:0",
+        "two:trial:0",
+      ]);
+      // A new window starts for items that become ready after a batch.
+      f.ready.add("task-three:trial:0");
+      now.mockReturnValue(1_600);
+      await definition.poll({ runId });
+      expect(scoreSubmit).toHaveBeenCalledTimes(2);
+    } finally {
+      now.mockRestore();
+    }
+  });
+
+  test("polls batches and supports async iterable results", async () => {
+    const statuses = new Map<string, "pending" | "complete">();
+    const task = new WorkflowBatchTask<
+      number,
+      number,
+      void,
+      void,
+      Record<string, never>,
+      { id: string; items: Array<{ customId: string; input: number }> }
+    >({
+      batching: { maxSize: 10 },
+      async submit(items) {
+        const id = `batch-${statuses.size}`;
+        statuses.set(id, "pending");
+        return {
+          id,
+          items: items.map(({ customId, input }) => ({ customId, input })),
+        };
+      },
+      completion: {
+        mode: "poll",
+        async poll({ id }) {
+          return { status: statuses.get(id)! };
+        },
+      },
+      async *collect({ items }) {
+        for (const { customId, input } of items) {
+          yield { customId, result: { output: input + 1 } };
+        }
+      },
+    });
+    const definition = defineWorkflowEval("batch-poll", {
+      store: new WorkflowEvalMemoryStore(),
+      data: [1, 2, 3].map((input) => ({ id: String(input), input })),
+      task,
+      scores: [({ output, input }) => (output === input + 1 ? 1 : 0)],
+    });
+    const { runId } = await definition.start({ noSendLogs: true });
+    await expect(definition.poll({ runId })).resolves.toMatchObject({
+      status: "waiting",
+      pending: { poll: 1, webhook: 0 },
+    });
+    statuses.set("batch-0", "complete");
+    await expect(definition.poll({ runId })).resolves.toMatchObject({
+      status: "completed",
+      summary: { scores: { scorer_0: { score: 1 } } },
+    });
+  });
+
+  test("rejects unknown and duplicate custom ids", async () => {
+    const f = batchEval({ taskSize: 2, scoreSize: 2, cases: 2 });
+    await f.definition.start({ noSendLogs: true });
+    f.taskResults.mockImplementationOnce(() => [
+      { customId: "item-9", result: { output: 1 } },
+    ]);
+    await expect(
+      f.definition.processSubmissionResult({ externalId: "task-batch-1" }),
+    ).rejects.toThrow("returned unknown customId item-9");
+    f.taskResults.mockImplementationOnce((items) => [
+      { customId: items[0].customId, result: { output: 0 } },
+      { customId: items[0].customId, result: { output: 0 } },
+    ]);
+    await expect(
+      f.definition.processSubmissionResult({ externalId: "task-batch-1" }),
+    ).rejects.toThrow("returned customId item-0 more than once");
+    await f.definition.processSubmissionResult({ externalId: "task-batch-1" });
+    expect(f.scoreSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  test("validates batching options and run locators", async () => {
+    const processor = {
+      submit: async () => null,
+      completion: {
+        mode: "poll" as const,
+        poll: async () => ({ status: "pending" as const }),
+      },
+      collect: () => [],
+    };
+    expect(
+      () => new WorkflowBatchTask({ ...processor, batching: { maxSize: 0 } }),
+    ).toThrow("batching.maxSize must be a positive integer");
+    expect(
+      () =>
+        new WorkflowBatchScorer({
+          ...processor,
+          name: "score",
+          batching: { maxSize: 1, maxWaitMs: -1 },
+        }),
+    ).toThrow("batching.maxWaitMs must be a non-negative number");
+
+    const f = workflowEval("webhook");
+    await f.definition.start({ noSendLogs: true });
+    await expect(
+      f.definition.processSubmissionResult({ submissionId: "submission" }),
+    ).rejects.toThrow("with a submissionId require runId");
+    await expect(
+      f.definition.processSubmissionResult({ externalId: "missing" }),
+    ).rejects.toThrow("No submission matches");
+    // Single-item webhook submissions can omit runId too.
+    await expect(
+      f.definition.processSubmissionResult({ externalId: "task-one:trial:0" }),
+    ).resolves.toMatchObject({ status: "waiting" });
+    expect(f.taskCollect).toHaveBeenCalledTimes(1);
+  });
+
+  test("infers batch submission data and item types", () => {
+    const task = new WorkflowBatchTask({
+      batching: { maxSize: 2 },
+      async submit(
+        items: WorkflowBatchItem<
+          WorkflowTaskItem<string, void, void, Record<string, never>>
+        >[],
+      ) {
+        expectTypeOf(items[0].customId).toEqualTypeOf<string>();
+        expectTypeOf(items[0].input).toEqualTypeOf<string>();
+        return { batchId: "batch" };
+      },
+      completion: {
+        mode: "webhook",
+        getExternalId(submission) {
+          expectTypeOf(submission).toEqualTypeOf<{ batchId: string }>();
+          return submission.batchId;
+        },
+      },
+      async *collect(submission) {
+        yield { customId: submission.batchId, result: { output: 1 } };
+      },
+    });
+    expect(task.processor.batching.maxSize).toBe(2);
+  });
+});
+
+function batchEval({
+  taskSize,
+  scoreSize,
+  cases,
+}: {
+  taskSize: number;
+  scoreSize: number;
+  cases: number;
+}) {
+  type TaskItem = WorkflowBatchItem<
+    WorkflowTaskItem<number, number, void, Record<string, never>>
+  >;
+  type ScoreItem = WorkflowBatchItem<
+    WorkflowScorerItem<number, number, number, void>
+  >;
+  const taskBatches: TaskItem[][] = [];
+  const scoreBatches: ScoreItem[][] = [];
+  const taskResults = vi.fn(
+    (items: TaskItem[]): WorkflowBatchItemResult<{ output: number }>[] =>
+      items.map(({ customId, input }) => ({
+        customId,
+        result: { output: input * 2 },
+      })),
+  );
+  const scoreResults = vi.fn(
+    (items: ScoreItem[]): WorkflowBatchItemResult<{ score: number }>[] =>
+      items.map(({ customId, output, expected }) => ({
+        customId,
+        result: { score: output === expected ? 1 : 0 },
+      })),
+  );
+  const completion = {
+    mode: "webhook" as const,
+    getExternalId: ({ id }: { id: string }) => id,
+  };
+  const taskSubmit = vi.fn(async (items: TaskItem[]) => {
+    taskBatches.push(items);
+    return { id: `task-batch-${taskBatches.length}` };
+  });
+  const taskCollect = vi.fn(async ({ id }: { id: string }) =>
+    taskResults(taskBatches[Number(id.split("-").at(-1)) - 1]),
+  );
+  const scoreSubmit = vi.fn(async (items: ScoreItem[]) => {
+    scoreBatches.push(items);
+    return { id: `score-batch-${scoreBatches.length}` };
+  });
+  const localScore = vi.fn(
+    ({ output, expected }: { output: number; expected: number }) =>
+      output === expected ? 1 : 0,
+  );
+  const definition = defineWorkflowEval("batch", {
+    store: new WorkflowEvalMemoryStore(),
+    data: Array.from({ length: cases }, (_, input) => ({
+      id: String(input),
+      input,
+      expected: input * 2,
+    })),
+    task: new WorkflowBatchTask<
+      number,
+      number,
+      number,
+      void,
+      Record<string, never>,
+      { id: string }
+    >({
+      batching: { maxSize: taskSize },
+      submit: taskSubmit,
+      completion,
+      collect: taskCollect,
+    }),
+    scores: [
+      new WorkflowBatchScorer<number, number, number, void, { id: string }>({
+        name: "batch_exact",
+        batching: { maxSize: scoreSize },
+        submit: scoreSubmit,
+        completion,
+        async collect({ id }) {
+          return scoreResults(scoreBatches[Number(id.split("-").at(-1)) - 1]);
+        },
+      }),
+      Object.defineProperty(localScore, "name", { value: "local" }),
+    ],
+  });
+  return {
+    definition,
+    taskBatches,
+    scoreBatches,
+    taskResults,
+    scoreResults,
+    taskSubmit,
+    taskCollect,
+    scoreSubmit,
+    localScore,
+  };
+}
 
 function workflowEval(
   mode: "poll" | "webhook",
