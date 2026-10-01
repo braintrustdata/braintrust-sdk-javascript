@@ -1,16 +1,61 @@
-import { beforeAll, expect, expectTypeOf, test } from "vitest";
+import { afterEach, beforeAll, expect, expectTypeOf, test, vi } from "vitest";
 import * as z3 from "zod/v3";
 import * as z4 from "zod/v4";
 import {
   CodeFunction,
+  ProjectNameIdMap,
   projects,
   serializeEvalParametersToStaticParametersSchema,
 } from "./framework2";
+import { _internalGetGlobalState } from "./logger";
 import { configureNode } from "./node/config";
 import { zodToJsonSchema } from "./zod/utils";
 
 beforeAll(() => {
   configureNode();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+function mockProjectRegister() {
+  const postJson = vi.fn(async () => ({
+    project: {
+      id: "00000000-0000-0000-0000-000000000001",
+      org_id: "00000000-0000-0000-0000-000000000002",
+      name: "project",
+    },
+  }));
+  vi.spyOn(_internalGetGlobalState(), "appConn").mockReturnValue({
+    post_json: postJson,
+  } as never);
+  return postJson;
+}
+
+test("project resolution creates the project in its project group", async () => {
+  const postJson = mockProjectRegister();
+  const project = projects.create({
+    name: "project",
+    projectGroupName: "my-group",
+  });
+
+  expect(await new ProjectNameIdMap().resolve(project)).toBe(
+    "00000000-0000-0000-0000-000000000001",
+  );
+  expect(postJson).toHaveBeenCalledWith("api/project/register", {
+    project_name: "project",
+    project_group_name: "my-group",
+  });
+});
+
+test("project resolution omits project_group_name when unspecified", async () => {
+  const postJson = mockProjectRegister();
+
+  await new ProjectNameIdMap().resolve(projects.create({ name: "project" }));
+  expect(postJson).toHaveBeenCalledWith("api/project/register", {
+    project_name: "project",
+  });
 });
 
 test.each([
