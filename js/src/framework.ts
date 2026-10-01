@@ -171,7 +171,7 @@ export interface EvalHooks<
    * Cancellation is cooperative: pass this to the APIs you call or check
    * `signal.aborted` to stop work early.
    */
-  signal: AbortSignal;
+  signal?: AbortSignal;
 }
 
 // This happens to be compatible with ScorerArgs defined in "../util".

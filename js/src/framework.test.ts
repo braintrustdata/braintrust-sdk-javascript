@@ -685,7 +685,7 @@ describe("runEvaluator", () => {
                 if (input > 2) {
                   await sleep(1_000, signal);
                 }
-                sawAbort.set(input, signal.aborted);
+                sawAbort.set(input, signal!.aborted);
                 taskCompletions.add(input);
                 return input * 2;
               },
@@ -847,7 +847,7 @@ describe("runEvaluator", () => {
             {
               projectName: "proj",
               evalName: "eval",
-              data,
+              data: data(),
               task: async (input: number) => {
                 taskInputs.push(input);
                 return input;
@@ -895,7 +895,7 @@ describe("runEvaluator", () => {
           {
             projectName: "proj",
             evalName: "eval",
-            data,
+            data: data(),
             task,
             scores: [],
             signal: controller.signal,
@@ -944,7 +944,7 @@ describe("runEvaluator", () => {
           evalName: "eval",
           data: [{ input: 1, expected: 2 }],
           task: async (input: number, { signal }) => {
-            signals.push(signal);
+            signals.push(signal!);
             await new Promise((r) => setTimeout(r, 100));
             return input * 2;
           },
