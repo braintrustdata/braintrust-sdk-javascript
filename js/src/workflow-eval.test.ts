@@ -1345,10 +1345,15 @@ function batchEval({
     mode: "webhook" as const,
     getExternalId: ({ id }: { id: string }) => id,
   };
-  const taskSubmit = vi.fn(async (items: TaskItem[]) => {
-    taskBatches.push(items);
-    return { id: `task-batch-${taskBatches.length}` };
-  });
+  const taskSubmit = vi.fn(
+    async (
+      items: TaskItem[],
+      _context: { runId: string; submissionId: string },
+    ) => {
+      taskBatches.push(items);
+      return { id: `task-batch-${taskBatches.length}` };
+    },
+  );
   const taskCollect = vi.fn(async ({ id }: { id: string }) =>
     taskResults(taskBatches[Number(id.split("-").at(-1)) - 1]),
   );
