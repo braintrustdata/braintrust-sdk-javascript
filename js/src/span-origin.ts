@@ -44,6 +44,7 @@ export const INSTRUMENTATION_NAMES = {
   TEMPORAL: "temporal",
   TYPESAFE: "typesafe",
   VOYAGEAI: "voyageai",
+  LIVEKIT_AGENTS: "livekit-agents",
   ELEVENLABS: "elevenlabs",
 } as const;
 

@@ -1,0 +1,28 @@
+{
+  "name": "@braintrust/e2e-livekit-agents-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "livekit-agents-latest": {
+          "package": "@livekit/agents",
+          "range": "1",
+          "targetDependency": "@livekit/agents",
+          "targetManifest": "versions/livekit-v1-latest/package.json"
+        },
+        "livekit-agents-plugin-openai-latest": {
+          "package": "@livekit/agents-plugin-openai",
+          "range": "1",
+          "targetDependency": "@livekit/agents-plugin-openai",
+          "targetManifest": "versions/livekit-v1-latest/package.json"
+        },
+        "livekit-agents-plugin-silero-latest": {
+          "package": "@livekit/agents-plugin-silero",
+          "range": "1",
+          "targetDependency": "@livekit/agents-plugin-silero",
+          "targetManifest": "versions/livekit-v1-latest/package.json"
+        }
+      }
+    }
+  }
+}

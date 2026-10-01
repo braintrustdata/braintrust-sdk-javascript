@@ -890,5 +890,36 @@
         "label": "v0.24 latest"
       }
     ]
+  },
+  {
+    "scenarioDirName": "livekit-agents-instrumentation",
+    "label": "LiveKit Agents",
+    "metadataScenario": "livekit-agents-instrumentation",
+    "variants": [
+      {
+        "variantKey": "livekit-v1-5",
+        "label": "v1.5 pinned"
+      },
+      {
+        "variantKey": "livekit-v1-9",
+        "label": "v1.9 pinned"
+      },
+      {
+        "variantKey": "livekit-v1-latest",
+        "label": "v1 latest"
+      },
+      {
+        "variantKey": "livekit-v1-5-inference",
+        "label": "v1.5 pinned inference"
+      },
+      {
+        "variantKey": "livekit-v1-9-inference",
+        "label": "v1.9 pinned inference"
+      },
+      {
+        "variantKey": "livekit-v1-latest-inference",
+        "label": "v1 latest inference"
+      }
+    ]
   }
 ]

@@ -318,6 +318,10 @@ function getCassetteServerRoutes(): CassetteServerRoute[] {
       upstreamOrigin: "https://router.huggingface.co",
     },
     { prefix: "/mistral", upstreamOrigin: "https://api.mistral.ai" },
+    {
+      prefix: "/livekit",
+      upstreamOrigin: "https://agent-gateway.livekit.cloud",
+    },
     { prefix: "/ollama", upstreamOrigin: "https://ollama.com" },
     { prefix: "/openai", upstreamOrigin: "https://api.openai.com" },
     { prefix: "/openrouter", upstreamOrigin: "https://openrouter.ai" },
@@ -354,6 +358,7 @@ function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
     HF_INFERENCE_ENDPOINT: `${serverUrl}/huggingface-router`,
     HUGGINGFACE_BASE_URL: `${serverUrl}/huggingface`,
     HUGGINGFACE_ROUTER_BASE_URL: `${serverUrl}/huggingface-router`,
+    LIVEKIT_INFERENCE_URL: `${serverUrl}/livekit/v1`,
     MISTRAL_API_URL: `${serverUrl}/mistral`,
     MISTRAL_BASE_URL: `${serverUrl}/mistral`,
     OLLAMA_HOST: `${serverUrl}/ollama`,

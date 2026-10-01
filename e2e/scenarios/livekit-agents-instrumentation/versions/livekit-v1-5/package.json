@@ -1,0 +1,19 @@
+{
+  "name": "@braintrust/e2e-livekit-v1-5",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@livekit/agents": "1.5.0",
+    "@livekit/agents-plugin-openai": "1.5.0",
+    "@livekit/agents-plugin-silero": "1.5.0",
+    "@livekit/rtc-node": "0.13.30",
+    "zod": "3.25.76"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "onnxruntime-node",
+      "@livekit/rtc-node",
+      "sharp"
+    ]
+  }
+}

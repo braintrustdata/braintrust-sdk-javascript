@@ -27,6 +27,7 @@ import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
+import { LiveKitAgentsPlugin } from "./plugins/livekit-agents-plugin";
 import { ElevenLabsPlugin } from "./plugins/elevenlabs-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
 import { TypeSafePlugin } from "./plugins/typesafe-plugin";
@@ -88,6 +89,7 @@ export class BraintrustPlugin extends BasePlugin {
   private langSmithPlugin: LangSmithPlugin | null = null;
   private piCodingAgentPlugin: PiCodingAgentPlugin | null = null;
   private strandsAgentSDKPlugin: StrandsAgentSDKPlugin | null = null;
+  private liveKitAgentsPlugin: LiveKitAgentsPlugin | null = null;
   private elevenLabsPlugin: ElevenLabsPlugin | null = null;
   private voyageAIPlugin: VoyageAIPlugin | null = null;
   private typeSafePlugin: TypeSafePlugin | null = null;
@@ -201,6 +203,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.cohere !== false) {
       this.coherePlugin = new CoherePlugin();
       this.coherePlugin.enable();
+    }
+
+    if (integrations.livekitAgents !== false) {
+      this.liveKitAgentsPlugin = new LiveKitAgentsPlugin();
+      this.liveKitAgentsPlugin.enable();
     }
 
     if (integrations.elevenlabs !== false) {
@@ -379,6 +386,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.coherePlugin) {
       this.coherePlugin.disable();
       this.coherePlugin = null;
+    }
+
+    if (this.liveKitAgentsPlugin) {
+      this.liveKitAgentsPlugin.disable();
+      this.liveKitAgentsPlugin = null;
     }
 
     if (this.elevenLabsPlugin) {

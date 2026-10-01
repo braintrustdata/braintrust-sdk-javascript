@@ -1,0 +1,1564 @@
+{
+  "span_tree": [
+    {
+      "name": "OpenAI plugin: livekit-session",
+      "type": "task",
+      "children": [
+        {
+          "name": "livekit.session",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.Agent.sttNode",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "content": [],
+                "operation": "transcribe"
+              },
+              "output": {
+                "annotations": {},
+                "content": []
+              },
+              "metadata": {
+                "model": "whisper-1",
+                "provider": "openai"
+              },
+              "error": "Invalid state: Releasing reader"
+            },
+            {
+              "name": "livekit.turn",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.Agent.llmNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather for weather questions. After the result, reply with one short sentence.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather to check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "message": {
+                        "content": null,
+                        "role": "assistant",
+                        "tool_calls": [
+                          {
+                            "function": {
+                              "arguments": "{}",
+                              "name": "lookup_weather"
+                            },
+                            "id": "<span:1>",
+                            "type": "function"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "gpt-4.1-nano",
+                    "provider": "openai",
+                    "tools": [
+                      {
+                        "function": {
+                          "description": "Get the weather in Paris.",
+                          "name": "lookup_weather",
+                          "parameters": {
+                            "properties": {},
+                            "required": [],
+                            "type": "object"
+                          }
+                        },
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 10,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 64,
+                    "time_to_first_token": 0,
+                    "tokens": 74
+                  }
+                },
+                {
+                  "name": "lookup_weather",
+                  "type": "tool",
+                  "children": [],
+                  "output": {
+                    "temperature": 20,
+                    "weather": "sunny"
+                  }
+                },
+                {
+                  "name": "livekit.Agent.llmNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather for weather questions. After the result, reply with one short sentence.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather to check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    {
+                      "content": null,
+                      "role": "assistant",
+                      "tool_calls": [
+                        {
+                          "function": {
+                            "arguments": "{}",
+                            "name": "lookup_weather"
+                          },
+                          "id": "<span:1>",
+                          "type": "function"
+                        }
+                      ]
+                    },
+                    {
+                      "content": "{\"weather\":\"sunny\",\"temperature\":20}",
+                      "role": "tool",
+                      "tool_call_id": "call_KyNpqENhvKfkp13PSXk6e9WD"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "message": {
+                        "content": "The weather in Paris is sunny with a temperature of 20°C.",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "gpt-4.1-nano",
+                    "provider": "openai",
+                    "tool_choice": "auto",
+                    "tools": [
+                      {
+                        "function": {
+                          "description": "Get the weather in Paris.",
+                          "name": "lookup_weather",
+                          "parameters": {
+                            "properties": {},
+                            "required": [],
+                            "type": "object"
+                          }
+                        },
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 15,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 92,
+                    "time_to_first_token": 0,
+                    "tokens": 107
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Use lookup_weather to check the weather in Paris.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{}",
+                        "name": "lookup_weather"
+                      },
+                      "id": "<span:1>",
+                      "type": "function"
+                    }
+                  ]
+                },
+                {
+                  "content": "{\"weather\":\"sunny\",\"temperature\":20}",
+                  "role": "tool",
+                  "tool_call_id": "call_KyNpqENhvKfkp13PSXk6e9WD"
+                },
+                {
+                  "content": [
+                    {
+                      "text": "The weather in Paris is sunny with a temperature of 20°C.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "assistant"
+                }
+              ],
+              "metadata": {
+                "operation": "run",
+                "status": "completed"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "vision",
+              "children": [
+                {
+                  "name": "livekit.Agent.llmNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Describe the image in five words.",
+                          "type": "text"
+                        },
+                        {
+                          "image_url": {
+                            "url": {
+                              "content_type": "image/png",
+                              "filename": "image.png",
+                              "key": "<uuid:1>",
+                              "type": "braintrust_attachment"
+                            }
+                          },
+                          "type": "image_url"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "message": {
+                        "content": "Ship battling stormy, lightning skies.",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "gpt-4.1-nano",
+                    "provider": "openai",
+                    "tools": []
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 9,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 2549,
+                    "time_to_first_token": 0,
+                    "tokens": 2558
+                  }
+                }
+              ],
+              "metadata": {
+                "operation": "vision",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "runOperation",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "speech",
+              "children": [
+                {
+                  "name": "livekit.Agent.ttsNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "operation": "speech",
+                    "prompt": "Hello from Braintrust."
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "file": {
+                          "byte_size": 62444,
+                          "file_data": {
+                            "content_type": "audio/wav",
+                            "filename": "audio-1.wav",
+                            "key": "<uuid:1>",
+                            "type": "braintrust_attachment"
+                          },
+                          "filename": "audio-1.wav"
+                        },
+                        "type": "file"
+                      }
+                    ]
+                  },
+                  "metadata": {
+                    "model": "tts-1",
+                    "provider": "openai"
+                  },
+                  "metrics": {
+                    "time_to_first_token": 0
+                  }
+                }
+              ],
+              "metadata": {
+                "operation": "speech",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "runOperation",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "transcription",
+              "children": [
+                {
+                  "name": "livekit.Agent.sttNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "content": [
+                      {
+                        "file": {
+                          "byte_size": 110444,
+                          "file_data": {
+                            "content_type": "audio/wav",
+                            "filename": "audio-1.wav",
+                            "key": "<uuid:1>",
+                            "type": "braintrust_attachment"
+                          },
+                          "filename": "audio-1.wav"
+                        },
+                        "type": "file"
+                      }
+                    ],
+                    "operation": "transcribe"
+                  },
+                  "output": {
+                    "annotations": {
+                      "language": "en",
+                      "segments": [
+                        {
+                          "confidence": 0,
+                          "end": 0,
+                          "start": 0,
+                          "text": "Brain Trust"
+                        }
+                      ]
+                    },
+                    "content": [
+                      {
+                        "text": "Brain Trust",
+                        "type": "text"
+                      }
+                    ]
+                  },
+                  "metadata": {
+                    "model": "whisper-1",
+                    "provider": "openai"
+                  },
+                  "metrics": {
+                    "time_to_first_token": 0
+                  }
+                }
+              ],
+              "metadata": {
+                "operation": "transcription",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "runOperation",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "output": [
+            {
+              "content": [
+                {
+                  "text": "Use lookup_weather to check the weather in Paris.",
+                  "type": "text"
+                }
+              ],
+              "role": "user"
+            },
+            {
+              "content": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{}",
+                    "name": "lookup_weather"
+                  },
+                  "id": "<span:1>",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": "{\"weather\":\"sunny\",\"temperature\":20}",
+              "role": "tool",
+              "tool_call_id": "call_KyNpqENhvKfkp13PSXk6e9WD"
+            },
+            {
+              "content": [
+                {
+                  "text": "The weather in Paris is sunny with a temperature of 20°C.",
+                  "type": "text"
+                }
+              ],
+              "role": "assistant"
+            }
+          ],
+          "metadata": {
+            "session_id": "capture-session",
+            "status": "completed"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/livekit-v1-latest/scenario.mjs",
+            "caller_functionname": "Object.callback",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "livekit-agents-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+        "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
+      }
+    },
+    {
+      "name": "LiveKit Inference: livekit-session",
+      "type": "task",
+      "children": [
+        {
+          "name": "livekit.session",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.Agent.sttNode",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "content": [
+                  {
+                    "file": {
+                      "byte_size": 94112,
+                      "file_data": {
+                        "content_type": "audio/wav",
+                        "filename": "audio-1.wav",
+                        "key": "<uuid:1>",
+                        "type": "braintrust_attachment"
+                      },
+                      "filename": "audio-1.wav"
+                    },
+                    "type": "file"
+                  }
+                ],
+                "operation": "transcribe"
+              },
+              "output": {
+                "annotations": {
+                  "language": "en",
+                  "segments": [
+                    {
+                      "confidence": 0.91748047,
+                      "end": 0,
+                      "start": 0,
+                      "text": "Hello from Brain Trust."
+                    }
+                  ]
+                },
+                "content": [
+                  {
+                    "text": "Hello from Brain Trust.",
+                    "type": "text"
+                  }
+                ]
+              },
+              "metadata": {
+                "model": "deepgram/nova-3",
+                "provider": "livekit"
+              },
+              "metrics": {
+                "time_to_first_token": 0
+              },
+              "error": "Invalid state: Releasing reader"
+            },
+            {
+              "name": "livekit.turn",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.Agent.llmNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather for weather questions. After the result, reply with one short sentence.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather to check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "message": {
+                        "content": null,
+                        "role": "assistant",
+                        "tool_calls": [
+                          {
+                            "function": {
+                              "arguments": "{}",
+                              "name": "lookup_weather"
+                            },
+                            "id": "<span:1>",
+                            "type": "function"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "openai/gpt-4.1-nano",
+                    "provider": "livekit",
+                    "tools": [
+                      {
+                        "function": {
+                          "description": "Get the weather in Paris.",
+                          "name": "lookup_weather",
+                          "parameters": {
+                            "properties": {},
+                            "required": [],
+                            "type": "object"
+                          }
+                        },
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 10,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 64,
+                    "time_to_first_token": 0,
+                    "tokens": 74
+                  }
+                },
+                {
+                  "name": "lookup_weather",
+                  "type": "tool",
+                  "children": [],
+                  "output": {
+                    "temperature": 20,
+                    "weather": "sunny"
+                  }
+                },
+                {
+                  "name": "livekit.Agent.llmNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather for weather questions. After the result, reply with one short sentence.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather to check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    {
+                      "content": null,
+                      "role": "assistant",
+                      "tool_calls": [
+                        {
+                          "function": {
+                            "arguments": "{}",
+                            "name": "lookup_weather"
+                          },
+                          "id": "<span:1>",
+                          "type": "function"
+                        }
+                      ]
+                    },
+                    {
+                      "content": "{\"weather\":\"sunny\",\"temperature\":20}",
+                      "role": "tool",
+                      "tool_call_id": "call_9Afi9WjI47UQlUZfj5moBuyv"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "message": {
+                        "content": "The weather in Paris is sunny with a temperature of 20°C.",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "openai/gpt-4.1-nano",
+                    "provider": "livekit",
+                    "tool_choice": "auto",
+                    "tools": [
+                      {
+                        "function": {
+                          "description": "Get the weather in Paris.",
+                          "name": "lookup_weather",
+                          "parameters": {
+                            "properties": {},
+                            "required": [],
+                            "type": "object"
+                          }
+                        },
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 15,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 92,
+                    "time_to_first_token": 0,
+                    "tokens": 107
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Use lookup_weather to check the weather in Paris.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{}",
+                        "name": "lookup_weather"
+                      },
+                      "id": "<span:1>",
+                      "type": "function"
+                    }
+                  ]
+                },
+                {
+                  "content": "{\"weather\":\"sunny\",\"temperature\":20}",
+                  "role": "tool",
+                  "tool_call_id": "call_9Afi9WjI47UQlUZfj5moBuyv"
+                },
+                {
+                  "content": [
+                    {
+                      "text": "The weather in Paris is sunny with a temperature of 20°C.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "assistant"
+                }
+              ],
+              "metadata": {
+                "operation": "run",
+                "status": "completed"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "vision",
+              "children": [
+                {
+                  "name": "livekit.Agent.llmNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Describe the image in five words.",
+                          "type": "text"
+                        },
+                        {
+                          "image_url": {
+                            "url": {
+                              "content_type": "image/png",
+                              "filename": "image.png",
+                              "key": "<uuid:1>",
+                              "type": "braintrust_attachment"
+                            }
+                          },
+                          "type": "image_url"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "message": {
+                        "content": "Ship battling stormy, turbulent seas.",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "openai/gpt-4.1-nano",
+                    "provider": "livekit",
+                    "tools": []
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 9,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 1440,
+                    "time_to_first_token": 0,
+                    "tokens": 1449
+                  }
+                }
+              ],
+              "metadata": {
+                "operation": "vision",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "runOperation",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "speech",
+              "children": [
+                {
+                  "name": "livekit.Agent.ttsNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "operation": "speech",
+                    "prompt": "Hello from Braintrust."
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "file": {
+                          "byte_size": 46112,
+                          "file_data": {
+                            "content_type": "audio/wav",
+                            "filename": "audio-1.wav",
+                            "key": "<uuid:1>",
+                            "type": "braintrust_attachment"
+                          },
+                          "filename": "audio-1.wav"
+                        },
+                        "type": "file"
+                      }
+                    ]
+                  },
+                  "metadata": {
+                    "model": "cartesia/sonic-3",
+                    "provider": "livekit"
+                  },
+                  "metrics": {
+                    "time_to_first_token": 0
+                  }
+                }
+              ],
+              "metadata": {
+                "operation": "speech",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "runOperation",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "transcription",
+              "children": [
+                {
+                  "name": "livekit.Agent.sttNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "content": [
+                      {
+                        "file": {
+                          "byte_size": 78112,
+                          "file_data": {
+                            "content_type": "audio/wav",
+                            "filename": "audio-1.wav",
+                            "key": "<uuid:1>",
+                            "type": "braintrust_attachment"
+                          },
+                          "filename": "audio-1.wav"
+                        },
+                        "type": "file"
+                      }
+                    ],
+                    "operation": "transcribe"
+                  },
+                  "output": {
+                    "annotations": {
+                      "language": "en",
+                      "segments": [
+                        {
+                          "confidence": 0.92333984,
+                          "end": 0,
+                          "start": 0,
+                          "text": "Hello from Brain Trust."
+                        }
+                      ]
+                    },
+                    "content": [
+                      {
+                        "text": "Hello from Brain Trust.",
+                        "type": "text"
+                      }
+                    ]
+                  },
+                  "metadata": {
+                    "model": "deepgram/nova-3",
+                    "provider": "livekit"
+                  },
+                  "metrics": {
+                    "time_to_first_token": 0
+                  }
+                }
+              ],
+              "metadata": {
+                "operation": "transcription",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "runOperation",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "livekit.turn",
+              "type": "task",
+              "children": [],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Hello from Brain Trust.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "content": [
+                    {
+                      "text": "Hello from Brain Trust! How can I assist you today?",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "assistant"
+                }
+              ],
+              "metadata": {
+                "operation": "voice",
+                "speech_id": "<speech_id:1>",
+                "status": "completed"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "livekit.Agent.llmNode",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Use lookup_weather for weather questions. After the result, reply with one short sentence.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "system"
+                },
+                {
+                  "content": [
+                    {
+                      "text": "Use lookup_weather to check the weather in Paris.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "user"
+                },
+                {
+                  "content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{}",
+                        "name": "lookup_weather"
+                      },
+                      "id": "<span:1>",
+                      "type": "function"
+                    }
+                  ]
+                },
+                {
+                  "content": "{\"weather\":\"sunny\",\"temperature\":20}",
+                  "role": "tool",
+                  "tool_call_id": "call_9Afi9WjI47UQlUZfj5moBuyv"
+                },
+                {
+                  "content": [
+                    {
+                      "text": "The weather in Paris is sunny with a temperature of 20°C.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "assistant"
+                },
+                {
+                  "content": [
+                    {
+                      "text": "Hello from Brain Trust.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "message": {
+                    "content": "Hello from Brain Trust! How can I assist you today?",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "openai/gpt-4.1-nano",
+                "provider": "livekit",
+                "tools": [
+                  {
+                    "function": {
+                      "description": "Get the weather in Paris.",
+                      "name": "lookup_weather",
+                      "parameters": {
+                        "properties": {},
+                        "required": [],
+                        "type": "object"
+                      }
+                    },
+                    "type": "function"
+                  }
+                ]
+              },
+              "metrics": {
+                "completion_reasoning_tokens": 0,
+                "completion_tokens": 13,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 119,
+                "time_to_first_token": 0,
+                "tokens": 132
+              }
+            }
+          ],
+          "output": [
+            {
+              "content": [
+                {
+                  "text": "Use lookup_weather to check the weather in Paris.",
+                  "type": "text"
+                }
+              ],
+              "role": "user"
+            },
+            {
+              "content": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{}",
+                    "name": "lookup_weather"
+                  },
+                  "id": "<span:1>",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": "{\"weather\":\"sunny\",\"temperature\":20}",
+              "role": "tool",
+              "tool_call_id": "call_9Afi9WjI47UQlUZfj5moBuyv"
+            },
+            {
+              "content": [
+                {
+                  "text": "The weather in Paris is sunny with a temperature of 20°C.",
+                  "type": "text"
+                }
+              ],
+              "role": "assistant"
+            },
+            {
+              "content": [
+                {
+                  "text": "Hello from Brain Trust.",
+                  "type": "text"
+                }
+              ],
+              "role": "user"
+            },
+            {
+              "content": [
+                {
+                  "text": "Hello from Brain Trust! How can I assist you today?",
+                  "type": "text"
+                }
+              ],
+              "role": "assistant"
+            }
+          ],
+          "metadata": {
+            "session_id": "capture-session",
+            "status": "completed"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/livekit-v1-latest/scenario.mjs",
+            "caller_functionname": "Object.callback",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "livekit-agents-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+        "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
+      }
+    },
+    {
+      "name": "Attachments disabled: livekit-session",
+      "type": "task",
+      "children": [
+        {
+          "name": "livekit.session",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.Agent.sttNode",
+              "type": "llm",
+              "children": [],
+              "input": {
+                "content": [],
+                "operation": "transcribe"
+              },
+              "output": {
+                "annotations": {},
+                "content": []
+              },
+              "metadata": {
+                "model": "whisper-1",
+                "provider": "openai"
+              },
+              "error": "Invalid state: Releasing reader"
+            },
+            {
+              "name": "livekit.turn",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.Agent.llmNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather for weather questions. After the result, reply with one short sentence.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather to check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "message": {
+                        "content": null,
+                        "role": "assistant",
+                        "tool_calls": [
+                          {
+                            "function": {
+                              "arguments": "{}",
+                              "name": "lookup_weather"
+                            },
+                            "id": "<span:1>",
+                            "type": "function"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "gpt-4.1-nano",
+                    "provider": "openai",
+                    "tools": [
+                      {
+                        "function": {
+                          "description": "Get the weather in Paris.",
+                          "name": "lookup_weather",
+                          "parameters": {
+                            "properties": {},
+                            "required": [],
+                            "type": "object"
+                          }
+                        },
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 10,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 64,
+                    "time_to_first_token": 0,
+                    "tokens": 74
+                  }
+                },
+                {
+                  "name": "lookup_weather",
+                  "type": "tool",
+                  "children": [],
+                  "output": {
+                    "temperature": 20,
+                    "weather": "sunny"
+                  }
+                },
+                {
+                  "name": "livekit.Agent.llmNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather for weather questions. After the result, reply with one short sentence.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Use lookup_weather to check the weather in Paris.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    {
+                      "content": null,
+                      "role": "assistant",
+                      "tool_calls": [
+                        {
+                          "function": {
+                            "arguments": "{}",
+                            "name": "lookup_weather"
+                          },
+                          "id": "<span:1>",
+                          "type": "function"
+                        }
+                      ]
+                    },
+                    {
+                      "content": "{\"weather\":\"sunny\",\"temperature\":20}",
+                      "role": "tool",
+                      "tool_call_id": "call_KyNpqENhvKfkp13PSXk6e9WD"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "message": {
+                        "content": "The weather in Paris is sunny with a temperature of 20°C.",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "gpt-4.1-nano",
+                    "provider": "openai",
+                    "tool_choice": "auto",
+                    "tools": [
+                      {
+                        "function": {
+                          "description": "Get the weather in Paris.",
+                          "name": "lookup_weather",
+                          "parameters": {
+                            "properties": {},
+                            "required": [],
+                            "type": "object"
+                          }
+                        },
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 15,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 92,
+                    "time_to_first_token": 0,
+                    "tokens": 107
+                  }
+                }
+              ],
+              "input": [
+                {
+                  "content": [
+                    {
+                      "text": "Use lookup_weather to check the weather in Paris.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "content": null,
+                  "role": "assistant",
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": "{}",
+                        "name": "lookup_weather"
+                      },
+                      "id": "<span:1>",
+                      "type": "function"
+                    }
+                  ]
+                },
+                {
+                  "content": "{\"weather\":\"sunny\",\"temperature\":20}",
+                  "role": "tool",
+                  "tool_call_id": "call_KyNpqENhvKfkp13PSXk6e9WD"
+                },
+                {
+                  "content": [
+                    {
+                      "text": "The weather in Paris is sunny with a temperature of 20°C.",
+                      "type": "text"
+                    }
+                  ],
+                  "role": "assistant"
+                }
+              ],
+              "metadata": {
+                "operation": "run",
+                "status": "completed"
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "vision",
+              "children": [
+                {
+                  "name": "livekit.Agent.llmNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": [
+                        {
+                          "text": "Describe the image in five words.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "message": {
+                        "content": "Ship battling stormy, lightning skies.",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "gpt-4.1-nano",
+                    "provider": "openai",
+                    "tools": []
+                  },
+                  "metrics": {
+                    "completion_reasoning_tokens": 0,
+                    "completion_tokens": 9,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 2549,
+                    "time_to_first_token": 0,
+                    "tokens": 2558
+                  }
+                }
+              ],
+              "metadata": {
+                "operation": "vision",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "runOperation",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "speech",
+              "children": [
+                {
+                  "name": "livekit.Agent.ttsNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "operation": "speech",
+                    "prompt": "Hello from Braintrust."
+                  },
+                  "output": {
+                    "content": []
+                  },
+                  "metadata": {
+                    "model": "tts-1",
+                    "provider": "openai"
+                  },
+                  "metrics": {
+                    "time_to_first_token": 0
+                  }
+                }
+              ],
+              "metadata": {
+                "operation": "speech",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "runOperation",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "transcription",
+              "children": [
+                {
+                  "name": "livekit.Agent.sttNode",
+                  "type": "llm",
+                  "children": [],
+                  "input": {
+                    "content": [],
+                    "operation": "transcribe"
+                  },
+                  "output": {
+                    "annotations": {
+                      "language": "en",
+                      "segments": [
+                        {
+                          "confidence": 0,
+                          "end": 0,
+                          "start": 0,
+                          "text": "Brain Trust"
+                        }
+                      ]
+                    },
+                    "content": [
+                      {
+                        "text": "Brain Trust",
+                        "type": "text"
+                      }
+                    ]
+                  },
+                  "metadata": {
+                    "model": "whisper-1",
+                    "provider": "openai"
+                  },
+                  "metrics": {
+                    "time_to_first_token": 0
+                  }
+                }
+              ],
+              "metadata": {
+                "operation": "transcription",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+                "caller_functionname": "runOperation",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "output": [
+            {
+              "content": [
+                {
+                  "text": "Use lookup_weather to check the weather in Paris.",
+                  "type": "text"
+                }
+              ],
+              "role": "user"
+            },
+            {
+              "content": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{}",
+                    "name": "lookup_weather"
+                  },
+                  "id": "<span:1>",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": "{\"weather\":\"sunny\",\"temperature\":20}",
+              "role": "tool",
+              "tool_call_id": "call_KyNpqENhvKfkp13PSXk6e9WD"
+            },
+            {
+              "content": [
+                {
+                  "text": "The weather in Paris is sunny with a temperature of 20°C.",
+                  "type": "text"
+                }
+              ],
+              "role": "assistant"
+            }
+          ],
+          "metadata": {
+            "session_id": "capture-session",
+            "status": "completed"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/livekit-v1-latest/scenario.mjs",
+            "caller_functionname": "Object.callback",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "livekit-agents-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/helpers/provider-runtime.mjs",
+        "caller_functionname": "runTracedScenario",
+        "caller_lineno": 0
+      }
+    }
+  ]
+}

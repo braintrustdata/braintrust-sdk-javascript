@@ -380,4 +380,10 @@ export type {
   SpanExportData,
 } from "./instrumentation";
 
+export { wrapLiveKitAgents } from "./wrappers/livekit-agents";
+export {
+  startLiveKitSessionTrace,
+  startLiveKitTurnTrace,
+  captureLiveKitTrace,
+} from "./livekit-trace";
 export { wrapElevenLabs } from "./wrappers/elevenlabs";

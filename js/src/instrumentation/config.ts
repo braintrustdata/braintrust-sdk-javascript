@@ -51,6 +51,7 @@ export interface InstrumentationIntegrationsConfig {
   langsmith?: boolean;
   voyageai?: boolean;
   typesafe?: boolean;
+  livekitAgents?: boolean;
   elevenlabs?: boolean;
 }
 
@@ -154,6 +155,9 @@ const envIntegrationAliases: Record<
   typesafe: "typesafe",
   "typesafe-ai": "typesafe",
   "@typesafe-ai/sdk": "typesafe",
+  livekitagents: "livekitAgents",
+  "livekit-agents": "livekitAgents",
+  "@livekit/agents": "livekitAgents",
   elevenlabs: "elevenlabs",
   "@elevenlabs/elevenlabs-js": "elevenlabs",
 };
@@ -198,6 +202,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     langsmith: true,
     voyageai: true,
     typesafe: true,
+    livekitAgents: true,
     elevenlabs: true,
     piCodingAgent: true,
     strandsAgentSDK: true,

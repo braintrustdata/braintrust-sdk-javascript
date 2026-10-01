@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   isAsyncIterable,
   observeByteStream,
+  observeStream,
   patchStreamIfNeeded,
   wrapStreamResult,
 } from "./stream-patcher";
@@ -606,6 +607,51 @@ describe("observeByteStream", () => {
 
     await stream.cancel();
   });
+});
+
+describe("observeStream", () => {
+  it.each(["reader", "iterate", "pipe"] as const)(
+    "observes falsy chunks without eager reads (%s)",
+    async (mode) => {
+      let pulls = 0;
+      const seen: unknown[] = [];
+      let complete = 0;
+      const stream = new ReadableStream(
+        {
+          pull(controller) {
+            pulls++;
+            controller.enqueue(0);
+            controller.enqueue("");
+            controller.enqueue({ text: "x" });
+            controller.close();
+          },
+        },
+        { highWaterMark: 0 },
+      );
+      observeStream(stream, {
+        debugLabel: "test",
+        onChunk: (chunk) => seen.push(chunk),
+        onComplete: () => complete++,
+        onCancel() {},
+      });
+      expect(pulls).toBe(0);
+      if (mode === "reader") {
+        const reader = stream.getReader();
+        while (!(await reader.read()).done) {
+          /* consume */
+        }
+      } else if (mode === "iterate")
+        for await (const _ of stream as unknown as AsyncIterable<unknown>) {
+          /* consume */
+        }
+      else
+        await stream
+          .pipeThrough(new TransformStream())
+          .pipeTo(new WritableStream());
+      expect(seen).toEqual([0, "", { text: "x" }]);
+      expect(complete).toBe(1);
+    },
+  );
 });
 
 describe("wrapStreamResult", () => {
