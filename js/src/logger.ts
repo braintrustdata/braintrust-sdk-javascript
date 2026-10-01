@@ -5051,9 +5051,11 @@ async function computeLoggerMetadata(
   {
     project_name,
     project_id,
+    project_group_name,
   }: {
     project_name?: string;
     project_id?: string;
+    project_group_name?: string;
   },
 ) {
   await state.login({});
@@ -5065,13 +5067,14 @@ async function computeLoggerMetadata(
     };
   }
 
+  const groupName = project_group_name || undefined;
   const cache = state.projectMetadataCache;
   const key = JSON.stringify([
     state.appUrl,
     org_id,
     state.loginToken,
     isEmpty(project_id)
-      ? ["name", project_name || GLOBAL_PROJECT]
+      ? ["name", project_name || GLOBAL_PROJECT, groupName]
       : ["id", project_id],
   ]);
   const cached = cache.get(key);
@@ -5093,6 +5096,7 @@ async function computeLoggerMetadata(
             {
               project_name: project_name || GLOBAL_PROJECT,
               org_id,
+              project_group_name: groupName,
             },
             controller.signal,
           );
@@ -5153,6 +5157,7 @@ type AsyncFlushArg<IsAsyncFlush> = {
 export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
   projectName?: string;
   projectId?: string;
+  _createInProjectGroup?: string;
   environment?: SpanOriginEnvironment;
   setCurrent?: boolean;
   state?: BraintrustState;
@@ -5165,6 +5170,7 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
  * @param options Additional options for configuring init().
  * @param options.projectName The name of the project to log into. If unspecified, will default to the Global project.
  * @param options.projectId The id of the project to log into. This takes precedence over projectName if specified.
+ * @param options._createInProjectGroup Experimental: the name of an existing project group to create the project in. Existing projects must already belong to the group, otherwise registration fails with a 409. Membership is re-checked on each fresh project lookup, so moving the project out of the group makes new loggers fail with a 409. Ignored when projectId is provided.
  * @param options.asyncFlush If true, will log asynchronously in the background. Otherwise, will log synchronously. (true by default)
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js,
@@ -5181,6 +5187,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   const {
     projectName,
     projectId,
+    _createInProjectGroup,
     asyncFlush: asyncFlushArg,
     appUrl,
     apiKey,
@@ -5198,6 +5205,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   const computeMetadataArgs = {
     project_name: projectName,
     project_id: projectId,
+    project_group_name: _createInProjectGroup,
   };
 
   const linkArgs = {
