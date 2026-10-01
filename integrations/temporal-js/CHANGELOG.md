@@ -1,5 +1,12 @@
 # @braintrust/temporal
 
+## 1.0.1
+
+### Patch Changes
+
+- fix: Add span provenance for temporal and openai agents sdk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2518)
+- Updated dependencies: braintrust@3.36.0
+
 ## 1.0.0
 
 This release promotes `@braintrust/temporal` to semver major version 1.0.0. There are no breaking changes in this release.

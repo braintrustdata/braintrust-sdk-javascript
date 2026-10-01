@@ -1,5 +1,24 @@
 # braintrust
 
+## 3.36.0
+
+### Minor Changes
+
+- feat: Support zod v4 schemas for eval parameters and function parameters (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2533)
+- feat: Add `_createInProjectGroup` to logger options (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2558)
+- feat: Expose helper types for pushing pre-processors (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2539)
+- feat: Add `projectGroupName` to create projects inside a project group Thanks @elijah0528! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2541)
+- span customizer enhancements Thanks @realark! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2536)
+
+### Patch Changes
+
+- fix: Add span provenance for temporal and openai agents sdk (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2518)
+- fix: Ignore empty numeric environment variables such as `BRAINTRUST_NUM_RETRIES` and `BRAINTRUST_DEFAULT_BATCH_SIZE` instead of reading them as `0` Thanks @raphaelfakhri! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2538)
+- fix(flue): Stop resending span metadata on end rows (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2547)
+- fix: Fix `reasoning_content` for openai compatible responses (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2524)
+- fix: Preserve LangChain model attribution (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2537)
+- perf: Cache project lookup (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2523)
+
 ## 3.35.0
 
 ### Minor Changes
