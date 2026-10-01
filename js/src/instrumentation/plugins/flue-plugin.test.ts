@@ -889,6 +889,88 @@ describe("Flue observe instrumentation", () => {
     expect(mockFlush).not.toHaveBeenCalled();
   });
 
+  it("logs only end-event data on later span rows", () => {
+    const emit = observeEvents();
+    const turnRequest = (turnId: string, content: string) => ({
+      input: {
+        messages: [{ content, role: "user" }],
+        systemPrompt: "Be precise",
+        tools: [{ name: "lookup" }],
+      },
+      operationId: "op-1",
+      purpose: "agent",
+      runId: "run-1",
+      turnId,
+      type: "turn_request",
+    });
+
+    emit({
+      input: { metadata: { scenario: "flue-instrumentation" } },
+      runId: "run-1",
+      type: "run_start",
+      workflowName: "research",
+    });
+    emit({
+      operationId: "op-1",
+      operationKind: "prompt",
+      runId: "run-1",
+      type: "operation_start",
+    });
+    emit(turnRequest("turn-1", "Research Flue"));
+    emit({
+      operationId: "op-1",
+      output: { content: "done", role: "assistant" },
+      purpose: "agent",
+      runId: "run-1",
+      stopReason: "stop",
+      turnId: "turn-1",
+      type: "turn",
+    });
+    emit(turnRequest("turn-2", "Start over"));
+    emit({
+      durationMs: 50,
+      isError: false,
+      operationId: "op-1",
+      operationKind: "prompt",
+      result: { text: "PROMPT_DONE" },
+      runId: "run-1",
+      type: "operation",
+    });
+    emit({
+      durationMs: 60,
+      isError: false,
+      runId: "run-1",
+      type: "run_end",
+    });
+
+    const [completedTurn, abandonedTurn] = spans.filter(
+      (span) => span.name === "flue.turn",
+    );
+    for (const turn of [completedTurn, abandonedTurn]) {
+      expect(turn?.args.event.metadata).toMatchObject({
+        "flue.system_prompt": "Be precise",
+        tools: [{ name: "lookup" }],
+      });
+      expect(turn?.log).toHaveBeenCalledTimes(1);
+      const endMetadata = turn?.log.mock.calls[0]?.[0].metadata ?? {};
+      expect(endMetadata).not.toHaveProperty("flue.system_prompt");
+      expect(endMetadata).not.toHaveProperty("tools");
+    }
+    expect(completedTurn?.log.mock.calls[0]?.[0].metadata).toMatchObject({
+      "flue.stop_reason": "stop",
+      "flue.turn_id": "turn-1",
+    });
+    for (const name of ["flue.prompt", "workflow:research"]) {
+      const span = findSpan(name);
+      expect(span?.args.event.metadata).toMatchObject({
+        scenario: "flue-instrumentation",
+      });
+      for (const [row] of span?.log.mock.calls ?? []) {
+        expect(row.metadata ?? {}).not.toHaveProperty("scenario");
+      }
+    }
+  });
+
   it("flushes without awaiting when a run ends", () => {
     const emit = observeEvents();
     const pendingFlush = new Promise<void>(() => {});
