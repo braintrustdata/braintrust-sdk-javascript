@@ -13,7 +13,9 @@ import {
 import { findChildSpans, findLatestSpan } from "../../helpers/trace-selectors";
 import {
   CACHE_PROMPT_MARKER,
+  EMBEDDING_MODEL,
   MODEL,
+  MULTIMODAL_EMBEDDING_MODEL,
   ROOT_NAME,
   SCENARIO_NAME,
 } from "./constants.mjs";
@@ -37,6 +39,8 @@ type RunBedrockRuntimeScenario = (harness: {
 const OPERATION_TO_SPAN_NAME = {
   "bedrock-converse-operation": "bedrock.converse",
   "bedrock-converse-stream-operation": "bedrock.converseStream",
+  "bedrock-embedding-operation": "bedrock.invokeModel",
+  "bedrock-multimodal-embedding-operation": "bedrock.invokeModel",
   "bedrock-invoke-model-operation": "bedrock.invokeModel",
   "bedrock-invoke-model-stream-operation":
     "bedrock.invokeModelWithResponseStream",
@@ -150,7 +154,12 @@ export function defineBedrockRuntimeInstrumentationAssertions(options: {
         const span = findBedrockSpan(events, operationName);
         expect(span, operationName).toBeDefined();
         expect(span?.row.metadata).toMatchObject({
-          model: MODEL,
+          model:
+            operationName === "bedrock-embedding-operation"
+              ? EMBEDDING_MODEL
+              : operationName === "bedrock-multimodal-embedding-operation"
+                ? MULTIMODAL_EMBEDDING_MODEL
+                : MODEL,
           provider: "aws-bedrock",
         });
         expect(span?.output).toBeDefined();
@@ -179,6 +188,68 @@ export function defineBedrockRuntimeInstrumentationAssertions(options: {
         tokens: expect.any(Number),
       });
     });
+
+    test("captures canonical Bedrock embedding data", testConfig, () => {
+      const embeddingSpan = findBedrockSpan(
+        events,
+        "bedrock-embedding-operation",
+      );
+
+      expect(embeddingSpan?.input).toEqual({
+        inputs: [
+          {
+            content: "Embed this short Braintrust test sentence.",
+          },
+        ],
+        output_dimensions: 256,
+      });
+      expect(embeddingSpan?.output).toEqual({ count: 1 });
+      expect(embeddingSpan?.metrics).toMatchObject({
+        prompt_tokens: expect.any(Number),
+        tokens: expect.any(Number),
+      });
+      expect(embeddingSpan?.metrics).not.toHaveProperty("completion_tokens");
+    });
+
+    test(
+      "captures canonical Bedrock multimodal embedding data",
+      testConfig,
+      () => {
+        const embeddingSpan = findBedrockSpan(
+          events,
+          "bedrock-multimodal-embedding-operation",
+        );
+
+        expect(embeddingSpan?.input).toMatchObject({
+          inputs: [
+            {
+              content: [
+                { text: "A sailing ship in a storm", type: "text" },
+                {
+                  image_url: {
+                    url: {
+                      content_type: "image/png",
+                      type: "braintrust_attachment",
+                    },
+                  },
+                  type: "image_url",
+                },
+              ],
+            },
+          ],
+          output_dimensions: 256,
+        });
+        expect(embeddingSpan?.output).toEqual({ count: 1 });
+        expect(embeddingSpan?.metrics).toMatchObject({
+          prompt_tokens: expect.any(Number),
+          tokens: expect.any(Number),
+        });
+        expect(embeddingSpan?.metrics).not.toHaveProperty("completion_tokens");
+        expect(embeddingSpan?.metrics).not.toHaveProperty(
+          "time_to_first_token",
+        );
+      },
+    );
 
     test("captures Bedrock prompt cache metrics", testConfig, () => {
       const metrics = Object.keys(OPERATION_TO_SPAN_NAME)

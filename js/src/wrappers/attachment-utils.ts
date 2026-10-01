@@ -10,6 +10,57 @@ export function isAutoCaptureAttachmentsEnabled(): boolean {
   );
 }
 
+function imageBytes(value: unknown): Uint8Array | undefined {
+  if (value instanceof Uint8Array) {
+    return value;
+  }
+  if (value instanceof ArrayBuffer) {
+    return new Uint8Array(value);
+  }
+  if (typeof value !== "string" || value.startsWith("data:")) {
+    return undefined;
+  }
+  try {
+    const decoded = atob(value.slice(0, 24));
+    return Uint8Array.from(decoded, (character) => character.charCodeAt(0));
+  } catch {
+    return undefined;
+  }
+}
+
+export function inferImageMediaType(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    const dataUrlType = value.match(/^data:(image\/[^;]+);base64,/i)?.[1];
+    if (dataUrlType) {
+      return dataUrlType;
+    }
+  }
+
+  const bytes = imageBytes(value);
+  if (!bytes) {
+    return undefined;
+  }
+  if (
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  ) {
+    return "image/png";
+  }
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return "image/jpeg";
+  }
+  const signature = String.fromCharCode(...bytes.slice(0, 12));
+  if (signature.startsWith("GIF87a") || signature.startsWith("GIF89a")) {
+    return "image/gif";
+  }
+  if (signature.startsWith("RIFF") && signature.slice(8, 12) === "WEBP") {
+    return "image/webp";
+  }
+  return undefined;
+}
+
 /**
  * Get file extension from IANA media type
  */
