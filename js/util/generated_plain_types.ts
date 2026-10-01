@@ -1,15 +1,15 @@
-// Auto-generated file (content hash d52ddfd3ce0aa144) -- do not modify
+// Auto-generated file (content hash 7351b6dec8a2d13b) -- do not modify
 
 export type AclObjectTypeType =
   /**
    * The object type that the ACL applies to
    *
-   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, ai_secret, org_ai_secret, org_account
+   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, project_group_projects, ai_secret, org_ai_secret, org_account
    */
   | /**
    * The object type that the ACL applies to
    *
-   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, ai_secret, org_ai_secret, org_account
+   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, project_group_projects, ai_secret, org_ai_secret, org_account
    */
   (| "organization"
       | "project"
@@ -24,6 +24,7 @@ export type AclObjectTypeType =
       | "org_project"
       | "org_audit_logs"
       | "project_group"
+      | "project_group_projects"
       | "ai_secret"
       | "org_ai_secret"
       | "org_account"
@@ -31,7 +32,7 @@ export type AclObjectTypeType =
   /**
    * The object type that the ACL applies to
    *
-   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, ai_secret, org_ai_secret, org_account
+   * @enum organization, project, experiment, dataset, prompt, prompt_session, group, role, org_member, project_log, org_project, org_audit_logs, project_group, project_group_projects, ai_secret, org_ai_secret, org_account
    */
   | null;
 export type PermissionType =
@@ -4390,10 +4391,6 @@ export type OnlineScoreConfigType = {
      */
     (SpanScopeType | TraceScopeType | GroupScopeType | null)
     | undefined;
-  run_once?: /**
-     * Skip rerunning a completed scorer while its definition is unchanged. Failed scorers still retry. When omitted, behavior is unchanged.
-     */
-    boolean | undefined;
 } | null;
 export type OrganizationType = {
   /**
