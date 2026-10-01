@@ -69,7 +69,6 @@ describe("project group registration", () => {
       });
       expect(fetch).not.toHaveBeenCalled();
       expect(await logger.id).toBe(projectId);
-      expect(await logger.id).toBe(projectId);
       const requests = fetch.mock.calls.filter(([url]) =>
         String(url).endsWith("/api/project/register"),
       );
@@ -82,7 +81,7 @@ describe("project group registration", () => {
     },
   );
 
-  test("keeps scoped registrations separate from the shared cache", async () => {
+  test("caches scoped registrations separately from unscoped ones", async () => {
     const { state, fetch } = createState();
     const options = { state, projectName: "project", setCurrent: false };
     await initLogger(options).id;
@@ -97,7 +96,7 @@ describe("project group registration", () => {
       requests.map(([, init]) => JSON.parse(init?.body as string)),
     ).toEqual([
       { project_name: "project", org_id: "org-id" },
-      ...["my-group", "my-group", "other-group"].map((project_group_name) => ({
+      ...["my-group", "other-group"].map((project_group_name) => ({
         project_name: "project",
         org_id: "org-id",
         project_group_name,
@@ -150,13 +149,16 @@ describe("project group registration", () => {
         ...(components === pythonExport ? { project_id: null } : {}),
       });
       const { state: receivingState, fetch } = createState();
-      expect(
-        await spanComponentsToObjectId({ state: receivingState, components }),
-      ).toBe(projectId);
-      const request = fetch.mock.calls.find(([url]) =>
+      for (let i = 0; i < 2; i++) {
+        expect(
+          await spanComponentsToObjectId({ state: receivingState, components }),
+        ).toBe(projectId);
+      }
+      const requests = fetch.mock.calls.filter(([url]) =>
         String(url).endsWith("/api/project/register"),
       );
-      expect(JSON.parse(request?.[1]?.body as string)).toEqual({
+      expect(requests).toHaveLength(1);
+      expect(JSON.parse(requests[0][1]?.body as string)).toEqual({
         project_name: "project",
         org_id: "org-id",
         project_group_name: "my-group",
