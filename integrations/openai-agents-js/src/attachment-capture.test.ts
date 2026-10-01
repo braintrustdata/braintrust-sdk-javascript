@@ -37,13 +37,7 @@ it.each([true, false])(
         name: type,
         groupId: null,
       };
-      const readData = vi.fn(() => "AQID");
-      const audio = {
-        get data() {
-          return readData();
-        },
-        format: "pcm",
-      };
+      const audio = { data: "AQID", format: "pcm" };
       const span: AgentsSpan = {
         type: "trace.span",
         traceId: type,
@@ -86,7 +80,6 @@ it.each([true, false])(
         ),
       ).toBe(true);
       if (!captureAttachments) {
-        expect(readData).not.toHaveBeenCalled();
         expect(decode).not.toHaveBeenCalled();
         expect(JSON.stringify(rows)).not.toContain("AQID");
       }

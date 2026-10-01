@@ -1,4 +1,10 @@
-import { Attachment, startSpan, withCurrent, type Span } from "../../logger";
+import {
+  _internalCaptureAttachmentsEnabled,
+  Attachment,
+  startSpan,
+  withCurrent,
+  type Span,
+} from "../../logger";
 import { debugLogger } from "../../debug-logger";
 import { getCurrentUnixTimestamp } from "../../util";
 import {
@@ -8,7 +14,6 @@ import {
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
-  isAutoCaptureAttachmentsEnabled,
 } from "../../wrappers/attachment-utils";
 import { isObject } from "../../../util/index";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
@@ -109,7 +114,7 @@ async function mediaInput(
   operation: string,
   captureAttachments: boolean,
 ) {
-  const pendingContent: Array<Promise<MediaPart | undefined>> = [];
+  const pendingContent: Array<Promise<MediaPart>> = [];
   for (const [key, purpose] of [
     ["image", "reference"],
     ["mask", "mask"],
@@ -118,23 +123,8 @@ async function mediaInput(
     const value = params[key];
     if (value === undefined) continue;
     for (const item of Array.isArray(value) ? value : [value]) {
-      if (!captureAttachments && key !== "file") {
-        if (
-          item instanceof URL ||
-          (typeof item === "string" && /^https?:/.test(item))
-        ) {
-          pendingContent.push(
-            Promise.resolve({
-              type: "image_url",
-              image_url: { url: item instanceof URL ? item.toString() : item },
-              purpose,
-            }),
-          );
-        }
-        continue;
-      }
       pendingContent.push(
-        (async (): Promise<MediaPart | undefined> => {
+        (async (): Promise<MediaPart> => {
           const isImage = key !== "file";
           const sourceName =
             isObject(item) && typeof item.name === "string"
@@ -228,9 +218,14 @@ async function mediaInput(
             filename,
             captureAttachments,
           );
-          if (isImage && attachment === undefined) return undefined;
           return isImage
-            ? { type: "image_url", image_url: { url: attachment }, purpose }
+            ? {
+                type: "image_url",
+                ...(attachment !== undefined
+                  ? { image_url: { url: attachment } }
+                  : {}),
+                purpose,
+              }
             : {
                 type: "file",
                 file: {
@@ -260,9 +255,7 @@ async function mediaInput(
   )
     parameters.format = params.response_format;
   const prompt = params.prompt ?? params.input;
-  const content = (await Promise.all(pendingContent)).filter(
-    (part) => part !== undefined,
-  );
+  const content = await Promise.all(pendingContent);
   return {
     operation,
     ...(prompt !== undefined ? { prompt } : {}),
@@ -687,7 +680,7 @@ export function interceptOpenAIMedia(
   return channel.intercept((target, thisArg, args, additional) => {
     if (isAutoInstrumentationSuppressed()) return target.apply(thisArg, args);
     const params = args[0];
-    const captureAttachments = isAutoCaptureAttachmentsEnabled();
+    const captureAttachments = _internalCaptureAttachmentsEnabled();
     let span: Span;
     try {
       const { name, spanAttributes, spanInfoMetadata } = buildStartSpanArgs(
@@ -779,7 +772,8 @@ export function interceptOpenAIMedia(
           const accumulated: OpenAIMediaResult = {};
           const audio: Blob[] = [];
           patchStreamIfNeeded<OpenAIMediaEvent>(value, {
-            shouldCollect: (event) => {
+            collectChunks: false,
+            onChunk: (event) => {
               if (event.b64_json || event.audio || event.delta || event.text)
                 first();
               if (event.usage) accumulated.usage = event.usage;
@@ -812,7 +806,6 @@ export function interceptOpenAIMedia(
                 );
                 if (blob) audio.push(blob);
               }
-              return false;
             },
             onComplete: () => {
               finish(accumulated);

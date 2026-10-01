@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Attachment } from "../../logger";
+import { _internalCaptureAttachmentsEnabled, Attachment } from "../../logger";
 import {
-  isAutoCaptureAttachmentsEnabled,
   omitMediaData,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
@@ -59,7 +58,7 @@ export function extractOpenAIBatchInput(
   const input =
     endpoint === "/v1/chat/completions" ? params.messages : params.input;
   return {
-    input: processInputAttachments(input, isAutoCaptureAttachmentsEnabled()),
+    input: processInputAttachments(input),
     metadata: batchMetadata(params),
   };
 }
@@ -70,7 +69,7 @@ export function extractOpenAIChatInput(params: Record<string, unknown>): {
 } {
   const { messages, ...metadata } = params;
   return {
-    input: processInputAttachments(messages, isAutoCaptureAttachmentsEnabled()),
+    input: processInputAttachments(messages),
     metadata: { ...metadata, provider: "openai" },
   };
 }
@@ -81,7 +80,7 @@ export function extractOpenAIResponsesInput(params: Record<string, unknown>): {
 } {
   const { input, ...metadata } = params;
   return {
-    input: processInputAttachments(input, isAutoCaptureAttachmentsEnabled()),
+    input: processInputAttachments(input),
     metadata: { ...metadata, provider: "openai" },
   };
 }
@@ -99,7 +98,7 @@ export function extractOpenAIResponsesMetadata(
 /** Convert Responses API base64 image outputs to Braintrust attachments. */
 export function processImagesInOutput(
   output: any,
-  captureAttachments = isAutoCaptureAttachmentsEnabled(),
+  captureAttachments = _internalCaptureAttachmentsEnabled(),
 ): any {
   if (Array.isArray(output)) {
     return output

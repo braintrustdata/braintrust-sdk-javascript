@@ -1,11 +1,9 @@
-import {
-  isAutoCaptureAttachmentsEnabled,
-  omitMediaData,
-} from "../../wrappers/attachment-utils";
+import { omitMediaData } from "../../wrappers/attachment-utils";
 import { BasePlugin, toLoggedError } from "../core";
 import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import {
+  _internalCaptureAttachmentsEnabled,
   Attachment,
   startSpan as startBaseSpan,
   withCurrent,
@@ -1657,7 +1655,7 @@ function convertBase64ToAttachment(
  */
 export function processAttachmentsInInput(
   input: unknown,
-  captureAttachments = isAutoCaptureAttachmentsEnabled(),
+  captureAttachments = _internalCaptureAttachmentsEnabled(),
 ): unknown {
   if (Array.isArray(input)) {
     return input

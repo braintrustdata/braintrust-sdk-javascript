@@ -718,6 +718,25 @@ function normalizeProxyConnUrl(proxyUrl: string): string {
 /** @internal */
 export const CAPTURE_ATTACHMENTS = Symbol.for("braintrust.captureAttachments");
 
+function captureAttachmentsFromEnv(): boolean {
+  return ["1", "true"].includes(
+    iso.getEnv("BRAINTRUST_CAPTURE_ATTACHMENTS")?.trim().toLowerCase() ?? "",
+  );
+}
+
+/**
+ * @internal Resolve automatic attachment capture for a logger or span. Only plain
+ * fields are read, so parents and global state from other SDK bundles also work.
+ */
+export function _internalCaptureAttachmentsEnabled(parent?: object): boolean {
+  // Global state is unset until a platform entrypoint configures the SDK.
+  const owner = parent ?? (_globalState ? getSpanParentObject() : undefined);
+  const policy = owner && Reflect.get(owner, CAPTURE_ATTACHMENTS);
+  return typeof policy === "boolean"
+    ? policy
+    : (_globalState?.captureAttachments ?? captureAttachmentsFromEnv());
+}
+
 export class BraintrustState {
   public id: string;
   public currentExperiment: Experiment | undefined;
@@ -1172,19 +1191,6 @@ export class BraintrustState {
     maskingFunction: ((value: unknown) => unknown) | null,
   ): void {
     this.bgLogger().setMaskingFunction(maskingFunction);
-  }
-
-  /** @internal Resolve capture against the actual logger or span, including across SDK bundles. */
-  public _internalCaptureAttachmentsEnabled(parent?: object): boolean {
-    const policy = parent && Reflect.get(parent, CAPTURE_ATTACHMENTS);
-    if (typeof policy === "boolean") return policy;
-    return (
-      this.captureAttachments ??
-      ["1", "true"].includes(
-        iso.getEnv("BRAINTRUST_CAPTURE_ATTACHMENTS")?.trim().toLowerCase() ??
-          "",
-      )
-    );
   }
 
   public setDebugLogLevel(option: DebugLogLevelOption): void {
@@ -2814,13 +2820,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
 
   /** @internal */
   public get [CAPTURE_ATTACHMENTS](): boolean {
-    return (
-      this.captureAttachments ??
-      ["1", "true"].includes(
-        iso.getEnv("BRAINTRUST_CAPTURE_ATTACHMENTS")?.trim().toLowerCase() ??
-          "",
-      )
-    );
+    return this.captureAttachments ?? captureAttachmentsFromEnv();
   }
 
   private parentObjectType() {
@@ -5096,21 +5096,19 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
     },
   );
 
-  if (
-    (options.setCurrent ?? true) &&
-    options.captureAttachments !== undefined
-  ) {
+  const setCurrent = options.setCurrent ?? true;
+  if (setCurrent && options.captureAttachments !== undefined) {
     state.captureAttachments = options.captureAttachments;
   }
   const ret = new Logger<IsAsyncFlush>(state, lazyMetadata, {
     captureAttachments:
       options.captureAttachments ??
-      ((options.setCurrent ?? true) ? state.captureAttachments : undefined),
+      (setCurrent ? state.captureAttachments : undefined),
     asyncFlush,
     computeMetadataArgs,
     linkArgs,
   });
-  if (options.setCurrent ?? true) {
+  if (setCurrent) {
     state.currentLogger = ret as Logger<false>;
   }
   return ret;
@@ -8205,7 +8203,8 @@ export class SpanImpl implements Span {
     this._state = args.state;
     this[CAPTURE_ATTACHMENTS] =
       args[CAPTURE_ATTACHMENTS] ??
-      args.state._internalCaptureAttachmentsEnabled();
+      args.state.captureAttachments ??
+      captureAttachmentsFromEnv();
     this._propagatedState = args.propagatedState;
     const instrumentationName =
       getSpanInstrumentationName(args) ??

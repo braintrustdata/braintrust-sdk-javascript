@@ -1,7 +1,6 @@
 import { uint8ArrayToBase64 } from "../../../util/bytes";
 import {
   getExtensionFromMediaType,
-  isAutoCaptureAttachmentsEnabled,
   omitMediaData,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
@@ -15,6 +14,7 @@ import type {
 } from "../core/channel-definitions";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
+  _internalCaptureAttachmentsEnabled,
   _internalGetGlobalState,
   Attachment,
   CAPTURE_ATTACHMENTS,
@@ -246,7 +246,7 @@ export class GoogleGenAIPlugin extends BasePlugin {
         streamEvent.googleGenAIMetadata =
           extractGenerateContentMetadata(params);
         streamEvent.googleGenAIStartTime = getCurrentUnixTimestamp();
-        streamEvent.captureAttachments = isAutoCaptureAttachmentsEnabled();
+        streamEvent.captureAttachments = _internalCaptureAttachmentsEnabled();
       },
       asyncEnd: (event) => {
         const streamEvent = event as GenerateContentStreamEvent;
@@ -661,7 +661,7 @@ function patchGoogleGenAIStreamingResult(args: {
     metadata,
     result,
     startTime,
-    captureAttachments = isAutoCaptureAttachmentsEnabled(),
+    captureAttachments = _internalCaptureAttachmentsEnabled(),
   } = args;
 
   if (
@@ -1175,8 +1175,12 @@ function serializeGoogleGenAIImage(
   fallbackMimeType?: string,
   purpose?: "input" | "reference" | "mask",
 ): Record<string, unknown> | undefined {
-  const captureAttachments = isAutoCaptureAttachmentsEnabled();
-  if (!captureAttachments && !image.gcsUri) return undefined;
+  const captureAttachments = _internalCaptureAttachmentsEnabled();
+  // Omitted inline media keeps its non-data metadata, without reading the bytes.
+  if (!captureAttachments && !image.gcsUri)
+    return purpose && "imageBytes" in image
+      ? { type: "image_url", purpose }
+      : undefined;
   const mimeType = image.mimeType ?? fallbackMimeType ?? "image/png";
   const filename = `${filenameStem}.${getExtensionFromMediaType(mimeType)}`;
   const media =
@@ -1203,10 +1207,14 @@ function serializeGoogleGenAIVideo(
   video: GoogleGenAIVideo,
   filenameStem: string,
 ): Record<string, unknown> | undefined {
-  const captureAttachments = isAutoCaptureAttachmentsEnabled();
-  if (!captureAttachments && !video.uri) return undefined;
+  const captureAttachments = _internalCaptureAttachmentsEnabled();
   const mimeType = video.mimeType ?? "video/mp4";
   const filename = `${filenameStem}.${getExtensionFromMediaType(mimeType)}`;
+  // Omitted inline media keeps its non-data metadata, without reading the bytes.
+  if (!captureAttachments && !video.uri)
+    return "videoBytes" in video
+      ? { type: "file", file: { filename } }
+      : undefined;
   const media =
     video.uri ??
     (video.videoBytes
@@ -1227,7 +1235,7 @@ type EmbeddingContentPart =
   | { type: "image_url"; image_url: { url: string | Attachment } }
   | {
       type: "file";
-      file: { file_data: string | Attachment; filename?: string };
+      file: { file_data?: string | Attachment; filename?: string };
     };
 
 function serializeEmbedContentInput(
@@ -1264,7 +1272,10 @@ function serializeEmbedContentInput(
         if (part.text !== undefined) return [{ type: "text", text: part.text }];
         const media = part.inlineData ?? part.fileData;
         if (!media) return [];
-        if ("data" in media && !isAutoCaptureAttachmentsEnabled()) return [];
+        if ("data" in media && !_internalCaptureAttachmentsEnabled())
+          return !media.mimeType?.startsWith("image/") && media.displayName
+            ? [{ type: "file", file: { filename: media.displayName } }]
+            : [];
         const data =
           "data" in media
             ? `data:${media.mimeType};base64,${typeof media.data === "string" ? media.data : uint8ArrayToBase64(media.data)}`
@@ -1431,7 +1442,7 @@ function serializeContentItem(item: string | GoogleGenAIContent): unknown {
  */
 function serializePart(
   part: GoogleGenAIPart,
-  captureAttachments = isAutoCaptureAttachmentsEnabled(),
+  captureAttachments = _internalCaptureAttachmentsEnabled(),
 ): unknown {
   if (!part || typeof part !== "object") {
     return part;
@@ -1457,10 +1468,7 @@ function serializePart(
         : {
             file: {
               file_data: attachment,
-              filename:
-                attachment instanceof Attachment
-                  ? attachment.reference.filename
-                  : `file.${getExtensionFromMediaType(mimeType)}`,
+              filename: attachment.reference.filename,
             },
           };
     }
@@ -1687,10 +1695,9 @@ function serializeInteractionValue(
         : "mimeType" in dict && typeof dict.mimeType === "string"
           ? dict.mimeType
           : undefined;
-    const captureAttachments = isAutoCaptureAttachmentsEnabled();
+    const captureAttachments = isMedia && _internalCaptureAttachmentsEnabled();
     const attachment =
       captureAttachments &&
-      isMedia &&
       mimeType &&
       "data" in dict &&
       dict.data !== undefined
@@ -1731,8 +1738,8 @@ function serializeInteractionValue(
 function createAttachmentFromInlineData(
   data: unknown,
   mimeType?: string,
-  filename?: string,
-  captureAttachments = isAutoCaptureAttachmentsEnabled(),
+  filename = `file.${mimeType ? getExtensionFromMediaType(mimeType) : "bin"}`,
+  captureAttachments = _internalCaptureAttachmentsEnabled(),
 ): Attachment | null {
   if (!captureAttachments) return null;
   if (
@@ -1767,9 +1774,7 @@ function createAttachmentFromInlineData(
 
   return new Attachment({
     data: arrayBuffer,
-    filename:
-      filename ??
-      `file.${mimeType ? getExtensionFromMediaType(mimeType) : "bin"}`,
+    filename,
     contentType: mimeType || "application/octet-stream",
   });
 }

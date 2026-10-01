@@ -1,8 +1,10 @@
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import {
+  _internalCaptureAttachmentsEnabled,
   Attachment,
   BraintrustState,
   CAPTURE_ATTACHMENTS,
+  ExternalAttachment,
   startSpan,
   _exportsForTestingOnly,
   _internalGetGlobalState,
@@ -12,10 +14,7 @@ import {
 import { configureNode } from "./node/config";
 import iso from "./isomorph";
 import * as byteUtils from "../util/index";
-import {
-  isAutoCaptureAttachmentsEnabled,
-  processInputAttachments,
-} from "./wrappers/attachment-utils";
+import { processInputAttachments } from "./wrappers/attachment-utils";
 import { processAttachmentsInInput } from "./instrumentation/plugins/anthropic-plugin";
 import {
   processAISDKCallInput,
@@ -563,31 +562,49 @@ it.each(["transcription", "translation"])(
   },
 );
 
+it("keeps explicit AI SDK attachments with capture disabled", () => {
+  initLogger({ ...loggerOptions, captureAttachments: false });
+  const external = new ExternalAttachment({
+    url: "s3://bucket/image.png",
+    filename: "image.png",
+    contentType: "image/png",
+  });
+  const content = [
+    { type: "image", image: external },
+    { type: "file", data: external, mediaType: "image/png" },
+  ];
+  const { input } = processAISDKCallInput({
+    model: { modelId: "model", provider: "test" },
+    messages: [{ role: "user", content }],
+  });
+  expect(input).toHaveProperty("messages.0.content", content);
+});
+
 it.each([true, false])(
   "explicit %s overrides an opposing environment setting",
   (captureAttachments) => {
     vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", String(!captureAttachments));
     const logger = initLogger({ ...loggerOptions, captureAttachments });
-    expect(isAutoCaptureAttachmentsEnabled(logger)).toBe(captureAttachments);
-    expect(isAutoCaptureAttachmentsEnabled()).toBe(captureAttachments);
+    expect(_internalCaptureAttachmentsEnabled(logger)).toBe(captureAttachments);
+    expect(_internalCaptureAttachmentsEnabled()).toBe(captureAttachments);
     initLogger(loggerOptions);
-    expect(isAutoCaptureAttachmentsEnabled()).toBe(captureAttachments);
+    expect(_internalCaptureAttachmentsEnabled()).toBe(captureAttachments);
   },
 );
 
 it("local loggers use the environment, and never inherit or update the global override", () => {
   initLogger({ ...loggerOptions, captureAttachments: true });
   const local = initLogger({ ...loggerOptions, setCurrent: false });
-  expect(isAutoCaptureAttachmentsEnabled(local)).toBe(false);
+  expect(_internalCaptureAttachmentsEnabled(local)).toBe(false);
   initLogger({
     ...loggerOptions,
     setCurrent: false,
     captureAttachments: false,
   });
-  expect(isAutoCaptureAttachmentsEnabled()).toBe(true);
+  expect(_internalCaptureAttachmentsEnabled()).toBe(true);
   vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
   initLogger({ ...loggerOptions, captureAttachments: false });
-  expect(isAutoCaptureAttachmentsEnabled(local)).toBe(true);
+  expect(_internalCaptureAttachmentsEnabled(local)).toBe(true);
 });
 
 it("isolates SDK state defaults", () => {
@@ -598,9 +615,9 @@ it("isolates SDK state defaults", () => {
     state: other,
     captureAttachments: false,
   });
-  expect(isAutoCaptureAttachmentsEnabled(otherLogger)).toBe(false);
-  expect(other._internalCaptureAttachmentsEnabled()).toBe(false);
-  expect(isAutoCaptureAttachmentsEnabled()).toBe(true);
+  expect(_internalCaptureAttachmentsEnabled(otherLogger)).toBe(false);
+  expect(other.captureAttachments).toBe(false);
+  expect(_internalCaptureAttachmentsEnabled()).toBe(true);
 });
 
 it("keeps concurrent local traces and descendants isolated after global replacement", async () => {
@@ -837,8 +854,8 @@ it("keeps ElevenLabs transcripts and timing without decoding or retaining audio"
   expect(
     rows.some((row) => row.metrics?.time_to_first_token !== undefined),
   ).toBe(true);
-  expect(rows.find((row) => row.output)?.output).toMatchObject({
-    content: [],
+  expect(rows.find((row) => row.output)?.output).toEqual({
+    content: [{ type: "file", file: { filename: "speech.mp3", byte_size: 3 } }],
     annotations: [{ alignment: { characters: ["h", "i"] } }],
   });
 });
@@ -866,7 +883,9 @@ it("does not read Groq speech blobs or retain audio when disabled", async () => 
   expect(concatenate).not.toHaveBeenCalled();
   const rows = (await background.drain()) as Array<{ output?: unknown }>;
   expect(JSON.stringify(rows)).not.toContain("braintrust_attachment");
-  expect(rows.find((row) => row.output)?.output).toEqual({ content: [] });
+  expect(rows.find((row) => row.output)?.output).toEqual({
+    content: [{ type: "file", file: { filename: "speech.wav", byte_size: 3 } }],
+  });
 });
 
 it("preserves a deferred instrumentation policy when a different logger supplies the span parent", async () => {
@@ -874,8 +893,8 @@ it("preserves a deferred instrumentation policy when a different logger supplies
   const args = { name: "deferred", [CAPTURE_ATTACHMENTS]: false };
   const deferred = startSpan(args);
   const child = deferred.startSpan();
-  expect(isAutoCaptureAttachmentsEnabled(deferred)).toBe(false);
-  expect(isAutoCaptureAttachmentsEnabled(child)).toBe(false);
+  expect(_internalCaptureAttachmentsEnabled(deferred)).toBe(false);
+  expect(_internalCaptureAttachmentsEnabled(child)).toBe(false);
   child.end();
   deferred.end();
 });

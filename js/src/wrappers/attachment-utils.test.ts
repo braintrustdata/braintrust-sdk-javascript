@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import iso from "../isomorph";
-import { Attachment } from "../logger";
-import {
-  isAutoCaptureAttachmentsEnabled,
-  processInputAttachments,
-} from "./attachment-utils";
+import { _internalCaptureAttachmentsEnabled, Attachment } from "../logger";
+import { processInputAttachments } from "./attachment-utils";
 
 const originalGetEnv = iso.getEnv;
 
@@ -12,11 +9,11 @@ afterEach(() => {
   iso.getEnv = originalGetEnv;
 });
 
-describe("isAutoCaptureAttachmentsEnabled", () => {
+describe("_internalCaptureAttachmentsEnabled", () => {
   it.each(["1", "true", " TRUE "])('accepts "%s"', (value) => {
     iso.getEnv = () => value;
 
-    expect(isAutoCaptureAttachmentsEnabled()).toBe(true);
+    expect(_internalCaptureAttachmentsEnabled()).toBe(true);
   });
 
   it.each([undefined, "0", "false", "yes", "on", "unexpected"])(
@@ -24,7 +21,7 @@ describe("isAutoCaptureAttachmentsEnabled", () => {
     (value) => {
       iso.getEnv = () => value;
 
-      expect(isAutoCaptureAttachmentsEnabled()).toBe(false);
+      expect(_internalCaptureAttachmentsEnabled()).toBe(false);
     },
   );
 });

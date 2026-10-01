@@ -1,7 +1,5 @@
-import {
-  isAutoCaptureAttachmentsEnabled,
-  processInputAttachments,
-} from "../../wrappers/attachment-utils";
+import { _internalCaptureAttachmentsEnabled } from "../../logger";
+import { processInputAttachments } from "../../wrappers/attachment-utils";
 import { interceptOpenAIMedia } from "./openai-media";
 import { BasePlugin } from "../core";
 import {
@@ -317,7 +315,7 @@ function processChatCompletionOutput(
   choices: OpenAIChatChoice[] | undefined,
   audioFormat: string | undefined,
 ): unknown {
-  const captureAttachments = isAutoCaptureAttachmentsEnabled();
+  const captureAttachments = _internalCaptureAttachmentsEnabled();
   return choices?.map((choice) => ({
     ...choice,
     // Parsed outputs and tool arguments are application JSON, not media parts.

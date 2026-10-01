@@ -33,26 +33,31 @@ const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
 const mockStartSpan = vi.mocked(startSpan);
 
 // Mock logger
-vi.mock("../../logger", () => ({
-  BaseAttachment: class {},
-  CAPTURE_ATTACHMENTS: Symbol.for("braintrust.captureAttachments"),
-  startSpan: vi.fn(() => ({
-    log: vi.fn(),
-    end: vi.fn(),
-  })),
-  _internalGetGlobalState: vi.fn(() => undefined),
-  currentSpan: vi.fn(() => undefined),
-  withCurrent: vi.fn((_span: unknown, callback: () => unknown) => callback()),
-  Attachment: class MockAttachment {
-    reference: any;
-    constructor(params: any) {
-      this.reference = {
-        filename: params.filename,
-        content_type: params.contentType,
-      };
-    }
-  },
-}));
+vi.mock("../../logger", async () => {
+  const { default: iso } = await import("../../isomorph");
+  return {
+    _internalCaptureAttachmentsEnabled: () =>
+      iso.getEnv("BRAINTRUST_CAPTURE_ATTACHMENTS") === "true",
+    BaseAttachment: class {},
+    CAPTURE_ATTACHMENTS: Symbol.for("braintrust.captureAttachments"),
+    startSpan: vi.fn(() => ({
+      log: vi.fn(),
+      end: vi.fn(),
+    })),
+    _internalGetGlobalState: vi.fn(() => undefined),
+    currentSpan: vi.fn(() => undefined),
+    withCurrent: vi.fn((_span: unknown, callback: () => unknown) => callback()),
+    Attachment: class MockAttachment {
+      reference: any;
+      constructor(params: any) {
+        this.reference = {
+          filename: params.filename,
+          content_type: params.contentType,
+        };
+      }
+    },
+  };
+});
 
 describe("GoogleGenAIPlugin", () => {
   let plugin: GoogleGenAIPlugin;

@@ -9,11 +9,15 @@ import {
   isObject,
   SpanTypeAttribute,
 } from "../../../util/index";
-import { Attachment, withCurrent, type Span } from "../../logger";
+import {
+  _internalCaptureAttachmentsEnabled,
+  Attachment,
+  withCurrent,
+  type Span,
+} from "../../logger";
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
-  isAutoCaptureAttachmentsEnabled,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
 import { getCurrentUnixTimestamp } from "../../util";
@@ -95,9 +99,7 @@ export class GroqPlugin extends BasePlugin {
           },
           metadata: { model: params.model, provider: "groq" },
         }),
-        extractOutput: () => ({
-          content: [],
-        }),
+        extractOutput: () => ({ content: [] }),
         extractMetrics: () => ({}),
         patchResult: ({ endEvent, result, span, startTime }) =>
           captureGroqSpeechResponse(
@@ -147,7 +149,7 @@ function extractGroqAudioInput(
   span: Span,
 ): { input: unknown; metadata: Record<string, unknown> } {
   const source = params.file ?? params.url;
-  const captureAttachments = isAutoCaptureAttachmentsEnabled(span);
+  const captureAttachments = _internalCaptureAttachmentsEnabled(span);
   const filePart = groqAudioFilePart(source, captureAttachments);
   const input = {
     operation,
@@ -404,25 +406,24 @@ function captureGroqSpeechResponse(
   span: Span,
   startTime: number,
 ): boolean {
-  const captureAttachments = isAutoCaptureAttachmentsEnabled(span);
+  const captureAttachments = _internalCaptureAttachmentsEnabled(span);
   if (!isObject(response)) return false;
 
-  const headerContentType = captureAttachments
-    ? responseHeader(response, "content-type")?.split(";", 1)[0]
-    : undefined;
-  const contentType = !captureAttachments
-    ? "application/octet-stream"
-    : headerContentType?.startsWith("audio/")
-      ? headerContentType
-      : audioContentTypeFromFormat(request.response_format ?? "wav");
+  const headerContentType = responseHeader(response, "content-type")?.split(
+    ";",
+    1,
+  )[0];
+  const contentType = headerContentType?.startsWith("audio/")
+    ? headerContentType
+    : audioContentTypeFromFormat(request.response_format ?? "wav");
   if (!contentType) return false;
 
-  const filename = !captureAttachments
-    ? ""
-    : (filenameFromContentDisposition(
-        responseHeader(response, "content-disposition"),
-      ) ?? `speech.${getExtensionFromMediaType(contentType)}`);
-  const chunks: Uint8Array[] | undefined = captureAttachments ? [] : undefined;
+  const filename =
+    filenameFromContentDisposition(
+      responseHeader(response, "content-disposition"),
+    ) ?? `speech.${getExtensionFromMediaType(contentType)}`;
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
   let finished = false;
   let started = false;
   let spanEnded = false;
@@ -436,7 +437,6 @@ function captureGroqSpeechResponse(
     }
   };
   let firstChunk = true;
-  let byteSize = 0;
   const onChunk = (chunk: Uint8Array) => {
     if (finished || chunk.byteLength === 0) return;
     if (firstChunk) {
@@ -447,50 +447,48 @@ function captureGroqSpeechResponse(
       });
       firstChunk = false;
     }
-    byteSize += chunk.byteLength;
-    if (chunks) chunks.push(new Uint8Array(chunk));
+    bytes += chunk.byteLength;
+    if (captureAttachments) chunks.push(new Uint8Array(chunk));
   };
   const complete = () => {
     if (finished) return;
     finished = true;
     try {
-      span.log({
-        output: {
-          content:
-            byteSize > 0 && chunks
-              ? [
-                  {
-                    type: "file",
-                    file: {
-                      filename,
-                      ...(byteSize ? { byte_size: byteSize } : {}),
-                      ...(chunks
-                        ? {
-                            file_data: new Attachment({
-                              data: concatUint8Arrays(...chunks).buffer,
-                              filename,
-                              contentType,
-                            }),
-                          }
-                        : {}),
-                    },
-                  },
-                ]
-              : [],
-        },
-      });
+      // Uncaptured blob reads are not inspected, so their size can be unknown.
+      const content =
+        captureAttachments && !bytes
+          ? []
+          : [
+              {
+                type: "file",
+                file: {
+                  filename,
+                  ...(bytes ? { byte_size: bytes } : {}),
+                  ...(captureAttachments
+                    ? {
+                        file_data: new Attachment({
+                          data: concatUint8Arrays(...chunks).buffer,
+                          filename,
+                          contentType,
+                        }),
+                      }
+                    : {}),
+                },
+              },
+            ];
+      span.log({ output: { content } });
     } finally {
-      if (chunks) chunks.length = 0;
+      chunks.length = 0;
       endSpan();
     }
   };
   const cancel = (error?: unknown) => {
     if (finished) return;
     finished = true;
+    chunks.length = 0;
     try {
       if (error !== undefined) span.log({ error });
     } finally {
-      if (chunks) chunks.length = 0;
       endSpan();
     }
   };

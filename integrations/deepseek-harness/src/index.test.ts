@@ -45,15 +45,16 @@ const mock = vi.hoisted(() => {
   }
 
   const logger = {
-    loggingState: { _internalCaptureAttachmentsEnabled: vi.fn(() => true) },
     startSpan: (args: Record<PropertyKey, unknown>) => new MockSpan(args),
     flush: vi.fn(async () => undefined),
   };
   const initLogger = vi.fn(() => logger);
+  const captureAttachmentsEnabled = vi.fn(() => true);
 
   return {
     Attachment: MockAttachment,
     attachments,
+    captureAttachmentsEnabled,
     initLogger,
     logger,
     reset() {
@@ -62,15 +63,14 @@ const mock = vi.hoisted(() => {
       spans.length = 0;
       initLogger.mockClear();
       logger.flush.mockClear();
-      logger.loggingState._internalCaptureAttachmentsEnabled.mockReturnValue(
-        true,
-      );
+      captureAttachmentsEnabled.mockReturnValue(true);
     },
     spans,
   };
 });
 
 vi.mock("braintrust", () => ({
+  _internalCaptureAttachmentsEnabled: mock.captureAttachmentsEnabled,
   Attachment: mock.Attachment,
   initLogger: mock.initLogger,
   NOOP_SPAN: {},
@@ -150,6 +150,14 @@ describe("DeepSeek Harness plugin", () => {
       setCurrent: false,
     });
     expect(ConfigSchema.dict?.apiKey?.meta.role).toBe("secret");
+  });
+
+  test("passes the attachment capture setting to its logger", () => {
+    createContext({ captureAttachments: true });
+
+    expect(mock.initLogger).toHaveBeenCalledWith(
+      expect.objectContaining({ captureAttachments: true }),
+    );
   });
 
   test("only logs the supported tool definition fields", async () => {
@@ -235,9 +243,7 @@ describe("DeepSeek Harness plugin", () => {
   test.each([true, false])(
     "processes Harness images with capture=%s",
     async (captureAttachments) => {
-      mock.logger.loggingState._internalCaptureAttachmentsEnabled.mockReturnValue(
-        captureAttachments,
-      );
+      mock.captureAttachmentsEnabled.mockReturnValue(captureAttachments);
       const harness = createContext();
       const currentSession = session();
       const image = {
@@ -281,26 +287,27 @@ describe("DeepSeek Harness plugin", () => {
       );
       await harness.listener("session/flush")(currentSession);
 
-      if (!captureAttachments) {
+      let expectedImagePart: Record<string, unknown>;
+      if (captureAttachments) {
+        expect(harness.readImage).toHaveBeenCalledOnce();
+        expect(harness.readImage).toHaveBeenCalledWith(image);
+        expect(mock.attachments).toHaveLength(1);
+        expect(mock.attachments[0]?.params).toMatchObject({
+          filename: "diagram.png",
+          contentType: "image/png",
+        });
+        expect(new Uint8Array(mock.attachments[0]?.params.data ?? [])).toEqual(
+          new Uint8Array([1, 2, 3]),
+        );
+        expectedImagePart = {
+          type: "image_url",
+          image_url: { url: mock.attachments[0] },
+        };
+      } else {
         expect(harness.readImage).not.toHaveBeenCalled();
         expect(mock.attachments).toHaveLength(0);
-        return;
+        expectedImagePart = { type: "image", attachment: image };
       }
-      expect(harness.readImage).toHaveBeenCalledOnce();
-      expect(harness.readImage).toHaveBeenCalledWith(image);
-      expect(mock.attachments).toHaveLength(1);
-      expect(mock.attachments[0]?.params).toMatchObject({
-        filename: "diagram.png",
-        contentType: "image/png",
-      });
-      expect(new Uint8Array(mock.attachments[0]?.params.data ?? [])).toEqual(
-        new Uint8Array([1, 2, 3]),
-      );
-
-      const expectedImagePart = {
-        type: "image_url",
-        image_url: { url: mock.attachments[0] },
-      };
       const turn = mock.spans.find(
         (span) => span.args.name === "deepseek_harness.turn",
       );

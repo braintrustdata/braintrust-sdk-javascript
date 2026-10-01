@@ -16,6 +16,7 @@ import {
 } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import {
+  _internalCaptureAttachmentsEnabled,
   _internalStartSpanWithInitialMerge,
   Attachment,
   BaseAttachment,
@@ -33,7 +34,6 @@ import {
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
-  isAutoCaptureAttachmentsEnabled,
   omitMediaData,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
@@ -920,7 +920,7 @@ function subscribeToHarnessContinuation(
         result: AISDKResult | AsyncIterable<unknown>;
       };
       const span = {
-        [CAPTURE_ATTACHMENTS]: isAutoCaptureAttachmentsEnabled(
+        [CAPTURE_ATTACHMENTS]: _internalCaptureAttachmentsEnabled(
           typeof parent === "string" ? undefined : parent,
         ),
         end: () => endHarnessTurn(parent),
@@ -985,7 +985,7 @@ function subscribeToHarnessContinuation(
           output: processAISDKOutput(
             endEvent.result,
             resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
-            isAutoCaptureAttachmentsEnabled(span),
+            _internalCaptureAttachmentsEnabled(span),
           ),
         });
         span.end();
@@ -1077,7 +1077,7 @@ function interceptAISDKModelGenerate(
           output: processAISDKOutput(
             result,
             additional.denyOutputPaths ?? defaultDenyOutputPaths,
-            isAutoCaptureAttachmentsEnabled(span),
+            _internalCaptureAttachmentsEnabled(span),
           ),
           metrics,
           ...mergeMetadataPayload(
@@ -1157,7 +1157,7 @@ function interceptAISDKModelStream(
           output: processAISDKOutput(
             aggregatedResult,
             additional.denyOutputPaths ?? defaultDenyOutputPaths,
-            isAutoCaptureAttachmentsEnabled(span),
+            _internalCaptureAttachmentsEnabled(span),
           ),
           metrics,
           ...mergeMetadataPayload(
@@ -1629,13 +1629,15 @@ const processContentPart = (part: any): any => {
 
   try {
     if (part.type === "tool-result") return processInputAttachments(part);
+    const captureAttachments = _internalCaptureAttachmentsEnabled();
 
     if (part.type === "image" && part.image) {
+      if (!captureAttachments)
+        return isInlineMedia(part.image) ? omitMediaData(part, "image") : part;
       const imageAttachment = convertImageToAttachment(
         part.image,
         part.mimeType || part.mediaType,
       );
-      if (imageAttachment === undefined) return omitMediaData(part, "image");
       if (imageAttachment) {
         return {
           ...part,
@@ -1644,17 +1646,14 @@ const processContentPart = (part: any): any => {
       }
     }
 
-    if (
-      part.type === "file" &&
-      part.data &&
-      (part.mimeType || part.mediaType)
-    ) {
+    if (part.type === "file" && part.data) {
+      if (!captureAttachments)
+        return isInlineMedia(part.data) ? omitMediaData(part, "data") : part;
       const fileAttachment = convertDataToAttachment(
         part.data,
         part.mimeType || part.mediaType,
         part.name || part.filename,
       );
-      if (fileAttachment === undefined) return omitMediaData(part, "data");
       if (fileAttachment) {
         return {
           ...part,
@@ -1665,12 +1664,14 @@ const processContentPart = (part: any): any => {
 
     if (part.type === "image_url" && part.image_url) {
       if (typeof part.image_url === "object" && part.image_url.url) {
+        if (!captureAttachments)
+          return isInlineMedia(part.image_url.url)
+            ? omitMediaData({
+                ...part,
+                image_url: omitMediaData(part.image_url, "url"),
+              })
+            : part;
         const imageAttachment = convertImageToAttachment(part.image_url.url);
-        if (imageAttachment === undefined)
-          return omitMediaData({
-            ...part,
-            image_url: omitMediaData(part.image_url, "url"),
-          });
         if (imageAttachment) {
           return {
             ...part,
@@ -1690,18 +1691,16 @@ const processContentPart = (part: any): any => {
   return part;
 };
 
+// Explicit attachments and remote URLs are references, not inline media.
+const isInlineMedia = (value: unknown): boolean =>
+  !(value instanceof BaseAttachment) &&
+  !(value instanceof URL && value.protocol !== "data:") &&
+  !(typeof value === "string" && /^https?:/i.test(value));
+
 const convertImageToAttachment = (
   image: any,
   explicitMimeType?: string,
-): Attachment | undefined | null => {
-  if (!isAutoCaptureAttachmentsEnabled()) {
-    return image instanceof Attachment
-      ? image
-      : (image instanceof URL && image.protocol !== "data:") ||
-          (typeof image === "string" && /^https?:/.test(image))
-        ? null
-        : undefined;
-  }
+): Attachment | null => {
   try {
     if (image instanceof URL) {
       if (image.protocol !== "data:") return null;
@@ -1756,15 +1755,7 @@ const convertDataToAttachment = (
   data: any,
   mimeType: string,
   filename?: string,
-): Attachment | undefined | null => {
-  if (!isAutoCaptureAttachmentsEnabled()) {
-    return data instanceof Attachment
-      ? data
-      : (data instanceof URL && data.protocol !== "data:") ||
-          (typeof data === "string" && /^https?:/.test(data))
-        ? null
-        : undefined;
-  }
+): Attachment | null => {
   if (!mimeType) return null;
 
   try {
@@ -1822,16 +1813,19 @@ export function processAISDKGenerateImageInput(
   }
 
   const processedPrompt = { ...prompt };
+  const captureAttachments = _internalCaptureAttachmentsEnabled();
   if (Array.isArray(prompt.images)) {
-    processedPrompt.images = prompt.images.flatMap((image) => {
-      const attachment = convertImageToAttachment(image, "image/png");
-      return attachment === undefined ? [] : [attachment ?? image];
-    });
+    processedPrompt.images = captureAttachments
+      ? prompt.images.map(
+          (image) => convertImageToAttachment(image, "image/png") ?? image,
+        )
+      : prompt.images.filter((image) => !isInlineMedia(image));
   }
   if (prompt.mask !== undefined) {
-    const attachment = convertImageToAttachment(prompt.mask, "image/png");
-    if (attachment === undefined) delete processedPrompt.mask;
-    else processedPrompt.mask = attachment ?? prompt.mask;
+    if (captureAttachments)
+      processedPrompt.mask =
+        convertImageToAttachment(prompt.mask, "image/png") ?? prompt.mask;
+    else if (isInlineMedia(prompt.mask)) delete processedPrompt.mask;
   }
 
   return processAISDKCallInput({
@@ -2870,7 +2864,7 @@ function prepareAISDKChildTracing(
             output: processAISDKOutput(
               output as AISDKResult,
               activeEntry.denyOutputPaths,
-              isAutoCaptureAttachmentsEnabled(span),
+              _internalCaptureAttachmentsEnabled(span),
             ),
             metrics,
             ...mergeMetadataPayload(metadataPayload, missingUsageMetadata),
@@ -3359,7 +3353,7 @@ export function patchAISDKStreamingResult(args: {
   }
 
   const resultRecord = result as Record<string, unknown>;
-  const captureAttachments = isAutoCaptureAttachmentsEnabled(span);
+  const captureAttachments = _internalCaptureAttachmentsEnabled(span);
   attachKnownResultPromiseHandlers(resultRecord);
   let finalized = false;
   const finalize = (
@@ -3999,7 +3993,7 @@ function isAsyncGenerator(value: unknown): value is AsyncGenerator {
 export function processAISDKOutput(
   output: AISDKResult,
   denyOutputPaths: string[],
-  captureAttachments = isAutoCaptureAttachmentsEnabled(),
+  captureAttachments = _internalCaptureAttachmentsEnabled(),
 ): Record<string, unknown> | AISDKResult {
   if (!output) return output;
 
@@ -4150,7 +4144,7 @@ function convertAISDKGeneratedFileToAttachment(
     return file;
   }
 
-  if (!isAutoCaptureAttachmentsEnabled()) return undefined;
+  if (!_internalCaptureAttachmentsEnabled()) return undefined;
 
   const generatedFile = file as AISDKGeneratedFile & Record<string, unknown>;
   const generatedMediaType = safeSerializableFieldRead(

@@ -1,13 +1,17 @@
 import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
-import { startSpan, withCurrent, type Span } from "../../logger";
+import {
+  _internalCaptureAttachmentsEnabled,
+  startSpan,
+  withCurrent,
+  type Span,
+} from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
 import {
-  isAutoCaptureAttachmentsEnabled,
   omitMediaData,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
@@ -188,10 +192,11 @@ function interceptCall<
               number,
               NonNullable<GenerativeAIResponse["candidates"]>[number]
             >();
-            const captureAttachments = isAutoCaptureAttachmentsEnabled(span);
+            const captureAttachments = _internalCaptureAttachmentsEnabled(span);
             patchStreamIfNeeded<GenerativeAIResponse>(value.stream, {
               aroundNext: (callback) => withCurrent(span, callback),
-              shouldCollect: (chunk) => {
+              collectChunks: false,
+              onChunk: (chunk) => {
                 for (const candidate of chunk.candidates ?? []) {
                   const index = candidate.index ?? 0;
                   const previous = candidates.get(index);
@@ -242,7 +247,6 @@ function interceptCall<
                     },
                   });
                 }
-                return false;
               },
               onComplete: () => {},
               onError: (error) =>
@@ -408,7 +412,7 @@ function extractInput(
 // then restore the native payload shape. Any conversion failure keeps all input.
 function convertAttachments<T>(
   value: T,
-  captureAttachments = isAutoCaptureAttachmentsEnabled(),
+  captureAttachments = _internalCaptureAttachmentsEnabled(),
 ): T {
   const convert = (node: unknown): unknown => {
     if (Array.isArray(node))
@@ -475,7 +479,7 @@ function logResponse(span: Span, response: GenerativeAIResponse): void {
         candidates: response.candidates,
         promptFeedback: response.promptFeedback,
       },
-      isAutoCaptureAttachmentsEnabled(span),
+      _internalCaptureAttachmentsEnabled(span),
     ),
     metrics,
     ...(response.modelVersion

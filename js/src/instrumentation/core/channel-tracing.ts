@@ -220,8 +220,10 @@ function startSpanForEvent<
   const startTime = getCurrentUnixTimestamp();
 
   try {
-    const { input, metadata } = withCurrent(span, () =>
-      config.extractInput(event.arguments, event as StartOf<TChannel>, span),
+    const { input, metadata } = config.extractInput(
+      event.arguments,
+      event as StartOf<TChannel>,
+      span,
     );
     span.log({
       input,

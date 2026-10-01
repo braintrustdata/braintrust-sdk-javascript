@@ -1,16 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { base64ToUint8Array, SpanTypeAttribute } from "braintrust/util";
+import { SpanTypeAttribute } from "braintrust/util";
 import {
   Span as BraintrustSpan,
   startSpan,
   Logger,
   currentSpan,
   NOOP_SPAN,
-  Attachment,
-  BaseAttachment,
-  _internalGetGlobalState,
-  getSpanParentObject,
-  withCurrent,
+  _internalCaptureAttachmentsEnabled,
+  _internalProcessImagesInOutput,
+  _internalProcessInputAttachments,
 } from "braintrust";
 import {
   SpanType,
@@ -108,39 +106,6 @@ function getTimeElapsed(end?: string, start?: string): number | undefined {
   return (endTime - startTime) / 1000;
 }
 
-function processAudioAttachment(audio: {
-  data: string;
-  format?: string;
-  [key: string]: unknown;
-}) {
-  if (
-    !_internalGetGlobalState()._internalCaptureAttachmentsEnabled(
-      getSpanParentObject(),
-    )
-  ) {
-    return Object.fromEntries(
-      Object.keys(audio)
-        .filter((key) => key !== "data")
-        .map((key) => [key, audio[key]]),
-    );
-  }
-
-  const format = audio.format || "wav";
-  const contentType = format === "mp3" ? "audio/mpeg" : `audio/${format}`;
-  try {
-    return {
-      ...audio,
-      data: new Attachment({
-        data: new Uint8Array(base64ToUint8Array(audio.data)).buffer,
-        filename: `audio.${format}`,
-        contentType,
-      }),
-    };
-  } catch {
-    return audio;
-  }
-}
-
 /**
  * `OpenAIAgentsTraceProcessor` is a tracing processor that logs traces from the OpenAI Agents SDK to Braintrust.
  *
@@ -176,203 +141,6 @@ export class OpenAIAgentsTraceProcessor {
     this.logger = options.logger;
     this.maxTraces =
       options.maxTraces ?? OpenAIAgentsTraceProcessor.DEFAULT_MAX_TRACES;
-  }
-
-  private processMedia(input: any): any {
-    if (input instanceof BaseAttachment) return input;
-    if (Array.isArray(input)) {
-      return input
-        .map((item) => this.processMedia(item))
-        .filter((item) => item !== undefined);
-    }
-
-    if (input && typeof input === "object") {
-      if (input.type === "audio" && typeof input.audio === "string") {
-        const audio = processAudioAttachment({
-          data: input.audio,
-          format: input.format,
-        });
-        const { audio: _audio, ...metadata } = input;
-        return audio.data === undefined
-          ? metadata
-          : { ...metadata, audio: audio.data };
-      }
-      if (
-        input.type === "input_audio" &&
-        input.input_audio &&
-        typeof input.input_audio === "object"
-      ) {
-        return {
-          ...input,
-          input_audio: processAudioAttachment(input.input_audio),
-        };
-      }
-      if (
-        input.role === "assistant" &&
-        input.audio &&
-        typeof input.audio === "object"
-      ) {
-        return { ...input, audio: processAudioAttachment(input.audio) };
-      }
-      const nestedField =
-        input.type === "image_url"
-          ? "image_url"
-          : input.type === "file"
-            ? "file"
-            : undefined;
-      const media = nestedField ? input[nestedField] : input;
-      const field =
-        input.type === "input_image"
-          ? "image_url" in input
-            ? "image_url"
-            : "image"
-          : input.type === "input_file"
-            ? "file_data" in input
-              ? "file_data"
-              : "file"
-            : input.type === "image_url"
-              ? "url"
-              : input.type === "file"
-                ? "file_data"
-                : undefined;
-      if (field && media && typeof media[field] === "string") {
-        const data = media[field];
-        if (/^https?:\/\//i.test(data)) return input;
-        if (
-          !_internalGetGlobalState()._internalCaptureAttachmentsEnabled(
-            getSpanParentObject(),
-          )
-        ) {
-          const { [field]: _data, ...metadata } = media;
-          const remaining = nestedField
-            ? {
-                ...input,
-                [nestedField]: Object.keys(metadata).length
-                  ? metadata
-                  : undefined,
-              }
-            : metadata;
-          return Object.keys(remaining).some(
-            (key) => key !== "type" && remaining[key] !== undefined,
-          )
-            ? remaining
-            : undefined;
-        }
-        const dataUriMatch = data.match(/^data:([^;,]+);base64,([\s\S]*)$/);
-        const contentType =
-          dataUriMatch?.[1] ??
-          (input.type === "input_image" || input.type === "image_url"
-            ? "image/png"
-            : "application/octet-stream");
-        const extension =
-          contentType === "application/octet-stream"
-            ? "bin"
-            : contentType.split("/")[1];
-        try {
-          const processed = {
-            ...media,
-            [field]: new Attachment({
-              data: new Uint8Array(
-                base64ToUint8Array(dataUriMatch?.[2] ?? data),
-              ).buffer,
-              filename: media.filename || `${input.type}.${extension}`,
-              contentType,
-            }),
-          };
-          return nestedField
-            ? { ...input, [nestedField]: processed }
-            : processed;
-        } catch {
-          return input;
-        }
-      }
-
-      // Recursively process nested objects
-      const result: any = {};
-      for (const [key, value] of Object.entries(input)) {
-        const processed = this.processMedia(value);
-        if (processed !== undefined) result[key] = processed;
-      }
-      return result;
-    }
-
-    return input;
-  }
-
-  private processOutputImages(output: any): any {
-    if (Array.isArray(output)) {
-      return output
-        .map((item) => this.processOutputImages(item))
-        .filter((item) => item !== undefined);
-    }
-
-    if (output && typeof output === "object") {
-      // Handle image_generation_call type - convert result to attachment
-      if (output.type === "image_generation_call" && output.result) {
-        if (
-          !_internalGetGlobalState()._internalCaptureAttachmentsEnabled(
-            getSpanParentObject(),
-          )
-        ) {
-          const { result: _result, ...metadata } = output;
-          return Object.keys(metadata).some((key) => key !== "type")
-            ? metadata
-            : undefined;
-        }
-        let resultData = output.result;
-
-        // Use output_format from the response
-        const fileExtension = output.output_format || "png";
-        const contentType = `image/${fileExtension}`;
-
-        // Strip data URI prefix if present (e.g., "data:image/png;base64,")
-        const dataUriMatch = resultData.match(/^data:image\/\w+;base64,(.*)$/);
-        if (dataUriMatch) {
-          resultData = dataUriMatch[1]; // Extract just the base64 part
-        }
-
-        const baseFilename =
-          output.revised_prompt && typeof output.revised_prompt === "string"
-            ? output.revised_prompt.slice(0, 50).replace(/[^a-zA-Z0-9]/g, "_")
-            : "generated_image";
-        const filename = `${baseFilename}.${fileExtension}`;
-
-        try {
-          // Convert base64 string to Blob
-          const binaryString = atob(resultData);
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-          const blob = new Blob([bytes], { type: contentType });
-
-          const attachment = new Attachment({
-            data: blob,
-            filename: filename,
-            contentType: contentType,
-          });
-
-          return {
-            ...output,
-            result: attachment,
-          };
-        } catch (e) {
-          console.error("Failed to process output image:", e);
-          console.error("Result data sample:", output.result.substring(0, 200));
-          return output;
-        }
-      }
-
-      // Recursively process nested objects
-      const result: any = {};
-      for (const [key, value] of Object.entries(output)) {
-        const processed = this.processOutputImages(value);
-        if (processed !== undefined) result[key] = processed;
-      }
-      return result;
-    }
-
-    return output;
   }
 
   private evictOldestTrace(): void {
@@ -474,7 +242,10 @@ export class OpenAIAgentsTraceProcessor {
     return data;
   }
 
-  private extractResponseLogData(span: AgentsSpan): Record<string, unknown> {
+  private extractResponseLogData(
+    span: AgentsSpan,
+    captureAttachments: boolean,
+  ): Record<string, unknown> {
     const spanData = span.spanData;
     const data: Record<string, any> = {};
 
@@ -483,12 +254,19 @@ export class OpenAIAgentsTraceProcessor {
     }
 
     if (spanData._input !== undefined) {
-      data.input = this.processMedia(spanData._input);
+      data.input = _internalProcessInputAttachments(
+        spanData._input,
+        captureAttachments,
+      );
     }
 
     if (spanData._response !== undefined) {
-      data.output = this.processMedia(
-        this.processOutputImages(spanData._response.output),
+      data.output = _internalProcessInputAttachments(
+        _internalProcessImagesInOutput(
+          spanData._response.output,
+          captureAttachments,
+        ),
+        captureAttachments,
       );
     }
 
@@ -576,7 +354,10 @@ export class OpenAIAgentsTraceProcessor {
     };
   }
 
-  private extractGenerationLogData(span: AgentsSpan): Record<string, unknown> {
+  private extractGenerationLogData(
+    span: AgentsSpan,
+    captureAttachments: boolean,
+  ): Record<string, unknown> {
     const spanData = span.spanData;
     if (!isGenerationSpanData(spanData)) {
       return {};
@@ -610,8 +391,14 @@ export class OpenAIAgentsTraceProcessor {
       metrics.prompt_cached_tokens = usage.input_tokens_details.cached_tokens;
 
     return {
-      input: this.processMedia(spanData.input),
-      output: this.processMedia(this.processOutputImages(spanData.output)),
+      input: _internalProcessInputAttachments(
+        spanData.input,
+        captureAttachments,
+      ),
+      output: _internalProcessInputAttachments(
+        _internalProcessImagesInOutput(spanData.output, captureAttachments),
+        captureAttachments,
+      ),
       metadata: {
         model: spanData.model,
         model_config: spanData.model_config,
@@ -645,13 +432,17 @@ export class OpenAIAgentsTraceProcessor {
 
   private extractTranscriptionLogData(
     span: AgentsSpan,
+    captureAttachments: boolean,
   ): Record<string, unknown> {
     const spanData = span.spanData;
     if (!isTranscriptionSpanData(spanData)) {
       return {};
     }
     return {
-      input: processAudioAttachment(spanData.input),
+      input: _internalProcessInputAttachments(
+        { type: "input_audio", input_audio: spanData.input },
+        captureAttachments,
+      )?.input_audio,
       output: spanData.output,
       metadata: {
         model: spanData.model,
@@ -660,14 +451,20 @@ export class OpenAIAgentsTraceProcessor {
     };
   }
 
-  private extractSpeechLogData(span: AgentsSpan): Record<string, unknown> {
+  private extractSpeechLogData(
+    span: AgentsSpan,
+    captureAttachments: boolean,
+  ): Record<string, unknown> {
     const spanData = span.spanData;
     if (!isSpeechSpanData(spanData)) {
       return {};
     }
     return {
       input: spanData.input,
-      output: processAudioAttachment(spanData.output),
+      output: _internalProcessInputAttachments(
+        { type: "input_audio", input_audio: spanData.output },
+        captureAttachments,
+      )?.input_audio,
       metadata: {
         model: spanData.model,
         model_config: spanData.model_config,
@@ -685,14 +482,17 @@ export class OpenAIAgentsTraceProcessor {
     };
   }
 
-  private extractLogData(span: AgentsSpan): Record<string, unknown> {
+  private extractLogData(
+    span: AgentsSpan,
+    captureAttachments: boolean,
+  ): Record<string, unknown> {
     const spanType = span.spanData?.type;
 
     switch (spanType) {
       case SpanType.AGENT:
         return this.extractAgentLogData(span);
       case SpanType.RESPONSE:
-        return this.extractResponseLogData(span);
+        return this.extractResponseLogData(span, captureAttachments);
       case SpanType.FUNCTION:
         return this.extractFunctionLogData(span);
       case SpanType.HANDOFF:
@@ -700,15 +500,15 @@ export class OpenAIAgentsTraceProcessor {
       case SpanType.GUARDRAIL:
         return this.extractGuardrailLogData(span);
       case SpanType.GENERATION:
-        return this.extractGenerationLogData(span);
+        return this.extractGenerationLogData(span, captureAttachments);
       case SpanType.CUSTOM:
         return this.extractCustomLogData(span);
       case SpanType.MCP_TOOLS:
         return this.extractMCPListToolsLogData(span);
       case SpanType.TRANSCRIPTION:
-        return this.extractTranscriptionLogData(span);
+        return this.extractTranscriptionLogData(span, captureAttachments);
       case SpanType.SPEECH:
-        return this.extractSpeechLogData(span);
+        return this.extractSpeechLogData(span, captureAttachments);
       case SpanType.SPEECH_GROUP:
         return this.extractSpeechGroupLogData(span);
       default:
@@ -748,8 +548,9 @@ export class OpenAIAgentsTraceProcessor {
     const braintrustSpan = traceData.childSpans.get(span.spanId);
 
     if (braintrustSpan) {
-      const logData = withCurrent(braintrustSpan, () =>
-        this.extractLogData(span),
+      const logData = this.extractLogData(
+        span,
+        _internalCaptureAttachmentsEnabled(braintrustSpan),
       );
       braintrustSpan.log({
         error: span.error,

@@ -3,13 +3,7 @@ import {
   getCurrentUnixTimestamp,
   isObject,
 } from "../../util";
-import {
-  currentSpan,
-  logError,
-  startSpan,
-  withCurrent,
-  type Span,
-} from "../../logger";
+import { logError, startSpan, withCurrent, type Span } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
@@ -602,13 +596,15 @@ export function braintrustAISDKTelemetry(): any {
         const operationName = state?.operationName ?? "generateText";
         const callInput = operationInput(event, operationName);
         const workflowAgent = operationName === "WorkflowAgent.stream";
-        const processedInput = withCurrent(state?.span ?? currentSpan(), () =>
+        const processInput = () =>
           shouldRecordInputs(event) && workflowAgent
             ? processAISDKWorkflowAgentModelCallInput(callInput).input
             : shouldRecordInputs(event)
               ? processAISDKCallInput(callInput).input
-              : undefined,
-        );
+              : undefined;
+        const processedInput = state
+          ? withCurrent(state.span, processInput)
+          : processInput();
         if (
           workflowAgent &&
           state?.ownsSpan &&

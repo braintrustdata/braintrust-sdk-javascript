@@ -1,20 +1,8 @@
-import iso from "../isomorph";
 import {
   Attachment,
   BaseAttachment,
-  _internalGetGlobalState,
-  getSpanParentObject,
+  _internalCaptureAttachmentsEnabled,
 } from "../logger";
-
-export function isAutoCaptureAttachmentsEnabled(parent?: object): boolean {
-  const state = _internalGetGlobalState();
-  return state
-    ? state._internalCaptureAttachmentsEnabled(parent ?? getSpanParentObject())
-    : ["1", "true"].includes(
-        iso.getEnv("BRAINTRUST_CAPTURE_ATTACHMENTS")?.trim().toLowerCase() ??
-          "",
-      );
-}
 
 /** Remove media fields without reading their values, dropping type-only blocks. */
 export function omitMediaData(
@@ -124,7 +112,7 @@ export function convertDataToBlob(data: any, mediaType: string): Blob | null {
  */
 export function processInputAttachments(
   input: any,
-  captureAttachments = isAutoCaptureAttachmentsEnabled(),
+  captureAttachments = _internalCaptureAttachmentsEnabled(),
   audioOutputFormat?: string,
 ): any {
   if (!input) {
@@ -395,12 +383,12 @@ export function processInputAttachments(
     // AI SDK image content format
     if (node.type === "image" && node.image) {
       if (node.image instanceof BaseAttachment) {
-        if (captureAttachments) attachmentIndex++;
+        attachmentIndex++;
         return node;
       }
       if (!captureAttachments) {
         return (node.image instanceof URL && node.image.protocol !== "data:") ||
-          (typeof node.image === "string" && /^https?:/.test(node.image))
+          (typeof node.image === "string" && /^https?:/i.test(node.image))
           ? node
           : omitMediaData(node, "image");
       }
@@ -430,12 +418,12 @@ export function processInputAttachments(
       node.data
     ) {
       if (node.data instanceof BaseAttachment) {
-        if (captureAttachments) attachmentIndex++;
+        attachmentIndex++;
         return node;
       }
       if (!captureAttachments) {
         return (node.data instanceof URL && node.data.protocol !== "data:") ||
-          (typeof node.data === "string" && /^https?:/.test(node.data))
+          (typeof node.data === "string" && /^https?:/i.test(node.data))
           ? node
           : omitMediaData(node, "data");
       }

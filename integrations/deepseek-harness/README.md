@@ -30,8 +30,10 @@ To override the defaults, add the following entry to the profile's
 ```
 
 The optional configuration fields are `apiKey`, `projectName`, `metadata`,
-`orgName`, and `appUrl`. `metadata` is added to every top-level user-turn trace,
-and `projectName` defaults to `DeepSeek Harness`. You can set `apiKey`
-under **Settings > Plugins** in Harness; it is declared as a secret field so
-the settings UI handles it as a credential. A configured `apiKey` takes
-precedence over the `BRAINTRUST_API_KEY` environment variable.
+`orgName`, `appUrl`, and `captureAttachments`. `metadata` is added to every
+top-level user-turn trace, and `projectName` defaults to `DeepSeek Harness`.
+You can set `apiKey` under **Settings > Plugins** in Harness; it is declared as
+a secret field so the settings UI handles it as a credential. A configured
+`apiKey` takes precedence over the `BRAINTRUST_API_KEY` environment variable.
+Set `captureAttachments: true` to upload Harness images as attachments; when it
+is omitted, the `BRAINTRUST_CAPTURE_ATTACHMENTS` environment variable decides.

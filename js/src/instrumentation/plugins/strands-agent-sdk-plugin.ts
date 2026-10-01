@@ -2,6 +2,7 @@ import { BasePlugin, toLoggedError } from "../core";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import { debugLogger } from "../../debug-logger";
 import {
+  _internalCaptureAttachmentsEnabled,
   Attachment,
   BaseAttachment,
   startSpan as startBaseSpan,
@@ -17,7 +18,6 @@ import { getCurrentUnixTimestamp } from "../../util";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import {
   convertDataToBlob,
-  isAutoCaptureAttachmentsEnabled,
   omitMediaData,
 } from "../../wrappers/attachment-utils";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
@@ -1022,7 +1022,7 @@ const STRANDS_MEDIA_TYPES: Record<string, string> = {
 };
 
 function createStrandsAttachmentCache(parent?: Span): StrandsAttachmentCache {
-  if (!isAutoCaptureAttachmentsEnabled(parent))
+  if (!_internalCaptureAttachmentsEnabled(parent))
     return { captureAttachments: false };
   return {
     captureAttachments: true,
@@ -1198,9 +1198,8 @@ function getOrCreateStrandsAttachment(
   data: unknown,
   filename: string,
   contentType: string,
-  cache: StrandsAttachmentCache,
+  cache: Extract<StrandsAttachmentCache, { captureAttachments: true }>,
 ): Attachment | undefined {
-  if (!cache.captureAttachments) return undefined;
   const key = `${contentType}\0${filename}`;
   const attachments =
     typeof data === "string"
