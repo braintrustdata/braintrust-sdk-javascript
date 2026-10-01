@@ -347,6 +347,9 @@ interface WorkflowSubmissionProcessor<
 interface WorkflowBatchingOptions {
   /** Maximum number of items in one provider batch. */
   maxSize: number;
+}
+
+interface WorkflowScorerBatchingOptions extends WorkflowBatchingOptions {
   /**
    * Submits a partial batch once it has waited this long for more items. The
    * wait is checked whenever the workflow advances; no timers are started.
@@ -372,9 +375,10 @@ interface WorkflowBatchProcessor<
   Item,
   Result,
   SubmissionData extends JsonValue,
+  Batching extends WorkflowBatchingOptions = WorkflowBatchingOptions,
 > {
   /** Configures how ready items are grouped into provider batches. */
-  batching: WorkflowBatchingOptions;
+  batching: Batching;
   /** Submits one provider batch and returns JSON-serializable provider data. */
   submit(
     items: WorkflowBatchItem<Item>[],
@@ -435,7 +439,8 @@ interface WorkflowScorerDefinition<
     | WorkflowBatchProcessor<
         WorkflowScorerItem<Input, Output, Expected, Metadata>,
         WorkflowScorerResult,
-        SubmissionData
+        SubmissionData,
+        WorkflowScorerBatchingOptions
       >;
 }
 
@@ -562,7 +567,8 @@ export class WorkflowBatchScorer<
     readonly processor: WorkflowBatchProcessor<
       WorkflowScorerItem<Input, Output, Expected, Metadata>,
       WorkflowScorerResult,
-      SubmissionData
+      SubmissionData,
+      WorkflowScorerBatchingOptions
     > & { name: string },
   ) {
     validateBatchingOptions(processor.batching);
@@ -573,7 +579,7 @@ export class WorkflowBatchScorer<
 function validateBatchingOptions({
   maxSize,
   maxWaitMs,
-}: WorkflowBatchingOptions) {
+}: WorkflowScorerBatchingOptions) {
   if (!Number.isInteger(maxSize) || maxSize < 1) {
     throw new Error("batching.maxSize must be a positive integer");
   }
@@ -1832,18 +1838,13 @@ async function ensureSubmissions(
       encoder.encode(plan.id),
     );
     if (!claim.created) return;
-    const item =
-      kind === "task"
-        ? taskSubmissionItem(record, state.parameters)
-        : scorerSubmissionItem(record);
     await submitAndRecord(
       definition,
       state,
       store,
       key,
-      processor,
-      plan,
-      (context) => processor.submit(item, context),
+      { ...plan, itemIds: [record.id], attempts: 0 },
+      [record],
     );
   });
 }
@@ -1855,7 +1856,12 @@ async function ensureBatchSubmissions(
   key: string,
   kind: "task" | "score",
   scorerName: string | undefined,
-  processor: WorkflowBatchProcessor<any, any, JsonValue>,
+  processor: WorkflowBatchProcessor<
+    any,
+    any,
+    JsonValue,
+    WorkflowScorerBatchingOptions
+  >,
 ) {
   const { maxSize, maxWaitMs } = processor.batching;
   const stage = stageKey(kind, scorerName);
@@ -1925,29 +1931,20 @@ async function ensureBatchSubmissions(
         store.addToSet(`${progressKey}/claimed`, record.id),
       ),
     );
-    const items = members.map((record, index) => ({
-      ...(kind === "task"
-        ? taskSubmissionItem(record, run.parameters)
-        : scorerSubmissionItem(record)),
-      // Positional IDs are unique within the batch and valid for every provider.
-      customId: `item-${index}`,
-    }));
     for (const record of members) record.batchSubmissions[stage] = submissionId;
     await submitAndRecord(
       definition,
       run,
       store,
       key,
-      processor,
       {
         id: submissionId,
         kind,
         scorerName,
-        items: Object.fromEntries(
-          items.map(({ customId }, index) => [customId, members[index].id]),
-        ),
+        itemIds: members.map(({ id }) => id),
+        attempts: 0,
       },
-      (context) => processor.submit(items, context),
+      members,
     );
   });
 }
@@ -1957,16 +1954,47 @@ async function submitAndRecord(
   state: WorkflowRunState,
   store: WorkflowEvalStore,
   key: string,
-  processor: { completion: WorkflowSubmissionCompletion<JsonValue> },
   submission: Pick<
     WorkflowSubmissionRecord,
-    "id" | "kind" | "scorerName" | "itemId" | "items"
+    "id" | "kind" | "scorerName" | "itemIds" | "attempts"
   >,
-  submit: (context: WorkflowSubmissionContext) => Promise<unknown>,
+  records: WorkflowCaseRecord[],
 ) {
+  const processor = processorForStage(
+    definition,
+    submission.kind,
+    submission.scorerName,
+  );
+  const items = records.map((record) =>
+    submission.kind === "task"
+      ? taskSubmissionItem(record, state.parameters)
+      : scorerSubmissionItem(record),
+  );
   const context = { runId: state.runId, submissionId: submission.id };
+  const attempt = {
+    ...submission,
+    attempts: submission.attempts + 1,
+    completionMode: processor.completion.mode,
+  };
+  let submitted: unknown;
+  try {
+    submitted = await ("batching" in processor
+      ? processor.submit(
+          // Positional IDs are unique within the batch and valid for every provider.
+          items.map((item, index) => ({ ...item, customId: `item-${index}` })),
+          context,
+        )
+      : processor.submit(items[0], context));
+  } catch (error) {
+    // The items stay claimed by this submission, and poll() retries it with
+    // the same submissionId.
+    await writeSubmissionRecords(store, key, [
+      { ...attempt, submissionData: null, status: "failed" },
+    ]);
+    throw error;
+  }
   const submissionData = assertJsonValue(
-    await submit(context),
+    submitted,
     `submission data for submission ${submission.id}`,
   );
   const externalId =
@@ -1976,19 +2004,20 @@ async function submitAndRecord(
   if (externalId !== undefined && !externalId.trim()) {
     throw new Error(`Submission ${submission.id} produced an empty externalId`);
   }
-  const record: WorkflowSubmissionRecord = {
-    ...submission,
-    submissionData,
-    externalId,
-    status: "submitted",
-    completionMode: processor.completion.mode,
-  };
   if (externalId !== undefined) {
     // Lets webhook handlers omit runId when provider IDs are unique.
-    await writeJson(store, externalRunKey(definition, externalId), state.runId);
+    const locator = await store.getOrSet(
+      externalRunKey(definition, externalId),
+      encoder.encode(JSON.stringify(state.runId)),
+    );
+    if (JSON.parse(decoder.decode(locator.value)) !== state.runId) {
+      // A null locator marks an externalId shared by several runs.
+      await writeJson(store, externalRunKey(definition, externalId), null);
+    }
   }
-  state.submissions.push(record);
-  await writeSubmissionRecords(store, key, [record]);
+  await writeSubmissionRecords(store, key, [
+    { ...attempt, submissionData, externalId, status: "submitted" },
+  ]);
 }
 
 async function runWithConcurrency<T>(
