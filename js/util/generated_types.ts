@@ -1,4 +1,4 @@
-// Auto-generated file (content hash d52ddfd3ce0aa144) -- do not modify
+// Auto-generated file (content hash 7351b6dec8a2d13b) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -17,6 +17,7 @@ export const AclObjectType = z.union([
     "org_project",
     "org_audit_logs",
     "project_group",
+    "project_group_projects",
     "ai_secret",
     "org_ai_secret",
     "org_account",
@@ -1605,7 +1606,6 @@ export const OnlineScoreConfig = z.union([
     apply_to_span_names: z.union([z.array(z.string()), z.null()]).optional(),
     skip_logging: z.union([z.boolean(), z.null()]).optional(),
     scope: z.union([SpanScope, TraceScope, GroupScope, z.null()]).optional(),
-    run_once: z.boolean().optional(),
   }),
   z.null(),
 ]);
