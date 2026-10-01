@@ -5051,9 +5051,11 @@ async function computeLoggerMetadata(
   {
     project_name,
     project_id,
+    project_group_name,
   }: {
     project_name?: string;
     project_id?: string;
+    project_group_name?: string;
   },
 ) {
   await state.login({});
@@ -5066,6 +5068,8 @@ async function computeLoggerMetadata(
   }
 
   const cache = state.projectMetadataCache;
+  // Scoped registrations must check current group membership on the server.
+  const useCache = !isEmpty(project_id) || project_group_name == null;
   const key = JSON.stringify([
     state.appUrl,
     org_id,
@@ -5074,7 +5078,7 @@ async function computeLoggerMetadata(
       ? ["name", project_name || GLOBAL_PROJECT]
       : ["id", project_id],
   ]);
-  const cached = cache.get(key);
+  const cached = useCache ? cache.get(key) : undefined;
   if (cached && Date.now() < cached.expiresAt) {
     return structuredClone(await cached.promise);
   }
@@ -5093,6 +5097,7 @@ async function computeLoggerMetadata(
             {
               project_name: project_name || GLOBAL_PROJECT,
               org_id,
+              ...(project_group_name != null ? { project_group_name } : {}),
             },
             controller.signal,
           );
@@ -5131,7 +5136,9 @@ async function computeLoggerMetadata(
       }),
     ]),
   };
-  cache.set(key, entry);
+  if (useCache) {
+    cache.set(key, entry);
+  }
   try {
     const metadata = await entry.promise;
     entry.expiresAt = Date.now() + PROJECT_CACHE_TTL_MS;
@@ -5153,6 +5160,12 @@ type AsyncFlushArg<IsAsyncFlush> = {
 export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
   projectName?: string;
   projectId?: string;
+  /**
+   * Experimental: create the project in this existing project group, by name.
+   * An existing project must already belong to the group, otherwise registration fails with a 409.
+   * Ignored when projectId is provided.
+   */
+  _createInProjectGroup?: string;
   environment?: SpanOriginEnvironment;
   setCurrent?: boolean;
   state?: BraintrustState;
@@ -5165,6 +5178,7 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
  * @param options Additional options for configuring init().
  * @param options.projectName The name of the project to log into. If unspecified, will default to the Global project.
  * @param options.projectId The id of the project to log into. This takes precedence over projectName if specified.
+ * @param options._createInProjectGroup Experimental: the name of an existing project group to create the project in. Existing projects must already belong to the group, otherwise registration fails with a 409. Ignored when projectId is provided.
  * @param options.asyncFlush If true, will log asynchronously in the background. Otherwise, will log synchronously. (true by default)
  * @param options.appUrl The URL of the Braintrust App. Defaults to https://www.braintrust.dev.
  * @param options.apiKey The API key to use. If the parameter is not specified, will try to use the `BRAINTRUST_API_KEY` environment variable. In Node.js,
@@ -5181,6 +5195,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   const {
     projectName,
     projectId,
+    _createInProjectGroup,
     asyncFlush: asyncFlushArg,
     appUrl,
     apiKey,
@@ -5198,6 +5213,9 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   const computeMetadataArgs = {
     project_name: projectName,
     project_id: projectId,
+    ...(_createInProjectGroup != null
+      ? { project_group_name: _createInProjectGroup }
+      : {}),
   };
 
   const linkArgs = {
