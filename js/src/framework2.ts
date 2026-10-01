@@ -43,9 +43,16 @@ export { toolFunctionDefinitionSchema };
 const currentFilename =
   typeof __filename !== "undefined" ? __filename : "unknown";
 
-type NameOrId = { name: string } | { id: string };
-
-export type CreateProjectOpts = NameOrId;
+export type CreateProjectOpts =
+  | {
+      name: string;
+      /**
+       * If specified, creates the project inside the project group with this name when the project
+       * does not already exist. Requires permission to create projects in that group.
+       */
+      projectGroupName?: string;
+    }
+  | { id: string };
 class ProjectBuilder {
   create(opts: CreateProjectOpts) {
     return new Project(opts);
@@ -56,6 +63,7 @@ export const projects = new ProjectBuilder();
 export class Project {
   public readonly name?: string;
   public readonly id?: string;
+  public readonly projectGroupName?: string;
   public tools: ToolBuilder;
   public prompts: PromptBuilder;
   public parameters: ParametersBuilder;
@@ -77,6 +85,7 @@ export class Project {
     _initializeSpanContext();
     this.name = "name" in args ? args.name : undefined;
     this.id = "id" in args ? args.id : undefined;
+    this.projectGroupName = "name" in args ? args.projectGroupName : undefined;
     this.tools = new ToolBuilder(this);
     this.prompts = new PromptBuilder(this);
     this.parameters = new ParametersBuilder(this);
@@ -857,12 +866,13 @@ export class ProjectNameIdMap {
   private nameToId: Record<string, string> = {};
   private idToName: Record<string, string> = {};
 
-  async getId(projectName: string): Promise<string> {
+  async getId(projectName: string, projectGroupName?: string): Promise<string> {
     if (!(projectName in this.nameToId)) {
       const response = await _internalGetGlobalState()
         .appConn()
         .post_json("api/project/register", {
           project_name: projectName,
+          ...(projectGroupName ? { project_group_name: projectGroupName } : {}),
         });
 
       const result = z
@@ -898,6 +908,6 @@ export class ProjectNameIdMap {
     if (project.id) {
       return project.id;
     }
-    return this.getId(project.name!);
+    return this.getId(project.name!, project.projectGroupName);
   }
 }
