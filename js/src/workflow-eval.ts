@@ -727,13 +727,15 @@ type WorkflowSubmissionRecord = {
   id: string;
   kind: "task" | "score";
   scorerName?: string;
-  /** Item of a single-item submission. */
-  itemId?: string;
-  /** Items of a batch submission, keyed by `customId`. */
-  items?: Record<string, string>;
+  /** Submitted items. Batch item `customId`s are `item-<index>`. */
+  itemIds: string[];
+  /** Number of `submit` calls made for this submission. */
+  attempts: number;
+  /** `null` while `status` is `failed`. */
   submissionData: JsonValue;
   externalId?: string;
-  status: "submitted" | "complete";
+  /** `failed` means `submit` threw. `poll()` retries the submission. */
+  status: "failed" | "submitted" | "complete";
   completionMode: "poll" | "webhook";
 };
 
@@ -862,7 +864,8 @@ type WorkflowRunRecord = Omit<WorkflowRunState, "cases" | "submissions">;
  *
  * `processSubmissionResult()` accepts either the provider's `externalId` or the
  * SDK's `submissionId`, plus `runId`. `runId` may be omitted with `externalId`
- * when provider IDs are unique across runs of the eval. Collection callbacks
+ * when provider IDs are unique across runs of the eval; an `externalId` shared
+ * by several runs throws and requires `runId`. Collection callbacks
  * must tolerate repeated invocation, including concurrent webhook deliveries.
  * Provider webhook failure handling remains the application's responsibility.
  *
@@ -914,6 +917,9 @@ type WorkflowRunRecord = Omit<WorkflowRunState, "cases" | "submissions">;
  *
  * Provider submissions and polling use `maxConcurrency` (default 10). A failed
  * provider callback is reported after independent submissions have advanced.
+ * When `submit` throws, its items stay with that submission and it counts as
+ * pending. The next `poll({ runId })` retries it with the same `submissionId`,
+ * so use that ID as the provider's idempotency key.
  */
 
 /**
@@ -1117,10 +1123,15 @@ async function processWorkflowSubmissionResult<
   }
   const runId =
     result.runId ??
-    (await readJson<string>(
+    (await readJson<string | null>(
       store,
       externalRunKey(definition, result.externalId!),
     ));
+  if (runId === null) {
+    throw new Error(
+      `externalId ${result.externalId} matches several runs; pass runId`,
+    );
+  }
   if (!runId) throw new Error("No submission matches this result");
   const key = runKey(definition.projectName, definition.evalName, runId);
   const run = await readJson<WorkflowRunRecord>(store, key);
@@ -1154,8 +1165,17 @@ async function processWorkflowSubmissionResult<
     );
   }
   if (run.status === "completed") return currentStatus(definition, run);
-  const itemIds = submissionItemIds(submission);
-  const state = (await readRunState(definition, store, key, itemIds))!;
+  if (submission.status === "failed") {
+    throw new Error(
+      `Submission ${submission.id} failed to submit; poll() retries it`,
+    );
+  }
+  const state = (await readRunState(
+    definition,
+    store,
+    key,
+    submission.itemIds,
+  ))!;
   if (submission.status !== "complete") {
     await collectSubmission(definition, state, store, key, submission);
     submission.status = "complete";
@@ -1164,7 +1184,7 @@ async function processWorkflowSubmissionResult<
   await writeSubmissionRecords(store, key, [submission]);
   return advanceWorkflowEval(
     definition,
-    (await readRunState(definition, store, key, itemIds))!,
+    (await readRunState(definition, store, key, submission.itemIds))!,
     store,
     key,
   );
@@ -1195,14 +1215,36 @@ async function pollWorkflowEval<
   const state = await readRunState(definition, store, key);
   if (!state) throw new Error(`Workflow eval run ${options.runId} is missing`);
 
+  const casesById = new Map(state.cases.map((record) => [record.id, record]));
   const submissions = state.submissions.filter((submission) => {
-    if (submission.status === "complete") return false;
+    if (submission.status !== "submitted") {
+      return submission.status === "failed";
+    }
     return (
       processorForStage(definition, submission.kind, submission.scorerName)
         .completion.mode === "poll"
     );
   });
   const workers = queue(async (submission: WorkflowSubmissionRecord) => {
+    if (submission.status === "failed") {
+      const claimed = await claimAction(
+        store,
+        key,
+        "submission-retry",
+        submission.id,
+        String(submission.attempts),
+      );
+      if (!claimed) return;
+      await submitAndRecord(
+        definition,
+        state,
+        store,
+        key,
+        submission,
+        submission.itemIds.map((id) => casesById.get(id)!),
+      );
+      return;
+    }
     const completion = processorForStage(
       definition,
       submission.kind,
@@ -1302,18 +1344,20 @@ async function advanceWorkflowEval<
   // Batch scorers decide when to submit from these counts, so they avoid
   // reading every case on each completion. Repeating additions repairs
   // interrupted updates.
-  await Promise.all(
-    state.cases.map(async (record) => {
-      if (batchScoreStages.length === 0 || !record.taskLogged) return;
-      await store.addToSet(`${key}/progress/tasks`, record.id);
-      if (record.taskError !== undefined) return;
-      await Promise.all(
-        batchScoreStages.map((stage) =>
-          store.addToSet(`${batchProgressKey(key, stage)}/ready`, record.id),
-        ),
-      );
-    }),
-  );
+  if (batchScoreStages.length > 0) {
+    await Promise.all(
+      state.cases.map(async (record) => {
+        if (!record.taskLogged) return;
+        await store.addToSet(`${key}/progress/tasks`, record.id);
+        if (record.taskError !== undefined) return;
+        await Promise.all(
+          batchScoreStages.map((stage) =>
+            store.addToSet(`${batchProgressKey(key, stage)}/ready`, record.id),
+          ),
+        );
+      }),
+    );
+  }
   await runScoreStages(definition, state, store, key, experiment);
   state = (await readRunState(definition, store, key, caseIds)) ?? state;
   const classifierNames = (definition.evaluator.classifiers ?? []).map(
@@ -1843,7 +1887,7 @@ async function ensureSubmissions(
       state,
       store,
       key,
-      { ...plan, itemIds: [record.id], attempts: 0 },
+      { id: plan.id, kind, scorerName, itemIds: [record.id], attempts: 0 },
       [record],
     );
   });
@@ -2056,23 +2100,25 @@ async function collectSubmission(
   const context = { runId: state.runId, submissionId: submission.id };
   const casesById = new Map(state.cases.map((record) => [record.id, record]));
   if (!("batching" in processor)) {
-    const record = casesById.get(submission.itemId!)!;
+    const record = casesById.get(submission.itemIds[0])!;
     applySubmissionOutcome(submission, record, {
       result: await processor.collect(submission.submissionData, context),
     });
     await writeCaseRecords(store, key, [record]);
     return;
   }
-  const items = submission.items!;
+  const customIds = new Set(
+    submission.itemIds.map((_, index) => `item-${index}`),
+  );
   // Results persisted by an interrupted earlier collection are kept.
   const pending = new Map<string, WorkflowCaseRecord>();
-  for (const [customId, itemId] of Object.entries(items)) {
+  for (const [index, itemId] of submission.itemIds.entries()) {
     const record = casesById.get(itemId)!;
     const complete =
       submission.kind === "task"
         ? record.taskComplete
         : hasScoreOutcome(record, submission.scorerName!);
-    if (!complete) pending.set(customId, record);
+    if (!complete) pending.set(`item-${index}`, record);
   }
   const seen = new Set<string>();
   let changed: WorkflowCaseRecord[] = [];
@@ -2080,8 +2126,8 @@ async function collectSubmission(
     submission.submissionData,
     context,
   )) {
-    const customId = entry?.customId;
-    if (!Object.hasOwn(items, customId)) {
+    const customId = entry.customId;
+    if (!customIds.has(customId)) {
       throw new Error(
         `collect for submission ${submission.id} returned unknown customId ${customId}`,
       );
@@ -2169,7 +2215,7 @@ function processorForStage(
   scorerName?: string,
 ):
   | WorkflowSubmissionProcessor<any, any, JsonValue>
-  | WorkflowBatchProcessor<any, any, JsonValue> {
+  | WorkflowBatchProcessor<any, any, JsonValue, WorkflowScorerBatchingOptions> {
   if (kind === "task") {
     if (!isWorkflowTask(definition.evaluator.task)) {
       throw new Error("Definition no longer contains the submission task");
@@ -2403,12 +2449,6 @@ function batchStageKeys(
   return stages;
 }
 
-function submissionItemIds(submission: WorkflowSubmissionRecord) {
-  return submission.items
-    ? Object.values(submission.items)
-    : [submission.itemId!];
-}
-
 function encodedKeyPart(value: string) {
   return uint8ArrayToBase64(encoder.encode(value))
     .replaceAll("+", "-")
@@ -2500,12 +2540,12 @@ async function readCaseRecord(
   store: WorkflowEvalStore,
   key: string,
   id: string,
+  batchStages: string[],
 ) {
   const scorers = resolveScorers(definition.evaluator.scores ?? []);
   const classifiers = (definition.evaluator.classifiers ?? []).map(
     classifierName,
   );
-  const batchStages = batchStageKeys(definition);
   const [
     base,
     task,
@@ -2529,14 +2569,17 @@ async function readCaseRecord(
         ),
       })),
     ),
+    // Only batch scorers record per-item failures.
     Promise.all(
-      scorers.map(async ({ name }) => ({
-        name,
-        value: await readJson<string>(
-          store,
-          caseRecordKey(key, id, "score-error", name),
-        ),
-      })),
+      scorers
+        .filter(({ name }) => batchStages.includes(stageKey("score", name)))
+        .map(async ({ name }) => ({
+          name,
+          value: await readJson<string>(
+            store,
+            caseRecordKey(key, id, "score-error", name),
+          ),
+        })),
     ),
     Promise.all(
       scorers.map(async ({ name }) => ({
@@ -2634,9 +2677,12 @@ async function readRunState(
   if (!selectedIds)
     throw new Error(`Workflow eval run ${record.runId} has no case index`);
   const plans = plannedSubmissions(definition, record.runId, selectedIds);
+  const batchStages = batchStageKeys(definition);
   const [cases, submissionRecords] = await Promise.all([
     Promise.all(
-      selectedIds.map((id) => readCaseRecord(definition, store, key, id)),
+      selectedIds.map((id) =>
+        readCaseRecord(definition, store, key, id, batchStages),
+      ),
     ),
     Promise.all(
       plans.map(async ({ id }) => {

@@ -471,13 +471,11 @@ describe("defineWorkflowEval", () => {
       key.includes("/submissions/"),
     );
     expect(submissions).toHaveLength(3);
-    expect(submissions.map(([, record]) => record.itemId)).toEqual([
-      "one:trial:0",
-      "two:trial:0",
-      "three:trial:0",
+    expect(submissions.map(([, record]) => record.itemIds)).toEqual([
+      ["one:trial:0"],
+      ["two:trial:0"],
+      ["three:trial:0"],
     ]);
-    for (const [, record] of submissions)
-      expect(record).not.toHaveProperty("itemIds");
     expect(records.filter(([key]) => key.includes("/cases/"))).toHaveLength(3);
   });
 
@@ -1161,6 +1159,84 @@ describe("workflow batch evals", () => {
     expect(f.scoreSubmit).toHaveBeenCalledTimes(1);
   });
 
+  test("retries failed batch submissions on poll", async () => {
+    const f = batchEval({ taskSize: 2, scoreSize: 2, cases: 3 });
+    f.taskSubmit.mockRejectedValueOnce(new Error("rate limited"));
+    await expect(f.definition.start({ noSendLogs: true })).rejects.toThrow(
+      "rate limited",
+    );
+    const { runId } = f.taskSubmit.mock.calls[0][1];
+    await expect(f.definition.status({ runId })).resolves.toMatchObject({
+      status: "waiting",
+      pending: { poll: 0, webhook: 2 },
+    });
+    await expect(
+      f.definition.processSubmissionResult({
+        runId,
+        submissionId: f.taskSubmit.mock.calls[0][1].submissionId,
+      }),
+    ).rejects.toThrow("failed to submit; poll() retries it");
+
+    await f.definition.poll({ runId });
+    expect(f.taskSubmit).toHaveBeenCalledTimes(3);
+    // The retry reuses the submission, so its ID can serve as an idempotency key.
+    expect(f.taskSubmit.mock.calls[2][1]).toEqual(
+      f.taskSubmit.mock.calls[0][1],
+    );
+    expect(f.taskSubmit.mock.calls[2][0].map(({ id }) => id)).toEqual(
+      f.taskSubmit.mock.calls[0][0].map(({ id }) => id),
+    );
+    // A successful retry is not submitted again.
+    await f.definition.poll({ runId });
+    expect(f.taskSubmit).toHaveBeenCalledTimes(3);
+
+    await f.definition.processSubmissionResult({ externalId: "task-batch-1" });
+    await f.definition.processSubmissionResult({ externalId: "task-batch-2" });
+    await f.definition.processSubmissionResult({ externalId: "score-batch-1" });
+    await expect(
+      f.definition.processSubmissionResult({ externalId: "score-batch-2" }),
+    ).resolves.toMatchObject({ status: "completed" });
+  });
+
+  test("retries failed single-item submissions on poll", async () => {
+    const f = workflowEval("webhook");
+    f.taskSubmit.mockRejectedValueOnce(new Error("rate limited"));
+    await expect(f.definition.start({ noSendLogs: true })).rejects.toThrow(
+      "rate limited",
+    );
+    const { runId } = f.taskSubmit.mock.calls[0][1];
+    await expect(f.definition.status({ runId })).resolves.toMatchObject({
+      pending: { poll: 0, webhook: 3 },
+    });
+    await f.definition.poll({ runId });
+    expect(f.taskSubmit).toHaveBeenCalledTimes(4);
+    expect(f.taskSubmit.mock.calls[3][1]).toEqual(
+      f.taskSubmit.mock.calls[0][1],
+    );
+    await expect(
+      f.definition.processSubmissionResult({
+        externalId: `task-${f.taskSubmit.mock.calls[0][0].id}`,
+      }),
+    ).resolves.toMatchObject({ status: "waiting" });
+  });
+
+  test("requires runId for externalIds shared by several runs", async () => {
+    const f = workflowEval("webhook");
+    const first = await f.definition.start({ noSendLogs: true });
+    const second = await f.definition.start({ noSendLogs: true });
+    await expect(
+      f.definition.processSubmissionResult({ externalId: "task-one:trial:0" }),
+    ).rejects.toThrow("matches several runs; pass runId");
+    for (const { runId } of [first, second]) {
+      await expect(
+        f.definition.processSubmissionResult({
+          runId,
+          externalId: "task-one:trial:0",
+        }),
+      ).resolves.toMatchObject({ status: "waiting" });
+    }
+  });
+
   test("validates batching options and run locators", async () => {
     const processor = {
       submit: async () => null,
@@ -1221,6 +1297,16 @@ describe("workflow batch evals", () => {
       },
     });
     expect(task.processor.batching.maxSize).toBe(2);
+    new WorkflowBatchTask({
+      // @ts-expect-error Tasks submit every case at start, so they never wait.
+      batching: { maxSize: 2, maxWaitMs: 1 },
+      submit: async () => null,
+      completion: {
+        mode: "poll",
+        poll: async () => ({ status: "pending" as const }),
+      },
+      collect: () => [],
+    });
   });
 });
 
