@@ -18,7 +18,7 @@ export interface IngestionEndpoint {
   key: string;
 }
 
-const INGESTION_KEY_QUERY = /^\?ingestKey=(bt-ik-[A-Za-z0-9]+)$/;
+const INGESTION_KEY_PATTERN = /^bt-ik-[A-Za-z0-9]{48}$/;
 
 /**
  * Parse an ingestion key URL such as
@@ -48,17 +48,21 @@ export function parseIngestionKeyUrl(value: string): IngestionEndpoint {
   if (url.hash || value.includes("#")) {
     throw invalid("the URL must not contain a fragment");
   }
-  const match = INGESTION_KEY_QUERY.exec(url.search);
-  if (!match) {
+  const params = [...url.searchParams];
+  if (params.length !== 1 || params[0][0] !== "ingestKey") {
     throw invalid(
       "the URL must contain exactly one ingestKey query parameter and no other query parameters",
     );
   }
-  const pathname = url.pathname.replace(/\/$/, "");
+  const key = params[0][1];
+  if (!INGESTION_KEY_PATTERN.test(key)) {
+    throw invalid("the ingestKey query parameter is not an ingestion key");
+  }
+  const pathname = url.pathname.replace(/\/+$/, "");
   if (!pathname.endsWith("/ingest")) {
     throw invalid("the URL path must end with /ingest");
   }
-  return { root: `${url.origin}${pathname}`, key: match[1] };
+  return { root: `${url.origin}${pathname}`, key };
 }
 
 // Row fields the ingestion endpoint accepts. Everything else (experiment and
@@ -178,17 +182,3 @@ export const ingestionUploadCompleteSchema = z.object({
   size_bytes: z.number().int().nonnegative(),
   sha256: sha256Schema,
 });
-
-/**
- * Hex SHA-256 digest of `data`, or undefined on platforms without WebCrypto.
- */
-export async function sha256Hex(data: Blob): Promise<string | undefined> {
-  const subtle = globalThis.crypto?.subtle;
-  if (!subtle) {
-    return undefined;
-  }
-  const digest = await subtle.digest("SHA-256", await data.arrayBuffer());
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
-}

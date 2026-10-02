@@ -108,6 +108,9 @@ const RESET_CONTEXT_MANAGER_STATE = Symbol.for(
 );
 // 6 MB for the AWS lambda gateway (from our own testing).
 export const DEFAULT_MAX_REQUEST_SIZE = 6 * 1024 * 1024;
+// Public clients often sit behind 1 MiB ingress limits, and Lambda data planes
+// see base64 encoded bodies, so larger batches overflow through an upload.
+const INGESTION_KEY_MAX_REQUEST_SIZE = 512 * 1024;
 
 export type { DatasetSnapshot };
 
@@ -172,7 +175,6 @@ import {
   parseIngestionKeyUrl,
   pickIngestionRowFields,
   replaceIngestionAttachmentReferences,
-  sha256Hex,
 } from "./ingestion-key";
 import {
   parseTemplateFormat,
@@ -910,6 +912,29 @@ export class BraintrustState {
   }
 
   /** @internal */
+  public async _internalFlushIngestionKeyStates(): Promise<void> {
+    await Promise.all(
+      [...this.ingestionKeyStates.values()].map((state) =>
+        state.bgLogger().flush(),
+      ),
+    );
+  }
+
+  /**
+   * Whether this state was given or logged in with an API key, as opposed to
+   * only picking one up from the environment on login.
+   *
+   * @internal
+   */
+  public _internalHasPrivateCredential(): boolean {
+    return (
+      this.loggedIn ||
+      this.loginToken !== null ||
+      this.loginParams.apiKey !== undefined
+    );
+  }
+
+  /** @internal */
   public _internalSetTraceContextSigningSecret(
     secret: string | undefined,
   ): void {
@@ -1605,6 +1630,8 @@ export class FailedHTTPResponse extends Error {
   public text: string;
   public data: string;
   public readonly cause?: unknown;
+  /** @internal The `Retry-After` header of the response. */
+  public retryAfter?: string;
 
   constructor(status: number, text: string, data: string, cause?: unknown) {
     super(`${status}: ${text} (${data})`);
@@ -1692,7 +1719,9 @@ async function checkResponse(resp: Response) {
       error,
     );
   }
-  throw new FailedHTTPResponse(resp.status, resp.statusText, data);
+  const error = new FailedHTTPResponse(resp.status, resp.statusText, data);
+  error.retryAfter = resp.headers.get("Retry-After") ?? undefined;
+  throw error;
 }
 
 class HTTPConnection {
@@ -3507,6 +3536,38 @@ const HTTP_RETRY_JITTER_MS = 200;
 const BTQL_HTTP_RETRIES = 3;
 const RETRYABLE_HTTP_STATUS_CODES = new Set([500, 502, 503, 504]);
 
+const MAX_INGESTION_RETRY_AFTER_MS = 60_000;
+
+// Ingestion key requests are rejected permanently on auth or validation
+// failures, so only transient failures are retried. Returns undefined if the
+// request must not be retried.
+function ingestionRetryDelayMs(
+  error: unknown,
+  attempt: number,
+): number | undefined {
+  const backoffMs = BACKGROUND_LOGGER_BASE_SLEEP_TIME_S * 1000 * 2 ** attempt;
+  if (!(error instanceof FailedHTTPResponse)) {
+    return backoffMs;
+  }
+  if (
+    error.status !== 408 &&
+    error.status !== 429 &&
+    !RETRYABLE_HTTP_STATUS_CODES.has(error.status)
+  ) {
+    return undefined;
+  }
+  if (!error.retryAfter) {
+    return backoffMs;
+  }
+  const seconds = Number(error.retryAfter);
+  const retryAfterMs = isNaN(seconds)
+    ? Date.parse(error.retryAfter) - now()
+    : seconds * 1000;
+  return isNaN(retryAfterMs)
+    ? backoffMs
+    : Math.min(Math.max(retryAfterMs, 0), MAX_INGESTION_RETRY_AFTER_MS);
+}
+
 function isRetryableHTTPError(error: unknown): boolean {
   return (
     !(error instanceof FailedHTTPResponse) ||
@@ -3786,7 +3847,8 @@ class HTTPBackgroundLogger implements BackgroundLogger {
       // Ingestion keys cannot read the server version, and the ingestion
       // endpoint always accepts overflow uploads.
       this._maxRequestSizePromise = Promise.resolve({
-        maxRequestSize: this.maxRequestSizeOverride ?? DEFAULT_MAX_REQUEST_SIZE,
+        maxRequestSize:
+          this.maxRequestSizeOverride ?? INGESTION_KEY_MAX_REQUEST_SIZE,
         canUseOverflow: true,
       });
     }
@@ -4026,31 +4088,28 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         // Every attempt uses a new upload, so an expired grant is never reused.
         return await this.uploadToIngestion(request, data);
       } catch (error) {
-        if (i + 1 >= this.numTries) {
+        const retryDelayMs = ingestionRetryDelayMs(error, i);
+        if (i + 1 >= this.numTries || retryDelayMs === undefined) {
           throw error;
         }
         debugLogger.warn(
           `Ingestion upload failed. Retrying\nError: ${formatHTTPError(error)}`,
         );
-        const sleepTimeS = BACKGROUND_LOGGER_BASE_SLEEP_TIME_S * 2 ** i;
-        debugLogger.info(`Sleeping for ${sleepTimeS}s`);
-        await new Promise((resolve) => setTimeout(resolve, sleepTimeS * 1000));
+        debugLogger.info(`Sleeping for ${retryDelayMs / 1000}s`);
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
       }
     }
   }
 
   private async uploadToIngestion(request: IngestionUploadRequest, data: Blob) {
     const conn = await this.apiConn.get();
-    const sha256 = await sha256Hex(data);
     // The grant lifetime is relative, so anchor it before the request is sent.
     const requestStart = now();
     const grant = parseIngestionResponse(
       ingestionUploadGrantSchema,
-      await conn.post_json("v1/uploads", {
-        ...request,
-        size_bytes: data.size,
-        ...(sha256 ? { sha256 } : {}),
-      }),
+      // The optional sha256 is omitted, since computing it would read the
+      // whole upload into memory at once.
+      await conn.post_json("v1/uploads", { ...request, size_bytes: data.size }),
     );
     const deadline = requestStart + grant.expires_in_ms;
     if (grant.num_chunks !== Math.ceil(data.size / grant.chunk_bytes)) {
@@ -4105,10 +4164,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
       ingestionUploadCompleteSchema,
       await conn.post_json(`v1/uploads/${grant.upload_id}/complete`, {}),
     );
-    if (
-      completed.size_bytes !== data.size ||
-      (sha256 !== undefined && completed.sha256 !== sha256)
-    ) {
+    if (completed.size_bytes !== data.size) {
       throw new Error(
         "Invalid response from ingestion endpoint: the completed upload does not match the uploaded data",
       );
@@ -4287,7 +4343,10 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         return;
       }
 
-      const isRetrying = i + 1 < this.numTries;
+      const retryDelayMs = this.usesIngestionKey
+        ? ingestionRetryDelayMs(error, i)
+        : BACKGROUND_LOGGER_BASE_SLEEP_TIME_S * 1000 * 2 ** i;
+      const isRetrying = i + 1 < this.numTries && retryDelayMs !== undefined;
       const retryingText = isRetrying ? "" : " Retrying";
       const errorText = (() => {
         if (error instanceof FailedHTTPResponse) {
@@ -4318,11 +4377,8 @@ class HTTPBackgroundLogger implements BackgroundLogger {
       } else {
         debugLogger.warn(errMsg);
         if (isRetrying) {
-          const sleepTimeS = BACKGROUND_LOGGER_BASE_SLEEP_TIME_S * 2 ** i;
-          debugLogger.info(`Sleeping for ${sleepTimeS}s`);
-          await new Promise((resolve) =>
-            setTimeout(resolve, sleepTimeS * 1000),
-          );
+          debugLogger.info(`Sleeping for ${retryDelayMs / 1000}s`);
+          await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
         }
       }
     }
@@ -5561,27 +5617,27 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @param options.forceLogin Login again, even if you have already logged in (by default, the logger will not login if you are already logged in)
  * @param options.debugLogLevel Enables internal Braintrust SDK troubleshooting output. Use `"error"`, `"warn"`, `"info"`, or `"debug"` to choose an explicit level, or `false` to explicitly disable it. If omitted, the SDK stays silent unless `BRAINTRUST_DEBUG_LOG_LEVEL` is set.
- * @param options.ingestionKey The ingestion URL of a project's ingestion key, like `https://<data plane>/ingest?ingestKey=<key>`. Ingestion keys can only write traces to their project, so they are safe to use in browsers and other public clients. The logger never logs in, ignores `BRAINTRUST_API_KEY` and does not create or look up the project. `projectName` is ignored, and `projectId` is only sent along for the server to check. If unspecified, will use the `BRAINTRUST_INGESTION_KEY` environment variable unless `apiKey` or `state` is specified. Cannot be combined with `apiKey` or `state`.
+ * @param options.ingestionKey The ingestion URL of a project's ingestion key, like `https://<data plane>/ingest?ingestKey=<key>`. Ingestion keys can only write traces into their project, so the logger never logs in, ignores `BRAINTRUST_API_KEY` and does not create or look up the project. `projectName` is ignored, and `projectId` is only sent along for the server to check. A `state` without an API key is used for the span context and masking, while the logger keeps its own queue. If unspecified, will use the `BRAINTRUST_INGESTION_KEY` environment variable unless an API key is passed through `apiKey` or `state`. Cannot be combined with an API key.
  * @param setCurrent If true (the default), set the global current-experiment to the newly-created one.
  * @returns The newly created Logger.
  */
 export function initLogger<IsAsyncFlush extends boolean = true>(
   options: Readonly<InitLoggerOptions<IsAsyncFlush>> = {},
 ) {
-  if (
-    options.ingestionKey !== undefined &&
-    (options.apiKey !== undefined || options.state !== undefined)
-  ) {
+  const hasPrivateCredential =
+    options.apiKey !== undefined ||
+    (options.state?._internalHasPrivateCredential() ?? false);
+  if (options.ingestionKey !== undefined && hasPrivateCredential) {
     throw new Error(
-      "initLogger accepts either an ingestionKey or an apiKey/state, not both",
+      "initLogger accepts either an ingestionKey or an API key, not both. A `state` that is logged in or has an `apiKey` counts as an API key.",
     );
   }
   // An explicit private credential takes precedence over the environment.
   const ingestionKey =
     options.ingestionKey ??
-    (options.apiKey === undefined && options.state === undefined
-      ? iso.getEnv(INGESTION_KEY_ENV_VAR) || undefined
-      : undefined);
+    (hasPrivateCredential
+      ? undefined
+      : iso.getEnv(INGESTION_KEY_ENV_VAR) || undefined);
   if (ingestionKey !== undefined) {
     return initIngestionKeyLogger(ingestionKey, options);
   }
@@ -5663,9 +5719,10 @@ function initIngestionKeyLogger<IsAsyncFlush extends boolean>(
     noExitFlush,
     onFlushError,
     debugLogLevel,
+    state: contextState = _globalState,
   }: Readonly<InitLoggerOptions<IsAsyncFlush>>,
 ) {
-  const state = _globalState._internalGetIngestionKeyState(
+  const state = contextState._internalGetIngestionKeyState(
     parseIngestionKeyUrl(ingestionKey),
     { fetch, noExitFlush, onFlushError, debugLogLevel },
   );
@@ -5684,7 +5741,7 @@ function initIngestionKeyLogger<IsAsyncFlush extends boolean>(
   });
   state.currentLogger = ret as Logger<false>;
   if (setCurrent ?? true) {
-    _globalState.currentLogger = ret as Logger<false>;
+    contextState.currentLogger = ret as Logger<false>;
   }
   return ret;
 }
@@ -7487,13 +7544,10 @@ export function _internalStartSpanWithContext<
  */
 export async function flush(options?: OptionalStateArg): Promise<void> {
   const state = options?.state ?? _globalState;
-  // Ingestion key loggers have their own queue.
-  const loggerState = state.currentLogger?.loggingState;
+  // Ingestion key loggers have their own queues.
   await Promise.all([
     state.bgLogger().flush(),
-    loggerState && loggerState !== state
-      ? loggerState.bgLogger().flush()
-      : undefined,
+    state._internalFlushIngestionKeyStates(),
   ]);
 }
 

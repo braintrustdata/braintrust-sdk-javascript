@@ -189,8 +189,14 @@ describe("parseIngestionKeyUrl", () => {
       parseIngestionKeyUrl(`https://dp.example/a/b/ingest?ingestKey=${key}`),
     ).toEqual({ root: "https://dp.example/a/b/ingest", key });
     expect(
-      parseIngestionKeyUrl(`http://localhost:8000/ingest/?ingestKey=${key}`),
+      parseIngestionKeyUrl(`http://localhost:8000/ingest//?ingestKey=${key}`),
     ).toEqual({ root: "http://localhost:8000/ingest", key });
+  });
+
+  test("decodes the query like URLSearchParams", () => {
+    expect(
+      parseIngestionKeyUrl(`https://dp.example/ingest?ingest%4Bey=${key}`),
+    ).toEqual({ root: "https://dp.example/ingest", key });
   });
 
   test.each([
@@ -208,6 +214,10 @@ describe("parseIngestionKeyUrl", () => {
       `https://dp.example/ingest?ingestKey=${key}&ingestKey=${key}`,
     ],
     ["a malformed key", "https://dp.example/ingest?ingestKey=sk-123"],
+    [
+      "a key of the wrong length",
+      `https://dp.example/ingest?ingestKey=${key.slice(0, -1)}`,
+    ],
     ["a different path", `https://dp.example/logs?ingestKey=${key}`],
   ])("rejects %s without echoing the key", (_, value) => {
     let error: unknown;
@@ -328,15 +338,53 @@ describe("initLogger with an ingestion key", () => {
 
   test("rejects an ingestion key combined with private credentials", () => {
     const ingestionKey = ingestionUrl(newKey());
-    expect(() => initLogger({ ingestionKey, apiKey: "private" })).toThrow(
-      "either an ingestionKey or an apiKey/state",
-    );
-    expect(() =>
-      initLogger({ ingestionKey, state: new BraintrustState({}) }),
-    ).toThrow("either an ingestionKey or an apiKey/state");
+    const loggedInState = new BraintrustState({});
+    loggedInState.loginToken = "private";
+    for (const options of [
+      { apiKey: "private" },
+      { state: new BraintrustState({ apiKey: "private" }) },
+      { state: loggedInState },
+    ]) {
+      expect(() => initLogger({ ingestionKey, ...options })).toThrow(
+        "either an ingestionKey or an API key",
+      );
+    }
     expect(() => initLogger({ ingestionKey: "" })).toThrow(
       "Invalid Braintrust ingestion key",
     );
+  });
+
+  test("uses a state without credentials for masking and the current logger", async () => {
+    const { requests, fetch } = mockIngestion();
+    vi.stubEnv("BRAINTRUST_INGESTION_KEY", ingestionUrl(newKey()));
+    const contextState = new BraintrustState({ noExitFlush: true });
+    contextState.setMaskingFunction((value) =>
+      value === "secret-value" ? "[masked]" : value,
+    );
+
+    const logger = initLogger({
+      state: contextState,
+      fetch,
+      noExitFlush: true,
+    });
+    logger.traced(
+      (root) =>
+        root.traced((span) => span.log({ input: "secret-value" }), {
+          name: "child",
+        }),
+      { name: "root" },
+    );
+    await flush({ state: contextState });
+
+    expect(logger.loggingState).not.toBe(contextState);
+    expect(contextState.currentLogger).toBe(logger);
+    expect(_internalGetGlobalState().currentLogger).toBeUndefined();
+    expect(paths(requests)).toEqual(["POST /deployment/base/ingest/v1/logs"]);
+    const rows = Object.fromEntries(
+      loggedRows(requests).map((row) => [row.span_attributes.name, row]),
+    );
+    expect(rows.child.input).toBe("[masked]");
+    expect(rows.child.span_parents).toEqual([rows.root.span_id]);
   });
 
   test("public and private loggers do not share queues or credentials", async () => {
@@ -385,23 +433,93 @@ describe("initLogger with an ingestion key", () => {
     ).toBe(true);
   });
 
-  test("retries rejected writes against the ingestion endpoint only", async () => {
+  test("retries throttled writes after Retry-After against the ingestion endpoint only", async () => {
     const { requests, fetch } = mockIngestion({
       respond: (request, index) =>
-        index === 0 ? json({ error: "slow down" }, 429) : undefined,
+        index === 0
+          ? new Response("slow down", {
+              status: 429,
+              headers: { "Retry-After": "0" },
+            })
+          : undefined,
     });
     vi.stubEnv("BRAINTRUST_NUM_RETRIES", "1");
     vi.stubEnv("BRAINTRUST_API_KEY", "private-api-key");
     const { logger, onFlushError } = initIngestionLogger(fetch);
 
     logger.log({ input: "a", output: "b" });
+    const start = Date.now();
     await logger.flush();
 
+    // Without Retry-After, the first retry waits one second.
+    expect(Date.now() - start).toBeLessThan(900);
     expect(onFlushError).not.toHaveBeenCalled();
     expect(paths(requests)).toEqual([
       "POST /deployment/base/ingest/v1/logs",
       "POST /deployment/base/ingest/v1/logs",
     ]);
+  });
+
+  test("retries transient server errors", async () => {
+    const { requests, fetch } = mockIngestion({
+      respond: (request, index) =>
+        index === 0 ? json({ error: "unavailable" }, 503) : undefined,
+    });
+    vi.stubEnv("BRAINTRUST_NUM_RETRIES", "1");
+    const { logger, onFlushError } = initIngestionLogger(fetch);
+
+    logger.log({ input: "a", output: "b" });
+    await logger.flush();
+
+    expect(onFlushError).not.toHaveBeenCalled();
+    expect(loggedRows(requests.slice(1))).toEqual([
+      expect.objectContaining({ input: "a" }),
+    ]);
+  });
+
+  test.each([401, 403, 400])(
+    "does not retry a write rejected with %i",
+    async (status) => {
+      const { requests, fetch } = mockIngestion({
+        respond: () => json({ error: "rejected" }, status),
+      });
+      vi.stubEnv("BRAINTRUST_NUM_RETRIES", "2");
+      vi.stubEnv("BRAINTRUST_API_KEY", "private-api-key");
+      const { logger, onFlushError } = initIngestionLogger(fetch);
+
+      logger.log({ input: "a", output: "b" });
+      await logger.flush();
+
+      expect(onFlushError).toHaveBeenCalledTimes(1);
+      expect(paths(requests)).toEqual(["POST /deployment/base/ingest/v1/logs"]);
+    },
+  );
+
+  test("does not request new upload grants after a permanent rejection", async () => {
+    const { requests, fetch } = mockIngestion({
+      respond: (request) =>
+        request.url.includes("/chunks/")
+          ? json({ error: "forbidden" }, 403)
+          : undefined,
+    });
+    vi.stubEnv("BRAINTRUST_NUM_RETRIES", "2");
+    const { logger, onFlushError } = initIngestionLogger(fetch);
+
+    logger.log({
+      input: new Attachment({
+        data: new ArrayBuffer(10),
+        filename: "a.bin",
+        contentType: "application/octet-stream",
+      }),
+      output: "dropped",
+    });
+    await logger.flush();
+
+    expect(onFlushError).toHaveBeenCalledTimes(1);
+    expect(paths(requests).filter((p) => p.endsWith("/v1/uploads"))).toEqual([
+      "POST /deployment/base/ingest/v1/uploads",
+    ]);
+    expect(loggedRows(requests)).toEqual([]);
   });
 
   test("gives up after the configured retries without a private fallback", async () => {
@@ -447,7 +565,6 @@ describe("initLogger with an ingestion key", () => {
       filename: "data.bin",
       content_type: "application/octet-stream",
       size_bytes: data.length,
-      sha256: createHash("sha256").update(data).digest("hex"),
     });
     expect(
       requests
@@ -588,6 +705,34 @@ describe("initLogger with an ingestion key", () => {
     ).toBe(true);
   });
 
+  test("overflows payloads above 512 KiB by default", async () => {
+    const { requests, uploads, fetch } = mockIngestion();
+    const { logger, onFlushError } = initIngestionLogger(fetch);
+
+    logger.log({ input: "x".repeat(400 * KIB), output: "inline" });
+    await logger.flush();
+    expect(uploads.size).toBe(0);
+    expect(loggedRows(requests)).toEqual([
+      expect.objectContaining({ output: "inline" }),
+    ]);
+
+    logger.log({ input: "x".repeat(600 * KIB), output: "overflow" });
+    await logger.flush();
+
+    expect(onFlushError).not.toHaveBeenCalled();
+    const [uploadId] = uploads.keys();
+    expect(paths(requests).slice(1)).toEqual([
+      "POST /deployment/base/ingest/v1/uploads",
+      `PUT /deployment/base/ingest/v1/uploads/${uploadId}/chunks/0`,
+      `PUT /deployment/base/ingest/v1/uploads/${uploadId}/chunks/1`,
+      `POST /deployment/base/ingest/v1/uploads/${uploadId}/complete`,
+      "POST /deployment/base/ingest/v1/logs",
+    ]);
+    expect(
+      requests.every((r) => r.body === undefined || r.body.length <= 512 * KIB),
+    ).toBe(true);
+  });
+
   test("only sends supported row fields", async () => {
     const { requests, fetch } = mockIngestion();
     const { logger } = initIngestionLogger(fetch);
@@ -640,10 +785,36 @@ describe("initLogger with an ingestion key", () => {
   });
 });
 
+describe("flush with ingestion keys", () => {
+  test("drains every ingestion key queue, not only the current logger", async () => {
+    const { requests, fetch } = mockIngestion();
+    const first = initIngestionLogger(fetch);
+    const second = initIngestionLogger(fetch);
+    first.logger.log({ input: "first", output: "x" });
+    second.logger.log({ input: "second", output: "x" });
+    const privateLogger = initLogger({ apiKey: "private-api-key" });
+    expect(_internalGetGlobalState().currentLogger).toBe(privateLogger);
+
+    await flush();
+
+    expect(
+      Object.fromEntries(
+        requests.map((r) => [
+          r.headers.authorization,
+          loggedRows([r])[0].input,
+        ]),
+      ),
+    ).toEqual({
+      [`Bearer ${first.key}`]: "first",
+      [`Bearer ${second.key}`]: "second",
+    });
+  });
+});
+
 describe("tracing with an ingestion key", () => {
   test("nests and propagates spans without project metadata", async () => {
     const { requests, fetch } = mockIngestion();
-    const { logger, onFlushError } = initIngestionLogger(fetch);
+    const { key, logger, onFlushError } = initIngestionLogger(fetch);
 
     let exported = "";
     let headers: Record<string, string> = {};
@@ -660,6 +831,10 @@ describe("tracing with an ingestion key", () => {
       { name: "root" },
     );
     await vi.waitFor(() => expect(exported).not.toBe(""));
+    // Exporting and injecting neither logs in nor looks up the project.
+    expect(requests).toHaveLength(0);
+    expect(exported).not.toContain(key);
+    expect(JSON.stringify(headers)).not.toContain(key);
 
     const remote = logger.startSpan({
       name: "remote",

@@ -119,7 +119,12 @@ const logger = initLogger({
 });
 ```
 
-An explicit `apiKey` or `state` takes precedence over `BRAINTRUST_INGESTION_KEY`, and passing either together with `ingestionKey` throws.
+Anyone with the key can write new rows into the project, and can update or delete any row of the project whose id they know, including rows logged with an API key.
+Row ids are not secret, so treat everything in the project as writable by the key's users.
+Uploaded attachments can only be referenced by rows written with the same key or a key it was rotated from.
+
+An API key passed as `apiKey`, or through a `state` that is logged in or has an `apiKey`, takes precedence over `BRAINTRUST_INGESTION_KEY`, and combining one with `ingestionKey` throws.
+A `state` without an API key only provides the span context and masking function, while the logger keeps its own queue.
 `projectName` is ignored, and `projectId` is only sent along for the server to check.
 Attachments and large batches are uploaded through the ingestion URL as well.
 Fields that ingestion keys do not support, like `classifications` or audit fields, are not logged, and logging comments throws.
