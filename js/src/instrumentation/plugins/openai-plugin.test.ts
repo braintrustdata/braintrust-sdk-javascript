@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   parseMetricsFromUsage,
   aggregateChatCompletionChunks,
+  aggregateResponseStreamEvents,
 } from "./openai-plugin";
 import { processImagesInOutput as processImagesInOutputWithFlag } from "./openai-span-data";
 import { Attachment } from "../../logger";
@@ -1692,5 +1693,60 @@ describe("processImagesInOutput", () => {
       const attachment = result.result as Attachment;
       expect(attachment.reference.filename).toBe("generated_image.png");
     });
+  });
+});
+
+describe("aggregateResponseStreamEvents", () => {
+  const usage = { input_tokens: 10, output_tokens: 4, total_tokens: 14 };
+
+  it.each(["response.completed", "response.incomplete", "response.failed"])(
+    "reads output and usage from the terminal %s event",
+    (type) => {
+      const chunks = [
+        { type: "response.created", response: { id: "resp_1" } },
+        {
+          type,
+          response: {
+            id: "resp_1",
+            status: type.split(".")[1],
+            output: [{ type: "message", id: "msg_1" }],
+            usage,
+          },
+        },
+      ];
+
+      const result = aggregateResponseStreamEvents(chunks);
+
+      expect(result.output).toEqual([{ type: "message", id: "msg_1" }]);
+      expect(result.metrics).toEqual({
+        prompt_tokens: 10,
+        completion_tokens: 4,
+        tokens: 14,
+      });
+      expect(result.metadata).toMatchObject({ id: "resp_1" });
+      expect(result.error).toBeUndefined();
+    },
+  );
+
+  it("logs the error from a terminal response.failed event", () => {
+    const error = { code: "server_error", message: "The model failed." };
+    const result = aggregateResponseStreamEvents([
+      {
+        type: "response.failed",
+        response: { id: "resp_1", status: "failed", output: [], error, usage },
+      },
+    ]);
+
+    expect(result.error).toBe("server_error: The model failed.");
+    expect(result.metadata).toMatchObject({ status: "failed", error });
+  });
+
+  it("ignores non-terminal events that carry a response", () => {
+    const result = aggregateResponseStreamEvents([
+      { type: "response.in_progress", response: { id: "resp_1", usage } },
+    ]);
+
+    expect(result.output).toBeUndefined();
+    expect(result.metrics).toEqual({});
   });
 });

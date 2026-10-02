@@ -98,6 +98,7 @@ type StreamingChannelSpanConfig<TChannel extends AnyAsyncChannel> =
       output: unknown;
       metrics: Record<string, number>;
       metadata?: Record<string, unknown>;
+      error?: string;
     };
     patchResult?: (args: {
       channelName: string;
@@ -140,6 +141,7 @@ type SyncStreamChannelSpanConfig<TChannel extends AnySyncStreamChannel> =
       output?: unknown;
       metrics?: Record<string, number>;
       metadata?: Record<string, unknown>;
+      error?: string;
     };
     patchResult?: (args: {
       channelName: string;
@@ -609,6 +611,7 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
               let output: unknown;
               let metrics: Record<string, number>;
               let metadata: Record<string, unknown> | undefined;
+              let error: string | undefined;
 
               if (config.aggregateChunks) {
                 const aggregated = config.aggregateChunks(
@@ -620,6 +623,7 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
                 output = aggregated.output;
                 metrics = aggregated.metrics;
                 metadata = aggregated.metadata;
+                error = aggregated.error;
               } else {
                 output = config.extractOutput(
                   chunks as unknown as StreamingResult<TChannel>,
@@ -654,6 +658,7 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
                 output,
                 ...(metadata !== undefined ? { metadata } : {}),
                 metrics,
+                ...(error !== undefined ? { error } : {}),
               });
             } catch (error) {
               debugLogger.error(
