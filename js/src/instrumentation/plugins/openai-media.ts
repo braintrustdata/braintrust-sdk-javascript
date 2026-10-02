@@ -1,4 +1,10 @@
-import { Attachment, startSpan, withCurrent, type Span } from "../../logger";
+import {
+  _internalCaptureAttachmentsEnabled,
+  Attachment,
+  startSpan,
+  withCurrent,
+  type Span,
+} from "../../logger";
 import { debugLogger } from "../../debug-logger";
 import { getCurrentUnixTimestamp } from "../../util";
 import {
@@ -8,7 +14,6 @@ import {
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
-  isAutoCaptureAttachmentsEnabled,
 } from "../../wrappers/attachment-utils";
 import { isObject } from "../../../util/index";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
@@ -32,13 +37,13 @@ type MediaPart =
   | { type: "text"; text: string }
   | {
       type: "image_url";
-      image_url: { url: unknown };
+      image_url?: { url: unknown };
       purpose?: string;
       revised_prompt?: string;
     }
   | {
       type: "file";
-      file: { filename: string; file_data: unknown; byte_size?: number };
+      file: { filename: string; file_data?: unknown; byte_size?: number };
     };
 
 const AUDIO_TYPES = new Map(
@@ -60,7 +65,7 @@ function mediaAttachment(
 ): unknown {
   if (value instanceof URL) return value.toString();
   if (typeof value === "string" && /^https?:/.test(value)) return value;
-  if (!captureAttachments) return "<omitted>";
+  if (!captureAttachments) return undefined;
   const blob =
     value instanceof Blob ? value : convertDataToBlob(value, contentType);
   if (blob)
@@ -214,8 +219,22 @@ async function mediaInput(
             captureAttachments,
           );
           return isImage
-            ? { type: "image_url", image_url: { url: attachment }, purpose }
-            : { type: "file", file: { filename, file_data: attachment } };
+            ? {
+                type: "image_url",
+                ...(attachment !== undefined
+                  ? { image_url: { url: attachment } }
+                  : {}),
+                purpose,
+              }
+            : {
+                type: "file",
+                file: {
+                  filename,
+                  ...(attachment !== undefined
+                    ? { file_data: attachment }
+                    : {}),
+                },
+              };
         })(),
       );
     }
@@ -263,10 +282,10 @@ function mediaOutput(
           captureAttachments,
         )
       : item.url;
-    if (url !== undefined)
+    if (url !== undefined || item.revised_prompt)
       content.push({
         type: "image_url",
-        image_url: { url },
+        ...(url !== undefined ? { image_url: { url } } : {}),
         ...(item.revised_prompt ? { revised_prompt: item.revised_prompt } : {}),
       });
   }
@@ -661,7 +680,7 @@ export function interceptOpenAIMedia(
   return channel.intercept((target, thisArg, args, additional) => {
     if (isAutoInstrumentationSuppressed()) return target.apply(thisArg, args);
     const params = args[0];
-    const captureAttachments = isAutoCaptureAttachmentsEnabled();
+    const captureAttachments = _internalCaptureAttachmentsEnabled();
     let span: Span;
     try {
       const { name, spanAttributes, spanInfoMetadata } = buildStartSpanArgs(
@@ -753,16 +772,21 @@ export function interceptOpenAIMedia(
           const accumulated: OpenAIMediaResult = {};
           const audio: Blob[] = [];
           patchStreamIfNeeded<OpenAIMediaEvent>(value, {
+            collectChunks: false,
             onChunk: (event) => {
               if (event.b64_json || event.audio || event.delta || event.text)
                 first();
               if (event.usage) accumulated.usage = event.usage;
               if (event.model) accumulated.model = event.model;
-              if (event.type.endsWith(".completed") && event.b64_json) {
+              if (
+                captureAttachments &&
+                event.type.endsWith(".completed") &&
+                event.b64_json
+              ) {
                 accumulated.data = [
                   ...(accumulated.data ?? []),
                   {
-                    b64_json: captureAttachments ? event.b64_json : "<omitted>",
+                    b64_json: event.b64_json,
                   },
                 ];
                 accumulated.output_format = event.output_format;

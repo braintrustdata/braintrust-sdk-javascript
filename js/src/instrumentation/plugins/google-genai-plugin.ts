@@ -1,6 +1,7 @@
 import { uint8ArrayToBase64 } from "../../../util/bytes";
 import {
   getExtensionFromMediaType,
+  omitMediaData,
   processInputAttachments,
 } from "../../wrappers/attachment-utils";
 import { debugLogger } from "../../debug-logger";
@@ -13,8 +14,10 @@ import type {
 } from "../core/channel-definitions";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
 import {
+  _internalCaptureAttachmentsEnabled,
   _internalGetGlobalState,
   Attachment,
+  CAPTURE_ATTACHMENTS,
   currentSpan,
   BRAINTRUST_CURRENT_SPAN_STORE,
   startSpan as startBaseSpan,
@@ -69,6 +72,7 @@ type GenerateContentStreamEvent =
     googleGenAIInput?: Record<string, unknown>;
     googleGenAIMetadata?: Record<string, unknown>;
     googleGenAIStartTime?: number;
+    captureAttachments?: boolean;
   };
 
 type SpanState = {
@@ -205,7 +209,9 @@ export class GoogleGenAIPlugin extends BasePlugin {
                   spanState.startTime,
                 ),
               ),
-              output: serializeGenerateContentOutput(event.result),
+              output: withCurrent(spanState.span, () =>
+                serializeGenerateContentOutput(event.result),
+              ),
             });
           } finally {
             spanState.span.end();
@@ -240,10 +246,12 @@ export class GoogleGenAIPlugin extends BasePlugin {
         streamEvent.googleGenAIMetadata =
           extractGenerateContentMetadata(params);
         streamEvent.googleGenAIStartTime = getCurrentUnixTimestamp();
+        streamEvent.captureAttachments = _internalCaptureAttachmentsEnabled();
       },
       asyncEnd: (event) => {
         const streamEvent = event as GenerateContentStreamEvent;
         patchGoogleGenAIStreamingResult({
+          captureAttachments: streamEvent.captureAttachments,
           input: streamEvent.googleGenAIInput,
           metadata: streamEvent.googleGenAIMetadata,
           startTime: streamEvent.googleGenAIStartTime,
@@ -543,7 +551,9 @@ function interceptGoogleGenAIMediaCall<
     try {
       void Promise.resolve(result).then((response) => {
         try {
-          span.log({ output: serializeOutput(response, params) });
+          span.log({
+            output: withCurrent(span, () => serializeOutput(response, params)),
+          });
         } catch (error) {
           debugLogger.error(
             `Error capturing Google GenAI ${name} output:`,
@@ -640,12 +650,19 @@ function logErrorAndEndSpan<TChannel extends GoogleGenAINonStreamingChannel>(
 }
 
 function patchGoogleGenAIStreamingResult(args: {
+  captureAttachments?: boolean;
   input: Record<string, unknown> | undefined;
   metadata: Record<string, unknown> | undefined;
   startTime: number | undefined;
   result: unknown;
 }): boolean {
-  const { input, metadata, result, startTime } = args;
+  const {
+    input,
+    metadata,
+    result,
+    startTime,
+    captureAttachments = _internalCaptureAttachmentsEnabled(),
+  } = args;
 
   if (
     !input ||
@@ -670,6 +687,7 @@ function patchGoogleGenAIStreamingResult(args: {
         withSpanInstrumentationName(
           {
             name: "generate_content_stream",
+            [CAPTURE_ATTACHMENTS]: captureAttachments,
             spanAttributes: {
               type: SpanTypeAttribute.LLM,
             },
@@ -791,7 +809,35 @@ function patchGoogleGenAIStreamingResult(args: {
             if (firstTokenTime === null) {
               firstTokenTime = getCurrentUnixTimestamp();
             }
-            chunks.push(nextResult.value);
+            chunks.push(
+              captureAttachments
+                ? nextResult.value
+                : {
+                    ...nextResult.value,
+                    candidates: nextResult.value.candidates?.map(
+                      (candidate) => ({
+                        ...candidate,
+                        content: candidate.content
+                          ? {
+                              ...candidate.content,
+                              parts: candidate.content.parts?.map((part) =>
+                                part.inlineData
+                                  ? {
+                                      ...part,
+                                      // This copy is only retained for trace aggregation.
+                                      inlineData: omitMediaData(
+                                        part.inlineData,
+                                        "data",
+                                      ) as GoogleGenAIPart["inlineData"],
+                                    }
+                                  : part,
+                              ),
+                            }
+                          : candidate.content,
+                      }),
+                    ),
+                  },
+            );
           }
 
           if (nextResult.done) {
@@ -800,6 +846,7 @@ function patchGoogleGenAIStreamingResult(args: {
                 chunks,
                 requestStartTime,
                 firstTokenTime,
+                captureAttachments,
               ),
             });
           }
@@ -827,6 +874,7 @@ function patchGoogleGenAIStreamingResult(args: {
                 chunks,
                 requestStartTime,
                 firstTokenTime,
+                captureAttachments,
               ),
             });
           } else {
@@ -902,7 +950,9 @@ function serializeGenerateContentOutput(
         ? {
             content: {
               ...candidate.content,
-              parts: candidate.content.parts.map((part) => serializePart(part)),
+              parts: candidate.content.parts
+                .map((part) => serializePart(part))
+                .filter((part) => part !== undefined),
             },
           }
         : {}),
@@ -1125,12 +1175,23 @@ function serializeGoogleGenAIImage(
   fallbackMimeType?: string,
   purpose?: "input" | "reference" | "mask",
 ): Record<string, unknown> | undefined {
+  const captureAttachments = _internalCaptureAttachmentsEnabled();
+  // Omitted inline media keeps its non-data metadata, without reading the bytes.
+  if (!captureAttachments && !image.gcsUri)
+    return purpose && "imageBytes" in image
+      ? { type: "image_url", purpose }
+      : undefined;
   const mimeType = image.mimeType ?? fallbackMimeType ?? "image/png";
   const filename = `${filenameStem}.${getExtensionFromMediaType(mimeType)}`;
   const media =
     image.gcsUri ??
     (image.imageBytes
-      ? createAttachmentFromInlineData(image.imageBytes, mimeType, filename)
+      ? createAttachmentFromInlineData(
+          image.imageBytes,
+          mimeType,
+          filename,
+          captureAttachments,
+        )
       : undefined);
   if (!media) {
     return undefined;
@@ -1146,12 +1207,23 @@ function serializeGoogleGenAIVideo(
   video: GoogleGenAIVideo,
   filenameStem: string,
 ): Record<string, unknown> | undefined {
+  const captureAttachments = _internalCaptureAttachmentsEnabled();
   const mimeType = video.mimeType ?? "video/mp4";
   const filename = `${filenameStem}.${getExtensionFromMediaType(mimeType)}`;
+  // Omitted inline media keeps its non-data metadata, without reading the bytes.
+  if (!captureAttachments && !video.uri)
+    return "videoBytes" in video
+      ? { type: "file", file: { filename } }
+      : undefined;
   const media =
     video.uri ??
     (video.videoBytes
-      ? createAttachmentFromInlineData(video.videoBytes, mimeType, filename)
+      ? createAttachmentFromInlineData(
+          video.videoBytes,
+          mimeType,
+          filename,
+          captureAttachments,
+        )
       : undefined);
   return media
     ? { type: "file", file: { filename, file_data: media } }
@@ -1163,7 +1235,7 @@ type EmbeddingContentPart =
   | { type: "image_url"; image_url: { url: string | Attachment } }
   | {
       type: "file";
-      file: { file_data: string | Attachment; filename?: string };
+      file: { file_data?: string | Attachment; filename?: string };
     };
 
 function serializeEmbedContentInput(
@@ -1200,6 +1272,10 @@ function serializeEmbedContentInput(
         if (part.text !== undefined) return [{ type: "text", text: part.text }];
         const media = part.inlineData ?? part.fileData;
         if (!media) return [];
+        if ("data" in media && !_internalCaptureAttachmentsEnabled())
+          return !media.mimeType?.startsWith("image/") && media.displayName
+            ? [{ type: "file", file: { filename: media.displayName } }]
+            : [];
         const data =
           "data" in media
             ? `data:${media.mimeType};base64,${typeof media.data === "string" ? media.data : uint8ArrayToBase64(media.data)}`
@@ -1283,7 +1359,7 @@ function serializeInteractionInput(
   ]) {
     const value = params[key];
     if (value !== undefined) {
-      input[key] = serializeInteractionValue(value);
+      input[key] = serializeInteractionValue(value, false);
     }
   }
 
@@ -1308,13 +1384,13 @@ function extractInteractionMetadata(
   ]) {
     const value = params[key];
     if (value !== undefined) {
-      metadata[key] = serializeInteractionValue(value);
+      metadata[key] = serializeInteractionValue(value, false);
     }
   }
 
   if (Array.isArray(params.tools)) {
     metadata.tools = params.tools.map((tool) =>
-      serializeInteractionValue(tool),
+      serializeInteractionValue(tool, false),
     );
   }
 
@@ -1346,7 +1422,9 @@ function serializeContentItem(item: string | GoogleGenAIContent): unknown {
     if (item.parts && Array.isArray(item.parts)) {
       return {
         ...item,
-        parts: item.parts.map((part: GoogleGenAIPart) => serializePart(part)),
+        parts: item.parts
+          .map((part: GoogleGenAIPart) => serializePart(part))
+          .filter((part) => part !== undefined),
       };
     }
     return item;
@@ -1362,14 +1440,27 @@ function serializeContentItem(item: string | GoogleGenAIContent): unknown {
 /**
  * Serialize a part, converting inline data to Attachments.
  */
-function serializePart(part: GoogleGenAIPart): unknown {
+function serializePart(
+  part: GoogleGenAIPart,
+  captureAttachments = _internalCaptureAttachmentsEnabled(),
+): unknown {
   if (!part || typeof part !== "object") {
     return part;
   }
 
+  if (part.inlineData && !captureAttachments)
+    return omitMediaData({
+      ...part,
+      inlineData: omitMediaData(part.inlineData, "data"),
+    });
   if (part.inlineData && part.inlineData.data) {
     const { data, mimeType } = part.inlineData;
-    const attachment = createAttachmentFromInlineData(data, mimeType);
+    const attachment = createAttachmentFromInlineData(
+      data,
+      mimeType,
+      undefined,
+      captureAttachments,
+    );
 
     if (attachment) {
       return mimeType.startsWith("image/")
@@ -1562,6 +1653,7 @@ function serializeVideoInteractionOutput(
 
 function serializeInteractionValue(
   value: unknown,
+  processMedia = true,
   seen = new WeakSet<object>(),
 ): unknown {
   if (value === null || value === undefined || typeof value !== "object") {
@@ -1569,7 +1661,9 @@ function serializeInteractionValue(
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => serializeInteractionValue(item, seen));
+    return value.map((item) =>
+      serializeInteractionValue(item, processMedia, seen),
+    );
   }
 
   const dict: unknown = tryToDict(value);
@@ -1578,7 +1672,9 @@ function serializeInteractionValue(
   }
 
   if (Array.isArray(dict)) {
-    return dict.map((item) => serializeInteractionValue(item, seen));
+    return dict.map((item) =>
+      serializeInteractionValue(item, processMedia, seen),
+    );
   }
 
   if (seen.has(dict)) {
@@ -1588,22 +1684,48 @@ function serializeInteractionValue(
   seen.add(dict);
   try {
     const serialized: Record<string, unknown> = {};
+    const isMedia =
+      processMedia &&
+      "type" in dict &&
+      typeof dict.type === "string" &&
+      ["image", "audio", "video", "document"].includes(dict.type);
     const mimeType =
       "mime_type" in dict && typeof dict.mime_type === "string"
         ? dict.mime_type
         : "mimeType" in dict && typeof dict.mimeType === "string"
           ? dict.mimeType
           : undefined;
+    const captureAttachments = isMedia && _internalCaptureAttachmentsEnabled();
     const attachment =
-      mimeType && "data" in dict && dict.data !== undefined
+      captureAttachments &&
+      mimeType &&
+      "data" in dict &&
+      dict.data !== undefined
         ? createAttachmentFromInlineData(dict.data, mimeType)
         : null;
 
-    for (const [key, entry] of Object.entries(dict)) {
+    for (const key of Object.keys(dict)) {
+      if (key === "data" && isMedia && !captureAttachments) continue;
+      const entry: unknown = Reflect.get(dict, key);
       if (key === "data" && attachment) {
         serialized[key] = attachment;
       } else {
-        serialized[key] = serializeInteractionValue(entry, seen);
+        // Only descend into provider content containers for media conversion.
+        // Tool arguments/results and metadata remain ordinary application JSON.
+        serialized[key] = serializeInteractionValue(
+          entry,
+          processMedia &&
+            [
+              "input",
+              "content",
+              "steps",
+              "outputs",
+              "output_image",
+              "output_audio",
+              "output_video",
+            ].includes(key),
+          seen,
+        );
       }
     }
 
@@ -1617,7 +1739,9 @@ function createAttachmentFromInlineData(
   data: unknown,
   mimeType?: string,
   filename = `file.${mimeType ? getExtensionFromMediaType(mimeType) : "bin"}`,
+  captureAttachments = _internalCaptureAttachmentsEnabled(),
 ): Attachment | null {
+  if (!captureAttachments) return null;
   if (
     !(
       data instanceof Uint8Array ||
@@ -1968,6 +2092,7 @@ function aggregateGenerateContentChunks(
   chunks: GoogleGenAIGenerateContentResponse[],
   startTime: number,
   firstTokenTime: number | null,
+  captureAttachments: boolean,
 ): {
   aggregated: Record<string, unknown>;
   metrics: Record<string, number>;
@@ -2023,7 +2148,9 @@ function aggregateGenerateContentChunks(
             } else if (part.executableCode) {
               otherParts.push({ executableCode: part.executableCode });
             } else if (part.inlineData || part.fileData) {
-              const serializedPart = tryToDict(serializePart(part));
+              const serializedPart = tryToDict(
+                serializePart(part, captureAttachments),
+              );
               if (serializedPart) {
                 otherParts.push(serializedPart);
               }
@@ -2172,7 +2299,7 @@ function aggregateInteractionEvents(
     output.output_text = outputText;
   }
   if (latestUsage) {
-    output.usage = serializeInteractionValue(latestUsage);
+    output.usage = serializeInteractionValue(latestUsage, false);
   }
 
   const compactSteps = Array.from(steps.values()).sort(
@@ -2234,7 +2361,10 @@ function compactInteractionStep(step: unknown): Record<string, unknown> {
     "is_error",
   ]) {
     if (stepDict[key] !== undefined) {
-      compact[key] = serializeInteractionValue(stepDict[key]);
+      compact[key] = serializeInteractionValue(
+        stepDict[key],
+        key === "content",
+      );
     }
   }
 

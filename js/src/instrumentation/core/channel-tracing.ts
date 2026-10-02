@@ -4,6 +4,7 @@ import {
   _internalGetGlobalState,
   BRAINTRUST_CURRENT_SPAN_STORE,
   startSpan,
+  withCurrent,
 } from "../../logger";
 import type { CurrentSpanStore, Span } from "../../logger";
 import {
@@ -480,9 +481,8 @@ export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
       const { span, startTime } = spanData;
 
       try {
-        const output = config.extractOutput(
-          asyncEndEvent.result,
-          asyncEndEvent,
+        const output = withCurrent(span, () =>
+          config.extractOutput(asyncEndEvent.result, asyncEndEvent),
         );
         const metrics = config.extractMetrics(
           asyncEndEvent.result,
@@ -611,19 +611,24 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
               let metadata: Record<string, unknown> | undefined;
 
               if (config.aggregateChunks) {
-                const aggregated = config.aggregateChunks(
-                  chunks,
-                  asyncEndEvent.result,
-                  asyncEndEvent,
-                  startTime,
+                const aggregateChunks = config.aggregateChunks;
+                const aggregated = withCurrent(span, () =>
+                  aggregateChunks(
+                    chunks,
+                    asyncEndEvent.result,
+                    asyncEndEvent,
+                    startTime,
+                  ),
                 );
                 output = aggregated.output;
                 metrics = aggregated.metrics;
                 metadata = aggregated.metadata;
               } else {
-                output = config.extractOutput(
-                  chunks as unknown as StreamingResult<TChannel>,
-                  asyncEndEvent,
+                output = withCurrent(span, () =>
+                  config.extractOutput(
+                    chunks as unknown as StreamingResult<TChannel>,
+                    asyncEndEvent,
+                  ),
                 );
                 metrics = config.extractMetrics(
                   chunks as unknown as StreamingResult<TChannel>,
@@ -719,9 +724,11 @@ export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
           }
         | undefined;
       try {
-        const output = config.extractOutput(
-          asyncEndEvent.result as StreamingResult<TChannel>,
-          asyncEndEvent,
+        const output = withCurrent(span, () =>
+          config.extractOutput(
+            asyncEndEvent.result as StreamingResult<TChannel>,
+            asyncEndEvent,
+          ),
         );
         const metrics = config.extractMetrics(
           asyncEndEvent.result as StreamingResult<TChannel>,

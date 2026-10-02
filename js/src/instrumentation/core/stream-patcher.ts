@@ -58,6 +58,14 @@ interface StreamPatchOptions<TChunk = unknown, TFinal = unknown> {
   shouldCollect?: (chunk: TChunk) => boolean;
 
   /**
+   * Retain chunks for onComplete, onCancel, and onError.
+   * Disable when onChunk accumulates its own result, so large media streams
+   * are not buffered.
+   * Default: true.
+   */
+  collectChunks?: boolean;
+
+  /**
    * Optional wrapper around iterator.next(). Used by integrations that need to
    * preserve async context while the producer advances.
    */
@@ -233,7 +241,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
               : true;
 
             if (shouldCollect) {
-              chunks.push(chunk);
+              if (options.collectChunks !== false) chunks.push(chunk);
 
               if (options.onChunk) {
                 try {
@@ -354,7 +362,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
               : true;
 
             if (shouldCollect) {
-              chunks.push(chunk);
+              if (options.collectChunks !== false) chunks.push(chunk);
 
               // Call onChunk handler if provided
               if (options.onChunk) {

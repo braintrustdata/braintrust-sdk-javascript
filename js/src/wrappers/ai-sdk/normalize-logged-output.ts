@@ -1,4 +1,5 @@
 import type { AISDKResult } from "../../vendor-sdk-types/ai-sdk";
+import { BaseAttachment } from "../../logger";
 
 const REMOVE_NORMALIZED_VALUE = Symbol("braintrust.ai-sdk.remove-normalized");
 
@@ -21,7 +22,12 @@ function normalizeAISDKLoggedValue(
       .filter((entry) => entry !== REMOVE_NORMALIZED_VALUE);
   }
 
-  if (!value || typeof value !== "object") {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    value instanceof BaseAttachment ||
+    value instanceof URL
+  ) {
     return value;
   }
 

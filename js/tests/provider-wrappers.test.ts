@@ -157,7 +157,9 @@ describe("provider wrapper", () => {
       ).toEqual(mockData);
       const spans = await backgroundLogger.drain();
       expect(spans).toHaveLength(1);
-      expect(spans[0].output[0].result).toBe("<omitted>");
+      expect(spans[0].output).toEqual([
+        { type: "image_generation_call", output_format: "png" },
+      ]);
     } finally {
       client.responses.create = originalCreate;
       if (originalAutoCaptureAttachments === undefined) {

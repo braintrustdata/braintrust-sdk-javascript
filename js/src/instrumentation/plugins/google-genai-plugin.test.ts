@@ -19,6 +19,9 @@ vi.mock("../../isomorph", () => ({
       };
     }),
     newTracingChannel: vi.fn(),
+    getEnv: vi.fn((name: string) =>
+      name === "BRAINTRUST_CAPTURE_ATTACHMENTS" ? "true" : undefined,
+    ),
   },
 }));
 
@@ -30,24 +33,31 @@ const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
 const mockStartSpan = vi.mocked(startSpan);
 
 // Mock logger
-vi.mock("../../logger", () => ({
-  startSpan: vi.fn(() => ({
-    log: vi.fn(),
-    end: vi.fn(),
-  })),
-  _internalGetGlobalState: vi.fn(() => undefined),
-  currentSpan: vi.fn(() => undefined),
-  withCurrent: vi.fn((_span: unknown, callback: () => unknown) => callback()),
-  Attachment: class MockAttachment {
-    reference: any;
-    constructor(params: any) {
-      this.reference = {
-        filename: params.filename,
-        content_type: params.contentType,
-      };
-    }
-  },
-}));
+vi.mock("../../logger", async () => {
+  const { default: iso } = await import("../../isomorph");
+  return {
+    _internalCaptureAttachmentsEnabled: () =>
+      iso.getEnv("BRAINTRUST_CAPTURE_ATTACHMENTS") === "true",
+    BaseAttachment: class {},
+    CAPTURE_ATTACHMENTS: Symbol.for("braintrust.captureAttachments"),
+    startSpan: vi.fn(() => ({
+      log: vi.fn(),
+      end: vi.fn(),
+    })),
+    _internalGetGlobalState: vi.fn(() => undefined),
+    currentSpan: vi.fn(() => undefined),
+    withCurrent: vi.fn((_span: unknown, callback: () => unknown) => callback()),
+    Attachment: class MockAttachment {
+      reference: any;
+      constructor(params: any) {
+        this.reference = {
+          filename: params.filename,
+          content_type: params.contentType,
+        };
+      }
+    },
+  };
+});
 
 describe("GoogleGenAIPlugin", () => {
   let plugin: GoogleGenAIPlugin;
@@ -1127,6 +1137,132 @@ describe("GoogleGenAIPlugin", () => {
   });
 
   describe("interactions.create channel subscription", () => {
+    it.each([
+      [false, false],
+      [false, true],
+      [true, false],
+      [true, true],
+    ])(
+      "preserves application JSON while processing media with capture=%s, streaming=%s",
+      async (captureAttachments, streaming) => {
+        const getEnv = vi.mocked(iso.getEnv);
+        const originalGetEnv = getEnv.getMockImplementation()!;
+        getEnv.mockImplementation((name) =>
+          name === "BRAINTRUST_CAPTURE_ATTACHMENTS"
+            ? String(captureAttachments)
+            : undefined,
+        );
+        try {
+          plugin.enable();
+          const handlers = subscribeSpy.mock.calls[3][0];
+          const data = { mimeType: "application/json", data: { count: 1 } };
+          const mediaShapedJSON = {
+            type: "image",
+            mime_type: "image/png",
+            data: "ordinary application data",
+          };
+          const media = { type: "image", mime_type: "image/png", data: "AQID" };
+          const content = [
+            {
+              type: "function_call",
+              name: "report",
+              arguments: { data, mediaShapedJSON },
+            },
+            {
+              type: "function_result",
+              name: "report",
+              result: { data, mediaShapedJSON },
+            },
+            media,
+          ];
+          const result = {
+            id: "interaction-json",
+            input: content,
+            steps: [
+              ...content.slice(0, 2),
+              { type: "model_output", content: [media] },
+            ],
+            metadata: { data, mediaShapedJSON },
+          };
+          const event: any = {
+            arguments: [
+              {
+                model: "gemini-2.5-flash",
+                input: content,
+                agent_config: { data, mediaShapedJSON },
+              },
+            ],
+            result: streaming
+              ? (async function* () {
+                  for (const [index, step] of result.steps.entries()) {
+                    yield { event_type: "step.start", index, step };
+                  }
+                  yield {
+                    event_type: "interaction.completed",
+                    interaction: result,
+                  };
+                })()
+              : result,
+          };
+          handlers.start(event);
+          const span = mockStartSpan.mock.results.at(-1)!.value;
+          handlers.asyncEnd(event);
+          if (streaming) {
+            for await (const _chunk of event.result) {
+              // Consume the provider stream to trigger final trace aggregation.
+            }
+          }
+          const expectedContent = [
+            ...content.slice(0, 2),
+            {
+              type: "image",
+              mime_type: "image/png",
+              ...(captureAttachments
+                ? {
+                    data: expect.objectContaining({
+                      reference: {
+                        filename: "file.png",
+                        content_type: "image/png",
+                      },
+                    }),
+                  }
+                : {}),
+            },
+          ];
+          expect(span.log).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+              input: expect.objectContaining({
+                input: expectedContent,
+                agent_config: { data, mediaShapedJSON },
+              }),
+              metadata: expect.objectContaining({
+                agent_config: { data, mediaShapedJSON },
+              }),
+            }),
+          );
+          const expectedSteps = [
+            ...content.slice(0, 2),
+            { type: "model_output", content: [expectedContent[2]] },
+          ];
+          expect(span.log).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+              output: {
+                ...result,
+                input: expectedContent,
+                steps: streaming
+                  ? expectedSteps.map((step, index) => ({ ...step, index }))
+                  : expectedSteps,
+              },
+            }),
+          );
+          expect(media.data).toBe("AQID");
+        } finally {
+          getEnv.mockImplementation(originalGetEnv);
+        }
+      },
+    );
+
     it("subscribes to the interactions.create channel", () => {
       plugin.enable();
 

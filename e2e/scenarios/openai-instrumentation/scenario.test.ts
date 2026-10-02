@@ -1,3 +1,4 @@
+import { defineAttachmentCaptureTests } from "../../helpers/attachment-capture-assertions";
 import { describe, it } from "vitest";
 import {
   prepareScenarioDir,
@@ -138,3 +139,13 @@ describe.concurrent("variants", () => {
     });
   }
 });
+
+for (const scenario of openaiScenarios) {
+  defineAttachmentCaptureTests({
+    scenarioDir,
+    originalScenarioDir,
+    provider: "openai",
+    packageName: scenario.dependencyName,
+    variantKey: scenario.snapshotName,
+  });
+}

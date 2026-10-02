@@ -102,6 +102,35 @@ describe("traceAsyncChannel current span binding", () => {
     });
   });
 
+  it("extracts input in the caller's context", async () => {
+    let inputContextSpan: Span | undefined;
+    let createdSpan: Span | undefined;
+    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
+      name: "channel-tracing-test",
+      type: "function",
+      extractInput: (_args, _event, span) => {
+        inputContextSpan = currentSpan();
+        createdSpan = span;
+        return { input: "input", metadata: undefined };
+      },
+      extractOutput: (result) => result,
+      extractMetrics: () => ({}),
+    });
+
+    try {
+      await testChannels.asyncCall.tracePromise(
+        async () => ({ ok: true as const }),
+        { arguments: [{}] } as any,
+      );
+    } finally {
+      unsubscribe();
+    }
+
+    // AI SDK child tracing compares the caller's span with the created span.
+    expect(createdSpan).toBeDefined();
+    expect(inputContextSpan).not.toBe(createdSpan);
+  });
+
   it("limits channel provenance to directly instrumented spans", async () => {
     const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
       name: "channel-parent",

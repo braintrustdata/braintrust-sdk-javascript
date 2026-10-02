@@ -34,7 +34,7 @@
     "zod": "^3.25.34"
   },
   "peerDependencies": {
-    "braintrust": ">=0.4.0"
+    "braintrust": ">=4.0.0"
   },
   "repository": {
     "type": "git",
