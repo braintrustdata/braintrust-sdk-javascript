@@ -5,18 +5,24 @@ import {
 } from "../../wrappers/attachment-utils";
 import { debugLogger } from "../../debug-logger";
 import { BasePlugin } from "../core";
-import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
+import {
+  interceptStreamingChannel,
+  traceStreamingChannel,
+  unsubscribeAll,
+} from "../core/channel-tracing";
 import type {
+  AnyAsyncChannel,
+  ArgsOf,
   ChannelMessage,
-  ErrorOf,
-  StartOf,
+  ResultOf,
 } from "../core/channel-definitions";
 import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
+import { isInvocationContext } from "../../global-instrumentation-hooks";
 import {
   _internalGetGlobalState,
   Attachment,
-  currentSpan,
   BRAINTRUST_CURRENT_SPAN_STORE,
+  currentSpan,
   startSpan as startBaseSpan,
   withCurrent,
   type CurrentSpanStore,
@@ -61,19 +67,39 @@ type GenerateContentStreamChannel =
   typeof googleGenAIChannels.generateContentStream;
 type EmbedContentChannel = typeof googleGenAIChannels.embedContent;
 type InteractionsCreateChannel = typeof googleGenAIChannels.interactionsCreate;
-type GoogleGenAINonStreamingChannel =
-  | GenerateContentChannel
-  | EmbedContentChannel;
-type GenerateContentStreamEvent =
-  ChannelMessage<GenerateContentStreamChannel> & {
-    googleGenAIInput?: Record<string, unknown>;
-    googleGenAIMetadata?: Record<string, unknown>;
-    googleGenAIStartTime?: number;
-  };
 
 type SpanState = {
   span: Span;
   startTime: number;
+};
+
+type GenerateContentStreamState = {
+  input: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  span?: undefined;
+  startTime: number;
+};
+
+type GoogleGenAICallTracer<
+  TChannel extends AnyAsyncChannel,
+  TState extends { span?: Span },
+> = {
+  start(params: ArgsOf<TChannel>[0]): TState;
+  end(state: TState, result: ResultOf<TChannel>): void;
+  error(state: TState, error: unknown): void;
+};
+
+type GoogleGenAICallChannel<TChannel extends AnyAsyncChannel> = TChannel & {
+  intercept(
+    interceptor: (
+      target: (
+        this: unknown,
+        ...args: ArgsOf<TChannel>
+      ) => PromiseLike<ResultOf<TChannel>>,
+      thisArg: unknown,
+      args: ArgsOf<TChannel>,
+    ) => PromiseLike<ResultOf<TChannel>>,
+  ): () => void;
 };
 
 const GOOGLE_GENAI_INTERNAL_CONTEXT = {
@@ -93,10 +119,40 @@ function createWrapperParityEvent(args: {
   } as StartSpanArgs["event"];
 }
 
+// Shared by the interceptor and by legacy subscribers of direct, unmarked
+// tracing events. Invocation-marked events are traced by the interceptor.
+const interactionsCreateConfig: Parameters<
+  typeof traceStreamingChannel<InteractionsCreateChannel>
+>[1] = {
+  name: ([params]) =>
+    isVideoInteractionCreate(params) ? "generate_video" : "create_interaction",
+  shouldTrace: ([params], event) =>
+    !isInvocationContext(event) && !isBackgroundInteractionCreate(params),
+  type: SpanTypeAttribute.LLM,
+  extractInput: ([params]) => ({
+    input: isVideoInteractionCreate(params)
+      ? serializeVideoInteractionInput(params)
+      : serializeInteractionInput(params),
+    metadata: isVideoInteractionCreate(params)
+      ? { model: params.model, provider: "google" }
+      : extractInteractionMetadata(params),
+  }),
+  extractOutput: (result, event) =>
+    isVideoInteractionCreate(event?.arguments?.[0]) ||
+    getInteractionVideoOutput(result).length > 0
+      ? serializeVideoInteractionOutput(result)
+      : serializeInteractionValue(result),
+  extractMetadata: (result) => extractInteractionResponseMetadata(result),
+  extractMetrics: (result, startTime) =>
+    cleanMetrics(extractInteractionMetrics(result, startTime)),
+  aggregateChunks: (chunks, _result, _event, startTime) =>
+    aggregateInteractionEvents(chunks, startTime),
+};
+
 /**
  * Auto-instrumentation plugin for the Google GenAI SDK.
  *
- * This plugin subscribes to orchestrion channels for Google GenAI SDK methods
+ * This plugin intercepts orchestrion channels for Google GenAI SDK methods
  * and creates Braintrust spans to track:
  * - models.generateContent (non-streaming)
  * - models.generateContentStream (streaming)
@@ -104,6 +160,7 @@ function createWrapperParityEvent(args: {
  * - models.generateImages (image generation)
  * - models.editImage (image editing)
  * - models.generateVideos (video job submission)
+ * - interactions.create (Interactions API)
  *
  * The plugin handles:
  * - Google-specific token metrics (promptTokenCount, candidatesTokenCount, cachedContentTokenCount)
@@ -121,342 +178,60 @@ export class GoogleGenAIPlugin extends BasePlugin {
   }
 
   private subscribeToGoogleGenAIChannels(): void {
-    this.subscribeToGenerateContentChannel();
-    this.subscribeToGenerateContentStreamChannel();
-    this.subscribeToEmbedContentChannel();
-    this.subscribeToInteractionsCreateChannel();
-    this.subscribeToGenerateImagesChannel();
-    this.subscribeToEditImageChannel();
-    this.subscribeToGenerateVideosChannel();
-  }
-
-  private subscribeToGenerateContentChannel(): void {
-    const tracingChannel =
-      googleGenAIChannels.generateContent.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<GenerateContentChannel>
-      >;
-    const states = new WeakMap<object, SpanState>();
-    const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
-      tracingChannel,
-      states,
-      (event) => {
-        const params = event.arguments[0];
-        const input = serializeGenerateContentInput(params);
-        const metadata = extractGenerateContentMetadata(params);
-        const span = startBaseSpan(
-          withSpanInstrumentationName(
-            {
-              name: "generate_content",
-              spanAttributes: {
-                type: SpanTypeAttribute.LLM,
-              },
-              event: createWrapperParityEvent({ input, metadata }),
-            },
-            INSTRUMENTATION_NAMES.GOOGLE_GENAI,
-          ),
-        );
-
-        return {
-          span,
-          startTime: getCurrentUnixTimestamp(),
-        };
-      },
-    );
-
-    const handlers: IsoChannelHandlers<ChannelMessage<GenerateContentChannel>> =
-      {
-        start: (event) => {
-          ensureSpanState(states, event, () => {
-            const params = event.arguments[0];
-            const input = serializeGenerateContentInput(params);
-            const metadata = extractGenerateContentMetadata(params);
-            const span = startBaseSpan(
-              withSpanInstrumentationName(
-                {
-                  name: "generate_content",
-                  spanAttributes: {
-                    type: SpanTypeAttribute.LLM,
-                  },
-                  event: createWrapperParityEvent({ input, metadata }),
-                },
-                INSTRUMENTATION_NAMES.GOOGLE_GENAI,
-              ),
-            );
-
-            return {
-              span,
-              startTime: getCurrentUnixTimestamp(),
-            };
-          });
-        },
-        asyncEnd: (event) => {
-          const spanState = states.get(event as object);
-          if (!spanState) {
-            return;
-          }
-
-          try {
-            const responseMetadata = extractResponseMetadata(event.result);
-            spanState.span.log({
-              ...(responseMetadata ? { metadata: responseMetadata } : {}),
-              metrics: cleanMetrics(
-                extractGenerateContentMetrics(
-                  event.result,
-                  spanState.startTime,
-                ),
-              ),
-              output: serializeGenerateContentOutput(event.result),
-            });
-          } finally {
-            spanState.span.end();
-            states.delete(event as object);
-          }
-        },
-        error: (event) => {
-          logErrorAndEndSpan(states, event as ErrorOf<GenerateContentChannel>);
-        },
-      };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindCurrentSpanStore?.();
-      tracingChannel.unsubscribe(handlers);
-    });
-  }
-
-  private subscribeToGenerateContentStreamChannel(): void {
-    const tracingChannel =
-      googleGenAIChannels.generateContentStream.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<GenerateContentStreamChannel>
-      >;
-
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<GenerateContentStreamChannel>
-    > = {
-      start: (event) => {
-        const streamEvent = event as GenerateContentStreamEvent;
-        const params = event.arguments[0];
-        streamEvent.googleGenAIInput = serializeGenerateContentInput(params);
-        streamEvent.googleGenAIMetadata =
-          extractGenerateContentMetadata(params);
-        streamEvent.googleGenAIStartTime = getCurrentUnixTimestamp();
-      },
-      asyncEnd: (event) => {
-        const streamEvent = event as GenerateContentStreamEvent;
-        patchGoogleGenAIStreamingResult({
-          input: streamEvent.googleGenAIInput,
-          metadata: streamEvent.googleGenAIMetadata,
-          startTime: streamEvent.googleGenAIStartTime,
-          result: streamEvent.result,
-        });
-      },
-      error: () => {},
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      tracingChannel.unsubscribe(handlers);
-    });
-  }
-
-  private subscribeToEmbedContentChannel(): void {
-    const tracingChannel =
-      googleGenAIChannels.embedContent.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<EmbedContentChannel>
-      >;
-    const states = new WeakMap<object, SpanState>();
     const embeddingSpans = new WeakSet<Span>();
+    const embedContentTracer = createEmbedContentTracer(embeddingSpans);
+
     this.unsubscribers.push(
-      googleGenAIChannels.httpResponseJson.intercept(
-        (target, thisArg, args) => {
-          const span = currentSpan();
-          const result = Reflect.apply(target, thisArg, args);
-          if (embeddingSpans.has(span)) {
-            // Observe the SDK's own JSON parsing, without cloning/consuming the
-            // response again or retaining the embedding vectors.
-            void Promise.resolve(result).then(
-              (response) => {
-                try {
-                  const metrics = cleanMetrics(
-                    extractEmbedContentMetrics(response),
-                  );
-                  if (
-                    embeddingSpans.has(span) &&
-                    Object.keys(metrics).length > 0
-                  ) {
-                    span.log({ metrics });
-                  }
-                } catch (error) {
-                  debugLogger.error(
-                    "Error reading Google GenAI embedding usage:",
-                    error,
-                  );
-                }
-              },
-              () => {}, // The embedding channel handles the original rejection.
-            );
-          }
-          return result;
-        },
+      subscribeToLegacyGoogleGenAICall(
+        googleGenAIChannels.generateContent,
+        generateContentTracer,
       ),
-    );
-    const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
-      tracingChannel,
-      states,
-      (event) => {
-        const params = event.arguments[0];
-        const input = serializeEmbedContentInput(params);
-        const metadata = { provider: "google", model: params.model };
-        const span = startBaseSpan(
-          withSpanInstrumentationName(
-            {
-              name: "embed_content",
-              spanAttributes: {
-                type: SpanTypeAttribute.LLM,
-              },
-              event: createWrapperParityEvent({ input, metadata }),
-            },
-            INSTRUMENTATION_NAMES.GOOGLE_GENAI,
-          ),
-        );
-
-        embeddingSpans.add(span);
-        return {
-          span,
-          startTime: getCurrentUnixTimestamp(),
-        };
-      },
-    );
-
-    const handlers: IsoChannelHandlers<ChannelMessage<EmbedContentChannel>> = {
-      start: (event) => {
-        ensureSpanState(states, event, () => {
-          const params = event.arguments[0];
-          const input = serializeEmbedContentInput(params);
-          const metadata = { provider: "google", model: params.model };
-          const span = startBaseSpan(
-            withSpanInstrumentationName(
-              {
-                name: "embed_content",
-                spanAttributes: {
-                  type: SpanTypeAttribute.LLM,
-                },
-                event: createWrapperParityEvent({ input, metadata }),
-              },
-              INSTRUMENTATION_NAMES.GOOGLE_GENAI,
-            ),
-          );
-
-          embeddingSpans.add(span);
-          return {
-            span,
-            startTime: getCurrentUnixTimestamp(),
-          };
-        });
-      },
-      asyncEnd: (event) => {
-        const spanState = states.get(event as object);
-        if (!spanState) {
-          return;
-        }
-
-        try {
-          spanState.span.log({
-            output: summarizeEmbedContentOutput(event.result),
-            metrics: cleanMetrics(
-              extractEmbedContentMetrics(event.result, spanState.startTime),
-            ),
-          });
-        } finally {
-          embeddingSpans.delete(spanState.span);
-          spanState.span.end();
-          states.delete(event as object);
-        }
-      },
-      error: (event) => {
-        const spanState = states.get(event as object);
-        if (!spanState) return;
-        try {
-          spanState.span.log({ error: event.error, output: { count: 0 } });
-        } finally {
-          embeddingSpans.delete(spanState.span);
-          spanState.span.end();
-          states.delete(event as object);
-        }
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindCurrentSpanStore?.();
-      tracingChannel.unsubscribe(handlers);
-    });
-  }
-
-  private subscribeToInteractionsCreateChannel(): void {
-    this.unsubscribers.push(
+      subscribeToLegacyGoogleGenAICall(
+        googleGenAIChannels.generateContentStream,
+        generateContentStreamTracer,
+      ),
+      interceptEmbedContentHttpResponse(embeddingSpans),
+      subscribeToLegacyGoogleGenAICall(
+        googleGenAIChannels.embedContent,
+        embedContentTracer,
+      ),
       traceStreamingChannel(
-        googleGenAIChannels.interactionsCreate as InteractionsCreateChannel,
-        {
-          name: ([params]) =>
-            isVideoInteractionCreate(params)
-              ? "generate_video"
-              : "create_interaction",
-          shouldTrace: ([params]) => !isBackgroundInteractionCreate(params),
-          type: SpanTypeAttribute.LLM,
-          extractInput: ([params]) => ({
-            input: isVideoInteractionCreate(params)
-              ? serializeVideoInteractionInput(params)
-              : serializeInteractionInput(params),
-            metadata: isVideoInteractionCreate(params)
-              ? { model: params.model, provider: "google" }
-              : extractInteractionMetadata(params),
-          }),
-          extractOutput: (result, event) =>
-            isVideoInteractionCreate(event?.arguments?.[0]) ||
-            getInteractionVideoOutput(result).length > 0
-              ? serializeVideoInteractionOutput(result)
-              : serializeInteractionValue(result),
-          extractMetadata: (result) =>
-            extractInteractionResponseMetadata(result),
-          extractMetrics: (result, startTime) =>
-            cleanMetrics(extractInteractionMetrics(result, startTime)),
-          aggregateChunks: (chunks, _result, _event, startTime) =>
-            aggregateInteractionEvents(chunks, startTime),
-        },
+        googleGenAIChannels.interactionsCreate,
+        interactionsCreateConfig,
       ),
-    );
-  }
-
-  private subscribeToGenerateImagesChannel(): void {
-    this.unsubscribers.push(
       interceptGoogleGenAIMediaCall(
         googleGenAIChannels.generateImages,
         "generate_images",
         serializeGenerateImagesInput,
         serializeGenerateImagesOutput,
       ),
-    );
-  }
-
-  private subscribeToEditImageChannel(): void {
-    this.unsubscribers.push(
       interceptGoogleGenAIMediaCall(
         googleGenAIChannels.editImage,
         "edit_image",
         serializeEditImageInput,
         serializeGenerateImagesOutput,
       ),
-    );
-  }
-
-  private subscribeToGenerateVideosChannel(): void {
-    this.unsubscribers.push(
       interceptGoogleGenAIMediaCall(
         googleGenAIChannels.generateVideos,
         "generate_videos",
         serializeGenerateVideosInput,
         serializeGenerateVideosOutput,
+      ),
+      interceptGoogleGenAICall(
+        googleGenAIChannels.generateContent,
+        generateContentTracer,
+      ),
+      interceptGoogleGenAICall(
+        googleGenAIChannels.generateContentStream,
+        generateContentStreamTracer,
+      ),
+      interceptGoogleGenAICall(
+        googleGenAIChannels.embedContent,
+        embedContentTracer,
+      ),
+      interceptStreamingChannel(
+        googleGenAIChannels.interactionsCreate,
+        interactionsCreateConfig,
       ),
     );
   }
@@ -566,39 +341,262 @@ function isBackgroundInteractionCreate(params: unknown): boolean {
   return tryToDict(params)?.background === true;
 }
 
-function ensureSpanState<TEvent extends object>(
-  states: WeakMap<object, SpanState>,
-  event: TEvent,
-  create: () => SpanState,
+function startGoogleGenAISpan(
+  name: string,
+  input: Record<string, unknown>,
+  metadata: Record<string, unknown>,
 ): SpanState {
-  const existing = states.get(event);
-  if (existing) {
-    return existing;
-  }
+  const span = startBaseSpan(
+    withSpanInstrumentationName(
+      {
+        name,
+        spanAttributes: {
+          type: SpanTypeAttribute.LLM,
+        },
+        event: createWrapperParityEvent({ input, metadata }),
+      },
+      INSTRUMENTATION_NAMES.GOOGLE_GENAI,
+    ),
+  );
 
-  const created = create();
-  states.set(event, created);
-  return created;
+  return {
+    span,
+    startTime: getCurrentUnixTimestamp(),
+  };
 }
 
-function bindCurrentSpanStoreToStart<
-  TChannel extends GoogleGenAINonStreamingChannel,
+const generateContentTracer: GoogleGenAICallTracer<
+  GenerateContentChannel,
+  SpanState
+> = {
+  start: (params) =>
+    startGoogleGenAISpan(
+      "generate_content",
+      serializeGenerateContentInput(params),
+      extractGenerateContentMetadata(params),
+    ),
+  end: ({ span, startTime }, result) => {
+    try {
+      const responseMetadata = extractResponseMetadata(result);
+      span.log({
+        ...(responseMetadata ? { metadata: responseMetadata } : {}),
+        metrics: cleanMetrics(extractGenerateContentMetrics(result, startTime)),
+        output: serializeGenerateContentOutput(result),
+      });
+    } finally {
+      span.end();
+    }
+  },
+  error: ({ span }, error) => {
+    span.log({
+      error: (error as Error | undefined)?.message,
+    });
+    span.end();
+  },
+};
+
+// The stream span starts lazily when the caller begins consuming it.
+const generateContentStreamTracer: GoogleGenAICallTracer<
+  GenerateContentStreamChannel,
+  GenerateContentStreamState
+> = {
+  start: (params) => ({
+    input: serializeGenerateContentInput(params),
+    metadata: extractGenerateContentMetadata(params),
+    startTime: getCurrentUnixTimestamp(),
+  }),
+  end: (state, result) => {
+    patchGoogleGenAIStreamingResult({ ...state, result });
+  },
+  error: () => {},
+};
+
+function createEmbedContentTracer(
+  embeddingSpans: WeakSet<Span>,
+): GoogleGenAICallTracer<EmbedContentChannel, SpanState> {
+  return {
+    start: (params) => {
+      const state = startGoogleGenAISpan(
+        "embed_content",
+        serializeEmbedContentInput(params),
+        { provider: "google", model: params.model },
+      );
+      embeddingSpans.add(state.span);
+      return state;
+    },
+    end: ({ span, startTime }, result) => {
+      try {
+        span.log({
+          output: summarizeEmbedContentOutput(result),
+          metrics: cleanMetrics(extractEmbedContentMetrics(result, startTime)),
+        });
+      } finally {
+        embeddingSpans.delete(span);
+        span.end();
+      }
+    },
+    error: ({ span }, error) => {
+      try {
+        span.log({ error, output: { count: 0 } });
+      } finally {
+        embeddingSpans.delete(span);
+        span.end();
+      }
+    },
+  };
+}
+
+function interceptEmbedContentHttpResponse(
+  embeddingSpans: WeakSet<Span>,
+): () => void {
+  return googleGenAIChannels.httpResponseJson.intercept(
+    (target, thisArg, args) => {
+      const span = currentSpan();
+      const result = Reflect.apply(target, thisArg, args);
+      if (embeddingSpans.has(span)) {
+        // Observe the SDK's own JSON parsing, without cloning/consuming the
+        // response again or retaining the embedding vectors.
+        void Promise.resolve(result).then(
+          (response) => {
+            try {
+              const metrics = cleanMetrics(
+                extractEmbedContentMetrics(response),
+              );
+              if (embeddingSpans.has(span) && Object.keys(metrics).length > 0) {
+                span.log({ metrics });
+              }
+            } catch (error) {
+              debugLogger.error(
+                "Error reading Google GenAI embedding usage:",
+                error,
+              );
+            }
+          },
+          () => {}, // The embedding channel handles the original rejection.
+        );
+      }
+      return result;
+    },
+  );
+}
+
+function interceptGoogleGenAICall<
+  TChannel extends AnyAsyncChannel,
+  TState extends { span?: Span },
 >(
-  tracingChannel: IsoTracingChannel<ChannelMessage<TChannel>>,
-  states: WeakMap<object, SpanState>,
-  create: (event: StartOf<TChannel>) => SpanState,
+  channel: GoogleGenAICallChannel<TChannel>,
+  tracer: GoogleGenAICallTracer<TChannel, TState>,
+): () => void {
+  return channel.intercept((target, thisArg, args) => {
+    const invoke = () => Reflect.apply(target, thisArg, args);
+    let state: TState;
+    try {
+      state = tracer.start(args[0]);
+    } catch (error) {
+      debugLogger.error(
+        `Error starting span for ${channel.channelName}:`,
+        error,
+      );
+      return invoke();
+    }
+
+    const finish = (callback: () => void) => {
+      try {
+        callback();
+      } catch (error) {
+        debugLogger.error(
+          `Error finishing span for ${channel.channelName}:`,
+          error,
+        );
+      }
+    };
+    // Register the result observer in the same span scope as the target, so
+    // completion callbacks inherit the span like the legacy lifecycle did.
+    const callAndObserve = () => {
+      let result: PromiseLike<ResultOf<TChannel>>;
+      try {
+        result = invoke();
+      } catch (error) {
+        finish(() => tracer.error(state, error));
+        throw error;
+      }
+      void Promise.resolve(result).then(
+        (response) => finish(() => tracer.end(state, response)),
+        (error) => finish(() => tracer.error(state, error)),
+      );
+      return result;
+    };
+    return state.span
+      ? withCurrent(state.span, callAndObserve)
+      : callAndObserve();
+  });
+}
+
+/**
+ * Traces direct, unmarked tracing events. Invocation-marked events come from
+ * calls that also pass through the interceptor, which traces them instead.
+ */
+function subscribeToLegacyGoogleGenAICall<
+  TChannel extends AnyAsyncChannel,
+  TState extends { span?: Span },
+>(
+  channel: TChannel,
+  tracer: GoogleGenAICallTracer<TChannel, TState>,
+): () => void {
+  const tracingChannel = channel.tracingChannel() as IsoTracingChannel<
+    ChannelMessage<TChannel>
+  >;
+  const states = new WeakMap<object, TState>();
+  const startState = (event: ChannelMessage<TChannel>) => {
+    if (isInvocationContext(event)) {
+      return undefined;
+    }
+    let state = states.get(event);
+    if (!state) {
+      state = tracer.start(event.arguments[0]);
+      states.set(event, state);
+    }
+    return state;
+  };
+  const takeState = (event: ChannelMessage<TChannel>) => {
+    const state = states.get(event);
+    states.delete(event);
+    return state;
+  };
+  const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
+    tracingChannel,
+    (event) => startState(event)?.span,
+  );
+  const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
+    start: (event) => {
+      startState(event);
+    },
+    asyncEnd: (event) => {
+      const state = takeState(event);
+      if (state) {
+        tracer.end(state, event.result as ResultOf<TChannel>);
+      }
+    },
+    error: (event) => {
+      const state = takeState(event);
+      if (state) {
+        tracer.error(state, event.error);
+      }
+    },
+  };
+
+  tracingChannel.subscribe(handlers);
+  return () => {
+    unbindCurrentSpanStore?.();
+    tracingChannel.unsubscribe(handlers);
+  };
+}
+
+function bindCurrentSpanStoreToStart<M>(
+  tracingChannel: IsoTracingChannel<M>,
+  getSpan: (event: M) => Span | undefined,
 ): (() => void) | undefined {
-  const state = _internalGetGlobalState();
-  const contextManager = state?.contextManager;
-  const startChannel = tracingChannel.start as
-    | ({
-        bindStore?: (
-          store: CurrentSpanStore,
-          callback: (event: ChannelMessage<TChannel>) => unknown,
-        ) => void;
-        unbindStore?: (store: CurrentSpanStore) => void;
-      } & object)
-    | undefined;
+  const contextManager = _internalGetGlobalState()?.contextManager;
   const currentSpanStore = contextManager
     ? (
         contextManager as {
@@ -606,37 +604,20 @@ function bindCurrentSpanStoreToStart<
         }
       )[BRAINTRUST_CURRENT_SPAN_STORE]
     : undefined;
-
-  if (!startChannel?.bindStore || !currentSpanStore) {
+  const startChannel = tracingChannel.start;
+  if (!contextManager || !currentSpanStore || !startChannel) {
     return undefined;
   }
 
   startChannel.bindStore(currentSpanStore, (event) => {
-    const span = ensureSpanState(states, event as object, () =>
-      create(event as StartOf<TChannel>),
-    ).span;
-    return contextManager!.wrapSpanForStore(span);
+    const span = getSpan(event);
+    return span
+      ? contextManager.wrapSpanForStore(span)
+      : currentSpanStore.getStore();
   });
-
   return () => {
-    startChannel.unbindStore?.(currentSpanStore);
+    startChannel.unbindStore(currentSpanStore);
   };
-}
-
-function logErrorAndEndSpan<TChannel extends GoogleGenAINonStreamingChannel>(
-  states: WeakMap<object, SpanState>,
-  event: ErrorOf<TChannel>,
-): void {
-  const spanState = states.get(event as object);
-  if (!spanState) {
-    return;
-  }
-
-  spanState.span.log({
-    error: event.error.message,
-  });
-  spanState.span.end();
-  states.delete(event as object);
 }
 
 function patchGoogleGenAIStreamingResult(args: {

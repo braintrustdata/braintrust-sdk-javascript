@@ -1,3 +1,4 @@
+import { markInvocationContext } from "../global-instrumentation-hooks";
 import { googleGenAIChannels } from "../instrumentation/plugins/google-genai-channels";
 import { isObject } from "../util";
 import type {
@@ -225,11 +226,11 @@ function wrapGenerateContent(
   original: GoogleGenAIModels["generateContent"],
 ): GoogleGenAIModels["generateContent"] {
   return function (params: GoogleGenAIGenerateContentParams) {
-    return googleGenAIChannels.generateContent.tracePromise(
-      () => original(params),
-      { arguments: [params] } as Parameters<
-        typeof googleGenAIChannels.generateContent.tracePromise
-      >[1],
+    return googleGenAIChannels.generateContent.invoke(
+      original,
+      undefined,
+      [params],
+      {},
     );
   };
 }
@@ -238,9 +239,11 @@ function wrapGenerateContentStream(
   original: GoogleGenAIModels["generateContentStream"],
 ): GoogleGenAIModels["generateContentStream"] {
   return function (params: GoogleGenAIGenerateContentParams) {
-    return googleGenAIChannels.generateContentStream.tracePromise(
-      () => original(params),
-      { arguments: [params] },
+    return googleGenAIChannels.generateContentStream.invoke(
+      original,
+      undefined,
+      [params],
+      {},
     );
   };
 }
@@ -249,11 +252,11 @@ function wrapEmbedContent(
   original: GoogleGenAIModels["embedContent"],
 ): GoogleGenAIModels["embedContent"] {
   return function (params: GoogleGenAIEmbedContentParams) {
-    return googleGenAIChannels.embedContent.tracePromise(
-      () => original(params),
-      { arguments: [params] } as Parameters<
-        typeof googleGenAIChannels.embedContent.tracePromise
-      >[1],
+    return googleGenAIChannels.embedContent.invoke(
+      original,
+      undefined,
+      [params],
+      {},
     );
   };
 }
@@ -271,16 +274,19 @@ function wrapInteractionCreate(
         : original(params, options);
     }
 
-    const traceContext =
-      options === undefined
-        ? { arguments: [params] }
-        : { arguments: [params, options] };
+    const args: Parameters<GoogleGenAIInteractions["create"]> =
+      options === undefined ? [params] : [params, options];
+    // The interceptor traces this call; the marked legacy lifecycle remains for
+    // existing tracing-channel consumers of this wrapper.
     return googleGenAIChannels.interactionsCreate.tracePromise(
       () =>
-        options === undefined ? original(params) : original(params, options),
-      traceContext as Parameters<
-        typeof googleGenAIChannels.interactionsCreate.tracePromise
-      >[1],
+        googleGenAIChannels.interactionsCreate.invoke(
+          original,
+          undefined,
+          args,
+          {},
+        ),
+      markInvocationContext({ arguments: args }),
     );
   };
 }
