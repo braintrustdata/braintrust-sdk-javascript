@@ -163,6 +163,18 @@ type ParametersRow = z.infer<typeof parametersRowSchema>;
 
 import { waitUntil } from "@vercel/functions";
 import {
+  INGESTION_KEY_ENV_VAR,
+  type IngestionEndpoint,
+  type IngestionUploadRequest,
+  ingestionUploadChunkSchema,
+  ingestionUploadCompleteSchema,
+  ingestionUploadGrantSchema,
+  parseIngestionKeyUrl,
+  pickIngestionRowFields,
+  replaceIngestionAttachmentReferences,
+  sha256Hex,
+} from "./ingestion-key";
+import {
   parseTemplateFormat,
   renderTemplateContent,
 } from "./template/renderer";
@@ -767,6 +779,8 @@ export class BraintrustState {
     typeof globalThis.fetch,
     LRUCache<string, Promise<LoaderRequestState>>
   >();
+  private maskingFunction: ((value: unknown) => unknown) | null = null;
+  private readonly ingestionKeyStates = new Map<string, BraintrustState>();
 
   private readonly loginParams: LoginOptions;
   private activeLoginOrgNameSelector: string | undefined;
@@ -793,13 +807,8 @@ export class BraintrustState {
       this.fetch = loginParams.fetch;
     }
 
-    const defaultGetLogConn = async () => {
-      await this.login({});
-      return this.apiConn();
-    };
-    this._bgLogger = new SyncLazyValue(
-      () =>
-        new HTTPBackgroundLogger(new LazyValue(defaultGetLogConn), loginParams),
+    this._bgLogger = new SyncLazyValue(() =>
+      this.createBackgroundLogger(loginParams),
     );
 
     if (loginParams.debugLogLevel !== undefined) {
@@ -847,6 +856,57 @@ export class BraintrustState {
     this.spanCache = new SpanCache({ disabled: loginParams.disableSpanCache });
     this.spanOriginEnvironment = detectSpanOriginEnvironment();
     this._internalSetTraceContextSigningSecret(loginParams.apiKey);
+  }
+
+  protected createBackgroundLogger(
+    loginParams: LoginOptions,
+  ): HTTPBackgroundLogger {
+    return new HTTPBackgroundLogger(
+      new LazyValue(async () => {
+        await this.login({});
+        return this.apiConn();
+      }),
+      loginParams,
+    );
+  }
+
+  /**
+   * Return the state that logs with an ingestion key. States are shared per
+   * endpoint and key, so repeated `initLogger` calls reuse one queue.
+   *
+   * @internal
+   */
+  public _internalGetIngestionKeyState(
+    endpoint: IngestionEndpoint,
+    loginParams: Pick<
+      LoginOptions,
+      "fetch" | "noExitFlush" | "onFlushError" | "debugLogLevel"
+    >,
+  ): BraintrustState {
+    const cacheKey = JSON.stringify([endpoint.root, endpoint.key]);
+    let state = this.ingestionKeyStates.get(cacheKey);
+    if (!state) {
+      state = new IngestionKeyState(this, endpoint, {
+        ...loginParams,
+        fetch: loginParams.fetch ?? this.fetch,
+        // Creating a state resets the global debug log level unless it is set.
+        debugLogLevel:
+          loginParams.debugLogLevel ??
+          (this.debugLogLevelConfigured
+            ? (this.debugLogLevel ?? false)
+            : undefined),
+      });
+      if (this.maskingFunction) {
+        state.setMaskingFunction(this.maskingFunction);
+      }
+      this.ingestionKeyStates.set(cacheKey, state);
+    } else {
+      if (loginParams.fetch) {
+        state.setFetch(loginParams.fetch);
+      }
+      state.setDebugLogLevel(loginParams.debugLogLevel);
+    }
+    return state;
   }
 
   /** @internal */
@@ -1188,7 +1248,11 @@ export class BraintrustState {
   public setMaskingFunction(
     maskingFunction: ((value: unknown) => unknown) | null,
   ): void {
+    this.maskingFunction = maskingFunction;
     this.bgLogger().setMaskingFunction(maskingFunction);
+    for (const state of this.ingestionKeyStates.values()) {
+      state.setMaskingFunction(maskingFunction);
+    }
   }
 
   public setDebugLogLevel(option: DebugLogLevelOption): void {
@@ -1397,6 +1461,55 @@ export class BraintrustState {
   toString(): string {
     return `BraintrustState(id=${this.id}, org=${this.orgName || "none"}, loggedIn=${this.loggedIn})`;
   }
+}
+
+/**
+ * State of loggers created with an ingestion key. It can only write traces to
+ * the key's ingestion endpoint, so it never logs in or reads private
+ * credentials. The span context is shared with the state that created it, so
+ * spans of both states nest into each other.
+ */
+class IngestionKeyState extends BraintrustState {
+  private readonly ingestionConn: HTTPConnection;
+
+  constructor(
+    private readonly contextState: BraintrustState,
+    endpoint: IngestionEndpoint,
+    loginParams: LoginOptions,
+  ) {
+    super(loginParams);
+    this.ingestionConn = new HTTPConnection(endpoint.root, this.fetch);
+    this.ingestionConn.set_token(endpoint.key);
+  }
+
+  public override get contextManager(): ContextManager {
+    return this.contextState.contextManager;
+  }
+
+  public override async login(): Promise<void> {
+    throw new Error(
+      "This logger uses a Braintrust ingestion key, which can only write traces. Use an API key for anything else.",
+    );
+  }
+
+  public override setFetch(fetch: typeof globalThis.fetch) {
+    super.setFetch(fetch);
+    this.ingestionConn.setFetch(fetch);
+  }
+
+  protected override createBackgroundLogger(
+    loginParams: LoginOptions,
+  ): HTTPBackgroundLogger {
+    return new HTTPBackgroundLogger(
+      new LazyValue(async () => this.ingestionConn),
+      loginParams,
+      true,
+    );
+  }
+}
+
+function usesIngestionKey(state: BraintrustState): boolean {
+  return state.currentLogger?.loggingState instanceof IngestionKeyState;
 }
 
 let _globalState: BraintrustState;
@@ -2376,6 +2489,22 @@ export class JSONAttachment extends Attachment {
   }
 }
 
+// Ingestion key loggers may not know their project id. The server resolves
+// the project from the key instead.
+function parentObjectIdFields(
+  objectType: SpanObjectTypeV3,
+  objectId: string,
+): ReturnType<SpanComponentsV3["objectIdFields"]> {
+  if (objectType === SpanObjectTypeV3.PROJECT_LOGS && !objectId) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return { log_id: "g" } as ReturnType<SpanComponentsV3["objectIdFields"]>;
+  }
+  return new SpanComponentsV3({
+    object_type: objectType,
+    object_id: objectId,
+  }).objectIdFields();
+}
+
 function logFeedbackImpl(
   state: BraintrustState,
   parentObjectType: SpanObjectTypeV3,
@@ -2394,6 +2523,9 @@ function logFeedbackImpl(
 
   if (!VALID_SOURCES.includes(source)) {
     throw new Error(`source must be one of ${VALID_SOURCES}`);
+  }
+  if (!isEmpty(comment) && state instanceof IngestionKeyState) {
+    throw new Error("Ingestion keys do not support logging comments");
   }
 
   if (
@@ -2420,10 +2552,7 @@ function logFeedbackImpl(
   );
 
   const parentIds = async () =>
-    new SpanComponentsV3({
-      object_type: parentObjectType,
-      object_id: await parentObjectId.get(),
-    }).objectIdFields();
+    parentObjectIdFields(parentObjectType, await parentObjectId.get());
 
   if (Object.keys(updateEvent).length > 0) {
     const record = new LazyValue(async () => {
@@ -2492,10 +2621,7 @@ function updateSpanImpl({
   );
 
   const parentIds = async () =>
-    new SpanComponentsV3({
-      object_type: parentObjectType,
-      object_id: await parentObjectId.get(),
-    }).objectIdFields();
+    parentObjectIdFields(parentObjectType, await parentObjectId.get());
 
   const record = new LazyValue(
     async () =>
@@ -2605,6 +2731,17 @@ function spanComponentsToObjectIdLambda(
   if (components.data.object_id) {
     const ret = components.data.object_id;
     return async () => ret;
+  }
+  if (
+    state instanceof IngestionKeyState &&
+    components.data.object_type === SpanObjectTypeV3.PROJECT_LOGS
+  ) {
+    // Ingestion keys cannot look up projects. The server resolves the project
+    // from the key if the slug does not include its id.
+    const projectId = String(
+      components.data.compute_object_metadata_args?.project_id ?? "",
+    );
+    return async () => projectId;
   }
   if (!components.data.compute_object_metadata_args) {
     throw new Error(
@@ -3252,6 +3389,29 @@ function now() {
   return new Date().getTime();
 }
 
+function throwAttachmentErrors(errors: unknown[]) {
+  if (errors.length === 1) {
+    throw errors[0];
+  } else if (errors.length > 1) {
+    throw new AggregateError(
+      errors,
+      `Encountered the following errors while uploading attachments:`,
+    );
+  }
+}
+
+function parseIngestionResponse<T>(schema: z.ZodType<T>, response: unknown) {
+  try {
+    return schema.parse(response);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const errorStr = JSON.stringify(error.flatten());
+      throw new Error(`Invalid response from ingestion endpoint: ${errorStr}`);
+    }
+    throw error;
+  }
+}
+
 export interface BackgroundLoggerOpts {
   noExitFlush?: boolean;
   onFlushError?: (error: unknown) => void;
@@ -3464,7 +3624,18 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     lastLoggedTimestamp: 0,
   };
 
-  constructor(apiConn: LazyValue<HTTPConnection>, opts?: BackgroundLoggerOpts) {
+  private readonly ingestionAttachmentUploads = new WeakMap<
+    Attachment,
+    Promise<BraintrustAttachmentReference>
+  >();
+  private readonly droppedIngestionFields = new Set<string>();
+
+  constructor(
+    apiConn: LazyValue<HTTPConnection>,
+    opts?: BackgroundLoggerOpts,
+    // Log through the ingestion key endpoints of `apiConn`.
+    private readonly usesIngestionKey = false,
+  ) {
     opts = opts ?? {};
     this.apiConn = apiConn;
 
@@ -3611,6 +3782,14 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     maxRequestSize: number;
     canUseOverflow: boolean;
   }> {
+    if (!this._maxRequestSizePromise && this.usesIngestionKey) {
+      // Ingestion keys cannot read the server version, and the ingestion
+      // endpoint always accepts overflow uploads.
+      this._maxRequestSizePromise = Promise.resolve({
+        maxRequestSize: this.maxRequestSizeOverride ?? DEFAULT_MAX_REQUEST_SIZE,
+        canUseOverflow: true,
+      });
+    }
     if (!this._maxRequestSizePromise) {
       this._maxRequestSizePromise = (async () => {
         let serverLimit: number | null = null;
@@ -3689,8 +3868,20 @@ class HTTPBackgroundLogger implements BackgroundLogger {
       return;
     }
 
-    const [allItems, attachments] = await this.unwrapLazyValues(wrappedItems);
+    const [unwrappedItems, attachments] =
+      await this.unwrapLazyValues(wrappedItems);
+    const attachmentErrors: unknown[] = [];
+    // The ingestion endpoint only accepts attachments uploaded before the rows
+    // that reference them.
+    const allItems = this.usesIngestionKey
+      ? await this.prepareIngestionRows(
+          unwrappedItems,
+          attachments,
+          attachmentErrors,
+        )
+      : unwrappedItems;
     if (allItems.length === 0) {
+      throwAttachmentErrors(attachmentErrors);
       return;
     }
 
@@ -3733,9 +3924,8 @@ class HTTPBackgroundLogger implements BackgroundLogger {
       );
     }
 
-    const attachmentErrors: unknown[] = [];
     // For now, upload attachments serially.
-    for (const attachment of attachments) {
+    for (const attachment of this.usesIngestionKey ? [] : attachments) {
       try {
         const result = await attachment.upload();
         if (result.upload_status === "error") {
@@ -3745,14 +3935,185 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         attachmentErrors.push(error);
       }
     }
-    if (attachmentErrors.length === 1) {
-      throw attachmentErrors[0];
-    } else if (attachmentErrors.length > 1) {
-      throw new AggregateError(
-        attachmentErrors,
-        `Encountered the following errors while uploading attachments:`,
+    throwAttachmentErrors(attachmentErrors);
+  }
+
+  private async prepareIngestionRows(
+    items: BackgroundLogEvent[],
+    attachments: BaseAttachment[],
+    attachmentErrors: unknown[],
+  ): Promise<BackgroundLogEvent[]> {
+    // Maps client attachment keys to the uploaded reference, or to undefined
+    // if the upload failed.
+    const references = new Map<
+      string,
+      BraintrustAttachmentReference | undefined
+    >();
+    for (const attachment of attachments) {
+      // External attachments are not uploaded, so their reference is kept.
+      if (
+        !(attachment instanceof Attachment) ||
+        references.has(attachment.reference.key)
+      ) {
+        continue;
+      }
+      try {
+        references.set(
+          attachment.reference.key,
+          await this.uploadIngestionAttachment(attachment),
+        );
+      } catch (error) {
+        references.set(attachment.reference.key, undefined);
+        attachmentErrors.push(error);
+      }
+    }
+
+    const droppedFields = new Set<string>();
+    const rows: BackgroundLogEvent[] = [];
+    for (const item of items) {
+      const row = pickIngestionRowFields(item, droppedFields);
+      // Rows that reference a failed upload are dropped with the error.
+      if (replaceIngestionAttachmentReferences(row, references)) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        rows.push(row as BackgroundLogEvent);
+      }
+    }
+    for (const field of droppedFields) {
+      if (!this.droppedIngestionFields.has(field)) {
+        this.droppedIngestionFields.add(field);
+        debugLogger.warn(
+          `Ingestion keys do not support the ${field} field, so it was not logged`,
+        );
+      }
+    }
+    return rows;
+  }
+
+  private uploadIngestionAttachment(
+    attachment: Attachment,
+  ): Promise<BraintrustAttachmentReference> {
+    let upload = this.ingestionAttachmentUploads.get(attachment);
+    if (!upload) {
+      upload = (async () => {
+        const reference = await this.uploadToIngestionWithRetries(
+          {
+            purpose: "attachment",
+            filename: attachment.reference.filename,
+            content_type: attachment.reference.content_type,
+          },
+          await attachment.data(),
+        );
+        if (reference.type !== BRAINTRUST_ATTACHMENT) {
+          throw new Error(
+            "Invalid response from ingestion endpoint: expected an attachment reference",
+          );
+        }
+        return reference;
+      })();
+      this.ingestionAttachmentUploads.set(attachment, upload);
+      // A later flush that logs the attachment again retries the upload.
+      upload.catch(() => this.ingestionAttachmentUploads.delete(attachment));
+    }
+    return upload;
+  }
+
+  private async uploadToIngestionWithRetries(
+    request: IngestionUploadRequest,
+    data: Blob,
+  ) {
+    for (let i = 0; ; i++) {
+      try {
+        // Every attempt uses a new upload, so an expired grant is never reused.
+        return await this.uploadToIngestion(request, data);
+      } catch (error) {
+        if (i + 1 >= this.numTries) {
+          throw error;
+        }
+        debugLogger.warn(
+          `Ingestion upload failed. Retrying\nError: ${formatHTTPError(error)}`,
+        );
+        const sleepTimeS = BACKGROUND_LOGGER_BASE_SLEEP_TIME_S * 2 ** i;
+        debugLogger.info(`Sleeping for ${sleepTimeS}s`);
+        await new Promise((resolve) => setTimeout(resolve, sleepTimeS * 1000));
+      }
+    }
+  }
+
+  private async uploadToIngestion(request: IngestionUploadRequest, data: Blob) {
+    const conn = await this.apiConn.get();
+    const sha256 = await sha256Hex(data);
+    // The grant lifetime is relative, so anchor it before the request is sent.
+    const requestStart = now();
+    const grant = parseIngestionResponse(
+      ingestionUploadGrantSchema,
+      await conn.post_json("v1/uploads", {
+        ...request,
+        size_bytes: data.size,
+        ...(sha256 ? { sha256 } : {}),
+      }),
+    );
+    const deadline = requestStart + grant.expires_in_ms;
+    if (grant.num_chunks !== Math.ceil(data.size / grant.chunk_bytes)) {
+      throw new Error(
+        `Invalid response from ingestion endpoint: ${grant.num_chunks} chunks of ${grant.chunk_bytes} bytes cannot hold ${data.size} bytes`,
       );
     }
+    const assertGrantActive = () => {
+      if (now() >= deadline) {
+        throw new Error("Ingestion upload expired before it completed");
+      }
+    };
+
+    // On platforms like Cloudflare, fetch must not be called as a method.
+    const fetch = conn.fetch;
+    for (let index = 0; index < grant.num_chunks; index++) {
+      assertGrantActive();
+      const chunk = data.slice(
+        index * grant.chunk_bytes,
+        (index + 1) * grant.chunk_bytes,
+      );
+      const response = await checkResponse(
+        await fetch(
+          _urljoin(
+            conn.base_url,
+            `v1/uploads/${grant.upload_id}/chunks/${index}`,
+          ),
+          {
+            method: "PUT",
+            headers: {
+              ...conn.headers,
+              Accept: "application/json",
+              "Content-Type": "application/octet-stream",
+            },
+            body: chunk,
+          },
+        ),
+      );
+      const ack = parseIngestionResponse(
+        ingestionUploadChunkSchema,
+        await response.json(),
+      );
+      if (ack.index !== index || ack.size_bytes !== chunk.size) {
+        throw new Error(
+          `Invalid response from ingestion endpoint: chunk ${index} of ${chunk.size} bytes was acknowledged as chunk ${ack.index} of ${ack.size_bytes} bytes`,
+        );
+      }
+    }
+
+    assertGrantActive();
+    const completed = parseIngestionResponse(
+      ingestionUploadCompleteSchema,
+      await conn.post_json(`v1/uploads/${grant.upload_id}/complete`, {}),
+    );
+    if (
+      completed.size_bytes !== data.size ||
+      (sha256 !== undefined && completed.sha256 !== sha256)
+    ) {
+      throw new Error(
+        "Invalid response from ingestion endpoint: the completed upload does not match the uploaded data",
+      );
+    }
+    return completed.reference;
   }
 
   private async unwrapLazyValues(
@@ -3870,15 +4231,36 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     }
 
     let overflowUpload: Logs3OverflowUpload | null = null;
-    const overflowRows = useOverflow
-      ? items.map((item) => item.overflowMeta)
-      : null;
+    let ingestionOverflowKey: string | null = null;
+    const overflowRows =
+      useOverflow && !this.usesIngestionKey
+        ? items.map((item) => item.overflowMeta)
+        : null;
 
     for (let i = 0; i < this.numTries; i++) {
       const startTime = now();
       let error: unknown = undefined;
       try {
-        if (overflowRows) {
+        if (useOverflow && this.usesIngestionKey) {
+          if (!ingestionOverflowKey) {
+            const reference = await this.uploadToIngestion(
+              { purpose: "logs3_overflow", content_type: "application/json" },
+              new Blob([dataStr], { type: "application/json" }),
+            );
+            if (reference.type !== LOGS3_OVERFLOW_REFERENCE_TYPE) {
+              throw new Error(
+                "Invalid response from ingestion endpoint: expected an overflow reference",
+              );
+            }
+            ingestionOverflowKey = reference.key;
+          }
+          await conn.post_json(
+            "v1/logs",
+            constructLogs3OverflowRequest(ingestionOverflowKey),
+          );
+        } else if (this.usesIngestionKey) {
+          await conn.post_json("v1/logs", dataStr);
+        } else if (overflowRows) {
           if (!overflowUpload) {
             const currentUpload = await this.requestLogs3OverflowUpload(conn, {
               rows: overflowRows,
@@ -5162,6 +5544,7 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
   setCurrent?: boolean;
   state?: BraintrustState;
   orgProjectMetadata?: OrgProjectMetadata;
+  ingestionKey?: string;
 } & AsyncFlushArg<IsAsyncFlush>;
 
 /**
@@ -5178,12 +5561,31 @@ export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
  * @param options.orgName (Optional) The name of a specific organization to connect to. This is useful if you belong to multiple.
  * @param options.forceLogin Login again, even if you have already logged in (by default, the logger will not login if you are already logged in)
  * @param options.debugLogLevel Enables internal Braintrust SDK troubleshooting output. Use `"error"`, `"warn"`, `"info"`, or `"debug"` to choose an explicit level, or `false` to explicitly disable it. If omitted, the SDK stays silent unless `BRAINTRUST_DEBUG_LOG_LEVEL` is set.
+ * @param options.ingestionKey The ingestion URL of a project's ingestion key, like `https://<data plane>/ingest?ingestKey=<key>`. Ingestion keys can only write traces to their project, so they are safe to use in browsers and other public clients. The logger never logs in, ignores `BRAINTRUST_API_KEY` and does not create or look up the project. `projectName` is ignored, and `projectId` is only sent along for the server to check. If unspecified, will use the `BRAINTRUST_INGESTION_KEY` environment variable unless `apiKey` or `state` is specified. Cannot be combined with `apiKey` or `state`.
  * @param setCurrent If true (the default), set the global current-experiment to the newly-created one.
  * @returns The newly created Logger.
  */
 export function initLogger<IsAsyncFlush extends boolean = true>(
   options: Readonly<InitLoggerOptions<IsAsyncFlush>> = {},
 ) {
+  if (
+    options.ingestionKey !== undefined &&
+    (options.apiKey !== undefined || options.state !== undefined)
+  ) {
+    throw new Error(
+      "initLogger accepts either an ingestionKey or an apiKey/state, not both",
+    );
+  }
+  // An explicit private credential takes precedence over the environment.
+  const ingestionKey =
+    options.ingestionKey ??
+    (options.apiKey === undefined && options.state === undefined
+      ? iso.getEnv(INGESTION_KEY_ENV_VAR) || undefined
+      : undefined);
+  if (ingestionKey !== undefined) {
+    return initIngestionKeyLogger(ingestionKey, options);
+  }
+
   const {
     projectName,
     projectId,
@@ -5244,6 +5646,45 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   });
   if (options.setCurrent ?? true) {
     state.currentLogger = ret as Logger<false>;
+  }
+  return ret;
+}
+
+function initIngestionKeyLogger<IsAsyncFlush extends boolean>(
+  ingestionKey: string,
+  {
+    projectId,
+    asyncFlush = true as IsAsyncFlush,
+    appUrl,
+    orgName,
+    environment,
+    setCurrent,
+    fetch,
+    noExitFlush,
+    onFlushError,
+    debugLogLevel,
+  }: Readonly<InitLoggerOptions<IsAsyncFlush>>,
+) {
+  const state = _globalState._internalGetIngestionKeyState(
+    parseIngestionKeyUrl(ingestionKey),
+    { fetch, noExitFlush, onFlushError, debugLogLevel },
+  );
+  state.spanOriginEnvironment = detectSpanOriginEnvironment(environment);
+  state.enforceQueueSizeLimit(true);
+
+  // The project is only known if it is passed in, and is never looked up.
+  const lazyMetadata = new LazyValue<OrgProjectMetadata>(async () => ({
+    org_id: "",
+    project: { id: projectId ?? "", name: "", fullInfo: {} },
+  }));
+  const ret = new Logger<IsAsyncFlush>(state, lazyMetadata, {
+    asyncFlush,
+    computeMetadataArgs: projectId ? { project_id: projectId } : undefined,
+    linkArgs: { org_name: orgName, app_url: appUrl, project_id: projectId },
+  });
+  state.currentLogger = ret as Logger<false>;
+  if (setCurrent ?? true) {
+    _globalState.currentLogger = ret as Logger<false>;
   }
   return ret;
 }
@@ -6555,7 +6996,17 @@ function resolveW3cParent(
   if (!braintrustParent) {
     braintrustParent = currentBraintrustParent(state);
   }
-  if (!braintrustParent) {
+  // Ingestion key loggers write to their own project, which they may not
+  // know, so the trace ids are enough to link their spans.
+  const ingestionKeyParent =
+    !braintrustParent && usesIngestionKey(state ?? _globalState)
+      ? {
+          objectType: SpanObjectTypeV3.PROJECT_LOGS,
+          objectId: undefined,
+          computeArgs: undefined,
+        }
+      : undefined;
+  if (!braintrustParent && !ingestionKeyParent) {
     debugLogger.warn(
       "Received traceparent without a braintrust.parent and no active logger/experiment; " +
         "cannot route the trace. Starting a fresh local span instead.",
@@ -6563,7 +7014,8 @@ function resolveW3cParent(
     return { parentSlug: undefined, propagatedState: undefined };
   }
 
-  const parsedParent = braintrustParentToComponents(braintrustParent);
+  const parsedParent =
+    ingestionKeyParent ?? braintrustParentToComponents(braintrustParent);
   if (parsedParent === undefined) {
     debugLogger.warn(
       `Invalid braintrust.parent: ${JSON.stringify(braintrustParent)}`,
@@ -7035,7 +7487,14 @@ export function _internalStartSpanWithContext<
  */
 export async function flush(options?: OptionalStateArg): Promise<void> {
   const state = options?.state ?? _globalState;
-  return await state.bgLogger().flush();
+  // Ingestion key loggers have their own queue.
+  const loggerState = state.currentLogger?.loggingState;
+  await Promise.all([
+    state.bgLogger().flush(),
+    loggerState && loggerState !== state
+      ? loggerState.bgLogger().flush()
+      : undefined,
+  ]);
 }
 
 /**
@@ -7066,6 +7525,26 @@ function startSpanAndIsLogger<IsAsyncFlush extends boolean = true>(
       parent: args?.parent,
       state,
     });
+
+  const ingestionKeyLogger = usesIngestionKey(state)
+    ? state.currentLogger
+    : undefined;
+  if (
+    ingestionKeyLogger &&
+    (parentObject instanceof SpanComponentsV3 ||
+      parentObject instanceof SpanComponentsV4) &&
+    parentObject.data.object_type === SpanObjectTypeV3.PROJECT_LOGS
+  ) {
+    // Ingestion key loggers can only write to their own project, so a
+    // propagated parent only links the span into its trace.
+    return {
+      span: ingestionKeyLogger.startSpan({
+        ...args,
+        parent: parentObject.toStr(),
+      }),
+      isSyncFlushLogger: ingestionKeyLogger.asyncFlush === false,
+    };
+  }
 
   if (
     parentObject instanceof SpanComponentsV3 ||
@@ -8530,10 +9009,10 @@ export class SpanImpl implements Span {
             ]),
           ),
         ),
-        ...new SpanComponentsV3({
-          object_type: this.parentObjectType,
-          object_id: await this.parentObjectId.get(),
-        }).objectIdFields(),
+        ...parentObjectIdFields(
+          this.parentObjectType,
+          await this.parentObjectId.get(),
+        ),
       };
       // Customize inside the memoized lazy value, before attachment processing,
       // merging, and masking. Retries reuse the customized record or drop result.

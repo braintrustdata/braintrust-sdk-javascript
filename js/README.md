@@ -104,6 +104,28 @@ If you use TypeScript or other transpilation plugins, place the Braintrust plugi
 
 For deeper details, see the [auto-instrumentation architecture docs](src/auto-instrumentations/README.md).
 
+## Ingestion Keys
+
+An ingestion key lets public clients, like browsers, write traces into a single project without an API key.
+Ingestion keys cannot read data, call models, or manage anything, so a logger that uses one never logs in, never looks up or creates the project, and ignores `BRAINTRUST_API_KEY`.
+
+Pass the full ingestion URL of the key, or set it as `BRAINTRUST_INGESTION_KEY`:
+
+```ts
+import { initLogger } from "braintrust";
+
+const logger = initLogger({
+  ingestionKey: "https://<data plane>/ingest?ingestKey=<key>",
+});
+```
+
+An explicit `apiKey` or `state` takes precedence over `BRAINTRUST_INGESTION_KEY`, and passing either together with `ingestionKey` throws.
+`projectName` is ignored, and `projectId` is only sent along for the server to check.
+Attachments and large batches are uploaded through the ingestion URL as well.
+Fields that ingestion keys do not support, like `classifications` or audit fields, are not logged, and logging comments throws.
+
+To export OpenTelemetry spans, point a standard OTLP exporter at the ingestion URL with `/otel/v1/traces` appended and without the query string, and send the key in an `Authorization: Bearer <key>` header.
+
 ## Migration Guides
 
 ### Upgrading from 2.x to 3.x
