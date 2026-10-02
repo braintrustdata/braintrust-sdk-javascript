@@ -1,7 +1,7 @@
 import { BasePlugin } from "../core";
 import {
-  traceAsyncChannel,
-  traceStreamingChannel,
+  interceptAsyncChannel,
+  interceptStreamingChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
 import {
@@ -35,7 +35,7 @@ import type {
 export class GroqPlugin extends BasePlugin {
   protected onEnable(): void {
     this.unsubscribers.push(
-      traceStreamingChannel(groqChannels.chatCompletionsCreate, {
+      interceptStreamingChannel(groqChannels.chatCompletionsCreate, {
         name: "groq.chat.completions.create",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => {
@@ -55,10 +55,7 @@ export class GroqPlugin extends BasePlugin {
         },
         aggregateChunks: aggregateGroqChatCompletionChunks,
       }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(groqChannels.embeddingsCreate, {
+      interceptAsyncChannel(groqChannels.embeddingsCreate, {
         name: "groq.embeddings.create",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => {
@@ -76,10 +73,7 @@ export class GroqPlugin extends BasePlugin {
         },
         extractMetrics: (result) => parseGroqMetrics(result),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceStreamingChannel(groqChannels.audioSpeechCreate, {
+      interceptStreamingChannel(groqChannels.audioSpeechCreate, {
         name: "groq.audio.speech.create",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => ({
@@ -104,10 +98,7 @@ export class GroqPlugin extends BasePlugin {
             startTime,
           ),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(groqChannels.audioTranscriptionsCreate, {
+      interceptAsyncChannel(groqChannels.audioTranscriptionsCreate, {
         name: "groq.audio.transcriptions.create",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], _event, span) =>
@@ -115,10 +106,7 @@ export class GroqPlugin extends BasePlugin {
         extractOutput: extractGroqAudioTextOutput,
         extractMetrics: (result) => parseGroqMetricsObject(result),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(groqChannels.audioTranslationsCreate, {
+      interceptAsyncChannel(groqChannels.audioTranslationsCreate, {
         name: "groq.audio.translations.create",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params], _event, span) =>
@@ -400,11 +388,7 @@ function captureGroqSpeechResponse(
   const endSpan = () => {
     if (spanEnded) return;
     spanEnded = true;
-    try {
-      span.end();
-    } catch (error) {
-      debugLogger.error("Error ending Groq speech span", error);
-    }
+    span.end();
   };
   let firstChunk = true;
   const onChunk = (chunk: Uint8Array) => {
@@ -454,11 +438,8 @@ function captureGroqSpeechResponse(
     if (finished) return;
     finished = true;
     chunks.length = 0;
-    try {
-      if (error !== undefined) span.log({ error });
-    } finally {
-      endSpan();
-    }
+    if (error !== undefined) span.log({ error });
+    endSpan();
   };
 
   const patched = observeResponseBytes(response, {
@@ -474,13 +455,8 @@ function captureGroqSpeechResponse(
   if (patched)
     queueMicrotask(() => {
       if (!started) {
-        try {
-          span.log({ output: { content: [] } });
-        } catch (error) {
-          debugLogger.error("Error logging unread Groq speech response", error);
-        } finally {
-          endSpan();
-        }
+        span.log({ output: { content: [] } });
+        endSpan();
       }
     });
   return patched;

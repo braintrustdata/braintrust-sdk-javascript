@@ -1,16 +1,8 @@
 import { groqChannels } from "../instrumentation/plugins/groq-channels";
 import type {
   GroqAudio,
-  GroqAudioSpeech,
-  GroqAudioTranscriptions,
-  GroqAudioTranslations,
   GroqChat,
-  GroqChatCompletion,
-  GroqChatCreateParams,
-  GroqChatStream,
   GroqClient,
-  GroqEmbeddingCreateParams,
-  GroqEmbeddingResponse,
   GroqEmbeddings,
 } from "../vendor-sdk-types/groq";
 
@@ -77,17 +69,10 @@ function groqProxy(groq: GroqClient): GroqClient {
     (...args: unknown[]) => unknown
   >();
 
-  const completionProxy = groq.chat?.completions
-    ? new Proxy(groq.chat.completions, {
-        get(target, prop, receiver) {
-          if (prop === "create") {
-            return wrapChatCompletionsCreate(target.create.bind(target));
-          }
-
-          return Reflect.get(target, prop, receiver);
-        },
-      })
-    : undefined;
+  const completionProxy = proxyCreateMethod(
+    groq.chat?.completions,
+    groqChannels.chatCompletionsCreate,
+  );
 
   const chatProxy = groq.chat
     ? new Proxy(groq.chat, {
@@ -101,53 +86,25 @@ function groqProxy(groq: GroqClient): GroqClient {
       })
     : undefined;
 
-  const embeddingsProxy = groq.embeddings
-    ? new Proxy(groq.embeddings, {
-        get(target, prop, receiver) {
-          if (prop === "create") {
-            return wrapEmbeddingsCreate(target.create.bind(target));
-          }
+  const embeddingsProxy = proxyCreateMethod(
+    groq.embeddings,
+    groqChannels.embeddingsCreate,
+  );
 
-          return Reflect.get(target, prop, receiver);
-        },
-      })
-    : undefined;
+  const speechProxy = proxyCreateMethod(
+    groq.audio?.speech,
+    groqChannels.audioSpeechCreate,
+  );
 
-  const speechProxy = groq.audio?.speech
-    ? new Proxy(groq.audio.speech, {
-        get(target, prop, receiver) {
-          if (prop === "create") {
-            return wrapAudioSpeechCreate(target.create.bind(target));
-          }
+  const transcriptionsProxy = proxyCreateMethod(
+    groq.audio?.transcriptions,
+    groqChannels.audioTranscriptionsCreate,
+  );
 
-          return Reflect.get(target, prop, receiver);
-        },
-      })
-    : undefined;
-
-  const transcriptionsProxy = groq.audio?.transcriptions
-    ? new Proxy(groq.audio.transcriptions, {
-        get(target, prop, receiver) {
-          if (prop === "create") {
-            return wrapAudioTranscriptionsCreate(target.create.bind(target));
-          }
-
-          return Reflect.get(target, prop, receiver);
-        },
-      })
-    : undefined;
-
-  const translationsProxy = groq.audio?.translations
-    ? new Proxy(groq.audio.translations, {
-        get(target, prop, receiver) {
-          if (prop === "create") {
-            return wrapAudioTranslationsCreate(target.create.bind(target));
-          }
-
-          return Reflect.get(target, prop, receiver);
-        },
-      })
-    : undefined;
+  const translationsProxy = proxyCreateMethod(
+    groq.audio?.translations,
+    groqChannels.audioTranslationsCreate,
+  );
 
   const audioProxy = groq.audio
     ? new Proxy(groq.audio, {
@@ -204,57 +161,31 @@ function groqProxy(groq: GroqClient): GroqClient {
   return topLevelProxy;
 }
 
-function wrapChatCompletionsCreate(
-  create: (
-    request: GroqChatCreateParams,
-    options?: unknown,
-  ) => Promise<GroqChatCompletion | GroqChatStream>,
-): GroqChat["completions"]["create"] {
-  return (request, options) =>
-    groqChannels.chatCompletionsCreate.tracePromise(
-      () => create(request, options),
-      { arguments: [request, options] },
-    ) as ReturnType<GroqChat["completions"]["create"]>;
-}
+function proxyCreateMethod<TParams, TResult extends PromiseLike<unknown>>(
+  resource:
+    | { create: (params: TParams, options?: unknown) => TResult }
+    | undefined,
+  channel: {
+    invoke(
+      target: (params: TParams, options?: unknown) => TResult,
+      thisArg: unknown,
+      args: [TParams, unknown?],
+      additional: Record<string, never>,
+    ): TResult;
+  },
+) {
+  return resource
+    ? new Proxy(resource, {
+        get(target, prop, receiver) {
+          if (prop === "create") {
+            // Bind on access, so clients without `create` still fail on read.
+            const create = target.create.bind(target);
+            return (request: TParams, options?: unknown) =>
+              channel.invoke(create, target, [request, options], {});
+          }
 
-function wrapEmbeddingsCreate(
-  create: (
-    request: GroqEmbeddingCreateParams,
-    options?: unknown,
-  ) => Promise<GroqEmbeddingResponse>,
-): GroqEmbeddings["create"] {
-  return (request, options) =>
-    groqChannels.embeddingsCreate.tracePromise(() => create(request, options), {
-      arguments: [request, options],
-    }) as ReturnType<GroqEmbeddings["create"]>;
-}
-
-function wrapAudioSpeechCreate(
-  create: GroqAudioSpeech["create"],
-): GroqAudioSpeech["create"] {
-  return (request, options) =>
-    groqChannels.audioSpeechCreate.tracePromise(
-      () => create(request, options),
-      { arguments: [request, options] },
-    ) as ReturnType<GroqAudioSpeech["create"]>;
-}
-
-function wrapAudioTranscriptionsCreate(
-  create: GroqAudioTranscriptions["create"],
-): GroqAudioTranscriptions["create"] {
-  return (request, options) =>
-    groqChannels.audioTranscriptionsCreate.tracePromise(
-      () => create(request, options),
-      { arguments: [request, options] },
-    ) as ReturnType<GroqAudioTranscriptions["create"]>;
-}
-
-function wrapAudioTranslationsCreate(
-  create: GroqAudioTranslations["create"],
-): GroqAudioTranslations["create"] {
-  return (request, options) =>
-    groqChannels.audioTranslationsCreate.tracePromise(
-      () => create(request, options),
-      { arguments: [request, options] },
-    ) as ReturnType<GroqAudioTranslations["create"]>;
+          return Reflect.get(target, prop, receiver);
+        },
+      })
+    : undefined;
 }
