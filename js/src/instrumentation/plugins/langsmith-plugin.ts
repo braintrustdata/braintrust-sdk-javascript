@@ -1,19 +1,21 @@
 import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
-import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
+import { LRUCache } from "../../lru-cache";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import { LRUCache } from "../../lru-cache";
 import type {
   LangSmithBatchIngestRuns,
   LangSmithRun,
 } from "../../vendor-sdk-types/langsmith";
 import { BasePlugin } from "../core";
 import { unsubscribeAll } from "../core/channel-tracing";
-import type { ChannelMessage } from "../core/channel-definitions";
+import { runInstrumentation } from "../core/observe-result";
+
+import type { ChannelMessage } from "../core/tracing-types";
 import { langSmithChannels } from "./langsmith-channels";
 
 type ActiveRun = {
@@ -56,44 +58,64 @@ export class LangSmithPlugin extends BasePlugin {
   }
 
   protected onEnable(): void {
-    const createChannel = langSmithChannels.createRun.tracingChannel();
-    const createHandlers = {
-      start: (
-        event: ChannelMessage<typeof langSmithChannels.createRun>,
-      ): void => {
-        this.containLifecycleFailure("createRun", () => {
-          this.processCreate(event.arguments[0]);
-        });
-      },
-    };
-    createChannel.subscribe(createHandlers);
-    this.unsubscribers.push(() => createChannel.unsubscribe(createHandlers));
+    const createChannel = langSmithChannels.createRun;
 
-    const updateChannel = langSmithChannels.updateRun.tracingChannel();
-    const updateHandlers = {
-      start: (
-        event: ChannelMessage<typeof langSmithChannels.updateRun>,
-      ): void => {
-        this.containLifecycleFailure("updateRun", () => {
-          this.processUpdate(event.arguments[0], event.arguments[1]);
-        });
+    const removecreateHandlers = createChannel.intercept(
+      (target, receiver, args, additional) => {
+        runInstrumentation(() =>
+          ((
+            event: ChannelMessage<typeof langSmithChannels.createRun>,
+          ): void => {
+            this.containLifecycleFailure("createRun", () => {
+              this.processCreate(additional.runTree ?? event.arguments[0]);
+            });
+          })({ arguments: args }),
+        );
+        return Reflect.apply(target, receiver, args);
       },
-    };
-    updateChannel.subscribe(updateHandlers);
-    this.unsubscribers.push(() => updateChannel.unsubscribe(updateHandlers));
+    );
+    this.unsubscribers.push(removecreateHandlers);
 
-    const batchChannel = langSmithChannels.batchIngestRuns.tracingChannel();
-    const batchHandlers = {
-      start: (
-        event: ChannelMessage<typeof langSmithChannels.batchIngestRuns>,
-      ): void => {
-        this.containLifecycleFailure("batchIngestRuns", () => {
-          this.processBatch(event.arguments[0]);
-        });
+    const updateChannel = langSmithChannels.updateRun;
+
+    const removeupdateHandlers = updateChannel.intercept(
+      (target, receiver, args, additional) => {
+        runInstrumentation(() =>
+          ((
+            event: ChannelMessage<typeof langSmithChannels.updateRun>,
+          ): void => {
+            this.containLifecycleFailure("updateRun", () => {
+              this.processUpdate(
+                additional.runTree
+                  ? ((additional.runTree as LangSmithRun).id as string)
+                  : event.arguments[0],
+                additional.runTree ?? event.arguments[1],
+              );
+            });
+          })({ arguments: args }),
+        );
+        return Reflect.apply(target, receiver, args);
       },
-    };
-    batchChannel.subscribe(batchHandlers);
-    this.unsubscribers.push(() => batchChannel.unsubscribe(batchHandlers));
+    );
+    this.unsubscribers.push(removeupdateHandlers);
+
+    const batchChannel = langSmithChannels.batchIngestRuns;
+
+    const removebatchHandlers = batchChannel.intercept(
+      (target, receiver, args, additional) => {
+        runInstrumentation(() =>
+          ((
+            event: ChannelMessage<typeof langSmithChannels.batchIngestRuns>,
+          ): void => {
+            this.containLifecycleFailure("batchIngestRuns", () => {
+              this.processBatch(event.arguments[0]);
+            });
+          })({ arguments: args }),
+        );
+        return Reflect.apply(target, receiver, args);
+      },
+    );
+    this.unsubscribers.push(removebatchHandlers);
   }
 
   protected onDisable(): void {

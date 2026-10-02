@@ -130,15 +130,14 @@ function wrapSend(
       return send(command, optionsOrCb, cb);
     }
 
-    return bedrockRuntimeChannels.clientSend.tracePromise(
-      () =>
+    return bedrockRuntimeChannels.clientSend.invoke(
+      (command, optionsOrCb) =>
         runWithAutoInstrumentationSuppressed(() =>
           send(command, optionsOrCb),
         ) as Promise<unknown>,
-      {
-        arguments: [command as BedrockRuntimeCommandLike, optionsOrCb],
-        span_info: buildBedrockRuntimeSpanInfo(command),
-      },
+      undefined,
+      [command as BedrockRuntimeCommandLike, optionsOrCb],
+      { span_info: buildBedrockRuntimeSpanInfo(command) },
     );
   };
 }

@@ -1,8 +1,8 @@
 /**
  * Instrumentation APIs for auto-instrumentation.
  *
- * This module provides the core plugin infrastructure for converting global
- * instrumentation hook events into Braintrust spans.
+ * This module provides the core plugin infrastructure for registering invocation
+ * interceptors that trace provider calls.
  *
  * Following the OpenTelemetry pattern, BasePlugin (like InstrumentationBase)
  * lives in the core SDK, while individual instrumentation implementations
@@ -14,35 +14,34 @@
  * @module instrumentation
  */
 
-export { BasePlugin } from "./core";
 export { BraintrustPlugin } from "./braintrust-plugin";
 export type { BraintrustPluginConfig } from "./braintrust-plugin";
-export { OpenAIAgentsTraceProcessor } from "./plugins/openai-agents-trace-processor";
-export type { OpenAIAgentsTraceProcessorOptions } from "./plugins/openai-agents-trace-processor";
+export { BasePlugin } from "./core";
+export { braintrustEveInstrumentation } from "./plugins/eve-instrumentation";
+export { braintrustEveHook } from "./plugins/eve-plugin";
 export {
   braintrustFlueInstrumentation,
   braintrustFlueObserver,
 } from "./plugins/flue-plugin";
-export { braintrustEveHook } from "./plugins/eve-plugin";
-export { braintrustEveInstrumentation } from "./plugins/eve-instrumentation";
+export { OpenAIAgentsTraceProcessor } from "./plugins/openai-agents-trace-processor";
+export type { OpenAIAgentsTraceProcessorOptions } from "./plugins/openai-agents-trace-processor";
 
 // Re-export core types for external instrumentation packages
-export type {
-  BaseContext,
-  StartEvent,
-  EndEvent,
-  ErrorEvent,
-  AsyncStartEvent,
-  AsyncEndEvent,
-  ChannelHandlers,
-} from "./core";
 export {
   createChannelName,
-  parseChannelName,
   isValidChannelName,
+  parseChannelName,
+} from "./core";
+export type {
+  AsyncEndEvent,
+  AsyncStartEvent,
+  BaseContext,
+  EndEvent,
+  ErrorEvent,
+  StartEvent,
 } from "./core";
 
 // Configuration API
+export type { SpanCustomizer, SpanExportData } from "./config";
 export { configureInstrumentation } from "./registry";
 export type { InstrumentationConfig } from "./registry";
-export type { SpanCustomizer, SpanExportData } from "./config";

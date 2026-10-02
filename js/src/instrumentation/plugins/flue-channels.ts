@@ -1,14 +1,9 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type { FlueObservableContext } from "../../vendor-sdk-types/flue";
 
-export const flueChannels = defineChannels(
-  "@flue/runtime",
-  {
-    createContext: channel<[unknown], FlueObservableContext>({
-      channelName: "createFlueContext",
-      kind: "sync-stream",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.FLUE },
-);
+export const flueChannels = defineInterceptor("@flue/runtime", {
+  createContext: channel<[unknown], FlueObservableContext>({
+    channelName: "createFlueContext",
+  }),
+});

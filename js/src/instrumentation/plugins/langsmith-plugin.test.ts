@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { configureNode } from "../../node/config";
 import { _exportsForTestingOnly, initLogger } from "../../logger";
+import { configureNode } from "../../node/config";
 import { langSmithChannels } from "./langsmith-channels";
 import { LangSmithPlugin } from "./langsmith-plugin";
 
@@ -42,73 +42,73 @@ describe("LangSmithPlugin", () => {
     const firstToken = new Date(start.getTime() + 250);
     const end = new Date(start.getTime() + 500);
 
-    await langSmithChannels.batchIngestRuns.tracePromise(
+    await langSmithChannels.batchIngestRuns.invoke(
       async () => undefined,
-      {
-        arguments: [
-          {
-            runCreates: [
-              {
-                id: childId,
-                trace_id: rootId,
-                parent_run_id: rootId,
-                dotted_order: `20260713T000000000000Z${rootId}.20260713T000000000001Z${childId}`,
-                name: "answer",
-                run_type: "llm",
-                start_time: start.toISOString(),
-                inputs: { messages: ["hello"] },
-                extra: {
-                  metadata: {
-                    customer: "acme",
-                    ls_provider: "openai",
-                    ls_model_name: "gpt-test",
-                    ls_temperature: 0.2,
-                    usage_metadata: { ignored: true },
-                  },
-                  runtime: { hidden: true },
+      undefined,
+      [
+        {
+          runCreates: [
+            {
+              id: childId,
+              trace_id: rootId,
+              parent_run_id: rootId,
+              dotted_order: `20260713T000000000000Z${rootId}.20260713T000000000001Z${childId}`,
+              name: "answer",
+              run_type: "llm",
+              start_time: start.toISOString(),
+              inputs: { messages: ["hello"] },
+              extra: {
+                metadata: {
+                  customer: "acme",
+                  ls_provider: "openai",
+                  ls_model_name: "gpt-test",
+                  ls_temperature: 0.2,
+                  usage_metadata: { ignored: true },
                 },
-                tags: ["unit", 1],
-                serialized: { secret: true },
-                events: [{ name: "new_token", time: firstToken.toISOString() }],
+                runtime: { hidden: true },
               },
-              {
-                id: rootId,
-                trace_id: rootId,
-                name: "workflow",
-                run_type: "chain",
-                start_time: start.toISOString(),
-                inputs: { question: "hello" },
-              },
-            ],
-            runUpdates: [
-              {
-                id: childId,
-                trace_id: rootId,
-                parent_run_id: rootId,
-                end_time: end.toISOString(),
-                outputs: {
-                  generations: ["world"],
-                  usage_metadata: {
-                    input_tokens: 3,
-                    output_tokens: 2,
-                    total_tokens: 5,
-                    input_token_details: {
-                      cache_read: 1,
-                      cache_creation: 2,
-                    },
+              tags: ["unit", 1],
+              serialized: { secret: true },
+              events: [{ name: "new_token", time: firstToken.toISOString() }],
+            },
+            {
+              id: rootId,
+              trace_id: rootId,
+              name: "workflow",
+              run_type: "chain",
+              start_time: start.toISOString(),
+              inputs: { question: "hello" },
+            },
+          ],
+          runUpdates: [
+            {
+              id: childId,
+              trace_id: rootId,
+              parent_run_id: rootId,
+              end_time: end.toISOString(),
+              outputs: {
+                generations: ["world"],
+                usage_metadata: {
+                  input_tokens: 3,
+                  output_tokens: 2,
+                  total_tokens: 5,
+                  input_token_details: {
+                    cache_read: 1,
+                    cache_creation: 2,
                   },
                 },
               },
-              {
-                id: rootId,
-                trace_id: rootId,
-                end_time: end.toISOString(),
-                outputs: { answer: "world" },
-              },
-            ],
-          },
-        ],
-      },
+            },
+            {
+              id: rootId,
+              trace_id: rootId,
+              end_time: end.toISOString(),
+              outputs: { answer: "world" },
+            },
+          ],
+        },
+      ],
+      {},
     );
 
     const spans = (await backgroundLogger.drain()) as any[];
@@ -168,15 +168,23 @@ describe("LangSmithPlugin", () => {
       end_time: new Date().toISOString(),
     };
 
-    await langSmithChannels.updateRun.tracePromise(async () => undefined, {
-      arguments: [id, update],
-    });
-    await langSmithChannels.createRun.tracePromise(async () => undefined, {
-      arguments: [update],
-    });
-    await langSmithChannels.batchIngestRuns.tracePromise(
+    await langSmithChannels.updateRun.invoke(
       async () => undefined,
-      { arguments: [{ runUpdates: [update] }] },
+      undefined,
+      [id, update],
+      {},
+    );
+    await langSmithChannels.createRun.invoke(
+      async () => undefined,
+      undefined,
+      [update],
+      {},
+    );
+    await langSmithChannels.batchIngestRuns.invoke(
+      async () => undefined,
+      undefined,
+      [{ runUpdates: [update] }],
+      {},
     );
 
     const spans = (await backgroundLogger.drain()) as any[];
@@ -192,8 +200,10 @@ describe("LangSmithPlugin", () => {
     const batchId = "66666666-6666-4666-8666-666666666666";
     const endTime = new Date().toISOString();
 
-    await langSmithChannels.createRun.tracePromise(async () => undefined, {
-      arguments: [
+    await langSmithChannels.createRun.invoke(
+      async () => undefined,
+      undefined,
+      [
         {
           id: directId,
           trace_id: directId,
@@ -202,24 +212,25 @@ describe("LangSmithPlugin", () => {
           end_time: endTime,
         },
       ],
-    });
-    await langSmithChannels.batchIngestRuns.tracePromise(
+      {},
+    );
+    await langSmithChannels.batchIngestRuns.invoke(
       async () => undefined,
-      {
-        arguments: [
-          {
-            runCreates: [
-              {
-                id: batchId,
-                trace_id: batchId,
-                name: "completed batch create",
-                outputs: { answer: "batch" },
-                end_time: endTime,
-              },
-            ],
-          },
-        ],
-      },
+      undefined,
+      [
+        {
+          runCreates: [
+            {
+              id: batchId,
+              trace_id: batchId,
+              name: "completed batch create",
+              outputs: { answer: "batch" },
+              end_time: endTime,
+            },
+          ],
+        },
+      ],
+      {},
     );
 
     const spans = (await backgroundLogger.drain()) as any[];
@@ -234,8 +245,10 @@ describe("LangSmithPlugin", () => {
   it("completes runs containing invalid nested dates", async () => {
     const id = "77777777-7777-4777-8777-777777777777";
 
-    await langSmithChannels.createRun.tracePromise(async () => undefined, {
-      arguments: [
+    await langSmithChannels.createRun.invoke(
+      async () => undefined,
+      undefined,
+      [
         {
           id,
           trace_id: id,
@@ -244,7 +257,8 @@ describe("LangSmithPlugin", () => {
           end_time: new Date().toISOString(),
         },
       ],
-    });
+      {},
+    );
 
     const spans = (await backgroundLogger.drain()) as any[];
     expect(spans.filter((span) => span.span_id === id)).toHaveLength(1);
@@ -261,9 +275,12 @@ describe("LangSmithPlugin", () => {
     });
 
     await expect(
-      langSmithChannels.createRun.tracePromise(async () => undefined, {
-        arguments: [payload],
-      }),
+      langSmithChannels.createRun.invoke(
+        async () => undefined,
+        undefined,
+        [payload],
+        {},
+      ),
     ).resolves.toBeUndefined();
     expect(getterCalled).toBe(false);
     expect(await backgroundLogger.drain()).toEqual([]);
@@ -278,17 +295,23 @@ describe("LangSmithPlugin", () => {
       end_time: new Date().toISOString(),
     };
 
-    await langSmithChannels.updateRun.tracePromise(async () => undefined, {
-      arguments: [run.id, run],
-    });
+    await langSmithChannels.updateRun.invoke(
+      async () => undefined,
+      undefined,
+      [run.id, run],
+      {},
+    );
     expect(await backgroundLogger.drain()).toEqual([]);
 
     plugin.disable();
     plugin = new LangSmithPlugin({ skipLangChainRuns: false });
     plugin.enable();
-    await langSmithChannels.updateRun.tracePromise(async () => undefined, {
-      arguments: [run.id, run],
-    });
+    await langSmithChannels.updateRun.invoke(
+      async () => undefined,
+      undefined,
+      [run.id, run],
+      {},
+    );
     expect(await backgroundLogger.drain()).toHaveLength(1);
   });
 

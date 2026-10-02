@@ -1,70 +1,38 @@
-import { BasePlugin, toLoggedError } from "../core";
+import type { ReturnOf } from "../core/channel-definitions";
 import { debugLogger } from "../../debug-logger";
+import { BasePlugin, toLoggedError } from "../core";
 import {
-  traceAsyncChannel,
-  traceStreamingChannel,
-  traceSyncStreamChannel,
+  traceAsyncCall,
+  traceStreamingCall,
+  traceSyncStreamCall,
   unsubscribeAll,
 } from "../core/channel-tracing";
-import type { ChannelMessage } from "../core/channel-definitions";
-import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
-import type { IsoChannelHandlers } from "../../isomorph";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
 import {
   SpanTypeAttribute,
   isObject,
   isPromiseLike,
 } from "../../../util/index";
-import { getCurrentUnixTimestamp } from "../../util";
 import {
-  _internalStartSpanWithInitialMerge,
   Attachment,
+  _internalStartSpanWithInitialMerge,
   currentSpan,
   startSpan,
-  type Span,
   withCurrent,
+  type Span,
 } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import {
-  convertDataToBlob,
-  getExtensionFromMediaType,
-} from "../../wrappers/attachment-utils";
-import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logged-output";
-import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
-import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
-import {
-  bindHarnessTurnParentToStart,
-  captureHarnessCreateSessionParent,
-  endHarnessTurn,
-  harnessContinuationParent,
-  registerHarnessSessionParent,
-  registerHarnessTurnSpan,
-  updateHarnessTurn,
-  type HarnessTurnParent,
-} from "../../wrappers/ai-sdk/harness-agent-context";
-import {
-  registerWorkflowAgentWrapperSpan,
-  unregisterWorkflowAgentWrapperSpan,
-} from "../../wrappers/ai-sdk/workflow-agent-context";
-import { zodToJsonSchema } from "../../zod/utils";
-import {
-  aiSDKChannels,
-  BRAINTRUST_WRAPPED_AI_SDK_MODEL,
-  harnessAgentChannels,
-} from "./ai-sdk-channels";
-import { extractTokenMetrics } from "./ai-sdk-metrics";
-import { currentCloudflareThinkSpan } from "./cloudflare-think-context";
-import {
-  isAutoInstrumentationSuppressed,
-  runWithAutoInstrumentationSuppressed,
-} from "../auto-instrumentation-suppression";
+import { getCurrentUnixTimestamp } from "../../util";
 import type {
   AISDK,
   AISDKCallParams,
   AISDKEmbedParams,
   AISDKEmbeddingResult,
+  AISDKGenerateImageParams,
   AISDKGeneratedFile,
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentSettings,
@@ -75,7 +43,6 @@ import type {
   AISDKOutputResponseFormat,
   AISDKRerankParams,
   AISDKRerankResult,
-  AISDKGenerateImageParams,
   AISDKResult,
   AISDKTool,
   AISDKTools,
@@ -86,6 +53,41 @@ import type {
   AISDKV7TelemetryOptions,
 } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import {
+  captureHarnessCreateSessionParent,
+  endHarnessTurn,
+  harnessContinuationParent,
+  registerHarnessSessionParent,
+  registerHarnessTurnSpan,
+  runWithHarnessTurnParent,
+  updateHarnessTurn,
+  type HarnessTurnParent,
+} from "../../wrappers/ai-sdk/harness-agent-context";
+import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logged-output";
+import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
+import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
+import {
+  registerWorkflowAgentWrapperSpan,
+  unregisterWorkflowAgentWrapperSpan,
+} from "../../wrappers/ai-sdk/workflow-agent-context";
+import {
+  convertDataToBlob,
+  getExtensionFromMediaType,
+} from "../../wrappers/attachment-utils";
+import { zodToJsonSchema } from "../../zod/utils";
+import {
+  isAutoInstrumentationSuppressed,
+  runWithAutoInstrumentationSuppressed,
+} from "../auto-instrumentation-suppression";
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
+import type { ChannelMessage } from "../core/tracing-types";
+import {
+  BRAINTRUST_WRAPPED_AI_SDK_MODEL,
+  aiSDKChannels,
+  harnessAgentChannels,
+} from "./ai-sdk-channels";
+import { extractTokenMetrics } from "./ai-sdk-metrics";
+import { currentCloudflareThinkSpan } from "./cloudflare-think-context";
 
 interface AISDKPluginConfig {
   /**
@@ -213,482 +215,658 @@ export class AISDKPlugin extends BasePlugin {
       subscribeToHarnessAgentCreateSession(),
     );
     this.unsubscribers.push(
-      subscribeToHarnessContinuation(
-        harnessAgentChannels.continueGenerate,
-        denyOutputPaths,
+      harnessAgentChannels.continueGenerate.intercept(
+        (target, receiver, args, additional) =>
+          traceHarnessContinuation(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            denyOutputPaths,
+          ),
       ),
-      subscribeToHarnessContinuation(
-        harnessAgentChannels.continueStream,
-        denyOutputPaths,
+      harnessAgentChannels.continueStream.intercept(
+        (target, receiver, args, additional) =>
+          traceHarnessContinuation(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            denyOutputPaths,
+          ),
       ),
     );
 
     // generateText - async function that may return streams
     this.unsubscribers.push(
-      traceStreamingChannel(aiSDKChannels.generateText, {
-        name: "generateText",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
-        extractOutput: (result, endEvent) => {
-          finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
-          return processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          );
-        },
-        extractMetrics: (result, _startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent),
-        aggregateChunks: aggregateAISDKChunks,
-      }),
+      aiSDKChannels.generateText.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof aiSDKChannels.generateText>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "generateText",
+              type: SpanTypeAttribute.FUNCTION,
+              extractInput: ([params], event, span) =>
+                prepareAISDKCallInput(params, event, span, denyOutputPaths),
+              extractOutput: (result, endEvent) => {
+                finalizeAISDKChildTracing(
+                  endEvent as { [key: string]: unknown },
+                );
+                return processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                );
+              },
+              extractMetrics: (result, _startTime, endEvent) =>
+                extractTopLevelAISDKMetrics(result, endEvent),
+              aggregateChunks: aggregateAISDKChunks,
+            },
+          ),
+      ),
     );
 
     // generateImage - async image generation function (v5 experimental, v6+ stable)
     this.unsubscribers.push(
-      traceAsyncChannel(aiSDKChannels.generateImage, {
-        name: "generateImage",
-        type: SpanTypeAttribute.LLM,
-        extractInput: ([params], event) =>
-          prepareAISDKGenerateImageInput(params, event.self),
-        extractOutput: (result, endEvent) =>
-          processAISDKGenerateImageOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+      aiSDKChannels.generateImage.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof aiSDKChannels.generateImage>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "generateImage",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params], event) =>
+                prepareAISDKGenerateImageInput(params, event.self),
+              extractOutput: (result, endEvent) =>
+                processAISDKGenerateImageOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                ),
+              extractMetrics: (result) => extractTokenMetrics(result),
+            },
           ),
-        extractMetrics: (result) => extractTokenMetrics(result),
-      }),
+      ),
     );
 
     // streamText - function returning stream
     this.unsubscribers.push(
-      traceStreamingChannel(aiSDKChannels.streamText, {
-        name: "streamText",
-        type: SpanTypeAttribute.FUNCTION,
-        shouldTrace: () => currentCloudflareThinkSpan() === undefined,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
-        extractOutput: (result, endEvent) =>
-          processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          ),
-        extractMetrics: (result, startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent, startTime),
-        aggregateChunks: aggregateAISDKChunks,
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            span,
-            startTime,
-          }),
-      }),
+      aiSDKChannels.streamText.intercept((target, receiver, args, additional) =>
+        traceStreamingCall<typeof aiSDKChannels.streamText>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+            name: "streamText",
+            type: SpanTypeAttribute.FUNCTION,
+            shouldTrace: () => currentCloudflareThinkSpan() === undefined,
+            extractInput: ([params], event, span) =>
+              prepareAISDKCallInput(params, event, span, denyOutputPaths),
+            extractOutput: (result, endEvent) =>
+              processAISDKOutput(
+                result,
+                resolveDenyOutputPaths(endEvent, denyOutputPaths),
+              ),
+            extractMetrics: (result, startTime, endEvent) =>
+              extractTopLevelAISDKMetrics(result, endEvent, startTime),
+            aggregateChunks: aggregateAISDKChunks,
+            patchResult: ({ endEvent, result, span, startTime }) =>
+              patchAISDKStreamingResult({
+                defaultDenyOutputPaths: denyOutputPaths,
+                endEvent,
+                result,
+                span,
+                startTime,
+              }),
+          },
+        ),
+      ),
     );
 
     // streamText - sync function returning stream (v4+, used by auto-hook)
     this.unsubscribers.push(
-      traceSyncStreamChannel(aiSDKChannels.streamTextSync, {
-        name: "streamText",
-        type: SpanTypeAttribute.FUNCTION,
-        shouldTrace: () => currentCloudflareThinkSpan() === undefined,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            span,
-            startTime,
-          }),
-      }),
+      aiSDKChannels.streamTextSync.intercept(
+        (target, receiver, args, additional) =>
+          traceSyncStreamCall<typeof aiSDKChannels.streamTextSync>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "streamText",
+              type: SpanTypeAttribute.FUNCTION,
+              shouldTrace: () => currentCloudflareThinkSpan() === undefined,
+              extractInput: ([params], event, span) =>
+                prepareAISDKCallInput(params, event, span, denyOutputPaths),
+              patchResult: ({ endEvent, result, span, startTime }) =>
+                patchAISDKStreamingResult({
+                  defaultDenyOutputPaths: denyOutputPaths,
+                  endEvent,
+                  result,
+                  span,
+                  startTime,
+                }),
+            },
+          ),
+      ),
     );
 
     // generateObject - async function that may return streams
     this.unsubscribers.push(
-      traceStreamingChannel(aiSDKChannels.generateObject, {
-        name: "generateObject",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
-        extractOutput: (result, endEvent) => {
-          finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
-          return processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          );
-        },
-        extractMetrics: (result, _startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent),
-        aggregateChunks: aggregateAISDKChunks,
-      }),
+      aiSDKChannels.generateObject.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof aiSDKChannels.generateObject>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "generateObject",
+              type: SpanTypeAttribute.FUNCTION,
+              extractInput: ([params], event, span) =>
+                prepareAISDKCallInput(params, event, span, denyOutputPaths),
+              extractOutput: (result, endEvent) => {
+                finalizeAISDKChildTracing(
+                  endEvent as { [key: string]: unknown },
+                );
+                return processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                );
+              },
+              extractMetrics: (result, _startTime, endEvent) =>
+                extractTopLevelAISDKMetrics(result, endEvent),
+              aggregateChunks: aggregateAISDKChunks,
+            },
+          ),
+      ),
     );
 
     // streamObject - function returning stream
     this.unsubscribers.push(
-      traceStreamingChannel(aiSDKChannels.streamObject, {
-        name: "streamObject",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
-        extractOutput: (result, endEvent) =>
-          processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+      aiSDKChannels.streamObject.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof aiSDKChannels.streamObject>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "streamObject",
+              type: SpanTypeAttribute.FUNCTION,
+              extractInput: ([params], event, span) =>
+                prepareAISDKCallInput(params, event, span, denyOutputPaths),
+              extractOutput: (result, endEvent) =>
+                processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                ),
+              extractMetrics: (result, startTime, endEvent) =>
+                extractTopLevelAISDKMetrics(result, endEvent, startTime),
+              aggregateChunks: aggregateAISDKChunks,
+              patchResult: ({ endEvent, result, span, startTime }) =>
+                patchAISDKStreamingResult({
+                  defaultDenyOutputPaths: denyOutputPaths,
+                  endEvent,
+                  result,
+                  span,
+                  startTime,
+                }),
+            },
           ),
-        extractMetrics: (result, startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent, startTime),
-        aggregateChunks: aggregateAISDKChunks,
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            span,
-            startTime,
-          }),
-      }),
+      ),
     );
 
     // streamObject - sync function returning stream (v4+, used by auto-hook)
     this.unsubscribers.push(
-      traceSyncStreamChannel(aiSDKChannels.streamObjectSync, {
-        name: "streamObject",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths),
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            span,
-            startTime,
-          }),
-      }),
+      aiSDKChannels.streamObjectSync.intercept(
+        (target, receiver, args, additional) =>
+          traceSyncStreamCall<typeof aiSDKChannels.streamObjectSync>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "streamObject",
+              type: SpanTypeAttribute.FUNCTION,
+              extractInput: ([params], event, span) =>
+                prepareAISDKCallInput(params, event, span, denyOutputPaths),
+              patchResult: ({ endEvent, result, span, startTime }) =>
+                patchAISDKStreamingResult({
+                  defaultDenyOutputPaths: denyOutputPaths,
+                  endEvent,
+                  result,
+                  span,
+                  startTime,
+                }),
+            },
+          ),
+      ),
     );
 
     // embed - async embedding function
     this.unsubscribers.push(
-      traceAsyncChannel(aiSDKChannels.embed, {
-        name: "embed",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event) =>
-          prepareAISDKEmbedInput(params, event.self),
-        extractOutput: (result, endEvent) =>
-          processAISDKEmbeddingOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          ),
-        extractMetrics: (result, _startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent),
-      }),
+      aiSDKChannels.embed.intercept((target, receiver, args, additional) =>
+        traceAsyncCall<typeof aiSDKChannels.embed>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+            name: "embed",
+            type: SpanTypeAttribute.FUNCTION,
+            extractInput: ([params], event) =>
+              prepareAISDKEmbedInput(params, event.self),
+            extractOutput: (result, endEvent) =>
+              processAISDKEmbeddingOutput(
+                result,
+                resolveDenyOutputPaths(endEvent, denyOutputPaths),
+              ),
+            extractMetrics: (result, _startTime, endEvent) =>
+              extractTopLevelAISDKMetrics(result, endEvent),
+          },
+        ),
+      ),
     );
 
     // embedMany - async embedding batch function
     this.unsubscribers.push(
-      traceAsyncChannel(aiSDKChannels.embedMany, {
-        name: "embedMany",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event) =>
-          prepareAISDKEmbedInput(params, event.self),
-        extractOutput: (result, endEvent) =>
-          processAISDKEmbeddingOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          ),
-        extractMetrics: (result, _startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent),
-      }),
+      aiSDKChannels.embedMany.intercept((target, receiver, args, additional) =>
+        traceAsyncCall<typeof aiSDKChannels.embedMany>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+            name: "embedMany",
+            type: SpanTypeAttribute.FUNCTION,
+            extractInput: ([params], event) =>
+              prepareAISDKEmbedInput(params, event.self),
+            extractOutput: (result, endEvent) =>
+              processAISDKEmbeddingOutput(
+                result,
+                resolveDenyOutputPaths(endEvent, denyOutputPaths),
+              ),
+            extractMetrics: (result, _startTime, endEvent) =>
+              extractTopLevelAISDKMetrics(result, endEvent),
+          },
+        ),
+      ),
     );
 
     // rerank - async reranking function
     this.unsubscribers.push(
-      traceAsyncChannel(aiSDKChannels.rerank, {
-        name: "rerank",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event) =>
-          prepareAISDKRerankInput(params, event.self),
-        extractOutput: (result, endEvent) =>
-          processAISDKRerankOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          ),
-        extractMetrics: (result, _startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent),
-      }),
+      aiSDKChannels.rerank.intercept((target, receiver, args, additional) =>
+        traceAsyncCall<typeof aiSDKChannels.rerank>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+            name: "rerank",
+            type: SpanTypeAttribute.FUNCTION,
+            extractInput: ([params], event) =>
+              prepareAISDKRerankInput(params, event.self),
+            extractOutput: (result, endEvent) =>
+              processAISDKRerankOutput(
+                result,
+                resolveDenyOutputPaths(endEvent, denyOutputPaths),
+              ),
+            extractMetrics: (result, _startTime, endEvent) =>
+              extractTopLevelAISDKMetrics(result, endEvent),
+          },
+        ),
+      ),
     );
 
     // Agent.generate - async method
     this.unsubscribers.push(
-      traceStreamingChannel(aiSDKChannels.agentGenerate, {
-        name: "Agent.generate",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths, {
-            agentOwner: true,
-          }),
-        extractOutput: (result, endEvent) => {
-          finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
-          return processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          );
-        },
-        extractMetrics: (result, _startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent),
-        aggregateChunks: aggregateAISDKChunks,
-      }),
+      aiSDKChannels.agentGenerate.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof aiSDKChannels.agentGenerate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "Agent.generate",
+              type: SpanTypeAttribute.FUNCTION,
+              extractInput: ([params], event, span) =>
+                prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+                  agentOwner: true,
+                }),
+              extractOutput: (result, endEvent) => {
+                finalizeAISDKChildTracing(
+                  endEvent as { [key: string]: unknown },
+                );
+                return processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                );
+              },
+              extractMetrics: (result, _startTime, endEvent) =>
+                extractTopLevelAISDKMetrics(result, endEvent),
+              aggregateChunks: aggregateAISDKChunks,
+            },
+          ),
+      ),
     );
 
     // Agent.stream - async method returning stream (v5, used by wrapAISDK)
     this.unsubscribers.push(
-      traceStreamingChannel(aiSDKChannels.agentStream, {
-        name: "Agent.stream",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths, {
-            agentOwner: true,
-          }),
-        extractOutput: (result, endEvent) =>
-          processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+      aiSDKChannels.agentStream.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof aiSDKChannels.agentStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "Agent.stream",
+              type: SpanTypeAttribute.FUNCTION,
+              extractInput: ([params], event, span) =>
+                prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+                  agentOwner: true,
+                }),
+              extractOutput: (result, endEvent) =>
+                processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                ),
+              extractMetrics: (result, startTime, endEvent) =>
+                extractTopLevelAISDKMetrics(result, endEvent, startTime),
+              aggregateChunks: aggregateAISDKChunks,
+              patchResult: ({ endEvent, result, span, startTime }) =>
+                patchAISDKStreamingResult({
+                  defaultDenyOutputPaths: denyOutputPaths,
+                  endEvent,
+                  result,
+                  span,
+                  startTime,
+                }),
+            },
           ),
-        extractMetrics: (result, startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent, startTime),
-        aggregateChunks: aggregateAISDKChunks,
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            span,
-            startTime,
-          }),
-      }),
+      ),
     );
 
     // Agent.stream - sync method returning stream (v5, used by auto-hook)
     this.unsubscribers.push(
-      traceSyncStreamChannel(aiSDKChannels.agentStreamSync, {
-        name: "Agent.stream",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths, {
-            agentOwner: true,
-          }),
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            span,
-            startTime,
-          }),
-      }),
+      aiSDKChannels.agentStreamSync.intercept(
+        (target, receiver, args, additional) =>
+          traceSyncStreamCall<typeof aiSDKChannels.agentStreamSync>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "Agent.stream",
+              type: SpanTypeAttribute.FUNCTION,
+              extractInput: ([params], event, span) =>
+                prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+                  agentOwner: true,
+                }),
+              patchResult: ({ endEvent, result, span, startTime }) =>
+                patchAISDKStreamingResult({
+                  defaultDenyOutputPaths: denyOutputPaths,
+                  endEvent,
+                  result,
+                  span,
+                  startTime,
+                }),
+            },
+          ),
+      ),
     );
 
     // HarnessAgent.generate - one task span per agent turn
     this.unsubscribers.push(
-      traceStreamingChannel(harnessAgentChannels.generate, {
-        name: "HarnessAgent.generate",
-        startSpan: _internalStartSpanWithInitialMerge,
-        type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event, span) =>
-          prepareAISDKHarnessAgentInput(params, event.self, span),
-        extractOutput: (result, endEvent) =>
-          processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+      harnessAgentChannels.generate.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof harnessAgentChannels.generate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "HarnessAgent.generate",
+              startSpan: _internalStartSpanWithInitialMerge,
+              type: SpanTypeAttribute.TASK,
+              extractInput: ([params], event, span) =>
+                prepareAISDKHarnessAgentInput(params, event.self, span),
+              extractOutput: (result, endEvent) =>
+                processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                ),
+              extractMetrics: (result) => extractTokenMetrics(result),
+              aggregateChunks: aggregateAISDKChunks,
+            },
           ),
-        extractMetrics: (result) => extractTokenMetrics(result),
-        aggregateChunks: aggregateAISDKChunks,
-      }),
+      ),
     );
 
     // HarnessAgent.stream - async method returning an AI SDK stream result
     this.unsubscribers.push(
-      traceStreamingChannel(harnessAgentChannels.stream, {
-        name: "HarnessAgent.stream",
-        startSpan: _internalStartSpanWithInitialMerge,
-        type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event, span) =>
-          prepareAISDKHarnessAgentInput(params, event.self, span),
-        extractOutput: (result, endEvent) =>
-          processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          ),
-        extractMetrics: (result, startTime) => ({
-          ...extractTokenMetrics(result),
-          ...(startTime === undefined
-            ? {}
-            : {
-                time_to_first_token: getCurrentUnixTimestamp() - startTime,
+      harnessAgentChannels.stream.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof harnessAgentChannels.stream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "HarnessAgent.stream",
+              startSpan: _internalStartSpanWithInitialMerge,
+              type: SpanTypeAttribute.TASK,
+              extractInput: ([params], event, span) =>
+                prepareAISDKHarnessAgentInput(params, event.self, span),
+              extractOutput: (result, endEvent) =>
+                processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                ),
+              extractMetrics: (result, startTime) => ({
+                ...extractTokenMetrics(result),
+                ...(startTime === undefined
+                  ? {}
+                  : {
+                      time_to_first_token:
+                        getCurrentUnixTimestamp() - startTime,
+                    }),
               }),
-        }),
-        aggregateChunks: aggregateAISDKChunks,
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            resolvePromiseUsage: true,
-            span,
-            startTime,
-          }),
-      }),
+              aggregateChunks: aggregateAISDKChunks,
+              patchResult: ({ endEvent, result, span, startTime }) =>
+                patchAISDKStreamingResult({
+                  defaultDenyOutputPaths: denyOutputPaths,
+                  endEvent,
+                  result,
+                  resolvePromiseUsage: true,
+                  span,
+                  startTime,
+                }),
+            },
+          ),
+      ),
     );
 
     // Trace a continuation as its own task only when its original turn cannot
     // be recovered. Known continuations extend the original Harness task.
     this.unsubscribers.push(
-      traceStreamingChannel(harnessAgentChannels.continueGenerate, {
-        name: "HarnessAgent.continueGenerate",
-        shouldTrace: (args) =>
-          !harnessContinuationParent(harnessSessionFromArguments(args)),
-        startSpan: _internalStartSpanWithInitialMerge,
-        type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event, span) =>
-          prepareAISDKHarnessAgentInput(params, event.self, span),
-        extractOutput: (result, endEvent) =>
-          processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+      harnessAgentChannels.continueGenerate.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof harnessAgentChannels.continueGenerate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "HarnessAgent.continueGenerate",
+              shouldTrace: (args) =>
+                !harnessContinuationParent(harnessSessionFromArguments(args)),
+              startSpan: _internalStartSpanWithInitialMerge,
+              type: SpanTypeAttribute.TASK,
+              extractInput: ([params], event, span) =>
+                prepareAISDKHarnessAgentInput(params, event.self, span),
+              extractOutput: (result, endEvent) =>
+                processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                ),
+              extractMetrics: (result) => extractTokenMetrics(result),
+              aggregateChunks: aggregateAISDKChunks,
+            },
           ),
-        extractMetrics: (result) => extractTokenMetrics(result),
-        aggregateChunks: aggregateAISDKChunks,
-      }),
+      ),
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(harnessAgentChannels.continueStream, {
-        name: "HarnessAgent.continueStream",
-        shouldTrace: (args) =>
-          !harnessContinuationParent(harnessSessionFromArguments(args)),
-        startSpan: _internalStartSpanWithInitialMerge,
-        type: SpanTypeAttribute.TASK,
-        extractInput: ([params], event, span) =>
-          prepareAISDKHarnessAgentInput(params, event.self, span),
-        extractOutput: (result, endEvent) =>
-          processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          ),
-        extractMetrics: (result, startTime) => ({
-          ...extractTokenMetrics(result),
-          ...(startTime === undefined
-            ? {}
-            : {
-                time_to_first_token: getCurrentUnixTimestamp() - startTime,
+      harnessAgentChannels.continueStream.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof harnessAgentChannels.continueStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "HarnessAgent.continueStream",
+              shouldTrace: (args) =>
+                !harnessContinuationParent(harnessSessionFromArguments(args)),
+              startSpan: _internalStartSpanWithInitialMerge,
+              type: SpanTypeAttribute.TASK,
+              extractInput: ([params], event, span) =>
+                prepareAISDKHarnessAgentInput(params, event.self, span),
+              extractOutput: (result, endEvent) =>
+                processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                ),
+              extractMetrics: (result, startTime) => ({
+                ...extractTokenMetrics(result),
+                ...(startTime === undefined
+                  ? {}
+                  : {
+                      time_to_first_token:
+                        getCurrentUnixTimestamp() - startTime,
+                    }),
               }),
-        }),
-        aggregateChunks: aggregateAISDKChunks,
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            resolvePromiseUsage: true,
-            span,
-            startTime,
-          }),
-      }),
+              aggregateChunks: aggregateAISDKChunks,
+              patchResult: ({ endEvent, result, span, startTime }) =>
+                patchAISDKStreamingResult({
+                  defaultDenyOutputPaths: denyOutputPaths,
+                  endEvent,
+                  result,
+                  resolvePromiseUsage: true,
+                  span,
+                  startTime,
+                }),
+            },
+          ),
+      ),
     );
 
     // ToolLoopAgent.generate - async method
     this.unsubscribers.push(
-      traceStreamingChannel(aiSDKChannels.toolLoopAgentGenerate, {
-        name: "ToolLoopAgent.generate",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths, {
-            agentOwner: true,
-          }),
-        extractOutput: (result, endEvent) => {
-          finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
-          return processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          );
-        },
-        extractMetrics: (result, _startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent),
-        aggregateChunks: aggregateAISDKChunks,
-      }),
+      aiSDKChannels.toolLoopAgentGenerate.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof aiSDKChannels.toolLoopAgentGenerate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "ToolLoopAgent.generate",
+              type: SpanTypeAttribute.FUNCTION,
+              extractInput: ([params], event, span) =>
+                prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+                  agentOwner: true,
+                }),
+              extractOutput: (result, endEvent) => {
+                finalizeAISDKChildTracing(
+                  endEvent as { [key: string]: unknown },
+                );
+                return processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                );
+              },
+              extractMetrics: (result, _startTime, endEvent) =>
+                extractTopLevelAISDKMetrics(result, endEvent),
+              aggregateChunks: aggregateAISDKChunks,
+            },
+          ),
+      ),
     );
 
     // ToolLoopAgent.stream - async method returning stream
     this.unsubscribers.push(
-      traceStreamingChannel(aiSDKChannels.toolLoopAgentStream, {
-        name: "ToolLoopAgent.stream",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event, span) =>
-          prepareAISDKCallInput(params, event, span, denyOutputPaths, {
-            agentOwner: true,
-          }),
-        extractOutput: (result, endEvent) =>
-          processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
+      aiSDKChannels.toolLoopAgentStream.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof aiSDKChannels.toolLoopAgentStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "ToolLoopAgent.stream",
+              type: SpanTypeAttribute.FUNCTION,
+              extractInput: ([params], event, span) =>
+                prepareAISDKCallInput(params, event, span, denyOutputPaths, {
+                  agentOwner: true,
+                }),
+              extractOutput: (result, endEvent) =>
+                processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                ),
+              extractMetrics: (result, startTime, endEvent) =>
+                extractTopLevelAISDKMetrics(result, endEvent, startTime),
+              aggregateChunks: aggregateAISDKChunks,
+              patchResult: ({ endEvent, result, span, startTime }) =>
+                patchAISDKStreamingResult({
+                  defaultDenyOutputPaths: denyOutputPaths,
+                  endEvent,
+                  result,
+                  span,
+                  startTime,
+                }),
+            },
           ),
-        extractMetrics: (result, startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent, startTime),
-        aggregateChunks: aggregateAISDKChunks,
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            result,
-            span,
-            startTime,
-          }),
-      }),
+      ),
     );
 
     // WorkflowAgent.stream - async method returning stream
     this.unsubscribers.push(
-      traceStreamingChannel(aiSDKChannels.workflowAgentStream, {
-        name: "WorkflowAgent.stream",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params], event, span) =>
-          prepareAISDKWorkflowAgentStreamInput(
-            params,
-            event,
-            span,
-            denyOutputPaths,
+      aiSDKChannels.workflowAgentStream.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof aiSDKChannels.workflowAgentStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.AI_SDK,
+              name: "WorkflowAgent.stream",
+              type: SpanTypeAttribute.FUNCTION,
+              extractInput: ([params], event, span) =>
+                prepareAISDKWorkflowAgentStreamInput(
+                  params,
+                  event,
+                  span,
+                  denyOutputPaths,
+                ),
+              extractOutput: (result, endEvent) => {
+                finalizeAISDKChildTracing(
+                  endEvent as { [key: string]: unknown },
+                );
+                return processAISDKOutput(
+                  result,
+                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                );
+              },
+              extractMetrics: (result, _startTime, endEvent) =>
+                extractTopLevelAISDKMetrics(result, endEvent),
+              aggregateChunks: aggregateAISDKChunks,
+              onComplete: ({ span }) => {
+                unregisterWorkflowAgentWrapperSpan(span);
+              },
+              onError: ({ event, span }) => {
+                finalizeAISDKChildTracing(event as { [key: string]: unknown });
+                unregisterWorkflowAgentWrapperSpan(span);
+              },
+              patchResult: ({ endEvent, result, span, startTime }) =>
+                patchAISDKStreamingResult({
+                  defaultDenyOutputPaths: denyOutputPaths,
+                  endEvent,
+                  onComplete: () => unregisterWorkflowAgentWrapperSpan(span),
+                  onCancel: () => unregisterWorkflowAgentWrapperSpan(span),
+                  onError: () => unregisterWorkflowAgentWrapperSpan(span),
+                  result,
+                  span,
+                  startTime,
+                }),
+            },
           ),
-        extractOutput: (result, endEvent) => {
-          finalizeAISDKChildTracing(endEvent as { [key: string]: unknown });
-          return processAISDKOutput(
-            result,
-            resolveDenyOutputPaths(endEvent, denyOutputPaths),
-          );
-        },
-        extractMetrics: (result, _startTime, endEvent) =>
-          extractTopLevelAISDKMetrics(result, endEvent),
-        aggregateChunks: aggregateAISDKChunks,
-        onComplete: ({ span }) => {
-          unregisterWorkflowAgentWrapperSpan(span);
-        },
-        onError: ({ event, span }) => {
-          finalizeAISDKChildTracing(event as { [key: string]: unknown });
-          unregisterWorkflowAgentWrapperSpan(span);
-        },
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths: denyOutputPaths,
-            endEvent,
-            onComplete: () => unregisterWorkflowAgentWrapperSpan(span),
-            onCancel: () => unregisterWorkflowAgentWrapperSpan(span),
-            onError: () => unregisterWorkflowAgentWrapperSpan(span),
-            result,
-            span,
-            startTime,
-          }),
-      }),
+      ),
     );
   }
 }
@@ -828,28 +1006,58 @@ function addEvaluationIds(
 }
 
 function subscribeToHarnessAgentCreateSession(): () => void {
-  const channel = harnessAgentChannels.createSession.tracingChannel();
+  const channel = harnessAgentChannels.createSession;
   const parents = new WeakMap<object, HarnessTurnParent>();
-  const handlers: IsoChannelHandlers<
-    ChannelMessage<typeof harnessAgentChannels.createSession>
-  > = {
-    start: (event) => {
-      const parent = captureHarnessCreateSessionParent(event.arguments?.[0]);
-      if (parent) {
-        parents.set(event, parent);
-      }
-    },
-    asyncEnd: (event) => {
-      registerHarnessSessionParent(event.result, parents.get(event));
-      parents.delete(event);
-    },
-    error: (event) => {
-      parents.delete(event);
-    },
-  };
 
-  channel.subscribe(handlers);
-  return () => channel.unsubscribe(handlers);
+  const removeHandlers = channel.intercept(
+    (target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<typeof harnessAgentChannels.createSession>;
+      const prepare = (
+        event: ChannelMessage<typeof harnessAgentChannels.createSession>,
+      ) => {
+        const parent = captureHarnessCreateSessionParent(event.arguments?.[0]);
+        if (parent) {
+          parents.set(event, parent);
+        }
+      };
+      const resolved = (
+        event: ChannelMessage<typeof harnessAgentChannels.createSession>,
+      ) => {
+        registerHarnessSessionParent(event.result, parents.get(event));
+        parents.delete(event);
+      };
+      const failed = (
+        event: ChannelMessage<typeof harnessAgentChannels.createSession>,
+      ) => {
+        parents.delete(event);
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        Object.assign(event, { error });
+        runInstrumentation(() => failed(event));
+        throw error;
+      }
+      return observeResult(
+        result,
+        (value) => {
+          Object.assign(event, { result: value });
+          resolved(event);
+        },
+        (error) => {
+          Object.assign(event, { error });
+          failed(event);
+        },
+      );
+    },
+  );
+  return () => removeHandlers();
 }
 
 type HarnessContinuationChannel = typeof harnessAgentChannels.continueGenerate;
@@ -864,146 +1072,159 @@ function harnessContinuationParentFromEvent(
   }
 }
 
-function subscribeToHarnessContinuation(
-  continuationChannel: HarnessContinuationChannel,
+function traceHarnessContinuation(
+  call: () => ReturnOf<HarnessContinuationChannel>,
+  event: ChannelMessage<HarnessContinuationChannel>,
   defaultDenyOutputPaths: string[],
-): () => void {
-  const channel = continuationChannel.tracingChannel();
+): ReturnOf<HarnessContinuationChannel> {
   const parents = new WeakMap<object, HarnessTurnParent>();
   const startTimes = new WeakMap<object, number>();
-  const unbindParentStore = bindHarnessTurnParentToStart(
-    channel,
-    harnessContinuationParentFromEvent,
-  );
-  const handlers: IsoChannelHandlers<
-    ChannelMessage<HarnessContinuationChannel>
-  > = {
-    start: (event) => {
-      const parent = harnessContinuationParentFromEvent(event);
-      if (!parent) {
-        return;
-      }
+  const prepare = (event: ChannelMessage<HarnessContinuationChannel>) => {
+    const parent = harnessContinuationParentFromEvent(event);
+    if (!parent) {
+      return;
+    }
 
-      parents.set(event, parent);
-      startTimes.set(event, getCurrentUnixTimestamp());
-      try {
-        const params = event.arguments?.[0];
-        if (params) {
-          // Harness reads telemetry from its settings after this event starts.
-          // The original task already contains the turn input, so only install
-          // telemetry here; continuation work is logged onto that task.
-          prepareAISDKHarnessAgentInput(params, event.self);
-        }
-      } catch (error) {
-        debugLogger.error(
-          "Error preparing Harness continuation telemetry:",
-          error,
-        );
+    parents.set(event, parent);
+    startTimes.set(event, getCurrentUnixTimestamp());
+    try {
+      const params = event.arguments?.[0];
+      if (params) {
+        // Harness reads telemetry from its settings after this event starts.
+        // The original task already contains the turn input, so only install
+        // telemetry here; continuation work is logged onto that task.
+        prepareAISDKHarnessAgentInput(params, event.self);
       }
-    },
-    asyncEnd: (event) => {
-      const parent = parents.get(event);
-      const startTime = startTimes.get(event) ?? getCurrentUnixTimestamp();
-      parents.delete(event);
-      startTimes.delete(event);
-      if (!parent) {
-        return;
-      }
+    } catch (error) {
+      debugLogger.error(
+        "Error preparing Harness continuation telemetry:",
+        error,
+      );
+    }
+  };
+  const resolved = (event: ChannelMessage<HarnessContinuationChannel>) => {
+    const parent = parents.get(event);
+    const startTime = startTimes.get(event) ?? getCurrentUnixTimestamp();
+    parents.delete(event);
+    startTimes.delete(event);
+    if (!parent) {
+      return;
+    }
 
-      const endEvent = event as ChannelMessage<HarnessContinuationChannel> & {
-        result: AISDKResult | AsyncIterable<unknown>;
-      };
-      const span = {
-        end: () => endHarnessTurn(parent),
-        log: (update: Parameters<Span["log"]>[0]) =>
-          updateHarnessTurn(
-            parent,
-            Object.prototype.hasOwnProperty.call(update, "error") &&
-              !Object.prototype.hasOwnProperty.call(update, "output")
-              ? { ...update, output: null }
-              : update,
-          ),
-      };
+    const endEvent = event as ChannelMessage<HarnessContinuationChannel> & {
+      result: AISDKResult | AsyncIterable<unknown>;
+    };
+    const span = {
+      end: () => endHarnessTurn(parent),
+      log: (update: Parameters<Span["log"]>[0]) =>
+        updateHarnessTurn(
+          parent,
+          Object.prototype.hasOwnProperty.call(update, "error") &&
+            !Object.prototype.hasOwnProperty.call(update, "output")
+            ? { ...update, output: null }
+            : update,
+        ),
+    };
 
-      try {
-        if (isAsyncIterable(endEvent.result)) {
-          patchStreamIfNeeded(endEvent.result, {
-            onComplete: (chunks) => {
-              try {
-                const { metadata, metrics, output } = aggregateAISDKChunks(
-                  chunks,
-                  endEvent.result,
-                  endEvent,
-                );
-                span.log({
-                  ...(metadata ? { metadata } : {}),
-                  metrics,
-                  output,
-                });
-              } catch (error) {
-                debugLogger.error(
-                  "Error aggregating Harness continuation stream:",
-                  error,
-                );
-              } finally {
-                span.end();
-              }
-            },
-            onError: (error) => {
-              span.log({ error: toLoggedError(error), output: null });
+    try {
+      if (isAsyncIterable(endEvent.result)) {
+        patchStreamIfNeeded(endEvent.result, {
+          onComplete: (chunks) => {
+            try {
+              const { metadata, metrics, output } = aggregateAISDKChunks(
+                chunks,
+                endEvent.result,
+                endEvent,
+              );
+              span.log({
+                ...(metadata ? { metadata } : {}),
+                metrics,
+                output,
+              });
+            } catch (error) {
+              debugLogger.error(
+                "Error aggregating Harness continuation stream:",
+                error,
+              );
+            } finally {
               span.end();
-            },
-          });
-          return;
-        }
-
-        if (
-          patchAISDKStreamingResult({
-            defaultDenyOutputPaths,
-            endEvent,
-            result: endEvent.result,
-            resolvePromiseUsage: true,
-            span,
-            startTime,
-          })
-        ) {
-          return;
-        }
-
-        finalizeAISDKChildTracing(endEvent);
-        span.log({
-          metrics: extractTokenMetrics(endEvent.result),
-          output: processAISDKOutput(
-            endEvent.result,
-            resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
-          ),
+            }
+          },
+          onError: (error) => {
+            span.log({ error: toLoggedError(error), output: null });
+            span.end();
+          },
         });
-        span.end();
-      } catch (error) {
-        debugLogger.error("Error tracing Harness continuation:", error);
-        span.end();
-      }
-    },
-    error: (event) => {
-      const parent = parents.get(event);
-      parents.delete(event);
-      startTimes.delete(event);
-      if (!parent) {
         return;
       }
-      updateHarnessTurn(parent, {
-        error: toLoggedError(event.error),
-        output: null,
-      });
-      endHarnessTurn(parent);
-    },
-  };
 
-  channel.subscribe(handlers);
-  return () => {
-    unbindParentStore();
-    channel.unsubscribe(handlers);
+      if (
+        patchAISDKStreamingResult({
+          defaultDenyOutputPaths,
+          endEvent,
+          result: endEvent.result,
+          resolvePromiseUsage: true,
+          span,
+          startTime,
+        })
+      ) {
+        return;
+      }
+
+      finalizeAISDKChildTracing(endEvent);
+      span.log({
+        metrics: extractTokenMetrics(endEvent.result),
+        output: processAISDKOutput(
+          endEvent.result,
+          resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+        ),
+      });
+      span.end();
+    } catch (error) {
+      debugLogger.error("Error tracing Harness continuation:", error);
+      span.end();
+    }
   };
+  const failed = (event: ChannelMessage<HarnessContinuationChannel>) => {
+    const parent = parents.get(event);
+    parents.delete(event);
+    startTimes.delete(event);
+    if (!parent) {
+      return;
+    }
+    updateHarnessTurn(parent, {
+      error: toLoggedError(event.error),
+      output: null,
+    });
+    endHarnessTurn(parent);
+  };
+  const invoke = () => {
+    runInstrumentation(() => prepare(event));
+    let result;
+    try {
+      result = call();
+    } catch (error) {
+      Object.assign(event, { error });
+      runInstrumentation(() => failed(event));
+      throw error;
+    }
+
+    return observeResult(
+      result,
+      (value) => {
+        Object.assign(event, { result: value });
+        resolved(event);
+      },
+      (error) => {
+        Object.assign(event, { error });
+        failed(event);
+      },
+    );
+  };
+  return runWithHarnessTurnParent(
+    harnessContinuationParentFromEvent(event),
+    invoke,
+  );
 }
 
 function interceptAISDKV7TelemetryDispatcher(): () => void {

@@ -101,12 +101,10 @@ function wrapPipelineFactory(
   ) {
     const [task] = args;
     const context: Parameters<
-      typeof huggingFaceTransformersChannels.pipeline.tracePromise
-    >[1] = {
-      arguments: args,
-    };
+      typeof huggingFaceTransformersChannels.pipeline.invoke
+    >[3] = {};
     return huggingFaceTransformersChannels.pipeline
-      .tracePromise(() => Reflect.apply(factory, this, args), context)
+      .invoke(factory, this, args, context)
       .then((pipeline) => {
         if (isSupportedHuggingFaceTransformersTask(pipeline.task ?? task)) {
           return wrapPipeline(pipeline);
@@ -150,13 +148,14 @@ function wrapPipeline(
   const proxy = new Proxy(pipeline, {
     apply(target, thisArg, args) {
       const context: Parameters<
-        typeof huggingFaceTransformersChannels.pipelineCall.tracePromise
-      >[1] = {
-        arguments: args as [unknown, ...unknown[]],
-        self: target,
+        typeof huggingFaceTransformersChannels.pipelineCall.invoke
+      >[3] = {
+        pipeline: target,
       };
-      return huggingFaceTransformersChannels.pipelineCall.tracePromise(
-        () => Reflect.apply(target, thisArg, args),
+      return huggingFaceTransformersChannels.pipelineCall.invoke(
+        target,
+        thisArg,
+        args,
         context,
       );
     },

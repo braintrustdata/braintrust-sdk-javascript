@@ -1,4 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
 const { mockWithCurrent, mockNewAsyncLocalStorage, mockStartSpan } = vi.hoisted(
   () => ({
@@ -26,7 +33,6 @@ vi.mock("../../isomorph", () => ({
   default: {
     getEnv: vi.fn(),
     newAsyncLocalStorage: mockNewAsyncLocalStorage,
-    newTracingChannel: vi.fn(),
   },
 }));
 
@@ -39,12 +45,13 @@ vi.mock("../../logger", async (importOriginal) => {
   };
 });
 
-import iso from "../../isomorph";
 import { Attachment } from "../../logger";
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { StrandsAgentSDKPlugin } from "./strands-agent-sdk-plugin";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 describe("StrandsAgentSDKPlugin", () => {
   let handlersByName: Map<string, any>;
@@ -65,7 +72,7 @@ describe("StrandsAgentSDKPlugin", () => {
   beforeEach(() => {
     handlersByName = new Map();
     spans = [];
-    mockNewTracingChannel.mockImplementation((name: string) => ({
+    mockNewInvocationHook.mockImplementation((name: string) => ({
       intercept: vi.fn((interceptor) => {
         const handlers = {
           end: (event: any) =>

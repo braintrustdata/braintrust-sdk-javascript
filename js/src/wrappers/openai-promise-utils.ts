@@ -1,11 +1,11 @@
 import type {
   ArgsOf,
-  ResultOf,
+  InvocationAdditionalOf,
 } from "../instrumentation/core/channel-definitions";
+import type { ResultOf } from "../instrumentation/core/tracing-types";
 import type {
   OpenAIAsyncChannel,
   OpenAIChannel,
-  OpenAIStartContext,
 } from "../instrumentation/plugins/openai-channels";
 
 export type EnhancedResponse<T> = {
@@ -20,7 +20,7 @@ export interface APIPromise<T> extends Promise<T> {
 }
 
 type ChannelContext<TChannel extends OpenAIAsyncChannel> =
-  OpenAIStartContext<TChannel>;
+  InvocationAdditionalOf<TChannel> & { arguments: ArgsOf<TChannel> };
 
 type ChannelParam<TChannel extends OpenAIChannel> = ArgsOf<TChannel>[0];
 
@@ -44,10 +44,11 @@ export function createChannelContext<TChannel extends OpenAIAsyncChannel>(
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       [params] as ArgsOf<TChannel>,
     span_info,
+    responseInfo: {},
   } as ChannelContext<TChannel>;
 }
 
-export async function tracePromiseWithResponse<
+export async function invokeWithResponse<
   TChannel extends OpenAIAsyncChannel,
   TResult extends ResultOf<TChannel>,
 >(
@@ -56,18 +57,23 @@ export async function tracePromiseWithResponse<
   apiPromise: APIPromise<TResult>,
 ): Promise<EnhancedResponse<TResult>> {
   let enhancedResponse: EnhancedResponse<TResult> | undefined;
-  const tracePromise =
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    channel.tracePromise as unknown as <TReturn extends Promise<TResult>>(
-      fn: () => TReturn,
-      context: ChannelContext<TChannel>,
-    ) => TReturn;
+  const invoke = channel.invoke as <T>(
+    call: () => T,
+    receiver: undefined,
+    args: unknown[],
+    additional: ChannelContext<TChannel>,
+  ) => T;
 
-  const data = await tracePromise(async () => {
-    enhancedResponse = await apiPromise.withResponse();
-    traceContext.response = enhancedResponse.response;
-    return enhancedResponse.data;
-  }, traceContext);
+  const data = await invoke(
+    async () => {
+      enhancedResponse = await apiPromise.withResponse();
+      traceContext.responseInfo!.response = enhancedResponse.response;
+      return enhancedResponse.data;
+    },
+    undefined,
+    traceContext.arguments,
+    traceContext,
+  );
 
   if (!enhancedResponse) {
     throw new Error("Expected withResponse() to provide response");
@@ -80,7 +86,7 @@ export async function tracePromiseWithResponse<
   };
 }
 
-export async function tracePromiseAsResponse<
+export async function invokeAsResponse<
   TChannel extends OpenAIAsyncChannel,
   TResult extends ResultOf<TChannel>,
 >(
@@ -88,19 +94,24 @@ export async function tracePromiseAsResponse<
   traceContext: ChannelContext<TChannel>,
   apiPromise: APIPromise<TResult>,
 ): Promise<Response> {
-  const tracePromise =
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    channel.tracePromise as unknown as (
-      fn: () => Promise<TResult | undefined>,
-      context: ChannelContext<TChannel>,
-    ) => Promise<TResult | undefined>;
+  const invoke = channel.invoke as <T>(
+    call: () => T,
+    receiver: undefined,
+    args: unknown[],
+    additional: ChannelContext<TChannel>,
+  ) => T;
 
   let response: Response | undefined;
-  await tracePromise(async () => {
-    response = await apiPromise.asResponse();
-    traceContext.response = response;
-    return undefined;
-  }, traceContext);
+  await invoke(
+    async () => {
+      response = await apiPromise.asResponse();
+      traceContext.responseInfo!.response = response;
+      return undefined;
+    },
+    undefined,
+    traceContext.arguments,
+    traceContext,
+  );
 
   if (!response) {
     throw new Error("Expected asResponse() to provide response");

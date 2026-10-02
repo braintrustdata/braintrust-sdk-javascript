@@ -1,12 +1,21 @@
+import type { CompiledPrompt } from "../../logger";
 import type {
   OpenAIMediaParams,
   OpenAIMediaResponse,
 } from "../../vendor-sdk-types/openai-media";
-import type { CompiledPrompt } from "../../logger";
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
-import type { StartOf } from "../core/channel-definitions";
-import type { ChannelSpanInfo, SpanInfoCarrier } from "../core/types";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
+import type {
+  OpenAIAgentsTraceStartChannelArgs,
+  OpenAIAgentsTraceState,
+} from "../../openai-agents-api-types";
+import type {
+  CompleteOpenAIBatchTraceArgs,
+  OpenAIBatchLike,
+  OpenAIBatchesRetrieveTraceArgs,
+  OpenAIFileLike,
+  OpenAIFilesCreateTraceArgs,
+} from "../../openai-batch-types";
 import type {
   OpenAIChatCompletion,
   OpenAIChatCompletionChunk,
@@ -21,209 +30,181 @@ import type {
   OpenAIResponseCreateParams,
   OpenAIResponseStreamEvent,
 } from "../../vendor-sdk-types/openai";
-import type {
-  CompleteOpenAIBatchTraceArgs,
-  OpenAIBatchLike,
-  OpenAIBatchesRetrieveTraceArgs,
-  OpenAIFileLike,
-  OpenAIFilesCreateTraceArgs,
-} from "../../openai-batch-types";
-import type {
-  OpenAIAgentsTraceStartChannelArgs,
-  OpenAIAgentsTraceState,
-} from "../../openai-agents-api-types";
+import type { ChannelSpanInfo, SpanInfoCarrier } from "../core/types";
 
 type OpenAIChatSpanInfo = NonNullable<CompiledPrompt<"chat">["span_info"]>;
 
 type OpenAIChannelExtras<TSpanInfo extends ChannelSpanInfo = ChannelSpanInfo> =
   SpanInfoCarrier<TSpanInfo> & {
     response?: Response;
+    responseInfo?: { response?: Response };
   };
 
 type OpenAIChatChannelExtras = OpenAIChannelExtras<OpenAIChatSpanInfo>;
 type OpenAIResponsesChannelExtras = OpenAIChannelExtras;
 
-export const openAIChannels = defineChannels(
-  "openai",
-  {
-    imagesGenerate: channel<
-      [OpenAIMediaParams, unknown?],
-      OpenAIMediaResponse,
-      OpenAIChannelExtras
-    >({ channelName: "images.generate", kind: "async" }),
-    imagesEdit: channel<
-      [OpenAIMediaParams, unknown?],
-      OpenAIMediaResponse,
-      OpenAIChannelExtras
-    >({ channelName: "images.edit", kind: "async" }),
-    imagesCreateVariation: channel<
-      [OpenAIMediaParams, unknown?],
-      OpenAIMediaResponse,
-      OpenAIChannelExtras
-    >({ channelName: "images.createVariation", kind: "async" }),
-    audioSpeechCreate: channel<
-      [OpenAIMediaParams, unknown?],
-      OpenAIMediaResponse,
-      OpenAIChannelExtras
-    >({ channelName: "audio.speech.create", kind: "async" }),
-    audioTranscriptionsCreate: channel<
-      [OpenAIMediaParams, unknown?],
-      OpenAIMediaResponse,
-      OpenAIChannelExtras
-    >({ channelName: "audio.transcriptions.create", kind: "async" }),
-    audioTranslationsCreate: channel<
-      [OpenAIMediaParams, unknown?],
-      OpenAIMediaResponse,
-      OpenAIChannelExtras
-    >({ channelName: "audio.translations.create", kind: "async" }),
+export const openAIChannels = defineInterceptor("openai", {
+  imagesGenerate: channel<
+    [OpenAIMediaParams, unknown?],
+    PromiseLike<OpenAIMediaResponse>,
+    OpenAIChannelExtras
+  >({ channelName: "images.generate" }),
+  imagesEdit: channel<
+    [OpenAIMediaParams, unknown?],
+    PromiseLike<OpenAIMediaResponse>,
+    OpenAIChannelExtras
+  >({ channelName: "images.edit" }),
+  imagesCreateVariation: channel<
+    [OpenAIMediaParams, unknown?],
+    PromiseLike<OpenAIMediaResponse>,
+    OpenAIChannelExtras
+  >({ channelName: "images.createVariation" }),
+  audioSpeechCreate: channel<
+    [OpenAIMediaParams, unknown?],
+    PromiseLike<OpenAIMediaResponse>,
+    OpenAIChannelExtras
+  >({ channelName: "audio.speech.create" }),
+  audioTranscriptionsCreate: channel<
+    [OpenAIMediaParams, unknown?],
+    PromiseLike<OpenAIMediaResponse>,
+    OpenAIChannelExtras
+  >({ channelName: "audio.transcriptions.create" }),
+  audioTranslationsCreate: channel<
+    [OpenAIMediaParams, unknown?],
+    PromiseLike<OpenAIMediaResponse>,
+    OpenAIChannelExtras
+  >({ channelName: "audio.translations.create" }),
 
-    agentsTraceStart: channel<
-      [OpenAIAgentsTraceStartChannelArgs],
-      OpenAIAgentsTraceState | null,
-      OpenAIChannelExtras
-    >({
-      channelName: "agents.trace.start",
-      kind: "async",
-    }),
+  agentsTraceStart: channel<
+    [OpenAIAgentsTraceStartChannelArgs],
+    PromiseLike<OpenAIAgentsTraceState | null>,
+    OpenAIChannelExtras
+  >({
+    channelName: "agents.trace.start",
+  }),
 
-    agentsTraceCapture: channel<
-      [{ event: unknown; state: OpenAIAgentsTraceState | null }],
-      OpenAIAgentsTraceState | null,
-      OpenAIChannelExtras
-    >({
-      channelName: "agents.trace.capture",
-      kind: "async",
-    }),
+  agentsTraceCapture: channel<
+    [{ event: unknown; state: OpenAIAgentsTraceState | null }],
+    PromiseLike<OpenAIAgentsTraceState | null>,
+    OpenAIChannelExtras
+  >({
+    channelName: "agents.trace.capture",
+  }),
 
-    agentsTraceFail: channel<
-      [{ error: unknown; state: OpenAIAgentsTraceState | null }],
-      OpenAIAgentsTraceState | null,
-      OpenAIChannelExtras
-    >({
-      channelName: "agents.trace.fail",
-      kind: "async",
-    }),
+  agentsTraceFail: channel<
+    [{ error: unknown; state: OpenAIAgentsTraceState | null }],
+    PromiseLike<OpenAIAgentsTraceState | null>,
+    OpenAIChannelExtras
+  >({
+    channelName: "agents.trace.fail",
+  }),
 
-    filesCreateTraced: channel<
-      [OpenAIFilesCreateTraceArgs],
-      OpenAIFileLike,
-      OpenAIChannelExtras
-    >({
-      channelName: "files.create-traced",
-      kind: "async",
-    }),
+  filesCreateTraced: channel<
+    [OpenAIFilesCreateTraceArgs],
+    PromiseLike<OpenAIFileLike>,
+    OpenAIChannelExtras
+  >({
+    channelName: "files.create-traced",
+  }),
 
-    batchesRetrieveTraced: channel<
-      [OpenAIBatchesRetrieveTraceArgs],
-      OpenAIBatchLike,
-      OpenAIChannelExtras
-    >({
-      channelName: "batches.retrieve-traced",
-      kind: "async",
-    }),
+  batchesRetrieveTraced: channel<
+    [OpenAIBatchesRetrieveTraceArgs],
+    PromiseLike<OpenAIBatchLike>,
+    OpenAIChannelExtras
+  >({
+    channelName: "batches.retrieve-traced",
+  }),
 
-    batchesCompleteTrace: channel<
-      [CompleteOpenAIBatchTraceArgs],
-      void,
-      OpenAIChannelExtras
-    >({
-      channelName: "batches.complete-trace",
-      kind: "async",
-    }),
+  batchesCompleteTrace: channel<
+    [CompleteOpenAIBatchTraceArgs],
+    PromiseLike<void>,
+    OpenAIChannelExtras
+  >({
+    channelName: "batches.complete-trace",
+  }),
 
-    chatCompletionsCreate: channel<
-      [OpenAIChatCreateParams],
-      OpenAIChatCompletion | OpenAIChatStream,
-      OpenAIChatChannelExtras,
-      OpenAIChatCompletionChunk
-    >({
-      channelName: "chat.completions.create",
-      kind: "async",
-    }),
+  chatCompletionsCreate: channel<
+    [OpenAIChatCreateParams],
+    PromiseLike<OpenAIChatCompletion | OpenAIChatStream>,
+    OpenAIChatChannelExtras,
+    OpenAIChatCompletionChunk
+  >({
+    channelName: "chat.completions.create",
+  }),
 
-    embeddingsCreate: channel<
-      [OpenAIEmbeddingCreateParams],
-      OpenAIEmbeddingResponse,
-      OpenAIChatChannelExtras
-    >({
-      channelName: "embeddings.create",
-      kind: "async",
-    }),
+  embeddingsCreate: channel<
+    [OpenAIEmbeddingCreateParams],
+    PromiseLike<OpenAIEmbeddingResponse>,
+    OpenAIChatChannelExtras
+  >({
+    channelName: "embeddings.create",
+  }),
 
-    betaChatCompletionsParse: channel<
-      [OpenAIChatCreateParams],
-      OpenAIChatCompletion,
-      OpenAIChatChannelExtras,
-      OpenAIChatCompletionChunk
-    >({
-      channelName: "beta.chat.completions.parse",
-      kind: "async",
-    }),
+  betaChatCompletionsParse: channel<
+    [OpenAIChatCreateParams],
+    PromiseLike<OpenAIChatCompletion>,
+    OpenAIChatChannelExtras,
+    OpenAIChatCompletionChunk
+  >({
+    channelName: "beta.chat.completions.parse",
+  }),
 
-    betaChatCompletionsStream: channel<
-      [OpenAIChatCreateParams],
-      unknown,
-      OpenAIChatChannelExtras
-    >({
-      channelName: "beta.chat.completions.stream",
-      kind: "sync-stream",
-    }),
+  betaChatCompletionsStream: channel<
+    [OpenAIChatCreateParams],
+    unknown,
+    OpenAIChatChannelExtras
+  >({
+    channelName: "beta.chat.completions.stream",
+  }),
 
-    moderationsCreate: channel<
-      [OpenAIModerationCreateParams],
-      OpenAIModerationResponse,
-      OpenAIChatChannelExtras
-    >({
-      channelName: "moderations.create",
-      kind: "async",
-    }),
+  moderationsCreate: channel<
+    [OpenAIModerationCreateParams],
+    PromiseLike<OpenAIModerationResponse>,
+    OpenAIChatChannelExtras
+  >({
+    channelName: "moderations.create",
+  }),
 
-    responsesCreate: channel<
-      [OpenAIResponseCreateParams],
-      OpenAIResponse | AsyncIterable<OpenAIResponseStreamEvent>,
-      OpenAIResponsesChannelExtras,
-      OpenAIResponseStreamEvent
-    >({
-      channelName: "responses.create",
-      kind: "async",
-    }),
+  responsesCreate: channel<
+    [OpenAIResponseCreateParams],
+    PromiseLike<OpenAIResponse | AsyncIterable<OpenAIResponseStreamEvent>>,
+    OpenAIResponsesChannelExtras,
+    OpenAIResponseStreamEvent
+  >({
+    channelName: "responses.create",
+  }),
 
-    responsesStream: channel<
-      [OpenAIResponseCreateParams],
-      unknown,
-      OpenAIResponsesChannelExtras,
-      OpenAIResponseStreamEvent
-    >({
-      channelName: "responses.stream",
-      kind: "sync-stream",
-    }),
+  responsesStream: channel<
+    [OpenAIResponseCreateParams],
+    unknown,
+    OpenAIResponsesChannelExtras,
+    OpenAIResponseStreamEvent
+  >({
+    channelName: "responses.stream",
+  }),
 
-    responsesParse: channel<
-      [OpenAIResponseCreateParams],
-      OpenAIResponse,
-      OpenAIResponsesChannelExtras,
-      OpenAIResponseStreamEvent
-    >({
-      channelName: "responses.parse",
-      kind: "async",
-    }),
+  responsesParse: channel<
+    [OpenAIResponseCreateParams],
+    PromiseLike<OpenAIResponse>,
+    OpenAIResponsesChannelExtras,
+    OpenAIResponseStreamEvent
+  >({
+    channelName: "responses.parse",
+  }),
 
-    responsesCompact: channel<
-      [OpenAIResponseCompactParams],
-      OpenAIResponse,
-      OpenAIResponsesChannelExtras
-    >({
-      channelName: "responses.compact",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.OPENAI },
-);
+  responsesCompact: channel<
+    [OpenAIResponseCompactParams],
+    PromiseLike<OpenAIResponse>,
+    OpenAIResponsesChannelExtras
+  >({
+    channelName: "responses.compact",
+  }),
+});
 
 export type OpenAIChannel =
   (typeof openAIChannels)[keyof typeof openAIChannels];
 
-export type OpenAIAsyncChannel = Extract<OpenAIChannel, { kind: "async" }>;
-
-export type OpenAIStartContext<TChannel extends OpenAIChannel = OpenAIChannel> =
-  StartOf<TChannel>;
+export type OpenAIAsyncChannel = Extract<
+  OpenAIChannel,
+  { __result?: PromiseLike<unknown> }
+>;

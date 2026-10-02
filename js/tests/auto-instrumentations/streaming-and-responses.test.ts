@@ -177,12 +177,12 @@ describe("Streaming Methods and Responses API", () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Verify start event (method called)
-      expect(collector.start.length).toBeGreaterThan(0);
-      const startEvent = collector.start[0];
+      expect(collector.calls.length).toBeGreaterThan(0);
+      const startEvent = collector.calls[0];
       expect(startEvent.arguments![0].model).toBe("gpt-4");
 
       // Verify end event (stream returned synchronously)
-      expect(collector.end.length).toBeGreaterThan(0);
+      expect(collector.returns.length).toBeGreaterThan(0);
     });
   });
 
@@ -238,11 +238,11 @@ describe("Streaming Methods and Responses API", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify events were captured
-      expect(collector.start.length).toBeGreaterThan(0);
-      expect(collector.asyncEnd.length).toBeGreaterThan(0);
+      expect(collector.calls.length).toBeGreaterThan(0);
+      expect(collector.resolutions.length).toBeGreaterThan(0);
 
       // Verify input was captured
-      const startEvent = collector.start[0];
+      const startEvent = collector.calls[0];
       expect(startEvent.arguments![0].model).toBe("gpt-4");
 
       // Verify result
@@ -335,8 +335,8 @@ describe("Streaming Methods and Responses API", () => {
       expect(result).toHaveLength(3);
 
       // Verify events were captured
-      expect(collector.start.length).toBeGreaterThan(0);
-      expect(collector.asyncEnd.length).toBeGreaterThan(0);
+      expect(collector.calls.length).toBeGreaterThan(0);
+      expect(collector.resolutions.length).toBeGreaterThan(0);
     });
   });
 
@@ -426,8 +426,8 @@ describe("Streaming Methods and Responses API", () => {
       expect(result.events[1].type).toBe("response.completed");
 
       // Verify instrumentation events
-      expect(collector.start.length).toBeGreaterThan(0);
-      expect(collector.end.length).toBeGreaterThan(0);
+      expect(collector.calls.length).toBeGreaterThan(0);
+      expect(collector.returns.length).toBeGreaterThan(0);
     });
   });
 
@@ -483,11 +483,11 @@ describe("Streaming Methods and Responses API", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify events were captured
-      expect(collector.start.length).toBeGreaterThan(0);
-      expect(collector.asyncEnd.length).toBeGreaterThan(0);
+      expect(collector.calls.length).toBeGreaterThan(0);
+      expect(collector.resolutions.length).toBeGreaterThan(0);
 
       // Verify input was captured
-      const startEvent = collector.start[0];
+      const startEvent = collector.calls[0];
       expect(startEvent.arguments![0].model).toBe("gpt-4");
 
       // Verify result
@@ -580,8 +580,8 @@ describe("Streaming Methods and Responses API", () => {
       expect(result[0].choices[0].delta.role).toBe("assistant");
 
       // Verify events were captured
-      expect(collector.start.length).toBeGreaterThan(0);
-      expect(collector.asyncEnd.length).toBeGreaterThan(0);
+      expect(collector.calls.length).toBeGreaterThan(0);
+      expect(collector.resolutions.length).toBeGreaterThan(0);
     });
   });
 });

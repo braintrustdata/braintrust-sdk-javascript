@@ -21,12 +21,11 @@ export function instrumentCloudflareAIChatAgent(
       this: CloudflareAIChatAgent,
       ...args: Parameters<CloudflareAIChatAgent["_runExclusiveChatTurn"]>
     ): Promise<unknown> {
-      return cloudflareAIChatChannels.runExclusiveChatTurn.tracePromise(
-        () => Reflect.apply(original, this, args),
-        {
-          arguments: args,
-          self: this,
-        },
+      return cloudflareAIChatChannels.runExclusiveChatTurn.invoke(
+        original,
+        this,
+        args,
+        {},
       );
     };
     wrappedTurnRunners.add(wrapped);
@@ -52,12 +51,11 @@ export function instrumentCloudflareAIChatResponseHook(
       result: CloudflareAIChatResponseResult,
     ): unknown {
       const args: [CloudflareAIChatResponseResult] = [result];
-      return cloudflareAIChatChannels.onChatResponse.traceSync(
-        () => Reflect.apply(original, this, args),
-        {
-          arguments: args,
-          self: this,
-        },
+      return cloudflareAIChatChannels.onChatResponse.invoke(
+        original,
+        this,
+        args,
+        {},
       );
     };
     wrappedResponseHooks.add(wrapped);

@@ -1,14 +1,8 @@
-import {
-  traceAsyncChannel,
-  traceSyncStreamChannel,
-  unsubscribeAll,
-} from "../core/channel-tracing";
-import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
-import { BasePlugin } from "../core";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
-import { getCurrentUnixTimestamp } from "../../util";
+import type { Span } from "../../logger";
 import { parseMetricsFromUsage } from "../../openai-utils";
-import { huggingFaceChannels } from "./huggingface-channels";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { getCurrentUnixTimestamp } from "../../util";
 import type {
   HuggingFaceChatCompletion,
   HuggingFaceChatCompletionChunk,
@@ -16,7 +10,14 @@ import type {
   HuggingFaceTextGenerationDetails,
   HuggingFaceTextGenerationStreamOutput,
 } from "../../vendor-sdk-types/huggingface";
-import type { Span } from "../../logger";
+import { BasePlugin } from "../core";
+import {
+  traceAsyncCall,
+  traceSyncStreamCall,
+  unsubscribeAll,
+} from "../core/channel-tracing";
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
+import { huggingFaceChannels } from "./huggingface-channels";
 
 const REQUEST_METADATA_ALLOWLIST = new Set([
   "dimensions",
@@ -44,53 +45,135 @@ const RESPONSE_METADATA_ALLOWLIST = new Set([
 export class HuggingFacePlugin extends BasePlugin {
   protected onEnable(): void {
     this.unsubscribers.push(
-      traceAsyncChannel(huggingFaceChannels.chatCompletion, {
-        name: "huggingface.chat_completion",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractChatInputWithMetadata,
-        extractOutput: (result) => result?.choices,
-        extractMetadata: (result) => extractResponseMetadata(result),
-        extractMetrics: (result) => parseMetricsFromUsage(result?.usage),
-      }),
-      traceSyncStreamChannel(huggingFaceChannels.chatCompletionStream, {
-        name: "huggingface.chat_completion_stream",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractChatInputWithMetadata,
-        patchResult: ({ result, span, startTime }) =>
-          patchChatCompletionStream({
-            result,
-            span,
-            startTime,
-          }),
-      }),
-      traceAsyncChannel(huggingFaceChannels.textGeneration, {
-        name: "huggingface.text_generation",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractTextGenerationInputWithMetadata,
-        extractOutput: (result) =>
-          isObject(result) ? { generated_text: result.generated_text } : result,
-        extractMetadata: extractTextGenerationMetadata,
-        extractMetrics: (result) =>
-          extractTextGenerationMetrics(result?.details ?? null),
-      }),
-      traceSyncStreamChannel(huggingFaceChannels.textGenerationStream, {
-        name: "huggingface.text_generation_stream",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractTextGenerationInputWithMetadata,
-        patchResult: ({ result, span, startTime }) =>
-          patchTextGenerationStream({
-            result,
-            span,
-            startTime,
-          }),
-      }),
-      traceAsyncChannel(huggingFaceChannels.featureExtraction, {
-        name: "huggingface.feature_extraction",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractFeatureExtractionInputWithMetadata,
-        extractOutput: summarizeFeatureExtractionOutput,
-        extractMetrics: () => ({}),
-      }),
+      huggingFaceChannels.chatCompletion.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof huggingFaceChannels.chatCompletion>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+              name: "huggingface.chat_completion",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params]) =>
+                extractChatInputWithMetadata([
+                  {
+                    ...params,
+                    ...(additional.endpointUrl && !params.endpointUrl
+                      ? { endpointUrl: additional.endpointUrl }
+                      : {}),
+                  },
+                ]),
+              extractOutput: (result) => result?.choices,
+              extractMetadata: (result) => extractResponseMetadata(result),
+              extractMetrics: (result) => parseMetricsFromUsage(result?.usage),
+            },
+          ),
+      ),
+      huggingFaceChannels.chatCompletionStream.intercept(
+        (target, receiver, args, additional) =>
+          traceSyncStreamCall<typeof huggingFaceChannels.chatCompletionStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+              name: "huggingface.chat_completion_stream",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params]) =>
+                extractChatInputWithMetadata([
+                  {
+                    ...params,
+                    ...(additional.endpointUrl && !params.endpointUrl
+                      ? { endpointUrl: additional.endpointUrl }
+                      : {}),
+                  },
+                ]),
+              patchResult: ({ result, span, startTime }) =>
+                patchChatCompletionStream({
+                  result,
+                  span,
+                  startTime,
+                }),
+            },
+          ),
+      ),
+      huggingFaceChannels.textGeneration.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof huggingFaceChannels.textGeneration>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+              name: "huggingface.text_generation",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params]) =>
+                extractTextGenerationInputWithMetadata([
+                  {
+                    ...params,
+                    ...(additional.endpointUrl && !params.endpointUrl
+                      ? { endpointUrl: additional.endpointUrl }
+                      : {}),
+                  },
+                ]),
+              extractOutput: (result) =>
+                isObject(result)
+                  ? { generated_text: result.generated_text }
+                  : result,
+              extractMetadata: extractTextGenerationMetadata,
+              extractMetrics: (result) =>
+                extractTextGenerationMetrics(result?.details ?? null),
+            },
+          ),
+      ),
+      huggingFaceChannels.textGenerationStream.intercept(
+        (target, receiver, args, additional) =>
+          traceSyncStreamCall<typeof huggingFaceChannels.textGenerationStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+              name: "huggingface.text_generation_stream",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params]) =>
+                extractTextGenerationInputWithMetadata([
+                  {
+                    ...params,
+                    ...(additional.endpointUrl && !params.endpointUrl
+                      ? { endpointUrl: additional.endpointUrl }
+                      : {}),
+                  },
+                ]),
+              patchResult: ({ result, span, startTime }) =>
+                patchTextGenerationStream({
+                  result,
+                  span,
+                  startTime,
+                }),
+            },
+          ),
+      ),
+      huggingFaceChannels.featureExtraction.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof huggingFaceChannels.featureExtraction>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+              name: "huggingface.feature_extraction",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params]) =>
+                extractFeatureExtractionInputWithMetadata([
+                  {
+                    ...params,
+                    ...(additional.endpointUrl && !params.endpointUrl
+                      ? { endpointUrl: additional.endpointUrl }
+                      : {}),
+                  },
+                ]),
+              extractOutput: summarizeFeatureExtractionOutput,
+              extractMetrics: () => ({}),
+            },
+          ),
+      ),
     );
   }
 

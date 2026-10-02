@@ -96,9 +96,9 @@ describe("Error Handling", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify error event was emitted
-      expect(collector.error.length).toBeGreaterThan(0);
-      expect(collector.error[0].error).toBeDefined();
-      expect(collector.error[0].error.message).toBe("Test error");
+      expect(collector.failures.length).toBeGreaterThan(0);
+      expect(collector.failures[0].error).toBeDefined();
+      expect(collector.failures[0].error.message).toBe("Test error");
     });
 
     it("should emit error event with correct error details", async () => {
@@ -155,8 +155,8 @@ describe("Error Handling", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify error details are captured
-      expect(collector.error.length).toBeGreaterThan(0);
-      const errorEvent = collector.error[0];
+      expect(collector.failures.length).toBeGreaterThan(0);
+      const errorEvent = collector.failures[0];
       expect(errorEvent.error.message).toBe("API failure");
       expect(errorEvent.error.name).toBe("CustomError");
       expect(errorEvent.error.code).toBe("ERR_API_FAILURE");
@@ -207,7 +207,7 @@ describe("Error Handling", () => {
 
       // Also verify error event was emitted
       await new Promise((resolve) => setImmediate(resolve));
-      expect(collector.error.length).toBeGreaterThan(0);
+      expect(collector.failures.length).toBeGreaterThan(0);
     });
 
     it("should handle errors in promise rejections", async () => {
@@ -251,8 +251,8 @@ describe("Error Handling", () => {
 
       // Verify error event was emitted
       await new Promise((resolve) => setImmediate(resolve));
-      expect(collector.error.length).toBeGreaterThan(0);
-      expect(collector.error[0].error.message).toBe("Promise rejection");
+      expect(collector.failures.length).toBeGreaterThan(0);
+      expect(collector.failures[0].error.message).toBe("Promise rejection");
     });
   });
 
@@ -303,12 +303,12 @@ describe("Error Handling", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify both start and error events were emitted
-      expect(collector.start.length).toBeGreaterThan(0);
-      expect(collector.error.length).toBeGreaterThan(0);
+      expect(collector.calls.length).toBeGreaterThan(0);
+      expect(collector.failures.length).toBeGreaterThan(0);
 
       // Verify start event came before error event
-      expect(collector.start[0].timestamp).toBeLessThanOrEqual(
-        collector.error[0].timestamp,
+      expect(collector.calls[0].timestamp).toBeLessThanOrEqual(
+        collector.failures[0].timestamp,
       );
     });
 
@@ -358,14 +358,14 @@ describe("Error Handling", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify error event was emitted
-      expect(collector.error.length).toBeGreaterThan(0);
+      expect(collector.failures.length).toBeGreaterThan(0);
 
       // Verify end event was NOT emitted (or if emitted, came before or at the same time as error due to asyncEnd)
       // Note: For async functions, asyncEnd might still fire, but end should not
-      if (collector.end.length > 0) {
+      if (collector.returns.length > 0) {
         // If end event exists, it should be before or at the same time as the error
-        expect(collector.end[0].timestamp).toBeLessThanOrEqual(
-          collector.error[0].timestamp,
+        expect(collector.returns[0].timestamp).toBeLessThanOrEqual(
+          collector.failures[0].timestamp,
         );
       }
     });

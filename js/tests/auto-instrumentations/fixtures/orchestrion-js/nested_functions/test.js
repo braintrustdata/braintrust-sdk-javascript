@@ -10,7 +10,7 @@ const context = getContext("orchestrion:undici:nested_fn");
   const result = f.addHook();
   assert.strictEqual(result, "Hook added");
   assert.deepStrictEqual(context, {
-    start: true,
-    end: "Hook added",
+    called: true,
+    result: "Hook added",
   });
 })();

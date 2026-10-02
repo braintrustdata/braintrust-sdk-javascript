@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   VoyageAIContextualizedEmbedRequest,
   VoyageAIContextualizedResult,
@@ -10,40 +10,32 @@ import type {
   VoyageAIRerankResponse,
 } from "../../vendor-sdk-types/voyageai";
 
-export const voyageAIChannels = defineChannels(
-  "voyageai",
-  {
-    embed: channel<
-      [VoyageAIEmbedRequest, options?: unknown],
-      VoyageAIEmbeddingResponse
-    >({
-      channelName: "embed",
-      kind: "async",
-    }),
+export const voyageAIChannels = defineInterceptor("voyageai", {
+  embed: channel<
+    [VoyageAIEmbedRequest, options?: unknown],
+    PromiseLike<VoyageAIEmbeddingResponse>
+  >({
+    channelName: "embed",
+  }),
 
-    multimodalEmbed: channel<
-      [VoyageAIMultimodalEmbedRequest, options?: unknown],
-      VoyageAIEmbeddingResponse
-    >({
-      channelName: "multimodalEmbed",
-      kind: "async",
-    }),
+  multimodalEmbed: channel<
+    [VoyageAIMultimodalEmbedRequest, options?: unknown],
+    PromiseLike<VoyageAIEmbeddingResponse>
+  >({
+    channelName: "multimodalEmbed",
+  }),
 
-    rerank: channel<
-      [VoyageAIRerankRequest, options?: unknown],
-      VoyageAIRerankResponse
-    >({
-      channelName: "rerank",
-      kind: "async",
-    }),
+  rerank: channel<
+    [VoyageAIRerankRequest, options?: unknown],
+    PromiseLike<VoyageAIRerankResponse>
+  >({
+    channelName: "rerank",
+  }),
 
-    contextualizedEmbed: channel<
-      [VoyageAIContextualizedEmbedRequest, options?: unknown],
-      VoyageAIContextualizedResult
-    >({
-      channelName: "contextualizedEmbed",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.VOYAGEAI },
-);
+  contextualizedEmbed: channel<
+    [VoyageAIContextualizedEmbedRequest, options?: unknown],
+    PromiseLike<VoyageAIContextualizedResult>
+  >({
+    channelName: "contextualizedEmbed",
+  }),
+});

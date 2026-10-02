@@ -1,3 +1,7 @@
+import type {
+  ArgsOf,
+  InvocationAdditionalOf,
+} from "../core/channel-definitions";
 import { Attachment, startSpan, withCurrent, type Span } from "../../logger";
 import { debugLogger } from "../../debug-logger";
 import { getCurrentUnixTimestamp } from "../../util";
@@ -654,193 +658,196 @@ function observeSpeech(
 }
 
 type MediaChannel = typeof openAIChannels.imagesGenerate;
-export function interceptOpenAIMedia(
-  channel: MediaChannel,
+export function traceOpenAIMedia(
+  call: () => PromiseLike<OpenAIMediaResponse>,
+  context: {
+    arguments: ArgsOf<MediaChannel>;
+    self: unknown;
+    additional: InvocationAdditionalOf<MediaChannel>;
+  },
+  channelName: string,
   operation: string,
-): () => void {
-  return channel.intercept((target, thisArg, args, additional) => {
-    if (isAutoInstrumentationSuppressed()) return target.apply(thisArg, args);
-    const params = args[0];
-    const captureAttachments = isAutoCaptureAttachmentsEnabled();
-    let span: Span;
-    try {
-      const { name, spanAttributes, spanInfoMetadata } = buildStartSpanArgs(
-        { name: `openai.${channel.channelName}`, type: "llm" },
-        { arguments: args, span_info: additional.span_info },
-      );
-      span = startSpan(
-        withSpanInstrumentationName(
-          {
-            name,
-            spanAttributes,
-            event: {
-              metadata: mergeInputMetadata(
-                {
-                  // Provider defaults can change independently of the SDK version.
-                  model:
-                    params.model ??
-                    (operation === "variation" ? "dall-e-2" : undefined),
-                  provider: "openai",
-                },
-                spanInfoMetadata,
-              ),
-            },
+): PromiseLike<OpenAIMediaResponse> {
+  const args = context.arguments;
+  const additional = context.additional;
+  if (isAutoInstrumentationSuppressed()) return call();
+  const params = args[0];
+  const captureAttachments = isAutoCaptureAttachmentsEnabled();
+  let span: Span;
+  try {
+    const { name, spanAttributes, spanInfoMetadata } = buildStartSpanArgs(
+      { name: `openai.${channelName}`, type: "llm" },
+      { arguments: args, span_info: additional.span_info },
+    );
+    span = startSpan(
+      withSpanInstrumentationName(
+        {
+          name,
+          spanAttributes,
+          event: {
+            metadata: mergeInputMetadata(
+              {
+                // Provider defaults can change independently of the SDK version.
+                model:
+                  params.model ??
+                  (operation === "variation" ? "dall-e-2" : undefined),
+                provider: "openai",
+              },
+              spanInfoMetadata,
+            ),
           },
-          INSTRUMENTATION_NAMES.OPENAI,
-        ),
-      );
-    } catch (error) {
-      debugLogger.debug("OpenAI media span failed", error);
-      return target.apply(thisArg, args);
-    }
-    void mediaInput(params, operation, captureAttachments)
-      .then((input) => span.log({ input }))
-      .catch((error) => debugLogger.debug("OpenAI media input failed", error));
-    const start = getCurrentUnixTimestamp();
-    let seen = false;
-    let ended = false;
-    const first = () => {
-      if (!seen) {
-        seen = true;
-        span.log({
-          metrics: { time_to_first_token: getCurrentUnixTimestamp() - start },
-        });
-      }
-    };
-    const finish = (result?: OpenAIMediaResult | string, error?: unknown) => {
-      if (ended) return;
-      ended = true;
-      try {
-        if (result !== undefined)
-          span.log({
-            output: mediaOutput(result, params, captureAttachments),
-            ...(typeof result === "object"
-              ? {
-                  metrics: mediaUsage(result.usage),
-                  ...(result.model
-                    ? { metadata: { model: result.model } }
-                    : {}),
-                }
-              : {}),
-          });
-        if (error !== undefined) span.log({ error });
-      } catch (error) {
-        debugLogger.debug("OpenAI media output failed", error);
-      } finally {
-        try {
-          span.end();
-        } catch (error) {
-          debugLogger.debug("OpenAI media finalization failed", error);
-        }
-      }
-    };
-    let observed = false;
-    const onValue = (value: OpenAIMediaResponse) => {
-      if (observed) return;
-      observed = true;
-      try {
-        if (
-          value instanceof Response ||
-          (isObject(value) &&
-            typeof Reflect.get(value, "arrayBuffer") === "function" &&
-            Reflect.get(value, "headers"))
-        ) {
-          span.log({ output: { content: [] } });
-          if (captureAttachments)
-            observeSpeech(value as Response, params, span, first);
-          finish();
-        } else if (isAsyncIterable(value)) {
-          const accumulated: OpenAIMediaResult = {};
-          const audio: Blob[] = [];
-          patchStreamIfNeeded<OpenAIMediaEvent>(value, {
-            onChunk: (event) => {
-              if (event.b64_json || event.audio || event.delta || event.text)
-                first();
-              if (event.usage) accumulated.usage = event.usage;
-              if (event.model) accumulated.model = event.model;
-              if (event.type.endsWith(".completed") && event.b64_json) {
-                accumulated.data = [
-                  ...(accumulated.data ?? []),
-                  {
-                    b64_json: captureAttachments ? event.b64_json : "<omitted>",
-                  },
-                ];
-                accumulated.output_format = event.output_format;
-              }
-              if (event.type === "transcript.text.delta")
-                accumulated.text =
-                  (accumulated.text ?? "") + (event.delta ?? "");
-              if (event.type === "transcript.text.done")
-                accumulated.text = event.text ?? accumulated.text;
-              if (event.type === "transcript.text.segment")
-                accumulated.segments = [...(accumulated.segments ?? []), event];
-              if (captureAttachments && event.audio) {
-                const blob = convertDataToBlob(
-                  event.audio,
-                  AUDIO_TYPES.get(params.response_format ?? "mp3") ??
-                    "application/octet-stream",
-                );
-                if (blob) audio.push(blob);
-              }
-            },
-            onComplete: () => {
-              finish(accumulated);
-              if (captureAttachments && audio.length) {
-                const contentType =
-                  AUDIO_TYPES.get(params.response_format ?? "mp3") ??
-                  "application/octet-stream";
-                const filename = `speech.${params.response_format ?? "mp3"}`;
-                span.log({
-                  output: {
-                    content: [
-                      {
-                        type: "file",
-                        file: {
-                          filename,
-                          file_data: new Attachment({
-                            data: new Blob(audio, { type: contentType }),
-                            contentType,
-                            filename,
-                          }),
-                        },
-                      },
-                    ],
-                  },
-                });
-              }
-            },
-            onCancel: () => finish(accumulated),
-            onError: (error) => finish(accumulated, error),
-          });
-        } else finish(value as OpenAIMediaResult | string);
-      } catch (error) {
-        debugLogger.debug("OpenAI media observation failed", error);
-        finish();
-      }
-    };
-    let result;
-    try {
-      result = withCurrent(span, () =>
-        runWithAutoInstrumentationSuppressed(() => target.apply(thisArg, args)),
-      );
-    } catch (error) {
-      finish(undefined, error);
-      throw error;
-    }
-    try {
-      observeMediaPromise(
-        result,
-        onValue,
-        (error) => finish(undefined, error),
-        (response) => {
-          if (operation === "speech") onValue(response);
-          else finish();
         },
-      );
+        INSTRUMENTATION_NAMES.OPENAI,
+      ),
+    );
+  } catch (error) {
+    debugLogger.debug("OpenAI media span failed", error);
+    return call();
+  }
+  void mediaInput(params, operation, captureAttachments)
+    .then((input) => span.log({ input }))
+    .catch((error) => debugLogger.debug("OpenAI media input failed", error));
+  const start = getCurrentUnixTimestamp();
+  let seen = false;
+  let ended = false;
+  const first = () => {
+    if (!seen) {
+      seen = true;
+      span.log({
+        metrics: { time_to_first_token: getCurrentUnixTimestamp() - start },
+      });
+    }
+  };
+  const finish = (result?: OpenAIMediaResult | string, error?: unknown) => {
+    if (ended) return;
+    ended = true;
+    try {
+      if (result !== undefined)
+        span.log({
+          output: mediaOutput(result, params, captureAttachments),
+          ...(typeof result === "object"
+            ? {
+                metrics: mediaUsage(result.usage),
+                ...(result.model ? { metadata: { model: result.model } } : {}),
+              }
+            : {}),
+        });
+      if (error !== undefined) span.log({ error });
     } catch (error) {
-      debugLogger.debug("OpenAI media promise observation failed", error);
+      debugLogger.debug("OpenAI media output failed", error);
+    } finally {
+      try {
+        span.end();
+      } catch (error) {
+        debugLogger.debug("OpenAI media finalization failed", error);
+      }
+    }
+  };
+  let observed = false;
+  const onValue = (value: OpenAIMediaResponse) => {
+    if (observed) return;
+    observed = true;
+    try {
+      if (
+        value instanceof Response ||
+        (isObject(value) &&
+          typeof Reflect.get(value, "arrayBuffer") === "function" &&
+          Reflect.get(value, "headers"))
+      ) {
+        span.log({ output: { content: [] } });
+        if (captureAttachments)
+          observeSpeech(value as Response, params, span, first);
+        finish();
+      } else if (isAsyncIterable(value)) {
+        const accumulated: OpenAIMediaResult = {};
+        const audio: Blob[] = [];
+        patchStreamIfNeeded<OpenAIMediaEvent>(value, {
+          onChunk: (event) => {
+            if (event.b64_json || event.audio || event.delta || event.text)
+              first();
+            if (event.usage) accumulated.usage = event.usage;
+            if (event.model) accumulated.model = event.model;
+            if (event.type.endsWith(".completed") && event.b64_json) {
+              accumulated.data = [
+                ...(accumulated.data ?? []),
+                {
+                  b64_json: captureAttachments ? event.b64_json : "<omitted>",
+                },
+              ];
+              accumulated.output_format = event.output_format;
+            }
+            if (event.type === "transcript.text.delta")
+              accumulated.text = (accumulated.text ?? "") + (event.delta ?? "");
+            if (event.type === "transcript.text.done")
+              accumulated.text = event.text ?? accumulated.text;
+            if (event.type === "transcript.text.segment")
+              accumulated.segments = [...(accumulated.segments ?? []), event];
+            if (captureAttachments && event.audio) {
+              const blob = convertDataToBlob(
+                event.audio,
+                AUDIO_TYPES.get(params.response_format ?? "mp3") ??
+                  "application/octet-stream",
+              );
+              if (blob) audio.push(blob);
+            }
+          },
+          onComplete: () => {
+            finish(accumulated);
+            if (captureAttachments && audio.length) {
+              const contentType =
+                AUDIO_TYPES.get(params.response_format ?? "mp3") ??
+                "application/octet-stream";
+              const filename = `speech.${params.response_format ?? "mp3"}`;
+              span.log({
+                output: {
+                  content: [
+                    {
+                      type: "file",
+                      file: {
+                        filename,
+                        file_data: new Attachment({
+                          data: new Blob(audio, { type: contentType }),
+                          contentType,
+                          filename,
+                        }),
+                      },
+                    },
+                  ],
+                },
+              });
+            }
+          },
+          onCancel: () => finish(accumulated),
+          onError: (error) => finish(accumulated, error),
+        });
+      } else finish(value as OpenAIMediaResult | string);
+    } catch (error) {
+      debugLogger.debug("OpenAI media observation failed", error);
       finish();
     }
-    return result;
-  });
+  };
+  let result;
+  try {
+    result = withCurrent(span, () =>
+      runWithAutoInstrumentationSuppressed(() => call()),
+    );
+  } catch (error) {
+    finish(undefined, error);
+    throw error;
+  }
+  try {
+    observeMediaPromise(
+      result,
+      onValue,
+      (error) => finish(undefined, error),
+      (response) => {
+        if (operation === "speech") onValue(response);
+        else finish();
+      },
+    );
+  } catch (error) {
+    debugLogger.debug("OpenAI media promise observation failed", error);
+    finish();
+  }
+  return result;
 }

@@ -223,47 +223,52 @@ function wrapGenerate(
   generate: (input: GenkitGenerateInput) => Promise<GenkitGenerateResponse>,
 ): NonNullable<GenkitInstance["generate"]> {
   return (input) =>
-    genkitChannels.generate.tracePromise(() => generate(input), {
-      arguments: [input],
-    });
+    genkitChannels.generate.invoke(generate, undefined, [input], {});
 }
 
 function wrapGenerateStream(
   generateStream: (input: GenkitGenerateInput) => GenkitGenerateStreamResponse,
 ): NonNullable<GenkitInstance["generateStream"]> {
   return (input) =>
-    genkitChannels.generateStream.traceSync(() => generateStream(input), {
-      arguments: [input],
-    } as Parameters<typeof genkitChannels.generateStream.traceSync>[1]);
+    genkitChannels.generateStream.invoke(
+      generateStream,
+      undefined,
+      [input],
+      {},
+    );
 }
 
 function wrapEmbed(
   embed: (params: GenkitEmbedParams) => Promise<GenkitEmbedding[]>,
 ): NonNullable<GenkitInstance["embed"]> {
   return (params) =>
-    genkitChannels.embed.tracePromise(() => embed(params), {
-      arguments: [params],
-    }) as Promise<GenkitEmbedding[]>;
+    genkitChannels.embed.invoke(embed, undefined, [params], {}) as Promise<
+      GenkitEmbedding[]
+    >;
 }
 
 function wrapEmbedMany(
   embedMany: (params: GenkitEmbedManyParams) => Promise<unknown>,
 ): NonNullable<GenkitInstance["embedMany"]> {
   return (params) =>
-    genkitChannels.embedMany.tracePromise(() => embedMany(params), {
-      arguments: [params],
-    }) as Promise<unknown>;
+    genkitChannels.embedMany.invoke(
+      embedMany,
+      undefined,
+      [params],
+      {},
+    ) as Promise<unknown>;
 }
 
 function wrapRun(
   run: NonNullable<GenkitInstance["run"]>,
 ): NonNullable<GenkitInstance["run"]> {
   return (name, inputOrFn, maybeFn) =>
-    genkitChannels.actionRun.tracePromise(() => run(name, inputOrFn, maybeFn), {
-      arguments: [name, inputOrFn, maybeFn],
-    } as Parameters<
-      typeof genkitChannels.actionRun.tracePromise
-    >[1]) as Promise<unknown>;
+    genkitChannels.actionRun.invoke(
+      run,
+      undefined,
+      [name, inputOrFn, maybeFn],
+      {},
+    ) as Promise<unknown>;
 }
 
 function wrapGenkitAction(action: GenkitAction): GenkitAction;
@@ -318,12 +323,12 @@ function traceActionRun(
   run: (input?: unknown, options?: unknown) => Promise<unknown>,
 ): (input?: unknown, options?: unknown) => Promise<unknown> {
   return (input, options) =>
-    genkitChannels.actionRun.tracePromise(() => run(input, options), {
-      arguments: [input, options],
-      self: action,
-    } as Parameters<
-      typeof genkitChannels.actionRun.tracePromise
-    >[1]) as Promise<unknown>;
+    genkitChannels.actionRun.invoke(
+      run,
+      action,
+      [input, options],
+      {},
+    ) as Promise<unknown>;
 }
 
 function traceActionStream(
@@ -331,10 +336,7 @@ function traceActionStream(
   stream: NonNullable<GenkitAction["stream"]>,
 ): NonNullable<GenkitAction["stream"]> {
   return (input, options) =>
-    genkitChannels.actionStream.traceSync(() => stream(input, options), {
-      arguments: [input, options],
-      self: action,
-    } as Parameters<typeof genkitChannels.actionStream.traceSync>[1]);
+    genkitChannels.actionStream.invoke(stream, action, [input, options], {});
 }
 
 function hasWrappedFlag(value: object): boolean {

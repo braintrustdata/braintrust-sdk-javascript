@@ -1,18 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { tracePromise } = vi.hoisted(() => ({
-  tracePromise: vi.fn((fn: () => Promise<unknown>, _event?: unknown) => fn()),
+const { invoke } = vi.hoisted(() => ({
+  invoke: vi.fn(
+    (
+      target: (...args: any[]) => any,
+      receiver: unknown,
+      args: unknown[],
+      _additional?: unknown,
+    ) => Reflect.apply(target, receiver, args),
+  ),
 }));
-
-vi.mock("../isomorph", () => ({
-  default: {
-    getEnv: vi.fn(),
-    newTracingChannel: vi.fn(() => ({
-      subscribe: vi.fn(),
-      tracePromise,
-      unsubscribe: vi.fn(),
-    })),
-  },
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
 }));
 
 import { wrapCloudflareAgent } from "./cloudflare-agent";
@@ -41,8 +41,11 @@ describe("wrapCloudflareAgent", () => {
       receiver: "receiver",
       status: "completed",
     });
-    expect(tracePromise).toHaveBeenCalledTimes(1);
-    expect(tracePromise.mock.calls[0][1]).toEqual({
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect({
+      self: invoke.mock.calls[0]?.[1],
+      arguments: invoke.mock.calls[0]?.[2],
+    }).toEqual({
       arguments: [ChildAgent, options],
       self: agent,
     });
@@ -59,7 +62,7 @@ describe("wrapCloudflareAgent", () => {
     wrapCloudflareAgent(Agent);
     await new Agent().runAgentTool();
 
-    expect(tracePromise).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledTimes(1);
   });
 
   it("preserves rejections", async () => {
@@ -73,7 +76,7 @@ describe("wrapCloudflareAgent", () => {
     wrapCloudflareAgent(Agent);
 
     await expect(new Agent().runAgentTool()).rejects.toBe(rejection);
-    expect(tracePromise).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledTimes(1);
   });
 
   it("does not trace detached runs", async () => {
@@ -96,13 +99,13 @@ describe("wrapCloudflareAgent", () => {
       options,
     );
 
-    expect(tracePromise).not.toHaveBeenCalled();
+    expect(invoke).not.toHaveBeenCalled();
     expect(inputGetter).not.toHaveBeenCalled();
   });
 
   it("returns unsupported values unchanged", () => {
     expect(wrapCloudflareAgent(undefined)).toBeUndefined();
     expect(wrapCloudflareAgent(class Unsupported {})).toBeDefined();
-    expect(tracePromise).not.toHaveBeenCalled();
+    expect(invoke).not.toHaveBeenCalled();
   });
 });

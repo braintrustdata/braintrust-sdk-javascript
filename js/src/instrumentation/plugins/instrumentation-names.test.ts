@@ -9,8 +9,8 @@ import {
   smithyCoreChannels,
 } from "./bedrock-runtime-channels";
 import { claudeAgentSDKChannels } from "./claude-agent-sdk-channels";
-import { cloudflareAIChatChannels } from "./cloudflare-ai-chat-channels";
 import { cloudflareAgentsChannels } from "./cloudflare-agents-channels";
+import { cloudflareAIChatChannels } from "./cloudflare-ai-chat-channels";
 import { cloudflareThinkChannels } from "./cloudflare-think-channels";
 import { cohereChannels } from "./cohere-channels";
 import { cursorSDKChannels } from "./cursor-sdk-channels";
@@ -18,12 +18,12 @@ import { flueChannels } from "./flue-channels";
 import { genkitChannels, genkitCoreChannels } from "./genkit-channels";
 import { gitHubCopilotChannels } from "./github-copilot-channels";
 import { googleADKChannels } from "./google-adk-channels";
-import { googleGenerativeAIChannels } from "./google-generative-ai-channels";
 import { googleGenAIChannels } from "./google-genai-channels";
+import { googleGenerativeAIChannels } from "./google-generative-ai-channels";
 import { groqChannels } from "./groq-channels";
 import { huggingFaceChannels } from "./huggingface-channels";
-import { langGraphSDKChannels } from "./langgraph-sdk-channels";
 import { langChainChannels } from "./langchain-channels";
+import { langGraphSDKChannels } from "./langgraph-sdk-channels";
 import { langSmithChannels } from "./langsmith-channels";
 import { mistralChannels } from "./mistral-channels";
 import { ollamaChannels } from "./ollama-channels";
@@ -35,7 +35,7 @@ import { openRouterChannels } from "./openrouter-channels";
 import { piCodingAgentChannels } from "./pi-coding-agent-channels";
 import { strandsAgentSDKChannels } from "./strands-agent-sdk-channels";
 
-describe("built-in instrumentation provenance names", () => {
+describe("wrapping definitions are independent of span provenance", () => {
   it.each([
     [aiSDKChannels.generateText, INSTRUMENTATION_NAMES.AI_SDK],
     [harnessAgentChannels.generate, INSTRUMENTATION_NAMES.AI_SDK],
@@ -88,7 +88,8 @@ describe("built-in instrumentation provenance names", () => {
       strandsAgentSDKChannels.agentStream,
       INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK,
     ],
-  ])("uses %s for its canonical channel group", (channel, expected) => {
-    expect(channel.instrumentationName).toBe(expected);
+  ])("keeps span configuration out of %s", (channel, _instrumentationName) => {
+    expect(channel).not.toHaveProperty("instrumentationName");
+    expect(channel).not.toHaveProperty("tracingChannel");
   });
 });

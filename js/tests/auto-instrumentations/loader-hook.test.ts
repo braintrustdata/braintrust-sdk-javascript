@@ -156,7 +156,7 @@ describe("Unified Loader Hook Integration Tests", () => {
     });
 
     expect(result).toEqual({
-      hasSubscribers: false,
+      hasInterceptors: false,
       providerCalls: 1,
       result: "result",
       subscriberCalls: 0,

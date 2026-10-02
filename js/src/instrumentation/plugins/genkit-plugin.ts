@@ -1,26 +1,21 @@
+import { withCurrent } from "../../logger";
 import { BasePlugin, toLoggedError } from "../core";
 import {
-  traceAsyncChannel,
-  traceSyncStreamChannel,
+  traceAsyncCall,
+  traceSyncStreamCall,
   unsubscribeAll,
 } from "../core/channel-tracing";
+import { observeResult, runInstrumentation } from "../core/observe-result";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
-import {
-  _internalGetGlobalState,
-  BRAINTRUST_CURRENT_SPAN_STORE,
-  startSpan as startBaseSpan,
-} from "../../logger";
-import type { CurrentSpanStore, Span } from "../../logger";
+
+import { SpanTypeAttribute } from "../../../util/index";
+import type { Span } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
-import { SpanTypeAttribute } from "../../../util/index";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
-import { genkitChannels, genkitCoreChannels } from "./genkit-channels";
 import type {
   GenkitAction,
   GenkitActionMetadata,
@@ -32,6 +27,9 @@ import type {
   GenkitGenerateStreamResponse,
   GenkitUsage,
 } from "../../vendor-sdk-types/genkit";
+import { processInputAttachments } from "../../wrappers/attachment-utils";
+import type { ChannelMessage } from "../core/tracing-types";
+import { genkitChannels, genkitCoreChannels } from "./genkit-channels";
 
 type SpanState = {
   span: Span;
@@ -49,49 +47,78 @@ export class GenkitPlugin extends BasePlugin {
 
   private subscribeToGenkitChannels(): void {
     this.unsubscribers.push(
-      traceAsyncChannel(genkitChannels.generate, {
-        name: "genkit.generate",
-        type: SpanTypeAttribute.LLM,
-        extractInput: ([input]) => extractGenerateInput(input),
-        extractOutput: extractGenerateOutput,
-        extractMetadata: (result, event) =>
-          extractGenerateResponseMetadata(result, event?.arguments?.[0]),
-        extractMetrics: (result) => parseGenkitUsageMetrics(result?.usage),
-      }),
+      genkitChannels.generate.intercept((target, receiver, args, additional) =>
+        traceAsyncCall<typeof genkitChannels.generate>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.GENKIT,
+            name: "genkit.generate",
+            type: SpanTypeAttribute.LLM,
+            extractInput: ([input]) => extractGenerateInput(input),
+            extractOutput: extractGenerateOutput,
+            extractMetadata: (result, event) =>
+              extractGenerateResponseMetadata(result, event?.arguments?.[0]),
+            extractMetrics: (result) => parseGenkitUsageMetrics(result?.usage),
+          },
+        ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceSyncStreamChannel(genkitChannels.generateStream, {
-        name: "genkit.generateStream",
-        type: SpanTypeAttribute.LLM,
-        extractInput: ([input]) => extractGenerateInput(input),
-        patchResult: ({ result, span, startTime }) =>
-          patchGenerateStreamResult(result, span, startTime),
-      }),
+      genkitChannels.generateStream.intercept(
+        (target, receiver, args, additional) =>
+          traceSyncStreamCall<typeof genkitChannels.generateStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.GENKIT,
+              name: "genkit.generateStream",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([input]) => extractGenerateInput(input),
+              patchResult: ({ result, span, startTime }) =>
+                patchGenerateStreamResult(result, span, startTime),
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(genkitChannels.embed, {
-        name: "genkit.embed",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params]) => extractEmbedInput(params),
-        extractOutput: (result) => summarizeEmbeddingResult(result),
-        extractMetadata: (_result, event) =>
-          extractEmbedMetadata(event?.arguments?.[0]),
-        extractMetrics: () => ({}),
-      }),
+      genkitChannels.embed.intercept((target, receiver, args, additional) =>
+        traceAsyncCall<typeof genkitChannels.embed>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.GENKIT,
+            name: "genkit.embed",
+            type: SpanTypeAttribute.FUNCTION,
+            extractInput: ([params]) => extractEmbedInput(params),
+            extractOutput: (result) => summarizeEmbeddingResult(result),
+            extractMetadata: (_result, event) =>
+              extractEmbedMetadata(event?.arguments?.[0]),
+            extractMetrics: () => ({}),
+          },
+        ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(genkitChannels.embedMany, {
-        name: "genkit.embedMany",
-        type: SpanTypeAttribute.FUNCTION,
-        extractInput: ([params]) => extractEmbedManyInput(params),
-        extractOutput: summarizeEmbeddingResult,
-        extractMetadata: (_result, event) =>
-          extractEmbedMetadata(event?.arguments?.[0]),
-        extractMetrics: () => ({}),
-      }),
+      genkitChannels.embedMany.intercept((target, receiver, args, additional) =>
+        traceAsyncCall<typeof genkitChannels.embedMany>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.GENKIT,
+            name: "genkit.embedMany",
+            type: SpanTypeAttribute.FUNCTION,
+            extractInput: ([params]) => extractEmbedManyInput(params),
+            extractOutput: summarizeEmbeddingResult,
+            extractMetadata: (_result, event) =>
+              extractEmbedMetadata(event?.arguments?.[0]),
+            extractMetrics: () => ({}),
+          },
+        ),
+      ),
     );
 
     this.subscribeToActionRun();
@@ -100,126 +127,189 @@ export class GenkitPlugin extends BasePlugin {
   }
 
   private subscribeToActionRun(): void {
-    const tracingChannel =
-      genkitChannels.actionRun.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<typeof genkitChannels.actionRun>
-      >;
+    const invocationHook = genkitChannels.actionRun;
     const states = new WeakMap<object, SpanState>();
-    const unbindCurrentSpanStore = bindActionCurrentSpanStoreToStart(
-      tracingChannel,
-      states,
-      (event) => startActionRunSpan(event),
-    );
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof genkitChannels.actionRun>
-    > = {
-      start: (event) => {
-        ensureActionSpanState(states, event as object, () =>
-          startActionRunSpan(event),
+    const removeHandlers = invocationHook.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof genkitChannels.actionRun>;
+        const spanState = runInstrumentation(
+          () =>
+            states.get(event) ?? ((event) => startActionRunSpan(event))(event),
         );
-      },
-      asyncEnd: (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
+        if (spanState) states.set(event, spanState);
+        const prepare = (
+          event: ChannelMessage<typeof genkitChannels.actionRun>,
+        ) => {
+          ensureActionSpanState(states, event as object, () =>
+            startActionRunSpan(event),
+          );
+        };
+        const resolved = (
+          event: ChannelMessage<typeof genkitChannels.actionRun>,
+        ) => {
+          const state = states.get(event);
+          if (!state) {
+            return;
+          }
 
-        try {
-          state.span.log({
-            output: extractActionOutput(event.result),
-            metrics: durationMetrics(state.startTime),
-          });
-        } finally {
+          try {
+            state.span.log({
+              output: extractActionOutput(event.result),
+              metrics: durationMetrics(state.startTime),
+            });
+          } finally {
+            state.span.end();
+            states.delete(event);
+          }
+        };
+        const failed = (
+          event: ChannelMessage<typeof genkitChannels.actionRun>,
+        ) => {
+          const state = states.get(event);
+          if (!state || !event.error) {
+            return;
+          }
+          state.span.log({ error: event.error.message });
           state.span.end();
           states.delete(event);
-        }
-      },
-      error: (event) => {
-        const state = states.get(event);
-        if (!state || !event.error) {
-          return;
-        }
-        state.span.log({ error: event.error.message });
-        state.span.end();
-        states.delete(event);
-      },
-    };
+        };
+        const invoke = () => {
+          runInstrumentation(() => prepare(event));
+          let result;
+          try {
+            result = Reflect.apply(target, receiver, args);
+          } catch (error) {
+            Object.assign(event, { error });
+            runInstrumentation(() => failed(event));
+            throw error;
+          }
 
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindCurrentSpanStore?.();
-      tracingChannel.unsubscribe(handlers);
-    });
+          return observeResult(
+            result,
+            (value) => {
+              Object.assign(event, { result: value });
+              resolved(event);
+            },
+            (error) => {
+              Object.assign(event, { error });
+              failed(event);
+            },
+          );
+        };
+        return spanState ? withCurrent(spanState.span, invoke) : invoke();
+      },
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private subscribeToActionSpan(): void {
-    const tracingChannel =
-      genkitCoreChannels.actionSpan.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<typeof genkitCoreChannels.actionSpan>
-      >;
+    const invocationHook = genkitCoreChannels.actionSpan;
     const states = new WeakMap<object, SpanState>();
-    const unbindCurrentSpanStore = bindActionCurrentSpanStoreToStart(
-      tracingChannel,
-      states,
-      (event) => startActionSpan(event),
-    );
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof genkitCoreChannels.actionSpan>
-    > = {
-      start: (event) => {
-        ensureActionSpanState(states, event as object, () =>
-          startActionSpan(event),
+    const removeHandlers = invocationHook.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof genkitCoreChannels.actionSpan>;
+        const spanState = runInstrumentation(
+          () => states.get(event) ?? ((event) => startActionSpan(event))(event),
         );
-      },
-      asyncEnd: (event) => {
-        const state = states.get(event as object);
-        if (!state) {
-          return;
-        }
+        if (spanState) states.set(event, spanState);
+        const prepare = (
+          event: ChannelMessage<typeof genkitCoreChannels.actionSpan>,
+        ) => {
+          ensureActionSpanState(states, event as object, () =>
+            startActionSpan(event),
+          );
+        };
+        const resolved = (
+          event: ChannelMessage<typeof genkitCoreChannels.actionSpan>,
+        ) => {
+          const state = states.get(event as object);
+          if (!state) {
+            return;
+          }
 
-        try {
-          state.span.log({
-            input: extractActionSpanInput(event.arguments),
-            output: extractActionOutput(event.result),
-            metrics: durationMetrics(state.startTime),
-          });
-        } finally {
+          try {
+            state.span.log({
+              input: extractActionSpanInput(event.arguments),
+              output: extractActionOutput(event.result),
+              metrics: durationMetrics(state.startTime),
+            });
+          } finally {
+            state.span.end();
+            states.delete(event as object);
+          }
+        };
+        const failed = (
+          event: ChannelMessage<typeof genkitCoreChannels.actionSpan>,
+        ) => {
+          const state = states.get(event as object);
+          if (!state || !event.error) {
+            return;
+          }
+          state.span.log({ error: event.error.message });
           state.span.end();
           states.delete(event as object);
-        }
-      },
-      error: (event) => {
-        const state = states.get(event as object);
-        if (!state || !event.error) {
-          return;
-        }
-        state.span.log({ error: event.error.message });
-        state.span.end();
-        states.delete(event as object);
-      },
-    };
+        };
+        const invoke = () => {
+          runInstrumentation(() => prepare(event));
+          let result;
+          try {
+            result = Reflect.apply(target, receiver, args);
+          } catch (error) {
+            Object.assign(event, { error });
+            runInstrumentation(() => failed(event));
+            throw error;
+          }
 
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindCurrentSpanStore?.();
-      tracingChannel.unsubscribe(handlers);
-    });
+          return observeResult(
+            result,
+            (value) => {
+              Object.assign(event, { result: value });
+              resolved(event);
+            },
+            (error) => {
+              Object.assign(event, { error });
+              failed(event);
+            },
+          );
+        };
+        return spanState ? withCurrent(spanState.span, invoke) : invoke();
+      },
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private subscribeToActionStream(): void {
     this.unsubscribers.push(
-      traceSyncStreamChannel(genkitChannels.actionStream, {
-        name: "genkit.action.stream",
-        type: SpanTypeAttribute.TASK,
-        extractInput: ([input], event) => ({
-          input,
-          metadata: actionMetadataForLog(extractActionMetadata(event.self)),
-        }),
-        patchResult: ({ result, span, startTime }) =>
-          patchActionStreamResult(result, span, startTime),
-      }),
+      genkitChannels.actionStream.intercept(
+        (target, receiver, args, additional) =>
+          traceSyncStreamCall<typeof genkitChannels.actionStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.GENKIT,
+              name: "genkit.action.stream",
+              type: SpanTypeAttribute.TASK,
+              extractInput: ([input], event) => ({
+                input,
+                metadata: actionMetadataForLog(
+                  extractActionMetadata(event.self),
+                ),
+              }),
+              patchResult: ({ result, span, startTime }) =>
+                patchActionStreamResult(result, span, startTime),
+            },
+          ),
+      ),
     );
   }
 }
@@ -297,52 +387,6 @@ function ensureActionSpanState(
     states.set(event, created);
   }
   return created;
-}
-
-function bindActionCurrentSpanStoreToStart<
-  TChannel extends
-    | typeof genkitChannels.actionRun
-    | typeof genkitCoreChannels.actionSpan,
->(
-  tracingChannel: IsoTracingChannel<ChannelMessage<TChannel>>,
-  states: WeakMap<object, SpanState>,
-  create: (event: ChannelMessage<TChannel>) => SpanState | undefined,
-): (() => void) | undefined {
-  const state = _internalGetGlobalState();
-  const contextManager = state?.contextManager;
-  const startChannel = tracingChannel.start as
-    | ({
-        bindStore?: (
-          store: CurrentSpanStore,
-          callback: (event: ChannelMessage<TChannel>) => unknown,
-        ) => void;
-        unbindStore?: (store: CurrentSpanStore) => void;
-      } & object)
-    | undefined;
-  const currentSpanStore = contextManager
-    ? (
-        contextManager as {
-          [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-        }
-      )[BRAINTRUST_CURRENT_SPAN_STORE]
-    : undefined;
-
-  if (!startChannel?.bindStore || !currentSpanStore) {
-    return undefined;
-  }
-
-  startChannel.bindStore(currentSpanStore, (event) => {
-    const state = ensureActionSpanState(states, event as object, () =>
-      create(event),
-    );
-    return state
-      ? contextManager!.wrapSpanForStore(state.span)
-      : currentSpanStore.getStore();
-  });
-
-  return () => {
-    startChannel.unbindStore?.(currentSpanStore);
-  };
 }
 
 function normalizeInput(input: GenkitGenerateInput): GenkitGenerateInput {

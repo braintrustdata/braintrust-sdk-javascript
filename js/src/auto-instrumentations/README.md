@@ -35,58 +35,26 @@ same identifier.
 
 ## Generated Runtime Contract
 
-For every configured channel, transformed modules lazily look up:
+Generated wrappers lazily look up invocation hooks in `globalThis.__braintrust_invocation_hooks_v2`.
+They pass the original target, receiver, complete arguments, and module version to `invoke`.
+They do not emit tracing events, create spans, or select tracing operators.
+Legacy `functionQuery.kind` and `callbackIndex` fields remain accepted for source compatibility but do not select runtime tracing behavior.
 
-```js
-globalThis.__braintrust_instrumentation_hooks?.get(
-  "orchestrion:openai:chat.completions.create",
-);
-```
-
-The lookup is retried until a hook exists, then cached. This has two important
-properties:
-
-- Loading an instrumented provider before Braintrust is safe; calls run normally.
-- Registering Braintrust later enables tracing without retransformation.
-
-The generated code only applies `traceInvocation`, passing the configured
-operator, original target, receiver, complete arguments, and `moduleVersion`.
-The normal hook runtime handles interceptor composition, the no-listener fast
-path, tracing context construction, and the legacy `tracePromise`, `traceSync`,
-or `traceCallback` dispatch around the effective intercepted call.
-
-The hook lifecycle mirrors tracing channels:
-
-1. `start` before the target call
-2. `end` after its synchronous portion
-3. `asyncStart` and `asyncEnd` when an asynchronous result settles
-4. `error` for synchronous throws, promise rejections, or callback errors
-
-The same context object is passed through every phase. Subscribers may mutate
-arguments or returned streams before user code continues.
-
-Invocation interceptors compose as nested middleware and may replace arguments,
-the receiver, the returned value, or the entire implementation. Tracing remains
-the outer compatibility layer, so tracing subscribers observe the interceptor's
-effective result.
+Calls run normally before a hook is registered.
+Lookup retries until registration succeeds, then caches the hook.
+Interceptors compose in registration order and may replace arguments, receivers, results, or the complete implementation.
 
 ## Global Registry
 
-The SDK installs `globalThis.__braintrust_instrumentation_hooks` with a
-non-enumerable, non-writable property descriptor. Its value is a mutable
-`Map<string, TracingHook>` shared by all Braintrust SDK copies in the realm.
+The invocation registry is a non-enumerable, non-writable global property containing a shared map.
+It is independent of SDK initialization, async-context storage, and tracing.
+Manual wrappers use the same hooks through `defineInterceptor` and `invoke`.
+Provider plugins explicitly register separate tracing functions through `intercept`.
+Do not combine wrapping and tracing in a runtime or convenience API.
 
-The implementation lives in `src/global-instrumentation-hooks.ts`. It supports:
-
-- composable `invoke` / `intercept` wrappers
-- all five lifecycle phases
-- multiple subscribers and complete unsubscription
-- `bindStore` / `unbindStore` for async-context propagation
-- sync, promise, and callback tracing operators
-- preservation of Promise subclasses, thenables, and non-Promise return values
-
-Manual wrappers use the same registry through typed channel definitions, so
-manual and auto-instrumented paths share lifecycle and span behavior.
+Protocol version 2 uses a separately keyed registry so it does not mutate an older SDK's registry.
+Previously transformed bundles must be rebuilt with the updated SDK to retain instrumentation.
+There is no legacy tracing-event compatibility layer.
 
 ## Loaders and Bundlers
 
@@ -110,8 +78,7 @@ bundles.
 1. Add the narrowest supported package/version/file/function config under
    `configs/`.
 2. Define a typed channel with the same package and operation identifier.
-3. Add or update a plugin that intercepts the typed channel; use the tracing
-   helpers only for existing instrumentation awaiting migration.
+3. Write a separate tracing function and explicitly register it through `intercept` in the provider plugin.
 4. Keep manual wrappers on that same typed channel through `invoke`.
 5. Add transformation/runtime coverage and a provider e2e scenario when the
    user-visible trace contract changes.

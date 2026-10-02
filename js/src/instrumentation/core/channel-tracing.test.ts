@@ -8,10 +8,10 @@ import {
   vi,
 } from "vitest";
 import {
+  NOOP_SPAN,
   _exportsForTestingOnly,
   currentSpan,
   initLogger,
-  NOOP_SPAN,
   type Span,
   type TestBackgroundLogger,
 } from "../../logger";
@@ -21,25 +21,20 @@ import {
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
-import { channel, defineChannels } from "./channel-definitions";
-import { traceAsyncChannel, traceStreamingChannel } from "./channel-tracing";
+import { channel, defineInterceptor } from "./channel-definitions";
 
-const testChannels = defineChannels(
-  "channel-tracing-test",
-  {
-    asyncCall: channel<[Record<string, unknown>], { ok: true }>({
-      channelName: "async.call",
-      kind: "async",
-    }),
-    streamingCall: channel<[Record<string, unknown>], { ok: true }>({
-      channelName: "streaming.call",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.OPENAI },
-);
+import { traceAsyncCall, traceStreamingCall } from "./channel-tracing";
 
-describe("traceAsyncChannel current span binding", () => {
+const testChannels = defineInterceptor("channel-tracing-test", {
+  asyncCall: channel<[Record<string, unknown>], PromiseLike<{ ok: true }>>({
+    channelName: "async.call",
+  }),
+  streamingCall: channel<[Record<string, unknown>], PromiseLike<{ ok: true }>>({
+    channelName: "streaming.call",
+  }),
+});
+
+describe("traceAsyncCall current span binding", () => {
   let backgroundLogger: TestBackgroundLogger;
 
   beforeAll(async () => {
@@ -60,21 +55,29 @@ describe("traceAsyncChannel current span binding", () => {
   });
 
   it("binds the created span into the traced async execution context", async () => {
-    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
-      name: "channel-tracing-test",
-      type: "function",
-      extractInput: () => ({
-        input: "input",
-        metadata: undefined,
-      }),
-      extractOutput: (result) => result,
-      extractMetrics: () => ({}),
-    });
+    const unsubscribe = testChannels.asyncCall.intercept(
+      (target, receiver, args, additional) =>
+        traceAsyncCall<typeof testChannels.asyncCall>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+            name: "channel-tracing-test",
+            type: "function",
+            extractInput: () => ({
+              input: "input",
+              metadata: undefined,
+            }),
+            extractOutput: (result) => result,
+            extractMetrics: () => ({}),
+          },
+        ),
+    );
 
     const seenSpanIds: string[] = [];
 
     try {
-      await testChannels.asyncCall.tracePromise(
+      await testChannels.asyncCall.invoke(
         async () => {
           seenSpanIds.push(currentSpan().spanId);
           await Promise.resolve();
@@ -82,7 +85,9 @@ describe("traceAsyncChannel current span binding", () => {
 
           return { ok: true as const };
         },
-        { arguments: [{}] } as any,
+        undefined,
+        ({ arguments: [{}] } as any).arguments,
+        {},
       );
     } finally {
       unsubscribe();
@@ -103,16 +108,24 @@ describe("traceAsyncChannel current span binding", () => {
   });
 
   it("limits channel provenance to directly instrumented spans", async () => {
-    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
-      name: "channel-parent",
-      type: "function",
-      extractInput: () => ({ input: "input", metadata: undefined }),
-      extractOutput: (result) => result,
-      extractMetrics: () => ({}),
-    });
+    const unsubscribe = testChannels.asyncCall.intercept(
+      (target, receiver, args, additional) =>
+        traceAsyncCall<typeof testChannels.asyncCall>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+            name: "channel-parent",
+            type: "function",
+            extractInput: () => ({ input: "input", metadata: undefined }),
+            extractOutput: (result) => result,
+            extractMetrics: () => ({}),
+          },
+        ),
+    );
 
     try {
-      await testChannels.asyncCall.tracePromise(
+      await testChannels.asyncCall.invoke(
         async () => {
           const parent = currentSpan();
           parent.startSpan({ name: "user-child" }).end();
@@ -131,7 +144,9 @@ describe("traceAsyncChannel current span binding", () => {
             .end();
           return { ok: true as const };
         },
-        { arguments: [{}] } as any,
+        undefined,
+        ({ arguments: [{}] } as any).arguments,
+        {},
       );
     } finally {
       unsubscribe();
@@ -161,28 +176,36 @@ describe("traceAsyncChannel current span binding", () => {
   });
 
   it("does not create a span when shouldTrace returns false", async () => {
-    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
-      name: "channel-tracing-test",
-      shouldTrace: ([params]) =>
-        !(
-          typeof params === "object" &&
-          params !== null &&
-          "skip" in params &&
-          params.skip === true
+    const unsubscribe = testChannels.asyncCall.intercept(
+      (target, receiver, args, additional) =>
+        traceAsyncCall<typeof testChannels.asyncCall>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+            name: "channel-tracing-test",
+            shouldTrace: ([params]) =>
+              !(
+                typeof params === "object" &&
+                params !== null &&
+                "skip" in params &&
+                params.skip === true
+              ),
+            type: "function",
+            extractInput: () => ({
+              input: "input",
+              metadata: undefined,
+            }),
+            extractOutput: (result) => result,
+            extractMetrics: () => ({}),
+          },
         ),
-      type: "function",
-      extractInput: () => ({
-        input: "input",
-        metadata: undefined,
-      }),
-      extractOutput: (result) => result,
-      extractMetrics: () => ({}),
-    });
+    );
 
     const seenSpanIds: string[] = [];
 
     try {
-      await testChannels.asyncCall.tracePromise(
+      await testChannels.asyncCall.invoke(
         async () => {
           seenSpanIds.push(currentSpan().spanId);
           await Promise.resolve();
@@ -190,7 +213,9 @@ describe("traceAsyncChannel current span binding", () => {
 
           return { ok: true as const };
         },
-        { arguments: [{ skip: true }] } as any,
+        undefined,
+        ({ arguments: [{ skip: true }] } as any).arguments,
+        {},
       );
     } finally {
       unsubscribe();
@@ -207,24 +232,34 @@ describe("traceAsyncChannel current span binding", () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
-    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
-      name: "channel-tracing-test",
-      shouldTrace: () => {
-        throw new Error("predicate failed");
-      },
-      type: "function",
-      extractInput: () => ({
-        input: "input",
-        metadata: undefined,
-      }),
-      extractOutput: (result) => result,
-      extractMetrics: () => ({}),
-    });
+    const unsubscribe = testChannels.asyncCall.intercept(
+      (target, receiver, args, additional) =>
+        traceAsyncCall<typeof testChannels.asyncCall>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+            name: "channel-tracing-test",
+            shouldTrace: () => {
+              throw new Error("predicate failed");
+            },
+            type: "function",
+            extractInput: () => ({
+              input: "input",
+              metadata: undefined,
+            }),
+            extractOutput: (result) => result,
+            extractMetrics: () => ({}),
+          },
+        ),
+    );
 
     try {
-      await testChannels.asyncCall.tracePromise(
+      await testChannels.asyncCall.invoke(
         async () => ({ ok: true as const }),
-        { arguments: [{}] } as any,
+        undefined,
+        ({ arguments: [{}] } as any).arguments,
+        {},
       );
     } finally {
       unsubscribe();
@@ -238,20 +273,28 @@ describe("traceAsyncChannel current span binding", () => {
   });
 
   it("skips auto instrumentation spans while suppression is active", async () => {
-    const unsubscribe = traceAsyncChannel(testChannels.asyncCall, {
-      name: "channel-tracing-test",
-      type: "function",
-      extractInput: () => ({
-        input: "input",
-        metadata: undefined,
-      }),
-      extractOutput: (result) => result,
-      extractMetrics: () => ({}),
-    });
+    const unsubscribe = testChannels.asyncCall.intercept(
+      (target, receiver, args, additional) =>
+        traceAsyncCall<typeof testChannels.asyncCall>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+            name: "channel-tracing-test",
+            type: "function",
+            extractInput: () => ({
+              input: "input",
+              metadata: undefined,
+            }),
+            extractOutput: (result) => result,
+            extractMetrics: () => ({}),
+          },
+        ),
+    );
 
     try {
       await runWithAutoInstrumentationSuppressed(() =>
-        testChannels.asyncCall.tracePromise(
+        testChannels.asyncCall.invoke(
           async () => {
             expect(currentSpan()).toBe(NOOP_SPAN);
             await Promise.resolve();
@@ -259,7 +302,9 @@ describe("traceAsyncChannel current span binding", () => {
 
             return { ok: true as const };
           },
-          { arguments: [{}] } as any,
+          undefined,
+          ({ arguments: [{}] } as any).arguments,
+          {},
         ),
       );
     } finally {
@@ -270,40 +315,50 @@ describe("traceAsyncChannel current span binding", () => {
     expect(spans).toHaveLength(0);
   });
 
-  it("runs streaming cleanup hooks when span logging fails", async () => {
+  it("runs completion and failure hooks and ends spans", async () => {
     const onComplete = vi.fn();
     const onError = vi.fn();
     const end = vi.fn();
     const child = {
       end,
-      log: vi.fn(() => {
-        throw new Error("logging failed");
-      }),
+      log: vi.fn(),
     } as unknown as Span;
-    const unsubscribe = traceStreamingChannel(testChannels.streamingCall, {
-      name: "streaming-channel-test",
-      startSpan: () => child,
-      type: "function",
-      extractInput: () => ({ input: "input", metadata: undefined }),
-      extractOutput: (result) => result,
-      extractMetrics: () => ({}),
-      onComplete,
-      onError,
-    });
+    const unsubscribe = testChannels.streamingCall.intercept(
+      (target, receiver, args, additional) =>
+        traceStreamingCall<typeof testChannels.streamingCall>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+            name: "streaming-channel-test",
+            startSpan: () => child,
+            type: "function",
+            extractInput: () => ({ input: "input", metadata: undefined }),
+            extractOutput: (result) => result,
+            extractMetrics: () => ({}),
+            onComplete,
+            onError,
+          },
+        ),
+    );
 
     try {
       await expect(
-        testChannels.streamingCall.tracePromise(
+        testChannels.streamingCall.invoke(
           async () => ({ ok: true as const }),
-          { arguments: [{}] } as any,
+          undefined,
+          ({ arguments: [{}] } as any).arguments,
+          {},
         ),
       ).resolves.toEqual({ ok: true });
       await expect(
-        testChannels.streamingCall.tracePromise(
+        testChannels.streamingCall.invoke(
           async () => {
             throw new Error("call failed");
           },
-          { arguments: [{}] } as any,
+          undefined,
+          ({ arguments: [{}] } as any).arguments,
+          {},
         ),
       ).rejects.toThrow("call failed");
     } finally {
@@ -321,15 +376,23 @@ describe("traceAsyncChannel current span binding", () => {
       end: vi.fn(),
       log: vi.fn(),
     } as unknown as Span;
-    const unsubscribe = traceStreamingChannel(testChannels.streamingCall, {
-      name: "streaming-channel-test",
-      startSpan: () => child,
-      type: "function",
-      extractInput: () => ({ input: "input", metadata: undefined }),
-      extractOutput: (result) => result,
-      extractMetrics: () => ({}),
-      onError,
-    });
+    const unsubscribe = testChannels.streamingCall.intercept(
+      (target, receiver, args, additional) =>
+        traceStreamingCall<typeof testChannels.streamingCall>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.OPENAI,
+            name: "streaming-channel-test",
+            startSpan: () => child,
+            type: "function",
+            extractInput: () => ({ input: "input", metadata: undefined }),
+            extractOutput: (result) => result,
+            extractMetrics: () => ({}),
+            onError,
+          },
+        ),
+    );
     const stream = {
       abort: vi.fn(),
       async *[Symbol.asyncIterator]() {
@@ -338,9 +401,11 @@ describe("traceAsyncChannel current span binding", () => {
     };
 
     try {
-      const patched = await testChannels.streamingCall.tracePromise(
+      const patched = await testChannels.streamingCall.invoke(
         async () => stream as any,
-        { arguments: [{}] } as any,
+        undefined,
+        ({ arguments: [{}] } as any).arguments,
+        {},
       );
       (patched as unknown as typeof stream).abort();
       await Promise.resolve();

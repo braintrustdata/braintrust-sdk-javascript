@@ -31,32 +31,46 @@ const RERANK_METADATA_ALLOWLIST = new Set([
 export class VoyageAIPlugin extends BasePlugin {
   protected onEnable(): void {
     this.unsubscribers.push(
-      interceptVoyageAICall(
-        voyageAIChannels.embed,
-        "voyageai.embed",
-        extractTextEmbeddingInput,
-        summarizeEmbeddingOutput,
-        extractEmbeddingUsageMetrics,
+      voyageAIChannels.embed.intercept((target, receiver, args, additional) =>
+        traceVoyageAICall(
+          () => Reflect.apply(target, receiver, args),
+          { arguments: args, self: receiver, additional },
+          "voyageai.embed",
+          extractTextEmbeddingInput,
+          summarizeEmbeddingOutput,
+          extractEmbeddingUsageMetrics,
+        ),
       ),
-      interceptVoyageAICall(
-        voyageAIChannels.multimodalEmbed,
-        "voyageai.multimodalEmbed",
-        extractMultimodalEmbeddingInput,
-        summarizeEmbeddingOutput,
-        extractEmbeddingUsageMetrics,
+      voyageAIChannels.multimodalEmbed.intercept(
+        (target, receiver, args, additional) =>
+          traceVoyageAICall(
+            () => Reflect.apply(target, receiver, args),
+            { arguments: args, self: receiver, additional },
+            "voyageai.multimodalEmbed",
+            extractMultimodalEmbeddingInput,
+            summarizeEmbeddingOutput,
+            extractEmbeddingUsageMetrics,
+          ),
       ),
-      interceptVoyageAICall(
-        voyageAIChannels.rerank,
-        "voyageai.rerank",
-        extractRerankInput,
-        summarizeRerankOutput,
+      voyageAIChannels.rerank.intercept((target, receiver, args, additional) =>
+        traceVoyageAICall(
+          () => Reflect.apply(target, receiver, args),
+          { arguments: args, self: receiver, additional },
+          "voyageai.rerank",
+          extractRerankInput,
+          summarizeRerankOutput,
+        ),
       ),
-      interceptVoyageAICall(
-        voyageAIChannels.contextualizedEmbed,
-        "voyageai.contextualizedEmbed",
-        extractContextualizedEmbeddingInput,
-        summarizeContextualizedEmbeddingOutput,
-        extractEmbeddingUsageMetrics,
+      voyageAIChannels.contextualizedEmbed.intercept(
+        (target, receiver, args, additional) =>
+          traceVoyageAICall(
+            () => Reflect.apply(target, receiver, args),
+            { arguments: args, self: receiver, additional },
+            "voyageai.contextualizedEmbed",
+            extractContextualizedEmbeddingInput,
+            summarizeContextualizedEmbeddingOutput,
+            extractEmbeddingUsageMetrics,
+          ),
       ),
     );
   }
@@ -71,21 +85,12 @@ type VoyageAIResult =
   | VoyageAIRerankResponse
   | VoyageAIContextualizedResult;
 
-type VoyageAIChannel<TArgs extends unknown[], TResult> = {
-  intercept(
-    interceptor: (
-      target: (this: unknown, ...args: TArgs) => PromiseLike<TResult>,
-      thisArg: unknown,
-      args: TArgs,
-    ) => PromiseLike<TResult>,
-  ): () => void;
-};
-
-function interceptVoyageAICall<
+function traceVoyageAICall<
   TArgs extends unknown[],
   TResult extends VoyageAIResult,
 >(
-  channel: VoyageAIChannel<TArgs, TResult>,
+  call: () => PromiseLike<TResult>,
+  context: { arguments: TArgs; self: unknown; additional: unknown },
   name: string,
   extractInput: (args: TArgs) => {
     input: unknown;
@@ -95,55 +100,51 @@ function interceptVoyageAICall<
   extractMetrics: (
     result: TResult,
   ) => Record<string, number> = extractUsageMetrics,
-): () => void {
-  return channel.intercept((target, thisArg, args) => {
-    const invokeTarget = () => Reflect.apply(target, thisArg, args);
-    if (isAutoInstrumentationSuppressed()) {
-      return invokeTarget();
-    }
+): PromiseLike<TResult> {
+  const args = context.arguments;
 
-    let span: Span;
-    try {
-      const { input, metadata } = extractInput(args);
-      span = startSpan(
-        withSpanInstrumentationName(
-          {
-            event: { input, metadata },
-            name,
-            spanAttributes: { type: SpanTypeAttribute.LLM },
-          },
-          INSTRUMENTATION_NAMES.VOYAGEAI,
-        ),
-      );
-    } catch (error) {
-      debugLogger.error(`Error starting span for ${name}:`, error);
-      return invokeTarget();
-    }
-
-    let result: PromiseLike<TResult>;
-    try {
-      result = withCurrent(span, () =>
-        runWithAutoInstrumentationSuppressed(invokeTarget),
-      );
-    } catch (error) {
-      finishVoyageAISpan(span, name, () => span.log({ error }));
-      throw error;
-    }
-
-    void Promise.resolve(result).then(
-      (value) =>
-        finishVoyageAISpan(span, name, () => {
-          const metadata = extractResponseMetadata(value);
-          span.log({
-            output: extractOutput(value),
-            ...(metadata ? { metadata } : {}),
-            metrics: extractMetrics(value),
-          });
-        }),
-      (error) => finishVoyageAISpan(span, name, () => span.log({ error })),
+  if (isAutoInstrumentationSuppressed()) {
+    return call();
+  }
+  let span: Span;
+  try {
+    const { input, metadata } = extractInput(args);
+    span = startSpan(
+      withSpanInstrumentationName(
+        {
+          event: { input, metadata },
+          name,
+          spanAttributes: { type: SpanTypeAttribute.LLM },
+        },
+        INSTRUMENTATION_NAMES.VOYAGEAI,
+      ),
     );
-    return result;
-  });
+  } catch (error) {
+    debugLogger.error(`Error starting span for ${name}:`, error);
+    return call();
+  }
+  let result: PromiseLike<TResult>;
+  try {
+    result = withCurrent(span, () =>
+      runWithAutoInstrumentationSuppressed(call),
+    );
+  } catch (error) {
+    finishVoyageAISpan(span, name, () => span.log({ error }));
+    throw error;
+  }
+  void Promise.resolve(result).then(
+    (value) =>
+      finishVoyageAISpan(span, name, () => {
+        const metadata = extractResponseMetadata(value);
+        span.log({
+          output: extractOutput(value),
+          ...(metadata ? { metadata } : {}),
+          metrics: extractMetrics(value),
+        });
+      }),
+    (error) => finishVoyageAISpan(span, name, () => span.log({ error })),
+  );
+  return result;
 }
 
 function finishVoyageAISpan(span: Span, name: string, log: () => void): void {

@@ -10,9 +10,7 @@ const context = getContext("orchestrion:undici:TestClass:testMe");
   const result = await test.testMe();
   assert.strictEqual(result, 42);
   assert.deepStrictEqual(context, {
-    start: true,
-    end: true,
-    asyncStart: 42,
-    asyncEnd: 42,
+    called: true,
+    result: 42,
   });
 })();

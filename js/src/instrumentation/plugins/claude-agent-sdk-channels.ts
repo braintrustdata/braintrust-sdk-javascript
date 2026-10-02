@@ -1,11 +1,11 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   ClaudeAgentSDKMessage,
   ClaudeAgentSDKQueryParams,
 } from "../../vendor-sdk-types/claude-agent-sdk";
 
-export const claudeAgentSDKChannels = defineChannels(
+export const claudeAgentSDKChannels = defineInterceptor(
   "@anthropic-ai/claude-agent-sdk",
   {
     query: channel<
@@ -15,8 +15,6 @@ export const claudeAgentSDKChannels = defineChannels(
       ClaudeAgentSDKMessage
     >({
       channelName: "query",
-      kind: "sync-stream",
     }),
   },
-  { instrumentationName: INSTRUMENTATION_NAMES.CLAUDE_AGENT_SDK },
 );

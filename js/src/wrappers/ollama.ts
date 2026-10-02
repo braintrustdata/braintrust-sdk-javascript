@@ -1,6 +1,6 @@
+import { isObject } from "../../util";
 import { debugLogger } from "../debug-logger";
 import { ollamaChannels } from "../instrumentation/plugins/ollama-channels";
-import { isObject } from "../../util";
 import type {
   OllamaChatRequest,
   OllamaChatResult,
@@ -98,25 +98,19 @@ function wrapChat(
   chat: (request: OllamaChatRequest) => Promise<OllamaChatResult>,
 ): NonNullable<OllamaClient["chat"]> {
   return (request) =>
-    ollamaChannels.chat.tracePromise(() => chat(request), {
-      arguments: [request],
-    });
+    ollamaChannels.chat.invoke(chat, undefined, [request], {});
 }
 
 function wrapGenerate(
   generate: (request: OllamaGenerateRequest) => Promise<OllamaGenerateResult>,
 ): NonNullable<OllamaClient["generate"]> {
   return (request) =>
-    ollamaChannels.generate.tracePromise(() => generate(request), {
-      arguments: [request],
-    });
+    ollamaChannels.generate.invoke(generate, undefined, [request], {});
 }
 
 function wrapEmbed(
   embed: (request: OllamaEmbedRequest) => Promise<OllamaEmbedResponse>,
 ): NonNullable<OllamaClient["embed"]> {
   return (request) =>
-    ollamaChannels.embed.tracePromise(() => embed(request), {
-      arguments: [request],
-    });
+    ollamaChannels.embed.invoke(embed, undefined, [request], {});
 }

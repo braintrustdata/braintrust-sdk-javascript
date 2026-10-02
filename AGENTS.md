@@ -33,6 +33,14 @@ Keep public exports minimal. Generally, export only the requested runtime APIs a
 
 Use the normal Orchestrion config plus plugin/channel path by default. Special-case source patches should be rare exceptions only when the target SDK cannot be instrumented through the standard transformer path, and the reason should be documented next to the patch.
 
+API wrapping and span instrumentation are separate concepts.
+Use `defineInterceptor` to define invocation hooks and `intercept`/`invoke` exclusively as generic wrapping machinery.
+Wrapping definitions and runtime code must not depend on spans, tracing lifecycle events, provenance, or SDK initialization.
+Keep span creation, context propagation, and finalization in separate tracing functions.
+Provider plugins explicitly register those functions through interceptors; tracing helpers accept callables and tracing configuration, never hooks or registration responsibilities.
+Do not introduce combined APIs such as `traceInvocation` or `interceptAndTrace`, including internal convenience APIs.
+Manual wrappers and generated wrappers only invoke hooks.
+
 Instrumentation patches generally do not need to be removed during teardown. Prefer leaving behavior-preserving patches installed when they are idempotent; do not add unpatching machinery by default.
 
 Span names should generally remain stable across calls and versions. Do not include dynamic values such as model names in span names; record those values in metadata instead.

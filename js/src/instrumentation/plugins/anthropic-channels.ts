@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   AnthropicCreateParams,
   AnthropicMessage,
@@ -15,52 +15,43 @@ import type {
 
 type AnthropicResult = AnthropicMessage | AnthropicMessageStream;
 
-export const anthropicChannels = defineChannels(
-  "@anthropic-ai/sdk",
-  {
-    messagesCreate: channel<
-      [AnthropicCreateParams],
-      AnthropicResult,
-      Record<string, unknown>,
-      AnthropicStreamEvent
-    >({
-      channelName: "messages.create",
-      kind: "async",
-    }),
-    betaMessagesCreate: channel<
-      [AnthropicCreateParams],
-      AnthropicResult,
-      Record<string, unknown>,
-      AnthropicStreamEvent
-    >({
-      channelName: "beta.messages.create",
-      kind: "async",
-    }),
-    betaMessagesToolRunner: channel<
-      [AnthropicToolRunnerParams],
-      AnthropicToolRunner<unknown>
-    >({
-      channelName: "beta.messages.toolRunner",
-      kind: "sync-stream",
-    }),
-    betaSessionsEventsStream: channel<
-      [string, AnthropicSessionEventStreamParams?],
-      AnthropicSessionEventStream,
-      Record<string, unknown>,
-      AnthropicSessionEvent
-    >({
-      channelName: "beta.sessions.events.stream",
-      kind: "async",
-    }),
-    betaSessionsThreadsEventsStream: channel<
-      [string, AnthropicSessionThreadEventStreamParams],
-      AnthropicSessionEventStream,
-      Record<string, unknown>,
-      AnthropicSessionEvent
-    >({
-      channelName: "beta.sessions.threads.events.stream",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.ANTHROPIC },
-);
+export const anthropicChannels = defineInterceptor("@anthropic-ai/sdk", {
+  messagesCreate: channel<
+    [AnthropicCreateParams],
+    PromiseLike<AnthropicResult>,
+    Record<string, unknown>,
+    AnthropicStreamEvent
+  >({
+    channelName: "messages.create",
+  }),
+  betaMessagesCreate: channel<
+    [AnthropicCreateParams],
+    PromiseLike<AnthropicResult>,
+    Record<string, unknown>,
+    AnthropicStreamEvent
+  >({
+    channelName: "beta.messages.create",
+  }),
+  betaMessagesToolRunner: channel<
+    [AnthropicToolRunnerParams],
+    AnthropicToolRunner<unknown>
+  >({
+    channelName: "beta.messages.toolRunner",
+  }),
+  betaSessionsEventsStream: channel<
+    [string, AnthropicSessionEventStreamParams?],
+    PromiseLike<AnthropicSessionEventStream>,
+    Record<string, unknown>,
+    AnthropicSessionEvent
+  >({
+    channelName: "beta.sessions.events.stream",
+  }),
+  betaSessionsThreadsEventsStream: channel<
+    [string, AnthropicSessionThreadEventStreamParams],
+    PromiseLike<AnthropicSessionEventStream>,
+    Record<string, unknown>,
+    AnthropicSessionEvent
+  >({
+    channelName: "beta.sessions.threads.events.stream",
+  }),
+});

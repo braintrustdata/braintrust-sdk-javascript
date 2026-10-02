@@ -1,26 +1,25 @@
 const { parentPort } = require("node:worker_threads");
 
-const registryKey = "__braintrust_instrumentation_hooks";
+const registryKey = "__braintrust_invocation_hooks_v2";
 const registryBrand = Symbol.for(
   "braintrust.global-instrumentation-hooks.registry",
 );
 const foreignRegistry = new Map([["foreign", "entry"]]);
 globalThis[registryKey] = foreignRegistry;
 
-const { newGlobalTracingChannel } = require(
+const { newGlobalInvocationHook } = require(
   process.env.BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME,
 );
 
-const channel = newGlobalTracingChannel(
+const channel = newGlobalInvocationHook(
   "orchestrion:test:configurable-registry",
 );
 let subscriberCalls = 0;
-channel.subscribe({
-  start() {
-    subscriberCalls += 1;
-  },
+channel.intercept((target, receiver, args) => {
+  subscriberCalls += 1;
+  return Reflect.apply(target, receiver, args);
 });
-const result = channel.traceSync(() => "result");
+const result = channel.invoke(() => "result", undefined, [], {});
 const descriptor = Object.getOwnPropertyDescriptor(globalThis, registryKey);
 
 parentPort?.postMessage({

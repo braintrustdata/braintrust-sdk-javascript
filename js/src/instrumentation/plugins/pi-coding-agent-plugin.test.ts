@@ -20,10 +20,16 @@ vi.mock("../../isomorph", async (importOriginal) => {
     default: {
       ...actual.default,
       newAsyncLocalStorage: <T>() => new AsyncLocalStorage<T>(),
-      newTracingChannel: mockNewTracingChannel,
     },
   };
 });
+
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: mockNewTracingChannel,
+}));
 
 vi.mock("../../logger", () => ({
   startSpan: (...args: unknown[]) => mockStartSpan(...args),

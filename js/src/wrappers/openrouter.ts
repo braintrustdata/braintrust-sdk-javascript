@@ -3,6 +3,8 @@ import type {
   OpenRouterBeta,
   OpenRouterCallModelRequest,
   OpenRouterChat,
+  OpenRouterChatCreateParams,
+  OpenRouterChatResult,
   OpenRouterClient,
   OpenRouterEmbeddingCreateParams,
   OpenRouterEmbeddingResponse,
@@ -13,8 +15,6 @@ import type {
   OpenRouterResponses,
   OpenRouterResponsesCreateParams,
   OpenRouterResponsesResult,
-  OpenRouterChatCreateParams,
-  OpenRouterChatResult,
 } from "../vendor-sdk-types/openrouter";
 
 /**
@@ -137,9 +137,7 @@ function wrapChatSend(
   ) => Promise<OpenRouterChatResult>,
 ): OpenRouterChat["send"] {
   return (request, options) =>
-    openRouterChannels.chatSend.tracePromise(() => send(request, options), {
-      arguments: [request],
-    } as Parameters<typeof openRouterChannels.chatSend.tracePromise>[1]);
+    openRouterChannels.chatSend.invoke(send, undefined, [request, options], {});
 }
 
 function wrapEmbeddingsGenerate(
@@ -149,9 +147,11 @@ function wrapEmbeddingsGenerate(
   ) => Promise<OpenRouterEmbeddingResponse>,
 ): OpenRouterEmbeddings["generate"] {
   return (request, options) =>
-    openRouterChannels.embeddingsGenerate.tracePromise(
-      () => generate(request, options),
-      { arguments: [request] },
+    openRouterChannels.embeddingsGenerate.invoke(
+      generate,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -162,9 +162,11 @@ function wrapResponsesSend(
   ) => Promise<OpenRouterResponsesResult>,
 ): OpenRouterResponses["send"] {
   return (request, options) =>
-    openRouterChannels.betaResponsesSend.tracePromise(
-      () => send(request, options),
-      { arguments: [request] },
+    openRouterChannels.betaResponsesSend.invoke(
+      send,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -175,9 +177,11 @@ function wrapRerank(
   ) => Promise<OpenRouterRerankResult>,
 ): OpenRouterRerank["rerank"] {
   return (request, options) =>
-    openRouterChannels.rerankRerank.tracePromise(
-      () => rerank(request, options),
-      { arguments: [request] },
+    openRouterChannels.rerankRerank.invoke(
+      rerank,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -189,11 +193,11 @@ function wrapCallModel(
 ): NonNullable<OpenRouterClient["callModel"]> {
   return (request, options) => {
     const tracedRequest = { ...request };
-    return openRouterChannels.callModel.traceSync(
-      () => callModel(tracedRequest, options),
-      {
-        arguments: [tracedRequest],
-      } as Parameters<typeof openRouterChannels.callModel.traceSync>[1],
+    return openRouterChannels.callModel.invoke(
+      callModel,
+      undefined,
+      [tracedRequest, options],
+      {},
     );
   };
 }

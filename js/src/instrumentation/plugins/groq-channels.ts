@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   GroqAudioSpeechCreateParams,
   GroqAudioTextResult,
@@ -15,50 +15,41 @@ import type {
 
 type GroqChatResult = GroqChatCompletion | GroqChatStream;
 
-export const groqChannels = defineChannels(
-  "groq-sdk",
-  {
-    chatCompletionsCreate: channel<
-      [GroqChatCreateParams, unknown?],
-      GroqChatResult,
-      Record<string, unknown>,
-      GroqChatCompletionChunk
-    >({
-      channelName: "chat.completions.create",
-      kind: "async",
-    }),
+export const groqChannels = defineInterceptor("groq-sdk", {
+  chatCompletionsCreate: channel<
+    [GroqChatCreateParams, unknown?],
+    PromiseLike<GroqChatResult>,
+    Record<string, unknown>,
+    GroqChatCompletionChunk
+  >({
+    channelName: "chat.completions.create",
+  }),
 
-    embeddingsCreate: channel<
-      [GroqEmbeddingCreateParams, unknown?],
-      GroqEmbeddingResponse
-    >({
-      channelName: "embeddings.create",
-      kind: "async",
-    }),
+  embeddingsCreate: channel<
+    [GroqEmbeddingCreateParams, unknown?],
+    PromiseLike<GroqEmbeddingResponse>
+  >({
+    channelName: "embeddings.create",
+  }),
 
-    audioSpeechCreate: channel<
-      [GroqAudioSpeechCreateParams, unknown?],
-      Response
-    >({
-      channelName: "audio.speech.create",
-      kind: "async",
-    }),
+  audioSpeechCreate: channel<
+    [GroqAudioSpeechCreateParams, unknown?],
+    PromiseLike<Response>
+  >({
+    channelName: "audio.speech.create",
+  }),
 
-    audioTranscriptionsCreate: channel<
-      [GroqAudioTranscriptionCreateParams, unknown?],
-      GroqAudioTextResult | string
-    >({
-      channelName: "audio.transcriptions.create",
-      kind: "async",
-    }),
+  audioTranscriptionsCreate: channel<
+    [GroqAudioTranscriptionCreateParams, unknown?],
+    PromiseLike<GroqAudioTextResult | string>
+  >({
+    channelName: "audio.transcriptions.create",
+  }),
 
-    audioTranslationsCreate: channel<
-      [GroqAudioTranslationCreateParams, unknown?],
-      GroqAudioTextResult | string
-    >({
-      channelName: "audio.translations.create",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.GROQ },
-);
+  audioTranslationsCreate: channel<
+    [GroqAudioTranslationCreateParams, unknown?],
+    PromiseLike<GroqAudioTextResult | string>
+  >({
+    channelName: "audio.translations.create",
+  }),
+});

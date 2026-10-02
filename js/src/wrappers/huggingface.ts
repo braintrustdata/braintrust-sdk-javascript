@@ -1,5 +1,5 @@
-import { huggingFaceChannels } from "../instrumentation/plugins/huggingface-channels";
 import { isObject } from "../../util";
+import { huggingFaceChannels } from "../instrumentation/plugins/huggingface-channels";
 import type {
   HuggingFaceChatCompletion,
   HuggingFaceChatCompletionChunk,
@@ -202,20 +202,6 @@ function clientProxyWithContext(
   });
 }
 
-function withEndpointUrl<T extends Record<string, unknown>>(
-  params: T,
-  endpointUrl?: string,
-): T {
-  if (!endpointUrl || params.endpointUrl !== undefined) {
-    return params;
-  }
-
-  return {
-    ...params,
-    endpointUrl,
-  };
-}
-
 function wrapChatCompletion(
   original: (
     params: HuggingFaceChatCompletionParams,
@@ -224,14 +210,15 @@ function wrapChatCompletion(
   endpointUrl?: string,
 ): HuggingFaceClient["chatCompletion"] {
   return (params, options) => {
-    const traceParams = withEndpointUrl(params, endpointUrl);
     const context: Parameters<
-      typeof huggingFaceChannels.chatCompletion.tracePromise
-    >[1] = {
-      arguments: [traceParams],
+      typeof huggingFaceChannels.chatCompletion.invoke
+    >[3] = {
+      endpointUrl,
     };
-    return huggingFaceChannels.chatCompletion.tracePromise(
-      () => original(params, options),
+    return huggingFaceChannels.chatCompletion.invoke(
+      original,
+      undefined,
+      [params, options],
       context,
     );
   };
@@ -245,11 +232,11 @@ function wrapChatCompletionStream(
   endpointUrl?: string,
 ): HuggingFaceClient["chatCompletionStream"] {
   return (params, options) =>
-    huggingFaceChannels.chatCompletionStream.traceSync(
-      () => original(params, options),
-      {
-        arguments: [withEndpointUrl(params, endpointUrl)],
-      },
+    huggingFaceChannels.chatCompletionStream.invoke(
+      original,
+      undefined,
+      [params, options],
+      { endpointUrl },
     );
 }
 
@@ -261,14 +248,15 @@ function wrapTextGeneration(
   endpointUrl?: string,
 ): HuggingFaceClient["textGeneration"] {
   return (params, options) => {
-    const traceParams = withEndpointUrl(params, endpointUrl);
     const context: Parameters<
-      typeof huggingFaceChannels.textGeneration.tracePromise
-    >[1] = {
-      arguments: [traceParams],
+      typeof huggingFaceChannels.textGeneration.invoke
+    >[3] = {
+      endpointUrl,
     };
-    return huggingFaceChannels.textGeneration.tracePromise(
-      () => original(params, options),
+    return huggingFaceChannels.textGeneration.invoke(
+      original,
+      undefined,
+      [params, options],
       context,
     );
   };
@@ -282,11 +270,11 @@ function wrapTextGenerationStream(
   endpointUrl?: string,
 ): HuggingFaceClient["textGenerationStream"] {
   return (params, options) =>
-    huggingFaceChannels.textGenerationStream.traceSync(
-      () => original(params, options),
-      {
-        arguments: [withEndpointUrl(params, endpointUrl)],
-      },
+    huggingFaceChannels.textGenerationStream.invoke(
+      original,
+      undefined,
+      [params, options],
+      { endpointUrl },
     );
 }
 
@@ -298,14 +286,15 @@ function wrapFeatureExtraction(
   endpointUrl?: string,
 ): HuggingFaceClient["featureExtraction"] {
   return (params, options) => {
-    const traceParams = withEndpointUrl(params, endpointUrl);
     const context: Parameters<
-      typeof huggingFaceChannels.featureExtraction.tracePromise
-    >[1] = {
-      arguments: [traceParams],
+      typeof huggingFaceChannels.featureExtraction.invoke
+    >[3] = {
+      endpointUrl,
     };
-    return huggingFaceChannels.featureExtraction.tracePromise(
-      () => original(params, options),
+    return huggingFaceChannels.featureExtraction.invoke(
+      original,
+      undefined,
+      [params, options],
       context,
     );
   };

@@ -1,21 +1,15 @@
 import { BasePlugin, toLoggedError } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
-import iso, { type IsoAsyncLocalStorage } from "../../isomorph";
+
+import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
-import { startSpan as startBaseSpan, withCurrent } from "../../logger";
+import iso, { type IsoAsyncLocalStorage } from "../../isomorph";
 import type { Span } from "../../logger";
+import { startSpan as startBaseSpan, withCurrent } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
-import { SpanTypeAttribute, isObject } from "../../../util/index";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
-import {
-  runWithAutoInstrumentationAllowed,
-  runWithAutoInstrumentationSuppressed,
-} from "../auto-instrumentation-suppression";
-import { piCodingAgentChannels } from "./pi-coding-agent-channels";
 import type {
   PiAgent,
   PiAgentEvent,
@@ -35,6 +29,13 @@ import type {
   PiToolCall,
   PiToolResultMessage,
 } from "../../vendor-sdk-types/pi-coding-agent";
+import { processInputAttachments } from "../../wrappers/attachment-utils";
+import {
+  runWithAutoInstrumentationAllowed,
+  runWithAutoInstrumentationSuppressed,
+} from "../auto-instrumentation-suppression";
+import type { ChannelMessage } from "../core/tracing-types";
+import { piCodingAgentChannels } from "./pi-coding-agent-channels";
 
 type PiPromptState = {
   activeLlmSpans: Set<PiLlmSpanState>;

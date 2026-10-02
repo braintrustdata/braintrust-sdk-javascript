@@ -1,18 +1,10 @@
-import { BasePlugin } from "../core";
-import type { IsoChannelHandlers } from "../../isomorph";
-import { startSpan as startBaseSpan } from "../../logger";
+import { SpanTypeAttribute } from "../../../util/index";
 import type { Span } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import { SpanTypeAttribute } from "../../../util/index";
-import {
-  extractAnthropicCacheTokens,
-  finalizeAnthropicTokens,
-} from "../../wrappers/anthropic-tokens-util";
-import type { AnthropicTokenMetrics } from "../../wrappers/anthropic-tokens-util";
-import { gitHubCopilotChannels } from "./github-copilot-channels";
 import type {
   GitHubCopilotSession,
   GitHubCopilotSessionConfig,
@@ -20,6 +12,14 @@ import type {
   GitHubCopilotTrackedEvent,
   GitHubCopilotUsageData,
 } from "../../vendor-sdk-types/github-copilot";
+import type { AnthropicTokenMetrics } from "../../wrappers/anthropic-tokens-util";
+import {
+  extractAnthropicCacheTokens,
+  finalizeAnthropicTokens,
+} from "../../wrappers/anthropic-tokens-util";
+import { BasePlugin } from "../core";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+import { gitHubCopilotChannels } from "./github-copilot-channels";
 
 const ROOT_AGENT_KEY = "__root__";
 
@@ -676,84 +676,105 @@ function isGitHubCopilotSession(value: unknown): value is GitHubCopilotSession {
 // ---------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeSessionHandlers(
-  sessionStates: WeakMap<object, SessionState>,
+function traceSessionCreation<T>(
+  call: () => T,
+  args: unknown[],
   configArgIndex: number,
   includeProviderMetadata: boolean,
-): IsoChannelHandlers<any> {
-  return {
-    start: (event) => {
-      const config = event.arguments[configArgIndex] as
-        | GitHubCopilotSessionConfig
-        | undefined;
-      if (!config || typeof config !== "object") {
-        return;
-      }
-
-      const sessionSpan = startBaseSpan(
-        withSpanInstrumentationName(
-          {
-            name: "Copilot Session",
-            spanAttributes: { type: SpanTypeAttribute.TASK },
-          },
-          INSTRUMENTATION_NAMES.GITHUB_COPILOT,
-        ),
-      );
-
-      const metadata: Record<string, unknown> = {};
-      if (config.model) {
-        metadata["github_copilot.model"] = config.model;
-      }
-      if (includeProviderMetadata && config.provider?.type) {
-        metadata["github_copilot.provider_type"] = config.provider.type;
-      }
-      if (Object.keys(metadata).length > 0) {
-        sessionSpan.log({ metadata });
-      }
-
-      const state: SessionState = {
-        session: makeSpanWithId(sessionSpan),
-        activeTurns: new Map(),
-        pendingUserMessages: new Map(),
-        currentMessageContent: new Map(),
-        activeTools: new Map(),
-        subAgents: new Map(),
-        agentIdToToolCallId: new Map(),
-        processing: Promise.resolve(),
-        totalInputTokens: 0,
-        totalOutputTokens: 0,
-      };
-
-      injectTracingHooks(config, state);
-      sessionStates.set(event, state);
-    },
-
-    asyncEnd: (event) => {
-      const state = sessionStates.get(event);
-      if (!state) {
-        return;
-      }
-
-      const session = event.result;
-      if (isGitHubCopilotSession(session)) {
-        attachSessionEventListener(session, state);
-      } else {
-        state.session.span.end();
-      }
-      sessionStates.delete(event);
-    },
-
-    error: (event) => {
-      const state = sessionStates.get(event);
-      if (!state || !event.error) {
-        return;
-      }
-
-      state.session.span.log({ error: event.error.message });
-      state.session.span.end();
-      sessionStates.delete(event);
-    },
+): T {
+  const sessionStates = new WeakMap<object, SessionState>();
+  const event: { arguments: unknown[]; result?: unknown; error?: Error } = {
+    arguments: args,
   };
+  const prepare = (context: typeof event) => {
+    const config = event.arguments[configArgIndex] as
+      | GitHubCopilotSessionConfig
+      | undefined;
+    if (!config || typeof config !== "object") {
+      return;
+    }
+
+    const sessionSpan = startBaseSpan(
+      withSpanInstrumentationName(
+        {
+          name: "Copilot Session",
+          spanAttributes: { type: SpanTypeAttribute.TASK },
+        },
+        INSTRUMENTATION_NAMES.GITHUB_COPILOT,
+      ),
+    );
+
+    const metadata: Record<string, unknown> = {};
+    if (config.model) {
+      metadata["github_copilot.model"] = config.model;
+    }
+    if (includeProviderMetadata && config.provider?.type) {
+      metadata["github_copilot.provider_type"] = config.provider.type;
+    }
+    if (Object.keys(metadata).length > 0) {
+      sessionSpan.log({ metadata });
+    }
+
+    const state: SessionState = {
+      session: makeSpanWithId(sessionSpan),
+      activeTurns: new Map(),
+      pendingUserMessages: new Map(),
+      currentMessageContent: new Map(),
+      activeTools: new Map(),
+      subAgents: new Map(),
+      agentIdToToolCallId: new Map(),
+      processing: Promise.resolve(),
+      totalInputTokens: 0,
+      totalOutputTokens: 0,
+    };
+
+    injectTracingHooks(config, state);
+    sessionStates.set(event, state);
+  };
+  const complete = (context: typeof event) => {
+    const state = sessionStates.get(event);
+    if (!state) {
+      return;
+    }
+
+    const session = event.result;
+    if (isGitHubCopilotSession(session)) {
+      attachSessionEventListener(session, state);
+    } else {
+      state.session.span.end();
+    }
+    sessionStates.delete(event);
+  };
+  const fail = (context: typeof event) => {
+    const state = sessionStates.get(event);
+    if (!state || !event.error) {
+      return;
+    }
+
+    state.session.span.log({ error: event.error.message });
+    state.session.span.end();
+    sessionStates.delete(event);
+  };
+  runInstrumentation(() => prepare(event));
+  let result: T;
+  try {
+    result = call();
+  } catch (error) {
+    Object.assign(event, { error });
+    runInstrumentation(() => fail(event));
+    throw error;
+  }
+  return observeResult(
+    result,
+    (value) => {
+      event.result = value;
+      complete(event);
+    },
+    (error) => {
+      Object.assign(event, { error });
+      fail(event);
+    },
+  );
 }
 
 export class GitHubCopilotPlugin extends BasePlugin {
@@ -769,28 +790,23 @@ export class GitHubCopilotPlugin extends BasePlugin {
   }
 
   private subscribeToSessionChannels(): void {
-    const createChannel = gitHubCopilotChannels.createSession.tracingChannel();
-    const resumeChannel = gitHubCopilotChannels.resumeSession.tracingChannel();
-
-    const sessionStates = new WeakMap<object, SessionState>();
-
-    const createHandlers = makeSessionHandlers(
-      sessionStates,
-      0, // config is arg 0 of createSession(config)
-      true, // include provider metadata
-    );
-    const resumeHandlers = makeSessionHandlers(
-      sessionStates,
-      1, // config is arg 1 of resumeSession(sessionId, config)
-      false, // resumeSession config has no provider field
-    );
-
-    createChannel.subscribe(createHandlers);
-    resumeChannel.subscribe(resumeHandlers);
-
     this.unsubscribers.push(
-      () => createChannel.unsubscribe(createHandlers),
-      () => resumeChannel.unsubscribe(resumeHandlers),
+      gitHubCopilotChannels.createSession.intercept((target, receiver, args) =>
+        traceSessionCreation(
+          () => Reflect.apply(target, receiver, args),
+          args,
+          0,
+          true,
+        ),
+      ),
+      gitHubCopilotChannels.resumeSession.intercept((target, receiver, args) =>
+        traceSessionCreation(
+          () => Reflect.apply(target, receiver, args),
+          args,
+          1,
+          false,
+        ),
+      ),
     );
   }
 }

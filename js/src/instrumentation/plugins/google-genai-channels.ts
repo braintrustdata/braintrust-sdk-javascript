@@ -1,10 +1,10 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
-  GoogleGenAIEmbedContentParams,
-  GoogleGenAIEmbedContentResponse,
   GoogleGenAIEditImageParams,
   GoogleGenAIEditImageResponse,
+  GoogleGenAIEmbedContentParams,
+  GoogleGenAIEmbedContentResponse,
   GoogleGenAIGenerateContentParams,
   GoogleGenAIGenerateContentResponse,
   GoogleGenAIGenerateImagesParams,
@@ -23,66 +23,54 @@ type GoogleGenAIInteractionResult =
   | GoogleGenAIInteraction
   | AsyncIterable<GoogleGenAIInteractionSSEEvent>;
 
-export const googleGenAIChannels = defineChannels(
-  "@google/genai",
-  {
-    generateContent: channel<
-      [GoogleGenAIGenerateContentParams],
-      GoogleGenAIGenerateContentResponse
-    >({
-      channelName: "models.generateContent",
-      kind: "async",
-    }),
-    generateContentStream: channel<
-      [GoogleGenAIGenerateContentParams],
-      GoogleGenAIStreamingResult,
-      Record<string, unknown>,
-      GoogleGenAIGenerateContentResponse
-    >({
-      channelName: "models.generateContentStream",
-      kind: "async",
-    }),
-    embedContent: channel<
-      [GoogleGenAIEmbedContentParams],
-      GoogleGenAIEmbedContentResponse
-    >({
-      channelName: "models.embedContent",
-      kind: "async",
-    }),
-    generateImages: channel<
-      [GoogleGenAIGenerateImagesParams],
-      GoogleGenAIGenerateImagesResponse
-    >({
-      channelName: "models.generateImages",
-      kind: "async",
-    }),
-    editImage: channel<
-      [GoogleGenAIEditImageParams],
-      GoogleGenAIEditImageResponse
-    >({
-      channelName: "models.editImage",
-      kind: "async",
-    }),
-    generateVideos: channel<
-      [GoogleGenAIGenerateVideosParams],
-      GoogleGenAIGenerateVideosOperation
-    >({
-      channelName: "models.generateVideos",
-      kind: "async",
-    }),
-    httpResponseJson: channel<[], GoogleGenAIEmbedContentResponse>({
-      channelName: "httpResponse.json",
-      kind: "async",
-    }),
-    interactionsCreate: channel<
-      [GoogleGenAIInteractionCreateParams, Record<string, unknown>?],
-      GoogleGenAIInteractionResult,
-      Record<string, unknown>,
-      GoogleGenAIInteractionSSEEvent
-    >({
-      channelName: "interactions.create",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.GOOGLE_GENAI },
-);
+export const googleGenAIChannels = defineInterceptor("@google/genai", {
+  generateContent: channel<
+    [GoogleGenAIGenerateContentParams],
+    PromiseLike<GoogleGenAIGenerateContentResponse>
+  >({
+    channelName: "models.generateContent",
+  }),
+  generateContentStream: channel<
+    [GoogleGenAIGenerateContentParams],
+    PromiseLike<GoogleGenAIStreamingResult>,
+    Record<string, unknown>,
+    GoogleGenAIGenerateContentResponse
+  >({
+    channelName: "models.generateContentStream",
+  }),
+  embedContent: channel<
+    [GoogleGenAIEmbedContentParams],
+    PromiseLike<GoogleGenAIEmbedContentResponse>
+  >({
+    channelName: "models.embedContent",
+  }),
+  generateImages: channel<
+    [GoogleGenAIGenerateImagesParams],
+    PromiseLike<GoogleGenAIGenerateImagesResponse>
+  >({
+    channelName: "models.generateImages",
+  }),
+  editImage: channel<
+    [GoogleGenAIEditImageParams],
+    PromiseLike<GoogleGenAIEditImageResponse>
+  >({
+    channelName: "models.editImage",
+  }),
+  generateVideos: channel<
+    [GoogleGenAIGenerateVideosParams],
+    PromiseLike<GoogleGenAIGenerateVideosOperation>
+  >({
+    channelName: "models.generateVideos",
+  }),
+  httpResponseJson: channel<[], PromiseLike<GoogleGenAIEmbedContentResponse>>({
+    channelName: "httpResponse.json",
+  }),
+  interactionsCreate: channel<
+    [GoogleGenAIInteractionCreateParams, Record<string, unknown>?],
+    PromiseLike<GoogleGenAIInteractionResult>,
+    Record<string, unknown>,
+    GoogleGenAIInteractionSSEEvent
+  >({
+    channelName: "interactions.create",
+  }),
+});
