@@ -140,14 +140,3 @@ export class InternalAbortError extends Error {
     this.name = "InternalAbortError";
   }
 }
-
-// Return a copy of record with the given keys removed.
-export function filterFrom(record: Record<string, any>, keys: string[]) {
-  const out: Record<string, any> = {};
-  for (const k of Object.keys(record)) {
-    if (!keys.includes(k)) {
-      out[k] = record[k];
-    }
-  }
-  return out;
-}
