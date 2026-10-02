@@ -1,26 +1,18 @@
 import { channel, defineChannels } from "../core/channel-definitions";
 import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
-  OpenRouterChatCompletion,
   OpenRouterChatCompletionChunk,
+  OpenRouterChatResult,
   OpenRouterCallModelRequest,
   OpenRouterChatCreateParams,
   OpenRouterEmbeddingCreateParams,
   OpenRouterEmbeddingResponse,
   OpenRouterRerankCreateParams,
   OpenRouterRerankResult,
-  OpenRouterResponse,
   OpenRouterResponseStreamEvent,
   OpenRouterResponsesCreateParams,
+  OpenRouterResponsesResult,
 } from "../../vendor-sdk-types/openrouter";
-
-type OpenRouterChatResult =
-  | OpenRouterChatCompletion
-  | AsyncIterable<OpenRouterChatCompletionChunk>;
-
-type OpenRouterResponsesResult =
-  | OpenRouterResponse
-  | AsyncIterable<OpenRouterResponseStreamEvent>;
 
 export const openRouterChannels = defineChannels(
   "@openrouter/sdk",
