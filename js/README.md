@@ -126,6 +126,7 @@ Uploaded attachments can only be referenced by rows written with the same key or
 An explicit `apiKey` takes precedence over `BRAINTRUST_INGESTION_KEY`, and combining it with `ingestionKey` throws.
 A `state` only provides the masking function and current logger, while the logger keeps its own queue and ignores any login of the state.
 `projectName` is ignored, and `projectId` or the ids of `orgProjectMetadata` are only sent along for the server to check.
+`updateSpan({ exported })` updates project log spans through the current ingestion key logger, and spans exported without a project need `state: logger.loggingState` instead of falling back to an API key.
 `ExternalAttachment` is not supported, since it can reference any object store content, so rows that contain one are not logged and the error is reported to `onFlushError`.
 Attachments and large batches are uploaded through the ingestion URL as well.
 Fields that ingestion keys do not support, like `classifications` or audit fields, are not logged, and logging comments throws.

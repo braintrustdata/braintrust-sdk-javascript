@@ -1486,12 +1486,15 @@ class IngestionKeyState extends BraintrustState {
 
   constructor(
     private readonly contextState: BraintrustState,
-    endpoint: IngestionEndpoint,
+    private readonly endpoint: IngestionEndpoint,
     private readonly ingestionOrgId: string | undefined,
     loginParams: LoginOptions,
   ) {
     super(loginParams);
-    this.ingestionConn = new HTTPConnection(endpoint.root, this.fetch);
+    this.ingestionConn = new HTTPConnection(
+      endpoint.root,
+      ingestionKeyFetch(this.fetch, endpoint.key),
+    );
     this.ingestionConn.set_token(endpoint.key);
   }
 
@@ -1507,7 +1510,7 @@ class IngestionKeyState extends BraintrustState {
 
   public override setFetch(fetch: typeof globalThis.fetch) {
     super.setFetch(fetch);
-    this.ingestionConn.setFetch(fetch);
+    this.ingestionConn.setFetch(ingestionKeyFetch(fetch, this.endpoint.key));
   }
 
   protected override createBackgroundLogger(
@@ -1520,6 +1523,66 @@ class IngestionKeyState extends BraintrustState {
     );
   }
 }
+
+/**
+ * Wrap `fetch` for ingestion key requests. Redirects are refused, since they
+ * could forward the key to another origin, keepalive is disabled, and the key
+ * is redacted from error responses and transport errors before anything can
+ * log them.
+ */
+function ingestionKeyFetch(
+  fetch: typeof globalThis.fetch,
+  key: string,
+): typeof globalThis.fetch {
+  const redact = (text: string) => text.split(key).join("[REDACTED]");
+  return async (input, init) => {
+    let response: Response;
+    try {
+      // Browsers reject keepalive requests above 64 KiB, which native rows
+      // below the overflow threshold can exceed.
+      response = await fetch(input, {
+        ...init,
+        redirect: "error",
+        keepalive: false,
+      });
+    } catch (error) {
+      if (init?.signal?.aborted) {
+        throw error;
+      }
+      // The cause is dropped, since it may reference the key as well.
+      throw new Error(
+        `Ingestion request failed: ${redact(error instanceof Error ? error.message : String(error))}`,
+      );
+    }
+    // Custom fetch implementations may ignore `redirect: "error"`.
+    if (
+      response.type === "opaqueredirect" ||
+      (response.status >= 300 && response.status < 400)
+    ) {
+      await response.body?.cancel();
+      throw new IngestionProtocolError(
+        "Ingestion endpoint responded with a redirect, which is not followed",
+      );
+    }
+    if (response.ok) {
+      return response;
+    }
+    let body: string;
+    try {
+      body = await response.text();
+    } catch {
+      body = "Unable to read response body";
+    }
+    return new Response(redact(body), {
+      status: response.status,
+      statusText: redact(response.statusText),
+      headers: response.headers,
+    });
+  };
+}
+
+// An invalid response of the ingestion endpoint, which is not retried.
+class IngestionProtocolError extends Error {}
 
 function usesIngestionKey(state: BraintrustState): boolean {
   return state.currentLogger?.loggingState instanceof IngestionKeyState;
@@ -2670,13 +2733,20 @@ export function updateSpan({
   "id" | "root_span_id" | "span_id"
 > &
   OptionalStateArg): void {
-  const resolvedState = state ?? _globalState;
+  const requestedState = state ?? _globalState;
   const components = SpanComponentsV4.fromStr(exported);
 
   if (!components.data.row_id) {
     throw new Error("Exported span must have a row id");
   }
 
+  // While an ingestion key logger is current, project log spans are updated
+  // through its key and never through private credentials.
+  const resolvedState =
+    components.data.object_type === SpanObjectTypeV3.PROJECT_LOGS &&
+    usesIngestionKey(requestedState)
+      ? requestedState.currentLogger!.loggingState
+      : requestedState;
   updateSpanImpl({
     state: resolvedState,
     parentObjectType: components.data.object_type,
@@ -2761,8 +2831,12 @@ function spanComponentsToObjectIdLambda(
     return async () => projectId;
   }
   if (!components.data.compute_object_metadata_args) {
+    // Only ingestion key loggers export spans without their object, and
+    // private credentials must not be used in their place.
     throw new Error(
-      "Impossible: must provide either objectId or computeObjectMetadataArgs",
+      components.data.object_type === SpanObjectTypeV3.PROJECT_LOGS
+        ? "This span was exported without its project, which happens for loggers that use an ingestion key. Continue or update it through a logger that uses an ingestion key."
+        : "Impossible: must provide either objectId or computeObjectMetadataArgs",
     );
   }
   switch (components.data.object_type) {
@@ -3423,10 +3497,17 @@ function parseIngestionResponse<T>(schema: z.ZodType<T>, response: unknown) {
   } catch (error) {
     if (error instanceof ZodError) {
       const errorStr = JSON.stringify(error.flatten());
-      throw new Error(`Invalid response from ingestion endpoint: ${errorStr}`);
+      throw new IngestionProtocolError(
+        `Invalid response from ingestion endpoint: ${errorStr}`,
+      );
     }
     throw error;
   }
+}
+
+// Monotonic milliseconds, so that wall clock changes cannot extend a grant.
+function monotonicNow() {
+  return typeof performance !== "undefined" ? performance.now() : now();
 }
 
 export interface BackgroundLoggerOpts {
@@ -3527,18 +3608,24 @@ const RETRYABLE_HTTP_STATUS_CODES = new Set([500, 502, 503, 504]);
 const MAX_INGESTION_RETRY_AFTER_MS = 60_000;
 
 // Ingestion key requests are rejected permanently on auth or validation
-// failures, so only transient failures are retried. Returns undefined if the
-// request must not be retried.
+// failures and invalid responses, so only transient failures and expired
+// upload grants are retried. Returns undefined if the request must not be
+// retried.
 function ingestionRetryDelayMs(
   error: unknown,
   attempt: number,
 ): number | undefined {
   const backoffMs = BACKGROUND_LOGGER_BASE_SLEEP_TIME_S * 1000 * 2 ** attempt;
+  if (error instanceof IngestionProtocolError || error instanceof SyntaxError) {
+    return undefined;
+  }
   if (!(error instanceof FailedHTTPResponse)) {
     return backoffMs;
   }
+  // 410 means that an upload grant expired, so a new one is requested.
   if (
     error.status !== 408 &&
+    error.status !== 410 &&
     error.status !== 429 &&
     !RETRYABLE_HTTP_STATUS_CODES.has(error.status)
   ) {
@@ -4073,7 +4160,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
           await attachment.data(),
         );
         if (reference.type !== BRAINTRUST_ATTACHMENT) {
-          throw new Error(
+          throw new IngestionProtocolError(
             "Invalid response from ingestion endpoint: expected an attachment reference",
           );
         }
@@ -4111,7 +4198,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   private async uploadToIngestion(request: IngestionUploadRequest, data: Blob) {
     const conn = await this.apiConn.get();
     // The grant lifetime is relative, so anchor it before the request is sent.
-    const requestStart = now();
+    const requestStart = monotonicNow();
     const grant = parseIngestionResponse(
       ingestionUploadGrantSchema,
       // The optional sha256 is omitted, since computing it would read the
@@ -4122,22 +4209,38 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         ...(this.ingestion?.orgId ? { org_id: this.ingestion.orgId } : {}),
       }),
     );
-    const deadline = requestStart + grant.expires_in_ms;
     if (grant.num_chunks !== Math.ceil(data.size / grant.chunk_bytes)) {
-      throw new Error(
+      throw new IngestionProtocolError(
         `Invalid response from ingestion endpoint: ${grant.num_chunks} chunks of ${grant.chunk_bytes} bytes cannot hold ${data.size} bytes`,
       );
     }
-    const assertGrantActive = () => {
-      if (now() >= deadline) {
+    // Requests of the upload must finish before the grant expires.
+    const remainingMs = Math.floor(
+      requestStart + grant.expires_in_ms - monotonicNow(),
+    );
+    if (remainingMs <= 0) {
+      throw new Error("Ingestion upload expired before it completed");
+    }
+    const signal = AbortSignal.timeout(remainingMs);
+    try {
+      return await this.uploadIngestionChunks(conn, grant, data, signal);
+    } catch (error) {
+      if (signal.aborted) {
         throw new Error("Ingestion upload expired before it completed");
       }
-    };
+      throw error;
+    }
+  }
 
+  private async uploadIngestionChunks(
+    conn: HTTPConnection,
+    grant: z.infer<typeof ingestionUploadGrantSchema>,
+    data: Blob,
+    signal: AbortSignal,
+  ) {
     // On platforms like Cloudflare, fetch must not be called as a method.
     const fetch = conn.fetch;
     for (let index = 0; index < grant.num_chunks; index++) {
-      assertGrantActive();
       const chunk = data.slice(
         index * grant.chunk_bytes,
         (index + 1) * grant.chunk_bytes,
@@ -4156,27 +4259,31 @@ class HTTPBackgroundLogger implements BackgroundLogger {
               "Content-Type": "application/octet-stream",
             },
             body: chunk,
+            signal,
           },
         ),
       );
       const ack = parseIngestionResponse(
         ingestionUploadChunkSchema,
-        await response.json(),
+        await readJSONResponse(response),
       );
       if (ack.index !== index || ack.size_bytes !== chunk.size) {
-        throw new Error(
+        throw new IngestionProtocolError(
           `Invalid response from ingestion endpoint: chunk ${index} of ${chunk.size} bytes was acknowledged as chunk ${ack.index} of ${ack.size_bytes} bytes`,
         );
       }
     }
 
-    assertGrantActive();
     const completed = parseIngestionResponse(
       ingestionUploadCompleteSchema,
-      await conn.post_json(`v1/uploads/${grant.upload_id}/complete`, {}),
+      await conn.post_json(
+        `v1/uploads/${grant.upload_id}/complete`,
+        {},
+        signal,
+      ),
     );
     if (completed.size_bytes !== data.size) {
-      throw new Error(
+      throw new IngestionProtocolError(
         "Invalid response from ingestion endpoint: the completed upload does not match the uploaded data",
       );
     }
@@ -4315,7 +4422,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
               new Blob([dataStr], { type: "application/json" }),
             );
             if (reference.type !== LOGS3_OVERFLOW_REFERENCE_TYPE) {
-              throw new Error(
+              throw new IngestionProtocolError(
                 "Invalid response from ingestion endpoint: expected an overflow reference",
               );
             }
@@ -4352,6 +4459,10 @@ class HTTPBackgroundLogger implements BackgroundLogger {
       }
       if (error === undefined) {
         return;
+      }
+      if (error instanceof FailedHTTPResponse && error.status === 410) {
+        // The overflow upload expired, so the payload is uploaded again.
+        ingestionOverflowKey = null;
       }
 
       const retryDelayMs = this.ingestion
@@ -5644,7 +5755,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   const ingestionKey =
     options.ingestionKey ??
     (options.apiKey === undefined
-      ? iso.getEnv(INGESTION_KEY_ENV_VAR) || undefined
+      ? iso.getEnv(INGESTION_KEY_ENV_VAR)
       : undefined);
   if (ingestionKey !== undefined) {
     return initIngestionKeyLogger(ingestionKey, options);

@@ -13,6 +13,7 @@ import {
   type InitLoggerOptions,
   setMaskingFunction,
   traced,
+  updateSpan,
 } from "./logger";
 import {
   ingestionUploadChunkSchema,
@@ -42,6 +43,9 @@ interface RecordedRequest {
   method: string;
   headers: Record<string, string>;
   body: Uint8Array | string | undefined;
+  redirect: RequestRedirect | undefined;
+  keepalive: boolean | undefined;
+  signal: AbortSignal | undefined;
 }
 
 function json(data: unknown, status = 200) {
@@ -91,6 +95,9 @@ function mockIngestion(
         ),
       ),
       body,
+      redirect: init?.redirect,
+      keepalive: init?.keepalive,
+      signal: init?.signal ?? undefined,
     };
     requests.push(request);
     const override = await options.respond?.(request, requests.length - 1);
@@ -170,7 +177,14 @@ function initIngestionLogger(
   fetch: typeof globalThis.fetch,
   options: InitLoggerOptions<true> = {},
 ) {
-  const key = newKey();
+  return initIngestionLoggerWithKey(fetch, newKey(), options);
+}
+
+function initIngestionLoggerWithKey(
+  fetch: typeof globalThis.fetch,
+  key: string,
+  options: InitLoggerOptions<true> = {},
+) {
   const onFlushError = vi.fn();
   const logger = initLogger<true>({
     ingestionKey: ingestionUrl(key),
@@ -182,9 +196,18 @@ function initIngestionLogger(
   return { key, logger, onFlushError };
 }
 
+// Requests of the global (private) state never reach a real server.
+const privateFetch = vi.fn(async (input: RequestInfo | URL) => {
+  throw new Error(`Unexpected private request to ${String(input)}`);
+});
+
 beforeEach(() => {
   // Only flush explicitly, so the rows of a span are sent together.
   vi.stubEnv("BRAINTRUST_SYNC_FLUSH", "1");
+  privateFetch.mockClear();
+  _internalGetGlobalState().setFetch(
+    privateFetch as unknown as typeof globalThis.fetch,
+  );
 });
 
 afterEach(() => {
@@ -342,6 +365,9 @@ describe("initLogger with an ingestion key", () => {
     expect(logger.loggingState).toBe(state);
     expect(paths(requests)).toEqual(["GET /version", "POST /logs3"]);
     expect(requests[1].headers.authorization).toBe("Bearer private-api-key");
+    // The private transport keeps its keepalive requests.
+    expect(requests[1].keepalive).toBe(true);
+    expect(requests[1].redirect).toBeUndefined();
     expect(JSON.stringify(requests)).not.toContain(key);
 
     const apiKeyLogger = initLogger({ apiKey: "private-api-key" });
@@ -931,6 +957,300 @@ describe("initLogger with an ingestion key", () => {
     expect(inspect(logger.loggingState)).not.toContain(key);
     expect(JSON.stringify(logger.loggingState)).not.toContain(key);
     expect(String(logger.loggingState)).not.toContain(key);
+  });
+});
+
+describe("ingestion key transport", () => {
+  test("refuses redirects and does not follow them", async () => {
+    const { requests, fetch } = mockIngestion({
+      respond: () =>
+        new Response(null, {
+          status: 307,
+          headers: { Location: "https://attacker.example/v1/logs" },
+        }),
+    });
+    vi.stubEnv("BRAINTRUST_NUM_RETRIES", "2");
+    const { logger, onFlushError } = initIngestionLogger(fetch);
+
+    logger.log({ input: "a", output: "b" });
+    await logger.flush();
+
+    expect(onFlushError).toHaveBeenCalledTimes(1);
+    expect(String(onFlushError.mock.calls[0][0])).toContain("redirect");
+    expect(paths(requests)).toEqual(["POST /deployment/base/ingest/v1/logs"]);
+    expect(requests.every((r) => r.redirect === "error")).toBe(true);
+  });
+
+  test("asks fetch not to follow redirects for uploads", async () => {
+    const { requests, fetch } = mockIngestion({ chunkBytes: 4 });
+    const { logger, onFlushError } = initIngestionLogger(fetch);
+
+    logger.log({
+      input: new Attachment({
+        data: new ArrayBuffer(10),
+        filename: "a.bin",
+        contentType: "application/octet-stream",
+      }),
+      output: "x",
+    });
+    await logger.flush();
+
+    expect(onFlushError).not.toHaveBeenCalled();
+    expect(requests).toHaveLength(6);
+    expect(requests.every((r) => r.redirect === "error")).toBe(true);
+  });
+
+  test("redacts the key from error responses", async () => {
+    const key = newKey();
+    const { fetch } = mockIngestion({
+      respond: () =>
+        new Response(`invalid Authorization: Bearer ${key}`, {
+          status: 400,
+          statusText: `Bad ${key}`,
+        }),
+    });
+    const { logger, onFlushError } = initIngestionLoggerWithKey(fetch, key);
+
+    logger.log({ input: "a", output: "b" });
+    await logger.flush();
+
+    expect(onFlushError).toHaveBeenCalledTimes(1);
+    const reported = inspect(onFlushError.mock.calls[0][0], { depth: 10 });
+    expect(reported).not.toContain(key);
+    expect(reported).toContain("Bearer [REDACTED]");
+  });
+
+  test("redacts the key from network errors", async () => {
+    const key = newKey();
+    const fetch = vi.fn(async () => {
+      throw new TypeError(`connect failed for Bearer ${key}`, {
+        cause: new Error(key),
+      });
+    }) as unknown as typeof globalThis.fetch;
+    vi.stubEnv("BRAINTRUST_NUM_RETRIES", "0");
+    const { logger, onFlushError } = initIngestionLoggerWithKey(fetch, key);
+
+    logger.log({ input: "a", output: "b" });
+    await logger.flush();
+
+    expect(onFlushError).toHaveBeenCalledTimes(1);
+    const reported = inspect(onFlushError.mock.calls[0][0], { depth: 10 });
+    expect(reported).not.toContain(key);
+    expect(reported).toContain("connect failed for Bearer [REDACTED]");
+  });
+
+  test("requests a new grant when the server reports it expired", async () => {
+    let chunkRequests = 0;
+    const { requests, fetch } = mockIngestion({
+      respond: (request) =>
+        request.url.includes("/chunks/") && chunkRequests++ === 0
+          ? json({ error: "upload expired" }, 410)
+          : undefined,
+    });
+    vi.stubEnv("BRAINTRUST_NUM_RETRIES", "1");
+    const { logger, onFlushError } = initIngestionLogger(fetch);
+
+    logger.log({
+      input: new Attachment({
+        data: new ArrayBuffer(10),
+        filename: "a.bin",
+        contentType: "application/octet-stream",
+      }),
+      output: "x",
+    });
+    await logger.flush();
+
+    expect(onFlushError).not.toHaveBeenCalled();
+    const grants = requests.filter((r) => r.url.endsWith("/v1/uploads"));
+    expect(grants).toHaveLength(2);
+    expect(loggedRows(requests)).toHaveLength(1);
+  });
+
+  test("aborts upload requests that outlive the grant", async () => {
+    let grants = 0;
+    const { requests, fetch } = mockIngestion({
+      respond: (request) => {
+        if (request.url.endsWith("/v1/uploads") && grants++ === 0) {
+          return json(
+            {
+              upload_id: randomUUID(),
+              chunk_bytes: 512 * KIB,
+              num_chunks: 1,
+              expires_in_ms: 50,
+            },
+            201,
+          );
+        }
+        if (request.url.includes("/chunks/") && grants === 1) {
+          // Hang until the grant expires.
+          return new Promise<Response>((_, reject) =>
+            request.signal!.addEventListener("abort", () =>
+              reject(request.signal!.reason),
+            ),
+          );
+        }
+        return undefined;
+      },
+    });
+    vi.stubEnv("BRAINTRUST_NUM_RETRIES", "1");
+    const { logger, onFlushError } = initIngestionLogger(fetch);
+
+    logger.log({
+      input: new Attachment({
+        data: new ArrayBuffer(10),
+        filename: "a.bin",
+        contentType: "application/octet-stream",
+      }),
+      output: "x",
+    });
+    await logger.flush();
+
+    expect(onFlushError).not.toHaveBeenCalled();
+    expect(requests.filter((r) => r.url.endsWith("/v1/uploads"))).toHaveLength(
+      2,
+    );
+    expect(
+      requests.filter((r) => r.url.includes("/chunks/")).every((r) => r.signal),
+    ).toBe(true);
+    expect(loggedRows(requests)).toHaveLength(1);
+  });
+
+  test.each([
+    ["an invalid grant", { upload_id: "not-a-uuid" }],
+    [
+      "an impossible chunk plan",
+      {
+        upload_id: "00000000-0000-4000-8000-000000000001",
+        chunk_bytes: 4,
+        num_chunks: 1,
+        expires_in_ms: 300_000,
+      },
+    ],
+  ])("does not retry %s", async (_, grant) => {
+    const { requests, fetch } = mockIngestion({
+      respond: (request) =>
+        request.url.endsWith("/v1/uploads") ? json(grant, 201) : undefined,
+    });
+    vi.stubEnv("BRAINTRUST_NUM_RETRIES", "2");
+    const { logger, onFlushError } = initIngestionLogger(fetch);
+
+    logger.log({
+      input: new Attachment({
+        data: new ArrayBuffer(10),
+        filename: "a.bin",
+        contentType: "application/octet-stream",
+      }),
+      output: "x",
+    });
+    await logger.flush();
+
+    expect(onFlushError).toHaveBeenCalledTimes(1);
+    expect(String(onFlushError.mock.calls[0][0])).toContain(
+      "Invalid response from ingestion endpoint",
+    );
+    expect(paths(requests)).toEqual([
+      "POST /deployment/base/ingest/v1/uploads",
+    ]);
+  });
+
+  test("sends native bodies above the browser keepalive limit", async () => {
+    const mock = mockIngestion();
+    // Like browsers, reject keepalive requests with bodies above 64 KiB.
+    const browserFetch = (async (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
+      if (init?.keepalive && String(init.body ?? "").length > 64 * KIB) {
+        throw new TypeError("Failed to fetch");
+      }
+      return mock.fetch(input, init);
+    }) as typeof globalThis.fetch;
+    const { logger, onFlushError } = initIngestionLogger(browserFetch);
+
+    logger.log({ input: "x".repeat(200 * KIB), output: "inline" });
+    await logger.flush();
+
+    expect(onFlushError).not.toHaveBeenCalled();
+    expect(paths(mock.requests)).toEqual([
+      "POST /deployment/base/ingest/v1/logs",
+    ]);
+    const [request] = mock.requests;
+    expect(request.keepalive).toBe(false);
+    expect(String(request.body).length).toBeGreaterThan(64 * KIB);
+    expect(String(request.body).length).toBeLessThan(512 * KIB);
+  });
+
+  test("an empty BRAINTRUST_INGESTION_KEY fails instead of logging privately", () => {
+    vi.stubEnv("BRAINTRUST_INGESTION_KEY", "");
+    vi.stubEnv("BRAINTRUST_API_KEY", "private-api-key");
+    expect(() => initLogger({ noExitFlush: true })).toThrow(
+      "Invalid Braintrust ingestion key",
+    );
+  });
+});
+
+describe("updateSpan with ingestion keys", () => {
+  test("updates exported spans through the current ingestion key logger", async () => {
+    const { requests, fetch } = mockIngestion();
+    vi.stubEnv("BRAINTRUST_API_KEY", "private-api-key");
+    const { key, logger } = initIngestionLogger(fetch, {
+      projectId: "project-id",
+    });
+    const span = logger.startSpan({ name: "root" });
+    span.end();
+    const exported = await span.export();
+
+    updateSpan({ exported, output: "updated" });
+    await flush();
+
+    expect(privateFetch).not.toHaveBeenCalled();
+    expect(
+      requests.every((r) => r.headers.authorization === `Bearer ${key}`),
+    ).toBe(true);
+    expect(loggedRows(requests)).toContainEqual(
+      expect.objectContaining({
+        id: span.id,
+        output: "updated",
+        project_id: "project-id",
+      }),
+    );
+  });
+
+  test("updates exported spans without a project through the logger state", async () => {
+    const { requests, fetch } = mockIngestion();
+    const { key, logger } = initIngestionLogger(fetch, { setCurrent: false });
+    const span = logger.startSpan({ name: "root" });
+    span.end();
+    const exported = await span.export();
+
+    updateSpan({ exported, output: "updated", state: logger.loggingState });
+    await logger.flush();
+
+    const update = loggedRows(requests).find((row) => row.output === "updated");
+    expect(update).toMatchObject({ id: span.id, log_id: "g" });
+    expect(update).not.toHaveProperty("project_id");
+    expect(
+      requests.every((r) => r.headers.authorization === `Bearer ${key}`),
+    ).toBe(true);
+  });
+
+  test("rejects exported spans without a project instead of using private credentials", async () => {
+    const { requests, fetch } = mockIngestion();
+    vi.stubEnv("BRAINTRUST_API_KEY", "private-api-key");
+    const { logger } = initIngestionLogger(fetch, { setCurrent: false });
+    const span = logger.startSpan({ name: "root" });
+    span.end();
+    const exported = await span.export();
+
+    expect(() => updateSpan({ exported, output: "updated" })).toThrow(
+      "exported without its project",
+    );
+    await flush();
+    await logger.flush();
+    expect(privateFetch).not.toHaveBeenCalled();
+    expect(loggedRows(requests).some((row) => row.output === "updated")).toBe(
+      false,
+    );
   });
 });
 
