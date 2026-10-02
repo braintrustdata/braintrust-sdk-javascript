@@ -17,8 +17,8 @@ import type {
 import { BasePlugin } from "../core";
 import type { AsyncEndOf } from "../core/channel-definitions";
 import {
-  traceAsyncChannel,
-  traceStreamingChannel,
+  interceptAsyncChannel,
+  interceptStreamingChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
 import { ollamaChannels } from "./ollama-channels";
@@ -26,7 +26,7 @@ import { ollamaChannels } from "./ollama-channels";
 export class OllamaPlugin extends BasePlugin {
   protected onEnable(): void {
     this.unsubscribers.push(
-      traceStreamingChannel(ollamaChannels.chat, {
+      interceptStreamingChannel(ollamaChannels.chat, {
         name: "ollama.chat",
         type: SpanTypeAttribute.LLM,
         extractInput: extractOllamaChatInput,
@@ -39,7 +39,7 @@ export class OllamaPlugin extends BasePlugin {
         extractMetrics: extractOllamaMetrics,
         aggregateChunks: aggregateOllamaChatChunks,
       }),
-      traceStreamingChannel(ollamaChannels.generate, {
+      interceptStreamingChannel(ollamaChannels.generate, {
         name: "ollama.generate",
         type: SpanTypeAttribute.LLM,
         extractInput: extractOllamaGenerateInput,
@@ -48,7 +48,7 @@ export class OllamaPlugin extends BasePlugin {
         extractMetrics: extractOllamaMetrics,
         aggregateChunks: aggregateOllamaGenerateChunks,
       }),
-      traceAsyncChannel(ollamaChannels.embed, {
+      interceptAsyncChannel(ollamaChannels.embed, {
         name: "ollama.embed",
         type: SpanTypeAttribute.LLM,
         extractInput: extractOllamaEmbedInput,
