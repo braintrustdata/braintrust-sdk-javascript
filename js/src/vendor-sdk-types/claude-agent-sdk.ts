@@ -16,6 +16,14 @@ export interface ClaudeAgentSDKUsage {
   };
 }
 
+export interface ClaudeAgentSDKModelUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadInputTokens: number;
+  cacheCreationInputTokens: number;
+  costUSD: number;
+}
+
 interface ClaudeAgentSDKRawStreamEvent {
   type?: string;
   message?: {
@@ -55,16 +63,7 @@ export interface ClaudeAgentSDKMessage {
   event?: ClaudeAgentSDKRawStreamEvent;
   parent_tool_use_id?: string | null;
   usage?: ClaudeAgentSDKUsage | TaskUsage;
-  modelUsage?: Record<
-    string,
-    {
-      inputTokens: number;
-      outputTokens: number;
-      cacheReadInputTokens: number;
-      cacheCreationInputTokens: number;
-      costUSD: number;
-    }
-  >;
+  modelUsage?: Record<string, ClaudeAgentSDKModelUsage>;
   total_cost_usd?: number;
   num_turns?: number;
   session_id?: string;
@@ -93,6 +92,8 @@ export interface ClaudeAgentSDKQueryOptions {
   maxTurns?: number;
   cwd?: string;
   continue?: boolean;
+  resume?: string;
+  forkSession?: boolean;
   allowedTools?: string[];
   disallowedTools?: string[];
   additionalDirectories?: string[];

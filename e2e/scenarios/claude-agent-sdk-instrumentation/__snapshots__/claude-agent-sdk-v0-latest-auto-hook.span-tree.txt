@@ -22,16 +22,16 @@ span_tree:
     │       }
     │       metadata: {
     │         "model": "claude-haiku-4-5",
-    │         "model_usage": {
-    │           "cache_creation_input_tokens": 199,
-    │           "cache_read_input_tokens": 48486,
-    │           "input_tokens": 375,
-    │           "output_tokens": 235
-    │         },
     │         "num_turns": 2,
     │         "permissionMode": "bypassPermissions",
     │         "session_id": "<uuid:1>",
     │         "total_cost_usd": 0.006647350000000001
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 19,
+    │         "estimated_cost": 0.00045200000000000004,
+    │         "prompt_tokens": 357,
+    │         "tokens": 376
     │       }
     │       ├── anthropic.messages.create [llm]
     │       │   input: [
@@ -197,8 +197,7 @@ span_tree:
     │         "model": "claude-haiku-4-5",
     │         "num_turns": 1,
     │         "permissionMode": "bypassPermissions",
-    │         "session_id": "<uuid:1>",
-    │         "total_cost_usd": 0.008567
+    │         "session_id": "<uuid:1>"
     │       }
     │       metrics: {
     │         "completion_tokens": 623,
@@ -310,16 +309,18 @@ span_tree:
     │           "Task"
     │         ],
     │         "model": "claude-haiku-4-5",
-    │         "model_usage": {
-    │           "cache_creation_input_tokens": 2657,
-    │           "cache_read_input_tokens": 84331,
-    │           "input_tokens": 398,
-    │           "output_tokens": 430
-    │         },
     │         "num_turns": 2,
     │         "permissionMode": "bypassPermissions",
     │         "session_id": "<uuid:1>",
     │         "total_cost_usd": 0.01430235
+    │       }
+    │       metrics: {
+    │         "completion_tokens": 136,
+    │         "estimated_cost": 0.00311275,
+    │         "prompt_cache_creation_tokens": 125,
+    │         "prompt_cached_tokens": 18995,
+    │         "prompt_tokens": 19497,
+    │         "tokens": 19633
     │       }
     │       ├── anthropic.messages.create [llm]
     │       │   input: [
@@ -491,8 +492,7 @@ span_tree:
     │       │       │   ]
     │       │       │   metadata: {
     │       │       │     "model": "claude-haiku-4-5-20251001",
-    │       │       │     "provider": "anthropic",
-    │       │       │     "usage_output_tokens_unknown": true
+    │       │       │     "provider": "anthropic"
     │       │       │   }
     │       │       │   metrics: {
     │       │       │     "prompt_cache_creation_1h_tokens": 0,
@@ -603,8 +603,7 @@ span_tree:
     │         "model": "claude-sonnet-4-5",
     │         "num_turns": 2,
     │         "permissionMode": "bypassPermissions",
-    │         "session_id": "<uuid:1>",
-    │         "total_cost_usd": 0.0260076
+    │         "session_id": "<uuid:1>"
     │       }
     │       metrics: {
     │         "completion_tokens": 460,
@@ -866,8 +865,7 @@ span_tree:
               "model": "claude-haiku-4-5",
               "num_turns": 2,
               "permissionMode": "bypassPermissions",
-              "session_id": "<uuid:1>",
-              "total_cost_usd": 0.00964865
+              "session_id": "<uuid:1>"
             }
             metrics: {
               "completion_tokens": 281,

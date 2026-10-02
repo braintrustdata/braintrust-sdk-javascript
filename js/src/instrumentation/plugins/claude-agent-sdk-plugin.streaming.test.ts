@@ -224,18 +224,16 @@ describe("Claude Agent SDK streaming instrumentation", () => {
 
   it("aggregates delegated usage on the task span without partial messages", async () => {
     const messages = [
-      assistantTextMessage("main", null, 100),
-      assistantTextMessage("subagent", "task-1", 200),
+      assistantTextMessage("claude-sonnet-4-5", null, 100),
+      assistantTextMessage("claude-haiku-4-5", "task-1", 200),
       delegatedResultMessage,
     ];
     const { root, llms } = await runQuery(messages, {
       model: "claude-sonnet-4-5",
     });
 
-    expect(root?.metadata).toMatchObject({
-      model: "claude-sonnet-4-5",
-      total_cost_usd: 0.125,
-    });
+    expect(root?.metadata?.model).toBe("claude-sonnet-4-5");
+    expect(root?.metadata?.total_cost_usd).toBeUndefined();
     expect(root?.metrics).toMatchObject({
       prompt_tokens: 300,
       completion_tokens: 120,
@@ -248,12 +246,11 @@ describe("Claude Agent SDK streaming instrumentation", () => {
     }
   });
 
-  it("keeps delegated usage in task metadata with partial messages", async () => {
+  it("reports unstreamed sub-agent usage on the task span with partial messages", async () => {
     const messages = [
-      ...streamEvents("main", null, 100, 50),
-      assistantTextMessage("main", null, 100),
-      ...streamEvents("subagent", "task-1", 200, 70),
-      assistantTextMessage("subagent", "task-1", 200),
+      ...streamEvents("claude-sonnet-4-5-20250929", null, 100, 50),
+      assistantTextMessage("claude-sonnet-4-5-20250929", null, 100),
+      assistantTextMessage("claude-haiku-4-5-20251001", "task-1", 200),
       delegatedResultMessage,
     ];
     const { root, llms } = await runQuery(messages, {
@@ -263,45 +260,114 @@ describe("Claude Agent SDK streaming instrumentation", () => {
 
     expect(root?.metadata).toMatchObject({
       model: "claude-sonnet-4-5",
-      model_usage: {
-        input_tokens: 300,
-        output_tokens: 120,
-        cache_read_input_tokens: 0,
-        cache_creation_input_tokens: 0,
-      },
       total_cost_usd: 0.125,
     });
-    expect(root?.metrics?.tokens).toBeUndefined();
-    expect(root?.metrics?.estimated_cost).toBeUndefined();
+    expect(root?.metrics).toMatchObject({
+      completion_tokens: 70,
+      tokens: 70,
+      // The sub-agent's unlogged share of its model cost, weighting output tokens 5x.
+      estimated_cost: expect.closeTo((0.025 * 350) / 550, 10),
+    });
+    expect(root?.metrics?.prompt_tokens).toBeUndefined();
     expect(llms.map((llm) => llm.metrics)).toEqual([
       expect.objectContaining({
         prompt_tokens: 100,
         completion_tokens: 50,
         tokens: 150,
       }),
-      expect.objectContaining({
-        prompt_tokens: 200,
-        completion_tokens: 70,
-        tokens: 270,
-      }),
+      expect.not.objectContaining({ completion_tokens: expect.anything() }),
     ]);
-    for (const llm of llms) {
-      expect(llm.metadata?.usage_output_tokens_unknown).toBeUndefined();
-    }
+    expect(llms[1].metrics?.prompt_tokens).toBe(200);
   });
 
-  it("marks subagent output usage as unknown without subagent stream events", async () => {
-    const {
-      llms: [llm],
-    } = await runQuery(
-      [assistantTextMessage("subagent", "task-1", 200), delegatedResultMessage],
+  it("does not count streamed usage again on the task span", async () => {
+    const { root } = await runQuery(
+      [
+        ...streamEvents("claude-sonnet-4-5-20250929", null, 100, 50),
+        assistantTextMessage("claude-sonnet-4-5-20250929", null, 100),
+        ...streamEvents("claude-haiku-4-5-20251001", "task-1", 200, 70),
+        assistantTextMessage("claude-haiku-4-5-20251001", "task-1", 200),
+        delegatedResultMessage,
+      ],
       { includePartialMessages: true },
     );
 
-    expect(llm.metrics?.prompt_tokens).toBe(200);
-    expect(llm.metrics?.completion_tokens).toBeUndefined();
-    expect(llm.metrics?.tokens).toBeUndefined();
-    expect(llm.metadata?.usage_output_tokens_unknown).toBe(true);
+    expect(root?.metrics?.prompt_tokens).toBeUndefined();
+    expect(root?.metrics?.completion_tokens).toBeUndefined();
+    expect(root?.metrics?.tokens).toBeUndefined();
+    expect(root?.metrics?.estimated_cost).toBeUndefined();
+  });
+
+  it.each([
+    "claude-haiku-4-5",
+    "claude-haiku-4-5-20251001",
+    "claude-haiku-4-5@20251001",
+    "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  ])("matches streamed usage to the %s model usage", async (modelUsageKey) => {
+    const { root } = await runQuery(
+      [
+        ...streamEvents("claude-haiku-4-5-20251001", null, 100, 50),
+        assistantTextMessage("claude-haiku-4-5-20251001", null, 100),
+        {
+          type: "result",
+          modelUsage: {
+            [modelUsageKey]: {
+              inputTokens: 100,
+              outputTokens: 50,
+              cacheReadInputTokens: 0,
+              cacheCreationInputTokens: 0,
+              costUSD: 0.01,
+            },
+          },
+        },
+      ],
+      { includePartialMessages: true },
+    );
+
+    expect(root?.metrics?.tokens).toBeUndefined();
+    expect(root?.metrics?.estimated_cost).toBeUndefined();
+  });
+
+  it.each([{ resume: "session-1" }, { continue: true }])(
+    "ignores the restored session usage when resuming with %j",
+    async (options) => {
+      const { root } = await runQuery([delegatedResultMessage], options);
+
+      expect(root?.metrics).toMatchObject({
+        prompt_tokens: 100,
+        completion_tokens: 50,
+        tokens: 150,
+      });
+      expect(root?.metrics?.estimated_cost).toBeUndefined();
+    },
+  );
+
+  it("ignores the restored session usage when resuming with partial messages", async () => {
+    const { root } = await runQuery(
+      [
+        ...streamEvents("claude-sonnet-4-5", null, 100, 50),
+        assistantTextMessage("claude-sonnet-4-5", null, 100),
+        delegatedResultMessage,
+      ],
+      { resume: "session-1", includePartialMessages: true },
+    );
+
+    expect(root?.metadata?.total_cost_usd).toBeUndefined();
+    expect(root?.metrics?.tokens).toBeUndefined();
+    expect(root?.metrics?.estimated_cost).toBeUndefined();
+  });
+
+  it("uses all-agent usage when forking a resumed session", async () => {
+    const { root } = await runQuery([delegatedResultMessage], {
+      resume: "session-1",
+      forkSession: true,
+    });
+
+    expect(root?.metrics).toMatchObject({
+      prompt_tokens: 300,
+      completion_tokens: 120,
+      estimated_cost: 0.125,
+    });
   });
 
   it.each([undefined, {}])(

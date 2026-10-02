@@ -167,12 +167,6 @@
               },
               "metadata": {
                 "model": "claude-haiku-4-5",
-                "model_usage": {
-                  "cache_creation_input_tokens": 18988,
-                  "cache_read_input_tokens": 18783,
-                  "input_tokens": 18,
-                  "output_tokens": 219
-                },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
                 "session_id": "<uuid:1>",
@@ -312,8 +306,7 @@
                 "model": "claude-haiku-4-5",
                 "num_turns": 1,
                 "permissionMode": "bypassPermissions",
-                "session_id": "<uuid:1>",
-                "total_cost_usd": 0.0272325
+                "session_id": "<uuid:1>"
               },
               "metrics": {
                 "completion_tokens": 361,
@@ -434,8 +427,7 @@
                           ],
                           "metadata": {
                             "model": "claude-haiku-4-5-20251001",
-                            "provider": "anthropic",
-                            "usage_output_tokens_unknown": true
+                            "provider": "anthropic"
                           },
                           "metrics": {
                             "prompt_cache_creation_1h_tokens": 0,
@@ -617,16 +609,18 @@
                   "Task"
                 ],
                 "model": "claude-haiku-4-5",
-                "model_usage": {
-                  "cache_creation_input_tokens": 46002,
-                  "cache_read_input_tokens": 45570,
-                  "input_tokens": 27,
-                  "output_tokens": 421
-                },
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
                 "session_id": "<uuid:1>",
                 "total_cost_usd": 0.06419149999999998
+              },
+              "metrics": {
+                "completion_tokens": 124,
+                "estimated_cost": 0.0034581499999999992,
+                "prompt_cache_creation_tokens": 125,
+                "prompt_cached_tokens": 26759,
+                "prompt_tokens": 26890,
+                "tokens": 27014
               }
             }
           ],
@@ -897,8 +891,7 @@
                 "model": "claude-sonnet-4-5",
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
-                "session_id": "<uuid:1>",
-                "total_cost_usd": 0.10557169999999999
+                "session_id": "<uuid:1>"
               },
               "metrics": {
                 "completion_tokens": 415,
@@ -1059,8 +1052,7 @@
                 "model": "claude-haiku-4-5",
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
-                "session_id": "<uuid:1>",
-                "total_cost_usd": 0.00518855
+                "session_id": "<uuid:1>"
               },
               "metrics": {
                 "completion_tokens": 233,
