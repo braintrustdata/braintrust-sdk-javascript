@@ -1,3 +1,4 @@
+import { markInvocationContext } from "../global-instrumentation-hooks";
 import { openRouterAgentChannels } from "../instrumentation/plugins/openrouter-agent-channels";
 import type {
   OpenRouterAgentClient,
@@ -5,8 +6,8 @@ import type {
 } from "../vendor-sdk-types/openrouter-agent";
 
 /**
- * Wrap an @openrouter/agent OpenRouter client so callModel() emits
- * diagnostics-channel events consumed by the OpenRouter Agent plugin.
+ * Wrap an @openrouter/agent OpenRouter client so callModel() passes through
+ * the Braintrust instrumentation hooks consumed by the OpenRouter Agent plugin.
  */
 export function wrapOpenRouterAgent<T extends object>(agent: T): T {
   const candidate: unknown = agent;
@@ -70,11 +71,18 @@ function wrapCallModel(
       const invocationTarget =
         thisArg === undefined ? (defaultThis ?? thisArg) : thisArg;
 
+      // Existing consumers observe callModel() through traceSync(). Like
+      // generated auto-instrumentation, keep that lifecycle around the
+      // intercepted call and mark its context as interceptor-owned.
       return openRouterAgentChannels.callModel.traceSync(
-        () => Reflect.apply(target, invocationTarget, [request, options]),
-        {
-          arguments: [request],
-        } as Parameters<typeof openRouterAgentChannels.callModel.traceSync>[1],
+        () =>
+          openRouterAgentChannels.callModel.invoke(
+            target,
+            invocationTarget,
+            [request, options],
+            {},
+          ),
+        markInvocationContext({ arguments: [request] }),
       );
     },
   });

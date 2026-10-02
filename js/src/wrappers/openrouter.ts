@@ -1,25 +1,12 @@
 import { openRouterChannels } from "../instrumentation/plugins/openrouter-channels";
 import type {
   OpenRouterBeta,
-  OpenRouterCallModelRequest,
-  OpenRouterChat,
   OpenRouterClient,
-  OpenRouterEmbeddingCreateParams,
-  OpenRouterEmbeddingResponse,
-  OpenRouterEmbeddings,
-  OpenRouterRerank,
-  OpenRouterRerankCreateParams,
-  OpenRouterRerankResult,
-  OpenRouterResponses,
-  OpenRouterResponsesCreateParams,
-  OpenRouterResponsesResult,
-  OpenRouterChatCreateParams,
-  OpenRouterChatResult,
 } from "../vendor-sdk-types/openrouter";
 
 /**
- * Wrap an OpenRouter client (created with `new OpenRouter(...)`) so calls emit
- * diagnostics-channel events that Braintrust plugins can consume.
+ * Wrap an OpenRouter client (created with `new OpenRouter(...)`) so calls pass
+ * through the Braintrust instrumentation hooks.
  */
 export function wrapOpenRouter<T>(openrouter: T): T {
   const or: unknown = openrouter;
@@ -53,18 +40,30 @@ function openRouterProxy(openrouter: OpenRouterClient): OpenRouterClient {
     get(target, prop, receiver) {
       switch (prop) {
         case "chat":
-          return target.chat ? chatProxy(target.chat) : target.chat;
+          return target.chat
+            ? methodProxy(target.chat, "send", openRouterChannels.chatSend)
+            : target.chat;
         case "embeddings":
           return target.embeddings
-            ? embeddingsProxy(target.embeddings)
+            ? methodProxy(
+                target.embeddings,
+                "generate",
+                openRouterChannels.embeddingsGenerate,
+              )
             : target.embeddings;
         case "rerank":
-          return target.rerank ? rerankProxy(target.rerank) : target.rerank;
+          return target.rerank
+            ? methodProxy(
+                target.rerank,
+                "rerank",
+                openRouterChannels.rerankRerank,
+              )
+            : target.rerank;
         case "beta":
           return target.beta ? betaProxy(target.beta) : target.beta;
         case "callModel":
           return typeof target.callModel === "function"
-            ? wrapCallModel(target.callModel.bind(target))
+            ? wrapCallModel(target)
             : target.callModel;
         default:
           return Reflect.get(target, prop, receiver);
@@ -77,123 +76,60 @@ function betaProxy(beta: OpenRouterBeta): OpenRouterBeta {
   return new Proxy(beta, {
     get(target, prop, receiver) {
       if (prop === "responses") {
-        return target.responses ? responsesProxy(target.responses) : undefined;
+        return target.responses
+          ? methodProxy(
+              target.responses,
+              "send",
+              openRouterChannels.betaResponsesSend,
+            )
+          : undefined;
       }
       return Reflect.get(target, prop, receiver);
     },
   });
 }
 
-function chatProxy(chat: OpenRouterChat): OpenRouterChat {
-  return new Proxy(chat, {
+function methodProxy<
+  T extends Record<K, (request: never, options?: unknown) => unknown>,
+  K extends string,
+>(
+  object: T,
+  method: K,
+  channel: {
+    invoke(
+      target: T[K],
+      thisArg: T,
+      args: Parameters<T[K]>,
+      additional: object,
+    ): unknown;
+  },
+): T {
+  return new Proxy(object, {
     get(target, prop, receiver) {
-      if (prop === "send") {
-        return wrapChatSend(target.send.bind(target));
+      if (prop !== method) {
+        return Reflect.get(target, prop, receiver);
       }
-      return Reflect.get(target, prop, receiver);
+      const boundMethod = target[method].bind(target) as T[K];
+      return (request: unknown, options?: unknown) =>
+        channel.invoke(
+          boundMethod,
+          target,
+          [request, options] as unknown as Parameters<T[K]>,
+          {},
+        );
     },
   });
-}
-
-function embeddingsProxy(
-  embeddings: OpenRouterEmbeddings,
-): OpenRouterEmbeddings {
-  return new Proxy(embeddings, {
-    get(target, prop, receiver) {
-      if (prop === "generate") {
-        return wrapEmbeddingsGenerate(target.generate.bind(target));
-      }
-      return Reflect.get(target, prop, receiver);
-    },
-  });
-}
-
-function responsesProxy(responses: OpenRouterResponses): OpenRouterResponses {
-  return new Proxy(responses, {
-    get(target, prop, receiver) {
-      if (prop === "send") {
-        return wrapResponsesSend(target.send.bind(target));
-      }
-      return Reflect.get(target, prop, receiver);
-    },
-  });
-}
-
-function rerankProxy(rerank: OpenRouterRerank): OpenRouterRerank {
-  return new Proxy(rerank, {
-    get(target, prop, receiver) {
-      if (prop === "rerank") {
-        return wrapRerank(target.rerank.bind(target));
-      }
-      return Reflect.get(target, prop, receiver);
-    },
-  });
-}
-
-function wrapChatSend(
-  send: (
-    request: OpenRouterChatCreateParams,
-    options?: unknown,
-  ) => Promise<OpenRouterChatResult>,
-): OpenRouterChat["send"] {
-  return (request, options) =>
-    openRouterChannels.chatSend.tracePromise(() => send(request, options), {
-      arguments: [request],
-    } as Parameters<typeof openRouterChannels.chatSend.tracePromise>[1]);
-}
-
-function wrapEmbeddingsGenerate(
-  generate: (
-    request: OpenRouterEmbeddingCreateParams,
-    options?: unknown,
-  ) => Promise<OpenRouterEmbeddingResponse>,
-): OpenRouterEmbeddings["generate"] {
-  return (request, options) =>
-    openRouterChannels.embeddingsGenerate.tracePromise(
-      () => generate(request, options),
-      { arguments: [request] },
-    );
-}
-
-function wrapResponsesSend(
-  send: (
-    request: OpenRouterResponsesCreateParams,
-    options?: unknown,
-  ) => Promise<OpenRouterResponsesResult>,
-): OpenRouterResponses["send"] {
-  return (request, options) =>
-    openRouterChannels.betaResponsesSend.tracePromise(
-      () => send(request, options),
-      { arguments: [request] },
-    );
-}
-
-function wrapRerank(
-  rerank: (
-    request: OpenRouterRerankCreateParams,
-    options?: unknown,
-  ) => Promise<OpenRouterRerankResult>,
-): OpenRouterRerank["rerank"] {
-  return (request, options) =>
-    openRouterChannels.rerankRerank.tracePromise(
-      () => rerank(request, options),
-      { arguments: [request] },
-    );
 }
 
 function wrapCallModel(
-  callModel: (
-    request: OpenRouterCallModelRequest,
-    options?: unknown,
-  ) => unknown,
+  openrouter: OpenRouterClient,
 ): NonNullable<OpenRouterClient["callModel"]> {
-  return (request, options) => {
-    const tracedRequest = { ...request };
-    return openRouterChannels.callModel.traceSync(
-      () => callModel(tracedRequest, options),
-      {
-        arguments: [tracedRequest],
-      } as Parameters<typeof openRouterChannels.callModel.traceSync>[1],
+  const callModel = openrouter.callModel!;
+  return (request, options) =>
+    openRouterChannels.callModel.invoke(
+      callModel,
+      openrouter,
+      [{ ...request }, options],
+      {},
     );
-  };
 }

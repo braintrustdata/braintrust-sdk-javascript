@@ -26,7 +26,7 @@ export const openRouterChannels = defineChannels(
   "@openrouter/sdk",
   {
     chatSend: channel<
-      [OpenRouterChatCreateParams],
+      [OpenRouterChatCreateParams, options?: unknown],
       OpenRouterChatResult,
       Record<string, unknown>,
       OpenRouterChatCompletionChunk
@@ -36,7 +36,7 @@ export const openRouterChannels = defineChannels(
     }),
 
     embeddingsGenerate: channel<
-      [OpenRouterEmbeddingCreateParams],
+      [OpenRouterEmbeddingCreateParams, options?: unknown],
       OpenRouterEmbeddingResponse
     >({
       channelName: "embeddings.generate",
@@ -44,7 +44,7 @@ export const openRouterChannels = defineChannels(
     }),
 
     rerankRerank: channel<
-      [OpenRouterRerankCreateParams],
+      [OpenRouterRerankCreateParams, options?: unknown],
       OpenRouterRerankResult
     >({
       channelName: "rerank.rerank",
@@ -52,7 +52,7 @@ export const openRouterChannels = defineChannels(
     }),
 
     betaResponsesSend: channel<
-      [OpenRouterResponsesCreateParams],
+      [OpenRouterResponsesCreateParams, options?: unknown],
       OpenRouterResponsesResult,
       Record<string, unknown>,
       OpenRouterResponseStreamEvent
@@ -61,7 +61,10 @@ export const openRouterChannels = defineChannels(
       kind: "async",
     }),
 
-    callModel: channel<[OpenRouterCallModelRequest], unknown>({
+    callModel: channel<
+      [OpenRouterCallModelRequest, options?: unknown],
+      unknown
+    >({
       channelName: "callModel",
       kind: "sync-stream",
     }),
@@ -79,19 +82,12 @@ export const openRouterChannels = defineChannels(
     }),
 
     toolExecute: channel<
-      [unknown],
-      unknown | AsyncIterable<unknown>,
-      {
-        span_info?: {
-          name?: string;
-        };
-        toolCallId?: string;
-        toolName: string;
-      },
-      unknown
+      unknown[],
+      unknown,
+      { toolCallId?: string; toolName: string }
     >({
       channelName: "tool.execute",
-      kind: "async",
+      kind: "sync-stream",
     }),
   },
   { instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER },

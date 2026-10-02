@@ -91,7 +91,10 @@ export type OpenRouterAgentCallModelRequest = {
   [key: string]: unknown;
 };
 
-export type OpenRouterAgentCallModelArgs = [OpenRouterAgentCallModelRequest];
+export type OpenRouterAgentCallModelArgs = [
+  OpenRouterAgentCallModelRequest,
+  options?: unknown,
+];
 
 export type OpenRouterAgentClient = {
   callModel?: (

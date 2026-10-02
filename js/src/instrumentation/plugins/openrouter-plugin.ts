@@ -1,21 +1,22 @@
 import { BasePlugin, toLoggedError } from "../core";
 import {
+  interceptAsyncChannel,
+  interceptStreamingChannel,
+  interceptSyncStreamChannel,
   traceAsyncChannel,
-  traceStreamingChannel,
   traceSyncStreamChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
-import type { ChannelMessage } from "../core/channel-definitions";
-import {
-  SpanTypeAttribute,
-  isObject,
-  isPromiseLike,
-} from "../../../util/index";
+import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { withCurrent } from "../../logger";
 import type { Span } from "../../logger";
 import { getCurrentUnixTimestamp } from "../../util";
 import { zodToJsonSchema } from "../../zod/utils";
 import { openRouterChannels } from "./openrouter-channels";
+import {
+  interceptToolExecute,
+  traceLegacyCallers,
+} from "./openrouter-tracing-adapters";
 import type {
   OpenRouterChatChoice,
   OpenRouterChatCompletionChunk,
@@ -39,7 +40,7 @@ export class OpenRouterPlugin extends BasePlugin {
 
   private subscribeToOpenRouterChannels(): void {
     this.unsubscribers.push(
-      traceStreamingChannel(openRouterChannels.chatSend, {
+      interceptStreamingChannel(openRouterChannels.chatSend, {
         name: "openrouter.chat.send",
         type: SpanTypeAttribute.LLM,
         extractInput: (args) => {
@@ -70,7 +71,7 @@ export class OpenRouterPlugin extends BasePlugin {
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(openRouterChannels.embeddingsGenerate, {
+      interceptAsyncChannel(openRouterChannels.embeddingsGenerate, {
         name: "openrouter.embeddings.generate",
         type: SpanTypeAttribute.LLM,
         extractInput: (args) => {
@@ -116,39 +117,48 @@ export class OpenRouterPlugin extends BasePlugin {
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(openRouterChannels.rerankRerank, {
-        name: "openrouter.rerank.rerank",
-        type: SpanTypeAttribute.LLM,
-        extractInput: (args) => {
-          const request = getOpenRouterRequestArg(args);
-          const requestBody = isObject(request?.requestBody)
-            ? request.requestBody
-            : {};
-          const httpReferer = request?.httpReferer;
-          const xTitle = request?.xTitle ?? request?.appTitle;
-          const { documents, query, ...metadata } = requestBody;
-          return {
-            input: {
-              documents,
-              query,
-            },
-            metadata: buildOpenRouterRerankMetadata(
-              metadata,
-              documents,
-              httpReferer,
-              xTitle,
-            ),
-          };
+      // Existing rerank consumers also call tracePromise() directly.
+      traceLegacyCallers(
+        openRouterChannels.rerankRerank,
+        {
+          name: "openrouter.rerank.rerank",
+          type: SpanTypeAttribute.LLM,
+          extractInput: (args) => {
+            const request = getOpenRouterRequestArg(args);
+            const requestBody = isObject(request?.requestBody)
+              ? request.requestBody
+              : {};
+            const httpReferer = request?.httpReferer;
+            const xTitle = request?.xTitle ?? request?.appTitle;
+            const { documents, query, ...metadata } = requestBody;
+            return {
+              input: {
+                documents,
+                query,
+              },
+              metadata: buildOpenRouterRerankMetadata(
+                metadata,
+                documents,
+                httpReferer,
+                xTitle,
+              ),
+            };
+          },
+          extractOutput: (result) => extractOpenRouterRerankOutput(result),
+          extractMetadata: (result) =>
+            extractOpenRouterResponseMetadata(result),
+          extractMetrics: (result) =>
+            isObject(result)
+              ? parseOpenRouterMetricsFromUsage(result.usage)
+              : {},
         },
-        extractOutput: (result) => extractOpenRouterRerankOutput(result),
-        extractMetadata: (result) => extractOpenRouterResponseMetadata(result),
-        extractMetrics: (result) =>
-          isObject(result) ? parseOpenRouterMetricsFromUsage(result.usage) : {},
-      }),
+        traceAsyncChannel<typeof openRouterChannels.rerankRerank>,
+        interceptAsyncChannel<typeof openRouterChannels.rerankRerank>,
+      ),
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(openRouterChannels.betaResponsesSend, {
+      interceptStreamingChannel(openRouterChannels.betaResponsesSend, {
         name: "openrouter.beta.responses.send",
         type: SpanTypeAttribute.LLM,
         extractInput: (args) => {
@@ -179,32 +189,43 @@ export class OpenRouterPlugin extends BasePlugin {
     );
 
     this.unsubscribers.push(
-      traceSyncStreamChannel(openRouterChannels.callModel, {
-        name: "openrouter.callModel",
-        type: SpanTypeAttribute.TASK,
-        extractInput: (args) => {
-          const request = getOpenRouterCallModelRequestArg(args);
-          return {
-            input: request
-              ? extractOpenRouterCallModelInput(request)
-              : undefined,
-            metadata: request
-              ? extractOpenRouterCallModelMetadata(request)
-              : { provider: "openrouter" },
-          };
-        },
-        patchResult: ({ endEvent, result, span }) => {
-          return patchOpenRouterCallModelResult({
-            request: getOpenRouterCallModelRequestArg(endEvent.arguments),
-            result,
-            span,
-          });
-        },
+      // Tools are wrapped before the call is traced, even when suppressed.
+      openRouterChannels.callModel.intercept((target, thisArg, args) => {
+        patchOpenRouterCallModelRequest(args);
+        return Reflect.apply(target, thisArg, args);
       }),
+      // Existing callModel consumers also call traceSync() directly.
+      traceLegacyCallers(
+        openRouterChannels.callModel,
+        {
+          name: "openrouter.callModel",
+          type: SpanTypeAttribute.TASK,
+          extractInput: (args) => {
+            const request = getOpenRouterCallModelRequestArg(args);
+            return {
+              input: request
+                ? extractOpenRouterCallModelInput(request)
+                : undefined,
+              metadata: request
+                ? extractOpenRouterCallModelMetadata(request)
+                : { provider: "openrouter" },
+            };
+          },
+          patchResult: ({ endEvent, result, span }) => {
+            return patchOpenRouterCallModelResult({
+              request: getOpenRouterCallModelRequestArg(endEvent.arguments),
+              result,
+              span,
+            });
+          },
+        },
+        traceSyncStreamChannel<typeof openRouterChannels.callModel>,
+        interceptSyncStreamChannel<typeof openRouterChannels.callModel>,
+      ),
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(openRouterChannels.callModelTurn, {
+      interceptAsyncChannel(openRouterChannels.callModelTurn, {
         name: "openrouter.beta.responses.send",
         type: SpanTypeAttribute.LLM,
         extractInput: (args, event) => {
@@ -250,35 +271,13 @@ export class OpenRouterPlugin extends BasePlugin {
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(openRouterChannels.toolExecute, {
-        name: "openrouter.tool",
-        type: SpanTypeAttribute.TOOL,
-        extractInput: (args, event) => ({
-          input: args[0],
-          metadata: {
-            provider: "openrouter",
-            tool_name: event.toolName,
-            ...(event.toolCallId ? { tool_call_id: event.toolCallId } : {}),
-          },
-        }),
-        extractOutput: (result) => result,
-        extractMetrics: () => ({}),
-        aggregateChunks: (chunks) => ({
-          output: chunks.length > 0 ? chunks[chunks.length - 1] : undefined,
-          metrics: {},
-        }),
-      }),
+      interceptToolExecute(openRouterChannels.toolExecute),
     );
 
     const callModelChannel = openRouterChannels.callModel.tracingChannel();
     const callModelHandlers = {
       start: (event: { arguments: unknown[] }) => {
-        const request = getOpenRouterCallModelRequestArg(event.arguments);
-        if (!request) {
-          return;
-        }
-
-        patchOpenRouterCallModelRequestTools(request);
+        patchOpenRouterCallModelRequest(event.arguments);
       },
     };
 
@@ -674,13 +673,16 @@ function extractOpenRouterRerankOutput(
 
 const OPENROUTER_WRAPPED_TOOL = Symbol("braintrust.openrouter.wrappedTool");
 
-type OpenRouterToolTraceContext = ChannelMessage<
-  typeof openRouterChannels.toolExecute
->;
-
 type WrappedOpenRouterTool = OpenRouterTool & {
   [OPENROUTER_WRAPPED_TOOL]?: true;
 };
+
+function patchOpenRouterCallModelRequest(args: unknown): void {
+  const request = getOpenRouterCallModelRequestArg(args);
+  if (request) {
+    patchOpenRouterCallModelRequestTools(request);
+  }
+}
 
 function patchOpenRouterCallModelRequestTools(
   request: OpenRouterCallModelRequest,
@@ -721,12 +723,15 @@ function wrapOpenRouterTool(tool: OpenRouterTool): OpenRouterTool {
     function: {
       ...tool.function,
       execute(this: unknown, ...args: unknown[]) {
-        return traceToolExecution({
+        return openRouterChannels.toolExecute.invoke(
+          originalExecute,
+          this,
           args,
-          execute: () => Reflect.apply(originalExecute, this, args),
-          toolCallId: getToolCallId(args[1]),
-          toolName,
-        });
+          {
+            toolCallId: getToolCallId(args[1]),
+            toolName,
+          },
+        );
       },
     },
   };
@@ -742,62 +747,6 @@ function wrapOpenRouterTool(tool: OpenRouterTool): OpenRouterTool {
 
 function isWrappedTool(tool: OpenRouterTool): boolean {
   return Boolean((tool as WrappedOpenRouterTool)[OPENROUTER_WRAPPED_TOOL]);
-}
-
-function traceToolExecution(args: {
-  args: unknown[];
-  execute: () => unknown;
-  toolCallId?: string;
-  toolName: string;
-}): unknown {
-  const tracingChannel = openRouterChannels.toolExecute.tracingChannel();
-  const input = args.args.length > 0 ? args.args[0] : undefined;
-  const event: OpenRouterToolTraceContext = {
-    arguments: [input],
-    span_info: {
-      name: args.toolName,
-    },
-    toolCallId: args.toolCallId,
-    toolName: args.toolName,
-  };
-
-  tracingChannel.start!.publish(event);
-
-  try {
-    const result = args.execute();
-    return publishToolResult(tracingChannel, event, result);
-  } catch (error) {
-    event.error = normalizeError(error);
-    tracingChannel.error!.publish(event);
-    throw error;
-  }
-}
-
-function publishToolResult(
-  tracingChannel: ReturnType<
-    typeof openRouterChannels.toolExecute.tracingChannel
-  >,
-  event: OpenRouterToolTraceContext,
-  result: unknown,
-): unknown {
-  if (isPromiseLike(result)) {
-    return result.then(
-      (resolved) => {
-        event.result = resolved;
-        tracingChannel.asyncEnd!.publish(event);
-        return resolved;
-      },
-      (error) => {
-        event.error = normalizeError(error);
-        tracingChannel.error!.publish(event);
-        throw error;
-      },
-    );
-  }
-
-  event.result = result;
-  tracingChannel.asyncEnd!.publish(event);
-  return result;
 }
 
 function getToolCallId(context: unknown): string | undefined {
@@ -1021,10 +970,6 @@ const OPENROUTER_CALL_MODEL_CONTEXT_METHODS = [
   "getToolCalls",
   "requiresApproval",
 ] as const;
-
-type OpenRouterCallModelTurnTraceContext = ChannelMessage<
-  typeof openRouterChannels.callModelTurn
->;
 
 type OpenRouterCallModelResultLike = {
   [OPENROUTER_WRAPPED_CALL_MODEL_RESULT]?: true;
@@ -1284,14 +1229,16 @@ async function traceOpenRouterCallModelTurn<TResult>(args: {
   step: number;
   stepType: "initial" | "continue";
 }): Promise<TResult> {
-  const context: OpenRouterCallModelTurnTraceContext = {
-    arguments: [args.request],
-    step: args.step,
-    stepType: args.stepType,
-  };
-
   return await withCurrent(args.parentSpan, () =>
-    openRouterChannels.callModelTurn.tracePromise(args.fn, context),
+    openRouterChannels.callModelTurn.invoke(
+      args.fn,
+      undefined,
+      [args.request],
+      {
+        step: args.step,
+        stepType: args.stepType,
+      },
+    ),
   );
 }
 
@@ -1501,10 +1448,6 @@ function isAsyncIterable(value: unknown): value is AsyncIterable<unknown> {
     Symbol.asyncIterator in value &&
     typeof value[Symbol.asyncIterator] === "function"
   );
-}
-
-function normalizeError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error));
 }
 
 export { parseOpenRouterMetricsFromUsage };

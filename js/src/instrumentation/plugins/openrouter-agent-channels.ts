@@ -26,19 +26,12 @@ export const openRouterAgentChannels = defineChannels(
     }),
 
     toolExecute: channel<
-      [unknown],
-      unknown | AsyncIterable<unknown>,
-      {
-        span_info?: {
-          name?: string;
-        };
-        toolCallId?: string;
-        toolName: string;
-      },
-      unknown
+      unknown[],
+      unknown,
+      { toolCallId?: string; toolName: string }
     >({
       channelName: "tool.execute",
-      kind: "async",
+      kind: "sync-stream",
     }),
   },
   { instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER_AGENT },
