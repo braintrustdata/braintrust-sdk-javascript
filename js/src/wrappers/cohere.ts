@@ -1,18 +1,9 @@
 import { cohereChannels } from "../instrumentation/plugins/cohere-channels";
-import type {
-  CohereChatRequest,
-  CohereChatResponse,
-  CohereChatStreamResult,
-  CohereClient,
-  CohereEmbedRequest,
-  CohereEmbedResponse,
-  CohereRerankRequest,
-  CohereRerankResponse,
-} from "../vendor-sdk-types/cohere";
+import type { CohereClient } from "../vendor-sdk-types/cohere";
 
 /**
- * Wrap a Cohere client so method calls emit diagnostics-channel events that
- * Braintrust plugins can consume.
+ * Wrap a Cohere client so method calls pass through the Braintrust
+ * instrumentation hooks.
  */
 export function wrapCohere<T>(cohere: T): T {
   if (isSupportedCohereClient(cohere)) {
@@ -61,21 +52,25 @@ function cohereProxy(cohere: CohereClient): CohereClient {
     get(target, prop, receiver) {
       switch (prop) {
         case "chat":
-          return typeof target.chat === "function"
-            ? wrapChat(target.chat.bind(target))
-            : target.chat;
+          return invokeThroughChannel(cohereChannels.chat, target.chat, target);
         case "chatStream":
-          return typeof target.chatStream === "function"
-            ? wrapChatStream(target.chatStream.bind(target))
-            : target.chatStream;
+          return invokeThroughChannel(
+            cohereChannels.chatStream,
+            target.chatStream,
+            target,
+          );
         case "embed":
-          return typeof target.embed === "function"
-            ? wrapEmbed(target.embed.bind(target))
-            : target.embed;
+          return invokeThroughChannel(
+            cohereChannels.embed,
+            target.embed,
+            target,
+          );
         case "rerank":
-          return typeof target.rerank === "function"
-            ? wrapRerank(target.rerank.bind(target))
-            : target.rerank;
+          return invokeThroughChannel(
+            cohereChannels.rerank,
+            target.rerank,
+            target,
+          );
         default: {
           const value = Reflect.get(target, prop, receiver);
           return isSupportedCohereClient(value) ? cohereProxy(value) : value;
@@ -88,50 +83,22 @@ function cohereProxy(cohere: CohereClient): CohereClient {
   return proxy;
 }
 
-function wrapChat(
-  chat: (
-    request: CohereChatRequest,
-    options?: unknown,
-  ) => Promise<CohereChatResponse>,
-): NonNullable<CohereClient["chat"]> {
-  return (request, options) =>
-    cohereChannels.chat.tracePromise(() => chat(request, options), {
-      arguments: [request],
-    } as Parameters<typeof cohereChannels.chat.tracePromise>[1]);
-}
-
-function wrapChatStream(
-  chatStream: (
-    request: CohereChatRequest,
-    options?: unknown,
-  ) => Promise<CohereChatStreamResult>,
-): NonNullable<CohereClient["chatStream"]> {
-  return (request, options) =>
-    cohereChannels.chatStream.tracePromise(() => chatStream(request, options), {
-      arguments: [request],
-    } as Parameters<typeof cohereChannels.chatStream.tracePromise>[1]);
-}
-
-function wrapEmbed(
-  embed: (
-    request: CohereEmbedRequest,
-    options?: unknown,
-  ) => Promise<CohereEmbedResponse>,
-): NonNullable<CohereClient["embed"]> {
-  return (request, options) =>
-    cohereChannels.embed.tracePromise(() => embed(request, options), {
-      arguments: [request],
-    });
-}
-
-function wrapRerank(
-  rerank: (
-    request: CohereRerankRequest,
-    options?: unknown,
-  ) => Promise<CohereRerankResponse>,
-): NonNullable<CohereClient["rerank"]> {
-  return (request, options) =>
-    cohereChannels.rerank.tracePromise(() => rerank(request, options), {
-      arguments: [request],
-    });
+function invokeThroughChannel<TRequest, TResult>(
+  channel: {
+    invoke(
+      target: (request: TRequest, options?: unknown) => Promise<TResult>,
+      thisArg: CohereClient,
+      args: [TRequest, unknown?],
+      additional: Record<string, never>,
+    ): Promise<TResult>;
+  },
+  method:
+    | ((request: TRequest, options?: unknown) => Promise<TResult>)
+    | undefined,
+  client: CohereClient,
+) {
+  return typeof method === "function"
+    ? (request: TRequest, options?: unknown) =>
+        channel.invoke(method, client, [request, options], {})
+    : method;
 }

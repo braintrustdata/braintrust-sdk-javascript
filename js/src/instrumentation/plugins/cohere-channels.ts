@@ -14,13 +14,13 @@ import type {
 export const cohereChannels = defineChannels(
   "cohere-ai",
   {
-    chat: channel<[CohereChatRequest], CohereChatResponse>({
+    chat: channel<[CohereChatRequest, options?: unknown], CohereChatResponse>({
       channelName: "chat",
       kind: "async",
     }),
 
     chatStream: channel<
-      [CohereChatRequest],
+      [CohereChatRequest, options?: unknown],
       CohereChatStreamResult,
       Record<string, unknown>,
       CohereChatStreamEvent
@@ -29,12 +29,18 @@ export const cohereChannels = defineChannels(
       kind: "async",
     }),
 
-    embed: channel<[CohereEmbedRequest], CohereEmbedResponse>({
+    embed: channel<
+      [CohereEmbedRequest, options?: unknown],
+      CohereEmbedResponse
+    >({
       channelName: "embed",
       kind: "async",
     }),
 
-    rerank: channel<[CohereRerankRequest], CohereRerankResponse>({
+    rerank: channel<
+      [CohereRerankRequest, options?: unknown],
+      CohereRerankResponse
+    >({
       channelName: "rerank",
       kind: "async",
     }),

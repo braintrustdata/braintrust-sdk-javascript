@@ -1,7 +1,7 @@
 import { BasePlugin } from "../core";
 import {
-  traceAsyncChannel,
-  traceStreamingChannel,
+  interceptAsyncChannel,
+  interceptStreamingChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
@@ -27,7 +27,7 @@ export class CoherePlugin extends BasePlugin {
 
   private subscribeToCohereChannels(): void {
     this.unsubscribers.push(
-      traceStreamingChannel(cohereChannels.chat, {
+      interceptStreamingChannel(cohereChannels.chat, {
         name: "cohere.chat",
         type: SpanTypeAttribute.LLM,
         extractInput: extractChatInputWithMetadata,
@@ -44,7 +44,7 @@ export class CoherePlugin extends BasePlugin {
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(cohereChannels.chatStream, {
+      interceptStreamingChannel(cohereChannels.chatStream, {
         name: "cohere.chatStream",
         type: SpanTypeAttribute.LLM,
         extractInput: extractChatInputWithMetadata,
@@ -56,7 +56,7 @@ export class CoherePlugin extends BasePlugin {
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(cohereChannels.embed, {
+      interceptAsyncChannel(cohereChannels.embed, {
         name: "cohere.embed",
         type: SpanTypeAttribute.LLM,
         extractInput: extractEmbedInputWithMetadata,
@@ -67,7 +67,7 @@ export class CoherePlugin extends BasePlugin {
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(cohereChannels.rerank, {
+      interceptAsyncChannel(cohereChannels.rerank, {
         name: "cohere.rerank",
         type: SpanTypeAttribute.LLM,
         extractInput: extractRerankInputWithMetadata,
@@ -174,35 +174,6 @@ const RESPONSE_METADATA_ALLOWLIST = new Set([
   "response_type",
 ]);
 
-function normalizeArgs(args: unknown[] | unknown): unknown[] {
-  if (Array.isArray(args)) {
-    return args;
-  }
-
-  if (isArrayLike(args)) {
-    return Array.from(args);
-  }
-
-  return [args];
-}
-
-function isArrayLike(value: unknown): value is ArrayLike<unknown> {
-  return (
-    isObject(value) &&
-    "length" in value &&
-    typeof value.length === "number" &&
-    Number.isInteger(value.length) &&
-    value.length >= 0
-  );
-}
-
-function getRequestArg(
-  args: unknown[] | unknown,
-): Record<string, unknown> | undefined {
-  const firstObjectArg = normalizeArgs(args).find((arg) => isObject(arg));
-  return isObject(firstObjectArg) ? firstObjectArg : undefined;
-}
-
 function addCohereProviderMetadata(
   metadata: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -230,11 +201,11 @@ function pickAllowedMetadata(
   return picked;
 }
 
-function extractChatInputWithMetadata(args: unknown[] | unknown): {
+function extractChatInputWithMetadata(args: unknown[]): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const request = getRequestArg(args);
+  const request = args.find(isObject);
   const { message, messages, ...rawMetadata } = request || {};
 
   return {
@@ -245,11 +216,11 @@ function extractChatInputWithMetadata(args: unknown[] | unknown): {
   };
 }
 
-function extractEmbedInputWithMetadata(args: unknown[] | unknown): {
+function extractEmbedInputWithMetadata(args: unknown[]): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const request = getRequestArg(args);
+  const request = args.find(isObject);
   const { inputs, texts, images, ...rawMetadata } = request || {};
 
   return {
@@ -260,11 +231,11 @@ function extractEmbedInputWithMetadata(args: unknown[] | unknown): {
   };
 }
 
-function extractRerankInputWithMetadata(args: unknown[] | unknown): {
+function extractRerankInputWithMetadata(args: unknown[]): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const request = getRequestArg(args);
+  const request = args.find(isObject);
   const { query, documents, ...rawMetadata } = request || {};
 
   return {
