@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { _exportsForTestingOnly, initLogger } from "../../logger";
-import { GenkitPlugin } from "./genkit-plugin";
 import { genkitChannels } from "./genkit-channels";
+import { GenkitPlugin } from "./genkit-plugin";
 
 function singleQueueStream<T>(
   chunks: T[],
@@ -59,7 +59,7 @@ describe("GenkitPlugin stream patching", () => {
     plugin.enable();
     const stream = singleQueueStream([{ text: "hello" }, { text: " world" }]);
 
-    const result = genkitChannels.generateStream.traceSync(
+    const result = genkitChannels.generateStream.invoke(
       () => ({
         response: Promise.resolve({
           text: "hello world",
@@ -71,9 +71,9 @@ describe("GenkitPlugin stream patching", () => {
         }),
         stream,
       }),
-      { arguments: [{ prompt: "Say hello world." }] } as Parameters<
-        typeof genkitChannels.generateStream.traceSync
-      >[1],
+      undefined,
+      [{ prompt: "Say hello world." }],
+      {},
     );
 
     await drainMicrotasks();
@@ -94,15 +94,14 @@ describe("GenkitPlugin stream patching", () => {
       },
     });
 
-    const result = genkitChannels.actionStream.traceSync(
+    const result = genkitChannels.actionStream.invoke(
       () => ({
         output: Promise.resolve({ done: true }),
         stream,
       }),
-      {
-        arguments: [{ input: true }],
-        self: action,
-      } as Parameters<typeof genkitChannels.actionStream.traceSync>[1],
+      action,
+      [{ input: true }],
+      {},
     );
 
     await drainMicrotasks();

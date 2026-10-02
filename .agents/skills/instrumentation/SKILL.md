@@ -1,14 +1,14 @@
 ---
 name: instrumentation
-description: Add or update Braintrust SDK instrumentation. Use when working on instrumentation of any kind - like wrappers, auto-instrumentation configs, tracing channels, provider plugins, vendored SDK typings, or instrumentation-specific tests.
+description: Add or update Braintrust SDK instrumentation. Use when working on instrumentation of any kind - like wrappers, auto-instrumentation configs, invocation hooks, provider plugins, vendored SDK typings, or instrumentation-specific tests.
 ---
 
 # Instrumentation Rules
 
 Read first based on the task:
 
-- `js/src/instrumentation/README.md` for plugin and tracing-channel architecture
-- Closest file in `js/src/instrumentation/core/` when changing shared channel semantics
+- `js/src/instrumentation/README.md` for wrapping and tracing architecture
+- Closest file in `js/src/instrumentation/core/` when changing shared invocation semantics
 - Closest file in `js/src/instrumentation/plugins/` when changing provider-specific extraction or span mapping
 - Closest file in `js/src/wrappers/` when manual wrappers and auto-instrumentation need to stay aligned
 - Closest test in `js/tests/auto-instrumentations/` when changing hook, loader, bundler, or transform behavior
@@ -16,8 +16,8 @@ Read first based on the task:
 
 Map the change before editing:
 
-- `js/src/instrumentation/core/` - tracing-channel helpers, stream patching, shared types
-- `js/src/instrumentation/plugins/` - provider-specific channel subscriptions and event-to-span conversion
+- `js/src/instrumentation/core/` - invocation definitions, independent tracing helpers, stream patching, shared types
+- `js/src/instrumentation/plugins/` - explicit interceptor registration and provider-specific tracing functions
 - `js/src/wrappers/` - manual instrumentation entrypoints that should mirror the same logical contracts
 - `js/src/auto-instrumentations/` - loader and bundler instrumentation config
 - `js/tests/auto-instrumentations/` - functional coverage for transformed code
@@ -27,10 +27,17 @@ Map the change before editing:
 - Inputs are untrusted: treat args, results, events, headers, and metadata as hostile. Prototype pollution is a concrete risk here. Avoid unsafe property access patterns, prototype-sensitive operations, and unnecessary mutation of third-party objects.
 - Support both auto-instrumentation and manual instrumentation. Auto-instrumentation does not cover every environment, loader, or framework.
 - For orchestrion auto-instrumentation, prefer targeting public API functions. Instrumenting internal helpers is more likely to break across library versions.
-- Auto and manual paths should share logic through the same typed channel. For new and migrated instrumentation, prefer `invoke` in manual wrappers and `intercept` in provider plugins so the target can be scoped with `AsyncLocalStorage.run()` and its arguments, receiver, or output can be patched. Keep tracing-style hooks only as the compatibility path for instrumentation that has not migrated yet. Manual wrappers should not directly emit observability data.
+- Keep wrapping and tracing separate, including internal APIs.
+  Define typed invocation hooks with `defineInterceptor`; `intercept` and `invoke` only compose and execute wrappers.
+  Definitions describe call arguments, return values, and opaque additional data, without span provenance or tracing methods.
+  The wrapping runtime must work without SDK initialization and have no dependency on spans, logging, or tracing lifecycle events.
+  Put span creation, context propagation, and finalization in separate tracing functions.
+  Plugins explicitly register those functions through `intercept`; shared tracing helpers accept callables and tracing configuration, never hooks or registration responsibilities.
+  Do not add combined helpers such as `traceInvocation` or `interceptAndTrace`, or retain a tracing-event compatibility path.
+  Manual wrappers and generated wrappers use the same hook through `invoke` and do not directly emit observability data.
 - Reuse shared repo utilities before introducing local helpers. Check `js/util/index.ts`, neighboring instrumentation files, and existing plugins/wrappers for utilities like `isObject`, merge helpers, and sanitizers before adding ad hoc replacements.
 - If a public instrumentation surface changes, check whether the export surface also needs updates in `js/src/instrumentation/index.ts` or `js/src/exports.ts`.
-- Preserve async context propagation. Changes around tracing channels, stream patching, or loader hooks must keep the current span context across awaits and stream consumption.
+- Preserve async context propagation. Changes around invocation hooks, stream patching, or loader hooks must keep the current span context across awaits and stream consumption.
 - Maintain isomorphic behavior. Node and browser/bundled paths must use compatible channel implementations and avoid channel-registry mismatches.
 - Setup, teardown, and patching must be idempotent. Enabling twice, disabling twice, or applying a patch twice should remain safe.
 - Promise/stream behavior must be preserved. Patches need to keep subclass/helper semantics intact.
@@ -44,7 +51,7 @@ Map the change before editing:
   Preserve useful text, metadata, metrics, and remote references when attachment capture is disabled, and omit inline bytes from logged payloads.
 - Do not modify package READMEs during instrumentation work unless the user specifically requests it or the change corrects outdated information.
 - We want to limit our instrumentation to operations that are relevant for AI generations and operations (LLMs, embeddings, media generation, ...). Things like creating entities on platforms (CRUD for Workflows of Agent entities) is irrelevant to us.
-- When building instrumentation, we should always have a vendored type/interface for what we are wrapping. The type or interface should not be larger than what is relevant to the instrumentation. The type or interface should be used for typing tracing channels and also should be used to assert the type on whatever is passed into wrappers as soon as the wrapper has verified that the passed in value is plausibly what should be wrapped.
+- When building instrumentation, we should always have a vendored type/interface for what we are wrapping. The type or interface should not be larger than what is relevant to the instrumentation. The type or interface should be used for typing invocation hooks and also should be used to assert the type on whatever is passed into wrappers as soon as the wrapper has verified that the passed in value is plausibly what should be wrapped.
 
 ## Process
 

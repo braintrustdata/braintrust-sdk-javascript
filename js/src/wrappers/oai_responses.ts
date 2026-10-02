@@ -1,7 +1,5 @@
-import type {
-  ArgsOf,
-  ResultOf,
-} from "../instrumentation/core/channel-definitions";
+import type { ArgsOf } from "../instrumentation/core/channel-definitions";
+import type { ResultOf } from "../instrumentation/core/tracing-types";
 import type { ChannelSpanInfo } from "../instrumentation/core/types";
 import { openAIChannels } from "../instrumentation/plugins/openai-channels";
 import { parseMetricsFromUsage } from "../openai-utils";
@@ -11,8 +9,8 @@ import {
   createLazyAPIPromise,
   EnhancedResponse,
   splitSpanInfo,
-  tracePromiseAsResponse,
-  tracePromiseWithResponse,
+  invokeAsResponse,
+  invokeWithResponse,
 } from "./openai-promise-utils";
 
 type SpanInfo = {
@@ -92,11 +90,7 @@ function wrapResponsesAsync<
       if (!executionPromise) {
         executionPromise = (async () => {
           const traceContext = createChannelContext(channel, params, span_info);
-          return tracePromiseWithResponse(
-            channel,
-            traceContext,
-            getAPIPromise(),
-          );
+          return invokeWithResponse(channel, traceContext, getAPIPromise());
         })();
       }
 
@@ -106,7 +100,7 @@ function wrapResponsesAsync<
     return createLazyAPIPromise(
       ensureExecuted,
       () =>
-        tracePromiseAsResponse(
+        invokeAsResponse(
           channel,
           createChannelContext(channel, params, span_info),
           getAPIPromise(),
@@ -134,10 +128,7 @@ function wrapResponsesSyncStream<TResult>(
       ArgsOf<typeof openAIChannels.responsesStream>[0],
       SpanInfo["span_info"]
     >(allParams);
-    return channel.traceSync(() => target(params, options), {
-      arguments: [params],
-      span_info,
-    });
+    return channel.invoke(target, undefined, [params, options], { span_info });
   };
 }
 

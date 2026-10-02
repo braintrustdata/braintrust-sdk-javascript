@@ -2,13 +2,6 @@ import {
   type GitMetadataSettingsType as GitMetadataSettings,
   type RepoInfoType as RepoInfo,
 } from "./generated_types";
-import {
-  newGlobalTracingChannel,
-  type GlobalHookAsyncLocalStorage,
-  type GlobalHookHandlers,
-  type GlobalTracingChannel,
-  type GlobalTracingChannelCollection,
-} from "./global-instrumentation-hooks";
 
 export interface CallerLocation {
   caller_functionname: string;
@@ -16,7 +9,10 @@ export interface CallerLocation {
   caller_lineno: number;
 }
 
-export type IsoAsyncLocalStorage<T> = GlobalHookAsyncLocalStorage<T>;
+export interface IsoAsyncLocalStorage<T> {
+  run<R>(store: T | undefined, callback: () => R): R;
+  getStore(): T | undefined;
+}
 
 class DefaultAsyncLocalStorage<T> implements IsoAsyncLocalStorage<T> {
   constructor() {}
@@ -28,10 +24,6 @@ class DefaultAsyncLocalStorage<T> implements IsoAsyncLocalStorage<T> {
     return undefined;
   }
 }
-
-type IsoTracingChannelCollection<M = any> = GlobalTracingChannelCollection<M>;
-export type IsoTracingChannel<M = any> = GlobalTracingChannel<M>;
-export type IsoChannelHandlers<M = any> = GlobalHookHandlers<M>;
 
 interface Common {
   buildType:
@@ -50,10 +42,6 @@ interface Common {
   getBraintrustApiKey: () => Promise<string | undefined>;
   getCallerLocation: () => CallerLocation | undefined;
   newAsyncLocalStorage: <T>() => IsoAsyncLocalStorage<T>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  newTracingChannel: <M = any>(
-    nameOrChannels: string | IsoTracingChannelCollection<M>,
-  ) => IsoTracingChannel<M>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   processOn: (event: string, handler: (code: any) => void) => void;
 
@@ -111,9 +99,7 @@ const iso: Common = {
   getCallerLocation: () => undefined,
   newAsyncLocalStorage: <T>() => new DefaultAsyncLocalStorage<T>(),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  newTracingChannel: <M = any>(
-    nameOrChannels: string | IsoTracingChannelCollection<M>,
-  ) => newGlobalTracingChannel<M>(nameOrChannels),
+
   processOn: (_0, _1) => {},
   basename: (filepath: string) => filepath.split(/[\\/]/).pop() || filepath,
   // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.

@@ -6,11 +6,9 @@ import {
   withSpanInstrumentationName,
 } from "../../span-origin";
 import type {
-  ElevenLabsSpeechArgs,
   ElevenLabsSpeechRequest,
   ElevenLabsTimestampAudio,
   ElevenLabsTranscription,
-  ElevenLabsTranscriptionRequest,
 } from "../../vendor-sdk-types/elevenlabs";
 import { getExtensionFromMediaType } from "../../wrappers/attachment-utils";
 import {
@@ -35,145 +33,158 @@ export class ElevenLabsPlugin extends BasePlugin {
       "streamWithTimestamps",
     ] as const) {
       this.unsubscribers.push(
-        interceptCall<ElevenLabsSpeechArgs>(
-          elevenLabsChannels[method],
-          `elevenlabs.textToSpeech.${method}`,
-          ([voice, request]) => ({
-            input: {
-              operation: "speech",
-              prompt: request.text,
-              parameters: {
-                voice,
-                format: request.outputFormat,
-                language: request.languageCode,
-                speed: request.voiceSettings?.speed,
-              },
-            },
-            metadata: {
-              provider: "elevenlabs",
-              model: request.modelId ?? "eleven_multilingual_v2",
-            },
-          }),
-          (value, args, span, finish, headers, started) =>
-            captureSpeech(
-              value,
-              args[1],
-              method,
-              span,
-              finish,
-              started,
-              headers,
+        elevenLabsChannels[method].intercept(
+          (target, receiver, args, additional) =>
+            traceElevenLabsCall(
+              () => Reflect.apply(target, receiver, args),
+              { arguments: args, self: receiver, additional },
+              `elevenlabs.textToSpeech.${method}`,
+              ([voice, request]) => ({
+                input: {
+                  operation: "speech",
+                  prompt: request.text,
+                  parameters: {
+                    voice,
+                    format: request.outputFormat,
+                    language: request.languageCode,
+                    speed: request.voiceSettings?.speed,
+                  },
+                },
+                metadata: {
+                  provider: "elevenlabs",
+                  model: request.modelId ?? "eleven_multilingual_v2",
+                },
+              }),
+              (value, args, span, finish, headers, started) =>
+                captureSpeech(
+                  value,
+                  args[1],
+                  method,
+                  span,
+                  finish,
+                  started,
+                  headers,
+                ),
             ),
         ),
       );
     }
     this.unsubscribers.push(
-      interceptCall<[ElevenLabsTranscriptionRequest, unknown?]>(
-        elevenLabsChannels.transcribe,
-        "elevenlabs.speechToText.convert",
-        ([request]) => {
-          // Webhook requests return an acknowledgement; the transcription arrives
-          // separately and cannot be captured by this request/response span.
-          if (request.webhook) return undefined;
-          const file = request.file;
-          const filename =
-            typeof File !== "undefined" && file instanceof File
-              ? file.name
-              : "audio";
-          const contentType =
-            file instanceof Blob
-              ? file.type || "application/octet-stream"
-              : "application/octet-stream";
-          const blob =
-            file instanceof Blob
-              ? file
-              : file instanceof Uint8Array
-                ? new Blob([new Uint8Array(file)], { type: contentType })
-                : file instanceof ArrayBuffer
-                  ? new Blob([file.slice(0)], { type: contentType })
-                  : undefined;
-          const fileData = blob
-            ? new Attachment({ data: blob, filename, contentType })
-            : request.cloudStorageUrl;
-          return {
-            input: {
-              operation: "transcribe",
-              content: fileData
-                ? [{ type: "file", file: { filename, file_data: fileData } }]
-                : [],
-              parameters: {
-                language: request.languageCode,
-                timestamp_granularities: request.timestampsGranularity,
-              },
-            },
-            metadata: { provider: "elevenlabs", model: request.modelId },
-          };
-        },
-        (value, _args, span, finish) => {
-          const result = value as ElevenLabsTranscription;
-          const transcripts = result.transcripts ?? [result];
-          span.log({
-            output: {
-              content: transcripts.flatMap((transcript) =>
-                typeof transcript.text === "string"
-                  ? [{ type: "text", text: transcript.text }]
-                  : [],
-              ),
-              annotations: {
-                language: result.languageCode,
-                words:
-                  result.words ??
-                  (result.transcripts
-                    ? result.transcripts.flatMap(
-                        (transcript) => transcript.words ?? [],
-                      )
-                    : undefined),
-              },
-            },
-          });
-          finish();
-        },
-        ([request], span) => {
-          const file = request.file;
-          if (!isAsyncIterable(file)) return;
-          const chunks: Uint8Array[] = [];
-          const filename =
-            isObject(file) && typeof file.path === "string"
-              ? file.path.split(/[\\/]/).pop() || "audio"
-              : "audio";
-          observeByteStream(file, {
-            onChunk: (chunk) => chunks.push(new Uint8Array(chunk)),
-            onComplete: () => {
-              const contentType = "application/octet-stream";
-              const data = new Blob(chunks as BlobPart[], {
-                type: contentType,
-              });
-              chunks.length = 0;
-              span.log({
+      elevenLabsChannels.transcribe.intercept(
+        (target, receiver, args, additional) =>
+          traceElevenLabsCall(
+            () => Reflect.apply(target, receiver, args),
+            { arguments: args, self: receiver, additional },
+            "elevenlabs.speechToText.convert",
+            ([request]) => {
+              // Webhook requests return an acknowledgement; the transcription arrives
+              // separately and cannot be captured by this request/response span.
+              if (request.webhook) return undefined;
+              const file = request.file;
+              const filename =
+                typeof File !== "undefined" && file instanceof File
+                  ? file.name
+                  : "audio";
+              const contentType =
+                file instanceof Blob
+                  ? file.type || "application/octet-stream"
+                  : "application/octet-stream";
+              const blob =
+                file instanceof Blob
+                  ? file
+                  : file instanceof Uint8Array
+                    ? new Blob([new Uint8Array(file)], { type: contentType })
+                    : file instanceof ArrayBuffer
+                      ? new Blob([file.slice(0)], { type: contentType })
+                      : undefined;
+              const fileData = blob
+                ? new Attachment({ data: blob, filename, contentType })
+                : request.cloudStorageUrl;
+              return {
                 input: {
-                  content: [
-                    {
-                      type: "file",
-                      file: {
-                        filename,
-                        file_data: new Attachment({
-                          data,
-                          filename,
-                          contentType,
-                        }),
-                      },
-                    },
-                  ],
+                  operation: "transcribe",
+                  content: fileData
+                    ? [
+                        {
+                          type: "file",
+                          file: { filename, file_data: fileData },
+                        },
+                      ]
+                    : [],
+                  parameters: {
+                    language: request.languageCode,
+                    timestamp_granularities: request.timestampsGranularity,
+                  },
+                },
+                metadata: { provider: "elevenlabs", model: request.modelId },
+              };
+            },
+            (value, _args, span, finish) => {
+              const result = value as ElevenLabsTranscription;
+              const transcripts = result.transcripts ?? [result];
+              span.log({
+                output: {
+                  content: transcripts.flatMap((transcript) =>
+                    typeof transcript.text === "string"
+                      ? [{ type: "text", text: transcript.text }]
+                      : [],
+                  ),
+                  annotations: {
+                    language: result.languageCode,
+                    words:
+                      result.words ??
+                      (result.transcripts
+                        ? result.transcripts.flatMap(
+                            (transcript) => transcript.words ?? [],
+                          )
+                        : undefined),
+                  },
                 },
               });
+              finish();
             },
-            onCancel: () => {
-              chunks.length = 0;
+            ([request], span) => {
+              const file = request.file;
+              if (!isAsyncIterable(file)) return;
+              const chunks: Uint8Array[] = [];
+              const filename =
+                isObject(file) && typeof file.path === "string"
+                  ? file.path.split(/[\\/]/).pop() || "audio"
+                  : "audio";
+              observeByteStream(file, {
+                onChunk: (chunk) => chunks.push(new Uint8Array(chunk)),
+                onComplete: () => {
+                  const contentType = "application/octet-stream";
+                  const data = new Blob(chunks as BlobPart[], {
+                    type: contentType,
+                  });
+                  chunks.length = 0;
+                  span.log({
+                    input: {
+                      content: [
+                        {
+                          type: "file",
+                          file: {
+                            filename,
+                            file_data: new Attachment({
+                              data,
+                              filename,
+                              contentType,
+                            }),
+                          },
+                        },
+                      ],
+                    },
+                  });
+                },
+                onCancel: () => {
+                  chunks.length = 0;
+                },
+                aroundRead: (next) => withCurrent(span, next),
+                debugLabel: "ElevenLabs audio",
+              });
             },
-            aroundRead: (next) => withCurrent(span, next),
-            debugLabel: "ElevenLabs audio",
-          });
-        },
+          ),
       ),
     );
   }
@@ -183,18 +194,10 @@ export class ElevenLabsPlugin extends BasePlugin {
 }
 
 type Finish = (error?: unknown) => void;
-type CallChannel<Args extends unknown[]> = {
-  intercept(
-    callback: (
-      target: (...args: Args) => PromiseLike<unknown>,
-      self: unknown,
-      args: Args,
-    ) => PromiseLike<unknown>,
-  ): () => void;
-};
 
-function interceptCall<Args extends unknown[]>(
-  channel: CallChannel<Args>,
+function traceElevenLabsCall<Args extends unknown[], TResult>(
+  call: () => TResult,
+  context: { arguments: Args; self: unknown; additional: unknown },
   name: string,
   input: (
     args: Args,
@@ -208,89 +211,86 @@ function interceptCall<Args extends unknown[]>(
     started: number,
   ) => void,
   beforeInvoke?: (args: Args, span: Span) => void,
-): () => void {
-  return channel.intercept((target, self, args) => {
-    const invoke = () => Reflect.apply(target, self, args);
-    if (isAutoInstrumentationSuppressed()) return invoke();
-    const started = Date.now() / 1000;
-    let span: Span | undefined;
-    try {
-      const event = input(args);
-      if (event !== undefined)
-        span = startSpan(
-          withSpanInstrumentationName(
-            {
-              name,
-              spanAttributes: { type: SpanTypeAttribute.LLM },
-              event,
-            },
-            INSTRUMENTATION_NAMES.ELEVENLABS,
-          ),
-        );
-    } catch (error) {
-      debugLogger.error("Error starting ElevenLabs span", error);
-      return invoke();
-    }
-    if (!span) return invoke();
-    const activeSpan = span;
-    let ended = false;
-    const finish: Finish = (error) => {
-      if (ended) return;
-      ended = true;
-      try {
-        if (error !== undefined) activeSpan.log({ error });
-        activeSpan.end();
-      } catch (loggingError) {
-        debugLogger.error("Error ending ElevenLabs span", loggingError);
-      }
-    };
-    try {
-      beforeInvoke?.(args, span);
-    } catch (error) {
-      debugLogger.error("Error observing ElevenLabs input", error);
-    }
-    let result: PromiseLike<unknown>;
-    try {
-      result = withCurrent(span, () =>
-        runWithAutoInstrumentationSuppressed(invoke),
+): TResult {
+  const args = context.arguments;
+
+  if (isAutoInstrumentationSuppressed()) return call();
+  const started = Date.now() / 1000;
+  let span: Span | undefined;
+  try {
+    const event = input(args);
+    if (event !== undefined)
+      span = startSpan(
+        withSpanInstrumentationName(
+          {
+            name,
+            spanAttributes: { type: SpanTypeAttribute.LLM },
+            event,
+          },
+          INSTRUMENTATION_NAMES.ELEVENLABS,
+        ),
       );
-    } catch (error) {
-      finish(error);
-      throw error;
-    }
-    // Observe the SDK promise without replacing it: withRawResponse() must remain
-    // available, including when it is the application's only consumption path.
-    const capture = (value: unknown, headers?: Headers) => {
-      try {
-        output(value, args, span, finish, headers, started);
-      } catch (error) {
-        debugLogger.error("Error capturing ElevenLabs output", error);
-        finish();
-      }
-    };
+  } catch (error) {
+    debugLogger.error("Error starting ElevenLabs span", error);
+    return call();
+  }
+  if (!span) return call();
+  const activeSpan = span;
+  let ended = false;
+  const finish: Finish = (error) => {
+    if (ended) return;
+    ended = true;
     try {
-      if (isObject(result) && typeof result.withRawResponse === "function") {
-        void result
-          .withRawResponse()
-          .then(
-            ({
-              data,
-              rawResponse,
-            }: {
-              data: unknown;
-              rawResponse?: { headers?: Headers };
-            }) => capture(data, rawResponse?.headers),
-            finish,
-          );
-      } else {
-        void Promise.resolve(result).then((value) => capture(value), finish);
-      }
+      if (error !== undefined) activeSpan.log({ error });
+      activeSpan.end();
+    } catch (loggingError) {
+      debugLogger.error("Error ending ElevenLabs span", loggingError);
+    }
+  };
+  try {
+    beforeInvoke?.(args, span);
+  } catch (error) {
+    debugLogger.error("Error observing ElevenLabs input", error);
+  }
+  let result: TResult;
+  try {
+    result = withCurrent(span, () =>
+      runWithAutoInstrumentationSuppressed(call),
+    );
+  } catch (error) {
+    finish(error);
+    throw error;
+  }
+  const capture = (value: unknown, headers?: Headers) => {
+    try {
+      output(value, args, span, finish, headers, started);
     } catch (error) {
-      debugLogger.error("Error observing ElevenLabs result", error);
+      debugLogger.error("Error capturing ElevenLabs output", error);
       finish();
     }
-    return result;
-  });
+  };
+  try {
+    if (isObject(result) && typeof result.withRawResponse === "function") {
+      void result
+        .withRawResponse()
+        .then(
+          ({
+            data,
+            rawResponse,
+          }: {
+            data: unknown;
+            rawResponse?: { headers?: Headers };
+          }) => capture(data, rawResponse?.headers),
+          finish,
+        );
+    } else {
+      void Promise.resolve(result).then((value) => capture(value), finish);
+    }
+  } catch (error) {
+    debugLogger.error("Error observing ElevenLabs result", error);
+    finish();
+  }
+  return result;
 }
 
 function captureSpeech(

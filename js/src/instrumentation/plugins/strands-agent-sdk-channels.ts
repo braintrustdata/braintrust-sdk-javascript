@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   StrandsAgent,
   StrandsAgentResult,
@@ -17,7 +17,7 @@ type StrandsChannelContext = {
   self?: unknown;
 };
 
-export const strandsAgentSDKChannels = defineChannels(
+export const strandsAgentSDKChannels = defineInterceptor(
   "@strands-agents/sdk",
   {
     agentStream: channel<
@@ -27,7 +27,6 @@ export const strandsAgentSDKChannels = defineChannels(
       StrandsAgentStreamEvent
     >({
       channelName: "Agent.stream",
-      kind: "sync-stream",
     }),
 
     graphStream: channel<
@@ -41,7 +40,6 @@ export const strandsAgentSDKChannels = defineChannels(
       StrandsMultiAgentStreamEvent
     >({
       channelName: "Graph.stream",
-      kind: "sync-stream",
     }),
 
     swarmStream: channel<
@@ -55,8 +53,6 @@ export const strandsAgentSDKChannels = defineChannels(
       StrandsMultiAgentStreamEvent
     >({
       channelName: "Swarm.stream",
-      kind: "sync-stream",
     }),
   },
-  { instrumentationName: INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK },
 );

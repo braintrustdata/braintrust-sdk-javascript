@@ -56,36 +56,56 @@ type Request =
   | { requests: GenerativeAIEmbedRequest[] };
 type Operation = keyof typeof googleGenerativeAIChannels;
 
-type GenerativeAIChannel<TArgs extends unknown[], TResult> = {
-  intercept(
-    interceptor: (
-      target: (this: unknown, ...args: TArgs) => PromiseLike<TResult>,
-      thisArg: unknown,
-      args: TArgs,
-    ) => PromiseLike<TResult>,
-  ): () => void;
-};
-
 export class GoogleGenerativeAIPlugin extends BasePlugin {
   protected onEnable(): void {
     this.unsubscribers.push(
-      interceptCall(
-        googleGenerativeAIChannels.generateContent,
-        "generateContent",
+      googleGenerativeAIChannels.generateContent.intercept(
+        (target, receiver, args, additional) =>
+          traceGenerativeAICall(
+            () => Reflect.apply(target, receiver, args),
+            { arguments: args, self: receiver, additional },
+            "generateContent",
+          ),
       ),
-      interceptCall(
-        googleGenerativeAIChannels.generateContentStream,
-        "generateContentStream",
+      googleGenerativeAIChannels.generateContentStream.intercept(
+        (target, receiver, args, additional) =>
+          traceGenerativeAICall(
+            () => Reflect.apply(target, receiver, args),
+            { arguments: args, self: receiver, additional },
+            "generateContentStream",
+          ),
       ),
-      interceptCall(googleGenerativeAIChannels.sendMessage, "sendMessage"),
-      interceptCall(
-        googleGenerativeAIChannels.sendMessageStream,
-        "sendMessageStream",
+      googleGenerativeAIChannels.sendMessage.intercept(
+        (target, receiver, args, additional) =>
+          traceGenerativeAICall(
+            () => Reflect.apply(target, receiver, args),
+            { arguments: args, self: receiver, additional },
+            "sendMessage",
+          ),
       ),
-      interceptCall(googleGenerativeAIChannels.embedContent, "embedContent"),
-      interceptCall(
-        googleGenerativeAIChannels.batchEmbedContents,
-        "batchEmbedContents",
+      googleGenerativeAIChannels.sendMessageStream.intercept(
+        (target, receiver, args, additional) =>
+          traceGenerativeAICall(
+            () => Reflect.apply(target, receiver, args),
+            { arguments: args, self: receiver, additional },
+            "sendMessageStream",
+          ),
+      ),
+      googleGenerativeAIChannels.embedContent.intercept(
+        (target, receiver, args, additional) =>
+          traceGenerativeAICall(
+            () => Reflect.apply(target, receiver, args),
+            { arguments: args, self: receiver, additional },
+            "embedContent",
+          ),
+      ),
+      googleGenerativeAIChannels.batchEmbedContents.intercept(
+        (target, receiver, args, additional) =>
+          traceGenerativeAICall(
+            () => Reflect.apply(target, receiver, args),
+            { arguments: args, self: receiver, additional },
+            "batchEmbedContents",
+          ),
       ),
     );
   }
@@ -95,206 +115,204 @@ export class GoogleGenerativeAIPlugin extends BasePlugin {
   }
 }
 
-function interceptCall<
+function traceGenerativeAICall<
   TArgs extends [Request, unknown?],
   TResult extends Result,
 >(
-  channel: GenerativeAIChannel<TArgs, TResult>,
+  call: () => PromiseLike<TResult>,
+  context: { arguments: TArgs; self: unknown; additional: unknown },
   operation: Operation,
-): () => void {
-  return channel.intercept((target, thisArg, args) => {
-    const invokeTarget = () => Reflect.apply(target, thisArg, args);
-    if (isAutoInstrumentationSuppressed()) return invokeTarget();
-    const self = thisArg as GenerativeAIModel | GenerativeAIChat;
-    const chat = operation.startsWith("sendMessage");
-    const embedding =
-      operation === "embedContent" || operation === "batchEmbedContents";
-    const start = getCurrentUnixTimestamp();
-    let span: Span;
-    try {
-      span = startSpan(
-        withSpanInstrumentationName(
-          {
-            name: embedding
-              ? operation === "embedContent"
-                ? "embed_content"
-                : "batch_embed_contents"
-              : "generate_content",
-            spanAttributes: { type: SpanTypeAttribute.LLM },
-            event: extractInput(self, args[0], operation),
-          },
-          INSTRUMENTATION_NAMES.GOOGLE_GENERATIVE_AI,
-        ),
-      );
-    } catch (error) {
-      debugLogger.error("Error starting Google Generative AI span:", error);
-      return invokeTarget();
-    }
-    let ended = false;
-    const finish = (log: () => void) => {
-      if (ended) return;
-      ended = true;
-      try {
-        log();
-      } catch (error) {
-        debugLogger.error("Error logging Google Generative AI span:", error);
-      }
-      try {
-        span.end();
-      } catch (error) {
-        debugLogger.error("Error ending Google Generative AI span:", error);
-      }
-    };
-    // The SDK serializes chat sends on this promise. Capture history after the
-    // preceding send completes, before the current SDK call appends its turn.
-    if (chat) {
-      try {
-        void (self as GenerativeAIChat)._sendPromise.then(
-          () => {
-            try {
-              span.log(extractInput(self, args[0], operation));
-            } catch (error) {
-              debugLogger.error("Error capturing Google chat history:", error);
-            }
-          },
-          () => {},
-        );
-      } catch (error) {
-        debugLogger.error("Error observing Google chat history:", error);
-      }
-    }
-    let result: PromiseLike<TResult>;
-    try {
-      result = withCurrent(span, () =>
-        runWithAutoInstrumentationSuppressed(invokeTarget),
-      );
-    } catch (error) {
-      finish(() => span.log({ error }));
-      throw error;
-    }
-    void Promise.resolve(result).then(
-      (value) => {
-        try {
-          if ("stream" in value) {
-            let firstToken = false;
-            const partial: GenerativeAIResponse = { candidates: [] };
-            const candidates = new Map<
-              number,
-              NonNullable<GenerativeAIResponse["candidates"]>[number]
-            >();
-            patchStreamIfNeeded<GenerativeAIResponse>(value.stream, {
-              aroundNext: (callback) => withCurrent(span, callback),
-              onChunk: (chunk) => {
-                for (const candidate of chunk.candidates ?? []) {
-                  const index = candidate.index ?? 0;
-                  const previous = candidates.get(index);
-                  const parts = [...(previous?.content?.parts ?? [])];
-                  for (const part of candidate.content?.parts ?? []) {
-                    const last = parts[parts.length - 1];
-                    if (part.text !== undefined && last?.text !== undefined) {
-                      parts[parts.length - 1] = {
-                        ...last,
-                        text: last.text + part.text,
-                      };
-                    } else parts.push(part);
-                  }
-                  candidates.set(index, {
-                    ...previous,
-                    ...candidate,
-                    content: {
-                      role:
-                        candidate.content?.role ??
-                        previous?.content?.role ??
-                        "model",
-                      parts,
-                    },
-                  });
-                }
-                partial.candidates = Array.from(candidates.values());
-                if (chunk.usageMetadata)
-                  partial.usageMetadata = chunk.usageMetadata;
-                if (
-                  !firstToken &&
-                  chunk.candidates?.some((candidate) =>
-                    candidate.content?.parts.some((part) =>
-                      part.text !== undefined
-                        ? part.text.length > 0
-                        : Object.keys(part).length > 0,
-                    ),
-                  )
-                ) {
-                  firstToken = true;
-                  span.log({
-                    metrics: {
-                      time_to_first_token: getCurrentUnixTimestamp() - start,
-                    },
-                  });
-                }
-              },
-              onComplete: () => {},
-              onError: (error) =>
-                finish(() => {
-                  logResponse(span, partial);
-                  span.log({ error });
-                }),
-              onCancel: () => finish(() => logResponse(span, partial)),
-            });
-            // The SDK tees its stream to build this aggregate, even when callers
-            // only await response. Observe it without replacing either public value.
-            void value.response.then(
-              (response) => finish(() => logResponse(span, response)),
-              (error) =>
-                finish(() => {
-                  logResponse(span, partial);
-                  span.log({ error });
-                }),
-            );
-          } else if ("response" in value) {
-            finish(() => logResponse(span, value.response));
-          } else {
-            const metrics: Record<string, number> = {};
-            const promptTokens = value.usageMetadata?.promptTokenCount;
-            if (
-              typeof promptTokens === "number" &&
-              Number.isFinite(promptTokens) &&
-              promptTokens >= 0
-            ) {
-              metrics.prompt_tokens = promptTokens;
-              metrics.tokens = promptTokens;
-            }
-            for (const detail of value.usageMetadata?.promptTokenDetails ??
-              []) {
-              if (
-                detail.modality === "AUDIO" &&
-                typeof detail.tokenCount === "number" &&
-                Number.isFinite(detail.tokenCount) &&
-                detail.tokenCount >= 0
-              ) {
-                metrics.prompt_audio_tokens =
-                  (metrics.prompt_audio_tokens ?? 0) + detail.tokenCount;
-              }
-            }
-            finish(() =>
-              span.log({
-                metrics,
-                output: {
-                  count: value.embeddings?.length ?? (value.embedding ? 1 : 0),
-                },
-              }),
-            );
-          }
-        } catch (error) {
-          debugLogger.error(
-            "Error observing Google Generative AI result:",
-            error,
-          );
-          finish(() => {});
-        }
-      },
-      (error) => finish(() => span.log({ error })),
+): PromiseLike<TResult> {
+  const args = context.arguments;
+  const thisArg = context.self;
+
+  if (isAutoInstrumentationSuppressed()) return call();
+  const self = thisArg as GenerativeAIModel | GenerativeAIChat;
+  const chat = operation.startsWith("sendMessage");
+  const embedding =
+    operation === "embedContent" || operation === "batchEmbedContents";
+  const start = getCurrentUnixTimestamp();
+  let span: Span;
+  try {
+    span = startSpan(
+      withSpanInstrumentationName(
+        {
+          name: embedding
+            ? operation === "embedContent"
+              ? "embed_content"
+              : "batch_embed_contents"
+            : "generate_content",
+          spanAttributes: { type: SpanTypeAttribute.LLM },
+          event: extractInput(self, args[0], operation),
+        },
+        INSTRUMENTATION_NAMES.GOOGLE_GENERATIVE_AI,
+      ),
     );
-    return result;
-  });
+  } catch (error) {
+    debugLogger.error("Error starting Google Generative AI span:", error);
+    return call();
+  }
+  let ended = false;
+  const finish = (log: () => void) => {
+    if (ended) return;
+    ended = true;
+    try {
+      log();
+    } catch (error) {
+      debugLogger.error("Error logging Google Generative AI span:", error);
+    }
+    try {
+      span.end();
+    } catch (error) {
+      debugLogger.error("Error ending Google Generative AI span:", error);
+    }
+  };
+  if (chat) {
+    try {
+      void (self as GenerativeAIChat)._sendPromise.then(
+        () => {
+          try {
+            span.log(extractInput(self, args[0], operation));
+          } catch (error) {
+            debugLogger.error("Error capturing Google chat history:", error);
+          }
+        },
+        () => {},
+      );
+    } catch (error) {
+      debugLogger.error("Error observing Google chat history:", error);
+    }
+  }
+  let result: PromiseLike<TResult>;
+  try {
+    result = withCurrent(span, () =>
+      runWithAutoInstrumentationSuppressed(call),
+    );
+  } catch (error) {
+    finish(() => span.log({ error }));
+    throw error;
+  }
+  void Promise.resolve(result).then(
+    (value) => {
+      try {
+        if ("stream" in value) {
+          let firstToken = false;
+          const partial: GenerativeAIResponse = { candidates: [] };
+          const candidates = new Map<
+            number,
+            NonNullable<GenerativeAIResponse["candidates"]>[number]
+          >();
+          patchStreamIfNeeded<GenerativeAIResponse>(value.stream, {
+            aroundNext: (callback) => withCurrent(span, callback),
+            onChunk: (chunk) => {
+              for (const candidate of chunk.candidates ?? []) {
+                const index = candidate.index ?? 0;
+                const previous = candidates.get(index);
+                const parts = [...(previous?.content?.parts ?? [])];
+                for (const part of candidate.content?.parts ?? []) {
+                  const last = parts[parts.length - 1];
+                  if (part.text !== undefined && last?.text !== undefined) {
+                    parts[parts.length - 1] = {
+                      ...last,
+                      text: last.text + part.text,
+                    };
+                  } else parts.push(part);
+                }
+                candidates.set(index, {
+                  ...previous,
+                  ...candidate,
+                  content: {
+                    role:
+                      candidate.content?.role ??
+                      previous?.content?.role ??
+                      "model",
+                    parts,
+                  },
+                });
+              }
+              partial.candidates = Array.from(candidates.values());
+              if (chunk.usageMetadata)
+                partial.usageMetadata = chunk.usageMetadata;
+              if (
+                !firstToken &&
+                chunk.candidates?.some((candidate) =>
+                  candidate.content?.parts.some((part) =>
+                    part.text !== undefined
+                      ? part.text.length > 0
+                      : Object.keys(part).length > 0,
+                  ),
+                )
+              ) {
+                firstToken = true;
+                span.log({
+                  metrics: {
+                    time_to_first_token: getCurrentUnixTimestamp() - start,
+                  },
+                });
+              }
+            },
+            onComplete: () => {},
+            onError: (error) =>
+              finish(() => {
+                logResponse(span, partial);
+                span.log({ error });
+              }),
+            onCancel: () => finish(() => logResponse(span, partial)),
+          });
+          // The SDK tees its stream to build this aggregate, even when callers
+          // only await response. Observe it without replacing either public value.
+          void value.response.then(
+            (response) => finish(() => logResponse(span, response)),
+            (error) =>
+              finish(() => {
+                logResponse(span, partial);
+                span.log({ error });
+              }),
+          );
+        } else if ("response" in value) {
+          finish(() => logResponse(span, value.response));
+        } else {
+          const metrics: Record<string, number> = {};
+          const promptTokens = value.usageMetadata?.promptTokenCount;
+          if (
+            typeof promptTokens === "number" &&
+            Number.isFinite(promptTokens) &&
+            promptTokens >= 0
+          ) {
+            metrics.prompt_tokens = promptTokens;
+            metrics.tokens = promptTokens;
+          }
+          for (const detail of value.usageMetadata?.promptTokenDetails ?? []) {
+            if (
+              detail.modality === "AUDIO" &&
+              typeof detail.tokenCount === "number" &&
+              Number.isFinite(detail.tokenCount) &&
+              detail.tokenCount >= 0
+            ) {
+              metrics.prompt_audio_tokens =
+                (metrics.prompt_audio_tokens ?? 0) + detail.tokenCount;
+            }
+          }
+          finish(() =>
+            span.log({
+              metrics,
+              output: {
+                count: value.embeddings?.length ?? (value.embedding ? 1 : 0),
+              },
+            }),
+          );
+        }
+      } catch (error) {
+        debugLogger.error(
+          "Error observing Google Generative AI result:",
+          error,
+        );
+        finish(() => {});
+      }
+    },
+    (error) => finish(() => span.log({ error })),
+  );
+  return result;
 }
 
 function normalizeContent(message: GenerativeAIMessage): GenerativeAIContent {

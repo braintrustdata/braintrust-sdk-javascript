@@ -1,28 +1,12 @@
-import { BasePlugin } from "../core";
 import {
-  traceAsyncChannel,
-  traceStreamingChannel,
-  unsubscribeAll,
-} from "../core/channel-tracing";
-import {
+  SpanTypeAttribute,
   concatUint8Arrays,
   isObject,
-  SpanTypeAttribute,
 } from "../../../util/index";
-import { Attachment, withCurrent, type Span } from "../../logger";
-import {
-  convertDataToBlob,
-  getExtensionFromMediaType,
-  processInputAttachments,
-} from "../../wrappers/attachment-utils";
-import { getCurrentUnixTimestamp } from "../../util";
-import {
-  aggregateChatCompletionChunks,
-  parseMetricsFromUsage,
-} from "./openai-plugin";
-import { groqChannels } from "./groq-channels";
-import { isAsyncIterable, observeByteStream } from "../core/stream-patcher";
 import { debugLogger } from "../../debug-logger";
+import { Attachment, withCurrent, type Span } from "../../logger";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { getCurrentUnixTimestamp } from "../../util";
 import type {
   GroqAudioSpeechCreateParams,
   GroqAudioTextResult,
@@ -31,101 +15,159 @@ import type {
   GroqChatCompletion,
   GroqChatCompletionChunk,
 } from "../../vendor-sdk-types/groq";
+import {
+  convertDataToBlob,
+  getExtensionFromMediaType,
+  processInputAttachments,
+} from "../../wrappers/attachment-utils";
+import { BasePlugin } from "../core";
+import {
+  traceAsyncCall,
+  traceStreamingCall,
+  unsubscribeAll,
+} from "../core/channel-tracing";
+import { isAsyncIterable, observeByteStream } from "../core/stream-patcher";
+import { groqChannels } from "./groq-channels";
+import {
+  aggregateChatCompletionChunks,
+  parseMetricsFromUsage,
+} from "./openai-plugin";
 
 export class GroqPlugin extends BasePlugin {
   protected onEnable(): void {
     this.unsubscribers.push(
-      traceStreamingChannel(groqChannels.chatCompletionsCreate, {
-        name: "groq.chat.completions.create",
-        type: SpanTypeAttribute.LLM,
-        extractInput: ([params]) => {
-          const { messages, ...metadata } = params;
-          return {
-            input: processInputAttachments(messages),
-            metadata: { ...metadata, provider: "groq" },
-          };
-        },
-        extractOutput: (result) => result?.choices,
-        extractMetrics: (result, startTime) => {
-          const metrics = parseGroqMetrics(result);
-          if (startTime) {
-            metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-          }
-          return metrics;
-        },
-        aggregateChunks: aggregateGroqChatCompletionChunks,
-      }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(groqChannels.embeddingsCreate, {
-        name: "groq.embeddings.create",
-        type: SpanTypeAttribute.LLM,
-        extractInput: ([params]) => {
-          const { input, ...metadata } = params;
-          return {
-            input,
-            metadata: { ...metadata, provider: "groq" },
-          };
-        },
-        extractOutput: (result) => {
-          const embedding = result?.data?.[0]?.embedding;
-          return Array.isArray(embedding)
-            ? { embedding_length: embedding.length }
-            : undefined;
-        },
-        extractMetrics: (result) => parseGroqMetrics(result),
-      }),
-    );
-
-    this.unsubscribers.push(
-      traceStreamingChannel(groqChannels.audioSpeechCreate, {
-        name: "groq.audio.speech.create",
-        type: SpanTypeAttribute.LLM,
-        extractInput: ([params]) => ({
-          input: {
-            operation: "speech",
-            prompt: params.input,
-            parameters: {
-              voice: params.voice,
-              format: params.response_format,
-              speed: params.speed,
+      groqChannels.chatCompletionsCreate.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof groqChannels.chatCompletionsCreate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.GROQ,
+              name: "groq.chat.completions.create",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params]) => {
+                const { messages, ...metadata } = params;
+                return {
+                  input: processInputAttachments(messages),
+                  metadata: { ...metadata, provider: "groq" },
+                };
+              },
+              extractOutput: (result) => result?.choices,
+              extractMetrics: (result, startTime) => {
+                const metrics = parseGroqMetrics(result);
+                if (startTime) {
+                  metrics.time_to_first_token =
+                    getCurrentUnixTimestamp() - startTime;
+                }
+                return metrics;
+              },
+              aggregateChunks: aggregateGroqChatCompletionChunks,
             },
-          },
-          metadata: { model: params.model, provider: "groq" },
-        }),
-        extractOutput: () => ({ content: [] }),
-        extractMetrics: () => ({}),
-        patchResult: ({ endEvent, result, span, startTime }) =>
-          captureGroqSpeechResponse(
-            result,
-            endEvent.arguments![0],
-            span,
-            startTime,
           ),
-      }),
+      ),
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(groqChannels.audioTranscriptionsCreate, {
-        name: "groq.audio.transcriptions.create",
-        type: SpanTypeAttribute.LLM,
-        extractInput: ([params], _event, span) =>
-          extractGroqAudioInput(params, "transcribe", span),
-        extractOutput: extractGroqAudioTextOutput,
-        extractMetrics: (result) => parseGroqMetricsObject(result),
-      }),
+      groqChannels.embeddingsCreate.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof groqChannels.embeddingsCreate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.GROQ,
+              name: "groq.embeddings.create",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params]) => {
+                const { input, ...metadata } = params;
+                return {
+                  input,
+                  metadata: { ...metadata, provider: "groq" },
+                };
+              },
+              extractOutput: (result) => {
+                const embedding = result?.data?.[0]?.embedding;
+                return Array.isArray(embedding)
+                  ? { embedding_length: embedding.length }
+                  : undefined;
+              },
+              extractMetrics: (result) => parseGroqMetrics(result),
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(groqChannels.audioTranslationsCreate, {
-        name: "groq.audio.translations.create",
-        type: SpanTypeAttribute.LLM,
-        extractInput: ([params], _event, span) =>
-          extractGroqAudioInput(params, "translate", span),
-        extractOutput: extractGroqAudioTextOutput,
-        extractMetrics: (result) => parseGroqMetricsObject(result),
-      }),
+      groqChannels.audioSpeechCreate.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof groqChannels.audioSpeechCreate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.GROQ,
+              name: "groq.audio.speech.create",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params]) => ({
+                input: {
+                  operation: "speech",
+                  prompt: params.input,
+                  parameters: {
+                    voice: params.voice,
+                    format: params.response_format,
+                    speed: params.speed,
+                  },
+                },
+                metadata: { model: params.model, provider: "groq" },
+              }),
+              extractOutput: () => ({ content: [] }),
+              extractMetrics: () => ({}),
+              patchResult: ({ endEvent, result, span, startTime }) =>
+                captureGroqSpeechResponse(
+                  result,
+                  endEvent.arguments![0],
+                  span,
+                  startTime,
+                ),
+            },
+          ),
+      ),
+    );
+
+    this.unsubscribers.push(
+      groqChannels.audioTranscriptionsCreate.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof groqChannels.audioTranscriptionsCreate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.GROQ,
+              name: "groq.audio.transcriptions.create",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params], _event, span) =>
+                extractGroqAudioInput(params, "transcribe", span),
+              extractOutput: extractGroqAudioTextOutput,
+              extractMetrics: (result) => parseGroqMetricsObject(result),
+            },
+          ),
+      ),
+    );
+
+    this.unsubscribers.push(
+      groqChannels.audioTranslationsCreate.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof groqChannels.audioTranslationsCreate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.GROQ,
+              name: "groq.audio.translations.create",
+              type: SpanTypeAttribute.LLM,
+              extractInput: ([params], _event, span) =>
+                extractGroqAudioInput(params, "translate", span),
+              extractOutput: extractGroqAudioTextOutput,
+              extractMetrics: (result) => parseGroqMetricsObject(result),
+            },
+          ),
+      ),
     );
   }
 

@@ -1,9 +1,11 @@
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import { BasePlugin } from "../core";
-import { traceAsyncChannel, unsubscribeAll } from "../core/channel-tracing";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
+import { traceAsyncCall, unsubscribeAll } from "../core/channel-tracing";
+import { observeResult } from "../core/observe-result";
+
 import { SpanTypeAttribute, isObject } from "../../../util";
 import type { HuggingFaceTransformersPipeline } from "../../vendor-sdk-types/huggingface-transformers";
+import type { ChannelMessage } from "../core/tracing-types";
 import {
   getHuggingFaceTransformersPipelineInfo,
   huggingFaceTransformersChannels,
@@ -23,34 +25,44 @@ export class HuggingFaceTransformersPlugin extends BasePlugin {
   protected onEnable(): void {
     this.subscribeToPipelineFactory();
     this.unsubscribers.push(
-      traceAsyncChannel(huggingFaceTransformersChannels.pipelineCall, {
-        name: (_args, event) => {
-          const task = getTask(event as HuggingFaceTransformersEventContext);
-          const operation = task?.replaceAll("-", "_") ?? "unknown";
-          return `huggingface.transformers.${operation}`;
-        },
-        type: SpanTypeAttribute.LLM,
-        shouldTrace: (_args, event) =>
-          isSupportedHuggingFaceTransformersTask(
-            getTask(event as HuggingFaceTransformersEventContext),
+      huggingFaceTransformersChannels.pipelineCall.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof huggingFaceTransformersChannels.pipelineCall>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE,
+              name: (_args, event) => {
+                const task = getTask(
+                  event as HuggingFaceTransformersEventContext,
+                );
+                const operation = task?.replaceAll("-", "_") ?? "unknown";
+                return `huggingface.transformers.${operation}`;
+              },
+              type: SpanTypeAttribute.LLM,
+              shouldTrace: (_args, event) =>
+                isSupportedHuggingFaceTransformersTask(
+                  getTask(event as HuggingFaceTransformersEventContext),
+                ),
+              extractInput: (args, event) => ({
+                input: extractInput(
+                  getTask(event as HuggingFaceTransformersEventContext),
+                  args,
+                ),
+                metadata: extractMetadata(
+                  event as HuggingFaceTransformersEventContext,
+                  args,
+                ),
+              }),
+              extractOutput: (result, event) =>
+                extractOutput(
+                  getTask(event as HuggingFaceTransformersEventContext),
+                  result,
+                ),
+              extractMetrics: () => ({}),
+            },
           ),
-        extractInput: (args, event) => ({
-          input: extractInput(
-            getTask(event as HuggingFaceTransformersEventContext),
-            args,
-          ),
-          metadata: extractMetadata(
-            event as HuggingFaceTransformersEventContext,
-            args,
-          ),
-        }),
-        extractOutput: (result, event) =>
-          extractOutput(
-            getTask(event as HuggingFaceTransformersEventContext),
-            result,
-          ),
-        extractMetrics: () => ({}),
-      }),
+      ),
     );
   }
 
@@ -59,34 +71,55 @@ export class HuggingFaceTransformersPlugin extends BasePlugin {
   }
 
   private subscribeToPipelineFactory(): void {
-    const channel =
-      huggingFaceTransformersChannels.pipeline.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<typeof huggingFaceTransformersChannels.pipeline>
-      >;
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof huggingFaceTransformersChannels.pipeline>
-    > = {
-      asyncEnd: (event) => {
-        if (typeof event.result !== "function") {
-          return;
+    const channel = huggingFaceTransformersChannels.pipeline;
+
+    const removeHandlers = channel.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof huggingFaceTransformersChannels.pipeline>;
+        const resolved = (
+          event: ChannelMessage<
+            typeof huggingFaceTransformersChannels.pipeline
+          >,
+        ) => {
+          if (typeof event.result !== "function") {
+            return;
+          }
+          registerHuggingFaceTransformersPipeline(
+            event.result,
+            event.arguments?.[0],
+            event.arguments?.[1],
+          );
+        };
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          throw error;
         }
-        registerHuggingFaceTransformersPipeline(
-          event.result,
-          event.arguments?.[0],
-          event.arguments?.[1],
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            resolved(event);
+          },
+          (error) => {},
         );
       },
-    };
-
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => channel.unsubscribe(handlers));
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 }
 
 function getTask(
   event: HuggingFaceTransformersEventContext,
 ): string | undefined {
-  const self = event.self;
+  const self =
+    event.pipeline ??
+    (event.self as HuggingFaceTransformersPipeline | undefined);
   const registeredTask = getHuggingFaceTransformersPipelineInfo(self)?.task;
   if (registeredTask !== undefined) {
     return registeredTask;
@@ -105,9 +138,15 @@ function extractMetadata(
     provider: "huggingface",
   };
   const registeredModel = getHuggingFaceTransformersPipelineInfo(
-    event.self,
+    event.pipeline ??
+      (event.self as HuggingFaceTransformersPipeline | undefined),
   )?.model;
-  const model = registeredModel ?? modelIdentifier(event.self);
+  const model =
+    registeredModel ??
+    modelIdentifier(
+      event.pipeline ??
+        (event.self as HuggingFaceTransformersPipeline | undefined),
+    );
   if (model) {
     metadata.model = model;
   }

@@ -1,25 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { invoke, tracePromise } = vi.hoisted(() => ({
+const { invoke } = vi.hoisted(() => ({
   invoke: vi.fn(
     (
-      target: (...args: unknown[]) => unknown,
-      thisArg: unknown,
+      target: (...args: any[]) => any,
+      receiver: unknown,
       args: unknown[],
-    ) => Reflect.apply(target, thisArg, args),
+      _additional?: unknown,
+    ) => Reflect.apply(target, receiver, args),
   ),
-  tracePromise: vi.fn((fn: () => Promise<unknown>) => fn()),
 }));
-
-vi.mock("../isomorph", () => ({
-  default: {
-    newTracingChannel: vi.fn(() => ({
-      subscribe: vi.fn(),
-      invoke,
-      tracePromise,
-      unsubscribe: vi.fn(),
-    })),
-  },
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
 }));
 
 import { wrapGoogleGenAI } from "./google-genai";
@@ -152,12 +145,15 @@ describe("wrapGoogleGenAI", () => {
     expect(result).toEqual({ options, params });
     expect(interactionsGetCount).toBe(1);
     expect(create).toHaveBeenCalledWith(params, options);
-    expect(tracePromise).toHaveBeenCalledWith(expect.any(Function), {
-      arguments: [params, options],
-    });
+    expect(invoke).toHaveBeenCalledWith(
+      expect.any(Function),
+      undefined,
+      [params, options],
+      expect.any(Object),
+    );
   });
 
-  it("does not trace background interaction tasks", async () => {
+  it("wraps background interaction tasks without making tracing decisions", async () => {
     const create = vi.fn(async (params: unknown, options?: unknown) => ({
       options,
       params,
@@ -191,7 +187,7 @@ describe("wrapGoogleGenAI", () => {
 
     expect(result).toEqual({ options, params });
     expect(create).toHaveBeenCalledWith(params, options);
-    expect(tracePromise).not.toHaveBeenCalled();
+    expect(invoke).toHaveBeenCalledOnce();
   });
 
   it("leaves clients without interactions unchanged", () => {
@@ -210,6 +206,6 @@ describe("wrapGoogleGenAI", () => {
     const client = new wrapped.GoogleGenAI();
 
     expect((client as any).interactions).toBeUndefined();
-    expect(tracePromise).not.toHaveBeenCalled();
+    expect(invoke).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   ElevenLabsAudio,
   ElevenLabsSpeechArgs,
@@ -8,29 +8,26 @@ import type {
   ElevenLabsTranscriptionRequest,
 } from "../../vendor-sdk-types/elevenlabs";
 
-export const elevenLabsChannels = defineChannels(
+export const elevenLabsChannels = defineInterceptor(
   "@elevenlabs/elevenlabs-js",
   {
-    convert: channel<ElevenLabsSpeechArgs, ElevenLabsAudio>({
+    convert: channel<ElevenLabsSpeechArgs, PromiseLike<ElevenLabsAudio>>({
       channelName: "textToSpeech.convert",
-      kind: "async",
     }),
-    stream: channel<ElevenLabsSpeechArgs, ElevenLabsAudio>({
+    stream: channel<ElevenLabsSpeechArgs, PromiseLike<ElevenLabsAudio>>({
       channelName: "textToSpeech.stream",
-      kind: "async",
     }),
     convertWithTimestamps: channel<
       ElevenLabsSpeechArgs,
-      ElevenLabsTimestampAudio
-    >({ channelName: "textToSpeech.convertWithTimestamps", kind: "async" }),
+      PromiseLike<ElevenLabsTimestampAudio>
+    >({ channelName: "textToSpeech.convertWithTimestamps" }),
     streamWithTimestamps: channel<
       ElevenLabsSpeechArgs,
-      AsyncIterable<ElevenLabsTimestampAudio>
-    >({ channelName: "textToSpeech.streamWithTimestamps", kind: "async" }),
+      PromiseLike<AsyncIterable<ElevenLabsTimestampAudio>>
+    >({ channelName: "textToSpeech.streamWithTimestamps" }),
     transcribe: channel<
       [ElevenLabsTranscriptionRequest, unknown?],
-      ElevenLabsTranscription
-    >({ channelName: "speechToText.convert", kind: "async" }),
+      PromiseLike<ElevenLabsTranscription>
+    >({ channelName: "speechToText.convert" }),
   },
-  { instrumentationName: INSTRUMENTATION_NAMES.ELEVENLABS },
 );

@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   CloudflareThinkInstance,
   CloudflareThinkStreamableResult,
@@ -11,17 +11,12 @@ type CloudflareThinkChannelContext = {
   moduleVersion?: string;
 };
 
-export const cloudflareThinkChannels = defineChannels(
-  "@cloudflare/think",
-  {
-    runInferenceLoop: channel<
-      [CloudflareThinkTurnInput],
-      CloudflareThinkStreamableResult,
-      CloudflareThinkChannelContext
-    >({
-      channelName: "Think.runInferenceLoop",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.CLOUDFLARE_THINK },
-);
+export const cloudflareThinkChannels = defineInterceptor("@cloudflare/think", {
+  runInferenceLoop: channel<
+    [CloudflareThinkTurnInput],
+    PromiseLike<CloudflareThinkStreamableResult>,
+    CloudflareThinkChannelContext
+  >({
+    channelName: "Think.runInferenceLoop",
+  }),
+});

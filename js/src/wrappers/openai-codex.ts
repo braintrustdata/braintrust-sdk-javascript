@@ -145,14 +145,10 @@ function wrapCodexThread(thread: OpenAICodexThread): OpenAICodexThread {
             OpenAICodexInput,
             OpenAICodexTurnOptions | undefined,
           ];
-          return openAICodexChannels.run.tracePromise(
-            () => Reflect.apply(value, target, args),
-            {
-              arguments: args,
-              operation: "run",
-              thread: target,
-            },
-          );
+          return openAICodexChannels.run.invoke(value, target, args, {
+            operation: "run",
+            thread: target,
+          });
         };
       }
       if (prop === "runStreamed" && typeof value === "function") {
@@ -164,14 +160,10 @@ function wrapCodexThread(thread: OpenAICodexThread): OpenAICodexThread {
             OpenAICodexInput,
             OpenAICodexTurnOptions | undefined,
           ];
-          return openAICodexChannels.runStreamed.tracePromise(
-            () => Reflect.apply(value, target, args),
-            {
-              arguments: args,
-              operation: "runStreamed",
-              thread: target,
-            },
-          );
+          return openAICodexChannels.runStreamed.invoke(value, target, args, {
+            operation: "runStreamed",
+            thread: target,
+          });
         };
       }
       if (typeof value === "function") {

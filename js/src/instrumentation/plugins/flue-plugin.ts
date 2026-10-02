@@ -1,23 +1,21 @@
-import { BasePlugin, toLoggedError } from "../core";
 import { debugLogger } from "../../debug-logger";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers } from "../../isomorph";
+import { BasePlugin, toLoggedError } from "../core";
+import { runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute } from "../../../util/index";
+import type { CurrentSpanStore, Span, StartSpanArgs } from "../../logger";
 import {
   BRAINTRUST_CURRENT_SPAN_STORE,
   NOOP_SPAN,
-  flush,
   _internalGetGlobalState,
+  flush,
   startSpan as startBaseSpan,
   withCurrent,
 } from "../../logger";
-import type { Span, StartSpanArgs } from "../../logger";
-import type { CurrentSpanStore } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import { SpanTypeAttribute } from "../../../util/index";
-import { flueChannels } from "./flue-channels";
 import type {
   FlueBaseEvent,
   FlueCompactionEvent,
@@ -43,17 +41,14 @@ import type {
   FlueTurnEvent,
   FlueTurnRequestEvent,
 } from "../../vendor-sdk-types/flue";
+import type { ChannelMessage } from "../core/tracing-types";
+import { flueChannels } from "./flue-channels";
 
 type FlueObserver = (event: unknown, ctx?: unknown) => void;
 type BraintrustFlueObserver = FlueObserver & FlueInstrumentation;
 
 type FlueAutoState = {
-  createContextChannel?: ReturnType<
-    typeof flueChannels.createContext.tracingChannel
-  >;
-  createContextHandlers?: IsoChannelHandlers<
-    ChannelMessage<typeof flueChannels.createContext>
-  >;
+  removeCreateContextInterceptor?: () => void;
   contexts: WeakSet<object>;
   refCount: number;
 };
@@ -128,19 +123,33 @@ function enableFlueAutoInstrumentation(): () => void {
   const state = getAutoState();
   state.refCount += 1;
 
-  if (!state.createContextHandlers) {
-    const createContextChannel = flueChannels.createContext.tracingChannel();
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof flueChannels.createContext>
-    > = {
-      end: (event) => {
-        subscribeToFlueContext(event.result, state);
-      },
-    };
+  if (!state.removeCreateContextInterceptor) {
+    const createContextChannel = flueChannels.createContext;
 
-    createContextChannel.subscribe(handlers);
-    state.createContextChannel = createContextChannel;
-    state.createContextHandlers = handlers;
+    const removeHandlers = createContextChannel.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof flueChannels.createContext>;
+        const returned = (
+          event: ChannelMessage<typeof flueChannels.createContext>,
+        ) => {
+          subscribeToFlueContext(event.result, state);
+        };
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          throw error;
+        }
+        Object.assign(event, { result });
+        runInstrumentation(() => returned(event));
+        return result;
+      },
+    );
+    state.removeCreateContextInterceptor = removeHandlers;
   }
 
   let released = false;
@@ -199,9 +208,7 @@ function releaseAutoState(state: FlueAutoState): void {
   }
 
   try {
-    if (state.createContextChannel && state.createContextHandlers) {
-      state.createContextChannel.unsubscribe(state.createContextHandlers);
-    }
+    state.removeCreateContextInterceptor?.();
   } finally {
     Reflect.deleteProperty(globalThis, FLUE_AUTO_STATE);
   }

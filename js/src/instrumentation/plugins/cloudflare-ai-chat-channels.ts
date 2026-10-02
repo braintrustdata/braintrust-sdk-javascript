@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   CloudflareAIChatResponseResult,
   CloudflareAIChatTurnCallback,
@@ -10,16 +10,15 @@ type CloudflareAIChatChannelContext = {
   self?: unknown;
 };
 
-export const cloudflareAIChatChannels = defineChannels(
+export const cloudflareAIChatChannels = defineInterceptor(
   "@cloudflare/ai-chat",
   {
     runExclusiveChatTurn: channel<
       [string, CloudflareAIChatTurnCallback, CloudflareAIChatTurnOptions?],
-      unknown,
+      PromiseLike<unknown>,
       CloudflareAIChatChannelContext
     >({
       channelName: "AIChatAgent._runExclusiveChatTurn",
-      kind: "async",
     }),
 
     onChatResponse: channel<
@@ -28,8 +27,6 @@ export const cloudflareAIChatChannels = defineChannels(
       CloudflareAIChatChannelContext
     >({
       channelName: "AIChatAgent.onChatResponse",
-      kind: "sync-stream",
     }),
   },
-  { instrumentationName: INSTRUMENTATION_NAMES.CLOUDFLARE_AI_CHAT },
 );

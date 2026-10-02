@@ -1,184 +1,86 @@
 # Writing Braintrust Instrumentation Plugins
 
-Braintrust instrumentation plugins wrap provider calls through typed invocation
-hooks or consume tracing-compatible events from the internal global registry.
-Auto-instrumented provider code and manual wrappers use the same typed channels,
-so extraction, stream handling, and span behavior stay aligned.
+API wrapping and span instrumentation are separate layers.
+Invocation hooks work independently of the SDK; provider plugins explicitly connect them to tracing functions.
 
-## Architecture
-
-An instrumentation has four parts:
-
-1. An Orchestrion config identifies the provider function for automatic
-   transformation.
-2. A typed channel defines its arguments, result, extra event fields, and stable
-   `orchestrion:<package>:<operation>` identifier.
-3. A plugin intercepts that channel, or subscribes to its legacy tracing
-   lifecycle, and maps the call into Braintrust spans.
-4. A manual wrapper invokes the same typed channel when transformation is not
-   available.
-
-The global hook transport is internal. New and migrated plugins should prefer
-the typed channel's `intercept` API. Existing plugins can continue using
-`traceAsyncChannel`, `traceStreamingChannel`, `traceSyncStreamChannel`, or
-`BasePlugin` helpers during the gradual migration.
-
-## Invocation Hooks
-
-Invocation hooks expose the complete target call and are designed for wrappers
-that need to scope the target with `AsyncLocalStorage.run()` or patch arguments,
-the receiver, or the returned value:
+## Define wrapping hooks
 
 ```ts
-const removeInterceptor = providerChannels.create.intercept(
-  (target, thisArg, args, additional) =>
-    store.run(additional.context, () => target.apply(thisArg, args)),
-);
-```
-
-Interceptors compose as nested middleware in registration order. Each receives
-the next target and may invoke it with different arguments or receiver, replace
-its result, call it more than once, or not call it at all. Removing an
-interceptor is idempotent. Calling a typed channel through `invoke` only uses
-the invocation hook and does not dispatch the legacy tracing lifecycle.
-Generated auto-instrumentation wrappers separately retain dual emission during
-the migration, with legacy tracing outside the effective intercepted call.
-
-## Lifecycle
-
-The event lifecycle is compatible with Node tracing channels:
-
-- `start`: before the synchronous portion of the target function
-- `end`: after the synchronous portion completes
-- `asyncStart`: when an asynchronous result begins settling
-- `asyncEnd`: after that result settles and before user continuation
-- `error`: when the target throws, rejects, or reports a callback error
-
-Every phase receives the same mutable context object:
-
-```ts
-interface InstrumentationContext {
-  arguments: ArrayLike<unknown>;
-  self?: unknown;
-  moduleVersion?: string;
-  result?: unknown;
-  error?: unknown;
-}
-```
-
-The generated wrapper passes the target invocation and `moduleVersion` to the
-global hook runtime. That runtime creates `arguments` and `self`; tracing
-operators add `result` or `error`.
-
-## Defining Typed Channels
-
-Define the smallest types needed by instrumentation:
-
-```ts
-const providerChannels = defineChannels(
-  "provider-package",
-  {
-    create: channel<
-      [CreateParams],
-      CreateResult,
-      { providerRequestId?: string }
-    >({
-      channelName: "messages.create",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: "provider" },
-);
-```
-
-Channel names must match the Orchestrion config exactly. Do not include the
-`orchestrion:` prefix in the transform config; `defineChannels` and Orchestrion
-construct it from the package and operation.
-
-## Subscribing
-
-Prefer the shared tracing helpers:
-
-```ts
-this.register(
-  traceAsyncChannel(providerChannels.create, {
-    name: "provider.messages.create",
-    type: "llm",
-    extractInput(args) {
-      return {
-        input: args[0].messages,
-        metadata: { model: args[0].model },
-      };
-    },
-    extractOutput(result) {
-      return result.content;
-    },
-    extractMetrics(result) {
-      return {
-        prompt_tokens: result.usage.input_tokens,
-        completion_tokens: result.usage.output_tokens,
-      };
-    },
+const providerHooks = defineInterceptor("provider-package", {
+  create: channel<[CreateParams], PromiseLike<CreateResult>>({
+    channelName: "messages.create",
   }),
+});
+```
+
+The identifier must match the Orchestrion config: `orchestrion:<package>:<operation>`.
+Definitions describe arguments, return values, and opaque additional data.
+They do not contain span names, instrumentation provenance, or tracing methods.
+
+Interceptors compose in registration order and may replace arguments, receivers, results, or the entire call.
+Removing an interceptor is idempotent.
+Wrapping can scope a call without creating spans:
+
+```ts
+const remove = providerHooks.create.intercept((target, receiver, args) =>
+  store.run(context, () => Reflect.apply(target, receiver, args)),
 );
 ```
 
-The helpers:
+## Trace independently
 
-- create and correlate spans with a `WeakMap` keyed by event context
-- bind the current span store to `start` for async-context propagation
-- contain extraction failures and log them through `debugLogger`
-- patch streams without replacing their public semantics
-- unsubscribe and unbind stores when a plugin is disabled
-
-Use raw `IsoChannelHandlers` only when a provider requires lifecycle behavior
-that the shared helpers cannot express.
-
-## Manual Wrappers
-
-New and migrated manual wrappers pass the original target, receiver, arguments,
-and any channel-specific fields to the same typed channel:
+Tracing helpers receive a callable and tracing data; they never receive a hook or register interceptors.
+Provider plugins explicitly connect the layers:
 
 ```ts
-return providerChannels.create.invoke(originalCreate, this, [params], {
-  providerRequestId,
-});
+this.unsubscribers.push(
+  providerHooks.create.intercept((target, receiver, args, additional) =>
+    traceAsyncCall<typeof providerHooks.create>(
+      () => Reflect.apply(target, receiver, args),
+      { ...additional, arguments: args, self: receiver },
+      {
+        name: "provider.messages.create",
+        instrumentationName: INSTRUMENTATION_NAMES.PROVIDER,
+        type: "llm",
+        extractInput: ([params]) => ({
+          input: params.messages,
+          metadata: { model: params.model },
+        }),
+        extractOutput: (result) => result.content,
+        extractMetrics: (result) => ({ tokens: result.usage.totalTokens }),
+      },
+    ),
+  ),
+);
 ```
 
-Legacy wrappers can continue calling the tracing-compatible operators until
-their plugin is migrated:
+The tracing function owns span creation, context propagation, response observation, and finalization.
+It preserves the original return value, including Promise subclasses and stream identity.
+Do not introduce combined registration APIs such as `interceptAndTrace` or `traceInvocation`.
+
+## Manual wrappers
+
+Manual and generated wrappers invoke the same hook:
 
 ```ts
-return providerChannels.create.tracePromise(() => originalCreate(params), {
-  arguments: [params],
-});
+return providerHooks.create.invoke(originalCreate, client, [params], {});
 ```
 
-Do not create spans directly inside wrappers. Keeping span creation in the
-plugin prevents auto and manual instrumentation from drifting.
+Without an interceptor the original function runs directly.
+With a tracing plugin enabled the registered tracing function creates spans.
+Manual wrappers must not create spans themselves.
 
-## Promise and Stream Requirements
+## Runtime and safety requirements
 
-Instrumentation is non-invasive:
-
-- Native promises retain normal resolution and rejection behavior.
-- Promise subclasses and other thenables are returned unchanged so helper
-  methods such as `withResponse()` remain available.
-- A non-Promise value returned from an `Async` transform remains that value.
-- Async iterables and event-emitter streams retain identity and public methods.
-- Subscriber or extraction bugs must not alter provider calls.
-
-Stream patches must be idempotent and preserve cancellation, errors, early
-termination, and async context.
-
-## Event and Span Safety
-
-- Treat arguments, results, metadata, and headers as untrusted.
-- Avoid prototype-sensitive merges and unnecessary mutation of provider data.
-- Capture only fields permitted by the instrumentation specification.
+- Preserve receivers, arguments, errors, async context, Promise helper methods, and stream cancellation.
+- Treat provider inputs and outputs as untrusted and capture only specification-permitted data.
+- Keep registration, removal, and stream patching idempotent.
+- Contain extraction failures with `debugLogger` without retrying the provider call.
 - Pass `Error` objects directly to `span.log({ error })`.
-- Use narrow vendored provider interfaces shared by wrappers and plugins.
-- Keep enable, disable, subscription, and patching behavior idempotent.
+- Treat `span.log()` and `span.end()` as non-throwing.
+
+Invocation protocol version 2 uses an independent global registry.
+Rebuild bundles transformed with the previous SDK when upgrading; the old combined tracing protocol is not supported.
 
 ## Export Customizers
 
@@ -269,7 +171,7 @@ Clearing customizers is always allowed and silent.
 Test at the narrowest useful layers:
 
 1. Plugin unit tests for extraction and span handling.
-2. Global hook/runtime tests for lifecycle and context behavior.
+2. Invocation runtime tests for wrapping and context behavior.
 3. Orchestrion transformation tests for generated wrappers.
 4. Bundler and loader tests for real transformed execution.
 5. Provider e2e tests for wrapped and auto-hook parity.

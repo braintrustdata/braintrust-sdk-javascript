@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { LangChainPlugin } from "./langchain-plugin";
 import { langChainChannels } from "./langchain-channels";
+import { LangChainPlugin } from "./langchain-plugin";
 
 function createManager(handlers: unknown[] = []) {
   return {
@@ -12,21 +12,30 @@ function createManager(handlers: unknown[] = []) {
 }
 
 function traceConfigureResult(result: unknown) {
-  return langChainChannels.configure.traceSync(() => result as any, {
-    arguments: [],
-  });
+  return langChainChannels.configure.invoke(
+    () => result as any,
+    undefined,
+    [],
+    {},
+  );
 }
-
 function traceConfigureArguments(args: unknown[]) {
-  return langChainChannels.configure.traceSync(() => args as any, {
-    arguments: args as any,
-  });
+  return langChainChannels.configure.invoke(
+    (...received: unknown[]) => received as any,
+    undefined,
+    args as any,
+    {},
+  );
 }
-
 function traceConfigureArgumentsObject(args: IArguments) {
-  return langChainChannels.configure.traceSync(() => args as any, {
-    arguments: args as any,
-  });
+  return langChainChannels.configure.invoke(
+    function (..._received: unknown[]) {
+      return arguments as any;
+    },
+    undefined,
+    args as any,
+    {},
+  );
 }
 
 function createArgumentsObject(...args: unknown[]): IArguments {
@@ -41,10 +50,10 @@ describe("LangChainPlugin", () => {
     const args: unknown[] = [];
 
     plugin.enable();
-    traceConfigureArguments(args);
+    const received = traceConfigureArguments(args);
     plugin.disable();
 
-    expect(args[0]).toEqual([
+    expect(received[0]).toEqual([
       expect.objectContaining({
         name: "BraintrustCallbackHandler",
       }),
@@ -56,10 +65,10 @@ describe("LangChainPlugin", () => {
     const args = createArgumentsObject();
 
     plugin.enable();
-    traceConfigureArgumentsObject(args);
+    const received = traceConfigureArgumentsObject(args);
     plugin.disable();
 
-    expect(args[0]).toEqual([
+    expect(received[0]).toEqual([
       expect.objectContaining({
         name: "BraintrustCallbackHandler",
       }),

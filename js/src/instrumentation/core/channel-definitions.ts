@@ -1,351 +1,83 @@
-import iso from "../../isomorph";
-import type { IsoTracingChannel } from "../../isomorph";
-import type { SpanInstrumentationName } from "../../span-origin";
-import type {
-  AsyncEndEventWith,
-  EndEventWith,
-  ErrorEventWith,
-  EventArguments,
-  StartEventWith,
-} from "./types";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
 
-export type ChannelKind = "async" | "sync-stream";
-
-type ChannelTypeInfo<
-  TArgs extends EventArguments,
+type ChannelSpec<
+  TArgs extends readonly unknown[],
   TResult,
-  TExtra extends object = Record<string, unknown>,
-  TChunk = never,
-  TKind extends ChannelKind = "async",
+  TExtra extends object,
+  TChunk,
 > = {
-  kind: TKind;
+  channelName: string;
   __args?: TArgs;
   __result?: TResult;
   __extra?: TExtra;
   __chunk?: TChunk;
 };
-
-type ChannelSpec<
-  TArgs extends EventArguments,
-  TResult,
-  TExtra extends object = Record<string, unknown>,
-  TChunk = never,
-  TKind extends ChannelKind = "async",
-> = ChannelTypeInfo<TArgs, TResult, TExtra, TChunk, TKind> & {
-  channelName: string;
+type AnySpec = ChannelSpec<readonly unknown[], unknown, object, unknown>;
+export type ArgsOf<T> = T extends {
+  __args?: infer A extends readonly unknown[];
+}
+  ? [...A]
+  : never;
+export type ReturnOf<T> = T extends { __result?: infer R } ? R : never;
+export type ExtraOf<T> = T extends { __extra?: infer E extends object }
+  ? E
+  : never;
+export type ChunkOf<T> = T extends { __chunk?: infer R } ? R : never;
+export type InvocationAdditionalOf<T> = ExtraOf<T> & { moduleVersion?: string };
+export type Interceptor<T extends AnySpec> = (
+  target: (this: unknown, ...args: ArgsOf<T>) => ReturnOf<T>,
+  receiver: unknown,
+  args: ArgsOf<T>,
+  additional: InvocationAdditionalOf<T>,
+) => ReturnOf<T>;
+export type InvocationChannel<T extends AnySpec> = T & {
+  intercept(interceptor: Interceptor<T>): () => void;
+  invoke<F extends (this: any, ...args: any[]) => ReturnOf<T>>(
+    target: F,
+    receiver: ThisParameterType<F>,
+    args: Parameters<F> | ArgsOf<T>,
+    additional: InvocationAdditionalOf<T>,
+  ): ReturnType<F>;
 };
 
-type AnyAsyncChannelSpec = ChannelSpec<
-  EventArguments,
-  unknown,
-  object,
-  unknown,
-  "async"
->;
-
-type AnySyncStreamChannelSpec = ChannelSpec<
-  EventArguments,
-  unknown,
-  object,
-  unknown,
-  "sync-stream"
->;
-
-type AnyChannelSpec = AnyAsyncChannelSpec | AnySyncStreamChannelSpec;
-
-export type ArgsOf<TChannel> =
-  TChannel extends ChannelTypeInfo<
-    infer TArgs,
-    unknown,
-    object,
-    unknown,
-    ChannelKind
-  >
-    ? [...TArgs]
-    : never;
-
-export type ResultOf<TChannel> =
-  TChannel extends ChannelTypeInfo<
-    EventArguments,
-    infer TResult,
-    object,
-    unknown,
-    ChannelKind
-  >
-    ? TResult
-    : never;
-
-export type ExtraOf<TChannel> =
-  TChannel extends ChannelTypeInfo<
-    EventArguments,
-    unknown,
-    infer TExtra extends object,
-    unknown,
-    ChannelKind
-  >
-    ? TExtra
-    : never;
-
-export type ChunkOf<TChannel> =
-  TChannel extends ChannelTypeInfo<
-    EventArguments,
-    unknown,
-    object,
-    infer TChunk,
-    ChannelKind
-  >
-    ? TChunk
-    : never;
-
-export type StartOf<TChannel extends AnyChannelSpec> = StartEventWith<
-  ArgsOf<TChannel>,
-  ExtraOf<TChannel>
->;
-
-export type AsyncEndOf<TChannel extends AnyChannelSpec> = AsyncEndEventWith<
-  ResultOf<TChannel>,
-  ArgsOf<TChannel>,
-  ExtraOf<TChannel>
->;
-
-export type EndOf<TChannel extends AnyChannelSpec> = EndEventWith<
-  ResultOf<TChannel>,
-  ArgsOf<TChannel>,
-  ExtraOf<TChannel>
->;
-
-export type ErrorOf<TChannel extends AnyChannelSpec> = ErrorEventWith<
-  ArgsOf<TChannel>,
-  ExtraOf<TChannel>
->;
-
-export type ChannelMessage<TChannel extends AnyChannelSpec> =
-  StartOf<TChannel> &
-    Partial<{ result: ResultOf<TChannel> }> &
-    Partial<Pick<ErrorOf<TChannel>, "error">>;
-
-type InvocationAdditionalOf<TChannel extends AnyChannelSpec> =
-  ExtraOf<TChannel> & { moduleVersion?: string };
-
-type InvocationResultOf<TChannel extends AnyChannelSpec> =
-  TChannel["kind"] extends "async"
-    ? PromiseLike<ResultOf<TChannel>>
-    : ResultOf<TChannel>;
-
-type ChannelInterceptor<TChannel extends AnyChannelSpec> = (
-  target: (
-    this: unknown,
-    ...args: ArgsOf<TChannel>
-  ) => InvocationResultOf<TChannel>,
-  thisArg: unknown,
-  args: ArgsOf<TChannel>,
-  additional: InvocationAdditionalOf<TChannel>,
-) => InvocationResultOf<TChannel>;
-
-type InterceptMethod<TChannel extends AnyChannelSpec> = {
-  intercept(interceptor: ChannelInterceptor<TChannel>): () => void;
-}["intercept"];
-
-type BaseTypedChannel<TSpec extends AnyChannelSpec> = TSpec & {
-  instrumentationName: SpanInstrumentationName;
-  tracingChannel(): IsoTracingChannel<ChannelMessage<TSpec>>;
-  intercept: InterceptMethod<TSpec>;
-};
-
-export type TypedAsyncChannel<TSpec extends AnyAsyncChannelSpec> =
-  BaseTypedChannel<TSpec> & {
-    invoke<TThis, TReturn extends PromiseLike<ResultOf<TSpec>>>(
-      target: (this: TThis, ...args: ArgsOf<TSpec>) => TReturn,
-      thisArg: TThis,
-      args: ArgsOf<TSpec>,
-      additional: InvocationAdditionalOf<TSpec>,
-    ): TReturn;
-    tracePromise<TReturn extends PromiseLike<ResultOf<TSpec>>>(
-      fn: () => TReturn,
-      context: StartOf<TSpec>,
-    ): TReturn;
-  };
-
-export type TypedSyncStreamChannel<TSpec extends AnySyncStreamChannelSpec> =
-  BaseTypedChannel<TSpec> & {
-    invoke<TThis, TReturn extends ResultOf<TSpec>>(
-      target: (this: TThis, ...args: ArgsOf<TSpec>) => TReturn,
-      thisArg: TThis,
-      args: ArgsOf<TSpec>,
-      additional: InvocationAdditionalOf<TSpec>,
-    ): TReturn;
-    traceSync<TResult extends ResultOf<TSpec>>(
-      fn: () => TResult,
-      context: StartOf<TSpec>,
-    ): TResult;
-  };
-
-export type AnyAsyncChannel = Omit<
-  TypedAsyncChannel<AnyAsyncChannelSpec>,
-  "intercept" | "invoke"
->;
-export type AnySyncStreamChannel = Omit<
-  TypedSyncStreamChannel<AnySyncStreamChannelSpec>,
-  "intercept" | "invoke"
->;
-
-type ChannelSpecMap = Record<string, AnyChannelSpec>;
-
+/** Describe a callable. Additional data is opaque to the wrapping runtime. */
 export function channel<
-  TArgs extends EventArguments,
+  TArgs extends readonly unknown[],
   TResult,
   TExtra extends object = Record<string, unknown>,
   TChunk = never,
->(spec: {
-  channelName: string;
-  kind: "async";
-}): ChannelSpec<TArgs, TResult, TExtra, TChunk, "async">;
-export function channel<
-  TArgs extends EventArguments,
-  TResult,
-  TExtra extends object = Record<string, unknown>,
-  TChunk = never,
->(spec: {
-  channelName: string;
-  kind: "sync-stream";
-}): ChannelSpec<TArgs, TResult, TExtra, TChunk, "sync-stream">;
-export function channel(spec: {
-  channelName: string;
-  kind: ChannelKind;
-}): AnyChannelSpec {
-  return spec as AnyChannelSpec;
+>(spec: { channelName: string }): ChannelSpec<TArgs, TResult, TExtra, TChunk> {
+  return spec;
 }
 
-type MaterializedChannel<T extends AnyChannelSpec> = T["kind"] extends "async"
-  ? TypedAsyncChannel<
-      ChannelSpec<ArgsOf<T>, ResultOf<T>, ExtraOf<T>, ChunkOf<T>, "async">
-    >
-  : TypedSyncStreamChannel<
-      ChannelSpec<ArgsOf<T>, ResultOf<T>, ExtraOf<T>, ChunkOf<T>, "sync-stream">
-    >;
-
-export function defineChannels<T extends ChannelSpecMap>(
+/** Define invocation hooks without initializing the SDK or enabling tracing. */
+export function defineInterceptor<T extends Record<string, AnySpec>>(
   pkg: string,
-  channels: T,
-  options: { instrumentationName: SpanInstrumentationName },
-): {
-  [K in keyof T]: MaterializedChannel<T[K]>;
-} {
-  const { instrumentationName } = options;
+  definitions: T,
+): { [K in keyof T]: InvocationChannel<T[K]> } {
   return Object.fromEntries(
-    Object.entries(channels).map(([key, spec]) => {
-      const fullChannelName = `orchestrion:${pkg}:${spec.channelName}`;
-      if (spec.kind === "async") {
-        const asyncSpec = spec as ChannelSpec<
-          ArgsOf<typeof spec>,
-          ResultOf<typeof spec>,
-          ExtraOf<typeof spec>,
-          ChunkOf<typeof spec>,
-          "async"
-        >;
-        const tracingChannel = () =>
-          iso.newTracingChannel<ChannelMessage<AnyAsyncChannelSpec>>(
-            fullChannelName,
-          );
-        const intercept = (
-          interceptor: ChannelInterceptor<AnyAsyncChannelSpec>,
-        ) => {
-          const hook = tracingChannel();
-          return typeof hook.intercept === "function"
-            ? hook.intercept(interceptor)
-            : () => {};
-        };
-        return [
-          key,
-          {
-            ...asyncSpec,
-            instrumentationName,
-            intercept,
-            invoke: <
-              TThis,
-              TReturn extends PromiseLike<ResultOf<typeof asyncSpec>>,
-            >(
-              target: (
-                this: TThis,
-                ...args: ArgsOf<typeof asyncSpec>
-              ) => TReturn,
-              thisArg: TThis,
-              args: ArgsOf<typeof asyncSpec>,
-              additional: InvocationAdditionalOf<typeof asyncSpec>,
-            ) => {
-              const hook = tracingChannel();
-              return (
-                typeof hook.invoke === "function"
-                  ? hook.invoke(target, thisArg, args, additional)
-                  : Reflect.apply(target, thisArg, args)
-              ) as TReturn;
-            },
-            tracingChannel,
-            tracePromise: <TReturn extends Promise<ResultOf<typeof asyncSpec>>>(
-              fn: () => TReturn,
-              context: StartOf<AnyAsyncChannelSpec>,
-            ) =>
-              tracingChannel().tracePromise(
-                fn,
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                context as ChannelMessage<AnyAsyncChannelSpec>,
-              ) as TReturn,
-          } as AnyAsyncChannel,
-        ];
-      }
-
-      const syncSpec = spec as ChannelSpec<
-        ArgsOf<typeof spec>,
-        ResultOf<typeof spec>,
-        ExtraOf<typeof spec>,
-        ChunkOf<typeof spec>,
-        "sync-stream"
-      >;
-      const tracingChannel = () =>
-        iso.newTracingChannel<ChannelMessage<AnySyncStreamChannelSpec>>(
-          fullChannelName,
-        );
-      const intercept = (
-        interceptor: ChannelInterceptor<AnySyncStreamChannelSpec>,
-      ) => {
-        const hook = tracingChannel();
-        return typeof hook.intercept === "function"
-          ? hook.intercept(interceptor)
-          : () => {};
-      };
+    Object.entries(definitions).map(([key, spec]) => {
+      const name = `orchestrion:${pkg}:${spec.channelName}`;
       return [
         key,
         {
-          ...syncSpec,
-          instrumentationName,
-          intercept,
-          invoke: <TThis, TResult extends ResultOf<typeof syncSpec>>(
-            target: (this: TThis, ...args: ArgsOf<typeof syncSpec>) => TResult,
-            thisArg: TThis,
-            args: ArgsOf<typeof syncSpec>,
-            additional: InvocationAdditionalOf<typeof syncSpec>,
-          ) => {
-            const hook = tracingChannel();
-            return (
-              typeof hook.invoke === "function"
-                ? hook.invoke(target, thisArg, args, additional)
-                : Reflect.apply(target, thisArg, args)
-            ) as TResult;
-          },
-          tracingChannel,
-          traceSync: <TResult>(
-            fn: () => TResult,
-            context: StartOf<AnySyncStreamChannelSpec>,
+          ...spec,
+          intercept: (interceptor: Interceptor<AnySpec>) =>
+            newGlobalInvocationHook(name).intercept(interceptor),
+          invoke: (
+            target: (...args: any[]) => any,
+            receiver: unknown,
+            args: unknown[],
+            additional: object,
           ) =>
-            tracingChannel().traceSync(
-              fn,
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              context as ChannelMessage<AnySyncStreamChannelSpec>,
+            newGlobalInvocationHook(name).invoke(
+              target,
+              receiver,
+              args,
+              additional,
             ),
-        } as AnySyncStreamChannel,
+        },
       ];
     }),
-  ) as {
-    [K in keyof T]: MaterializedChannel<T[K]>;
-  };
+  ) as unknown as { [K in keyof T]: InvocationChannel<T[K]> };
 }

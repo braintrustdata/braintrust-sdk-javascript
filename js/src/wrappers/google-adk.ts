@@ -1,11 +1,11 @@
 import { googleADKChannels } from "../instrumentation/plugins/google-adk-channels";
 import type {
-  GoogleADKRunner,
-  GoogleADKRunnerConstructor,
-  GoogleADKInMemoryRunnerConstructor,
   GoogleADKBaseAgent,
   GoogleADKBaseTool,
+  GoogleADKInMemoryRunnerConstructor,
   GoogleADKRunAsyncParams,
+  GoogleADKRunner,
+  GoogleADKRunnerConstructor,
   GoogleADKToolRunRequest,
 } from "../vendor-sdk-types/google-adk";
 
@@ -119,10 +119,12 @@ function wrapRunnerRunAsync(
 ): (params: GoogleADKRunAsyncParams) => AsyncGenerator<unknown> {
   const original = runner.runAsync.bind(runner);
   return function (params: GoogleADKRunAsyncParams) {
-    return googleADKChannels.runnerRunAsync.traceSync(() => original(params), {
-      arguments: [params],
-      self: runner,
-    } as Parameters<typeof googleADKChannels.runnerRunAsync.traceSync>[1]);
+    return googleADKChannels.runnerRunAsync.invoke(
+      original,
+      runner,
+      [params],
+      {},
+    );
   };
 }
 
@@ -155,11 +157,11 @@ function wrapAgentRunAsync(
 ): (parentContext: unknown) => AsyncGenerator<unknown> {
   const original = agent.runAsync.bind(agent);
   return function (parentContext: unknown) {
-    return googleADKChannels.agentRunAsync.traceSync(
-      () => original(parentContext),
-      { arguments: [parentContext], self: agent } as Parameters<
-        typeof googleADKChannels.agentRunAsync.traceSync
-      >[1],
+    return googleADKChannels.agentRunAsync.invoke(
+      original,
+      agent,
+      [parentContext],
+      {},
     );
   };
 }
@@ -191,9 +193,6 @@ function wrapToolRunAsync(
 ): (req: GoogleADKToolRunRequest) => Promise<unknown> {
   const original = tool.runAsync.bind(tool);
   return function (req: GoogleADKToolRunRequest) {
-    return googleADKChannels.toolRunAsync.tracePromise(() => original(req), {
-      arguments: [req],
-      self: tool,
-    } as Parameters<typeof googleADKChannels.toolRunAsync.tracePromise>[1]);
+    return googleADKChannels.toolRunAsync.invoke(original, tool, [req], {});
   };
 }

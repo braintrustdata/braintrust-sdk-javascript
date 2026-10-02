@@ -1,4 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
 const telemetryMocks = vi.hoisted(() => ({
   braintrustAISDKTelemetry: vi.fn(),
@@ -11,34 +18,33 @@ const telemetryMocks = vi.hoisted(() => ({
   },
 }));
 
-// Mock iso's newTracingChannel - must be before any imports that use it
+// Mock platform context independently of invocation hooks.
 vi.mock("../../isomorph", () => ({
-  default: {
-    newTracingChannel: vi.fn(),
-  },
+  default: {},
 }));
 
 vi.mock("../../wrappers/ai-sdk/telemetry", () => ({
   braintrustAISDKTelemetry: telemetryMocks.braintrustAISDKTelemetry,
 }));
 
+import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
 import {
   AISDKPlugin,
   DEFAULT_DENY_OUTPUT_PATHS,
+  extractTokenMetrics,
   processAISDKCallInput,
   processAISDKGenerateImageInput,
+  processAISDKGenerateImageOutput,
+  processAISDKOutput as processAISDKOutputActual,
   processAISDKWorkflowAgentCallInput,
   processAISDKWorkflowAgentModelCallInput,
-  processAISDKOutput as processAISDKOutputActual,
-  processAISDKGenerateImageOutput,
-  extractTokenMetrics,
   serializeModelWithProvider,
 } from "./ai-sdk-plugin";
-import iso from "../../isomorph";
-import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
-import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 type MockTracingChannel = {
   handlers: any[];
   hasSubscribers: boolean;
@@ -67,7 +73,7 @@ describe("AISDKPlugin", () => {
     telemetryMocks.braintrustAISDKTelemetry.mockReturnValue(
       telemetryMocks.telemetry,
     );
-    mockNewTracingChannel.mockImplementation((name: string) => {
+    mockNewInvocationHook.mockImplementation((name: string) => {
       const channel: MockTracingChannel = {
         handlers: [],
         hasSubscribers: false,
@@ -249,7 +255,7 @@ describe("AISDKPlugin", () => {
       plugin.enable();
 
       expect(
-        mockChannels.get("orchestrion:ai:generateImage")?.subscribe,
+        mockChannels.get("orchestrion:ai:generateImage")?.intercept,
       ).toHaveBeenCalledTimes(1);
     });
 

@@ -1,19 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { tracePromise } = vi.hoisted(() => ({
-  tracePromise: vi.fn((fn: () => Promise<unknown>, _event?: unknown) => fn()),
+const { invoke } = vi.hoisted(() => ({
+  invoke: vi.fn(
+    (
+      target: (...args: any[]) => any,
+      receiver: unknown,
+      args: unknown[],
+      _additional?: unknown,
+    ) => Reflect.apply(target, receiver, args),
+  ),
 }));
-
-vi.mock("../isomorph", () => ({
-  default: {
-    getEnv: vi.fn(() => undefined),
-    newTracingChannel: vi.fn(() => ({
-      subscribe: vi.fn(),
-      tracePromise,
-      traceSync: vi.fn((fn: () => unknown) => fn()),
-      unsubscribe: vi.fn(),
-    })),
-  },
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
 }));
 
 import { wrapCloudflareAIChat } from "./cloudflare-ai-chat";
@@ -65,8 +64,11 @@ describe("wrapCloudflareAIChat", () => {
     expect(agent.onChatResponse()).toBe("field-hook");
     expect(module.AIChatAgent.kind).toBe("ai-chat");
     expect(module.untouched).toBe("value");
-    expect(tracePromise).toHaveBeenCalledTimes(1);
-    expect(tracePromise.mock.calls[0][1]).toMatchObject({
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect({
+      self: invoke.mock.calls[0]?.[1],
+      arguments: invoke.mock.calls[0]?.[2],
+    }).toMatchObject({
       arguments: ["request-1", expect.any(Function)],
       self: agent,
     });
@@ -93,6 +95,6 @@ describe("wrapCloudflareAIChat", () => {
     await expect(
       agent._runExclusiveChatTurn("request-1", async () => {}),
     ).rejects.toBe(failure);
-    expect(tracePromise).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,12 +1,5 @@
-/**
- * Test helpers for functional testing of instrumented code.
- */
-
-import {
-  newGlobalTracingChannel,
-  type GlobalHookHandlers,
-  type GlobalTracingChannel,
-} from "../../src/global-instrumentation-hooks";
+/** Test-local recording through ordinary invocation interceptors. */
+import { newGlobalInvocationHook } from "../../src/global-instrumentation-hooks";
 
 export interface CapturedEvent {
   arguments?: any[];
@@ -15,95 +8,68 @@ export interface CapturedEvent {
   error?: any;
   timestamp: number;
 }
-
-export interface EventCollector {
-  start: CapturedEvent[];
-  end: CapturedEvent[];
-  asyncStart: CapturedEvent[];
-  asyncEnd: CapturedEvent[];
-  error: CapturedEvent[];
-  clear: () => void;
-  subscribe: (channelName: string) => void;
-  unsubscribe: () => void;
-}
-
-/**
- * Creates an event collector for capturing global instrumentation hook events.
- */
-export function createEventCollector(): EventCollector {
-  const subscriptions: Array<{
-    channel: GlobalTracingChannel;
-    handlers: GlobalHookHandlers;
-  }> = [];
-  const collector: EventCollector = {
-    start: [],
-    end: [],
-    asyncStart: [],
-    asyncEnd: [],
-    error: [],
+export function createEventCollector() {
+  const removals: Array<() => void> = [];
+  return {
+    calls: [] as CapturedEvent[],
+    returns: [] as CapturedEvent[],
+    promises: [] as CapturedEvent[],
+    resolutions: [] as CapturedEvent[],
+    failures: [] as CapturedEvent[],
     clear() {
-      this.start = [];
-      this.end = [];
-      this.asyncStart = [];
-      this.asyncEnd = [];
-      this.error = [];
+      this.calls = [];
+      this.returns = [];
+      this.promises = [];
+      this.resolutions = [];
+      this.failures = [];
     },
     subscribe(channelName: string) {
-      const channel = newGlobalTracingChannel(channelName);
-      const handlers = {
-        start: (ctx: any) => {
-          this.start.push({
-            arguments: ctx.arguments ? Array.from(ctx.arguments) : undefined,
-            self: ctx.self,
-            timestamp: Date.now(),
-          });
-        },
-        end: (ctx: any) => {
-          this.end.push({
-            result: ctx.result,
-            timestamp: Date.now(),
-          });
-        },
-        asyncStart: (ctx: any) => {
-          this.asyncStart.push({
-            timestamp: Date.now(),
-          });
-        },
-        asyncEnd: (ctx: any) => {
-          this.asyncEnd.push({
-            result: ctx.result,
-            timestamp: Date.now(),
-          });
-        },
-        error: (ctx: any) => {
-          this.error.push({
-            error: ctx.error,
-            timestamp: Date.now(),
-          });
-        },
-      };
-      channel.subscribe(handlers);
-      subscriptions.push({ channel, handlers });
+      removals.push(
+        newGlobalInvocationHook(channelName).intercept(
+          (target, receiver, args) => {
+            this.calls.push({
+              arguments: args,
+              self: receiver,
+              timestamp: Date.now(),
+            });
+            let result;
+            try {
+              result = Reflect.apply(target, receiver, args);
+            } catch (error) {
+              this.failures.push({ error, timestamp: Date.now() });
+              throw error;
+            }
+            this.returns.push({ result, timestamp: Date.now() });
+            if (result && typeof result.then === "function") {
+              this.promises.push({ result, timestamp: Date.now() });
+              result.then(
+                (value: unknown) => {
+                  this.resolutions.push({
+                    result: value,
+                    timestamp: Date.now(),
+                  });
+                },
+                (error: unknown) => {
+                  this.failures.push({ error, timestamp: Date.now() });
+                },
+              );
+            }
+            return result;
+          },
+        ),
+      );
     },
     unsubscribe() {
-      for (const { channel, handlers } of subscriptions.splice(0)) {
-        channel.unsubscribe(handlers);
-      }
+      for (const remove of removals.splice(0)) remove();
     },
   };
-
-  return collector;
 }
-
-/**
- * Helper to run a function and wait for all events to be emitted.
- */
+export type EventCollector = ReturnType<typeof createEventCollector>;
 export async function runAndCollectEvents<T>(
   fn: () => T | Promise<T>,
-  collector: EventCollector,
+  _collector: EventCollector,
 ): Promise<T> {
   const result = await fn();
-  // Give event handlers a chance to run
   await new Promise((resolve) => setImmediate(resolve));
   return result;
 }

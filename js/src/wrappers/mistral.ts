@@ -198,11 +198,11 @@ function wrapChatComplete(
   ) => Promise<MistralChatCompletionResponse>,
 ): MistralChat["complete"] {
   return (request, options) =>
-    mistralChannels.chatComplete.tracePromise(
-      () => complete(request, options),
-      {
-        arguments: [request],
-      } as Parameters<typeof mistralChannels.chatComplete.tracePromise>[1],
+    mistralChannels.chatComplete.invoke(
+      complete,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -213,9 +213,12 @@ function wrapChatStream(
   ) => Promise<MistralChatStreamingResult>,
 ): MistralChat["stream"] {
   return (request, options) =>
-    mistralChannels.chatStream.tracePromise(() => stream(request, options), {
-      arguments: [request],
-    } as Parameters<typeof mistralChannels.chatStream.tracePromise>[1]);
+    mistralChannels.chatStream.invoke(
+      stream,
+      undefined,
+      [request, options],
+      {},
+    );
 }
 
 function wrapEmbeddingsCreate(
@@ -225,9 +228,11 @@ function wrapEmbeddingsCreate(
   ) => Promise<MistralEmbeddingResponse>,
 ): MistralEmbeddings["create"] {
   return (request, options) =>
-    mistralChannels.embeddingsCreate.tracePromise(
-      () => create(request, options),
-      { arguments: [request] },
+    mistralChannels.embeddingsCreate.invoke(
+      create,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -238,9 +243,11 @@ function wrapClassifiersModerate(
   ) => Promise<MistralModerationResponse>,
 ): MistralClassifiers["moderate"] {
   return (request, options) =>
-    mistralChannels.classifiersModerate.tracePromise(
-      () => moderate(request, options),
-      { arguments: [request] },
+    mistralChannels.classifiersModerate.invoke(
+      moderate,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -251,9 +258,11 @@ function wrapClassifiersModerateChat(
   ) => Promise<MistralModerationResponse>,
 ): MistralClassifiers["moderateChat"] {
   return (request, options) =>
-    mistralChannels.classifiersModerateChat.tracePromise(
-      () => moderateChat(request, options),
-      { arguments: [request] },
+    mistralChannels.classifiersModerateChat.invoke(
+      moderateChat,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -264,9 +273,11 @@ function wrapClassifiersClassify(
   ) => Promise<MistralClassificationResponse>,
 ): NonNullable<MistralClassifiers["classify"]> {
   return (request, options) =>
-    mistralChannels.classifiersClassify.tracePromise(
-      () => classify(request, options),
-      { arguments: [request] },
+    mistralChannels.classifiersClassify.invoke(
+      classify,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -277,9 +288,11 @@ function wrapClassifiersClassifyChat(
   ) => Promise<MistralClassificationResponse>,
 ): NonNullable<MistralClassifiers["classifyChat"]> {
   return (request, options) =>
-    mistralChannels.classifiersClassifyChat.tracePromise(
-      () => classifyChat(request, options),
-      { arguments: [request] },
+    mistralChannels.classifiersClassifyChat.invoke(
+      classifyChat,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -290,9 +303,12 @@ function wrapFimComplete(
   ) => Promise<MistralFimCompletionResponse>,
 ): MistralFim["complete"] {
   return (request, options) =>
-    mistralChannels.fimComplete.tracePromise(() => complete(request, options), {
-      arguments: [request],
-    } as Parameters<typeof mistralChannels.fimComplete.tracePromise>[1]);
+    mistralChannels.fimComplete.invoke(
+      complete,
+      undefined,
+      [request, options],
+      {},
+    );
 }
 
 function wrapFimStream(
@@ -302,9 +318,7 @@ function wrapFimStream(
   ) => Promise<MistralFimStreamingResult>,
 ): MistralFim["stream"] {
   return (request, options) =>
-    mistralChannels.fimStream.tracePromise(() => stream(request, options), {
-      arguments: [request],
-    } as Parameters<typeof mistralChannels.fimStream.tracePromise>[1]);
+    mistralChannels.fimStream.invoke(stream, undefined, [request, options], {});
 }
 
 function wrapAgentsComplete(
@@ -314,11 +328,11 @@ function wrapAgentsComplete(
   ) => Promise<MistralAgentsCompletionResponse>,
 ): MistralAgents["complete"] {
   return (request, options) =>
-    mistralChannels.agentsComplete.tracePromise(
-      () => complete(request, options),
-      {
-        arguments: [request],
-      } as Parameters<typeof mistralChannels.agentsComplete.tracePromise>[1],
+    mistralChannels.agentsComplete.invoke(
+      complete,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -329,7 +343,10 @@ function wrapAgentsStream(
   ) => Promise<MistralAgentsStreamingResult>,
 ): MistralAgents["stream"] {
   return (request, options) =>
-    mistralChannels.agentsStream.tracePromise(() => stream(request, options), {
-      arguments: [request],
-    } as Parameters<typeof mistralChannels.agentsStream.tracePromise>[1]);
+    mistralChannels.agentsStream.invoke(
+      stream,
+      undefined,
+      [request, options],
+      {},
+    );
 }

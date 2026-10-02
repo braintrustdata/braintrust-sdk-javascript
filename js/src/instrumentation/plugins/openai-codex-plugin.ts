@@ -1,16 +1,15 @@
 import { BasePlugin, toLoggedError } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers } from "../../isomorph";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
-import { startSpan as startBaseSpan } from "../../logger";
 import type { Span, StartSpanArgs } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
-import { SpanTypeAttribute } from "../../../util/index";
-import { openAICodexChannels } from "./openai-codex-channels";
 import type {
   OpenAICodexCommandExecutionItem,
   OpenAICodexFileChangeItem,
@@ -26,6 +25,8 @@ import type {
   OpenAICodexUsage,
   OpenAICodexWebSearchItem,
 } from "../../vendor-sdk-types/openai-codex";
+import type { ChannelMessage } from "../core/tracing-types";
+import { openAICodexChannels } from "./openai-codex-channels";
 
 type CodexRunState = {
   activeLlmSpan?: CodexLlmSpanState;
@@ -69,71 +70,125 @@ export class OpenAICodexPlugin extends BasePlugin {
   }
 
   private subscribeToRun(): void {
-    const channel = openAICodexChannels.run.tracingChannel();
+    const channel = openAICodexChannels.run;
     const states = new WeakMap<object, CodexRunState>();
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof openAICodexChannels.run>
-    > = {
-      start: (event) => {
-        states.set(event, startCodexRun(event, "Thread.run"));
-      },
-      asyncEnd: async (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
+    const removeHandlers = channel.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof openAICodexChannels.run>;
+        const prepare = (
+          event: ChannelMessage<typeof openAICodexChannels.run>,
+        ) => {
+          states.set(event, startCodexRun(event, "Thread.run"));
+        };
+        const resolved = async (
+          event: ChannelMessage<typeof openAICodexChannels.run>,
+        ) => {
+          const state = states.get(event);
+          if (!state) {
+            return;
+          }
+          states.delete(event);
+          await finalizeCompletedRun(state, event.result);
+        };
+        const failed = async (
+          event: ChannelMessage<typeof openAICodexChannels.run>,
+        ) => {
+          const state = states.get(event);
+          if (!state) {
+            return;
+          }
+          states.delete(event);
+          await finalizeCodexRun(state, { error: event.error });
+        };
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
         }
-        states.delete(event);
-        await finalizeCompletedRun(state, event.result);
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            return resolved(event);
+          },
+          (error) => {
+            Object.assign(event, { error });
+            return failed(event);
+          },
+        );
       },
-      error: async (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
-        states.delete(event);
-        await finalizeCodexRun(state, { error: event.error });
-      },
-    };
-
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private subscribeToRunStreamed(): void {
-    const channel = openAICodexChannels.runStreamed.tracingChannel();
+    const channel = openAICodexChannels.runStreamed;
     const states = new WeakMap<object, CodexRunState>();
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof openAICodexChannels.runStreamed>
-    > = {
-      start: (event) => {
-        states.set(event, startCodexRun(event, "Thread.runStreamed"));
-      },
-      asyncEnd: async (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
+    const removeHandlers = channel.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof openAICodexChannels.runStreamed>;
+        const prepare = (
+          event: ChannelMessage<typeof openAICodexChannels.runStreamed>,
+        ) => {
+          states.set(event, startCodexRun(event, "Thread.runStreamed"));
+        };
+        const resolved = async (
+          event: ChannelMessage<typeof openAICodexChannels.runStreamed>,
+        ) => {
+          const state = states.get(event);
+          if (!state) {
+            return;
+          }
+          states.delete(event);
+          await patchStreamedTurn(event.result, state);
+        };
+        const failed = async (
+          event: ChannelMessage<typeof openAICodexChannels.runStreamed>,
+        ) => {
+          const state = states.get(event);
+          if (!state) {
+            return;
+          }
+          states.delete(event);
+          await finalizeCodexRun(state, { error: event.error });
+        };
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
         }
-        states.delete(event);
-        await patchStreamedTurn(event.result, state);
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            return resolved(event);
+          },
+          (error) => {
+            Object.assign(event, { error });
+            return failed(event);
+          },
+        );
       },
-      error: async (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
-        states.delete(event);
-        await finalizeCodexRun(state, { error: event.error });
-      },
-    };
-
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 }
 

@@ -127,12 +127,12 @@ describe("Multiple Instrumentations", () => {
       expect(result.embeddingResult.type).toBe("embeddings");
 
       // Verify chat completions channel received events
-      expect(chatCollector.start.length).toBeGreaterThan(0);
-      expect(chatCollector.start[0].arguments![0].model).toBe("gpt-4");
+      expect(chatCollector.calls.length).toBeGreaterThan(0);
+      expect(chatCollector.calls[0].arguments![0].model).toBe("gpt-4");
 
       // Verify embeddings channel received events
-      expect(embeddingsCollector.start.length).toBeGreaterThan(0);
-      expect(embeddingsCollector.start[0].arguments![0].model).toBe(
+      expect(embeddingsCollector.calls.length).toBeGreaterThan(0);
+      expect(embeddingsCollector.calls[0].arguments![0].model).toBe(
         "text-embedding-ada-002",
       );
     });
@@ -191,12 +191,12 @@ describe("Multiple Instrumentations", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Chat completions channel should have events
-      expect(chatCollector.start.length).toBeGreaterThan(0);
+      expect(chatCollector.calls.length).toBeGreaterThan(0);
 
       // Embeddings channel should NOT have events (we didn't call it)
-      expect(embeddingsCollector.start.length).toBe(0);
-      expect(embeddingsCollector.end.length).toBe(0);
-      expect(embeddingsCollector.asyncEnd.length).toBe(0);
+      expect(embeddingsCollector.calls.length).toBe(0);
+      expect(embeddingsCollector.returns.length).toBe(0);
+      expect(embeddingsCollector.resolutions.length).toBe(0);
     });
   });
 
@@ -256,16 +256,16 @@ describe("Multiple Instrumentations", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify correct number of calls to each method
-      expect(chatCollector.start.length).toBe(3);
-      expect(embeddingsCollector.start.length).toBe(2);
+      expect(chatCollector.calls.length).toBe(3);
+      expect(embeddingsCollector.calls.length).toBe(2);
 
       // Verify the right models were passed
-      expect(chatCollector.start[0].arguments![0].model).toBe("gpt-4");
-      expect(chatCollector.start[1].arguments![0].model).toBe("gpt-3.5-turbo");
-      expect(chatCollector.start[2].arguments![0].model).toBe("gpt-4-turbo");
+      expect(chatCollector.calls[0].arguments![0].model).toBe("gpt-4");
+      expect(chatCollector.calls[1].arguments![0].model).toBe("gpt-3.5-turbo");
+      expect(chatCollector.calls[2].arguments![0].model).toBe("gpt-4-turbo");
 
-      expect(embeddingsCollector.start[0].arguments![0].model).toBe("ada-002");
-      expect(embeddingsCollector.start[1].arguments![0].model).toBe("ada-003");
+      expect(embeddingsCollector.calls[0].arguments![0].model).toBe("ada-002");
+      expect(embeddingsCollector.calls[1].arguments![0].model).toBe("ada-003");
     });
   });
 
@@ -339,16 +339,16 @@ describe("Multiple Instrumentations", () => {
       expect(callOrder).toHaveLength(4);
 
       // Verify we got events for all calls
-      expect(chatCollector.start.length).toBe(2);
-      expect(embeddingsCollector.start.length).toBe(2);
+      expect(chatCollector.calls.length).toBe(2);
+      expect(embeddingsCollector.calls.length).toBe(2);
 
       // Verify the events contain the right data (order may vary due to random delays)
-      const chatModels = chatCollector.start
+      const chatModels = chatCollector.calls
         .map((e) => e.arguments![0].model)
         .sort();
       expect(chatModels).toEqual(["gpt-3.5", "gpt-4"]);
 
-      const embedInputs = embeddingsCollector.start
+      const embedInputs = embeddingsCollector.calls
         .map((e) => e.arguments![0].input)
         .sort();
       expect(embedInputs).toEqual(["embed1", "embed2"]);
@@ -447,8 +447,8 @@ describe("Multiple Instrumentations", () => {
       expect(result.processed).toBe("test");
 
       // Verify custom instrumentation emitted events
-      expect(customCollector.start.length).toBeGreaterThan(0);
-      expect(customCollector.start[0].arguments![0].data).toBe("test");
+      expect(customCollector.calls.length).toBeGreaterThan(0);
+      expect(customCollector.calls[0].arguments![0].data).toBe("test");
 
       // Clean up
       fs.rmSync(customSdkDir, { recursive: true, force: true });
@@ -514,11 +514,11 @@ describe("Multiple Instrumentations", () => {
       expect(result2.client).toBe("client2");
 
       // Verify both calls emitted events
-      expect(collector.start.length).toBe(2);
+      expect(collector.calls.length).toBe(2);
 
       // Verify each call had the right self context
-      expect(collector.start[0].self._client.name).toBe("client1");
-      expect(collector.start[1].self._client.name).toBe("client2");
+      expect(collector.calls[0].self._client.name).toBe("client1");
+      expect(collector.calls[1].self._client.name).toBe("client2");
     });
   });
 });

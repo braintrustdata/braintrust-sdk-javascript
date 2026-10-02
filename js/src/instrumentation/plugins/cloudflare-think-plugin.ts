@@ -1,24 +1,24 @@
+import { withCurrent } from "../../logger";
 import { BasePlugin } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers } from "../../isomorph";
-import {
-  BRAINTRUST_CURRENT_SPAN_STORE,
-  _internalGetGlobalState,
-  startSpan,
-} from "../../logger";
-import type { CurrentSpanStore, Span } from "../../logger";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute, isObject } from "../../../util/index";
+import { debugLogger } from "../../debug-logger";
+import type { Span } from "../../logger";
+import { _internalGetGlobalState, startSpan } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import { debugLogger } from "../../debug-logger";
 import { getCurrentUnixTimestamp } from "../../util";
-import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
+import type { ChannelMessage } from "../core/tracing-types";
 
 // Think delegates inference and tool execution to AI SDK's streamText. Its
 // events keep the task open through stream consumption and provide the model,
 // tool, output, and usage data that the outer Think call does not expose.
+import type { AISDKResult } from "../../vendor-sdk-types/ai-sdk";
+import type { CloudflareThinkMessage } from "../../vendor-sdk-types/cloudflare-think";
 import { aiSDKChannels } from "./ai-sdk-channels";
 import {
   DEFAULT_DENY_OUTPUT_PATHS,
@@ -31,8 +31,6 @@ import {
   registerCloudflareThinkSpan,
   unregisterCloudflareThinkSpan,
 } from "./cloudflare-think-context";
-import type { AISDKResult } from "../../vendor-sdk-types/ai-sdk";
-import type { CloudflareThinkMessage } from "../../vendor-sdk-types/cloudflare-think";
 
 type ThinkRunState = {
   aiEvent?: Record<string, unknown>;
@@ -72,18 +70,8 @@ export class CloudflareThinkPlugin extends BasePlugin {
   }
 
   private subscribeToThinkRuns(): void {
-    const channel = cloudflareThinkChannels.runInferenceLoop.tracingChannel();
+    const channel = cloudflareThinkChannels.runInferenceLoop;
     const states = new WeakMap<object, ThinkRunState>();
-    const state = _internalGetGlobalState();
-    const contextManager = state?.contextManager;
-    const currentSpanStore = contextManager
-      ? (
-          contextManager as {
-            [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-          }
-        )[BRAINTRUST_CURRENT_SPAN_STORE]
-      : undefined;
-
     const ensureState = (
       event: ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>,
     ): ThinkRunState | undefined => {
@@ -130,83 +118,163 @@ export class CloudflareThinkPlugin extends BasePlugin {
       return runState;
     };
 
-    if (contextManager && currentSpanStore && channel.start) {
-      channel.start.bindStore(currentSpanStore, (event) => {
-        const runState = ensureState(event);
-        return runState
-          ? contextManager.wrapSpanForStore(runState.span)
-          : currentSpanStore.getStore();
-      });
-      this.unsubscribers.push(() =>
-        channel.start?.unbindStore(currentSpanStore),
-      );
-    }
+    const removeHandlers = channel.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>;
+        const prepare = (
+          event: ChannelMessage<
+            typeof cloudflareThinkChannels.runInferenceLoop
+          >,
+        ) => {
+          ensureState(event);
+        };
+        const resolved = (
+          event: ChannelMessage<
+            typeof cloudflareThinkChannels.runInferenceLoop
+          >,
+        ) => {
+          const runState = states.get(event);
+          states.delete(event);
+          if (!runState || runState.finalized || runState.aiResultPatched) {
+            return;
+          }
+          this.finishState(runState, undefined, event.result);
+        };
+        const failed = (
+          event: ChannelMessage<
+            typeof cloudflareThinkChannels.runInferenceLoop
+          >,
+        ) => {
+          const runState = states.get(event);
+          states.delete(event);
+          if (runState) {
+            this.finishState(runState, event.error);
+          }
+        };
+        const invoke = () => {
+          runInstrumentation(() => prepare(event));
+          let result;
+          try {
+            result = Reflect.apply(target, receiver, args);
+          } catch (error) {
+            Object.assign(event, { error });
+            runInstrumentation(() => failed(event));
+            throw error;
+          }
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof cloudflareThinkChannels.runInferenceLoop>
-    > = {
-      start: (event) => {
-        ensureState(event);
+          return observeResult(
+            result,
+            (value) => {
+              Object.assign(event, { result: value });
+              resolved(event);
+            },
+            (error) => {
+              Object.assign(event, { error });
+              failed(event);
+            },
+          );
+        };
+        const spanState = runInstrumentation(() => ensureState(event));
+        return spanState ? withCurrent(spanState.span, invoke) : invoke();
       },
-      asyncEnd: (event) => {
-        const runState = states.get(event);
-        states.delete(event);
-        if (!runState || runState.finalized || runState.aiResultPatched) {
-          return;
-        }
-        this.finishState(runState, undefined, event.result);
-      },
-      error: (event) => {
-        const runState = states.get(event);
-        states.delete(event);
-        if (runState) {
-          this.finishState(runState, event.error);
-        }
-      },
-    };
-
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => channel.unsubscribe(handlers));
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private subscribeToAISDKStreamTextSync(): void {
-    const channel = aiSDKChannels.streamTextSync.tracingChannel();
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof aiSDKChannels.streamTextSync>
-    > = {
-      start: (event) => {
-        this.startAISDKStream(event);
-      },
-      end: (event) => {
-        this.endAISDKStream(event);
-      },
-      error: (event) => {
-        this.errorAISDKStream(event);
-      },
-    };
+    const channel = aiSDKChannels.streamTextSync;
 
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => channel.unsubscribe(handlers));
+    const removeHandlers = channel.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof aiSDKChannels.streamTextSync>;
+        const prepare = (
+          event: ChannelMessage<typeof aiSDKChannels.streamTextSync>,
+        ) => {
+          this.startAISDKStream(event);
+        };
+        const returned = (
+          event: ChannelMessage<typeof aiSDKChannels.streamTextSync>,
+        ) => {
+          this.endAISDKStream(event);
+        };
+        const failed = (
+          event: ChannelMessage<typeof aiSDKChannels.streamTextSync>,
+        ) => {
+          this.errorAISDKStream(event);
+        };
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
+        }
+        Object.assign(event, { result });
+        runInstrumentation(() => returned(event));
+        return result;
+      },
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private subscribeToAISDKStreamTextAsync(): void {
-    const channel = aiSDKChannels.streamText.tracingChannel();
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof aiSDKChannels.streamText>
-    > = {
-      start: (event) => {
-        this.startAISDKStream(event);
-      },
-      asyncEnd: (event) => {
-        this.endAISDKStream(event);
-      },
-      error: (event) => {
-        this.errorAISDKStream(event);
-      },
-    };
+    const channel = aiSDKChannels.streamText;
 
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => channel.unsubscribe(handlers));
+    const removeHandlers = channel.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof aiSDKChannels.streamText>;
+        const prepare = (
+          event: ChannelMessage<typeof aiSDKChannels.streamText>,
+        ) => {
+          this.startAISDKStream(event);
+        };
+        const resolved = (
+          event: ChannelMessage<typeof aiSDKChannels.streamText>,
+        ) => {
+          this.endAISDKStream(event);
+        };
+        const failed = (
+          event: ChannelMessage<typeof aiSDKChannels.streamText>,
+        ) => {
+          this.errorAISDKStream(event);
+        };
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
+        }
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            resolved(event);
+          },
+          (error) => {
+            Object.assign(event, { error });
+            failed(event);
+          },
+        );
+      },
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private startAISDKStream(event: AISDKStreamEvent): void {

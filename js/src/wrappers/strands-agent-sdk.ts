@@ -221,9 +221,7 @@ function wrapMultiAgentInstance(
             value as StrandsMultiAgent["stream"],
             target,
             callArgs,
-            {
-              orchestrator: proxy,
-            },
+            { orchestrator: proxy },
           );
         };
       }

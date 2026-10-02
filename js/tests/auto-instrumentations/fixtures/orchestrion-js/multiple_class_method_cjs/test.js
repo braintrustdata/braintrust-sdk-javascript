@@ -12,17 +12,13 @@ const context2 = getContext("orchestrion:undici:Undici_fetch2");
   const result1 = await undici.fetch1("https://example.com");
   assert.strictEqual(result1, 42);
   assert.deepStrictEqual(context1, {
-    start: true,
-    end: true,
-    asyncStart: 42,
-    asyncEnd: 42,
+    called: true,
+    result: 42,
   });
   const result2 = await undici.fetch2("https://example.com");
   assert.strictEqual(result2, 43);
   assert.deepStrictEqual(context2, {
-    start: true,
-    end: true,
-    asyncStart: 43,
-    asyncEnd: 43,
+    called: true,
+    result: 43,
   });
 })();

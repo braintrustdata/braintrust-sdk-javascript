@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   CursorSDKAgent,
   CursorSDKAgentOptions,
@@ -9,44 +9,34 @@ import type {
   CursorSDKUserMessage,
 } from "../../vendor-sdk-types/cursor-sdk";
 
-export const cursorSDKChannels = defineChannels(
-  "@cursor/sdk",
-  {
-    create: channel<
-      [CursorSDKAgentOptions],
-      CursorSDKAgent,
-      Record<string, never>
-    >({
+export const cursorSDKChannels = defineInterceptor("@cursor/sdk", {
+  create: channel<[CursorSDKAgentOptions], PromiseLike<CursorSDKAgent>, object>(
+    {
       channelName: "Agent.create",
-      kind: "async",
-    }),
-    resume: channel<
-      [string, Partial<CursorSDKAgentOptions> | undefined],
-      CursorSDKAgent,
-      Record<string, never>
-    >({
-      channelName: "Agent.resume",
-      kind: "async",
-    }),
-    prompt: channel<
-      [string | CursorSDKUserMessage, CursorSDKAgentOptions | undefined],
-      CursorSDKRunResult,
-      Record<string, never>
-    >({
-      channelName: "Agent.prompt",
-      kind: "async",
-    }),
-    send: channel<
-      [string | CursorSDKUserMessage, CursorSDKSendOptions | undefined],
-      CursorSDKRun,
-      {
-        agent?: CursorSDKAgent;
-        operation?: "send";
-      }
-    >({
-      channelName: "agent.send",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.CURSOR_SDK },
-);
+    },
+  ),
+  resume: channel<
+    [string, Partial<CursorSDKAgentOptions> | undefined],
+    PromiseLike<CursorSDKAgent>,
+    object
+  >({
+    channelName: "Agent.resume",
+  }),
+  prompt: channel<
+    [string | CursorSDKUserMessage, CursorSDKAgentOptions | undefined],
+    PromiseLike<CursorSDKRunResult>,
+    object
+  >({
+    channelName: "Agent.prompt",
+  }),
+  send: channel<
+    [string | CursorSDKUserMessage, CursorSDKSendOptions | undefined],
+    PromiseLike<CursorSDKRun>,
+    {
+      agent?: CursorSDKAgent;
+      operation?: "send";
+    }
+  >({
+    channelName: "agent.send",
+  }),
+});

@@ -1,21 +1,19 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   PiAgentSession,
   PiPromptOptions,
 } from "../../vendor-sdk-types/pi-coding-agent";
 
-export const piCodingAgentChannels = defineChannels(
+export const piCodingAgentChannels = defineInterceptor(
   "@earendil-works/pi-coding-agent",
   {
     prompt: channel<
       [string, PiPromptOptions | undefined],
-      void,
+      PromiseLike<void>,
       { session?: PiAgentSession }
     >({
       channelName: "AgentSession.prompt",
-      kind: "async",
     }),
   },
-  { instrumentationName: INSTRUMENTATION_NAMES.PI_CODING_AGENT },
 );

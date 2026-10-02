@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   GenkitAction,
   GenkitEmbedManyParams,
@@ -11,59 +11,46 @@ import type {
   GenkitGenerateStreamResponse,
 } from "../../vendor-sdk-types/genkit";
 
-export const genkitChannels = defineChannels(
-  "@genkit-ai/ai",
-  {
-    generate: channel<[GenkitGenerateInput], GenkitGenerateResponse>({
+export const genkitChannels = defineInterceptor("@genkit-ai/ai", {
+  generate: channel<[GenkitGenerateInput], PromiseLike<GenkitGenerateResponse>>(
+    {
       channelName: "generate",
-      kind: "async",
-    }),
+    },
+  ),
 
-    generateStream: channel<
-      [GenkitGenerateInput],
-      GenkitGenerateStreamResponse,
-      Record<string, unknown>,
-      GenkitGenerateResponseChunk
-    >({
-      channelName: "generateStream",
-      kind: "sync-stream",
-    }),
+  generateStream: channel<
+    [GenkitGenerateInput],
+    GenkitGenerateStreamResponse,
+    Record<string, unknown>,
+    GenkitGenerateResponseChunk
+  >({
+    channelName: "generateStream",
+  }),
 
-    embed: channel<[GenkitEmbedParams], GenkitEmbedding[]>({
-      channelName: "embed",
-      kind: "async",
-    }),
+  embed: channel<[GenkitEmbedParams], PromiseLike<GenkitEmbedding[]>>({
+    channelName: "embed",
+  }),
 
-    embedMany: channel<[GenkitEmbedManyParams], unknown>({
-      channelName: "embedMany",
-      kind: "async",
-    }),
+  embedMany: channel<[GenkitEmbedManyParams], PromiseLike<unknown>>({
+    channelName: "embedMany",
+  }),
 
-    actionRun: channel<[unknown, unknown?], unknown>({
-      channelName: "action.run",
-      kind: "async",
-    }),
+  actionRun: channel<[unknown, unknown?], PromiseLike<unknown>>({
+    channelName: "action.run",
+  }),
 
-    actionStream: channel<
-      [unknown, unknown?],
-      ReturnType<NonNullable<GenkitAction["stream"]>>,
-      Record<string, unknown>,
-      unknown
-    >({
-      channelName: "action.stream",
-      kind: "sync-stream",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.GENKIT },
-);
+  actionStream: channel<
+    [unknown, unknown?],
+    ReturnType<NonNullable<GenkitAction["stream"]>>,
+    Record<string, unknown>,
+    unknown
+  >({
+    channelName: "action.stream",
+  }),
+});
 
-export const genkitCoreChannels = defineChannels(
-  "@genkit-ai/core",
-  {
-    actionSpan: channel<[unknown, unknown, unknown?], unknown>({
-      channelName: "action.span",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.GENKIT },
-);
+export const genkitCoreChannels = defineInterceptor("@genkit-ai/core", {
+  actionSpan: channel<[unknown, unknown, unknown?], PromiseLike<unknown>>({
+    channelName: "action.span",
+  }),
+});

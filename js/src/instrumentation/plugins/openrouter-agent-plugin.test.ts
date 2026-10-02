@@ -7,8 +7,8 @@ import {
   it,
   vi,
 } from "vitest";
-import { configureNode } from "../../node/config";
 import { _exportsForTestingOnly, initLogger } from "../../logger";
+import { configureNode } from "../../node/config";
 import { openRouterAgentChannels } from "./openrouter-agent-channels";
 import {
   aggregateOpenRouterChatChunks,
@@ -459,7 +459,7 @@ describe("OpenRouter Agent Plugin", () => {
         tools: [tool],
       };
 
-      const result = openRouterAgentChannels.callModel.traceSync(
+      const result = openRouterAgentChannels.callModel.invoke(
         () => {
           const modelResult = {
             allToolExecutionRounds: [] as any[],
@@ -515,9 +515,9 @@ describe("OpenRouter Agent Plugin", () => {
 
           return modelResult;
         },
-        {
-          arguments: [request as any],
-        },
+        undefined,
+        [request as any],
+        {},
       );
       expect(request.tools[0]).not.toBe(tool);
 
@@ -635,7 +635,7 @@ describe("OpenRouter Agent Plugin", () => {
         model: "openai/gpt-4.1-mini",
       };
 
-      const result = openRouterAgentChannels.callModel.traceSync(
+      const result = openRouterAgentChannels.callModel.invoke(
         () => ({
           async getResponse() {
             return finalResponse;
@@ -644,9 +644,9 @@ describe("OpenRouter Agent Plugin", () => {
             return "ok";
           },
         }),
-        {
-          arguments: [request],
-        },
+        undefined,
+        [request],
+        {},
       );
 
       await expect(result.getText()).resolves.toBe("ok");

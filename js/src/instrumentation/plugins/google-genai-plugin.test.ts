@@ -1,8 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+import { invocationController } from "../test-utils/invocation";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
-// Mock iso's newTracingChannel - must be before any imports that use it
+// Mock platform context independently of invocation hooks.
 vi.mock("../../isomorph", () => ({
   default: {
+    getEnv: () => undefined,
     newAsyncLocalStorage: vi.fn(() => {
       let current: unknown;
       return {
@@ -18,15 +27,15 @@ vi.mock("../../isomorph", () => ({
         }),
       };
     }),
-    newTracingChannel: vi.fn(),
   },
 }));
 
-import { GoogleGenAIPlugin } from "./google-genai-plugin";
 import { startSpan } from "../../logger";
-import iso from "../../isomorph";
+import { GoogleGenAIPlugin } from "./google-genai-plugin";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 const mockStartSpan = vi.mocked(startSpan);
 
 // Mock logger
@@ -70,7 +79,28 @@ describe("GoogleGenAIPlugin", () => {
       hasSubscribers: false,
     };
 
-    mockNewTracingChannel.mockReturnValue(mockChannel);
+    mockNewInvocationHook.mockImplementation((name: string) => {
+      mockChannel = {
+        intercept: (interceptor: any) => {
+          if (
+            [
+              "models.generateContent",
+              "models.generateContentStream",
+              "models.embedContent",
+              "interactions.create",
+            ].some(
+              (operation) => name === `orchestrion:@google/genai:${operation}`,
+            )
+          ) {
+            subscribeSpy(invocationController(interceptor));
+          } else {
+            interceptSpy(interceptor);
+          }
+          return unsubscribeSpy;
+        },
+      };
+      return mockChannel;
+    });
     plugin = new GoogleGenAIPlugin();
   });
 
@@ -116,20 +146,13 @@ describe("GoogleGenAIPlugin", () => {
     it("should extract input correctly", () => {
       plugin.enable();
 
-      const subscribeCall = subscribeSpy.mock.calls.find(
-        (call: any) =>
-          mockNewTracingChannel.mock.results[
-            subscribeSpy.mock.calls.indexOf(call)
-          ]?.value === mockChannel,
-      );
-
-      expect(subscribeCall).toBeDefined();
+      expect(subscribeSpy).toHaveBeenCalled();
 
       // Get the handlers from the subscribe call
       const handlers = subscribeSpy.mock.calls[0][0];
-      expect(handlers).toHaveProperty("start");
-      expect(handlers).toHaveProperty("asyncEnd");
-      expect(handlers).toHaveProperty("error");
+      expect(handlers).toHaveProperty("begin");
+      expect(handlers).toHaveProperty("resolve");
+      expect(handlers).toHaveProperty("reject");
     });
 
     it.each([
@@ -216,12 +239,12 @@ describe("GoogleGenAIPlugin", () => {
           ],
         };
 
-        handlers.start(event);
+        handlers.begin(event);
         const span = mockStartSpan.mock.results.at(-1)?.value as {
           log: ReturnType<typeof vi.fn>;
         };
         event.result = { usageMetadata };
-        handlers.asyncEnd(event);
+        handlers.resolve(event);
 
         const metrics = span.log.mock.calls[0][0].metrics;
         expect(metrics).toMatchObject(expectedMetrics);
@@ -244,7 +267,7 @@ describe("GoogleGenAIPlugin", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       const span = mockStartSpan.mock.results.at(-1)?.value as {
         log: ReturnType<typeof vi.fn>;
       };
@@ -263,7 +286,7 @@ describe("GoogleGenAIPlugin", () => {
           totalTokenCount: 0,
         },
       };
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       expect(span.log.mock.calls[0][0].metrics).toMatchObject({
         completion_audio_tokens: 0,
@@ -289,7 +312,7 @@ describe("GoogleGenAIPlugin", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       const span = mockStartSpan.mock.results.at(-1)?.value as {
         log: ReturnType<typeof vi.fn>;
       };
@@ -310,7 +333,7 @@ describe("GoogleGenAIPlugin", () => {
           },
         ],
       };
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       expect(span.log).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -351,7 +374,7 @@ describe("GoogleGenAIPlugin", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       const span = mockStartSpan.mock.results.at(-1)?.value as {
         log: ReturnType<typeof vi.fn>;
       };
@@ -372,7 +395,7 @@ describe("GoogleGenAIPlugin", () => {
           },
         ],
       };
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       expect(span.log).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -457,9 +480,9 @@ describe("GoogleGenAIPlugin", () => {
         };
       }
 
-      handlers.start(event);
+      handlers.begin(event);
       event.result = stream();
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
       for await (const _chunk of event.result) {
         // Consume the provider stream so the instrumentation finalizes it.
       }
@@ -932,7 +955,7 @@ describe("GoogleGenAIPlugin", () => {
       (model, contents, inputs) => {
         plugin.enable();
         const handlers = subscribeSpy.mock.calls[2][0];
-        handlers.start({
+        handlers.begin({
           arguments: [
             {
               model,
@@ -988,7 +1011,7 @@ describe("GoogleGenAIPlugin", () => {
         ],
       };
       const original = structuredClone(params);
-      handlers.start({ arguments: [params] });
+      handlers.begin({ arguments: [params] });
       const input = mockStartSpan.mock.calls[0][0]?.event?.input;
       expect(input).toMatchObject({
         inputs: [
@@ -1024,7 +1047,7 @@ describe("GoogleGenAIPlugin", () => {
     it("retains all inline media when any attachment conversion fails", () => {
       plugin.enable();
       const handlers = subscribeSpy.mock.calls[2][0];
-      handlers.start({
+      handlers.begin({
         arguments: [
           {
             model: "gemini-embedding-2-preview",
@@ -1095,8 +1118,8 @@ describe("GoogleGenAIPlugin", () => {
           ],
           result,
         };
-        handlers.start(event);
-        handlers.asyncEnd(event);
+        handlers.begin(event);
+        handlers.resolve(event);
         const span = mockStartSpan.mock.results[0].value;
         expect(span.log).toHaveBeenCalledWith({
           output: { count },
@@ -1118,8 +1141,8 @@ describe("GoogleGenAIPlugin", () => {
         arguments: [{ model: "gemini-embedding-2-preview", contents: "hello" }],
         error,
       };
-      handlers.start(event);
-      handlers.error(event);
+      handlers.begin(event);
+      handlers.reject(event);
       const span = mockStartSpan.mock.results[0].value;
       expect(span.log).toHaveBeenCalledWith({ error, output: { count: 0 } });
       expect(span.end).toHaveBeenCalledOnce();
@@ -1130,7 +1153,7 @@ describe("GoogleGenAIPlugin", () => {
     it("subscribes to the interactions.create channel", () => {
       plugin.enable();
 
-      expect(mockNewTracingChannel).toHaveBeenCalledWith(
+      expect(mockNewInvocationHook).toHaveBeenCalledWith(
         "orchestrion:@google/genai:interactions.create",
       );
       expect(subscribeSpy).toHaveBeenCalledTimes(4);
@@ -1164,7 +1187,7 @@ describe("GoogleGenAIPlugin", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       const span = mockStartSpan.mock.results.at(-1)?.value as {
         end: ReturnType<typeof vi.fn>;
         log: ReturnType<typeof vi.fn>;
@@ -1198,7 +1221,7 @@ describe("GoogleGenAIPlugin", () => {
         },
       };
 
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       expect(span.log).toHaveBeenNthCalledWith(
         1,
@@ -1292,7 +1315,7 @@ describe("GoogleGenAIPlugin", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       const span = mockStartSpan.mock.results.at(-1)?.value as {
         end: ReturnType<typeof vi.fn>;
         log: ReturnType<typeof vi.fn>;
@@ -1306,7 +1329,7 @@ describe("GoogleGenAIPlugin", () => {
         },
         status: "completed",
       };
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       expect(mockStartSpan).toHaveBeenLastCalledWith(
         expect.objectContaining({
@@ -1378,7 +1401,7 @@ describe("GoogleGenAIPlugin", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       const span = mockStartSpan.mock.results.at(-1)?.value as {
         log: ReturnType<typeof vi.fn>;
       };
@@ -1399,7 +1422,7 @@ describe("GoogleGenAIPlugin", () => {
         },
       };
 
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       expect(span.log).toHaveBeenLastCalledWith(
         expect.objectContaining({
@@ -1416,7 +1439,7 @@ describe("GoogleGenAIPlugin", () => {
         }),
       );
 
-      handlers.start(event);
+      handlers.begin(event);
       const missingUsageSpan = mockStartSpan.mock.results.at(-1)?.value as {
         log: ReturnType<typeof vi.fn>;
       };
@@ -1426,7 +1449,7 @@ describe("GoogleGenAIPlugin", () => {
         usage: {},
       };
 
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       expect(missingUsageSpan.log).toHaveBeenLastCalledWith(
         expect.objectContaining({
@@ -1455,12 +1478,12 @@ describe("GoogleGenAIPlugin", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       event.result = {
         id: "interaction-background",
         status: "in_progress",
       };
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       expect(mockStartSpan).not.toHaveBeenCalled();
     });
@@ -1513,13 +1536,13 @@ describe("GoogleGenAIPlugin", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       const span = mockStartSpan.mock.results.at(-1)?.value as {
         end: ReturnType<typeof vi.fn>;
         log: ReturnType<typeof vi.fn>;
       };
       event.result = stream();
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       for await (const _chunk of event.result) {
         // Consume the stream so aggregation completes.
@@ -1575,13 +1598,13 @@ describe("GoogleGenAIPlugin", () => {
         ],
       };
 
-      handlers.start(event);
+      handlers.begin(event);
       const span = mockStartSpan.mock.results.at(-1)?.value as {
         end: ReturnType<typeof vi.fn>;
         log: ReturnType<typeof vi.fn>;
       };
       event.result = stream();
-      handlers.asyncEnd(event);
+      handlers.resolve(event);
 
       await expect(async () => {
         for await (const _chunk of event.result) {

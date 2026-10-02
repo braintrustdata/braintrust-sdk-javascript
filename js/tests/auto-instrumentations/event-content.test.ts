@@ -97,8 +97,8 @@ describe("Event Content Validation", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify start event was emitted with arguments
-      expect(collector.start.length).toBeGreaterThan(0);
-      const startEvent = collector.start[0];
+      expect(collector.calls.length).toBeGreaterThan(0);
+      const startEvent = collector.calls[0];
       expect(startEvent.arguments).toBeDefined();
       expect(startEvent.arguments!.length).toBeGreaterThan(0);
 
@@ -171,8 +171,8 @@ describe("Event Content Validation", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify all arguments were captured
-      expect(collector.start.length).toBeGreaterThan(0);
-      const startEvent = collector.start[0];
+      expect(collector.calls.length).toBeGreaterThan(0);
+      const startEvent = collector.calls[0];
       expect(startEvent.arguments).toBeDefined();
       expect(startEvent.arguments!.length).toBeGreaterThanOrEqual(1);
 
@@ -239,15 +239,15 @@ describe("Event Content Validation", () => {
 
       // Verify end event was emitted with result
       // Note: For async functions, result appears in asyncEnd event
-      const hasAsyncEnd = collector.asyncEnd.length > 0;
-      const hasEnd = collector.end.length > 0;
+      const hasAsyncEnd = collector.resolutions.length > 0;
+      const hasEnd = collector.returns.length > 0;
 
       expect(hasAsyncEnd || hasEnd).toBe(true);
 
       // Check the appropriate event type
       const resultEvent = hasAsyncEnd
-        ? collector.asyncEnd[0]
-        : collector.end[0];
+        ? collector.resolutions[0]
+        : collector.returns[0];
       expect(resultEvent.result).toBeDefined();
       expect(resultEvent.result.id).toBe("chatcmpl-123");
       expect(resultEvent.result.model).toBe("gpt-4");
@@ -318,14 +318,14 @@ describe("Event Content Validation", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify complex result structure is captured
-      const hasAsyncEnd = collector.asyncEnd.length > 0;
-      const hasEnd = collector.end.length > 0;
+      const hasAsyncEnd = collector.resolutions.length > 0;
+      const hasEnd = collector.returns.length > 0;
 
       expect(hasAsyncEnd || hasEnd).toBe(true);
 
       const resultEvent = hasAsyncEnd
-        ? collector.asyncEnd[0]
-        : collector.end[0];
+        ? collector.resolutions[0]
+        : collector.returns[0];
       expect(resultEvent.result).toBeDefined();
       expect(resultEvent.result.usage.total_tokens).toBe(75);
       expect(resultEvent.result.choices[0].message.tool_calls).toHaveLength(1);
@@ -379,8 +379,8 @@ describe("Event Content Validation", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify self context was captured
-      expect(collector.start.length).toBeGreaterThan(0);
-      const startEvent = collector.start[0];
+      expect(collector.calls.length).toBeGreaterThan(0);
+      const startEvent = collector.calls[0];
       expect(startEvent.self).toBeDefined();
 
       // self should be the Completions instance
@@ -433,16 +433,16 @@ describe("Event Content Validation", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify events were emitted
-      expect(collector.start.length).toBeGreaterThan(0);
+      expect(collector.calls.length).toBeGreaterThan(0);
 
       // For async functions, we expect asyncStart and asyncEnd
-      if (collector.asyncStart.length > 0 && collector.asyncEnd.length > 0) {
+      if (collector.promises.length > 0 && collector.resolutions.length > 0) {
         // Verify order: start <= asyncStart <= asyncEnd
-        expect(collector.start[0].timestamp).toBeLessThanOrEqual(
-          collector.asyncStart[0].timestamp,
+        expect(collector.calls[0].timestamp).toBeLessThanOrEqual(
+          collector.promises[0].timestamp,
         );
-        expect(collector.asyncStart[0].timestamp).toBeLessThanOrEqual(
-          collector.asyncEnd[0].timestamp,
+        expect(collector.promises[0].timestamp).toBeLessThanOrEqual(
+          collector.resolutions[0].timestamp,
         );
       }
     });
@@ -489,12 +489,12 @@ describe("Event Content Validation", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify we got 3 start events (one per call)
-      expect(collector.start.length).toBe(3);
+      expect(collector.calls.length).toBe(3);
 
       // Verify each call had different arguments
-      expect(collector.start[0].arguments![0].model).toBe("gpt-4");
-      expect(collector.start[1].arguments![0].model).toBe("gpt-3.5-turbo");
-      expect(collector.start[2].arguments![0].model).toBe("gpt-4-turbo");
+      expect(collector.calls[0].arguments![0].model).toBe("gpt-4");
+      expect(collector.calls[1].arguments![0].model).toBe("gpt-3.5-turbo");
+      expect(collector.calls[2].arguments![0].model).toBe("gpt-4-turbo");
     });
   });
 
@@ -547,12 +547,12 @@ describe("Event Content Validation", () => {
       await new Promise((resolve) => setImmediate(resolve));
 
       // Verify correct channel received events
-      expect(correctCollector.start.length).toBeGreaterThan(0);
+      expect(correctCollector.calls.length).toBeGreaterThan(0);
 
       // Verify wrong channel did NOT receive events
-      expect(wrongCollector.start.length).toBe(0);
-      expect(wrongCollector.end.length).toBe(0);
-      expect(wrongCollector.asyncEnd.length).toBe(0);
+      expect(wrongCollector.calls.length).toBe(0);
+      expect(wrongCollector.returns.length).toBe(0);
+      expect(wrongCollector.resolutions.length).toBe(0);
     });
   });
 
@@ -679,12 +679,12 @@ describe("Event Content Validation", () => {
         expect(result.isEventEmitter).toBe(true);
 
         // Verify start event captured arguments
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.start[0].arguments![0].model).toBe("gpt-4");
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.calls[0].arguments![0].model).toBe("gpt-4");
 
         // Verify end event (stream returned synchronously)
-        expect(streamCollector.end.length).toBeGreaterThan(0);
-        expect(streamCollector.end[0].result).toBeDefined();
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
+        expect(streamCollector.returns[0].result).toBeDefined();
       });
 
       it("should return stream object synchronously for responses.stream", async () => {
@@ -753,11 +753,11 @@ describe("Event Content Validation", () => {
         expect(result.hasEmit).toBe(true);
 
         // Verify start event captured arguments
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.start[0].arguments![0].model).toBe("gpt-4");
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.calls[0].arguments![0].model).toBe("gpt-4");
 
         // Verify end event (stream returned synchronously)
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
       });
     });
 
@@ -858,8 +858,8 @@ describe("Event Content Validation", () => {
         expect(result.endCalled).toBe(true);
 
         // Verify start and end events were emitted
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
       });
 
       it("should verify handlers are called when stream emits events", async () => {
@@ -969,8 +969,8 @@ describe("Event Content Validation", () => {
         expect(result.completions[0].id).toBe("chatcmpl-123");
 
         // Verify instrumentation events
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
       });
     });
 
@@ -1071,8 +1071,8 @@ describe("Event Content Validation", () => {
         expect(result.chunkCount).toBe(2);
 
         // Verify instrumentation captured the start
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
 
         // Note: Actual time_to_first_token logging happens in the instrumentation wrapper
         // This test verifies the stream emits chunks in the correct sequence
@@ -1157,8 +1157,8 @@ describe("Event Content Validation", () => {
         expect(result.chunkCount).toBe(5);
 
         // Verify instrumentation events
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
       });
     });
 
@@ -1263,8 +1263,8 @@ describe("Event Content Validation", () => {
         expect(result.capturedCompletion.usage.total_tokens).toBe(15);
 
         // Verify instrumentation events
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
       });
 
       it("should log output on response.completed event for responses.stream", async () => {
@@ -1369,8 +1369,8 @@ describe("Event Content Validation", () => {
         expect(result.eventCount).toBe(2);
 
         // Verify instrumentation events
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
       });
     });
 
@@ -1441,11 +1441,11 @@ describe("Event Content Validation", () => {
         expect(result.callDuration).toBeLessThan(50);
 
         // Verify start event was emitted immediately
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.start[0].arguments![0].model).toBe("gpt-4");
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.calls[0].arguments![0].model).toBe("gpt-4");
 
         // Verify end event was also emitted (stream returned synchronously)
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
       });
 
       it("should NOT end span before stream completes", async () => {
@@ -1541,8 +1541,8 @@ describe("Event Content Validation", () => {
         expect(result.streamEnded).toBe(true);
 
         // Verify instrumentation captured the entire lifecycle
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
 
         // The start and end events are for the synchronous method call
         // The actual stream completion happens asynchronously via event listeners
@@ -1629,8 +1629,8 @@ describe("Event Content Validation", () => {
         expect(result.errorMessage).toBe("Stream error occurred");
 
         // Verify instrumentation events
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
       });
 
       it("should log error and end span when stream fails", async () => {
@@ -1726,8 +1726,8 @@ describe("Event Content Validation", () => {
         expect(result.errorMessage).toBe("Network failure");
 
         // Verify instrumentation events
-        expect(streamCollector.start.length).toBeGreaterThan(0);
-        expect(streamCollector.end.length).toBeGreaterThan(0);
+        expect(streamCollector.calls.length).toBeGreaterThan(0);
+        expect(streamCollector.returns.length).toBeGreaterThan(0);
       });
     });
   });

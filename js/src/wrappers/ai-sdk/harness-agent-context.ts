@@ -1,8 +1,9 @@
+import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
+import type { IsoAsyncLocalStorage } from "../../isomorph";
 import iso from "../../isomorph";
-import type { IsoAsyncLocalStorage, IsoTracingChannel } from "../../isomorph";
 import {
-  _internalGetGlobalState,
   _internalExportParentSynchronously,
+  _internalGetGlobalState,
   currentSpan,
   startSpan,
   updateSpan,
@@ -18,7 +19,6 @@ import type {
   AISDKHarnessAgentCreateSessionParams,
   AISDKHarnessAgentSession,
 } from "../../vendor-sdk-types/ai-sdk";
-import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
 
 const BRAINTRUST_TURN_CONTEXT_KEY = "__braintrust_trace_context";
 
@@ -311,26 +311,17 @@ export function currentHarnessTurnParent(): HarnessTurnParent | undefined {
   );
 }
 
-export function bindHarnessTurnParentToStart<T>(
-  tracingChannel: IsoTracingChannel<T>,
-  parentFromEvent: (event: T) => HarnessTurnParent | undefined,
-): () => void {
-  const startChannel = tracingChannel.start;
-  if (!startChannel) {
-    return () => {};
-  }
-
+export function runWithHarnessTurnParent<T>(
+  parent: HarnessTurnParent | undefined,
+  call: () => T,
+): T {
   harnessTurnParentStore ??= iso.newAsyncLocalStorage<
     HarnessTurnParent | undefined
   >();
-  const store = harnessTurnParentStore;
-  startChannel.bindStore(
-    store,
-    (event) => parentFromEvent(event) ?? store.getStore(),
+  return harnessTurnParentStore.run(
+    parent ?? harnessTurnParentStore.getStore(),
+    call,
   );
-  return () => {
-    startChannel.unbindStore(store);
-  };
 }
 
 export function startHarnessTurnChildSpan(

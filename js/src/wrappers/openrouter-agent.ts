@@ -1,7 +1,7 @@
 import { openRouterAgentChannels } from "../instrumentation/plugins/openrouter-agent-channels";
 import type {
-  OpenRouterAgentClient,
   OpenRouterAgentCallModelRequest,
+  OpenRouterAgentClient,
 } from "../vendor-sdk-types/openrouter-agent";
 
 /**
@@ -70,11 +70,11 @@ function wrapCallModel(
       const invocationTarget =
         thisArg === undefined ? (defaultThis ?? thisArg) : thisArg;
 
-      return openRouterAgentChannels.callModel.traceSync(
-        () => Reflect.apply(target, invocationTarget, [request, options]),
-        {
-          arguments: [request],
-        } as Parameters<typeof openRouterAgentChannels.callModel.traceSync>[1],
+      return openRouterAgentChannels.callModel.invoke(
+        target,
+        invocationTarget,
+        [request, options],
+        {},
       );
     },
   });

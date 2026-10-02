@@ -1,29 +1,24 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   OpenAIAgentsSpan,
   OpenAIAgentsTrace,
 } from "../../vendor-sdk-types/openai-agents";
 
-export const openAIAgentsCoreChannels = defineChannels(
+export const openAIAgentsCoreChannels = defineInterceptor(
   "@openai/agents-core",
   {
-    onTraceStart: channel<[OpenAIAgentsTrace], void>({
+    onTraceStart: channel<[OpenAIAgentsTrace], PromiseLike<void>>({
       channelName: "tracing.processor.onTraceStart",
-      kind: "async",
     }),
-    onTraceEnd: channel<[OpenAIAgentsTrace], void>({
+    onTraceEnd: channel<[OpenAIAgentsTrace], PromiseLike<void>>({
       channelName: "tracing.processor.onTraceEnd",
-      kind: "async",
     }),
-    onSpanStart: channel<[OpenAIAgentsSpan], void>({
+    onSpanStart: channel<[OpenAIAgentsSpan], PromiseLike<void>>({
       channelName: "tracing.processor.onSpanStart",
-      kind: "async",
     }),
-    onSpanEnd: channel<[OpenAIAgentsSpan], void>({
+    onSpanEnd: channel<[OpenAIAgentsSpan], PromiseLike<void>>({
       channelName: "tracing.processor.onSpanEnd",
-      kind: "async",
     }),
   },
-  { instrumentationName: INSTRUMENTATION_NAMES.OPENAI_AGENTS },
 );

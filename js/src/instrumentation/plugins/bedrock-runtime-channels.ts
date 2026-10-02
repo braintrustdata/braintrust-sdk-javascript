@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   BedrockRuntimeChannelContext,
   BedrockRuntimeCommandLike,
@@ -14,34 +14,21 @@ type BedrockRuntimeStreamEvent =
 
 const clientSendChannel = channel<
   [BedrockRuntimeCommandLike, unknown?],
-  BedrockRuntimeSendResult,
+  PromiseLike<BedrockRuntimeSendResult>,
   BedrockRuntimeChannelContext,
   BedrockRuntimeStreamEvent
 >({
   channelName: "client.send",
-  kind: "async",
 });
 
-export const bedrockRuntimeChannels = defineChannels(
-  "aws-bedrock-runtime",
-  {
-    clientSend: clientSendChannel,
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.BEDROCK_RUNTIME },
-);
+export const bedrockRuntimeChannels = defineInterceptor("aws-bedrock-runtime", {
+  clientSend: clientSendChannel,
+});
 
-export const smithyCoreChannels = defineChannels(
-  "@smithy/core",
-  {
-    clientSend: clientSendChannel,
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.BEDROCK_RUNTIME },
-);
+export const smithyCoreChannels = defineInterceptor("@smithy/core", {
+  clientSend: clientSendChannel,
+});
 
-export const smithyClientChannels = defineChannels(
-  "@smithy/smithy-client",
-  {
-    clientSend: clientSendChannel,
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.BEDROCK_RUNTIME },
-);
+export const smithyClientChannels = defineInterceptor("@smithy/smithy-client", {
+  clientSend: clientSendChannel,
+});

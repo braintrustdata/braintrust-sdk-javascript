@@ -1,9 +1,9 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
+  OpenRouterCallModelRequest,
   OpenRouterChatCompletion,
   OpenRouterChatCompletionChunk,
-  OpenRouterCallModelRequest,
   OpenRouterChatCreateParams,
   OpenRouterEmbeddingCreateParams,
   OpenRouterEmbeddingResponse,
@@ -22,77 +22,66 @@ type OpenRouterResponsesResult =
   | OpenRouterResponse
   | AsyncIterable<OpenRouterResponseStreamEvent>;
 
-export const openRouterChannels = defineChannels(
-  "@openrouter/sdk",
-  {
-    chatSend: channel<
-      [OpenRouterChatCreateParams],
-      OpenRouterChatResult,
-      Record<string, unknown>,
-      OpenRouterChatCompletionChunk
-    >({
-      channelName: "chat.send",
-      kind: "async",
-    }),
+export const openRouterChannels = defineInterceptor("@openrouter/sdk", {
+  chatSend: channel<
+    [OpenRouterChatCreateParams],
+    PromiseLike<OpenRouterChatResult>,
+    Record<string, unknown>,
+    OpenRouterChatCompletionChunk
+  >({
+    channelName: "chat.send",
+  }),
 
-    embeddingsGenerate: channel<
-      [OpenRouterEmbeddingCreateParams],
-      OpenRouterEmbeddingResponse
-    >({
-      channelName: "embeddings.generate",
-      kind: "async",
-    }),
+  embeddingsGenerate: channel<
+    [OpenRouterEmbeddingCreateParams],
+    PromiseLike<OpenRouterEmbeddingResponse>
+  >({
+    channelName: "embeddings.generate",
+  }),
 
-    rerankRerank: channel<
-      [OpenRouterRerankCreateParams],
-      OpenRouterRerankResult
-    >({
-      channelName: "rerank.rerank",
-      kind: "async",
-    }),
+  rerankRerank: channel<
+    [OpenRouterRerankCreateParams],
+    PromiseLike<OpenRouterRerankResult>
+  >({
+    channelName: "rerank.rerank",
+  }),
 
-    betaResponsesSend: channel<
-      [OpenRouterResponsesCreateParams],
-      OpenRouterResponsesResult,
-      Record<string, unknown>,
-      OpenRouterResponseStreamEvent
-    >({
-      channelName: "beta.responses.send",
-      kind: "async",
-    }),
+  betaResponsesSend: channel<
+    [OpenRouterResponsesCreateParams],
+    PromiseLike<OpenRouterResponsesResult>,
+    Record<string, unknown>,
+    OpenRouterResponseStreamEvent
+  >({
+    channelName: "beta.responses.send",
+  }),
 
-    callModel: channel<[OpenRouterCallModelRequest], unknown>({
-      channelName: "callModel",
-      kind: "sync-stream",
-    }),
+  callModel: channel<[OpenRouterCallModelRequest], unknown>({
+    channelName: "callModel",
+  }),
 
-    callModelTurn: channel<
-      [OpenRouterCallModelRequest | undefined],
-      unknown,
-      {
-        step: number;
-        stepType: "initial" | "continue";
-      }
-    >({
-      channelName: "callModel.turn",
-      kind: "async",
-    }),
+  callModelTurn: channel<
+    [OpenRouterCallModelRequest | undefined],
+    PromiseLike<unknown>,
+    {
+      step: number;
+      stepType: "initial" | "continue";
+    }
+  >({
+    channelName: "callModel.turn",
+  }),
 
-    toolExecute: channel<
-      [unknown],
-      unknown | AsyncIterable<unknown>,
-      {
-        span_info?: {
-          name?: string;
-        };
-        toolCallId?: string;
-        toolName: string;
-      },
-      unknown
-    >({
-      channelName: "tool.execute",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER },
-);
+  toolExecute: channel<
+    [unknown],
+    unknown | AsyncIterable<unknown>,
+    {
+      span_info?: {
+        name?: string;
+      };
+      toolCallId?: string;
+      toolName: string;
+    },
+    unknown
+  >({
+    channelName: "tool.execute",
+  }),
+});

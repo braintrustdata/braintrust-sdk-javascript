@@ -1,17 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { tracePromise } = vi.hoisted(() => ({
-  tracePromise: vi.fn((fn: () => Promise<unknown>) => fn()),
+const { invoke } = vi.hoisted(() => ({
+  invoke: vi.fn(
+    (
+      target: (...args: any[]) => any,
+      receiver: unknown,
+      args: unknown[],
+      _additional?: unknown,
+    ) => Reflect.apply(target, receiver, args),
+  ),
 }));
-
-vi.mock("../isomorph", () => ({
-  default: {
-    newTracingChannel: vi.fn(() => ({
-      subscribe: vi.fn(),
-      tracePromise,
-      unsubscribe: vi.fn(),
-    })),
-  },
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
 }));
 
 import { wrapCursorSDK } from "./cursor-sdk";
@@ -56,7 +57,27 @@ describe("wrapCursorSDK", () => {
 
     expect(result).toBe(run);
     expect(agent.send).toHaveBeenCalledWith("hello", expect.any(Object));
-    expect(tracePromise).toHaveBeenCalledTimes(2);
+    expect(invoke).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not wrap send twice when the plugin already patched the returned agent", async () => {
+    const run = makeRun();
+    const agent = {
+      [Symbol.for("braintrust.cursor-sdk.auto-patched-agent")]: true,
+      send: vi.fn(async () => run),
+    };
+    const sdk = {
+      Agent: class {
+        static async create() {
+          return agent;
+        }
+      },
+    };
+    const wrapped = wrapCursorSDK(sdk as any) as any;
+    const created = await wrapped.Agent.create({});
+    await expect(created.send("hello")).resolves.toBe(run);
+    expect(agent.send).toHaveBeenCalledExactlyOnceWith("hello");
+    expect(invoke).toHaveBeenCalledOnce();
   });
 
   it("wraps Agent.resume and preserves private-field-safe method binding", async () => {
@@ -101,7 +122,7 @@ describe("wrapCursorSDK", () => {
     await expect(wrapped.Agent.prompt("hello")).resolves.toMatchObject({
       result: "hello",
     });
-    expect(tracePromise).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledTimes(1);
   });
 
   it("handles module namespace-like objects", async () => {

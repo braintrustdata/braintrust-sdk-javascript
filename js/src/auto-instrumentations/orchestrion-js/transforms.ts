@@ -6,10 +6,10 @@
 import esquery from "esquery";
 import { parse } from "meriyah";
 import {
-  GLOBAL_INSTRUMENTATION_HOOK_BRAND,
   GLOBAL_INSTRUMENTATION_HOOKS_KEY,
   GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
   GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
+  GLOBAL_INVOCATION_HOOK_BRAND,
 } from "../../global-instrumentation-hooks";
 import type { FunctionQuery, InstrumentationConfig } from "./types";
 
@@ -20,12 +20,10 @@ type TransformFn = (
   parent: AnyNode,
   ancestry: AnyNode[],
 ) => void;
-type TraceOperator = "traceCallback" | "tracePromise" | "traceSync";
 
 export interface TransformState extends InstrumentationConfig {
   moduleVersion: string;
   functionQuery: FunctionQuery;
-  operator: TraceOperator;
   functionIndex?: number;
 }
 
@@ -41,7 +39,7 @@ function formatChannelGetter(channelName: string): string {
 }
 
 export const transforms: Record<string, TransformFn> = {
-  tracingHookDeclaration(state, node) {
+  invocationHookDeclaration(state, node) {
     const {
       channelName,
       module: { name },
@@ -84,9 +82,9 @@ export const transforms: Record<string, TransformFn> = {
               (typeof __bt$hook !== "object" &&
                 typeof __bt$hook !== "function")) ||
             __bt$hook[Symbol.for(${JSON.stringify(
-              GLOBAL_INSTRUMENTATION_HOOK_BRAND,
+              GLOBAL_INVOCATION_HOOK_BRAND,
             )})] !== ${GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION} ||
-            typeof __bt$hook.traceInvocation !== "function"
+            typeof __bt$hook.invoke !== "function"
           ) return undefined;
           return __bt$hook;
         } catch {
@@ -116,9 +114,7 @@ export const transforms: Record<string, TransformFn> = {
     node.body.splice(index + 1, 0, ...parse(code).body);
   },
 
-  traceCallback: traceAny,
-  tracePromise: traceAny,
-  traceSync: traceAny,
+  invoke: traceAny,
 };
 
 function traceAny(
@@ -141,7 +137,7 @@ function traceFunction(
   node: AnyNode,
   program: AnyNode,
 ): void {
-  transforms.tracingHookDeclaration(state, program, null, []);
+  transforms.invocationHookDeclaration(state, program, null, []);
 
   const isArrowFunction = node.type === "ArrowFunctionExpression";
 
@@ -195,7 +191,7 @@ function traceInstanceMethod(
   node: AnyNode,
   program: AnyNode,
 ): void {
-  const { functionQuery, operator } = state;
+  const { functionQuery } = state;
   const { methodName } = functionQuery as any;
 
   if (!methodName) {
@@ -210,7 +206,7 @@ function traceInstanceMethod(
 
   let ctor = classBody.body.find(({ kind }: AnyNode) => kind === "constructor");
 
-  transforms.tracingHookDeclaration(state, program, null, []);
+  transforms.invocationHookDeclaration(state, program, null, []);
 
   if (!ctor) {
     ctor = (
@@ -233,7 +229,7 @@ function traceInstanceMethod(
 
   const fn = ctorBody[1].expression.right;
 
-  fn.async = operator === "tracePromise";
+  fn.async = false;
   fn.body = wrap(
     state,
     {
@@ -331,21 +327,18 @@ function wrapInvocation(
   state: TransformState,
   argsExpression: string,
 ): AnyNode {
-  const { channelName, moduleVersion, operator, functionQuery } = state;
+  const { channelName, moduleVersion } = state;
   const channelGetter = formatChannelGetter(channelName);
-  const callbackIndex = functionQuery.callbackIndex ?? -1;
 
   return parse(`
     function wrapper () {
       const __bt$hook = ${channelGetter}();
       if (!__bt$hook) return __bt$target.apply(this, ${argsExpression});
-      return __bt$hook.traceInvocation(
-        ${JSON.stringify(operator)},
+      return __bt$hook.invoke(
         __bt$target,
         this,
         ${argsExpression},
-        { moduleVersion: ${JSON.stringify(moduleVersion)} },
-        ${callbackIndex}
+        { moduleVersion: ${JSON.stringify(moduleVersion)} }
       );
     }
   `);

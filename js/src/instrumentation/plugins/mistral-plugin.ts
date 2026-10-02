@@ -1,13 +1,6 @@
-import { BasePlugin } from "../core";
-import {
-  traceAsyncChannel,
-  traceStreamingChannel,
-  unsubscribeAll,
-} from "../core/channel-tracing";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
-import { mistralChannels } from "./mistral-channels";
 import type {
   MistralChatCompletionChunk,
   MistralChatCompletionChunkChoice,
@@ -18,6 +11,14 @@ import type {
   MistralThinkingContentPart,
   MistralToolCallDelta,
 } from "../../vendor-sdk-types/mistral";
+import { processInputAttachments } from "../../wrappers/attachment-utils";
+import { BasePlugin } from "../core";
+import {
+  traceAsyncCall,
+  traceStreamingCall,
+  unsubscribeAll,
+} from "../core/channel-tracing";
+import { mistralChannels } from "./mistral-channels";
 
 export class MistralPlugin extends BasePlugin {
   protected onEnable(): void {
@@ -30,144 +31,248 @@ export class MistralPlugin extends BasePlugin {
 
   private subscribeToMistralChannels(): void {
     this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.chatComplete, {
-        name: "mistral.chat.complete",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractMessagesInputWithMetadata,
-        extractOutput: (result) => {
-          return result?.choices;
-        },
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralMetrics(result?.usage, startTime),
-      }),
+      mistralChannels.chatComplete.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof mistralChannels.chatComplete>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.chat.complete",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractMessagesInputWithMetadata,
+              extractOutput: (result) => {
+                return result?.choices;
+              },
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result, startTime) =>
+                extractMistralMetrics(result?.usage, startTime),
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.chatStream, {
-        name: "mistral.chat.stream",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractMessagesInputWithMetadata,
-        extractOutput: extractMistralStreamOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralStreamingMetrics(result, startTime),
-        aggregateChunks: aggregateMistralStreamChunks,
-      }),
+      mistralChannels.chatStream.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof mistralChannels.chatStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.chat.stream",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractMessagesInputWithMetadata,
+              extractOutput: extractMistralStreamOutput,
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result, startTime) =>
+                extractMistralStreamingMetrics(result, startTime),
+              aggregateChunks: aggregateMistralStreamChunks,
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(mistralChannels.embeddingsCreate, {
-        name: "mistral.embeddings.create",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractEmbeddingInputWithMetadata,
-        extractOutput: (result) => {
-          const embedding = result?.data?.[0]?.embedding;
-          return Array.isArray(embedding)
-            ? { embedding_length: embedding.length }
-            : undefined;
-        },
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
-      }),
+      mistralChannels.embeddingsCreate.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof mistralChannels.embeddingsCreate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.embeddings.create",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractEmbeddingInputWithMetadata,
+              extractOutput: (result) => {
+                const embedding = result?.data?.[0]?.embedding;
+                return Array.isArray(embedding)
+                  ? { embedding_length: embedding.length }
+                  : undefined;
+              },
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result) =>
+                parseMistralMetricsFromUsage(result?.usage),
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(mistralChannels.classifiersModerate, {
-        name: "mistral.classifiers.moderate",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractClassifierInputWithMetadata,
-        extractOutput: extractClassifierOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
-      }),
+      mistralChannels.classifiersModerate.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof mistralChannels.classifiersModerate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.classifiers.moderate",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractClassifierInputWithMetadata,
+              extractOutput: extractClassifierOutput,
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result) =>
+                parseMistralMetricsFromUsage(result?.usage),
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(mistralChannels.classifiersModerateChat, {
-        name: "mistral.classifiers.moderateChat",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractClassifierInputWithMetadata,
-        extractOutput: extractClassifierOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
-      }),
+      mistralChannels.classifiersModerateChat.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof mistralChannels.classifiersModerateChat>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.classifiers.moderateChat",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractClassifierInputWithMetadata,
+              extractOutput: extractClassifierOutput,
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result) =>
+                parseMistralMetricsFromUsage(result?.usage),
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(mistralChannels.classifiersClassify, {
-        name: "mistral.classifiers.classify",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractClassifierInputWithMetadata,
-        extractOutput: extractClassifierOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
-      }),
+      mistralChannels.classifiersClassify.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof mistralChannels.classifiersClassify>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.classifiers.classify",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractClassifierInputWithMetadata,
+              extractOutput: extractClassifierOutput,
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result) =>
+                parseMistralMetricsFromUsage(result?.usage),
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceAsyncChannel(mistralChannels.classifiersClassifyChat, {
-        name: "mistral.classifiers.classifyChat",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractClassifierInputWithMetadata,
-        extractOutput: extractClassifierOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
-      }),
+      mistralChannels.classifiersClassifyChat.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof mistralChannels.classifiersClassifyChat>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.classifiers.classifyChat",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractClassifierInputWithMetadata,
+              extractOutput: extractClassifierOutput,
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result) =>
+                parseMistralMetricsFromUsage(result?.usage),
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.fimComplete, {
-        name: "mistral.fim.complete",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractPromptInputWithMetadata,
-        extractOutput: (result) => {
-          return result?.choices;
-        },
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralMetrics(result?.usage, startTime),
-      }),
+      mistralChannels.fimComplete.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof mistralChannels.fimComplete>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.fim.complete",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractPromptInputWithMetadata,
+              extractOutput: (result) => {
+                return result?.choices;
+              },
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result, startTime) =>
+                extractMistralMetrics(result?.usage, startTime),
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.fimStream, {
-        name: "mistral.fim.stream",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractPromptInputWithMetadata,
-        extractOutput: extractMistralStreamOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralStreamingMetrics(result, startTime),
-        aggregateChunks: aggregateMistralStreamChunks,
-      }),
+      mistralChannels.fimStream.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof mistralChannels.fimStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.fim.stream",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractPromptInputWithMetadata,
+              extractOutput: extractMistralStreamOutput,
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result, startTime) =>
+                extractMistralStreamingMetrics(result, startTime),
+              aggregateChunks: aggregateMistralStreamChunks,
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.agentsComplete, {
-        name: "mistral.agents.complete",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractMessagesInputWithMetadata,
-        extractOutput: (result) => {
-          return result?.choices;
-        },
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralMetrics(result?.usage, startTime),
-      }),
+      mistralChannels.agentsComplete.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof mistralChannels.agentsComplete>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.agents.complete",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractMessagesInputWithMetadata,
+              extractOutput: (result) => {
+                return result?.choices;
+              },
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result, startTime) =>
+                extractMistralMetrics(result?.usage, startTime),
+            },
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.agentsStream, {
-        name: "mistral.agents.stream",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractMessagesInputWithMetadata,
-        extractOutput: extractMistralStreamOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralStreamingMetrics(result, startTime),
-        aggregateChunks: aggregateMistralStreamChunks,
-      }),
+      mistralChannels.agentsStream.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof mistralChannels.agentsStream>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.MISTRAL,
+              name: "mistral.agents.stream",
+              type: SpanTypeAttribute.LLM,
+              extractInput: extractMessagesInputWithMetadata,
+              extractOutput: extractMistralStreamOutput,
+              extractMetadata: (result) =>
+                extractMistralResponseMetadata(result),
+              extractMetrics: (result, startTime) =>
+                extractMistralStreamingMetrics(result, startTime),
+              aggregateChunks: aggregateMistralStreamChunks,
+            },
+          ),
+      ),
     );
   }
 }

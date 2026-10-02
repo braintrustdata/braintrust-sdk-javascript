@@ -7,13 +7,13 @@
  * IMPORTANT: Tests use a mock OpenAI package structure in test/fixtures/node_modules/openai.
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import * as esbuild from "esbuild";
-import { build as viteBuild } from "vite";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
+import { build as viteBuild } from "vite";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   create,
   type InstrumentationConfig,
@@ -22,7 +22,7 @@ import {
   GLOBAL_INSTRUMENTATION_HOOKS_KEY,
   GLOBAL_INSTRUMENTATION_HOOKS_PROTOCOL_VERSION,
   GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
-  newGlobalTracingChannel,
+  newGlobalInvocationHook,
 } from "../../src/global-instrumentation-hooks";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -82,14 +82,16 @@ function transformTestCode(
 }
 
 function expectGlobalHookTransform(output: string): void {
-  expect(output).toContain("__braintrust_instrumentation_hooks");
+  expect(output).toContain("__braintrust_invocation_hooks_v2");
   expect(output).toContain("braintrust.global-instrumentation-hooks.registry");
-  expect(output).toContain("braintrust.global-instrumentation-hooks.hook");
+  expect(output).toContain(
+    "braintrust.global-instrumentation-hooks.invocation-hook",
+  );
   expect(output).toContain("orchestrion:openai:chat.completions.create");
-  expect(output).toContain("__bt$hook.traceInvocation");
+  expect(output).toContain("__bt$hook.invoke");
   expect(output).not.toContain("__bt$hook.hasSubscribers");
   expect(output).not.toContain("__bt$hook.hasInterceptors");
-  expect(output).not.toContain("__bt$hook.invoke");
+  expect(output).not.toContain("__bt$hook.traceInvocation");
   expect(output).not.toContain("__bt$hook.tracePromise");
   expect(output).not.toContain("__apm$");
   expect(output).not.toContain("tr_ch_apm$");
@@ -170,7 +172,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__bt$hook.traceInvocation");
+      expect(result.code).toContain("__bt$hook.invoke");
     });
 
     it("supports method-only configs", () => {
@@ -186,7 +188,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__bt$hook.traceInvocation");
+      expect(result.code).toContain("__bt$hook.invoke");
     });
 
     it("supports function declaration configs", () => {
@@ -200,7 +202,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__bt$hook.traceInvocation");
+      expect(result.code).toContain("__bt$hook.invoke");
     });
 
     it("ignores malformed global hook entries at runtime", () => {
@@ -256,7 +258,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__bt$hook.traceInvocation");
+      expect(result.code).toContain("__bt$hook.invoke");
     });
 
     it("supports export-alias class method configs", () => {
@@ -278,7 +280,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__bt$hook.traceInvocation");
+      expect(result.code).toContain("__bt$hook.invoke");
     });
 
     it("supports private class method configs", () => {
@@ -300,7 +302,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__bt$hook.traceInvocation");
+      expect(result.code).toContain("__bt$hook.invoke");
     });
 
     it("supports object/property configs", () => {
@@ -318,7 +320,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__bt$hook.traceInvocation");
+      expect(result.code).toContain("__bt$hook.invoke");
     });
 
     it("supports callback configs", () => {
@@ -332,7 +334,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__bt$hook.traceInvocation");
+      expect(result.code).toContain("__bt$hook.invoke");
     });
 
     it("supports raw AST query configs", () => {
@@ -348,7 +350,7 @@ describe("Orchestrion Transformation Tests", () => {
       );
 
       expect(result.code).toContain("orchestrion:test-sdk:test");
-      expect(result.code).toContain("__bt$hook.traceInvocation");
+      expect(result.code).toContain("__bt$hook.invoke");
     });
 
     it("supports index selection", () => {
@@ -368,12 +370,10 @@ describe("Orchestrion Transformation Tests", () => {
         `,
       );
 
-      const wrapperCount = result.code.match(
-        /return __bt\$hook\.traceInvocation/g,
-      );
+      const wrapperCount = result.code.match(/return __bt\$hook\.invoke/g);
       expect(wrapperCount).toHaveLength(1);
       expect(result.code.indexOf("secondCreate")).toBeLessThan(
-        result.code.indexOf("return __bt$hook.traceInvocation"),
+        result.code.indexOf("return __bt$hook.invoke"),
       );
     });
 
@@ -415,11 +415,9 @@ describe("Orchestrion Transformation Tests", () => {
       ).toHaveLength(1);
       expect(result.code).toContain("orchestrion:test-sdk:first");
       expect(result.code).toContain("orchestrion:test-sdk:second");
-      expect(
-        result.code.match(/return __bt\$hook\.traceInvocation/g),
-      ).toHaveLength(2);
-      expect(result.code).toContain('"traceSync"');
-      expect(result.code).toContain('"tracePromise"');
+      expect(result.code.match(/return __bt\$hook\.invoke/g)).toHaveLength(2);
+      expect(result.code).not.toContain('"traceSync"');
+      expect(result.code).not.toContain('"tracePromise"');
     });
 
     it("generates source maps", () => {
@@ -462,16 +460,18 @@ describe("Orchestrion Transformation Tests", () => {
       expect(loadedModule.exports.query("before")).toBe("before");
 
       const events: unknown[] = [];
-      const hook = newGlobalTracingChannel("orchestrion:test-sdk:test");
-      const handlers = { start: (event: unknown) => events.push(event) };
-      hook.subscribe(handlers);
+      const hook = newGlobalInvocationHook("orchestrion:test-sdk:test");
+      const remove = hook.intercept((target, receiver, args) => {
+        events.push(args);
+        return Reflect.apply(target, receiver, args);
+      });
 
       expect(loadedModule.exports.query("after")).toBe("after");
       expect(events).toHaveLength(1);
-      hook.unsubscribe(handlers);
+      remove();
     });
 
-    it("invokes generic interceptors inside tracing hooks", () => {
+    it("invokes generic interceptors with receiver, arguments, and version metadata", () => {
       const result = transformTestCode(
         { className: "Client", methodName: "query", kind: "Sync" },
         `
@@ -498,19 +498,10 @@ describe("Orchestrion Transformation Tests", () => {
         result.code,
       )(loadedModule, loadedModule.exports);
 
-      const hook = newGlobalTracingChannel<Record<string, unknown>>(
+      const hook = newGlobalInvocationHook<{ moduleVersion: string }>(
         "orchestrion:test-sdk:test",
       );
       const lifecycle: string[] = [];
-      const handlers = {
-        start: (event: Record<string, unknown>) =>
-          lifecycle.push(
-            `start:${Array.from(event.arguments as ArrayLike<unknown>)[0]}`,
-          ),
-        end: (event: Record<string, unknown>) =>
-          lifecycle.push(`end:${event.result}`),
-      };
-      hook.subscribe(handlers);
       const removeInterceptor = hook.intercept(
         (target, _thisArg, args, additional: { moduleVersion: string }) => {
           lifecycle.push(`intercept:${additional.moduleVersion}`);
@@ -522,14 +513,9 @@ describe("Orchestrion Transformation Tests", () => {
 
       const client = new loadedModule.exports("original");
       expect(client.query("value")).toBe("patched:VALUE!");
-      expect(lifecycle).toEqual([
-        "start:value",
-        "intercept:1.0.0",
-        "end:patched:VALUE!",
-      ]);
+      expect(lifecycle).toEqual(["intercept:1.0.0"]);
 
       removeInterceptor();
-      hook.unsubscribe(handlers);
     });
 
     it("supports asynchronous invocation interceptors", async () => {
@@ -552,7 +538,7 @@ describe("Orchestrion Transformation Tests", () => {
         "exports",
         result.code,
       )(loadedModule, loadedModule.exports);
-      const hook = newGlobalTracingChannel("orchestrion:test-sdk:test");
+      const hook = newGlobalInvocationHook("orchestrion:test-sdk:test");
       const removeInterceptor = hook.intercept(async (target, thisArg, args) =>
         String(await target.apply(thisArg, [String(args[0]).toUpperCase()])),
       );
@@ -586,7 +572,7 @@ describe("Orchestrion Transformation Tests", () => {
         "exports",
         result.code,
       )(loadedModule, loadedModule.exports);
-      const hook = newGlobalTracingChannel("orchestrion:test-sdk:test");
+      const hook = newGlobalInvocationHook("orchestrion:test-sdk:test");
       const removeInterceptor = hook.intercept((target, thisArg, args) => {
         const callback = args[1] as (error: unknown, value: string) => void;
         return target.apply(thisArg, [String(args[0]).toUpperCase(), callback]);

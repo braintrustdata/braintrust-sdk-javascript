@@ -1,7 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
-// Mock iso's newTracingChannel - must be before any imports that use it
+// Mock platform context independently of invocation hooks.
 const streamPatcherMock = vi.hoisted(() => ({
   options: undefined as
     | {
@@ -14,7 +21,6 @@ const streamPatcherMock = vi.hoisted(() => ({
 vi.mock("../../isomorph", () => ({
   default: {
     newAsyncLocalStorage: <T>() => new AsyncLocalStorage<T>(),
-    newTracingChannel: vi.fn(),
   },
 }));
 
@@ -32,11 +38,12 @@ vi.mock("../core/stream-patcher", () => ({
   }),
 }));
 
-import { ClaudeAgentSDKPlugin } from "./claude-agent-sdk-plugin";
-import iso from "../../isomorph";
 import { startSpan } from "../../logger";
+import { ClaudeAgentSDKPlugin } from "./claude-agent-sdk-plugin";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 // Mock the logger module
 vi.mock("../../logger", () => ({
@@ -140,7 +147,7 @@ describe("ClaudeAgentSDKPlugin", () => {
       hasSubscribers: false,
     };
 
-    mockNewTracingChannel.mockReturnValue(mockChannel);
+    mockNewInvocationHook.mockReturnValue(mockChannel);
 
     plugin = new ClaudeAgentSDKPlugin();
   });
@@ -153,7 +160,7 @@ describe("ClaudeAgentSDKPlugin", () => {
     it("should enable the plugin and subscribe to channels", () => {
       plugin.enable();
 
-      expect(mockNewTracingChannel).toHaveBeenCalledWith(
+      expect(mockNewInvocationHook).toHaveBeenCalledWith(
         "orchestrion:@anthropic-ai/claude-agent-sdk:query",
       );
       expect(mockChannel.intercept).toHaveBeenCalledTimes(1);

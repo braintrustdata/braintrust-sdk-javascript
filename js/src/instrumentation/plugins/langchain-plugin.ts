@@ -1,11 +1,12 @@
 import { BasePlugin } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
+import { runInstrumentation } from "../core/observe-result";
+
 import type { LangChainCallbackManager } from "../../vendor-sdk-types/langchain";
 import {
   BRAINTRUST_LANGCHAIN_CALLBACK_HANDLER_NAME,
   BraintrustLangChainCallbackHandler,
 } from "../../wrappers/langchain/callback-handler";
+import type { ChannelMessage } from "../core/tracing-types";
 import { langChainChannels } from "./langchain-channels";
 
 type LangChainConfigureChannel =
@@ -29,25 +30,34 @@ export class LangChainPlugin extends BasePlugin {
   }
 
   private subscribeToConfigure(channel: LangChainConfigureChannel): void {
-    const tracingChannel: IsoTracingChannel<
-      ChannelMessage<LangChainConfigureChannel>
-    > = channel.tracingChannel();
+    const invocationHook = channel;
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<LangChainConfigureChannel>
-    > = {
-      start: (event) => {
-        injectHandlerIntoArguments(event.arguments);
+    const removeHandlers = invocationHook.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<LangChainConfigureChannel>;
+        const prepare = (event: ChannelMessage<LangChainConfigureChannel>) => {
+          injectHandlerIntoArguments(event.arguments);
+        };
+        const returned = (event: ChannelMessage<LangChainConfigureChannel>) => {
+          this.injectHandler(event.result);
+        };
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          throw error;
+        }
+        Object.assign(event, { result });
+        runInstrumentation(() => returned(event));
+        return result;
       },
-      end: (event) => {
-        this.injectHandler(event.result);
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      tracingChannel.unsubscribe(handlers);
-    });
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private injectHandler(result: unknown): void {
