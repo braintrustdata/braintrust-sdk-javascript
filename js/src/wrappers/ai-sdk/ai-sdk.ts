@@ -29,6 +29,7 @@ import type {
   AISDKStreamFunction,
   AISDKWorkflowAgentClass,
 } from "../../vendor-sdk-types/ai-sdk";
+import { markInvocationContext } from "../../global-instrumentation-hooks";
 import { currentWorkflowAgentWrapperSpan } from "./workflow-agent-context";
 
 interface WrapAISDKOptions {
@@ -370,12 +371,11 @@ const wrapHarnessAgentCreateSession = (
   const wrapper = function (
     params?: Parameters<AISDKHarnessAgentCreateSessionFunction>[0],
   ) {
-    return harnessAgentChannels.createSession.tracePromise(
-      () =>
-        params === undefined
-          ? createSession.call(instance)
-          : createSession.call(instance, params),
-      createAISDKChannelContext(params ?? {}, { self: instance }),
+    return harnessAgentChannels.createSession.invoke(
+      createSession,
+      instance,
+      params === undefined ? [] : [params],
+      {},
     );
   };
   Object.defineProperty(wrapper, "name", {
@@ -517,17 +517,20 @@ const makeGenerateTextWrapper = (
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
 
-    return channel.tracePromise(
-      () => generateText(tracedParams),
-      createAISDKChannelContext(tracedParams, {
-        aiSDK: contextOptions.aiSDK,
-        denyOutputPaths: options.denyOutputPaths,
-        self: contextOptions.self,
-        span_info: mergeSpanInfo(span_info, {
-          name,
-          spanType: contextOptions.spanType,
-        }),
+    const context = createAISDKChannelContext({
+      aiSDK: contextOptions.aiSDK,
+      denyOutputPaths: options.denyOutputPaths,
+      span_info: mergeSpanInfo(span_info, {
+        name,
+        spanType: contextOptions.spanType,
       }),
+    });
+
+    return channel.invoke(
+      generateText,
+      contextOptions.self,
+      [tracedParams],
+      context,
     );
   };
   Object.defineProperty(wrapper, "name", { value: name, writable: false });
@@ -585,12 +588,13 @@ const makeGenerateImageWrapper = (
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
 
-    return aiSDKChannels.generateImage.tracePromise(
-      () => generateImage(tracedParams),
-      createAISDKChannelContext(tracedParams, {
+    return aiSDKChannels.generateImage.invoke(
+      generateImage,
+      contextOptions.self,
+      [tracedParams],
+      createAISDKChannelContext({
         aiSDK: contextOptions.aiSDK,
         denyOutputPaths: options.denyOutputPaths,
-        self: contextOptions.self,
         span_info: mergeSpanInfo(span_info, {
           name: "generateImage",
           spanType: contextOptions.spanType,
@@ -620,12 +624,13 @@ const makeEmbedWrapper = (
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
 
-    return channel.tracePromise(
-      () => embed(tracedParams),
-      createAISDKChannelContext(tracedParams, {
+    return channel.invoke(
+      embed,
+      contextOptions.self,
+      [tracedParams],
+      createAISDKChannelContext({
         aiSDK: contextOptions.aiSDK,
         denyOutputPaths: options.denyOutputPaths,
-        self: contextOptions.self,
         span_info: mergeSpanInfo(span_info, {
           name,
           spanType: contextOptions.spanType,
@@ -678,12 +683,13 @@ const makeRerankWrapper = (
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
 
-    return aiSDKChannels.rerank.tracePromise(
-      () => rerank(tracedParams),
-      createAISDKChannelContext(tracedParams, {
+    return aiSDKChannels.rerank.invoke(
+      rerank,
+      contextOptions.self,
+      [tracedParams],
+      createAISDKChannelContext({
         aiSDK: contextOptions.aiSDK,
         denyOutputPaths: options.denyOutputPaths,
-        self: contextOptions.self,
         span_info: mergeSpanInfo(span_info, {
           name: "rerank",
           spanType: contextOptions.spanType,
@@ -726,17 +732,32 @@ const makeStreamWrapper = (
   ) {
     const { span_info, ...params } = allParams;
     const tracedParams = { ...params };
-    const context = createAISDKChannelContext(tracedParams, {
+    const context = createAISDKChannelContext({
       aiSDK: contextOptions.aiSDK,
       denyOutputPaths: options.denyOutputPaths,
-      self: contextOptions.self,
       span_info: mergeSpanInfo(span_info, {
         name,
         spanType: contextOptions.spanType,
       }),
     });
 
-    return channel.tracePromise(() => streamText(tracedParams) as any, context);
+    // v4+ stream functions return their result synchronously.
+    const invoke = () =>
+      channel.invoke(
+        streamText as any,
+        contextOptions.self,
+        [tracedParams],
+        context,
+      );
+    if (channel !== aiSDKChannels.streamText) {
+      return invoke();
+    }
+
+    // Cloudflare Think observes streamText through its legacy lifecycle.
+    return channel.tracePromise(
+      invoke,
+      markInvocationContext({ ...context, arguments: [tracedParams] }),
+    );
   };
   Object.defineProperty(wrapper, "name", { value: name, writable: false });
   return wrapper;
@@ -801,22 +822,16 @@ function mergeSpanInfo(
   };
 }
 
-function createAISDKChannelContext<TParams extends Record<string, unknown>>(
-  params: TParams,
-  context: {
-    aiSDK?: AISDK;
-    denyOutputPaths?: string[];
-    self?: unknown;
-    span_info?: SpanInfo["span_info"];
-  } = {},
-) {
+function createAISDKChannelContext(context: {
+  aiSDK?: AISDK;
+  denyOutputPaths?: string[];
+  span_info?: SpanInfo["span_info"];
+}) {
   return {
-    arguments: [params] as [TParams],
     ...(context.aiSDK ? { aiSDK: context.aiSDK } : {}),
     ...(context.denyOutputPaths
       ? { denyOutputPaths: context.denyOutputPaths }
       : {}),
-    ...(context.self !== undefined ? { self: context.self } : {}),
     ...(context.span_info ? { span_info: context.span_info } : {}),
   };
 }

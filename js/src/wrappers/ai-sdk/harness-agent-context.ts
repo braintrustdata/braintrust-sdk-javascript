@@ -1,5 +1,5 @@
 import iso from "../../isomorph";
-import type { IsoAsyncLocalStorage, IsoTracingChannel } from "../../isomorph";
+import type { IsoAsyncLocalStorage } from "../../isomorph";
 import {
   _internalGetGlobalState,
   _internalExportParentSynchronously,
@@ -311,26 +311,14 @@ export function currentHarnessTurnParent(): HarnessTurnParent | undefined {
   );
 }
 
-export function bindHarnessTurnParentToStart<T>(
-  tracingChannel: IsoTracingChannel<T>,
-  parentFromEvent: (event: T) => HarnessTurnParent | undefined,
-): () => void {
-  const startChannel = tracingChannel.start;
-  if (!startChannel) {
-    return () => {};
-  }
-
+export function runWithHarnessTurnParent<R>(
+  parent: HarnessTurnParent,
+  callback: () => R,
+): R {
   harnessTurnParentStore ??= iso.newAsyncLocalStorage<
     HarnessTurnParent | undefined
   >();
-  const store = harnessTurnParentStore;
-  startChannel.bindStore(
-    store,
-    (event) => parentFromEvent(event) ?? store.getStore(),
-  );
-  return () => {
-    startChannel.unbindStore(store);
-  };
+  return harnessTurnParentStore.run(parent, callback);
 }
 
 export function startHarnessTurnChildSpan(
