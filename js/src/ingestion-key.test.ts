@@ -5,6 +5,7 @@ import {
   _internalGetGlobalState,
   Attachment,
   BraintrustState,
+  constructLogs3OverflowRequest,
   ExternalAttachment,
   extractTraceContextFromHeaders,
   flush,
@@ -13,7 +14,12 @@ import {
   setMaskingFunction,
   traced,
 } from "./logger";
-import { parseIngestionKeyUrl } from "./ingestion-key";
+import {
+  ingestionUploadChunkSchema,
+  ingestionUploadCompleteSchema,
+  ingestionUploadGrantSchema,
+  parseIngestionKeyUrl,
+} from "./ingestion-key";
 import { configureNode } from "./node/config";
 
 configureNode();
@@ -1011,4 +1017,183 @@ describe("tracing with an ingestion key", () => {
     }
     expect(headers.baggage ?? "").not.toContain("braintrust.parent");
   });
+});
+
+// Cases from typespecs/src/public-ingestion.fixture.json in
+// braintrustdata/braintrust at 74ce022558796700023b29a98dba448784fc69f2.
+const FIXTURE_KEY = "bt-ik-FAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKE";
+const FIXTURE_VALID_URLS: [string, string][] = [
+  [
+    `https://dp.example.com/ingest?ingestKey=${FIXTURE_KEY}`,
+    "https://dp.example.com/ingest",
+  ],
+  [
+    `https://dp.example.com/base/path/ingest?ingestKey=${FIXTURE_KEY}`,
+    "https://dp.example.com/base/path/ingest",
+  ],
+  [
+    `https://dp.example.com:8443/base/ingest/?ingestKey=${FIXTURE_KEY}`,
+    "https://dp.example.com:8443/base/ingest",
+  ],
+  [
+    `http://localhost:8000/ingest?ingestKey=${FIXTURE_KEY}`,
+    "http://localhost:8000/ingest",
+  ],
+  [
+    `https://dp.example.com/base/ingest///?ingestKey=${FIXTURE_KEY}`,
+    "https://dp.example.com/base/ingest",
+  ],
+  [
+    "https://dp.example.com/ingest?ingestKey=bt%2Dik%2DFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKE",
+    "https://dp.example.com/ingest",
+  ],
+  [
+    `https://dp.example.com/ingest?ingest%4Bey=${FIXTURE_KEY}`,
+    "https://dp.example.com/ingest",
+  ],
+];
+const FIXTURE_INVALID_URLS: [string, string][] = [
+  ["missing key", "https://dp.example.com/ingest"],
+  [
+    "path does not end with /ingest",
+    `https://dp.example.com/base?ingestKey=${FIXTURE_KEY}`,
+  ],
+  [
+    "not an ingestion key",
+    // An API key shaped value, built here so it does not look like a secret.
+    `https://dp.example.com/ingest?ingestKey=sk-${"FAKE".repeat(12)}`,
+  ],
+  [
+    "truncated key",
+    "https://dp.example.com/ingest?ingestKey=bt-ik-FAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAK",
+  ],
+  [
+    "extra query parameter",
+    `https://dp.example.com/ingest?ingestKey=${FIXTURE_KEY}&project_id=foo`,
+  ],
+  [
+    "repeated key parameter",
+    `https://dp.example.com/ingest?ingestKey=${FIXTURE_KEY}&ingestKey=${FIXTURE_KEY}`,
+  ],
+  [
+    "embedded credentials",
+    `https://user:pass@dp.example.com/ingest?ingestKey=${FIXTURE_KEY}`,
+  ],
+  [
+    "fragment",
+    `https://dp.example.com/ingest?ingestKey=${FIXTURE_KEY}#fragment`,
+  ],
+  ["empty fragment", `https://dp.example.com/ingest?ingestKey=${FIXTURE_KEY}#`],
+  [
+    "unsupported protocol",
+    `ftp://dp.example.com/ingest?ingestKey=${FIXTURE_KEY}`,
+  ],
+  ["bare key without a URL", `${FIXTURE_KEY}`],
+];
+const FIXTURE_UPLOAD = {
+  grant: {
+    upload_id: "00000000-0000-4000-8000-000000000001",
+    chunk_bytes: 524288,
+    num_chunks: 3,
+    expires_in_ms: 300000,
+  },
+  chunk_response: { index: 2, size_bytes: 100 },
+  complete_responses: [
+    {
+      reference: {
+        type: "braintrust_attachment",
+        filename: "image.png",
+        content_type: "image/png",
+        key: "server-issued/attachment-key",
+      },
+      size_bytes: 1048676,
+      sha256:
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    },
+    {
+      reference: {
+        type: "logs3_overflow",
+        key: "00000000-0000-4000-8000-000000000001",
+      },
+      size_bytes: 5242880,
+      sha256:
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    },
+  ],
+  overflow_logs_request: {
+    api_version: 2,
+    rows: {
+      type: "logs3_overflow",
+      key: "00000000-0000-4000-8000-000000000001",
+    },
+  },
+};
+// [size_bytes, chunk_bytes, num_chunks, last_chunk_bytes]
+const FIXTURE_CHUNK_PLANS: [number, number, number, number | null][] = [
+  [0, 524288, 0, null],
+  [1, 524288, 1, 1],
+  [524288, 524288, 1, 524288],
+  [524289, 524288, 2, 1],
+  [2097252, 524288, 5, 100],
+  [9437184, 4194304, 3, 1048576],
+];
+
+describe("shared public ingestion fixture", () => {
+  test.each(FIXTURE_VALID_URLS)("parses %s", (url, root) => {
+    expect(parseIngestionKeyUrl(url)).toEqual({ root, key: FIXTURE_KEY });
+  });
+
+  test.each(FIXTURE_INVALID_URLS)("rejects %s", (_, url) => {
+    expect(() => parseIngestionKeyUrl(url)).toThrow(
+      "Invalid Braintrust ingestion key",
+    );
+    try {
+      parseIngestionKeyUrl(url);
+    } catch (error) {
+      expect(inspect(error)).not.toContain(FIXTURE_KEY);
+    }
+  });
+
+  test("accepts the upload responses", () => {
+    expect(ingestionUploadGrantSchema.parse(FIXTURE_UPLOAD.grant)).toEqual(
+      FIXTURE_UPLOAD.grant,
+    );
+    expect(
+      ingestionUploadChunkSchema.parse(FIXTURE_UPLOAD.chunk_response),
+    ).toEqual(FIXTURE_UPLOAD.chunk_response);
+    for (const response of FIXTURE_UPLOAD.complete_responses) {
+      expect(ingestionUploadCompleteSchema.parse(response)).toEqual(response);
+    }
+    expect(
+      constructLogs3OverflowRequest(FIXTURE_UPLOAD.grant.upload_id),
+    ).toEqual(FIXTURE_UPLOAD.overflow_logs_request);
+  });
+
+  test.each(FIXTURE_CHUNK_PLANS)(
+    "uploads %i bytes in chunks of %i",
+    async (sizeBytes, chunkBytes, numChunks, lastChunkBytes) => {
+      const { requests, fetch } = mockIngestion({ chunkBytes });
+      const { logger, onFlushError } = initIngestionLogger(fetch);
+
+      logger.log({
+        input: new Attachment({
+          data: new ArrayBuffer(sizeBytes),
+          filename: "data.bin",
+          contentType: "application/octet-stream",
+        }),
+        output: "x",
+      });
+      await logger.flush();
+
+      expect(onFlushError).not.toHaveBeenCalled();
+      const chunkSizes = requests
+        .filter((r) => r.url.includes("/chunks/"))
+        .map((r) => (r.body as Uint8Array).length);
+      expect(chunkSizes).toHaveLength(numChunks);
+      expect(chunkSizes.at(-1) ?? null).toBe(lastChunkBytes);
+      expect(chunkSizes.slice(0, -1).every((size) => size === chunkBytes)).toBe(
+        true,
+      );
+    },
+  );
 });
