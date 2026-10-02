@@ -360,41 +360,81 @@ const RELATIVE_TOKEN_PRICES: ClaudeAgentSDKUsageTotals = {
 
 /**
  * Metrics for the all-agent usage that no LLM span logged, such as sub-agent
- * output tokens that are never streamed. The cost is each model's share of its
- * `costUSD`, because the task span's model can't price the other models.
+ * output tokens that are never streamed. The tokens are the remainder across
+ * all models, so they don't depend on matching model names. The cost is each
+ * model's share of its `costUSD`, because the task span's model can't price the
+ * other models. When a logged call can't be matched to its model, the cost is
+ * the remainder's share of the total cost instead.
  */
 function unloggedUsageMetrics(
   modelUsage: Record<string, ClaudeAgentSDKModelUsage>,
   loggedLlmUsageByModel: Map<string | undefined, ClaudeAgentSDKUsageTotals>,
 ): Record<string, number> {
+  const remainder = (
+    total: ClaudeAgentSDKUsageTotals,
+    logged: ClaudeAgentSDKUsageTotals | undefined,
+  ) => {
+    const unlogged = { ...total };
+    for (const key of USAGE_TOKEN_KEYS) {
+      unlogged[key] = Math.max(0, total[key] - (logged?.[key] ?? 0));
+    }
+    return unlogged;
+  };
   const relativeCost = (usage: ClaudeAgentSDKUsageTotals) =>
     USAGE_TOKEN_KEYS.reduce(
       (cost, key) => cost + usage[key] * RELATIVE_TOKEN_PRICES[key],
       0,
     );
-  const unloggedUsages: ClaudeAgentSDKUsageTotals[] = [];
-  let unloggedCost = 0;
+
+  // Several model ids can share a base name, e.g. a `[1m]` and a regular variant.
+  const usageByModel = new Map<
+    string,
+    { costUSD: number; total: ClaudeAgentSDKUsageTotals }
+  >();
+  let totalCost = 0;
   for (const [model, usage] of Object.entries(modelUsage)) {
+    const baseModel = baseModelName(model);
     const total = modelUsageTotals(usage);
-    const logged = loggedLlmUsageByModel.get(baseModelName(model));
-    const unlogged = modelUsageTotals(usage);
-    for (const key of USAGE_TOKEN_KEYS) {
-      unlogged[key] = Math.max(0, total[key] - (logged?.[key] ?? 0));
+    const existing = usageByModel.get(baseModel);
+    if (existing) {
+      existing.costUSD += usage.costUSD;
+      for (const key of USAGE_TOKEN_KEYS) {
+        existing.total[key] += total[key];
+      }
+    } else {
+      usageByModel.set(baseModel, { costUSD: usage.costUSD, total });
     }
-    unloggedUsages.push(unlogged);
-    const totalRelativeCost = relativeCost(total);
-    if (totalRelativeCost > 0) {
-      unloggedCost +=
-        (usage.costUSD * relativeCost(unlogged)) / totalRelativeCost;
+    totalCost += usage.costUSD;
+  }
+  const total = sumUsageTotals(
+    [...usageByModel.values()].map((usage) => usage.total),
+  );
+  const unlogged = remainder(
+    total,
+    sumUsageTotals([...loggedLlmUsageByModel.values()]),
+  );
+
+  const metrics: Record<string, number> = {};
+  for (const [key, value] of Object.entries(extractUsage(unlogged, true))) {
+    if (value > 0) {
+      metrics[key] = value;
     }
   }
 
-  const metrics: Record<string, number> = {};
-  for (const [key, value] of Object.entries(
-    extractUsage(sumUsageTotals(unloggedUsages), true),
-  )) {
-    if (value > 0) {
-      metrics[key] = value;
+  const costShares = [...loggedLlmUsageByModel.keys()].every(
+    (model) => model !== undefined && usageByModel.has(model),
+  )
+    ? [...usageByModel].map(([model, usage]) => ({
+        ...usage,
+        unlogged: remainder(usage.total, loggedLlmUsageByModel.get(model)),
+      }))
+    : [{ costUSD: totalCost, total, unlogged }];
+  let unloggedCost = 0;
+  for (const share of costShares) {
+    const totalRelativeCost = relativeCost(share.total);
+    if (totalRelativeCost > 0) {
+      unloggedCost +=
+        (share.costUSD * relativeCost(share.unlogged)) / totalRelativeCost;
     }
   }
   if (unloggedCost > 0) {
@@ -1191,12 +1231,15 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
       callUsage.output_tokens = 0;
     }
     const responseModel = lastMessage.message?.model || state.options.model;
-    const model = responseModel && baseModelName(responseModel);
+    const model = responseModel ? baseModelName(responseModel) : undefined;
     const loggedUsage = state.loggedLlmUsageByModel.get(model);
-    state.loggedLlmUsageByModel.set(
-      model,
-      sumUsageTotals(loggedUsage ? [loggedUsage, callUsage] : [callUsage]),
-    );
+    if (loggedUsage) {
+      for (const key of USAGE_TOKEN_KEYS) {
+        loggedUsage[key] += callUsage[key];
+      }
+    } else {
+      state.loggedLlmUsageByModel.set(model, callUsage);
+    }
   }
 
   if (llmSpanResult) {
@@ -1661,6 +1704,9 @@ async function handleStreamMessage(
     !state.options.forkSession;
   const modelUsage = resumesSession ? undefined : message.modelUsage;
   const totalCost = resumesSession ? undefined : message.total_cost_usd;
+  if (totalCost !== undefined) {
+    metadata.total_cost_usd = totalCost;
+  }
   let metrics: Record<string, number> = {};
   if (!state.options.includePartialMessages) {
     const modelUsages = Object.values(modelUsage ?? {}).map(modelUsageTotals);
@@ -1678,9 +1724,6 @@ async function handleStreamMessage(
     // LLM spans already carry the per-call usage seen in stream events, so the
     // task span only gets the rest.
     metrics = unloggedUsageMetrics(modelUsage, state.loggedLlmUsageByModel);
-    if (totalCost !== undefined) {
-      metadata.total_cost_usd = totalCost;
-    }
   }
   if (Object.keys(metadata).length > 0 || Object.keys(metrics).length > 0) {
     state.span.log({

@@ -232,8 +232,10 @@ describe("Claude Agent SDK streaming instrumentation", () => {
       model: "claude-sonnet-4-5",
     });
 
-    expect(root?.metadata?.model).toBe("claude-sonnet-4-5");
-    expect(root?.metadata?.total_cost_usd).toBeUndefined();
+    expect(root?.metadata).toMatchObject({
+      model: "claude-sonnet-4-5",
+      total_cost_usd: 0.125,
+    });
     expect(root?.metrics).toMatchObject({
       prompt_tokens: 300,
       completion_tokens: 120,
@@ -326,6 +328,73 @@ describe("Claude Agent SDK streaming instrumentation", () => {
 
     expect(root?.metrics?.tokens).toBeUndefined();
     expect(root?.metrics?.estimated_cost).toBeUndefined();
+  });
+
+  it("counts unmatched model usage once and prices it by its share of the total cost", async () => {
+    const { root } = await runQuery(
+      [
+        ...streamEvents("claude-haiku-4-5-20251001", null, 100, 50),
+        assistantTextMessage("claude-haiku-4-5-20251001", null, 100),
+        assistantTextMessage("claude-haiku-4-5", "task-1", 200),
+        {
+          type: "result",
+          modelUsage: {
+            "arn:aws:bedrock:us-east-1:123456789012:application-inference-profile/abc":
+              {
+                inputTokens: 300,
+                outputTokens: 120,
+                cacheReadInputTokens: 0,
+                cacheCreationInputTokens: 0,
+                costUSD: 0.01,
+              },
+          },
+        },
+      ],
+      { includePartialMessages: true },
+    );
+
+    expect(root?.metrics).toMatchObject({
+      completion_tokens: 70,
+      tokens: 70,
+      estimated_cost: expect.closeTo((0.01 * 350) / 900, 10),
+    });
+    expect(root?.metrics?.prompt_tokens).toBeUndefined();
+  });
+
+  it("combines model usage that shares a base model name", async () => {
+    const { root } = await runQuery(
+      [
+        ...streamEvents("claude-sonnet-4-5-20250929", null, 100, 50),
+        assistantTextMessage("claude-sonnet-4-5-20250929", null, 100),
+        assistantTextMessage("claude-sonnet-4-5", "task-1", 200),
+        {
+          type: "result",
+          modelUsage: {
+            "claude-sonnet-4-5-20250929[1m]": {
+              inputTokens: 100,
+              outputTokens: 50,
+              cacheReadInputTokens: 0,
+              cacheCreationInputTokens: 0,
+              costUSD: 0.1,
+            },
+            "claude-sonnet-4-5-20250929": {
+              inputTokens: 200,
+              outputTokens: 70,
+              cacheReadInputTokens: 0,
+              cacheCreationInputTokens: 0,
+              costUSD: 0.025,
+            },
+          },
+        },
+      ],
+      { includePartialMessages: true },
+    );
+
+    expect(root?.metrics).toMatchObject({
+      completion_tokens: 70,
+      tokens: 70,
+      estimated_cost: expect.closeTo((0.125 * 350) / 900, 10),
+    });
   });
 
   it.each([{ resume: "session-1" }, { continue: true }])(

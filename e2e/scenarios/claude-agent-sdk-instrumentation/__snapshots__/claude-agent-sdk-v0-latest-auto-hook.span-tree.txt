@@ -197,7 +197,8 @@ span_tree:
     │         "model": "claude-haiku-4-5",
     │         "num_turns": 1,
     │         "permissionMode": "bypassPermissions",
-    │         "session_id": "<uuid:1>"
+    │         "session_id": "<uuid:1>",
+    │         "total_cost_usd": 0.008567
     │       }
     │       metrics: {
     │         "completion_tokens": 623,
@@ -603,7 +604,8 @@ span_tree:
     │         "model": "claude-sonnet-4-5",
     │         "num_turns": 2,
     │         "permissionMode": "bypassPermissions",
-    │         "session_id": "<uuid:1>"
+    │         "session_id": "<uuid:1>",
+    │         "total_cost_usd": 0.0260076
     │       }
     │       metrics: {
     │         "completion_tokens": 460,
@@ -865,7 +867,8 @@ span_tree:
               "model": "claude-haiku-4-5",
               "num_turns": 2,
               "permissionMode": "bypassPermissions",
-              "session_id": "<uuid:1>"
+              "session_id": "<uuid:1>",
+              "total_cost_usd": 0.00964865
             }
             metrics: {
               "completion_tokens": 281,

@@ -306,7 +306,8 @@
                 "model": "claude-haiku-4-5",
                 "num_turns": 1,
                 "permissionMode": "bypassPermissions",
-                "session_id": "<uuid:1>"
+                "session_id": "<uuid:1>",
+                "total_cost_usd": 0.0272325
               },
               "metrics": {
                 "completion_tokens": 361,
@@ -891,7 +892,8 @@
                 "model": "claude-sonnet-4-5",
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
-                "session_id": "<uuid:1>"
+                "session_id": "<uuid:1>",
+                "total_cost_usd": 0.10557169999999999
               },
               "metrics": {
                 "completion_tokens": 415,
@@ -1052,7 +1054,8 @@
                 "model": "claude-haiku-4-5",
                 "num_turns": 2,
                 "permissionMode": "bypassPermissions",
-                "session_id": "<uuid:1>"
+                "session_id": "<uuid:1>",
+                "total_cost_usd": 0.00518855
               },
               "metrics": {
                 "completion_tokens": 233,

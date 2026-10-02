@@ -723,7 +723,6 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       () => {
         const aggregateTasks = [
           "claude-agent-async-prompt-operation",
-          "claude-agent-subagent-built-in-tool-operation",
           "claude-agent-failure-operation",
         ].map((operationName) => {
           const operation = findLatestSpan(events, operationName);
@@ -762,12 +761,17 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
           total_cost_usd: result.total_cost_usd,
         });
         // Only the unlogged usage is priced on the task span.
-        expect(root?.metrics?.estimated_cost === undefined).toBe(
-          root?.metrics?.tokens === undefined,
-        );
-        expect(root?.metrics?.estimated_cost ?? 0).toBeLessThan(
-          result.total_cost_usd,
-        );
+        if (
+          root?.metrics?.prompt_tokens === undefined &&
+          root?.metrics?.completion_tokens === undefined
+        ) {
+          expect(root?.metrics?.estimated_cost).toBeUndefined();
+        } else {
+          expect(root?.metrics?.estimated_cost).toBeGreaterThan(0);
+          expect(root?.metrics?.estimated_cost).toBeLessThan(
+            result.total_cost_usd,
+          );
+        }
         const llms = findAllSpans(events, "anthropic.messages.create").filter(
           (event) => isDescendantOf(events, event, root?.span.id),
         );
@@ -802,7 +806,9 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         );
 
         expect(Object.keys(result.modelUsage).length).toBeGreaterThan(1);
-        expect(root?.row.metadata).not.toHaveProperty("total_cost_usd");
+        expect(root?.row.metadata).toMatchObject({
+          total_cost_usd: result.total_cost_usd,
+        });
         expectSpanUsageToMatch(root, { usage: totalUsage });
         expect(root?.metrics?.estimated_cost).toBe(result.total_cost_usd);
         const llms = findAllSpans(events, "anthropic.messages.create").filter(
