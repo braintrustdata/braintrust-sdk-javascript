@@ -1,7 +1,7 @@
 import { BasePlugin } from "../core";
 import {
-  traceAsyncChannel,
-  traceStreamingChannel,
+  interceptAsyncChannel,
+  interceptStreamingChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
@@ -13,6 +13,7 @@ import type {
   MistralChatCompletionChunkChoice,
   MistralChatCompletionEvent,
   MistralChatCompletionResponse,
+  MistralClassificationResponse,
   MistralContentPart,
   MistralTextContentPart,
   MistralThinkingContentPart,
@@ -21,43 +22,18 @@ import type {
 
 export class MistralPlugin extends BasePlugin {
   protected onEnable(): void {
-    this.subscribeToMistralChannels();
-  }
-
-  protected onDisable(): void {
-    this.unsubscribers = unsubscribeAll(this.unsubscribers);
-  }
-
-  private subscribeToMistralChannels(): void {
     this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.chatComplete, {
+      interceptStreamingChannel(mistralChannels.chatComplete, {
+        ...COMPLETION_SPAN,
         name: "mistral.chat.complete",
-        type: SpanTypeAttribute.LLM,
         extractInput: extractMessagesInputWithMetadata,
-        extractOutput: (result) => {
-          return result?.choices;
-        },
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralMetrics(result?.usage, startTime),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.chatStream, {
+      interceptStreamingChannel(mistralChannels.chatStream, {
+        ...STREAM_SPAN,
         name: "mistral.chat.stream",
-        type: SpanTypeAttribute.LLM,
         extractInput: extractMessagesInputWithMetadata,
-        extractOutput: extractMistralStreamOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralStreamingMetrics(result, startTime),
-        aggregateChunks: aggregateMistralStreamChunks,
       }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(mistralChannels.embeddingsCreate, {
+      interceptAsyncChannel(mistralChannels.embeddingsCreate, {
         name: "mistral.embeddings.create",
         type: SpanTypeAttribute.LLM,
         extractInput: extractEmbeddingInputWithMetadata,
@@ -67,110 +43,73 @@ export class MistralPlugin extends BasePlugin {
             ? { embedding_length: embedding.length }
             : undefined;
         },
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
+        extractMetadata: extractMistralResponseMetadata,
         extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(mistralChannels.classifiersModerate, {
+      interceptAsyncChannel(mistralChannels.classifiersModerate, {
+        ...CLASSIFIER_SPAN,
         name: "mistral.classifiers.moderate",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractClassifierInputWithMetadata,
-        extractOutput: extractClassifierOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(mistralChannels.classifiersModerateChat, {
+      interceptAsyncChannel(mistralChannels.classifiersModerateChat, {
+        ...CLASSIFIER_SPAN,
         name: "mistral.classifiers.moderateChat",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractClassifierInputWithMetadata,
-        extractOutput: extractClassifierOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(mistralChannels.classifiersClassify, {
+      interceptAsyncChannel(mistralChannels.classifiersClassify, {
+        ...CLASSIFIER_SPAN,
         name: "mistral.classifiers.classify",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractClassifierInputWithMetadata,
-        extractOutput: extractClassifierOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(mistralChannels.classifiersClassifyChat, {
+      interceptAsyncChannel(mistralChannels.classifiersClassifyChat, {
+        ...CLASSIFIER_SPAN,
         name: "mistral.classifiers.classifyChat",
-        type: SpanTypeAttribute.LLM,
-        extractInput: extractClassifierInputWithMetadata,
-        extractOutput: extractClassifierOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result) => parseMistralMetricsFromUsage(result?.usage),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.fimComplete, {
+      interceptStreamingChannel(mistralChannels.fimComplete, {
+        ...COMPLETION_SPAN,
         name: "mistral.fim.complete",
-        type: SpanTypeAttribute.LLM,
         extractInput: extractPromptInputWithMetadata,
-        extractOutput: (result) => {
-          return result?.choices;
-        },
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralMetrics(result?.usage, startTime),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.fimStream, {
+      interceptStreamingChannel(mistralChannels.fimStream, {
+        ...STREAM_SPAN,
         name: "mistral.fim.stream",
-        type: SpanTypeAttribute.LLM,
         extractInput: extractPromptInputWithMetadata,
-        extractOutput: extractMistralStreamOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralStreamingMetrics(result, startTime),
-        aggregateChunks: aggregateMistralStreamChunks,
       }),
-    );
-
-    this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.agentsComplete, {
+      interceptStreamingChannel(mistralChannels.agentsComplete, {
+        ...COMPLETION_SPAN,
         name: "mistral.agents.complete",
-        type: SpanTypeAttribute.LLM,
         extractInput: extractMessagesInputWithMetadata,
-        extractOutput: (result) => {
-          return result?.choices;
-        },
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralMetrics(result?.usage, startTime),
       }),
-    );
-
-    this.unsubscribers.push(
-      traceStreamingChannel(mistralChannels.agentsStream, {
+      interceptStreamingChannel(mistralChannels.agentsStream, {
+        ...STREAM_SPAN,
         name: "mistral.agents.stream",
-        type: SpanTypeAttribute.LLM,
         extractInput: extractMessagesInputWithMetadata,
-        extractOutput: extractMistralStreamOutput,
-        extractMetadata: (result) => extractMistralResponseMetadata(result),
-        extractMetrics: (result, startTime) =>
-          extractMistralStreamingMetrics(result, startTime),
-        aggregateChunks: aggregateMistralStreamChunks,
       }),
     );
   }
+
+  protected onDisable(): void {
+    this.unsubscribers = unsubscribeAll(this.unsubscribers);
+  }
 }
+
+const COMPLETION_SPAN = {
+  type: SpanTypeAttribute.LLM,
+  extractOutput: extractMistralChoicesOutput,
+  extractMetadata: extractMistralResponseMetadata,
+  extractMetrics: extractMistralCompletionMetrics,
+};
+
+const STREAM_SPAN = {
+  ...COMPLETION_SPAN,
+  aggregateChunks: aggregateMistralStreamChunks,
+};
+
+const CLASSIFIER_SPAN = {
+  type: SpanTypeAttribute.LLM,
+  extractInput: extractClassifierInputWithMetadata,
+  extractOutput: extractClassifierOutput,
+  extractMetadata: extractMistralResponseMetadata,
+  extractMetrics: (result: MistralClassificationResponse) =>
+    parseMistralMetricsFromUsage(result?.usage),
+};
 
 const TOKEN_NAME_MAP: Record<string, string> = {
   promptTokens: "prompt_tokens",
@@ -241,35 +180,6 @@ function camelToSnake(value: string): string {
   return value.replace(/[A-Z]/g, (match) => `_${match.toLowerCase()}`);
 }
 
-function normalizeArgs(args: unknown[] | unknown): unknown[] {
-  if (Array.isArray(args)) {
-    return args;
-  }
-
-  if (isArrayLike(args)) {
-    return Array.from(args);
-  }
-
-  return [args];
-}
-
-function isArrayLike(value: unknown): value is ArrayLike<unknown> {
-  return (
-    isObject(value) &&
-    "length" in value &&
-    typeof value.length === "number" &&
-    Number.isInteger(value.length) &&
-    value.length >= 0
-  );
-}
-
-function getMistralRequestArg(
-  args: unknown[] | unknown,
-): Record<string, unknown> | undefined {
-  const firstObjectArg = normalizeArgs(args).find((arg) => isObject(arg));
-  return isObject(firstObjectArg) ? firstObjectArg : undefined;
-}
-
 function addMistralProviderMetadata(
   metadata: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -315,11 +225,11 @@ function isMistralChunkChoice(
   return isObject(value);
 }
 
-function extractMessagesInputWithMetadata(args: unknown[] | unknown): {
+function extractMessagesInputWithMetadata(args: unknown[]): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const params = getMistralRequestArg(args);
+  const params = args.find(isObject);
   const { messages, ...rawMetadata } = params || {};
 
   return {
@@ -330,11 +240,11 @@ function extractMessagesInputWithMetadata(args: unknown[] | unknown): {
   };
 }
 
-function extractEmbeddingInputWithMetadata(args: unknown[] | unknown): {
+function extractEmbeddingInputWithMetadata(args: unknown[]): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const params = getMistralRequestArg(args);
+  const params = args.find(isObject);
   const { inputs, ...rawMetadata } = params || {};
 
   return {
@@ -345,11 +255,11 @@ function extractEmbeddingInputWithMetadata(args: unknown[] | unknown): {
   };
 }
 
-function extractClassifierInputWithMetadata(args: unknown[] | unknown): {
+function extractClassifierInputWithMetadata(args: unknown[]): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const params = getMistralRequestArg(args);
+  const params = args.find(isObject);
   const { input, inputs, ...rawMetadata } = params || {};
 
   return {
@@ -360,11 +270,11 @@ function extractClassifierInputWithMetadata(args: unknown[] | unknown): {
   };
 }
 
-function extractPromptInputWithMetadata(args: unknown[] | unknown): {
+function extractPromptInputWithMetadata(args: unknown[]): {
   input: unknown;
   metadata: Record<string, unknown>;
 } {
-  const params = getMistralRequestArg(args);
+  const params = args.find(isObject);
   const { prompt, ...rawMetadata } = params || {};
 
   return {
@@ -391,18 +301,7 @@ export function extractMistralResponseMetadata(
   return Object.keys(picked).length > 0 ? picked : undefined;
 }
 
-function extractMistralMetrics(
-  usage: unknown,
-  startTime?: number,
-): Record<string, number> {
-  const metrics = parseMistralMetricsFromUsage(usage);
-  if (startTime) {
-    metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-  }
-  return metrics;
-}
-
-function extractMistralStreamOutput(result: unknown): unknown {
+function extractMistralChoicesOutput(result: unknown): unknown {
   return isObject(result) ? result.choices : undefined;
 }
 
@@ -410,7 +309,7 @@ function extractClassifierOutput(result: unknown): unknown {
   return isObject(result) ? result.results : undefined;
 }
 
-function extractMistralStreamingMetrics(
+function extractMistralCompletionMetrics(
   result: unknown,
   startTime?: number,
 ): Record<string, number> {

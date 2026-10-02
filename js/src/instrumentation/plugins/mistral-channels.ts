@@ -25,7 +25,7 @@ export const mistralChannels = defineChannels(
   "@mistralai/mistralai",
   {
     chatComplete: channel<
-      [MistralChatCreateParams],
+      [MistralChatCreateParams, unknown?],
       MistralChatCompletionResponse
     >({
       channelName: "chat.complete",
@@ -33,7 +33,7 @@ export const mistralChannels = defineChannels(
     }),
 
     chatStream: channel<
-      [MistralChatCreateParams],
+      [MistralChatCreateParams, unknown?],
       MistralChatResult,
       Record<string, unknown>,
       MistralChatCompletionEvent
@@ -43,7 +43,7 @@ export const mistralChannels = defineChannels(
     }),
 
     embeddingsCreate: channel<
-      [MistralEmbeddingCreateParams],
+      [MistralEmbeddingCreateParams, unknown?],
       MistralEmbeddingResponse
     >({
       channelName: "embeddings.create",
@@ -51,7 +51,7 @@ export const mistralChannels = defineChannels(
     }),
 
     classifiersModerate: channel<
-      [MistralClassificationCreateParams],
+      [MistralClassificationCreateParams, unknown?],
       MistralModerationResponse
     >({
       channelName: "classifiers.moderate",
@@ -59,7 +59,7 @@ export const mistralChannels = defineChannels(
     }),
 
     classifiersModerateChat: channel<
-      [MistralChatClassificationCreateParams],
+      [MistralChatClassificationCreateParams, unknown?],
       MistralModerationResponse
     >({
       channelName: "classifiers.moderateChat",
@@ -67,7 +67,7 @@ export const mistralChannels = defineChannels(
     }),
 
     classifiersClassify: channel<
-      [MistralClassificationCreateParams],
+      [MistralClassificationCreateParams, unknown?],
       MistralClassificationResponse
     >({
       channelName: "classifiers.classify",
@@ -75,7 +75,7 @@ export const mistralChannels = defineChannels(
     }),
 
     classifiersClassifyChat: channel<
-      [MistralChatClassificationCreateParams],
+      [MistralChatClassificationCreateParams, unknown?],
       MistralClassificationResponse
     >({
       channelName: "classifiers.classifyChat",
@@ -83,7 +83,7 @@ export const mistralChannels = defineChannels(
     }),
 
     fimComplete: channel<
-      [MistralFimCreateParams],
+      [MistralFimCreateParams, unknown?],
       MistralFimCompletionResponse
     >({
       channelName: "fim.complete",
@@ -91,7 +91,7 @@ export const mistralChannels = defineChannels(
     }),
 
     fimStream: channel<
-      [MistralFimCreateParams],
+      [MistralFimCreateParams, unknown?],
       MistralFimResult,
       Record<string, unknown>,
       MistralFimCompletionEvent
@@ -101,7 +101,7 @@ export const mistralChannels = defineChannels(
     }),
 
     agentsComplete: channel<
-      [MistralAgentsCreateParams],
+      [MistralAgentsCreateParams, unknown?],
       MistralAgentsCompletionResponse
     >({
       channelName: "agents.complete",
@@ -109,7 +109,7 @@ export const mistralChannels = defineChannels(
     }),
 
     agentsStream: channel<
-      [MistralAgentsCreateParams],
+      [MistralAgentsCreateParams, unknown?],
       MistralAgentsResult,
       Record<string, unknown>,
       MistralAgentsCompletionEvent

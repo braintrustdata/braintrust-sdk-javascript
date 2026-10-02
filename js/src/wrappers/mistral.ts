@@ -1,26 +1,11 @@
 import { mistralChannels } from "../instrumentation/plugins/mistral-channels";
 import type {
   MistralAgents,
-  MistralAgentsCompletionResponse,
-  MistralAgentsCreateParams,
-  MistralAgentsStreamingResult,
   MistralChat,
-  MistralChatClassificationCreateParams,
-  MistralChatCompletionResponse,
-  MistralChatCreateParams,
-  MistralChatStreamingResult,
-  MistralClassificationCreateParams,
-  MistralClassificationResponse,
   MistralClassifiers,
   MistralClient,
-  MistralEmbeddingCreateParams,
-  MistralEmbeddingResponse,
   MistralEmbeddings,
   MistralFim,
-  MistralFimCompletionResponse,
-  MistralFimCreateParams,
-  MistralFimStreamingResult,
-  MistralModerationResponse,
 } from "../vendor-sdk-types/mistral";
 
 /**
@@ -82,254 +67,97 @@ function hasClassifiers(value: unknown): value is MistralClassifiers {
   return hasFunction(value, "moderate") && hasFunction(value, "moderateChat");
 }
 
+type MistralMethodChannel = {
+  invoke(
+    target: (request: unknown, options?: unknown) => PromiseLike<unknown>,
+    thisArg: unknown,
+    args: [unknown, unknown?],
+    additional: Record<string, never>,
+  ): PromiseLike<unknown>;
+};
+
+type MistralMethodChannels = Map<string | symbol, MistralMethodChannel>;
+
+const MISTRAL_RESOURCE_CHANNELS = new Map<
+  string | symbol,
+  MistralMethodChannels
+>([
+  [
+    "chat",
+    new Map([
+      ["complete", mistralChannels.chatComplete],
+      ["stream", mistralChannels.chatStream],
+    ]),
+  ],
+  ["embeddings", new Map([["create", mistralChannels.embeddingsCreate]])],
+  [
+    "fim",
+    new Map([
+      ["complete", mistralChannels.fimComplete],
+      ["stream", mistralChannels.fimStream],
+    ]),
+  ],
+  [
+    "agents",
+    new Map([
+      ["complete", mistralChannels.agentsComplete],
+      ["stream", mistralChannels.agentsStream],
+    ]),
+  ],
+  [
+    "classifiers",
+    new Map([
+      ["moderate", mistralChannels.classifiersModerate],
+      ["moderateChat", mistralChannels.classifiersModerateChat],
+      ["classify", mistralChannels.classifiersClassify],
+      ["classifyChat", mistralChannels.classifiersClassifyChat],
+    ]),
+  ],
+]);
+
+// Only newer SDK versions have these, so they are wrapped only when present.
+const OPTIONAL_MISTRAL_METHODS = new Set<string | symbol>([
+  "classify",
+  "classifyChat",
+]);
+
+// The property reads below intentionally match the original per-resource
+// proxies, so SDK getters run the same number of times with the same receiver.
 function mistralProxy(mistral: MistralClient): MistralClient {
   return new Proxy(mistral, {
     get(target, prop, receiver) {
-      switch (prop) {
-        case "chat":
-          return target.chat ? chatProxy(target.chat) : target.chat;
-        case "fim":
-          return target.fim ? fimProxy(target.fim) : target.fim;
-        case "agents":
-          return target.agents ? agentsProxy(target.agents) : target.agents;
-        case "embeddings":
-          return target.embeddings
-            ? embeddingsProxy(target.embeddings)
-            : target.embeddings;
-        case "classifiers":
-          return target.classifiers
-            ? classifiersProxy(target.classifiers)
-            : target.classifiers;
-        default:
-          return Reflect.get(target, prop, receiver);
+      const channels = MISTRAL_RESOURCE_CHANNELS.get(prop);
+      if (!channels) {
+        return Reflect.get(target, prop, receiver);
       }
+
+      if (!Reflect.get(target, prop)) {
+        return Reflect.get(target, prop);
+      }
+
+      return resourceProxy(Reflect.get(target, prop), channels);
     },
   });
 }
 
-function chatProxy(chat: MistralChat): MistralChat {
-  return new Proxy(chat, {
+function resourceProxy(
+  resource: object,
+  channels: MistralMethodChannels,
+): object {
+  return new Proxy(resource, {
     get(target, prop, receiver) {
-      if (prop === "complete") {
-        return wrapChatComplete(target.complete.bind(target));
+      const channel = channels.get(prop);
+      if (
+        !channel ||
+        (OPTIONAL_MISTRAL_METHODS.has(prop) && !Reflect.get(target, prop))
+      ) {
+        return Reflect.get(target, prop, receiver);
       }
 
-      if (prop === "stream") {
-        return wrapChatStream(target.stream.bind(target));
-      }
-
-      return Reflect.get(target, prop, receiver);
+      // Binding on access throws for non-function values, as before.
+      const method = Reflect.get(target, prop).bind(target);
+      return (request: unknown, options?: unknown) =>
+        channel.invoke(method, target, [request, options], {});
     },
   });
-}
-
-function embeddingsProxy(embeddings: MistralEmbeddings): MistralEmbeddings {
-  return new Proxy(embeddings, {
-    get(target, prop, receiver) {
-      if (prop === "create") {
-        return wrapEmbeddingsCreate(target.create.bind(target));
-      }
-
-      return Reflect.get(target, prop, receiver);
-    },
-  });
-}
-
-function fimProxy(fim: MistralFim): MistralFim {
-  return new Proxy(fim, {
-    get(target, prop, receiver) {
-      if (prop === "complete") {
-        return wrapFimComplete(target.complete.bind(target));
-      }
-
-      if (prop === "stream") {
-        return wrapFimStream(target.stream.bind(target));
-      }
-
-      return Reflect.get(target, prop, receiver);
-    },
-  });
-}
-
-function agentsProxy(agents: MistralAgents): MistralAgents {
-  return new Proxy(agents, {
-    get(target, prop, receiver) {
-      if (prop === "complete") {
-        return wrapAgentsComplete(target.complete.bind(target));
-      }
-
-      if (prop === "stream") {
-        return wrapAgentsStream(target.stream.bind(target));
-      }
-
-      return Reflect.get(target, prop, receiver);
-    },
-  });
-}
-
-function classifiersProxy(classifiers: MistralClassifiers): MistralClassifiers {
-  return new Proxy(classifiers, {
-    get(target, prop, receiver) {
-      if (prop === "moderate") {
-        return wrapClassifiersModerate(target.moderate.bind(target));
-      }
-
-      if (prop === "moderateChat") {
-        return wrapClassifiersModerateChat(target.moderateChat.bind(target));
-      }
-
-      if (prop === "classify" && target.classify) {
-        return wrapClassifiersClassify(target.classify.bind(target));
-      }
-
-      if (prop === "classifyChat" && target.classifyChat) {
-        return wrapClassifiersClassifyChat(target.classifyChat.bind(target));
-      }
-
-      return Reflect.get(target, prop, receiver);
-    },
-  });
-}
-
-function wrapChatComplete(
-  complete: (
-    request: MistralChatCreateParams,
-    options?: unknown,
-  ) => Promise<MistralChatCompletionResponse>,
-): MistralChat["complete"] {
-  return (request, options) =>
-    mistralChannels.chatComplete.tracePromise(
-      () => complete(request, options),
-      {
-        arguments: [request],
-      } as Parameters<typeof mistralChannels.chatComplete.tracePromise>[1],
-    );
-}
-
-function wrapChatStream(
-  stream: (
-    request: MistralChatCreateParams,
-    options?: unknown,
-  ) => Promise<MistralChatStreamingResult>,
-): MistralChat["stream"] {
-  return (request, options) =>
-    mistralChannels.chatStream.tracePromise(() => stream(request, options), {
-      arguments: [request],
-    } as Parameters<typeof mistralChannels.chatStream.tracePromise>[1]);
-}
-
-function wrapEmbeddingsCreate(
-  create: (
-    request: MistralEmbeddingCreateParams,
-    options?: unknown,
-  ) => Promise<MistralEmbeddingResponse>,
-): MistralEmbeddings["create"] {
-  return (request, options) =>
-    mistralChannels.embeddingsCreate.tracePromise(
-      () => create(request, options),
-      { arguments: [request] },
-    );
-}
-
-function wrapClassifiersModerate(
-  moderate: (
-    request: MistralClassificationCreateParams,
-    options?: unknown,
-  ) => Promise<MistralModerationResponse>,
-): MistralClassifiers["moderate"] {
-  return (request, options) =>
-    mistralChannels.classifiersModerate.tracePromise(
-      () => moderate(request, options),
-      { arguments: [request] },
-    );
-}
-
-function wrapClassifiersModerateChat(
-  moderateChat: (
-    request: MistralChatClassificationCreateParams,
-    options?: unknown,
-  ) => Promise<MistralModerationResponse>,
-): MistralClassifiers["moderateChat"] {
-  return (request, options) =>
-    mistralChannels.classifiersModerateChat.tracePromise(
-      () => moderateChat(request, options),
-      { arguments: [request] },
-    );
-}
-
-function wrapClassifiersClassify(
-  classify: (
-    request: MistralClassificationCreateParams,
-    options?: unknown,
-  ) => Promise<MistralClassificationResponse>,
-): NonNullable<MistralClassifiers["classify"]> {
-  return (request, options) =>
-    mistralChannels.classifiersClassify.tracePromise(
-      () => classify(request, options),
-      { arguments: [request] },
-    );
-}
-
-function wrapClassifiersClassifyChat(
-  classifyChat: (
-    request: MistralChatClassificationCreateParams,
-    options?: unknown,
-  ) => Promise<MistralClassificationResponse>,
-): NonNullable<MistralClassifiers["classifyChat"]> {
-  return (request, options) =>
-    mistralChannels.classifiersClassifyChat.tracePromise(
-      () => classifyChat(request, options),
-      { arguments: [request] },
-    );
-}
-
-function wrapFimComplete(
-  complete: (
-    request: MistralFimCreateParams,
-    options?: unknown,
-  ) => Promise<MistralFimCompletionResponse>,
-): MistralFim["complete"] {
-  return (request, options) =>
-    mistralChannels.fimComplete.tracePromise(() => complete(request, options), {
-      arguments: [request],
-    } as Parameters<typeof mistralChannels.fimComplete.tracePromise>[1]);
-}
-
-function wrapFimStream(
-  stream: (
-    request: MistralFimCreateParams,
-    options?: unknown,
-  ) => Promise<MistralFimStreamingResult>,
-): MistralFim["stream"] {
-  return (request, options) =>
-    mistralChannels.fimStream.tracePromise(() => stream(request, options), {
-      arguments: [request],
-    } as Parameters<typeof mistralChannels.fimStream.tracePromise>[1]);
-}
-
-function wrapAgentsComplete(
-  complete: (
-    request: MistralAgentsCreateParams,
-    options?: unknown,
-  ) => Promise<MistralAgentsCompletionResponse>,
-): MistralAgents["complete"] {
-  return (request, options) =>
-    mistralChannels.agentsComplete.tracePromise(
-      () => complete(request, options),
-      {
-        arguments: [request],
-      } as Parameters<typeof mistralChannels.agentsComplete.tracePromise>[1],
-    );
-}
-
-function wrapAgentsStream(
-  stream: (
-    request: MistralAgentsCreateParams,
-    options?: unknown,
-  ) => Promise<MistralAgentsStreamingResult>,
-): MistralAgents["stream"] {
-  return (request, options) =>
-    mistralChannels.agentsStream.tracePromise(() => stream(request, options), {
-      arguments: [request],
-    } as Parameters<typeof mistralChannels.agentsStream.tracePromise>[1]);
 }
