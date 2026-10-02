@@ -267,38 +267,28 @@ function copyUsage(usage: unknown): ClaudeAgentSDKUsage | undefined {
   return Object.keys(copy).length > 0 ? copy : undefined;
 }
 
-/** Preserves each model's usage and sums the all-agent token totals. */
-function extractModelUsage(modelUsage: ClaudeAgentSDKMessage["modelUsage"]) {
-  const entries = Object.entries(modelUsage ?? {});
-  if (entries.length === 0) {
+/** Sums the SDK's all-agent model usage into Anthropic usage fields. */
+function aggregateModelUsage(
+  modelUsage: ClaudeAgentSDKMessage["modelUsage"],
+): ClaudeAgentSDKUsage | undefined {
+  const usages = Object.values(modelUsage ?? {});
+  if (usages.length === 0) {
     return undefined;
   }
 
-  const models = Object.fromEntries(
-    entries.map(([model, usage]) => [
-      model,
-      {
-        input_tokens: usage.inputTokens,
-        output_tokens: usage.outputTokens,
-        cache_read_input_tokens: usage.cacheReadInputTokens,
-        cache_creation_input_tokens: usage.cacheCreationInputTokens,
-        cost_usd: usage.costUSD,
-      },
-    ]),
-  );
   const totals = {
     input_tokens: 0,
     output_tokens: 0,
     cache_read_input_tokens: 0,
     cache_creation_input_tokens: 0,
   };
-  for (const usage of Object.values(models)) {
-    totals.input_tokens += usage.input_tokens;
-    totals.output_tokens += usage.output_tokens;
-    totals.cache_read_input_tokens += usage.cache_read_input_tokens;
-    totals.cache_creation_input_tokens += usage.cache_creation_input_tokens;
+  for (const usage of usages) {
+    totals.input_tokens += usage.inputTokens;
+    totals.output_tokens += usage.outputTokens;
+    totals.cache_read_input_tokens += usage.cacheReadInputTokens;
+    totals.cache_creation_input_tokens += usage.cacheCreationInputTokens;
   }
-  return { models, totals };
+  return totals;
 }
 
 /** Layers a newer usage snapshot over an older one, field by field. */
@@ -497,7 +487,13 @@ async function createLLMSpanForMessages(
 
   span.log({
     input,
-    metadata: { ...(model && { model }), provider: "anthropic" },
+    metadata: {
+      ...(model && { model }),
+      provider: "anthropic",
+      // Sub-agent calls may never receive the stream event with final output usage.
+      ...(options.includePartialMessages &&
+        !hasFinalOutputUsage && { usage_output_tokens_unknown: true }),
+    },
     ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
     output: outputs,
   });
@@ -1554,23 +1550,21 @@ async function handleStreamMessage(
   if (message.session_id !== undefined) {
     metadata.session_id = message.session_id;
   }
-  const modelUsage = extractModelUsage(message.modelUsage);
-  const usage = modelUsage?.totals ?? copyUsage(message.usage);
-  if (modelUsage) {
-    metadata.model_usage = modelUsage.models;
+  if (message.total_cost_usd !== undefined) {
+    metadata.total_cost_usd = message.total_cost_usd;
   }
+  const usage =
+    aggregateModelUsage(message.modelUsage) ?? copyUsage(message.usage);
   let metrics: Record<string, number> = {};
   if (state.options.includePartialMessages) {
-    // Keep available all-agent totals without counting them again alongside per-call metrics.
+    // Keep the all-agent total visible without counting it again alongside per-call metrics.
     if (usage) {
-      metadata.total_usage = usage;
-    }
-    if (message.total_cost_usd !== undefined) {
-      metadata.total_cost_usd = message.total_cost_usd;
+      metadata.model_usage = usage;
     }
   } else {
     metrics = extractUsage(usage, true);
     if (message.total_cost_usd !== undefined) {
+      // The totals can span several models, so they can't be priced from the main agent's model.
       metrics.estimated_cost = message.total_cost_usd;
     }
   }

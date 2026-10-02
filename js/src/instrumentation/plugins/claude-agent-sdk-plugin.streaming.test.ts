@@ -179,23 +179,6 @@ const delegatedResultMessage: ClaudeAgentSDKMessage = {
   total_cost_usd: 0.125,
 };
 
-const expectedDelegatedModelUsage = {
-  "claude-sonnet-4-5": {
-    input_tokens: 100,
-    output_tokens: 50,
-    cache_read_input_tokens: 0,
-    cache_creation_input_tokens: 0,
-    cost_usd: 0.1,
-  },
-  "claude-haiku-4-5": {
-    input_tokens: 200,
-    output_tokens: 70,
-    cache_read_input_tokens: 0,
-    cache_creation_input_tokens: 0,
-    cost_usd: 0.025,
-  },
-};
-
 describe("Claude Agent SDK streaming instrumentation", () => {
   let backgroundLogger: TestBackgroundLogger;
 
@@ -251,7 +234,7 @@ describe("Claude Agent SDK streaming instrumentation", () => {
 
     expect(root?.metadata).toMatchObject({
       model: "claude-sonnet-4-5",
-      model_usage: expectedDelegatedModelUsage,
+      total_cost_usd: 0.125,
     });
     expect(root?.metrics).toMatchObject({
       prompt_tokens: 300,
@@ -280,14 +263,13 @@ describe("Claude Agent SDK streaming instrumentation", () => {
 
     expect(root?.metadata).toMatchObject({
       model: "claude-sonnet-4-5",
-      model_usage: expectedDelegatedModelUsage,
+      model_usage: {
+        input_tokens: 300,
+        output_tokens: 120,
+        cache_read_input_tokens: 0,
+        cache_creation_input_tokens: 0,
+      },
       total_cost_usd: 0.125,
-    });
-    expect(root?.metadata?.total_usage).toEqual({
-      input_tokens: 300,
-      output_tokens: 120,
-      cache_read_input_tokens: 0,
-      cache_creation_input_tokens: 0,
     });
     expect(root?.metrics?.tokens).toBeUndefined();
     expect(root?.metrics?.estimated_cost).toBeUndefined();
@@ -303,9 +285,12 @@ describe("Claude Agent SDK streaming instrumentation", () => {
         tokens: 270,
       }),
     ]);
+    for (const llm of llms) {
+      expect(llm.metadata?.usage_output_tokens_unknown).toBeUndefined();
+    }
   });
 
-  it("keeps subagent prompt usage without subagent stream events", async () => {
+  it("marks subagent output usage as unknown without subagent stream events", async () => {
     const {
       llms: [llm],
     } = await runQuery(
@@ -316,6 +301,7 @@ describe("Claude Agent SDK streaming instrumentation", () => {
     expect(llm.metrics?.prompt_tokens).toBe(200);
     expect(llm.metrics?.completion_tokens).toBeUndefined();
     expect(llm.metrics?.tokens).toBeUndefined();
+    expect(llm.metadata?.usage_output_tokens_unknown).toBe(true);
   });
 
   it.each([undefined, {}])(

@@ -380,28 +380,15 @@ function findAllAgentUsage(events: CapturedLogEvent[], operationName: string) {
     cache_read_input_tokens: 0,
     cache_creation_input_tokens: 0,
   };
-  const modelUsage = Object.fromEntries(
-    Object.entries(result.modelUsage).map(([model, usage]) => {
-      totalUsage.input_tokens += usage.inputTokens;
-      totalUsage.output_tokens += usage.outputTokens;
-      totalUsage.cache_read_input_tokens += usage.cacheReadInputTokens;
-      totalUsage.cache_creation_input_tokens += usage.cacheCreationInputTokens;
-      return [
-        model,
-        {
-          input_tokens: usage.inputTokens,
-          output_tokens: usage.outputTokens,
-          cache_read_input_tokens: usage.cacheReadInputTokens,
-          cache_creation_input_tokens: usage.cacheCreationInputTokens,
-          cost_usd: usage.costUSD,
-        },
-      ];
-    }),
-  );
+  for (const usage of Object.values(result.modelUsage)) {
+    totalUsage.input_tokens += usage.inputTokens;
+    totalUsage.output_tokens += usage.outputTokens;
+    totalUsage.cache_read_input_tokens += usage.cacheReadInputTokens;
+    totalUsage.cache_creation_input_tokens += usage.cacheCreationInputTokens;
+  }
   return {
     root: findOperationTaskRoot(events, operationName),
     result,
-    modelUsage,
     totalUsage,
   };
 }
@@ -795,14 +782,13 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       "keeps all-agent usage in task metadata with partial messages for %s",
       testConfig,
       (operationName) => {
-        const { root, result, modelUsage, totalUsage } = findAllAgentUsage(
+        const { root, result, totalUsage } = findAllAgentUsage(
           events,
           operationName,
         );
 
         expect(root?.row.metadata).toMatchObject({
-          model_usage: modelUsage,
-          total_usage: totalUsage,
+          model_usage: totalUsage,
           total_cost_usd: result.total_cost_usd,
         });
         for (const key of [
@@ -819,6 +805,9 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         expect(llms.length).toBeGreaterThan(0);
         for (const llm of llms) {
           expect(llm.metrics?.prompt_tokens).toBeGreaterThan(0);
+          expect(llm.row.metadata?.usage_output_tokens_unknown).toBe(
+            llm.metrics?.completion_tokens === undefined ? true : undefined,
+          );
         }
       },
     );
@@ -827,13 +816,15 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       "aggregates all-agent usage on the task span without partial messages",
       testConfig,
       () => {
-        const { root, result, modelUsage, totalUsage } = findAllAgentUsage(
+        const { root, result, totalUsage } = findAllAgentUsage(
           events,
           "claude-agent-subagent-built-in-tool-operation",
         );
 
-        expect(Object.keys(modelUsage).length).toBeGreaterThan(1);
-        expect(root?.row.metadata).toMatchObject({ model_usage: modelUsage });
+        expect(Object.keys(result.modelUsage).length).toBeGreaterThan(1);
+        expect(root?.row.metadata).toMatchObject({
+          total_cost_usd: result.total_cost_usd,
+        });
         expectSpanUsageToMatch(root, { usage: totalUsage });
         expect(root?.metrics?.estimated_cost).toBe(result.total_cost_usd);
         const llms = findAllSpans(events, "anthropic.messages.create").filter(
@@ -842,6 +833,7 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
         expect(llms.length).toBeGreaterThan(0);
         for (const llm of llms) {
           expect(llm.metrics?.tokens).toBeUndefined();
+          expect(llm.row.metadata?.usage_output_tokens_unknown).toBeUndefined();
         }
       },
     );
