@@ -1,7 +1,6 @@
 import { channel, defineChannels } from "../core/channel-definitions";
 import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
-  BedrockRuntimeChannelContext,
   BedrockRuntimeCommandLike,
   BedrockRuntimeConverseStreamEvent,
   BedrockRuntimeResponseStreamEvent,
@@ -13,9 +12,9 @@ type BedrockRuntimeStreamEvent =
   | BedrockRuntimeResponseStreamEvent;
 
 const clientSendChannel = channel<
-  [BedrockRuntimeCommandLike, unknown?],
+  [command: BedrockRuntimeCommandLike, optionsOrCb?: unknown, cb?: unknown],
   BedrockRuntimeSendResult,
-  BedrockRuntimeChannelContext,
+  Record<string, unknown>,
   BedrockRuntimeStreamEvent
 >({
   channelName: "client.send",

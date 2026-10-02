@@ -1,10 +1,14 @@
+import { isInvocationContext } from "../../global-instrumentation-hooks";
 import { BasePlugin } from "../core";
-import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
+import {
+  interceptStreamingChannel,
+  traceStreamingChannel,
+  unsubscribeAll,
+} from "../core/channel-tracing";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
 import type { Span } from "../../logger";
-import type { AnyAsyncChannel } from "../core/channel-definitions";
 import type {
   BedrockRuntimeConverseRequest,
   BedrockRuntimeConverseResponse,
@@ -19,52 +23,61 @@ import {
   smithyCoreChannels,
 } from "./bedrock-runtime-channels";
 import {
-  buildBedrockRuntimeSpanInfo,
   getBedrockRuntimeCommandInput,
   getBedrockRuntimeCommandName,
   getBedrockRuntimeOperation,
+  shouldTraceBedrockRuntimeSend,
 } from "./bedrock-runtime-common";
+
+const bedrockRuntimeClientSendConfig: Parameters<
+  typeof traceStreamingChannel<typeof bedrockRuntimeChannels.clientSend>
+>[1] = {
+  name: ([command]) => {
+    const operation = getBedrockRuntimeOperation(command);
+    return operation ? `bedrock.${operation}` : "bedrock.client.send";
+  },
+  shouldTrace: shouldTraceBedrockRuntimeSend,
+  type: SpanTypeAttribute.LLM,
+  extractInput: ([command]) => extractBedrockRuntimeInput(command),
+  extractOutput: (result, endEvent) =>
+    extractBedrockRuntimeOutput(endEvent?.arguments?.[0], result),
+  extractMetadata: (result, endEvent) =>
+    extractBedrockRuntimeResponseMetadata(endEvent?.arguments?.[0], result),
+  extractMetrics: (result) => extractBedrockRuntimeResponseMetrics(result),
+  patchResult: ({ endEvent, result, span, startTime }) =>
+    patchBedrockRuntimeStreamingResult({
+      command: endEvent.arguments?.[0],
+      result,
+      span,
+      startTime,
+    }),
+};
 
 export class BedrockRuntimePlugin extends BasePlugin {
   protected onEnable(): void {
+    const smithyChannels = [
+      smithyCoreChannels.clientSend,
+      smithyClientChannels.clientSend,
+    ];
     this.unsubscribers.push(
-      ...[
-        bedrockRuntimeChannels.clientSend,
-        smithyCoreChannels.clientSend,
-        smithyClientChannels.clientSend,
-      ].map((channel) => traceBedrockRuntimeClientSendChannel(channel)),
+      ...[bedrockRuntimeChannels.clientSend, ...smithyChannels].map((channel) =>
+        interceptStreamingChannel(channel, bedrockRuntimeClientSendConfig),
+      ),
+      // Direct legacy tracing calls on the Smithy channels stay traced. Events
+      // from generated wrappers are marked and traced by the interceptor.
+      ...smithyChannels.map((channel) =>
+        traceStreamingChannel(channel, {
+          ...bedrockRuntimeClientSendConfig,
+          shouldTrace: (args, event) =>
+            !isInvocationContext(event) && shouldTraceBedrockRuntimeSend(args),
+        }),
+      ),
     );
   }
 
   protected onDisable(): void {
     this.unsubscribers = unsubscribeAll(this.unsubscribers);
   }
-}
-
-function traceBedrockRuntimeClientSendChannel(
-  channel: AnyAsyncChannel,
-): () => void {
-  return traceStreamingChannel(channel, {
-    name: ([command]) => buildBedrockRuntimeSpanInfo(command).name,
-    shouldTrace: ([command, optionsOrCb, cb]) =>
-      getBedrockRuntimeOperation(command) !== undefined &&
-      typeof optionsOrCb !== "function" &&
-      typeof cb !== "function",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([command]) => extractBedrockRuntimeInput(command),
-    extractOutput: (result, endEvent) =>
-      extractBedrockRuntimeOutput(endEvent?.arguments?.[0], result),
-    extractMetadata: (result, endEvent) =>
-      extractBedrockRuntimeResponseMetadata(endEvent?.arguments?.[0], result),
-    extractMetrics: (result) => extractBedrockRuntimeResponseMetrics(result),
-    patchResult: ({ endEvent, result, span, startTime }) =>
-      patchBedrockRuntimeStreamingResult({
-        command: endEvent.arguments?.[0],
-        result,
-        span,
-        startTime,
-      }),
-  });
 }
 
 function extractBedrockRuntimeInput(command: unknown): {

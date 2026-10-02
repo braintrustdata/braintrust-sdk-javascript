@@ -1,5 +1,3 @@
-import type { ChannelSpanInfo } from "../instrumentation/core/types";
-
 export type BedrockRuntimeCommandName =
   | "ConverseCommand"
   | "ConverseStreamCommand"
@@ -22,10 +20,6 @@ export interface BedrockRuntimeClient {
     cb?: unknown,
   ) => Promise<unknown> | unknown;
   [key: string]: unknown;
-}
-
-export interface BedrockRuntimeChannelContext {
-  span_info?: ChannelSpanInfo;
 }
 
 export interface BedrockRuntimeContentBlock {

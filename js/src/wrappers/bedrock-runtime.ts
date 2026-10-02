@@ -1,12 +1,9 @@
 import { runWithAutoInstrumentationSuppressed } from "../instrumentation/auto-instrumentation-suppression";
 import { bedrockRuntimeChannels } from "../instrumentation/plugins/bedrock-runtime-channels";
-import {
-  buildBedrockRuntimeSpanInfo,
-  getBedrockRuntimeOperation,
-} from "../instrumentation/plugins/bedrock-runtime-common";
+import { shouldTraceBedrockRuntimeSend } from "../instrumentation/plugins/bedrock-runtime-common";
 import type {
   BedrockRuntimeClient,
-  BedrockRuntimeCommandLike,
+  BedrockRuntimeSendResult,
 } from "../vendor-sdk-types/bedrock-runtime";
 
 /**
@@ -65,7 +62,7 @@ function bedrockRuntimeProxy(
   const proxy: BedrockRuntimeClient = new Proxy(client, {
     get(target, prop, receiver) {
       if (prop === "send") {
-        return wrapSend(target.send.bind(target));
+        return wrapSend(target);
       }
 
       const value = Reflect.get(target, prop, receiver);
@@ -118,27 +115,21 @@ function bedrockRuntimeProxy(
   return proxy;
 }
 
-function wrapSend(
-  send: BedrockRuntimeClient["send"],
-): BedrockRuntimeClient["send"] {
+function wrapSend(client: BedrockRuntimeClient): BedrockRuntimeClient["send"] {
+  const send = client.send.bind(client);
   return (command, optionsOrCb, cb) => {
-    if (
-      getBedrockRuntimeOperation(command) === undefined ||
-      typeof optionsOrCb === "function" ||
-      typeof cb === "function"
-    ) {
+    if (!shouldTraceBedrockRuntimeSend([command, optionsOrCb, cb])) {
       return send(command, optionsOrCb, cb);
     }
 
-    return bedrockRuntimeChannels.clientSend.tracePromise(
-      () =>
+    return bedrockRuntimeChannels.clientSend.invoke(
+      (...args) =>
         runWithAutoInstrumentationSuppressed(() =>
-          send(command, optionsOrCb),
-        ) as Promise<unknown>,
-      {
-        arguments: [command as BedrockRuntimeCommandLike, optionsOrCb],
-        span_info: buildBedrockRuntimeSpanInfo(command),
-      },
+          send(...args),
+        ) as Promise<BedrockRuntimeSendResult>,
+      client,
+      [command, optionsOrCb],
+      {},
     );
   };
 }

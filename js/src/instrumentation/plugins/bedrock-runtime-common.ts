@@ -56,20 +56,16 @@ export function getBedrockRuntimeCommandInput(
     : undefined;
 }
 
-export function buildBedrockRuntimeSpanInfo(command: unknown): {
-  name: string;
-  metadata: Record<string, unknown>;
-} {
-  const commandName = getBedrockRuntimeCommandName(command);
-  const operation = getBedrockRuntimeOperation(command);
-
-  return {
-    name: operation ? `bedrock.${operation}` : "bedrock.client.send",
-    metadata: {
-      ...(commandName ? { command: commandName } : {}),
-      ...(operation ? { operation } : {}),
-    },
-  };
+export function shouldTraceBedrockRuntimeSend([
+  command,
+  optionsOrCb,
+  cb,
+]: readonly unknown[]): boolean {
+  return (
+    getBedrockRuntimeOperation(command) !== undefined &&
+    typeof optionsOrCb !== "function" &&
+    typeof cb !== "function"
+  );
 }
 
 function isBedrockRuntimeCommandName(
