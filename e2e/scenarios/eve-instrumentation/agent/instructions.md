@@ -12,6 +12,8 @@ For every user task, follow these steps exactly:
      and read second, so Eve executes them as one parallel batch. The calls are
      independent. NEVER call one by itself, wait for its result, or emit either
      call in a separate response.
-2. Only after both results are available, answer with a single sentence that
+2. If a tool result says "Started task", your next response MUST be exactly one
+   task_wait call with no arguments and no text.
+3. Only after both results are available, answer with a single sentence that
    starts with "Final answer from read:" and includes the researcher result, read
    title, URL, and read excerpt.

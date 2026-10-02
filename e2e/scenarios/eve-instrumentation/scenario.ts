@@ -29,7 +29,7 @@ async function main() {
   );
   const evePackage = JSON.parse(
     await readFile(path.join(evePackageDir, "package.json"), "utf8"),
-  ) as { bin?: string | Record<string, string> };
+  ) as { bin?: string | Record<string, string>; version: string };
   const eveBinPath =
     typeof evePackage.bin === "string" ? evePackage.bin : evePackage.bin?.eve;
   if (!eveBinPath) {
@@ -54,6 +54,11 @@ async function main() {
   });
   await rm(path.join(agentDir, "channels", "eve.ts"), { force: true });
   if (process.env.EVE_INSTRUMENTATION_PROVIDER === "1") {
+    // Eve 0.62 made instrumentation providers stable and rejects the flag.
+    const [major = 0, minor = 0] = evePackage.version.split(".").map(Number);
+    if (major === 0 && minor < 62) {
+      process.env.EVE_EXPERIMENTAL_INSTRUMENTATION_PROVIDERS = "1";
+    }
     await mkdir(path.join(agentDir, "instrumentation"), { recursive: true });
     await mkdir(path.join(agentDir, "channels"), { recursive: true });
     await copyFile(

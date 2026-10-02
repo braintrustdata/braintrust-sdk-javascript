@@ -19,5 +19,5 @@ export default defineAgent({
       },
     }),
   ),
-  modelContextWindowTokens: 8_192,
+  modelContextWindowTokens: 32_768,
 });

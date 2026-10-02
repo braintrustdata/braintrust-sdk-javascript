@@ -62,10 +62,12 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
     const instrumentation = braintrustEveInstrumentation({ setup });
     expectTypeOf(instrumentation).toBeAny();
     expect(instrumentation).toMatchObject({
-      capture: "content",
       setup,
       tracePolicy: expect.any(Function),
     });
+    // Eve 0.62+ rejects an own `capture` key, older versions still read it.
+    expect(Object.hasOwn(instrumentation, "capture")).toBe(false);
+    expect(instrumentation.capture).toBe("content");
     expect(instrumentation.tracePolicy?.({ audience: "private" })).toEqual({
       emit: true,
       recordInputs: true,
@@ -228,6 +230,7 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
     );
 
     expect(turn).toMatchObject({
+      input: [{ content: "Find Eve", role: "user" }],
       metadata: {
         "eve.session_id": "session-1",
         scenario: "eve-provider-unit",
@@ -235,7 +238,7 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
       span_attributes: { type: "task" },
       span_parents: [],
     });
-    expect(turn).not.toHaveProperty("input");
+    // The only model reply requested tool calls, so the turn has no answer.
     expect(turn).not.toHaveProperty("output");
     expect(model).toMatchObject({
       input: [
@@ -284,6 +287,105 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
       span_parents: [turn?.span_id],
     });
     expect(action).not.toHaveProperty("error");
+  });
+
+  it("records the turn's new user message and final reply on the turn span", async () => {
+    const provider = braintrustEveInstrumentation({});
+    const scope = (stepIndex: number) => ({
+      attemptId: `session-2:turn-2:${stepIndex}:0`,
+      attemptIndex: 0,
+      rootSessionId: "session-2",
+      sessionId: "session-2",
+      stepIndex,
+      turnId: "turn-2",
+    });
+    const modelCall = async (
+      stepIndex: number,
+      messages: unknown[],
+      finishReason: string,
+      content: unknown[],
+    ) => {
+      const context = providerContext();
+      const idempotencyKey = `model:session-2:turn-2:${stepIndex}:0:0`;
+      await provider.events?.["model.call.started"]?.(
+        {
+          idempotencyKey,
+          input: { instructions: "Be concise", messages },
+          model: { modelId: "qwen/qwen3", provider: "openrouter" },
+          scope: scope(stepIndex),
+          type: "model.call.started",
+        },
+        context,
+      );
+      await provider.events?.["model.call.completed"]?.(
+        {
+          content,
+          finishReason,
+          idempotencyKey,
+          scope: scope(stepIndex),
+          type: "model.call.completed",
+          usage: { inputTokens: 1, outputTokens: 1 },
+        },
+        context,
+      );
+    };
+    const history = [
+      { content: "Earlier question", role: "user" },
+      { content: "Earlier answer", role: "assistant" },
+      { content: "Find Eve again", role: "user" },
+    ];
+    const turnContext = providerContext();
+
+    await provider.events?.["turn.started"]?.(
+      {
+        idempotencyKey: "turn:session-2:turn-2",
+        rootSessionId: "session-2",
+        sequence: 1,
+        sessionId: "session-2",
+        turnId: "turn-2",
+        type: "turn.started",
+      },
+      turnContext,
+    );
+    await modelCall(0, history, "tool-calls", [
+      { text: "Checking", type: "text" },
+      {
+        callId: "call-search",
+        input: { query: "Eve" },
+        toolName: "search",
+        type: "tool-call",
+      },
+    ]);
+    await modelCall(
+      1,
+      [
+        ...history,
+        { content: "Checking", role: "assistant" },
+        { content: "[Agents]", role: "user" },
+      ],
+      "stop",
+      [{ text: "Eve is a framework", type: "text" }],
+    );
+    await provider.events?.["turn.completed"]?.(
+      {
+        idempotencyKey: "turn:session-2:turn-2",
+        sessionId: "session-2",
+        turnId: "turn-2",
+        type: "turn.completed",
+      },
+      turnContext,
+    );
+
+    const writes = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
+    const turn = mergeRowBatch([...writes].reverse()).find(
+      (span) => span.span_attributes?.name === "eve.turn",
+    );
+    expect(turn).toMatchObject({
+      input: [{ content: "Find Eve again", role: "user" }],
+      output: "Eve is a framework",
+    });
   });
 
   it("preserves the trace root for depth-two subagents after provider replacement", async () => {
@@ -344,7 +446,8 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
         callId: "call-grandchild",
         idempotencyKey: "action:child-session:turn_0:call-grandchild",
         input: { message: "delegate twice" },
-        kind: "subagent-call",
+        // Eve 0.70+ reports agent calls as tool calls.
+        kind: "tool-call",
         name: "grandchild",
         scope: {
           attemptId: "child-attempt",

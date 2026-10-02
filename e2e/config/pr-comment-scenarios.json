@@ -708,6 +708,10 @@
         "label": "v0 latest pinned"
       },
       {
+        "variantKey": "eve-v0-70",
+        "label": "v0.70 pinned"
+      },
+      {
         "variantKey": "eve-v0-latest",
         "label": "v0 latest"
       }

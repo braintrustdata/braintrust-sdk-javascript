@@ -1,5 +1,12 @@
 span_tree:
 ├── eve.turn [task]
+│   input: [
+│     {
+│       "content": "Run the Braintrust Eve instrumentation e2e scenario",
+│       "role": "user"
+│     }
+│   ]
+│   output: "Final answer from read: Researcher result: The Eve instrumentation guide provides documentation for the Braintrust Eve instrumentation e2e scenario. [View documentation](https://eve.dev/docs/guides/instrumentation). Read title: Eve instrumentation, URL: https://eve.dev/docs/guides/instrumentation, Excerpt: \"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\""
 │   metadata: {
 │     "eve.session_id": "<eve.session_id:1>",
 │     "scenario": "eve-instrumentation",
@@ -8,7 +15,7 @@ span_tree:
 │   ├── eve.step [llm]
 │   │   input: [
 │   │     {
-│   │       "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+│   │       "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. If a tool result says \"Started task\", your next response MUST be exactly one\n   task_wait call with no arguments and no text.\n3. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
 │   │       "role": "system"
 │   │     },
 │   │     {
@@ -24,7 +31,7 @@ span_tree:
 │   │         "content": null,
 │   │         "reasoning": [
 │   │           {
-│   │             "content": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which typically stands for end-to-end testing. So, they probably want to simulate or execute a full workflow within the Eve instrumentation setup.\n\nFirst, I need to check the available tools. The user provided a list of functions, including researcher, read, and others. The instructions say that for every user task, I must first make two tool calls: researcher with the user's message and read with the URL to the instrumentation guide. Then, after getting both results, I should generate a final answer combining the researcher's output, the read title, URL, and excerpt.\n\nSo, the first step is to call the researcher function with the user's message. The message here is \"Run the Braintrust Eve instrumentation e2e scenario.\" I need to pass this exactly as is. Then, I need to call the read function with the URL https://eve.dev/docs/guides/instrumentation. \n\nWait, the user might be expecting me to follow the steps outlined in the documentation. The read function will fetch the content from that URL, which is the guide. The researcher function might be used to query the documentation before reading it. But according to the instructions, I must emit both calls simultaneously. \n\nOnce both responses are available, I need to compile the final answer. The final answer should start with \"Final answer from read:\" and include the researcher result, the title of the read content, the URL, and an excerpt from the read. \n\nI should make sure not to include any other text besides the two tool calls in the initial response. No explanations, just the JSON objects within the tool_call tags. Then, after receiving the results, structure the final answer properly. \n\nI need to verify that I'm not missing any steps. The user's instruction is straightforward, but I have to follow the exact process: two tool calls first, then the final answer. No deviations. Also, ensure that the researcher's message is the exact user input, and the read URL is correct. \n\nI think that's all. Let me structure the tool calls correctly.\n"
+│   │             "content": "\nOkay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which typically stands for end-to-end testing. So, I need to follow the steps outlined in the Braintrust Eve documentation to set up and execute these tests.\n\nFirst, I should check the available tools. The user provided a list of functions, including researcher, read, and others. The researcher function is for researching the Eve instrumentation documentation before the parent reads it. The read function is for reading a deterministic Eve documentation page fixture. \n\nThe instructions say that for every user task, I must first call the researcher with the user's message and then read the specific documentation URL. The user's message here is \"Run the Braintrust Eve instrumentation e2e scenario.\" So, I need to use the researcher tool with that message. Then, I have to call the read tool with the URL \"https://eve.dev/docs/guides/instrumentation\" to get the necessary documentation.\n\nWait, the user's exact instruction is to run the e2e scenario. But according to the steps provided in the initial instructions, the first response must contain exactly the researcher and read tool calls. So, I can't proceed further without those. The researcher will send the message to the subagent for research, and the read will fetch the documentation. \n\nAfter those two calls, once the results are available, I need to compile a final answer that includes the researcher's result, the read title, URL, and excerpt. But the user hasn't provided any prior messages, so this is the first interaction. Therefore, I must strictly follow the steps: first, make the two tool calls, then wait for their results, and then generate the final answer.\n\nI need to ensure that the researcher's argument is exactly the user's message, which is \"Run the Braintrust Eve instrumentation e2e scenario.\" The read tool's argument is the fixed URL. Both calls must be in the same response, researcher first, then read. No other text or calls are allowed at this stage. \n\nOnce those are executed, if the tool results say \"Started task,\" the next step would be to call task_wait. But since the user hasn't mentioned any specific steps beyond the initial request, I need to stick to the initial instructions. After both results are in, the final answer should start with \"Final answer from read:\" and include the necessary details from the researcher result, the read title, URL, and excerpt.\n\nSo, the immediate action is to generate the two tool calls as specified. No other steps can be taken until those are processed. I must not add any extra text or calls. Just the two tool calls in the correct order.\n"
 │   │           }
 │   │         ],
 │   │         "role": "assistant",
@@ -57,17 +64,17 @@ span_tree:
 │   │     "testRunId": "<run:1>"
 │   │   }
 │   │   metrics: {
-│   │     "completion_tokens": 514,
+│   │     "completion_tokens": 626,
 │   │     "prompt_cache_creation_tokens": 0,
 │   │     "prompt_cached_tokens": 0,
-│   │     "prompt_tokens": 3670,
-│   │     "tokens": 4184
+│   │     "prompt_tokens": 3714,
+│   │     "tokens": 4340
 │   │   }
 │   ├── researcher [tool]
 │   │   input: {
 │   │     "message": "Run the Braintrust Eve instrumentation e2e scenario"
 │   │   }
-│   │   output: "Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)"
+│   │   output: "Researcher result: The Eve instrumentation guide provides documentation for the Braintrust Eve instrumentation e2e scenario. [View documentation](https://eve.dev/docs/guides/instrumentation)"
 │   │   metadata: {
 │   │     "eve.action_kind": "subagent-call",
 │   │     "eve.session_id": "<eve.session_id:1>",
@@ -75,6 +82,13 @@ span_tree:
 │   │     "testRunId": "<run:1>"
 │   │   }
 │   │   └── eve.turn [task]
+│   │       input: [
+│   │         {
+│   │           "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario",
+│   │           "role": "user"
+│   │         }
+│   │       ]
+│   │       output: "Researcher result: The Eve instrumentation guide provides documentation for the Braintrust Eve instrumentation e2e scenario. [View documentation](https://eve.dev/docs/guides/instrumentation)"
 │   │       metadata: {
 │   │         "eve.session_id": "<eve.session_id:1>",
 │   │         "scenario": "eve-instrumentation",
@@ -99,14 +113,14 @@ span_tree:
 │   │       │         "content": null,
 │   │       │         "reasoning": [
 │   │       │           {
-│   │       │             "content": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Since I'm the researcher subagent, my job is to look up the documentation first. Let me check the available tools. There's a 'search' function that queries the Eve documentation. I should use that.\n\nThe task is to search for \"Braintrust Eve instrumentation e2e scenario\". I'll call the search tool with that exact query. Once I get the results, I need to provide a concise answer with the title and URL from the search. Let me make sure I follow the instructions: one tool call, then a single sentence with the result. Alright, let's execute the search.\n"
+│   │       │             "content": "\nOkay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Since I'm the researcher subagent, my job is to look up the documentation first. Let me check the available tools. There's a 'search' function that queries the Eve documentation. I should use that.\n\nThe task is to \"Run the Braintrust Eve instrumentation e2e scenario.\" So I'll input that exact query into the search tool. The search should find relevant sections in the documentation. Once I get the search results, I need to present the title and URL of the top result. Let me make sure I'm using the correct syntax for the tool call. The parameters require a \"query\" string. Alright, I'll structure the JSON accordingly.\n"
 │   │       │           }
 │   │       │         ],
 │   │       │         "role": "assistant",
 │   │       │         "tool_calls": [
 │   │       │           {
 │   │       │             "function": {
-│   │       │               "arguments": "{\"query\":\"Braintrust Eve instrumentation e2e scenario\"}",
+│   │       │               "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario\"}",
 │   │       │               "name": "search"
 │   │       │             },
 │   │       │             "id": "<span:1>",
@@ -124,18 +138,18 @@ span_tree:
 │   │       │     "testRunId": "<run:1>"
 │   │       │   }
 │   │       │   metrics: {
-│   │       │     "completion_tokens": 169,
+│   │       │     "completion_tokens": 184,
 │   │       │     "prompt_cache_creation_tokens": 0,
 │   │       │     "prompt_cached_tokens": 0,
-│   │       │     "prompt_tokens": 3057,
-│   │       │     "tokens": 3226
+│   │       │     "prompt_tokens": 3073,
+│   │       │     "tokens": 3257
 │   │       │   }
 │   │       ├── search [tool]
 │   │       │   input: {
-│   │       │     "query": "Braintrust Eve instrumentation e2e scenario"
+│   │       │     "query": "Run the Braintrust Eve instrumentation e2e scenario"
 │   │       │   }
 │   │       │   output: {
-│   │       │     "query": "Braintrust Eve instrumentation e2e scenario",
+│   │       │     "query": "Run the Braintrust Eve instrumentation e2e scenario",
 │   │       │     "title": "Eve instrumentation",
 │   │       │     "url": "https://eve.dev/docs/guides/instrumentation"
 │   │       │   }
@@ -158,12 +172,12 @@ span_tree:
 │   │             {
 │   │               "content": [
 │   │                 {
-│   │                   "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Since I'm the researcher subagent, my job is to look up the documentation first. Let me check the available tools. There's a 'search' function that queries the Eve documentation. I should use that.\n\nThe task is to search for \"Braintrust Eve instrumentation e2e scenario\". I'll call the search tool with that exact query. Once I get the results, I need to provide a concise answer with the title and URL from the search. Let me make sure I follow the instructions: one tool call, then a single sentence with the result. Alright, let's execute the search.\n",
+│   │                   "text": "\nOkay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Since I'm the researcher subagent, my job is to look up the documentation first. Let me check the available tools. There's a 'search' function that queries the Eve documentation. I should use that.\n\nThe task is to \"Run the Braintrust Eve instrumentation e2e scenario.\" So I'll input that exact query into the search tool. The search should find relevant sections in the documentation. Once I get the search results, I need to present the title and URL of the top result. Let me make sure I'm using the correct syntax for the tool call. The parameters require a \"query\" string. Alright, I'll structure the JSON accordingly.\n",
 │   │                   "type": "reasoning"
 │   │                 },
 │   │                 {
 │   │                   "input": {
-│   │                     "query": "Braintrust Eve instrumentation e2e scenario"
+│   │                     "query": "Run the Braintrust Eve instrumentation e2e scenario"
 │   │                   },
 │   │                   "toolCallId": "<toolCallId:1>",
 │   │                   "toolName": "search",
@@ -178,7 +192,7 @@ span_tree:
 │   │                   "output": {
 │   │                     "type": "json",
 │   │                     "value": {
-│   │                       "query": "Braintrust Eve instrumentation e2e scenario",
+│   │                       "query": "Run the Braintrust Eve instrumentation e2e scenario",
 │   │                       "title": "Eve instrumentation",
 │   │                       "url": "https://eve.dev/docs/guides/instrumentation"
 │   │                     }
@@ -196,10 +210,10 @@ span_tree:
 │   │               "finish_reason": "stop",
 │   │               "index": 0,
 │   │               "message": {
-│   │                 "content": "Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)",
+│   │                 "content": "Researcher result: The Eve instrumentation guide provides documentation for the Braintrust Eve instrumentation e2e scenario. [View documentation](https://eve.dev/docs/guides/instrumentation)",
 │   │                 "reasoning": [
 │   │                   {
-│   │                     "content": "Okay, the user asked me to run the Braintrust Eve instrumentation e2e scenario. As the researcher subagent, my first step was to search the Eve documentation for relevant information. The search tool returned a result with the title \"Eve instrumentation\" and a URL. Now, I need to present this information clearly.\n\nThe instructions say to answer with a single sentence starting with \"Researcher result:\" including the title and URL. I should make sure the link is properly formatted. Let me check the parameters again to confirm the title and URL from the search response. The title is \"Eve instrumentation\" and the URL is \"https://eve.dev/docs/guides/instrumentation\". \n\nI need to structure the response correctly. The sentence should be concise and include both the title and the link. No other information is needed since the user's task is to research before the parent reads it. Alright, that's all. Time to put it together.\n"
+│   │                     "content": "\nOkay, the user asked me to run the Braintrust Eve instrumentation end-to-end scenario. As the researcher subagent, I need to check the documentation first. I used the search tool with the exact query they provided. The result came back with the title \"Eve instrumentation\" and a URL. Now, I should present that information clearly. The user probably needs to follow the guide at that link to proceed. I'll make sure to mention the title and URL in the response so they can access the documentation directly.\n"
 │   │                   }
 │   │                 ],
 │   │                 "role": "assistant"
@@ -214,11 +228,11 @@ span_tree:
 │   │             "testRunId": "<run:1>"
 │   │           }
 │   │           metrics: {
-│   │             "completion_tokens": 219,
+│   │             "completion_tokens": 146,
 │   │             "prompt_cache_creation_tokens": 0,
 │   │             "prompt_cached_tokens": 0,
-│   │             "prompt_tokens": 3269,
-│   │             "tokens": 3488
+│   │             "prompt_tokens": 3302,
+│   │             "tokens": 3448
 │   │           }
 │   ├── read [tool]
 │   │   input: {
@@ -239,7 +253,7 @@ span_tree:
 │   └── eve.step [llm]
 │       input: [
 │         {
-│           "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+│           "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. If a tool result says \"Started task\", your next response MUST be exactly one\n   task_wait call with no arguments and no text.\n3. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
 │           "role": "system"
 │         },
 │         {
@@ -249,7 +263,7 @@ span_tree:
 │         {
 │           "content": [
 │             {
-│               "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which typically stands for end-to-end testing. So, they probably want to simulate or execute a full workflow within the Eve instrumentation setup.\n\nFirst, I need to check the available tools. The user provided a list of functions, including researcher, read, and others. The instructions say that for every user task, I must first make two tool calls: researcher with the user's message and read with the URL to the instrumentation guide. Then, after getting both results, I should generate a final answer combining the researcher's output, the read title, URL, and excerpt.\n\nSo, the first step is to call the researcher function with the user's message. The message here is \"Run the Braintrust Eve instrumentation e2e scenario.\" I need to pass this exactly as is. Then, I need to call the read function with the URL https://eve.dev/docs/guides/instrumentation. \n\nWait, the user might be expecting me to follow the steps outlined in the documentation. The read function will fetch the content from that URL, which is the guide. The researcher function might be used to query the documentation before reading it. But according to the instructions, I must emit both calls simultaneously. \n\nOnce both responses are available, I need to compile the final answer. The final answer should start with \"Final answer from read:\" and include the researcher result, the title of the read content, the URL, and an excerpt from the read. \n\nI should make sure not to include any other text besides the two tool calls in the initial response. No explanations, just the JSON objects within the tool_call tags. Then, after receiving the results, structure the final answer properly. \n\nI need to verify that I'm not missing any steps. The user's instruction is straightforward, but I have to follow the exact process: two tool calls first, then the final answer. No deviations. Also, ensure that the researcher's message is the exact user input, and the read URL is correct. \n\nI think that's all. Let me structure the tool calls correctly.\n",
+│               "text": "\nOkay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which typically stands for end-to-end testing. So, I need to follow the steps outlined in the Braintrust Eve documentation to set up and execute these tests.\n\nFirst, I should check the available tools. The user provided a list of functions, including researcher, read, and others. The researcher function is for researching the Eve instrumentation documentation before the parent reads it. The read function is for reading a deterministic Eve documentation page fixture. \n\nThe instructions say that for every user task, I must first call the researcher with the user's message and then read the specific documentation URL. The user's message here is \"Run the Braintrust Eve instrumentation e2e scenario.\" So, I need to use the researcher tool with that message. Then, I have to call the read tool with the URL \"https://eve.dev/docs/guides/instrumentation\" to get the necessary documentation.\n\nWait, the user's exact instruction is to run the e2e scenario. But according to the steps provided in the initial instructions, the first response must contain exactly the researcher and read tool calls. So, I can't proceed further without those. The researcher will send the message to the subagent for research, and the read will fetch the documentation. \n\nAfter those two calls, once the results are available, I need to compile a final answer that includes the researcher's result, the read title, URL, and excerpt. But the user hasn't provided any prior messages, so this is the first interaction. Therefore, I must strictly follow the steps: first, make the two tool calls, then wait for their results, and then generate the final answer.\n\nI need to ensure that the researcher's argument is exactly the user's message, which is \"Run the Braintrust Eve instrumentation e2e scenario.\" The read tool's argument is the fixed URL. Both calls must be in the same response, researcher first, then read. No other text or calls are allowed at this stage. \n\nOnce those are executed, if the tool results say \"Started task,\" the next step would be to call task_wait. But since the user hasn't mentioned any specific steps beyond the initial request, I need to stick to the initial instructions. After both results are in, the final answer should start with \"Final answer from read:\" and include the necessary details from the researcher result, the read title, URL, and excerpt.\n\nSo, the immediate action is to generate the two tool calls as specified. No other steps can be taken until those are processed. I must not add any extra text or calls. Just the two tool calls in the correct order.\n",
 │               "type": "reasoning"
 │             },
 │             {
@@ -295,7 +309,7 @@ span_tree:
 │             {
 │               "output": {
 │                 "type": "text",
-│                 "value": "Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)"
+│                 "value": "Researcher result: The Eve instrumentation guide provides documentation for the Braintrust Eve instrumentation e2e scenario. [View documentation](https://eve.dev/docs/guides/instrumentation)"
 │               },
 │               "toolCallId": "<toolCallId:1>",
 │               "toolName": "researcher",
@@ -310,10 +324,10 @@ span_tree:
 │           "finish_reason": "stop",
 │           "index": 0,
 │           "message": {
-│             "content": "Final answer from read: Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation). Title: Eve instrumentation. URL: https://eve.dev/docs/guides/instrumentation. Excerpt: \"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"",
+│             "content": "Final answer from read: Researcher result: The Eve instrumentation guide provides documentation for the Braintrust Eve instrumentation e2e scenario. [View documentation](https://eve.dev/docs/guides/instrumentation). Read title: Eve instrumentation, URL: https://eve.dev/docs/guides/instrumentation, Excerpt: \"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"",
 │             "reasoning": [
 │               {
-│                 "content": "Okay, let me process what's needed here. The user asked to run the Braintrust Eve instrumentation e2e scenario. According to the instructions, I first made the two required tool calls: researcher with the user's message and read with the documentation URL. Now, I have the results from those calls.\n\nThe researcher tool was used to send the message \"Run the Braintrust Eve instrumentation e2e scenario\" to the subagent. The read tool fetched the documentation page, which has a title \"Eve instrumentation\", a URL, and an excerpt mentioning that Eve hooks expose runtime stream events mapped into a nested turn trace.\n\nNow, I need to construct the final answer. The instructions specify that it should start with \"Final answer from read:\", include the researcher result, the title, URL, and excerpt. The researcher result here is the link to the documentation. The read response provided the title, URL, and excerpt. \n\nI should verify that all required elements are included. The researcher result is the link, the title is \"Eve instrumentation\", the URL is the one provided, and the excerpt is the text about runtime context. Putting it all together in a single sentence as specified. No markdown, just plain text. Let me check for any missing parts or formatting issues. Looks good. Time to compose the final answer.\n"
+│                 "content": "\nOkay, let's see. The user asked to run the Braintrust Eve instrumentation e2e scenario. The first step was to call the researcher and read tools. The researcher's response mentioned that the Eve instrumentation guide has documentation for the e2e scenario. The read tool's result gave a snippet about Eve hooks exposing runtime stream events mapped into a nested turn trace.\n\nNow, the next step is to compile the final answer. The instructions say to start with \"Final answer from read:\" and include the researcher result, read title, URL, and excerpt. The researcher result is the message about the documentation. The read result has the title \"Eve instrumentation\", URL, and the excerpt about runtime context. \n\nI need to make sure all those elements are included. Also, check if there's any other information needed. Since the user's task was to run the scenario, maybe the answer should confirm that the documentation is ready. But according to the steps, just present the gathered info. No markdown, just a single sentence. Let me structure it properly.\n"
 │               }
 │             ],
 │             "role": "assistant"
@@ -328,13 +342,20 @@ span_tree:
 │         "testRunId": "<run:1>"
 │       }
 │       metrics: {
-│         "completion_tokens": 339,
+│         "completion_tokens": 301,
 │         "prompt_cache_creation_tokens": 0,
 │         "prompt_cached_tokens": 0,
-│         "prompt_tokens": 4264,
-│         "tokens": 4603
+│         "prompt_tokens": 4436,
+│         "tokens": 4737
 │       }
 └── eve.turn [task]
+    input: [
+      {
+        "content": "Run the Braintrust Eve instrumentation e2e scenario again",
+        "role": "user"
+      }
+    ]
+    output: "Final answer from read: Researcher result: The documentation for \"Eve instrumentation\" can be found at [Eve instrumentation](https://eve.dev/docs/guides/instrumentation). Read title: Eve instrumentation, URL: https://eve.dev/docs/guides/instrumentation, Excerpt: \"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\""
     metadata: {
       "eve.session_id": "<eve.session_id:1>",
       "scenario": "eve-instrumentation",
@@ -343,7 +364,7 @@ span_tree:
     ├── eve.step [llm]
     │   input: [
     │     {
-    │       "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+    │       "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. If a tool result says \"Started task\", your next response MUST be exactly one\n   task_wait call with no arguments and no text.\n3. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
     │       "role": "system"
     │     },
     │     {
@@ -353,7 +374,7 @@ span_tree:
     │     {
     │       "content": [
     │         {
-    │           "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which typically stands for end-to-end testing. So, they probably want to simulate or execute a full workflow within the Eve instrumentation setup.\n\nFirst, I need to check the available tools. The user provided a list of functions, including researcher, read, and others. The instructions say that for every user task, I must first make two tool calls: researcher with the user's message and read with the URL to the instrumentation guide. Then, after getting both results, I should generate a final answer combining the researcher's output, the read title, URL, and excerpt.\n\nSo, the first step is to call the researcher function with the user's message. The message here is \"Run the Braintrust Eve instrumentation e2e scenario.\" I need to pass this exactly as is. Then, I need to call the read function with the URL https://eve.dev/docs/guides/instrumentation. \n\nWait, the user might be expecting me to follow the steps outlined in the documentation. The read function will fetch the content from that URL, which is the guide. The researcher function might be used to query the documentation before reading it. But according to the instructions, I must emit both calls simultaneously. \n\nOnce both responses are available, I need to compile the final answer. The final answer should start with \"Final answer from read:\" and include the researcher result, the title of the read content, the URL, and an excerpt from the read. \n\nI should make sure not to include any other text besides the two tool calls in the initial response. No explanations, just the JSON objects within the tool_call tags. Then, after receiving the results, structure the final answer properly. \n\nI need to verify that I'm not missing any steps. The user's instruction is straightforward, but I have to follow the exact process: two tool calls first, then the final answer. No deviations. Also, ensure that the researcher's message is the exact user input, and the read URL is correct. \n\nI think that's all. Let me structure the tool calls correctly.\n",
+    │           "text": "\nOkay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which typically stands for end-to-end testing. So, I need to follow the steps outlined in the Braintrust Eve documentation to set up and execute these tests.\n\nFirst, I should check the available tools. The user provided a list of functions, including researcher, read, and others. The researcher function is for researching the Eve instrumentation documentation before the parent reads it. The read function is for reading a deterministic Eve documentation page fixture. \n\nThe instructions say that for every user task, I must first call the researcher with the user's message and then read the specific documentation URL. The user's message here is \"Run the Braintrust Eve instrumentation e2e scenario.\" So, I need to use the researcher tool with that message. Then, I have to call the read tool with the URL \"https://eve.dev/docs/guides/instrumentation\" to get the necessary documentation.\n\nWait, the user's exact instruction is to run the e2e scenario. But according to the steps provided in the initial instructions, the first response must contain exactly the researcher and read tool calls. So, I can't proceed further without those. The researcher will send the message to the subagent for research, and the read will fetch the documentation. \n\nAfter those two calls, once the results are available, I need to compile a final answer that includes the researcher's result, the read title, URL, and excerpt. But the user hasn't provided any prior messages, so this is the first interaction. Therefore, I must strictly follow the steps: first, make the two tool calls, then wait for their results, and then generate the final answer.\n\nI need to ensure that the researcher's argument is exactly the user's message, which is \"Run the Braintrust Eve instrumentation e2e scenario.\" The read tool's argument is the fixed URL. Both calls must be in the same response, researcher first, then read. No other text or calls are allowed at this stage. \n\nOnce those are executed, if the tool results say \"Started task,\" the next step would be to call task_wait. But since the user hasn't mentioned any specific steps beyond the initial request, I need to stick to the initial instructions. After both results are in, the final answer should start with \"Final answer from read:\" and include the necessary details from the researcher result, the read title, URL, and excerpt.\n\nSo, the immediate action is to generate the two tool calls as specified. No other steps can be taken until those are processed. I must not add any extra text or calls. Just the two tool calls in the correct order.\n",
     │           "type": "reasoning"
     │         },
     │         {
@@ -399,7 +420,7 @@ span_tree:
     │         {
     │           "output": {
     │             "type": "text",
-    │             "value": "Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)"
+    │             "value": "Researcher result: The Eve instrumentation guide provides documentation for the Braintrust Eve instrumentation e2e scenario. [View documentation](https://eve.dev/docs/guides/instrumentation)"
     │           },
     │           "toolCallId": "<toolCallId:1>",
     │           "toolName": "researcher",
@@ -411,11 +432,11 @@ span_tree:
     │     {
     │       "content": [
     │         {
-    │           "text": "Okay, let me process what's needed here. The user asked to run the Braintrust Eve instrumentation e2e scenario. According to the instructions, I first made the two required tool calls: researcher with the user's message and read with the documentation URL. Now, I have the results from those calls.\n\nThe researcher tool was used to send the message \"Run the Braintrust Eve instrumentation e2e scenario\" to the subagent. The read tool fetched the documentation page, which has a title \"Eve instrumentation\", a URL, and an excerpt mentioning that Eve hooks expose runtime stream events mapped into a nested turn trace.\n\nNow, I need to construct the final answer. The instructions specify that it should start with \"Final answer from read:\", include the researcher result, the title, URL, and excerpt. The researcher result here is the link to the documentation. The read response provided the title, URL, and excerpt. \n\nI should verify that all required elements are included. The researcher result is the link, the title is \"Eve instrumentation\", the URL is the one provided, and the excerpt is the text about runtime context. Putting it all together in a single sentence as specified. No markdown, just plain text. Let me check for any missing parts or formatting issues. Looks good. Time to compose the final answer.\n",
+    │           "text": "\nOkay, let's see. The user asked to run the Braintrust Eve instrumentation e2e scenario. The first step was to call the researcher and read tools. The researcher's response mentioned that the Eve instrumentation guide has documentation for the e2e scenario. The read tool's result gave a snippet about Eve hooks exposing runtime stream events mapped into a nested turn trace.\n\nNow, the next step is to compile the final answer. The instructions say to start with \"Final answer from read:\" and include the researcher result, read title, URL, and excerpt. The researcher result is the message about the documentation. The read result has the title \"Eve instrumentation\", URL, and the excerpt about runtime context. \n\nI need to make sure all those elements are included. Also, check if there's any other information needed. Since the user's task was to run the scenario, maybe the answer should confirm that the documentation is ready. But according to the steps, just present the gathered info. No markdown, just a single sentence. Let me structure it properly.\n",
     │           "type": "reasoning"
     │         },
     │         {
-    │           "text": "Final answer from read: Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation). Title: Eve instrumentation. URL: https://eve.dev/docs/guides/instrumentation. Excerpt: \"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"",
+    │           "text": "Final answer from read: Researcher result: The Eve instrumentation guide provides documentation for the Braintrust Eve instrumentation e2e scenario. [View documentation](https://eve.dev/docs/guides/instrumentation). Read title: Eve instrumentation, URL: https://eve.dev/docs/guides/instrumentation, Excerpt: \"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"",
     │           "type": "text"
     │         }
     │       ],
@@ -434,7 +455,7 @@ span_tree:
     │         "content": null,
     │         "reasoning": [
     │           {
-    │             "content": "Okay, the user wants me to run the Braintrust Eve instrumentation e2e scenario again. Let me check the previous interaction to make sure I follow the correct steps.\n\nIn the first run, the user said \"Run the Braintrust Eve instrumentation e2e scenario,\" and I called the researcher and read tools. The researcher was given the message \"Run the Braintrust Eve instrumentation e2e scenario,\" and the read tool accessed the specified URL. Then, after getting the response, I provided the final answer combining the researcher result and the read excerpt.\n\nNow the user is asking to do it again. The instructions say that for every user task, I must first make the two tool calls: researcher with the full user message and read with the URL. I need to ensure that I don't reuse any previous messages and that both calls are made in the same response. Then, once both results are available, I answer with the single sentence starting with \"Final answer from read:\" including all the required details.\n\nSo, the next step is to generate the two tool calls again. The user's message is \"Run the Braintrust Eve instrumentation e2e scenario again,\" so the researcher argument should be exactly that. The read tool will use the same URL as before. I need to make sure the JSON is correctly formatted and that both tool calls are in the same response. After that, when the tool responses come back, I'll structure the final answer as instructed.\n"
+    │             "content": "\nOkay, the user wants to run the Braintrust Eve instrumentation e2e scenario again. Let me check the previous interaction.\n\nIn the history, the user first asked to run the scenario, and I called the researcher and read tools. The researcher's response mentioned the documentation, and the read tool provided an excerpt. Then the user said \"again,\" so I need to handle that.\n\nWait, the user's current message is \"Run the Braintrust Eve instrumentation e2e scenario again.\" So, following the instructions, I need to make sure I do exactly what's specified. The first step is to call researcher with the full user message and read with the given URL. But the user mentioned \"again,\" so I need to make sure the message is the same as the current one. \n\nWait, the instructions say that for every user task, the first response must have exactly the two tool calls: researcher with the full user message and read with the URL. The user's message here is \"Run the Braintrust Eve instrumentation e2e scenario again.\" So I need to pass that exact message to the researcher. Also, the read URL is fixed as https://eve.dev/docs/guides/instrumentation. \n\nI should not reuse any previous messages. So even though the user said \"again,\" the message argument for researcher should be the exact current message. Then, the read tool is called again with the same URL. \n\nAfter that, if the tool results come back, I need to wait for both, then provide the final answer. The previous example had the final answer combining the researcher result, read title, URL, and excerpt. \n\nSo the steps are: call researcher with the current message, call read with the URL, wait for both results, then format the final answer. \n\nI need to make sure that the researcher's message is exactly the user's current input, which includes \"again.\" So the researcher call is {\"message\":\"Run the Braintrust Eve instrumentation e2e scenario again\"}.\n\nThen the read call is {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n\nOnce both are done, the final answer would include the researcher's result, the read title, URL, and excerpt. The previous example had the researcher result as a link, so maybe the same here. The read excerpt is from the tool response, which in the previous case was about Eve hooks and runtime events.\n\nSo the final answer would be structured as before, but with the current message. I need to make sure that the researcher's result is correctly quoted, and the read details are included.\n"
     │           }
     │         ],
     │         "role": "assistant",
@@ -467,17 +488,17 @@ span_tree:
     │     "testRunId": "<run:1>"
     │   }
     │   metrics: {
-    │     "completion_tokens": 355,
+    │     "completion_tokens": 588,
     │     "prompt_cache_creation_tokens": 0,
     │     "prompt_cached_tokens": 0,
-    │     "prompt_tokens": 3895,
-    │     "tokens": 4250
+    │     "prompt_tokens": 3972,
+    │     "tokens": 4560
     │   }
     ├── researcher [tool]
     │   input: {
     │     "message": "Run the Braintrust Eve instrumentation e2e scenario again"
     │   }
-    │   output: "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation"
+    │   output: "Researcher result: The documentation for \"Eve instrumentation\" can be found at [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)."
     │   metadata: {
     │     "eve.action_kind": "subagent-call",
     │     "eve.session_id": "<eve.session_id:1>",
@@ -485,6 +506,13 @@ span_tree:
     │     "testRunId": "<run:1>"
     │   }
     │   └── eve.turn [task]
+    │       input: [
+    │         {
+    │           "content": "You are the subagent \"researcher\".\nDescription: Research the Eve instrumentation documentation before the parent reads it.\n\nThe caller delegated the following task to you. Complete it and return the final result directly.\n\nCaller message:\nRun the Braintrust Eve instrumentation e2e scenario again",
+    │           "role": "user"
+    │         }
+    │       ]
+    │       output: "Researcher result: The documentation for \"Eve instrumentation\" can be found at [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)."
     │       metadata: {
     │         "eve.session_id": "<eve.session_id:1>",
     │         "scenario": "eve-instrumentation",
@@ -509,14 +537,14 @@ span_tree:
     │       │         "content": null,
     │       │         "reasoning": [
     │       │           {
-    │       │             "content": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario again. Since I'm the researcher subagent, my job is to look up the documentation first. Let me check the available tools. There's a 'search' function that queries the Eve documentation. I should use that. The query should be the exact task name they mentioned: \"Braintrust Eve instrumentation e2e scenario\". I'll call the search tool with that query. Once I get the results, I'll provide the title and URL from the search outcome. Need to make sure I only do one tool call as per instructions.\n"
+    │       │             "content": "\nOkay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario again. Since I'm the researcher subagent, my job is to look up the documentation first. Let me check the available tools. There's a 'search' function that queries the Eve documentation. I need to use that. The task is to \"Run the Braintrust Eve instrumentation e2e scenario again,\" so I'll use that exact query in the search. I'll make sure to call the search tool once with the full task as the query. Once I get the results, I'll format the answer with the title and URL from the search result. Let me structure the tool call correctly.\n"
     │       │           }
     │       │         ],
     │       │         "role": "assistant",
     │       │         "tool_calls": [
     │       │           {
     │       │             "function": {
-    │       │               "arguments": "{\"query\":\"Braintrust Eve instrumentation e2e scenario\"}",
+    │       │               "arguments": "{\"query\":\"Run the Braintrust Eve instrumentation e2e scenario again\"}",
     │       │               "name": "search"
     │       │             },
     │       │             "id": "<span:1>",
@@ -534,18 +562,18 @@ span_tree:
     │       │     "testRunId": "<run:1>"
     │       │   }
     │       │   metrics: {
-    │       │     "completion_tokens": 155,
+    │       │     "completion_tokens": 171,
     │       │     "prompt_cache_creation_tokens": 0,
     │       │     "prompt_cached_tokens": 0,
-    │       │     "prompt_tokens": 3058,
-    │       │     "tokens": 3213
+    │       │     "prompt_tokens": 3074,
+    │       │     "tokens": 3245
     │       │   }
     │       ├── search [tool]
     │       │   input: {
-    │       │     "query": "Braintrust Eve instrumentation e2e scenario"
+    │       │     "query": "Run the Braintrust Eve instrumentation e2e scenario again"
     │       │   }
     │       │   output: {
-    │       │     "query": "Braintrust Eve instrumentation e2e scenario",
+    │       │     "query": "Run the Braintrust Eve instrumentation e2e scenario again",
     │       │     "title": "Eve instrumentation",
     │       │     "url": "https://eve.dev/docs/guides/instrumentation"
     │       │   }
@@ -568,12 +596,12 @@ span_tree:
     │             {
     │               "content": [
     │                 {
-    │                   "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario again. Since I'm the researcher subagent, my job is to look up the documentation first. Let me check the available tools. There's a 'search' function that queries the Eve documentation. I should use that. The query should be the exact task name they mentioned: \"Braintrust Eve instrumentation e2e scenario\". I'll call the search tool with that query. Once I get the results, I'll provide the title and URL from the search outcome. Need to make sure I only do one tool call as per instructions.\n",
+    │                   "text": "\nOkay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario again. Since I'm the researcher subagent, my job is to look up the documentation first. Let me check the available tools. There's a 'search' function that queries the Eve documentation. I need to use that. The task is to \"Run the Braintrust Eve instrumentation e2e scenario again,\" so I'll use that exact query in the search. I'll make sure to call the search tool once with the full task as the query. Once I get the results, I'll format the answer with the title and URL from the search result. Let me structure the tool call correctly.\n",
     │                   "type": "reasoning"
     │                 },
     │                 {
     │                   "input": {
-    │                     "query": "Braintrust Eve instrumentation e2e scenario"
+    │                     "query": "Run the Braintrust Eve instrumentation e2e scenario again"
     │                   },
     │                   "toolCallId": "<toolCallId:1>",
     │                   "toolName": "search",
@@ -588,7 +616,7 @@ span_tree:
     │                   "output": {
     │                     "type": "json",
     │                     "value": {
-    │                       "query": "Braintrust Eve instrumentation e2e scenario",
+    │                       "query": "Run the Braintrust Eve instrumentation e2e scenario again",
     │                       "title": "Eve instrumentation",
     │                       "url": "https://eve.dev/docs/guides/instrumentation"
     │                     }
@@ -606,10 +634,10 @@ span_tree:
     │               "finish_reason": "stop",
     │               "index": 0,
     │               "message": {
-    │                 "content": "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation",
+    │                 "content": "Researcher result: The documentation for \"Eve instrumentation\" can be found at [Eve instrumentation](https://eve.dev/docs/guides/instrumentation).",
     │                 "reasoning": [
     │                   {
-    │                     "content": "Okay, the user asked me to run the Braintrust Eve instrumentation end-to-end scenario again. As the researcher subagent, my first step is to look up the relevant documentation. I used the search tool with the query \"Braintrust Eve instrumentation e2e scenario\" and found a result titled \"Eve instrumentation\" with the URL provided. Now, I need to confirm that this documentation covers the e2e scenario. The title seems relevant, but I should check if the content includes steps or guides for running such a scenario. Since I can't browse the link, I'll rely on the title and the assumption that the documentation is accurate. The next step is to inform the user of the research result, citing the title and URL. I should keep the response concise and directly address the task. No further tool calls are needed here since the search result provides the necessary information. I'll format the answer as instructed, starting with \"Researcher result:\" followed by the title and URL.\n"
+    │                     "content": "\nOkay, the user asked me to run the Braintrust Eve instrumentation end-to-end scenario again. As the researcher subagent, I need to check the documentation first. I used the search tool with the exact query they provided. The result came back with the title \"Eve instrumentation\" and a URL. Now, I should present that information clearly. The instructions say to start the answer with \"Researcher result:\" and include the title and URL. I need to make sure it's a single sentence. Let me format it correctly.\n"
     │                   }
     │                 ],
     │                 "role": "assistant"
@@ -624,11 +652,11 @@ span_tree:
     │             "testRunId": "<run:1>"
     │           }
     │           metrics: {
-    │             "completion_tokens": 221,
+    │             "completion_tokens": 145,
     │             "prompt_cache_creation_tokens": 0,
     │             "prompt_cached_tokens": 0,
-    │             "prompt_tokens": 3256,
-    │             "tokens": 3477
+    │             "prompt_tokens": 3291,
+    │             "tokens": 3436
     │           }
     ├── read [tool]
     │   input: {
@@ -649,7 +677,7 @@ span_tree:
     └── eve.step [llm]
         input: [
           {
-            "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
+            "content": "Instructions (instructions)\nYou are a deterministic fixture agent for Braintrust Eve instrumentation tests.\n\nFor every user task, follow these steps exactly:\n\n1. Your first response MUST contain exactly these two tool calls and no text:\n   - researcher with only this argument: {\"message\":\"<the full user message>\"}.\n     Copy the current user message verbatim, including words such as \"again\";\n     never reuse a message from an earlier turn. Do not pass outputSchema.\n   - read with only this argument:\n     {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n     Emit both calls simultaneously in the same response, with researcher first\n     and read second, so Eve executes them as one parallel batch. The calls are\n     independent. NEVER call one by itself, wait for its result, or emit either\n     call in a separate response.\n2. If a tool result says \"Started task\", your next response MUST be exactly one\n   task_wait call with no arguments and no text.\n3. Only after both results are available, answer with a single sentence that\n   starts with \"Final answer from read:\" and includes the researcher result, read\n   title, URL, and read excerpt.\n\nTool execution\nA single tool or subagent call runs as one serial action. If you call multiple independent tools or subagents in one response, eve treats that batch as parallel work. Only batch work that is independent and does not rely on another call in the same response.",
             "role": "system"
           },
           {
@@ -659,7 +687,7 @@ span_tree:
           {
             "content": [
               {
-                "text": "Okay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which typically stands for end-to-end testing. So, they probably want to simulate or execute a full workflow within the Eve instrumentation setup.\n\nFirst, I need to check the available tools. The user provided a list of functions, including researcher, read, and others. The instructions say that for every user task, I must first make two tool calls: researcher with the user's message and read with the URL to the instrumentation guide. Then, after getting both results, I should generate a final answer combining the researcher's output, the read title, URL, and excerpt.\n\nSo, the first step is to call the researcher function with the user's message. The message here is \"Run the Braintrust Eve instrumentation e2e scenario.\" I need to pass this exactly as is. Then, I need to call the read function with the URL https://eve.dev/docs/guides/instrumentation. \n\nWait, the user might be expecting me to follow the steps outlined in the documentation. The read function will fetch the content from that URL, which is the guide. The researcher function might be used to query the documentation before reading it. But according to the instructions, I must emit both calls simultaneously. \n\nOnce both responses are available, I need to compile the final answer. The final answer should start with \"Final answer from read:\" and include the researcher result, the title of the read content, the URL, and an excerpt from the read. \n\nI should make sure not to include any other text besides the two tool calls in the initial response. No explanations, just the JSON objects within the tool_call tags. Then, after receiving the results, structure the final answer properly. \n\nI need to verify that I'm not missing any steps. The user's instruction is straightforward, but I have to follow the exact process: two tool calls first, then the final answer. No deviations. Also, ensure that the researcher's message is the exact user input, and the read URL is correct. \n\nI think that's all. Let me structure the tool calls correctly.\n",
+                "text": "\nOkay, the user wants me to run the Braintrust Eve instrumentation end-to-end scenario. Let me start by understanding what that entails. The user mentioned \"e2e scenario,\" which typically stands for end-to-end testing. So, I need to follow the steps outlined in the Braintrust Eve documentation to set up and execute these tests.\n\nFirst, I should check the available tools. The user provided a list of functions, including researcher, read, and others. The researcher function is for researching the Eve instrumentation documentation before the parent reads it. The read function is for reading a deterministic Eve documentation page fixture. \n\nThe instructions say that for every user task, I must first call the researcher with the user's message and then read the specific documentation URL. The user's message here is \"Run the Braintrust Eve instrumentation e2e scenario.\" So, I need to use the researcher tool with that message. Then, I have to call the read tool with the URL \"https://eve.dev/docs/guides/instrumentation\" to get the necessary documentation.\n\nWait, the user's exact instruction is to run the e2e scenario. But according to the steps provided in the initial instructions, the first response must contain exactly the researcher and read tool calls. So, I can't proceed further without those. The researcher will send the message to the subagent for research, and the read will fetch the documentation. \n\nAfter those two calls, once the results are available, I need to compile a final answer that includes the researcher's result, the read title, URL, and excerpt. But the user hasn't provided any prior messages, so this is the first interaction. Therefore, I must strictly follow the steps: first, make the two tool calls, then wait for their results, and then generate the final answer.\n\nI need to ensure that the researcher's argument is exactly the user's message, which is \"Run the Braintrust Eve instrumentation e2e scenario.\" The read tool's argument is the fixed URL. Both calls must be in the same response, researcher first, then read. No other text or calls are allowed at this stage. \n\nOnce those are executed, if the tool results say \"Started task,\" the next step would be to call task_wait. But since the user hasn't mentioned any specific steps beyond the initial request, I need to stick to the initial instructions. After both results are in, the final answer should start with \"Final answer from read:\" and include the necessary details from the researcher result, the read title, URL, and excerpt.\n\nSo, the immediate action is to generate the two tool calls as specified. No other steps can be taken until those are processed. I must not add any extra text or calls. Just the two tool calls in the correct order.\n",
                 "type": "reasoning"
               },
               {
@@ -705,7 +733,7 @@ span_tree:
               {
                 "output": {
                   "type": "text",
-                  "value": "Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)"
+                  "value": "Researcher result: The Eve instrumentation guide provides documentation for the Braintrust Eve instrumentation e2e scenario. [View documentation](https://eve.dev/docs/guides/instrumentation)"
                 },
                 "toolCallId": "<toolCallId:1>",
                 "toolName": "researcher",
@@ -717,11 +745,11 @@ span_tree:
           {
             "content": [
               {
-                "text": "Okay, let me process what's needed here. The user asked to run the Braintrust Eve instrumentation e2e scenario. According to the instructions, I first made the two required tool calls: researcher with the user's message and read with the documentation URL. Now, I have the results from those calls.\n\nThe researcher tool was used to send the message \"Run the Braintrust Eve instrumentation e2e scenario\" to the subagent. The read tool fetched the documentation page, which has a title \"Eve instrumentation\", a URL, and an excerpt mentioning that Eve hooks expose runtime stream events mapped into a nested turn trace.\n\nNow, I need to construct the final answer. The instructions specify that it should start with \"Final answer from read:\", include the researcher result, the title, URL, and excerpt. The researcher result here is the link to the documentation. The read response provided the title, URL, and excerpt. \n\nI should verify that all required elements are included. The researcher result is the link, the title is \"Eve instrumentation\", the URL is the one provided, and the excerpt is the text about runtime context. Putting it all together in a single sentence as specified. No markdown, just plain text. Let me check for any missing parts or formatting issues. Looks good. Time to compose the final answer.\n",
+                "text": "\nOkay, let's see. The user asked to run the Braintrust Eve instrumentation e2e scenario. The first step was to call the researcher and read tools. The researcher's response mentioned that the Eve instrumentation guide has documentation for the e2e scenario. The read tool's result gave a snippet about Eve hooks exposing runtime stream events mapped into a nested turn trace.\n\nNow, the next step is to compile the final answer. The instructions say to start with \"Final answer from read:\" and include the researcher result, read title, URL, and excerpt. The researcher result is the message about the documentation. The read result has the title \"Eve instrumentation\", URL, and the excerpt about runtime context. \n\nI need to make sure all those elements are included. Also, check if there's any other information needed. Since the user's task was to run the scenario, maybe the answer should confirm that the documentation is ready. But according to the steps, just present the gathered info. No markdown, just a single sentence. Let me structure it properly.\n",
                 "type": "reasoning"
               },
               {
-                "text": "Final answer from read: Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation). Title: Eve instrumentation. URL: https://eve.dev/docs/guides/instrumentation. Excerpt: \"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"",
+                "text": "Final answer from read: Researcher result: The Eve instrumentation guide provides documentation for the Braintrust Eve instrumentation e2e scenario. [View documentation](https://eve.dev/docs/guides/instrumentation). Read title: Eve instrumentation, URL: https://eve.dev/docs/guides/instrumentation, Excerpt: \"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"",
                 "type": "text"
               }
             ],
@@ -734,7 +762,7 @@ span_tree:
           {
             "content": [
               {
-                "text": "Okay, the user wants me to run the Braintrust Eve instrumentation e2e scenario again. Let me check the previous interaction to make sure I follow the correct steps.\n\nIn the first run, the user said \"Run the Braintrust Eve instrumentation e2e scenario,\" and I called the researcher and read tools. The researcher was given the message \"Run the Braintrust Eve instrumentation e2e scenario,\" and the read tool accessed the specified URL. Then, after getting the response, I provided the final answer combining the researcher result and the read excerpt.\n\nNow the user is asking to do it again. The instructions say that for every user task, I must first make the two tool calls: researcher with the full user message and read with the URL. I need to ensure that I don't reuse any previous messages and that both calls are made in the same response. Then, once both results are available, I answer with the single sentence starting with \"Final answer from read:\" including all the required details.\n\nSo, the next step is to generate the two tool calls again. The user's message is \"Run the Braintrust Eve instrumentation e2e scenario again,\" so the researcher argument should be exactly that. The read tool will use the same URL as before. I need to make sure the JSON is correctly formatted and that both tool calls are in the same response. After that, when the tool responses come back, I'll structure the final answer as instructed.\n",
+                "text": "\nOkay, the user wants to run the Braintrust Eve instrumentation e2e scenario again. Let me check the previous interaction.\n\nIn the history, the user first asked to run the scenario, and I called the researcher and read tools. The researcher's response mentioned the documentation, and the read tool provided an excerpt. Then the user said \"again,\" so I need to handle that.\n\nWait, the user's current message is \"Run the Braintrust Eve instrumentation e2e scenario again.\" So, following the instructions, I need to make sure I do exactly what's specified. The first step is to call researcher with the full user message and read with the given URL. But the user mentioned \"again,\" so I need to make sure the message is the same as the current one. \n\nWait, the instructions say that for every user task, the first response must have exactly the two tool calls: researcher with the full user message and read with the URL. The user's message here is \"Run the Braintrust Eve instrumentation e2e scenario again.\" So I need to pass that exact message to the researcher. Also, the read URL is fixed as https://eve.dev/docs/guides/instrumentation. \n\nI should not reuse any previous messages. So even though the user said \"again,\" the message argument for researcher should be the exact current message. Then, the read tool is called again with the same URL. \n\nAfter that, if the tool results come back, I need to wait for both, then provide the final answer. The previous example had the final answer combining the researcher result, read title, URL, and excerpt. \n\nSo the steps are: call researcher with the current message, call read with the URL, wait for both results, then format the final answer. \n\nI need to make sure that the researcher's message is exactly the user's current input, which includes \"again.\" So the researcher call is {\"message\":\"Run the Braintrust Eve instrumentation e2e scenario again\"}.\n\nThen the read call is {\"url\":\"https://eve.dev/docs/guides/instrumentation\"}.\n\nOnce both are done, the final answer would include the researcher's result, the read title, URL, and excerpt. The previous example had the researcher result as a link, so maybe the same here. The read excerpt is from the tool response, which in the previous case was about Eve hooks and runtime events.\n\nSo the final answer would be structured as before, but with the current message. I need to make sure that the researcher's result is correctly quoted, and the read details are included.\n",
                 "type": "reasoning"
               },
               {
@@ -780,7 +808,7 @@ span_tree:
               {
                 "output": {
                   "type": "text",
-                  "value": "Researcher result: Eve instrumentation https://eve.dev/docs/guides/instrumentation"
+                  "value": "Researcher result: The documentation for \"Eve instrumentation\" can be found at [Eve instrumentation](https://eve.dev/docs/guides/instrumentation)."
                 },
                 "toolCallId": "<toolCallId:3>",
                 "toolName": "researcher",
@@ -795,10 +823,10 @@ span_tree:
             "finish_reason": "stop",
             "index": 0,
             "message": {
-              "content": "Final answer from read: Researcher result: [Eve instrumentation](https://eve.dev/docs/guides/instrumentation). Title: Eve instrumentation. URL: https://eve.dev/docs/guides/instrumentation. Excerpt: \"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"",
+              "content": "Final answer from read: Researcher result: The documentation for \"Eve instrumentation\" can be found at [Eve instrumentation](https://eve.dev/docs/guides/instrumentation). Read title: Eve instrumentation, URL: https://eve.dev/docs/guides/instrumentation, Excerpt: \"Eve hooks expose runtime stream events that Braintrust maps into a nested turn trace.\"",
               "reasoning": [
                 {
-                  "content": "Okay, the user asked to run the Braintrust Eve instrumentation e2e scenario again. I need to follow the same steps as before. First, call the researcher with the exact user message, which is \"Run the Braintrust Eve instrumentation e2e scenario again\". Then, use the read tool to fetch the documentation from the same URL. Once both responses are received, compile the final answer with the researcher result, title, URL, and excerpt. Make sure the final answer is a single sentence starting with \"Final answer from read:\" and includes all the required details. Check that the researcher result is correctly formatted as a link and that the excerpt matches the provided data. Alright, everything seems in order.\n"
+                  "content": "\nOkay, let me process this step by step. The user asked to run the Braintrust Eve instrumentation e2e scenario again. According to the instructions, my first response must include two tool calls: researcher with the user's exact message and read with the specified URL. I did that, and both tool results are now available.\n\nThe researcher tool's response mentions the documentation link, and the read tool provided an excerpt about Eve hooks and runtime events. Now, I need to formulate the final answer. It should start with \"Final answer from read:\" and include the researcher result, read title, URL, and excerpt. I'll make sure to structure it correctly, ensuring all required elements are present and formatted properly. No additional text or explanations are needed, just the single sentence as specified.\n"
                 }
               ],
               "role": "assistant"
@@ -813,9 +841,9 @@ span_tree:
           "testRunId": "<run:1>"
         }
         metrics: {
-          "completion_tokens": 213,
+          "completion_tokens": 242,
           "prompt_cache_creation_tokens": 0,
           "prompt_cached_tokens": 0,
-          "prompt_tokens": 4329,
-          "tokens": 4542
+          "prompt_tokens": 4654,
+          "tokens": 4896
         }

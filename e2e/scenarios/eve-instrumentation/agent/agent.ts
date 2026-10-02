@@ -21,7 +21,7 @@ const providerInstrumentation =
   process.env.EVE_INSTRUMENTATION_PROVIDER === "1";
 
 export default defineAgent({
-  ...(providerInstrumentation
+  ...(process.env.EVE_EXPERIMENTAL_INSTRUMENTATION_PROVIDERS === "1"
     ? { experimental: { instrumentationProviders: true } }
     : {}),
   model: defineDynamic({
@@ -29,9 +29,9 @@ export default defineAgent({
     events: {
       "step.started": () =>
         providerInstrumentation
-          ? { model: dynamicModel, modelContextWindowTokens: 8_192 }
+          ? { model: dynamicModel, modelContextWindowTokens: 32_768 }
           : dynamicModel,
     },
   } as never),
-  ...(providerInstrumentation ? {} : { modelContextWindowTokens: 8_192 }),
+  ...(providerInstrumentation ? {} : { modelContextWindowTokens: 32_768 }),
 } as never);

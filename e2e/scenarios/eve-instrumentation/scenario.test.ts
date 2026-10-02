@@ -25,31 +25,38 @@ const scenarioDir = await prepareScenarioDir({
 const eveScenarios = await Promise.all(
   [
     {
-      cassetteKey: "eve-v0",
       dependencyName: "eve-v0",
       label: "v0 pinned",
       provider: false,
+      tasks: false,
       variantKey: "eve-v0",
     },
     {
-      cassetteKey: "eve-v0-latest",
       dependencyName: "eve-v0-provider",
       label: "v0 provider minimum",
       provider: true,
+      tasks: false,
       variantKey: "eve-v0-provider",
     },
     {
-      cassetteKey: "eve-v0-latest",
       dependencyName: "eve-v0-latest-pinned",
       label: "v0 latest pinned",
       provider: true,
+      tasks: false,
       variantKey: "eve-v0-latest-pinned",
     },
     {
-      cassetteKey: "eve-v0-latest",
+      dependencyName: "eve-v0-70",
+      label: "v0.70 pinned",
+      provider: true,
+      tasks: true,
+      variantKey: "eve-v0-70",
+    },
+    {
       dependencyName: "eve-v0-latest",
       label: "v0 latest",
       provider: true,
+      tasks: true,
       variantKey: "eve-v0-latest",
     },
   ].map(async (scenario) => ({
@@ -84,7 +91,6 @@ describe.sequential("eve instrumentation variants", () => {
                 NODE_ENV: "development",
               },
               runContext: {
-                cassette: { variantKey: scenario.cassetteKey },
                 originalScenarioDir,
                 variantKey: scenario.variantKey,
               },
@@ -162,20 +168,30 @@ describe.sequential("eve instrumentation variants", () => {
         });
         expect(root?.metadata).not.toHaveProperty("model");
         expect(root?.metadata).not.toHaveProperty("provider");
+        expect(root?.input).toEqual([
+          {
+            content: "Run the Braintrust Eve instrumentation e2e scenario",
+            role: "user",
+          },
+        ]);
+        expect(root?.output).toContain("Final answer from read");
         if (scenario.provider) {
           expect(root?.metrics).not.toHaveProperty("completion_tokens");
           expect(root?.metrics).not.toHaveProperty("prompt_tokens");
           expect(root?.metrics).not.toHaveProperty("tokens");
-          expect(root?.output).toBeUndefined();
         } else {
           expect(root?.metrics?.completion_tokens).toEqual(expect.any(Number));
           expect(root?.metrics?.prompt_tokens).toEqual(expect.any(Number));
           expect(root?.metrics?.tokens).toEqual(expect.any(Number));
-          expect(root?.output).toContain("Final answer from read");
         }
 
-        expect(steps).toHaveLength(2);
-        expect(steps.map((step) => step.span.type)).toEqual(["llm", "llm"]);
+        // Eve 0.70+ runs the researcher as a task, so the parent waits for its
+        // result in an extra step before answering.
+        const parentStepCount = scenario.tasks ? 3 : 2;
+        expect(steps).toHaveLength(parentStepCount);
+        expect(steps.map((step) => step.span.type)).toEqual(
+          Array(parentStepCount).fill("llm"),
+        );
         expect(steps[0]?.output).toMatchObject([
           {
             finish_reason: "tool_calls",
@@ -188,7 +204,19 @@ describe.sequential("eve instrumentation variants", () => {
             },
           },
         ]);
-        expect(steps[1]?.output).toMatchObject([
+        if (scenario.tasks) {
+          expect(steps[1]?.output).toMatchObject([
+            {
+              finish_reason: "tool_calls",
+              message: {
+                tool_calls: [
+                  { function: { name: "task_wait" }, type: "function" },
+                ],
+              },
+            },
+          ]);
+        }
+        expect(steps[parentStepCount - 1]?.output).toMatchObject([
           {
             finish_reason: "stop",
             message: {
@@ -232,7 +260,11 @@ describe.sequential("eve instrumentation variants", () => {
           scenario: "eve-instrumentation",
           testRunId: expect.any(String),
         });
-        expect(researcher?.output).toContain("Researcher result");
+        // Eve 0.70+ runs subagents as tasks, so the call returns a receipt and
+        // the result reaches the parent in a later step.
+        expect(researcher?.output).toContain(
+          scenario.tasks ? "Started task researcher-" : "Researcher result",
+        );
         expect(researcher?.error).toBeUndefined();
 
         expect(childTurn).toBeDefined();
@@ -256,6 +288,15 @@ describe.sequential("eve instrumentation variants", () => {
         expect(childTurn?.metadata?.["eve.session_id"]).not.toEqual(
           root?.metadata?.["eve.session_id"],
         );
+        expect(childTurn?.input).toEqual([
+          {
+            content: expect.stringContaining(
+              'You are the subagent "researcher"',
+            ),
+            role: "user",
+          },
+        ]);
+        expect(childTurn?.output).toContain("Researcher result");
 
         expect(childSteps).toHaveLength(2);
         for (const step of childSteps) {
@@ -320,16 +361,18 @@ describe.sequential("eve instrumentation variants", () => {
         });
         expect(secondRoot?.metadata).not.toHaveProperty("model");
         expect(secondRoot?.metadata).not.toHaveProperty("provider");
-        if (scenario.provider) {
-          expect(secondRoot?.output).toBeUndefined();
-        } else {
-          expect(secondRoot?.output).toContain("Final answer from read");
-        }
-        expect(secondSteps).toHaveLength(2);
-        expect(secondSteps.map((step) => step.span.type)).toEqual([
-          "llm",
-          "llm",
+        expect(secondRoot?.input).toEqual([
+          {
+            content:
+              "Run the Braintrust Eve instrumentation e2e scenario again",
+            role: "user",
+          },
         ]);
+        expect(secondRoot?.output).toContain("Final answer from read");
+        expect(secondSteps).toHaveLength(parentStepCount);
+        expect(secondSteps.map((step) => step.span.type)).toEqual(
+          Array(parentStepCount).fill("llm"),
+        );
         for (const step of secondSteps) {
           expect(step.metadata).toMatchObject({
             "eve.session_id": secondRoot?.metadata?.["eve.session_id"],
@@ -359,7 +402,19 @@ describe.sequential("eve instrumentation variants", () => {
             },
           },
         ]);
-        expect(secondSteps[1]?.output).toMatchObject([
+        if (scenario.tasks) {
+          expect(secondSteps[1]?.output).toMatchObject([
+            {
+              finish_reason: "tool_calls",
+              message: {
+                tool_calls: [
+                  { function: { name: "task_wait" }, type: "function" },
+                ],
+              },
+            },
+          ]);
+        }
+        expect(secondSteps[parentStepCount - 1]?.output).toMatchObject([
           {
             finish_reason: "stop",
             message: {
@@ -417,10 +472,9 @@ describe.sequential("eve instrumentation variants", () => {
         }
 
         const snapshotEvents = JSON.parse(
-          JSON.stringify(events).replace(
-            /ag_researcher:[0-9a-f]+/g,
-            "ag_researcher:<id>",
-          ),
+          JSON.stringify(events)
+            .replace(/ag_researcher:[0-9a-f]+/g, "ag_researcher:<id>")
+            .replace(/\bresearcher-[a-z0-9]{6}\b/g, "researcher-<id>"),
         ) as CapturedLogEvent[];
         await matchSpanTreeSnapshot(
           snapshotEvents,
