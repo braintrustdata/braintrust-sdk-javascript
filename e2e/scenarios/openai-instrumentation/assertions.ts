@@ -1,6 +1,3 @@
-import { existsSync } from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, test } from "vitest";
 import type { CapturedLogEvent } from "../../helpers/mock-braintrust-server";
 import type { Json } from "../../helpers/normalize";
@@ -43,13 +40,15 @@ type RunOpenAIScenario = (harness: {
 type RelevantEvent = {
   event: CapturedLogEvent;
   summaryName?: string;
+  timingDependent?: boolean;
 };
 
 type OperationSpec = {
   childNames: readonly string[];
   nestedChildNames?: readonly string[];
   nestedSpanCount?: number;
-  expectsOutput: boolean;
+  // Leave unset when the output depends on stream timing.
+  expectsOutput?: boolean;
   expectsModel?: boolean;
   expectsTimeToFirstToken: boolean;
   expectsError?: boolean;
@@ -91,6 +90,14 @@ function validateStreamFixtureOutput(span: CapturedLogEvent | undefined): void {
     }),
   );
   expect(message?.refusal).toBe("NOPE");
+}
+
+function validateIncompleteResponse(span: CapturedLogEvent | undefined): void {
+  expect(span?.row.metadata).toMatchObject({
+    incomplete_details: { reason: "max_output_tokens" },
+    status: "incomplete",
+  });
+  expect(span?.metrics?.completion_tokens).toEqual(expect.any(Number));
 }
 
 function validateMultipleChoicesStreamOutput(
@@ -634,11 +641,32 @@ const OPERATION_SPECS: readonly OperationSpec[] = [
   },
   {
     childNames: ["openai.responses.create"],
-    expectsOutput: false,
+    // The SDK still emits the events it buffered before the caller broke out,
+    // so whether the terminal event lands on the span depends on timing.
     expectsTimeToFirstToken: true,
     name: "openai-responses-stream-partial-operation",
     operation: "responses-stream-partial",
-    testName: "captures partial streamed responses before final output",
+    testName:
+      "captures trace when breaking out of client.responses.stream() early",
+  },
+  {
+    childNames: ["openai.responses.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-responses-create-stream-incomplete-operation",
+    operation: "responses-create-stream-incomplete",
+    testName:
+      "captures incomplete responses from client.responses.create({ stream: true })",
+    validate: validateIncompleteResponse,
+  },
+  {
+    childNames: ["openai.responses.create"],
+    expectsOutput: true,
+    expectsTimeToFirstToken: true,
+    name: "openai-responses-stream-incomplete-operation",
+    operation: "responses-stream-incomplete",
+    testName: "captures incomplete responses from client.responses.stream()",
+    validate: validateIncompleteResponse,
   },
   {
     childNames: ["openai.responses.parse", "openai.responses.create"],
@@ -971,6 +999,7 @@ function buildRelevantEvents(
     relevantEvents.push({
       event: providerSpan,
       summaryName: spec.childNames[0],
+      timingDependent: spec.expectsOutput === undefined,
     });
     if (spec.nestedChildNames) {
       relevantEvents.push(
@@ -994,11 +1023,16 @@ function buildSpanTree(
   operationSpecs: OperationSpec[],
 ): SpanTreeEntry[] {
   return buildRelevantEvents(events, operationSpecs).map(
-    ({ event, summaryName }) => {
+    ({ event, summaryName, timingDependent }) => {
+      const fields = spanTreeFields(event);
       return {
         event,
         fields: {
-          ...spanTreeFields(event),
+          // Output, metadata and metrics of timing-dependent spans vary
+          // between runs, so only snapshot what the caller passed in.
+          ...(timingDependent
+            ? { span_attributes: fields.span_attributes, input: fields.input }
+            : fields),
           context: event.context,
         },
         name: summaryName ?? event.span.name,
@@ -1009,7 +1043,6 @@ function buildSpanTree(
 
 export function defineOpenAIInstrumentationAssertions(options: {
   assertPrivateFieldMethodsOperation?: boolean;
-  cassetteName?: string;
   name: string;
   runScenario: RunOpenAIScenario;
   snapshotName: string;
@@ -1127,20 +1160,6 @@ export function defineOpenAIInstrumentationAssertions(options: {
       },
     );
 
-    const scenarioDir = path.dirname(fileURLToPath(options.testFileUrl));
-    const cassetteMode = process.env.BRAINTRUST_E2E_CASSETTE_MODE;
-    const cassetteEngaged =
-      cassetteMode === "record" ||
-      cassetteMode === "record-missing" ||
-      cassetteMode === "replay" ||
-      existsSync(
-        path.join(
-          scenarioDir,
-          "__cassettes__",
-          `${options.cassetteName ?? options.snapshotName}.cassette.json`,
-        ),
-      );
-
     for (const spec of operationSpecs) {
       test(spec.testName, testConfig, () => {
         const root = findLatestSpan(events, ROOT_NAME);
@@ -1169,11 +1188,7 @@ export function defineOpenAIInstrumentationAssertions(options: {
 
         if (spec.expectsOutput) {
           expect(span?.output).toBeDefined();
-        } else if (!cassetteEngaged) {
-          // Under cassette replay, partial-stream tests can't reliably
-          // produce undefined output: the recorded SSE chunks deliver
-          // faster than the consumer can `break` out of the iteration.
-          // Only enforce the strict expectation against the live API.
+        } else if (spec.expectsOutput === false) {
           expect(span?.output).toBeUndefined();
         }
 

@@ -1029,6 +1029,39 @@ export async function runOpenAIInstrumentationScenario(options) {
             max_output_tokens: 24,
           });
           await collectOneAndReturn(stream);
+          // The SDK keeps emitting events it already buffered after the
+          // break. Wait for the aborted stream to settle so the span doesn't
+          // depend on how much work runs after this operation.
+          await stream.done().catch(() => {});
+        },
+      );
+
+      await runOperation(
+        "openai-responses-create-stream-incomplete-operation",
+        "responses-create-stream-incomplete",
+        async () => {
+          const { data: responseStream } = await awaitMaybeWithResponse(
+            client.responses.create({
+              model: OPENAI_MODEL,
+              input: "Count from 1 to 100, separated by commas.",
+              max_output_tokens: 16,
+              stream: true,
+            }),
+          );
+          await collectAsync(responseStream);
+        },
+      );
+
+      await runOperation(
+        "openai-responses-stream-incomplete-operation",
+        "responses-stream-incomplete",
+        async () => {
+          const stream = client.responses.stream({
+            model: OPENAI_MODEL,
+            input: "Count from 100 down to 1, separated by commas.",
+            max_output_tokens: 16,
+          });
+          await collectAsync(stream);
         },
       );
 

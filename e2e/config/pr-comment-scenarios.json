@@ -752,6 +752,17 @@
     ]
   },
   {
+    "scenarioDirName": "workflow-eval-batch",
+    "label": "Workflow Eval Batch",
+    "metadataScenario": "workflow-eval-batch",
+    "evals": [
+      {
+        "experimentNameTemplate": "workflow-eval-batch-{testRunId}",
+        "label": "batch"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "nextjs-instrumentation",
     "label": "Next.js Instrumentation",
     "metadataScenario": "nextjs-instrumentation",

@@ -222,10 +222,7 @@ function expectSpanUsageToMatch(
     prompt_tokens: expectedMetrics.prompt_tokens,
     tokens: expectedMetrics.tokens,
   });
-  if (
-    expectedMetrics.prompt_cache_creation_5m_tokens !== undefined ||
-    expectedMetrics.prompt_cache_creation_1h_tokens !== undefined
-  ) {
+  if (expectedMetrics.prompt_cache_creation_tokens === undefined) {
     expect(span?.metrics?.prompt_cache_creation_tokens).toBeUndefined();
   }
 }
@@ -353,6 +350,47 @@ function findLatestTaskLlmBeforeSpan(
       );
     })
     .at(-1);
+}
+
+type ClaudeAgentResultUsage = {
+  modelUsage: Record<
+    string,
+    {
+      inputTokens: number;
+      outputTokens: number;
+      cacheReadInputTokens: number;
+      cacheCreationInputTokens: number;
+      costUSD: number;
+    }
+  >;
+  total_cost_usd: number;
+};
+
+/** Derives the expected all-agent usage from the SDK result logged by the scenario. */
+function findAllAgentUsage(events: CapturedLogEvent[], operationName: string) {
+  const operation = findLatestSpan(events, operationName);
+  const result = findChildSpans(
+    events,
+    "claude-agent-result-usage",
+    operation?.span.id,
+  ).at(-1)?.output as ClaudeAgentResultUsage;
+  const totalUsage = {
+    input_tokens: 0,
+    output_tokens: 0,
+    cache_read_input_tokens: 0,
+    cache_creation_input_tokens: 0,
+  };
+  for (const usage of Object.values(result.modelUsage)) {
+    totalUsage.input_tokens += usage.inputTokens;
+    totalUsage.output_tokens += usage.outputTokens;
+    totalUsage.cache_read_input_tokens += usage.cacheReadInputTokens;
+    totalUsage.cache_creation_input_tokens += usage.cacheCreationInputTokens;
+  }
+  return {
+    root: findOperationTaskRoot(events, operationName),
+    result,
+    totalUsage,
+  };
 }
 
 function findOperationTaskRoot(
@@ -597,13 +635,6 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
 
         expect(expectedUsage?.length).toBeGreaterThan(1);
         expect(llmSpans).toHaveLength(expectedUsage?.length ?? 0);
-        expect(task?.metrics?.prompt_tokens).toBeUndefined();
-        expect(task?.metrics?.completion_tokens).toBeUndefined();
-        expect(task?.metrics?.tokens).toBeUndefined();
-        expect(task?.metrics?.prompt_cached_tokens).toBeUndefined();
-        expect(task?.metrics?.prompt_cache_creation_tokens).toBeUndefined();
-        expect(task?.metrics?.prompt_cache_creation_5m_tokens).toBeUndefined();
-        expect(task?.metrics?.prompt_cache_creation_1h_tokens).toBeUndefined();
 
         for (const [index, expected] of (expectedUsage ?? []).entries()) {
           expectSpanUsageToMatch(llmSpans[index], expected);
@@ -687,22 +718,11 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
     );
 
     test(
-      "stores aggregate usage only on tasks without partial messages",
+      "stores aggregate usage on tasks without partial messages",
       testConfig,
       () => {
-        const partialOperation = findLatestSpan(
-          events,
-          "claude-agent-basic-operation",
-        );
-        const partialTask = findChildSpans(
-          events,
-          "Claude Agent",
-          partialOperation?.span.id,
-        ).at(-1);
         const aggregateTasks = [
           "claude-agent-async-prompt-operation",
-          "claude-agent-subagent-operation",
-          "claude-agent-subagent-built-in-tool-operation",
           "claude-agent-failure-operation",
         ].map((operationName) => {
           const operation = findLatestSpan(events, operationName);
@@ -711,19 +731,6 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
           );
         });
 
-        expect(partialTask?.metrics?.prompt_tokens).toBeUndefined();
-        expect(partialTask?.metrics?.completion_tokens).toBeUndefined();
-        expect(partialTask?.metrics?.tokens).toBeUndefined();
-        expect(partialTask?.metrics?.prompt_cached_tokens).toBeUndefined();
-        expect(
-          partialTask?.metrics?.prompt_cache_creation_tokens,
-        ).toBeUndefined();
-        expect(
-          partialTask?.metrics?.prompt_cache_creation_5m_tokens,
-        ).toBeUndefined();
-        expect(
-          partialTask?.metrics?.prompt_cache_creation_1h_tokens,
-        ).toBeUndefined();
         for (const task of aggregateTasks) {
           expect(task?.metrics).toMatchObject({
             completion_tokens: expect.any(Number),
@@ -734,6 +741,82 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
             Number(task?.metrics?.prompt_tokens) +
               Number(task?.metrics?.completion_tokens),
           );
+        }
+      },
+    );
+
+    test.each([
+      "claude-agent-basic-operation",
+      "claude-agent-subagent-operation",
+    ])(
+      "reports unstreamed all-agent usage on the task span with partial messages for %s",
+      testConfig,
+      (operationName) => {
+        const { root, result, totalUsage } = findAllAgentUsage(
+          events,
+          operationName,
+        );
+
+        expect(root?.row.metadata).toMatchObject({
+          total_cost_usd: result.total_cost_usd,
+        });
+        // Only the unlogged usage is priced on the task span.
+        if (
+          root?.metrics?.prompt_tokens === undefined &&
+          root?.metrics?.completion_tokens === undefined
+        ) {
+          expect(root?.metrics?.estimated_cost).toBeUndefined();
+        } else {
+          expect(root?.metrics?.estimated_cost).toBeGreaterThan(0);
+          expect(root?.metrics?.estimated_cost).toBeLessThan(
+            result.total_cost_usd,
+          );
+        }
+        const llms = findAllSpans(events, "anthropic.messages.create").filter(
+          (event) => isDescendantOf(events, event, root?.span.id),
+        );
+        expect(llms.length).toBeGreaterThan(0);
+        for (const llm of llms) {
+          expect(llm.metrics?.prompt_tokens).toBeGreaterThan(0);
+          if (llm.span.parentIds[0] === root?.span.id) {
+            expect(llm.metrics?.completion_tokens).toBeGreaterThan(0);
+          }
+        }
+        const sumMetric = (key: string) =>
+          [root, ...llms].reduce(
+            (sum, event) => sum + Number(event?.metrics?.[key] ?? 0),
+            0,
+          );
+        expect(sumMetric("prompt_tokens")).toBe(
+          totalUsage.input_tokens +
+            totalUsage.cache_read_input_tokens +
+            totalUsage.cache_creation_input_tokens,
+        );
+        expect(sumMetric("completion_tokens")).toBe(totalUsage.output_tokens);
+      },
+    );
+
+    test(
+      "aggregates all-agent usage on the task span without partial messages",
+      testConfig,
+      () => {
+        const { root, result, totalUsage } = findAllAgentUsage(
+          events,
+          "claude-agent-subagent-built-in-tool-operation",
+        );
+
+        expect(Object.keys(result.modelUsage).length).toBeGreaterThan(1);
+        expect(root?.row.metadata).toMatchObject({
+          total_cost_usd: result.total_cost_usd,
+        });
+        expectSpanUsageToMatch(root, { usage: totalUsage });
+        expect(root?.metrics?.estimated_cost).toBe(result.total_cost_usd);
+        const llms = findAllSpans(events, "anthropic.messages.create").filter(
+          (event) => isDescendantOf(events, event, root?.span.id),
+        );
+        expect(llms.length).toBeGreaterThan(0);
+        for (const llm of llms) {
+          expect(llm.metrics?.tokens).toBeUndefined();
         }
       },
     );
@@ -967,7 +1050,9 @@ export function defineClaudeAgentSDKInstrumentationAssertions(options: {
       async ({ expect }) => {
         await matchSpanTreeSnapshot(
           events.filter(
-            (event) => event.span.name !== "claude-agent-basic-partial-usage",
+            (event) =>
+              event.span.name !== "claude-agent-basic-partial-usage" &&
+              event.span.name !== "claude-agent-result-usage",
           ),
           snapshotPath,
           {

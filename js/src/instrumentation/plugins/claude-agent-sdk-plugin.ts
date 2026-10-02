@@ -30,12 +30,16 @@ import type {
   ClaudeAgentSDKHookCallbackMatcher,
   ClaudeAgentSDKMcpServersConfig,
   ClaudeAgentSDKMessage,
+  ClaudeAgentSDKModelUsage,
   ClaudeAgentSDKQueryOptions,
   ClaudeAgentSDKQueryParams,
   ClaudeAgentSDKUsage,
 } from "../../vendor-sdk-types/claude-agent-sdk";
 
 type ClaudeConversationMessage = { content: unknown; role: string };
+type ClaudeAgentSDKUsageTotals = Required<
+  Omit<ClaudeAgentSDKUsage, "cache_creation">
+>;
 type ParsedToolName = {
   displayName: string;
   mcpServer?: string;
@@ -220,6 +224,13 @@ function tokenCount(value: unknown): number | undefined {
     : undefined;
 }
 
+const USAGE_TOKEN_KEYS = [
+  "input_tokens",
+  "output_tokens",
+  "cache_read_input_tokens",
+  "cache_creation_input_tokens",
+] as const;
+
 /**
  * Snapshots the token fields we understand out of a provider usage object.
  *
@@ -233,12 +244,7 @@ function copyUsage(usage: unknown): ClaudeAgentSDKUsage | undefined {
   }
 
   const copy: ClaudeAgentSDKUsage = {};
-  for (const key of [
-    "input_tokens",
-    "output_tokens",
-    "cache_read_input_tokens",
-    "cache_creation_input_tokens",
-  ] as const) {
+  for (const key of USAGE_TOKEN_KEYS) {
     const value = tokenCount(Reflect.get(usage, key));
     if (value !== undefined) {
       copy[key] = value;
@@ -267,6 +273,49 @@ function copyUsage(usage: unknown): ClaudeAgentSDKUsage | undefined {
   return Object.keys(copy).length > 0 ? copy : undefined;
 }
 
+function modelUsageTotals(
+  usage: ClaudeAgentSDKModelUsage,
+): ClaudeAgentSDKUsageTotals {
+  return {
+    input_tokens: usage.inputTokens,
+    output_tokens: usage.outputTokens,
+    cache_read_input_tokens: usage.cacheReadInputTokens,
+    cache_creation_input_tokens: usage.cacheCreationInputTokens,
+  };
+}
+
+function sumUsageTotals(
+  usages: ClaudeAgentSDKUsageTotals[],
+): ClaudeAgentSDKUsageTotals {
+  const totals = {
+    input_tokens: 0,
+    output_tokens: 0,
+    cache_read_input_tokens: 0,
+    cache_creation_input_tokens: 0,
+  };
+  for (const usage of usages) {
+    for (const key of USAGE_TOKEN_KEYS) {
+      totals[key] += usage[key];
+    }
+  }
+  return totals;
+}
+
+/** Reduces usage to its token totals, counting cache writes like `finalizeAnthropicTokens`. */
+function usageTotals(usage: ClaudeAgentSDKUsage): ClaudeAgentSDKUsageTotals {
+  const cacheCreation = usage.cache_creation;
+  return {
+    input_tokens: usage.input_tokens ?? 0,
+    output_tokens: usage.output_tokens ?? 0,
+    cache_read_input_tokens: usage.cache_read_input_tokens ?? 0,
+    cache_creation_input_tokens: Math.max(
+      usage.cache_creation_input_tokens ?? 0,
+      (cacheCreation?.ephemeral_5m_input_tokens ?? 0) +
+        (cacheCreation?.ephemeral_1h_input_tokens ?? 0),
+    ),
+  };
+}
+
 /** Layers a newer usage snapshot over an older one, field by field. */
 function mergeUsage(
   base: ClaudeAgentSDKUsage | undefined,
@@ -285,6 +334,113 @@ function mergeUsage(
     ...override,
     ...(cacheCreation && { cache_creation: cacheCreation }),
   };
+}
+
+/**
+ * Reduces a model id to its base name, e.g. `claude-haiku-4-5`. Model usage is
+ * keyed by the requested model, which can be an alias or a Bedrock/Vertex id,
+ * while assistant messages carry the dated model that served the request.
+ */
+function baseModelName(model: string): string {
+  return model
+    .replace(/^(?:[a-z]+\.)?anthropic\./, "")
+    .replace(/\[.*\]$/, "")
+    .replace(/-v\d+(?::\d+)?$/, "")
+    .replace(/[-@](?:\d{8}|latest)$/, "")
+    .replace(/-0$/, "");
+}
+
+// Anthropic prices every Claude model with the same input, output, and cache ratios.
+const RELATIVE_TOKEN_PRICES: ClaudeAgentSDKUsageTotals = {
+  input_tokens: 1,
+  output_tokens: 5,
+  cache_read_input_tokens: 0.1,
+  cache_creation_input_tokens: 1.25,
+};
+
+/**
+ * Metrics for the all-agent usage that no LLM span logged, such as sub-agent
+ * output tokens that are never streamed. The tokens are the remainder across
+ * all models, so they don't depend on matching model names. The cost is each
+ * model's share of its `costUSD`, because the task span's model can't price the
+ * other models. When a logged call can't be matched to its model, the cost is
+ * the remainder's share of the total cost instead.
+ */
+function unloggedUsageMetrics(
+  modelUsage: Record<string, ClaudeAgentSDKModelUsage>,
+  loggedLlmUsageByModel: Map<string | undefined, ClaudeAgentSDKUsageTotals>,
+): Record<string, number> {
+  const remainder = (
+    total: ClaudeAgentSDKUsageTotals,
+    logged: ClaudeAgentSDKUsageTotals | undefined,
+  ) => {
+    const unlogged = { ...total };
+    for (const key of USAGE_TOKEN_KEYS) {
+      unlogged[key] = Math.max(0, total[key] - (logged?.[key] ?? 0));
+    }
+    return unlogged;
+  };
+  const relativeCost = (usage: ClaudeAgentSDKUsageTotals) =>
+    USAGE_TOKEN_KEYS.reduce(
+      (cost, key) => cost + usage[key] * RELATIVE_TOKEN_PRICES[key],
+      0,
+    );
+
+  // Several model ids can share a base name, e.g. a `[1m]` and a regular variant.
+  const usageByModel = new Map<
+    string,
+    { costUSD: number; total: ClaudeAgentSDKUsageTotals }
+  >();
+  let totalCost = 0;
+  for (const [model, usage] of Object.entries(modelUsage)) {
+    const baseModel = baseModelName(model);
+    const total = modelUsageTotals(usage);
+    const existing = usageByModel.get(baseModel);
+    if (existing) {
+      existing.costUSD += usage.costUSD;
+      for (const key of USAGE_TOKEN_KEYS) {
+        existing.total[key] += total[key];
+      }
+    } else {
+      usageByModel.set(baseModel, { costUSD: usage.costUSD, total });
+    }
+    totalCost += usage.costUSD;
+  }
+  const total = sumUsageTotals(
+    [...usageByModel.values()].map((usage) => usage.total),
+  );
+  const unlogged = remainder(
+    total,
+    sumUsageTotals([...loggedLlmUsageByModel.values()]),
+  );
+
+  const metrics: Record<string, number> = {};
+  for (const [key, value] of Object.entries(extractUsage(unlogged, true))) {
+    if (value > 0) {
+      metrics[key] = value;
+    }
+  }
+
+  const costShares = [...loggedLlmUsageByModel.keys()].every(
+    (model) => model !== undefined && usageByModel.has(model),
+  )
+    ? [...usageByModel].map(([model, usage]) => ({
+        ...usage,
+        unlogged: remainder(usage.total, loggedLlmUsageByModel.get(model)),
+      }))
+    : [{ costUSD: totalCost, total, unlogged }];
+  let unloggedCost = 0;
+  for (const share of costShares) {
+    const totalRelativeCost = relativeCost(share.total);
+    if (totalRelativeCost > 0) {
+      unloggedCost +=
+        (share.costUSD * relativeCost(share.unlogged)) / totalRelativeCost;
+    }
+  }
+  if (unloggedCost > 0) {
+    metrics.estimated_cost = unloggedCost;
+  }
+  return metrics;
 }
 
 function extractUsage(
@@ -968,6 +1124,7 @@ type QueryState = {
   endedSubAgentSpans: Set<string>;
   finalOutputUsageMessageIds: Set<string>;
   finalResults: ClaudeConversationMessage[];
+  loggedLlmUsageByModel: Map<string | undefined, ClaudeAgentSDKUsageTotals>;
   options: ClaudeAgentSDKQueryOptions;
   originalPrompt: string | AsyncIterable<ClaudeAgentSDKMessage> | undefined;
   processing: Promise<void>;
@@ -1067,6 +1224,23 @@ async function finalizeCurrentMessageGroup(state: QueryState): Promise<void> {
     hasFinalOutputUsage,
     existingLlmSpan,
   );
+
+  if (llmSpanResult && usage) {
+    const callUsage = usageTotals(usage);
+    if (!hasFinalOutputUsage) {
+      callUsage.output_tokens = 0;
+    }
+    const responseModel = lastMessage.message?.model || state.options.model;
+    const model = responseModel ? baseModelName(responseModel) : undefined;
+    const loggedUsage = state.loggedLlmUsageByModel.get(model);
+    if (loggedUsage) {
+      for (const key of USAGE_TOKEN_KEYS) {
+        loggedUsage[key] += callUsage[key];
+      }
+    } else {
+      state.loggedLlmUsageByModel.set(model, callUsage);
+    }
+  }
 
   if (llmSpanResult) {
     if (parentToolUseId) {
@@ -1513,6 +1687,9 @@ async function handleStreamMessage(
     return;
   }
 
+  // The result ends the turn, so log the last LLM call before reconciling usage.
+  await finalizeCurrentMessageGroup(state);
+
   const metadata: Record<string, unknown> = {};
   if (message.num_turns !== undefined) {
     metadata.num_turns = message.num_turns;
@@ -1520,9 +1697,34 @@ async function handleStreamMessage(
   if (message.session_id !== undefined) {
     metadata.session_id = message.session_id;
   }
-  const metrics = state.options.includePartialMessages
-    ? {}
-    : extractUsage(copyUsage(message.usage), true);
+  // Resuming a session restores its earlier model usage and cost, while
+  // `usage` only covers this query.
+  const resumesSession =
+    (state.options.resume !== undefined || state.options.continue === true) &&
+    !state.options.forkSession;
+  const modelUsage = resumesSession ? undefined : message.modelUsage;
+  const totalCost = resumesSession ? undefined : message.total_cost_usd;
+  if (totalCost !== undefined) {
+    metadata.total_cost_usd = totalCost;
+  }
+  let metrics: Record<string, number> = {};
+  if (!state.options.includePartialMessages) {
+    const modelUsages = Object.values(modelUsage ?? {}).map(modelUsageTotals);
+    metrics = extractUsage(
+      modelUsages.length > 0
+        ? sumUsageTotals(modelUsages)
+        : copyUsage(message.usage),
+      true,
+    );
+    if (totalCost !== undefined) {
+      // The totals can span several models, so they can't be priced from the main agent's model.
+      metrics.estimated_cost = totalCost;
+    }
+  } else if (modelUsage) {
+    // LLM spans already carry the per-call usage seen in stream events, so the
+    // task span only gets the rest.
+    metrics = unloggedUsageMetrics(modelUsage, state.loggedLlmUsageByModel);
+  }
   if (Object.keys(metadata).length > 0 || Object.keys(metrics).length > 0) {
     state.span.log({
       ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
@@ -1744,6 +1946,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
         endedSubAgentSpans,
         finalOutputUsageMessageIds: new Set(),
         finalResults: [],
+        loggedLlmUsageByModel: new Map(),
         options: optionsWithHooks,
         originalPrompt,
         processing: Promise.resolve(),
