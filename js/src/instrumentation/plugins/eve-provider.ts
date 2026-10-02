@@ -40,7 +40,10 @@ type StoredSpan =
   | { skip: true };
 
 type TurnContext = {
+  inputRecorded?: boolean;
   rootSpanId: string;
+  // Only set when the turn span was opened by this process.
+  span?: Span;
   spanId: string;
 };
 
@@ -79,10 +82,6 @@ export function createEveInstrumentationProvider(
 ): EveProviderDefinition {
   const bridge = new EveProviderBridge(options.metadata);
   return {
-    // Eve versions before tracePolicy use capture to decide whether provider
-    // events include content. Newer versions prefer tracePolicy when both are
-    // present, so keep the deprecated field for backwards compatibility.
-    capture: "content",
     tracePolicy: () => ({
       emit: true,
       recordInputs: true,
@@ -200,7 +199,7 @@ class EveProviderBridge {
           ).spanId;
         parentSpanId = (
           await generateEveIds(
-            "subagent",
+            "tool",
             actionIdempotencyKey(
               event.parentLineage.sessionId,
               event.parentLineage.turnId,
@@ -227,6 +226,7 @@ class EveProviderBridge {
       span?.log({ metadata });
       this.turns.set(key, {
         rootSpanId,
+        span,
         spanId,
       });
     });
@@ -290,6 +290,17 @@ class EveProviderBridge {
       });
       if (!span) return;
       span.log({ ...(input !== undefined ? { input } : {}), metadata });
+      const turn = this.turns.get(
+        turnKey(event.scope.sessionId, event.scope.turnId),
+      );
+      if (turn?.span && !turn.inputRecorded && input) {
+        // Eve's turn events carry no content. The first model call of a turn
+        // ends with the messages that started it, after any prior history.
+        turn.inputRecorded = true;
+        let start = input.length;
+        while (start > 0 && input[start - 1]?.role === "user") start--;
+        if (start < input.length) turn.span.log({ input: input.slice(start) });
+      }
       this.activeModels.set(event.idempotencyKey, {
         span,
         turnKey: turnKey(event.scope.sessionId, event.scope.turnId),
@@ -309,6 +320,20 @@ class EveProviderBridge {
         context.state.set(undefined);
         return;
       }
+      const output =
+        event.type === "model.call.completed" ? modelOutput(event) : undefined;
+      const reply = output?.[0]?.message.content;
+      if (
+        reply &&
+        event.type === "model.call.completed" &&
+        event.finishReason !== "tool-calls"
+      ) {
+        // The latest reply that does not continue with tool calls is the
+        // turn's answer, matching the legacy hook integration.
+        this.turns
+          .get(turnKey(event.scope.sessionId, event.scope.turnId))
+          ?.span?.log({ output: reply });
+      }
       const active = this.activeModels.get(event.idempotencyKey);
       if (active) {
         const span = active.span;
@@ -317,7 +342,7 @@ class EveProviderBridge {
         } else {
           span.log({
             metrics: usageMetrics(event.usage),
-            output: modelOutput(event),
+            output,
           });
         }
         span.end();
@@ -330,7 +355,7 @@ class EveProviderBridge {
               ? event.error !== undefined
                 ? { error: event.error }
                 : {}
-              : { output: modelOutput(event) }),
+              : { output }),
             metrics: {
               ...(event.type === "model.call.completed"
                 ? usageMetrics(event.usage)
@@ -359,8 +384,10 @@ class EveProviderBridge {
         return;
       }
       const parent = await this.parentForScope(event.scope);
+      // Child turns derive their parent from this id without knowing the
+      // action kind, and Eve 0.70+ reports agent calls as tool calls.
       const { rowId, spanId } = await generateEveIds(
-        event.kind === "subagent-call" ? "subagent" : "tool",
+        "tool",
         event.idempotencyKey,
       );
       const metadata = {
@@ -568,7 +595,7 @@ function modelOutput(
     EveProviderModelCallTerminalEvent,
     { type: "model.call.completed" }
   >,
-): unknown {
+) {
   const content = event.content ?? [];
   let text = "";
   const reasoning: { content: string }[] = [];
