@@ -28,6 +28,7 @@ import { parseBaggage } from "./propagation";
 import { configureNode } from "./node/config";
 import type { ProgressReporter } from "./reporters/types";
 import { InternalAbortError } from "./util";
+import { getEventListeners } from "node:events";
 
 beforeAll(() => {
   configureNode();
@@ -603,80 +604,302 @@ describe("runEvaluator", () => {
       vi.useRealTimers();
     });
 
-    test("runEvaluator rejects on timeout and kills remaining tasks", async () => {
-      const taskStarts: Set<number> = new Set();
-      const taskCompletions: Set<number> = new Set();
+    // Records the outcome of a run as soon as it settles, so tests can assert
+    // what state the eval had left behind at the moment it rejected.
+    function track(run: Promise<unknown>, taskCompletions: Set<number>) {
+      const outcome: {
+        settled: boolean;
+        error?: unknown;
+        completionsAtSettle?: Set<number>;
+      } = { settled: false };
+      const done = run.then(
+        () => {
+          outcome.settled = true;
+          outcome.completionsAtSettle = new Set(taskCompletions);
+        },
+        (error) => {
+          outcome.settled = true;
+          outcome.error = error;
+          outcome.completionsAtSettle = new Set(taskCompletions);
+        },
+      );
+      return { outcome, done };
+    }
 
-      const runExpect = expect(
-        runEvaluator(
-          null,
-          {
-            projectName: "proj",
-            evalName: "eval",
-            data: Array.from({ length: 10 }, (_, i) => ({
-              input: i,
-              expected: i * 2,
-            })),
-            task: async (input: number) => {
-              taskStarts.add(input);
-              if (input > 2) {
-                await new Promise((r) => setTimeout(r, 100));
-              }
-              taskCompletions.add(input);
-              return input * 2;
-            },
-            scores: [],
-            timeout: 10,
-            maxConcurrency: 1,
+    function sleep(ms: number, signal?: AbortSignal) {
+      return new Promise<void>((resolve) => {
+        const timeoutId = setTimeout(resolve, ms);
+        signal?.addEventListener("abort", () => {
+          clearTimeout(timeoutId);
+          resolve();
+        });
+      });
+    }
+
+    const tenRows = Array.from({ length: 10 }, (_, i) => ({
+      input: i,
+      expected: i * 2,
+    }));
+
+    describe.each([
+      {
+        name: "timeout",
+        message: "Evaluator timed out",
+        setup: () => ({
+          options: { timeout: 10 },
+          cancel: async () => {
+            await vi.advanceTimersByTimeAsync(10);
           },
-          new NoopProgressReporter(),
-          [],
-          undefined,
-        ),
-      ).rejects.toThrow(new InternalAbortError("Evaluator timed out"));
+        }),
+      },
+      {
+        name: "abort signal",
+        message: "Evaluator aborted",
+        setup: () => {
+          const controller = new AbortController();
+          return {
+            options: { signal: controller.signal },
+            cancel: async () => {
+              await vi.advanceTimersByTimeAsync(10);
+              controller.abort();
+            },
+          };
+        },
+      },
+    ])("on $name", ({ message, setup }) => {
+      test("skips unstarted trials and waits for in-flight tasks before rejecting", async () => {
+        const { options, cancel } = setup();
+        const taskStarts = new Set<number>();
+        const taskCompletions = new Set<number>();
+        const sawAbort = new Map<number, boolean>();
 
-      await vi.advanceTimersByTimeAsync(10);
-      await runExpect;
+        const { outcome, done } = track(
+          runEvaluator(
+            null,
+            {
+              projectName: "proj",
+              evalName: "eval",
+              data: tenRows,
+              task: async (input: number, { signal }) => {
+                taskStarts.add(input);
+                if (input > 2) {
+                  await sleep(1_000, signal);
+                }
+                sawAbort.set(input, signal!.aborted);
+                taskCompletions.add(input);
+                return input * 2;
+              },
+              scores: [],
+              maxConcurrency: 1,
+              ...options,
+            },
+            new NoopProgressReporter(),
+            [],
+            undefined,
+          ),
+          taskCompletions,
+        );
 
-      // first 3 tasks complete and 4th task was started but not completed before timeout
-      expect(taskStarts).toEqual(new Set([0, 1, 2, 3]));
-      expect(taskCompletions).toEqual(new Set([0, 1, 2]));
+        await cancel();
+        await done;
 
-      await vi.advanceTimersByTimeAsync(200);
+        expect(outcome.error).toEqual(new InternalAbortError(message));
+        // The in-flight task observed the abort and finished before the rejection.
+        expect(outcome.completionsAtSettle).toEqual(new Set([0, 1, 2, 3]));
+        expect(sawAbort.get(2)).toBe(false);
+        expect(sawAbort.get(3)).toBe(true);
 
-      // no other tasks are started after evaluator is aborted and the 4th in-flight task completes
-      expect(taskStarts).toEqual(new Set([0, 1, 2, 3]));
-      expect(taskCompletions).toEqual(new Set([0, 1, 2, 3]));
-      expect(vi.getTimerCount()).toBe(0);
+        await vi.advanceTimersByTimeAsync(2_000);
+
+        // No trial that was still queued at abort time ever starts.
+        expect(taskStarts).toEqual(new Set([0, 1, 2, 3]));
+        expect(vi.getTimerCount()).toBe(0);
+      });
+
+      test("waits for in-flight tasks that ignore the signal", async () => {
+        const { options, cancel } = setup();
+        const taskCompletions = new Set<number>();
+
+        const { outcome, done } = track(
+          runEvaluator(
+            null,
+            {
+              projectName: "proj",
+              evalName: "eval",
+              data: tenRows,
+              task: async (input: number) => {
+                if (input > 2) {
+                  await sleep(100);
+                }
+                taskCompletions.add(input);
+                return input * 2;
+              },
+              scores: [],
+              maxConcurrency: 1,
+              ...options,
+            },
+            new NoopProgressReporter(),
+            [],
+            undefined,
+          ),
+          taskCompletions,
+        );
+
+        await cancel();
+        await vi.advanceTimersByTimeAsync(80);
+        expect(outcome.settled).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(20);
+        await done;
+
+        expect(outcome.error).toEqual(new InternalAbortError(message));
+        expect(outcome.completionsAtSettle).toEqual(new Set([0, 1, 2, 3]));
+        expect(vi.getTimerCount()).toBe(0);
+      });
+
+      test("rejects with the abort reason when an in-flight task throws because of the abort", async () => {
+        const { options, cancel } = setup();
+
+        const { outcome, done } = track(
+          runEvaluator(
+            null,
+            {
+              projectName: "proj",
+              evalName: "eval",
+              data: [{ input: 1 }],
+              task: async (_input: number, { signal }) => {
+                await sleep(1_000, signal);
+                throw new Error("task saw the abort");
+              },
+              scores: [],
+              ...options,
+            },
+            new NoopProgressReporter(),
+            [],
+            undefined,
+          ),
+          new Set(),
+        );
+
+        await cancel();
+        await done;
+
+        expect(outcome.error).toBeInstanceOf(InternalAbortError);
+        expect(outcome.error).toEqual(new InternalAbortError(message));
+      });
+
+      test("keeps the abort reason first when there are other unhandled errors", async () => {
+        const { options, cancel } = setup();
+
+        const { outcome, done } = track(
+          runEvaluator(
+            null,
+            {
+              projectName: "proj",
+              evalName: "eval",
+              data: [{ input: 1 }],
+              task: async (_input: number, { signal }) => {
+                await sleep(1_000, signal);
+                throw new Error("task saw the abort");
+              },
+              scores: [makeTestScorer("scorer_0")],
+              errorScoreHandler: () => {
+                throw new Error("errorScoreHandler crashed");
+              },
+              ...options,
+            },
+            new NoopProgressReporter(),
+            [],
+            undefined,
+          ),
+          new Set(),
+        );
+
+        await cancel();
+        await done;
+
+        expect(outcome.error).toBeInstanceOf(AggregateError);
+        const { errors } = outcome.error as AggregateError;
+        expect(errors).toEqual([
+          new InternalAbortError(message),
+          new Error("errorScoreHandler crashed"),
+        ]);
+      });
+
+      test("waits for a pending data iterator before rejecting", async () => {
+        const { options, cancel } = setup();
+        const taskInputs: number[] = [];
+        let iteratorClosed = false;
+
+        async function* data() {
+          try {
+            yield { input: 0 };
+            await sleep(100);
+            yield { input: 1 };
+          } finally {
+            iteratorClosed = true;
+          }
+        }
+
+        const { outcome, done } = track(
+          runEvaluator(
+            null,
+            {
+              projectName: "proj",
+              evalName: "eval",
+              data: data(),
+              task: async (input: number) => {
+                taskInputs.push(input);
+                return input;
+              },
+              scores: [],
+              ...options,
+            },
+            new NoopProgressReporter(),
+            [],
+            undefined,
+          ),
+          new Set(),
+        );
+
+        await cancel();
+        await vi.advanceTimersByTimeAsync(80);
+        expect(outcome.settled).toBe(false);
+        expect(iteratorClosed).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(20);
+        await done;
+
+        expect(outcome.error).toEqual(new InternalAbortError(message));
+        expect(iteratorClosed).toBe(true);
+        // The row yielded after the abort is never scheduled.
+        expect(taskInputs).toEqual([0]);
+        expect(vi.getTimerCount()).toBe(0);
+      });
     });
 
-    test("runEvaluator rejects on abort signal and kills remaining tasks", async () => {
-      const taskStarts: Set<number> = new Set();
-      const taskCompletions: Set<number> = new Set();
+    test("rejects without running any task when the signal is already aborted", async () => {
+      const controller = new AbortController();
+      controller.abort();
+      const task = vi.fn(async (input: number) => input);
+      let dataRead = false;
 
-      const abortController = new AbortController();
+      async function* data() {
+        dataRead = true;
+        yield { input: 1 };
+      }
 
-      const runExpect = expect(
+      await expect(
         runEvaluator(
           null,
           {
             projectName: "proj",
             evalName: "eval",
-            data: Array.from({ length: 10 }, (_, i) => ({
-              input: i,
-              expected: i * 2,
-            })),
-            task: async (input: number) => {
-              taskStarts.add(input);
-              if (input > 2) {
-                await new Promise((r) => setTimeout(r, 100));
-              }
-              taskCompletions.add(input);
-              return input * 2;
-            },
+            data: data(),
+            task,
             scores: [],
-            signal: abortController.signal,
-            maxConcurrency: 1,
+            signal: controller.signal,
+            timeout: 5_000,
           },
           new NoopProgressReporter(),
           [],
@@ -684,30 +907,44 @@ describe("runEvaluator", () => {
         ),
       ).rejects.toThrow(new InternalAbortError("Evaluator aborted"));
 
-      await vi.advanceTimersByTimeAsync(10);
-      abortController.abort();
-      await runExpect;
-
-      // first 3 tasks complete and 4th task was started but not completed before abort
-      expect(taskStarts).toEqual(new Set([0, 1, 2, 3]));
-      expect(taskCompletions).toEqual(new Set([0, 1, 2]));
-
-      await vi.advanceTimersByTimeAsync(200);
-
-      // no other tasks are started after evaluator is aborted and the 4th in-flight task completes
-      expect(taskStarts).toEqual(new Set([0, 1, 2, 3]));
-      expect(taskCompletions).toEqual(new Set([0, 1, 2, 3]));
+      expect(task).not.toHaveBeenCalled();
+      expect(dataRead).toBe(false);
       expect(vi.getTimerCount()).toBe(0);
     });
 
+    test("times out immediately with a timeout of 0", async () => {
+      const task = vi.fn(async (input: number) => input);
+
+      await expect(
+        runEvaluator(
+          null,
+          {
+            projectName: "proj",
+            evalName: "eval",
+            data: tenRows,
+            task,
+            scores: [],
+            timeout: 0,
+          },
+          new NoopProgressReporter(),
+          [],
+          undefined,
+        ),
+      ).rejects.toThrow(new InternalAbortError("Evaluator timed out"));
+
+      expect(task).not.toHaveBeenCalled();
+    });
+
     test("runEvaluator works with no timeout or abort signal", async () => {
+      const signals: AbortSignal[] = [];
       const run = runEvaluator(
         null,
         {
           projectName: "proj",
           evalName: "eval",
           data: [{ input: 1, expected: 2 }],
-          task: async (input: number) => {
+          task: async (input: number, { signal }) => {
+            signals.push(signal!);
             await new Promise((r) => setTimeout(r, 100));
             return input * 2;
           },
@@ -719,41 +956,93 @@ describe("runEvaluator", () => {
       );
 
       await vi.advanceTimersByTimeAsync(100);
-      await run;
+      const result = await run;
+      expect(result.results.map((r) => r.output)).toEqual([2]);
+      expect(signals).toHaveLength(1);
+      expect(signals[0].aborted).toBe(false);
       expect(vi.getTimerCount()).toBe(0);
     });
 
-    test("runEvaluator cleans up cancellation resources after completing", async () => {
-      const abortController = new AbortController();
-      const addEventListener = vi.spyOn(
-        abortController.signal,
-        "addEventListener",
-      );
+    test.each([
+      { outcome: "success", failTask: false },
+      { outcome: "failure", failTask: true },
+    ])(
+      "runEvaluator cleans up cancellation resources after $outcome",
+      async ({ failTask }) => {
+        const controller = new AbortController();
+
+        const run = runEvaluator(
+          null,
+          {
+            projectName: "proj",
+            evalName: "eval",
+            data: [{ input: 1, expected: 2 }],
+            task: async (input: number) => {
+              if (failTask) {
+                throw new Error("task error");
+              }
+              return input * 2;
+            },
+            scores: [makeTestScorer("scorer_0")],
+            errorScoreHandler: () => {
+              throw new Error("errorScoreHandler crashed");
+            },
+            timeout: 5_000,
+            signal: controller.signal,
+          },
+          new NoopProgressReporter(),
+          [],
+          undefined,
+        );
+
+        if (failTask) {
+          await expect(run).rejects.toThrow(
+            "Encountered 1 unhandled task errors",
+          );
+        } else {
+          await run;
+        }
+
+        expect(vi.getTimerCount()).toBe(0);
+        expect(getEventListeners(controller.signal, "abort")).toHaveLength(0);
+      },
+    );
+
+    test("runEvaluator cleans up cancellation resources after an abort", async () => {
+      const controller = new AbortController();
       const removeEventListener = vi.spyOn(
-        abortController.signal,
+        controller.signal,
         "removeEventListener",
       );
 
-      await runEvaluator(
-        null,
-        {
-          projectName: "proj",
-          evalName: "eval",
-          data: [{ input: 1, expected: 2 }],
-          task: async (input: number) => input * 2,
-          scores: [],
-          timeout: 5_000,
-          signal: abortController.signal,
-        },
-        new NoopProgressReporter(),
-        [],
-        undefined,
-      );
+      const run = expect(
+        runEvaluator(
+          null,
+          {
+            projectName: "proj",
+            evalName: "eval",
+            data: [{ input: 1 }],
+            task: async (_input: number, { signal }) => sleep(1_000, signal),
+            scores: [],
+            timeout: 5_000,
+            signal: controller.signal,
+          },
+          new NoopProgressReporter(),
+          [],
+          undefined,
+        ),
+      ).rejects.toThrow(new InternalAbortError("Evaluator aborted"));
+
+      await vi.advanceTimersByTimeAsync(10);
+      controller.abort();
+      await run;
 
       expect(vi.getTimerCount()).toBe(0);
-      expect(addEventListener).toHaveBeenCalledOnce();
-      const abortHandler = addEventListener.mock.calls[0][1];
-      expect(removeEventListener).toHaveBeenCalledWith("abort", abortHandler);
+      expect(removeEventListener).toHaveBeenCalledWith(
+        "abort",
+        expect.any(Function),
+      );
+      expect(getEventListeners(controller.signal, "abort")).toHaveLength(0);
     });
   });
 });
