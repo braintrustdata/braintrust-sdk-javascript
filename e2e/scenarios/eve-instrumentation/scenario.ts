@@ -1,4 +1,5 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { once } from "node:events";
 import {
   copyFile,
@@ -8,10 +9,16 @@ import {
   symlink,
   unlink,
 } from "node:fs/promises";
+import http from "node:http";
 import net from "node:net";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { runMain } from "../../helpers/scenario-runtime";
+import { initLogger, traced } from "braintrust";
+import {
+  getTestRunId,
+  runMain,
+  scopedName,
+} from "../../helpers/scenario-runtime";
 
 async function main() {
   const tscBin = createRequire(import.meta.url).resolve("typescript/bin/tsc");
@@ -153,9 +160,86 @@ async function main() {
       "session.waiting",
       nextIndex,
     );
+    if (process.env.EVE_INSTRUMENTATION_PROVIDER === "1") {
+      await runTracedCallerSession(baseUrl);
+    }
     await new Promise((resolve) => setTimeout(resolve, 5000));
   } finally {
     await stopServer(server);
+  }
+}
+
+// Eve only adopts an inbound `traceparent` for session creates that carry a
+// callback, so the caller registers a loopback callback receiver.
+async function runTracedCallerSession(baseUrl: string): Promise<void> {
+  const logger = initLogger({
+    projectName: scopedName("e2e-eve-instrumentation"),
+  });
+  const callbacks = http.createServer((request, response) => {
+    request.resume();
+    request.on("end", () => {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({ ok: true }));
+    });
+  });
+  await new Promise<void>((resolve, reject) => {
+    callbacks.once("error", reject);
+    callbacks.listen(0, "127.0.0.1", () => resolve());
+  });
+  const address = callbacks.address();
+  if (!address || typeof address === "string") {
+    throw new Error("Could not allocate a port for the Eve callback receiver");
+  }
+  const token = randomUUID();
+
+  try {
+    await traced(
+      async (span) => {
+        const response = await fetch(`${baseUrl}/eve/v1/session`, {
+          body: JSON.stringify({
+            callback: {
+              callId: "call-traced-caller",
+              subagentName: "traced-caller",
+              token,
+              url: `http://127.0.0.1:${address.port}/eve/v1/callback/${token}`,
+            },
+            message:
+              "Run the Braintrust Eve instrumentation e2e scenario from a traced caller",
+          }),
+          headers: span.inject({ "content-type": "application/json" }),
+          method: "POST",
+        });
+        if (!response.ok) {
+          throw new Error(
+            `Traced Eve session create failed with ${response.status}: ${await response.text()}`,
+          );
+        }
+        const body = (await response.json()) as { sessionId?: string };
+        if (!body.sessionId) {
+          throw new Error(
+            `Traced Eve session create did not return a sessionId`,
+          );
+        }
+        await streamUntil(
+          baseUrl,
+          body.sessionId,
+          new Set([body.sessionId]),
+          "turn.completed",
+        );
+      },
+      {
+        event: {
+          metadata: {
+            scenario: "eve-instrumentation",
+            testRunId: getTestRunId(),
+          },
+        },
+        name: "eve.caller",
+      },
+    );
+    await logger.flush();
+  } finally {
+    await new Promise<void>((resolve) => callbacks.close(() => resolve()));
   }
 }
 
