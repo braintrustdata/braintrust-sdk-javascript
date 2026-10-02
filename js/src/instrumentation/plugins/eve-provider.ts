@@ -208,6 +208,11 @@ class EveProviderBridge {
             ),
           )
         ).spanId;
+      } else if (event.parentTraceContext) {
+        // Eve forwards the caller's W3C trace context, e.g. from a
+        // `traceparent` header, so the turn nests under the caller's span.
+        rootSpanId = event.parentTraceContext.traceId;
+        parentSpanId = event.parentTraceContext.spanId;
       }
 
       const metadata = this.spanMetadata(event.sessionId);
@@ -720,13 +725,17 @@ function isEveProviderEvent<TType extends EveProviderEvent["type"]>(
   }
   if (type === "turn.started") {
     const parentLineage = event["parentLineage"];
+    const parentTraceContext = event["parentTraceContext"];
     return (
       typeof event["rootSessionId"] === "string" &&
       typeof event["sessionId"] === "string" &&
       typeof event["turnId"] === "string" &&
       typeof event["sequence"] === "number" &&
       Number.isFinite(event["sequence"]) &&
-      (parentLineage === undefined || isEveProviderParentLineage(parentLineage))
+      (parentLineage === undefined ||
+        isEveProviderParentLineage(parentLineage)) &&
+      (parentTraceContext === undefined ||
+        isEveProviderTraceContext(parentTraceContext))
     );
   }
   if (
@@ -824,5 +833,17 @@ function isEveProviderParentLineage(
     typeof value["callId"] === "string" &&
     typeof value["sessionId"] === "string" &&
     typeof value["turnId"] === "string"
+  );
+}
+
+function isEveProviderTraceContext(
+  value: unknown,
+): value is EveProviderTurnStartedEvent["parentTraceContext"] {
+  return (
+    isObject(value) &&
+    typeof value["spanId"] === "string" &&
+    value["spanId"].length > 0 &&
+    typeof value["traceId"] === "string" &&
+    value["traceId"].length > 0
   );
 }

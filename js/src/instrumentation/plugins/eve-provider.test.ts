@@ -286,6 +286,74 @@ describe("braintrustEveInstrumentation provider lifecycle", () => {
     expect(action).not.toHaveProperty("error");
   });
 
+  it("nests turns under the caller's propagated trace context", async () => {
+    const traceId = "4bf92f3577b34da6a3ce929d0e0e4736";
+    const callerSpanId = "00f067aa0ba902b7";
+    const turnContext = providerContext();
+    const modelContext = providerContext();
+    const scope = {
+      attemptId: "traced-session:turn_0:0:0",
+      attemptIndex: 0,
+      rootSessionId: "traced-session",
+      sessionId: "traced-session",
+      stepIndex: 0,
+      turnId: "turn_0",
+    };
+    const turnStarted = {
+      idempotencyKey: "turn:traced-session:turn_0",
+      parentTraceContext: {
+        isRemote: true,
+        spanId: callerSpanId,
+        traceFlags: 1,
+        traceId,
+      },
+      rootSessionId: "traced-session",
+      sequence: 0,
+      sessionId: "traced-session",
+      turnId: "turn_0",
+      type: "turn.started" as const,
+    };
+
+    const provider = braintrustEveInstrumentation({});
+    await provider.events?.["turn.started"]?.(turnStarted, turnContext);
+
+    // A replacement process replays the turn start from Eve's durable state
+    // before its model calls run.
+    const replacement = braintrustEveInstrumentation({});
+    await replacement.events?.["turn.started"]?.(turnStarted, turnContext);
+    await replacement.events?.["model.call.started"]?.(
+      {
+        idempotencyKey: "model:traced-session:turn_0:0:0:0",
+        input: { messages: [{ content: "Hi", role: "user" }] },
+        model: { modelId: "qwen/qwen3", provider: "openrouter" },
+        scope,
+        type: "model.call.started",
+      },
+      modelContext,
+    );
+
+    const writes = (await backgroundLogger.drain()) as Array<
+      Record<string, any> & { id: string }
+    >;
+    const spans = mergeRowBatch([...writes].reverse());
+    const turns = spans.filter(
+      (span) => span.span_attributes?.name === "eve.turn",
+    );
+    const model = spans.find(
+      (span) => span.span_attributes?.name === "eve.step",
+    );
+
+    expect(turns).toHaveLength(1);
+    expect(turns[0]).toMatchObject({
+      root_span_id: traceId,
+      span_parents: [callerSpanId],
+    });
+    expect(model).toMatchObject({
+      root_span_id: traceId,
+      span_parents: [turns[0]?.span_id],
+    });
+  });
+
   it("preserves the trace root for depth-two subagents after provider replacement", async () => {
     const metadata = { scenario: "eve-provider-replacement" };
     const provider = braintrustEveInstrumentation({ metadata });

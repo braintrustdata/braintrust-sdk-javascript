@@ -15,6 +15,7 @@ import {
   findAllSpans,
   findChildSpans,
   findLatestChildSpan,
+  findLatestSpan,
   spanInstrumentationName,
 } from "../../helpers/trace-selectors";
 
@@ -98,7 +99,10 @@ describe.sequential("eve instrumentation variants", () => {
       }, TIMEOUT_MS);
 
       test("captures user turns as traces with subagent turns attached", async () => {
-        const turns = findAllSpans(events, "eve.turn");
+        const caller = findLatestSpan(events, "eve.caller");
+        const turns = findAllSpans(events, "eve.turn").filter(
+          (turn) => turn.span.rootId !== caller?.span.rootId,
+        );
         const [root, secondRoot] = turns
           .filter((turn) => turn.span.parentIds.length === 0)
           .sort(
@@ -402,6 +406,7 @@ describe.sequential("eve instrumentation variants", () => {
         });
 
         for (const event of events) {
+          if (event.span.id === caller?.span.id) continue;
           expect(spanInstrumentationName(event)).toBe("eve");
         }
 
@@ -435,6 +440,50 @@ describe.sequential("eve instrumentation variants", () => {
           },
         );
       });
+
+      if (scenario.provider) {
+        test("nests turns under a caller's propagated trace context", async () => {
+          const caller = findLatestSpan(events, "eve.caller");
+          const turn = findAllSpans(events, "eve.turn").find((candidate) =>
+            candidate.span.parentIds.includes(caller?.span.id ?? ""),
+          );
+          const steps = findChildSpans(events, "eve.step", turn?.span.id);
+          const researcher = findLatestChildSpan(
+            events,
+            "researcher",
+            turn?.span.id,
+          );
+          const read = findLatestChildSpan(events, "read", turn?.span.id);
+          const childTurn = findAllSpans(events, "eve.turn").find((candidate) =>
+            candidate.span.parentIds.includes(researcher?.span.id ?? ""),
+          );
+          const childSteps = findChildSpans(
+            events,
+            "eve.step",
+            childTurn?.span.id,
+          );
+
+          expect(caller).toBeDefined();
+          expect(caller?.span.parentIds).toEqual([]);
+          expect(turn).toBeDefined();
+          expect(turn?.span.parentIds).toEqual([caller?.span.id]);
+          expect(turn?.span.rootId).toBe(caller?.span.rootId);
+          expect(turn?.metadata).toMatchObject({
+            "eve.session_id": expect.any(String),
+            scenario: "eve-instrumentation",
+          });
+          expect(steps).toHaveLength(2);
+          for (const span of [...steps, researcher, read]) {
+            expect(span?.span.rootId).toBe(caller?.span.rootId);
+          }
+          expect(childTurn).toBeDefined();
+          expect(childTurn?.span.rootId).toBe(caller?.span.rootId);
+          expect(childSteps).toHaveLength(2);
+          for (const step of childSteps) {
+            expect(step.span.rootId).toBe(caller?.span.rootId);
+          }
+        });
+      }
     });
   }
 });
