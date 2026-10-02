@@ -37,7 +37,13 @@ type OpenAIChatSpanInfo = NonNullable<CompiledPrompt<"chat">["span_info"]>;
 
 type OpenAIChannelExtras<TSpanInfo extends ChannelSpanInfo = ChannelSpanInfo> =
   SpanInfoCarrier<TSpanInfo> & {
+    /** The raw response on tracing-compatible events from manual wrappers. */
     response?: Response;
+    /**
+     * Filled by manual wrappers once the raw response is available. The
+     * holder is shared by reference, so copies of these extras observe it.
+     */
+    responseHolder?: { response?: Response };
   };
 
 type OpenAIChatChannelExtras = OpenAIChannelExtras<OpenAIChatSpanInfo>;

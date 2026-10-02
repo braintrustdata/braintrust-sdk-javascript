@@ -11,30 +11,13 @@ import {
   X_CACHED_HEADER,
 } from "../openai-utils";
 import { responsesProxy } from "./oai_responses";
-import type {
-  ArgsOf,
-  ResultOf,
-} from "../instrumentation/core/channel-definitions";
 import { openAIChannels } from "../instrumentation/plugins/openai-channels";
 import type {
   OpenAIChatCompletion,
   OpenAIChatCreateParams,
-  OpenAIChatStream,
   OpenAIClient,
-  OpenAIEmbeddingCreateParams,
-  OpenAIEmbeddingResponse,
-  OpenAIModerationCreateParams,
-  OpenAIModerationResponse,
 } from "../vendor-sdk-types/openai";
-import {
-  APIPromise,
-  createChannelContext,
-  createLazyAPIPromise,
-  EnhancedResponse,
-  splitSpanInfo,
-  tracePromiseAsResponse,
-  tracePromiseWithResponse,
-} from "./openai-promise-utils";
+import { splitSpanInfo, wrapAPIPromiseMethod } from "./openai-promise-utils";
 import { OpenAIV4Client } from "../vendor-sdk-types/openai-v4";
 
 declare global {
@@ -92,7 +75,10 @@ export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
     get(target, name, receiver) {
       const baseVal = Reflect.get(target, name, receiver);
       if (name === "create") {
-        return wrapChatCompletion(baseVal.bind(target));
+        return wrapAPIPromiseMethod(
+          openAIChannels.chatCompletionsCreate,
+          baseVal.bind(target),
+        );
       } else if (name === "parse") {
         return wrapBetaChatCompletionParse(baseVal.bind(target));
       } else if (name === "stream") {
@@ -111,14 +97,14 @@ export function wrapOpenAIv4<T extends OpenAILike>(openai: T): T {
     },
   });
 
-  const embeddingProxy = createEndpointProxy<
-    OpenAIEmbeddingCreateParams,
-    OpenAIEmbeddingResponse
-  >(typedOpenai.embeddings, wrapEmbeddings);
-  const moderationProxy = createEndpointProxy<
-    OpenAIModerationCreateParams,
-    OpenAIModerationResponse
-  >(typedOpenai.moderations, wrapModerations);
+  const embeddingProxy = createEndpointProxy(
+    typedOpenai.embeddings,
+    openAIChannels.embeddingsCreate,
+  );
+  const moderationProxy = createEndpointProxy(
+    typedOpenai.moderations,
+    openAIChannels.moderationsCreate,
+  );
   let betaProxy: OpenAIClient["beta"];
   if (typedOpenai.beta?.chat?.completions?.stream) {
     const betaChatCompletionProxy = new Proxy(
@@ -272,193 +258,51 @@ type SpanInfo = {
   span_info?: CompiledPrompt<"chat">["span_info"];
 };
 
-function wrapBetaChatCompletionParse<
-  P extends OpenAIChatCreateParams,
-  C extends OpenAIChatCompletion,
->(completion: (params: P) => Promise<C>): (params: P & SpanInfo) => Promise<C> {
-  return async (allParams: P & SpanInfo) => {
-    const { span_info, params } = splitSpanInfo<P, SpanInfo["span_info"]>(
-      allParams,
-    );
-    return openAIChannels.betaChatCompletionsParse.tracePromise(
-      async () => await completion(params),
-      { arguments: [params], span_info },
+function wrapBetaChatCompletionParse(
+  completion: (params: OpenAIChatCreateParams) => Promise<OpenAIChatCompletion>,
+): (
+  params: OpenAIChatCreateParams & SpanInfo,
+) => Promise<OpenAIChatCompletion> {
+  return async (allParams) => {
+    const { span_info, params } = splitSpanInfo(allParams);
+    return openAIChannels.betaChatCompletionsParse.invoke(
+      completion,
+      undefined,
+      [params],
+      { span_info },
     );
   };
 }
 
-function wrapBetaChatCompletionStream<P extends OpenAIChatCreateParams, C>(
-  completion: (params: P) => C,
-): (params: P & SpanInfo) => C {
-  return (allParams: P & SpanInfo) => {
-    const { span_info, params } = splitSpanInfo<P, SpanInfo["span_info"]>(
-      allParams,
-    );
-    return openAIChannels.betaChatCompletionsStream.traceSync(
-      () => completion(params),
-      { arguments: [params], span_info },
+function wrapBetaChatCompletionStream<C>(
+  completion: (params: OpenAIChatCreateParams) => C,
+): (params: OpenAIChatCreateParams & SpanInfo) => C {
+  return (allParams) => {
+    const { span_info, params } = splitSpanInfo(allParams);
+    return openAIChannels.betaChatCompletionsStream.invoke(
+      completion,
+      undefined,
+      [params],
+      { span_info },
     );
   };
 }
 
 export { LEGACY_CACHED_HEADER, parseCachedHeader, X_CACHED_HEADER };
 
-function wrapChatCompletion<
-  P extends OpenAIChatCreateParams,
-  C extends OpenAIChatCompletion | OpenAIChatStream,
->(
-  completion: (params: P, options?: unknown) => APIPromise<C>,
-): (params: P, options?: unknown) => APIPromise<C> {
-  return (allParams: P & SpanInfo, options?: unknown): APIPromise<C> => {
-    const { span_info, params } = splitSpanInfo<P, SpanInfo["span_info"]>(
-      allParams,
-    );
-    // Lazy execution - we must defer the API call until the promise is actually consumed
-    // to avoid unhandled rejections when the underlying OpenAI call fails immediately.
-    // Without lazy execution, the promise chain starts before error handlers are attached.
-    let executionPromise: Promise<EnhancedResponse<C>> | null = null;
-    let apiPromise: APIPromise<C> | null = null;
-
-    const getAPIPromise = (): APIPromise<C> => {
-      apiPromise ??= completion(params, options);
-      return apiPromise;
-    };
-
-    const ensureExecuted = (): Promise<EnhancedResponse<C>> => {
-      if (!executionPromise) {
-        executionPromise = (async (): Promise<EnhancedResponse<C>> => {
-          const traceContext = createChannelContext(
-            openAIChannels.chatCompletionsCreate,
-            params,
-            span_info,
-          );
-
-          if (params.stream) {
-            const completionPromise =
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              getAPIPromise() as APIPromise<OpenAIChatStream>;
-            const { data, response, request_id } =
-              await tracePromiseWithResponse(
-                openAIChannels.chatCompletionsCreate,
-                traceContext,
-                completionPromise,
-              );
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            return { data: data as C, response, request_id };
-          }
-
-          const completionResponse =
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            getAPIPromise() as APIPromise<OpenAIChatCompletion>;
-          const { data, response, request_id } = await tracePromiseWithResponse(
-            openAIChannels.chatCompletionsCreate,
-            traceContext,
-            completionResponse,
-          );
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          return { data: data as C, response, request_id };
-        })();
-      }
-      return executionPromise;
-    };
-
-    return createLazyAPIPromise(
-      ensureExecuted,
-      () =>
-        tracePromiseAsResponse(
-          openAIChannels.chatCompletionsCreate,
-          createChannelContext(
-            openAIChannels.chatCompletionsCreate,
-            params,
-            span_info,
-          ),
-          getAPIPromise(),
-        ),
-      getAPIPromise,
-    );
-  };
-}
-
-function createEndpointProxy<T, R>(
+function createEndpointProxy(
   target: any,
-  wrapperFn: (
-    create: (params: T, options?: unknown) => APIPromise<R>,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  ) => Function,
+  channel:
+    | typeof openAIChannels.embeddingsCreate
+    | typeof openAIChannels.moderationsCreate,
 ) {
   return new Proxy(target, {
     get(target, name, receiver) {
       const baseVal = Reflect.get(target, name, receiver);
       if (name === "create") {
-        return wrapperFn(baseVal.bind(target));
+        return wrapAPIPromiseMethod(channel, baseVal.bind(target));
       }
       return baseVal;
     },
   });
 }
-
-function wrapApiCreateWithChannel<
-  TChannel extends
-    | typeof openAIChannels.embeddingsCreate
-    | typeof openAIChannels.moderationsCreate,
->(
-  create: (
-    params: ArgsOf<TChannel>[0],
-    options?: unknown,
-  ) => APIPromise<ResultOf<TChannel>>,
-  channel: TChannel,
-): (
-  params: ArgsOf<TChannel>[0] & SpanInfo,
-  options?: unknown,
-) => APIPromise<ResultOf<TChannel>> {
-  return (allParams: ArgsOf<TChannel>[0] & SpanInfo, options?: unknown) => {
-    const { span_info, params } = splitSpanInfo<
-      ArgsOf<TChannel>[0],
-      SpanInfo["span_info"]
-    >(allParams);
-    let executionPromise: Promise<EnhancedResponse<ResultOf<TChannel>>> | null =
-      null;
-    let apiPromise: APIPromise<ResultOf<TChannel>> | null = null;
-    const getAPIPromise = () => {
-      apiPromise ??= create(params, options);
-      return apiPromise;
-    };
-    const ensureExecuted = () => {
-      if (!executionPromise) {
-        executionPromise = (async () => {
-          const traceContext = createChannelContext(channel, params, span_info);
-          return tracePromiseWithResponse(
-            channel,
-            traceContext,
-            getAPIPromise(),
-          );
-        })();
-      }
-      return executionPromise;
-    };
-    return createLazyAPIPromise(
-      ensureExecuted,
-      () =>
-        tracePromiseAsResponse(
-          channel,
-          createChannelContext(channel, params, span_info),
-          getAPIPromise(),
-        ),
-      getAPIPromise,
-    );
-  };
-}
-
-const wrapEmbeddings = (
-  create: (
-    params: OpenAIEmbeddingCreateParams,
-    options?: unknown,
-  ) => APIPromise<OpenAIEmbeddingResponse>,
-) => wrapApiCreateWithChannel(create, openAIChannels.embeddingsCreate);
-
-const wrapModerations = (
-  create: (
-    params: OpenAIModerationCreateParams,
-    options?: unknown,
-  ) => APIPromise<OpenAIModerationResponse>,
-) => wrapApiCreateWithChannel(create, openAIChannels.moderationsCreate);

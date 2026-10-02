@@ -1,5 +1,7 @@
+import { markInvocationContext } from "../global-instrumentation-hooks";
 import type {
   ArgsOf,
+  ExtraOf,
   ResultOf,
 } from "../instrumentation/core/channel-definitions";
 import type {
@@ -34,78 +36,98 @@ export function splitSpanInfo<T, TSpanInfo = unknown>(
   };
 }
 
-export function createChannelContext<TChannel extends OpenAIAsyncChannel>(
-  _channel: TChannel,
-  params: ChannelParam<TChannel>,
-  span_info: ChannelContext<TChannel>["span_info"],
-): ChannelContext<TChannel> {
-  return {
-    arguments:
+/**
+ * Wrap an APIPromise method so the request is traced when its result is first
+ * consumed, while preserving lazy execution, withResponse(), and asResponse().
+ */
+export function wrapAPIPromiseMethod<TChannel extends OpenAIAsyncChannel>(
+  channel: TChannel,
+  method: (
+    params: ChannelParam<TChannel>,
+    options?: unknown,
+  ) => APIPromise<ResultOf<TChannel>>,
+): (
+  params: ChannelParam<TChannel> & Pick<ChannelContext<TChannel>, "span_info">,
+  options?: unknown,
+) => APIPromise<ResultOf<TChannel>> {
+  type TResult = ResultOf<TChannel>;
+  const invoke =
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    channel.invoke as unknown as <T>(
+      target: () => Promise<T>,
+      thisArg: undefined,
+      args: [ChannelParam<TChannel>],
+      additional: ExtraOf<TChannel>,
+    ) => Promise<T>;
+  const tracePromise =
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    channel.tracePromise as unknown as <T>(
+      fn: () => Promise<T>,
+      context: ChannelContext<TChannel>,
+    ) => Promise<T>;
+
+  return (allParams, options) => {
+    const { span_info, params } = splitSpanInfo(allParams);
+    // Lazy execution avoids unhandled rejections when the request fails
+    // before the application attaches its handlers.
+    let apiPromise: APIPromise<TResult> | undefined;
+    const getAPIPromise = () => (apiPromise ??= method(params, options));
+    const consume = <T>(
+      read: (
+        apiPromise: APIPromise<TResult>,
+      ) => Promise<{ value: T; response: Response }>,
+    ): Promise<T> => {
+      // The request starts before the traced call, as with the unwrapped SDK.
+      const request = getAPIPromise();
+      const responseHolder: { response?: Response } = {};
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      [params] as ArgsOf<TChannel>,
-    span_info,
-  } as ChannelContext<TChannel>;
-}
+      const additional = { span_info, responseHolder } as ExtraOf<TChannel>;
+      // Spans come from the invocation hook. The surrounding lifecycle keeps
+      // events for existing tracing-channel subscribers of these calls, and
+      // its context is marked so span-creating legacy subscribers skip it.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const context = markInvocationContext({
+        arguments: [params],
+        span_info,
+      } as ChannelContext<TChannel>);
+      return tracePromise(
+        () =>
+          invoke(
+            async () => {
+              const { value, response } = await read(request);
+              context.response = responseHolder.response = response;
+              return value;
+            },
+            undefined,
+            [params],
+            additional,
+          ),
+        context,
+      );
+    };
 
-export async function tracePromiseWithResponse<
-  TChannel extends OpenAIAsyncChannel,
-  TResult extends ResultOf<TChannel>,
->(
-  channel: TChannel,
-  traceContext: ChannelContext<TChannel>,
-  apiPromise: APIPromise<TResult>,
-): Promise<EnhancedResponse<TResult>> {
-  let enhancedResponse: EnhancedResponse<TResult> | undefined;
-  const tracePromise =
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    channel.tracePromise as unknown as <TReturn extends Promise<TResult>>(
-      fn: () => TReturn,
-      context: ChannelContext<TChannel>,
-    ) => TReturn;
-
-  const data = await tracePromise(async () => {
-    enhancedResponse = await apiPromise.withResponse();
-    traceContext.response = enhancedResponse.response;
-    return enhancedResponse.data;
-  }, traceContext);
-
-  if (!enhancedResponse) {
-    throw new Error("Expected withResponse() to provide response");
-  }
-
-  return {
-    data,
-    response: enhancedResponse.response,
-    request_id: enhancedResponse.request_id,
+    return createLazyAPIPromise(
+      async () => {
+        let enhanced: EnhancedResponse<TResult> | undefined;
+        const data = await consume(async (apiPromise) => {
+          enhanced = await apiPromise.withResponse();
+          return { value: enhanced.data, response: enhanced.response };
+        });
+        const { response, request_id } = enhanced!;
+        return { data, response, request_id };
+      },
+      async () => {
+        let response: Response | undefined;
+        // The traced value stays undefined because the body is not parsed.
+        await consume(async (apiPromise) => {
+          response = await apiPromise.asResponse();
+          return { value: undefined, response };
+        });
+        return response!;
+      },
+      getAPIPromise,
+    );
   };
-}
-
-export async function tracePromiseAsResponse<
-  TChannel extends OpenAIAsyncChannel,
-  TResult extends ResultOf<TChannel>,
->(
-  channel: TChannel,
-  traceContext: ChannelContext<TChannel>,
-  apiPromise: APIPromise<TResult>,
-): Promise<Response> {
-  const tracePromise =
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    channel.tracePromise as unknown as (
-      fn: () => Promise<TResult | undefined>,
-      context: ChannelContext<TChannel>,
-    ) => Promise<TResult | undefined>;
-
-  let response: Response | undefined;
-  await tracePromise(async () => {
-    response = await apiPromise.asResponse();
-    traceContext.response = response;
-    return undefined;
-  }, traceContext);
-
-  if (!response) {
-    throw new Error("Expected asResponse() to provide response");
-  }
-  return response;
 }
 
 export function createLazyAPIPromise<TResult>(

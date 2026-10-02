@@ -1,9 +1,9 @@
 import { interceptOpenAIMedia } from "./openai-media";
 import { BasePlugin } from "../core";
 import {
-  traceAsyncChannel,
-  traceStreamingChannel,
-  traceSyncStreamChannel,
+  interceptAsyncChannel,
+  interceptStreamingChannel,
+  interceptSyncStreamChannel,
   unsubscribeAll,
 } from "../core/channel-tracing";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
@@ -86,7 +86,7 @@ export class OpenAIPlugin extends BasePlugin {
 
     // Chat Completions - supports streaming
     this.unsubscribers.push(
-      traceStreamingChannel(openAIChannels.chatCompletionsCreate, {
+      interceptStreamingChannel(openAIChannels.chatCompletionsCreate, {
         name: "Chat Completion",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => extractOpenAIChatInput(params),
@@ -110,7 +110,7 @@ export class OpenAIPlugin extends BasePlugin {
 
     // Embeddings
     this.unsubscribers.push(
-      traceAsyncChannel(openAIChannels.embeddingsCreate, {
+      interceptAsyncChannel(openAIChannels.embeddingsCreate, {
         name: "Embedding",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => {
@@ -138,7 +138,7 @@ export class OpenAIPlugin extends BasePlugin {
 
     // Beta Chat Completions Parse
     this.unsubscribers.push(
-      traceStreamingChannel(openAIChannels.betaChatCompletionsParse, {
+      interceptStreamingChannel(openAIChannels.betaChatCompletionsParse, {
         name: "Chat Completion",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => extractOpenAIChatInput(params),
@@ -162,7 +162,7 @@ export class OpenAIPlugin extends BasePlugin {
 
     // Beta Chat Completions Stream (sync method returning event-based stream)
     this.unsubscribers.push(
-      traceSyncStreamChannel(openAIChannels.betaChatCompletionsStream, {
+      interceptSyncStreamChannel(openAIChannels.betaChatCompletionsStream, {
         name: "Chat Completion",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => extractOpenAIChatInput(params),
@@ -171,7 +171,7 @@ export class OpenAIPlugin extends BasePlugin {
 
     // Moderations
     this.unsubscribers.push(
-      traceAsyncChannel(openAIChannels.moderationsCreate, {
+      interceptAsyncChannel(openAIChannels.moderationsCreate, {
         name: "Moderation",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => {
@@ -196,7 +196,7 @@ export class OpenAIPlugin extends BasePlugin {
 
     // Responses API - create (supports streaming via stream=true param)
     this.unsubscribers.push(
-      traceStreamingChannel(openAIChannels.responsesCreate, {
+      interceptStreamingChannel(openAIChannels.responsesCreate, {
         name: "openai.responses.create",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => extractOpenAIResponsesInput(params),
@@ -221,7 +221,7 @@ export class OpenAIPlugin extends BasePlugin {
 
     // Responses API - stream (sync method returning event-based stream)
     this.unsubscribers.push(
-      traceSyncStreamChannel(openAIChannels.responsesStream, {
+      interceptSyncStreamChannel(openAIChannels.responsesStream, {
         name: "openai.responses.create",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => extractOpenAIResponsesInput(params),
@@ -250,7 +250,7 @@ export class OpenAIPlugin extends BasePlugin {
 
     // Responses API - parse
     this.unsubscribers.push(
-      traceStreamingChannel(openAIChannels.responsesParse, {
+      interceptStreamingChannel(openAIChannels.responsesParse, {
         name: "openai.responses.parse",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => extractOpenAIResponsesInput(params),
@@ -275,7 +275,7 @@ export class OpenAIPlugin extends BasePlugin {
 
     // Responses API - compact
     this.unsubscribers.push(
-      traceAsyncChannel(openAIChannels.responsesCompact, {
+      interceptAsyncChannel(openAIChannels.responsesCompact, {
         name: "openai.responses.compact",
         type: SpanTypeAttribute.LLM,
         extractInput: ([params]) => extractOpenAIResponsesInput(params),
@@ -308,7 +308,12 @@ function getCachedMetricFromEndEvent(endEvent: unknown): number | undefined {
     return undefined;
   }
 
-  const response = (endEvent as Record<string, unknown>).response;
+  // Manual wrappers set the raw response after the call starts, so invocation
+  // extras carry it in a holder shared with the copied event.
+  const response =
+    (endEvent as Record<string, unknown>).response ??
+    (endEvent as { responseHolder?: { response?: Response } }).responseHolder
+      ?.response;
   if (!isObject(response)) {
     return undefined;
   }
