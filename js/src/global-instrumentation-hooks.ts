@@ -17,6 +17,29 @@ export const GLOBAL_INVOCATION_HOOK_BRAND =
 const registryBrand = Symbol.for(GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND);
 const hookBrand = Symbol.for(GLOBAL_INSTRUMENTATION_HOOK_BRAND);
 const invocationHookBrand = Symbol.for(GLOBAL_INVOCATION_HOOK_BRAND);
+const invocationContextBrand = Symbol.for(
+  "braintrust.global-instrumentation-hooks.invocation-context",
+);
+
+/**
+ * Marks an internally created tracing context whose call also passes through
+ * the invocation hooks, so legacy subscribers can skip spans owned by
+ * interceptors. The marker is a non-enumerable `Symbol.for` property, so it is
+ * recognized across duplicate SDK bundles and does not change the context's
+ * enumerable shape.
+ */
+export function markInvocationContext<T extends object>(context: T): T {
+  Object.defineProperty(context, invocationContextBrand, { value: true });
+  return context;
+}
+
+export function isInvocationContext(context: unknown): boolean {
+  return (
+    typeof context === "object" &&
+    context !== null &&
+    (context as Record<symbol, unknown>)[invocationContextBrand] === true
+  );
+}
 
 export interface GlobalHookAsyncLocalStorage<T> {
   run<R>(store: T | undefined, callback: () => R): R;
@@ -334,11 +357,11 @@ function traceInvocation<F extends GlobalInvocationTarget>(
   additional: unknown,
   callbackIndex = -1,
 ): ReturnType<F> {
-  const context = {
+  const context = markInvocationContext({
     ...(additional as object),
     arguments: args,
     self: thisArg,
-  };
+  });
   const invoke = () => hook.invoke(target, thisArg, args, additional);
 
   if (operator === "traceCallback") {
