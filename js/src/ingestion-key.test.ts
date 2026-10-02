@@ -5,6 +5,7 @@ import {
   _internalGetGlobalState,
   Attachment,
   BraintrustState,
+  ExternalAttachment,
   extractTraceContextFromHeaders,
   flush,
   initLogger,
@@ -133,6 +134,10 @@ function mockIngestion(
       });
     }
     if (request.method === "POST" && path.endsWith("/v1/logs")) {
+      // The public server path rejects external attachment references.
+      if (String(request.body).includes('"external_attachment"')) {
+        return json({ error: "external attachments are not supported" }, 400);
+      }
       const payload = bodyJson(request);
       return json({
         ids: Array.isArray(payload.rows)
@@ -310,7 +315,7 @@ describe("initLogger with an ingestion key", () => {
     globalState.resetLoginInfo();
   });
 
-  test("an explicit private credential takes precedence over the environment", async () => {
+  test("an explicit apiKey takes precedence over the environment", async () => {
     const { requests, fetch } = mockIngestion({ respond: () => json({}) });
     const key = newKey();
     vi.stubEnv("BRAINTRUST_INGESTION_KEY", ingestionUrl(key));
@@ -321,6 +326,7 @@ describe("initLogger with an ingestion key", () => {
 
     const logger = initLogger({
       state,
+      apiKey: "private-api-key",
       projectId: "private-project",
       projectName: "private",
     });
@@ -336,22 +342,80 @@ describe("initLogger with an ingestion key", () => {
     expect(apiKeyLogger.loggingState).toBe(_internalGetGlobalState());
   });
 
-  test("rejects an ingestion key combined with private credentials", () => {
+  test("ignores the login of a supplied state", async () => {
+    const { requests, fetch } = mockIngestion();
+    const loggedInState = new BraintrustState({ fetch, noExitFlush: true });
+    loggedInState.apiUrl = "https://api.test";
+    loggedInState.loginToken = "private-api-key";
+    loggedInState.loggedIn = true;
+    const envKey = newKey();
+    vi.stubEnv("BRAINTRUST_INGESTION_KEY", ingestionUrl(envKey));
+
+    const fromEnv = initLogger({ state: loggedInState, noExitFlush: true });
+    const explicit = initIngestionLogger(fetch, { state: loggedInState });
+    fromEnv.log({ input: "env", output: "x" });
+    explicit.logger.log({ input: "explicit", output: "x" });
+    await flush({ state: loggedInState });
+
+    expect(fromEnv.loggingState).not.toBe(loggedInState);
+    expect(loggedInState.currentLogger).toBe(explicit.logger);
+    expect(
+      requests.map((r) => [r.headers.authorization, loggedRows([r])[0].input]),
+    ).toEqual(
+      expect.arrayContaining([
+        [`Bearer ${envKey}`, "env"],
+        [`Bearer ${explicit.key}`, "explicit"],
+      ]),
+    );
+    expect(requests).toHaveLength(2);
+    expect(JSON.stringify(requests)).not.toContain("private-api-key");
+  });
+
+  test("rejects an ingestion key combined with an apiKey", () => {
     const ingestionKey = ingestionUrl(newKey());
-    const loggedInState = new BraintrustState({});
-    loggedInState.loginToken = "private";
-    for (const options of [
-      { apiKey: "private" },
-      { state: new BraintrustState({ apiKey: "private" }) },
-      { state: loggedInState },
-    ]) {
-      expect(() => initLogger({ ingestionKey, ...options })).toThrow(
-        "either an ingestionKey or an API key",
-      );
-    }
+    expect(() => initLogger({ ingestionKey, apiKey: "private" })).toThrow(
+      "either an ingestionKey or an apiKey",
+    );
     expect(() => initLogger({ ingestionKey: "" })).toThrow(
       "Invalid Braintrust ingestion key",
     );
+  });
+
+  test("sends the ids of orgProjectMetadata for the server to check", async () => {
+    const { requests, fetch } = mockIngestion();
+    const orgProjectMetadata = {
+      org_id: "org-id",
+      project: { id: "project-id", name: "ignored", fullInfo: {} },
+    };
+    const { logger, onFlushError } = initIngestionLogger(fetch, {
+      orgProjectMetadata,
+    });
+
+    logger.log({
+      input: new Attachment({
+        data: new ArrayBuffer(10),
+        filename: "a.bin",
+        contentType: "application/octet-stream",
+      }),
+      output: "x",
+    });
+    await logger.flush();
+
+    expect(onFlushError).not.toHaveBeenCalled();
+    expect(bodyJson(requests[0])).toMatchObject({
+      purpose: "attachment",
+      org_id: "org-id",
+    });
+    expect(loggedRows(requests)).toEqual([
+      expect.objectContaining({ org_id: "org-id", project_id: "project-id" }),
+    ]);
+    expect(JSON.stringify(requests)).not.toContain("ignored");
+    expect(() =>
+      initIngestionLogger(fetch, {
+        orgProjectMetadata,
+        projectId: "other-project",
+      }),
+    ).toThrow("does not match");
   });
 
   test("uses a state without credentials for masking and the current logger", async () => {
@@ -631,6 +695,85 @@ describe("initLogger with an ingestion key", () => {
     expect(onFlushError).toHaveBeenCalledTimes(1);
     expect(loggedRows(requests).map((row) => row.output)).toEqual(["kept"]);
     expect(requests.some((r) => r.url.includes("/attachment"))).toBe(false);
+  });
+
+  test("rejects external attachments before logging their rows", async () => {
+    const { requests, fetch } = mockIngestion();
+    const { logger, onFlushError } = initIngestionLogger(fetch);
+
+    logger.log({
+      input: new ExternalAttachment({
+        url: "s3://private-bucket/secret.pdf",
+        filename: "secret.pdf",
+        contentType: "application/pdf",
+      }),
+      output: "instance",
+    });
+    logger.log({
+      input: {
+        file: {
+          type: "external_attachment",
+          url: "s3://private-bucket/other.pdf",
+          filename: "other.pdf",
+          content_type: "application/pdf",
+        },
+      },
+      output: "reference",
+    });
+    logger.log({ input: "kept", output: "kept" });
+    await logger.flush();
+
+    expect(onFlushError).toHaveBeenCalledTimes(1);
+    expect(String(onFlushError.mock.calls[0][0])).toContain(
+      "do not support external attachments",
+    );
+    expect(loggedRows(requests).map((row) => row.output)).toEqual(["kept"]);
+    expect(JSON.stringify(requests)).not.toContain("private-bucket");
+  });
+
+  test("keeps references to already committed attachments", async () => {
+    const { requests, fetch } = mockIngestion();
+    const { logger, onFlushError } = initIngestionLogger(fetch);
+    const reference = {
+      type: "braintrust_attachment",
+      filename: "a.bin",
+      content_type: "application/octet-stream",
+      key: "server-committed-upload",
+    };
+
+    logger.log({ input: { file: reference }, output: "x" });
+    await logger.flush();
+
+    expect(onFlushError).not.toHaveBeenCalled();
+    expect(paths(requests)).toEqual(["POST /deployment/base/ingest/v1/logs"]);
+    expect(loggedRows(requests)[0].input.file).toEqual(reference);
+  });
+
+  test("keeps private external attachment behavior", async () => {
+    const { requests, fetch } = mockIngestion({ respond: () => json({}) });
+    const state = new BraintrustState({ fetch, noExitFlush: true });
+    state.apiUrl = "https://api.test";
+    const logger = initLogger({
+      state,
+      projectId: "private-project",
+      projectName: "private",
+    });
+
+    logger.log({
+      input: new ExternalAttachment({
+        url: "s3://bucket/file.pdf",
+        filename: "file.pdf",
+        contentType: "application/pdf",
+      }),
+      output: "x",
+    });
+    await logger.flush();
+
+    expect(paths(requests)).toEqual(["GET /version", "POST /logs3"]);
+    expect(bodyJson(requests[1]).rows[0].input).toMatchObject({
+      type: "external_attachment",
+      url: "s3://bucket/file.pdf",
+    });
   });
 
   test("restarts an upload whose grant expired", async () => {

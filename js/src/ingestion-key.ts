@@ -1,6 +1,7 @@
 import { z } from "zod/v3";
 import {
   BraintrustAttachmentReference as braintrustAttachmentReferenceSchema,
+  ExternalAttachmentReference as externalAttachmentReferenceSchema,
   type BraintrustAttachmentReferenceType as BraintrustAttachmentReference,
 } from "./generated_types";
 import {
@@ -113,22 +114,29 @@ export function pickIngestionRowFields(
 
 const BRAINTRUST_ATTACHMENT =
   braintrustAttachmentReferenceSchema.shape.type.value;
+const EXTERNAL_ATTACHMENT = externalAttachmentReferenceSchema.shape.type.value;
 
 /**
  * Replace attachment references whose key is in `references` with the
  * reference the ingestion endpoint returned for the upload. A reference mapped
- * to `undefined` failed to upload, in which case this returns false.
+ * to `undefined` failed to upload.
+ *
+ * Returns why the row cannot be logged, or undefined if it can. External
+ * attachments are rejected, since they can reference any object store content.
  */
 export function replaceIngestionAttachmentReferences(
   container: Record<string, unknown> | unknown[],
   references: ReadonlyMap<string, BraintrustAttachmentReference | undefined>,
-): boolean {
+): "failed_upload" | "external_attachment" | undefined {
   for (const [key, value] of Object.entries(container)) {
     if (!value || typeof value !== "object") {
       continue;
     }
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const reference = value as Record<string, unknown>;
+    if (reference.type === EXTERNAL_ATTACHMENT) {
+      return "external_attachment";
+    }
     if (
       reference.type === BRAINTRUST_ATTACHMENT &&
       typeof reference.key === "string" &&
@@ -136,17 +144,18 @@ export function replaceIngestionAttachmentReferences(
     ) {
       const uploaded = references.get(reference.key);
       if (!uploaded) {
-        return false;
+        return "failed_upload";
       }
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       (container as Record<string, unknown>)[key] = uploaded;
       continue;
     }
-    if (!replaceIngestionAttachmentReferences(reference, references)) {
-      return false;
+    const problem = replaceIngestionAttachmentReferences(reference, references);
+    if (problem) {
+      return problem;
     }
   }
-  return true;
+  return undefined;
 }
 
 export type IngestionUploadRequest =
