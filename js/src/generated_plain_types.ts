@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 7351b6dec8a2d13b) -- do not modify
+// Auto-generated file (content hash 15ee517da0d5a72c) -- do not modify
 
 export type AclObjectTypeType =
   /**
@@ -1902,9 +1902,13 @@ export type EnvVarType = {
    * The category of the secret: env_var for regular environment variables, ai_provider for AI provider API keys
    *
    * @default "env_var"
-   * @enum env_var, ai_provider, sandbox_provider
+   * @enum env_var, ai_provider, sandbox_provider, automation_integration
    */
-  secret_category: "env_var" | "ai_provider" | "sandbox_provider";
+  secret_category:
+    | "env_var"
+    | "ai_provider"
+    | "sandbox_provider"
+    | "automation_integration";
 };
 export type RepoInfoType =
   /**
@@ -4917,11 +4921,15 @@ export type WindowedAutomationConfigType = {
         string>;
         harness?:
           | /**
-           * @enum native, codex, claude-code
+           * Required when saving a Loop automation. Currently only Codex is supported.
+           *
+           * @enum codex, native, claude-code
            */
-          ("native" | "codex" | "claude-code")
+          ("codex" | "native" | "claude-code")
           | undefined;
         model?: /**
+           * Required when saving a Loop automation.
+           *
            * @minLength 1
            */
           string | undefined;
@@ -5001,6 +5009,29 @@ export type WindowedAutomationConfigType = {
          * @minLength 1
          * @maxLength 10000
          */
+          string | undefined;
+      }
+    | {
+        /**
+         * The type of action to take
+         *
+         * @enum pagerduty
+         */
+        type: "pagerduty";
+        /**
+         * The data-plane secret containing the PagerDuty routing key
+         */
+        routing_key_secret_name: string;
+        /**
+         * @enum critical, error, warning, info
+         */
+        severity: "critical" | "error" | "warning" | "info";
+        formatting_prompt?: /**
+           * Instructions for Loop to format content sent to this destination
+           *
+           * @minLength 1
+           * @maxLength 10000
+           */
           string | undefined;
       }
   >;
@@ -5372,6 +5403,29 @@ export type ProjectAutomationType = {
              * @maxLength 10000
              */
                 string | undefined;
+            }
+          | {
+              /**
+               * The type of action to take
+               *
+               * @enum pagerduty
+               */
+              type: "pagerduty";
+              /**
+               * The data-plane secret containing the PagerDuty routing key
+               */
+              routing_key_secret_name: string;
+              /**
+               * @enum critical, error, warning, info
+               */
+              severity: "critical" | "error" | "warning" | "info";
+              formatting_prompt?: /**
+                 * Instructions for Loop to format content sent to this destination
+                 *
+                 * @minLength 1
+                 * @maxLength 10000
+                 */
+                string | undefined;
             };
       }
     | {
@@ -5614,6 +5668,29 @@ export type ProjectAutomationType = {
              * @minLength 1
              * @maxLength 10000
              */
+                string | undefined;
+            }
+          | {
+              /**
+               * The type of action to take
+               *
+               * @enum pagerduty
+               */
+              type: "pagerduty";
+              /**
+               * The data-plane secret containing the PagerDuty routing key
+               */
+              routing_key_secret_name: string;
+              /**
+               * @enum critical, error, warning, info
+               */
+              severity: "critical" | "error" | "warning" | "info";
+              formatting_prompt?: /**
+                 * Instructions for Loop to format content sent to this destination
+                 *
+                 * @minLength 1
+                 * @maxLength 10000
+                 */
                 string | undefined;
             };
       }
