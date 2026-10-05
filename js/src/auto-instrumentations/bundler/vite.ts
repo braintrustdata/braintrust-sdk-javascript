@@ -9,12 +9,21 @@ export function braintrustVitePlugin(
   const optimizeDepsPlugin: VitePlugin = {
     name: "braintrust:optimize-deps",
     config() {
+      const optimizeDeps =
+        this?.meta != null && "rolldownVersion" in this.meta
+          ? {
+              rolldownOptions: {
+                plugins: [unplugin.rolldown(options)],
+              },
+            }
+          : {
+              esbuildOptions: {
+                plugins: [unplugin.esbuild(options)],
+              },
+            };
+
       return {
-        optimizeDeps: {
-          esbuildOptions: {
-            plugins: [unplugin.esbuild(options)],
-          },
-        },
+        optimizeDeps,
       };
     },
     configEnvironment(name: string) {
@@ -24,12 +33,22 @@ export function braintrustVitePlugin(
       if (name === "client") {
         return;
       }
+
+      const optimizeDeps =
+        this?.meta != null && "rolldownVersion" in this.meta
+          ? {
+              rolldownOptions: {
+                plugins: [unplugin.rolldown(options)],
+              },
+            }
+          : {
+              esbuildOptions: {
+                plugins: [unplugin.esbuild(options)],
+              },
+            };
+
       return {
-        optimizeDeps: {
-          esbuildOptions: {
-            plugins: [unplugin.esbuild(options)],
-          },
-        },
+        optimizeDeps,
       };
     },
   };
