@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 7351b6dec8a2d13b) -- do not modify
+// Auto-generated file (content hash 15ee517da0d5a72c) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -752,7 +752,12 @@ export const EnvVar = z.object({
   preview_secret: z.union([z.string(), z.null()]).optional(),
   secret_type: z.union([z.string(), z.null()]).optional(),
   secret_category: z
-    .enum(["env_var", "ai_provider", "sandbox_provider"])
+    .enum([
+      "env_var",
+      "ai_provider",
+      "sandbox_provider",
+      "automation_integration",
+    ])
     .optional()
     .default("env_var"),
 });
@@ -1742,7 +1747,7 @@ export const WindowedAutomationConfig = z.object({
       include_trigger_input: z.boolean().optional().default(false),
       agent_slug: z.string().min(1),
       auto_approve_tools: z.array(z.string().min(1)).optional().default([]),
-      harness: z.enum(["native", "codex", "claude-code"]).optional(),
+      harness: z.enum(["codex", "native", "claude-code"]).optional(),
       model: z.string().min(1).optional(),
       endpoint_name: z.string().min(1).optional(),
       reasoning_effort: z
@@ -1763,6 +1768,12 @@ export const WindowedAutomationConfig = z.object({
           workspace_id: z.string(),
           channel: z.string(),
           message_template: z.string().optional(),
+          formatting_prompt: z.string().min(1).max(10000).optional(),
+        }),
+        z.object({
+          type: z.literal("pagerduty"),
+          routing_key_secret_name: z.string().uuid(),
+          severity: z.enum(["critical", "error", "warning", "info"]),
           formatting_prompt: z.string().min(1).max(10000).optional(),
         }),
       ]),
@@ -1867,6 +1878,12 @@ export const ProjectAutomation = z.object({
           message_template: z.string().optional(),
           formatting_prompt: z.string().min(1).max(10000).optional(),
         }),
+        z.object({
+          type: z.literal("pagerduty"),
+          routing_key_secret_name: z.string().uuid(),
+          severity: z.enum(["critical", "error", "warning", "info"]),
+          formatting_prompt: z.string().min(1).max(10000).optional(),
+        }),
       ]),
     }),
     z.object({
@@ -1929,6 +1946,12 @@ export const ProjectAutomation = z.object({
           workspace_id: z.string(),
           channel: z.string(),
           message_template: z.string().optional(),
+          formatting_prompt: z.string().min(1).max(10000).optional(),
+        }),
+        z.object({
+          type: z.literal("pagerduty"),
+          routing_key_secret_name: z.string().uuid(),
+          severity: z.enum(["critical", "error", "warning", "info"]),
           formatting_prompt: z.string().min(1).max(10000).optional(),
         }),
       ]),
