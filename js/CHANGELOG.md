@@ -1,5 +1,19 @@
 # braintrust
 
+## 3.37.0
+
+### Minor Changes
+
+- feat(evals): Add cooperative cancellation via `signal` in task hooks When an eval hits its `timeout` or its `signal` aborts, it now stops scheduling new trials, aborts the new `signal` in the task hooks, and waits for in-flight tasks and scorers to settle before rejecting. Previously the eval rejected right away and left running tasks going in the background. Pass `hooks.signal` to the APIs your task calls (or check `signal.aborted`) to stop work early. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2549)
+- feat(workflow-eval): Add batch tasks and scorers (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2548)
+
+### Patch Changes
+
+- fix(eve): Support Eve 0.62+ and 0.70 (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2572)
+- fix: Log output and token metrics for OpenAI Responses API streams that end with `response.incomplete` or `response.failed`, and log the error for `response.failed` Thanks @raphaelfakhri! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2540)
+- fix: Fix claude token usage stats (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2544)
+- fix(eve): Nest turns under the caller's propagated trace context (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2574)
+
 ## 3.36.0
 
 ### Minor Changes
