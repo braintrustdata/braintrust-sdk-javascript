@@ -251,7 +251,12 @@ export class SpanComponentsV4 {
           const remainingJsonObj = JSON.parse(
             uint8ArrayToString(rawBytes.subarray(byteOffset)),
           );
-          Object.assign(jsonObj, remainingJsonObj);
+          for (const key of Object.keys(remainingJsonObj)) {
+            if (["__proto__", "constructor", "prototype"].includes(key)) {
+              continue;
+            }
+            jsonObj[key] = remainingJsonObj[key];
+          }
         }
       }
 
