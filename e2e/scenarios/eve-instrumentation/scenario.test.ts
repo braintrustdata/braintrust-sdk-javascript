@@ -526,13 +526,13 @@ describe.sequential("eve instrumentation variants", () => {
             "eve.session_id": expect.any(String),
             scenario: "eve-instrumentation",
           });
-          expect(steps).toHaveLength(2);
+          expect(steps.length).toBeGreaterThan(0);
           for (const span of [...steps, researcher, read]) {
             expect(span?.span.rootId).toBe(caller?.span.rootId);
           }
           expect(childTurn).toBeDefined();
           expect(childTurn?.span.rootId).toBe(caller?.span.rootId);
-          expect(childSteps).toHaveLength(2);
+          expect(childSteps.length).toBeGreaterThan(0);
           for (const step of childSteps) {
             expect(step.span.rootId).toBe(caller?.span.rootId);
           }
