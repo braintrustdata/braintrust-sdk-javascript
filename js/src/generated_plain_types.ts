@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 15ee517da0d5a72c) -- do not modify
+// Auto-generated file (content hash 34201145df21e506) -- do not modify
 
 export type AclObjectTypeType =
   /**
@@ -5509,6 +5509,12 @@ export type ProjectAutomationType = {
                * The GCP service account email to impersonate
                */
               service_account_email: string;
+              credential_name?: /**
+                 * The name of a Google workload identity federation credential configured in this organization's AI providers. Supported data planes can use it regardless of hosting environment. If omitted, the data plane's GCP identity is used.
+                 *
+                 * @minLength 1
+                 */
+                string | undefined;
             };
         batch_size?:
           | /**
