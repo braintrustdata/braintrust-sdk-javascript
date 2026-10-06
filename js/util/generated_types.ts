@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 15ee517da0d5a72c) -- do not modify
+// Auto-generated file (content hash 34201145df21e506) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -1907,6 +1907,7 @@ export const ProjectAutomation = z.object({
         z.object({
           type: z.literal("gcp_service_account"),
           service_account_email: z.string(),
+          credential_name: z.string().min(1).optional(),
         }),
       ]),
       batch_size: z.union([z.number(), z.null()]).optional(),
