@@ -1,4 +1,4 @@
-// Auto-generated file (content hash 34201145df21e506) -- do not modify
+// Auto-generated file (content hash c38d9109a23f8691) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -1972,7 +1972,7 @@ export const ProjectGroup = z.object({
   name: z.string(),
   description: z.union([z.string(), z.null()]).optional(),
   deleted_at: z.union([z.string(), z.null()]).optional(),
-  member_projects: z.array(z.string().uuid()).max(10000),
+  member_projects: z.array(z.string().uuid()),
 });
 export type ProjectGroupType = z.infer<typeof ProjectGroup>;
 export const ProjectLogsEvent = z.object({
