@@ -1,5 +1,11 @@
 # braintrust
 
+## 3.37.1
+
+### Patch Changes
+
+- fix(vite): support Vite 8 dependency optimization (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2582)
+
 ## 3.37.0
 
 ### Minor Changes
