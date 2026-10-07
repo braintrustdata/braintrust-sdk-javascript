@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { _exportsForTestingOnly, initLogger } from "../../logger";
+import { Attachment, _exportsForTestingOnly, initLogger } from "../../logger";
 import { configureNode } from "../../node/config";
+import type { BedrockRuntimeMiddlewareStack } from "../../vendor-sdk-types/bedrock-runtime";
 import {
   smithyClientChannels,
   smithyCoreChannels,
@@ -23,6 +24,13 @@ class ConverseCommand {
 
 class InvokeModelWithBidirectionalStreamCommand {
   constructor(public input: Record<string, unknown>) {}
+}
+
+class InvokeModelCommand {
+  constructor(
+    public input: Record<string, unknown>,
+    public middlewareStack?: BedrockRuntimeMiddlewareStack,
+  ) {}
 }
 
 class GetObjectCommand {
@@ -228,6 +236,432 @@ describe("BedrockRuntimePlugin", () => {
           span_attributes: expect.objectContaining({
             name: "bedrock.invokeModelWithBidirectionalStream",
           }),
+        }),
+      ]),
+    );
+  });
+
+  it("captures canonical Titan embedding data and token metrics", async () => {
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            embedding: [0.1, 0.2, 0.3],
+            embeddingsByType: {
+              float: [0.1, 0.2, 0.3],
+            },
+            inputTextTokenCount: 4,
+          }),
+        ),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              dimensions: 3,
+              inputText: "Embed this sentence.",
+              normalize: true,
+            }),
+            modelId: "amazon.titan-embed-text-v2:0",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          input: {
+            inputs: [{ content: "Embed this sentence." }],
+            output_dimensions: 3,
+          },
+          metadata: expect.objectContaining({
+            model: "amazon.titan-embed-text-v2:0",
+            provider: "aws-bedrock",
+          }),
+          metrics: expect.objectContaining({
+            prompt_tokens: 4,
+            tokens: 4,
+          }),
+          output: { count: 1 },
+        }),
+      ]),
+    );
+    expect(spans).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_tokens: expect.anything(),
+          }),
+          output: { count: 1 },
+        }),
+      ]),
+    );
+  });
+
+  it("captures Titan multimodal embeddings without logging raw images", async () => {
+    const inputImage = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: JSON.stringify({
+          embedding: [0.1, 0.2, 0.3],
+          inputTextTokenCount: 4,
+        }),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              embeddingConfig: { outputEmbeddingLength: 3 },
+              inputImage,
+              inputText: "Embed this image.",
+            }),
+            modelId: "amazon.titan-embed-image-v1",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    const span = spans.find(
+      (candidate: any) =>
+        candidate.metadata?.model === "amazon.titan-embed-image-v1",
+    ) as Record<string, any> | undefined;
+    expect(span).toMatchObject({
+      input: {
+        inputs: [
+          {
+            content: [
+              { text: "Embed this image.", type: "text" },
+              { type: "image_url" },
+            ],
+          },
+        ],
+        output_dimensions: 3,
+      },
+      metrics: {
+        prompt_tokens: 4,
+        tokens: 4,
+      },
+      output: { count: 1 },
+    });
+    const attachment = span?.input?.inputs?.[0]?.content?.[1]?.image_url?.url;
+    expect(attachment).toBeInstanceOf(Attachment);
+    expect(attachment.reference).toMatchObject({
+      content_type: "image/png",
+      type: "braintrust_attachment",
+    });
+    expect(JSON.stringify(span?.input)).not.toContain(inputImage);
+  });
+
+  it("captures Nova multimodal embedding requests and response counts", async () => {
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: JSON.stringify({
+          embeddings: [
+            { embedding: [0.1, 0.2], embeddingType: "AUDIO" },
+            { embedding: [0.3, 0.4], embeddingType: "VIDEO" },
+          ],
+        }),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              schemaVersion: "nova-multimodal-embed-v1",
+              singleEmbeddingParams: {
+                embeddingDimension: 2,
+                embeddingPurpose: "GENERIC_INDEX",
+                text: { value: "Embed this sentence." },
+              },
+              taskType: "SINGLE_EMBEDDING",
+            }),
+            modelId: "amazon.nova-2-multimodal-embeddings-v1:0",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          input: {
+            inputs: [{ content: "Embed this sentence." }],
+            output_dimensions: 2,
+          },
+          output: { count: 2 },
+        }),
+      ]),
+    );
+  });
+
+  it("captures Marengo multimodal embeddings without provider-native data", async () => {
+    const base64String = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: JSON.stringify({
+          data: {
+            embedding: [0.1, 0.2, 0.3],
+          },
+        }),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              inputType: "text_image",
+              text_image: {
+                inputText: "Embed this image.",
+                mediaSource: { base64String },
+              },
+            }),
+            modelId: "us.twelvelabs.marengo-embed-3-0-v1:0",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    const span = spans.find(
+      (candidate: any) =>
+        candidate.metadata?.model === "us.twelvelabs.marengo-embed-3-0-v1:0",
+    ) as Record<string, any> | undefined;
+    expect(span).toMatchObject({
+      input: {
+        inputs: [
+          {
+            content: [
+              { text: "Embed this image.", type: "text" },
+              { type: "image_url" },
+            ],
+          },
+        ],
+      },
+      output: { count: 1 },
+    });
+    expect(
+      span?.input?.inputs?.[0]?.content?.[1]?.image_url?.url,
+    ).toBeInstanceOf(Attachment);
+    expect(JSON.stringify(span?.input)).not.toContain(base64String);
+  });
+
+  it("captures canonical Cohere batch embedding data without vectors", async () => {
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            embeddings: [
+              [0.1, 0.2, 0.3],
+              [0.4, 0.5, 0.6],
+            ],
+            id: "response-id",
+            response_type: "embeddings_floats",
+            texts: ["First", "Second"],
+          }),
+        ),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({
+              input_type: "search_document",
+              texts: ["First", "Second"],
+            }),
+            modelId: "cohere.embed-english-v3",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          input: {
+            inputs: [{ content: "First" }, { content: "Second" }],
+          },
+          output: { count: 2 },
+        }),
+      ]),
+    );
+  });
+
+  it("captures Cohere v4 embedding token metrics from response headers", async () => {
+    let responseMiddleware:
+      | Parameters<BedrockRuntimeMiddlewareStack["add"]>[0]
+      | undefined;
+    const middlewareStack: BedrockRuntimeMiddlewareStack = {
+      add(middleware, options) {
+        responseMiddleware = middleware;
+        expect(options).toEqual({
+          name: "braintrustBedrockResponseHeaderMetrics",
+          priority: "high",
+          step: "deserialize",
+        });
+      },
+    };
+    const output = {
+      body: JSON.stringify({
+        embeddings: {
+          float: [
+            [0.1, 0.2],
+            [0.3, 0.4],
+          ],
+          int8: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
+        response_type: "embeddings_by_type",
+      }),
+    };
+
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => {
+        if (!responseMiddleware) {
+          throw new Error("Expected response middleware to be installed");
+        }
+        const result = await responseMiddleware(async () => ({
+          output,
+          response: {
+            headers: {
+              "x-amzn-bedrock-input-token-count": "112",
+              "x-amzn-bedrock-output-token-count": "17",
+            },
+          },
+        }))({});
+        return result.output;
+      },
+      {
+        arguments: [
+          new InvokeModelCommand(
+            {
+              body: JSON.stringify({
+                input_type: "search_document",
+                output_dimension: 2,
+                texts: ["First", "Second"],
+              }),
+              modelId: "us.cohere.embed-v4:0",
+            },
+            middlewareStack,
+          ) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          input: {
+            inputs: [{ content: "First" }, { content: "Second" }],
+            output_dimensions: 2,
+          },
+          metrics: expect.objectContaining({
+            prompt_tokens: 112,
+            tokens: 112,
+          }),
+          output: { count: 2 },
+        }),
+      ]),
+    );
+    expect(spans).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_tokens: expect.anything(),
+          }),
+          output: { count: 2 },
+        }),
+      ]),
+    );
+  });
+
+  it("combines Titan body and response header token metrics", async () => {
+    let responseMiddleware:
+      | Parameters<BedrockRuntimeMiddlewareStack["add"]>[0]
+      | undefined;
+    const middlewareStack: BedrockRuntimeMiddlewareStack = {
+      add(middleware) {
+        responseMiddleware = middleware;
+      },
+    };
+    const output = {
+      body: JSON.stringify({
+        inputTextTokenCount: 10,
+        results: [
+          {
+            completionReason: "FINISH",
+            outputText: "Done",
+          },
+        ],
+      }),
+    };
+
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => {
+        if (!responseMiddleware) {
+          throw new Error("Expected response middleware to be installed");
+        }
+        const result = await responseMiddleware(async () => ({
+          output,
+          response: {
+            headers: {
+              "x-amzn-bedrock-output-token-count": "20",
+            },
+          },
+        }))({});
+        return result.output;
+      },
+      {
+        arguments: [
+          new InvokeModelCommand(
+            {
+              body: JSON.stringify({ inputText: "Complete this sentence." }),
+              modelId: "amazon.titan-text-express-v1",
+            },
+            middlewareStack,
+          ) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          metrics: expect.objectContaining({
+            completion_tokens: 20,
+            prompt_tokens: 10,
+            tokens: 30,
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("never logs provider-native output for malformed embedding responses", async () => {
+    await smithyCoreChannels.clientSend.tracePromise(
+      async () => ({
+        body: JSON.stringify({ unexpected: "response" }),
+      }),
+      {
+        arguments: [
+          new InvokeModelCommand({
+            body: JSON.stringify({ inputText: "Embed this." }),
+            modelId: "amazon.titan-embed-text-v2:0",
+          }) as any,
+        ],
+      },
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          output: { count: 0 },
         }),
       ]),
     );
