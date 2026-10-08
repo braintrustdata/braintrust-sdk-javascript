@@ -271,8 +271,9 @@ export function defineCohereInstrumentationAssertions(options: {
       });
     });
 
-    test("matches span tree snapshot", testConfig, async () => {
+    test("matches span tree snapshot", testConfig, async ({ expect }) => {
       await matchSpanTreeSnapshot(events, spanSnapshotPath, {
+        snapshotExpect: expect,
         normalize: {
           omittedKeys: ["prompt_cached_tokens", "relevance_score"],
         },

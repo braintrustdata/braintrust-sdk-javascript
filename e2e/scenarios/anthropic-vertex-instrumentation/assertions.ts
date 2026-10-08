@@ -66,13 +66,14 @@ export function defineAnthropicVertexInstrumentationAssertions(options: {
       }
     });
 
-    test("matches span tree snapshot", async () => {
+    test("matches span tree snapshot", async ({ expect }) => {
       await matchSpanTreeSnapshot(
         events,
         resolveFileSnapshotPath(
           options.testFileUrl,
           `${options.snapshotName}.span-tree.json`,
         ),
+        { snapshotExpect: expect },
       );
     });
   });

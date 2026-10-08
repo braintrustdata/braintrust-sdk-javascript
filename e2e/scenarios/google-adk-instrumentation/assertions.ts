@@ -347,8 +347,14 @@ export function defineGoogleADKInstrumentationAssertions(options: {
       );
     });
 
-    test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath);
-    });
+    test(
+      "matches the shared span tree snapshot",
+      testConfig,
+      async ({ expect }) => {
+        await matchSpanTreeSnapshot(events, spanSnapshotPath, {
+          snapshotExpect: expect,
+        });
+      },
+    );
   });
 }

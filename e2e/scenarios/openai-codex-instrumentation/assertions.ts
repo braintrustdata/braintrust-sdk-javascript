@@ -333,8 +333,10 @@ export function defineOpenAICodexInstrumentationAssertions(options: {
       }
     });
 
-    test("matches the span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath(options));
+    test("matches the span tree snapshot", testConfig, async ({ expect }) => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath(options), {
+        snapshotExpect: expect,
+      });
     });
   });
 }

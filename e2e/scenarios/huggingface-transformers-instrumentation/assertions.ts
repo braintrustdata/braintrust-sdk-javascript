@@ -116,8 +116,10 @@ export function defineAssertions(options: {
       ]);
     });
 
-    test("matches span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(traceEvents, snapshotPath);
+    test("matches span tree snapshot", testConfig, async ({ expect }) => {
+      await matchSpanTreeSnapshot(traceEvents, snapshotPath, {
+        snapshotExpect: expect,
+      });
     });
   });
 }

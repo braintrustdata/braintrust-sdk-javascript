@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -41,7 +42,7 @@ const claudeAgentSDKScenarios = await Promise.all(
 
 describe.concurrent("wrapped instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    describe.sequential(`claude agent sdk ${scenario.version}`, () => {
+    describeVariant(`claude agent sdk ${scenario.version}`, () => {
       defineClaudeAgentSDKInstrumentationAssertions({
         assertLocalToolHandlerParenting: true,
         expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
@@ -67,7 +68,7 @@ describe.concurrent("wrapped instrumentation", () => {
 
 describe.concurrent("auto-hook instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    describe.sequential(`claude agent sdk ${scenario.version}`, () => {
+    describeVariant(`claude agent sdk ${scenario.version}`, () => {
       defineClaudeAgentSDKInstrumentationAssertions({
         assertLocalToolHandlerParenting: true,
         expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,

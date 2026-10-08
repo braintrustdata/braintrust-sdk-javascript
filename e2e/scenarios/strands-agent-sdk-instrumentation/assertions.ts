@@ -642,9 +642,11 @@ export function defineStrandsAgentSDKInstrumentationAssertions(options: {
       },
     );
 
-    test("matches the span tree snapshot", testConfig, async () => {
+    test("matches the span tree snapshot", testConfig, async ({ expect }) => {
       expect(setupError).toBeUndefined();
-      await matchSpanTreeSnapshot(summarize(events), spanSnapshotPath);
+      await matchSpanTreeSnapshot(summarize(events), spanSnapshotPath, {
+        snapshotExpect: expect,
+      });
     });
   });
 }

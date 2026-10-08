@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -27,7 +28,7 @@ const huggingFaceScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of huggingFaceScenarios) {
-    describe.sequential(`huggingface inference sdk ${scenario.version}`, () => {
+    describeVariant(`huggingface inference sdk ${scenario.version}`, () => {
       defineHuggingFaceInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -32,7 +33,7 @@ const anthropicBedrockScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of anthropicBedrockScenarios) {
-    describe.sequential(`anthropic bedrock sdk ${scenario.version}`, () => {
+    describeVariant(`anthropic bedrock sdk ${scenario.version}`, () => {
       defineAnthropicBedrockInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

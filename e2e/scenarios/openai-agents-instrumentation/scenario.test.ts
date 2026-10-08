@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -32,7 +33,7 @@ const openAIAgentsScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of openAIAgentsScenarios) {
-    describe.sequential(`openai agents sdk ${scenario.version}`, () => {
+    describeVariant(`openai agents sdk ${scenario.version}`, () => {
       defineOpenAIAgentsAutoInstrumentationAssertions({
         name: "auto-hook instrumentation",
         runScenario: async ({ runNodeScenarioDir }) => {

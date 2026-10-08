@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -34,7 +35,7 @@ const genkitScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of genkitScenarios) {
-    describe.sequential(`genkit ${scenario.version}`, () => {
+    describeVariant(`genkit ${scenario.version}`, () => {
       defineGenkitInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {
