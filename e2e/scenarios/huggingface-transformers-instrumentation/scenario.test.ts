@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -23,7 +24,7 @@ const scenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of scenarios) {
-    describe.sequential(`Transformers.js ${scenario.version}`, () => {
+    describeVariant(`Transformers.js ${scenario.version}`, () => {
       defineAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

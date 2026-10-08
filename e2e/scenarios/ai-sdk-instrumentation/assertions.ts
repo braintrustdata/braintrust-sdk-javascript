@@ -1502,19 +1502,24 @@ export function defineAISDKInstrumentationAssertions(options: {
       );
     }
 
-    test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath, {
-        normalize: {
-          additionalProviderIdKeys: ["callId"],
-          omittedKeys: [
-            "id",
-            "performance",
-            "prompt_cache_key",
-            ...(options.sdkMajorVersion < 6 ? ["toolCallId"] : []),
-          ],
-        },
-      });
-    });
+    test(
+      "matches the shared span tree snapshot",
+      testConfig,
+      async ({ expect }) => {
+        await matchSpanTreeSnapshot(events, spanSnapshotPath, {
+          snapshotExpect: expect,
+          normalize: {
+            additionalProviderIdKeys: ["callId"],
+            omittedKeys: [
+              "id",
+              "performance",
+              "prompt_cache_key",
+              ...(options.sdkMajorVersion < 6 ? ["toolCallId"] : []),
+            ],
+          },
+        });
+      },
+    );
   });
 }
 

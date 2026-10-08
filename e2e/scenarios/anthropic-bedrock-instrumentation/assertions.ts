@@ -140,8 +140,10 @@ export function defineAnthropicBedrockInstrumentationAssertions(options: {
       },
     );
 
-    test("matches span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(spanTreeEvents(events), spanSnapshotPath);
+    test("matches span tree snapshot", testConfig, async ({ expect }) => {
+      await matchSpanTreeSnapshot(spanTreeEvents(events), spanSnapshotPath, {
+        snapshotExpect: expect,
+      });
     });
   });
 }

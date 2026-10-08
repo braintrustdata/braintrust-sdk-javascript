@@ -159,8 +159,10 @@ export function defineLangSmithInstrumentationAssertions(options: {
       });
     }
 
-    test("matches span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath);
+    test("matches span tree snapshot", testConfig, async ({ expect }) => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath, {
+        snapshotExpect: expect,
+      });
     });
   });
 }

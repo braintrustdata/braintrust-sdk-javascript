@@ -202,8 +202,10 @@ export function defineBedrockRuntimeInstrumentationAssertions(options: {
       ).toBe(true);
     });
 
-    test("matches span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(spanTreeEvents(events), spanSnapshotPath);
+    test("matches span tree snapshot", testConfig, async ({ expect }) => {
+      await matchSpanTreeSnapshot(spanTreeEvents(events), spanSnapshotPath, {
+        snapshotExpect: expect,
+      });
     });
   });
 }

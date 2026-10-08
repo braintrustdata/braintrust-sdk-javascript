@@ -1228,14 +1228,19 @@ export function defineOpenAIInstrumentationAssertions(options: {
       });
     }
 
-    test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(
-        buildSpanTree(events, operationSpecs),
-        spanSnapshotPath,
-        {
-          normalize: { omittedKeys: ["prompt_cache_key"] },
-        },
-      );
-    });
+    test(
+      "matches the shared span tree snapshot",
+      testConfig,
+      async ({ expect }) => {
+        await matchSpanTreeSnapshot(
+          buildSpanTree(events, operationSpecs),
+          spanSnapshotPath,
+          {
+            snapshotExpect: expect,
+            normalize: { omittedKeys: ["prompt_cache_key"] },
+          },
+        );
+      },
+    );
   });
 }

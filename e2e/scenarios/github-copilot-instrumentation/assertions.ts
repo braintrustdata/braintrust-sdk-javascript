@@ -263,8 +263,10 @@ export function defineGitHubCopilotInstrumentationAssertions(options: {
       expect(toolSpan?.span.type).toBe("tool");
     });
 
-    test("matches the span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, snapshotPath);
+    test("matches the span tree snapshot", testConfig, async ({ expect }) => {
+      await matchSpanTreeSnapshot(events, snapshotPath, {
+        snapshotExpect: expect,
+      });
     });
   });
 }

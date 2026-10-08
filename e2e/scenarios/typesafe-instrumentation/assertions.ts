@@ -139,8 +139,10 @@ export function defineTypeSafeInstrumentationAssertions(options: {
       });
     });
 
-    test("matches the span tree snapshot", async () => {
-      await matchSpanTreeSnapshot(spanTreeEvents(events), spanSnapshotPath);
+    test("matches the span tree snapshot", async ({ expect }) => {
+      await matchSpanTreeSnapshot(spanTreeEvents(events), spanSnapshotPath, {
+        snapshotExpect: expect,
+      });
     });
   });
 }

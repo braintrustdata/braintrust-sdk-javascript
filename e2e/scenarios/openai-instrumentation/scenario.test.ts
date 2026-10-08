@@ -1,4 +1,5 @@
 import { describe, it } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -85,7 +86,7 @@ describe.concurrent("variants", () => {
     const assertPrivateFieldMethodsOperation =
       !scenario.disablePrivateFieldMethodsAssertion;
 
-    describe.sequential(`openai sdk ${scenario.version}`, () => {
+    describeVariant(`openai sdk ${scenario.version}`, () => {
       defineOpenAIInstrumentationAssertions({
         assertPrivateFieldMethodsOperation,
         name: "wrapped instrumentation",
