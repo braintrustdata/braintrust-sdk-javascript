@@ -1,3 +1,4 @@
+import { livekitConfigs } from "./livekit";
 import type { InstrumentationConfig } from "../orchestrion-js";
 import {
   isInstrumentationIntegrationDisabled,
@@ -123,6 +124,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     {
       integrations: ["strandsAgentSDK"],
       configs: strandsAgentSDKConfigs,
+    },
+    {
+      integrations: ["livekit"],
+      configs: livekitConfigs,
     },
     {
       integrations: ["flue"],

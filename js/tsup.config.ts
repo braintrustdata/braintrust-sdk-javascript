@@ -9,22 +9,27 @@ const define = {
   __BRAINTRUST_SDK_VERSION__: JSON.stringify(packageJson.version),
 };
 
+const nodeEntries = {
+  index: "src/node/index.ts",
+  "custom-views": "src/custom-views/exports.ts",
+  preprocessors: "src/preprocessors/exports.ts",
+  "apply-auto-instrumentation": "src/node/apply-auto-instrumentation-entry.ts",
+  "vitest-evals-reporter": "src/wrappers/vitest-evals/reporter.ts",
+};
+
 export default defineConfig([
   // Node.js entrypoint
   {
     entry: {
-      index: "src/node/index.ts",
-      "custom-views": "src/custom-views/exports.ts",
-      preprocessors: "src/preprocessors/exports.ts",
-      "apply-auto-instrumentation":
-        "src/node/apply-auto-instrumentation-entry.ts",
-      "vitest-evals-reporter": "src/wrappers/vitest-evals/reporter.ts",
+      ...nodeEntries,
+      livekit: "src/instrumentation/livekit/processor.ts",
     },
     format: ["cjs", "esm"],
     outDir: "dist",
     external: ["zod"],
     removeNodeProtocol: false,
     dts: {
+      entry: nodeEntries,
       // Split DTS generation to reduce memory usage
       compilerOptions: {
         skipLibCheck: true,
@@ -33,6 +38,18 @@ export default defineConfig([
     splitting: true,
     define,
     clean: true,
+  },
+  // Keep the optional integration's declarations separate from the core API.
+  {
+    entry: { livekit: "src/instrumentation/livekit/processor.ts" },
+    format: ["cjs", "esm"],
+    outDir: "dist",
+    external: ["zod"],
+    removeNodeProtocol: false,
+    dts: { only: true, compilerOptions: { skipLibCheck: true } },
+    splitting: false,
+    define,
+    clean: false,
   },
   {
     entry: { cli: "src/cli/index.ts" },

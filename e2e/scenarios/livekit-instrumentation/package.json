@@ -1,0 +1,23 @@
+{
+  "name": "@braintrust/e2e-livekit-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "livekit-v1-latest": {
+          "package": "@livekit/agents",
+          "range": "~1.9.1"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "livekit-v1": "npm:@livekit/agents@1.9.1",
+    "livekit-v1-latest": "npm:@livekit/agents@1.9.1",
+    "@livekit/rtc-node": "1.1.0",
+    "@opentelemetry/sdk-trace-node": "2.0.1",
+    "@livekit/agents-plugin-openai": "1.9.1",
+    "zod": "3.25.76",
+    "ws": "8.18.3"
+  }
+}

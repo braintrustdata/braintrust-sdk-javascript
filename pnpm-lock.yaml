@@ -87,6 +87,9 @@ importers:
 
   e2e:
     devDependencies:
+      '@braintrust/audio':
+        specifier: workspace:^
+        version: link:../integrations/audio
       '@braintrust/deepseek-harness':
         specifier: workspace:^
         version: link:../integrations/deepseek-harness

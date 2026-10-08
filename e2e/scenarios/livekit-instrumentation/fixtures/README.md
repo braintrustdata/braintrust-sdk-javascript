@@ -1,0 +1,3 @@
+`order-24khz.pcm` is mono, signed 16-bit little-endian PCM at 24 kHz, generated with OpenAI speech synthesis for the fictional prompt “Where is my order DEMO 1042?”. It contains no customer audio. Realtime tests send this fixture through LiveKit's actual input stream and record real provider responses. HTTP and WebSocket cassettes contain those responses, never fabricated provider output.
+
+Offline replay buffers caller samples and uses a sample-clock output sink so scheduler jitter does not alter selection geometry. The companion PoC room validator separately checks actual RTC timing and received audio.
