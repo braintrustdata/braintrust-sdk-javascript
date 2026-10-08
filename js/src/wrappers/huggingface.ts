@@ -61,8 +61,8 @@ function isHuggingFaceConstructorKey(
   return HUGGINGFACE_CONSTRUCTOR_KEY_SET.has(value);
 }
 
-// Unlike `isObject`, this accepts null-prototype objects such as the ESM module
-// namespace returned by `await import("@huggingface/inference")`.
+// Unlike `isObject`, this accepts null-prototype objects such as ESM module
+// namespace objects.
 function isRecord(value: unknown): value is Record<PropertyKey, unknown> {
   return (
     (typeof value === "object" || typeof value === "function") && value !== null
