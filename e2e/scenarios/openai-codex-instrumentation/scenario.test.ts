@@ -14,17 +14,17 @@ const TIMEOUT_MS = 240_000;
 const openAICodexScenarios = await Promise.all(
   [
     {
-      autoEntry: "scenario.openai-codex-v0128.mjs",
+      autoEntry: "scenario.mjs",
       autoSnapshotName: "openai-codex-v0-auto-hook",
       dependencyName: "openai-codex-sdk-v0",
-      wrapperEntry: "scenario.openai-codex-v0128.ts",
+      wrapperEntry: "scenario.ts",
       wrapperSnapshotName: "openai-codex-v0-wrapped",
     },
     {
-      autoEntry: "scenario.openai-codex-v0128.mjs",
+      autoEntry: "scenario.mjs",
       autoSnapshotName: "openai-codex-v0-latest-auto-hook",
       dependencyName: "openai-codex-sdk-v0-latest",
-      wrapperEntry: "scenario.openai-codex-v0128.ts",
+      wrapperEntry: "scenario.ts",
       wrapperSnapshotName: "openai-codex-v0-latest-wrapped",
     },
   ].map(async (scenario) => ({

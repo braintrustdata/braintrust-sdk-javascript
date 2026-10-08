@@ -14,16 +14,16 @@ const TIMEOUT_MS = 300_000;
 const claudeAgentSDKScenarios = await Promise.all(
   [
     {
-      autoEntry: "scenario.claude-agent-sdk-v0.2.76.mjs",
+      autoEntry: "scenario.mjs",
       dependencyName: "claude-agent-sdk-v0",
       snapshotName: "claude-agent-sdk-v0",
-      wrapperEntry: "scenario.claude-agent-sdk-v0.2.76.ts",
+      wrapperEntry: "scenario.ts",
     },
     {
-      autoEntry: "scenario.claude-agent-sdk-v0.2.81.mjs",
+      autoEntry: "scenario.mjs",
       dependencyName: "claude-agent-sdk-v0-latest",
       snapshotName: "claude-agent-sdk-v0-latest",
-      wrapperEntry: "scenario.claude-agent-sdk-v0.2.81.ts",
+      wrapperEntry: "scenario.ts",
     },
   ].map(async (scenario) => {
     const { expectTaskLifecycleDetails = true, ...scenarioWithoutDefaults } =

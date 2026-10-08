@@ -61,9 +61,7 @@ describe.concurrent("variants", () => {
             timeoutMs: TIMEOUT_MS,
           });
         },
-        snapshotName: scenario.supportsSessions
-          ? `${scenario.snapshotName}-wrapped`
-          : scenario.snapshotName,
+        snapshotName: scenario.snapshotName,
         supportsBetaMessages: scenario.supportsBetaMessages,
         supportsBetaToolRunner: scenario.supportsBetaToolRunner ?? true,
         supportsSessions: scenario.supportsSessions,

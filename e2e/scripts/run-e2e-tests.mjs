@@ -66,26 +66,37 @@ function scenarioPathArg(arg) {
     return arg;
   }
 
-  const scenarioPath = path.join(E2E_DIR, "scenarios", arg, "scenario.test.ts");
-  return existsSync(scenarioPath) ? `scenarios/${arg}/scenario.test.ts` : arg;
+  const scenarioDir = path.join(E2E_DIR, "scenarios", arg);
+  return existsSync(path.join(scenarioDir, "scenario.test.ts"))
+    ? `scenarios/${arg}/`
+    : arg;
 }
 
 async function defaultScenarioTestPaths() {
   const entries = await readdir(path.join(E2E_DIR, "scenarios"), {
     withFileTypes: true,
   });
-  const scenarioPaths = entries
+  const scenarioDirs = entries
     .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
-    .map((entry) => `scenarios/${entry.name}/scenario.test.ts`)
-    .filter((scenarioPath) => existsSync(path.join(E2E_DIR, scenarioPath)))
+    .map((entry) => `scenarios/${entry.name}`);
+  const testPaths = (
+    await Promise.all(
+      [...scenarioDirs, "helpers"].map(async (dir) =>
+        (await readdir(path.join(E2E_DIR, dir)))
+          .filter((name) => name.endsWith(".test.ts"))
+          .map((name) => `${dir}/${name}`),
+      ),
+    )
+  )
+    .flat()
     .sort();
 
-  if (scenarioPaths.length === 0) {
+  if (testPaths.length === 0) {
     console.error("[e2e] No scenario test files found.");
     process.exit(1);
   }
 
-  return scenarioPaths;
+  return testPaths;
 }
 
 function replayEnv() {
