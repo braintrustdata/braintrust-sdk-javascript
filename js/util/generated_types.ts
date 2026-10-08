@@ -1,4 +1,4 @@
-// Auto-generated file (content hash c38d9109a23f8691) -- do not modify
+// Auto-generated file (content hash 387034529ea006a9) -- do not modify
 
 import { z } from "zod/v3";
 
@@ -206,6 +206,7 @@ export const AsyncScoringControl = z.union([
             z.object({ type: z.literal("trace") }),
           ]),
           idempotency_key: z.string().optional(),
+          triggered_xact_id: z.union([z.string(), z.number()]).optional(),
         }),
       )
       .min(1),

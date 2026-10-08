@@ -1,4 +1,4 @@
-// Auto-generated file (content hash c38d9109a23f8691) -- do not modify
+// Auto-generated file (content hash 387034529ea006a9) -- do not modify
 
 export type AclObjectTypeType =
   /**
@@ -641,6 +641,7 @@ export type AsyncScoringControlType =
               type: "trace";
             };
         idempotency_key?: string | undefined;
+        triggered_xact_id?: (string | number) | undefined;
       }>;
     }
   | {
