@@ -1,5 +1,4 @@
 import { huggingFaceChannels } from "../instrumentation/plugins/huggingface-channels";
-import { isObject } from "../../util";
 import type {
   HuggingFaceChatCompletion,
   HuggingFaceChatCompletionChunk,
@@ -62,9 +61,17 @@ function isHuggingFaceConstructorKey(
   return HUGGINGFACE_CONSTRUCTOR_KEY_SET.has(value);
 }
 
+// Unlike `isObject`, this accepts null-prototype objects such as the ESM module
+// namespace returned by `await import("@huggingface/inference")`.
+function isRecord(value: unknown): value is Record<PropertyKey, unknown> {
+  return (
+    (typeof value === "object" || typeof value === "function") && value !== null
+  );
+}
+
 function hasFunction(value: unknown, methodName: string): boolean {
   return (
-    isObject(value) &&
+    isRecord(value) &&
     methodName in value &&
     typeof value[methodName] === "function"
   );
@@ -73,7 +80,7 @@ function hasFunction(value: unknown, methodName: string): boolean {
 function isSupportedHuggingFaceModule(
   value: unknown,
 ): value is HuggingFaceModule {
-  if (!isObject(value)) {
+  if (!isRecord(value)) {
     return false;
   }
 

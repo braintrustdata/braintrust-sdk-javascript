@@ -43,7 +43,7 @@ describe.concurrent("variants", () => {
           });
         },
         snapshotName: `${scenario.snapshotName}-wrapped`,
-        supportsToolCalls: false,
+        supportsToolCalls: scenario.supportsToolCalls,
         testFileUrl: import.meta.url,
         timeoutMs: HUGGINGFACE_SCENARIO_TIMEOUT_MS,
       });

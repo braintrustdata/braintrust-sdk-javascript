@@ -9,3 +9,36 @@ span_tree:
           "operation": "chat",
           "testRunId": "<run:1>"
         }
+        └── huggingface.chat_completion [llm]
+            input: [
+              {
+                "content": "Reply with exactly OK.",
+                "role": "user"
+              }
+            ]
+            output: [
+              {
+                "finish_reason": "stop",
+                "index": 0,
+                "message": {
+                  "content": "OK",
+                  "role": "assistant"
+                }
+              }
+            ]
+            metadata: {
+              "created": 0,
+              "endpointUrl": "<mock-server>/huggingface-router",
+              "id": "<span:1>",
+              "max_tokens": 16,
+              "model": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+              "object": "chat.completion",
+              "provider": "huggingface",
+              "temperature": 0
+            }
+            metrics: {
+              "completion_tokens": 2,
+              "estimated_cost": 3.7999999999999996e-7,
+              "prompt_tokens": 15,
+              "tokens": 17
+            }

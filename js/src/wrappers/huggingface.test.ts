@@ -274,6 +274,31 @@ describe("wrapHuggingFace", () => {
     });
   });
 
+  test("wraps ESM module namespaces from dynamic import()", async () => {
+    // ESM namespace objects have a null prototype, unlike CJS exports.
+    const namespace = Object.freeze(
+      Object.assign(Object.create(null), buildModernModule(), {
+        [Symbol.toStringTag]: "Module",
+      }),
+    );
+    const { InferenceClient } = wrapHuggingFace(namespace) as any;
+    const client = new InferenceClient("hf_test");
+
+    await client.chatCompletion({
+      model: "Qwen/Qwen3-32B",
+      messages: [{ role: "user", content: "Reply with exactly PARIS." }],
+    });
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]).toMatchObject({
+      span_attributes: {
+        name: "huggingface.chat_completion",
+        type: "llm",
+      },
+    });
+  });
+
   test("wraps direct textGenerationStream exports", async () => {
     const huggingFace = wrapHuggingFace(buildModernModule()) as any;
 
