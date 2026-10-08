@@ -9,7 +9,6 @@
 
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import * as esbuild from "esbuild";
-import { build as viteBuild } from "vite";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,9 +23,9 @@ import {
   GLOBAL_INSTRUMENTATION_HOOKS_REGISTRY_BRAND,
   newGlobalTracingChannel,
 } from "../../src/global-instrumentation-hooks";
+import { bundleFixture, fixturesDir } from "./test-bundle";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const fixturesDir = path.join(__dirname, "fixtures");
 const outputDir = path.join(__dirname, "output-transformation");
 const nodeModulesDir = path.join(fixturesDir, "node_modules");
 const mastraFixtureDir = path.join(outputDir, "mastra-fixture");
@@ -600,34 +599,6 @@ describe("Orchestrion Transformation Tests", () => {
   });
 
   describe("esbuild", () => {
-    it("should transform OpenAI SDK code with global hooks", async () => {
-      const { braintrustEsbuildPlugin } =
-        await import("../../src/auto-instrumentations/bundler/esbuild.js");
-
-      const entryPoint = path.join(fixturesDir, "test-app.js");
-      const outfile = path.join(outputDir, "esbuild-bundle.js");
-
-      const result = await esbuild.build({
-        entryPoints: [entryPoint],
-        bundle: true,
-        write: true,
-        outfile,
-        format: "esm",
-        plugins: [braintrustEsbuildPlugin()],
-        logLevel: "error",
-        absWorkingDir: fixturesDir,
-        preserveSymlinks: true, // CRITICAL: Don't dereference symlinks!
-        platform: "node",
-      });
-
-      expect(result.errors).toHaveLength(0);
-      expect(fs.existsSync(outfile)).toBe(true);
-
-      const output = fs.readFileSync(outfile, "utf-8");
-
-      expectGlobalHookTransform(output);
-    });
-
     it.each([
       ["browser", "browser", { browser: true }],
       ["legacy-browser", "browser", { useDiagnosticChannelCompatShim: true }],
@@ -665,40 +636,30 @@ describe("Orchestrion Transformation Tests", () => {
     );
   });
 
-  describe("vite", () => {
-    it.each([false, true])(
-      "should transform OpenAI SDK code with global hooks (browser: %s)",
-      async (browser) => {
-        const { braintrustVitePlugin } =
-          await import("../../src/auto-instrumentations/bundler/vite.js");
-
-        const outDir = path.join(outputDir, `vite-dist-${browser}`);
-
-        await viteBuild({
-          root: fixturesDir,
-          build: {
-            lib: {
-              entry: path.join(fixturesDir, "test-app.js"),
-              formats: ["es"],
-              fileName: "bundle",
-            },
-            outDir,
-            emptyOutDir: true,
-            minify: false,
-          },
-          plugins: [braintrustVitePlugin({ browser })],
-          logLevel: "error",
-          resolve: {
-            preserveSymlinks: true, // Don't dereference symlinks
-          },
-        });
-
-        const output = fs.readFileSync(
-          path.join(outDir, "bundle.mjs"),
-          "utf-8",
+  describe("esbuild, vite, and rollup", () => {
+    it.each([
+      ["esbuild", false],
+      ["esbuild", true],
+      ["vite", false],
+      ["vite", true],
+      ["rollup", false],
+      ["rollup", true],
+    ] as const)(
+      "should transform OpenAI SDK code with global hooks (%s, browser: %s)",
+      async (bundler, browser) => {
+        const outfile = path.join(
+          outputDir,
+          `${bundler}-bundle-${browser}.mjs`,
         );
 
-        expectGlobalHookTransform(output);
+        await bundleFixture(
+          bundler,
+          path.join(fixturesDir, "test-app.js"),
+          outfile,
+          { browser },
+        );
+
+        expectGlobalHookTransform(fs.readFileSync(outfile, "utf-8"));
       },
     );
   });
@@ -925,44 +886,5 @@ describe("Orchestrion Transformation Tests", () => {
       expect(output).toContain("__btPatchAPIPromise");
       expect(output).toContain("__btParsePatched");
     });
-  });
-
-  describe("rollup", () => {
-    it.each([false, true])(
-      "should transform OpenAI SDK code with global hooks (browser: %s)",
-      async (browser) => {
-        const { rollup } = await import("rollup");
-        const { braintrustRollupPlugin } =
-          await import("../../src/auto-instrumentations/bundler/rollup.js");
-
-        const outfile = path.join(outputDir, `rollup-bundle-${browser}.js`);
-
-        // Simple resolver plugin to find modules in node_modules
-        const resolverPlugin = {
-          name: "resolver",
-          resolveId(source: string) {
-            if (source.startsWith("openai")) {
-              // Bundler resolveId always returns posix-style paths
-              return path
-                .resolve(fixturesDir, "node_modules", source)
-                .replace(/\\/g, "/");
-            }
-            return null;
-          },
-        };
-
-        const bundle = await rollup({
-          input: path.join(fixturesDir, "test-app.js"),
-          plugins: [resolverPlugin, braintrustRollupPlugin({ browser })],
-          external: [],
-          preserveSymlinks: true, // Don't dereference symlinks
-        });
-
-        await bundle.write({ file: outfile, format: "es" });
-        await bundle.close();
-
-        expectGlobalHookTransform(fs.readFileSync(outfile, "utf-8"));
-      },
-    );
   });
 });
