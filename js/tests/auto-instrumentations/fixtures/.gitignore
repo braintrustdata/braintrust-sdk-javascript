@@ -1,6 +1,3 @@
-# Include node_modules/openai (mock package for tests)
+# Include node_modules (mock packages for tests)
 # This negates the global node_modules ignore
 !/node_modules
-
-# Exclude dynamically generated test files
-/test-files
