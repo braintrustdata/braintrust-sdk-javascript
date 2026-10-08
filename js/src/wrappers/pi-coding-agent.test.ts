@@ -2,19 +2,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { invoke } = vi.hoisted(() => ({
   invoke: vi.fn(
-    (target: (...args: any[]) => unknown, thisArg: unknown, args: unknown[]) =>
-      Reflect.apply(target, thisArg, args),
+    (
+      target: (...args: any[]) => any,
+      receiver: unknown,
+      args: unknown[],
+      _additional?: unknown,
+    ) => Reflect.apply(target, receiver, args),
   ),
 }));
-
-vi.mock("../isomorph", () => ({
-  default: {
-    newTracingChannel: vi.fn(() => ({
-      hasInterceptors: true,
-      hasSubscribers: false,
-      invoke,
-    })),
-  },
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
 }));
 
 import { wrapPiCodingAgentSDK } from "./pi-coding-agent";

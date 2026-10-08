@@ -51,9 +51,7 @@ describe("BedrockRuntimePlugin", () => {
   });
 
   it("traces promise-style Smithy send events and ignores callback overloads", async () => {
-    const tracingChannel = smithyCoreChannels.clientSend.tracingChannel();
-
-    await smithyCoreChannels.clientSend.tracePromise(
+    await smithyCoreChannels.clientSend.invoke(
       async () => ({
         output: {
           message: {
@@ -67,14 +65,14 @@ describe("BedrockRuntimePlugin", () => {
           totalTokens: 2,
         },
       }),
-      {
-        arguments: [
-          new ConverseCommand({
-            messages: [{ role: "user", content: [{ text: "OK" }] }],
-            modelId: "us.amazon.nova-lite-v1:0",
-          }) as any,
-        ],
-      },
+      undefined,
+      [
+        new ConverseCommand({
+          messages: [{ role: "user", content: [{ text: "OK" }] }],
+          modelId: "us.amazon.nova-lite-v1:0",
+        }) as any,
+      ],
+      {},
     );
 
     const callbackEvent: any = {
@@ -86,7 +84,7 @@ describe("BedrockRuntimePlugin", () => {
         () => {},
       ],
     };
-    tracingChannel.start!.publish(callbackEvent);
+
     callbackEvent.result = {
       output: {
         message: {
@@ -95,7 +93,12 @@ describe("BedrockRuntimePlugin", () => {
         },
       },
     };
-    tracingChannel.asyncEnd!.publish(callbackEvent);
+    smithyCoreChannels.clientSend.invoke(
+      () => callbackEvent.result,
+      undefined,
+      callbackEvent.arguments,
+      {},
+    );
 
     const spans = await backgroundLogger.drain();
     expect(spans).toEqual(
@@ -139,19 +142,19 @@ describe("BedrockRuntimePlugin", () => {
       };
       const originalIterator = stream[Symbol.asyncIterator];
 
-      const result = await channel.tracePromise(
+      const result = await channel.invoke(
         async () => ({
           body: stream,
           service: "s3",
         }),
-        {
-          arguments: [
-            new GetObjectCommand({
-              Bucket: "not-bedrock",
-              Key: "object.txt",
-            }) as any,
-          ],
-        },
+        undefined,
+        [
+          new GetObjectCommand({
+            Bucket: "not-bedrock",
+            Key: "object.txt",
+          }) as any,
+        ],
+        {},
       );
 
       expect(result.body).toBe(stream);
@@ -197,18 +200,18 @@ describe("BedrockRuntimePlugin", () => {
       };
     }
 
-    const result = await smithyCoreChannels.clientSend.tracePromise(
+    const result = await smithyCoreChannels.clientSend.invoke(
       async () => ({
         body: body(),
       }),
-      {
-        arguments: [
-          new InvokeModelWithBidirectionalStreamCommand({
-            body: undefined,
-            modelId: "us.amazon.nova-lite-v1:0",
-          }) as any,
-        ],
-      },
+      undefined,
+      [
+        new InvokeModelWithBidirectionalStreamCommand({
+          body: undefined,
+          modelId: "us.amazon.nova-lite-v1:0",
+        }) as any,
+      ],
+      {},
     );
 
     for await (const _chunk of result.body) {

@@ -1,20 +1,19 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 
-// Mock iso's newTracingChannel
-vi.mock("../isomorph", () => {
-  const mockTraceSync = vi.fn((fn: () => any) => fn());
-  const mockTracePromise = vi.fn((fn: () => any) => fn());
-  return {
-    default: {
-      newTracingChannel: vi.fn(() => ({
-        subscribe: vi.fn(),
-        unsubscribe: vi.fn(),
-        traceSync: mockTraceSync,
-        tracePromise: mockTracePromise,
-      })),
-    },
-  };
-});
+const { invoke } = vi.hoisted(() => ({
+  invoke: vi.fn(
+    (
+      target: (...args: any[]) => any,
+      receiver: unknown,
+      args: unknown[],
+      _additional?: unknown,
+    ) => Reflect.apply(target, receiver, args),
+  ),
+}));
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
+}));
 
 import { wrapGoogleADK } from "./google-adk";
 
@@ -188,7 +187,7 @@ describe("wrapGoogleADK", () => {
     expect(events[0].id).toBe("1");
   });
 
-  it("should wrap FunctionTool.runAsync to call tracePromise channel", async () => {
+  it("should wrap FunctionTool.runAsync to call invoke channel", async () => {
     class FakeFunctionTool {
       name: string;
       constructor(config: any) {

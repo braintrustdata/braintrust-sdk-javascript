@@ -109,9 +109,11 @@ function betaSessionEventsProxy(
       if (prop === "stream") {
         return new TypedApplyProxy(target.stream, {
           apply(stream, thisArg, argArray) {
-            return anthropicChannels.betaSessionsEventsStream.tracePromise(
-              () => Reflect.apply(stream, thisArg, argArray),
-              { arguments: argArray },
+            return anthropicChannels.betaSessionsEventsStream.invoke(
+              stream,
+              thisArg,
+              argArray,
+              {},
             );
           },
         });
@@ -144,9 +146,11 @@ function betaSessionThreadEventsProxy(
       if (prop === "stream") {
         return new TypedApplyProxy(target.stream, {
           apply(stream, thisArg, argArray) {
-            return anthropicChannels.betaSessionsThreadsEventsStream.tracePromise(
-              () => Reflect.apply(stream, thisArg, argArray),
-              { arguments: argArray },
+            return anthropicChannels.betaSessionsThreadsEventsStream.invoke(
+              stream,
+              thisArg,
+              argArray,
+              {},
             );
           },
         });
@@ -208,12 +212,7 @@ function createProxy(
 ) {
   return new TypedApplyProxy(create, {
     apply(target, thisArg, argArray) {
-      return channel.tracePromise(
-        () => Reflect.apply(target, thisArg, argArray),
-        {
-          arguments: argArray,
-        },
-      );
+      return channel.invoke(target, thisArg, argArray, {});
     },
   });
 }
@@ -238,12 +237,7 @@ function toolRunnerProxy(
             })
           : { _client: anthropic };
 
-      return channel.traceSync(
-        () => Reflect.apply(target, invocationTarget, argArray),
-        {
-          arguments: argArray,
-        },
-      );
+      return channel.invoke(target, invocationTarget, argArray, {});
     },
   });
 }

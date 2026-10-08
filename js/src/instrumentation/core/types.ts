@@ -1,14 +1,4 @@
-/**
- * Standard event types for global hook-based instrumentation.
- *
- * These types retain the TracingChannel-compatible lifecycle.
- * For async functions (tracePromise):
- * - start: Called before the synchronous portion executes
- * - end: Called after the synchronous portion completes (promise returned)
- * - asyncStart: Called when the promise begins to settle
- * - asyncEnd: Called when the promise finishes settling (before user code continues)
- * - error: Called if the function throws or the promise rejects
- */
+/** Per-call tracing data. These types do not define invocation hooks or event subscriptions. */
 
 export type EventArguments = readonly unknown[];
 
@@ -25,25 +15,22 @@ export type SpanInfoCarrier<
 };
 
 /**
- * Base context object shared across all events in a trace.
+ * Per-call context passed to tracing callbacks.
  */
 export interface BaseContext {
   /**
    * Unique identifier for this trace.
-   * Can be used to correlate start/end/error events.
    */
   traceId?: string;
 
   /**
-   * Arbitrary data that can be attached by event handlers
-   * and passed between start/end/error events.
+   * Additional data used by tracing callbacks.
    */
   [key: string]: unknown;
 }
 
 /**
- * Event emitted before the synchronous portion of a function executes.
- * This is where you should create spans and extract input data.
+ * Input context for a tracing function.
  */
 export interface StartEvent<TInput = unknown> extends BaseContext {
   /**
@@ -53,8 +40,7 @@ export interface StartEvent<TInput = unknown> extends BaseContext {
 }
 
 /**
- * Event emitted after the synchronous portion completes.
- * For async functions, this fires when the promise is returned (not settled).
+ * Context containing a returned value.
  */
 export interface EndEvent<TResult = unknown> extends BaseContext {
   /**
@@ -70,7 +56,7 @@ export interface EndEvent<TResult = unknown> extends BaseContext {
 }
 
 /**
- * Event emitted when a function throws or a promise rejects.
+ * Context containing a thrown error or rejected promise.
  */
 export interface ErrorEvent extends BaseContext {
   /**
@@ -85,8 +71,7 @@ export interface ErrorEvent extends BaseContext {
 }
 
 /**
- * Event emitted when a promise begins to settle.
- * This fires after the synchronous portion and when the async continuation starts.
+ * Input context preserving the callable argument tuple.
  */
 export interface TypedStartEvent<
   TArguments extends EventArguments = unknown[],
@@ -116,9 +101,7 @@ export interface TypedErrorEvent<
 export interface AsyncStartEvent<TInput = unknown> extends StartEvent<TInput> {}
 
 /**
- * Event emitted when a promise finishes settling.
- * This fires BEFORE control returns to user code after await.
- * This is where you should extract output data and finalize spans.
+ * Context containing a resolved value for output extraction and finalization.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AsyncEndEvent<TResult = unknown> extends EndEvent<TResult> {}
@@ -144,43 +127,3 @@ export type ErrorEventWith<
   TArguments extends EventArguments = unknown[],
   TExtra extends object = Record<string, never>,
 > = TypedErrorEvent<TArguments> & TExtra;
-
-/**
- * Subscription handlers for a tracing-compatible global hook.
- *
- * Common usage pattern:
- * - Use start to create spans and extract input
- * - Use asyncEnd to extract output and finalize spans
- * - Use error to handle failures
- */
-export interface ChannelHandlers<TInput = unknown, TResult = unknown> {
-  /**
-   * Called before the synchronous portion of a function executes.
-   * Use this to create spans and extract input data.
-   */
-  start?: (event: StartEvent<TInput>) => void;
-
-  /**
-   * Called after the synchronous portion completes (promise returned).
-   * Usually not needed for typical instrumentation.
-   */
-  end?: (event: EndEvent<TResult>) => void;
-
-  /**
-   * Called when a promise begins to settle.
-   * Usually not needed for typical instrumentation.
-   */
-  asyncStart?: (event: AsyncStartEvent<TInput>) => void;
-
-  /**
-   * Called when a promise finishes settling, before user code continues.
-   * Use this to extract output, patch streams, and finalize spans.
-   */
-  asyncEnd?: (event: AsyncEndEvent<TResult>) => void;
-
-  /**
-   * Called when a function throws or promise rejects.
-   * Use this to log errors and clean up spans.
-   */
-  error?: (event: ErrorEvent) => void;
-}

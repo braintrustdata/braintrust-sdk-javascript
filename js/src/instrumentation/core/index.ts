@@ -9,19 +9,18 @@
  * bundler subpaths, such as `braintrust/vite`.
  */
 
-export { BasePlugin } from "./plugin";
-export { toLoggedError } from "./logging";
 export {
   createChannelName,
-  parseChannelName,
   isValidChannelName,
+  parseChannelName,
 } from "./channel";
+export { toLoggedError } from "./logging";
+export { BasePlugin } from "./plugin";
 export type {
+  AsyncEndEvent,
+  AsyncStartEvent,
   BaseContext,
-  StartEvent,
   EndEvent,
   ErrorEvent,
-  AsyncStartEvent,
-  AsyncEndEvent,
-  ChannelHandlers,
+  StartEvent,
 } from "./types";

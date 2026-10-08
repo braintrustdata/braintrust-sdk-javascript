@@ -37,40 +37,31 @@ vi.mock("../../debug-logger", () => ({
   },
 }));
 
-const { mockNewTracingChannel, mockTracingChannels } = vi.hoisted(() => {
-  const tracingChannels = new Map<string, any>();
+const { mockNewInvocationHook, mockInvocationHooks } = vi.hoisted(() => {
+  const invocationHooks = new Map<string, any>();
 
-  function tracingChannel(name: string) {
-    const existing = tracingChannels.get(name);
+  function invocationHook(name: string) {
+    const existing = invocationHooks.get(name);
     if (existing) {
       return existing;
     }
 
     const handlers = new Set<any>();
-    const stores = new Map<any, (message: any) => unknown>();
     const channel = {
       __handlers: handlers,
-      __stores: stores,
-      start: {
-        bindStore: vi.fn(
-          (store: unknown, transform: (message: any) => unknown) => {
-            stores.set(store, transform);
-          },
-        ),
-        unbindStore: vi.fn((store: unknown) => stores.delete(store)),
-      },
-      subscribe: vi.fn((handler: any) => {
+      remove: vi.fn((handler: any) => handlers.delete(handler)),
+      intercept: vi.fn((handler: any) => {
         handlers.add(handler);
+        return () => channel.remove(handler);
       }),
-      unsubscribe: vi.fn((handler: any) => handlers.delete(handler)),
     };
-    tracingChannels.set(name, channel);
+    invocationHooks.set(name, channel);
     return channel;
   }
 
   return {
-    mockNewTracingChannel: vi.fn((name: string) => tracingChannel(name)),
-    mockTracingChannels: tracingChannels,
+    mockNewInvocationHook: vi.fn((name: string) => invocationHook(name)),
+    mockInvocationHooks: invocationHooks,
   };
 });
 
@@ -101,10 +92,11 @@ vi.mock("../../logger", () => ({
   },
 }));
 
-vi.mock("../../isomorph", () => ({
-  default: {
-    newTracingChannel: mockNewTracingChannel,
-  },
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: mockNewInvocationHook,
 }));
 
 import {
@@ -166,9 +158,8 @@ describe("Flue observe instrumentation", () => {
     delete (globalThis as Record<symbol, unknown>)[
       Symbol.for("braintrust.flue.observe-bridge")
     ];
-    for (const channel of mockTracingChannels.values()) {
+    for (const channel of mockInvocationHooks.values()) {
       channel.__handlers.clear();
-      channel.__stores.clear();
     }
     vi.clearAllMocks();
   });
@@ -1450,11 +1441,11 @@ describe("Flue observe instrumentation", () => {
     };
 
     plugin.enable();
-    expect(mockNewTracingChannel).toHaveBeenCalledWith(
+    expect(mockNewInvocationHook).toHaveBeenCalledWith(
       CREATE_CONTEXT_CHANNEL_NAME,
     );
     expect(
-      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).subscribe,
+      invocationHook(CREATE_CONTEXT_CHANNEL_NAME).intercept,
     ).toHaveBeenCalledTimes(1);
 
     emitCreateContextEnd(context);
@@ -1484,7 +1475,7 @@ describe("Flue observe instrumentation", () => {
     plugin.disable();
 
     expect(
-      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).unsubscribe,
+      invocationHook(CREATE_CONTEXT_CHANNEL_NAME).remove,
     ).toHaveBeenCalledTimes(1);
     expect(unsubscribeContext).toHaveBeenCalledTimes(1);
   });
@@ -1507,19 +1498,19 @@ describe("Flue observe instrumentation", () => {
     emitCreateContextEnd(context);
 
     expect(
-      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).subscribe,
+      invocationHook(CREATE_CONTEXT_CHANNEL_NAME).intercept,
     ).toHaveBeenCalledTimes(1);
     expect(context.subscribeEvent).toHaveBeenCalledTimes(1);
 
     first.disable();
     expect(
-      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).unsubscribe,
+      invocationHook(CREATE_CONTEXT_CHANNEL_NAME).remove,
     ).not.toHaveBeenCalled();
     expect(unsubscribeContext).not.toHaveBeenCalled();
 
     second.disable();
     expect(
-      tracingChannel(CREATE_CONTEXT_CHANNEL_NAME).unsubscribe,
+      invocationHook(CREATE_CONTEXT_CHANNEL_NAME).remove,
     ).toHaveBeenCalledTimes(1);
 
     contextSubscribers[0]?.({
@@ -1567,14 +1558,14 @@ describe("Flue observe instrumentation", () => {
   }
 
   function emitCreateContextEnd(result: unknown) {
-    for (const handlers of tracingChannel(CREATE_CONTEXT_CHANNEL_NAME)
+    for (const handlers of invocationHook(CREATE_CONTEXT_CHANNEL_NAME)
       .__handlers) {
-      handlers.end?.({ result });
+      handlers(() => result, undefined, [], {});
     }
   }
 
-  function tracingChannel(channelName: string) {
-    const channel = mockTracingChannels.get(channelName);
+  function invocationHook(channelName: string) {
+    const channel = mockInvocationHooks.get(channelName);
     if (!channel) {
       throw new Error(`Missing mocked tracing channel: ${channelName}`);
     }

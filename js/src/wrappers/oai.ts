@@ -4,18 +4,15 @@ import type {
   OpenAIMediaParams,
 } from "../vendor-sdk-types/openai-media";
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ArgsOf } from "../instrumentation/core/channel-definitions";
+import type { ResultOf } from "../instrumentation/core/tracing-types";
+import { openAIChannels } from "../instrumentation/plugins/openai-channels";
 import type { CompiledPrompt } from "../logger";
 import {
   LEGACY_CACHED_HEADER,
   parseCachedHeader,
   X_CACHED_HEADER,
 } from "../openai-utils";
-import { responsesProxy } from "./oai_responses";
-import type {
-  ArgsOf,
-  ResultOf,
-} from "../instrumentation/core/channel-definitions";
-import { openAIChannels } from "../instrumentation/plugins/openai-channels";
 import type {
   OpenAIChatCompletion,
   OpenAIChatCreateParams,
@@ -26,16 +23,17 @@ import type {
   OpenAIModerationCreateParams,
   OpenAIModerationResponse,
 } from "../vendor-sdk-types/openai";
+import { OpenAIV4Client } from "../vendor-sdk-types/openai-v4";
+import { responsesProxy } from "./oai_responses";
 import {
   APIPromise,
   createChannelContext,
   createLazyAPIPromise,
   EnhancedResponse,
   splitSpanInfo,
-  tracePromiseAsResponse,
-  tracePromiseWithResponse,
+  invokeAsResponse,
+  invokeWithResponse,
 } from "./openai-promise-utils";
-import { OpenAIV4Client } from "../vendor-sdk-types/openai-v4";
 
 declare global {
   var __inherited_braintrust_wrap_openai: ((openai: any) => any) | undefined;
@@ -280,9 +278,11 @@ function wrapBetaChatCompletionParse<
     const { span_info, params } = splitSpanInfo<P, SpanInfo["span_info"]>(
       allParams,
     );
-    return openAIChannels.betaChatCompletionsParse.tracePromise(
-      async () => await completion(params),
-      { arguments: [params], span_info },
+    return openAIChannels.betaChatCompletionsParse.invoke(
+      completion,
+      undefined,
+      [params],
+      { span_info },
     );
   };
 }
@@ -294,9 +294,11 @@ function wrapBetaChatCompletionStream<P extends OpenAIChatCreateParams, C>(
     const { span_info, params } = splitSpanInfo<P, SpanInfo["span_info"]>(
       allParams,
     );
-    return openAIChannels.betaChatCompletionsStream.traceSync(
-      () => completion(params),
-      { arguments: [params], span_info },
+    return openAIChannels.betaChatCompletionsStream.invoke(
+      completion,
+      undefined,
+      [params],
+      { span_info },
     );
   };
 }
@@ -337,12 +339,11 @@ function wrapChatCompletion<
             const completionPromise =
               // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               getAPIPromise() as APIPromise<OpenAIChatStream>;
-            const { data, response, request_id } =
-              await tracePromiseWithResponse(
-                openAIChannels.chatCompletionsCreate,
-                traceContext,
-                completionPromise,
-              );
+            const { data, response, request_id } = await invokeWithResponse(
+              openAIChannels.chatCompletionsCreate,
+              traceContext,
+              completionPromise,
+            );
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return { data: data as C, response, request_id };
           }
@@ -350,7 +351,7 @@ function wrapChatCompletion<
           const completionResponse =
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             getAPIPromise() as APIPromise<OpenAIChatCompletion>;
-          const { data, response, request_id } = await tracePromiseWithResponse(
+          const { data, response, request_id } = await invokeWithResponse(
             openAIChannels.chatCompletionsCreate,
             traceContext,
             completionResponse,
@@ -365,7 +366,7 @@ function wrapChatCompletion<
     return createLazyAPIPromise(
       ensureExecuted,
       () =>
-        tracePromiseAsResponse(
+        invokeAsResponse(
           openAIChannels.chatCompletionsCreate,
           createChannelContext(
             openAIChannels.chatCompletionsCreate,
@@ -427,11 +428,7 @@ function wrapApiCreateWithChannel<
       if (!executionPromise) {
         executionPromise = (async () => {
           const traceContext = createChannelContext(channel, params, span_info);
-          return tracePromiseWithResponse(
-            channel,
-            traceContext,
-            getAPIPromise(),
-          );
+          return invokeWithResponse(channel, traceContext, getAPIPromise());
         })();
       }
       return executionPromise;
@@ -439,7 +436,7 @@ function wrapApiCreateWithChannel<
     return createLazyAPIPromise(
       ensureExecuted,
       () =>
-        tracePromiseAsResponse(
+        invokeAsResponse(
           channel,
           createChannelContext(channel, params, span_info),
           getAPIPromise(),

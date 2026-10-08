@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   CloudflareAgentToolClass,
   CloudflareRunAgentToolOptions,
@@ -10,17 +10,12 @@ type CloudflareAgentsChannelContext = {
   self?: unknown;
 };
 
-export const cloudflareAgentsChannels = defineChannels(
-  "agents",
-  {
-    runAgentTool: channel<
-      [CloudflareAgentToolClass, CloudflareRunAgentToolOptions],
-      CloudflareRunAgentToolResult,
-      CloudflareAgentsChannelContext
-    >({
-      channelName: "Agent.runAgentTool",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.CLOUDFLARE_AGENTS },
-);
+export const cloudflareAgentsChannels = defineInterceptor("agents", {
+  runAgentTool: channel<
+    [CloudflareAgentToolClass, CloudflareRunAgentToolOptions],
+    PromiseLike<CloudflareRunAgentToolResult>,
+    CloudflareAgentsChannelContext
+  >({
+    channelName: "Agent.runAgentTool",
+  }),
+});

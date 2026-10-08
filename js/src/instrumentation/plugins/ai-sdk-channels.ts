@@ -1,13 +1,12 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
-import type { ChannelSpanInfo } from "../core/types";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   AISDK,
-  AISDKEvaluateParams,
-  AISDKEvaluationResult,
   AISDKCallParams,
   AISDKEmbedParams,
   AISDKEmbeddingResult,
+  AISDKEvaluateParams,
+  AISDKEvaluationResult,
   AISDKGenerateImageParams,
   AISDKHarnessAgentCallParams,
   AISDKHarnessAgentCreateSessionParams,
@@ -22,6 +21,7 @@ import type {
   AISDKV7CreateTelemetryDispatcherArgs,
   AISDKV7TelemetryDispatcher,
 } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import type { ChannelSpanInfo } from "../core/types";
 
 type AISDKStreamResult = AISDKResult | AsyncIterable<unknown>;
 type AISDKChannelContext = {
@@ -40,231 +40,200 @@ export const BRAINTRUST_WRAPPED_AI_SDK_MODEL = Symbol.for(
   "braintrust.ai-sdk.wrapped-model",
 );
 
-export const aiSDKChannels = defineChannels(
-  "ai",
-  {
-    modelGenerate: channel<
-      [AISDKCallParams],
-      AISDKResult,
-      AISDKModelChannelContext
-    >({
-      channelName: "model.doGenerate",
-      kind: "async",
-    }),
-    modelStream: channel<
-      [AISDKCallParams],
-      AISDKResult & { stream: ReadableStream<AISDKModelStreamChunk> },
-      AISDKModelChannelContext
-    >({
-      channelName: "model.doStream",
-      kind: "async",
-    }),
-    evaluate: channel<
-      [AISDKEvaluateParams],
-      AISDKEvaluationResult,
-      AISDKChannelContext
-    >({
-      channelName: "evaluate",
-      kind: "async",
-    }),
-    generateText: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "generateText",
-      kind: "async",
-    }),
-    generateImage: channel<
-      [AISDKGenerateImageParams],
-      AISDKResult,
-      AISDKChannelContext
-    >({
-      channelName: "generateImage",
-      kind: "async",
-    }),
-    streamText: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "streamText",
-      kind: "async",
-    }),
-    streamTextSync: channel<
-      [AISDKCallParams],
-      AISDKResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "streamText.sync",
-      kind: "sync-stream",
-    }),
-    generateObject: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "generateObject",
-      kind: "async",
-    }),
-    streamObject: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "streamObject",
-      kind: "async",
-    }),
-    streamObjectSync: channel<
-      [AISDKCallParams],
-      AISDKResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "streamObject.sync",
-      kind: "sync-stream",
-    }),
-    embed: channel<
-      [AISDKEmbedParams],
-      AISDKEmbeddingResult,
-      AISDKChannelContext
-    >({
-      channelName: "embed",
-      kind: "async",
-    }),
-    embedMany: channel<
-      [AISDKEmbedParams],
-      AISDKEmbeddingResult,
-      AISDKChannelContext
-    >({
-      channelName: "embedMany",
-      kind: "async",
-    }),
-    rerank: channel<
-      [AISDKRerankParams],
-      AISDKRerankResult,
-      AISDKChannelContext
-    >({
-      channelName: "rerank",
-      kind: "async",
-    }),
-    agentGenerate: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "Agent.generate",
-      kind: "async",
-    }),
-    agentStream: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "Agent.stream",
-      kind: "async",
-    }),
-    agentStreamSync: channel<
-      [AISDKCallParams],
-      AISDKResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "Agent.stream.sync",
-      kind: "sync-stream",
-    }),
-    toolLoopAgentGenerate: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "ToolLoopAgent.generate",
-      kind: "async",
-    }),
-    toolLoopAgentStream: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "ToolLoopAgent.stream",
-      kind: "async",
-    }),
-    workflowAgentStream: channel<
-      [AISDKCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "WorkflowAgent.stream",
-      kind: "async",
-    }),
-    v7CreateTelemetryDispatcher: channel<
-      [AISDKV7CreateTelemetryDispatcherArgs],
-      AISDKV7TelemetryDispatcher
-    >({
-      channelName: "createTelemetryDispatcher",
-      kind: "sync-stream",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.AI_SDK },
-);
+export const aiSDKChannels = defineInterceptor("ai", {
+  modelGenerate: channel<
+    [AISDKCallParams],
+    PromiseLike<AISDKResult>,
+    AISDKModelChannelContext
+  >({
+    channelName: "model.doGenerate",
+  }),
+  modelStream: channel<
+    [AISDKCallParams],
+    PromiseLike<
+      AISDKResult & { stream: ReadableStream<AISDKModelStreamChunk> }
+    >,
+    AISDKModelChannelContext
+  >({
+    channelName: "model.doStream",
+  }),
+  evaluate: channel<
+    [AISDKEvaluateParams],
+    PromiseLike<AISDKEvaluationResult>,
+    AISDKChannelContext
+  >({
+    channelName: "evaluate",
+  }),
+  generateText: channel<
+    [AISDKCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "generateText",
+  }),
+  generateImage: channel<
+    [AISDKGenerateImageParams],
+    PromiseLike<AISDKResult>,
+    AISDKChannelContext
+  >({
+    channelName: "generateImage",
+  }),
+  streamText: channel<
+    [AISDKCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "streamText",
+  }),
+  streamTextSync: channel<
+    [AISDKCallParams],
+    AISDKResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "streamText.sync",
+  }),
+  generateObject: channel<
+    [AISDKCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "generateObject",
+  }),
+  streamObject: channel<
+    [AISDKCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "streamObject",
+  }),
+  streamObjectSync: channel<
+    [AISDKCallParams],
+    AISDKResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "streamObject.sync",
+  }),
+  embed: channel<
+    [AISDKEmbedParams],
+    PromiseLike<AISDKEmbeddingResult>,
+    AISDKChannelContext
+  >({
+    channelName: "embed",
+  }),
+  embedMany: channel<
+    [AISDKEmbedParams],
+    PromiseLike<AISDKEmbeddingResult>,
+    AISDKChannelContext
+  >({
+    channelName: "embedMany",
+  }),
+  rerank: channel<
+    [AISDKRerankParams],
+    PromiseLike<AISDKRerankResult>,
+    AISDKChannelContext
+  >({
+    channelName: "rerank",
+  }),
+  agentGenerate: channel<
+    [AISDKCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "Agent.generate",
+  }),
+  agentStream: channel<
+    [AISDKCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "Agent.stream",
+  }),
+  agentStreamSync: channel<
+    [AISDKCallParams],
+    AISDKResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "Agent.stream.sync",
+  }),
+  toolLoopAgentGenerate: channel<
+    [AISDKCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "ToolLoopAgent.generate",
+  }),
+  toolLoopAgentStream: channel<
+    [AISDKCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "ToolLoopAgent.stream",
+  }),
+  workflowAgentStream: channel<
+    [AISDKCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "WorkflowAgent.stream",
+  }),
+  v7CreateTelemetryDispatcher: channel<
+    [AISDKV7CreateTelemetryDispatcherArgs],
+    AISDKV7TelemetryDispatcher
+  >({
+    channelName: "createTelemetryDispatcher",
+  }),
+});
 
-export const harnessAgentChannels = defineChannels(
-  "@ai-sdk/harness",
-  {
-    createSession: channel<
-      [AISDKHarnessAgentCreateSessionParams?],
-      AISDKHarnessAgentSession,
-      AISDKChannelContext
-    >({
-      channelName: "HarnessAgent.createSession",
-      kind: "async",
-    }),
-    generate: channel<
-      [AISDKHarnessAgentCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "HarnessAgent.generate",
-      kind: "async",
-    }),
-    stream: channel<
-      [AISDKHarnessAgentCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "HarnessAgent.stream",
-      kind: "async",
-    }),
-    continueGenerate: channel<
-      [AISDKHarnessAgentCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "HarnessAgent.continueGenerate",
-      kind: "async",
-    }),
-    continueStream: channel<
-      [AISDKHarnessAgentCallParams],
-      AISDKStreamResult,
-      AISDKChannelContext,
-      unknown
-    >({
-      channelName: "HarnessAgent.continueStream",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.AI_SDK },
-);
+export const harnessAgentChannels = defineInterceptor("@ai-sdk/harness", {
+  createSession: channel<
+    [AISDKHarnessAgentCreateSessionParams?],
+    PromiseLike<AISDKHarnessAgentSession>,
+    AISDKChannelContext
+  >({
+    channelName: "HarnessAgent.createSession",
+  }),
+  generate: channel<
+    [AISDKHarnessAgentCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "HarnessAgent.generate",
+  }),
+  stream: channel<
+    [AISDKHarnessAgentCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "HarnessAgent.stream",
+  }),
+  continueGenerate: channel<
+    [AISDKHarnessAgentCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "HarnessAgent.continueGenerate",
+  }),
+  continueStream: channel<
+    [AISDKHarnessAgentCallParams],
+    PromiseLike<AISDKStreamResult> | AISDKStreamResult,
+    AISDKChannelContext,
+    unknown
+  >({
+    channelName: "HarnessAgent.continueStream",
+  }),
+});

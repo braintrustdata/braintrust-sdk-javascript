@@ -1,10 +1,13 @@
-import { BasePlugin } from "../core";
-import { traceStreamingChannel, unsubscribeAll } from "../core/channel-tracing";
-import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
+import type { ReturnOf } from "../core/channel-definitions";
+import type { StartOf } from "../core/tracing-types";
 import { SpanTypeAttribute, isObject } from "../../../util/index";
-import { getCurrentUnixTimestamp } from "../../util";
 import type { Span } from "../../logger";
-import type { AnyAsyncChannel } from "../core/channel-definitions";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { getCurrentUnixTimestamp } from "../../util";
+import { BasePlugin } from "../core";
+import { traceStreamingCall, unsubscribeAll } from "../core/channel-tracing";
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
+
 import type {
   BedrockRuntimeConverseRequest,
   BedrockRuntimeConverseResponse,
@@ -32,7 +35,14 @@ export class BedrockRuntimePlugin extends BasePlugin {
         bedrockRuntimeChannels.clientSend,
         smithyCoreChannels.clientSend,
         smithyClientChannels.clientSend,
-      ].map((channel) => traceBedrockRuntimeClientSendChannel(channel)),
+      ].map((channel) =>
+        channel.intercept((target, receiver, args, additional) =>
+          traceBedrockRuntimeClientSend(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+          ),
+        ),
+      ),
     );
   }
 
@@ -41,30 +51,36 @@ export class BedrockRuntimePlugin extends BasePlugin {
   }
 }
 
-function traceBedrockRuntimeClientSendChannel(
-  channel: AnyAsyncChannel,
-): () => void {
-  return traceStreamingChannel(channel, {
-    name: ([command]) => buildBedrockRuntimeSpanInfo(command).name,
-    shouldTrace: ([command, optionsOrCb, cb]) =>
-      getBedrockRuntimeOperation(command) !== undefined &&
-      typeof optionsOrCb !== "function" &&
-      typeof cb !== "function",
-    type: SpanTypeAttribute.LLM,
-    extractInput: ([command]) => extractBedrockRuntimeInput(command),
-    extractOutput: (result, endEvent) =>
-      extractBedrockRuntimeOutput(endEvent?.arguments?.[0], result),
-    extractMetadata: (result, endEvent) =>
-      extractBedrockRuntimeResponseMetadata(endEvent?.arguments?.[0], result),
-    extractMetrics: (result) => extractBedrockRuntimeResponseMetrics(result),
-    patchResult: ({ endEvent, result, span, startTime }) =>
-      patchBedrockRuntimeStreamingResult({
-        command: endEvent.arguments?.[0],
-        result,
-        span,
-        startTime,
-      }),
-  });
+function traceBedrockRuntimeClientSend(
+  call: () => ReturnOf<typeof bedrockRuntimeChannels.clientSend>,
+  event: StartOf<typeof bedrockRuntimeChannels.clientSend>,
+): ReturnOf<typeof bedrockRuntimeChannels.clientSend> {
+  return traceStreamingCall<typeof bedrockRuntimeChannels.clientSend>(
+    call,
+    event,
+    {
+      instrumentationName: INSTRUMENTATION_NAMES.BEDROCK_RUNTIME,
+      name: ([command]) => buildBedrockRuntimeSpanInfo(command).name,
+      shouldTrace: ([command, optionsOrCb, cb]) =>
+        getBedrockRuntimeOperation(command) !== undefined &&
+        typeof optionsOrCb !== "function" &&
+        typeof cb !== "function",
+      type: SpanTypeAttribute.LLM,
+      extractInput: ([command]) => extractBedrockRuntimeInput(command),
+      extractOutput: (result, endEvent) =>
+        extractBedrockRuntimeOutput(endEvent?.arguments?.[0], result),
+      extractMetadata: (result, endEvent) =>
+        extractBedrockRuntimeResponseMetadata(endEvent?.arguments?.[0], result),
+      extractMetrics: (result) => extractBedrockRuntimeResponseMetrics(result),
+      patchResult: ({ endEvent, result, span, startTime }) =>
+        patchBedrockRuntimeStreamingResult({
+          command: endEvent.arguments?.[0],
+          result,
+          span,
+          startTime,
+        }),
+    },
+  );
 }
 
 function extractBedrockRuntimeInput(command: unknown): {

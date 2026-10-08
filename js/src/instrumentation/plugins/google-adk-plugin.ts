@@ -1,30 +1,26 @@
 import { BasePlugin } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
-import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
-import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
-import {
-  BRAINTRUST_CURRENT_SPAN_STORE,
-  _internalGetGlobalState,
-  startSpan as startBaseSpan,
-  withCurrent,
-} from "../../logger";
-import type { CurrentSpanStore, Span } from "../../logger";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute } from "../../../util/index";
+import type { Span } from "../../logger";
+import { startSpan as startBaseSpan, withCurrent } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import { SpanTypeAttribute } from "../../../util/index";
 import { getCurrentUnixTimestamp } from "../../util";
-import { googleADKChannels } from "./google-adk-channels";
 import type {
+  GoogleADKBaseAgent,
+  GoogleADKBaseTool,
   GoogleADKEvent,
+  GoogleADKLlmAgent,
   GoogleADKRunAsyncParams,
   GoogleADKToolRunRequest,
   GoogleADKUsageMetadata,
-  GoogleADKBaseAgent,
-  GoogleADKLlmAgent,
-  GoogleADKBaseTool,
 } from "../../vendor-sdk-types/google-adk";
+import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
+import type { ChannelMessage } from "../core/tracing-types";
+import { googleADKChannels } from "./google-adk-channels";
 
 type RunnerState = {
   span: Span;
@@ -45,10 +41,6 @@ type ToolState = {
   span: Span;
   startTime: number;
 };
-
-type GoogleADKStreamChannel =
-  | typeof googleADKChannels.runnerRunAsync
-  | typeof googleADKChannels.agentRunAsync;
 
 /**
  * Auto-instrumentation plugin for the Google ADK.
@@ -82,10 +74,7 @@ export class GoogleADKPlugin extends BasePlugin {
   }
 
   private subscribeToRunnerRunAsync(): void {
-    const tracingChannel =
-      googleADKChannels.runnerRunAsync.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<typeof googleADKChannels.runnerRunAsync>
-      >;
+    const invocationHook = googleADKChannels.runnerRunAsync;
     const states = new WeakMap<object, RunnerState>();
 
     const createState = (
@@ -126,80 +115,94 @@ export class GoogleADKPlugin extends BasePlugin {
       return { span, startTime, events: [], contextKey };
     };
 
-    const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
-      tracingChannel,
-      states,
-      createState,
-    );
+    const removeHandlers = invocationHook.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof googleADKChannels.runnerRunAsync>;
+        const spanState = runInstrumentation(
+          () => states.get(event) ?? createState(event),
+        );
+        if (spanState) states.set(event, spanState);
+        const prepare = (
+          event: ChannelMessage<typeof googleADKChannels.runnerRunAsync>,
+        ) => {
+          ensureState(states, event, () => createState(event));
+        };
+        const returned = (
+          event: ChannelMessage<typeof googleADKChannels.runnerRunAsync>,
+        ) => {
+          const state = states.get(event);
+          if (!state) {
+            return;
+          }
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof googleADKChannels.runnerRunAsync>
-    > = {
-      start: (event) => {
-        ensureState(states, event, () => createState(event));
-      },
+          const result = event.result;
+          if (isAsyncIterable(result)) {
+            bindAsyncIterableToCurrentSpan(result, state.span);
+            patchStreamIfNeeded<GoogleADKEvent>(result, {
+              onChunk: (adkEvent: GoogleADKEvent) => {
+                state.events.push(adkEvent);
+              },
+              onComplete: () => {
+                finalizeRunnerSpan(state, this.activeRunnerSpans);
+                states.delete(event);
+              },
+              onError: (error: Error) => {
+                cleanupActiveRunnerSpan(state, this.activeRunnerSpans);
+                state.span.log({ error: error.message });
+                state.span.end();
+                states.delete(event);
+              },
+            });
+            return;
+          }
 
-      end: (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
-
-        const result = event.result;
-        if (isAsyncIterable(result)) {
-          bindAsyncIterableToCurrentSpan(result, state.span);
-          patchStreamIfNeeded<GoogleADKEvent>(result, {
-            onChunk: (adkEvent: GoogleADKEvent) => {
-              state.events.push(adkEvent);
-            },
-            onComplete: () => {
-              finalizeRunnerSpan(state, this.activeRunnerSpans);
-              states.delete(event);
-            },
-            onError: (error: Error) => {
-              cleanupActiveRunnerSpan(state, this.activeRunnerSpans);
-              state.span.log({ error: error.message });
-              state.span.end();
-              states.delete(event);
-            },
-          });
-          return;
-        }
-
-        // Non-streaming case (unlikely for runners but handle gracefully)
-        try {
-          state.span.log({ output: result });
-        } finally {
+          // Non-streaming case (unlikely for runners but handle gracefully)
+          try {
+            state.span.log({ output: result });
+          } finally {
+            cleanupActiveRunnerSpan(state, this.activeRunnerSpans);
+            state.span.end();
+            states.delete(event);
+          }
+        };
+        const failed = (
+          event: ChannelMessage<typeof googleADKChannels.runnerRunAsync>,
+        ) => {
+          const state = states.get(event);
+          if (!state || !event.error) {
+            return;
+          }
           cleanupActiveRunnerSpan(state, this.activeRunnerSpans);
+          state.span.log({ error: event.error.message });
           state.span.end();
           states.delete(event);
-        }
+        };
+        const invoke = () => {
+          runInstrumentation(() => prepare(event));
+          let result;
+          try {
+            result = Reflect.apply(target, receiver, args);
+          } catch (error) {
+            Object.assign(event, { error });
+            runInstrumentation(() => failed(event));
+            throw error;
+          }
+          Object.assign(event, { result });
+          runInstrumentation(() => returned(event));
+          return result;
+        };
+        return spanState ? withCurrent(spanState.span, invoke) : invoke();
       },
-
-      error: (event) => {
-        const state = states.get(event);
-        if (!state || !event.error) {
-          return;
-        }
-        cleanupActiveRunnerSpan(state, this.activeRunnerSpans);
-        state.span.log({ error: event.error.message });
-        state.span.end();
-        states.delete(event);
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindCurrentSpanStore?.();
-      tracingChannel.unsubscribe(handlers);
-    });
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private subscribeToAgentRunAsync(): void {
-    const tracingChannel =
-      googleADKChannels.agentRunAsync.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<typeof googleADKChannels.agentRunAsync>
-      >;
+    const invocationHook = googleADKChannels.agentRunAsync;
     const states = new WeakMap<object, AgentState>();
 
     const createState = (
@@ -262,160 +265,202 @@ export class GoogleADKPlugin extends BasePlugin {
       return { span, startTime, events: [], contextKey, name: agentName };
     };
 
-    const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
-      tracingChannel,
-      states,
-      createState,
-    );
+    const removeHandlers = invocationHook.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof googleADKChannels.agentRunAsync>;
+        const spanState = runInstrumentation(
+          () => states.get(event) ?? createState(event),
+        );
+        if (spanState) states.set(event, spanState);
+        const prepare = (
+          event: ChannelMessage<typeof googleADKChannels.agentRunAsync>,
+        ) => {
+          ensureState(states, event, () => createState(event));
+        };
+        const returned = (
+          event: ChannelMessage<typeof googleADKChannels.agentRunAsync>,
+        ) => {
+          const state = states.get(event);
+          if (!state) {
+            return;
+          }
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof googleADKChannels.agentRunAsync>
-    > = {
-      start: (event) => {
-        ensureState(states, event, () => createState(event));
-      },
+          const result = event.result;
+          if (isAsyncIterable(result)) {
+            bindAsyncIterableToCurrentSpan(result, state.span);
+            patchStreamIfNeeded<GoogleADKEvent>(result, {
+              onChunk: (adkEvent: GoogleADKEvent) => {
+                state.events.push(adkEvent);
+              },
+              onComplete: () => {
+                finalizeAgentSpan(state, this.activeAgentSpans);
+                states.delete(event);
+              },
+              onError: (error: Error) => {
+                cleanupActiveAgentSpan(state, this.activeAgentSpans);
+                state.span.log({ error: error.message });
+                state.span.end();
+                states.delete(event);
+              },
+            });
+            return;
+          }
 
-      end: (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
-
-        const result = event.result;
-        if (isAsyncIterable(result)) {
-          bindAsyncIterableToCurrentSpan(result, state.span);
-          patchStreamIfNeeded<GoogleADKEvent>(result, {
-            onChunk: (adkEvent: GoogleADKEvent) => {
-              state.events.push(adkEvent);
-            },
-            onComplete: () => {
-              finalizeAgentSpan(state, this.activeAgentSpans);
-              states.delete(event);
-            },
-            onError: (error: Error) => {
-              cleanupActiveAgentSpan(state, this.activeAgentSpans);
-              state.span.log({ error: error.message });
-              state.span.end();
-              states.delete(event);
-            },
-          });
-          return;
-        }
-
-        try {
-          state.span.log({ output: result });
-        } finally {
+          try {
+            state.span.log({ output: result });
+          } finally {
+            cleanupActiveAgentSpan(state, this.activeAgentSpans);
+            state.span.end();
+            states.delete(event);
+          }
+        };
+        const failed = (
+          event: ChannelMessage<typeof googleADKChannels.agentRunAsync>,
+        ) => {
+          const state = states.get(event);
+          if (!state || !event.error) {
+            return;
+          }
           cleanupActiveAgentSpan(state, this.activeAgentSpans);
+          state.span.log({ error: event.error.message });
           state.span.end();
           states.delete(event);
-        }
+        };
+        const invoke = () => {
+          runInstrumentation(() => prepare(event));
+          let result;
+          try {
+            result = Reflect.apply(target, receiver, args);
+          } catch (error) {
+            Object.assign(event, { error });
+            runInstrumentation(() => failed(event));
+            throw error;
+          }
+          Object.assign(event, { result });
+          runInstrumentation(() => returned(event));
+          return result;
+        };
+        return spanState ? withCurrent(spanState.span, invoke) : invoke();
       },
-
-      error: (event) => {
-        const state = states.get(event);
-        if (!state || !event.error) {
-          return;
-        }
-        cleanupActiveAgentSpan(state, this.activeAgentSpans);
-        state.span.log({ error: event.error.message });
-        state.span.end();
-        states.delete(event);
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindCurrentSpanStore?.();
-      tracingChannel.unsubscribe(handlers);
-    });
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private subscribeToToolRunAsync(): void {
-    const tracingChannel = googleADKChannels.toolRunAsync.tracingChannel();
+    const invocationHook = googleADKChannels.toolRunAsync;
     const states = new WeakMap<object, ToolState>();
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof googleADKChannels.toolRunAsync>
-    > = {
-      start: (event) => {
-        const req = (event.arguments[0] ?? {}) as GoogleADKToolRunRequest;
-        const tool = event.self as GoogleADKBaseTool | undefined;
+    const removeHandlers = invocationHook.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof googleADKChannels.toolRunAsync>;
+        const prepare = (
+          event: ChannelMessage<typeof googleADKChannels.toolRunAsync>,
+        ) => {
+          const req = (event.arguments[0] ?? {}) as GoogleADKToolRunRequest;
+          const tool = event.self as GoogleADKBaseTool | undefined;
 
-        const toolName = extractToolName(req, tool);
-        const parentSpan = findToolParentSpan(
-          req,
-          this.activeAgentSpans,
-          this.activeRunnerSpans,
-        );
+          const toolName = extractToolName(req, tool);
+          const parentSpan = findToolParentSpan(
+            req,
+            this.activeAgentSpans,
+            this.activeRunnerSpans,
+          );
 
-        const createSpan = () =>
-          startBaseSpan(
-            withSpanInstrumentationName(
-              {
-                name: toolName ? `tool: ${toolName}` : "Google ADK Tool",
-                spanAttributes: {
-                  type: SpanTypeAttribute.TOOL,
-                },
-                event: {
-                  input: req.args,
-                  metadata: {
-                    provider: "google-adk",
-                    ...(toolName && { "google_adk.tool_name": toolName }),
-                    ...(extractToolCallId(req) && {
-                      "google_adk.tool_call_id": extractToolCallId(req),
-                    }),
+          const createSpan = () =>
+            startBaseSpan(
+              withSpanInstrumentationName(
+                {
+                  name: toolName ? `tool: ${toolName}` : "Google ADK Tool",
+                  spanAttributes: {
+                    type: SpanTypeAttribute.TOOL,
+                  },
+                  event: {
+                    input: req.args,
+                    metadata: {
+                      provider: "google-adk",
+                      ...(toolName && { "google_adk.tool_name": toolName }),
+                      ...(extractToolCallId(req) && {
+                        "google_adk.tool_call_id": extractToolCallId(req),
+                      }),
+                    },
                   },
                 },
-              },
-              INSTRUMENTATION_NAMES.GOOGLE_ADK,
-            ),
-          );
-        const span = parentSpan
-          ? withCurrent(parentSpan, () => createSpan())
-          : createSpan();
-        const startTime = getCurrentUnixTimestamp();
+                INSTRUMENTATION_NAMES.GOOGLE_ADK,
+              ),
+            );
+          const span = parentSpan
+            ? withCurrent(parentSpan, () => createSpan())
+            : createSpan();
+          const startTime = getCurrentUnixTimestamp();
 
-        states.set(event, { span, startTime });
-      },
+          states.set(event, { span, startTime });
+        };
+        const resolved = (
+          event: ChannelMessage<typeof googleADKChannels.toolRunAsync>,
+        ) => {
+          const state = states.get(event);
+          if (!state) {
+            return;
+          }
 
-      asyncEnd: (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
+          try {
+            const metrics: Record<string, number> = {};
+            const end = getCurrentUnixTimestamp();
+            metrics.start = state.startTime;
+            metrics.end = end;
+            metrics.duration = end - state.startTime;
 
-        try {
-          const metrics: Record<string, number> = {};
-          const end = getCurrentUnixTimestamp();
-          metrics.start = state.startTime;
-          metrics.end = end;
-          metrics.duration = end - state.startTime;
-
-          state.span.log({
-            output: event.result,
-            metrics: cleanMetrics(metrics),
-          });
-        } finally {
+            state.span.log({
+              output: event.result,
+              metrics: cleanMetrics(metrics),
+            });
+          } finally {
+            state.span.end();
+            states.delete(event);
+          }
+        };
+        const failed = (
+          event: ChannelMessage<typeof googleADKChannels.toolRunAsync>,
+        ) => {
+          const state = states.get(event);
+          if (!state || !event.error) {
+            return;
+          }
+          state.span.log({ error: event.error.message });
           state.span.end();
           states.delete(event);
+        };
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
         }
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            resolved(event);
+          },
+          (error) => {
+            Object.assign(event, { error });
+            failed(event);
+          },
+        );
       },
-
-      error: (event) => {
-        const state = states.get(event);
-        if (!state || !event.error) {
-          return;
-        }
-        state.span.log({ error: event.error.message });
-        state.span.end();
-        states.delete(event);
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      tracingChannel.unsubscribe(handlers);
-    });
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 }
 
@@ -527,49 +572,6 @@ function bindAsyncIterableToCurrentSpan(stream: unknown, span: Span): unknown {
   }
 
   return stream;
-}
-
-function bindCurrentSpanStoreToStart<
-  TChannel extends GoogleADKStreamChannel,
-  TState extends { span: Span },
->(
-  tracingChannel: IsoTracingChannel<ChannelMessage<TChannel>>,
-  states: WeakMap<object, TState>,
-  create: (event: ChannelMessage<TChannel>) => TState,
-): (() => void) | undefined {
-  const state = _internalGetGlobalState();
-  const contextManager = state?.contextManager;
-  const startChannel = tracingChannel.start as
-    | ({
-        bindStore?: (
-          store: CurrentSpanStore,
-          callback: (event: ChannelMessage<TChannel>) => unknown,
-        ) => void;
-        unbindStore?: (store: CurrentSpanStore) => void;
-      } & object)
-    | undefined;
-  const currentSpanStore = contextManager
-    ? (
-        contextManager as {
-          [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-        }
-      )[BRAINTRUST_CURRENT_SPAN_STORE]
-    : undefined;
-
-  if (!startChannel?.bindStore || !currentSpanStore) {
-    return undefined;
-  }
-
-  startChannel.bindStore(currentSpanStore, (event) => {
-    const span = ensureState(states, event as object, () =>
-      create(event as ChannelMessage<TChannel>),
-    ).span;
-    return contextManager.wrapSpanForStore(span);
-  });
-
-  return () => {
-    startChannel.unbindStore?.(currentSpanStore);
-  };
 }
 
 // ---- Helper functions ----

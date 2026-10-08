@@ -91,9 +91,11 @@ function wrappedCreateSession(
   client: GitHubCopilotClient,
 ): (config: GitHubCopilotSessionConfig) => Promise<GitHubCopilotSession> {
   return (config: GitHubCopilotSessionConfig) =>
-    gitHubCopilotChannels.createSession.tracePromise(
-      () => client.createSession(config),
-      { arguments: [config] },
+    gitHubCopilotChannels.createSession.invoke(
+      client.createSession,
+      client,
+      [config],
+      {},
     );
 }
 
@@ -104,8 +106,10 @@ function wrappedResumeSession(
   config: GitHubCopilotResumeSessionConfig,
 ) => Promise<GitHubCopilotSession> {
   return (sessionId: string, config: GitHubCopilotResumeSessionConfig) =>
-    gitHubCopilotChannels.resumeSession.tracePromise(
-      () => client.resumeSession(sessionId, config),
-      { arguments: [sessionId, config] },
+    gitHubCopilotChannels.resumeSession.invoke(
+      client.resumeSession,
+      client,
+      [sessionId, config],
+      {},
     );
 }

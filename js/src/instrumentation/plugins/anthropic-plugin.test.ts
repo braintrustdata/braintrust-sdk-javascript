@@ -1,10 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
-// Mock iso's newTracingChannel - must be before any imports that use it
 vi.mock("../../isomorph", () => ({
-  default: {
-    newTracingChannel: vi.fn(),
-  },
+  default: {},
 }));
 
 import {

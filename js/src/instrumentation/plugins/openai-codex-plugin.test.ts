@@ -1,23 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+import { invocationController } from "../test-utils/invocation";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
 const { mockStartSpan } = vi.hoisted(() => ({
   mockStartSpan: vi.fn(),
 }));
 
 vi.mock("../../isomorph", () => ({
-  default: {
-    newTracingChannel: vi.fn(),
-  },
+  default: {},
 }));
 
 vi.mock("../../logger", () => ({
   startSpan: (...args: unknown[]) => mockStartSpan(...args),
 }));
 
-import iso from "../../isomorph";
 import { OpenAICodexPlugin } from "./openai-codex-plugin";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 describe("OpenAICodexPlugin", () => {
   let handlersByName: Map<string, any>;
@@ -31,9 +38,11 @@ describe("OpenAICodexPlugin", () => {
   beforeEach(() => {
     handlersByName = new Map();
     spans = [];
-    mockNewTracingChannel.mockImplementation((name: string) => ({
-      subscribe: vi.fn((handlers) => handlersByName.set(name, handlers)),
-      unsubscribe: vi.fn(),
+    mockNewInvocationHook.mockImplementation((name: string) => ({
+      intercept: vi.fn((interceptor) => {
+        handlersByName.set(name, invocationController(interceptor));
+        return vi.fn();
+      }),
     }));
     mockStartSpan.mockImplementation((args: any) => {
       const span = {
@@ -79,8 +88,8 @@ describe("OpenAICodexPlugin", () => {
       thread: { id: "thread-1" },
     };
 
-    runHandlers.start(event);
-    await runHandlers.asyncEnd(event);
+    runHandlers.begin(event);
+    await runHandlers.resolve(event);
 
     const rootSpan = spans.find((span) => span.name === "OpenAI Codex");
     expect(rootSpan?.log).toHaveBeenCalledWith(

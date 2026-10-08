@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   MistralAgentsCompletionEvent,
   MistralAgentsCompletionResponse,
@@ -21,102 +21,87 @@ import type {
   MistralModerationResponse,
 } from "../../vendor-sdk-types/mistral";
 
-export const mistralChannels = defineChannels(
-  "@mistralai/mistralai",
-  {
-    chatComplete: channel<
-      [MistralChatCreateParams],
-      MistralChatCompletionResponse
-    >({
-      channelName: "chat.complete",
-      kind: "async",
-    }),
+export const mistralChannels = defineInterceptor("@mistralai/mistralai", {
+  chatComplete: channel<
+    [MistralChatCreateParams],
+    PromiseLike<MistralChatCompletionResponse>
+  >({
+    channelName: "chat.complete",
+  }),
 
-    chatStream: channel<
-      [MistralChatCreateParams],
-      MistralChatResult,
-      Record<string, unknown>,
-      MistralChatCompletionEvent
-    >({
-      channelName: "chat.stream",
-      kind: "async",
-    }),
+  chatStream: channel<
+    [MistralChatCreateParams],
+    PromiseLike<MistralChatResult>,
+    Record<string, unknown>,
+    MistralChatCompletionEvent
+  >({
+    channelName: "chat.stream",
+  }),
 
-    embeddingsCreate: channel<
-      [MistralEmbeddingCreateParams],
-      MistralEmbeddingResponse
-    >({
-      channelName: "embeddings.create",
-      kind: "async",
-    }),
+  embeddingsCreate: channel<
+    [MistralEmbeddingCreateParams],
+    PromiseLike<MistralEmbeddingResponse>
+  >({
+    channelName: "embeddings.create",
+  }),
 
-    classifiersModerate: channel<
-      [MistralClassificationCreateParams],
-      MistralModerationResponse
-    >({
-      channelName: "classifiers.moderate",
-      kind: "async",
-    }),
+  classifiersModerate: channel<
+    [MistralClassificationCreateParams],
+    PromiseLike<MistralModerationResponse>
+  >({
+    channelName: "classifiers.moderate",
+  }),
 
-    classifiersModerateChat: channel<
-      [MistralChatClassificationCreateParams],
-      MistralModerationResponse
-    >({
-      channelName: "classifiers.moderateChat",
-      kind: "async",
-    }),
+  classifiersModerateChat: channel<
+    [MistralChatClassificationCreateParams],
+    PromiseLike<MistralModerationResponse>
+  >({
+    channelName: "classifiers.moderateChat",
+  }),
 
-    classifiersClassify: channel<
-      [MistralClassificationCreateParams],
-      MistralClassificationResponse
-    >({
-      channelName: "classifiers.classify",
-      kind: "async",
-    }),
+  classifiersClassify: channel<
+    [MistralClassificationCreateParams],
+    PromiseLike<MistralClassificationResponse>
+  >({
+    channelName: "classifiers.classify",
+  }),
 
-    classifiersClassifyChat: channel<
-      [MistralChatClassificationCreateParams],
-      MistralClassificationResponse
-    >({
-      channelName: "classifiers.classifyChat",
-      kind: "async",
-    }),
+  classifiersClassifyChat: channel<
+    [MistralChatClassificationCreateParams],
+    PromiseLike<MistralClassificationResponse>
+  >({
+    channelName: "classifiers.classifyChat",
+  }),
 
-    fimComplete: channel<
-      [MistralFimCreateParams],
-      MistralFimCompletionResponse
-    >({
-      channelName: "fim.complete",
-      kind: "async",
-    }),
+  fimComplete: channel<
+    [MistralFimCreateParams],
+    PromiseLike<MistralFimCompletionResponse>
+  >({
+    channelName: "fim.complete",
+  }),
 
-    fimStream: channel<
-      [MistralFimCreateParams],
-      MistralFimResult,
-      Record<string, unknown>,
-      MistralFimCompletionEvent
-    >({
-      channelName: "fim.stream",
-      kind: "async",
-    }),
+  fimStream: channel<
+    [MistralFimCreateParams],
+    PromiseLike<MistralFimResult>,
+    Record<string, unknown>,
+    MistralFimCompletionEvent
+  >({
+    channelName: "fim.stream",
+  }),
 
-    agentsComplete: channel<
-      [MistralAgentsCreateParams],
-      MistralAgentsCompletionResponse
-    >({
-      channelName: "agents.complete",
-      kind: "async",
-    }),
+  agentsComplete: channel<
+    [MistralAgentsCreateParams],
+    PromiseLike<MistralAgentsCompletionResponse>
+  >({
+    channelName: "agents.complete",
+  }),
 
-    agentsStream: channel<
-      [MistralAgentsCreateParams],
-      MistralAgentsResult,
-      Record<string, unknown>,
-      MistralAgentsCompletionEvent
-    >({
-      channelName: "agents.stream",
-      kind: "async",
-    }),
-  },
-  { instrumentationName: INSTRUMENTATION_NAMES.MISTRAL },
-);
+  agentsStream: channel<
+    [MistralAgentsCreateParams],
+    PromiseLike<MistralAgentsResult>,
+    Record<string, unknown>,
+    MistralAgentsCompletionEvent
+  >({
+    channelName: "agents.stream",
+  }),
+});

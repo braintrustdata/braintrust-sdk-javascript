@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
-import { newGlobalTracingChannel } from "../global-instrumentation-hooks";
+import { newGlobalInvocationHook } from "../global-instrumentation-hooks";
 import { initializeHandles } from "./index";
 import type { FileHandle } from "./types";
 
@@ -89,14 +89,13 @@ describe("eval auto-instrumentation", () => {
       expect(output).toContain(googleGenAIChannel);
 
       const lifecycle: string[] = [];
-      const hook = newGlobalTracingChannel(googleGenAIChannel);
-      const handlers = {
-        asyncEnd: () => lifecycle.push("asyncEnd"),
-        asyncStart: () => lifecycle.push("asyncStart"),
-        end: () => lifecycle.push("end"),
-        start: () => lifecycle.push("start"),
-      };
-      hook.subscribe(handlers);
+      const hook = newGlobalInvocationHook(googleGenAIChannel);
+      const remove = hook.intercept((target, receiver, args) => {
+        lifecycle.push("called");
+        const result = Reflect.apply(target, receiver, args);
+        result.then(() => lifecycle.push("resolved"));
+        return result;
+      });
 
       try {
         const loadedModule = { exports: {} as Record<string, unknown> };
@@ -109,9 +108,9 @@ describe("eval auto-instrumentation", () => {
         await expect(invoke(loadedModule.exports)).resolves.toEqual({
           text: "payload",
         });
-        expect(lifecycle).toEqual(["start", "end", "asyncStart", "asyncEnd"]);
+        expect(lifecycle).toEqual(["called", "resolved"]);
       } finally {
-        hook.unsubscribe(handlers);
+        remove();
       }
     },
   );
@@ -175,7 +174,7 @@ describe("eval auto-instrumentation", () => {
   });
 
   it.each([
-    ["instruments", undefined, ["start", "end", "asyncStart", "asyncEnd"]],
+    ["instruments", undefined, ["called", "resolved"]],
     ["respects opt-out for", "anthropic", []],
   ])("%s external eval dependencies", async (_label, disabled, expected) => {
     const runnerPath = path.join(fixtureDir, "external-eval-runner.cjs");
@@ -186,19 +185,21 @@ describe("eval auto-instrumentation", () => {
       `require("tsx/cjs");
 require("node:module").register = () => {};
 const { loadModule } = require(${JSON.stringify(loadModulePath)});
-const { newGlobalTracingChannel } = require(${JSON.stringify(globalHooksPath)});
+const { newGlobalInvocationHook } = require(${JSON.stringify(globalHooksPath)});
 const lifecycle = [];
-const channel = newGlobalTracingChannel(${JSON.stringify(anthropicChannel)});
-const handlers = Object.fromEntries(
-  ["start", "end", "asyncStart", "asyncEnd"].map((name) => [name, () => lifecycle.push(name)]),
-);
-channel.subscribe(handlers);
+const channel = newGlobalInvocationHook(${JSON.stringify(anthropicChannel)});
+const remove = channel.intercept((target, receiver, args) => {
+  lifecycle.push("called");
+  const result = Reflect.apply(target, receiver, args);
+  result.then(() => lifecycle.push("resolved"));
+  return result;
+});
 loadModule({
   inFile: ${JSON.stringify(evalFile)},
   moduleText: 'const { Messages } = require("@anthropic-ai/sdk/resources/messages/messages.js"); globalThis.__externalEvalResult = new Messages().create("payload");',
 });
 Promise.resolve(globalThis.__externalEvalResult).then((result) => {
-  channel.unsubscribe(handlers);
+  remove();
   process.stdout.write(JSON.stringify({ lifecycle, result }));
 });`,
     );

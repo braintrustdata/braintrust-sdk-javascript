@@ -1,17 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { tracePromise } = vi.hoisted(() => ({
-  tracePromise: vi.fn((fn: () => Promise<unknown>, _event?: unknown) => fn()),
+const { invoke } = vi.hoisted(() => ({
+  invoke: vi.fn(
+    (
+      target: (...args: any[]) => any,
+      receiver: unknown,
+      args: unknown[],
+      _additional?: unknown,
+    ) => Reflect.apply(target, receiver, args),
+  ),
 }));
-
-vi.mock("../isomorph", () => ({
-  default: {
-    newTracingChannel: vi.fn(() => ({
-      subscribe: vi.fn(),
-      tracePromise,
-      unsubscribe: vi.fn(),
-    })),
-  },
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
 }));
 
 import {
@@ -59,10 +60,8 @@ describe("LangSmith namespace wrappers", () => {
     await expect(traced("hello")).resolves.toBe("hello!");
     expect(existingOnEnd).toHaveBeenCalledWith(run);
     expect(wrapped.helper).toBe(helper);
-    expect(tracePromise).toHaveBeenCalledTimes(1);
-    expect(tracePromise.mock.calls[0]?.[1]).toMatchObject({
-      arguments: ["run-1", run],
-    });
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(invoke.mock.calls[0]?.[2]).toEqual(["run-1", run]);
   });
 
   it("recursively wraps RunTree children without changing class identity", async () => {
@@ -109,7 +108,7 @@ describe("LangSmith namespace wrappers", () => {
     tree.postRun = replacement;
     await expect(tree.postRun()).resolves.toBe("replacement");
     expect(replacement).toHaveBeenCalledOnce();
-    expect(tracePromise).toHaveBeenCalledTimes(3);
+    expect(invoke).toHaveBeenCalledTimes(3);
   });
 
   it("wraps Client lifecycle methods and safely binds other methods", async () => {
@@ -148,7 +147,7 @@ describe("LangSmith namespace wrappers", () => {
       id: "replacement",
     });
     expect(replacement).toHaveBeenCalledOnce();
-    expect(tracePromise).toHaveBeenCalledTimes(4);
+    expect(invoke).toHaveBeenCalledTimes(4);
   });
 
   it("preserves Client method errors", async () => {
@@ -172,7 +171,7 @@ describe("LangSmith namespace wrappers", () => {
 
     const wrapped = wrapLangSmithClient(wrapLangSmithClient({ Client }));
     await new wrapped.Client().createRun({ id: "one" });
-    expect(tracePromise).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledTimes(1);
   });
 
   it("preserves namespace keys for module-shaped objects", () => {

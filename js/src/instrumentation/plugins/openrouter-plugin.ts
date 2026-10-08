@@ -1,25 +1,21 @@
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import { BasePlugin, toLoggedError } from "../core";
 import {
-  traceAsyncChannel,
-  traceStreamingChannel,
-  traceSyncStreamChannel,
+  traceAsyncCall,
+  traceStreamingCall,
+  traceSyncStreamCall,
   unsubscribeAll,
 } from "../core/channel-tracing";
-import type { ChannelMessage } from "../core/channel-definitions";
-import {
-  SpanTypeAttribute,
-  isObject,
-  isPromiseLike,
-} from "../../../util/index";
-import { withCurrent } from "../../logger";
+import { runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute, isObject } from "../../../util/index";
 import type { Span } from "../../logger";
+import { withCurrent } from "../../logger";
 import { getCurrentUnixTimestamp } from "../../util";
-import { zodToJsonSchema } from "../../zod/utils";
-import { openRouterChannels } from "./openrouter-channels";
 import type {
+  OpenRouterCallModelRequest,
   OpenRouterChatChoice,
   OpenRouterChatCompletionChunk,
-  OpenRouterCallModelRequest,
   OpenRouterEmbeddingResponse,
   OpenRouterRerankResult,
   OpenRouterResponse,
@@ -27,6 +23,9 @@ import type {
   OpenRouterTool,
   OpenRouterToolTurnContext,
 } from "../../vendor-sdk-types/openrouter";
+import { zodToJsonSchema } from "../../zod/utils";
+import type { ChannelMessage } from "../core/tracing-types";
+import { openRouterChannels } from "./openrouter-channels";
 
 export class OpenRouterPlugin extends BasePlugin {
   protected onEnable(): void {
@@ -39,253 +38,329 @@ export class OpenRouterPlugin extends BasePlugin {
 
   private subscribeToOpenRouterChannels(): void {
     this.unsubscribers.push(
-      traceStreamingChannel(openRouterChannels.chatSend, {
-        name: "openrouter.chat.send",
-        type: SpanTypeAttribute.LLM,
-        extractInput: (args) => {
-          const request = getOpenRouterRequestArg(args);
-          const chatGenerationParams = isObject(request?.chatGenerationParams)
-            ? request.chatGenerationParams
-            : {};
-          const httpReferer = request?.httpReferer;
-          const xTitle = request?.xTitle;
-          const { messages, ...metadata } = chatGenerationParams;
-          return {
-            input: messages,
-            metadata: buildOpenRouterMetadata(metadata, httpReferer, xTitle),
-          };
-        },
-        extractOutput: (result) => {
-          return isObject(result) ? result.choices : undefined;
-        },
-        extractMetrics: (result, startTime) => {
-          const metrics = parseOpenRouterMetricsFromUsage(result?.usage);
-          if (startTime) {
-            metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-          }
-          return metrics;
-        },
-        aggregateChunks: aggregateOpenRouterChatChunks,
-      }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(openRouterChannels.embeddingsGenerate, {
-        name: "openrouter.embeddings.generate",
-        type: SpanTypeAttribute.LLM,
-        extractInput: (args) => {
-          const request = getOpenRouterRequestArg(args);
-          const requestBody = isObject(request?.requestBody)
-            ? request.requestBody
-            : {};
-          const httpReferer = request?.httpReferer;
-          const xTitle = request?.xTitle;
-          const { input, ...metadata } = requestBody;
-          return {
-            input,
-            metadata: buildOpenRouterEmbeddingMetadata(
-              metadata,
-              httpReferer,
-              xTitle,
-            ),
-          };
-        },
-        extractOutput: (result) => {
-          if (!isObject(result)) {
-            return undefined;
-          }
-
-          const embedding = result.data?.[0]?.embedding;
-          return Array.isArray(embedding)
-            ? { embedding_length: embedding.length }
-            : undefined;
-        },
-        extractMetadata: (result) => {
-          if (!isObject(result)) {
-            return undefined;
-          }
-
-          return extractOpenRouterResponseMetadata(result);
-        },
-        extractMetrics: (result) => {
-          return isObject(result)
-            ? parseOpenRouterMetricsFromUsage(result.usage)
-            : {};
-        },
-      }),
-    );
-
-    this.unsubscribers.push(
-      traceAsyncChannel(openRouterChannels.rerankRerank, {
-        name: "openrouter.rerank.rerank",
-        type: SpanTypeAttribute.LLM,
-        extractInput: (args) => {
-          const request = getOpenRouterRequestArg(args);
-          const requestBody = isObject(request?.requestBody)
-            ? request.requestBody
-            : {};
-          const httpReferer = request?.httpReferer;
-          const xTitle = request?.xTitle ?? request?.appTitle;
-          const { documents, query, ...metadata } = requestBody;
-          return {
-            input: {
-              documents,
-              query,
+      openRouterChannels.chatSend.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof openRouterChannels.chatSend>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER,
+              name: "openrouter.chat.send",
+              type: SpanTypeAttribute.LLM,
+              extractInput: (args) => {
+                const request = getOpenRouterRequestArg(args);
+                const chatGenerationParams = isObject(
+                  request?.chatGenerationParams,
+                )
+                  ? request.chatGenerationParams
+                  : {};
+                const httpReferer = request?.httpReferer;
+                const xTitle = request?.xTitle;
+                const { messages, ...metadata } = chatGenerationParams;
+                return {
+                  input: messages,
+                  metadata: buildOpenRouterMetadata(
+                    metadata,
+                    httpReferer,
+                    xTitle,
+                  ),
+                };
+              },
+              extractOutput: (result) => {
+                return isObject(result) ? result.choices : undefined;
+              },
+              extractMetrics: (result, startTime) => {
+                const metrics = parseOpenRouterMetricsFromUsage(result?.usage);
+                if (startTime) {
+                  metrics.time_to_first_token =
+                    getCurrentUnixTimestamp() - startTime;
+                }
+                return metrics;
+              },
+              aggregateChunks: aggregateOpenRouterChatChunks,
             },
-            metadata: buildOpenRouterRerankMetadata(
-              metadata,
-              documents,
-              httpReferer,
-              xTitle,
-            ),
-          };
-        },
-        extractOutput: (result) => extractOpenRouterRerankOutput(result),
-        extractMetadata: (result) => extractOpenRouterResponseMetadata(result),
-        extractMetrics: (result) =>
-          isObject(result) ? parseOpenRouterMetricsFromUsage(result.usage) : {},
-      }),
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(openRouterChannels.betaResponsesSend, {
-        name: "openrouter.beta.responses.send",
-        type: SpanTypeAttribute.LLM,
-        extractInput: (args) => {
-          const request = getOpenRouterRequestArg(args);
-          const openResponsesRequest = isObject(request?.openResponsesRequest)
-            ? request.openResponsesRequest
-            : {};
-          const httpReferer = request?.httpReferer;
-          const xTitle = request?.xTitle;
-          const { input, ...metadata } = openResponsesRequest;
-          return {
-            input,
-            metadata: buildOpenRouterMetadata(metadata, httpReferer, xTitle),
-          };
-        },
-        extractOutput: (result) =>
-          extractOpenRouterResponseOutput(result as Record<string, unknown>),
-        extractMetadata: (result) => extractOpenRouterResponseMetadata(result),
-        extractMetrics: (result, startTime) => {
-          const metrics = parseOpenRouterMetricsFromUsage(result?.usage);
-          if (startTime) {
-            metrics.time_to_first_token = getCurrentUnixTimestamp() - startTime;
-          }
-          return metrics;
-        },
-        aggregateChunks: aggregateOpenRouterResponseStreamEvents,
-      }),
-    );
+      openRouterChannels.embeddingsGenerate.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof openRouterChannels.embeddingsGenerate>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER,
+              name: "openrouter.embeddings.generate",
+              type: SpanTypeAttribute.LLM,
+              extractInput: (args) => {
+                const request = getOpenRouterRequestArg(args);
+                const requestBody = isObject(request?.requestBody)
+                  ? request.requestBody
+                  : {};
+                const httpReferer = request?.httpReferer;
+                const xTitle = request?.xTitle;
+                const { input, ...metadata } = requestBody;
+                return {
+                  input,
+                  metadata: buildOpenRouterEmbeddingMetadata(
+                    metadata,
+                    httpReferer,
+                    xTitle,
+                  ),
+                };
+              },
+              extractOutput: (result) => {
+                if (!isObject(result)) {
+                  return undefined;
+                }
 
-    this.unsubscribers.push(
-      traceSyncStreamChannel(openRouterChannels.callModel, {
-        name: "openrouter.callModel",
-        type: SpanTypeAttribute.TASK,
-        extractInput: (args) => {
-          const request = getOpenRouterCallModelRequestArg(args);
-          return {
-            input: request
-              ? extractOpenRouterCallModelInput(request)
-              : undefined,
-            metadata: request
-              ? extractOpenRouterCallModelMetadata(request)
-              : { provider: "openrouter" },
-          };
-        },
-        patchResult: ({ endEvent, result, span }) => {
-          return patchOpenRouterCallModelResult({
-            request: getOpenRouterCallModelRequestArg(endEvent.arguments),
-            result,
-            span,
-          });
-        },
-      }),
-    );
+                const embedding = result.data?.[0]?.embedding;
+                return Array.isArray(embedding)
+                  ? { embedding_length: embedding.length }
+                  : undefined;
+              },
+              extractMetadata: (result) => {
+                if (!isObject(result)) {
+                  return undefined;
+                }
 
-    this.unsubscribers.push(
-      traceAsyncChannel(openRouterChannels.callModelTurn, {
-        name: "openrouter.beta.responses.send",
-        type: SpanTypeAttribute.LLM,
-        extractInput: (args, event) => {
-          const request = getOpenRouterCallModelRequestArg(args);
-          const metadata = request
-            ? extractOpenRouterCallModelMetadata(request)
-            : { provider: "openrouter" };
-
-          if (isObject(metadata) && "tools" in metadata) {
-            delete (metadata as Record<string, unknown>).tools;
-          }
-
-          return {
-            input: request
-              ? extractOpenRouterCallModelInput(request)
-              : undefined,
-            metadata: {
-              ...metadata,
-              step: event.step,
-              step_type: event.stepType,
+                return extractOpenRouterResponseMetadata(result);
+              },
+              extractMetrics: (result) => {
+                return isObject(result)
+                  ? parseOpenRouterMetricsFromUsage(result.usage)
+                  : {};
+              },
             },
-          };
-        },
-        extractOutput: (result) =>
-          extractOpenRouterResponseOutput(result as Record<string, unknown>),
-        extractMetadata: (result, event) => {
-          if (!isObject(result)) {
-            return {
-              step: event?.step,
-              step_type: event?.stepType,
-            };
-          }
-
-          return {
-            ...(extractOpenRouterResponseMetadata(result) || {}),
-            ...(event?.step !== undefined ? { step: event.step } : {}),
-            ...(event?.stepType ? { step_type: event.stepType } : {}),
-          };
-        },
-        extractMetrics: (result) =>
-          isObject(result) ? parseOpenRouterMetricsFromUsage(result.usage) : {},
-      }),
+          ),
+      ),
     );
 
     this.unsubscribers.push(
-      traceStreamingChannel(openRouterChannels.toolExecute, {
-        name: "openrouter.tool",
-        type: SpanTypeAttribute.TOOL,
-        extractInput: (args, event) => ({
-          input: args[0],
-          metadata: {
-            provider: "openrouter",
-            tool_name: event.toolName,
-            ...(event.toolCallId ? { tool_call_id: event.toolCallId } : {}),
-          },
-        }),
-        extractOutput: (result) => result,
-        extractMetrics: () => ({}),
-        aggregateChunks: (chunks) => ({
-          output: chunks.length > 0 ? chunks[chunks.length - 1] : undefined,
-          metrics: {},
-        }),
-      }),
+      openRouterChannels.rerankRerank.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof openRouterChannels.rerankRerank>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER,
+              name: "openrouter.rerank.rerank",
+              type: SpanTypeAttribute.LLM,
+              extractInput: (args) => {
+                const request = getOpenRouterRequestArg(args);
+                const requestBody = isObject(request?.requestBody)
+                  ? request.requestBody
+                  : {};
+                const httpReferer = request?.httpReferer;
+                const xTitle = request?.xTitle ?? request?.appTitle;
+                const { documents, query, ...metadata } = requestBody;
+                return {
+                  input: {
+                    documents,
+                    query,
+                  },
+                  metadata: buildOpenRouterRerankMetadata(
+                    metadata,
+                    documents,
+                    httpReferer,
+                    xTitle,
+                  ),
+                };
+              },
+              extractOutput: (result) => extractOpenRouterRerankOutput(result),
+              extractMetadata: (result) =>
+                extractOpenRouterResponseMetadata(result),
+              extractMetrics: (result) =>
+                isObject(result)
+                  ? parseOpenRouterMetricsFromUsage(result.usage)
+                  : {},
+            },
+          ),
+      ),
     );
 
-    const callModelChannel = openRouterChannels.callModel.tracingChannel();
-    const callModelHandlers = {
-      start: (event: { arguments: unknown[] }) => {
-        const request = getOpenRouterCallModelRequestArg(event.arguments);
-        if (!request) {
-          return;
-        }
+    this.unsubscribers.push(
+      openRouterChannels.betaResponsesSend.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof openRouterChannels.betaResponsesSend>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER,
+              name: "openrouter.beta.responses.send",
+              type: SpanTypeAttribute.LLM,
+              extractInput: (args) => {
+                const request = getOpenRouterRequestArg(args);
+                const openResponsesRequest = isObject(
+                  request?.openResponsesRequest,
+                )
+                  ? request.openResponsesRequest
+                  : {};
+                const httpReferer = request?.httpReferer;
+                const xTitle = request?.xTitle;
+                const { input, ...metadata } = openResponsesRequest;
+                return {
+                  input,
+                  metadata: buildOpenRouterMetadata(
+                    metadata,
+                    httpReferer,
+                    xTitle,
+                  ),
+                };
+              },
+              extractOutput: (result) =>
+                extractOpenRouterResponseOutput(
+                  result as Record<string, unknown>,
+                ),
+              extractMetadata: (result) =>
+                extractOpenRouterResponseMetadata(result),
+              extractMetrics: (result, startTime) => {
+                const metrics = parseOpenRouterMetricsFromUsage(result?.usage);
+                if (startTime) {
+                  metrics.time_to_first_token =
+                    getCurrentUnixTimestamp() - startTime;
+                }
+                return metrics;
+              },
+              aggregateChunks: aggregateOpenRouterResponseStreamEvents,
+            },
+          ),
+      ),
+    );
 
-        patchOpenRouterCallModelRequestTools(request);
-      },
-    };
+    this.unsubscribers.push(
+      openRouterChannels.callModel.intercept(
+        (target, receiver, args, additional) =>
+          traceSyncStreamCall<typeof openRouterChannels.callModel>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER,
+              name: "openrouter.callModel",
+              type: SpanTypeAttribute.TASK,
+              extractInput: (args) => {
+                const request = getOpenRouterCallModelRequestArg(args);
+                return {
+                  input: request
+                    ? extractOpenRouterCallModelInput(request)
+                    : undefined,
+                  metadata: request
+                    ? extractOpenRouterCallModelMetadata(request)
+                    : { provider: "openrouter" },
+                };
+              },
+              patchResult: ({ endEvent, result, span }) => {
+                return patchOpenRouterCallModelResult({
+                  request: getOpenRouterCallModelRequestArg(endEvent.arguments),
+                  result,
+                  span,
+                });
+              },
+            },
+          ),
+      ),
+    );
 
-    callModelChannel.subscribe(callModelHandlers);
-    this.unsubscribers.push(() => {
-      callModelChannel.unsubscribe(callModelHandlers);
-    });
+    this.unsubscribers.push(
+      openRouterChannels.callModelTurn.intercept(
+        (target, receiver, args, additional) =>
+          traceAsyncCall<typeof openRouterChannels.callModelTurn>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER,
+              name: "openrouter.beta.responses.send",
+              type: SpanTypeAttribute.LLM,
+              extractInput: (args, event) => {
+                const request = getOpenRouterCallModelRequestArg(args);
+                const metadata = request
+                  ? extractOpenRouterCallModelMetadata(request)
+                  : { provider: "openrouter" };
+
+                if (isObject(metadata) && "tools" in metadata) {
+                  delete (metadata as Record<string, unknown>).tools;
+                }
+
+                return {
+                  input: request
+                    ? extractOpenRouterCallModelInput(request)
+                    : undefined,
+                  metadata: {
+                    ...metadata,
+                    step: event.step,
+                    step_type: event.stepType,
+                  },
+                };
+              },
+              extractOutput: (result) =>
+                extractOpenRouterResponseOutput(
+                  result as Record<string, unknown>,
+                ),
+              extractMetadata: (result, event) => {
+                if (!isObject(result)) {
+                  return {
+                    step: event?.step,
+                    step_type: event?.stepType,
+                  };
+                }
+
+                return {
+                  ...(extractOpenRouterResponseMetadata(result) || {}),
+                  ...(event?.step !== undefined ? { step: event.step } : {}),
+                  ...(event?.stepType ? { step_type: event.stepType } : {}),
+                };
+              },
+              extractMetrics: (result) =>
+                isObject(result)
+                  ? parseOpenRouterMetricsFromUsage(result.usage)
+                  : {},
+            },
+          ),
+      ),
+    );
+
+    this.unsubscribers.push(
+      openRouterChannels.toolExecute.intercept(
+        (target, receiver, args, additional) =>
+          traceStreamingCall<typeof openRouterChannels.toolExecute>(
+            () => Reflect.apply(target, receiver, args),
+            { ...additional, arguments: args, self: receiver },
+            {
+              instrumentationName: INSTRUMENTATION_NAMES.OPENROUTER,
+              name: "openrouter.tool",
+              type: SpanTypeAttribute.TOOL,
+              extractInput: (args, event) => ({
+                input: args[0],
+                metadata: {
+                  provider: "openrouter",
+                  tool_name: event.toolName,
+                  ...(event.toolCallId
+                    ? { tool_call_id: event.toolCallId }
+                    : {}),
+                },
+              }),
+              extractOutput: (result) => result,
+              extractMetrics: () => ({}),
+              aggregateChunks: (chunks) => ({
+                output:
+                  chunks.length > 0 ? chunks[chunks.length - 1] : undefined,
+                metrics: {},
+              }),
+            },
+          ),
+      ),
+    );
+
+    this.unsubscribers.push(
+      openRouterChannels.callModel.intercept((target, receiver, args) => {
+        runInstrumentation(() => {
+          const request = getOpenRouterCallModelRequestArg(args);
+          if (request) patchOpenRouterCallModelRequestTools(request);
+        });
+        return Reflect.apply(target, receiver, args);
+      }),
+    );
   }
 }
 
@@ -750,7 +825,6 @@ function traceToolExecution(args: {
   toolCallId?: string;
   toolName: string;
 }): unknown {
-  const tracingChannel = openRouterChannels.toolExecute.tracingChannel();
   const input = args.args.length > 0 ? args.args[0] : undefined;
   const event: OpenRouterToolTraceContext = {
     arguments: [input],
@@ -761,43 +835,12 @@ function traceToolExecution(args: {
     toolName: args.toolName,
   };
 
-  tracingChannel.start!.publish(event);
-
-  try {
-    const result = args.execute();
-    return publishToolResult(tracingChannel, event, result);
-  } catch (error) {
-    event.error = normalizeError(error);
-    tracingChannel.error!.publish(event);
-    throw error;
-  }
-}
-
-function publishToolResult(
-  tracingChannel: ReturnType<
-    typeof openRouterChannels.toolExecute.tracingChannel
-  >,
-  event: OpenRouterToolTraceContext,
-  result: unknown,
-): unknown {
-  if (isPromiseLike(result)) {
-    return result.then(
-      (resolved) => {
-        event.result = resolved;
-        tracingChannel.asyncEnd!.publish(event);
-        return resolved;
-      },
-      (error) => {
-        event.error = normalizeError(error);
-        tracingChannel.error!.publish(event);
-        throw error;
-      },
-    );
-  }
-
-  event.result = result;
-  tracingChannel.asyncEnd!.publish(event);
-  return result;
+  return openRouterChannels.toolExecute.invoke(
+    args.execute,
+    undefined,
+    [input],
+    event,
+  );
 }
 
 function getToolCallId(context: unknown): string | undefined {
@@ -1291,7 +1334,12 @@ async function traceOpenRouterCallModelTurn<TResult>(args: {
   };
 
   return await withCurrent(args.parentSpan, () =>
-    openRouterChannels.callModelTurn.tracePromise(args.fn, context),
+    openRouterChannels.callModelTurn.invoke(
+      args.fn,
+      undefined,
+      [args.request],
+      context,
+    ),
   );
 }
 
@@ -1501,10 +1549,6 @@ function isAsyncIterable(value: unknown): value is AsyncIterable<unknown> {
     Symbol.asyncIterator in value &&
     typeof value[Symbol.asyncIterator] === "function"
   );
-}
-
-function normalizeError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error));
 }
 
 export { parseOpenRouterMetricsFromUsage };

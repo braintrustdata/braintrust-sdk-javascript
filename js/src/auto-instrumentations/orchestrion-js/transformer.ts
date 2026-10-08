@@ -3,13 +3,12 @@
  * licensed under Apache-2.0. Modified by Braintrust.
  */
 
-import esquery from "esquery";
 import { generate } from "astring";
+import esquery from "esquery";
 import { parse } from "meriyah";
 import { SourceMapGenerator } from "source-map";
 import { transforms, type TransformState } from "./transforms";
 import type {
-  FunctionKind,
   FunctionQuery,
   InstrumentationConfig,
   ModuleType,
@@ -18,7 +17,6 @@ import type {
 
 type AnyNode = any;
 type ExportAliases = Record<string, string>;
-type TraceOperator = "traceCallback" | "tracePromise" | "traceSync";
 
 /**
  * Applies instrumentation configs to JavaScript source by parsing it into an
@@ -90,7 +88,6 @@ export class Transformer {
         ...config,
         moduleVersion: this.version,
         functionQuery: resolvedFunctionQuery,
-        operator: this.getOperator(resolvedFunctionQuery.kind),
       };
 
       esquery.traverse(ast, esquery.parse(query), (...args: any[]) => {
@@ -141,7 +138,7 @@ export class Transformer {
   free(): void {}
 
   private visit(state: TransformState, ...args: any[]): void {
-    const transform = transforms[state.operator];
+    const transform = transforms.invoke;
     const { index = 0 } = state.functionQuery as any;
     const [node] = args;
     const type = node.init?.type || node.type;
@@ -162,17 +159,6 @@ export class Transformer {
     }
 
     (transform as (...args: any[]) => void)(state, ...args);
-  }
-
-  private getOperator(kind: FunctionKind): TraceOperator {
-    switch (kind) {
-      case "Async":
-        return "tracePromise";
-      case "Callback":
-        return "traceCallback";
-      case "Sync":
-        return "traceSync";
-    }
   }
 
   private collectExportAliases(ast: AnyNode): ExportAliases {

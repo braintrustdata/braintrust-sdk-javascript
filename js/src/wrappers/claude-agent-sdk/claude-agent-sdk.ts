@@ -13,7 +13,7 @@ type LocalToolMetadata = {
 
 /**
  * Wraps the Claude Agent SDK with Braintrust tracing. Query calls only publish
- * tracing-channel events; the Claude Agent SDK plugin owns all span lifecycle
+ * invocation hooks; the Claude Agent SDK plugin owns all span lifecycle
  * work, including root/task spans, LLM spans, tool spans, and sub-agent spans.
  *
  * @param sdk - The Claude Agent SDK module

@@ -1,16 +1,15 @@
 import { BasePlugin, toLoggedError } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers } from "../../isomorph";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
-import { startSpan as startBaseSpan } from "../../logger";
 import type { Span } from "../../logger";
+import { startSpan as startBaseSpan } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
-import { SpanTypeAttribute } from "../../../util/index";
-import { cursorSDKChannels } from "./cursor-sdk-channels";
 import type {
   CursorSDKAgent,
   CursorSDKAgentOptions,
@@ -28,6 +27,8 @@ import type {
   CursorSDKUsage,
   CursorSDKUserMessage,
 } from "../../vendor-sdk-types/cursor-sdk";
+import type { ChannelMessage } from "../core/tracing-types";
+import { cursorSDKChannels } from "./cursor-sdk-channels";
 
 const PATCHED_AGENT = Symbol.for("braintrust.cursor-sdk.auto-patched-agent");
 const PATCHED_RUN = Symbol.for("braintrust.cursor-sdk.patched-run");
@@ -89,187 +90,238 @@ export class CursorSDKPlugin extends BasePlugin {
   private subscribeToAgentFactory(
     channel: typeof cursorSDKChannels.create | typeof cursorSDKChannels.resume,
   ): void {
-    const tracingChannel = channel.tracingChannel();
-    const handlers: IsoChannelHandlers<ChannelMessage<typeof channel>> = {
-      asyncEnd: (event) => {
-        patchCursorAgentInPlace(event.result);
-      },
-      error: () => {},
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      tracingChannel.unsubscribe(handlers);
-    });
+    this.unsubscribers.push(
+      channel.intercept((target, receiver, args) =>
+        observeResult(
+          Reflect.apply(target, receiver, args),
+          patchCursorAgentInPlace,
+          () => {},
+        ),
+      ),
+    );
   }
 
   private subscribeToPrompt(): void {
-    const channel = cursorSDKChannels.prompt.tracingChannel();
+    const channel = cursorSDKChannels.prompt;
     const states = new WeakMap<object, PromptState>();
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof cursorSDKChannels.prompt>
-    > = {
-      start: (event) => {
-        this.promptDepth += 1;
-        const message = event.arguments[0];
-        const options = event.arguments[1];
-        const metadata = {
-          ...extractAgentOptionsMetadata(options),
-          "cursor_sdk.operation": "Agent.prompt",
-          provider: "cursor",
-          ...(event.moduleVersion
-            ? { "cursor_sdk.version": event.moduleVersion }
-            : {}),
-        };
-        const span = startBaseSpan(
-          withSpanInstrumentationName(
-            {
-              name: "Cursor Agent",
-              spanAttributes: { type: SpanTypeAttribute.TASK },
-            },
-            INSTRUMENTATION_NAMES.CURSOR_SDK,
-          ),
-        );
-        const startTime = getCurrentUnixTimestamp();
-        safeLog(span, {
-          input: sanitizeUserMessage(message),
-          metadata,
-        });
-        states.set(event, { metadata, span, startTime });
-      },
-      asyncEnd: (event) => {
-        this.promptDepth = Math.max(0, this.promptDepth - 1);
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
-        try {
-          safeLog(state.span, {
-            metadata: {
-              ...state.metadata,
-              ...extractRunResultMetadata(event.result),
-            },
-            metrics: buildDurationMetrics(state.startTime),
-            output: event.result?.result ?? event.result,
+    const removeHandlers = channel.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof cursorSDKChannels.prompt>;
+        const prepare = (
+          event: ChannelMessage<typeof cursorSDKChannels.prompt>,
+        ) => {
+          this.promptDepth += 1;
+          const message = event.arguments[0];
+          const options = event.arguments[1];
+          const metadata = {
+            ...extractAgentOptionsMetadata(options),
+            "cursor_sdk.operation": "Agent.prompt",
+            provider: "cursor",
+            ...(event.moduleVersion
+              ? { "cursor_sdk.version": event.moduleVersion }
+              : {}),
+          };
+          const span = startBaseSpan(
+            withSpanInstrumentationName(
+              {
+                name: "Cursor Agent",
+                spanAttributes: { type: SpanTypeAttribute.TASK },
+              },
+              INSTRUMENTATION_NAMES.CURSOR_SDK,
+            ),
+          );
+          const startTime = getCurrentUnixTimestamp();
+          safeLog(span, {
+            input: sanitizeUserMessage(message),
+            metadata,
           });
-        } finally {
+          states.set(event, { metadata, span, startTime });
+        };
+        const resolved = (
+          event: ChannelMessage<typeof cursorSDKChannels.prompt>,
+        ) => {
+          this.promptDepth = Math.max(0, this.promptDepth - 1);
+          const state = states.get(event);
+          if (!state) {
+            return;
+          }
+          try {
+            safeLog(state.span, {
+              metadata: {
+                ...state.metadata,
+                ...extractRunResultMetadata(event.result),
+              },
+              metrics: buildDurationMetrics(state.startTime),
+              output: event.result?.result ?? event.result,
+            });
+          } finally {
+            state.span.end();
+            states.delete(event);
+          }
+        };
+        const failed = (
+          event: ChannelMessage<typeof cursorSDKChannels.prompt>,
+        ) => {
+          this.promptDepth = Math.max(0, this.promptDepth - 1);
+          const state = states.get(event);
+          if (!state || !event.error) {
+            return;
+          }
+          safeLog(state.span, { error: event.error.message });
           state.span.end();
           states.delete(event);
+        };
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
         }
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            resolved(event);
+          },
+          (error) => {
+            Object.assign(event, { error });
+            failed(event);
+          },
+        );
       },
-      error: (event) => {
-        this.promptDepth = Math.max(0, this.promptDepth - 1);
-        const state = states.get(event);
-        if (!state || !event.error) {
-          return;
-        }
-        safeLog(state.span, { error: event.error.message });
-        state.span.end();
-        states.delete(event);
-      },
-    };
-
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private subscribeToSend(): void {
-    const channel = cursorSDKChannels.send.tracingChannel();
+    const channel = cursorSDKChannels.send;
     const states = new WeakMap<object, CursorRunState>();
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof cursorSDKChannels.send>
-    > = {
-      start: (event) => {
-        if (this.promptDepth > 0) {
-          return;
-        }
+    const removeHandlers = channel.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<typeof cursorSDKChannels.send>;
+        const prepare = (
+          event: ChannelMessage<typeof cursorSDKChannels.send>,
+        ) => {
+          if (this.promptDepth > 0) {
+            return;
+          }
 
-        const message = event.arguments[0];
-        const sendOptions = event.arguments[1];
-        const agent = event.agent;
-        const metadata = {
-          ...extractSendMetadata(sendOptions),
-          ...(agent ? extractAgentMetadata(agent) : {}),
-          "cursor_sdk.operation": "agent.send",
-          provider: "cursor",
-          ...(event.moduleVersion
-            ? { "cursor_sdk.version": event.moduleVersion }
-            : {}),
+          const message = event.arguments[0];
+          const sendOptions = event.arguments[1];
+          const agent = event.agent;
+          const metadata = {
+            ...extractSendMetadata(sendOptions),
+            ...(agent ? extractAgentMetadata(agent) : {}),
+            "cursor_sdk.operation": "agent.send",
+            provider: "cursor",
+            ...(event.moduleVersion
+              ? { "cursor_sdk.version": event.moduleVersion }
+              : {}),
+          };
+          const span = startBaseSpan(
+            withSpanInstrumentationName(
+              {
+                name: "Cursor Agent",
+                spanAttributes: { type: SpanTypeAttribute.TASK },
+              },
+              INSTRUMENTATION_NAMES.CURSOR_SDK,
+            ),
+          );
+          const startTime = getCurrentUnixTimestamp();
+          safeLog(span, {
+            input: sanitizeUserMessage(message),
+            metadata,
+          });
+
+          const state: CursorRunState = {
+            activeToolSpans: new Map(),
+            agent,
+            conversationText: [],
+            deltaText: [],
+            finalized: false,
+            input: message,
+            metadata,
+            metrics: {},
+            span,
+            startTime,
+            streamMessages: [],
+            streamText: [],
+            stepText: [],
+            taskText: [],
+          };
+
+          if (hasCursorCallbacks(sendOptions)) {
+            event.arguments[1] = wrapSendOptionsCallbacks(sendOptions, state);
+          }
+          states.set(event, state);
         };
-        const span = startBaseSpan(
-          withSpanInstrumentationName(
-            {
-              name: "Cursor Agent",
-              spanAttributes: { type: SpanTypeAttribute.TASK },
-            },
-            INSTRUMENTATION_NAMES.CURSOR_SDK,
-          ),
+        const resolved = (
+          event: ChannelMessage<typeof cursorSDKChannels.send>,
+        ) => {
+          const state = states.get(event);
+          if (!state) {
+            return;
+          }
+
+          if (!event.result) {
+            return;
+          }
+          state.run = event.result;
+          state.metadata = {
+            ...state.metadata,
+            ...extractRunMetadata(event.result),
+          };
+          patchCursorRun(event.result, state);
+        };
+        const failed = (
+          event: ChannelMessage<typeof cursorSDKChannels.send>,
+        ) => {
+          const state = states.get(event);
+          if (!state || !event.error) {
+            return;
+          }
+          safeLog(state.span, { error: event.error.message });
+          endOpenToolSpans(state, event.error.message);
+          state.span.end();
+          state.finalized = true;
+          states.delete(event);
+        };
+        runInstrumentation(() => prepare(event));
+        let result;
+        try {
+          result = Reflect.apply(target, receiver, args);
+        } catch (error) {
+          Object.assign(event, { error });
+          runInstrumentation(() => failed(event));
+          throw error;
+        }
+        return observeResult(
+          result,
+          (value) => {
+            Object.assign(event, { result: value });
+            resolved(event);
+          },
+          (error) => {
+            Object.assign(event, { error });
+            failed(event);
+          },
         );
-        const startTime = getCurrentUnixTimestamp();
-        safeLog(span, {
-          input: sanitizeUserMessage(message),
-          metadata,
-        });
-
-        const state: CursorRunState = {
-          activeToolSpans: new Map(),
-          agent,
-          conversationText: [],
-          deltaText: [],
-          finalized: false,
-          input: message,
-          metadata,
-          metrics: {},
-          span,
-          startTime,
-          streamMessages: [],
-          streamText: [],
-          stepText: [],
-          taskText: [],
-        };
-
-        if (hasCursorCallbacks(sendOptions)) {
-          event.arguments[1] = wrapSendOptionsCallbacks(sendOptions, state);
-        }
-        states.set(event, state);
       },
-      asyncEnd: (event) => {
-        const state = states.get(event);
-        if (!state) {
-          return;
-        }
-
-        if (!event.result) {
-          return;
-        }
-        state.run = event.result;
-        state.metadata = {
-          ...state.metadata,
-          ...extractRunMetadata(event.result),
-        };
-        patchCursorRun(event.result, state);
-      },
-      error: (event) => {
-        const state = states.get(event);
-        if (!state || !event.error) {
-          return;
-        }
-        safeLog(state.span, { error: event.error.message });
-        endOpenToolSpans(state, event.error.message);
-        state.span.end();
-        state.finalized = true;
-        states.delete(event);
-      },
-    };
-
-    channel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      channel.unsubscribe(handlers);
-    });
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 }
 
@@ -303,13 +355,11 @@ function patchCursorAgentInPlace(agent: unknown): void {
           string | CursorSDKUserMessage,
           CursorSDKSendOptions | undefined,
         ];
-        return cursorSDKChannels.send.tracePromise(
-          () => originalSend(...args),
-          {
-            agent: agentRecord,
-            arguments: args,
-            operation: "send",
-          } as never,
+        return cursorSDKChannels.send.invoke(
+          originalSend,
+          undefined,
+          [...args],
+          { agent: agentRecord, operation: "send" },
         );
       },
       writable: true,

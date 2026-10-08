@@ -1,9 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { newGlobalInvocationHook } from "../global-instrumentation-hooks";
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
-// Mock iso's newTracingChannel - must be before any imports that use it
+// Mock platform context independently of invocation hooks.
 vi.mock("../isomorph", () => ({
   default: {
-    newTracingChannel: vi.fn(),
     newAsyncLocalStorage: vi.fn(() => ({
       getStore: vi.fn(() => undefined),
       run: vi.fn((_store: unknown, callback: () => unknown) => callback()),
@@ -13,20 +17,21 @@ vi.mock("../isomorph", () => ({
   },
 }));
 
-import { registry, configureInstrumentation } from "./registry";
-import iso from "../isomorph";
+import { configureInstrumentation, registry } from "./registry";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 describe("Plugin Registry", () => {
   beforeEach(() => {
     // Setup mock channel
     const mockChannel = {
-      subscribe: vi.fn(),
-      unsubscribe: vi.fn(),
+      intercept: vi.fn(() => vi.fn()),
+      unintercept: vi.fn(() => vi.fn()),
       hasSubscribers: false,
     };
-    mockNewTracingChannel.mockReturnValue(mockChannel);
+    mockNewInvocationHook.mockReturnValue(mockChannel);
   });
 
   // Clean up after each test

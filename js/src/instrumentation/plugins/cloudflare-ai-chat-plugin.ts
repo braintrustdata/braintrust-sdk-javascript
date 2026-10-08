@@ -1,24 +1,20 @@
 import { BasePlugin } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
-import {
-  BRAINTRUST_CURRENT_SPAN_STORE,
-  _internalGetGlobalState,
-  startSpan as startBaseSpan,
-  withCurrent,
-} from "../../logger";
-import type { CurrentSpanStore, Span } from "../../logger";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
+import type { Span } from "../../logger";
+import { startSpan as startBaseSpan, withCurrent } from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import { SpanTypeAttribute } from "../../../util/index";
 import type {
   CloudflareAIChatAgent,
   CloudflareAIChatMessage,
   CloudflareAIChatTurnCallback,
 } from "../../vendor-sdk-types/cloudflare-ai-chat";
+import type { ChannelMessage } from "../core/tracing-types";
 import { cloudflareAIChatChannels } from "./cloudflare-ai-chat-channels";
 import { instrumentCloudflareAIChatResponseHook } from "./cloudflare-ai-chat-instrumentation";
 
@@ -67,111 +63,121 @@ export class CloudflareAIChatPlugin extends BasePlugin {
   }
 
   private subscribeToTurnRunner(): void {
-    const tracingChannel =
-      cloudflareAIChatChannels.runExclusiveChatTurn.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<TurnChannel>
-      >;
+    const invocationHook = cloudflareAIChatChannels.runExclusiveChatTurn;
 
-    const unbindCurrentSpanStore = this.bindCurrentSpanStore(tracingChannel);
-    const handlers: IsoChannelHandlers<ChannelMessage<TurnChannel>> = {
-      start: (event) => {
-        this.ensureEventState(event);
-      },
-      asyncEnd: (event) => {
-        this.finishEvent(event);
-      },
-      error: (event) => {
-        this.finishEvent(event, event.error);
-      },
-    };
+    const removeHandlers = invocationHook.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<TurnChannel>;
+        const spanState = runInstrumentation(() =>
+          this.ensureEventState(event),
+        );
+        const prepare = (event: ChannelMessage<TurnChannel>) => {
+          this.ensureEventState(event);
+        };
+        const resolved = (event: ChannelMessage<TurnChannel>) => {
+          this.finishEvent(event);
+        };
+        const failed = (event: ChannelMessage<TurnChannel>) => {
+          this.finishEvent(event, event.error);
+        };
+        const invoke = () => {
+          runInstrumentation(() => prepare(event));
+          let result;
+          try {
+            result = Reflect.apply(target, receiver, args);
+          } catch (error) {
+            Object.assign(event, { error });
+            runInstrumentation(() => failed(event));
+            throw error;
+          }
 
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => {
-      unbindCurrentSpanStore?.();
-      tracingChannel.unsubscribe(handlers);
-    });
+          return observeResult(
+            result,
+            (value) => {
+              Object.assign(event, { result: value });
+              resolved(event);
+            },
+            (error) => {
+              Object.assign(event, { error });
+              failed(event);
+            },
+          );
+        };
+        return spanState ? withCurrent(spanState.span, invoke) : invoke();
+      },
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private subscribeToResponseHook(): void {
-    const tracingChannel =
-      cloudflareAIChatChannels.onChatResponse.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<ResponseChannel>
-      >;
-    const handlers: IsoChannelHandlers<ChannelMessage<ResponseChannel>> = {
-      start: (event) => {
-        let state: TurnState | undefined;
+    const invocationHook = cloudflareAIChatChannels.onChatResponse;
+
+    const removeHandlers = invocationHook.intercept(
+      (target, receiver, args, additional) => {
+        const event = {
+          ...additional,
+          arguments: args,
+          self: receiver,
+        } as ChannelMessage<ResponseChannel>;
+
+        const prepare = (event: ChannelMessage<ResponseChannel>) => {
+          let state: TurnState | undefined;
+          try {
+            const agent = asObject(event.self);
+            const result = event.arguments[0];
+            state = agent
+              ? this.findResponseState(
+                  agent,
+                  stringValue(ownValue(result, "requestId")),
+                )
+              : undefined;
+            if (!state) {
+              return;
+            }
+            state.responseObserved = true;
+
+            const output = serializeMessage(ownValue(result, "message"));
+            const status = stringValue(ownValue(result, "status"));
+            const error = ownValue(result, "error");
+            const input =
+              ownValue(result, "continuation") === true
+                ? state.input
+                : serializeMessages(readProperty(agent, "messages"))?.filter(
+                    (message) =>
+                      typeof output?.id !== "string" ||
+                      message.id !== output.id,
+                  );
+            state.span.log({
+              ...(input !== undefined ? { input } : {}),
+              ...(output !== undefined ? { output } : {}),
+              ...(status === "error" && error !== undefined ? { error } : {}),
+            });
+          } catch (error) {
+            debugLogger.debug(
+              "Failed to process @cloudflare/ai-chat response hook:",
+              error,
+            );
+          } finally {
+            if (state?.settled) {
+              this.cleanupState(state);
+            }
+          }
+        };
+        runInstrumentation(() => prepare(event));
+        let result;
         try {
-          const agent = asObject(event.self);
-          const result = event.arguments[0];
-          state = agent
-            ? this.findResponseState(
-                agent,
-                stringValue(ownValue(result, "requestId")),
-              )
-            : undefined;
-          if (!state) {
-            return;
-          }
-          state.responseObserved = true;
-
-          const output = serializeMessage(ownValue(result, "message"));
-          const status = stringValue(ownValue(result, "status"));
-          const error = ownValue(result, "error");
-          const input =
-            ownValue(result, "continuation") === true
-              ? state.input
-              : serializeMessages(readProperty(agent, "messages"))?.filter(
-                  (message) =>
-                    typeof output?.id !== "string" || message.id !== output.id,
-                );
-          state.span.log({
-            ...(input !== undefined ? { input } : {}),
-            ...(output !== undefined ? { output } : {}),
-            ...(status === "error" && error !== undefined ? { error } : {}),
-          });
+          result = Reflect.apply(target, receiver, args);
         } catch (error) {
-          debugLogger.debug(
-            "Failed to process @cloudflare/ai-chat response hook:",
-            error,
-          );
-        } finally {
-          if (state?.settled) {
-            this.cleanupState(state);
-          }
+          throw error;
         }
+        return result;
       },
-    };
-
-    tracingChannel.subscribe(handlers);
-    this.unsubscribers.push(() => tracingChannel.unsubscribe(handlers));
-  }
-
-  private bindCurrentSpanStore(
-    tracingChannel: IsoTracingChannel<ChannelMessage<TurnChannel>>,
-  ): (() => void) | undefined {
-    const globalState = _internalGetGlobalState();
-    const contextManager = globalState?.contextManager;
-    const startChannel = tracingChannel.start;
-    const currentSpanStore = contextManager
-      ? (
-          contextManager as {
-            [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-          }
-        )[BRAINTRUST_CURRENT_SPAN_STORE]
-      : undefined;
-
-    if (!startChannel || !currentSpanStore || !contextManager) {
-      return undefined;
-    }
-
-    startChannel.bindStore(currentSpanStore, (event) => {
-      const state = this.ensureEventState(event);
-      return state
-        ? contextManager.wrapSpanForStore(state.span)
-        : currentSpanStore.getStore();
-    });
-
-    return () => startChannel.unbindStore(currentSpanStore);
+    );
+    this.unsubscribers.push(removeHandlers);
   }
 
   private ensureEventState(

@@ -1,5 +1,5 @@
-import { channel, defineChannels } from "../core/channel-definitions";
-import { INSTRUMENTATION_NAMES } from "../../span-origin";
+import { channel, defineInterceptor } from "../core/channel-definitions";
+
 import type {
   HuggingFaceTransformersPipeline,
   HuggingFaceTransformersTask,
@@ -8,7 +8,8 @@ import type {
 
 export type HuggingFaceTransformersEventContext = {
   moduleVersion?: string;
-  self?: HuggingFaceTransformersPipeline;
+  self?: unknown;
+  pipeline?: HuggingFaceTransformersPipeline;
 };
 
 type HuggingFaceTransformersPipelineInfo = {
@@ -54,26 +55,23 @@ export function getHuggingFaceTransformersPipelineInfo(
   return pipeline ? pipelineInfo.get(pipeline) : undefined;
 }
 
-export const huggingFaceTransformersChannels = defineChannels(
+export const huggingFaceTransformersChannels = defineInterceptor(
   "@huggingface/transformers",
   {
     pipeline: channel<
       [string, (string | null)?, Record<string, unknown>?],
-      HuggingFaceTransformersPipeline,
+      PromiseLike<HuggingFaceTransformersPipeline>,
       HuggingFaceTransformersEventContext
     >({
       channelName: "pipeline",
-      kind: "async",
     }),
 
     pipelineCall: channel<
       [unknown, ...unknown[]],
-      unknown | HuggingFaceTransformersTensor,
+      PromiseLike<unknown | HuggingFaceTransformersTensor>,
       HuggingFaceTransformersEventContext
     >({
       channelName: "pipeline.call",
-      kind: "async",
     }),
   },
-  { instrumentationName: INSTRUMENTATION_NAMES.HUGGINGFACE },
 );

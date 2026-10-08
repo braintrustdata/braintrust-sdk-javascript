@@ -71,20 +71,25 @@ describe("OpenAI API promise wrappers", () => {
     expect(tracedAsResponseCalls).toBe(1);
   });
 
-  it("dispatches the OpenAI channel lifecycle for asResponse-only calls", async () => {
+  it("invokes the OpenAI hook for asResponse-only calls", async () => {
     const phases: string[] = [];
     let result: unknown;
-    const tracingChannel =
-      openAIChannels.chatCompletionsCreate.tracingChannel();
-    const handlers = {
-      asyncEnd: (event: { result?: unknown }) => {
-        phases.push("asyncEnd");
-        result = event.result;
+    const remove = openAIChannels.chatCompletionsCreate.intercept(
+      (target, receiver, args) => {
+        phases.push("called");
+        const promise = Reflect.apply(target, receiver, args);
+        promise.then(
+          (value) => {
+            phases.push("resolved");
+            result = value;
+          },
+          () => {
+            phases.push("error");
+          },
+        );
+        return promise;
       },
-      error: () => phases.push("error"),
-      start: () => phases.push("start"),
-    };
-    tracingChannel.subscribe(handlers);
+    );
 
     try {
       const client = wrapOpenAI({
@@ -106,10 +111,10 @@ describe("OpenAI API promise wrappers", () => {
       expect(response.bodyUsed).toBe(false);
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
     } finally {
-      tracingChannel.unsubscribe(handlers);
+      remove();
     }
 
-    expect(phases).toEqual(["start", "asyncEnd"]);
+    expect(phases).toEqual(["called", "resolved"]);
     expect(result).toBeUndefined();
   });
 
@@ -141,14 +146,21 @@ describe("OpenAI API promise wrappers", () => {
       },
     );
     const phases: string[] = [];
-    const tracingChannel =
-      openAIChannels.chatCompletionsCreate.tracingChannel();
-    const handlers = {
-      asyncEnd: () => phases.push("asyncEnd"),
-      error: () => phases.push("error"),
-      start: () => phases.push("start"),
-    };
-    tracingChannel.subscribe(handlers);
+    const remove = openAIChannels.chatCompletionsCreate.intercept(
+      (target, receiver, args) => {
+        phases.push("called");
+        const promise = Reflect.apply(target, receiver, args);
+        promise.then(
+          (value) => {
+            phases.push("resolved");
+          },
+          () => {
+            phases.push("error");
+          },
+        );
+        return promise;
+      },
+    );
 
     try {
       const client = wrapOpenAI({
@@ -169,14 +181,14 @@ describe("OpenAI API promise wrappers", () => {
       expect(raw).toBe(response);
       expect(raw.bodyUsed).toBe(false);
       expect(pulls).toBe(0);
-      expect(phases).toEqual(["start", "asyncEnd"]);
+      expect(phases).toEqual(["called", "resolved"]);
 
       const reader = raw.body?.getReader();
       await reader?.read();
       await reader?.cancel();
       expect(cancelled).toBe(true);
     } finally {
-      tracingChannel.unsubscribe(handlers);
+      remove();
     }
   });
 

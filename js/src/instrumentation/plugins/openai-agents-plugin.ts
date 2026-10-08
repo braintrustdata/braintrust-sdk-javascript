@@ -1,12 +1,13 @@
-import { BasePlugin } from "../core";
-import { unsubscribeAll } from "../core/channel-tracing";
 import { isObject } from "../../../util/index";
-import { openAIAgentsCoreChannels } from "./openai-agents-channels";
-import { OpenAIAgentsTraceProcessor } from "./openai-agents-trace-processor";
 import type {
   OpenAIAgentsSpan,
   OpenAIAgentsTrace,
 } from "../../vendor-sdk-types/openai-agents";
+import { BasePlugin } from "../core";
+import { unsubscribeAll } from "../core/channel-tracing";
+import { runInstrumentation } from "../core/observe-result";
+import { openAIAgentsCoreChannels } from "./openai-agents-channels";
+import { OpenAIAgentsTraceProcessor } from "./openai-agents-trace-processor";
 
 function firstArgument(args: unknown): unknown {
   if (Array.isArray(args)) {
@@ -54,61 +55,72 @@ export class OpenAIAgentsPlugin extends BasePlugin {
   }
 
   private subscribeToTraceLifecycle(): void {
-    const traceStartChannel =
-      openAIAgentsCoreChannels.onTraceStart.tracingChannel();
-    const traceStartHandlers = {
-      start: (event: { arguments: unknown }) => {
-        const trace = firstArgument(event.arguments);
-        if (isOpenAIAgentsTrace(trace)) {
-          void this.processor.onTraceStart(trace);
-        }
-      },
-    };
-    traceStartChannel.subscribe(traceStartHandlers);
-    this.unsubscribers.push(() =>
-      traceStartChannel.unsubscribe(traceStartHandlers),
-    );
+    const traceStartChannel = openAIAgentsCoreChannels.onTraceStart;
 
-    const traceEndChannel =
-      openAIAgentsCoreChannels.onTraceEnd.tracingChannel();
-    const traceEndHandlers = {
-      start: (event: { arguments: unknown }) => {
-        const trace = firstArgument(event.arguments);
-        if (isOpenAIAgentsTrace(trace)) {
-          void this.processor.onTraceEnd(trace);
-        }
+    const removetraceStartHandlers = traceStartChannel.intercept(
+      (target, receiver, args) => {
+        runInstrumentation(() =>
+          ((event: { arguments: unknown }) => {
+            const trace = firstArgument(event.arguments);
+            if (isOpenAIAgentsTrace(trace)) {
+              void this.processor.onTraceStart(trace);
+            }
+          })({ arguments: args }),
+        );
+        return Reflect.apply(target, receiver, args);
       },
-    };
-    traceEndChannel.subscribe(traceEndHandlers);
-    this.unsubscribers.push(() =>
-      traceEndChannel.unsubscribe(traceEndHandlers),
     );
+    this.unsubscribers.push(removetraceStartHandlers);
 
-    const spanStartChannel =
-      openAIAgentsCoreChannels.onSpanStart.tracingChannel();
-    const spanStartHandlers = {
-      start: (event: { arguments: unknown }) => {
-        const span = firstArgument(event.arguments);
-        if (isOpenAIAgentsSpan(span)) {
-          void this.processor.onSpanStart(span);
-        }
+    const traceEndChannel = openAIAgentsCoreChannels.onTraceEnd;
+
+    const removetraceEndHandlers = traceEndChannel.intercept(
+      (target, receiver, args) => {
+        runInstrumentation(() =>
+          ((event: { arguments: unknown }) => {
+            const trace = firstArgument(event.arguments);
+            if (isOpenAIAgentsTrace(trace)) {
+              void this.processor.onTraceEnd(trace);
+            }
+          })({ arguments: args }),
+        );
+        return Reflect.apply(target, receiver, args);
       },
-    };
-    spanStartChannel.subscribe(spanStartHandlers);
-    this.unsubscribers.push(() =>
-      spanStartChannel.unsubscribe(spanStartHandlers),
     );
+    this.unsubscribers.push(removetraceEndHandlers);
 
-    const spanEndChannel = openAIAgentsCoreChannels.onSpanEnd.tracingChannel();
-    const spanEndHandlers = {
-      start: (event: { arguments: unknown }) => {
-        const span = firstArgument(event.arguments);
-        if (isOpenAIAgentsSpan(span)) {
-          void this.processor.onSpanEnd(span);
-        }
+    const spanStartChannel = openAIAgentsCoreChannels.onSpanStart;
+
+    const removespanStartHandlers = spanStartChannel.intercept(
+      (target, receiver, args) => {
+        runInstrumentation(() =>
+          ((event: { arguments: unknown }) => {
+            const span = firstArgument(event.arguments);
+            if (isOpenAIAgentsSpan(span)) {
+              void this.processor.onSpanStart(span);
+            }
+          })({ arguments: args }),
+        );
+        return Reflect.apply(target, receiver, args);
       },
-    };
-    spanEndChannel.subscribe(spanEndHandlers);
-    this.unsubscribers.push(() => spanEndChannel.unsubscribe(spanEndHandlers));
+    );
+    this.unsubscribers.push(removespanStartHandlers);
+
+    const spanEndChannel = openAIAgentsCoreChannels.onSpanEnd;
+
+    const removespanEndHandlers = spanEndChannel.intercept(
+      (target, receiver, args) => {
+        runInstrumentation(() =>
+          ((event: { arguments: unknown }) => {
+            const span = firstArgument(event.arguments);
+            if (isOpenAIAgentsSpan(span)) {
+              void this.processor.onSpanEnd(span);
+            }
+          })({ arguments: args }),
+        );
+        return Reflect.apply(target, receiver, args);
+      },
+    );
+    this.unsubscribers.push(removespanEndHandlers);
   }
 }

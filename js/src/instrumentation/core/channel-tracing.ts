@@ -1,35 +1,29 @@
 import { debugLogger } from "../../debug-logger";
-import type { IsoChannelHandlers, IsoTracingChannel } from "../../isomorph";
-import {
-  _internalGetGlobalState,
-  BRAINTRUST_CURRENT_SPAN_STORE,
-  startSpan,
-} from "../../logger";
-import type { CurrentSpanStore, Span } from "../../logger";
+import type { Span } from "../../logger";
+import { startSpan, withCurrent } from "../../logger";
 import {
   withSpanInstrumentationName,
   type SpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp, isObject } from "../../util";
-import type {
-  AnyAsyncChannel,
-  AnySyncStreamChannel,
-  ArgsOf,
-  AsyncEndOf,
-  ChannelMessage,
-  ChunkOf,
-  EndOf,
-  ErrorOf,
-  ResultOf,
-  StartOf,
-} from "./channel-definitions";
-import { isAsyncIterable, patchStreamIfNeeded } from "./stream-patcher";
+import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
+import type { ArgsOf, ChunkOf, ReturnOf } from "./channel-definitions";
 import {
   buildStartSpanArgs,
   mergeInputMetadata,
   type ChannelConfig,
 } from "./channel-tracing-utils";
-import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
+import { observeResult, runInstrumentation } from "./observe-result";
+import { isAsyncIterable, patchStreamIfNeeded } from "./stream-patcher";
+import type {
+  AnyAsyncChannel,
+  AnySyncStreamChannel,
+  AsyncEndOf,
+  EndOf,
+  ErrorOf,
+  ResultOf,
+  StartOf,
+} from "./tracing-types";
 
 type SpanState = {
   span: Span;
@@ -146,7 +140,7 @@ type SyncStreamChannelSpanConfig<TChannel extends AnySyncStreamChannel> =
     patchResult?: (args: {
       channelName: string;
       endEvent: EndOf<TChannel>;
-      result: ResultOf<TChannel>;
+      result: ReturnOf<TChannel>;
       span: Span;
       startTime: number;
     }) => boolean;
@@ -259,127 +253,6 @@ function shouldTraceEvent<
   }
 }
 
-function ensureSpanStateForEvent<
-  TChannel extends AnyAsyncChannel | AnySyncStreamChannel,
->(
-  states: WeakMap<object, SpanState>,
-  config: ChannelConfig & {
-    extractInput: (
-      args: [...ArgsOf<TChannel>, ...any[]],
-      event: StartOf<TChannel>,
-      span: Span,
-    ) => {
-      input: unknown;
-      metadata: unknown;
-    };
-  },
-  event: StartOf<TChannel>,
-  channelName: string,
-  instrumentationName: SpanInstrumentationName,
-): SpanState | undefined {
-  const key = event as object;
-  const existing = states.get(key);
-  if (existing) {
-    return existing;
-  }
-
-  if (!shouldTraceEvent<TChannel>(config, event, channelName)) {
-    return undefined;
-  }
-
-  const created = startSpanForEvent<TChannel>(
-    config,
-    event,
-    channelName,
-    instrumentationName,
-  );
-  states.set(key, created);
-  return created;
-}
-
-function bindCurrentSpanStoreToStart<
-  TChannel extends AnyAsyncChannel | AnySyncStreamChannel,
->(
-  tracingChannel: IsoTracingChannel<ChannelMessage<TChannel>>,
-  states: WeakMap<object, SpanState>,
-  config: ChannelConfig & {
-    extractInput: (
-      args: [...ArgsOf<TChannel>, ...any[]],
-      event: StartOf<TChannel>,
-      span: Span,
-    ) => {
-      input: unknown;
-      metadata: unknown;
-    };
-  },
-  channelName: string,
-  instrumentationName: SpanInstrumentationName,
-): (() => void) | undefined {
-  const state = _internalGetGlobalState();
-  const startChannel = tracingChannel.start;
-  const contextManager = state?.contextManager;
-  const currentSpanStore = contextManager
-    ? (
-        contextManager as {
-          [BRAINTRUST_CURRENT_SPAN_STORE]?: CurrentSpanStore;
-        }
-      )[BRAINTRUST_CURRENT_SPAN_STORE]
-    : undefined;
-
-  if (!currentSpanStore || !startChannel) {
-    return undefined;
-  }
-
-  startChannel.bindStore(
-    currentSpanStore,
-    (event: ChannelMessage<TChannel>) => {
-      if (isAutoInstrumentationSuppressed()) {
-        return currentSpanStore.getStore();
-      }
-
-      const spanState = ensureSpanStateForEvent<TChannel>(
-        states,
-        config,
-        event as StartOf<TChannel>,
-        channelName,
-        instrumentationName,
-      );
-      return spanState
-        ? contextManager!.wrapSpanForStore(spanState.span)
-        : currentSpanStore.getStore();
-    },
-  );
-
-  return () => {
-    startChannel.unbindStore(currentSpanStore);
-  };
-}
-
-function logErrorAndEnd<
-  TChannel extends AnyAsyncChannel | AnySyncStreamChannel,
->(
-  states: WeakMap<object, SpanState>,
-  event: ErrorOf<TChannel>,
-  channelName: string,
-): void {
-  const spanData = states.get(event as object);
-  if (!spanData) {
-    return;
-  }
-
-  try {
-    spanData.span.log({ error: event.error });
-  } catch (error) {
-    debugLogger.error(`Error logging failure for ${channelName}:`, error);
-  }
-  try {
-    spanData.span.end();
-  } catch (error) {
-    debugLogger.error(`Error ending span for ${channelName}:`, error);
-  }
-  states.delete(event as object);
-}
-
 function runStreamingCompletionHook<TChannel extends AnyAsyncChannel>(args: {
   channelName: string;
   config: StreamingChannelSpanConfig<TChannel>;
@@ -441,435 +314,422 @@ function runStreamingErrorHook<TChannel extends AnyAsyncChannel>(args: {
   }
 }
 
-export function traceAsyncChannel<TChannel extends AnyAsyncChannel>(
-  channel: TChannel,
-  config: AsyncChannelSpanConfig<TChannel>,
-): () => void {
-  const tracingChannel = channel.tracingChannel() as IsoTracingChannel<
-    ChannelMessage<TChannel>
-  >;
-  const states = new WeakMap<object, SpanState>();
-  const channelName = channel.channelName;
-  const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
-    tracingChannel,
-    states,
-    config,
-    channelName,
-    channel.instrumentationName,
+export function traceAsyncCall<TChannel extends AnyAsyncChannel>(
+  call: () => ReturnOf<TChannel>,
+  event: StartOf<TChannel>,
+  config: AsyncChannelSpanConfig<TChannel> & {
+    instrumentationName: SpanInstrumentationName;
+  },
+): ReturnOf<TChannel> {
+  const channelName =
+    typeof config.name === "string" ? config.name : "provider call";
+  if (
+    isAutoInstrumentationSuppressed() ||
+    !shouldTraceEvent(config, event, channelName)
+  )
+    return call();
+  const spanData = runInstrumentation(() =>
+    startSpanForEvent<TChannel>(
+      config,
+      event,
+      channelName,
+      config.instrumentationName,
+    ),
   );
+  if (!spanData) return call();
+  const { span } = spanData;
+  const complete = (event: AsyncEndOf<TChannel>) => {
+    const asyncEndEvent = event as AsyncEndOf<TChannel>;
+    const { span, startTime } = spanData;
 
-  const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
-    start: (event) => {
-      if (isAutoInstrumentationSuppressed()) {
-        return;
-      }
-
-      ensureSpanStateForEvent<TChannel>(
-        states,
-        config,
-        event as StartOf<TChannel>,
-        channelName,
-        channel.instrumentationName,
+    try {
+      const output = config.extractOutput(asyncEndEvent.result, asyncEndEvent);
+      const metrics = config.extractMetrics(
+        asyncEndEvent.result,
+        startTime,
+        asyncEndEvent,
       );
-    },
-    asyncEnd: (event) => {
-      const spanData = states.get(event as object);
-      if (!spanData) {
-        return;
-      }
+      const metadata = config.extractMetadata?.(
+        asyncEndEvent.result,
+        asyncEndEvent,
+      );
 
-      const asyncEndEvent = event as AsyncEndOf<TChannel>;
-      const { span, startTime } = spanData;
-
-      try {
-        const output = config.extractOutput(
-          asyncEndEvent.result,
-          asyncEndEvent,
-        );
-        const metrics = config.extractMetrics(
-          asyncEndEvent.result,
-          startTime,
-          asyncEndEvent,
-        );
-        const metadata = config.extractMetadata?.(
-          asyncEndEvent.result,
-          asyncEndEvent,
-        );
-
-        span.log({
-          output,
-          ...(normalizeMetadata(metadata) !== undefined
-            ? { metadata: normalizeMetadata(metadata) }
-            : {}),
-          metrics,
-        });
-      } catch (error) {
-        debugLogger.error(`Error extracting output for ${channelName}:`, error);
-      } finally {
-        span.end();
-        states.delete(event as object);
-      }
-    },
-    error: (event) => {
-      logErrorAndEnd(states, event as ErrorOf<TChannel>, channelName);
-    },
+      span.log({
+        output,
+        ...(normalizeMetadata(metadata) !== undefined
+          ? { metadata: normalizeMetadata(metadata) }
+          : {}),
+        metrics,
+      });
+    } catch (error) {
+      debugLogger.error(`Error extracting output for ${channelName}:`, error);
+    } finally {
+      span.end();
+    }
   };
-
-  tracingChannel.subscribe(handlers);
-
-  return () => {
-    unbindCurrentSpanStore?.();
-    tracingChannel.unsubscribe(handlers);
+  const fail = (error: unknown) => {
+    span.log({ error });
+    span.end();
   };
+  let result: ReturnOf<TChannel>;
+  try {
+    result = withCurrent(span, call);
+  } catch (error) {
+    fail(error);
+    throw error;
+  }
+  return withCurrent(span, () =>
+    observeResult(
+      result,
+      (value) =>
+        complete(
+          Object.assign(event, { result: value }) as AsyncEndOf<TChannel>,
+        ),
+      fail,
+    ),
+  );
 }
 
-export function traceStreamingChannel<TChannel extends AnyAsyncChannel>(
-  channel: TChannel,
-  config: StreamingChannelSpanConfig<TChannel>,
-): () => void {
-  const tracingChannel = channel.tracingChannel() as IsoTracingChannel<
-    ChannelMessage<TChannel>
-  >;
-  const states = new WeakMap<object, SpanState>();
-  const channelName = channel.channelName;
-  const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
-    tracingChannel,
-    states,
-    config,
-    channelName,
-    channel.instrumentationName,
+export function traceStreamingCall<TChannel extends AnyAsyncChannel>(
+  call: () => ReturnOf<TChannel>,
+  event: StartOf<TChannel>,
+  config: StreamingChannelSpanConfig<TChannel> & {
+    instrumentationName: SpanInstrumentationName;
+  },
+): ReturnOf<TChannel> {
+  const channelName =
+    typeof config.name === "string" ? config.name : "provider call";
+  if (
+    isAutoInstrumentationSuppressed() ||
+    !shouldTraceEvent(config, event, channelName)
+  )
+    return call();
+  const spanData = runInstrumentation(() =>
+    startSpanForEvent<TChannel>(
+      config,
+      event,
+      channelName,
+      config.instrumentationName,
+    ),
   );
+  if (!spanData) return call();
+  const { span, startTime } = spanData;
+  const complete = (event: AsyncEndOf<TChannel>) => {
+    const asyncEndEvent = event as AsyncEndOf<TChannel>;
+    const { span, startTime } = spanData;
 
-  const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
-    start: (event) => {
-      if (isAutoInstrumentationSuppressed()) {
-        return;
-      }
+    if (isAsyncIterable(asyncEndEvent.result)) {
+      let firstChunkTime: number | undefined;
+      const handleStreamError = (error: Error) => {
+        try {
+          span.log({ error });
+        } catch (loggingError) {
+          debugLogger.error(
+            `Error logging failure for ${channelName}:`,
+            loggingError,
+          );
+        }
+        span.end();
 
-      ensureSpanStateForEvent<TChannel>(
-        states,
-        config,
-        event as StartOf<TChannel>,
-        channelName,
-        channel.instrumentationName,
-      );
-    },
-    asyncEnd: (event) => {
-      const spanData = states.get(event as object);
-      if (!spanData) {
-        return;
-      }
-
-      const asyncEndEvent = event as AsyncEndOf<TChannel>;
-      const { span, startTime } = spanData;
-
-      if (isAsyncIterable(asyncEndEvent.result)) {
-        let firstChunkTime: number | undefined;
-        const handleStreamError = (error: Error) => {
-          try {
-            span.log({ error });
-          } catch (loggingError) {
-            debugLogger.error(
-              `Error logging failure for ${channelName}:`,
-              loggingError,
-            );
-          }
-          try {
-            span.end();
-          } catch (endingError) {
-            debugLogger.error(
-              `Error ending span for ${channelName}:`,
-              endingError,
-            );
-          }
-          states.delete(event as object);
-          runStreamingErrorHook<TChannel>({
-            channelName,
-            config,
-            error,
-            event: asyncEndEvent,
-            span,
-            startTime,
-          });
-        };
-
-        patchStreamIfNeeded(asyncEndEvent.result, {
-          onChunk: () => {
-            if (firstChunkTime === undefined) {
-              firstChunkTime = getCurrentUnixTimestamp();
-            }
-          },
-          onComplete: (chunks: ChunkOf<TChannel>[]) => {
-            let completion:
-              | {
-                  metadata?: Record<string, unknown>;
-                  metrics: Record<string, number>;
-                  output: unknown;
-                }
-              | undefined;
-            try {
-              let output: unknown;
-              let metrics: Record<string, number>;
-              let metadata: Record<string, unknown> | undefined;
-              let error: string | undefined;
-
-              if (config.aggregateChunks) {
-                const aggregated = config.aggregateChunks(
-                  chunks,
-                  asyncEndEvent.result,
-                  asyncEndEvent,
-                  startTime,
-                );
-                output = aggregated.output;
-                metrics = aggregated.metrics;
-                metadata = aggregated.metadata;
-                error = aggregated.error;
-              } else {
-                output = config.extractOutput(
-                  chunks as unknown as StreamingResult<TChannel>,
-                  asyncEndEvent,
-                );
-                metrics = config.extractMetrics(
-                  chunks as unknown as StreamingResult<TChannel>,
-                  startTime,
-                  asyncEndEvent,
-                );
-              }
-
-              if (
-                metrics.time_to_first_token === undefined &&
-                firstChunkTime !== undefined
-              ) {
-                metrics.time_to_first_token = firstChunkTime - startTime;
-              } else if (
-                metrics.time_to_first_token === undefined &&
-                chunks.length > 0
-              ) {
-                metrics.time_to_first_token =
-                  getCurrentUnixTimestamp() - startTime;
-              }
-
-              completion = {
-                ...(metadata !== undefined ? { metadata } : {}),
-                metrics,
-                output,
-              };
-              span.log({
-                output,
-                ...(metadata !== undefined ? { metadata } : {}),
-                metrics,
-                ...(error !== undefined ? { error } : {}),
-              });
-            } catch (error) {
-              debugLogger.error(
-                `Error extracting output for ${channelName}:`,
-                error,
-              );
-            } finally {
-              try {
-                span.end();
-              } catch (error) {
-                debugLogger.error(
-                  `Error ending span for ${channelName}:`,
-                  error,
-                );
-              }
-              states.delete(event as object);
-            }
-            if (completion) {
-              runStreamingCompletionHook<TChannel>({
-                channelName,
-                chunks,
-                config,
-                endEvent: asyncEndEvent,
-                ...(completion.metadata !== undefined
-                  ? { metadata: completion.metadata }
-                  : {}),
-                metrics: completion.metrics,
-                output: completion.output,
-                result: asyncEndEvent.result as StreamingResult<TChannel>,
-                span,
-                startTime,
-              });
-            }
-          },
-          onCancel: () => {
-            const error = new Error("Stream cancelled before completion");
-            error.name = "AbortError";
-            handleStreamError(error);
-          },
-          onError: handleStreamError,
+        runStreamingErrorHook<TChannel>({
+          channelName,
+          config,
+          error,
+          event: asyncEndEvent,
+          span,
+          startTime,
         });
-        return;
-      }
+      };
+
+      patchStreamIfNeeded(asyncEndEvent.result, {
+        onChunk: () => {
+          if (firstChunkTime === undefined) {
+            firstChunkTime = getCurrentUnixTimestamp();
+          }
+        },
+        onComplete: (chunks: ChunkOf<TChannel>[]) => {
+          let completion:
+            | {
+                metadata?: Record<string, unknown>;
+                metrics: Record<string, number>;
+                output: unknown;
+              }
+            | undefined;
+          try {
+            let output: unknown;
+            let metrics: Record<string, number>;
+            let metadata: Record<string, unknown> | undefined;
+            let error: string | undefined;
+
+            if (config.aggregateChunks) {
+              const aggregated = config.aggregateChunks(
+                chunks,
+                asyncEndEvent.result,
+                asyncEndEvent,
+                startTime,
+              );
+              output = aggregated.output;
+              metrics = aggregated.metrics;
+              metadata = aggregated.metadata;
+              error = aggregated.error;
+            } else {
+              output = config.extractOutput(
+                chunks as unknown as StreamingResult<TChannel>,
+                asyncEndEvent,
+              );
+              metrics = config.extractMetrics(
+                chunks as unknown as StreamingResult<TChannel>,
+                startTime,
+                asyncEndEvent,
+              );
+            }
+
+            if (
+              metrics.time_to_first_token === undefined &&
+              firstChunkTime !== undefined
+            ) {
+              metrics.time_to_first_token = firstChunkTime - startTime;
+            } else if (
+              metrics.time_to_first_token === undefined &&
+              chunks.length > 0
+            ) {
+              metrics.time_to_first_token =
+                getCurrentUnixTimestamp() - startTime;
+            }
+
+            completion = {
+              ...(metadata !== undefined ? { metadata } : {}),
+              metrics,
+              output,
+            };
+            span.log({
+              output,
+              ...(metadata !== undefined ? { metadata } : {}),
+              metrics,
+              ...(error !== undefined ? { error } : {}),
+            });
+          } catch (error) {
+            debugLogger.error(
+              `Error extracting output for ${channelName}:`,
+              error,
+            );
+          } finally {
+            span.end();
+          }
+          if (completion) {
+            runStreamingCompletionHook<TChannel>({
+              channelName,
+              chunks,
+              config,
+              endEvent: asyncEndEvent,
+              ...(completion.metadata !== undefined
+                ? { metadata: completion.metadata }
+                : {}),
+              metrics: completion.metrics,
+              output: completion.output,
+              result: asyncEndEvent.result as StreamingResult<TChannel>,
+              span,
+              startTime,
+            });
+          }
+        },
+        onCancel: () => {
+          const error = new Error("Stream cancelled before completion");
+          error.name = "AbortError";
+          handleStreamError(error);
+        },
+        onError: handleStreamError,
+      });
+      return;
+    }
+
+    if (
+      config.patchResult?.({
+        channelName,
+        endEvent: asyncEndEvent,
+        result: asyncEndEvent.result as StreamingResult<TChannel>,
+        span,
+        startTime,
+      })
+    ) {
+      return;
+    }
+
+    let completion:
+      | {
+          metadata?: Record<string, unknown>;
+          metrics: Record<string, number>;
+          output: unknown;
+        }
+      | undefined;
+    try {
+      const output = config.extractOutput(
+        asyncEndEvent.result as StreamingResult<TChannel>,
+        asyncEndEvent,
+      );
+      const metrics = config.extractMetrics(
+        asyncEndEvent.result as StreamingResult<TChannel>,
+        startTime,
+        asyncEndEvent,
+      );
+      const metadata = config.extractMetadata?.(
+        asyncEndEvent.result as StreamingResult<TChannel>,
+        asyncEndEvent,
+      );
+
+      completion = {
+        ...(normalizeMetadata(metadata) !== undefined
+          ? { metadata: normalizeMetadata(metadata) }
+          : {}),
+        metrics,
+        output,
+      };
+      span.log({
+        output,
+        ...(normalizeMetadata(metadata) !== undefined
+          ? { metadata: normalizeMetadata(metadata) }
+          : {}),
+        metrics,
+      });
+    } catch (error) {
+      debugLogger.error(`Error extracting output for ${channelName}:`, error);
+    } finally {
+      span.end();
+    }
+    if (completion) {
+      runStreamingCompletionHook<TChannel>({
+        channelName,
+        config,
+        endEvent: asyncEndEvent,
+        ...(completion.metadata !== undefined
+          ? { metadata: completion.metadata }
+          : {}),
+        metrics: completion.metrics,
+        output: completion.output,
+        result: asyncEndEvent.result as StreamingResult<TChannel>,
+        span,
+        startTime,
+      });
+    }
+  };
+  const fail = (error: unknown) => {
+    span.log({ error });
+    span.end();
+    runStreamingErrorHook<TChannel>({
+      channelName,
+      config,
+      error: error as Error,
+      event: { ...event, error } as ErrorOf<TChannel>,
+      span,
+      startTime,
+    });
+  };
+  let result: ReturnOf<TChannel>;
+  try {
+    result = withCurrent(span, call);
+  } catch (error) {
+    fail(error);
+    throw error;
+  }
+  return withCurrent(span, () =>
+    observeResult(
+      result,
+      (value) =>
+        complete(
+          Object.assign(event, { result: value }) as AsyncEndOf<TChannel>,
+        ),
+      fail,
+    ),
+  );
+}
+
+export function traceSyncStreamCall<TChannel extends AnyAsyncChannel>(
+  call: () => ReturnOf<TChannel>,
+  event: StartOf<TChannel>,
+  config: SyncStreamChannelSpanConfig<TChannel> & {
+    instrumentationName: SpanInstrumentationName;
+  },
+): ReturnOf<TChannel> {
+  const channelName =
+    typeof config.name === "string" ? config.name : "provider call";
+  if (
+    isAutoInstrumentationSuppressed() ||
+    !shouldTraceEvent(config, event, channelName)
+  )
+    return call();
+  const spanData = runInstrumentation(() =>
+    startSpanForEvent<TChannel>(
+      config,
+      event,
+      channelName,
+      config.instrumentationName,
+    ),
+  );
+  if (!spanData) return call();
+  const { span } = spanData;
+  const complete = (event: EndOf<TChannel>) => {
+    const { span, startTime } = spanData;
+    const endEvent = event as EndOf<TChannel>;
+    const handleResolvedResult = (result: ReturnOf<TChannel>) => {
+      const resolvedEndEvent = {
+        ...endEvent,
+        result,
+      } as EndOf<TChannel>;
 
       if (
         config.patchResult?.({
           channelName,
-          endEvent: asyncEndEvent,
-          result: asyncEndEvent.result as StreamingResult<TChannel>,
+          endEvent: resolvedEndEvent,
+          result,
           span,
           startTime,
         })
       ) {
-        states.delete(event as object);
         return;
       }
 
-      let completion:
-        | {
-            metadata?: Record<string, unknown>;
-            metrics: Record<string, number>;
-            output: unknown;
-          }
-        | undefined;
-      try {
-        const output = config.extractOutput(
-          asyncEndEvent.result as StreamingResult<TChannel>,
-          asyncEndEvent,
-        );
-        const metrics = config.extractMetrics(
-          asyncEndEvent.result as StreamingResult<TChannel>,
-          startTime,
-          asyncEndEvent,
-        );
-        const metadata = config.extractMetadata?.(
-          asyncEndEvent.result as StreamingResult<TChannel>,
-          asyncEndEvent,
-        );
+      const stream = result;
 
-        completion = {
-          ...(normalizeMetadata(metadata) !== undefined
-            ? { metadata: normalizeMetadata(metadata) }
-            : {}),
-          metrics,
-          output,
-        };
-        span.log({
-          output,
-          ...(normalizeMetadata(metadata) !== undefined
-            ? { metadata: normalizeMetadata(metadata) }
-            : {}),
-          metrics,
-        });
-      } catch (error) {
-        debugLogger.error(`Error extracting output for ${channelName}:`, error);
-      } finally {
+      if (!isSyncStreamLike<ChunkOf<TChannel>>(stream)) {
+        span.end();
+
+        return;
+      }
+
+      let first = true;
+
+      stream.on("chunk", () => {
+        if (first) {
+          span.log({
+            metrics: {
+              time_to_first_token: getCurrentUnixTimestamp() - startTime,
+            },
+          });
+          first = false;
+        }
+      });
+
+      stream.on("chatCompletion", (completion) => {
         try {
-          span.end();
+          if (hasChoices(completion)) {
+            span.log({
+              output: completion.choices,
+            });
+          }
         } catch (error) {
-          debugLogger.error(`Error ending span for ${channelName}:`, error);
+          debugLogger.error(
+            `Error extracting chatCompletion for ${channelName}:`,
+            error,
+          );
         }
-        states.delete(event as object);
-      }
-      if (completion) {
-        runStreamingCompletionHook<TChannel>({
-          channelName,
-          config,
-          endEvent: asyncEndEvent,
-          ...(completion.metadata !== undefined
-            ? { metadata: completion.metadata }
-            : {}),
-          metrics: completion.metrics,
-          output: completion.output,
-          result: asyncEndEvent.result as StreamingResult<TChannel>,
-          span,
-          startTime,
-        });
-      }
-    },
-    error: (event) => {
-      const spanData = states.get(event as object);
-      logErrorAndEnd(states, event as ErrorOf<TChannel>, channelName);
-      if (spanData) {
-        runStreamingErrorHook<TChannel>({
-          channelName,
-          config,
-          error: (event as ErrorOf<TChannel>).error,
-          event: event as ErrorOf<TChannel>,
-          span: spanData.span,
-          startTime: spanData.startTime,
-        });
-      }
-    },
-  };
+      });
 
-  tracingChannel.subscribe(handlers);
-
-  return () => {
-    unbindCurrentSpanStore?.();
-    tracingChannel.unsubscribe(handlers);
-  };
-}
-
-export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
-  channel: TChannel,
-  config: SyncStreamChannelSpanConfig<TChannel>,
-): () => void {
-  const tracingChannel = channel.tracingChannel() as IsoTracingChannel<
-    ChannelMessage<TChannel>
-  >;
-  const states = new WeakMap<object, SpanState>();
-  const channelName = channel.channelName;
-  const unbindCurrentSpanStore = bindCurrentSpanStoreToStart(
-    tracingChannel,
-    states,
-    config,
-    channelName,
-    channel.instrumentationName,
-  );
-
-  const handlers: IsoChannelHandlers<ChannelMessage<TChannel>> = {
-    start: (event) => {
-      if (isAutoInstrumentationSuppressed()) {
-        return;
-      }
-
-      ensureSpanStateForEvent<TChannel>(
-        states,
-        config,
-        event as StartOf<TChannel>,
-        channelName,
-        channel.instrumentationName,
-      );
-    },
-    end: (event) => {
-      const spanData = states.get(event as object);
-      if (!spanData) {
-        return;
-      }
-
-      const { span, startTime } = spanData;
-      const endEvent = event as EndOf<TChannel>;
-      const handleResolvedResult = (result: ResultOf<TChannel>) => {
-        const resolvedEndEvent = {
-          ...endEvent,
-          result,
-        } as EndOf<TChannel>;
-
-        if (
-          config.patchResult?.({
-            channelName,
-            endEvent: resolvedEndEvent,
-            result,
-            span,
-            startTime,
-          })
-        ) {
+      stream.on("event", (streamEvent) => {
+        if (!config.extractFromEvent) {
           return;
         }
 
-        const stream = result;
-
-        if (!isSyncStreamLike<ChunkOf<TChannel>>(stream)) {
-          span.end();
-          states.delete(event as object);
-          return;
-        }
-
-        let first = true;
-
-        stream.on("chunk", () => {
+        try {
           if (first) {
             span.log({
               metrics: {
@@ -878,79 +738,49 @@ export function traceSyncStreamChannel<TChannel extends AnySyncStreamChannel>(
             });
             first = false;
           }
-        });
 
-        stream.on("chatCompletion", (completion) => {
-          try {
-            if (hasChoices(completion)) {
-              span.log({
-                output: completion.choices,
-              });
-            }
-          } catch (error) {
-            debugLogger.error(
-              `Error extracting chatCompletion for ${channelName}:`,
-              error,
-            );
+          const extracted = config.extractFromEvent(streamEvent);
+          if (extracted && Object.keys(extracted).length > 0) {
+            span.log(extracted);
           }
+        } catch (error) {
+          debugLogger.error(
+            `Error extracting event for ${channelName}:`,
+            error,
+          );
+        }
+      });
+
+      stream.on("end", () => {
+        span.end();
+      });
+
+      stream.on("error", (error: Error) => {
+        span.log({
+          error: error.message,
         });
+        span.end();
+      });
+    };
 
-        stream.on("event", (streamEvent) => {
-          if (!config.extractFromEvent) {
-            return;
-          }
-
-          try {
-            if (first) {
-              span.log({
-                metrics: {
-                  time_to_first_token: getCurrentUnixTimestamp() - startTime,
-                },
-              });
-              first = false;
-            }
-
-            const extracted = config.extractFromEvent(streamEvent);
-            if (extracted && Object.keys(extracted).length > 0) {
-              span.log(extracted);
-            }
-          } catch (error) {
-            debugLogger.error(
-              `Error extracting event for ${channelName}:`,
-              error,
-            );
-          }
-        });
-
-        stream.on("end", () => {
-          span.end();
-          states.delete(event as object);
-        });
-
-        stream.on("error", (error: Error) => {
-          span.log({
-            error: error.message,
-          });
-          span.end();
-          states.delete(event as object);
-        });
-      };
-
-      handleResolvedResult(endEvent.result);
-    },
-    error: (event) => {
-      logErrorAndEnd(states, event as ErrorOf<TChannel>, channelName);
-    },
+    handleResolvedResult(endEvent.result);
   };
-
-  tracingChannel.subscribe(handlers);
-
-  return () => {
-    unbindCurrentSpanStore?.();
-    tracingChannel.unsubscribe(handlers);
+  const fail = (error: unknown) => {
+    span.log({ error });
+    span.end();
   };
+  let result: ReturnOf<TChannel>;
+  try {
+    result = withCurrent(span, call);
+  } catch (error) {
+    fail(error);
+    throw error;
+  }
+  withCurrent(span, () =>
+    runInstrumentation(() => complete({ ...event, result } as EndOf<TChannel>)),
+  );
+  return result;
 }
-
 export function unsubscribeAll(
   unsubscribers: Array<() => void>,
 ): Array<() => void> {

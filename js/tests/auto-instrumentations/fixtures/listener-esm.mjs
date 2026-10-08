@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { parentPort } from "node:worker_threads";
 
-const { getTracingHook } = createRequire(import.meta.url)(
+const { getInvocationHook } = createRequire(import.meta.url)(
   "./global-hook-listener.cjs",
 );
 
@@ -9,24 +9,25 @@ const events = { start: [], end: [], error: [] };
 // NOTE: code-transformer prepends "orchestrion:openai:" to the channel name
 const expectedChannel = "orchestrion:openai:chat.completions.create";
 
-// Subscribe to the global hook and accumulate events
-const channel = getTracingHook(expectedChannel);
-channel.subscribe({
-  start: (ctx) => {
-    events.start.push({
-      args: ctx.arguments ? Array.from(ctx.arguments) : [],
-      self: !!ctx.self,
-    });
-  },
-  asyncEnd: (ctx) => {
-    // Only send serializable result data
-    events.end.push({
-      result: ctx.result ? JSON.parse(JSON.stringify(ctx.result)) : null,
-    });
-  },
-  error: (ctx) => {
-    events.error.push({ error: String(ctx.error) });
-  },
+getInvocationHook(expectedChannel).intercept((target, receiver, args) => {
+  events.start.push({ args, self: !!receiver });
+  try {
+    const result = Reflect.apply(target, receiver, args);
+    Promise.resolve(result).then(
+      (value) => {
+        events.end.push({
+          result: value ? JSON.parse(JSON.stringify(value)) : null,
+        });
+      },
+      (error) => {
+        events.error.push({ error: String(error) });
+      },
+    );
+    return result;
+  } catch (error) {
+    events.error.push({ error: String(error) });
+    throw error;
+  }
 });
 
 // Send all accumulated events on exit
