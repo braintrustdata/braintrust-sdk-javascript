@@ -1,23 +1,34 @@
-import { SegmentExporter } from "../../../../integrations/audio/src/exporter";
-import * as timeline from "../../../../integrations/audio/src/timeline";
-import { mergeSelections } from "../../../../integrations/audio/src/selections";
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import { EventEmitter } from "node:events";
-import { afterEach, expect, test, vi } from "vitest";
-import { instrumentInput, instrumentOutput, release } from "./capture";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
-  Recorder,
+  createRecording,
+  timeline,
   type RecordingOptions,
-} from "../../../../integrations/audio/src/recorder";
-import type { EncodedAudio } from "../../../../integrations/audio/src/segment";
-import type { Capture } from "./runtime";
+} from "../../../../integrations/audio/src/index";
+import * as audioWorker from "../../../../integrations/audio/src/worker";
 import { encodeCall } from "../../../../integrations/audio/src/pcm";
+import { mergeSelections } from "../../../../integrations/audio/src/selections";
+import { instrumentInput, instrumentOutput, release } from "./capture";
+import type { Capture } from "./runtime";
+type AudioFile = { bytes: Uint8Array; durationMs: number };
 const captures: Capture[] = [];
+beforeEach(() => {
+  // Core-only test jobs do not build the optional audio worker. Keep real WAV
+  // encoding here; worker execution is covered by audio tests and LiveKit E2E.
+  vi.spyOn(audioWorker, "createEncoder").mockReturnValue(
+    async (packets, durationMs) => ({
+      ...encodeCall(packets, durationMs),
+      mimeType: "audio/wav",
+      sampleRate: 24000,
+    }),
+  );
+});
 function capture(
   options: RecordingOptions = {},
-): Capture & { files: EncodedAudio[]; recorder: Recorder } {
-  const files: EncodedAudio[] = [];
-  const c: Capture & { files: EncodedAudio[]; recorder: Recorder } = {
+): Capture & { files: AudioFile[] } {
+  const files: AudioFile[] = [];
+  const c: Capture & { files: AudioFile[] } = {
     files,
     timeline,
     session: {
@@ -31,29 +42,25 @@ function capture(
     user: true,
     agent: true,
     origin: Date.now() - 100,
-    recorder: new Recorder(
+    recording: createRecording({
       options,
-      new SegmentExporter(
-        async (packets, durationMs) => ({
-          ...encodeCall(packets, durationMs),
-          mimeType: "audio/wav",
-          sampleRate: 24000,
-        }),
-        ({ data }) => ({
-          reference: {},
-          upload: async () => {
-            files.push({
-              bytes: data,
-              durationMs: (data.length - 44) / 96,
-              mimeType: "audio/wav",
-              sampleRate: 24000,
-            });
-            return { upload_status: "done" };
-          },
-        }),
-      ),
-      async () => {},
-    ),
+      audioFormat: "wav",
+      span: { spanId: "session", log: () => {} },
+      flush: async () => {},
+      snapshot: () => ({
+        origin: c.origin,
+        basis: "test",
+        source: (channel_index) => ({ channel_index }),
+      }),
+      turnSelections: () => [],
+      createAttachment: ({ data }) => ({
+        reference: {},
+        upload: async () => {
+          files.push({ bytes: data, durationMs: (data.length - 44) / 96 });
+          return { upload_status: "done" };
+        },
+      }),
+    }),
     inputTimeline: [],
     inputDurationMs: 0,
     outputHolds: new Map(),
@@ -73,9 +80,10 @@ const frame = (samples = 480, value = 1234) => ({
 afterEach(async () => {
   for (const c of captures.splice(0)) {
     for (const f of c.cleanups) f();
-    await c.recorder.finish();
+    await c.recording.finish();
     release(c);
   }
+  vi.restoreAllMocks();
 });
 test("input tap preserves read values, cancellation and locks; copies mutable PCM", async () => {
   const c = capture(),
@@ -93,7 +101,7 @@ test("input tap preserves read values, cancellation and locks; copies mutable PC
   const reader = stream.getReader();
   expect((await reader.read()).value).toBe(f);
   f.data.fill(0);
-  await c.recorder.finish();
+  await c.recording.finish();
   expect(
     new DataView(c.files[0].bytes.buffer).getInt16(
       c.files[0].bytes.length - 4,
@@ -151,7 +159,7 @@ test("interruption includes only sink progress ranges, excluding queued tail and
   expect(
     c.events.get("turn")![0].attributes.synchronizedTranscript,
   ).toBeUndefined();
-  await c.recorder.finish();
+  await c.recording.finish();
   const wav = c.files[0];
   expect(wav.durationMs).toBe(80);
   const view = new DataView(wav.bytes.buffer);
@@ -171,7 +179,7 @@ test("synchronous completion during an in-flight capture is settled after accept
   };
   instrumentOutput(c, sink, true);
   await sink.captureFrame(frame());
-  await c.recorder.finish();
+  await c.recording.finish();
   expect(c.files).toHaveLength(1);
   expect(c.selections.get("turn")![0].end_offset_ms).toBe(30);
 });
@@ -184,8 +192,8 @@ test("failed capture preserves the original exception and cannot claim retained 
   };
   instrumentOutput(c, sink, false);
   await expect(sink.captureFrame(frame())).rejects.toBe(error);
-  expect(c.recorder.reason).toBe("output_capture_failed");
-  await c.recorder.finish();
+  expect(c.recording.reason).toBe("output_capture_failed");
+  await c.recording.finish();
   expect(c.files).toHaveLength(0);
 });
 test("unknown interrupted playout is omitted rather than guessed from span timestamps", async () => {
@@ -195,29 +203,7 @@ test("unknown interrupted playout is omitted rather than guessed from span times
   instrumentOutput(c, sink, false);
   await sink.captureFrame(frame());
   sink.emit("playbackFinished", { playbackPosition: 0.01, interrupted: true });
-  expect(c.recorder.reason).toBe("output_playout_mapping_unavailable");
-});
-test("worker preserves channel separation and frame duration at different rates", () => {
-  const result = encodeCall([
-    {
-      pcm: new Int16Array(160).fill(1000),
-      rate: 8000,
-      channels: 1,
-      channel: 0,
-      at: 0,
-    },
-    {
-      pcm: new Int16Array(960).fill(-1000),
-      rate: 48000,
-      channels: 1,
-      channel: 1,
-      at: 0,
-    },
-  ]);
-  expect(result.durationMs).toBe(20);
-  const view = new DataView(result.bytes.buffer);
-  expect(view.getInt16(44, true)).toBe(1000);
-  expect(view.getInt16(46, true)).toBe(-1000);
+  expect(c.recording.reason).toBe("output_playout_mapping_unavailable");
 });
 test("byte budget stops capture and releases staged output without changing I/O", async () => {
   const c = capture({ maxBufferBytes: 960 }),
@@ -230,9 +216,9 @@ test("byte budget stops capture and releases staged output without changing I/O"
   await sink.captureFrame(frame());
   await sink.captureFrame(frame());
   expect(accepted).toBe(2);
-  expect(c.recorder.reason).toBe("capture_byte_limit");
+  expect(c.recording.reason).toBe("capture_byte_limit");
   sink.emit("playbackFinished", { playbackPosition: 0.04, interrupted: false });
-  await c.recorder.finish();
+  await c.recording.finish();
   expect(c.files).toHaveLength(0);
 });
 test("buffered input frames retain all samples instead of overwriting equal arrival times", async () => {
@@ -249,7 +235,7 @@ test("buffered input frames retain all samples instead of overwriting equal arri
   await reader.read();
   await reader.read();
   reader.releaseLock();
-  await c.recorder.finish();
+  await c.recording.finish();
   const wav = c.files[0],
     view = new DataView(wav.bytes.buffer);
   const last = wav.bytes.length - 4;
@@ -262,12 +248,12 @@ test("input source replacement is explicit and concurrent sessions cannot steal 
   const stream = new ReadableStream();
   instrumentInput(a, stream);
   instrumentInput(b, stream);
-  expect(a.recorder.reason).toBe("shared_input_unsupported");
-  expect(b.recorder.reason).toBe("shared_input_unsupported");
+  expect(a.recording.reason).toBe("shared_input_unsupported");
+  expect(b.recording.reason).toBe("shared_input_unsupported");
   const c = capture();
   instrumentInput(c, new ReadableStream());
   instrumentInput(c, new ReadableStream());
-  expect(c.recorder.reason).toBe("input_source_change_unsupported");
+  expect(c.recording.reason).toBe("input_source_change_unsupported");
 });
 
 test("confirmed playback rotates during a still-open utterance and interruption discards only its queued tail", async () => {
@@ -283,13 +269,13 @@ test("confirmed playback rotates during a still-open utterance and interruption 
     offset: 0,
     duration: 20,
   });
-  await c.recorder.drain();
-  expect(c.recorder.segments).toMatchObject([{ state: "ready", end: 20 }]);
+  await c.recording.drain();
+  expect(c.files).toMatchObject([{ durationMs: 20 }]);
   expect(c.closed).toBe(false);
-  expect(c.recorder.retainedBytes).toBe(0);
   await sink.captureFrame(frame());
   sink.emit("playbackFinished", { playbackPosition: 0.02, interrupted: true });
-  expect(c.recorder.retainedBytes).toBe(0);
+  await c.recording.finish();
+  expect(c.files).toMatchObject([{ durationMs: 20 }]);
   expect(c.selections.get("turn")).toMatchObject([
     { start_offset_ms: 0, end_offset_ms: 20 },
   ]);
@@ -298,27 +284,8 @@ test("confirmed playback rotates during a still-open utterance and interruption 
 test("continuous input uses sample time despite late delivery and preserves actual silent samples", async () => {
   let now = 10020;
   const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
-  const files: Uint8Array[] = [];
   const c = capture();
   c.origin = 10000;
-  c.recorder = new Recorder(
-    {},
-    new SegmentExporter(
-      async (packets, durationMs) => ({
-        ...encodeCall(packets, durationMs),
-        mimeType: "audio/wav",
-        sampleRate: 24000,
-      }),
-      ({ data }) => ({
-        reference: {},
-        upload: async () => {
-          files.push(data);
-          return { upload_status: "done" };
-        },
-      }),
-    ),
-    async () => {},
-  );
   const stream = new ReadableStream({
     start(controller) {
       for (const value of [1234, 0, 2345])
@@ -334,9 +301,9 @@ test("continuous input uses sample time despite late delivery and preserves actu
       await reader.read();
     }
     reader.releaseLock();
-    await c.recorder.finish();
-    const wav = new DataView(files[0].buffer);
-    expect((files[0].length - 44) / 4).toBe(1440);
+    await c.recording.finish();
+    const wav = new DataView(c.files[0].bytes.buffer);
+    expect((c.files[0].bytes.length - 44) / 4).toBe(1440);
     for (let i = 0; i < 1440; i++)
       expect(wav.getInt16(44 + i * 4, true)).toBe(
         i < 480 ? 1234 : i < 960 ? 0 : 2345,
@@ -361,10 +328,43 @@ test("shared output stops both recordings without changing application playback"
   const audio = frame();
   expect(await sink.captureFrame(audio)).toBe("played");
   sink.emit("playbackFinished", { playbackPosition: 0.02, interrupted: false });
-  await Promise.all([a.recorder.finish(), b.recorder.finish()]);
+  await Promise.all([a.recording.finish(), b.recording.finish()]);
   expect(delivered).toEqual([audio]);
   expect(a.files).toEqual([]);
   expect(b.files).toEqual([]);
-  expect(a.recorder.reason).toBe("shared_output_unsupported");
-  expect(b.recorder.reason).toBe("shared_output_unsupported");
+  expect(a.recording.reason).toBe("shared_output_unsupported");
+  expect(b.recording.reason).toBe("shared_output_unsupported");
+});
+
+test("multiple playback runs in one assistant turn keep selections on each speaking span", async () => {
+  const c = capture();
+  const sink = Object.assign(new EventEmitter(), {
+    captureFrame: async (_frame: unknown) => {},
+    flush() {},
+  });
+  instrumentOutput(c, sink, false);
+  for (const [id, start] of [
+    ["ack", 10],
+    ["answer", 100],
+  ] as const) {
+    c.session.agentSpeakingSpan = { spanContext: () => ({ spanId: id }) };
+    await sink.captureFrame(frame(480));
+    sink.emit("playbackProgressed", {
+      startedAt: c.origin + start,
+      offset: 0,
+      duration: 20,
+    });
+    sink.emit("playbackFinished", {
+      playbackPosition: 0.02,
+      interrupted: false,
+    });
+    sink.flush();
+  }
+  expect(c.selections.get("ack")).toMatchObject([
+    { start_offset_ms: 10, end_offset_ms: 30 },
+  ]);
+  expect(c.selections.get("answer")).toMatchObject([
+    { start_offset_ms: 100, end_offset_ms: 120 },
+  ]);
+  expect(c.selections.get("turn")).toHaveLength(2);
 });

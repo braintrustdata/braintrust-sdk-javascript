@@ -8,7 +8,7 @@ import type {
   ChatMessage,
   AudioFrame,
 } from "./types";
-import type { Recording } from "./audio";
+import type { AudioExtension, Recording } from "./audio";
 import type { Span } from "../../logger";
 import type { Message } from "./schema";
 import type { LiveKitOptions } from "./options";
@@ -48,8 +48,8 @@ export type Capture = {
   user: boolean;
   agent: boolean;
   origin: number;
-  recorder: Recording["recorder"];
-  timeline: Recording["timeline"];
+  recording: Recording;
+  timeline: AudioExtension["timeline"];
   inputTimeline: {
     at: number;
     duration: number;

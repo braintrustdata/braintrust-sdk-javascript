@@ -7,6 +7,8 @@ type PlaybackRun = {
   frames: Packet[];
   duration: number;
   owner?: string;
+  speaking?: string;
+  unclaimed: { start: number; end: number }[];
   started?: number;
   ranges: { offset: number; duration: number; startedAt: number }[];
   finished?: any;
@@ -41,12 +43,13 @@ export function instrumentOutput(
       segments.splice(index, 1);
       if (current === segment) current = undefined;
     }
-    if (c.closed || c.recorder.reason) {
-      for (const frame of segment.frames) c.recorder.release(frame.pcm);
+    if (c.closed || c.recording.reason) {
+      for (const frame of segment.frames) c.recording.release(frame.pcm);
       segment.frames = [];
       c.outputHolds.delete(segment);
       return;
     }
+    segment.speaking ??= nativeId(c.session.agentSpeakingSpan);
     const ev = segment.finished;
     const ranges = segment.ranges.splice(0);
     if (
@@ -67,7 +70,7 @@ export function instrumentOutput(
       segment.duration
     ) {
       omit(c, "output_playout_mapping_unavailable");
-      for (const f of segment.frames) c.recorder.release(f.pcm);
+      for (const f of segment.frames) c.recording.release(f.pcm);
       segment.frames = [];
       c.outputHolds.delete(segment);
       return;
@@ -109,8 +112,8 @@ export function instrumentOutput(
         if (whole) moved.add(frame.pcm.buffer);
         const accepted = whole
           ? packet(c, { ...frame, pcm, at })
-          : c.recorder.record({ ...frame, pcm, at });
-        if (accepted)
+          : c.recording.record({ ...frame, pcm, at });
+        if (accepted) {
           select(
             c,
             segment.owner,
@@ -123,16 +126,33 @@ export function instrumentOutput(
               ),
             1,
           );
+          const end =
+            at +
+            c.timeline.pcmBytesToMs(pcm.byteLength, frame.rate, frame.channels);
+          const previous = segment.unclaimed.at(-1);
+          if (
+            previous &&
+            at >= previous.start &&
+            at <= previous.end + c.timeline.samplesToMs(1)
+          )
+            previous.end = Math.max(previous.end, end);
+          else if (segment.unclaimed.length < MAX_PACKETS)
+            segment.unclaimed.push({ start: at, end });
+          else omit(c, "selection_limit");
+        }
       }
       segment.processed = end;
       // Only confirmed output advances this hold. Generated/queued audio never does.
       segment.hold = Math.max(0, range.startedAt - c.origin + range.duration);
       c.outputHolds.set(segment, segment.hold);
     }
+    if (segment.speaking)
+      for (const range of segment.unclaimed.splice(0))
+        select(c, segment.speaking, range.start, range.end, 1);
     segment.frames = segment.frames.filter((frame) => {
       const consumed =
         finishing ||
-        c.recorder.reason ||
+        c.recording.reason ||
         frame.at +
           c.timeline.pcmBytesToMs(
             frame.pcm.byteLength,
@@ -141,7 +161,7 @@ export function instrumentOutput(
           ) <=
           segment.processed + c.timeline.samplesToMs(1);
       if (consumed && !moved.has(frame.pcm.buffer))
-        c.recorder.release(frame.pcm);
+        c.recording.release(frame.pcm);
       return !consumed;
     });
     if (finishing) {
@@ -202,7 +222,7 @@ export function instrumentOutput(
     if (segments.some((s) => s.frames.length))
       omit(c, "unfinished_output_segment");
     for (const segment of segments)
-      for (const frame of segment.frames) c.recorder.release(frame.pcm);
+      for (const frame of segment.frames) c.recording.release(frame.pcm);
     segments.splice(0);
     c.outputHolds.clear();
     current = undefined;
@@ -212,10 +232,11 @@ export function instrumentOutput(
     let segment: PlaybackRun | undefined;
     let pcm: Int16Array | undefined;
     observe(() => {
-      if (c.closed || c.recorder.reason) return;
+      if (c.closed || c.recording.reason) return;
       if (!current) {
         current = {
           frames: [],
+          unclaimed: [],
           duration: 0,
           owner: nativeId(c.session.activity?.currentSpeech?._agentTurnSpan),
           ranges: [],
@@ -234,7 +255,7 @@ export function instrumentOutput(
     try {
       const result = await Reflect.apply(captureFrame, this, [frame, ...args]);
       observe(() => {
-        if (segment && pcm && !c.recorder.reason) {
+        if (segment && pcm && !c.recording.reason) {
           segment.frames.push({
             pcm,
             rate: frame.sampleRate,
@@ -259,7 +280,7 @@ export function instrumentOutput(
           segment.inFlight--;
           settle(segment);
         }
-        if (pcm && c.recorder.reason) c.recorder.release(pcm);
+        if (pcm && c.recording.reason) c.recording.release(pcm);
       });
     }
   };

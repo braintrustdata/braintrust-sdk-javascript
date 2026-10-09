@@ -24,31 +24,30 @@ type RecordingSpan = {
   log(event: { input?: unknown; metadata?: Record<string, unknown> }): void;
 };
 export interface Recording {
-  recorder: {
-    readonly reason?: string;
-    readonly formats: ReadonlyMap<
-      number,
-      ReadonlyMap<string, { sample_rate_hz: number; channel_count: number }>
-    >;
-    stop(reason: string): void;
-    copy(pcm: Int16Array): Int16Array | undefined;
-    release(pcm: Int16Array): void;
-    append(packet: Packet): boolean;
-    record(packet: Packet): boolean;
-    advance(watermark: number): void;
-    drain(): Promise<void>;
-    finish(): Promise<void>;
-  };
+  readonly reason?: string;
+  readonly formats: ReadonlyMap<
+    number,
+    ReadonlyMap<string, { sample_rate_hz: number; channel_count: number }>
+  >;
+  stop(reason: string): void;
+  copy(pcm: Int16Array): Int16Array | undefined;
+  release(pcm: Int16Array): void;
+  append(packet: Packet): boolean;
+  record(packet: Packet): boolean;
+  advance(watermark: number): void;
+  drain(): Promise<void>;
+  finish(): Promise<void>;
+  publishRecordings(): void;
+  publishSelections(): void;
+}
+export interface AudioExtension {
   timeline: {
     CALL_SAMPLE_RATE: number;
     msToSamples(milliseconds: number, sampleRate?: number): number;
     samplesToMs(samples: number, sampleRate?: number): number;
     pcmBytesToMs(bytes: number, sampleRate: number, channels: number): number;
   };
-  publishManifest(): void;
-  publishSelections(): void;
-}
-export interface AudioExtension {
+
   createRecording(config: {
     options?: RecordingOptions;
     audioFormat?: "ogg" | "wav";
@@ -59,10 +58,9 @@ export interface AudioExtension {
       origin: number;
       basis: string;
       source(channel: number): Record<string, unknown>;
-      closed: boolean;
       metadata?: Record<string, unknown>;
     };
-    targets(): Iterable<{
+    turnSelections(): Iterable<{
       span: Pick<RecordingSpan, "log">;
       intervals: Selection[];
       alias?: boolean;

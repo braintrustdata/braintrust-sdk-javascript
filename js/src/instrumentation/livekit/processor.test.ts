@@ -46,8 +46,9 @@ function fixture(
           log(event: any) {
             row.logs.push(event);
           },
-          end(event: any) {
-            row.end = event;
+          end(event: { endTime?: number } = {}) {
+            row.end ??= { endTime: event.endTime ?? Date.now() / 1000 };
+            return row.end.endTime;
           },
         };
       },
@@ -97,7 +98,6 @@ test("native hierarchy and inference types survive; namespace and tool payloads 
   ).toBe(true);
   expect(rows[3].logs.find((e: any) => e.input)?.input).toEqual({ id: 1 });
   expect(rows.every((r) => r.end.endTime === 2)).toBe(true);
-  expect(p.rows.size).toBe(0);
 });
 test("content opt-out retains timing and IDs without logging transcript or tool content", () => {
   const { rows, span, p } = fixture(false),
@@ -124,8 +124,14 @@ test("concurrent sessions keep parents separate; closing one does not clear anot
   p.onStart(child);
   p.onEnd(a);
   expect(rows[2].parent).toBe("0");
-  expect(p.rows.has("b")).toBe(true);
+  const laterChild = span("later", "agent_turn", "b");
+  p.onStart(laterChild);
+  p.onEnd(laterChild);
+  p.onEnd(child);
   p.onEnd(b);
+  expect(rows[3].parent).toBe(rows[1].spanId);
+  expect(rows[3].end).toEqual({ endTime: 2 });
+  expect(rows[1].end).toEqual({ endTime: 2 });
 });
 test("late tool completion keeps its native owner after the session ends", () => {
   const { rows, span, p } = fixture(true);
@@ -138,13 +144,12 @@ test("late tool completion keeps its native owner after the session ends", () =>
   for (const s of [root, turn, tool]) p.onStart(s);
   p.onEnd(turn);
   p.onEnd(root);
-  expect(p.rows.has("tool")).toBe(true);
+  expect(rows[2].end).toBeUndefined();
   p.onEnd(tool);
   expect(rows[2].logs.find((event: any) => event.output)?.output).toEqual({
     ok: true,
   });
   expect(rows[2].parent).toBe("1");
-  expect(p.rows.size).toBe(0);
 });
 test("committed messages retain identity and honor content opt-out", () => {
   const { rows, span, p } = fixture(false),
@@ -230,7 +235,7 @@ test("pipeline context owns an interrupted message after the speech handle is cl
   p.onEnd(root);
 });
 
-test("realtime speaking nests under its provider turn without crossing sessions or dispatches", async () => {
+test("realtime speaking nests under its framework turn without crossing sessions or dispatches", async () => {
   const { rows, span, p } = fixture(true);
   const root = span("root", "agent_session"),
     other = span("other", "agent_session");
@@ -241,10 +246,7 @@ test("realtime speaking nests under its provider turn without crossing sessions 
     agentSession: { sessionSpan: root },
     realtimeSession: provider,
   });
-  provider.emit("openai_server_event_received", {
-    type: "input_audio_buffer.speech_started",
-    item_id: "caller-item",
-  });
+  provider.emit("input_speech_started", {});
   const user = rows.find((row) => row.args.name === "user_turn")!;
   const unrelated = span("unrelated", "user_speaking", "other");
   const speaking = span("speaking", "user_speaking", "root");
@@ -255,15 +257,13 @@ test("realtime speaking nests under its provider turn without crossing sessions 
   expect(rows.at(-1)?.logs).toContainEqual({
     metadata: {
       "turn.id": user.spanId,
-      "contrib.livekit.turn.association": "provider_speech_start_dispatch",
+      "contrib.livekit.turn.association": "realtime_speech_start_dispatch",
     },
   });
   p.onEnd(speaking);
   p.onEnd(unrelated);
-  provider.emit("openai_server_event_received", {
-    type: "input_audio_buffer.speech_started",
-    item_id: "later-item",
-  });
+  provider.emit("input_speech_stopped", {});
+  provider.emit("input_speech_started", {});
   await Promise.resolve();
   const delayed = span("delayed", "user_speaking", "root");
   p.onStart(delayed);
@@ -493,4 +493,198 @@ test("failed shutdown flush still releases the runtime for another processor", a
   processor = undefined;
   await expect(failed.shutdown()).rejects.toBe(failure);
   expect(() => fixture()).not.toThrow();
+});
+
+test("duplex generation content comes from LiveKit streams without provider events", async () => {
+  const { rows, span, p } = fixture(true);
+  const root = span("root", "agent_session");
+  const turn = span("turn", "agent_turn", "root");
+  const inference = span("model", "realtime_inference", "turn");
+  for (const native of [root, turn, inference]) p.onStart(native);
+  const session = Object.assign(new EventEmitter(), {
+    chatCtx: {
+      items: [
+        {
+          type: "message",
+          id: "user",
+          role: "user",
+          content: ["Where is order 1042?"],
+        },
+      ],
+    },
+  });
+  const stream = <T>(items: T[]) =>
+    new ReadableStream<T>({
+      start(c) {
+        for (const item of items) c.enqueue(item);
+        c.close();
+      },
+    });
+  const textStream = stream(["It arrives ", "Friday."]);
+  const ev = {
+    responseId: "native-response",
+    messageStream: stream([{ messageId: "answer", textStream }]),
+    functionStream: stream([
+      {
+        type: "function_call",
+        callId: "call",
+        name: "lookup_order",
+        args: '{"order_id":"1042"}',
+      },
+    ]),
+  };
+  p.realtime(
+    { agentSession: { sessionSpan: root }, realtimeSession: session },
+    { ev, inferenceSpan: inference, span: turn },
+  );
+  expect(textStream.locked).toBe(false);
+  const consumed: string[] = [];
+  await ev.messageStream.pipeTo(
+    new WritableStream({
+      async write(message) {
+        await message.textStream.pipeTo(
+          new WritableStream({
+            write(text) {
+              consumed.push(text);
+            },
+          }),
+        );
+      },
+    }),
+  );
+  expect(consumed).toEqual(["It arrives ", "Friday."]);
+  await ev.functionStream.pipeTo(new WritableStream());
+  p.onEnd(inference);
+  expect(rows[2].logs).toContainEqual(
+    expect.objectContaining({
+      input: [{ role: "user", content: "Where is order 1042?" }],
+    }),
+  );
+  expect(rows[2].logs).toContainEqual({
+    output: [{ role: "assistant", content: "It arrives Friday." }],
+  });
+  expect(
+    rows[2].logs.some((e: any) =>
+      e.output?.some((m: any) => m.tool_calls?.[0]?.id === "call"),
+    ),
+  ).toBe(true);
+  p.onEnd(turn);
+  p.onEnd(root);
+});
+
+test("installing a realtime observer never hides a native caller turn", () => {
+  const { rows, span, p } = fixture();
+  const root = span("root", "agent_session");
+  p.onStart(root);
+  p.realtime({
+    agentSession: { sessionSpan: root },
+    realtimeSession: new EventEmitter(),
+  });
+  const user = span("user", "user_turn", "root");
+  p.onStart(user);
+  p.onEnd(user);
+  expect(rows[1].args.name).toBe("user_turn");
+  expect(JSON.stringify(rows[1])).not.toContain("input_observation");
+  p.onEnd(root);
+});
+
+test("committed realtime fragments preserve the complete caller turn and speaking parents", () => {
+  const { rows, span, p } = fixture(true);
+  const root = span("root", "agent_session");
+  p.onStart(root);
+  const provider = new EventEmitter();
+  const session = { sessionSpan: root };
+  p.realtime({ agentSession: session, realtimeSession: provider });
+  for (const [id, text] of [
+    ["a", "Where is my order"],
+    ["b", " DMO"],
+    ["c", "1042?"],
+  ]) {
+    provider.emit("input_speech_started", {});
+    const speaking = span(id, "user_speaking", "root");
+    p.onStart(speaking);
+    provider.emit("input_audio_transcription_completed", {
+      itemId: id,
+      transcript: text,
+      isFinal: true,
+    });
+    p.conversation(session, {
+      type: "message",
+      id,
+      role: "user",
+      textContent: text,
+      interrupted: false,
+    });
+    p.onEnd(speaking);
+    provider.emit("input_speech_stopped", {});
+  }
+  const callers = rows.filter((row) => row.args.name === "user_turn");
+  expect(callers).toHaveLength(1);
+  expect(callers[0].logs.filter((event) => event.input).at(-1).input).toEqual([
+    { role: "user", content: "Where is my order DMO1042?" },
+  ]);
+  const speech = rows.filter(
+    (row) => row.args.name === "livekit.user_speaking",
+  );
+  expect(speech).toHaveLength(3);
+  expect(speech.every((row) => row.parent === callers[0].spanId)).toBe(true);
+  p.onEnd(root);
+});
+
+test("late native realtime metrics update their model operation without another span", () => {
+  const { rows, span, p } = fixture();
+  const root = span("s", "agent_session");
+  const model = span("m", "realtime_inference", "s");
+  const late = span("late", "realtime_metrics", "m", {
+    "gen_ai.response.id": "response-1",
+    "gen_ai.usage.input_tokens": 10,
+    "gen_ai.usage.output_tokens": 3,
+  });
+  p.onStart(root);
+  p.onStart(model);
+  p.onEnd(model);
+  p.onStart(late);
+  p.onEnd(late);
+  expect(rows).toHaveLength(2);
+  expect(rows[1].logs).toContainEqual(
+    expect.objectContaining({
+      metrics: expect.objectContaining({
+        prompt_tokens: 10,
+        completion_tokens: 3,
+        tokens: 13,
+      }),
+      metadata: expect.objectContaining({ "gen_ai.response.id": "response-1" }),
+    }),
+  );
+});
+
+test("early native realtime usage reaches its inference with content capture disabled", () => {
+  const { rows, span, p } = fixture(false);
+  const root = span("root", "agent_session");
+  const session = { sessionSpan: root } as any;
+  const realtimeSession = new EventEmitter();
+  const activity = { agentSession: session, realtimeSession } as any;
+  p.onStart(root);
+  p.realtime(activity);
+  realtimeSession.emit("metrics_collected", {
+    type: "realtime_model_metrics",
+    requestId: "response",
+    inputTokens: 10,
+    outputTokens: 2,
+    transcript: "must not be logged",
+  });
+  const inference = span("model", "realtime_inference", "root");
+  p.onStart(inference);
+  p.realtime(activity, {
+    inferenceSpan: inference,
+    ev: { responseId: "response" },
+  } as any);
+  p.onEnd(inference);
+  expect(rows[1].logs).toContainEqual(
+    expect.objectContaining({
+      metrics: { prompt_tokens: 10, completion_tokens: 2, tokens: 12 },
+    }),
+  );
+  expect(JSON.stringify(rows)).not.toContain("must not be logged");
+  p.onEnd(root);
 });

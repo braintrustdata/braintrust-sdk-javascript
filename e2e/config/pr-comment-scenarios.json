@@ -923,7 +923,7 @@
   },
   {
     "scenarioDirName": "livekit-instrumentation",
-    "label": "LiveKit voice instrumentation (automatic and manual)",
+    "label": "LiveKit voice instrumentation (streaming cascade, realtime, duplex, half-cascade, reconnect, interruption recovery; automatic and manual)",
     "metadataScenario": "livekit-instrumentation",
     "variants": [
       {

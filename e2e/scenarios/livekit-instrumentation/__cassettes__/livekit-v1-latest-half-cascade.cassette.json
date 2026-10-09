@@ -1,0 +1,61 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "f333eabc1165d96b",
+      "matchKey": "POST api.openai.com/v1/audio/speech",
+      "recordedAt": "2026-10-09T05:25:57.262Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": "Your order is scheduled for delivery on Friday.",
+            "model": "gpt-4o-mini-tts",
+            "response_format": "pcm",
+            "speed": 1,
+            "voice": "alloy"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/speech"
+      },
+      "response": {
+        "body": {
+          "contentType": "audio/pcm",
+          "kind": "binary",
+          "path": "livekit-v1-latest-half-cascade.cassette.blobs/a56da26af0789aa678f9dbd3016badc1c4dba2b376ad6ffc4456328b648f788d.bin",
+          "sha256": "a56da26af0789aa678f9dbd3016badc1c4dba2b376ad6ffc4456328b648f788d"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a47af7b16f82e824-ORD",
+          "content-type": "audio/pcm",
+          "date": "Fri, 09 Oct 2026 05:25:56 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "362",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29998",
+          "x-ratelimit-remaining-tokens": "149999940",
+          "x-ratelimit-reset-requests": "4ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_1c71e570f808476d823901b2aad4f282"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-10-09T05:26:03.532Z"
+  }
+}

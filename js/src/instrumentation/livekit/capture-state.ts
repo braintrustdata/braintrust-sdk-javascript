@@ -2,14 +2,14 @@
 import type { Capture, Packet } from "./runtime";
 const MAX_PACKETS = 100000;
 export function omit(c: Capture, reason: string) {
-  c.recorder.stop(reason);
+  c.recording.stop(reason);
 }
 export function release(c: Capture) {
   c.inputStream = undefined;
 }
 export function advance(c: Capture) {
   const wall = Date.now() - c.origin - 1000;
-  c.recorder.advance(
+  c.recording.advance(
     Math.min(
       wall,
       c.user ? (c.inputEnd ?? 0) : wall,
@@ -18,7 +18,7 @@ export function advance(c: Capture) {
   );
 }
 export function copyFrame(c: Capture, frame: any): Int16Array | undefined {
-  if (c.closed || c.recorder.reason) return;
+  if (c.closed || c.recording.reason) return;
   if (
     !(frame?.data instanceof Int16Array) ||
     !Number.isInteger(frame.sampleRate) ||
@@ -31,10 +31,10 @@ export function copyFrame(c: Capture, frame: any): Int16Array | undefined {
     return;
   }
   if (!frame.data.length) return;
-  return c.recorder.copy(frame.data);
+  return c.recording.copy(frame.data);
 }
 export function packet(c: Capture, p: Packet): boolean {
-  return c.recorder.append(p);
+  return c.recording.append(p);
 }
 export function select(
   c: Capture,

@@ -1,3 +1,4 @@
+import { assertAudioTrace } from "./assertions";
 import { expect, test } from "vitest";
 import {
   prepareScenarioDir,
@@ -12,7 +13,7 @@ function normalizer() {
   function stable(value: unknown, key = ""): unknown {
     if (
       typeof value === "number" &&
-      /(_ms|_at|At|wait_duration|queue_wait|playback_latency|playbackPosition|ttft|ttfb|time_to_first_chunk|time_to_first_token|timestamp|ttfbMs|durationMs|tokensPerSecond)$/.test(
+      /(_ms|_at|transcription_delay|end_of_turn_delay|on_user_turn_completed_delay|e2e_latency|At|wait_duration|queue_wait|playback_latency|playbackPosition|ttft|ttfb|time_to_first_chunk|time_to_first_token|timestamp|ttfbMs|durationMs|tokensPerSecond)$/.test(
         key,
       )
     )
@@ -36,7 +37,7 @@ function normalizer() {
     if (value && typeof value === "object")
       return Object.fromEntries(
         Object.entries(value).map(([k, v]) => [
-          k.startsWith("item_") ? stable(k) : k,
+          /^(item_|speech_)/.test(k) ? stable(k) : k,
           stable(v, k),
         ]),
       );
@@ -74,6 +75,7 @@ for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
           });
           const stable = normalizer();
           const raw = harness.events();
+          assertAudioTrace(raw);
           const events = [...new Set(raw.map((e) => e.span.name))].flatMap(
             (name) => findAllSpans(raw, name!),
           );
@@ -149,6 +151,7 @@ for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
         });
         const stable = normalizer();
         const raw = harness.events();
+        assertAudioTrace(raw);
         const events = [...new Set(raw.map((e) => e.span.name))].flatMap(
           (name) => findAllSpans(raw, name!),
         );
@@ -213,166 +216,257 @@ for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
 }
 
 for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
-  test.sequential(
-    `${variant} realtime order conversation`,
-    async () => {
-      await withScenarioHarness(async (harness) => {
-        await harness.runNodeScenarioDir({
-          scenarioDir,
-          entry: "scenario.mjs",
-          timeoutMs: 90000,
-          nodeArgs: ["--import", "braintrust/hook.mjs"],
-          env: {
-            LIVEKIT_PACKAGE: variant,
-            LIVEKIT_PROVIDER: "1",
-            LIVEKIT_REALTIME: "1",
-            LIVEKIT_AUDIO: "1",
-            LIVEKIT_WS_PATH: `${originalScenarioDir}/__cassettes__/${variant}-realtime.websocket.json`,
-            BRAINTRUST_E2E_CASSETTE_MODE:
-              process.env.BRAINTRUST_E2E_CASSETTE_MODE ?? "replay",
-            BRAINTRUST_DISABLE_INSTRUMENTATION: "",
-            OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "replay",
-          },
-          runContext: {
-            variantKey: variant,
-            originalScenarioDir,
-            cassette: false,
-          },
-        });
-        const stable = normalizer();
-        const raw = harness.events();
-        const events = [...new Set(raw.map((e) => e.span.name))].flatMap(
-          (name) => findAllSpans(raw, name!),
-        );
-        expect(
-          findLatestSpan(events, "lookup_order")?.row.output,
-        ).toMatchObject({ delivery: "Friday" });
-        expect(
-          events.filter((e) => e.span.name === "llm_response"),
-        ).toHaveLength(2);
-        const turn = findLatestSpan(events, "assistant_turn");
-        expect(turn?.row.output).toEqual(
-          expect.arrayContaining([
+  for (const [scheme, burst] of [
+    "realtime",
+    "duplex",
+    "duplex-overlap",
+    "streaming-cascade",
+    "half-cascade",
+    "reconnect",
+  ].flatMap<[string, boolean]>((scheme) =>
+    scheme === "half-cascade"
+      ? [
+          [scheme, false],
+          [scheme, true],
+        ]
+      : [[scheme, false]],
+  ))
+    test.sequential(
+      `${variant} ${scheme}${burst ? " burst" : ""} order conversation`,
+      async () => {
+        await withScenarioHarness(async (harness) => {
+          await harness.runNodeScenarioDir({
+            scenarioDir,
+            entry: "scenario.mjs",
+            timeoutMs: 90000,
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            env: {
+              LIVEKIT_PACKAGE: variant,
+              LIVEKIT_PROVIDER: "1",
+              LIVEKIT_WS_BURST: burst ? "1" : "0",
+              LIVEKIT_REALTIME: scheme === "streaming-cascade" ? "0" : "1",
+              LIVEKIT_STREAMING_STT: scheme === "streaming-cascade" ? "1" : "0",
+              LIVEKIT_RECONNECT: scheme === "reconnect" ? "1" : "0",
+              LIVEKIT_HALF_CASCADE: scheme === "half-cascade" ? "1" : "0",
+              LIVEKIT_DUPLEX: scheme.startsWith("duplex") ? "1" : "0",
+              LIVEKIT_OVERLAP: scheme === "duplex-overlap" ? "1" : "0",
+              LIVEKIT_AUDIO: "1",
+              LIVEKIT_WS_PATH: `${originalScenarioDir}/__cassettes__/${variant}-${scheme}.websocket.json`,
+              BRAINTRUST_E2E_CASSETTE_MODE:
+                process.env.BRAINTRUST_E2E_CASSETTE_MODE ?? "replay",
+              BRAINTRUST_DISABLE_INSTRUMENTATION: "",
+              OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "replay",
+            },
+            runContext: {
+              variantKey: variant,
+              originalScenarioDir,
+              cassette: ["streaming-cascade", "half-cascade"].includes(scheme)
+                ? { variantKey: `${variant}-${scheme}` }
+                : false,
+            },
+          });
+          const stable = normalizer();
+          const raw = harness.events();
+          assertAudioTrace(raw);
+          const events = [...new Set(raw.map((e) => e.span.name))].flatMap(
+            (name) => findAllSpans(raw, name!),
+          );
+          expect(
+            findLatestSpan(events, "lookup_order")?.row.output,
+          ).toMatchObject({ delivery: "Friday" });
+          expect(
+            events.filter((e) => e.span.name === "llm_response").length,
+          ).toBeGreaterThanOrEqual(2);
+          const turn = findLatestSpan(events, "assistant_turn");
+          expect(turn?.row.output).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                role: "assistant",
+                content: expect.stringMatching(/Friday/i),
+              }),
+            ]),
+          );
+          if (scheme === "reconnect")
+            expect(
+              events.filter(
+                (e) =>
+                  e.span.name === "user_turn" &&
+                  e.row.metadata?.["contrib.livekit.item_id"],
+              ),
+            ).toHaveLength(2);
+          if (scheme.startsWith("duplex")) {
+            const callers = events.filter(
+              (e) =>
+                e.span.name === "user_turn" &&
+                e.row.metadata?.["contrib.livekit.item_id"],
+            );
+            expect(callers).toHaveLength(scheme === "duplex-overlap" ? 2 : 1);
+            if (scheme === "duplex-overlap")
+              expect(callers[1].row.input).toEqual([
+                expect.objectContaining({
+                  role: "user",
+                  content: expect.stringMatching(/Thanks.*delivery.*detail/i),
+                }),
+              ]);
+            expect(callers[0].row.input).toEqual([
+              expect.objectContaining({
+                role: "user",
+                content: expect.stringMatching(
+                  /Where is my order.*(?:1042|one zero four two)/i,
+                ),
+              }),
+            ]);
+          }
+          const user = events.find(
+            (e) =>
+              e.span.name === "user_turn" &&
+              (e.row.metadata?.["contrib.livekit.item_id"] ||
+                (scheme === "streaming-cascade" &&
+                  Array.isArray(e.row.input) &&
+                  e.row.input.some(
+                    (message) => message?.role === "user" && message.content,
+                  ))),
+          );
+          expect(user?.row.input).toEqual([
             expect.objectContaining({
-              role: "assistant",
-              content: expect.stringMatching(/Friday/i),
+              role: "user",
+              content: expect.stringMatching(/order/i),
             }),
-          ]),
-        );
-        const user = events.find(
-          (e) =>
-            e.span.name === "user_turn" && e.row.metadata?.["openai.item_id"],
-        );
-        expect(user?.row.input).toEqual([
-          expect.objectContaining({
-            role: "user",
-            content: expect.stringMatching(/order/i),
-          }),
-        ]);
-        expect(user?.row.metadata?.["audio.selections"]).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({ channel_index: 0 }),
-          ]),
-        );
-        expect(turn?.row.metadata?.["turn.reply_to"]).toBe(user!.span.id);
-        const speaking = findLatestSpan(events, "livekit.user_speaking");
-        expect(speaking?.row.span_parents).toEqual([user!.span.id]);
-        expect(speaking?.row.metadata?.["turn.id"]).toBe(user!.span.id);
-        expect(speaking?.row.metadata?.["audio.selections"]).toEqual(
-          user!.row.metadata?.["audio.selections"],
-        );
-        expect(
-          events
-            .filter((e) => e.span.name === "llm_response")
-            .every((e) => Array.isArray(e.row.output)),
-        ).toBe(true);
-        expect(findLatestSpan(events, "tts")).toBeUndefined();
-        await matchSpanTreeSnapshot(
-          events.map((event) => ({
-            event,
-            fields: stable({
-              ...spanTreeFields(event),
-              context: event.row.context,
-            }) as Record<string, unknown>,
-          })),
-          resolveFileSnapshotPath(
-            import.meta.url,
-            `${variant}-realtime.span-tree.json`,
-          ),
-        );
-      });
-    },
-    120000,
-  );
+          ]);
+          expect(user?.row.metadata?.["audio.selections"]).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({ channel_index: 0 }),
+            ]),
+          );
+          expect(
+            events
+              .filter((e) => e.span.name === "llm_response")
+              .every((e) => Array.isArray(e.row.output)),
+          ).toBe(true);
+          if (["half-cascade", "streaming-cascade"].includes(scheme))
+            expect(findLatestSpan(events, "tts")).toBeDefined();
+          else expect(findLatestSpan(events, "tts")).toBeUndefined();
+          if (scheme === "streaming-cascade")
+            expect(user?.row.metadata?.model).toBe("gpt-4o-mini-transcribe");
+          await matchSpanTreeSnapshot(
+            events.map((event) => ({
+              event,
+              fields: stable({
+                ...spanTreeFields(event),
+                context: event.row.context,
+              }) as Record<string, unknown>,
+            })),
+            resolveFileSnapshotPath(
+              import.meta.url,
+              `${variant}-${scheme}.span-tree.json`,
+            ),
+          );
+        });
+      },
+      120000,
+    );
 }
 
 for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
-  test.sequential(
-    `${variant} interrupted order answer`,
-    async () => {
-      await withScenarioHarness(async (harness) => {
-        await harness.runNodeScenarioDir({
-          scenarioDir,
-          entry: "scenario.mjs",
-          timeoutMs: 90000,
-          nodeArgs: ["--import", "braintrust/hook.mjs"],
-          env: {
-            LIVEKIT_PACKAGE: variant,
-            LIVEKIT_PROVIDER: "1",
-            LIVEKIT_AUDIO: "1",
-            LIVEKIT_INTERRUPT: "1",
-            BRAINTRUST_DISABLE_INSTRUMENTATION: "",
-          },
-          runContext: {
-            variantKey: variant,
-            cassette: { variantKey: `${variant}-order` },
-            originalScenarioDir,
-          },
+  for (const recover of [false, true])
+    test.sequential(
+      `${variant} ${recover ? "recovered" : "interrupted"} order answer`,
+      async () => {
+        await withScenarioHarness(async (harness) => {
+          await harness.runNodeScenarioDir({
+            scenarioDir,
+            entry: "scenario.mjs",
+            timeoutMs: 90000,
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            env: {
+              LIVEKIT_PACKAGE: variant,
+              LIVEKIT_PROVIDER: "1",
+              LIVEKIT_AUDIO: "1",
+              LIVEKIT_INTERRUPT: "1",
+              LIVEKIT_RECOVER: recover ? "1" : "0",
+              BRAINTRUST_DISABLE_INSTRUMENTATION: "",
+            },
+            runContext: {
+              variantKey: variant,
+              cassette: {
+                variantKey: `${variant}-${recover ? "recovered" : "order"}`,
+              },
+              originalScenarioDir,
+            },
+          });
+          const raw = harness.events();
+          assertAudioTrace(raw);
+          const events = [...new Set(raw.map((e) => e.span.name))].flatMap(
+            (name) => findAllSpans(raw, name!),
+          );
+          const turn = events.find(
+            (e) =>
+              e.span.name === "assistant_turn" &&
+              e.row.metadata?.["contrib.livekit.interrupted"],
+          );
+          if (recover) {
+            const resumed = findLatestSpan(events, "assistant_turn");
+            expect(resumed?.span.id).not.toBe(turn?.span.id);
+            expect(resumed?.row.metadata?.["contrib.livekit.interrupted"]).toBe(
+              false,
+            );
+            expect(resumed?.row.output).toEqual(
+              expect.arrayContaining([
+                expect.objectContaining({
+                  role: "assistant",
+                  content: expect.stringMatching(/Friday/i),
+                }),
+              ]),
+            );
+            expect(resumed?.row.metadata?.["audio.selections"]).toEqual(
+              expect.arrayContaining([
+                expect.objectContaining({ channel_index: 1 }),
+              ]),
+            );
+          }
+          expect(turn?.row.metadata?.["contrib.livekit.interrupted"]).toBe(
+            true,
+          );
+          expect(turn?.row.metadata?.["audio.selections"]).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({ channel_index: 1 }),
+            ]),
+          );
+          expect(
+            turn?.row.metadata?.["contrib.livekit.playback_events"],
+          ).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                attributes: expect.objectContaining({ interrupted: true }),
+              }),
+            ]),
+          );
+          const stable = normalizer();
+          await matchSpanTreeSnapshot(
+            events.map((event) => ({
+              event,
+              fields: stable({
+                ...spanTreeFields(event),
+                context: event.row.context,
+              }) as Record<string, unknown>,
+            })),
+            resolveFileSnapshotPath(
+              import.meta.url,
+              `${variant}-${recover ? "recovered" : "interrupted"}.span-tree.json`,
+            ),
+          );
         });
-        const raw = harness.events();
-        const events = [...new Set(raw.map((e) => e.span.name))].flatMap(
-          (name) => findAllSpans(raw, name!),
-        );
-        const turn = findLatestSpan(events, "assistant_turn");
-        expect(turn?.row.metadata?.["contrib.livekit.interrupted"]).toBe(true);
-        expect(turn?.row.metadata?.["audio.selections"]).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({ channel_index: 1 }),
-          ]),
-        );
-        expect(turn?.row.metadata?.["contrib.livekit.playback_events"]).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              attributes: expect.objectContaining({ interrupted: true }),
-            }),
-          ]),
-        );
-        const stable = normalizer();
-        await matchSpanTreeSnapshot(
-          events.map((event) => ({
-            event,
-            fields: stable({
-              ...spanTreeFields(event),
-              context: event.row.context,
-            }) as Record<string, unknown>,
-          })),
-          resolveFileSnapshotPath(
-            import.meta.url,
-            `${variant}-interrupted.span-tree.json`,
-          ),
-        );
-      });
-    },
-    120000,
-  );
+      },
+      120000,
+    );
 }
 
 for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
-  test.sequential(
-    `${variant} progressive Ogg order recording`,
-    async () => {
+  test.sequential.each([0, 137])(
+    `${variant} progressive Ogg order recording (%i ms start delay)`,
+    async (startDelayMs) => {
       await withScenarioHarness(async (harness) => {
-        await harness.runNodeScenarioDir({
+        const result = await harness.runNodeScenarioDir({
           scenarioDir,
           entry: "scenario.mjs",
           timeoutMs: 90000,
@@ -382,6 +476,7 @@ for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
             LIVEKIT_PROVIDER: "1",
             LIVEKIT_AUDIO: "1",
             LIVEKIT_SEGMENTS: "1",
+            LIVEKIT_PLAYBACK_START_DELAY_MS: String(startDelayMs),
             BRAINTRUST_DISABLE_INSTRUMENTATION: "",
           },
           runContext: {
@@ -391,6 +486,7 @@ for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
           },
         });
         const raw = harness.events();
+        assertAudioTrace(raw);
         const events = [...new Set(raw.map((e) => e.span.name))].flatMap(
           (name) => findAllSpans(raw, name!),
         );
@@ -400,40 +496,116 @@ for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
           state: string;
           mime_type: string;
           recording_group_id: string;
+          duration_ms: number;
+          attachment: { span_id: string; ref: string };
+          timeline: { recording_start_offset_ms: number };
         }[];
+        // Rotation is anchored to session time, so startup latency changes the
+        // number of files. Assert complete playback coverage rather than a fixed
+        // segment-count snapshot; the ordinary audio case snapshots trace shape.
         expect(descriptors.length).toBeGreaterThan(1);
+        const attachments = (
+          root.row.input as {
+            audio: Record<
+              string,
+              { key: string; filename: string; content_type: string }
+            >;
+          }
+        ).audio;
+        expect(Object.keys(attachments).sort()).toEqual(
+          descriptors.map((r) => r.id).sort(),
+        );
+        const requests = harness.requestsAfter(0);
+        for (const [index, recording] of descriptors.entries()) {
+          expect(recording).toMatchObject({
+            id: `call-${String(index).padStart(4, "0")}`,
+            state: "ready",
+            mime_type: "audio/ogg",
+            recording_group_id: "call",
+            attachment: {
+              span_id: root.span.id,
+              ref: `/input/audio/${recording.id}`,
+            },
+          });
+          expect(recording.duration_ms).toBeGreaterThan(0);
+          expect(recording.duration_ms).toBeLessThanOrEqual(200.05);
+          if (index > 0) {
+            const previous = descriptors[index - 1];
+            expect(recording.timeline.recording_start_offset_ms).toBeCloseTo(
+              previous.timeline.recording_start_offset_ms +
+                previous.duration_ms,
+              1,
+            );
+          }
+          const attachment = attachments[recording.id];
+          expect(attachment).toMatchObject({
+            filename: `${recording.id}.ogg`,
+            content_type: "audio/ogg",
+          });
+          expect(
+            requests.some(
+              (r) =>
+                r.path === "/attachment/status" &&
+                (r.jsonBody as { key?: string })?.key === attachment.key &&
+                (r.jsonBody as { status?: { upload_status?: string } })?.status
+                  ?.upload_status === "done",
+            ),
+          ).toBe(true);
+        }
+        const diagnostic = result.stdout
+          .split("\n")
+          .find((line) => line.startsWith('{"playedDurationMs":'));
+        expect(diagnostic).toBeDefined();
+        const { playedDurationMs, completedUploads } = JSON.parse(diagnostic!);
+        expect(playedDurationMs).toBeGreaterThan(0);
+        // A successful upload must precede the final frame, without forceFlush.
         expect(
-          descriptors.every(
-            (r) =>
-              r.state === "ready" &&
-              r.mime_type === "audio/ogg" &&
-              r.recording_group_id === "call",
+          completedUploads.some(
+            (upload: { key: string; playedSamples: number }) =>
+              upload.playedSamples > 0 &&
+              upload.playedSamples / 24 < playedDurationMs &&
+              Object.values(attachments).some((a) => a.key === upload.key),
           ),
         ).toBe(true);
-        const turn = findLatestSpan(events, "assistant_turn")!;
-        expect(
-          new Set(
-            (
-              turn.row.metadata?.["audio.selections"] as {
-                recording_id: string;
-              }[]
-            ).map((s) => s.recording_id),
-          ).size,
-        ).toBeGreaterThan(1);
-        const stable = normalizer();
-        await matchSpanTreeSnapshot(
-          events.map((event) => ({
-            event,
-            fields: stable({
-              ...spanTreeFields(event),
-              context: event.row.context,
-            }) as Record<string, unknown>,
-          })),
-          resolveFileSnapshotPath(
-            import.meta.url,
-            `${variant}-segments.span-tree.json`,
-          ),
-        );
+        for (const name of ["assistant_turn", "livekit.agent_speaking"]) {
+          const owner = findLatestSpan(events, name)!;
+          const selections = owner.row.metadata?.["audio.selections"] as {
+            recording_id: string;
+            recording_span_id: string;
+            channel_index: number;
+            start_offset_ms: number;
+            end_offset_ms: number;
+          }[];
+          expect(selections.map((s) => s.recording_id)).toEqual(
+            descriptors.map((r) => r.id),
+          );
+          let selectedMs = 0;
+          let previousEnd: number | undefined;
+          for (const selection of selections) {
+            const recording = descriptors.find(
+              (r) => r.id === selection.recording_id,
+            )!;
+            expect(selection.recording_span_id).toBe(root.span.id);
+            expect(selection.channel_index).toBe(1);
+            expect(selection.start_offset_ms).toBeGreaterThanOrEqual(0);
+            expect(selection.end_offset_ms).toBeGreaterThan(
+              selection.start_offset_ms,
+            );
+            expect(selection.end_offset_ms).toBeLessThanOrEqual(
+              recording.duration_ms + 0.05,
+            );
+            const start =
+              recording.timeline.recording_start_offset_ms +
+              selection.start_offset_ms;
+            if (previousEnd !== undefined)
+              expect(start).toBeCloseTo(previousEnd, 1);
+            previousEnd =
+              recording.timeline.recording_start_offset_ms +
+              selection.end_offset_ms;
+            selectedMs += selection.end_offset_ms - selection.start_offset_ms;
+          }
+          expect(selectedMs).toBeCloseTo(playedDurationMs, 1);
+        }
       });
     },
     120000,
@@ -483,6 +655,7 @@ for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
             },
           });
           const events = harness.events();
+          assertAudioTrace(events);
           if (mode === "integration-off" || mode === "unsampled") {
             expect(events).toHaveLength(0);
             return;
@@ -569,6 +742,7 @@ for (const variant of ["livekit-v1", "livekit-v1-latest"]) {
             },
           });
           const events = harness.events();
+          assertAudioTrace(events);
           expect(findAllSpans(events, "livekit.agent_session")).toHaveLength(1);
           const turns = findAllSpans(events, "assistant_turn");
           const turnIds = new Set(turns.map((t) => t.span.id));

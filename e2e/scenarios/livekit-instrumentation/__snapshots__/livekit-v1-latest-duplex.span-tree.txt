@@ -1,0 +1,645 @@
+span_tree:
+└── livekit.agent_session [task]
+    input: {
+      "audio": {
+        "call-0000": {
+          "content_type": "audio/wav",
+          "filename": "call-0000.wav",
+          "key": "<uuid:1>",
+          "type": "braintrust_attachment"
+        }
+      }
+    }
+    metadata: {
+      "audio.recordings": [
+        {
+          "attachment": {
+            "ref": "/input/audio/call-0000",
+            "span_id": "<span:2>"
+          },
+          "channel_count": 2,
+          "duration_ms": 0,
+          "id": "<span:1>",
+          "mime_type": "audio/wav",
+          "recording_group_id": "call",
+          "sample_rate_hz": 24000,
+          "sources": [
+            {
+              "boundary": "session_input",
+              "channel_index": 0
+            },
+            {
+              "boundary": "local_audio_output",
+              "channel_index": 1
+            }
+          ],
+          "state": "ready",
+          "timeline": {
+            "basis": "local_input_arrival_and_output_playout",
+            "origin_unix_ms": 0,
+            "recording_start_offset_ms": 0
+          }
+        }
+      ],
+      "contrib.livekit.agent_label": "default_agent",
+      "contrib.livekit.audio.input_clock": "arrival_anchored_ordered_samples",
+      "contrib.livekit.audio.input_formats": [
+        {
+          "channel_count": 1,
+          "sample_rate_hz": 24000
+        }
+      ],
+      "contrib.livekit.audio.output_formats": [
+        {
+          "channel_count": 1,
+          "sample_rate_hz": 24000
+        }
+      ],
+      "contrib.livekit.events": [
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "listening",
+            "contrib.livekit.old_state": "initializing"
+          },
+          "name": "agent_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "speaking",
+            "contrib.livekit.old_state": "listening"
+          },
+          "name": "user_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "listening",
+            "contrib.livekit.old_state": "speaking"
+          },
+          "name": "user_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "speaking",
+            "contrib.livekit.old_state": "listening"
+          },
+          "name": "user_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "speaking",
+            "contrib.livekit.old_state": "listening"
+          },
+          "name": "agent_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "listening",
+            "contrib.livekit.old_state": "speaking"
+          },
+          "name": "user_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "thinking",
+            "contrib.livekit.old_state": "speaking"
+          },
+          "name": "agent_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "speaking",
+            "contrib.livekit.old_state": "thinking"
+          },
+          "name": "agent_state_changed",
+          "time_unix_ms": 0
+        },
+        {
+          "attributes": {
+            "contrib.livekit.new_state": "listening",
+            "contrib.livekit.old_state": "speaking"
+          },
+          "name": "agent_state_changed",
+          "time_unix_ms": 0
+        }
+      ],
+      "gen_ai.operation.name": "invoke_workflow",
+      "gen_ai.workflow.name": "agent_session",
+      "scenario": "livekit-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    context: {
+      "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+      "caller_functionname": "ScenarioProcessor.onStart",
+      "caller_lineno": 0
+    }
+    ├── livekit.session_start [task]
+    │   metadata: {
+    │     "scenario": "livekit-instrumentation",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │     "caller_functionname": "ScenarioProcessor.onStart",
+    │     "caller_lineno": 0
+    │   }
+    │   └── livekit.start_agent_activity [task]
+    │       metadata: {
+    │         "contrib.livekit.agent_label": "default_agent",
+    │         "gen_ai.agent.name": "default_agent",
+    │         "gen_ai.operation.name": "create_agent",
+    │         "gen_ai.provider.name": "<provider-host>",
+    │         "gen_ai.request.model": "gpt-live-1",
+    │         "model": "gpt-live-1",
+    │         "provider": "<provider-host>",
+    │         "scenario": "livekit-instrumentation",
+    │         "testRunId": "<run:1>"
+    │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │         "caller_functionname": "ScenarioProcessor.onStart",
+    │         "caller_lineno": 0
+    │       }
+    │       ├── livekit.setup_toolsets [task]
+    │       │   metadata: {
+    │       │     "scenario": "livekit-instrumentation",
+    │       │     "testRunId": "<run:1>"
+    │       │   }
+    │       │   context: {
+    │       │     "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │       │     "caller_functionname": "ScenarioProcessor.onStart",
+    │       │     "caller_lineno": 0
+    │       │   }
+    │       └── livekit.on_enter [task]
+    │           metadata: {
+    │             "contrib.livekit.agent_label": "default_agent",
+    │             "scenario": "livekit-instrumentation",
+    │             "testRunId": "<run:1>"
+    │           }
+    │           context: {
+    │             "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │             "caller_functionname": "ScenarioProcessor.onStart",
+    │             "caller_lineno": 0
+    │           }
+    ├── user_turn [task]
+    │   input: [
+    │     {
+    │       "content": "Where is my order DMO-1042",
+    │       "role": "user"
+    │     }
+    │   ]
+    │   metadata: {
+    │     "audio.selection": null,
+    │     "audio.selections": [
+    │       {
+    │         "channel_index": 0,
+    │         "end_offset_ms": 0,
+    │         "recording_id": "call-0000",
+    │         "recording_span_id": "<span:4>",
+    │         "start_offset_ms": 0
+    │       },
+    │       {
+    │         "channel_index": 0,
+    │         "end_offset_ms": 0,
+    │         "recording_id": "call-0000",
+    │         "recording_span_id": "<span:4>",
+    │         "start_offset_ms": 0
+    │       }
+    │     ],
+    │     "contrib.livekit.committed_messages": {
+    │       "<native:1>": {
+    │         "id": "<span:2>",
+    │         "interrupted": false,
+    │         "role": "user",
+    │         "text": "Where is my order",
+    │         "turn_span_id": "<span:1>"
+    │       },
+    │       "<native:2>": {
+    │         "id": "<span:3>",
+    │         "interrupted": false,
+    │         "role": "user",
+    │         "text": " DMO-1042",
+    │         "turn_span_id": "<span:1>"
+    │       }
+    │     },
+    │     "contrib.livekit.item_id": "<native:1>",
+    │     "contrib.livekit.turn.timing_source": "realtime_session_events",
+    │     "turn.id": "<span:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<node-internal>",
+    │     "caller_functionname": "<node-internal>",
+    │     "caller_lineno": 0
+    │   }
+    │   ├── livekit.user_speaking [task]
+    │   │   metadata: {
+    │   │     "audio.selection": {
+    │   │       "channel_index": 0,
+    │   │       "end_offset_ms": 0,
+    │   │       "recording_id": "call-0000",
+    │   │       "recording_span_id": "<span:2>",
+    │   │       "start_offset_ms": 0
+    │   │     },
+    │   │     "audio.selections": [
+    │   │       {
+    │   │         "channel_index": 0,
+    │   │         "end_offset_ms": 0,
+    │   │         "recording_id": "call-0000",
+    │   │         "recording_span_id": "<span:2>",
+    │   │         "start_offset_ms": 0
+    │   │       }
+    │   │     ],
+    │   │     "contrib.livekit.turn.association": "realtime_speech_start_dispatch",
+    │   │     "scenario": "livekit-instrumentation",
+    │   │     "testRunId": "<run:1>",
+    │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │   │     "caller_functionname": "ScenarioProcessor.onStart",
+    │   │     "caller_lineno": 0
+    │   │   }
+    │   └── livekit.user_speaking [task]
+    │       metadata: {
+    │         "audio.selection": {
+    │           "channel_index": 0,
+    │           "end_offset_ms": 0,
+    │           "recording_id": "call-0000",
+    │           "recording_span_id": "<span:2>",
+    │           "start_offset_ms": 0
+    │         },
+    │         "audio.selections": [
+    │           {
+    │             "channel_index": 0,
+    │             "end_offset_ms": 0,
+    │             "recording_id": "call-0000",
+    │             "recording_span_id": "<span:2>",
+    │             "start_offset_ms": 0
+    │           }
+    │         ],
+    │         "contrib.livekit.turn.association": "realtime_speech_start_dispatch",
+    │         "scenario": "livekit-instrumentation",
+    │         "testRunId": "<run:1>",
+    │         "turn.id": "<span:1>"
+    │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │         "caller_functionname": "ScenarioProcessor.onStart",
+    │         "caller_lineno": 0
+    │       }
+    ├── user_turn [task]
+    │   input: [
+    │     {
+    │       "content": "",
+    │       "role": "user"
+    │     }
+    │   ]
+    │   metadata: {
+    │     "contrib.livekit.end_of_turn_delay": 0,
+    │     "contrib.livekit.transcript_confidence": 0,
+    │     "contrib.livekit.transcription_delay": 0,
+    │     "scenario": "livekit-instrumentation",
+    │     "testRunId": "<run:1>",
+    │     "turn.id": "<span:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │     "caller_functionname": "ScenarioProcessor.onStart",
+    │     "caller_lineno": 0
+    │   }
+    │   └── livekit.eou_wait [task]
+    │       metadata: {
+    │         "contrib.livekit.eou.endpointing_delay": 0.5,
+    │         "contrib.livekit.eou.not_committed_count": 0,
+    │         "contrib.livekit.eou.outcome": "committed",
+    │         "contrib.livekit.eou.rearm_count": 0,
+    │         "contrib.livekit.eou.source": "manual",
+    │         "contrib.livekit.eou.wait_duration": 0,
+    │         "scenario": "livekit-instrumentation",
+    │         "testRunId": "<run:1>",
+    │         "turn.id": "<span:1>"
+    │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │         "caller_functionname": "ScenarioProcessor.onStart",
+    │         "caller_lineno": 0
+    │       }
+    ├── assistant_turn [task]
+    │   output: [
+    │     {
+    │       "content": " I'll check that for you.",
+    │       "role": "assistant"
+    │     },
+    │     {
+    │       "content": " It's scheduled to arrive Friday.",
+    │       "role": "assistant"
+    │     }
+    │   ]
+    │   metadata: {
+    │     "audio.selection": null,
+    │     "audio.selections": [
+    │       {
+    │         "channel_index": 1,
+    │         "end_offset_ms": 0,
+    │         "recording_id": "call-0000",
+    │         "recording_span_id": "<span:2>",
+    │         "start_offset_ms": 0
+    │       },
+    │       {
+    │         "channel_index": 1,
+    │         "end_offset_ms": 0,
+    │         "recording_id": "call-0000",
+    │         "recording_span_id": "<span:2>",
+    │         "start_offset_ms": 0
+    │       }
+    │     ],
+    │     "contrib.livekit.committed_messages": {
+    │       "<native:3>": {
+    │         "id": "<span:3>",
+    │         "interrupted": false,
+    │         "role": "assistant",
+    │         "text": " I'll check that for you.",
+    │         "turn_span_id": "<span:1>"
+    │       },
+    │       "<native:4>": {
+    │         "id": "<span:4>",
+    │         "interrupted": false,
+    │         "role": "assistant",
+    │         "text": " It's scheduled to arrive Friday.",
+    │         "turn_span_id": "<span:1>"
+    │       }
+    │     },
+    │     "contrib.livekit.events": [
+    │       {
+    │         "attributes": {
+    │           "contrib.livekit.generation_id": "<native:7>"
+    │         },
+    │         "name": "generation",
+    │         "time_unix_ms": 0
+    │       },
+    │       {
+    │         "attributes": {
+    │           "contrib.livekit.generation_id": "<native:6>",
+    │           "contrib.livekit.parent_generation_id": "<native:7>"
+    │         },
+    │         "name": "generation",
+    │         "time_unix_ms": 0
+    │       }
+    │     ],
+    │     "contrib.livekit.generation_count": 2,
+    │     "contrib.livekit.generation_id": "<native:6>",
+    │     "contrib.livekit.interrupted": false,
+    │     "contrib.livekit.playback_events": [
+    │       {
+    │         "attributes": {
+    │           "interrupted": false,
+    │           "playbackPosition": 0
+    │         },
+    │         "name": "playbackFinished",
+    │         "time_unix_ms": 0
+    │       },
+    │       {
+    │         "attributes": {
+    │           "interrupted": false,
+    │           "playbackPosition": 0
+    │         },
+    │         "name": "playbackFinished",
+    │         "time_unix_ms": 0
+    │       }
+    │     ],
+    │     "contrib.livekit.speech.queue_wait": 0,
+    │     "contrib.livekit.speech_id": "<native:5>",
+    │     "gen_ai.agent.name": "default_agent",
+    │     "gen_ai.operation.name": "invoke_agent",
+    │     "scenario": "livekit-instrumentation",
+    │     "testRunId": "<run:1>",
+    │     "turn.id": "<span:1>"
+    │   }
+    │   context: {
+    │     "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │     "caller_functionname": "ScenarioProcessor.onStart",
+    │     "caller_lineno": 0
+    │   }
+    │   ├── llm_response [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": "Where is my order DMO-1042",
+    │   │       "role": "user"
+    │   │     }
+    │   │   ]
+    │   │   output: [
+    │   │     {
+    │   │       "content": null,
+    │   │       "role": "assistant",
+    │   │       "tool_calls": [
+    │   │         {
+    │   │           "function": {
+    │   │             "arguments": "{\"order_id\":\"DMO-1042\"}",
+    │   │             "name": "lookup_order"
+    │   │           },
+    │   │           "id": "<span:1>",
+    │   │           "type": "function"
+    │   │         }
+    │   │       ]
+    │   │     },
+    │   │     {
+    │   │       "content": " I'll check that for you.",
+    │   │       "role": "assistant"
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "contrib.livekit.input_scope": "realtime_session_context",
+    │   │     "contrib.livekit.response_id": "<native:3>",
+    │   │     "gen_ai.operation.name": "generate_content",
+    │   │     "gen_ai.provider.name": "<provider-host>",
+    │   │     "gen_ai.request.model": "gpt-live-1",
+    │   │     "gen_ai.request.stream": true,
+    │   │     "model": "gpt-live-1",
+    │   │     "provider": "<provider-host>",
+    │   │     "scenario": "livekit-instrumentation",
+    │   │     "testRunId": "<run:1>",
+    │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │   │     "caller_functionname": "ScenarioProcessor.onStart",
+    │   │     "caller_lineno": 0
+    │   │   }
+    │   ├── llm_response [llm]
+    │   │   input: [
+    │   │     {
+    │   │       "content": "Where is my order DMO-1042",
+    │   │       "role": "user"
+    │   │     },
+    │   │     {
+    │   │       "content": " I'll check that for you.",
+    │   │       "role": "assistant"
+    │   │     },
+    │   │     {
+    │   │       "content": null,
+    │   │       "role": "assistant",
+    │   │       "tool_calls": [
+    │   │         {
+    │   │           "function": {
+    │   │             "arguments": "{\"order_id\":\"DMO-1042\"}",
+    │   │             "name": "lookup_order"
+    │   │           },
+    │   │           "id": "<span:1>",
+    │   │           "type": "function"
+    │   │         }
+    │   │       ]
+    │   │     },
+    │   │     {
+    │   │       "content": "{\"order_id\":\"DMO-1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+    │   │       "role": "tool",
+    │   │       "tool_call_id": "call_aIYJAGQmFD8OjtbbrsKaW6OO"
+    │   │     }
+    │   │   ]
+    │   │   output: [
+    │   │     {
+    │   │       "content": " It's scheduled to arrive Friday.",
+    │   │       "role": "assistant"
+    │   │     }
+    │   │   ]
+    │   │   metadata: {
+    │   │     "continuation.tool_call_ids": [
+    │   │       "call_aIYJAGQmFD8OjtbbrsKaW6OO"
+    │   │     ],
+    │   │     "contrib.livekit.input_scope": "realtime_session_context",
+    │   │     "contrib.livekit.response_id": "<native:4>",
+    │   │     "gen_ai.operation.name": "generate_content",
+    │   │     "gen_ai.provider.name": "<provider-host>",
+    │   │     "gen_ai.request.model": "gpt-live-1",
+    │   │     "gen_ai.request.stream": true,
+    │   │     "model": "gpt-live-1",
+    │   │     "provider": "<provider-host>",
+    │   │     "scenario": "livekit-instrumentation",
+    │   │     "testRunId": "<run:1>",
+    │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │   │     "caller_functionname": "ScenarioProcessor.onStart",
+    │   │     "caller_lineno": 0
+    │   │   }
+    │   ├── livekit.agent_speaking [task]
+    │   │   metadata: {
+    │   │     "audio.selection": {
+    │   │       "channel_index": 1,
+    │   │       "end_offset_ms": 0,
+    │   │       "recording_id": "call-0000",
+    │   │       "recording_span_id": "<span:2>",
+    │   │       "start_offset_ms": 0
+    │   │     },
+    │   │     "audio.selections": [
+    │   │       {
+    │   │         "channel_index": 1,
+    │   │         "end_offset_ms": 0,
+    │   │         "recording_id": "call-0000",
+    │   │         "recording_span_id": "<span:2>",
+    │   │         "start_offset_ms": 0
+    │   │       }
+    │   │     ],
+    │   │     "scenario": "livekit-instrumentation",
+    │   │     "testRunId": "<run:1>",
+    │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │   │     "caller_functionname": "ScenarioProcessor.onStart",
+    │   │     "caller_lineno": 0
+    │   │   }
+    │   ├── livekit.agent_speaking [task]
+    │   │   metadata: {
+    │   │     "audio.selection": {
+    │   │       "channel_index": 1,
+    │   │       "end_offset_ms": 0,
+    │   │       "recording_id": "call-0000",
+    │   │       "recording_span_id": "<span:2>",
+    │   │       "start_offset_ms": 0
+    │   │     },
+    │   │     "audio.selections": [
+    │   │       {
+    │   │         "channel_index": 1,
+    │   │         "end_offset_ms": 0,
+    │   │         "recording_id": "call-0000",
+    │   │         "recording_span_id": "<span:2>",
+    │   │         "start_offset_ms": 0
+    │   │       }
+    │   │     ],
+    │   │     "scenario": "livekit-instrumentation",
+    │   │     "testRunId": "<run:1>",
+    │   │     "turn.id": "<span:1>"
+    │   │   }
+    │   │   context: {
+    │   │     "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │   │     "caller_functionname": "ScenarioProcessor.onStart",
+    │   │     "caller_lineno": 0
+    │   │   }
+    │   └── lookup_order [tool]
+    │       input: {
+    │         "order_id": "DMO-1042"
+    │       }
+    │       output: {
+    │         "delivery": "Friday",
+    │         "order_id": "DMO-1042",
+    │         "status": "in_transit"
+    │       }
+    │       metadata: {
+    │         "contrib.livekit.function_tool.is_error": false,
+    │         "contrib.livekit.function_tool.name": "lookup_order",
+    │         "contrib.livekit.request_span_id": "<span:1>",
+    │         "gen_ai.agent.name": "default_agent",
+    │         "gen_ai.operation.name": "execute_tool",
+    │         "gen_ai.tool.call.id": "call_aIYJAGQmFD8OjtbbrsKaW6OO",
+    │         "gen_ai.tool.name": "lookup_order",
+    │         "gen_ai.tool.type": "function",
+    │         "scenario": "livekit-instrumentation",
+    │         "testRunId": "<run:1>",
+    │         "turn.id": "<span:2>"
+    │       }
+    │       context: {
+    │         "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+    │         "caller_functionname": "ScenarioProcessor.onStart",
+    │         "caller_lineno": 0
+    │       }
+    └── livekit.session_close [task]
+        metadata: {
+          "contrib.livekit.close.drain": false,
+          "contrib.livekit.close_reason": "user_initiated",
+          "scenario": "livekit-instrumentation",
+          "testRunId": "<run:1>"
+        }
+        context: {
+          "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+          "caller_functionname": "ScenarioProcessor.onStart",
+          "caller_lineno": 0
+        }
+        └── livekit.drain_agent_activity [task]
+            metadata: {
+              "contrib.livekit.agent_label": "default_agent",
+              "scenario": "livekit-instrumentation",
+              "testRunId": "<run:1>"
+            }
+            context: {
+              "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+              "caller_functionname": "ScenarioProcessor.onStart",
+              "caller_lineno": 0
+            }
+            └── livekit.on_exit [task]
+                metadata: {
+                  "contrib.livekit.agent_label": "default_agent",
+                  "scenario": "livekit-instrumentation",
+                  "testRunId": "<run:1>"
+                }
+                context: {
+                  "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+                  "caller_functionname": "ScenarioProcessor.onStart",
+                  "caller_lineno": 0
+                }

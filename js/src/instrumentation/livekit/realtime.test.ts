@@ -1,251 +1,482 @@
-import * as timeline from "../../../../integrations/audio/src/timeline";
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { EventEmitter } from "node:events";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { RealtimeObserver } from "./realtime";
-import type { Capture } from "./runtime";
-function fixture(content = true) {
-  const logs: any[] = [];
+
+function fixture(content = true, maxPauseMs = 0) {
   const turns: any[] = [];
   const root: any = {
-    spanId: "root",
-    log: (data: any) => logs.push(data),
-    startSpan: (args: any) => {
-      const row = {
-        spanId: `user-${turns.length}`,
+    startSpan(args: any) {
+      const span = {
+        spanId: `turn-${turns.length}`,
         args,
         logs: [] as any[],
-        ended: false,
-        log(data: any) {
-          this.logs.push(data);
+        ends: [] as any[],
+        log(event: any) {
+          this.logs.push(event);
         },
-        end() {
-          this.ended = true;
+        end(event: any) {
+          this.ends.push(event);
         },
       };
-      turns.push(row);
-      return row;
+      turns.push(span);
+      return span;
     },
   };
   const session = new EventEmitter();
-  const c = {
-    user: true,
-    row: { span: root },
-    inputTimeline: [
-      { at: 100, duration: 1000, rate: 24000, channels: 1, sampleStart: 0 },
-    ],
-    selections: new Map(),
-    timeline,
-  } as unknown as Capture;
-  const observer = new RealtimeObserver(session, root, content, () => c);
-  const send = (event: any) =>
-    session.emit("openai_client_event_queued", event);
-  const receive = (event: any) =>
-    session.emit("openai_server_event_received", event);
-  return { c, observer, send, receive, turns, session };
+  const observer = new RealtimeObserver(
+    session,
+    root,
+    content,
+    () => undefined,
+    maxPauseMs,
+  );
+  return { turns, session, observer };
 }
-test("server item identity associates late transcripts, replies and exact retained input ranges", () => {
-  const { c, observer, send, receive, turns, session } = fixture();
-  send({
-    type: "input_audio_buffer.append",
-    audio: Buffer.alloc(48000).toString("base64"),
+
+test("duplex events create caller turns before LiveKit dispatch and associate delayed transcripts", async () => {
+  const { turns, session, observer } = fixture();
+  let parent: any;
+  session.on("input_speech_started", () => {
+    parent = observer.takeSpeakingTurn();
   });
-  receive({
-    type: "input_audio_buffer.speech_started",
-    item_id: "input-1",
-    audio_start_ms: 200,
+  session.emit("input_speech_started", {});
+  expect(parent).toBe(turns[0]);
+  session.emit("input_audio_transcription_completed", {
+    itemId: "u1",
+    transcript: "Order",
+    isFinal: false,
   });
-  receive({
-    type: "input_audio_buffer.speech_stopped",
-    item_id: "input-1",
-    audio_end_ms: 500,
+  session.emit("input_speech_stopped", {});
+  await new Promise((resolve) => setTimeout(resolve, 2));
+  session.emit("input_speech_started", {});
+  session.emit("input_audio_transcription_completed", {
+    itemId: "u2",
+    transcript: "Thanks",
+    isFinal: false,
   });
-  receive({ type: "response.created", response: { id: "response-1" } });
-  receive({
-    type: "input_audio_buffer.speech_started",
-    item_id: "input-2",
-    audio_start_ms: 600,
+  session.emit("input_audio_transcription_completed", {
+    itemId: "u1",
+    transcript: "Order 1042",
+    isFinal: true,
   });
-  receive({
-    type: "conversation.item.input_audio_transcription.completed",
-    item_id: "input-1",
-    transcript: "Where is order 1042?",
-  });
-  const model: any = {
-    logs: [],
-    log(data: any) {
-      this.logs.push(data);
-    },
-  };
-  observer.bind("response-1", model);
-  expect(model.logs).toContainEqual({
-    metadata: { "turn.reply_to": "user-0" },
-  });
-  expect(turns[0].logs).toContainEqual({
-    input: [{ role: "user", content: "Where is order 1042?" }],
-  });
-  expect(model.logs).toContainEqual({
-    input: [{ role: "user", content: "Where is order 1042?" }],
-    metadata: { "contrib.livekit.input_scope": "associated_user_turn" },
-  });
-  expect(c.selections.get("user-0")).toMatchObject([
-    { start_offset_ms: 300, end_offset_ms: 600, channel_index: 0 },
-  ]);
+  expect(turns).toHaveLength(2);
+  expect(observer.message("u1")).toBe(turns[0]);
+  expect(turns[0].logs).toContainEqual(
+    expect.objectContaining({
+      input: [{ role: "user", content: "Order 1042" }],
+    }),
+  );
+  expect(
+    turns[1].logs.some((e: any) => JSON.stringify(e).includes("Order")),
+  ).toBe(false);
   observer.close();
-  expect(turns[1].logs).toContainEqual({
-    metadata: { "turn.incomplete": true },
-  });
-  expect(session.listenerCount("openai_server_event_received")).toBe(0);
+  expect(session.listenerCount("input_audio_transcription_completed")).toBe(0);
+  expect(turns[1].logs).toContainEqual(
+    expect.objectContaining({
+      metadata: expect.objectContaining({ "turn.incomplete": true }),
+    }),
+  );
 });
-test("late transcripts update only their associated model responses", () => {
-  const { observer, receive } = fixture();
-  const models = [[], []] as any[][];
-  for (let i = 0; i < 2; i++) {
-    receive({ type: "input_audio_buffer.speech_started", item_id: `u${i}` });
-    receive({ type: "input_audio_buffer.speech_stopped", item_id: `u${i}` });
-    receive({ type: "response.created", response: { id: `r${i}` } });
-    observer.bind(`r${i}`, {
-      log: (value: any) => models[i].push(value),
-    } as any);
-  }
-  for (const i of [1, 0])
-    receive({
-      type: "conversation.item.input_audio_transcription.completed",
-      item_id: `u${i}`,
-      transcript: `caller ${i}`,
-    });
-  expect(models.map((logs) => logs.flatMap((row) => row.input ?? []))).toEqual([
-    [{ role: "user", content: "caller 0" }],
-    [{ role: "user", content: "caller 1" }],
-  ]);
+
+test("a final transcript without speech events still creates a caller turn", () => {
+  const { turns, session, observer } = fixture();
+  session.emit("input_audio_transcription_completed", {
+    itemId: "u1",
+    transcript: "Where is my order?",
+    isFinal: true,
+    turnStartedAt: 1000,
+  });
+  session.emit("input_audio_transcription_completed", {
+    itemId: "u1",
+    transcript: "Where is my order?",
+    isFinal: true,
+    turnStartedAt: 1000,
+  });
+  expect(turns).toHaveLength(1);
+  expect(turns[0].args.startTime).toBe(1);
   observer.close();
 });
 
-test("speaking ownership is single-use and expires after the provider dispatch", async () => {
-  const { observer, receive, turns } = fixture();
-  receive({ type: "input_audio_buffer.speech_started", item_id: "first" });
-  expect(observer.takeSpeakingTurn()).toBe(turns[0]);
-  expect(observer.takeSpeakingTurn()).toBeUndefined();
-  receive({ type: "input_audio_buffer.speech_started", item_id: "first" });
-  expect(observer.takeSpeakingTurn()).toBeUndefined();
-  receive({ type: "input_audio_buffer.speech_started", item_id: "second" });
-  await Promise.resolve();
-  expect(observer.takeSpeakingTurn()).toBeUndefined();
-  receive({ type: "input_audio_buffer.speech_started", item_id: "third" });
-  receive({ type: "input_audio_buffer.speech_stopped", item_id: "third" });
-  expect(observer.takeSpeakingTurn()).toBeUndefined();
-  receive({ type: "input_audio_buffer.speech_started", item_id: "fourth" });
-  receive({ type: "error" });
-  expect(observer.takeSpeakingTurn()).toBeUndefined();
-  receive({ type: "input_audio_buffer.speech_started", item_id: "fifth" });
-  receive({ type: "session.created" });
-  expect(observer.takeSpeakingTurn()).toBeUndefined();
-  receive({ type: "input_audio_buffer.speech_started", item_id: "sixth" });
-  observer.close();
-  expect(observer.takeSpeakingTurn()).toBeUndefined();
-});
-test("clears invalidate later alignment and content opt-out keeps transcripts private", () => {
-  const { c, observer, send, receive, turns } = fixture(false);
-  send({
-    type: "input_audio_buffer.append",
-    audio: Buffer.alloc(48000).toString("base64"),
-  });
-  send({ type: "input_audio_buffer.clear" });
-  receive({
-    type: "input_audio_buffer.speech_started",
-    item_id: "input",
-    audio_start_ms: 200,
-  });
-  receive({
-    type: "input_audio_buffer.speech_stopped",
-    item_id: "input",
-    audio_end_ms: 500,
-  });
-  receive({
-    type: "conversation.item.input_audio_transcription.completed",
-    item_id: "input",
+test("content opt-out and error monitoring preserve application behavior", () => {
+  const { turns, session, observer } = fixture(false);
+  const application = vi.fn();
+  session.on("input_speech_started", application);
+  session.emit("input_speech_started", {});
+  session.emit("input_audio_transcription_completed", {
+    itemId: "u1",
     transcript: "private",
+    isFinal: true,
   });
-  expect(c.selections.size).toBe(0);
+  expect(application).toHaveBeenCalledOnce();
   expect(JSON.stringify(turns)).not.toContain("private");
-  observer.close();
-});
-
-test("an unsolicited response does not inherit a historical caller turn", () => {
-  const { observer, receive } = fixture();
-  receive({
-    type: "input_audio_buffer.speech_started",
-    item_id: "input",
-    audio_start_ms: 0,
-  });
-  receive({
-    type: "input_audio_buffer.speech_stopped",
-    item_id: "input",
-    audio_end_ms: 500,
-  });
-  receive({ type: "response.created", response: { id: "answer" } });
-  receive({ type: "response.created", response: { id: "unsolicited" } });
-  const logs: any[] = [];
-  const span: any = { log: (data: any) => logs.push(data) };
-  observer.bind("unsolicited", span);
-  expect(logs.some((log) => log.metadata?.["turn.reply_to"])).toBe(false);
-  observer.close();
-});
-
-test("recording opt-out never inspects inline provider audio", () => {
-  const { c, observer, send } = fixture();
-  c.user = false;
-  let inspected = false;
-  send({
-    type: "input_audio_buffer.append",
-    get audio() {
-      inspected = true;
-      return "AAAA";
-    },
-  });
-  expect(inspected).toBe(false);
-  observer.close();
-});
-
-test("provider errors invalidate alignment while retaining unhandled error semantics", () => {
-  const { c, observer, session, send, receive } = fixture();
   expect(() => session.emit("error", new Error("provider failure"))).toThrow(
     "provider failure",
   );
-  send({
-    type: "input_audio_buffer.append",
-    audio: Buffer.alloc(48000).toString("base64"),
+  observer.close();
+  expect(session.listenerCount("input_speech_started")).toBe(1);
+});
+
+test("a response retains its caller's late transcript without picking up a later caller", async () => {
+  const { session, observer } = fixture();
+  const logs: any[] = [];
+  session.emit("input_speech_started", {});
+  session.emit("input_audio_transcription_completed", {
+    itemId: "u1",
+    transcript: "Where is",
+    isFinal: false,
   });
-  receive({
-    type: "input_audio_buffer.speech_started",
-    item_id: "after-error",
-    audio_start_ms: 0,
+  observer.captureInput({ log: (event: any) => logs.push(event) } as any);
+  session.emit("input_speech_stopped", {});
+  await new Promise((resolve) => setTimeout(resolve, 2));
+  session.emit("input_speech_started", {});
+  session.emit("input_audio_transcription_completed", {
+    itemId: "u2",
+    transcript: "Thanks",
+    isFinal: false,
   });
-  receive({
-    type: "input_audio_buffer.speech_stopped",
-    item_id: "after-error",
-    audio_end_ms: 500,
+  session.emit("input_audio_transcription_completed", {
+    itemId: "u1",
+    transcript: "Where is order 1042?",
+    isFinal: true,
   });
-  expect(c.selections.size).toBe(0);
+  expect(logs.at(-1).input).toEqual([
+    { role: "user", content: "Where is order 1042?" },
+  ]);
+  expect(JSON.stringify(logs)).not.toContain("Thanks");
   observer.close();
 });
 
-test("response association is independent of model binding order", () => {
-  const { observer, receive } = fixture();
-  const logs: any[] = [];
-  const model: any = { log: (event: any) => logs.push(event) };
-  receive({
-    type: "input_audio_buffer.speech_started",
-    item_id: "caller",
-    audio_start_ms: 0,
+test("synchronous speech/transcript dispatch supplies identity even when producer timestamp precedes observation", () => {
+  const { session, observer, turns } = fixture();
+  const startedAt = Date.now() - 2;
+  session.emit("input_speech_started", {});
+  observer.takeSpeakingTurn();
+  session.emit("input_audio_transcription_completed", {
+    itemId: "caller",
+    turnStartedAt: startedAt,
+    transcript: "Where is my order?",
+    isFinal: false,
   });
-  receive({
-    type: "input_audio_buffer.speech_stopped",
-    item_id: "caller",
-    audio_end_ms: 100,
-  });
-  observer.bind("reply", model);
-  receive({ type: "response.created", response: { id: "reply" } });
-  expect(logs).toContainEqual({ metadata: { "turn.reply_to": "user-0" } });
+  expect(turns).toHaveLength(1);
+  expect(observer.message("caller")).toBe(turns[0]);
   observer.close();
+});
+
+test("tool continuation retains the caller's original position in model context", () => {
+  const { session, observer } = fixture();
+  session.emit("input_speech_started", {});
+  session.emit("input_audio_transcription_completed", {
+    itemId: "u1",
+    transcript: "Where is my order?",
+    isFinal: true,
+  });
+  session.emit("input_speech_stopped", {});
+  Object.assign(session, {
+    chatCtx: {
+      items: [
+        {
+          id: "u1",
+          type: "message",
+          role: "user",
+          content: ["Where is my order?"],
+        },
+        {
+          id: "a1",
+          type: "message",
+          role: "assistant",
+          content: ["Checking now."],
+        },
+        { type: "function_call_output", callId: "lookup", output: "Friday" },
+      ],
+    },
+  });
+  const log = vi.fn();
+  observer.captureInput({ log } as any);
+  expect(log.mock.calls.at(-1)![0].input).toEqual([
+    { role: "user", content: "Where is my order?" },
+    { role: "assistant", content: "Checking now." },
+    { role: "tool", content: "Friday", tool_call_id: "lookup" },
+  ]);
+  observer.close();
+});
+
+test("historical caller fragments stay grouped when a later caller speaks", async () => {
+  const { session, observer } = fixture();
+  // This fixture uses a zero pause window; synchronous fragments share its boundary.
+  const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+  try {
+    for (const [id, text] of [
+      ["u1", "Where is my order"],
+      ["u2", " DMO1042?"],
+    ]) {
+      session.emit("input_speech_started", {});
+      session.emit("input_audio_transcription_completed", {
+        itemId: id,
+        transcript: text,
+        isFinal: true,
+      });
+      session.emit("input_speech_stopped", {});
+    }
+    clock.mockReturnValue(5000);
+    session.emit("input_speech_started", {});
+    session.emit("input_audio_transcription_completed", {
+      itemId: "u3",
+      transcript: "Thanks",
+      isFinal: true,
+    });
+    Object.assign(session, {
+      chatCtx: {
+        items: [
+          {
+            id: "u1",
+            type: "message",
+            role: "user",
+            content: ["Where is my order"],
+          },
+          { id: "u2", type: "message", role: "user", content: [" DMO1042?"] },
+          {
+            id: "a1",
+            type: "message",
+            role: "assistant",
+            content: ["Friday."],
+          },
+          { id: "u3", type: "message", role: "user", content: ["Thanks"] },
+        ],
+      },
+    });
+    const log = vi.fn();
+    observer.captureInput({ log } as any);
+    expect(log.mock.calls.at(-1)![0].input).toEqual([
+      { role: "user", content: "Where is my order DMO1042?" },
+      { role: "assistant", content: "Friday." },
+      { role: "user", content: "Thanks" },
+    ]);
+  } finally {
+    clock.mockRestore();
+    observer.close();
+  }
+});
+
+test("reconnect ends an unfinished caller but preserves completed conversation grouping", () => {
+  const { session, observer, turns } = fixture();
+  const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+  try {
+    for (const [id, text] of [
+      ["u1", "Where is"],
+      ["u2", " my order?"],
+    ]) {
+      session.emit("input_speech_started", {});
+      session.emit("input_audio_transcription_completed", {
+        itemId: id,
+        transcript: text,
+        isFinal: true,
+      });
+      session.emit("input_speech_stopped", {});
+    }
+    clock.mockReturnValue(5000);
+    session.emit("input_speech_started", {});
+    session.emit("input_audio_transcription_completed", {
+      itemId: "partial",
+      transcript: "Wait",
+      isFinal: false,
+    });
+    session.emit("session_reconnected", {});
+    expect(turns[1].logs).toContainEqual(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ "turn.incomplete": true }),
+      }),
+    );
+    expect(observer.takeSpeakingTurn()).toBeUndefined();
+    Object.assign(session, {
+      chatCtx: {
+        items: [
+          { id: "u1", type: "message", role: "user", content: ["Where is"] },
+          { id: "u2", type: "message", role: "user", content: [" my order?"] },
+        ],
+      },
+    });
+    const log = vi.fn();
+    observer.captureInput({ log } as any);
+    expect(log.mock.calls.at(-1)![0].input).toEqual([
+      { role: "user", content: "Where is my order?" },
+    ]);
+    session.emit("input_speech_started", {});
+    session.emit("input_audio_transcription_completed", {
+      itemId: "next",
+      transcript: "Please continue",
+      isFinal: true,
+    });
+    expect(turns).toHaveLength(3);
+    expect(observer.message("next")).toBe(turns[2]);
+  } finally {
+    observer.close();
+    clock.mockRestore();
+  }
+});
+
+test("grouped caller fragments do not move across intervening assistant messages", () => {
+  const { session, observer, turns } = fixture();
+  const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+  try {
+    for (const [itemId, transcript] of [
+      ["u1", "Where is my order?"],
+      ["u2", "Thanks. Tell me more."],
+    ]) {
+      session.emit("input_speech_started", {});
+      session.emit("input_audio_transcription_completed", {
+        itemId,
+        transcript,
+        isFinal: true,
+      });
+      session.emit("input_speech_stopped", {});
+    }
+    expect(turns).toHaveLength(1);
+    Object.assign(session, {
+      chatCtx: {
+        items: [
+          {
+            id: "u1",
+            type: "message",
+            role: "user",
+            content: ["Where is my order?"],
+          },
+          {
+            id: "a1",
+            type: "message",
+            role: "assistant",
+            content: ["Checking now."],
+          },
+          {
+            id: "u2",
+            type: "message",
+            role: "user",
+            content: ["Thanks. Tell me more."],
+          },
+        ],
+      },
+    });
+    const log = vi.fn();
+    observer.captureInput({ log } as any);
+    const expected = [
+      { role: "user", content: "Where is my order?" },
+      { role: "assistant", content: "Checking now." },
+      { role: "user", content: "Thanks. Tell me more." },
+    ];
+    expect(log.mock.calls.at(-1)![0].input).toEqual(expected);
+    // The latest transcript can arrive before LiveKit commits it to chatCtx.
+    (session as any).chatCtx.items.pop();
+    observer.captureInput({ log } as any);
+    expect(log.mock.calls.at(-1)![0].input).toEqual(expected);
+    (session as any).chatCtx.items.push({
+      id: "u2",
+      type: "message",
+      role: "user",
+      content: ["Thanks. Tell me more."],
+    });
+    session.emit("session_reconnected", {});
+    observer.captureInput({ log } as any);
+    expect(log.mock.calls.at(-1)![0].input).toEqual(expected);
+  } finally {
+    observer.close();
+    clock.mockRestore();
+  }
+});
+
+test("a response's own generated message is excluded from its input", () => {
+  const { session, observer } = fixture();
+  Object.assign(session, {
+    chatCtx: {
+      items: [
+        {
+          id: "user",
+          type: "message",
+          role: "user",
+          content: ["Order status?"],
+        },
+        {
+          id: "answer",
+          type: "message",
+          role: "assistant",
+          content: ["Friday."],
+        },
+      ],
+    },
+  });
+  const log = vi.fn();
+  const excludeOutput = observer.captureInput({ log } as any);
+  excludeOutput?.("answer");
+  expect(log.mock.calls.at(-1)![0].input).toEqual([
+    { role: "user", content: "Order status?" },
+  ]);
+  observer.close();
+});
+
+test("caller fragments end once at the last speech stop, not at the first fragment", () => {
+  const { session, observer, turns } = fixture(true, 3000);
+  const clock = vi.spyOn(Date, "now");
+  try {
+    for (const [start, end, id, transcript] of [
+      [1000, 1500, "u1", "Where is my order"],
+      [1800, 2200, "u2", " DMO1042?"],
+    ] as const) {
+      clock.mockReturnValue(start);
+      session.emit("input_speech_started", {});
+      session.emit("input_audio_transcription_completed", {
+        itemId: id,
+        transcript,
+        isFinal: true,
+      });
+      clock.mockReturnValue(end);
+      session.emit("input_speech_stopped", {});
+    }
+    clock.mockReturnValue(5000);
+    observer.close();
+    expect(turns).toHaveLength(1);
+    expect(turns[0].ends).toEqual([{ endTime: 2.2 }]);
+  } finally {
+    clock.mockRestore();
+  }
+});
+
+test("completed assistant playback separates caller turns inside the pause window", () => {
+  const { session, observer, turns } = fixture(true, 3000);
+  const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+  try {
+    session.emit("input_speech_started", {});
+    session.emit("input_audio_transcription_completed", {
+      itemId: "question",
+      transcript: "Where is my order DMO1042?",
+      isFinal: true,
+    });
+    clock.mockReturnValue(1500);
+    session.emit("input_speech_stopped", {});
+    observer.assistantSpeechEnded(2200);
+    clock.mockReturnValue(2600);
+    session.emit("input_speech_started", {});
+    session.emit("input_audio_transcription_completed", {
+      itemId: "followup",
+      transcript: "Thanks. Tell me more.",
+      isFinal: true,
+    });
+    clock.mockReturnValue(3100);
+    session.emit("input_speech_stopped", {});
+    observer.close();
+    expect(turns).toHaveLength(2);
+    expect(
+      turns.map(
+        (turn) => turn.logs.filter((log: any) => log.input).at(-1).input,
+      ),
+    ).toEqual([
+      [{ role: "user", content: "Where is my order DMO1042?" }],
+      [{ role: "user", content: "Thanks. Tell me more." }],
+    ]);
+    expect(turns.map((turn) => turn.ends)).toEqual([
+      [{ endTime: 1.5 }],
+      [{ endTime: 3.1 }],
+    ]);
+  } finally {
+    observer.close();
+    clock.mockRestore();
+  }
 });

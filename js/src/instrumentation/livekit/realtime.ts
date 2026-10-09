@@ -1,319 +1,260 @@
+import { RealtimeMetrics } from "./realtime-metrics";
 import { errorMonitor } from "node:events";
 import type { Span } from "../../logger";
-import { isObject } from "../../../util/index";
 import { observe, type Capture } from "./runtime";
-import { select } from "./capture";
-import { messages } from "./schema";
+import { TurnTracker, type Turn } from "./turns";
+import { messages, type Message } from "./schema";
 
+type Listener = (event: Record<string, unknown>) => void;
 export interface RealtimeSession {
-  on(
-    name: string | symbol,
-    callback: (event: Record<string, unknown>) => void,
-  ): unknown;
-  off(
-    name: string | symbol,
-    callback: (event: Record<string, unknown>) => void,
-  ): unknown;
+  readonly chatCtx?: { items: unknown[] };
+  on(name: string | symbol, callback: Listener): unknown;
+  prependListener?(name: string | symbol, callback: Listener): unknown;
+  off(name: string | symbol, callback: Listener): unknown;
 }
-type User = {
-  span: Span;
-  start?: number;
-  end?: number;
-  ended: boolean;
-  transcript?: string;
-};
-/** OpenAI's public plugin events supply item identity lost by generic speech callbacks. */
+
+/** Adapts LiveKit's common realtime events, including DuplexRealtimeAdapter. */
 export class RealtimeObserver {
-  private users = new Map<string, User>();
-  private replies = new Map<
-    string,
-    {
-      user?: User;
-      row?: Span;
-      turn?: Span;
-      response?: Record<string, unknown>;
-      tools?: string[];
-      associated?: boolean;
-    }
-  >();
-  private pendingUser?: User;
+  private tracker: TurnTracker;
+  private usage: RealtimeMetrics;
+  private turns = new Map<string, { span: Span; turn: Turn; ended: boolean }>();
+  private messages = new Map<string, Span>();
   private speakingTurn?: Span;
-  private toolUsers = new Map<string, User>();
-  private pendingTools: string[] = [];
-  private continuation: string[] = [];
-  private inputValid = true;
-  private queuedSamples = 0;
-  private connections = 0;
-  private readonly receive = (event: Record<string, unknown>) =>
-    observe(() => this.server(event));
-  private readonly failed = () =>
-    observe(() => {
-      this.speakingTurn = undefined;
-      this.inputValid = false;
-      if (this.capture()?.user)
-        this.root.log({
-          metadata: {
-            "contrib.livekit.realtime.input_alignment_invalidated": true,
-          },
-        });
-    });
-  private readonly send = (event: Record<string, unknown>) =>
-    observe(() => this.client(event));
+  private dispatchTurn?: string;
+  private inputs = new Map<string, ((turn: Turn) => void)[]>();
+  private readonly listeners: [string | symbol, Listener][];
+
   constructor(
-    private session: RealtimeSession,
+    readonly session: RealtimeSession,
     private root: Span,
     private content: boolean,
     private capture: () => Capture | undefined,
+    maxPauseMs = 1500,
   ) {
-    session.on("openai_server_event_received", this.receive);
-    session.on("openai_client_event_queued", this.send);
-    session.on(errorMonitor, this.failed);
+    this.usage = new RealtimeMetrics(session);
+    this.tracker = new TurnTracker(
+      Number.isFinite(maxPauseMs) && maxPauseMs >= 0 ? maxPauseMs : 1500,
+    );
+    const listeners: [string | symbol, Listener][] = [
+      [
+        "input_speech_started",
+        () => {
+          const previous = this.tracker.pending();
+          const observation = this.tracker.start(Date.now());
+          if (previous && previous.id !== observation.id)
+            this.endTurn(previous);
+          const turn = this.publish(observation);
+          this.dispatchTurn = observation.id;
+          this.speakingTurn = turn;
+          // LiveKit creates its speaking span in the same event dispatch. Do not
+          // carry parentage into unrelated tasks or local VAD observations.
+          queueMicrotask(() => {
+            if (this.speakingTurn === turn) this.speakingTurn = undefined;
+            if (this.dispatchTurn === observation.id)
+              this.dispatchTurn = undefined;
+          });
+        },
+      ],
+      [
+        "input_speech_stopped",
+        () => {
+          this.speakingTurn = undefined;
+          this.dispatchTurn = undefined;
+          const turn = this.tracker.stop(Date.now());
+          if (turn) this.publish(turn);
+        },
+      ],
+      [
+        "input_audio_transcription_completed",
+        (event) => {
+          if (typeof event.itemId !== "string") return;
+          const turn = this.tracker.transcript(
+            {
+              id: event.itemId,
+              speechId: this.dispatchTurn,
+              text:
+                this.content && typeof event.transcript === "string"
+                  ? event.transcript
+                  : undefined,
+              start:
+                typeof event.turnStartedAt === "number"
+                  ? event.turnStartedAt
+                  : undefined,
+              final: event.isFinal === true,
+            },
+            Date.now(),
+          );
+          this.messages.set(event.itemId, this.publish(turn));
+        },
+      ],
+      ["session_reconnected", () => this.endPending()],
+      [errorMonitor, () => this.endPending()],
+    ];
+    this.listeners = listeners.map(([name, listener]) => [
+      name,
+      (event) => observe(() => listener(event)),
+    ]);
+    for (const [name, listener] of this.listeners) {
+      // Observe before LiveKit's own listener commits the message/starts speech.
+      // This does not replace any listener or consume any model streams.
+      if (session.prependListener) session.prependListener(name, listener);
+      else session.on(name, listener);
+    }
   }
-  private client(event: Record<string, unknown>) {
-    if (
-      event.type === "conversation.item.create" &&
-      isObject(event.item) &&
-      event.item.type === "function_call_output" &&
-      typeof event.item.call_id === "string" &&
-      this.pendingTools.length < 256
-    )
-      this.pendingTools.push(event.item.call_id);
-    if (event.type === "response.create") {
-      this.continuation =
-        isObject(event.response) && event.response.input !== undefined
-          ? []
-          : this.pendingTools.splice(0);
-    }
-    if (event.type === "input_audio_buffer.clear") this.failed();
-    // No audio inspection or sample bookkeeping when recording is off.
-    if (
-      this.capture()?.user &&
-      event.type === "input_audio_buffer.append" &&
-      typeof event.audio === "string"
-    ) {
-      const padding = event.audio.endsWith("==")
-        ? 2
-        : event.audio.endsWith("=")
-          ? 1
-          : 0;
-      this.queuedSamples += ((event.audio.length / 4) * 3 - padding) / 2;
-    }
-  }
-  private server(event: Record<string, unknown>) {
-    if (
-      event.type === "input_audio_buffer.speech_started" ||
-      event.type === "input_audio_buffer.speech_stopped" ||
-      event.type === "session.created"
-    )
-      this.speakingTurn = undefined;
-    if (
-      event.type === "session.created" &&
-      (this.connections++ > 0 || this.users.size > 0)
-    ) {
-      this.inputValid = false;
-      this.pendingUser = undefined;
-      this.pendingTools = [];
-      this.continuation = [];
-    }
-    if (event.type === "error") this.failed();
-    const id = typeof event.item_id === "string" ? event.item_id : undefined;
-    if (
-      event.type === "input_audio_buffer.speech_started" &&
-      id &&
-      !this.users.has(id)
-    ) {
-      if (this.users.size >= 256) {
-        this.root.log({
-          metadata: { "contrib.livekit.realtime.association_limit": true },
-        });
-        return;
-      }
-      const span = this.root.startSpan({ name: "user_turn", type: "task" });
+
+  private publish(turn: Turn): Span {
+    let span = this.turns.get(turn.id)?.span;
+    if (!span) {
+      span = this.root.startSpan({
+        name: "user_turn",
+        type: "task",
+        startTime: turn.start / 1000,
+      });
+      this.turns.set(turn.id, { span, turn, ended: false });
       span.log({
         metadata: {
           "turn.id": span.spanId,
-          "openai.item_id": id,
-          "contrib.livekit.turn.start_event": event.type,
+          "contrib.livekit.turn.timing_source": "realtime_session_events",
         },
       });
-      this.users.set(id, {
-        span,
-        start:
-          typeof event.audio_start_ms === "number"
-            ? event.audio_start_ms
-            : undefined,
-        ended: false,
-      });
-      // LiveKit 1.9.x synchronously handles this provider event after emitting
-      // it, creating user_speaking in the same dispatch. Never carry ownership
-      // into later tasks (e.g. local VAD or a delayed/changed provider path).
-      this.speakingTurn = span;
-      queueMicrotask(() => {
-        if (this.speakingTurn === span) this.speakingTurn = undefined;
-      });
-    } else if (event.type === "input_audio_buffer.speech_stopped" && id) {
-      const user = this.users.get(id);
-      if (!user) return;
-      user.end =
-        typeof event.audio_end_ms === "number" ? event.audio_end_ms : undefined;
-      user.span.log({
-        metadata: {
-          "contrib.livekit.turn.stop_event": event.type,
-          "openai.input_audio_segments": [
-            { item_id: id, audio_start_ms: user.start, audio_end_ms: user.end },
-          ],
-        },
-      });
-      user.span.end();
-      user.ended = true;
-      this.pendingUser = user;
-      this.align(user);
-    } else if (
-      event.type === "conversation.item.input_audio_transcription.completed" &&
-      id
-    ) {
-      const user = this.users.get(id);
-      if (user && this.content && typeof event.transcript === "string") {
-        user.transcript = event.transcript;
-        user.span.log({ input: [{ role: "user", content: event.transcript }] });
-        for (const reply of this.replies.values()) {
-          if (reply.user === user) this.publishInput(reply);
-        }
-      }
-    } else if (
-      event.type === "response.output_item.added" &&
-      isObject(event.item) &&
-      event.item.type === "function_call" &&
-      typeof event.item.call_id === "string" &&
-      typeof event.response_id === "string"
-    ) {
-      const user = this.replies.get(event.response_id)?.user;
-      if (user && this.toolUsers.size < 256)
-        this.toolUsers.set(event.item.call_id, user);
-    } else if (
-      (event.type === "response.created" || event.type === "response.done") &&
-      isObject(event.response) &&
-      typeof event.response.id === "string"
-    ) {
-      const responseId = event.response.id;
-      if (this.replies.size >= 256 && !this.replies.has(responseId)) return;
-      let response = this.replies.get(responseId) ?? {};
-      if (!response.associated) {
-        const tools = this.continuation.splice(0);
-        const users = new Set(
-          tools.map((id) => this.toolUsers.get(id)).filter(Boolean),
-        );
-        const user =
-          this.pendingUser ?? (users.size === 1 ? [...users][0] : undefined);
-        response = { ...response, user, tools, associated: true };
-        this.pendingUser = undefined;
-      }
-      if (event.type === "response.done") response.response = event.response;
-      this.replies.set(responseId, response);
-      this.publish(response);
     }
-  }
-  private align(user: User) {
-    const c = this.capture();
-    if (
-      !c?.user ||
-      !this.inputValid ||
-      user.start === undefined ||
-      user.end === undefined ||
-      c.timeline.msToSamples(user.end) > this.queuedSamples
-    )
-      return;
-    // The supported path forwards mono 24 kHz samples in order. Server speech
-    // offsets confirm receipt; resets/reconnects invalidate this sample clock.
-    const input = c.inputTimeline;
-    if (
-      input.some(
-        (p) => p.rate !== c.timeline.CALL_SAMPLE_RATE || p.channels !== 1,
-      )
-    )
-      return;
-    for (const p of input) {
-      const from = Math.max(p.sampleStart, user.start),
-        to = Math.min(p.sampleStart + p.duration, user.end);
-      if (to > from)
-        select(
-          c,
-          user.span.spanId,
-          p.at + from - p.sampleStart,
-          p.at + to - p.sampleStart,
-          0,
-        );
-    }
-    // Finalization resolves this external turn's selections after audio is ready.
-    c.externalSpans ??= new Map();
-    c.externalSpans.set(user.span.spanId, user.span);
-    c.publishSelections?.();
-  }
-  bind(responseId: unknown, model: Span, turn?: Span) {
-    if (typeof responseId !== "string") return;
-    const response = this.replies.get(responseId) ?? {};
-    response.row = model;
-    response.turn = turn;
-    this.replies.set(responseId, response);
-    this.publish(response);
-    return response.user?.span.spanId;
-  }
-  private publish(entry: {
-    row?: Span;
-    turn?: Span;
-    response?: Record<string, unknown>;
-    user?: User;
-    tools?: string[];
-  }) {
-    if (!entry.row) return;
-    this.publishInput(entry);
-    if (entry.user) {
-      entry.row.log({ metadata: { "turn.reply_to": entry.user.span.spanId } });
-      entry.turn?.log({
-        metadata: { "turn.reply_to": entry.user.span.spanId },
-      });
-    }
-    if (entry.tools?.length)
-      entry.row.log({
-        metadata: { "continuation.tool_call_ids": entry.tools },
-      });
-    if (!entry.response) return;
-    entry.row.log({
+    span.log({
+      ...(turn.text !== undefined
+        ? { input: [{ role: "user", content: turn.text }] }
+        : {}),
       metadata: {
-        "openai.response.id": entry.response.id,
-        "contrib.livekit.response.status": entry.response.status,
+        ...(turn.messageId
+          ? { "contrib.livekit.item_id": turn.messageId }
+          : {}),
+        ...(turn.incomplete ? { "turn.incomplete": true } : {}),
       },
     });
-    if (this.content) {
-      const output = messages(entry.response.output);
-      if (output) {
-        entry.row.log({ output });
-        if (output.some((message) => message.tool_calls?.length))
-          entry.turn?.log({ output });
-      }
+    for (const update of this.inputs.get(turn.id) ?? []) update(turn);
+    if (turn.final || turn.incomplete) this.inputs.delete(turn.id);
+
+    const capture = this.capture();
+    if (capture) {
+      capture.externalSpans ??= new Map();
+      capture.externalSpans.set(span.spanId, span);
+    }
+    return span;
+  }
+
+  private endTurn(turn: Turn): void {
+    const entry = this.turns.get(turn.id);
+    if (entry && !entry.ended && turn.end !== undefined) {
+      entry.span.end({ endTime: turn.end / 1000 });
+      entry.ended = true;
     }
   }
-  private publishInput(entry: { row?: Span; user?: User }) {
-    if (!this.content || entry.user?.transcript === undefined) return;
-    entry.row?.log({
-      input: [{ role: "user", content: entry.user.transcript }],
-      metadata: { "contrib.livekit.input_scope": "associated_user_turn" },
-    });
+
+  assistantSpeechEnded(at: number): void {
+    const turn = this.tracker.boundary(at);
+    if (turn) this.endTurn(turn);
   }
-  close() {
-    this.speakingTurn = undefined;
-    this.session.off("openai_server_event_received", this.receive);
-    this.session.off("openai_client_event_queued", this.send);
-    this.session.off(errorMonitor, this.failed);
-    for (const user of this.users.values())
-      if (!user.ended) {
-        user.span.log({ metadata: { "turn.incomplete": true } });
-        user.span.end();
+
+  private context(items: unknown[]): Message[] {
+    const result: Message[] = [];
+    let previousTurn: string | undefined;
+    for (const item of items) {
+      const turn =
+        typeof item === "object" && item !== null && "id" in item
+          ? this.tracker.message(String(item.id))
+          : undefined;
+      for (const message of messages([item]) ?? []) {
+        if (
+          turn &&
+          message.role === "user" &&
+          typeof message.content === "string"
+        ) {
+          const previous = previousTurn === turn.id ? result.at(-1) : undefined;
+          if (previous)
+            previous.content = String(previous.content) + message.content;
+          else result.push(message);
+          previousTurn = turn.id;
+        } else {
+          result.push(message);
+          previousTurn = undefined;
+        }
       }
-    this.users.clear();
-    this.toolUsers.clear();
-    this.replies.clear();
+    }
+    return result;
   }
+
+  captureInput(model: Span): ((messageId: string) => void) | undefined {
+    if (!this.content) return;
+    const pending = this.tracker.pending();
+    const items = [...(this.session.chatCtx?.items ?? [])];
+    const excluded = new Set<string>();
+    const itemId = (item: unknown) =>
+      typeof item === "object" && item !== null && "id" in item
+        ? String(item.id)
+        : undefined;
+    const update = () => {
+      const transcripts = new Map(
+        pending
+          ? this.tracker.transcripts(pending).map(({ id, text }) => [id, text])
+          : [],
+      );
+      // Update fragments where LiveKit placed them. Newly observed caller text
+      // follows existing context, even if it belongs to an earlier grouped turn.
+      const context = items
+        .filter((item) => !excluded.has(itemId(item) ?? ""))
+        .map((item) => {
+          const id = itemId(item);
+          const text = id === undefined ? undefined : transcripts.get(id);
+          if (text === undefined) return item;
+          transcripts.delete(id!);
+          return { id, type: "message", role: "user", content: [text] };
+        });
+      for (const [id, text] of transcripts)
+        context.push({ id, type: "message", role: "user", content: [text] });
+      model.log({
+        input: this.context(context),
+        metadata: { "contrib.livekit.input_scope": "realtime_session_context" },
+      });
+    };
+    update();
+    if (pending && !pending.final) {
+      const updates = this.inputs.get(pending.id) ?? [];
+      updates.push(update);
+      this.inputs.set(pending.id, updates);
+    }
+    // Some adapters commit the generated message before dispatching generation.
+    // Its stream identity distinguishes output from the input snapshot.
+    return (messageId) => {
+      excluded.add(messageId);
+      update();
+    };
+  }
+
+  message(id: string): Span | undefined {
+    return this.messages.get(id);
+  }
+
+  private endPending() {
+    this.speakingTurn = undefined;
+    this.dispatchTurn = undefined;
+    for (const turn of this.tracker.reset(Date.now())) this.publish(turn);
+    for (const { turn } of this.turns.values()) this.endTurn(turn);
+    this.inputs.clear();
+  }
+
+  captureMetrics(responseId: string, span: Span) {
+    this.usage.associate(responseId, span);
+  }
+
+  close() {
+    this.usage.close();
+    for (const [name, listener] of this.listeners)
+      this.session.off(name, listener);
+    this.endPending();
+    this.tracker.close(Date.now());
+    this.turns.clear();
+    this.messages.clear();
+    this.inputs.clear();
+  }
+
   takeSpeakingTurn(): Span | undefined {
     const turn = this.speakingTurn;
     this.speakingTurn = undefined;

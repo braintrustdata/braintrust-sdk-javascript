@@ -75,6 +75,13 @@
               "type": "task",
               "children": [],
               "metadata": {
+                "audio.selection": {
+                  "channel_index": 1,
+                  "end_offset_ms": 0,
+                  "recording_id": "call-0000",
+                  "recording_span_id": "<span:2>",
+                  "start_offset_ms": 0
+                },
                 "audio.selections": [
                   {
                     "channel_index": 1,
