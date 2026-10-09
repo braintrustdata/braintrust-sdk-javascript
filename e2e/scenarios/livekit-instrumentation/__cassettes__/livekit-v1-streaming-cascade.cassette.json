@@ -1,0 +1,1726 @@
+{
+  "entries": [
+    {
+      "callIndex": 0,
+      "id": "ca41920661a27eb5",
+      "matchKey": "GET api.openai.com/v1/models",
+      "recordedAt": "2026-10-09T05:24:29.146Z",
+      "request": {
+        "body": {
+          "kind": "empty"
+        },
+        "headers": {},
+        "method": "GET",
+        "url": "https://api.openai.com/v1/models"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "data": [
+              {
+                "created": 1681940951,
+                "id": "tts-1",
+                "object": "model",
+                "owned_by": "openai-internal",
+                "shutdown_date": null
+              },
+              {
+                "created": 1754425928,
+                "id": "gpt-5-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1754425867,
+                "id": "gpt-5-mini-2025-08-07",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-11"
+              },
+              {
+                "created": 1744133506,
+                "id": "o4-mini-2025-04-16",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1712601677,
+                "id": "gpt-4-turbo-2024-04-09",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1732734466,
+                "id": "omni-moderation-2024-09-26",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1785168034,
+                "id": "gpt-live-transcribe",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1782228658,
+                "id": "gpt-5.6-luna",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1731689265,
+                "id": "omni-moderation-latest",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1778006032,
+                "id": "gpt-realtime-2",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1759514629,
+                "id": "gpt-5-search-api",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1776839241,
+                "id": "gpt-5.5-2026-04-23",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1772654062,
+                "id": "gpt-5.4-2026-03-05",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1706048358,
+                "id": "gpt-3.5-turbo-0125",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1754426384,
+                "id": "gpt-5-nano",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1762988221,
+                "id": "gpt-5.1-codex",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1773451123,
+                "id": "gpt-5.4-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1742251791,
+                "id": "o1-pro",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1782254706,
+                "id": "gpt-realtime-2.1-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1756271773,
+                "id": "gpt-realtime-2025-08-28",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1739331543,
+                "id": "gpt-4o-2024-11-20",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1750865219,
+                "id": "o3-deep-research-2025-06-26",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1762800673,
+                "id": "gpt-5.1",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1677532384,
+                "id": "whisper-1",
+                "object": "model",
+                "owned_by": "openai-internal",
+                "shutdown_date": "2027-02-26"
+              },
+              {
+                "created": 1759469822,
+                "id": "gpt-5-pro",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1778012060,
+                "id": "gpt-realtime-whisper",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1765610407,
+                "id": "gpt-4o-mini-transcribe-2025-12-15",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1759469707,
+                "id": "gpt-5-pro-2025-10-06",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-11"
+              },
+              {
+                "created": 1782228018,
+                "id": "gpt-5.6-sol",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1756271701,
+                "id": "gpt-realtime",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-20"
+              },
+              {
+                "created": 1699046015,
+                "id": "tts-1-hd",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1771461469,
+                "id": "gpt-realtime-1.5",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1765343983,
+                "id": "gpt-5.2-pro",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1754073306,
+                "id": "gpt-5-chat-latest",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1776894349,
+                "id": "gpt-5.5-pro",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1765610545,
+                "id": "gpt-4o-mini-transcribe-2025-03-20",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-20"
+              },
+              {
+                "created": 1756256146,
+                "id": "gpt-audio-2025-08-28",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1749166761,
+                "id": "o3-pro-2025-06-10",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-11"
+              },
+              {
+                "created": 1777704602,
+                "id": "chat-latest",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1772659657,
+                "id": "gpt-5.4-pro-2026-03-05",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1777950216,
+                "id": "gpt-realtime-translate",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1754075360,
+                "id": "gpt-5-2025-08-07",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-11"
+              },
+              {
+                "created": 1699053241,
+                "id": "tts-1-1106",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1765343959,
+                "id": "gpt-5.2-pro-2025-12-11",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1759512137,
+                "id": "gpt-audio-mini-2025-10-06",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1776894470,
+                "id": "gpt-5.5-pro-2026-04-23",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1772659601,
+                "id": "gpt-5.4-pro",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1765612007,
+                "id": "gpt-realtime-mini-2025-12-15",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1742403959,
+                "id": "gpt-4o-mini-tts",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1763671532,
+                "id": "gpt-5.1-codex-max",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1741391161,
+                "id": "gpt-4o-mini-search-preview",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1773451076,
+                "id": "gpt-5.4-mini-2026-03-17",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1712361441,
+                "id": "gpt-4-turbo",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1748475349,
+                "id": "o3-pro",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1722814719,
+                "id": "gpt-4o-2024-08-06",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1749840121,
+                "id": "o3-deep-research",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1744225308,
+                "id": "o3",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1741390858,
+                "id": "gpt-4o-mini-search-preview-2025-03-11",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1744321707,
+                "id": "gpt-4.1-nano",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1776399795,
+                "id": "gpt-image-2",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1683758102,
+                "id": "gpt-3.5-turbo-16k",
+                "object": "model",
+                "owned_by": "openai-internal",
+                "shutdown_date": null
+              },
+              {
+                "created": 1671217299,
+                "id": "text-embedding-ada-002",
+                "object": "model",
+                "owned_by": "openai-internal",
+                "shutdown_date": null
+              },
+              {
+                "created": 1782254687,
+                "id": "gpt-realtime-2.1",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1744316542,
+                "id": "gpt-4.1",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1776824847,
+                "id": "gpt-5.5",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1699053533,
+                "id": "tts-1-hd-1106",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1772691852,
+                "id": "gpt-5.4",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1749685485,
+                "id": "o4-mini-deep-research",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1771905621,
+                "id": "gpt-4o-search-preview-2025-03-11",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1705948997,
+                "id": "text-embedding-3-small",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1692634615,
+                "id": "babbage-002",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-09-28"
+              },
+              {
+                "created": 1705953180,
+                "id": "text-embedding-3-large",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1715368132,
+                "id": "gpt-4o-2024-05-13",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1750798887,
+                "id": "gpt-4o-transcribe-diarize",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-02-26"
+              },
+              {
+                "created": 1757527818,
+                "id": "gpt-5-codex",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1762800353,
+                "id": "gpt-5.1-2025-11-13",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1686588896,
+                "id": "gpt-4-0613",
+                "object": "model",
+                "owned_by": "openai",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1771905534,
+                "id": "gpt-4o-search-preview",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1759517133,
+                "id": "gpt-realtime-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-20"
+              },
+              {
+                "created": 1758845821,
+                "id": "gpt-image-1-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-01"
+              },
+              {
+                "created": 1782228459,
+                "id": "gpt-5.6-terra",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1694122472,
+                "id": "gpt-3.5-turbo-instruct-0914",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1744133301,
+                "id": "o3-2025-04-16",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-11"
+              },
+              {
+                "created": 1772236571,
+                "id": "gpt-5.3-chat-latest",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-08-10"
+              },
+              {
+                "created": 1765313028,
+                "id": "gpt-5.2-2025-12-11",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1765925279,
+                "id": "chatgpt-image-latest",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-01"
+              },
+              {
+                "created": 1677610602,
+                "id": "gpt-3.5-turbo",
+                "object": "model",
+                "owned_by": "openai",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1764030620,
+                "id": "gpt-image-1.5",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-01"
+              },
+              {
+                "created": 1738010200,
+                "id": "o3-mini-2025-01-31",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1771550885,
+                "id": "gpt-audio-1.5",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1692634301,
+                "id": "davinci-002",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-09-28"
+              },
+              {
+                "created": 1737146383,
+                "id": "o3-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1773450870,
+                "id": "gpt-5.4-nano",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1765760008,
+                "id": "gpt-audio-mini-2025-12-15",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1750866121,
+                "id": "o4-mini-deep-research-2025-06-26",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1742251504,
+                "id": "o1-pro-2025-03-19",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1759708615,
+                "id": "sora-2",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-09-24"
+              },
+              {
+                "created": 1744318173,
+                "id": "gpt-4.1-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1721172741,
+                "id": "gpt-4o-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1765344352,
+                "id": "gpt-5.2-chat-latest",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-08-10"
+              },
+              {
+                "created": 1776399994,
+                "id": "gpt-image-2-2026-04-21",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1742068596,
+                "id": "gpt-4o-mini-transcribe",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-02-26"
+              },
+              {
+                "created": 1741377021,
+                "id": "computer-use-preview-2025-03-11",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1692901427,
+                "id": "gpt-3.5-turbo-instruct",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-09-28"
+              },
+              {
+                "created": 1759708663,
+                "id": "sora-2-pro",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-09-24"
+              },
+              {
+                "created": 1754425777,
+                "id": "gpt-5",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1785168027,
+                "id": "gpt-transcribe",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1744321025,
+                "id": "gpt-4.1-nano-2025-04-14",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1759512027,
+                "id": "gpt-audio-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-20"
+              },
+              {
+                "created": 1744317547,
+                "id": "gpt-4.1-mini-2025-04-14",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1734326976,
+                "id": "o1-2024-12-17",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1765610837,
+                "id": "gpt-4o-mini-tts-2025-12-15",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1745517030,
+                "id": "gpt-image-1",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1756339249,
+                "id": "gpt-audio",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-01-20"
+              },
+              {
+                "created": 1770537915,
+                "id": "gpt-5.3-codex",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1760043960,
+                "id": "gpt-5-search-api-2025-10-14",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1766164985,
+                "id": "gpt-5.2-codex",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1754426303,
+                "id": "gpt-5-nano-2025-08-07",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-12-11"
+              },
+              {
+                "created": 1734655677,
+                "id": "computer-use-preview",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1744225351,
+                "id": "o4-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1763007109,
+                "id": "gpt-5.1-codex-mini",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1742068463,
+                "id": "gpt-4o-transcribe",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2027-02-26"
+              },
+              {
+                "created": 1762547951,
+                "id": "gpt-5.1-chat-latest",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1744315746,
+                "id": "gpt-4.1-2025-04-14",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1721172717,
+                "id": "gpt-4o-mini-2024-07-18",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1789405937,
+                "id": "gpt-6-sol",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1715367049,
+                "id": "gpt-4o",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1790552874,
+                "id": "gpt-6.1-sol",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1698959748,
+                "id": "gpt-3.5-turbo-1106",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-09-28"
+              },
+              {
+                "created": 1789406102,
+                "id": "gpt-6-luna",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1765610731,
+                "id": "gpt-4o-mini-tts-2025-03-20",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-07-23"
+              },
+              {
+                "created": 1765313051,
+                "id": "gpt-5.2",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1734375816,
+                "id": "o1",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1773450837,
+                "id": "gpt-5.4-nano-2026-03-17",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1788563147,
+                "id": "gpt-image-2.5-flare",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1788851010,
+                "id": "gpt-image-2.5-sunburst-2026-09-08",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1687882411,
+                "id": "gpt-4",
+                "object": "model",
+                "owned_by": "openai",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1788563162,
+                "id": "gpt-image-2.5-sunburst",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1788851006,
+                "id": "gpt-image-2.5-flare-2026-09-08",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1787853604,
+                "id": "gpt-6-astra",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1788889407,
+                "id": "gpt-live-1",
+                "object": "model",
+                "owned_by": "system",
+                "shutdown_date": null
+              },
+              {
+                "created": 1716329250,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvl6lN",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716331110,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSPmgCG",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336369,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmbI2Q:ckpt-step-390",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362623,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Rac3tn7:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336302,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTlWxd8",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1713573280,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9FsyeDN8:ckpt-step-90",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716330832,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSLIKb5",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715853777,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PSErO3L",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336369,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmbj09:ckpt-step-195",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336351,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmJmyv:ckpt-step-380",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716333310,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSzFxEO",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1713573280,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9FsyefHN:ckpt-step-80",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716330832,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSLIfx5:ckpt-step-200",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716339335,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RUYRGkA",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716329249,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvlWn2:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716329335,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRx9tlM:ckpt-step-80",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362498,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Raa2l8E:ckpt-step-200",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715851953,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PRlRlAx:ckpt-step-50",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362498,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Raa2Nvc:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716332961,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RStddp1:ckpt-step-360",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716339335,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RUYRyU2:ckpt-step-380",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716331343,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSTXyGA:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336352,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmJSe8",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715853777,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PSErmVj:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336302,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTlWMsA:ckpt-step-380",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716333026,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSug5k7:ckpt-step-190",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716331343,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSTX8uk:ckpt-step-200",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716329249,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvli2C:ckpt-step-50",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716339335,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RUYQIXR:ckpt-step-190",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1713573281,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9FsyegS7",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716332961,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RStdzjn:ckpt-step-180",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336351,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmJgKG:ckpt-step-190",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716331110,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSPl83J:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716329241,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvdpE3:ckpt-step-60",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336302,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTlWVsA:ckpt-step-190",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716329335,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRx9zAB",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362078,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RaTGp2X",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715851953,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PRlRzXm:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716329241,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvdKr0:ckpt-step-80",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362498,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Raa2g2t",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716329241,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRvdrgP",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716331110,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSPmMV8:ckpt-step-200",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716336369,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RTmbTRx",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716333026,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSug3RE",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716332961,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RStdh74",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362078,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RaTG7lD:ckpt-step-50",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716331344,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSTXTUN",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715853777,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PSErVBb:ckpt-step-200",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715853272,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PS6iZg1:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362078,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RaTGd3R:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716333026,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSugSr3:ckpt-step-380",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715851954,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PRlRXjc",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715853272,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PS6irTy",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362623,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Rac38GU:ckpt-step-50",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716330832,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSLIu9M:ckpt-step-100",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716362623,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9Rac3rrg",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716333309,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSzFKKN:ckpt-step-200",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716333309,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RSzFcrA:ckpt-step-400",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1715853272,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9PS6i40V:ckpt-step-50",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              },
+              {
+                "created": 1716329335,
+                "id": "ft:gpt-3.5-turbo-0125:braintrust-data::9RRx9HqT:ckpt-step-90",
+                "object": "model",
+                "owned_by": "braintrust-data",
+                "shutdown_date": "2026-10-23"
+              }
+            ],
+            "object": "list"
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a47af58bca5ee6c0-ORD",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Fri, 09 Oct 2026 05:24:29 GMT",
+          "openai-processing-ms": "851",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-request-id": "42c451a8-557a-43d7-b49c-569a5d6c8032"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "821d5c8ca7a4b272",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "recordedAt": "2026-10-09T05:24:35.203Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+                "role": "system"
+              },
+              {
+                "content": "Where is my order, DMO-1042?",
+                "role": "user"
+              }
+            ],
+            "model": "gpt-4.1-nano",
+            "parallel_tool_calls": true,
+            "stream": true,
+            "stream_options": {
+              "include_usage": true
+            },
+            "tools": [
+              {
+                "function": {
+                  "description": "Look up an order delivery status.",
+                  "name": "lookup_order",
+                  "parameters": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "order_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["order_id"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"index\":0,\"id\":\"call_UJSzFQibd36wIeKjjJwuroFp\",\"type\":\"function\",\"function\":{\"name\":\"lookup_order\",\"arguments\":\"\"}}],\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"4a\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"zEQCYOqte3xmR\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"order\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"klZjqUS13rH\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"_id\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"UwybQ9ovgBFpj\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\":\\\"\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"QeEbA3RoZZ4\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"DM\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"y78zKm900Lo13d\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"O\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"TDLdsQj8WvIPZK8\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"-\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"ICszioBMVRJ8X4O\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"104\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"cxTIDZXf3th7F\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"2\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"SYtWdo8zfJthGO8\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"}\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"71o5Ad5GsERzy\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"tool_calls\"}],\"usage\":null,\"obfuscation\":\"Nl5OJhVsa6cKhM\"}",
+            "data: {\"id\":\"chatcmpl-EWxNr7Hq6VXTQepGZWlDFVu629GIh\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[],\"usage\":{\"prompt_tokens\":83,\"completion_tokens\":19,\"total_tokens\":102,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"zAf0mmqS\"}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a47af5b4bb756185-ORD",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 09 Oct 2026 05:24:35 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "237",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999955",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_44874680e3a345dd80c5c3e553cb1bb3"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "db2fd1af1cbe5a3f",
+      "matchKey": "POST api.openai.com/v1/chat/completions",
+      "recordedAt": "2026-10-09T05:24:35.655Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "messages": [
+              {
+                "content": "You help customers check orders. Always call lookup_order when an order number is supplied. Answer with one short sentence giving the delivery day.",
+                "role": "system"
+              },
+              {
+                "content": "Where is my order, DMO-1042?",
+                "role": "user"
+              },
+              {
+                "role": "assistant",
+                "tool_calls": [
+                  {
+                    "function": {
+                      "arguments": "{\"order_id\":\"DMO-1042\"}",
+                      "name": "lookup_order"
+                    },
+                    "id": "call_UJSzFQibd36wIeKjjJwuroFp",
+                    "type": "function"
+                  }
+                ]
+              },
+              {
+                "content": "{\"order_id\":\"DMO-1042\",\"status\":\"in_transit\",\"delivery\":\"Friday\"}",
+                "role": "tool",
+                "tool_call_id": "call_UJSzFQibd36wIeKjjJwuroFp"
+              }
+            ],
+            "model": "gpt-4.1-nano",
+            "parallel_tool_calls": true,
+            "stream": true,
+            "stream_options": {
+              "include_usage": true
+            },
+            "tool_choice": "auto",
+            "tools": [
+              {
+                "function": {
+                  "description": "Look up an order delivery status.",
+                  "name": "lookup_order",
+                  "parameters": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "order_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["order_id"],
+                    "type": "object"
+                  }
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"8I6LdyZo\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Your\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"Vwpjm6\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" order\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"miuz\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" D\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"DsLoadiY\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"MO\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"vfg3MqMc\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"-\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"I78kvbG8n\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"104\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"pSbhwiv\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"2\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"JRUQnyFQZ\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" will\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"maEUL\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" be\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"kp6Ip73\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" delivered\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" on\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"hbiNTDB\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Friday\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"yde\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null,\"obfuscation\":\"mNk8XSK0t\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":null,\"obfuscation\":\"W7aK\"}",
+            "data: {\"id\":\"chatcmpl-EWxNri9AsOfhgSiWoIZh2P4EhcHAa\",\"object\":\"chat.completion.chunk\",\"created\":1791523475,\"model\":\"gpt-4.1-nano-2025-04-14\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_71b24f5eef\",\"choices\":[],\"usage\":{\"prompt_tokens\":130,\"completion_tokens\":14,\"total_tokens\":144,\"prompt_tokens_details\":{\"cached_tokens\":0,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":0,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}},\"obfuscation\":\"rAdPpX6\"}",
+            "data: [DONE]"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a47af5b83d9a6185-ORD",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Fri, 09 Oct 2026 05:24:35 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "211",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29998",
+          "x-ratelimit-remaining-tokens": "149999835",
+          "x-ratelimit-reset-requests": "4ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_7498f80b139c4a81903bb13628e33a26"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 0,
+      "id": "bb65b6415db13fbd",
+      "matchKey": "POST api.openai.com/v1/audio/speech",
+      "recordedAt": "2026-10-09T05:24:37.075Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": "Your order DMO-1042 will be delivered on Friday.",
+            "model": "gpt-4o-mini-tts",
+            "response_format": "pcm",
+            "speed": 1,
+            "voice": "alloy"
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/speech"
+      },
+      "response": {
+        "body": {
+          "contentType": "audio/pcm",
+          "kind": "binary",
+          "path": "livekit-v1-streaming-cascade.cassette.blobs/fd25a59c58e493a5cccaff311b7830679ce74e559daf26c7bc5d40bd6acae648.bin",
+          "sha256": "fd25a59c58e493a5cccaff311b7830679ce74e559daf26c7bc5d40bd6acae648"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a47af5bb0f5f6185-ORD",
+          "content-type": "audio/pcm",
+          "date": "Fri, 09 Oct 2026 05:24:36 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "517",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-openai-proxy-wasm": "v0.1",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999990",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_a9f4b08f7d234e4cb325279b1db1a527"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-10-09T05:18:34.744Z"
+  }
+}

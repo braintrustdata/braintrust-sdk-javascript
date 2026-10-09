@@ -1,0 +1,286 @@
+{
+  "span_tree": [
+    {
+      "name": "livekit.agent_session",
+      "type": "task",
+      "children": [
+        {
+          "name": "livekit.session_start",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.start_agent_activity",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.setup_toolsets",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+                    "caller_functionname": "ScenarioProcessor.onStart",
+                    "caller_lineno": 0
+                  }
+                },
+                {
+                  "name": "livekit.on_enter",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.agent_label": "default_agent",
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+                    "caller_functionname": "ScenarioProcessor.onStart",
+                    "caller_lineno": 0
+                  }
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.agent_label": "default_agent",
+                "gen_ai.agent.name": "default_agent",
+                "gen_ai.operation.name": "create_agent",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+                "caller_functionname": "ScenarioProcessor.onStart",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "metadata": {
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+            "caller_functionname": "ScenarioProcessor.onStart",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "assistant_turn",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.agent_speaking",
+              "type": "task",
+              "children": [],
+              "metadata": {
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+                "caller_functionname": "ScenarioProcessor.onStart",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "output": [
+            {
+              "content": "Fixture playback",
+              "role": "assistant"
+            }
+          ],
+          "metadata": {
+            "contrib.livekit.committed_messages": {
+              "<native:1>": {
+                "id": "<span:2>",
+                "interrupted": false,
+                "role": "assistant",
+                "text": "Fixture playback",
+                "turn_span_id": "<span:1>"
+              }
+            },
+            "contrib.livekit.events": [
+              {
+                "attributes": {
+                  "contrib.livekit.generation_id": "<native:3>"
+                },
+                "name": "generation",
+                "time_unix_ms": 0
+              }
+            ],
+            "contrib.livekit.generation_count": 1,
+            "contrib.livekit.generation_id": "<native:3>",
+            "contrib.livekit.interrupted": false,
+            "contrib.livekit.speech.queue_wait": 0,
+            "contrib.livekit.speech_id": "<native:2>",
+            "gen_ai.agent.name": "default_agent",
+            "gen_ai.operation.name": "invoke_agent",
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>",
+            "turn.id": "<span:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+            "caller_functionname": "ScenarioProcessor.onStart",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "livekit.session_close",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.drain_agent_activity",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.on_exit",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.agent_label": "default_agent",
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+                    "caller_functionname": "ScenarioProcessor.onStart",
+                    "caller_lineno": 0
+                  }
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.agent_label": "default_agent",
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+                "caller_functionname": "ScenarioProcessor.onStart",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "metadata": {
+            "contrib.livekit.close.drain": false,
+            "contrib.livekit.close_reason": "user_initiated",
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+            "caller_functionname": "ScenarioProcessor.onStart",
+            "caller_lineno": 0
+          }
+        },
+        {
+          "name": "user_turn",
+          "type": "task",
+          "children": [
+            {
+              "name": "livekit.eou_wait",
+              "type": "task",
+              "children": [
+                {
+                  "name": "livekit.eou_detection",
+                  "type": "task",
+                  "children": [],
+                  "metadata": {
+                    "contrib.livekit.eou.endpointing_delay": 0.3,
+                    "contrib.livekit.eou.from_cache": false,
+                    "contrib.livekit.eou.language": "",
+                    "contrib.livekit.eou.source": "manual",
+                    "scenario": "livekit-instrumentation",
+                    "testRunId": "<run:1>",
+                    "turn.id": "<span:1>"
+                  },
+                  "context": {
+                    "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+                    "caller_functionname": "ScenarioProcessor.onStart",
+                    "caller_lineno": 0
+                  }
+                }
+              ],
+              "metadata": {
+                "contrib.livekit.eou.endpointing_delay": 0.3,
+                "contrib.livekit.eou.not_committed_count": 0,
+                "contrib.livekit.eou.outcome": "committed",
+                "contrib.livekit.eou.rearm_count": 0,
+                "contrib.livekit.eou.source": "manual",
+                "contrib.livekit.eou.wait_duration": 0,
+                "scenario": "livekit-instrumentation",
+                "testRunId": "<run:1>",
+                "turn.id": "<span:1>"
+              },
+              "context": {
+                "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+                "caller_functionname": "ScenarioProcessor.onStart",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "input": [
+            {
+              "content": "",
+              "role": "user"
+            }
+          ],
+          "metadata": {
+            "contrib.livekit.end_of_turn_delay": 0,
+            "contrib.livekit.transcript_confidence": 0,
+            "contrib.livekit.transcription_delay": 0,
+            "scenario": "livekit-instrumentation",
+            "testRunId": "<run:1>",
+            "turn.id": "<span:1>"
+          },
+          "context": {
+            "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+            "caller_functionname": "ScenarioProcessor.onStart",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "contrib.livekit.agent_label": "default_agent",
+        "contrib.livekit.events": [
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "listening",
+              "contrib.livekit.old_state": "initializing"
+            },
+            "name": "agent_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "speaking",
+              "contrib.livekit.old_state": "listening"
+            },
+            "name": "agent_state_changed",
+            "time_unix_ms": 0
+          },
+          {
+            "attributes": {
+              "contrib.livekit.new_state": "listening",
+              "contrib.livekit.old_state": "speaking"
+            },
+            "name": "agent_state_changed",
+            "time_unix_ms": 0
+          }
+        ],
+        "gen_ai.operation.name": "invoke_workflow",
+        "gen_ai.workflow.name": "agent_session",
+        "scenario": "livekit-instrumentation",
+        "testRunId": "<run:1>"
+      },
+      "context": {
+        "caller_filename": "<repo>/e2e/scenarios/livekit-instrumentation/scenario.mjs",
+        "caller_functionname": "ScenarioProcessor.onStart",
+        "caller_lineno": 0
+      }
+    }
+  ]
+}
