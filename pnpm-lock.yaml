@@ -364,9 +364,6 @@ importers:
       '@next/env':
         specifier: ^14.2.3
         version: 14.2.3
-      '@types/react':
-        specifier: ^18.3.1
-        version: 18.3.31
       '@vercel/functions':
         specifier: ^1.0.2
         version: 1.0.2
@@ -485,6 +482,9 @@ importers:
       '@types/pluralize':
         specifier: ^0.0.30
         version: 0.0.30
+      '@types/react':
+        specifier: ^18.3.1
+        version: 18.3.31
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.49.0
         version: 8.50.0(@typescript-eslint/parser@8.50.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.4.4))(eslint@9.39.4(jiti@2.6.1))(typescript@5.4.4)

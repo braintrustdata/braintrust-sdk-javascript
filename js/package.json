@@ -201,6 +201,7 @@
     "@types/mustache": "^4.2.5",
     "@types/node": "^20.10.5",
     "@types/pluralize": "^0.0.30",
+    "@types/react": "^18.3.1",
     "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@typescript-eslint/parser": "^8.49.0",
     "ai": "^6.0.0",
@@ -228,7 +229,6 @@
   },
   "dependencies": {
     "@next/env": "^14.2.3",
-    "@types/react": "^18.3.1",
     "@vercel/functions": "^1.0.2",
     "acorn": "^8.16.0",
     "acorn-import-attributes": "^1.9.5",
@@ -258,7 +258,13 @@
     "zod-to-json-schema": "^3.25.0"
   },
   "peerDependencies": {
+    "@types/react": ">=18",
     "zod": "^3.25.34 || ^4.0"
+  },
+  "peerDependenciesMeta": {
+    "@types/react": {
+      "optional": true
+    }
   },
   "optionalDependencies": {
     "@braintrust/bt-darwin-arm64": "0.12.0",
