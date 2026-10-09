@@ -1,0 +1,51 @@
+{
+  "name": "@braintrust/audio",
+  "version": "0.0.1",
+  "description": "Shared audio recording, encoding, and export for Braintrust integrations",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "check:typings": "tsc --noEmit",
+    "test": "vitest run",
+    "test:smoke": "node smoke/recording.mjs"
+  },
+  "dependencies": {
+    "@audio/encode-opus": "1.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "tsup": "^8.5.1",
+    "typescript": "^5.3.3",
+    "vitest": "4.1.11",
+    "ogg-opus-decoder": "^1.7.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "Braintrust Data Inc.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/braintrustdata/braintrust-sdk-javascript.git",
+    "directory": "integrations/audio"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "provenance": true
+  }
+}
