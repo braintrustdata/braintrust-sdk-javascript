@@ -1,6 +1,6 @@
 import { SpanTypeAttribute, isObject } from "../../../util/index";
 import iso from "../../isomorph";
-import { Attachment } from "../../logger";
+import { _internalCaptureAttachmentsEnabled, Attachment } from "../../logger";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
 import type {
   OllamaChatRequest,
@@ -209,7 +209,17 @@ function normalizeTextAndImages(
 
   const imageParts: Record<string, unknown>[] = [];
   const unrecognizedImages: unknown[] = [];
+  const captureAttachments = _internalCaptureAttachmentsEnabled();
   for (const image of images) {
+    if (!captureAttachments) {
+      if (
+        image instanceof URL ||
+        (typeof image === "string" && /^https?:\/\//i.test(image))
+      ) {
+        imageParts.push({ type: "image_url", image_url: { url: image } });
+      }
+      continue;
+    }
     let localImagePath: string | undefined;
     let localPathMediaType: string | undefined;
     if (

@@ -1,6 +1,12 @@
 import { isObject, SpanTypeAttribute } from "../../../util";
 import { debugLogger } from "../../debug-logger";
-import { Attachment, startSpan, withCurrent, type Span } from "../../logger";
+import {
+  _internalCaptureAttachmentsEnabled,
+  Attachment,
+  startSpan,
+  withCurrent,
+  type Span,
+} from "../../logger";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
@@ -84,8 +90,10 @@ export class ElevenLabsPlugin extends BasePlugin {
             file instanceof Blob
               ? file.type || "application/octet-stream"
               : "application/octet-stream";
-          const blob =
-            file instanceof Blob
+          const captureAttachments = _internalCaptureAttachmentsEnabled();
+          const blob = !captureAttachments
+            ? undefined
+            : file instanceof Blob
               ? file
               : file instanceof Uint8Array
                 ? new Blob([new Uint8Array(file)], { type: contentType })
@@ -98,9 +106,18 @@ export class ElevenLabsPlugin extends BasePlugin {
           return {
             input: {
               operation: "transcribe",
-              content: fileData
-                ? [{ type: "file", file: { filename, file_data: fileData } }]
-                : [],
+              content:
+                fileData || file !== undefined
+                  ? [
+                      {
+                        type: "file",
+                        file: {
+                          filename,
+                          ...(fileData ? { file_data: fileData } : {}),
+                        },
+                      },
+                    ]
+                  : [],
               parameters: {
                 language: request.languageCode,
                 timestamp_granularities: request.timestampsGranularity,
@@ -135,7 +152,11 @@ export class ElevenLabsPlugin extends BasePlugin {
         },
         ([request], span) => {
           const file = request.file;
-          if (!isAsyncIterable(file)) return;
+          if (
+            !_internalCaptureAttachmentsEnabled(span) ||
+            !isAsyncIterable(file)
+          )
+            return;
           const chunks: Uint8Array[] = [];
           const filename =
             isObject(file) && typeof file.path === "string"
@@ -302,6 +323,7 @@ function captureSpeech(
   started: number,
   headers?: Headers,
 ): void {
+  const captureAttachments = _internalCaptureAttachmentsEnabled(span);
   const format = request.outputFormat ?? "mp3_44100_128";
   const formatType = format.startsWith("mp3_")
     ? "audio/mpeg"
@@ -331,16 +353,16 @@ function captureSpeech(
   let bytes = 0;
   let first = true;
   let stopped = false;
-  const observe = (chunk: Uint8Array) => {
-    if (stopped || chunk.byteLength === 0) return;
+  const observe = (byteLength: number, chunk?: Uint8Array) => {
+    if (stopped || byteLength === 0) return;
     if (first && method.startsWith("stream")) {
       span.log({
         metrics: { time_to_first_token: Date.now() / 1000 - started },
       });
     }
     first = false;
-    chunks.push(new Uint8Array(chunk));
-    bytes += chunk.byteLength;
+    if (chunk) chunks.push(new Uint8Array(chunk));
+    bytes += byteLength;
   };
   const complete = () => {
     if (stopped) return;
@@ -348,22 +370,20 @@ function captureSpeech(
     try {
       const content = [];
       if (contentType && bytes) {
-        const data = new Uint8Array(bytes);
-        let offset = 0;
-        for (const chunk of chunks) {
-          data.set(chunk, offset);
-          offset += chunk.length;
-        }
         content.push({
           type: "file",
           file: {
             filename,
             byte_size: bytes,
-            file_data: new Attachment({
-              data: new Blob([data], { type: contentType }),
-              filename,
-              contentType,
-            }),
+            ...(captureAttachments
+              ? {
+                  file_data: new Attachment({
+                    data: new Blob(chunks as BlobPart[], { type: contentType }),
+                    filename,
+                    contentType,
+                  }),
+                }
+              : {}),
           },
         });
       }
@@ -384,8 +404,19 @@ function captureSpeech(
     finish(error);
   };
   const timestampChunk = (chunk: ElevenLabsTimestampAudio) => {
-    const binary = atob(chunk.audioBase64);
-    observe(Uint8Array.from(binary, (character) => character.charCodeAt(0)));
+    const audio = chunk.audioBase64;
+    if (captureAttachments) {
+      const data = Uint8Array.from(atob(audio), (character) =>
+        character.charCodeAt(0),
+      );
+      observe(data.byteLength, data);
+    } else {
+      // Derive the decoded size from the base64 length without decoding audio.
+      observe(
+        Math.floor((audio.length * 3) / 4) -
+          (audio.endsWith("==") ? 2 : audio.endsWith("=") ? 1 : 0),
+      );
+    }
     if (chunk.alignment || chunk.normalizedAlignment)
       alignments.push({
         alignment: chunk.alignment,
@@ -413,7 +444,8 @@ function captureSpeech(
     });
   } else {
     observeByteStream(value, {
-      onChunk: observe,
+      onChunk: (chunk) =>
+        observe(chunk.byteLength, captureAttachments ? chunk : undefined),
       onComplete: complete,
       onCancel: cancel,
       aroundRead: (next) => withCurrent(span, next),

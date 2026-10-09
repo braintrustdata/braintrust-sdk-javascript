@@ -78,6 +78,7 @@ export {
   SpanImpl,
   TestBackgroundLogger,
   _exportsForTestingOnly,
+  _internalCaptureAttachmentsEnabled,
   _internalGetGlobalState,
   _internalSetInitialState,
   constructLogs3OverflowRequest,
@@ -140,6 +141,8 @@ export {
   startOpenAIAgentsTrace,
   updateOpenAIAgentsTrace,
 } from "./openai-agents-api";
+export { processImagesInOutput as _internalProcessImagesInOutput } from "./instrumentation/plugins/openai-span-data";
+export { processInputAttachments as _internalProcessInputAttachments } from "./wrappers/attachment-utils";
 
 // Internal isomorph layer for platform-specific implementations
 import _internalIso from "./isomorph";

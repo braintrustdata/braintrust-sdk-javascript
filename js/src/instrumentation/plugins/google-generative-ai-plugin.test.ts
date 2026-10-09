@@ -22,6 +22,7 @@ describe("Google Generative AI instrumentation", () => {
   beforeEach(() => {
     logger = _exportsForTestingOnly.useTestBackgroundLogger();
     initLogger({
+      captureAttachments: true,
       projectName: "tmp-luca-google-generative-ai-tests",
       projectId: "test-project-id",
     });
@@ -366,23 +367,36 @@ describe("Google Generative AI instrumentation", () => {
     ]);
   });
 
-  it("converts image inputs without mutating the provider request", async () => {
-    const inlineData = { data: "aGVsbG8=", mimeType: "image/png" };
-    const request = [{ inlineData }];
-    await channels.generateContent.invoke(
-      async () => ({ response: {} }),
-      { model: "models/test" },
-      [request],
-      {},
-    );
-    const spans = await logger.drain();
-    expect(spans[0]).toHaveProperty(
-      "input.contents.0.parts.0.inlineData.data",
-      expect.any(Attachment),
-    );
-    expect(request[0].inlineData).toBe(inlineData);
-    expect(inlineData.data).toBe("aGVsbG8=");
-  });
+  it.each([true, false])(
+    "processes inline inputs with capture=%s without mutating the provider request",
+    async (captureAttachments) => {
+      initLogger({
+        projectId: "test-project-id",
+        projectName: "tmp-luca-google-generative-ai-tests",
+        captureAttachments,
+      });
+      const inlineData = { data: "aGVsbG8=", mimeType: "image/png" };
+      const request = [{ inlineData }];
+      await channels.generateContent.invoke(
+        async () => ({ response: {} }),
+        { model: "models/test" },
+        [request],
+        {},
+      );
+      const spans = await logger.drain();
+      if (captureAttachments)
+        expect(spans[0]).toHaveProperty(
+          "input.contents.0.parts.0.inlineData.data",
+          expect.any(Attachment),
+        );
+      else
+        expect(spans[0]).not.toHaveProperty(
+          "input.contents.0.parts.0.inlineData.data",
+        );
+      expect(request[0].inlineData).toBe(inlineData);
+      expect(inlineData.data).toBe("aGVsbG8=");
+    },
+  );
 
   it("keeps all original input when any attachment cannot be converted", async () => {
     const request = [

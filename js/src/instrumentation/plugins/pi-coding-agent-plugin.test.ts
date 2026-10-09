@@ -25,10 +25,17 @@ vi.mock("../../isomorph", async (importOriginal) => {
   };
 });
 
-vi.mock("../../logger", () => ({
-  startSpan: (...args: unknown[]) => mockStartSpan(...args),
-  withCurrent: (_span: unknown, callback: () => unknown) => callback(),
-}));
+vi.mock("../../logger", async () => {
+  const { default: iso } = await import("../../isomorph");
+  return {
+    _internalCaptureAttachmentsEnabled: () =>
+      iso.getEnv("BRAINTRUST_CAPTURE_ATTACHMENTS") === "true",
+    CAPTURE_ATTACHMENTS: Symbol.for("braintrust.captureAttachments"),
+    BaseAttachment: class {},
+    startSpan: (...args: unknown[]) => mockStartSpan(...args),
+    withCurrent: (_span: unknown, callback: () => unknown) => callback(),
+  };
+});
 
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { PiCodingAgentPlugin } from "./pi-coding-agent-plugin";

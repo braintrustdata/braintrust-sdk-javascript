@@ -9,7 +9,12 @@ import {
   isObject,
   SpanTypeAttribute,
 } from "../../../util/index";
-import { Attachment, withCurrent, type Span } from "../../logger";
+import {
+  _internalCaptureAttachmentsEnabled,
+  Attachment,
+  withCurrent,
+  type Span,
+} from "../../logger";
 import {
   convertDataToBlob,
   getExtensionFromMediaType,
@@ -144,7 +149,8 @@ function extractGroqAudioInput(
   span: Span,
 ): { input: unknown; metadata: Record<string, unknown> } {
   const source = params.file ?? params.url;
-  const filePart = groqAudioFilePart(source);
+  const captureAttachments = _internalCaptureAttachmentsEnabled(span);
+  const filePart = groqAudioFilePart(source, captureAttachments);
   const input = {
     operation,
     ...(params.prompt !== undefined ? { prompt: params.prompt } : {}),
@@ -160,15 +166,36 @@ function extractGroqAudioInput(
         : {}),
     },
   };
-  if (!filePart) observeGroqAudioInput(source, input, span);
+  if (!filePart && captureAttachments)
+    observeGroqAudioInput(source, input, span);
   return {
     input,
     metadata: { model: params.model, provider: "groq" },
   };
 }
 
-function groqAudioFilePart(source: unknown): unknown | undefined {
+function groqAudioFilePart(
+  source: unknown,
+  captureAttachments: boolean,
+): unknown | undefined {
   if (source === undefined || source === null) return undefined;
+
+  if (!captureAttachments) {
+    return {
+      type: "file",
+      file: {
+        filename:
+          typeof source === "string"
+            ? (filenameFromPath(source) ?? "audio")
+            : isObject(source)
+              ? (filenameForAudioSource(source) ?? "audio")
+              : "audio",
+        ...(typeof source === "string" && /^https?:\/\//i.test(source)
+          ? { file_data: source }
+          : {}),
+      },
+    };
+  }
 
   if (typeof source === "string") {
     if (source.startsWith("data:")) {
@@ -323,6 +350,7 @@ function filenameFromContentDisposition(value: string | undefined) {
 }
 
 function filenameFromPath(value: string): string | undefined {
+  if (/^data:/i.test(value)) return undefined;
   const withoutQuery = value.split(/[?#]/, 1)[0];
   return withoutQuery.split(/[\\/]/).pop() || undefined;
 }
@@ -378,6 +406,7 @@ function captureGroqSpeechResponse(
   span: Span,
   startTime: number,
 ): boolean {
+  const captureAttachments = _internalCaptureAttachmentsEnabled(span);
   if (!isObject(response)) return false;
 
   const headerContentType = responseHeader(response, "content-type")?.split(
@@ -394,6 +423,7 @@ function captureGroqSpeechResponse(
       responseHeader(response, "content-disposition"),
     ) ?? `speech.${getExtensionFromMediaType(contentType)}`;
   const chunks: Uint8Array[] = [];
+  let bytes = 0;
   let finished = false;
   let started = false;
   let spanEnded = false;
@@ -417,36 +447,38 @@ function captureGroqSpeechResponse(
       });
       firstChunk = false;
     }
-    chunks.push(new Uint8Array(chunk));
+    bytes += chunk.byteLength;
+    if (captureAttachments) chunks.push(new Uint8Array(chunk));
   };
   const complete = () => {
     if (finished) return;
     finished = true;
-    const data = concatUint8Arrays(...chunks);
-    chunks.length = 0;
     try {
-      span.log({
-        output: {
-          content:
-            data.byteLength > 0
-              ? [
-                  {
-                    type: "file",
-                    file: {
-                      filename,
-                      byte_size: data.byteLength,
-                      file_data: new Attachment({
-                        data: data.buffer,
-                        filename,
-                        contentType,
-                      }),
-                    },
-                  },
-                ]
-              : [],
-        },
-      });
+      // Uncaptured blob reads are not inspected, so their size can be unknown.
+      const content =
+        captureAttachments && !bytes
+          ? []
+          : [
+              {
+                type: "file",
+                file: {
+                  filename,
+                  ...(bytes ? { byte_size: bytes } : {}),
+                  ...(captureAttachments
+                    ? {
+                        file_data: new Attachment({
+                          data: concatUint8Arrays(...chunks).buffer,
+                          filename,
+                          contentType,
+                        }),
+                      }
+                    : {}),
+                },
+              },
+            ];
+      span.log({ output: { content } });
     } finally {
+      chunks.length = 0;
       endSpan();
     }
   };
@@ -461,16 +493,20 @@ function captureGroqSpeechResponse(
     }
   };
 
-  const patched = observeResponseBytes(response, {
-    onChunk,
-    onComplete: complete,
-    onCancel: cancel,
-    onStart: () => {
-      started = true;
+  const patched = observeResponseBytes(
+    response,
+    {
+      onChunk,
+      onComplete: complete,
+      onCancel: cancel,
+      onStart: () => {
+        started = true;
+      },
+      aroundRead: (next) => withCurrent(span, next),
+      debugLabel: "Groq speech audio",
     },
-    aroundRead: (next) => withCurrent(span, next),
-    debugLabel: "Groq speech audio",
-  });
+    captureAttachments,
+  );
   if (patched)
     queueMicrotask(() => {
       if (!started) {
@@ -489,6 +525,7 @@ function captureGroqSpeechResponse(
 function observeResponseBytes(
   response: Record<string, unknown>,
   options: Parameters<typeof observeByteStream>[1],
+  captureAttachments = true,
 ): boolean {
   const onStart = options.onStart;
   const safely = (callback: () => void) => {
@@ -518,11 +555,15 @@ function observeResponseBytes(
   patched =
     patchResponseBytesMethod(response, "arrayBuffer", safeOptions) || patched;
   patched = patchResponseBytesMethod(response, "bytes", safeOptions) || patched;
-  patched = patchResponseBlobMethod(response, safeOptions) || patched;
+  patched =
+    patchResponseBlobMethod(response, safeOptions, captureAttachments) ||
+    patched;
   for (const method of ["formData", "json", "text"] as const)
     patched =
       patchResponseCompletionMethod(response, method, safeOptions) || patched;
-  patched = patchResponseCloneMethod(response, safeOptions) || patched;
+  patched =
+    patchResponseCloneMethod(response, safeOptions, captureAttachments) ||
+    patched;
   return patched;
 }
 
@@ -557,6 +598,7 @@ function patchResponseBytesMethod(
 function patchResponseBlobMethod(
   response: object,
   options: Parameters<typeof observeByteStream>[1],
+  captureAttachments: boolean,
 ): boolean {
   const responseRecord = response as Record<string, unknown>;
   const original = responseRecord.blob;
@@ -572,7 +614,7 @@ function patchResponseBlobMethod(
       throw error;
     }
     void Promise.resolve(result).then((value) => {
-      if (!(value instanceof Blob)) {
+      if (!captureAttachments || !(value instanceof Blob)) {
         options.onComplete();
         return;
       }
@@ -616,6 +658,7 @@ function patchResponseCompletionMethod(
 function patchResponseCloneMethod(
   response: object,
   options: Parameters<typeof observeByteStream>[1],
+  captureAttachments: boolean,
 ): boolean {
   const responseRecord = response as Record<string, unknown>;
   const original = responseRecord.clone;
@@ -623,7 +666,8 @@ function patchResponseCloneMethod(
     return false;
   responseRecord.clone = function (this: unknown, ...args: unknown[]) {
     const clone = Reflect.apply(original, this, args);
-    if (isObject(clone)) observeResponseBytes(clone, options);
+    if (isObject(clone))
+      observeResponseBytes(clone, options, captureAttachments);
     return clone;
   };
   return true;
