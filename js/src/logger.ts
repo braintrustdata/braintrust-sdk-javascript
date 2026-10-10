@@ -5853,7 +5853,7 @@ async function loginToLoaderRequestState({
     );
     const org = selectLoginOrg(info.org_info, orgName);
     orgId = org.id;
-    apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
+    apiUrl = iso.getEnv("BRAINTRUST_API_URL") || org.api_url;
     if (!apiUrl) {
       throw new Error(
         orgName
@@ -7221,8 +7221,8 @@ function _saveOrgInfo(
   const org = selectLoginOrg(orgInfo, orgName);
   state.orgId = org.id;
   state.orgName = org.name;
-  state.apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
-  state.proxyUrl = iso.getEnv("BRAINTRUST_PROXY_URL") ?? org.proxy_url;
+  state.apiUrl = iso.getEnv("BRAINTRUST_API_URL") || org.api_url;
+  state.proxyUrl = iso.getEnv("BRAINTRUST_PROXY_URL") || org.proxy_url;
   state.gitMetadataSettings = org.git_metadata || undefined;
 }
 

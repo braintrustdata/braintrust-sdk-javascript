@@ -12,6 +12,7 @@ import {
   FailedHTTPResponse,
   loadPrompt,
   loadParameters,
+  loginToState,
   wrapTraced,
   currentSpan,
   withParent,
@@ -3207,6 +3208,81 @@ test("simulateLoginForTests and simulateLogoutForTests", async () => {
     expect(logoutState.apiUrl).toBe(null);
     expect(logoutState.appUrl).toBe("https://www.braintrust.dev");
   }
+});
+
+describe("login with empty URL environment variables", () => {
+  const orgInfo = {
+    id: "org-id",
+    name: "org-name",
+    api_url: "https://api.test",
+    proxy_url: "https://proxy.test",
+  };
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    _exportsForTestingOnly.simulateLogoutForTests();
+  });
+
+  test("loginToState uses the organization URLs when BRAINTRUST_API_URL and BRAINTRUST_PROXY_URL are empty", async () => {
+    vi.stubEnv("BRAINTRUST_API_URL", "");
+    vi.stubEnv("BRAINTRUST_PROXY_URL", "");
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      Response.json({ org_info: [orgInfo] }),
+    );
+
+    const state = await loginToState({
+      apiKey: "test-credential",
+      appUrl: "https://app.test",
+      fetch,
+    });
+
+    expect(state.apiUrl).toBe("https://api.test");
+    expect(state.proxyUrl).toBe("https://proxy.test");
+  });
+
+  test("loadPrompt with an explicit API key uses the organization API URL when BRAINTRUST_API_URL is empty", async () => {
+    vi.stubEnv("BRAINTRUST_API_URL", "");
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(Response.json({ org_info: [orgInfo] }))
+      .mockResolvedValueOnce(
+        Response.json({
+          objects: [
+            {
+              id: "11111111-1111-4111-8111-111111111111",
+              _xact_id: "v1",
+              project_id: "22222222-2222-4222-8222-222222222222",
+              log_id: "p",
+              org_id: "33333333-3333-4333-8333-333333333333",
+              name: "Saved prompt",
+              slug: "saved-prompt",
+              prompt_data: {
+                prompt: {
+                  type: "chat",
+                  messages: [{ role: "user", content: "Hello" }],
+                },
+                options: { model: "gpt-5-mini" },
+              },
+            },
+          ],
+        }),
+      );
+
+    await loadPrompt({
+      projectName: "test-project",
+      slug: "saved-prompt",
+      apiKey: "test-credential",
+      appUrl: "https://app.test",
+      fetch,
+      noTrace: true,
+    });
+
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      expect.stringMatching(/^https:\/\/api\.test\/v1\/prompt\?/),
+      expect.anything(),
+    );
+  });
 });
 
 describe("HTTPConnection POST retries", () => {
