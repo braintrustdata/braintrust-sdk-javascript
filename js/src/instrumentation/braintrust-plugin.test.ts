@@ -17,6 +17,7 @@ import { MistralPlugin } from "./plugins/mistral-plugin";
 import { OllamaPlugin } from "./plugins/ollama-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
+import { PortkeyPlugin } from "./plugins/portkey-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
 import { LangChainPlugin } from "./plugins/langchain-plugin";
 import { LangSmithPlugin } from "./plugins/langsmith-plugin";
@@ -36,6 +37,10 @@ function createPluginClassMock() {
     this.disable = vi.fn();
   });
 }
+
+vi.mock("./plugins/portkey-plugin", () => ({
+  PortkeyPlugin: createPluginClassMock(),
+}));
 
 // Preserve the re-exported utility functions (parseMetricsFromUsage, etc.)
 // while mocking out the OpenAIPlugin class — those utilities are also
@@ -673,6 +678,22 @@ describe("BraintrustPlugin", () => {
       expect(MistralPlugin).toHaveBeenCalledTimes(1);
     });
 
+    it("enables and tears down Portkey by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+      const portkey = vi.mocked(PortkeyPlugin).mock.results[0].value;
+      expect(portkey.enable).toHaveBeenCalledTimes(1);
+      plugin.disable();
+      expect(portkey.disable).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not enable Portkey when portkey: false", () => {
+      const plugin = new BraintrustPlugin({ integrations: { portkey: false } });
+      plugin.enable();
+      expect(PortkeyPlugin).not.toHaveBeenCalled();
+      plugin.disable();
+    });
+
     it("should not create GitHubCopilot plugin when gitHubCopilot: false", () => {
       const plugin = new BraintrustPlugin({
         integrations: { gitHubCopilot: false },
@@ -751,6 +772,7 @@ describe("BraintrustPlugin", () => {
           ollama: false,
           cohere: false,
           groq: false,
+          portkey: false,
           gitHubCopilot: false,
           langchain: false,
           langsmith: false,
@@ -777,6 +799,7 @@ describe("BraintrustPlugin", () => {
       expect(OllamaPlugin).not.toHaveBeenCalled();
       expect(CoherePlugin).not.toHaveBeenCalled();
       expect(GroqPlugin).not.toHaveBeenCalled();
+      expect(PortkeyPlugin).not.toHaveBeenCalled();
       expect(GitHubCopilotPlugin).not.toHaveBeenCalled();
       expect(LangChainPlugin).not.toHaveBeenCalled();
       expect(LangSmithPlugin).not.toHaveBeenCalled();

@@ -42,6 +42,7 @@ export interface InstrumentationIntegrationsConfig {
   ollama?: boolean;
   cohere?: boolean;
   groq?: boolean;
+  portkey?: boolean;
   bedrock?: boolean;
   awsBedrock?: boolean;
   awsBedrockRuntime?: boolean;
@@ -138,6 +139,8 @@ const envIntegrationAliases: Record<
   cohere: "cohere",
   groq: "groq",
   "groq-sdk": "groq",
+  portkey: "portkey",
+  "portkey-ai": "portkey",
   bedrock: "bedrock",
   "aws-bedrock": "awsBedrock",
   awsbedrock: "awsBedrock",
@@ -196,6 +199,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     ollama: true,
     cohere: true,
     groq: true,
+    portkey: true,
     bedrock: true,
     awsBedrock: true,
     awsBedrockRuntime: true,

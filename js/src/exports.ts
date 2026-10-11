@@ -240,6 +240,7 @@ export { wrapCohere } from "./wrappers/cohere";
 export { wrapVoyageAI } from "./wrappers/voyageai";
 export { wrapTypeSafe } from "./wrappers/typesafe";
 export { wrapGroq } from "./wrappers/groq";
+export { wrapPortkey } from "./wrappers/portkey";
 export { wrapBedrockRuntime } from "./wrappers/bedrock-runtime";
 export { wrapCopilotClient } from "./wrappers/github-copilot";
 export {
