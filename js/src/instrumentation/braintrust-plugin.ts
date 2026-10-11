@@ -19,6 +19,7 @@ import { OllamaPlugin } from "./plugins/ollama-plugin";
 import { GoogleADKPlugin } from "./plugins/google-adk-plugin";
 import { CoherePlugin } from "./plugins/cohere-plugin";
 import { GroqPlugin } from "./plugins/groq-plugin";
+import { PortkeyPlugin } from "./plugins/portkey-plugin";
 import { BedrockRuntimePlugin } from "./plugins/bedrock-runtime-plugin";
 import { GenkitPlugin } from "./plugins/genkit-plugin";
 import { GitHubCopilotPlugin } from "./plugins/github-copilot-plugin";
@@ -80,6 +81,7 @@ export class BraintrustPlugin extends BasePlugin {
   private googleADKPlugin: GoogleADKPlugin | null = null;
   private coherePlugin: CoherePlugin | null = null;
   private groqPlugin: GroqPlugin | null = null;
+  private portkeyPlugin: PortkeyPlugin | null = null;
   private bedrockRuntimePlugin: BedrockRuntimePlugin | null = null;
   private genkitPlugin: GenkitPlugin | null = null;
   private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
@@ -221,6 +223,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.groq !== false) {
       this.groqPlugin = new GroqPlugin();
       this.groqPlugin.enable();
+    }
+
+    if (integrations.portkey !== false) {
+      this.portkeyPlugin = new PortkeyPlugin();
+      this.portkeyPlugin.enable();
     }
 
     if (
@@ -399,6 +406,11 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.groqPlugin) {
       this.groqPlugin.disable();
       this.groqPlugin = null;
+    }
+
+    if (this.portkeyPlugin) {
+      this.portkeyPlugin.disable();
+      this.portkeyPlugin = null;
     }
 
     if (this.bedrockRuntimePlugin) {

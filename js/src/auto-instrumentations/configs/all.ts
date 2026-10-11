@@ -20,6 +20,7 @@ import { googleADKConfigs } from "./google-adk";
 import { googleGenerativeAIConfigs } from "./google-generative-ai";
 import { googleGenAIConfigs } from "./google-genai";
 import { groqConfigs } from "./groq";
+import { portkeyConfigs } from "./portkey";
 import { huggingFaceConfigs } from "./huggingface";
 import { huggingFaceTransformersConfigs } from "./huggingface-transformers";
 import { langchainConfigs } from "./langchain";
@@ -108,6 +109,7 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     { integrations: ["googleADK"], configs: googleADKConfigs },
     { integrations: ["cohere"], configs: cohereConfigs },
     { integrations: ["groq"], configs: groqConfigs },
+    { integrations: ["portkey"], configs: portkeyConfigs },
     {
       integrations: ["genkit"],
       configs: genkitConfigs,
