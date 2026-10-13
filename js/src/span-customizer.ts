@@ -8,6 +8,7 @@ import {
   PARENT_ID_FIELD,
   TRANSACTION_ID_FIELD,
 } from "../util/db_fields";
+import { mergeRowBatch } from "../util/merge_row_batch";
 import { isPromiseLike } from "../util/type_util";
 import { isOtelCompatMode } from "./id-gen";
 import type { SpanCustomizer, SpanExportData } from "./instrumentation/config";
@@ -15,8 +16,14 @@ import type { SpanCustomizer, SpanExportData } from "./instrumentation/config";
 // Configuration can precede platform initialization and must be shared across
 // SDK bundles without importing the provider plugin registry into the logger.
 const SPAN_CUSTOMIZERS_KEY = Symbol.for("braintrust.spanCustomizers");
+const CUSTOMIZER_FAILURE_LOGGED_KEY = Symbol.for(
+  "braintrust.spanCustomizerFailureLogged",
+);
+const STRIPPED_RECORDS_KEY = Symbol.for("braintrust.strippedSpanRecords");
 const shared: typeof globalThis & {
   [SPAN_CUSTOMIZERS_KEY]?: readonly SpanCustomizer[];
+  [CUSTOMIZER_FAILURE_LOGGED_KEY]?: boolean;
+  [STRIPPED_RECORDS_KEY]?: WeakSet<object>;
 } = globalThis;
 
 const PROTECTED_FIELDS = new Set([
@@ -82,14 +89,23 @@ export function createMaskingCustomizer(
 }
 
 // Accept null-prototype objects and objects from any realm's Object.prototype
-// (e.g. node:vm), whose own prototype is null. Arrays, Dates, and class
-// instances all have a longer prototype chain.
+// (e.g. node:vm). Reject custom prototypes, including classes extending null.
 function isPlainRecord(value: unknown): value is SpanExportData {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
   const prototype = Object.getPrototypeOf(value);
-  return prototype === null || Object.getPrototypeOf(prototype) === null;
+  if (prototype === null) return true;
+  const constructor = Object.getOwnPropertyDescriptor(
+    prototype,
+    "constructor",
+  )?.value;
+  return (
+    Object.getPrototypeOf(prototype) === null &&
+    typeof constructor === "function" &&
+    Function.prototype.toString.call(constructor) ===
+      Function.prototype.toString.call(Object)
+  );
 }
 
 // Only plain containers are copied deeply; payloads may contain SDK objects such
@@ -128,38 +144,73 @@ function restoreProtocolFields(
   return restored;
 }
 
-// Log the first failure immediately, then at most once per period with a count
-// of suppressed failures, mirroring the background logger's queue-drop logging.
-const FAILURE_LOGGING_PERIOD_MS = 60_000;
-const failureLoggingState = {
-  numSuppressed: 0,
-  lastLoggedTimestamp: -Infinity,
-};
-
 function registerCustomizerFailure(): void {
-  const timeNow = Date.now();
-  if (
-    timeNow - failureLoggingState.lastLoggedTimestamp <
-    FAILURE_LOGGING_PERIOD_MS
-  ) {
-    failureLoggingState.numSuppressed++;
-    return;
-  }
-  const suppressed = failureLoggingState.numSuppressed
-    ? ` ${failureLoggingState.numSuppressed} additional records were dropped since the last report.`
-    : "";
+  if (shared[CUSTOMIZER_FAILURE_LOGGED_KEY]) return;
+  shared[CUSTOMIZER_FAILURE_LOGGED_KEY] = true;
   // Never log the exception or record: either can contain sensitive data.
   // eslint-disable-next-line no-restricted-properties -- intentional always-visible export failure.
   console.error(
-    `[braintrust] Span export customizer failed; dropping record.${suppressed}`,
+    "[braintrust] Span export customizer failed; exporting only span identity and duration.",
   );
-  failureLoggingState.numSuppressed = 0;
-  failureLoggingState.lastLoggedTimestamp = timeNow;
 }
 
 export function resetSpanCustomizerFailureLoggingForTests(): void {
-  failureLoggingState.numSuppressed = 0;
-  failureLoggingState.lastLoggedTimestamp = -Infinity;
+  delete shared[CUSTOMIZER_FAILURE_LOGGED_KEY];
+}
+
+function stripFailedRecord(original: SpanExportData): SpanExportData {
+  const stripped: SpanExportData = {};
+  for (const key of PROTECTED_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(original, key)) {
+      stripped[key] = copyProtocolValue(original[key]);
+    }
+  }
+  // Native records represent duration with start/end timestamps. Preserve only
+  // the timestamps present in this incremental record, never synthesize either.
+  if (isPlainRecord(original.metrics)) {
+    const metrics: SpanExportData = {};
+    for (const key of ["start", "end"]) {
+      if (Object.prototype.hasOwnProperty.call(original.metrics, key)) {
+        metrics[key] = original.metrics[key];
+      }
+    }
+    if (Object.keys(metrics).length) stripped.metrics = metrics;
+  }
+  stripped.context = { customizer_error: true };
+  (shared[STRIPPED_RECORDS_KEY] ??= new WeakSet()).add(stripped);
+  return stripped;
+}
+
+// A stripped incremental record must not absorb other records or be mutated by
+// merging: the same object is memoized for retries. Duplicate IDs in one request
+// share a transaction ID, so a group boundary is only needed where a stripped
+// record would share a group with another record of the same ID. Groups must be
+// sent in order, in separate requests.
+export function mergeCustomizedSpanRecords<
+  T extends { id: string; _is_merge?: boolean | null },
+>(records: T[]): T[][] {
+  const stripped = shared[STRIPPED_RECORDS_KEY];
+  if (!stripped || !records.some((record) => stripped.has(record))) {
+    return [mergeRowBatch(records)];
+  }
+  const merged: T[][] = [];
+  let group: T[] = [];
+  let ids = new Set<string>();
+  let strippedIds = new Set<string>();
+  for (const record of records) {
+    const isStripped = stripped.has(record);
+    if (strippedIds.has(record.id) || (isStripped && ids.has(record.id))) {
+      merged.push(mergeRowBatch(group));
+      group = [];
+      ids = new Set();
+      strippedIds = new Set();
+    }
+    group.push(record);
+    ids.add(record.id);
+    if (isStripped) strippedIds.add(record.id);
+  }
+  merged.push(mergeRowBatch(group));
+  return merged;
 }
 
 export function setSpanCustomizers(
@@ -181,9 +232,13 @@ export function customizeSpanExport(
   customizers: readonly SpanCustomizer[] | undefined = shared[
     SPAN_CUSTOMIZERS_KEY
   ],
-): SpanExportData | null {
-  if (!customizers?.length) return data;
+): SpanExportData {
+  // SDK-generated failure diagnostics and original timestamps are final, not
+  // user content for downstream masking to replace.
+  if (!customizers?.length || shared[STRIPPED_RECORDS_KEY]?.has(data))
+    return data;
 
+  const original = data;
   let protectedFields: SpanExportData | undefined;
 
   for (const customizer of customizers) {
@@ -217,7 +272,7 @@ export function customizeSpanExport(
       data = restoreProtocolFields(result, protectedFields);
     } catch {
       registerCustomizerFailure();
-      return null;
+      return stripFailedRecord(original);
     }
   }
   return data;

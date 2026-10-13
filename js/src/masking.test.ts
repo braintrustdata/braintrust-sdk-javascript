@@ -547,7 +547,7 @@ describe("masking functionality", () => {
     ]);
   });
 
-  test("dropped customizer records never reach masking or merge into successful records", async () => {
+  test("stripped customizer records bypass masking and remain independent of successful records", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     configureInstrumentation({
       spanCustomizers: [
@@ -559,22 +559,49 @@ describe("masking functionality", () => {
         },
       ],
     });
-    const mask = vi.fn((data: unknown) => (data === "safe" ? "masked" : data));
+    const mask = vi.fn((data: unknown) => {
+      if (data && typeof data === "object" && "customizer_error" in data) {
+        return { injected: "must not replace SDK diagnostics" };
+      }
+      if (data && typeof data === "object" && "start" in data) {
+        return { start: 999, end: 999 };
+      }
+      return data === "safe" ? "masked" : data;
+    });
     setMaskingFunction(mask);
     const span = initLogger({
       projectName: "test",
       projectId: "test-project-id",
     }).startSpan({ name: "manual" });
-    span.log({ output: "private", metadata: { secret: "private" } });
+    span.log({
+      output: "private",
+      metadata: { secret: "private" },
+      metrics: { start: 10, end: 20, tokens: 99 },
+    });
     span.log({ output: "safe" });
     span.end();
 
     const events = await memoryLogger.drain();
     expect(events).toEqual([
+      expect.objectContaining({
+        id: span.id,
+        span_attributes: expect.anything(),
+      }),
+      {
+        id: span.id,
+        span_id: span.spanId,
+        root_span_id: span.rootSpanId,
+        project_id: "test-project-id",
+        log_id: "g",
+        _is_merge: true,
+        context: { customizer_error: true },
+        metrics: { start: 10, end: 20 },
+      },
       expect.objectContaining({ id: span.id, output: "masked" }),
     ]);
     expect(JSON.stringify(events)).not.toContain("private");
     expect(JSON.stringify(mask.mock.calls)).not.toContain("private");
+    expect(JSON.stringify(mask.mock.calls)).not.toContain("customizer_error");
   });
 
   test.each(["manual", "instrumented"])(

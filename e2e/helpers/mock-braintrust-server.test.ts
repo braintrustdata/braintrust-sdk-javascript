@@ -21,6 +21,11 @@ describe("production forwarding", () => {
       const upstream = createServer(async (req, res) => {
         let body = "";
         for await (const chunk of req) body += chunk;
+        // Ignore forwarded bodyless requests such as `HEAD /`.
+        if (!body) {
+          res.end();
+          return;
+        }
         const {
           sequence,
           rows: [row],
@@ -98,6 +103,11 @@ describe("production forwarding", () => {
       const upstream = createServer(async (req, res) => {
         let body = "";
         for await (const chunk of req) body += chunk;
+        // Ignore forwarded bodyless requests such as `HEAD /`.
+        if (!body) {
+          res.end();
+          return;
+        }
         const payload = JSON.parse(body);
         received.push(payload);
         // Reproduce a gateway outage followed by successful ingestion.
@@ -160,6 +170,11 @@ describe("production forwarding", () => {
       const upstream = createServer(async (req, res) => {
         let body = "";
         for await (const chunk of req) body += chunk;
+        // Ignore forwarded bodyless requests such as `HEAD /`.
+        if (!body) {
+          res.end();
+          return;
+        }
         const { sequence } = JSON.parse(body);
         received.push(sequence);
         res.statusCode = sequence === 1 ? status : 200;

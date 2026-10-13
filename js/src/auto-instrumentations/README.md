@@ -126,7 +126,7 @@ Relevant suites live in:
 - `src/global-instrumentation-hooks.test.ts`
 - `tests/auto-instrumentations/orchestrion-js-upstream.test.ts`
 - `tests/auto-instrumentations/transformation.test.ts`
-- `tests/auto-instrumentations/runtime-execution.test.ts`
+- `tests/auto-instrumentations/bundled-runtime.test.ts`
 - `tests/auto-instrumentations/loader-hook.test.ts`
 
 The transformation suites assert that output contains the global registry lookup

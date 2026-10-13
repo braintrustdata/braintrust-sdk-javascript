@@ -1,5 +1,11 @@
 # braintrust
 
+## 3.37.2
+
+### Patch Changes
+
+- fix: Make `@types/react` an optional peer dependency `braintrust` no longer installs React 18 types for every consumer. Projects that use `braintrust/custom-views` now type-check against their own `@types/react` (React 18 or newer), which fixes `ReactNode` type conflicts in React 19 projects. (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2596)
+
 ## 3.37.1
 
 ### Patch Changes

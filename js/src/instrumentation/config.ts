@@ -10,10 +10,12 @@ export interface SpanCustomizer {
    * Callbacks are synchronous. Add, change, or delete payload fields, then return
    * the record or a replacement plain object. Payloads may still contain SDK
    * Attachment objects; attachment processing and serialization happen later.
-   * Throwing or returning an invalid value (including a promise) logs a safe
-   * error, stops the callback chain, and drops this outgoing record. Later
-   * records are evaluated independently; already exported records cannot be
-   * retracted. Handle recovery inside the callback if export should continue.
+   * Throwing or returning an invalid value (including a promise) stops the chain
+   * and exports only original identity, routing, and duration timestamps, plus
+   * context: { customizer_error: true }. No attachments from that record upload.
+   * A safe error is logged at most once per JavaScript global environment.
+   * Later records are evaluated independently; already exported records cannot
+   * be retracted. Handle recovery inside the callback to retain span content.
    */
   onSpanExport?(data: SpanExportData): SpanExportData;
 }

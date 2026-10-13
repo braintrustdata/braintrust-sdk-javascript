@@ -208,7 +208,7 @@ async function runVitest(scenarioNames, runContextDir) {
   }
 
   const scenarioPaths = scenarioNames.map(
-    (scenarioName) => `scenarios/${scenarioName}/scenario.test.ts`,
+    (scenarioName) => `scenarios/${scenarioName}/`,
   );
   const vitestArgs =
     scenarioPaths.length > 0
@@ -230,10 +230,19 @@ async function defaultScenarioTestPaths() {
   const entries = await readdir(path.join(E2E_DIR, "scenarios"), {
     withFileTypes: true,
   });
-  const scenarioPaths = entries
+  const scenarioDirs = entries
     .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
-    .map((entry) => `scenarios/${entry.name}/scenario.test.ts`)
-    .filter((scenarioPath) => existsSync(path.join(E2E_DIR, scenarioPath)))
+    .map((entry) => `scenarios/${entry.name}`);
+  const scenarioPaths = (
+    await Promise.all(
+      scenarioDirs.map(async (dir) =>
+        (await readdir(path.join(E2E_DIR, dir)))
+          .filter((name) => name.endsWith(".test.ts"))
+          .map((name) => `${dir}/${name}`),
+      ),
+    )
+  )
+    .flat()
     .sort();
 
   if (scenarioPaths.length === 0) {

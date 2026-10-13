@@ -47,7 +47,6 @@ import {
   LogFeedbackFullArgs,
   mergeDicts,
   mergeGitMetadataSettings,
-  mergeRowBatch,
   OBJECT_DELETE_FIELD,
   OBJECT_ID_KEYS,
   SanitizedExperimentLogPartialArgs,
@@ -210,6 +209,7 @@ import {
 import {
   createMaskingCustomizer,
   customizeSpanExport,
+  mergeCustomizedSpanRecords,
 } from "./span-customizer";
 import type { SpanCustomizer, SpanExportData } from "./instrumentation/config";
 
@@ -2504,7 +2504,7 @@ function updateSpanImpl({
         ...updateEvent,
         ...(await parentIds()),
         [IS_MERGE_FIELD]: true,
-      }) as BackgroundLogEvent | null,
+      }) as BackgroundLogEvent,
   );
   state.bgLogger().log([record]);
 }
@@ -3273,7 +3273,7 @@ function getNumericEnv(name: string): number | undefined {
 }
 
 interface BackgroundLogger {
-  log(items: LazyValue<BackgroundLogEvent | null>[]): void;
+  log(items: LazyValue<BackgroundLogEvent>[]): void;
   flush(): Promise<void>;
   pendingFlushBytes(): number;
   flushBackpressureBytes(): number;
@@ -3283,10 +3283,10 @@ interface BackgroundLogger {
 }
 
 export class TestBackgroundLogger implements BackgroundLogger {
-  private items: LazyValue<BackgroundLogEvent | null>[][] = [];
+  private items: LazyValue<BackgroundLogEvent>[][] = [];
   private exportCustomizers: readonly SpanCustomizer[] = [];
 
-  log(items: LazyValue<BackgroundLogEvent | null>[]): void {
+  log(items: LazyValue<BackgroundLogEvent>[]): void {
     this.items.push(items);
   }
 
@@ -3318,23 +3318,20 @@ export class TestBackgroundLogger implements BackgroundLogger {
     const events: BackgroundLogEvent[] = [];
     for (const item of items) {
       for (const event of item) {
-        const value = await event.get();
-        if (value !== null) events.push(value);
+        events.push(await event.get());
       }
     }
 
-    let batch = mergeRowBatch(events);
+    let batch = mergeCustomizedSpanRecords(events).flat();
 
     if (this.exportCustomizers.length) {
-      batch = batch
-        .map(
-          (item) =>
-            customizeSpanExport(
-              item as SpanExportData,
-              this.exportCustomizers,
-            ) as BackgroundLogEvent | null,
-        )
-        .filter((item): item is BackgroundLogEvent => item !== null);
+      batch = batch.map(
+        (item) =>
+          customizeSpanExport(
+            item as SpanExportData,
+            this.exportCustomizers,
+          ) as BackgroundLogEvent,
+      );
     }
 
     return batch;
@@ -3427,7 +3424,7 @@ class ConcurrencyLimiter {
 
 interface QueuedLogEvent {
   sequence: number;
-  event: LazyValue<BackgroundLogEvent | null>;
+  event: LazyValue<BackgroundLogEvent>;
 }
 
 class HTTPBackgroundLogger implements BackgroundLogger {
@@ -3581,7 +3578,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     return this._flushBackpressureBytes;
   }
 
-  log(items: LazyValue<BackgroundLogEvent | null>[]) {
+  log(items: LazyValue<BackgroundLogEvent>[]) {
     if (this._disabled) {
       return;
     }
@@ -3682,7 +3679,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   }
 
   private async flushWrappedItemsChunk(
-    wrappedItems: LazyValue<BackgroundLogEvent | null>[],
+    wrappedItems: LazyValue<BackgroundLogEvent>[],
     batchSize: number,
   ) {
     if (!wrappedItems.length) {
@@ -3690,38 +3687,46 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     }
 
     const [allItems, attachments] = await this.unwrapLazyValues(wrappedItems);
-    if (allItems.length === 0) {
-      return;
-    }
 
-    // Construct batches of records to flush in parallel.
+    // Failure barriers must be sent in order, in separate requests. Within each
+    // group, retain the normal parallel transport batching.
     let chunkBytes = 0;
-    const allItemsWithMeta = allItems.map((item) => {
-      const withMeta = stringifyWithOverflowMeta(item);
-      chunkBytes += withMeta.str.length;
-      return withMeta;
-    });
+    const groupsWithMeta = allItems.map((group) =>
+      group.map((item) => {
+        const withMeta = stringifyWithOverflowMeta(item);
+        chunkBytes += withMeta.str.length;
+        return withMeta;
+      }),
+    );
     this._pendingBytes += chunkBytes;
 
     const maxRequestSizeResult = await this.getMaxRequestSize();
-    const batches = batchItems({
-      items: allItemsWithMeta,
-      batchMaxNumItems: batchSize,
-      batchMaxNumBytes: maxRequestSizeResult.maxRequestSize / 2,
-      getByteSize: (item) => item.str.length,
-    });
-
-    const postPromises = batches.map((batch) =>
-      this.requestLimiter.run(async () => {
-        try {
-          await this.submitLogsRequest(batch, maxRequestSizeResult);
-          return { type: "success" } as const;
-        } catch (e) {
-          return { type: "error", value: e } as const;
-        }
-      }),
-    );
-    const results = await Promise.all(postPromises);
+    const results: ({ type: "success" } | { type: "error"; value: unknown })[] =
+      [];
+    for (const items of groupsWithMeta) {
+      // Later groups may depend on rows in a failed group, so stop sending.
+      if (results.some((r) => r.type === "error")) break;
+      const batches = batchItems({
+        items,
+        batchMaxNumItems: batchSize,
+        batchMaxNumBytes: maxRequestSizeResult.maxRequestSize / 2,
+        getByteSize: (item) => item.str.length,
+      });
+      results.push(
+        ...(await Promise.all(
+          batches.map((batch) =>
+            this.requestLimiter.run(async () => {
+              try {
+                await this.submitLogsRequest(batch, maxRequestSizeResult);
+                return { type: "success" } as const;
+              } catch (e) {
+                return { type: "error", value: e } as const;
+              }
+            }),
+          ),
+        )),
+      );
+    }
     this._pendingBytes = Math.max(0, this._pendingBytes - chunkBytes);
     const failingResultErrors = results
       .map((r) => (r.type === "success" ? undefined : r.value))
@@ -3756,34 +3761,45 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   }
 
   private async unwrapLazyValues(
-    wrappedItems: LazyValue<BackgroundLogEvent | null>[],
-  ): Promise<[BackgroundLogEvent[], Attachment[]]> {
+    wrappedItems: LazyValue<BackgroundLogEvent>[],
+  ): Promise<[BackgroundLogEvent[][], Attachment[]]> {
     for (let i = 0; i < this.numTries; ++i) {
       try {
-        const items = (
-          await Promise.all(wrappedItems.map((x) => x.get()))
-        ).filter((item): item is BackgroundLogEvent => item !== null);
+        const items = await Promise.all(wrappedItems.map((x) => x.get()));
 
         // TODO(kevin): `extractAttachments` should ideally come after
         // `mergeRowBatch`, since merge-overwriting could result in some
         // attachments that no longer need to be uploaded. This would require
         // modifying the merge logic to treat the Attachment object as a "leaf"
         // rather than attempting to merge the keys of the Attachment.
-        const attachments: Attachment[] = [];
+        let attachments: Attachment[] = [];
         items.forEach((item) => extractAttachments(item, attachments));
 
-        let mergedItems = mergeRowBatch(items);
+        let mergedItems = mergeCustomizedSpanRecords(items);
 
         if (this.exportCustomizers.length) {
-          mergedItems = mergedItems
-            .map(
+          mergedItems = mergedItems.map((group) =>
+            group.map(
               (item) =>
                 customizeSpanExport(
                   item as SpanExportData,
                   this.exportCustomizers,
-                ) as BackgroundLogEvent | null,
-            )
-            .filter((item): item is BackgroundLogEvent => item !== null);
+                ) as BackgroundLogEvent,
+            ),
+          );
+          // Customizers may strip or replace attachment references; don't upload
+          // content that is no longer referenced by any exported record.
+          const referencedKeys = new Set<string>();
+          mergedItems.forEach((group) =>
+            group.forEach((item) =>
+              collectAttachmentReferenceKeys(item, referencedKeys),
+            ),
+          );
+          attachments = attachments.filter(
+            (attachment) =>
+              attachment.reference.type !== BRAINTRUST_ATTACHMENT ||
+              referencedKeys.has(attachment.reference.key),
+          );
         }
 
         return [mergedItems, attachments];
@@ -3968,7 +3984,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   }
 
   private async dumpDroppedEvents(
-    wrappedItems: LazyValue<BackgroundLogEvent | null>[],
+    wrappedItems: LazyValue<BackgroundLogEvent>[],
   ) {
     const publishPayloadsDir = [
       this.allPublishPayloadsDir,
@@ -3982,7 +3998,9 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         await this.unwrapLazyValues(wrappedItems);
 
       const dataStr = constructLogs3Data(
-        allItems.map((x) => stringifyWithOverflowMeta(x)),
+        allItems.flatMap((group) =>
+          group.map((x) => stringifyWithOverflowMeta(x)),
+        ),
       );
       const attachmentStr = JSON.stringify(
         allAttachments.map((a) => a.debugInfo()),
@@ -5853,7 +5871,7 @@ async function loginToLoaderRequestState({
     );
     const org = selectLoginOrg(info.org_info, orgName);
     orgId = org.id;
-    apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
+    apiUrl = iso.getEnv("BRAINTRUST_API_URL") || org.api_url;
     if (!apiUrl) {
       throw new Error(
         orgName
@@ -7221,8 +7239,8 @@ function _saveOrgInfo(
   const org = selectLoginOrg(orgInfo, orgName);
   state.orgId = org.id;
   state.orgName = org.name;
-  state.apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
-  state.proxyUrl = iso.getEnv("BRAINTRUST_PROXY_URL") ?? org.proxy_url;
+  state.apiUrl = iso.getEnv("BRAINTRUST_API_URL") || org.api_url;
+  state.proxyUrl = iso.getEnv("BRAINTRUST_PROXY_URL") || org.proxy_url;
   state.gitMetadataSettings = org.git_metadata || undefined;
 }
 
@@ -7468,6 +7486,22 @@ function extractAttachments(
     // Recursive case: object or array.
     extractAttachments(value, attachments);
   }
+}
+
+function collectAttachmentReferenceKeys(value: unknown, keys: Set<string>) {
+  if (!value || typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectAttachmentReferenceKeys(item, keys));
+    return;
+  }
+  const record = value as Record<string, unknown>;
+  if (record.type === BRAINTRUST_ATTACHMENT && typeof record.key === "string") {
+    keys.add(record.key);
+    return;
+  }
+  Object.values(record).forEach((item) =>
+    collectAttachmentReferenceKeys(item, keys),
+  );
 }
 
 /**
@@ -8536,8 +8570,8 @@ export class SpanImpl implements Span {
         }).objectIdFields(),
       };
       // Customize inside the memoized lazy value, before attachment processing,
-      // merging, and masking. Retries reuse the customized record or drop result.
-      return customizeSpanExport(record) as BackgroundLogEvent | null;
+      // merging, and masking. Retries reuse the customized or stripped record.
+      return customizeSpanExport(record) as BackgroundLogEvent;
     };
     this._state.bgLogger().log([new LazyValue(computeRecord)]);
   }
