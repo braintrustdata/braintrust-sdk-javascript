@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -32,7 +33,7 @@ const githubCopilotScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of githubCopilotScenarios) {
-    describe.sequential(`github copilot sdk ${scenario.version}`, () => {
+    describeVariant(`github copilot sdk ${scenario.version}`, () => {
       defineGitHubCopilotInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

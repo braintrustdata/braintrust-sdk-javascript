@@ -4,6 +4,7 @@ import {
   findLatestSpan,
 } from "../../helpers/trace-selectors";
 import { describe, expect, it } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -26,10 +27,10 @@ const variants = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const { dependency, version } of variants) {
-    describe.sequential(`LangGraph SDK ${version} (${dependency})`, () => {
+    describeVariant(`LangGraph SDK ${version} (${dependency})`, () => {
       for (const module of ["esm", "cjs"]) {
         for (const mode of ["wrapped", "auto", "both", "disabled"]) {
-          it(`${module} ${mode}`, async () => {
+          it(`${module} ${mode}`, async ({ expect }) => {
             await withScenarioHarness(
               async (harness) => {
                 const result = await harness.runNodeScenarioDir({
@@ -285,6 +286,7 @@ describe.concurrent("variants", () => {
                     import.meta.url,
                     `${dependency}-${module}-${mode}.span-tree.json`,
                   ),
+                  { snapshotExpect: expect },
                 );
               },
               {

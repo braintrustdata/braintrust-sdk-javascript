@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -36,7 +37,7 @@ const scenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of scenarios) {
-    describe.sequential(`voyageai sdk ${scenario.version}`, () => {
+    describeVariant(`voyageai sdk ${scenario.version}`, () => {
       const env = {
         VOYAGEAI_PACKAGE_NAME: scenario.dependencyName,
       };

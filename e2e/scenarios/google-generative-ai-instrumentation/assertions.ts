@@ -112,13 +112,14 @@ export function defineGoogleGenerativeAIInstrumentationAssertions(options: {
         expect(children[0].input).toHaveProperty("contents.length", 6);
     });
 
-    test("matches the span tree snapshot", async () => {
+    test("matches the span tree snapshot", async ({ expect }) => {
       await matchSpanTreeSnapshot(
         events.map((event) => ({
           event,
           fields: { ...spanTreeFields(event), context: event.context },
         })),
         spanSnapshotPath,
+        { snapshotExpect: expect },
       );
     });
   });

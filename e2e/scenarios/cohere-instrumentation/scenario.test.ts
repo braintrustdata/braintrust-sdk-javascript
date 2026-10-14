@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -29,7 +30,7 @@ describe.concurrent("variants", () => {
   for (const scenario of cohereScenarios) {
     const supportsThinking = scenario.supportsThinking ?? true;
 
-    describe.sequential(`cohere sdk ${scenario.version}`, () => {
+    describeVariant(`cohere sdk ${scenario.version}`, () => {
       defineCohereInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

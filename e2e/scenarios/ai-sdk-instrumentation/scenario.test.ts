@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -47,7 +48,7 @@ describeVariants("variants", () => {
     const supportsOutputObjectScenario =
       scenario.supportsOutputObjectScenario ?? supportsRichInputScenarios;
 
-    describe.sequential(`ai sdk ${scenario.version}`, () => {
+    describeVariant(`ai sdk ${scenario.version}`, () => {
       defineAISDKInstrumentationAssertions({
         agentSpanName: scenario.agentSpanName,
         name: scenario.wrapperTestName ?? "wrapped instrumentation",

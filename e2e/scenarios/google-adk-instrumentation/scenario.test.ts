@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -48,7 +49,7 @@ const googleADKScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of googleADKScenarios) {
-    describe.sequential(`google adk sdk ${scenario.version}`, () => {
+    describeVariant(`google adk sdk ${scenario.version}`, () => {
       defineGoogleADKInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

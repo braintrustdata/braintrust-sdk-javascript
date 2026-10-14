@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import { resolve } from "node:path";
 import {
   prepareScenarioDir,
@@ -37,7 +38,7 @@ const groqScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of groqScenarios) {
-    describe.sequential(`groq sdk ${scenario.version}`, () => {
+    describeVariant(`groq sdk ${scenario.version}`, () => {
       defineGroqInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

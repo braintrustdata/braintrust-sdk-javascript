@@ -144,7 +144,7 @@ export function defineOpenRouterAgentTraceAssertions(options: {
       },
     );
 
-    test("matches span tree snapshot", testConfig, async () => {
+    test("matches span tree snapshot", testConfig, async ({ expect }) => {
       await matchSpanTreeSnapshot(
         events.map((event) => ({
           event,
@@ -154,6 +154,7 @@ export function defineOpenRouterAgentTraceAssertions(options: {
           },
         })),
         spanSnapshotPath,
+        { snapshotExpect: expect },
       );
     });
   });

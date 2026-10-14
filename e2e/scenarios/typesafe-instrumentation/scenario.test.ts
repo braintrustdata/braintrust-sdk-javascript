@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -36,7 +37,7 @@ const scenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of scenarios) {
-    describe.sequential(`typesafe sdk ${scenario.version}`, () => {
+    describeVariant(`typesafe sdk ${scenario.version}`, () => {
       const env = { TYPESAFE_PACKAGE_NAME: scenario.dependencyName };
       const runContext = {
         originalScenarioDir,

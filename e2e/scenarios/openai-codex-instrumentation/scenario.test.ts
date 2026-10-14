@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -38,7 +39,7 @@ const openAICodexScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of openAICodexScenarios) {
-    describe.sequential(`openai codex sdk ${scenario.version}`, () => {
+    describeVariant(`openai codex sdk ${scenario.version}`, () => {
       defineOpenAICodexInstrumentationAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {

@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -42,7 +43,7 @@ const strandsAgentSDKScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of strandsAgentSDKScenarios) {
-    describe.sequential(`Strands Agent SDK ${scenario.version}`, () => {
+    describeVariant(`Strands Agent SDK ${scenario.version}`, () => {
       defineStrandsAgentSDKInstrumentationAssertions({
         expectOverlapParentProbe: scenario.expectOverlapParentProbe,
         name: "wrapped instrumentation",

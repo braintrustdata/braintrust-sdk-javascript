@@ -1,4 +1,5 @@
 import { describe } from "vitest";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -32,7 +33,7 @@ const openRouterAgentScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of openRouterAgentScenarios) {
-    describe.sequential(`openrouter agent ${scenario.version}`, () => {
+    describeVariant(`openrouter agent ${scenario.version}`, () => {
       defineOpenRouterAgentTraceAssertions({
         name: "wrapped instrumentation",
         runScenario: async ({ runScenarioDir }) => {
