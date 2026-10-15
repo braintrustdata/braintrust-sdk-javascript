@@ -190,6 +190,7 @@
   "license": "MIT",
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
+    "@e2b/code-interpreter": "2.2.0",
     "@nodelib/fs.walk": "^1.2.8",
     "@types/argparse": "^2.0.14",
     "@types/async": "^3.2.24",
@@ -207,6 +208,7 @@
     "ai": "^6.0.0",
     "async": "^3.2.5",
     "cross-env": "^7.0.3",
+    "e2b": "2.9.0",
     "eslint": "^9.39.2",
     "eslint-plugin-es-x": "9.7.0",
     "eslint-plugin-n": "^18.2.1",

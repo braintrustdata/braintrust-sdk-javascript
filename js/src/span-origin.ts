@@ -20,6 +20,7 @@ export const INSTRUMENTATION_NAMES = {
   CURSOR_SDK: "cursor-sdk",
   DEEPSEEK_HARNESS: "deepseek-harness",
   EVE: "eve",
+  E2B: "e2b",
   FLUE: "flue",
   GENKIT: "genkit",
   GITHUB_COPILOT: "github-copilot",

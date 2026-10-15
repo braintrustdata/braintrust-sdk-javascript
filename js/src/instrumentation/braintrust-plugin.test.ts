@@ -24,6 +24,7 @@ import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
 import { TypeSafePlugin } from "./plugins/typesafe-plugin";
+import { E2BPlugin } from "./plugins/e2b-plugin";
 import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
 
@@ -143,6 +144,10 @@ vi.mock("./plugins/typesafe-plugin", () => ({
   TypeSafePlugin: createPluginClassMock(),
 }));
 
+vi.mock("./plugins/e2b-plugin", () => ({
+  E2BPlugin: createPluginClassMock(),
+}));
+
 vi.mock("./plugins/cloudflare-ai-chat-plugin", () => ({
   CloudflareAIChatPlugin: createPluginClassMock(),
 }));
@@ -157,6 +162,23 @@ describe("BraintrustPlugin", () => {
   });
 
   describe("sub-plugin creation (default behavior)", () => {
+    it("enables and disables E2B with the parent plugin", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+      expect(E2BPlugin).toHaveBeenCalledTimes(1);
+      const instance = vi.mocked(E2BPlugin).mock.results[0].value;
+      expect(instance.enable).toHaveBeenCalledTimes(1);
+      plugin.disable();
+      expect(instance.disable).toHaveBeenCalledTimes(1);
+    });
+
+    it("respects the E2B integration opt-out", () => {
+      const plugin = new BraintrustPlugin({ integrations: { e2b: false } });
+      plugin.enable();
+      expect(E2BPlugin).not.toHaveBeenCalled();
+      plugin.disable();
+    });
+
     it("should create and enable OpenAI plugin by default", () => {
       const plugin = new BraintrustPlugin();
       plugin.enable();

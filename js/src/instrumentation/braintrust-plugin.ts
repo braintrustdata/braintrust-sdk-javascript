@@ -30,6 +30,7 @@ import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { ElevenLabsPlugin } from "./plugins/elevenlabs-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
 import { TypeSafePlugin } from "./plugins/typesafe-plugin";
+import { E2BPlugin } from "./plugins/e2b-plugin";
 import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
 import type { InstrumentationIntegrationsConfig } from "./config";
@@ -91,6 +92,7 @@ export class BraintrustPlugin extends BasePlugin {
   private elevenLabsPlugin: ElevenLabsPlugin | null = null;
   private voyageAIPlugin: VoyageAIPlugin | null = null;
   private typeSafePlugin: TypeSafePlugin | null = null;
+  private e2bPlugin: E2BPlugin | null = null;
   private cloudflareAIChatPlugin: CloudflareAIChatPlugin | null = null;
   private cloudflareAgentsPlugin: CloudflareAgentsPlugin | null = null;
 
@@ -216,6 +218,10 @@ export class BraintrustPlugin extends BasePlugin {
     if (integrations.typesafe !== false) {
       this.typeSafePlugin = new TypeSafePlugin();
       this.typeSafePlugin.enable();
+    }
+    if (integrations.e2b !== false) {
+      this.e2bPlugin = new E2BPlugin();
+      this.e2bPlugin.enable();
     }
 
     if (integrations.groq !== false) {
@@ -394,6 +400,10 @@ export class BraintrustPlugin extends BasePlugin {
     if (this.typeSafePlugin) {
       this.typeSafePlugin.disable();
       this.typeSafePlugin = null;
+    }
+    if (this.e2bPlugin) {
+      this.e2bPlugin.disable();
+      this.e2bPlugin = null;
     }
 
     if (this.groqPlugin) {

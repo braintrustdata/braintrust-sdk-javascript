@@ -37,6 +37,7 @@ import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
 import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
 import { typeSafeConfigs } from "./typesafe";
+import { e2bConfigs } from "./e2b";
 
 interface InstrumentationConfigGroup {
   integrations: readonly (keyof InstrumentationIntegrationsConfig)[];
@@ -46,6 +47,7 @@ interface InstrumentationConfigGroup {
 const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] =
   [
     { integrations: ["openai"], configs: openaiConfigs },
+    { integrations: ["e2b"], configs: e2bConfigs },
     {
       integrations: ["openaiCodexSDK"],
       configs: openAICodexConfigs,

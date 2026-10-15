@@ -104,6 +104,14 @@ If you use TypeScript or other transpilation plugins, place the Braintrust plugi
 
 For deeper details, see the [auto-instrumentation architecture docs](src/auto-instrumentations/README.md).
 
+### E2B
+
+Auto-instrumentation supports `e2b` 2.9+ and `@e2b/code-interpreter` 2.2+ within their 2.x release lines. With the runtime hook or a bundler plugin enabled, `Sandbox.create()`, `sandbox.commands.run()`, and `sandbox.runCode()` produce tool spans. Initialize a Braintrust logger as usual before making these calls.
+
+Spans capture command/code inputs, execution outputs and errors, and selected operation metadata. Connection credentials, environment variables, and callbacks are not logged. Background command spans finish when the SDK returns the command handle; they do not track the background process to completion.
+
+Set `BRAINTRUST_DISABLE_INSTRUMENTATION=e2b` to disable both E2B packages, or use `configureInstrumentation({ integrations: { e2b: false } })` before initializing the SDK.
+
 ## Migration Guides
 
 ### Upgrading from 2.x to 3.x
