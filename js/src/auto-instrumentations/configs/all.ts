@@ -36,6 +36,7 @@ import { piCodingAgentConfigs } from "./pi-coding-agent";
 import { strandsAgentSDKConfigs } from "./strands-agent-sdk";
 import { elevenLabsConfigs } from "./elevenlabs";
 import { voyageAIConfigs } from "./voyageai";
+import { lumaAIConfigs } from "./lumaai";
 import { typeSafeConfigs } from "./typesafe";
 
 interface InstrumentationConfigGroup {
@@ -45,6 +46,7 @@ interface InstrumentationConfigGroup {
 
 const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] =
   [
+    { integrations: ["lumaai"], configs: lumaAIConfigs },
     { integrations: ["openai"], configs: openaiConfigs },
     {
       integrations: ["openaiCodexSDK"],

@@ -29,6 +29,7 @@ import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { ElevenLabsPlugin } from "./plugins/elevenlabs-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
+import { LumaAIPlugin } from "./plugins/lumaai-plugin";
 import { TypeSafePlugin } from "./plugins/typesafe-plugin";
 import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
@@ -90,6 +91,7 @@ export class BraintrustPlugin extends BasePlugin {
   private strandsAgentSDKPlugin: StrandsAgentSDKPlugin | null = null;
   private elevenLabsPlugin: ElevenLabsPlugin | null = null;
   private voyageAIPlugin: VoyageAIPlugin | null = null;
+  private lumaAIPlugin: LumaAIPlugin | null = null;
   private typeSafePlugin: TypeSafePlugin | null = null;
   private cloudflareAIChatPlugin: CloudflareAIChatPlugin | null = null;
   private cloudflareAgentsPlugin: CloudflareAgentsPlugin | null = null;
@@ -101,6 +103,11 @@ export class BraintrustPlugin extends BasePlugin {
 
   protected onEnable(): void {
     const integrations = this.config.integrations ?? {};
+
+    if (integrations.lumaai !== false) {
+      this.lumaAIPlugin = new LumaAIPlugin();
+      this.lumaAIPlugin.enable();
+    }
 
     // Enable OpenAI integration (default: true)
     if (integrations.openai !== false) {
@@ -287,6 +294,10 @@ export class BraintrustPlugin extends BasePlugin {
   }
 
   protected onDisable(): void {
+    if (this.lumaAIPlugin) {
+      this.lumaAIPlugin.disable();
+      this.lumaAIPlugin = null;
+    }
     if (this.openaiPlugin) {
       this.openaiPlugin.disable();
       this.openaiPlugin = null;

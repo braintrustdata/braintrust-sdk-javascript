@@ -104,6 +104,18 @@ If you use TypeScript or other transpilation plugins, place the Braintrust plugi
 
 For deeper details, see the [auto-instrumentation architecture docs](src/auto-instrumentations/README.md).
 
+### Luma AI
+
+With the runtime hook or a bundler plugin enabled, `lumaai` versions `>=1.19.1 <2`
+automatically trace `client.generations.create()` and `client.generations.get()`.
+Initialize a Braintrust logger as usual before making calls. Creation spans include
+the prompt, keyframes, concepts, and model settings; polling spans include the
+generation ID, status, and returned asset URLs. Each poll is a separate span, and
+failed generation responses are recorded as errors. The integration preserves
+Luma's `asResponse()` and `withResponse()` helpers.
+
+Set `BRAINTRUST_DISABLE_INSTRUMENTATION=lumaai` to disable this integration.
+
 ## Migration Guides
 
 ### Upgrading from 2.x to 3.x
