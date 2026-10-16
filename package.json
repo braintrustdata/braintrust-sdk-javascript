@@ -20,7 +20,6 @@
     "test:e2e:bump": "node e2e/scripts/run-e2e-bump-docker.mjs",
     "dotagents:install": "dotagents install",
     "dotagents:sync": "dotagents sync",
-    "changeset": "changeset",
     "playground": "turbo run playground --filter=\"braintrust\"",
     "playground:cli:push": "turbo run playground:cli:push --filter=\"braintrust\"",
     "playground:cli:eval": "turbo run playground:cli:eval --filter=\"braintrust\"",

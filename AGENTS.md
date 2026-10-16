@@ -58,10 +58,16 @@ Uses Vitest. Prefer running the **narrowest relevant test** rather than the full
 **From `js/` directory:**
 
 ```bash
-pnpm test                         # Core vitest suite (excludes wrappers)
-pnpm test -- -t "test name"       # Filter by test name
-pnpm run test:checks              # Hermetic tests (core + vitest wrapper)
+pnpm test                                    # Core vitest suite (excludes wrappers)
+pnpm exec vitest run src/foo.test.ts         # Run a single test file
+pnpm exec vitest run src/foo.test.ts -t "x"  # Filter by test name within a file
+pnpm run test:checks                         # Hermetic tests (core + vitest wrapper)
+pnpm run check:typings                       # Typecheck source and test files
 ```
+
+Do not pass filters through `pnpm test -- ...`; the `--` makes Vitest ignore them and run the full suite.
+
+Vitest does not typecheck. Before opening or updating a pull request, run `pnpm run check:typings` in each package you touched (or from the repo root) so type errors in source or test files are caught before CI.
 
 **E2E tests (`e2e/`):**
 
