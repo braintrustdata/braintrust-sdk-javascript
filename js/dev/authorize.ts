@@ -1,3 +1,4 @@
+import { debugLogger } from "../src/debug-logger";
 import { Request, Response, NextFunction } from "express";
 import { IncomingHttpHeaders } from "http";
 import createError from "http-errors";
@@ -90,7 +91,7 @@ export function makeCheckAuthorized(allowedOrgName: string | undefined) {
       req.ctx.state = state;
       next();
     } catch (e) {
-      console.error("Authorization error:", e);
+      debugLogger.error("Authorization error:", e);
       return next(createError(401, "Unauthorized"));
     }
   };

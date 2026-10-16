@@ -48,6 +48,7 @@ describe("onSpanExport", () => {
   let memoryLogger: TestBackgroundLogger;
 
   beforeEach(async () => {
+    vi.stubEnv("BRAINTRUST_DEBUG_LOG_LEVEL", "error");
     registry.disable();
     await _exportsForTestingOnly.simulateLoginForTests();
     memoryLogger = _exportsForTestingOnly.useTestBackgroundLogger();
@@ -863,7 +864,8 @@ describe("onSpanExport", () => {
     expect(errorLog).toHaveBeenCalledTimes(1);
     expect(errorLog.mock.calls).toEqual([
       [
-        "[braintrust] Span export customizer failed; exporting only span identity and duration.",
+        "[braintrust]",
+        "Span export customizer failed; exporting only span identity and duration.",
       ],
     ]);
   });

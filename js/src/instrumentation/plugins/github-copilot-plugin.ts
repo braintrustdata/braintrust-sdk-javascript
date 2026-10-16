@@ -1,3 +1,4 @@
+import { debugLogger } from "../../debug-logger";
 import { SpanTypeAttribute } from "../../../util/index";
 import type { Span } from "../../logger";
 import { startSpan as startBaseSpan } from "../../logger";
@@ -650,8 +651,7 @@ function attachSessionEventListener(
     state.processing = state.processing
       .then(() => dispatchEvent(state, event))
       .catch((err) => {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.error(
+        debugLogger.error(
           "[Braintrust] Error processing GitHub Copilot SDK event:",
           err,
         );

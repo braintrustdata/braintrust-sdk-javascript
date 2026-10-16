@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { invoke } = vi.hoisted(() => ({
@@ -23,7 +24,7 @@ describe("wrapStrandsAgentSDK", () => {
   });
 
   it("returns invalid modules unchanged", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
     const sdk = { AgentSession: class {} };
 
     expect(wrapStrandsAgentSDK(sdk)).toBe(sdk);

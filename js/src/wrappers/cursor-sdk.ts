@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { cursorSDKChannels } from "../instrumentation/plugins/cursor-sdk-interceptors";
 import type {
   CursorSDKAgent,
@@ -21,8 +22,7 @@ export function wrapCursorSDK<T>(sdk: T): T {
 
   const maybeSDK = sdk as Record<PropertyKey, unknown>;
   if (!maybeSDK.Agent || typeof maybeSDK.Agent !== "function") {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported Cursor SDK. Not wrapping.");
+    debugLogger.warn("Unsupported Cursor SDK. Not wrapping.");
     return sdk;
   }
 

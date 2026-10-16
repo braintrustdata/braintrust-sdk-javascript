@@ -80,7 +80,13 @@ function parseDebugLogLevelEnv(
 }
 
 export function getEnvDebugLogLevel(): DebugLogLevel | undefined {
-  return parseDebugLogLevelEnv(iso.getEnv("BRAINTRUST_DEBUG_LOG_LEVEL"));
+  return parseDebugLogLevelEnv(
+    iso.getEnv("BRAINTRUST_DEBUG_LOG_LEVEL") ??
+      // Loader and bundler diagnostics can run before platform initialization.
+      (typeof process !== "undefined"
+        ? process.env.BRAINTRUST_DEBUG_LOG_LEVEL
+        : undefined),
+  );
 }
 
 export function setGlobalDebugLogLevel(

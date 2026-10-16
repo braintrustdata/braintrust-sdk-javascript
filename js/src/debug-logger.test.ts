@@ -16,6 +16,7 @@ import {
   login,
 } from "./logger";
 import { configureNode } from "./node/config";
+import iso from "./isomorph";
 
 configureNode();
 
@@ -105,7 +106,8 @@ describe("debug logger", () => {
     expect(warnSpy).toHaveBeenCalledWith("[braintrust]", "global warning");
   });
 
-  test("BRAINTRUST_DEBUG_LOG_LEVEL accepts error, warn, info, and debug", () => {
+  test("BRAINTRUST_DEBUG_LOG_LEVEL works before platform initialization", () => {
+    vi.spyOn(iso, "getEnv").mockReturnValue(undefined);
     process.env.BRAINTRUST_DEBUG_LOG_LEVEL = "error";
     expect(getEnvDebugLogLevel()).toBe("error");
 

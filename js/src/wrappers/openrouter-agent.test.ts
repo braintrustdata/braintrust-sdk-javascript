@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { wrapOpenRouterAgent } from "./openrouter-agent";
 import { openRouterAgentChannels } from "../instrumentation/plugins/openrouter-agent-interceptors";
@@ -8,7 +9,7 @@ describe("wrapOpenRouterAgent", () => {
   });
 
   it("returns the original value and warns for unsupported inputs", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
     const input = { notCallModel: true };
 
     expect(wrapOpenRouterAgent(input as object)).toBe(input);

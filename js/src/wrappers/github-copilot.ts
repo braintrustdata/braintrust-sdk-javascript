@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { gitHubCopilotChannels } from "../instrumentation/plugins/github-copilot-interceptors";
 import type {
   GitHubCopilotClient,
@@ -37,8 +38,7 @@ function isGitHubCopilotClient(value: unknown): value is GitHubCopilotClient {
  */
 export function wrapCopilotClient<T extends object>(client: T): T {
   if (!isGitHubCopilotClient(client)) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn(
+    debugLogger.warn(
       "[Braintrust] wrapCopilotClient: argument does not look like a CopilotClient. Not wrapping.",
     );
     return client;

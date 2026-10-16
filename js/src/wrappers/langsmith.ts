@@ -74,8 +74,7 @@ function wrapNamespaceExport<T>(
     return namespace;
   }
   if (typeof candidate[exportName] !== "function") {
-    // eslint-disable-next-line no-restricted-properties -- public wrapper diagnostics follow existing wrapper behavior.
-    console.warn(
+    debugLogger.warn(
       `Unsupported LangSmith ${exportName} namespace. Not wrapping.`,
     );
     return namespace;

@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { voyageAIChannels } from "../instrumentation/plugins/voyageai-interceptors";
 import type {
   VoyageAIClient,
@@ -13,8 +14,7 @@ import type {
  */
 export function wrapVoyageAI<T>(client: T): T {
   if (!isSupportedVoyageAIClient(client)) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported Voyage AI library. Not wrapping.");
+    debugLogger.warn("Unsupported Voyage AI library. Not wrapping.");
     return client;
   }
 

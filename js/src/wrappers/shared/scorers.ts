@@ -1,3 +1,4 @@
+import { debugLogger } from "../../debug-logger";
 import type { Span } from "../../logger";
 import type { Score } from "../../../util/score";
 import type { ScorerFunction } from "./types";
@@ -45,8 +46,7 @@ export async function runScorers(args: {
       } catch (scorerError) {
         // Log scorer error but don't fail the test — use metadata instead
         // of top-level error field to avoid marking the span as errored
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.warn("Braintrust: Scorer failed:", scorerError);
+        debugLogger.warn("Braintrust: Scorer failed:", scorerError);
         const errorStr =
           scorerError instanceof Error
             ? `${scorerError.message}\n\n${scorerError.stack || ""}`

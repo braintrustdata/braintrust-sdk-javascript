@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { genkitChannels } from "../instrumentation/plugins/genkit-interceptors";
 import type {
   GenkitAction,
@@ -36,8 +37,7 @@ export function wrapGenkit<T>(genkit: T): T {
     return wrapGenkitModule(genkit) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Genkit object. Not wrapping.");
+  debugLogger.warn("Unsupported Genkit object. Not wrapping.");
   return genkit;
 }
 

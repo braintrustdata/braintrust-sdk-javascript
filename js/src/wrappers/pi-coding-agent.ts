@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { piCodingAgentChannels } from "../instrumentation/plugins/pi-coding-agent-interceptors";
 import type {
   PiAgentSession,
@@ -19,8 +20,7 @@ export function wrapPiCodingAgentSDK<T>(sdk: T): T {
 
   const maybeSDK = sdk as Record<PropertyKey, unknown>;
   if (!maybeSDK.AgentSession || typeof maybeSDK.AgentSession !== "function") {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported Pi Coding Agent SDK. Not wrapping.");
+    debugLogger.warn("Unsupported Pi Coding Agent SDK. Not wrapping.");
     return sdk;
   }
 
@@ -39,8 +39,7 @@ function patchAgentSessionClass(AgentSession: PiAgentSessionClass): void {
 
   const descriptor = Object.getOwnPropertyDescriptor(prototype, "prompt");
   if (!descriptor || typeof descriptor.value !== "function") {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported Pi Coding Agent SDK. Not wrapping.");
+    debugLogger.warn("Unsupported Pi Coding Agent SDK. Not wrapping.");
     return;
   }
 

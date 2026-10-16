@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { openRouterAgentChannels } from "../instrumentation/plugins/openrouter-agent-interceptors";
 import type {
   OpenRouterAgentCallModelRequest,
@@ -19,8 +20,7 @@ export function wrapOpenRouterAgent<T extends object>(agent: T): T {
     return openRouterAgentProxy(candidate as OpenRouterAgentClient) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported OpenRouter Agent library. Not wrapping.");
+  debugLogger.warn("Unsupported OpenRouter Agent library. Not wrapping.");
   return agent;
 }
 

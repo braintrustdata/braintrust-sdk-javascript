@@ -3,6 +3,8 @@
  * Patches Module.prototype._compile to transform CommonJS modules at load time.
  */
 
+import { debugLogger } from "../../debug-logger";
+
 import {
   InstrumentationMatcher,
   type InstrumentationConfig,
@@ -48,7 +50,7 @@ export function patchCommonJS(instrumentations: InstrumentationConfig[]): void {
           try {
             source = transformer.transform(source, "unknown").code;
           } catch (error) {
-            console.warn(`Error transforming module ${filename}:`, error);
+            debugLogger.warn(`Error transforming module ${filename}:`, error);
           }
         }
       }

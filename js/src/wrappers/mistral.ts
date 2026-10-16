@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { mistralChannels } from "../instrumentation/plugins/mistral-interceptors";
 import type {
   MistralAgents,
@@ -31,8 +32,7 @@ export function wrapMistral<T>(mistral: T): T {
     return mistralProxy(mistral) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Mistral library. Not wrapping.");
+  debugLogger.warn("Unsupported Mistral library. Not wrapping.");
   return mistral;
 }
 

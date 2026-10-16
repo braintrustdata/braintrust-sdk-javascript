@@ -1,3 +1,4 @@
+import { debugLogger } from "../src/debug-logger";
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import {
@@ -165,7 +166,7 @@ export function runDevServer(
         try {
           await validateParameters(parameters ?? {}, evaluator.parameters);
         } catch (e) {
-          console.error("Error validating parameters", e);
+          debugLogger.error("Error validating parameters", e);
           if (
             e instanceof z.ZodError ||
             e instanceof ValidationError ||
@@ -280,7 +281,7 @@ export function runDevServer(
           res.json(summary.summary);
         }
       } catch (e) {
-        console.error("Error running eval", e);
+        debugLogger.error("Error running eval", e);
         if (stream) {
           res.write(
             serializeSSEEvent({

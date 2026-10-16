@@ -3,6 +3,8 @@
  * This is used by Node.js --import to transform ES modules at load time.
  */
 
+import { debugLogger } from "../../debug-logger.js";
+
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { extname, sep } from "node:path";
@@ -89,7 +91,7 @@ export async function load(url: string, context: any, nextLoad: Function) {
       ).code;
       result.shortCircuit = true;
     } catch (err) {
-      console.warn(`Error transforming module ${url}:`, err);
+      debugLogger.warn(`Error transforming module ${url}:`, err);
     }
   }
   return result;

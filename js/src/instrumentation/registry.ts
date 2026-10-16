@@ -5,6 +5,8 @@
  * Users can disable specific integrations programmatically or via environment variables.
  */
 
+import { debugLogger } from "../debug-logger";
+
 import { BraintrustPlugin } from "./braintrust-plugin";
 import iso from "../isomorph";
 import {
@@ -55,8 +57,7 @@ class PluginRegistry {
    */
   configure(config: InstrumentationConfig): void {
     if (this.enabled) {
-      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-      console.warn(
+      debugLogger.warn(
         "Braintrust: Cannot configure instrumentation after it has been enabled. " +
           "Call configureInstrumentation() before importing any AI SDKs.",
       );

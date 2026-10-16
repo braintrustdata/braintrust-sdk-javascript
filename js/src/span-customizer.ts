@@ -1,3 +1,4 @@
+import { debugLogger } from "./debug-logger";
 import {
   ARRAY_DELETE_FIELD,
   ID_FIELD,
@@ -154,9 +155,8 @@ function registerCustomizerFailure(): void {
   if (shared[CUSTOMIZER_FAILURE_LOGGED_KEY]) return;
   shared[CUSTOMIZER_FAILURE_LOGGED_KEY] = true;
   // Never log the exception or record: either can contain sensitive data.
-  // eslint-disable-next-line no-restricted-properties -- intentional always-visible export failure.
-  console.error(
-    "[braintrust] Span export customizer failed; exporting only span identity and duration.",
+  debugLogger.error(
+    "Span export customizer failed; exporting only span identity and duration.",
   );
 }
 

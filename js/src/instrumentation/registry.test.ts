@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { newGlobalInvocationHook } from "../global-instrumentation-hooks";
+import { debugLogger } from "../debug-logger";
 vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
   newGlobalInvocationHook: vi.fn(),
@@ -108,35 +109,32 @@ describe("Plugin Registry", () => {
 
   it("should warn if configureInstrumentation is called after enable", () => {
     const testRegistry = new (registry.constructor as any)();
-    const warnSpy = [] as string[];
-    const originalWarn = console.warn;
-    console.warn = (msg: string) => warnSpy.push(msg);
+    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
 
     try {
       testRegistry.enable();
       testRegistry.configure({ integrations: { openai: false } });
 
-      expect(warnSpy.length).toBeGreaterThan(0);
-      expect(warnSpy[0]).toContain("Cannot configure instrumentation");
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Cannot configure instrumentation"),
+      );
     } finally {
-      console.warn = originalWarn;
+      warnSpy.mockRestore();
       testRegistry.disable();
     }
   });
 
   it("should allow configuration before enable", () => {
     const testRegistry = new (registry.constructor as any)();
-    const warnSpy = [] as string[];
-    const originalWarn = console.warn;
-    console.warn = (msg: string) => warnSpy.push(msg);
+    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
 
     try {
       testRegistry.configure({ integrations: { openai: false } });
       testRegistry.enable();
 
-      expect(warnSpy.length).toBe(0);
+      expect(warnSpy).not.toHaveBeenCalled();
     } finally {
-      console.warn = originalWarn;
+      warnSpy.mockRestore();
       testRegistry.disable();
     }
   });

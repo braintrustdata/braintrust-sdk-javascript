@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import {
   afterEach,
   beforeAll,
@@ -49,7 +50,7 @@ describe("openrouter wrapper", () => {
   });
 
   test("returns the original object for unsupported clients", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
     const invalid = { foo: "bar" };
 
     expect(wrapOpenRouter(invalid)).toBe(invalid);

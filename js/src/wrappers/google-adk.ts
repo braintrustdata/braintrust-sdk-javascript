@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { googleADKChannels } from "../instrumentation/plugins/google-adk-interceptors";
 import type {
   GoogleADKBaseAgent,
@@ -41,14 +42,12 @@ import type {
  */
 export function wrapGoogleADK<T extends Record<string, any>>(adkModule: T): T {
   if (!adkModule || typeof adkModule !== "object") {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Invalid Google ADK module. Not wrapping.");
+    debugLogger.warn("Invalid Google ADK module. Not wrapping.");
     return adkModule;
   }
 
   if (!("Runner" in adkModule) && !("LlmAgent" in adkModule)) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn(
+    debugLogger.warn(
       "Runner or LlmAgent class not found in module. Not wrapping. Make sure you're passing the module itself (import * as adk from '@google/adk').",
     );
     return adkModule;
