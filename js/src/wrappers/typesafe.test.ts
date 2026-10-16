@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import {
   afterEach,
   beforeAll,
@@ -112,7 +113,9 @@ describe("TypeSafe wrapper", () => {
   });
 
   it("returns unsupported clients unchanged", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => {});
     const unsupported = { models: {} };
 
     expect(wrapTypeSafe(unsupported)).toBe(unsupported);

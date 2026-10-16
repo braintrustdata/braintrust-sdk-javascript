@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { strandsAgentSDKChannels } from "../instrumentation/plugins/strands-agent-sdk-interceptors";
 import type {
   StrandsAgent,
@@ -35,8 +36,7 @@ export function wrapStrandsAgentSDK<T>(sdk: T): T {
     typeof maybeSDK.Graph !== "function" &&
     typeof maybeSDK.Swarm !== "function"
   ) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported Strands Agent SDK. Not wrapping.");
+    debugLogger.notice.warn("Unsupported Strands Agent SDK. Not wrapping.");
     return sdk;
   }
 

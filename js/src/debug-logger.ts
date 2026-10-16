@@ -9,11 +9,21 @@ type DebugLoggerStateLike = {
   hasDebugLogLevelOverride?: () => boolean;
 };
 
+// Notice methods return whether the message was emitted.
+type NoticeLoggerMethods = {
+  warn: (...args: unknown[]) => boolean;
+  error: (...args: unknown[]) => boolean;
+};
+
 type DebugLoggerMethods = {
   info: (...args: unknown[]) => void;
   debug: (...args: unknown[]) => void;
   warn: (...args: unknown[]) => void;
   error: (...args: unknown[]) => void;
+  // User-facing diagnostics that are shown at "warn" when no debug log level
+  // has been configured. An explicit level still filters them, and
+  // `debugLogLevel: false` silences them.
+  notice: NoticeLoggerMethods;
 };
 
 const PREFIX = "[braintrust]";
@@ -80,7 +90,13 @@ function parseDebugLogLevelEnv(
 }
 
 export function getEnvDebugLogLevel(): DebugLogLevel | undefined {
-  return parseDebugLogLevelEnv(iso.getEnv("BRAINTRUST_DEBUG_LOG_LEVEL"));
+  return parseDebugLogLevelEnv(
+    iso.getEnv("BRAINTRUST_DEBUG_LOG_LEVEL") ??
+      // Loader and bundler diagnostics can run before platform initialization.
+      (typeof process !== "undefined"
+        ? process.env.BRAINTRUST_DEBUG_LOG_LEVEL
+        : undefined),
+  );
 }
 
 export function setGlobalDebugLogLevel(
@@ -103,13 +119,15 @@ export function setDebugLogStateResolver(
   debugLogStateResolver = resolver;
 }
 
+// Returns `false` when logging was explicitly disabled and `undefined` when no
+// level has been configured.
 function resolveDebugLogLevel(
   state?: DebugLoggerStateLike,
-): DebugLogLevel | undefined {
+): DebugLogLevel | false | undefined {
   const stateLevel = state?.getDebugLogLevel?.();
   const hasStateOverride = state?.hasDebugLogLevelOverride?.() ?? false;
   if (hasStateOverride) {
-    return stateLevel;
+    return stateLevel ?? false;
   }
 
   const globalLevel =
@@ -119,7 +137,7 @@ function resolveDebugLogLevel(
     ] as DebugLogLevel | false | undefined;
 
   if (globalLevel !== undefined) {
-    return globalLevel === false ? undefined : globalLevel;
+    return globalLevel;
   }
 
   return getEnvDebugLogLevel();
@@ -129,11 +147,12 @@ function emit(
   method: "info" | "debug" | "warn" | "error",
   state: DebugLoggerStateLike | undefined,
   args: unknown[],
-) {
-  const level = resolveDebugLogLevel(state);
+  defaultLevel?: DebugLogLevel,
+): boolean {
+  const level = resolveDebugLogLevel(state) ?? defaultLevel;
 
   if (!level || LOG_LEVEL_PRIORITY[method] > LOG_LEVEL_PRIORITY[level]) {
-    return;
+    return false;
   }
 
   if (method === "info") {
@@ -149,6 +168,7 @@ function emit(
     // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
     console.error(PREFIX, ...args);
   }
+  return true;
 }
 
 function createDebugLogger(state?: DebugLoggerStateLike): DebugLoggerMethods {
@@ -165,6 +185,14 @@ function createDebugLogger(state?: DebugLoggerStateLike): DebugLoggerMethods {
     },
     error(...args: unknown[]) {
       emit("error", resolveState(), args);
+    },
+    notice: {
+      warn(...args: unknown[]) {
+        return emit("warn", resolveState(), args, "warn");
+      },
+      error(...args: unknown[]) {
+        return emit("error", resolveState(), args, "warn");
+      },
     },
   };
 }

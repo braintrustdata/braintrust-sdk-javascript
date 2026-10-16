@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { groqChannels } from "../instrumentation/plugins/groq-interceptors";
 import type {
   GroqAudio,
@@ -22,8 +23,7 @@ export function wrapGroq<T extends object>(groq: T): T {
     return groqProxy(groq) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Groq library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Groq library. Not wrapping.");
   return groq;
 }
 

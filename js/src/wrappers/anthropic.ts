@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { anthropicChannels } from "../instrumentation/plugins/anthropic-interceptors";
 import { TypedApplyProxy } from "../typed-instrumentation-helpers";
 import type {
@@ -38,8 +39,7 @@ export function wrapAnthropic<T extends object>(anthropic: T): T {
     return anthropicProxy(au as AnthropicClient) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Anthropic library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Anthropic library. Not wrapping.");
   return anthropic;
 }
 

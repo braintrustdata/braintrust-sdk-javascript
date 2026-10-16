@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { openAICodexChannels } from "../instrumentation/plugins/openai-codex-interceptors";
 import type {
   OpenAICodexClass,
@@ -28,8 +29,7 @@ export function wrapOpenAICodexSDK<T>(sdk: T): T {
   }
 
   if (!maybeSDK.Codex || typeof maybeSDK.Codex !== "function") {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported OpenAI Codex SDK. Not wrapping.");
+    debugLogger.notice.warn("Unsupported OpenAI Codex SDK. Not wrapping.");
     return sdk;
   }
 

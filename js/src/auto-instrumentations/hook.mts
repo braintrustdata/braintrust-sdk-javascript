@@ -13,6 +13,8 @@
  * - CJS modules: Transformed via patching Module._compile
  */
 
+import { debugLogger } from "../debug-logger.js";
+
 import { register } from "node:module";
 import {
   isInstrumentationIntegrationDisabled,
@@ -57,20 +59,16 @@ if (!alreadyApplied) {
   try {
     patchCommonJS(allConfigs);
 
-    if (process.env.DEBUG === "@braintrust*" || process.env.DEBUG === "*") {
-      console.log(
-        "[Braintrust] Auto-instrumentation active (ESM + CJS) for:",
-        allConfigs.map((c) => c.channelName).join(", "),
-      );
-    }
+    debugLogger.debug(
+      "Auto-instrumentation active (ESM + CJS) for:",
+      allConfigs.map((c) => c.channelName).join(", "),
+    );
   } catch (err) {
     // CJS patch failed, but ESM hook is still active
-    if (process.env.DEBUG === "@braintrust*" || process.env.DEBUG === "*") {
-      console.log(
-        "[Braintrust] Auto-instrumentation active (ESM only) for:",
-        allConfigs.map((c) => c.channelName).join(", "),
-      );
-      console.error("[Braintrust] CJS patch failed:", err);
-    }
+    debugLogger.debug(
+      "Auto-instrumentation active (ESM only) for:",
+      allConfigs.map((c) => c.channelName).join(", "),
+    );
+    debugLogger.notice.error("CJS patch failed:", err);
   }
 }

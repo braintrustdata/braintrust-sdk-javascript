@@ -1,3 +1,4 @@
+import { debugLogger } from "../src/debug-logger";
 import { z } from "zod/v3";
 import { Request, Response, ErrorRequestHandler, NextFunction } from "express";
 import { HttpError } from "http-errors";
@@ -27,7 +28,7 @@ export const errorHandler: ErrorRequestHandler = (
     return;
   }
 
-  console.error("Internal server error", err);
+  debugLogger.notice.error("Internal server error", err);
   res.status(500).json({
     error: {
       message: "Internal server error",

@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { typeSafeChannels } from "../instrumentation/plugins/typesafe-interceptors";
 import type {
   TypeSafeClient,
@@ -8,8 +9,7 @@ import type {
 export function wrapTypeSafe<T>(client: T): T;
 export function wrapTypeSafe(client: unknown): unknown {
   if (!isSupportedTypeSafeClient(client)) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported TypeSafe AI library. Not wrapping.");
+    debugLogger.notice.warn("Unsupported TypeSafe AI library. Not wrapping.");
     return client;
   }
 

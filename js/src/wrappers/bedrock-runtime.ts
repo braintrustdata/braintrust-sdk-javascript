@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { runWithAutoInstrumentationSuppressed } from "../instrumentation/auto-instrumentation-suppression";
 import { bedrockRuntimeChannels } from "../instrumentation/plugins/bedrock-runtime-interceptors";
 import {
@@ -17,8 +18,7 @@ export function wrapBedrockRuntime<T>(client: T): T {
     return bedrockRuntimeProxy(client) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving wrapper warning behavior.
-  console.warn("Unsupported Bedrock Runtime library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Bedrock Runtime library. Not wrapping.");
   return client;
 }
 

@@ -1,3 +1,4 @@
+import { debugLogger } from "./debug-logger";
 import { z } from "zod/v3";
 import * as z4 from "zod/v4";
 import Ajv from "ajv";
@@ -125,8 +126,7 @@ function validateParametersWithZod<
           return [name, schema.parse(value)];
         }
       } catch (e) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.error("Error validating parameter", name, e);
+        debugLogger.notice.error("Error validating parameter", name, e);
         throw Error(
           `Invalid parameter '${name}': ${e instanceof Error ? e.message : String(e)}`,
         );

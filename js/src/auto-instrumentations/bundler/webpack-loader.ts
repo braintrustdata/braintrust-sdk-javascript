@@ -21,6 +21,8 @@
  * ```
  */
 
+import { debugLogger } from "../../debug-logger";
+
 import { InstrumentationMatcher } from "../orchestrion-js";
 import { getDefaultAutoInstrumentationConfigs } from "../configs/all";
 import { type BundlerPluginOptions } from "./plugin";
@@ -81,7 +83,7 @@ function codeTransformerLoader(
       callback(null, code, inputSourceMap);
     }
   } catch (error) {
-    console.warn(
+    debugLogger.notice.warn(
       `[code-transformer-loader] Error transforming ${resourcePath}:`,
       error,
     );

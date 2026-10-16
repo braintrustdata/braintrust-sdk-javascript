@@ -1845,8 +1845,10 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
           metadata: filterSerializableOptions(options),
         });
       } catch (error) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.error("Error extracting input for Claude Agent SDK:", error);
+        debugLogger.error(
+          "Error extracting input for Claude Agent SDK:",
+          error,
+        );
       }
 
       const activeToolSpans = new Map<string, Span>();
@@ -1982,8 +1984,7 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
             state.processing = state.processing
               .then(() => handleStreamMessage(state, message))
               .catch((error) => {
-                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                console.error(
+                debugLogger.error(
                   "Error processing Claude Agent SDK stream chunk:",
                   error,
                 );
@@ -2005,8 +2006,10 @@ export class ClaudeAgentSDKPlugin extends BasePlugin {
       try {
         state.span.log({ output: result });
       } catch (error) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.error("Error extracting output for Claude Agent SDK:", error);
+        debugLogger.error(
+          "Error extracting output for Claude Agent SDK:",
+          error,
+        );
       } finally {
         state.span.end();
       }

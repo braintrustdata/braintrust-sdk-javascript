@@ -13,7 +13,7 @@ export function wrapLangGraphSDK<T>(client: T): T {
     !isObject(runsClient) ||
     !["wait", "stream"].every((key) => typeof runsClient[key] === "function")
   ) {
-    debugLogger.warn("Unsupported LangGraph SDK client. Not wrapping.");
+    debugLogger.notice.warn("Unsupported LangGraph SDK client. Not wrapping.");
     return client;
   }
   const sdk = client as unknown as LangGraphSDKClient;

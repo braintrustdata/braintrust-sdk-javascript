@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { cohereChannels } from "../instrumentation/plugins/cohere-interceptors";
 import type {
   CohereChatRequest,
@@ -19,8 +20,7 @@ export function wrapCohere<T>(cohere: T): T {
     return cohereProxy(cohere) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Cohere library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Cohere library. Not wrapping.");
   return cohere;
 }
 

@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { openRouterChannels } from "../instrumentation/plugins/openrouter-interceptors";
 import type {
   OpenRouterBeta,
@@ -43,8 +44,7 @@ export function wrapOpenRouter<T>(openrouter: T): T {
     return openRouterProxy(or as OpenRouterClient) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported OpenRouter library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported OpenRouter library. Not wrapping.");
   return openrouter;
 }
 

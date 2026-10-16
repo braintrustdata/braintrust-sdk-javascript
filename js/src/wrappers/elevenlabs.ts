@@ -30,7 +30,7 @@ export function wrapElevenLabs<T>(client: T): T {
     !isObject(client.textToSpeech) ||
     typeof client.textToSpeech.convert !== "function"
   ) {
-    debugLogger.warn("Unsupported ElevenLabs client. Not wrapping.");
+    debugLogger.notice.warn("Unsupported ElevenLabs client. Not wrapping.");
     return client;
   }
   const cached = clients.get(client);

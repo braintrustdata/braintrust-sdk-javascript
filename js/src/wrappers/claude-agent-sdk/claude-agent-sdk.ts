@@ -1,3 +1,4 @@
+import { debugLogger } from "../../debug-logger";
 import { claudeAgentSDKChannels } from "../../instrumentation/plugins/claude-agent-sdk-interceptors";
 import { CLAUDE_AGENT_SDK_SKIP_LOCAL_TOOL_HOOKS_OPTION } from "../../instrumentation/plugins/claude-agent-sdk-instrumentation-constants";
 import { wrapLocalClaudeToolHandler } from "../../instrumentation/plugins/claude-agent-sdk-local-tool-spans";
@@ -31,8 +32,7 @@ export function wrapClaudeAgentSDK<T extends object>(sdk: T): T {
     return claudeAgentSDKProxy(s as ClaudeAgentSDKModule) as unknown as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported Claude Agent SDK. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Claude Agent SDK. Not wrapping.");
   return sdk;
 }
 

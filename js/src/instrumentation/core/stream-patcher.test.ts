@@ -1,3 +1,4 @@
+import { debugLogger } from "../../debug-logger";
 import { describe, it, expect, vi } from "vitest";
 import {
   isAsyncIterable,
@@ -396,7 +397,7 @@ describe("patchStreamIfNeeded", () => {
       },
     });
 
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
     const onComplete = vi.fn();
 
     const result = patchStreamIfNeeded(stream, { onComplete });
@@ -416,7 +417,7 @@ describe("patchStreamIfNeeded", () => {
       },
     });
 
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
     const onComplete = vi.fn();
 
     const result = patchStreamIfNeeded(stream, { onComplete });
@@ -436,7 +437,9 @@ describe("patchStreamIfNeeded", () => {
       },
     };
 
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const errorSpy = vi
+      .spyOn(debugLogger, "error")
+      .mockImplementation(() => {});
     const onComplete = vi.fn(() => {
       throw new Error("Handler error");
     });
@@ -464,7 +467,9 @@ describe("patchStreamIfNeeded", () => {
       },
     };
 
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const errorSpy = vi
+      .spyOn(debugLogger, "error")
+      .mockImplementation(() => {});
     const onChunk = vi.fn(() => {
       throw new Error("Chunk handler error");
     });
@@ -493,7 +498,9 @@ describe("patchStreamIfNeeded", () => {
       },
     };
 
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const errorSpy = vi
+      .spyOn(debugLogger, "error")
+      .mockImplementation(() => {});
     const onError = vi.fn(() => {
       throw new Error("Error handler error");
     });
@@ -678,7 +685,9 @@ describe("wrapStreamResult", () => {
       },
     };
 
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const errorSpy = vi
+      .spyOn(debugLogger, "error")
+      .mockImplementation(() => {});
     const processChunks = vi.fn(() => {
       throw new Error("Process error");
     });
@@ -709,7 +718,9 @@ describe("wrapStreamResult", () => {
   it("should handle errors in onNonStream", () => {
     const result = { foo: "bar" };
 
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const errorSpy = vi
+      .spyOn(debugLogger, "error")
+      .mockImplementation(() => {});
     const processChunks = vi.fn();
     const onNonStream = vi.fn(() => {
       throw new Error("Non-stream error");

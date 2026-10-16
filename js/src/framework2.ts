@@ -1,3 +1,4 @@
+import { debugLogger } from "./debug-logger";
 import { _initializeSpanContext } from "./framework";
 import type { Trace } from "./trace";
 import iso from "./isomorph";
@@ -128,16 +129,16 @@ export class Project {
 
   async publish() {
     if (globalThis._lazy_load) {
-      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-      console.warn("publish() is a no-op when running `braintrust push`.");
+      debugLogger.notice.warn(
+        "publish() is a no-op when running `braintrust push`.",
+      );
       return;
     }
     await login();
     const projectMap = new ProjectNameIdMap();
     const functionDefinitions: FunctionEvent[] = [];
     if (this._publishableCodeFunctions.length > 0) {
-      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-      console.warn(
+      debugLogger.notice.warn(
         "Code functions cannot be published directly. Use `braintrust push` instead.",
       );
     }

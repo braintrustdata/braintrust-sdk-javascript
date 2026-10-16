@@ -1,3 +1,4 @@
+import { debugLogger } from "../../debug-logger";
 import { isAutoInstrumentationSuppressed } from "../../instrumentation/auto-instrumentation-suppression";
 import {
   SpanTypeAttribute,
@@ -93,8 +94,7 @@ export function braintrustAISDKTelemetry(): any {
     try {
       callback();
     } catch (error) {
-      // eslint-disable-next-line no-restricted-properties
-      console.error(`Error in Braintrust AI SDK telemetry ${name}:`, error);
+      debugLogger.error(`Error in Braintrust AI SDK telemetry ${name}:`, error);
     }
   };
 

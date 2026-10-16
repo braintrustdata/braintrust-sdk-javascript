@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import {
   afterEach,
   beforeAll,
@@ -40,7 +41,9 @@ describe("Voyage AI wrapper", () => {
   });
 
   it("returns unsupported clients unchanged", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => {});
     const unsupported = { tokenize: vi.fn() };
 
     expect(wrapVoyageAI(unsupported)).toBe(unsupported);

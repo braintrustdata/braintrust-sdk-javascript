@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import type {
   OpenAIMediaClient,
   OpenAIMediaMethod,
@@ -68,8 +69,9 @@ export function wrapOpenAI<T extends object>(openai: T): T {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return wrapOpenAIv4(typedOpenAI) as T;
   } else {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported OpenAI library (potentially v3). Not wrapping.");
+    debugLogger.notice.warn(
+      "Unsupported OpenAI library (potentially v3). Not wrapping.",
+    );
     return openai;
   }
 }

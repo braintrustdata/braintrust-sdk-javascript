@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import { isObject } from "../../util";
 import { huggingFaceChannels } from "../instrumentation/plugins/huggingface-interceptors";
 import type {
@@ -51,8 +52,9 @@ export function wrapHuggingFace(huggingFace: unknown): unknown {
     return clientProxy(huggingFace);
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported HuggingFace Inference SDK. Not wrapping.");
+  debugLogger.notice.warn(
+    "Unsupported HuggingFace Inference SDK. Not wrapping.",
+  );
   return huggingFace;
 }
 
