@@ -32,7 +32,7 @@ export function wrapMistral<T>(mistral: T): T {
     return mistralProxy(mistral) as T;
   }
 
-  debugLogger.warn("Unsupported Mistral library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Mistral library. Not wrapping.");
   return mistral;
 }
 

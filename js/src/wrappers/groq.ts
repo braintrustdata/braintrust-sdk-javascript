@@ -23,7 +23,7 @@ export function wrapGroq<T extends object>(groq: T): T {
     return groqProxy(groq) as T;
   }
 
-  debugLogger.warn("Unsupported Groq library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Groq library. Not wrapping.");
   return groq;
 }
 

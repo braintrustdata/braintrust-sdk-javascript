@@ -32,7 +32,7 @@ export function wrapClaudeAgentSDK<T extends object>(sdk: T): T {
     return claudeAgentSDKProxy(s as ClaudeAgentSDKModule) as unknown as T;
   }
 
-  debugLogger.warn("Unsupported Claude Agent SDK. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Claude Agent SDK. Not wrapping.");
   return sdk;
 }
 

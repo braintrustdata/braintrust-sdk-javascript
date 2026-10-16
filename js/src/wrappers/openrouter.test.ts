@@ -50,7 +50,9 @@ describe("openrouter wrapper", () => {
   });
 
   test("returns the original object for unsupported clients", () => {
-    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => {});
     const invalid = { foo: "bar" };
 
     expect(wrapOpenRouter(invalid)).toBe(invalid);

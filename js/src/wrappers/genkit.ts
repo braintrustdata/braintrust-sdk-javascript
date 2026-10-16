@@ -37,7 +37,7 @@ export function wrapGenkit<T>(genkit: T): T {
     return wrapGenkitModule(genkit) as T;
   }
 
-  debugLogger.warn("Unsupported Genkit object. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Genkit object. Not wrapping.");
   return genkit;
 }
 

@@ -69,7 +69,7 @@ export function wrapOpenAI<T extends object>(openai: T): T {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return wrapOpenAIv4(typedOpenAI) as T;
   } else {
-    debugLogger.warn(
+    debugLogger.notice.warn(
       "Unsupported OpenAI library (potentially v3). Not wrapping.",
     );
     return openai;

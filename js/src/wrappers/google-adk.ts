@@ -42,12 +42,12 @@ import type {
  */
 export function wrapGoogleADK<T extends Record<string, any>>(adkModule: T): T {
   if (!adkModule || typeof adkModule !== "object") {
-    debugLogger.warn("Invalid Google ADK module. Not wrapping.");
+    debugLogger.notice.warn("Invalid Google ADK module. Not wrapping.");
     return adkModule;
   }
 
   if (!("Runner" in adkModule) && !("LlmAgent" in adkModule)) {
-    debugLogger.warn(
+    debugLogger.notice.warn(
       "Runner or LlmAgent class not found in module. Not wrapping. Make sure you're passing the module itself (import * as adk from '@google/adk').",
     );
     return adkModule;

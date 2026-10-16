@@ -74,7 +74,7 @@ function wrapNamespaceExport<T>(
     return namespace;
   }
   if (typeof candidate[exportName] !== "function") {
-    debugLogger.warn(
+    debugLogger.notice.warn(
       `Unsupported LangSmith ${exportName} namespace. Not wrapping.`,
     );
     return namespace;

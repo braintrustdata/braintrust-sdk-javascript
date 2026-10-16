@@ -30,7 +30,7 @@ export function wrapAISDKModel<T extends object>(model: T): T {
   ) {
     return new BraintrustLanguageModelWrapper(m) as any as T;
   } else {
-    debugLogger.warn("Unsupported AI SDK model. Not wrapping.");
+    debugLogger.notice.warn("Unsupported AI SDK model. Not wrapping.");
     return model;
   }
 }

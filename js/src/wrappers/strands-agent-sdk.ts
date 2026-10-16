@@ -36,7 +36,7 @@ export function wrapStrandsAgentSDK<T>(sdk: T): T {
     typeof maybeSDK.Graph !== "function" &&
     typeof maybeSDK.Swarm !== "function"
   ) {
-    debugLogger.warn("Unsupported Strands Agent SDK. Not wrapping.");
+    debugLogger.notice.warn("Unsupported Strands Agent SDK. Not wrapping.");
     return sdk;
   }
 

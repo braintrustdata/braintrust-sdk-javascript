@@ -20,7 +20,7 @@ export function wrapCohere<T>(cohere: T): T {
     return cohereProxy(cohere) as T;
   }
 
-  debugLogger.warn("Unsupported Cohere library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Cohere library. Not wrapping.");
   return cohere;
 }
 

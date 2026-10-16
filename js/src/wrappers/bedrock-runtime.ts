@@ -18,7 +18,7 @@ export function wrapBedrockRuntime<T>(client: T): T {
     return bedrockRuntimeProxy(client) as T;
   }
 
-  debugLogger.warn("Unsupported Bedrock Runtime library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Bedrock Runtime library. Not wrapping.");
   return client;
 }
 

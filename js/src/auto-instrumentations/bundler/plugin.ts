@@ -75,7 +75,9 @@ export const unplugin = createUnplugin<BundlerPluginOptions>((options = {}) => {
         return transformBundledModule(code, filePath, matcher, browser);
       } catch (error) {
         // If transformation fails, warn and return original code
-        debugLogger.warn(`Code transformation failed for ${id}: ${error}`);
+        debugLogger.notice.warn(
+          `Code transformation failed for ${id}: ${error}`,
+        );
         return null;
       }
     },

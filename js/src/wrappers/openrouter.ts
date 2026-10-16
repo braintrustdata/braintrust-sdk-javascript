@@ -44,7 +44,7 @@ export function wrapOpenRouter<T>(openrouter: T): T {
     return openRouterProxy(or as OpenRouterClient) as T;
   }
 
-  debugLogger.warn("Unsupported OpenRouter library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported OpenRouter library. Not wrapping.");
   return openrouter;
 }
 

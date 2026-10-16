@@ -86,5 +86,7 @@ function isObjectLike(value: unknown): value is object {
 }
 
 function warnUnsupportedAgent(): void {
-  debugLogger.warn("Unsupported Cloudflare Agents Agent class. Not wrapping.");
+  debugLogger.notice.warn(
+    "Unsupported Cloudflare Agents Agent class. Not wrapping.",
+  );
 }

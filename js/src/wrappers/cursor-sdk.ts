@@ -22,7 +22,7 @@ export function wrapCursorSDK<T>(sdk: T): T {
 
   const maybeSDK = sdk as Record<PropertyKey, unknown>;
   if (!maybeSDK.Agent || typeof maybeSDK.Agent !== "function") {
-    debugLogger.warn("Unsupported Cursor SDK. Not wrapping.");
+    debugLogger.notice.warn("Unsupported Cursor SDK. Not wrapping.");
     return sdk;
   }
 

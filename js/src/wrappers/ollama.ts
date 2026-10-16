@@ -20,7 +20,7 @@ export function wrapOllama<T>(ollama: T): T {
     return ollamaProxy(ollama) as T;
   }
 
-  debugLogger.warn("Unsupported Ollama library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Ollama library. Not wrapping.");
   return ollama;
 }
 

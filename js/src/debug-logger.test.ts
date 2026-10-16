@@ -95,6 +95,57 @@ describe("debug logger", () => {
     );
   });
 
+  test("notice messages are shown at warn when no level is configured", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    debugLogger.warn("hidden warning");
+    expect(debugLogger.notice.warn("notice warning")).toBe(true);
+    expect(debugLogger.notice.error("notice error")).toBe(true);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy).toHaveBeenCalledWith("[braintrust]", "notice warning");
+    expect(errorSpy).toHaveBeenCalledWith("[braintrust]", "notice error");
+  });
+
+  test("notice messages respect an explicit level", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const state = {
+      getDebugLogLevel: () => "error" as const,
+      hasDebugLogLevelOverride: () => true,
+    };
+
+    const scopedLogger = debugLogger.forState(state);
+    expect(scopedLogger.notice.warn("notice warning")).toBe(false);
+    expect(scopedLogger.notice.error("notice error")).toBe(true);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith("[braintrust]", "notice error");
+  });
+
+  test("notice messages are silenced when logging is disabled", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    _exportsForTestingOnly.setInitialTestState();
+    const state = _exportsForTestingOnly.simulateLogoutForTests();
+    state.setDebugLogLevel(false);
+
+    expect(debugLogger.notice.warn("notice warning")).toBe(false);
+    expect(debugLogger.notice.error("notice error")).toBe(false);
+    expect(
+      debugLogger
+        .forState({
+          getDebugLogLevel: () => undefined,
+          hasDebugLogLevelOverride: () => true,
+        })
+        .notice.error("scoped notice error"),
+    ).toBe(false);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
   test("default logger resolves the global SDK state", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     _exportsForTestingOnly.setInitialTestState();

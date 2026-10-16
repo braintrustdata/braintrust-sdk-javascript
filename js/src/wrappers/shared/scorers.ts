@@ -46,7 +46,7 @@ export async function runScorers(args: {
       } catch (scorerError) {
         // Log scorer error but don't fail the test — use metadata instead
         // of top-level error field to avoid marking the span as errored
-        debugLogger.warn("Braintrust: Scorer failed:", scorerError);
+        debugLogger.notice.warn("Scorer failed:", scorerError);
         const errorStr =
           scorerError instanceof Error
             ? `${scorerError.message}\n\n${scorerError.stack || ""}`

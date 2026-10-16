@@ -9,7 +9,9 @@ describe("wrapOpenRouterAgent", () => {
   });
 
   it("returns the original value and warns for unsupported inputs", () => {
-    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => {});
     const input = { notCallModel: true };
 
     expect(wrapOpenRouterAgent(input as object)).toBe(input);

@@ -52,7 +52,9 @@ describe("wrapOllama", () => {
 
   it("returns unsupported objects unchanged", () => {
     const client = {};
-    const warn = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
+    const warn = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => {});
 
     expect(wrapOllama(client)).toBe(client);
     expect(warn).toHaveBeenCalledWith(

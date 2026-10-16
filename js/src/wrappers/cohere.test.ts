@@ -41,7 +41,9 @@ describe("cohere wrapper", () => {
   });
 
   test("returns original object for unsupported clients", () => {
-    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => {});
     const invalid = { foo: "bar" };
 
     expect(wrapCohere(invalid)).toBe(invalid);

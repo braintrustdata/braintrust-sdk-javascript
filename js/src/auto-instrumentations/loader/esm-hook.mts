@@ -91,7 +91,7 @@ export async function load(url: string, context: any, nextLoad: Function) {
       ).code;
       result.shortCircuit = true;
     } catch (err) {
-      debugLogger.warn(`Error transforming module ${url}:`, err);
+      debugLogger.notice.warn(`Error transforming module ${url}:`, err);
     }
   }
   return result;

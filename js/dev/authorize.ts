@@ -91,7 +91,7 @@ export function makeCheckAuthorized(allowedOrgName: string | undefined) {
       req.ctx.state = state;
       next();
     } catch (e) {
-      debugLogger.error("Authorization error:", e);
+      debugLogger.notice.error("Authorization error:", e);
       return next(createError(401, "Unauthorized"));
     }
   };

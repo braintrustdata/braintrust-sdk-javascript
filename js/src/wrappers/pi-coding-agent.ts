@@ -20,7 +20,7 @@ export function wrapPiCodingAgentSDK<T>(sdk: T): T {
 
   const maybeSDK = sdk as Record<PropertyKey, unknown>;
   if (!maybeSDK.AgentSession || typeof maybeSDK.AgentSession !== "function") {
-    debugLogger.warn("Unsupported Pi Coding Agent SDK. Not wrapping.");
+    debugLogger.notice.warn("Unsupported Pi Coding Agent SDK. Not wrapping.");
     return sdk;
   }
 
@@ -39,7 +39,7 @@ function patchAgentSessionClass(AgentSession: PiAgentSessionClass): void {
 
   const descriptor = Object.getOwnPropertyDescriptor(prototype, "prompt");
   if (!descriptor || typeof descriptor.value !== "function") {
-    debugLogger.warn("Unsupported Pi Coding Agent SDK. Not wrapping.");
+    debugLogger.notice.warn("Unsupported Pi Coding Agent SDK. Not wrapping.");
     return;
   }
 

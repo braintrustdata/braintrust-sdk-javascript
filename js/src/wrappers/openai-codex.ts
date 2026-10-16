@@ -29,7 +29,7 @@ export function wrapOpenAICodexSDK<T>(sdk: T): T {
   }
 
   if (!maybeSDK.Codex || typeof maybeSDK.Codex !== "function") {
-    debugLogger.warn("Unsupported OpenAI Codex SDK. Not wrapping.");
+    debugLogger.notice.warn("Unsupported OpenAI Codex SDK. Not wrapping.");
     return sdk;
   }
 

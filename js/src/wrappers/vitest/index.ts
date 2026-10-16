@@ -99,8 +99,8 @@ export function wrapVitest<
     flushExperiment: async (options?: { displaySummary?: boolean }) => {
       const ctx = getExperimentContext();
       if (!ctx) {
-        debugLogger.warn(
-          "Braintrust: No experiment context found. Make sure you're using bt.describe() and calling flushExperiment() within an afterAll() hook.",
+        debugLogger.notice.warn(
+          "No experiment context found. Make sure you're using bt.describe() and calling flushExperiment() within an afterAll() hook.",
         );
         return;
       }

@@ -38,12 +38,12 @@ export function wrapGoogleGenAI<T extends Record<string, any>>(
   googleGenAI: T,
 ): T {
   if (!googleGenAI || typeof googleGenAI !== "object") {
-    debugLogger.warn("Invalid Google GenAI module. Not wrapping.");
+    debugLogger.notice.warn("Invalid Google GenAI module. Not wrapping.");
     return googleGenAI;
   }
 
   if (!("GoogleGenAI" in googleGenAI)) {
-    debugLogger.warn(
+    debugLogger.notice.warn(
       "GoogleGenAI class not found in module. Not wrapping. Make sure you're passing the module itself (import * as googleGenAI from '@google/genai').",
     );
     return googleGenAI;

@@ -14,7 +14,7 @@ import type {
  */
 export function wrapVoyageAI<T>(client: T): T {
   if (!isSupportedVoyageAIClient(client)) {
-    debugLogger.warn("Unsupported Voyage AI library. Not wrapping.");
+    debugLogger.notice.warn("Unsupported Voyage AI library. Not wrapping.");
     return client;
   }
 

@@ -52,7 +52,9 @@ export function wrapHuggingFace(huggingFace: unknown): unknown {
     return clientProxy(huggingFace);
   }
 
-  debugLogger.warn("Unsupported HuggingFace Inference SDK. Not wrapping.");
+  debugLogger.notice.warn(
+    "Unsupported HuggingFace Inference SDK. Not wrapping.",
+  );
   return huggingFace;
 }
 

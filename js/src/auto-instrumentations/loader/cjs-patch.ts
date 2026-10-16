@@ -50,7 +50,10 @@ export function patchCommonJS(instrumentations: InstrumentationConfig[]): void {
           try {
             source = transformer.transform(source, "unknown").code;
           } catch (error) {
-            debugLogger.warn(`Error transforming module ${filename}:`, error);
+            debugLogger.notice.warn(
+              `Error transforming module ${filename}:`,
+              error,
+            );
           }
         }
       }

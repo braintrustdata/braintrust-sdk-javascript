@@ -20,7 +20,9 @@ export function wrapOpenRouterAgent<T extends object>(agent: T): T {
     return openRouterAgentProxy(candidate as OpenRouterAgentClient) as T;
   }
 
-  debugLogger.warn("Unsupported OpenRouter Agent library. Not wrapping.");
+  debugLogger.notice.warn(
+    "Unsupported OpenRouter Agent library. Not wrapping.",
+  );
   return agent;
 }
 

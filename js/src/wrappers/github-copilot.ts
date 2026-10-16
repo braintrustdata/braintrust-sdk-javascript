@@ -38,8 +38,8 @@ function isGitHubCopilotClient(value: unknown): value is GitHubCopilotClient {
  */
 export function wrapCopilotClient<T extends object>(client: T): T {
   if (!isGitHubCopilotClient(client)) {
-    debugLogger.warn(
-      "[Braintrust] wrapCopilotClient: argument does not look like a CopilotClient. Not wrapping.",
+    debugLogger.notice.warn(
+      "wrapCopilotClient: argument does not look like a CopilotClient. Not wrapping.",
     );
     return client;
   }

@@ -83,7 +83,7 @@ function codeTransformerLoader(
       callback(null, code, inputSourceMap);
     }
   } catch (error) {
-    debugLogger.warn(
+    debugLogger.notice.warn(
       `[code-transformer-loader] Error transforming ${resourcePath}:`,
       error,
     );

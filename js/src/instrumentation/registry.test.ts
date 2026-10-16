@@ -109,7 +109,9 @@ describe("Plugin Registry", () => {
 
   it("should warn if configureInstrumentation is called after enable", () => {
     const testRegistry = new (registry.constructor as any)();
-    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => {});
 
     try {
       testRegistry.enable();
@@ -126,7 +128,9 @@ describe("Plugin Registry", () => {
 
   it("should allow configuration before enable", () => {
     const testRegistry = new (registry.constructor as any)();
-    const warnSpy = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => {});
 
     try {
       testRegistry.configure({ integrations: { openai: false } });

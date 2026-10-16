@@ -28,7 +28,7 @@ export const errorHandler: ErrorRequestHandler = (
     return;
   }
 
-  debugLogger.error("Internal server error", err);
+  debugLogger.notice.error("Internal server error", err);
   res.status(500).json({
     error: {
       message: "Internal server error",

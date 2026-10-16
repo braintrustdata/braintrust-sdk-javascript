@@ -166,7 +166,7 @@ export function runDevServer(
         try {
           await validateParameters(parameters ?? {}, evaluator.parameters);
         } catch (e) {
-          debugLogger.error("Error validating parameters", e);
+          debugLogger.notice.error("Error validating parameters", e);
           if (
             e instanceof z.ZodError ||
             e instanceof ValidationError ||
@@ -281,7 +281,7 @@ export function runDevServer(
           res.json(summary.summary);
         }
       } catch (e) {
-        debugLogger.error("Error running eval", e);
+        debugLogger.notice.error("Error running eval", e);
         if (stream) {
           res.write(
             serializeSSEEvent({

@@ -69,6 +69,6 @@ if (!alreadyApplied) {
       "Auto-instrumentation active (ESM only) for:",
       allConfigs.map((c) => c.channelName).join(", "),
     );
-    debugLogger.error("CJS patch failed:", err);
+    debugLogger.notice.error("CJS patch failed:", err);
   }
 }

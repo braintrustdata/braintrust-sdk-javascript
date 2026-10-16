@@ -39,7 +39,7 @@ export function wrapAnthropic<T extends object>(anthropic: T): T {
     return anthropicProxy(au as AnthropicClient) as T;
   }
 
-  debugLogger.warn("Unsupported Anthropic library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported Anthropic library. Not wrapping.");
   return anthropic;
 }
 

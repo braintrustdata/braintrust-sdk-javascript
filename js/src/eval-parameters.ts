@@ -126,7 +126,7 @@ function validateParametersWithZod<
           return [name, schema.parse(value)];
         }
       } catch (e) {
-        debugLogger.error("Error validating parameter", name, e);
+        debugLogger.notice.error("Error validating parameter", name, e);
         throw Error(
           `Invalid parameter '${name}': ${e instanceof Error ? e.message : String(e)}`,
         );

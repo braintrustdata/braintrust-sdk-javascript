@@ -9,7 +9,7 @@ import type {
 export function wrapTypeSafe<T>(client: T): T;
 export function wrapTypeSafe(client: unknown): unknown {
   if (!isSupportedTypeSafeClient(client)) {
-    debugLogger.warn("Unsupported TypeSafe AI library. Not wrapping.");
+    debugLogger.notice.warn("Unsupported TypeSafe AI library. Not wrapping.");
     return client;
   }
 

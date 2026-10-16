@@ -651,10 +651,7 @@ function attachSessionEventListener(
     state.processing = state.processing
       .then(() => dispatchEvent(state, event))
       .catch((err) => {
-        debugLogger.error(
-          "[Braintrust] Error processing GitHub Copilot SDK event:",
-          err,
-        );
+        debugLogger.error("Error processing GitHub Copilot SDK event:", err);
       });
   };
 

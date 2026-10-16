@@ -834,6 +834,34 @@ describe("onSpanExport", () => {
     }
   });
 
+  test("logs the failure once logging is enabled after a silenced failure", () => {
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+    const state = _internalGetGlobalState();
+    configureInstrumentation({
+      spanCustomizers: [
+        {
+          onSpanExport(): SpanExportData {
+            throw new Error("private exception detail");
+          },
+        },
+      ],
+    });
+
+    state.setDebugLogLevel(false);
+    customizeSpanExport({ id: "silenced" });
+    expect(errorLog).not.toHaveBeenCalled();
+
+    state.setDebugLogLevel("error");
+    customizeSpanExport({ id: "visible" });
+    customizeSpanExport({ id: "deduplicated" });
+    expect(errorLog.mock.calls).toEqual([
+      [
+        "[braintrust]",
+        "Span export customizer failed; exporting only span identity and duration.",
+      ],
+    ]);
+  });
+
   test("logs safely once across time, registrations, and SDK module copies", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});

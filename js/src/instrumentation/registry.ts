@@ -57,8 +57,8 @@ class PluginRegistry {
    */
   configure(config: InstrumentationConfig): void {
     if (this.enabled) {
-      debugLogger.warn(
-        "Braintrust: Cannot configure instrumentation after it has been enabled. " +
+      debugLogger.notice.warn(
+        "Cannot configure instrumentation after it has been enabled. " +
           "Call configureInstrumentation() before importing any AI SDKs.",
       );
       return;
