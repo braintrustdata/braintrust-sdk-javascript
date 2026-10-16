@@ -1,3 +1,4 @@
+import type { LiveKitOptions } from "./livekit/options";
 export type SpanExportData = Record<string, unknown>;
 
 export interface SpanCustomizer {
@@ -23,6 +24,7 @@ export interface SpanCustomizer {
 }
 
 export interface InstrumentationIntegrationsConfig {
+  livekit?: boolean | LiveKitOptions;
   openai?: boolean;
   anthropic?: boolean;
   vercel?: boolean;
@@ -84,6 +86,8 @@ const envIntegrationAliases: Record<
   string,
   keyof InstrumentationIntegrationsConfig
 > = {
+  livekit: "livekit",
+  "@livekit/agents": "livekit",
   openai: "openai",
   "openai-codex": "openaiCodexSDK",
   "openai-codex-sdk": "openaiCodexSDK",
@@ -175,6 +179,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
   boolean
 > {
   return {
+    livekit: true,
     openai: true,
     openaiCodexSDK: true,
     anthropic: true,

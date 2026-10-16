@@ -28,6 +28,7 @@ export const INSTRUMENTATION_NAMES = {
   GOOGLE_GENAI: "google-genai",
   GROQ: "groq",
   HUGGINGFACE: "huggingface",
+  LIVEKIT: "livekit",
   LANGCHAIN: "langchain",
   LANGSMITH: "langsmith",
   MASTRA: "mastra",

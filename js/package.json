@@ -143,6 +143,11 @@
       "import": "./dist/auto-instrumentations/bundler/rollup.mjs",
       "module": "./dist/auto-instrumentations/bundler/rollup.mjs",
       "require": "./dist/auto-instrumentations/bundler/rollup.cjs"
+    },
+    "./livekit": {
+      "types": "./dist/livekit.d.ts",
+      "import": "./dist/livekit.mjs",
+      "require": "./dist/livekit.js"
     }
   },
   "files": [

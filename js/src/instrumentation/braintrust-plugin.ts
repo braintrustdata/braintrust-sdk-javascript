@@ -1,3 +1,4 @@
+import { LiveKitPlugin } from "./plugins/livekit-plugin";
 import { BasePlugin } from "./core";
 import { OpenAIPlugin } from "./plugins/openai-plugin";
 import { OpenAICodexPlugin } from "./plugins/openai-codex-plugin";
@@ -83,6 +84,7 @@ export class BraintrustPlugin extends BasePlugin {
   private bedrockRuntimePlugin: BedrockRuntimePlugin | null = null;
   private genkitPlugin: GenkitPlugin | null = null;
   private gitHubCopilotPlugin: GitHubCopilotPlugin | null = null;
+  private livekitPlugin: LiveKitPlugin | null = null;
   private fluePlugin: FluePlugin | null = null;
   private langChainPlugin: LangChainPlugin | null = null;
   private langSmithPlugin: LangSmithPlugin | null = null;
@@ -99,8 +101,27 @@ export class BraintrustPlugin extends BasePlugin {
     this.config = config;
   }
 
+  configureLiveKit(value: InstrumentationIntegrationsConfig["livekit"]) {
+    this.livekitPlugin?.configure(typeof value === "object" ? value : {});
+    if (value === false) {
+      this.livekitPlugin?.disable();
+      this.livekitPlugin = null;
+    } else if (!this.livekitPlugin) {
+      this.livekitPlugin = new LiveKitPlugin(
+        typeof value === "object" ? value : {},
+      );
+      this.livekitPlugin.enable();
+    }
+  }
+
   protected onEnable(): void {
     const integrations = this.config.integrations ?? {};
+    if (integrations.livekit !== false) {
+      this.livekitPlugin = new LiveKitPlugin(
+        typeof integrations.livekit === "object" ? integrations.livekit : {},
+      );
+      this.livekitPlugin.enable();
+    }
 
     // Enable OpenAI integration (default: true)
     if (integrations.openai !== false) {
@@ -287,6 +308,8 @@ export class BraintrustPlugin extends BasePlugin {
   }
 
   protected onDisable(): void {
+    this.livekitPlugin?.disable();
+    this.livekitPlugin = null;
     if (this.openaiPlugin) {
       this.openaiPlugin.disable();
       this.openaiPlugin = null;
