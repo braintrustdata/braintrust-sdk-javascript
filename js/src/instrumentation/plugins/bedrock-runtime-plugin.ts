@@ -568,11 +568,26 @@ export function aggregateInvokeModelResponseStreamChunks(
             ),
           },
     metrics: parseBedrockRuntimeMetrics(
-      usage ?? (isObject(metadata) ? metadata.usage : undefined),
+      usage ??
+        (isObject(metadata) ? metadata.usage : undefined) ??
+        lastInvocationMetrics(jsonLikeChunks),
       isObject(metadata) ? metadata.metrics : undefined,
     ),
     ...(metadata ? { metadata } : {}),
   };
+}
+
+// Models whose stream carries no usage of its own (gpt-oss, for example) only
+// report token counts in the amazon-bedrock-invocationMetrics of the last
+// chunk. Nova sends zeros there, so it is only a fallback after metadata.usage.
+function lastInvocationMetrics(
+  chunks: Record<string, unknown>[],
+): Record<string, unknown> | undefined {
+  const metrics = chunks
+    .map((chunk) => chunk["amazon-bedrock-invocationMetrics"])
+    .reverse()
+    .find(isObject);
+  return metrics ? sanitizeRecord(metrics) : undefined;
 }
 
 function logBedrockStreamAggregation(
@@ -818,6 +833,14 @@ function extractTextFromJsonLike(value: unknown): string {
   }
   if (Array.isArray(value.outputs)) {
     return value.outputs.map(extractTextFromJsonLike).join("");
+  }
+  // OpenAI-compatible chunks (gpt-oss and other OpenAI models):
+  // choices[].delta.content
+  if (Array.isArray(value.choices)) {
+    return value.choices.map(extractTextFromJsonLike).join("");
+  }
+  if (typeof value.content === "string") {
+    return value.content;
   }
 
   return "";
