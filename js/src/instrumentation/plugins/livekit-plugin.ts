@@ -30,7 +30,7 @@ import {
 import { isObject } from "../../../util";
 import { zodToJsonSchema } from "../../zod/utils";
 import { debugLogger } from "../../debug-logger";
-import { isAutoCaptureAttachmentsEnabled } from "../../wrappers/attachment-utils";
+import { isEnvFlagEnabled } from "../../wrappers/attachment-utils";
 import { DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES } from "../config";
 import {
   PcmAudio,
@@ -48,6 +48,10 @@ const SAMPLE_RATE = 24000;
 // The OTel API shares its context key through Symbol.for, including across copies.
 const OTEL_SPAN_KEY = Symbol.for("OpenTelemetry Context Key SPAN");
 const FINAL_TRANSCRIPT = 2; // SpeechEventType.FINAL_TRANSCRIPT
+// Voice audio is personal data, so each direction has its own explicit flag rather
+// than the shared BRAINTRUST_CAPTURE_ATTACHMENTS, which also enables other media.
+const CAPTURE_USER_AUDIO = "BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS";
+const CAPTURE_AGENT_AUDIO = "BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS";
 
 // Native spans with a Braintrust name. Other session spans export as `livekit.<name>`.
 const SPANS = new Map<string, { name: string; type: "task" | "llm" | "tool" }>([
@@ -386,6 +390,10 @@ class LiveKitTracing {
     if (name === "agent_session") {
       const rows = new Map<string, Row>();
       const relationships = new Relationships();
+      const captures = {
+        input: isEnvFlagEnabled(CAPTURE_USER_AUDIO),
+        output: isEnvFlagEnabled(CAPTURE_AGENT_AUDIO),
+      };
       this.sessions.set(id, {
         root: row,
         rows,
@@ -393,11 +401,15 @@ class LiveKitTracing {
         relationships,
         speech: new SpeechTracker(relationships),
         transcripts: new Map(),
-        recording: isAutoCaptureAttachmentsEnabled()
-          ? new Recording(row.span, this.streamingAttachmentBufferBytes, (id) =>
-              rows.get(id),
-            )
-          : undefined,
+        recording:
+          captures.input || captures.output
+            ? new Recording(
+                row.span,
+                this.streamingAttachmentBufferBytes,
+                (id) => rows.get(id),
+                captures,
+              )
+            : undefined,
         closed: false,
       });
     }
@@ -578,7 +590,8 @@ class LiveKitTracing {
   }
 
   input(activity: AgentActivity, stream: ReadableStream<AudioFrame>): void {
-    this.sessionOf(activity.agentSession)?.recording?.attachInput(stream);
+    const recording = this.sessionOf(activity.agentSession)?.recording;
+    if (recording?.captures.input) recording.attachInput(stream);
   }
 
   output(session: AgentSession): void {
@@ -594,7 +607,7 @@ class LiveKitTracing {
             const row = this.rowOf(session.agentSpeakingSpan);
             if (row) row.playedText = text;
           },
-          state.recording,
+          state.recording?.captures.output ? state.recording : undefined,
         )
       : undefined;
   }
@@ -1164,6 +1177,8 @@ class Recording {
     private span: Span,
     private chunkBytes: number,
     private resolve: (owner: string) => Row | undefined,
+    /** Which directions this recording captures: caller input, agent output. */
+    readonly captures = { input: true, output: true },
   ) {
     this.pcm = new PcmAudio({
       sampleRate: SAMPLE_RATE,

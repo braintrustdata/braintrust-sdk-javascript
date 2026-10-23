@@ -53,6 +53,7 @@ Map the change before editing:
 - Log only the useful surface. Prefer narrow, stable payloads over dumping full request/response objects; exclude redundant or overly large data when possible.
 - Automatic capture of inline multimodal bytes as Braintrust attachments must be opt-in.
   Guard attachment creation and binary observation with `BRAINTRUST_CAPTURE_ATTACHMENTS`, and enable them only when its value is `1` or `true`.
+  Audio/video recordings may contain personal data and are separately controlled with their own explicit flags (`BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS`, `BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS`): enabling the shared flag for other media never records audio/video without these being enabled.
   Preserve useful text, metadata, metrics, and remote references when attachment capture is disabled, and omit inline bytes from logged payloads.
 - Segmentable streaming media must use the shared `configureInstrumentation({ streamingAttachmentBufferBytes })` setting instead of provider-specific chunk-size or time-based controls.
   It defaults to 4 MiB per logical media stream and counts binary attachment payload bytes after decoding and format conversion, including any required padding or silence.

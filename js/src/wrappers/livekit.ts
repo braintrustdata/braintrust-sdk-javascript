@@ -75,8 +75,9 @@ function wrapSession(session: AgentSession): AgentSession {
  * Trace a LiveKit Agents (1.9.x) module with Braintrust.
  *
  * Captures cascade voice sessions: user and agent turns, speech, STT, LLM
- * responses, TTS and function tools. With attachment capture enabled, the call
- * audio is recorded as PCM attachments. Wrap the module before constructing
+ * responses, TTS and function tools. Call audio is recorded as PCM attachments
+ * per direction: set BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS for caller audio
+ * and BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS for agent audio. Wrap the module before constructing
  * sessions; only sessions created through the wrapped module are traced.
  *
  * @example

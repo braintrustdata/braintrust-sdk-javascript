@@ -864,7 +864,8 @@ describe("speech", () => {
 
 describe("recording", () => {
   beforeEach(() => {
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+    vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "true");
+    vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "true");
   });
   /** A recorded session with one agent turn and an EventEmitter sink. */
   function session(
@@ -911,8 +912,10 @@ describe("recording", () => {
     };
   }
 
-  test("disabled attachment capture leaves sinks and inputs untouched", async () => {
-    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "");
+  test("the shared attachment flag alone records no voice audio", async () => {
+    vi.stubEnv("BRAINTRUST_CAPTURE_ATTACHMENTS", "true");
+    vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "");
+    vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "");
     const stream = new ReadableStream();
     const { getReader } = stream;
     const { sink, session: agentSession, close } = session();
@@ -922,6 +925,37 @@ describe("recording", () => {
     expect(stream.getReader).toBe(getReader);
     expect(sink.captureFrame).toBe(captureFrame);
     expect((await close()).recordings).toBeUndefined();
+  });
+
+  test("user audio alone taps the input and leaves the sink untouched", async () => {
+    vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "");
+    const stream = new ReadableStream();
+    const { getReader } = stream;
+    const { sink, session: agentSession, close } = session();
+    const { captureFrame } = sink;
+    tracing.input({ agentSession }, stream);
+    tracing.output(agentSession);
+    expect(stream.getReader).not.toBe(getReader);
+    expect(sink.captureFrame).toBe(captureFrame);
+    await close();
+  });
+
+  test("agent audio alone records playback and leaves the input untouched", async () => {
+    vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "");
+    const stream = new ReadableStream();
+    const { getReader } = stream;
+    const { sink, origin, session: agentSession, close } = session();
+    tracing.input({ agentSession }, stream);
+    expect(stream.getReader).toBe(getReader);
+    await sink.captureFrame(frame());
+    sink.emit("playbackStarted", { createdAt: origin + 10 });
+    sink.emit("playbackFinished", {
+      playbackPosition: 0.02,
+      interrupted: false,
+    });
+    expect((await close()).recordings).toMatchObject([
+      { state: "ready", sources: [{ boundary: "local_audio_output" }] },
+    ]);
   });
 
   test("close resolves after the recording is uploaded and published", async () => {

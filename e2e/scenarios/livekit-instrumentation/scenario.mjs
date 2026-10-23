@@ -10,7 +10,9 @@ const livekit = await import("@livekit/agents");
 const { voice, llm, telemetry, initializeLogger } =
   process.env.LIVEKIT_WRAP === "1" ? wrapLiveKit(livekit) : livekit;
 initializeLogger({ pretty: false, level: "silent" });
-const recording = process.env.BRAINTRUST_CAPTURE_ATTACHMENTS === "true";
+const recording =
+  process.env.BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS === "true" ||
+  process.env.BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS === "true";
 let provider;
 if (process.env.LIVEKIT_OTEL === "unsampled") {
   // An application provider that samples everything out must stay installed.
