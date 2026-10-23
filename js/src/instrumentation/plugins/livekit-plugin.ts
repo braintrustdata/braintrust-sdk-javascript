@@ -18,7 +18,7 @@ import type {
 } from "../../vendor-sdk-types/livekit";
 import iso from "../../isomorph";
 import { BasePlugin } from "../core";
-import { observeResult, runInstrumentation } from "../core/observe-result";
+import { runInstrumentation } from "../core/observe-result";
 import { livekitChannels } from "./livekit-interceptors";
 import { v4 as uuidv4 } from "uuid";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
@@ -160,12 +160,11 @@ export class LiveKitPlugin extends BasePlugin {
           Reflect.apply(target, self, args),
         ),
       ),
-      livekitChannels.close.intercept((target, self, args) => {
-        // closeImpl clears sessionSpan, so resolve the session before calling it.
-        const span = (self as AgentSession).sessionSpan;
-        const finish = () => tracing.closeSession(span);
-        return observeResult(Reflect.apply(target, self, args), finish, finish);
-      }),
+      livekitChannels.close.intercept((target, self, args) =>
+        tracing.close(self as AgentSession, () =>
+          Reflect.apply(target, self, args),
+        ),
+      ),
     );
   }
 
@@ -610,6 +609,24 @@ class LiveKitTracing {
     // samples; never derive selection from the broader user_turn span's start/end timestamps.
     if (stoppedSpeakingAt !== undefined)
       state.recording?.selectInput(turn, startedSpeakingAt, stoppedSpeakingAt);
+  }
+
+  /**
+   * Runs LiveKit's close, then waits for the session's recording to upload and
+   * publish. LiveKit's job process exits right after shutdown, so work left
+   * running past close is lost. LiveKit's result and errors are unchanged.
+   */
+  async close(
+    session: AgentSession,
+    close: () => Promise<void>,
+  ): Promise<void> {
+    // closeImpl clears sessionSpan, so resolve the session before calling it.
+    const span = session.sessionSpan;
+    try {
+      return await close();
+    } finally {
+      await this.closeSession(span);
+    }
   }
 
   closeSession(session: LiveKitSpan | string | undefined): Promise<void> {

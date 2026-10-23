@@ -924,6 +924,53 @@ describe("recording", () => {
     expect((await close()).recordings).toBeUndefined();
   });
 
+  test("close resolves after the recording is uploaded and published", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.mocked(Attachment.prototype.upload).mockImplementation(async () => {
+      await gate;
+      return { upload_status: "done" };
+    });
+    const { root, sink, origin, session: agentSession } = session();
+    await sink.captureFrame(frame());
+    sink.emit("playbackStarted", { createdAt: origin + 10 });
+    sink.emit("playbackFinished", {
+      playbackPosition: 0.02,
+      interrupted: false,
+    });
+    let closed = false;
+    const closing = tracing
+      .close(agentSession, async () => {})
+      .then(() => (closed = true));
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(closed).toBe(false);
+    release();
+    await closing;
+    root.end();
+    const recordings = (await rows()).named("session")[0].metadata?.[
+      "audio.recordings"
+    ];
+    expect(recordings).toMatchObject([{ id: "call-0000", state: "ready" }]);
+  });
+
+  test("close keeps LiveKit's error and still finishes the recording", async () => {
+    const error = new Error("close failed");
+    const { root, sink, session: agentSession } = session();
+    await sink.captureFrame(frame());
+    await expect(
+      tracing.close(agentSession, async () => {
+        throw error;
+      }),
+    ).rejects.toBe(error);
+    root.end();
+    const recordings = (await rows()).named("session")[0].metadata?.[
+      "audio.recordings"
+    ];
+    expect(recordings).toBeDefined();
+  });
+
   test("interruption records only confirmed progress ranges, excluding the queued tail and pauses", async () => {
     const { sink, origin, close } = session();
     await sink.captureFrame(frame(2400)); // 100 ms generated

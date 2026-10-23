@@ -270,6 +270,10 @@ try {
   await session.close();
   await logger.flush();
   if (provider) assert.equal(telemetry.tracer.getProvider(), provider);
+  // LiveKit's job process exits right after its shutdown callbacks, like this;
+  // anything not finished by then is lost.
+  await new Promise((resolve) => process.stdout.write("", resolve));
+  process.exit(0);
 } finally {
   if (streamingStt) await session.input.audio?.close();
   await session.close();
