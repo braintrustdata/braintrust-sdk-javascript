@@ -1282,12 +1282,16 @@ describe("recording", () => {
 });
 
 describe("recording files", () => {
-  const packet = (at: number, length = 24000, channel = 0) => ({
+  const packet = (
+    at: number,
+    length = 24000,
+    source: "session_input" | "local_audio_output" = "session_input",
+  ) => ({
     pcm: Int16Array.from({ length }, (_, i) => ((i * 31) % 30000) - 15000),
     at,
     rate: 24000,
     channels: 1,
-    channel,
+    source,
   });
   /** A recording whose wall-clock hold no longer limits uploads. */
   function recording(chunkBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES) {
@@ -1330,11 +1334,14 @@ describe("recording files", () => {
       return { upload_status: "done" };
     });
     const { r, log, files, selections } = recording(96000);
-    r.select("turn", 0, 1000, 0);
+    r.select("turn", 0, 1000, "session_input");
     r.publish(["turn"]);
     r.record(packet(0));
     r.advance();
-    expect(files()).toEqual([["call-0000", "pending", 0, undefined]]);
+    // Pending once the segment leaves the (empty) middleware stack.
+    await vi.waitFor(() =>
+      expect(files()).toEqual([["call-0000", "pending", 0, undefined]]),
+    );
     expect(log.mock.calls.some(([event]) => event.input)).toBe(false);
     expect(selections()).toEqual([]);
     complete();
@@ -1357,7 +1364,13 @@ describe("recording files", () => {
           (_, i) => (((i + at) * (channel ? 31 : 17)) % 30001) - 15000,
         );
         expect(
-          r.record({ pcm, at: at / 24, rate: 24000, channels: 1, channel }),
+          r.record({
+            pcm,
+            at: at / 24,
+            rate: 24000,
+            channels: 1,
+            source: channel ? "local_audio_output" : "session_input",
+          }),
         ).toBe(true);
         for (let i = 0; i < pcm.length; i++)
           expected.writeInt16LE(pcm[i], ((at + i) * 2 + channel) * 2);
@@ -1409,7 +1422,7 @@ describe("recording files", () => {
         error_message: "offline",
       });
     const { r, files, selections } = recording(96000);
-    r.select("turn", 0, 2000, 0);
+    r.select("turn", 0, 2000, "session_input");
     for (let i = 0; i < 2; i++) {
       r.record(packet(i * 1000));
       r.advance();
@@ -1429,10 +1442,10 @@ describe("recording files", () => {
 
   test("late selections split across ready files and merge adjacent intervals", async () => {
     const { r, selections } = recording(96000);
-    r.record(packet(0, 48000));
+    r.record(packet(0, 48000, "local_audio_output"));
     await r.finish();
-    r.select("turn", 500, 1000, 1);
-    r.select("turn", 1000, 1500, 1);
+    r.select("turn", 500, 1000, "local_audio_output");
+    r.select("turn", 1000, 1500, "local_audio_output");
     r.publish(["turn"]);
     expect(selections()).toEqual([
       ["call-0000", 500, 1000],
