@@ -17,6 +17,7 @@ import {
   initLogger,
 } from "../../logger";
 import type { LiveKitSpan, SpanTime } from "../../vendor-sdk-types/livekit";
+import type { AudioMiddleware } from "../../audio-middleware";
 import { DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES } from "../config";
 import { channel, defineInterceptor } from "../core/interceptor-definitions";
 import { traceAsyncCall } from "../core/tracing";
@@ -1003,6 +1004,155 @@ describe("recording", () => {
       "audio.recordings"
     ];
     expect(recordings).toBeDefined();
+  });
+
+  /** Replaces the default tracing with one that runs the given middleware. */
+  async function withMiddleware(
+    middleware: AudioMiddleware,
+    chunkBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES,
+  ) {
+    await tracing.shutdown();
+    tracing = new LiveKitTracing(chunkBytes, () => [middleware]);
+  }
+  /** One agent frame played for 20 ms starting 10 ms into the call. */
+  async function playOneFrame(sink: EventEmitter & any, origin: number) {
+    await sink.captureFrame(frame());
+    sink.emit("playbackStarted", { createdAt: origin + 10 });
+    sink.emit("playbackFinished", {
+      playbackPosition: 0.02,
+      interrupted: false,
+    });
+  }
+
+  test("disabled audio capture never runs middleware", async () => {
+    vi.stubEnv("BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS", "");
+    vi.stubEnv("BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS", "");
+    const middleware = vi.fn<AudioMiddleware>();
+    await withMiddleware(middleware);
+    const { sink, origin, close } = session();
+    await playOneFrame(sink, origin);
+    expect((await close()).recordings).toBeUndefined();
+    expect(middleware).not.toHaveBeenCalled();
+  });
+
+  test("middleware output is uploaded with its format; selections are unchanged", async () => {
+    await withMiddleware(async (segment, meta, next) => {
+      const framed = new Uint8Array(segment.length + 4);
+      framed.set([0x54, 0x45, 0x53, 0x54]);
+      framed.set(segment, 4);
+      return next(framed, {
+        ...meta,
+        mimeType: "audio/x-test",
+        encoding: "test",
+        attributes: { "acme.framing": "test" },
+        state: { "acme.header": framed.subarray(0, 4) },
+      });
+    });
+    const { sink, origin, close } = session();
+    await playOneFrame(sink, origin);
+    const { recordings, selections, named } = await close();
+    expect(recordings).toMatchObject([
+      {
+        id: "call-0000",
+        state: "ready",
+        mime_type: "audio/x-test",
+        duration_ms: 30, // Includes the 10 ms before playout started.
+        sources: [{ channel_index: 1 }],
+      },
+    ]);
+    // Only raw PCM publishes a sample format.
+    expect(recordings[0]).not.toHaveProperty("sample_format");
+    // Attributes describe the published file; state stays in the pipeline.
+    expect(recordings[0].attributes).toEqual({ "acme.framing": "test" });
+    expect(JSON.stringify(recordings)).not.toContain("acme.header");
+    expect(selections("agent_turn")).toEqual([["call-0000", 10, 30]]);
+    expect([...uploads[0].slice(0, 4)]).toEqual([0x54, 0x45, 0x53, 0x54]);
+    expect(channelSamples(uploads[0].slice(4), 1)[300]).toBe(1234);
+    const audio = named("session").find((row) => row.input?.audio)?.input.audio[
+      "call-0000"
+    ];
+    expect(audio).toMatchObject({
+      filename: "call-0000.x-test",
+      content_type: "audio/x-test",
+    });
+  });
+
+  test("failing middleware omits its file without changing sink I/O", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await withMiddleware(() => {
+      throw new Error("encoder unavailable");
+    });
+    const { sink, origin, close } = session();
+    await expect(playOneFrame(sink, origin)).resolves.toBeUndefined();
+    const { recordings, selections } = await close();
+    expect(recordings).toEqual([
+      expect.objectContaining({
+        id: "call-0000",
+        state: "omitted",
+        reason: "recording_transform_failed",
+        gaps: [
+          {
+            start_offset_ms: 0,
+            end_offset_ms: 30,
+            reason: "recording_transform_failed",
+          },
+        ],
+      }),
+      {
+        id: "call",
+        recording_group_id: "call",
+        state: "omitted",
+        reason: "recording_transform_failed",
+        truncated: true,
+      },
+    ]);
+    expect(selections("agent_turn")).toEqual([]);
+    expect(uploads).toEqual([]);
+  });
+
+  test("slow middleware never delays playback; close waits for it", async () => {
+    let entered = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    // 100 ms segments of 24 kHz stereo s16le.
+    await withMiddleware(async (segment, meta, next) => {
+      entered++;
+      await gate;
+      return next(segment, meta);
+    }, 9600);
+    const { sink, origin, close } = session();
+    const play = async (startedAt: number) => {
+      await sink.captureFrame(frame(2400));
+      sink.emit("playbackStarted", { createdAt: startedAt });
+      sink.emit("playbackFinished", {
+        playbackPosition: 0.1,
+        interrupted: false,
+      });
+    };
+    await play(origin);
+    now = origin + 2000; // The first 100 ms are now safe to cut.
+    await play(origin + 1500);
+    expect(entered).toBe(1);
+    // Later playback completes while that segment is held in middleware.
+    await play(origin + 1700);
+    expect(uploads).toEqual([]);
+    const closing = close();
+    release();
+    const { recordings } = await closing;
+    // The empty interval between playouts is skipped, not uploaded as silence.
+    expect(
+      recordings.map((r: any) => [
+        r.state,
+        r.timeline.recording_start_offset_ms,
+        r.duration_ms,
+      ]),
+    ).toEqual([
+      ["ready", 0, 100],
+      ["ready", 1500, 100],
+      ["ready", 1700, 100],
+    ]);
   });
 
   test("interruption records only confirmed progress ranges, excluding the queued tail and pauses", async () => {

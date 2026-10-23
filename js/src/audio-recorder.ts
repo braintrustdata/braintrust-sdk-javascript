@@ -1,39 +1,23 @@
+import { debugLogger } from "./debug-logger";
+import {
+  runMiddleware,
+  type AudioMiddlewareStack,
+  type AudioResult,
+  type AudioSegmentMeta,
+} from "./audio-middleware";
 import { PcmBuffer, pcmBytesToMs } from "./pcm-buffer";
-
-/**
- * Describes what a segment is and where it sits on the recording timeline, in
- * terms any audio format shares.
- */
-export interface AudioSegmentMeta {
-  /** Zero-based position of this segment within its recording. */
-  readonly index: number;
-  /** Segment start on the recording timeline. */
-  readonly startOffsetMs: number;
-  /** Playable duration of the segment. */
-  readonly durationMs: number;
-  readonly sampleRate: number;
-  readonly channelCount: number;
-  /** Sources heard in this segment and the file channel each occupies. */
-  readonly sources: readonly AudioSource[];
-  /** Content type of the segment bytes, such as `audio/pcm`. */
-  readonly mimeType: string;
-  /** Sample or codec encoding, such as `s16le`. */
-  readonly encoding: string;
-}
-
-/** A recorder source key, as given by the integration, on one file channel. */
-type AudioSource = { readonly channel: number; readonly name: string };
 
 type AudioRecorderOptions = {
   sampleRate: number;
   /** Source keys, one per output channel in order. */
   sources: readonly string[];
-  /** Target size of each segment. */
+  /** Target size of each segment entering the middleware. */
   segmentBytes: number;
   /** Bound on buffered and reserved audio; one in-flight segment is extra. */
   maxBufferBytes?: number;
   maxDurationMs?: number;
-  /** Receives each segment; the recorder waits for it to settle. */
+  middleware?: AudioMiddlewareStack;
+  /** Receives each transformed segment; the recorder waits for it to settle. */
   onFlush(segment: Uint8Array, meta: AudioSegmentMeta): void | Promise<void>;
   /** Receives the original metadata of a segment that failed, and the stop reason. */
   onError(meta: AudioSegmentMeta, reason: string, error: unknown): void;
@@ -41,7 +25,7 @@ type AudioRecorderOptions = {
 
 /**
  * Assembles PCM on a channel timeline, cuts bounded segments behind a confirmed
- * offset, and passes them to `onFlush`, one at a time.
+ * offset, and passes them through middleware to `onFlush`, one at a time.
  */
 export class AudioRecorder {
   private buffer: PcmBuffer;
@@ -50,6 +34,7 @@ export class AudioRecorder {
   private index = 0;
   private job?: Promise<void>;
   private finishing?: Promise<void>;
+  private warned = false;
   private stopReason?: string;
   private isClosed = false;
 
@@ -205,8 +190,24 @@ export class AudioRecorder {
   }
 
   private async process(segment: Uint8Array, meta: AudioSegmentMeta) {
+    let result: AudioResult;
     try {
-      await this.options.onFlush(segment, meta);
+      result = await runMiddleware(
+        this.options.middleware ?? [],
+        segment,
+        meta,
+      );
+    } catch (error) {
+      if (!this.warned)
+        debugLogger.notice.warn(
+          "Audio middleware failed; the recording omits this segment and stops.",
+          error,
+        );
+      this.warned = true;
+      return this.fail("recording_transform_failed", error, meta);
+    }
+    try {
+      await this.options.onFlush(result.segment, result.meta);
     } catch (error) {
       this.fail("recording_export_failed", error, meta);
     }

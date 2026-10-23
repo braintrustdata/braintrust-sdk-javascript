@@ -1,5 +1,6 @@
 import { expect, test, vi } from "vitest";
-import { AudioRecorder, type AudioSegmentMeta } from "./audio-recorder";
+import type { AudioMiddleware, AudioSegmentMeta } from "./audio-middleware";
+import { AudioRecorder } from "./audio-recorder";
 
 const mono = (offsetMs: number) => ({
   sampleRate: 1000,
@@ -32,7 +33,7 @@ function recorder(
   return { r, flushed, errors };
 }
 
-test("segments carry the recorded PCM and its format and placement", async () => {
+test("without middleware, segments carry the recorded PCM and its format and placement", async () => {
   const { r, flushed, errors } = recorder();
   // Leading silence is skipped in whole segments, so 20 ms starts the first one.
   expect(r.record("a", ramp(4), mono(20))).toBe(true);
@@ -141,6 +142,30 @@ test("rotation and the final partial segment reconstruct both channels exactly",
       );
 });
 
+test("middleware output is flushed; a failing segment is omitted, stops capture and keeps earlier audio", async () => {
+  let calls = 0;
+  const failSecond: AudioMiddleware = (segment, meta, next) => {
+    if (++calls === 2) throw new Error("boom");
+    return next(segment, { ...meta, encoding: "tagged" });
+  };
+  const { r, flushed, errors } = recorder({ middleware: [failSecond] });
+  r.record("a", ramp(30), mono(0));
+  r.advance(30);
+  await vi.waitFor(() => expect(errors).toHaveLength(1));
+  expect(errors[0]).toMatchObject({
+    meta: { index: 1, startOffsetMs: 10 },
+    reason: "recording_transform_failed",
+  });
+  expect(r.reason).toBe("recording_transform_failed");
+  expect(r.record("a", ramp(1), mono(40))).toBe(false);
+  await r.finish();
+  // Accepted audio after the failure still drains on finish.
+  expect(flushed.map(({ meta }) => [meta.index, meta.encoding])).toEqual([
+    [0, "tagged"],
+    [2, "tagged"],
+  ]);
+});
+
 test("a rejected flush is reported, stops capture and never rejects finish", async () => {
   const { r, errors } = recorder({
     onFlush: async () => {
@@ -160,15 +185,12 @@ test("one segment is in flight; slow work bounds the backlog and keeps the accep
   const gate = new Promise<void>((resolve) => {
     release = resolve;
   });
-  const starts: number[] = [];
+  const slow: AudioMiddleware = async (segment, meta, next) => {
+    await gate;
+    return next(segment, meta);
+  };
   // Room for 20 buffered samples; the in-flight segment sits outside the budget.
-  const { r } = recorder({
-    maxBufferBytes: 40,
-    onFlush: async (_segment, meta) => {
-      await gate;
-      starts.push(meta.startOffsetMs);
-    },
-  });
+  const { r, flushed } = recorder({ middleware: [slow], maxBufferBytes: 40 });
   expect(r.record("a", ramp(10), mono(0))).toBe(true);
   r.advance(10);
   for (let at = 10; at < 30; at += 10) {
@@ -179,7 +201,7 @@ test("one segment is in flight; slow work bounds the backlog and keeps the accep
   expect(r.reason).toBe("capture_byte_limit");
   release();
   await r.finish();
-  expect(starts).toEqual([0, 10, 20]);
+  expect(flushed.map(({ meta }) => meta.startOffsetMs)).toEqual([0, 10, 20]);
 });
 
 test("finish is idempotent and waits for flushes to settle", async () => {
@@ -236,4 +258,34 @@ test("the duration limit and invalid audio stop capture with a reason", async ()
   const unknown = recorder();
   expect(unknown.r.record("c", ramp(1), mono(0))).toBe(false);
   expect(unknown.r.reason).toBe("unknown_audio_source");
+});
+
+test("concurrent recorders with shared middleware keep their segments separate", async () => {
+  const gates: (() => void)[] = [];
+  const tag: AudioMiddleware = async (segment, meta, next) => {
+    await new Promise<void>((resolve) => gates.push(resolve));
+    return next(segment, { ...meta, encoding: `tagged-${segment[0]}` });
+  };
+  const a = recorder({ middleware: [tag] });
+  const b = recorder({ middleware: [tag] });
+  a.r.record("a", ramp(15, 1), mono(0));
+  b.r.record("a", ramp(15, 50), mono(0));
+  const finishing = Promise.all([a.r.finish(), b.r.finish()]);
+  // Release in reverse arrival order; each recorder still flushes in order.
+  while (a.flushed.length + b.flushed.length < 4) {
+    gates
+      .splice(0)
+      .reverse()
+      .forEach((release) => release());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  await finishing;
+  expect(a.flushed.map(({ meta }) => [meta.index, meta.encoding])).toEqual([
+    [0, "tagged-1"],
+    [1, "tagged-11"],
+  ]);
+  expect(b.flushed.map(({ meta }) => [meta.index, meta.encoding])).toEqual([
+    [0, "tagged-50"],
+    [1, "tagged-60"],
+  ]);
 });

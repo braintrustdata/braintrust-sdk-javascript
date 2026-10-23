@@ -33,7 +33,11 @@ import { debugLogger } from "../../debug-logger";
 import { isEnvFlagEnabled } from "../../wrappers/attachment-utils";
 import { DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES } from "../config";
 import { pcmBytesToMs, msToSamples, samplesToMs } from "../../pcm-buffer";
-import { AudioRecorder, type AudioSegmentMeta } from "../../audio-recorder";
+import { AudioRecorder } from "../../audio-recorder";
+import type {
+  AudioMiddlewareStack,
+  AudioSegmentMeta,
+} from "../../audio-middleware";
 
 // Bounds on per-session observation state, independent of the attachment threshold.
 const MAX_ROWS = 8192;
@@ -233,7 +237,10 @@ class LiveKitTracing {
   // Callbacks already handed to LiveKit can outlive interceptor unsubscription.
   private disabled = false;
 
-  constructor(private streamingAttachmentBufferBytes: number) {}
+  constructor(
+    private streamingAttachmentBufferBytes: number,
+    private audioMiddleware?: () => AudioMiddlewareStack,
+  ) {}
 
   private rowOf(span: LiveKitSpan | undefined): Row | undefined {
     const row = span && observedRows.get(span);
@@ -404,6 +411,7 @@ class LiveKitTracing {
                 this.streamingAttachmentBufferBytes,
                 (id) => rows.get(id),
                 captures,
+                this.audioMiddleware,
               )
             : undefined,
         closed: false,
@@ -1172,15 +1180,30 @@ class Recording {
     private resolve: (owner: string) => Row | undefined,
     /** Which directions this recording captures: caller input, agent output. */
     readonly captures = { input: true, output: true },
+    middleware?: () => AudioMiddlewareStack,
   ) {
+    // Each recording builds its own stack, so plugin state is never shared.
+    let stack: AudioMiddlewareStack = [];
+    let failed = false;
+    try {
+      stack = middleware?.() ?? [];
+    } catch (error) {
+      failed = true;
+      debugLogger.notice.warn(
+        "LiveKit audio middleware failed to start.",
+        error,
+      );
+    }
     this.recorder = new AudioRecorder({
       sampleRate: SAMPLE_RATE,
       sources: ["session_input", "local_audio_output"],
       segmentBytes: chunkBytes,
       maxDurationMs: MAX_RECORDING_MS,
+      middleware: stack,
       onFlush: (segment, meta) => this.upload(segment, meta),
       onError: (meta, reason) => this.omit(meta, reason),
     });
+    if (failed) this.stop("recording_transform_failed");
   }
 
   get active(): boolean {
@@ -1357,8 +1380,10 @@ class Recording {
       mime_type: meta.mimeType,
       sample_rate_hz: meta.sampleRate,
       channel_count: meta.channelCount,
-      sample_format: meta.encoding,
+      // Headerless PCM needs its sample format published; files such as Ogg carry their own.
+      ...(meta.mimeType === "audio/pcm" && { sample_format: meta.encoding }),
       duration_ms: meta.durationMs,
+      ...(meta.attributes && { attributes: meta.attributes }),
     };
     this.publishFiles();
     const attachment = new Attachment({
