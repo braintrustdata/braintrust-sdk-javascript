@@ -22,7 +22,7 @@ import { runInstrumentation } from "../core/observe-result";
 import { livekitChannels } from "./livekit-interceptors";
 import { v4 as uuidv4 } from "uuid";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
-import { startSpan, withCurrent, type Span } from "../../logger";
+import { Attachment, startSpan, withCurrent, type Span } from "../../logger";
 import {
   withSpanInstrumentationName,
   INSTRUMENTATION_NAMES,
@@ -33,11 +33,11 @@ import { debugLogger } from "../../debug-logger";
 import { isEnvFlagEnabled } from "../../wrappers/attachment-utils";
 import { DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES } from "../config";
 import {
-  PcmAudio,
+  PcmBuffer,
   pcmBytesToMs,
   msToSamples,
   samplesToMs,
-} from "../../pcm-audio";
+} from "../../pcm-buffer";
 
 // Bounds on per-session observation state, independent of the attachment threshold.
 const MAX_ROWS = 8192;
@@ -1142,7 +1142,7 @@ type AudioFile = {
   start: number;
   end: number;
   channels: number[];
-  metadata: NonNullable<ReturnType<PcmAudio["digest"]>>["metadata"];
+  metadata: Record<string, unknown>;
   state: "pending" | "ready" | "omitted";
   reason?: string;
 };
@@ -1150,12 +1150,12 @@ type AudioFile = {
 const inputs = new WeakMap<object, Recording>();
 const sinks = new WeakMap<object, Playback>();
 
-/** LiveKit's call clock, upload queue, and speech-to-file references. PcmAudio owns the bytes. */
+/** LiveKit's call clock, upload queue, and speech-to-file references. PcmBuffer owns the bytes. */
 class Recording {
   readonly origin = Date.now();
   /** Session-clock playout that each pending output run may still add audio before. */
   readonly holds = new Map<object, number>();
-  private pcm: PcmAudio;
+  private pcm: PcmBuffer;
   private files: AudioFile[] = [];
   private formats = [
     new Map<string, { sample_rate_hz: number; channel_count: number }>(),
@@ -1180,7 +1180,7 @@ class Recording {
     /** Which directions this recording captures: caller input, agent output. */
     readonly captures = { input: true, output: true },
   ) {
-    this.pcm = new PcmAudio({
+    this.pcm = new PcmBuffer({
       sampleRate: SAMPLE_RATE,
       channels: 2,
       maxBufferBytes: Math.min(
@@ -1237,7 +1237,7 @@ class Recording {
       return false;
     }
     try {
-      this.pcm.update(packet.pcm, {
+      this.pcm.write(packet.pcm, {
         sampleRate: packet.rate,
         channels: packet.channels,
         channel: packet.channel,
@@ -1393,15 +1393,14 @@ class Recording {
     )
       return;
     const id = `call-${String(this.files.length).padStart(4, "0")}`;
-    let result: ReturnType<PcmAudio["digest"]>;
+    let result: ReturnType<PcmBuffer["flush"]>;
     try {
-      result = this.pcm.digest({
+      result = this.pcm.flush({
         maxBytes: this.chunkBytes,
         endOffsetMs: this.closed
           ? undefined
           : Math.min(this.confirmedThroughMs, this.pcm.endOffsetMs),
-        flush: this.closed,
-        filename: `${id}.pcm`,
+        partial: this.closed,
       });
     } catch (error) {
       this.stop(
@@ -1410,13 +1409,23 @@ class Recording {
       return;
     }
     if (!result) return;
-    const { attachment } = result;
+    const attachment = new Attachment({
+      data: result.data,
+      filename: `${id}.pcm`,
+      contentType: "audio/pcm",
+    });
     const file: AudioFile = {
       id,
       start: result.startOffsetMs,
       end: result.endOffsetMs,
       channels: result.channels,
-      metadata: result.metadata,
+      metadata: {
+        mime_type: "audio/pcm",
+        sample_rate_hz: SAMPLE_RATE,
+        channel_count: 2,
+        sample_format: "s16le",
+        duration_ms: result.endOffsetMs - result.startOffsetMs,
+      },
       state: "pending",
     };
     this.files.push(file);
