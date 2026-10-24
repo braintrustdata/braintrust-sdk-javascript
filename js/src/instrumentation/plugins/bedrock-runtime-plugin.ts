@@ -179,7 +179,11 @@ function extractBedrockRuntimeOutput(
 
   if (operation === "invokeModel") {
     const response = isObject(result) ? result : undefined;
-    return parseJsonBody(response?.body) ?? summarizeBody(response?.body);
+    const parsedBody = parseJsonBody(response?.body);
+    if (isBedrockEmbeddingResponse(parsedBody)) {
+      return summarizeBedrockEmbeddingResponse(parsedBody);
+    }
+    return parsedBody ?? summarizeBody(response?.body);
   }
 
   return sanitizeBedrockValue(result);
@@ -233,7 +237,11 @@ function extractBedrockRuntimeResponseMetrics(
       ? parsedBody.metadata
       : undefined;
     const metrics = parseBedrockRuntimeMetrics(
-      parsedBody.usage ?? metadata?.usage,
+      parsedBody.usage ??
+        metadata?.usage ??
+        (isBedrockEmbeddingResponse(parsedBody)
+          ? bedrockEmbeddingUsageFromBody(parsedBody)
+          : undefined),
       parsedBody.metrics ?? metadata?.metrics,
     );
     if (Object.keys(metrics).length > 0) {
@@ -328,6 +336,60 @@ export function parseBedrockRuntimeMetrics(
 
 function firstNumber(...values: unknown[]): number | undefined {
   return values.find((value): value is number => typeof value === "number");
+}
+
+// InvokeModel is the embeddings surface for Titan and Cohere Embed on Bedrock.
+// Their responses carry no `usage` object: Titan reports a top-level token
+// count next to the vector, and Cohere Embed reports `meta.tokens` /
+// `meta.billed_units`. Without this detection the raw float arrays are logged
+// verbatim and the token metrics are dropped (#2303).
+function isBedrockEmbeddingResponse(
+  parsedBody: unknown,
+): parsedBody is Record<string, unknown> {
+  return (
+    isObject(parsedBody) &&
+    (Array.isArray(parsedBody.embedding) ||
+      Array.isArray(parsedBody.embeddings))
+  );
+}
+
+function summarizeBedrockEmbeddingResponse(
+  body: Record<string, unknown>,
+): Record<string, unknown> {
+  if (Array.isArray(body.embedding)) {
+    return { embedding_length: body.embedding.length };
+  }
+
+  const embeddings = Array.isArray(body.embeddings) ? body.embeddings : [];
+  const firstVector = embeddings.find((value): value is unknown[] =>
+    Array.isArray(value),
+  );
+  return {
+    embedding_count: embeddings.length,
+    ...(firstVector ? { embedding_length: firstVector.length } : {}),
+  };
+}
+
+function bedrockEmbeddingUsageFromBody(
+  body: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  const meta = isObject(body.meta) ? body.meta : undefined;
+  const tokens = isObject(meta?.tokens) ? meta.tokens : undefined;
+  const billedUnits = isObject(meta?.billed_units)
+    ? meta.billed_units
+    : undefined;
+
+  const inputTokens = firstNumber(
+    tokens?.input_tokens,
+    billedUnits?.input_tokens,
+    body.inputTextTokenCount,
+    body.prompt_token_count,
+  );
+  if (inputTokens === undefined) {
+    return undefined;
+  }
+
+  return { input_tokens: inputTokens };
 }
 
 function patchBedrockRuntimeStreamingResult(args: {

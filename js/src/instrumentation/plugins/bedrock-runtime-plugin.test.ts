@@ -25,6 +25,10 @@ class InvokeModelWithBidirectionalStreamCommand {
   constructor(public input: Record<string, unknown>) {}
 }
 
+class InvokeModelCommand {
+  constructor(public input: Record<string, unknown>) {}
+}
+
 class GetObjectCommand {
   constructor(public input: Record<string, unknown>) {}
 }
@@ -172,6 +176,128 @@ describe("BedrockRuntimePlugin", () => {
     }
 
     await expect(backgroundLogger.drain()).resolves.toEqual([]);
+  });
+
+  it("summarizes Titan embeddings output and records input token usage", async () => {
+    const embedding = Array.from({ length: 1024 }, (_, index) => index * 0.01);
+    await smithyCoreChannels.clientSend.invoke(
+      async () => ({
+        contentType: "application/json",
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            embedding,
+            inputTextTokenCount: 17,
+          }),
+        ),
+      }),
+      undefined,
+      [
+        new InvokeModelCommand({
+          modelId: "amazon.titan-embed-text-v2:0",
+          contentType: "application/json",
+          accept: "application/json",
+          body: JSON.stringify({ inputText: "hello world" }),
+        }) as any,
+      ],
+      {},
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          span_attributes: expect.objectContaining({
+            name: "bedrock.invokeModel",
+          }),
+          output: { embedding_length: 1024 },
+          metrics: expect.objectContaining({
+            prompt_tokens: 17,
+            tokens: 17,
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("summarizes Cohere embeddings output and records billed token usage", async () => {
+    const vector = (offset: number) =>
+      Array.from({ length: 64 }, (_, index) => index + offset);
+    await smithyCoreChannels.clientSend.invoke(
+      async () => ({
+        contentType: "application/json",
+        body: new TextEncoder().encode(
+          JSON.stringify({
+            id: "cohere-embed-1",
+            embeddings: [vector(0), vector(1)],
+            texts: ["first", "second"],
+            response_type: "embeddings",
+            meta: {
+              billed_units: { input_tokens: 4 },
+              api_version: "1",
+            },
+          }),
+        ),
+      }),
+      undefined,
+      [
+        new InvokeModelCommand({
+          modelId: "cohere.embed-english-v3",
+          contentType: "application/json",
+          accept: "application/json",
+          body: JSON.stringify({ texts: ["first", "second"] }),
+        }) as any,
+      ],
+      {},
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          span_attributes: expect.objectContaining({
+            name: "bedrock.invokeModel",
+          }),
+          output: { embedding_count: 2, embedding_length: 64 },
+          metrics: expect.objectContaining({
+            prompt_tokens: 4,
+            tokens: 4,
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("does not summarize a plain invokeModel JSON completion response", async () => {
+    await smithyCoreChannels.clientSend.invoke(
+      async () => ({
+        contentType: "application/json",
+        body: new TextEncoder().encode(
+          JSON.stringify({ completion: "hello", stop_reason: "finished" }),
+        ),
+      }),
+      undefined,
+      [
+        new InvokeModelCommand({
+          modelId: "ai21.j2-mid-v1",
+          contentType: "application/json",
+          accept: "application/json",
+          body: JSON.stringify({ prompt: "hi" }),
+        }) as any,
+      ],
+      {},
+    );
+
+    const spans = await backgroundLogger.drain();
+    expect(spans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          span_attributes: expect.objectContaining({
+            name: "bedrock.invokeModel",
+          }),
+          output: { completion: "hello", stop_reason: "finished" },
+        }),
+      ]),
+    );
   });
 
   it("traces bidirectional stream Smithy send events", async () => {
