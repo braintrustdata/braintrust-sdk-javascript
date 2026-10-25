@@ -147,10 +147,21 @@ export interface PiTool {
 }
 
 export type PiMessage =
+  | PiSystemMessage
   | PiUserMessage
   | PiAssistantMessage
   | PiToolResultMessage
   | { role?: string; [key: string]: unknown };
+
+export interface PiSystemMessage {
+  role: "system";
+  content: string | PiTextContent[];
+  sections?: Record<string, string | null>;
+  toolsAdded?: PiTool[];
+  toolsRemoved?: Array<{ name: string }>;
+  timestamp?: number;
+  [key: string]: unknown;
+}
 
 export interface PiUserMessage {
   role: "user";

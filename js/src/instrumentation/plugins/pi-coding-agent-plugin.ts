@@ -24,6 +24,7 @@ import type {
   PiPromptOptions,
   PiSimpleStreamOptions,
   PiStreamFunction,
+  PiSystemMessage,
   PiTextContent,
   PiTool,
   PiToolCall,
@@ -386,7 +387,7 @@ async function startPiLlmSpan(
   const metadata = {
     ...extractModelMetadata(model),
     ...extractStreamOptionsMetadata(options),
-    ...extractToolMetadata(context.tools),
+    ...extractToolMetadata(resolvePiContextTools(context)),
     "pi_coding_agent.operation": `agent.${property}`,
   };
   const span = startBaseSpan(
@@ -734,13 +735,64 @@ function finishOpenToolSpans(state: PiPromptState, error?: unknown): void {
 }
 
 function normalizePiContextInput(context: PiContext): unknown[] {
-  const messages = context.messages.flatMap((message) =>
-    normalizePiMessage(message),
+  const messages = context.messages.flatMap((message, index) =>
+    isPiSystemMessage(message)
+      ? normalizePiSystemMessage(message, index === 0)
+      : normalizePiMessage(message),
   );
-  if (context.systemPrompt) {
+  if (context.systemPrompt && !context.messages.some(isPiSystemMessage)) {
     return [{ role: "system", content: context.systemPrompt }, ...messages];
   }
   return messages;
+}
+
+// Pi 1.4 carries the system prompt and tool declarations in the transcript's
+// system messages. The leading one is the base prompt; later ones add
+// instructions or replace/remove named sections.
+function normalizePiSystemMessage(
+  message: PiSystemMessage,
+  leading: boolean,
+): unknown[] {
+  const parts: string[] = [];
+  const text = Array.isArray(message.content)
+    ? message.content.map((part) => part.text).join("\n")
+    : message.content;
+  if (text) {
+    parts.push(text);
+  }
+  for (const [name, value] of Object.entries(message.sections ?? {})) {
+    if (value !== null) {
+      parts.push(
+        leading
+          ? value
+          : `Updated system prompt section "${name}":\n\n${value}`,
+      );
+    } else if (!leading) {
+      parts.push(`Removed system prompt section "${name}".`);
+    }
+  }
+  return parts.length > 0
+    ? [{ role: "system", content: parts.join("\n\n") }]
+    : [];
+}
+
+function resolvePiContextTools(context: PiContext): PiTool[] | undefined {
+  const declared = new Map<string, PiTool>();
+  let hasToolState = false;
+  for (const message of context.messages) {
+    if (!isPiSystemMessage(message)) {
+      continue;
+    }
+    for (const { name } of message.toolsRemoved ?? []) {
+      hasToolState = true;
+      declared.delete(name);
+    }
+    for (const tool of message.toolsAdded ?? []) {
+      hasToolState = true;
+      declared.set(tool.name, tool);
+    }
+  }
+  return hasToolState ? [...declared.values()] : context.tools;
 }
 
 function normalizePiMessage(message: PiMessage): unknown[] {
@@ -838,6 +890,10 @@ function isPiUserMessage(
   message: PiMessage,
 ): message is Extract<PiMessage, { role: "user" }> {
   return message.role === "user" && "content" in message;
+}
+
+function isPiSystemMessage(message: PiMessage): message is PiSystemMessage {
+  return message.role === "system" && "content" in message;
 }
 
 function isPiAssistantMessage(message: unknown): message is PiAssistantMessage {

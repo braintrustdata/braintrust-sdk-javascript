@@ -218,6 +218,68 @@ describe("PiCodingAgentPlugin", () => {
     },
   );
 
+  it("records the system prompt and tools carried by transcript system messages", async () => {
+    const interceptor = promptInterceptor(enablePlugin(plugins));
+    const agent = makeAgent(
+      vi.fn(async () => makeStream(makeAssistantMessage("done"))),
+    );
+    const session = makeSession(agent);
+    const declaration = (name: string) => ({
+      name,
+      description: `${name} tool`,
+      parameters: { type: "object", properties: {} },
+    });
+    // Pi 1.4 passes a transcript: no `systemPrompt` / `tools` on the context.
+    const context = {
+      messages: [
+        {
+          role: "system",
+          content: [
+            { type: "text", text: "base" },
+            { type: "text", text: "prompt" },
+          ],
+          sections: { env: "<env>dev</env>" },
+          toolsAdded: [declaration("bash"), declaration("read")],
+          timestamp: 1,
+        },
+        { role: "user", content: "hello", timestamp: 2 },
+        {
+          role: "system",
+          content: "",
+          sections: { env: null },
+          toolsRemoved: [{ name: "read" }],
+          toolsAdded: [declaration("grep")],
+          timestamp: 3,
+        },
+      ],
+    };
+
+    await interceptor(
+      async function (this: typeof session) {
+        const stream = await this.agent.streamFn(anthropicModel(), context);
+        await stream.result();
+      },
+      session,
+      ["hello", undefined],
+      {},
+    );
+
+    const llmSpan = findSpan(spans, "anthropic.messages.create");
+    expect(llmSpan?.args.event.input).toEqual([
+      { role: "system", content: "base\nprompt\n\n<env>dev</env>" },
+      { role: "user", content: "hello" },
+      { role: "system", content: 'Removed system prompt section "env".' },
+    ]);
+    expect(llmSpan?.args.event.metadata.tools).toEqual([
+      expect.objectContaining({
+        function: expect.objectContaining({ name: "bash" }),
+      }),
+      expect.objectContaining({
+        function: expect.objectContaining({ name: "grep" }),
+      }),
+    ]);
+  });
+
   it("counts cache reads and writes in prompt_tokens", async () => {
     const interceptor = promptInterceptor(enablePlugin(plugins));
     // Pi's `input` excludes cached tokens (its OpenAI client subtracts them from
