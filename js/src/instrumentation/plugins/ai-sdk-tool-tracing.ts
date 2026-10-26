@@ -33,12 +33,15 @@ export function traceAISDKTool<T>(
     toolCallId,
     parent,
     type = SpanTypeAttribute.TOOL,
+    logOutput = (span, output) => span.log({ output }),
   }: {
     name: string;
     input: unknown;
     toolCallId?: string;
     parent?: Span;
     type?: SpanTypeAttribute;
+    /** Records the final result; it may log later, after the span has ended. */
+    logOutput?: (span: Span, output: unknown) => void;
   },
 ): T {
   if (currentAISDKToolSpan(toolCallId)) return execute();
@@ -69,7 +72,7 @@ export function traceAISDKTool<T>(
     span.end();
   };
   const finish = (output: unknown) => {
-    if (capture?.recordOutputs !== false) span.log({ output });
+    if (capture?.recordOutputs !== false) logOutput(span, output);
     span.end();
   };
   try {

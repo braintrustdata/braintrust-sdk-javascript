@@ -79,6 +79,11 @@ import {
   type HarnessTurnParent,
 } from "../../wrappers/ai-sdk/harness-agent-context";
 import { normalizeAISDKLoggedOutput } from "../../wrappers/ai-sdk/normalize-logged-output";
+import {
+  aiSDKModelOutputToolNames,
+  applyAISDKToolModelOutputs,
+  hasAISDKToolModelOutput,
+} from "../../wrappers/ai-sdk/tool-model-output";
 import { braintrustAISDKTelemetry } from "../../wrappers/ai-sdk/telemetry";
 import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
 import {
@@ -287,9 +292,10 @@ export class AISDKPlugin extends BasePlugin {
                 finalizeAISDKChildTracing(
                   endEvent as { [key: string]: unknown },
                 );
-                return processAISDKOutput(
+                return processAISDKCallOutput(
                   result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                  endEvent,
+                  denyOutputPaths,
                 );
               },
               extractMetrics: (result, _startTime, endEvent) =>
@@ -338,10 +344,7 @@ export class AISDKPlugin extends BasePlugin {
             extractInput: ([params], event, span) =>
               prepareAISDKCallInput(params, event, span, denyOutputPaths),
             extractOutput: (result, endEvent) =>
-              processAISDKOutput(
-                result,
-                resolveDenyOutputPaths(endEvent, denyOutputPaths),
-              ),
+              processAISDKCallOutput(result, endEvent, denyOutputPaths),
             extractMetrics: (result, startTime, endEvent) =>
               extractTopLevelAISDKMetrics(result, endEvent, startTime),
             aggregateChunks: aggregateAISDKChunks,
@@ -402,9 +405,10 @@ export class AISDKPlugin extends BasePlugin {
                 finalizeAISDKChildTracing(
                   endEvent as { [key: string]: unknown },
                 );
-                return processAISDKOutput(
+                return processAISDKCallOutput(
                   result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                  endEvent,
+                  denyOutputPaths,
                 );
               },
               extractMetrics: (result, _startTime, endEvent) =>
@@ -429,10 +433,7 @@ export class AISDKPlugin extends BasePlugin {
               extractInput: ([params], event, span) =>
                 prepareAISDKCallInput(params, event, span, denyOutputPaths),
               extractOutput: (result, endEvent) =>
-                processAISDKOutput(
-                  result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
-                ),
+                processAISDKCallOutput(result, endEvent, denyOutputPaths),
               extractMetrics: (result, startTime, endEvent) =>
                 extractTopLevelAISDKMetrics(result, endEvent, startTime),
               aggregateChunks: aggregateAISDKChunks,
@@ -566,9 +567,10 @@ export class AISDKPlugin extends BasePlugin {
                 finalizeAISDKChildTracing(
                   endEvent as { [key: string]: unknown },
                 );
-                return processAISDKOutput(
+                return processAISDKCallOutput(
                   result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                  endEvent,
+                  denyOutputPaths,
                 );
               },
               extractMetrics: (result, _startTime, endEvent) =>
@@ -595,10 +597,7 @@ export class AISDKPlugin extends BasePlugin {
                   agentOwner: true,
                 }),
               extractOutput: (result, endEvent) =>
-                processAISDKOutput(
-                  result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
-                ),
+                processAISDKCallOutput(result, endEvent, denyOutputPaths),
               extractMetrics: (result, startTime, endEvent) =>
                 extractTopLevelAISDKMetrics(result, endEvent, startTime),
               aggregateChunks: aggregateAISDKChunks,
@@ -658,10 +657,7 @@ export class AISDKPlugin extends BasePlugin {
               extractInput: ([params], event, span) =>
                 prepareAISDKHarnessAgentInput(params, event.self, span),
               extractOutput: (result, endEvent) =>
-                processAISDKOutput(
-                  result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
-                ),
+                processAISDKCallOutput(result, endEvent, denyOutputPaths),
               extractMetrics: (result) => extractTokenMetrics(result),
               aggregateChunks: aggregateAISDKChunks,
             },
@@ -684,10 +680,7 @@ export class AISDKPlugin extends BasePlugin {
               extractInput: ([params], event, span) =>
                 prepareAISDKHarnessAgentInput(params, event.self, span),
               extractOutput: (result, endEvent) =>
-                processAISDKOutput(
-                  result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
-                ),
+                processAISDKCallOutput(result, endEvent, denyOutputPaths),
               extractMetrics: (result, startTime) => ({
                 ...extractTokenMetrics(result),
                 ...(startTime === undefined
@@ -730,10 +723,7 @@ export class AISDKPlugin extends BasePlugin {
               extractInput: ([params], event, span) =>
                 prepareAISDKHarnessAgentInput(params, event.self, span),
               extractOutput: (result, endEvent) =>
-                processAISDKOutput(
-                  result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
-                ),
+                processAISDKCallOutput(result, endEvent, denyOutputPaths),
               extractMetrics: (result) => extractTokenMetrics(result),
               aggregateChunks: aggregateAISDKChunks,
             },
@@ -757,10 +747,7 @@ export class AISDKPlugin extends BasePlugin {
               extractInput: ([params], event, span) =>
                 prepareAISDKHarnessAgentInput(params, event.self, span),
               extractOutput: (result, endEvent) =>
-                processAISDKOutput(
-                  result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
-                ),
+                processAISDKCallOutput(result, endEvent, denyOutputPaths),
               extractMetrics: (result, startTime) => ({
                 ...extractTokenMetrics(result),
                 ...(startTime === undefined
@@ -804,9 +791,10 @@ export class AISDKPlugin extends BasePlugin {
                 finalizeAISDKChildTracing(
                   endEvent as { [key: string]: unknown },
                 );
-                return processAISDKOutput(
+                return processAISDKCallOutput(
                   result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                  endEvent,
+                  denyOutputPaths,
                 );
               },
               extractMetrics: (result, _startTime, endEvent) =>
@@ -833,10 +821,7 @@ export class AISDKPlugin extends BasePlugin {
                   agentOwner: true,
                 }),
               extractOutput: (result, endEvent) =>
-                processAISDKOutput(
-                  result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
-                ),
+                processAISDKCallOutput(result, endEvent, denyOutputPaths),
               extractMetrics: (result, startTime, endEvent) =>
                 extractTopLevelAISDKMetrics(result, endEvent, startTime),
               aggregateChunks: aggregateAISDKChunks,
@@ -875,9 +860,10 @@ export class AISDKPlugin extends BasePlugin {
                 finalizeAISDKChildTracing(
                   endEvent as { [key: string]: unknown },
                 );
-                return processAISDKOutput(
+                return processAISDKCallOutput(
                   result,
-                  resolveDenyOutputPaths(endEvent, denyOutputPaths),
+                  endEvent,
+                  denyOutputPaths,
                 );
               },
               extractMetrics: (result, _startTime, endEvent) =>
@@ -1233,9 +1219,10 @@ function traceHarnessContinuation(
       finalizeAISDKChildTracing(endEvent);
       span.log({
         metrics: extractTokenMetrics(endEvent.result),
-        output: processAISDKOutput(
+        output: processAISDKCallOutput(
           endEvent.result,
-          resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+          endEvent,
+          defaultDenyOutputPaths,
         ),
       });
       span.end();
@@ -1628,6 +1615,32 @@ export function patchAISDKV7TelemetryDispatcher(
           ? existingExecuteTool.call(dispatcher, args)
           : args.execute(),
     });
+}
+
+function processAISDKCallOutput(
+  result: AISDKResult,
+  event: Parameters<typeof resolveDenyOutputPaths>[0],
+  defaultDenyOutputPaths: string[],
+): Record<string, unknown> | AISDKResult {
+  return applyAISDKToolModelOutputs(
+    processAISDKOutput(
+      result,
+      resolveDenyOutputPaths(event, defaultDenyOutputPaths),
+    ),
+    aiSDKModelOutputToolNamesFromEvent(event),
+  );
+}
+
+function aiSDKModelOutputToolNamesFromEvent(event: unknown): Set<string> {
+  const params = isObject(event)
+    ? (event.arguments as unknown[])?.[0]
+    : undefined;
+  const self = isObject(event) ? event.self : undefined;
+  return aiSDKModelOutputToolNames(
+    isObject(params) ? params.tools : undefined,
+    isObject(self) ? self.tools : undefined,
+    isObject(self) && isObject(self.settings) ? self.settings.tools : undefined,
+  );
 }
 
 function resolveDenyOutputPaths(
@@ -2736,7 +2749,31 @@ type AISDKToolPatchEntry = {
 type AISDKToolPatchState = {
   entries: AISDKToolPatchEntry[];
   originalExecute: (...args: unknown[]) => unknown;
+  originalToModelOutput?: (...args: unknown[]) => unknown;
+  // Tool spans waiting for the SDK to convert their result with toModelOutput.
+  pendingModelOutputs: AISDKPendingToolModelOutput[];
 };
+
+type AISDKPendingToolModelOutput = {
+  output: unknown;
+  span: Span;
+  toolCallId?: string;
+};
+
+function takePendingAISDKToolModelOutput(
+  pending: AISDKPendingToolModelOutput[],
+  options: unknown,
+): AISDKPendingToolModelOutput | undefined {
+  // AI SDK v6+ passes { toolCallId, input, output }; v5 passes the output.
+  const index = pending.findIndex(
+    (entry) =>
+      (entry.toolCallId !== undefined &&
+        isObject(options) &&
+        options.toolCallId === entry.toolCallId) ||
+      Object.is(entry.output, options),
+  );
+  return index >= 0 ? pending.splice(index, 1)[0] : undefined;
+}
 
 function activeAISDKChildPatchEntry<
   TEntry extends { activeSpanIds: Set<string>; parentSpan: Span },
@@ -3218,6 +3255,10 @@ function prepareAISDKChildTracing(
         return;
       }
       tool.execute = state.originalExecute;
+      if (state.originalToModelOutput) {
+        tool.toModelOutput = state.originalToModelOutput;
+      }
+      state.pendingModelOutputs.length = 0;
       delete toolRecord[AUTO_PATCHED_TOOL];
     };
     const existingState = toolRecord[AUTO_PATCHED_TOOL];
@@ -3250,11 +3291,40 @@ function prepareAISDKChildTracing(
     }
 
     const originalExecute = toolRecord.execute;
+    const originalToModelOutput = hasAISDKToolModelOutput(tool)
+      ? tool.toModelOutput
+      : undefined;
     const state: AISDKToolPatchState = {
       entries: [entry],
       originalExecute,
+      originalToModelOutput,
+      pendingModelOutputs: [],
     };
     toolRecord[AUTO_PATCHED_TOOL] = state;
+    // The model only sees the toModelOutput result, so tool spans log the value
+    // the SDK produced rather than the raw execute result.
+    const logModelOutput = originalToModelOutput
+      ? (toolCallId: string | undefined) => (span: Span, output: unknown) => {
+          state.pendingModelOutputs.push({ output, span, toolCallId });
+        }
+      : undefined;
+    if (originalToModelOutput) {
+      tool.toModelOutput = function toModelOutputPatched(...args: unknown[]) {
+        const result = Reflect.apply(originalToModelOutput, this, args);
+        const pending = takePendingAISDKToolModelOutput(
+          state.pendingModelOutputs,
+          args[0],
+        );
+        if (pending) {
+          observeResult(
+            result,
+            (output) => pending.span.log({ output }),
+            () => {},
+          );
+        }
+        return result;
+      };
+    }
     tool.execute = function executePatched(...args: unknown[]) {
       const executionOptions = args[1];
       const toolCallId =
@@ -3272,6 +3342,7 @@ function prepareAISDKChildTracing(
         input: serializeToolExecutionInput(args),
         toolCallId,
         parent: activeEntry.parentSpan,
+        ...(logModelOutput ? { logOutput: logModelOutput(toolCallId) } : {}),
       });
     };
 
@@ -3624,9 +3695,12 @@ export function patchAISDKStreamingResult(args: {
         metrics.time_to_first_token = firstChunkTime - startTime;
       }
 
-      const processedOutput = await processAISDKStreamingOutput(
-        result,
-        resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+      const processedOutput = applyAISDKToolModelOutputs(
+        await processAISDKStreamingOutput(
+          result,
+          resolveDenyOutputPaths(endEvent, defaultDenyOutputPaths),
+        ),
+        aiSDKModelOutputToolNamesFromEvent(endEvent),
       );
       const output = transformOutput
         ? transformOutput(processedOutput)

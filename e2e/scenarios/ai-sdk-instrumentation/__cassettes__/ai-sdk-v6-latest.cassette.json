@@ -4244,6 +4244,550 @@
         "status": 200,
         "statusText": "OK"
       }
+    },
+    {
+      "callIndex": 0,
+      "id": "aaf9ccb66199eb2b",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-10-22T00:07:18.040Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": [
+                  {
+                    "text": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 32,
+            "model": "gpt-4o-mini-2024-07-18",
+            "store": false,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up today's signups",
+                "name": "lookup_signups",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {},
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "access_programs": null,
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1792627637,
+            "created_at": 1792627637,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_0dc943f30b6e58b1016ad953b5222487d0afb9f4e7e426ca40",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 32,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "arguments": "{}",
+                "call_id": "call_ah0xRHUBjdtoiZkqI6MHnPNI",
+                "id": "fc_0dc943f30b6e58b1016ad953b5e7a887d0a3afda439bcfac00",
+                "name": "lookup_signups",
+                "status": "completed",
+                "type": "function_call"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": false,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "required",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [
+              {
+                "description": "Look up today's signups",
+                "name": "lookup_signups",
+                "output_schema": null,
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {},
+                  "required": [],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 61,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 0
+              },
+              "output_tokens": 2,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 63
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a4e442cb7a93d005-SJC",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Thu, 22 Oct 2026 00:07:18 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "870",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999722",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_d34c4950bcf247fa8dbf4244a034f006"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 1,
+      "id": "01fe077c2b2a17b1",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-10-22T00:07:18.721Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": [
+                  {
+                    "text": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "arguments": "{}",
+                "call_id": "call_ah0xRHUBjdtoiZkqI6MHnPNI",
+                "name": "lookup_signups",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_ah0xRHUBjdtoiZkqI6MHnPNI",
+                "output": "1 signup; rows hidden from the model",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 32,
+            "model": "gpt-4o-mini-2024-07-18",
+            "store": false,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up today's signups",
+                "name": "lookup_signups",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {},
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "access_programs": null,
+            "background": false,
+            "billing": {
+              "payer": "developer"
+            },
+            "completed_at": 1792627638,
+            "created_at": 1792627638,
+            "error": null,
+            "frequency_penalty": 0,
+            "id": "resp_00bce4a3522c9b70016ad953b62f7487d0a46c9d540aec3793",
+            "incomplete_details": null,
+            "instructions": null,
+            "max_output_tokens": 32,
+            "max_tool_calls": null,
+            "metadata": {},
+            "model": "gpt-4o-mini-2024-07-18",
+            "moderation": null,
+            "object": "response",
+            "output": [
+              {
+                "arguments": "{}",
+                "call_id": "call_qSuTfMTQMVi233e5CN8VqS0Z",
+                "id": "fc_00bce4a3522c9b70016ad953b6992887d095a8db99c215803a",
+                "name": "lookup_signups",
+                "status": "completed",
+                "type": "function_call"
+              }
+            ],
+            "parallel_tool_calls": true,
+            "presence_penalty": 0,
+            "previous_response_id": null,
+            "prompt_cache_key": "[REDACTED]",
+            "prompt_cache_retention": "in_memory",
+            "reasoning": {
+              "context": null,
+              "effort": null,
+              "summary": null
+            },
+            "safety_identifier": null,
+            "service_tier": "default",
+            "status": "completed",
+            "store": false,
+            "temperature": 0,
+            "text": {
+              "format": {
+                "type": "text"
+              },
+              "verbosity": "medium"
+            },
+            "tool_choice": "required",
+            "tool_usage": {
+              "image_gen": {
+                "input_tokens": 0,
+                "input_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "output_tokens": 0,
+                "output_tokens_details": {
+                  "image_tokens": 0,
+                  "text_tokens": 0
+                },
+                "total_tokens": 0
+              },
+              "web_search": {
+                "num_requests": 0
+              }
+            },
+            "tools": [
+              {
+                "description": "Look up today's signups",
+                "name": "lookup_signups",
+                "output_schema": null,
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {},
+                  "required": [],
+                  "type": "object"
+                },
+                "strict": true,
+                "type": "function"
+              }
+            ],
+            "top_logprobs": 0,
+            "top_p": 1,
+            "truncation": "disabled",
+            "usage": {
+              "input_tokens": 87,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 0
+              },
+              "output_tokens": 2,
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "total_tokens": 89
+            },
+            "user": null
+          }
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a4e442d20e6ad005-SJC",
+          "content-encoding": "gzip",
+          "content-type": "application/json",
+          "date": "Thu, 22 Oct 2026 00:07:18 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "506",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999697",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_7ae7f60235f24f64bb6292dd625652c5"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 2,
+      "id": "5cf470606d682f6c",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-10-22T00:07:19.290Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": [
+                  {
+                    "text": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              }
+            ],
+            "max_output_tokens": 32,
+            "model": "gpt-4o-mini-2024-07-18",
+            "store": false,
+            "stream": true,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up today's signups",
+                "name": "lookup_signups",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {},
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_01a2f6bc0aee4b01016ad953b6d00c87d081cc3cb783c1b2ce\",\"object\":\"response\",\"created_at\":1792627638,\"status\":\"in_progress\",\"access_programs\":null,\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"required\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Look up today's signups\",\"name\":\"lookup_signups\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"required\":[]},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_01a2f6bc0aee4b01016ad953b6d00c87d081cc3cb783c1b2ce\",\"object\":\"response\",\"created_at\":1792627638,\"status\":\"in_progress\",\"access_programs\":null,\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"required\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Look up today's signups\",\"name\":\"lookup_signups\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"required\":[]},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"fc_01a2f6bc0aee4b01016ad953b7335887d0b82349fc55abd2df\",\"type\":\"function_call\",\"status\":\"in_progress\",\"arguments\":\"\",\"call_id\":\"call_QhRMBwJ7wSaDpzdENbVH8xDa\",\"name\":\"lookup_signups\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"{}\",\"item_id\":\"fc_01a2f6bc0aee4b01016ad953b7335887d0b82349fc55abd2df\",\"obfuscation\":\"xO45gQ79l5zx0w\",\"output_index\":0,\"sequence_number\":3}",
+            "event: response.function_call_arguments.done\ndata: {\"type\":\"response.function_call_arguments.done\",\"arguments\":\"{}\",\"item_id\":\"fc_01a2f6bc0aee4b01016ad953b7335887d0b82349fc55abd2df\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"fc_01a2f6bc0aee4b01016ad953b7335887d0b82349fc55abd2df\",\"type\":\"function_call\",\"status\":\"completed\",\"arguments\":\"{}\",\"call_id\":\"call_QhRMBwJ7wSaDpzdENbVH8xDa\",\"name\":\"lookup_signups\"},\"output_index\":0,\"sequence_number\":5}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_01a2f6bc0aee4b01016ad953b6d00c87d081cc3cb783c1b2ce\",\"object\":\"response\",\"created_at\":1792627638,\"status\":\"completed\",\"access_programs\":null,\"background\":false,\"completed_at\":1792627639,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"fc_01a2f6bc0aee4b01016ad953b7335887d0b82349fc55abd2df\",\"type\":\"function_call\",\"status\":\"completed\",\"arguments\":\"{}\",\"call_id\":\"call_QhRMBwJ7wSaDpzdENbVH8xDa\",\"name\":\"lookup_signups\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":false,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"required\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Look up today's signups\",\"name\":\"lookup_signups\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"required\":[]},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":61,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":2,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":63},\"user\":null,\"metadata\":{}},\"sequence_number\":6}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a4e442d648cbd005-SJC",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 22 Oct 2026 00:07:19 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "403",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999722",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_cd45010298ac4c4986d9c0e51b0a8559"
+        },
+        "status": 200
+      }
+    },
+    {
+      "callIndex": 3,
+      "id": "cbf269f0e5b3ff9f",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-10-22T00:07:20.090Z",
+      "request": {
+        "body": {
+          "kind": "json",
+          "value": {
+            "input": [
+              {
+                "content": [
+                  {
+                    "text": "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+                    "type": "input_text"
+                  }
+                ],
+                "role": "user"
+              },
+              {
+                "arguments": "{}",
+                "call_id": "call_QhRMBwJ7wSaDpzdENbVH8xDa",
+                "name": "lookup_signups",
+                "type": "function_call"
+              },
+              {
+                "call_id": "call_QhRMBwJ7wSaDpzdENbVH8xDa",
+                "output": "1 signup; rows hidden from the model",
+                "type": "function_call_output"
+              }
+            ],
+            "max_output_tokens": 32,
+            "model": "gpt-4o-mini-2024-07-18",
+            "store": false,
+            "stream": true,
+            "temperature": 0,
+            "tool_choice": "required",
+            "tools": [
+              {
+                "description": "Look up today's signups",
+                "name": "lookup_signups",
+                "parameters": {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "additionalProperties": false,
+                  "properties": {},
+                  "type": "object"
+                },
+                "type": "function"
+              }
+            ]
+          }
+        },
+        "headers": {},
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses"
+      },
+      "response": {
+        "body": {
+          "chunks": [
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_066a9fcd452a466d016ad953b7834c87d09722e89989561263\",\"object\":\"response\",\"created_at\":1792627639,\"status\":\"in_progress\",\"access_programs\":null,\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"required\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Look up today's signups\",\"name\":\"lookup_signups\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"required\":[]},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_066a9fcd452a466d016ad953b7834c87d09722e89989561263\",\"object\":\"response\",\"created_at\":1792627639,\"status\":\"in_progress\",\"access_programs\":null,\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"required\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Look up today's signups\",\"name\":\"lookup_signups\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"required\":[]},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"fc_066a9fcd452a466d016ad953b7ff3c87d083d54ee7360a4b04\",\"type\":\"function_call\",\"status\":\"in_progress\",\"arguments\":\"\",\"call_id\":\"call_KaLViQHkGPzUuiOcshB5YGcu\",\"name\":\"lookup_signups\"},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"{}\",\"item_id\":\"fc_066a9fcd452a466d016ad953b7ff3c87d083d54ee7360a4b04\",\"obfuscation\":\"J7ZoUuv4wtc9wW\",\"output_index\":0,\"sequence_number\":3}",
+            "event: response.function_call_arguments.done\ndata: {\"type\":\"response.function_call_arguments.done\",\"arguments\":\"{}\",\"item_id\":\"fc_066a9fcd452a466d016ad953b7ff3c87d083d54ee7360a4b04\",\"output_index\":0,\"sequence_number\":4}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"fc_066a9fcd452a466d016ad953b7ff3c87d083d54ee7360a4b04\",\"type\":\"function_call\",\"status\":\"completed\",\"arguments\":\"{}\",\"call_id\":\"call_KaLViQHkGPzUuiOcshB5YGcu\",\"name\":\"lookup_signups\"},\"output_index\":0,\"sequence_number\":5}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_066a9fcd452a466d016ad953b7834c87d09722e89989561263\",\"object\":\"response\",\"created_at\":1792627639,\"status\":\"completed\",\"access_programs\":null,\"background\":false,\"completed_at\":1792627640,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":32,\"max_tool_calls\":null,\"model\":\"gpt-4o-mini-2024-07-18\",\"moderation\":null,\"output\":[{\"id\":\"fc_066a9fcd452a466d016ad953b7ff3c87d083d54ee7360a4b04\",\"type\":\"function_call\",\"status\":\"completed\",\"arguments\":\"{}\",\"call_id\":\"call_KaLViQHkGPzUuiOcshB5YGcu\",\"name\":\"lookup_signups\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":null,\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":null,\"effort\":null,\"summary\":null},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":false,\"temperature\":0,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"required\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Look up today's signups\",\"name\":\"lookup_signups\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false,\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"required\":[]},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":87,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":2,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":89},\"user\":null,\"metadata\":{}},\"sequence_number\":6}"
+          ],
+          "kind": "sse"
+        },
+        "headers": {
+          "access-control-expose-headers": "X-Request-ID, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
+          "cf-cache-status": "DYNAMIC",
+          "cf-ray": "a4e442d9dad1d005-SJC",
+          "content-type": "text/event-stream; charset=utf-8",
+          "date": "Thu, 22 Oct 2026 00:07:19 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "578",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
+          "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
+          "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "150000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "149999695",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_53d6d6695b6149b385fc2a928dba307b"
+        },
+        "status": 200
+      }
     }
   ],
   "meta": {

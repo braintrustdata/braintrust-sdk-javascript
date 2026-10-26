@@ -423,6 +423,67 @@ function createWeatherTool(ai, schemaKey) {
   });
 }
 
+export const MODEL_OUTPUT_TOOL_SECRET = "signup-secret@example.com";
+export const MODEL_OUTPUT_TOOL_VALUE = "1 signup; rows hidden from the model";
+
+// toModelOutput keeps the raw rows away from the model; traces must match.
+function createModelOutputTool(ai, sdkMajorVersion) {
+  return ai.tool({
+    description: "Look up today's signups",
+    inputSchema: z.object({}),
+    execute: async () => ({ rows: [{ email: MODEL_OUTPUT_TOOL_SECRET }] }),
+    // AI SDK v5 passes the output directly; v6+ passes { toolCallId, input, output }.
+    toModelOutput: (options) => {
+      const output = sdkMajorVersion >= 6 ? options.output : options;
+      if (output?.rows?.[0]?.email !== MODEL_OUTPUT_TOOL_SECRET) {
+        throw new Error("Unexpected toModelOutput argument");
+      }
+      return { type: "text", value: MODEL_OUTPUT_TOOL_VALUE };
+    },
+  });
+}
+
+async function runToolModelOutputOperations({
+  ai,
+  instrumentedAI,
+  maxTokensKey,
+  openaiModel,
+  sdkMajorVersion,
+}) {
+  const createRequest = () => ({
+    model: openaiModel,
+    prompt:
+      "Use the lookup_signups tool to count today's signups, then reply with the count only.",
+    // Send prior tool items inline instead of referencing stored responses.
+    providerOptions: { openai: { store: false } },
+    temperature: 0,
+    toolChoice: "required",
+    stopWhen: ai.stepCountIs(2),
+    tools: {
+      lookup_signups: createModelOutputTool(ai, sdkMajorVersion),
+    },
+    ...tokenLimit(maxTokensKey, 32),
+  });
+
+  await runOperation(
+    "ai-sdk-tool-model-output-operation",
+    "tool-model-output",
+    async () => {
+      await instrumentedAI.generateText(createRequest());
+    },
+  );
+
+  await runOperation(
+    "ai-sdk-tool-model-output-stream-operation",
+    "tool-model-output-stream",
+    async () => {
+      const result = await instrumentedAI.streamText(createRequest());
+      for await (const _chunk of result.textStream) {
+      }
+    },
+  );
+}
+
 async function runWorkflowAgentStreamOperation({
   ai,
   instrumentedWorkflow,
@@ -877,6 +938,16 @@ async function runAISDKInstrumentationScenario(
 
         await instrumentedAI.generateText(toolRequest);
       });
+
+      if (options.supportsToolExecution && sdkMajorVersion >= 5) {
+        await runToolModelOutputOperations({
+          ai: options.ai,
+          instrumentedAI,
+          maxTokensKey: options.maxTokensKey,
+          openaiModel,
+          sdkMajorVersion,
+        });
+      }
 
       if (supportsOpenAICacheScenario) {
         const prompt = `${CACHE_PROMPT_PREFIX}\n\nReply with exactly CACHE_OK and nothing else.`;

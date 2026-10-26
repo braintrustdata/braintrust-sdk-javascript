@@ -13,7 +13,12 @@ import {
   findLatestSpan,
 } from "../../helpers/trace-selectors";
 
-import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
+import {
+  MODEL_OUTPUT_TOOL_SECRET,
+  MODEL_OUTPUT_TOOL_VALUE,
+  ROOT_NAME,
+  SCENARIO_NAME,
+} from "./scenario.impl.mjs";
 
 type AgentSpanName = "Agent" | "ToolLoopAgent";
 
@@ -1265,6 +1270,56 @@ export function defineAISDKInstrumentationAssertions(options: {
         );
       }
     });
+
+    if (options.supportsToolExecution && options.sdkMajorVersion >= 5) {
+      for (const [operation, parentName] of [
+        ["ai-sdk-tool-model-output-operation", "generateText"],
+        ["ai-sdk-tool-model-output-stream-operation", "streamText"],
+      ] as const) {
+        test(
+          `logs toModelOutput results for ${parentName}() tools`,
+          testConfig,
+          () => {
+            const operationSpan = findLatestSpan(events, operation);
+            const parent = findParentSpan(
+              events,
+              parentName,
+              operationSpan?.span.id,
+            );
+            const toolSpans = findChildSpans(
+              events,
+              "lookup_signups",
+              parent?.span.id,
+            );
+
+            expect(toolSpans.length).toBeGreaterThanOrEqual(1);
+            for (const toolSpan of toolSpans) {
+              expect(toolSpan.output).toEqual({
+                type: "text",
+                value: MODEL_OUTPUT_TOOL_VALUE,
+              });
+            }
+            // Before v7, streamText parents log only text and finishReason.
+            if (parentName === "generateText" || options.sdkMajorVersion >= 7) {
+              expect(collectToolResultNames(parent?.output)).toContain(
+                "lookup_signups",
+              );
+              expect(JSON.stringify(parent?.output)).toContain(
+                MODEL_OUTPUT_TOOL_VALUE,
+              );
+            }
+            for (const event of [
+              parent,
+              ...findSpanDescendants(events, parent?.span.id),
+            ]) {
+              expect(JSON.stringify(event?.row)).not.toContain(
+                MODEL_OUTPUT_TOOL_SECRET,
+              );
+            }
+          },
+        );
+      }
+    }
 
     if (options.supportsGenerateObject) {
       test("captures trace for generateObject()", testConfig, () => {
