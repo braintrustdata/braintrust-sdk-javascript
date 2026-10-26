@@ -37,6 +37,10 @@ vi.mock("../../logger", () => ({
 }));
 
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
+import type {
+  PiContext,
+  PiModel,
+} from "../../vendor-sdk-types/pi-coding-agent";
 import { PiCodingAgentPlugin } from "./pi-coding-agent-plugin";
 
 const PROMPT_CHANNEL =
@@ -217,6 +221,121 @@ describe("PiCodingAgentPlugin", () => {
       expect(taskSpan?.end).toHaveBeenCalledTimes(1);
     },
   );
+
+  it("preserves Pi 1.4 prompt deltas and resolves tool updates without mutation", async () => {
+    const original = {
+      name: "lookup",
+      description: "Old lookup",
+      parameters: { type: "object" },
+    };
+    const replacement = { ...original, description: "New lookup" };
+    const prototypeNamed = { name: "__proto__", description: "Safe name" };
+    const context: PiContext = {
+      tools: [{ name: "stale" }],
+      messages: [
+        {
+          role: "system",
+          content: "Base instructions",
+          sections: JSON.parse(
+            '{"preamble":"Be helpful","cwd":"/old","__proto__":"Keep this section"}',
+          ),
+          toolsAdded: [original, { name: "removed" }, prototypeNamed],
+        },
+        { role: "user", content: "hello" },
+        {
+          role: "system",
+          content: [
+            { type: "text", text: "More instructions" },
+            { type: "text", text: "Second block" },
+          ],
+          sections: { preamble: "Be concise", cwd: null, extra: "New section" },
+          toolsRemoved: [{ name: "removed" }, { name: "lookup" }],
+          toolsAdded: [replacement],
+        },
+        {
+          role: "system",
+          content: "",
+          sections: { extra: null },
+          toolsAdded: [{ ...prototypeNamed, description: "Updated safely" }],
+        },
+      ],
+    };
+    const originalContext = structuredClone(context);
+    await captureContext(context);
+
+    expect(
+      findSpan(spans, "anthropic.messages.create")?.args.event.input,
+    ).toEqual([
+      {
+        role: "system",
+        content: "Base instructions\n\nBe helpful\n\n/old\n\nKeep this section",
+      },
+      { role: "user", content: "hello" },
+      {
+        role: "system",
+        content:
+          'More instructions\nSecond block\n\nUpdated system prompt section "preamble":\n\nBe concise\n\nRemoved system prompt section "cwd".\n\nUpdated system prompt section "extra":\n\nNew section',
+      },
+      {
+        role: "system",
+        content: 'Removed system prompt section "extra".',
+      },
+    ]);
+    expect(
+      findSpan(spans, "anthropic.messages.create")?.args.event.metadata.tools,
+    ).toEqual([
+      {
+        type: "function",
+        function: { ...prototypeNamed, description: "Updated safely" },
+      },
+      { type: "function", function: replacement },
+    ]);
+    expect(context).toEqual(originalContext);
+  });
+
+  it("does not restore legacy tools after the transcript removes every tool", async () => {
+    await captureContext({
+      tools: [{ name: "removed" }],
+      messages: [
+        { role: "system", content: "", toolsAdded: [{ name: "removed" }] },
+        { role: "system", content: "", toolsRemoved: [{ name: "removed" }] },
+      ],
+    });
+
+    expect(
+      findSpan(spans, "anthropic.messages.create")?.args.event.metadata,
+    ).not.toHaveProperty("tools");
+  });
+
+  it("falls back to legacy tools when system messages do not declare tools", async () => {
+    await captureContext({
+      tools: [{ name: "lookup" }],
+      messages: [{ role: "system", content: "Instructions" }],
+    });
+
+    expect(
+      findSpan(spans, "anthropic.messages.create")?.args.event.metadata.tools,
+    ).toEqual([{ type: "function", function: { name: "lookup" } }]);
+  });
+
+  async function captureContext(context: PiContext) {
+    const interceptor = promptInterceptor(enablePlugin(plugins));
+    const originalStream = vi.fn(async (_model: PiModel, _context: PiContext) =>
+      makeStream(makeAssistantMessage("done")),
+    );
+    const agent = makeAgent(originalStream, "streamFunction");
+    const session = makeSession(agent);
+    await interceptor(
+      async () => {
+        const stream = await agent.streamFunction(anthropicModel(), context);
+        await stream.result();
+      },
+      session,
+      ["hello", undefined],
+      { moduleVersion: "1.4.0" },
+    );
+    expect(originalStream.mock.calls[0]?.[1]).toBe(context);
+  }
 
   it("counts cached usage once across multiple LLM turns", async () => {
     const interceptor = promptInterceptor(enablePlugin(plugins));

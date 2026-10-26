@@ -133,6 +133,7 @@ export interface PiModel {
 }
 
 export interface PiContext {
+  // Legacy shorthand; Pi 1.4 stream functions receive these in system messages.
   systemPrompt?: string;
   messages: PiMessage[];
   tools?: PiTool[];
@@ -147,10 +148,20 @@ export interface PiTool {
 }
 
 export type PiMessage =
+  | PiSystemMessage
   | PiUserMessage
   | PiAssistantMessage
   | PiToolResultMessage
   | { role?: string; [key: string]: unknown };
+
+export interface PiSystemMessage {
+  role: "system";
+  content: string | PiTextContent[];
+  sections?: Record<string, string | null>;
+  toolsAdded?: PiTool[];
+  toolsRemoved?: { name: string }[];
+  [key: string]: unknown;
+}
 
 export interface PiUserMessage {
   role: "user";

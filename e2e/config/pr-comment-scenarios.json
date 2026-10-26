@@ -146,6 +146,14 @@
       {
         "variantKey": "pi-coding-agent-v081-latest",
         "label": "v0.81 latest"
+      },
+      {
+        "variantKey": "pi-coding-agent-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "pi-coding-agent-v1-latest",
+        "label": "v1 latest"
       }
     ]
   },

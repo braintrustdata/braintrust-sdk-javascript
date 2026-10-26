@@ -24,6 +24,7 @@ import type {
   PiPromptOptions,
   PiSimpleStreamOptions,
   PiStreamFunction,
+  PiSystemMessage,
   PiTextContent,
   PiTool,
   PiToolCall,
@@ -308,6 +309,7 @@ function makeInstrumentedStreamFunction(
       return invokeOriginal();
     }
 
+    wrapPiToolExecutors(agent.state?.tools);
     wrapPiToolExecutors(context.tools);
     const llmState = await startPiLlmSpan(
       state,
@@ -382,7 +384,7 @@ async function startPiLlmSpan(
   const metadata = {
     ...extractModelMetadata(model),
     ...extractStreamOptionsMetadata(options),
-    ...extractToolMetadata(context.tools),
+    ...extractToolMetadata(resolvePiContextTools(context)),
     "pi_coding_agent.operation": `agent.${property}`,
   };
   const span = startBaseSpan(
@@ -720,13 +722,67 @@ function finishOpenToolSpans(state: PiPromptState, error?: unknown): void {
 }
 
 function normalizePiContextInput(context: PiContext): unknown[] {
-  const messages = context.messages.flatMap((message) =>
-    normalizePiMessage(message),
-  );
+  const messages: unknown[] = [];
   if (context.systemPrompt) {
-    return [{ role: "system", content: context.systemPrompt }, ...messages];
+    messages.push({ role: "system", content: context.systemPrompt });
+  }
+  for (const message of context.messages) {
+    if (!isPiSystemMessage(message)) {
+      messages.push(...normalizePiMessage(message));
+      continue;
+    }
+
+    const text =
+      typeof message.content === "string"
+        ? message.content
+        : message.content
+            .filter((part) => part.type === "text")
+            .map((part) => part.text)
+            .join("\n");
+    const initial = messages.length === 0;
+    const content = [text];
+    // Later system messages are deltas. Name section patches explicitly so
+    // replacements and removals retain their meaning without repeating history.
+    for (const [name, value] of Object.entries(message.sections ?? {})) {
+      if (value === null && !initial) {
+        content.push(`Removed system prompt section ${JSON.stringify(name)}.`);
+      } else if (typeof value === "string") {
+        content.push(
+          initial
+            ? value
+            : `Updated system prompt section ${JSON.stringify(name)}:\n\n${value}`,
+        );
+      }
+    }
+    messages.push({
+      role: "system",
+      content: content.filter((part) => part.length > 0).join("\n\n"),
+    });
   }
   return messages;
+}
+
+function resolvePiContextTools(context: PiContext): PiTool[] | undefined {
+  const tools = new Map<string, PiTool>();
+  let hasDeclarations = false;
+  for (const message of context.messages) {
+    if (!isPiSystemMessage(message)) {
+      continue;
+    }
+    if (
+      message.toolsAdded !== undefined ||
+      message.toolsRemoved !== undefined
+    ) {
+      hasDeclarations = true;
+    }
+    for (const tool of message.toolsRemoved ?? []) {
+      tools.delete(tool.name);
+    }
+    for (const tool of message.toolsAdded ?? []) {
+      tools.set(tool.name, tool);
+    }
+  }
+  return hasDeclarations ? [...tools.values()] : context.tools;
 }
 
 function normalizePiMessage(message: PiMessage): unknown[] {
@@ -818,6 +874,13 @@ function extractAssistantOutput(message: PiAssistantMessage): unknown {
       message: normalizeAssistantMessage(message),
     },
   ]);
+}
+
+function isPiSystemMessage(message: PiMessage): message is PiSystemMessage {
+  return (
+    message.role === "system" &&
+    (typeof message.content === "string" || Array.isArray(message.content))
+  );
 }
 
 function isPiUserMessage(
