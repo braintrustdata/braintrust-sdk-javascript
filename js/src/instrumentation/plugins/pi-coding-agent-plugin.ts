@@ -41,10 +41,8 @@ type PiPromptState = {
   activeLlmSpans: Set<PiLlmSpanState>;
   activeToolSpans: Map<string, PiToolSpanState>;
   agent: PiAgent;
-  collectedLlmUsageMetrics: boolean;
   deferCompletionUntilTurnEnd: boolean;
   finalized: boolean;
-  metrics: Record<string, number>;
   onFinalize?: (state: PiPromptState) => void;
   metadata: Record<string, unknown>;
   output?: unknown;
@@ -202,13 +200,11 @@ function startPiPromptRun(
     activeLlmSpans: new Set(),
     activeToolSpans: new Map(),
     agent,
-    collectedLlmUsageMetrics: false,
     deferCompletionUntilTurnEnd:
       options?.streamingBehavior === "followUp" ||
       options?.streamingBehavior === "steer",
     finalized: false,
     metadata,
-    metrics: {},
     onFinalize,
     promptCallEnded: false,
     span,
@@ -568,9 +564,6 @@ async function handlePiAgentEvent(
       state.turnEnded = true;
       if (isPiAssistantMessage(event.message)) {
         state.output = extractAssistantOutput(event.message);
-        if (!state.collectedLlmUsageMetrics) {
-          addMetrics(state.metrics, extractUsageMetrics(event.message.usage));
-        }
       }
       if (state.promptCallEnded && state.deferCompletionUntilTurnEnd) {
         finishPiPromptRun(state);
@@ -661,10 +654,8 @@ function finishPiPromptRun(state: PiPromptState, error?: unknown): void {
     safeLog(state.span, {
       ...(error ? { error: toLoggedError(error) } : {}),
       metadata,
-      metrics: {
-        ...cleanMetrics(state.metrics),
-        ...buildDurationMetrics(state.startTime),
-      },
+      // Usage belongs to LLM spans; repeating it here doubles trace rollups and cost.
+      metrics: buildDurationMetrics(state.startTime),
       output: state.output,
     });
   } finally {
@@ -700,11 +691,6 @@ function finishPiLlmSpan(
     ...cleanMetrics(llmState.metrics),
     ...buildDurationMetrics(llmState.startTime),
   };
-  const usageMetrics = extractUsageMetrics(message?.usage);
-  if (Object.keys(usageMetrics).length > 0) {
-    promptState.collectedLlmUsageMetrics = true;
-    addMetrics(promptState.metrics, usageMetrics);
-  }
 
   try {
     safeLog(llmState.span, {
@@ -1071,15 +1057,6 @@ function extractUsageMetrics(
         : undefined,
     tokens: usage.totalTokens ?? usage.tokens,
   });
-}
-
-function addMetrics(
-  target: Record<string, number>,
-  source: Record<string, number>,
-): void {
-  for (const [key, value] of Object.entries(source)) {
-    target[key] = (target[key] ?? 0) + value;
-  }
 }
 
 function buildDurationMetrics(startTime: number): Record<string, number> {

@@ -185,11 +185,7 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
           "anthropic.messages.create",
           task?.span.id,
         );
-        const llm = findChildSpans(
-          events,
-          "anthropic.messages.create",
-          task?.span.id,
-        ).at(-1);
+        const llm = llmSpans.at(-1);
         const tool = findChildSpans(events, "bash", task?.span.id).at(-1);
         const toolChild = findChildSpans(
           events,
@@ -205,6 +201,17 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
           "pi_coding_agent.operation": "AgentSession.prompt",
           provider: "anthropic",
         });
+        for (const metric of [
+          "prompt_tokens",
+          "completion_tokens",
+          "tokens",
+          "prompt_cached_tokens",
+          "prompt_cache_creation_tokens",
+          "estimated_cost",
+        ]) {
+          expect(task?.metrics).not.toHaveProperty(metric);
+        }
+        expect(task?.metrics).toMatchObject({ duration: expect.any(Number) });
 
         expect(llm).toBeDefined();
         expect(llmSpans).toHaveLength(2);
@@ -216,13 +223,13 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
         expect(String(llm?.row.metadata?.model)).toContain("claude-haiku-4-5");
         expect(llm?.input).toEqual(expect.any(Array));
         expect(llm?.output).toBeDefined();
-        expect(llm?.metrics).toEqual(
-          expect.objectContaining({
+        for (const llmSpan of llmSpans) {
+          expect(llmSpan.metrics).toMatchObject({
             completion_tokens: expect.any(Number),
             prompt_tokens: expect.any(Number),
             tokens: expect.any(Number),
-          }),
-        );
+          });
+        }
 
         expect(tool).toBeDefined();
         expect(tool?.span.type).toBe("tool");
