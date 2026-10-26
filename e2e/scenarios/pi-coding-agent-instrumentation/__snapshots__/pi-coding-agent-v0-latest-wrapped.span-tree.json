@@ -129,12 +129,7 @@
                 "provider": "anthropic"
               },
               "metrics": {
-                "completion_tokens": 6,
-                "duration": 0,
-                "prompt_cache_creation_tokens": 0,
-                "prompt_cached_tokens": 0,
-                "prompt_tokens": 10,
-                "tokens": 16
+                "duration": 0
               }
             }
           ],

@@ -209,16 +209,16 @@ describe("PiCodingAgentPlugin", () => {
         expect.objectContaining({ output: { stdout: "pi_tool_ok" } }),
       );
       const finalTaskLog = taskSpan?.log.mock.calls.at(-1)?.[0];
-      expect(finalTaskLog?.metrics).toMatchObject({
-        completion_tokens: 3,
-        prompt_tokens: 5,
-        tokens: 8,
+      expect(finalTaskLog?.metrics).toEqual({
+        duration: expect.any(Number),
+        end: expect.any(Number),
+        start: expect.any(Number),
       });
       expect(taskSpan?.end).toHaveBeenCalledTimes(1);
     },
   );
 
-  it("counts cache reads and writes in prompt_tokens", async () => {
+  it("counts cached usage once across multiple LLM turns", async () => {
     const interceptor = promptInterceptor(enablePlugin(plugins));
     // Pi's `input` excludes cached tokens (its OpenAI client subtracts them from
     // `input_tokens`; Anthropic reports them separately), so 5 + 20 + 4 + 3 = 32.
@@ -237,10 +237,18 @@ describe("PiCodingAgentPlugin", () => {
 
     await interceptor(
       async function (this: typeof session) {
-        const stream = await this.agent.streamFn(anthropicModel(), {
-          messages: [{ role: "user", content: "hello" }],
-        });
-        await stream.result();
+        for (let turnIndex = 0; turnIndex < 2; turnIndex++) {
+          const stream = await this.agent.streamFn(anthropicModel(), {
+            messages: [{ role: "user", content: "hello" }],
+          });
+          await stream.result();
+          await this.agent.emit({
+            type: "turn_end",
+            message,
+            toolResults: [],
+            turnIndex,
+          });
+        }
       },
       session,
       ["hello", undefined],
@@ -254,16 +262,23 @@ describe("PiCodingAgentPlugin", () => {
       prompt_tokens: 29,
       tokens: 32,
     };
-    expect(
-      findSpan(spans, "anthropic.messages.create")?.log,
-    ).toHaveBeenCalledWith(
-      expect.objectContaining({ metrics: expect.objectContaining(expected) }),
+    const llmSpans = spans.filter(
+      (span) => span.args.spanAttributes.type === "llm",
     );
-    const finalTaskLog = findSpan(
-      spans,
-      "AgentSession.prompt",
-    )?.log.mock.calls.at(-1)?.[0];
-    expect(finalTaskLog?.metrics).toMatchObject(expected);
+    expect(llmSpans).toHaveLength(2);
+    for (const span of llmSpans) {
+      expect(span.log).toHaveBeenCalledWith(
+        expect.objectContaining({ metrics: expect.objectContaining(expected) }),
+      );
+    }
+    for (const [metric, value] of Object.entries(expected)) {
+      const total = spans.reduce(
+        (sum, span) =>
+          sum + (span.log.mock.calls.at(-1)?.[0].metrics?.[metric] ?? 0),
+        0,
+      );
+      expect(total).toBe(value * 2);
+    }
   });
 
   it("isolates overlapping prompts on the same agent without prompt matching", async () => {
@@ -360,6 +375,11 @@ describe("PiCodingAgentPlugin", () => {
       expect.objectContaining({ output: expect.any(Array) }),
     );
     expect(taskSpan?.end).toHaveBeenCalledTimes(1);
+    expect(taskSpan?.log.mock.calls.at(-1)?.[0].metrics).toEqual({
+      duration: expect.any(Number),
+      end: expect.any(Number),
+      start: expect.any(Number),
+    });
   });
 
   it("preserves full-iterator stream behavior", async () => {
