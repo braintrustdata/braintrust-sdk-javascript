@@ -49,13 +49,13 @@
           },
           "output": "Paris",
           "project_id": "<project_id>",
-          "root_span_id": "<span:4>",
+          "root_span_id": "<span:5>",
           "span_attributes": {
             "exec_counter": 0,
             "name": "jest basic span",
             "type": "task"
           },
-          "span_id": "<span:3>"
+          "span_id": "<span:4>"
         },
         {
           "context": {
@@ -69,7 +69,7 @@
             "transcript": {
               "content_type": "application/json",
               "filename": "conversation_transcript.json",
-              "key": "<uuid:9>",
+              "key": "<uuid:7>",
               "type": "braintrust_attachment"
             },
             "type": "chat_completion"
@@ -88,13 +88,13 @@
             "attachment": true
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:8>",
+          "root_span_id": "<span:9>",
           "span_attributes": {
             "exec_counter": 1,
             "name": "root",
             "type": "task"
           },
-          "span_id": "<span:7>"
+          "span_id": "<span:8>"
         },
         {
           "context": {
@@ -317,13 +317,13 @@
           },
           "output": "Paris",
           "project_id": "<project_id>",
-          "root_span_id": "<span:4>",
+          "root_span_id": "<span:5>",
           "span_attributes": {
             "exec_counter": 0,
             "name": "jest basic span",
             "type": "task"
           },
-          "span_id": "<span:3>"
+          "span_id": "<span:4>"
         },
         {
           "context": {
@@ -337,7 +337,7 @@
             "transcript": {
               "content_type": "application/json",
               "filename": "conversation_transcript.json",
-              "key": "<uuid:9>",
+              "key": "<uuid:7>",
               "type": "braintrust_attachment"
             },
             "type": "chat_completion"
@@ -356,13 +356,13 @@
             "attachment": true
           },
           "project_id": "<project_id>",
-          "root_span_id": "<span:8>",
+          "root_span_id": "<span:9>",
           "span_attributes": {
             "exec_counter": 1,
             "name": "root",
             "type": "task"
           },
-          "span_id": "<span:7>"
+          "span_id": "<span:8>"
         },
         {
           "context": {

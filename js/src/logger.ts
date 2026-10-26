@@ -3444,6 +3444,34 @@ function getNumericEnv(name: string): number | undefined {
   return isNaN(value) ? undefined : value;
 }
 
+// Like the OTel BatchSpanProcessor, wait briefly before flushing so rows
+// logged close together share a request and a span's start and end rows can
+// merge into one. Rows still waiting on the delay are lost when the process
+// exits without `beforeExit` (signals, `process.exit()`).
+// Only long-lived Node processes delay by default: serverless and
+// scale-to-zero platforms may freeze or throttle the process before a timer
+// fires, and browser and edge runtimes have no exit flush.
+const DEFAULT_FLUSH_DELAY_MS = 1000;
+
+function isServerlessEnvironment(): boolean {
+  return (
+    !!iso.getEnv("VERCEL") ||
+    !!iso.getEnv("NETLIFY") ||
+    !!iso.getEnv("AWS_EXECUTION_ENV")?.startsWith("AWS_Lambda_") ||
+    !!iso.getEnv("AWS_LAMBDA_FUNCTION_NAME") ||
+    !!iso.getEnv("K_SERVICE") ||
+    !!iso.getEnv("FUNCTION_TARGET") ||
+    iso.getEnv("GAE_ENV") === "standard" ||
+    !!iso.getEnv("FUNCTIONS_WORKER_RUNTIME")
+  );
+}
+
+function defaultFlushDelayMs(): number {
+  return iso.buildType === "node" && !isServerlessEnvironment()
+    ? DEFAULT_FLUSH_DELAY_MS
+    : 0;
+}
+
 interface BackgroundLogger {
   log(items: LazyValue<BackgroundLogEvent>[]): void;
   flush(): Promise<void>;
@@ -3610,8 +3638,13 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   private readonly requestLimiter: ConcurrencyLimiter;
   private lastEnqueuedSequence = 0;
   private completedSequence = 0;
+  private cancelFlushTimer: (() => void) | undefined;
+  // Enqueue time of the oldest row that no flush has drained yet.
+  private pendingSince: number | undefined;
+  private readonly exitFlushRegistered: boolean;
 
   public syncFlush: boolean = false;
+  public flushDelayMs: number;
   private maxRequestSizeOverride: number | null = null;
   private _maxRequestSizePromise: Promise<{
     maxRequestSize: number;
@@ -3648,6 +3681,12 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     if (defaultBatchSizeEnv !== undefined) {
       this.defaultBatchSize = defaultBatchSizeEnv;
     }
+
+    const flushDelayMsEnv = getNumericEnv("BRAINTRUST_FLUSH_DELAY_MS");
+    this.flushDelayMs =
+      flushDelayMsEnv !== undefined && flushDelayMsEnv >= 0
+        ? flushDelayMsEnv
+        : defaultFlushDelayMs();
 
     const maxRequestSizeEnv = getNumericEnv("BRAINTRUST_MAX_REQUEST_SIZE");
     if (maxRequestSizeEnv !== undefined) {
@@ -3733,6 +3772,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         await this.flush();
       });
     }
+    this.exitFlushRegistered = !opts.noExitFlush;
     this.onFlushError = opts.onFlushError;
   }
 
@@ -3765,9 +3805,10 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     // Queue limits reject a suffix of newly pushed items, so their sequence
     // numbers can be reused by the next accepted events.
     this.lastEnqueuedSequence -= droppedItems.length;
+    this.pendingSince ??= Date.now();
 
     if (!this.syncFlush) {
-      this.triggerActiveFlush();
+      this.scheduleFlush();
     }
 
     if (droppedItems.length) {
@@ -4265,6 +4306,59 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     }
   }
 
+  // Flush once the oldest pending row has waited `flushDelayMs`, or right away
+  // once a full batch of `defaultBatchSize` rows is queued. An active flush
+  // reschedules when it finishes, so only one is ever in flight.
+  private scheduleFlush() {
+    const queueLength = this.queue.length();
+    if (queueLength === 0) {
+      return;
+    }
+    if (queueLength >= this.defaultBatchSize) {
+      // No-op while a flush is in flight; it reschedules when it finishes.
+      this.triggerActiveFlush();
+      return;
+    }
+    if (!this.activeFlushResolved || this.cancelFlushTimer !== undefined) {
+      return;
+    }
+
+    const now = Date.now();
+    const delay = this.pendingSince! + this.flushDelayMs - now;
+    if (delay <= 0) {
+      this.triggerActiveFlush();
+      return;
+    }
+
+    let resolveTimer!: () => void;
+    const timerDone = new Promise<void>((resolve) => {
+      resolveTimer = resolve;
+    });
+    const timer = setTimeout(() => {
+      this.cancelFlushTimer?.();
+      this.triggerActiveFlush();
+    }, delay);
+    this.cancelFlushTimer = () => {
+      clearTimeout(timer);
+      this.cancelFlushTimer = undefined;
+      resolveTimer();
+    };
+    // With an exit flush registered, a pending timer must not keep the
+    // process alive: `beforeExit` flushes whatever is still queued.
+    if (this.exitFlushRegistered) {
+      (timer as { unref?: () => void }).unref?.();
+    }
+    this.registerWaitUntil(timerDone);
+  }
+
+  private registerWaitUntil(promise: Promise<void>) {
+    try {
+      waitUntil(promise);
+    } catch (error) {
+      debugLogger.error("Failed to register background flush", error);
+    }
+  }
+
   private triggerActiveFlush() {
     if (this.activeFlushResolved) {
       const flushBoundary = this.lastEnqueuedSequence;
@@ -4272,6 +4366,9 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         return;
       }
 
+      // This flush drains everything queued, which supersedes any timer.
+      this.cancelFlushTimer?.();
+      this.pendingSince = undefined;
       this.activeFlushResolved = false;
       this.activeFlush = (async () => {
         try {
@@ -4280,17 +4377,12 @@ class HTTPBackgroundLogger implements BackgroundLogger {
           this.reportFlushError(err);
         } finally {
           this.activeFlushResolved = true;
-          if (!this.syncFlush && this.queue.length() > 0) {
-            this.triggerActiveFlush();
+          if (!this.syncFlush) {
+            this.scheduleFlush();
           }
         }
       })();
-
-      try {
-        waitUntil(this.activeFlush);
-      } catch (error) {
-        debugLogger.error("Failed to register background flush", error);
-      }
+      this.registerWaitUntil(this.activeFlush);
     }
   }
 
