@@ -66,8 +66,8 @@
     "@deepseek-ai/dsh-tools": "0.1.0-rc.6",
     "@types/node": "^22.15.21",
     "tsup": "^8.5.1",
-    "typescript": "^5.5.4",
-    "vitest": "4.1.11"
+    "typescript": "^5.9.3",
+    "vitest": "4.1.12"
   },
   "repository": {
     "type": "git",
