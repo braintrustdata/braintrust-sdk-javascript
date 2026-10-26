@@ -25,7 +25,7 @@
   "author": "Braintrust Data Inc.",
   "license": "MIT",
   "devDependencies": {
-    "@langchain/anthropic": "^1.3.1",
+    "@langchain/anthropic": "^1.6.0",
     "@langchain/core": "^1.1.6",
     "@langchain/langgraph": "^1.0.7",
     "@langchain/openai": "^1.2.0",
