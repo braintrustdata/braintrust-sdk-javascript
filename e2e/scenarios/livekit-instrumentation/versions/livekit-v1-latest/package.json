@@ -7,6 +7,6 @@
     "@livekit/rtc-node": "1.1.0",
     "@opentelemetry/sdk-trace-node": "2.0.1",
     "ws": "8.18.3",
-    "zod": "3.25.76"
+    "zod": "4.6.6"
   }
 }

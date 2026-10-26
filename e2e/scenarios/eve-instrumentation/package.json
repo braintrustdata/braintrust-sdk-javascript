@@ -21,7 +21,7 @@
     "eve-v0-provider": "npm:eve@0.34.0",
     "eve-v0-70": "npm:eve@0.70.0",
     "eve-v0-latest": "npm:eve@0.70.0",
-    "zod": "4.3.6"
+    "zod": "4.6.6"
   },
   "pnpm": {
     "overrides": {

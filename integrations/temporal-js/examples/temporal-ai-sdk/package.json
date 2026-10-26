@@ -26,7 +26,7 @@
     "ai": "^6.0.0",
     "braintrust": "file:../../../../js/braintrust-2.2.0.tgz",
     "nanoid": "^3.3.4",
-    "zod": "^3.25.76"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

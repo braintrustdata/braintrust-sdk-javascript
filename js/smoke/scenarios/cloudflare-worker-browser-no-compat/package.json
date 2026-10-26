@@ -4,7 +4,7 @@
   "type": "module",
   "dependencies": {
     "braintrust": "file:../../../artifacts/braintrust-latest.tgz",
-    "zod": "^3.25.76"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250810.0",
