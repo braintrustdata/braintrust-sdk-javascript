@@ -37,7 +37,7 @@
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.1",
     "braintrust": "workspace:^",
-    "zod": "^3.25.34 || ^4.0"
+    "zod": "^4.6.6"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": ">=4.0.1",
