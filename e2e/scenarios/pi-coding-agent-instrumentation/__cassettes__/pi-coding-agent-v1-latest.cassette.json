@@ -2,259 +2,266 @@
   "entries": [
     {
       "callIndex": 0,
-      "id": "5625e915bcb72d05",
-      "matchKey": "POST api.anthropic.com/v1/messages",
-      "recordedAt": "2026-07-06T18:58:08.198Z",
+      "id": "9d4c6e540841b9c5",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-10-26T13:06:16.355Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
-            "max_tokens": 64000,
-            "messages": [
+            "include": ["reasoning.encrypted_content"],
+            "input": [
+              {
+                "content": "You are a coding assistant. Use tools when requested.\n\n<cwd>\n/Users/abhijeetprasad/.superset/worktrees/braintrust-sdk-javascript/resolve-issue-red-green-73219c51/e2e/.bt-tmp/run-0w90vN/scenarios/pi-coding-agent-instrumentation\n</cwd>",
+                "role": "developer"
+              },
               {
                 "content": [
                   {
-                    "cache_control": {
-                      "type": "ephemeral"
-                    },
                     "text": "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output.",
-                    "type": "text"
+                    "type": "input_text"
                   }
                 ],
                 "role": "user"
               }
             ],
-            "model": "claude-haiku-4-5",
-            "stream": true,
-            "system": [
-              {
-                "cache_control": {
-                  "type": "ephemeral"
-                },
-                "text": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /workspace/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-a0beda3ff342f9cd/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /workspace/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-a0beda3ff342f9cd/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /workspace/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-a0beda3ff342f9cd/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\n\n<project_context>\n\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/workspace/AGENTS.md\">\n# Braintrust JavaScript SDK Monorepo\n\nTypeScript SDKs and integrations for Braintrust. Uses `pnpm` workspaces.\n\n## Repository Structure\n\n```text\n.\n├── js/             # Main `braintrust` package\n├── integrations/   # Integration packages (@braintrust/*)\n├── e2e/            # End-to-end scenario tests (mock server + subprocess isolation)\n├── docs/           # Docs and reference material\n└── internal/       # Internal test fixtures and golden projects\n```\n\n## Setup\n\n```bash\nmise install        # Install toolchain and dependencies\n```\n\n## Build\n\n```bash\npnpm run build      # Build all workspace packages (from repo root)\n```\n\n## Instrumentation\n\nUse the normal Orchestrion config plus plugin/channel path by default. Special-case source patches should be rare exceptions only when the target SDK cannot be instrumented through the standard transformer path, and the reason should be documented next to the patch.\n\n## Testing\n\nUses Vitest. Prefer running the **narrowest relevant test** rather than the full suite.\n\n**From `js/` directory:**\n\n```bash\npnpm test                         # Core vitest suite (excludes wrappers)\npnpm test -- -t \"test name\"       # Filter by test name\npnpm run test:checks              # Hermetic tests (core + vitest wrapper)\n```\n\n**E2E tests (`e2e/`):**\n\nEach scenario runs the SDK in a subprocess against a mock Braintrust server and snapshots the results. No API keys required for replay; recording needs provider keys.\n\n```bash\npnpm run test:e2e                 # Run all e2e scenarios (from repo root)\npnpm run test:e2e:update          # Update e2e snapshots without re-recording cassettes\npnpm run test:e2e:record          # Re-record provider cassettes and update snapshots\n```\n\nWhen adding or modifying e2e tests, run the relevant e2e verification twice before stopping so flakes are caught proactively. After running `pnpm run test:e2e:update` or `pnpm run test:e2e:record`, always run the normal e2e tests afterward to verify there is no snapshot drift or unstable output.\n\nSpan-tree snapshots are paired: `*.span-tree.json` is the structural contract, and `*.span-tree.txt` is the human-readable ASCII tree generated from the same normalized spans. Both files are asserted and should be updated together through `pnpm run test:e2e:update` or `pnpm run test:e2e:record`; do not hand-edit only one side of the pair.\n\n**From repo root:**\n\n```bash\npnpm run test       # Run all workspace tests via turbo\n```\n\n## Linting & Formatting\n\nRun from the repo root. **Always run `fix:formatting` before committing** — there is a pre-commit hook that will reject unformatted code.\n\n```bash\npnpm run formatting      # Check formatting (prettier)\npnpm run lint            # Run eslint checks\npnpm run fix:formatting  # Auto-fix formatting\npnpm run fix:lint        # Auto-fix eslint issues\n```\n\n## Vendored Forks and Licenses\n\nWhen touching forked third-party code in this repository, including the\nvendored `import-in-the-middle`, `require-in-the-middle`, or `orchestrion-js`\ncode, preserve and respect the upstream license requirements. Keep copyright\nnotices, license files, provenance notes, and `js/NOTICE` entries accurate when\ncopying, updating, or materially modifying vendored code.\n\n</project_instructions>\n\n</project_context>\n\nCurrent date: 2026-07-06\nCurrent working directory: /workspace/e2e/.bt-tmp/run-65wF9N/scenarios/pi-coding-agent-instrumentation",
-                "type": "text"
-              }
-            ],
-            "thinking": {
-              "type": "disabled"
+            "max_output_tokens": 128000,
+            "model": "gpt-5-nano",
+            "prompt_cache_key": "[REDACTED]",
+            "reasoning": {
+              "effort": "minimal",
+              "summary": "auto"
             },
+            "store": false,
+            "stream": true,
             "tools": [
               {
-                "cache_control": {
-                  "type": "ephemeral"
-                },
                 "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
-                "eager_input_streaming": true,
-                "input_schema": {
+                "name": "bash",
+                "parameters": {
+                  "additionalProperties": false,
                   "properties": {
                     "command": {
-                      "description": "Bash command to execute",
+                      "description": "Shell command to execute",
                       "type": "string"
                     },
                     "timeout": {
-                      "description": "Timeout in seconds (optional, no default timeout)",
-                      "type": "number"
+                      "anyOf": [
+                        {
+                          "description": "Timeout in seconds (optional, no default timeout)",
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
-                  "required": ["command"],
+                  "required": ["command", "timeout"],
                   "type": "object"
                 },
-                "name": "bash"
+                "strict": true,
+                "type": "function"
               }
             ]
           }
         },
         "headers": {},
         "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages"
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
         "body": {
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_019WGRRz5ny5C3mCcd36RMbC\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":2261,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":57,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_015FEcLpdNm5dDJCRYpiqTPj\",\"name\":\"bash\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}",
-            "event: ping\ndata: {\"type\":\"ping\"}",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"command\\\": \\\"printf pi_tool_ok\"}}",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}}",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":2261,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":57}}",
-            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0b86321b42b1ad5e016adf5047b89487d1aa5c6e63418ce6f2\",\"object\":\"response\",\"created_at\":1793019975,\"status\":\"in_progress\",\"access_programs\":null,\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5-nano-2025-08-07\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"01a17851-9740-712e-af1b-3238a14569b1\",\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":\"current_turn\",\"effort\":\"minimal\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.\",\"name\":\"bash\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"command\",\"timeout\"],\"properties\":{\"command\":{\"type\":\"string\",\"description\":\"Shell command to execute\"},\"timeout\":{\"anyOf\":[{\"type\":\"number\",\"description\":\"Timeout in seconds (optional, no default timeout)\"},{\"type\":\"null\"}]}},\"additionalProperties\":false},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0b86321b42b1ad5e016adf5047b89487d1aa5c6e63418ce6f2\",\"object\":\"response\",\"created_at\":1793019975,\"status\":\"in_progress\",\"access_programs\":null,\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5-nano-2025-08-07\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"01a17851-9740-712e-af1b-3238a14569b1\",\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":\"current_turn\",\"effort\":\"minimal\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.\",\"name\":\"bash\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"command\",\"timeout\"],\"properties\":{\"command\":{\"type\":\"string\",\"description\":\"Shell command to execute\"},\"timeout\":{\"anyOf\":[{\"type\":\"number\",\"description\":\"Timeout in seconds (optional, no default timeout)\"},{\"type\":\"null\"}]}},\"additionalProperties\":false},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"rs_0b86321b42b1ad5e016adf50481f5487d1816244e8f64a915c\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABq31BIw6YQtpfi2G8QHtq0DFuRnEcQbf3XHRA5qhUTYjmLoVmcH4NdHW4t-KYmk_KU80_Dcls3k863t3oYOfMiHrMm84gE4k3EMeyHayRGJWNxoGEDmp1mNDGZrQdjfQKUTwkkbx9wB260m_X5Vywp3uKKzOiX_PmLASgUGw8voAYXZR6lBU0HuPy6PCkPsvwlVPhzesfTfTmz5BtNmHK67Q_0hGmG_rmRW12I0kMS3fccfUByXxIODmed0VpyiOC4pQl0W-1o-wyNpmcqY3QJ0hGACWW2SQkIAPePtCvHmuTZPTt0KTBnPolt_OYPDjwr1_RFlzoZEJdWK2D9aHzpho0Mn6-6ke3VsK6WSp_xutBvO9WS-jvfJeI4lC6Lpijb-va1xyq3T3AmK56Cz8auqhhHCqbqLxX092YVfpag9DO-aUmN_MX7JHeVuIWNJDQRe5OAICs7aJNyi4I6L-SK1ThMLtKpzXorrAu30OIimVj5od_OCv9Y9vhLnyJp3NrPp6ApfON93Vy_L9d6FUk92B6IgscBC_kWKD4LCZqePaBFOjLXyWdrVAFMTcby7hIdfwcLz4hu285oOCVCfXma1OjSET23-CGb4e-dova5sc-RhiZp4nzNDSACH5AZI0Un35Jyu8zCBk-g9G4kMQjeViiL6i7qXhOb7qPV587yye6j1VM_ZPG65lM2i_IY49sYIso59tRz25dp0Kn86CvgJVs0Hl0kFwukSTrs3lacCBx1mAhPMikqnpDaTW4MUZqPpms6EaphwMu9VEMZpDt8teT0RhQUfA1aW2dw1LliuUoxhXDX-bvs_x8JIonmOm5SWuvMUJIkrDYcRm1wMcLG_8OYV_Tlc3rGY9OChXvjwn9K5estEEPUKZK6i4yDdmz6QvnpPa-_0ZLuD4j_Jln-_IAB1XBRv_YLTctpLHIKSqRkdfCQNrUQsgdu6BuSCLhry5b415bvttFtyMeQIXD6TtHz_x5ULZF08Ke7hSs0AHbRBbI6IjqpWkgtDknIcrEDWRspj1siH_0znlNPIdrcz4NStt0coArqYSZeopx6WHcfIUnuwZvqLoxhWNlA3XkxkItRhhbMRiSAPS_ojTKOa2ng5fFcJ5WpK-MWcfVTJEHZ76AlQzKUe4fedgYRZCYIt3pFHjaPpRKhZjssIoSfkhV0sr-kWWz_I9dbwDC_d2cpVM_xALW6o296n-gpJto6C3K4\",\"summary\":[]},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"rs_0b86321b42b1ad5e016adf50481f5487d1816244e8f64a915c\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABq31BINzpCqufGcEDBVQP8Fu3tSWIRjzs5PDUJjv1SqAMfzU3nYNbY_fPrw0V9_BBHyACHQhti4OEFUUoDCcuIs7yNUQmGaI5m8Xb31RTuxxKCe1kql8tXw5HVxfEv_a7RyvaWpa_20lh_KHLONOWRHh_do-n2SuBhma0wBeFTFmkdk4NSGoNgwmKP0r0QDHxbbVPwXfJpZQQXtbg4WuY2v1NCE2XgNCdxkioHp4Ye20aESCyLJnQHCrk2vAV68kJV9YRqe5sNiSXIvO-27Sn8_RJrXlozmXZ4_XWAQNpr26D_b5vmz6yJKVQ6zx4jErnaPacl5LzKG1qyCn94PpScB1HNTNnsMf6qqQjSgY6-auvIFaKUZBQEG29yh5NPP0030erc_CJdWrBO1SLdB5_u-Uz6dadsyOcz4NqzqMMFWs_j7OGsh2AjrDiKbbAUbDEen-CgBFHaev_aVaibzViP_F_TwL2Z1OeVlH1wpXqtn5MVhNe-RikxsDx4hZh3kza0nWtZUzwqnwhzEe_B3hcBSArbQOjfBwIHCq7gZpSPq5vBhaN8sIP98_YoS8E-QCZZJ14pmWWNxLahMhRoFE2zT55Ye83R-l0h3SjEjyGROzb__D-eUWC58ldwOLLoQMSlg1uk7PBl2NvWrpc_gVMPz4sOUOoeAyAViZFpUy_S6v3b0nIlobBrZWjBfloJwuqRz7aRzRC_8VMImdWKX7ESn1B8mIRmiaSZGcprh48ACX_-kI9jl-35Y3j8jcUlwtbmR7XfKDldZ7DWbXeIAqtX2p3WFzu_gFcHlDY0v-HUSJ1rSQm-L5zeEpcw6tHOwIJykuT_FirVMp9jW8MGAYHkjUjBg8DBrkyZWuGdDEDz7DsjkNK5i3vdO4eSvGVt2Mo9H9qs7KRN66tbIYRfFhI1Sc3oC7DZwwOAk9nEWZFfdvKnU83FkB_l2VB7iU5QHalYzKiifgDIQgK6qRCQ_SL2TEfBKecO2rKlGLKp5gNvzL7HP0oU7F7bc2AMJsAvxiKDypeXqFIUayP0Top5VLHeFTAraL_t34_KTiJGO1GZb3IBUyHqWLsZtGuWfSvnlicR64rN4leBNxKu-wqCZqMEVqAqdmydzaE0lq6caxSqxBmz68-5B5UIiGfarNWnF-KJU-Xm6oV1G0EBhF1mbUOxCcx2YUPCOYog0AkONfENVS-bCZV4nytMqI--XxfNGYAMBnR9ZyIO6Qc-nsPlsWc443FA8DPV1OYv3fYiWGg5DSJMEKDuFweJXCTBqzRPqFBoK5oxsvBlG0Q3VUFuVsWjEfTI7D2XmzOhh3mg9kE1H2XT879A_FzMmMG4IA8UwaEniKJ1HDzlaCKbuOSv0B0nLqjOsNhYMVcF65NZwlNg7pxs7cIDvkZL_AQiW4bDL7qJkRKKKY801Hw-JcMbTu-sAWTio35Gb9HzM6bynj_RiAECjbetVi7kPWJqk9Aq0JJb5Zz8QfnBKwSQego34a-SyteeB3vTPKhgFl237dcT2qPHIPhYhCHoZu1ZecHHUIc-tDGIquUzDZcDBo4oq4WfTaPwo0DHZHcV5oND-rdbUOLCJ8pmC7FQ5xwlsnSggbz33SxLMlFdMBdpAf9RRumEvZ38NncAMITJ7z4FfdlIYT9UDp0=\",\"summary\":[]},\"output_index\":0,\"sequence_number\":3}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"type\":\"function_call\",\"status\":\"in_progress\",\"arguments\":\"\",\"call_id\":\"call_nfMLwtliP8Lmn5SMjdlCMUVh\",\"name\":\"bash\"},\"output_index\":1,\"sequence_number\":4}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"{\\\"\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"OkCA4IozQyJIvd\",\"output_index\":1,\"sequence_number\":5}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"command\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"SXAD8400i\",\"output_index\":1,\"sequence_number\":6}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"\\\":\\\"\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"1YrzoXhwSvArk\",\"output_index\":1,\"sequence_number\":7}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"printf\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"61wpGCRCPK\",\"output_index\":1,\"sequence_number\":8}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\" pi\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"2vA3Qx4muAon4\",\"output_index\":1,\"sequence_number\":9}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"_tool\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"RLtMmbsddmd\",\"output_index\":1,\"sequence_number\":10}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"_ok\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"6BDZ6RvOpWNDf\",\"output_index\":1,\"sequence_number\":11}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"\\\",\\\"\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"h2SlIT7FrHqsN\",\"output_index\":1,\"sequence_number\":12}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"timeout\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"gi78AMYVz\",\"output_index\":1,\"sequence_number\":13}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"\\\":\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"5jMn3I4oYZsVq4\",\"output_index\":1,\"sequence_number\":14}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"120\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"aQLc1hbJPoZPY\",\"output_index\":1,\"sequence_number\":15}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"000\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"vY9zGHQhB5IR4\",\"output_index\":1,\"sequence_number\":16}",
+            "event: response.function_call_arguments.delta\ndata: {\"type\":\"response.function_call_arguments.delta\",\"delta\":\"}\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"obfuscation\":\"GwnErSdi4gwiUGu\",\"output_index\":1,\"sequence_number\":17}",
+            "event: response.function_call_arguments.done\ndata: {\"type\":\"response.function_call_arguments.done\",\"arguments\":\"{\\\"command\\\":\\\"printf pi_tool_ok\\\",\\\"timeout\\\":120000}\",\"item_id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"output_index\":1,\"sequence_number\":18}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"type\":\"function_call\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"printf pi_tool_ok\\\",\\\"timeout\\\":120000}\",\"call_id\":\"call_nfMLwtliP8Lmn5SMjdlCMUVh\",\"name\":\"bash\"},\"output_index\":1,\"sequence_number\":19}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0b86321b42b1ad5e016adf5047b89487d1aa5c6e63418ce6f2\",\"object\":\"response\",\"created_at\":1793019975,\"status\":\"completed\",\"access_programs\":null,\"background\":false,\"completed_at\":1793019976,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5-nano-2025-08-07\",\"moderation\":null,\"output\":[{\"id\":\"rs_0b86321b42b1ad5e016adf50481f5487d1816244e8f64a915c\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABq31BIUG469iwwdidwtn8QS6FDysrMIxGb0oGY2m98hbLfBZi-UhRU-4X_sfchJMxJH3Itq08C45iARupOSOx3RLQiRbXDeIldt8tqaGovbq1-ZkkUPROfatux_pVsEDyOja1FOdVfi0Cg2_VYqx22FvPYJrN8wpp_AEX173ulQ_c_kxXoy4yNQUsSpujNEQ9kcVlkr3L6j60pS8K0m_zlTgavsxxTq6l3NOl6yc9GMCnxkwmI-V3XSZtvM_hkmYd2Ls_xmLEfHTuQqtq0g3wjo2e7pY2VfzxNmfIlUK2BSFd9I2GhigMaPmxcP1mT9fwP319ycU5VBAjXFwNHUmMmuep5ODu4FGAtCP1fUoqb1J-BN4mOY4qTbDA1-66zbqdthW_yLeq48xIm1FYLA-TuU5LxismDPBqI92PsfNjmVvjgPBQPXv6Qjuz3SKNCaoWF7t1VfCU1tLINPue3r3rvNWuoguGfXt9btC_um6LJr0ze8UBaOH53VxmZRBpqxpxGM93B_AlCZXDLcNOwfTMkvig-B421YA8fA9PqAa4rocnVSiG1Z4cgp5ZOpzlewIB9QNXyyekaYERSk5rly1hj8B-prVhmGqWgh8yYdrCo-rA0U0leJisfc-ak-pVlYadBNos2WBKwyOTAESL6jfwtNFSn1b1dKeho6Zc79zRQ5tyB568rnkuU4JIH3Qcgc6d1KrcYaGk6d7s0YUIy6zYP68d3BbtjEvY3gAdyKOSS6MOwi5GdTQyeEXTt-ZeyEGrXFm2yjtVimyAy4kQ5npcM5yO5YMXSTOgPLnTWgAT2OzcSpRP2lnJO7QMRFnt6T6cdn_TnG64dudRERZ0SNBG3ibPs-dpq_tDma0LRqcpKakvg3MPGfNs0Ple3L8kpwbovtiofdH2cBe6FT_ikR82u5sIEQv3OzZ9o4y1fSYNXtgvqex8os9CKyyg4nGz3IKYF1xFTyD7fRGI4lrjoqllNCgSne3Lh2P77u0cw8MR-BfF_w9t-86MknxP63pSQ1G71Nvq9-V5LpFKQfgd-uNuCgVm8cIz12OOK0PPFdTvT5k8JHxyr9ApqsaH2VFzu0yREvMZtuoyTkER1Xs0n4-lElg9meI9mUyy6H3nVxwPJaFzdGCIuhspy04G4DgiHC9xVC44TRPnMhugzoeBhYLS4-K9SK5N6mWlJqqMYXn7yuqhwc2rPvHEM1QzrDhrAxCwNAOIa9AdfagiyzQ9Cfb9sbLkDXn2JxEYvUy5hIWUIE6W_mVqSXEmDBKTjCOD1lOLb-0bTKqIEdEY7CEn7AiayjxCbojl0e9l8xziNJSAFtyB0FHXEir9hMH6hPejDR6GkpgMS5-RJb_FvLNzZFewtLVUsEhdrfE4Uhr36Tbx-RaP7-O-tS7XG8LLO08jaDX-Nsc9LDPYURV9P8MmyKGDhH_zN3o0wiL71LT9_1JfJHHhFyU2rImynY3gzz06DoPf_QH_pfq5gfumqyMFhIgVKh3euKOFQacYYx-azi5prFhtbHxONgTxdyBofcF3PqNlCgls5HCL6XBH5abVuWU5BmBBSbFYcsGrVRjgqmuPawBesWIC5FaD8JVb-2L7Soswr-OIaXM1gdob91Zu85balTqKPqUrVCNLkUMrmSBqpmRZNB80=\",\"summary\":[]},{\"id\":\"fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7\",\"type\":\"function_call\",\"status\":\"completed\",\"arguments\":\"{\\\"command\\\":\\\"printf pi_tool_ok\\\",\\\"timeout\\\":120000}\",\"call_id\":\"call_nfMLwtliP8Lmn5SMjdlCMUVh\",\"name\":\"bash\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"01a17851-9740-712e-af1b-3238a14569b1\",\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":\"current_turn\",\"effort\":\"minimal\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.\",\"name\":\"bash\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"command\",\"timeout\"],\"properties\":{\"command\":{\"type\":\"string\",\"description\":\"Shell command to execute\"},\"timeout\":{\"anyOf\":[{\"type\":\"number\",\"description\":\"Timeout in seconds (optional, no default timeout)\"},{\"type\":\"null\"}]}},\"additionalProperties\":false},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":221,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":40,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":261},\"user\":null,\"metadata\":{}},\"sequence_number\":20}"
           ],
           "kind": "sse"
         },
         "headers": {
-          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
-          "anthropic-ratelimit-input-tokens-limit": "10000000",
-          "anthropic-ratelimit-input-tokens-remaining": "9999000",
-          "anthropic-ratelimit-input-tokens-reset": "2026-07-06T18:58:07Z",
-          "anthropic-ratelimit-output-tokens-limit": "2000000",
-          "anthropic-ratelimit-output-tokens-remaining": "2000000",
-          "anthropic-ratelimit-output-tokens-reset": "2026-07-06T18:58:07Z",
-          "anthropic-ratelimit-requests-limit": "20000",
-          "anthropic-ratelimit-requests-remaining": "19999",
-          "anthropic-ratelimit-requests-reset": "2026-07-06T18:58:07Z",
-          "anthropic-ratelimit-tokens-limit": "12000000",
-          "anthropic-ratelimit-tokens-remaining": "11999000",
-          "anthropic-ratelimit-tokens-reset": "2026-07-06T18:58:07Z",
-          "cache-control": "no-cache",
+          "access-control-expose-headers": "X-Request-ID, Server-Timing-Total, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a170d6ca09f8cb7b-VIE",
-          "connection": "keep-alive",
-          "content-encoding": "gzip",
-          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "cf-ray": "a509ad5fbeb8051b-YYZ",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Mon, 06 Jul 2026 18:58:08 GMT",
-          "request-id": "req_011CcmKJCn7wFd54uu1SxCzF",
+          "date": "Mon, 26 Oct 2026 13:06:15 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "226",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
           "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "traceresponse": "00-6393f554e55b24340bab14a0b500ace9-0391e1d18f0eb979-01",
-          "transfer-encoding": "chunked",
-          "vary": "Accept-Encoding",
-          "x-robots-tag": "none"
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999283",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_718e410526064111ad09440ad9f31a66"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     },
     {
       "callIndex": 1,
-      "id": "0c74acf5b76aad36",
-      "matchKey": "POST api.anthropic.com/v1/messages",
-      "recordedAt": "2026-07-06T18:58:09.570Z",
+      "id": "bc3da232a7ed2a0a",
+      "matchKey": "POST api.openai.com/v1/responses",
+      "recordedAt": "2026-10-26T13:06:17.626Z",
       "request": {
         "body": {
           "kind": "json",
           "value": {
-            "max_tokens": 64000,
-            "messages": [
+            "include": ["reasoning.encrypted_content"],
+            "input": [
+              {
+                "content": "You are a coding assistant. Use tools when requested.\n\n<cwd>\n/Users/abhijeetprasad/.superset/worktrees/braintrust-sdk-javascript/resolve-issue-red-green-73219c51/e2e/.bt-tmp/run-0w90vN/scenarios/pi-coding-agent-instrumentation\n</cwd>",
+                "role": "developer"
+              },
               {
                 "content": [
                   {
                     "text": "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output.",
-                    "type": "text"
+                    "type": "input_text"
                   }
                 ],
                 "role": "user"
               },
               {
-                "content": [
-                  {
-                    "id": "toolu_015FEcLpdNm5dDJCRYpiqTPj",
-                    "input": {
-                      "command": "printf pi_tool_ok"
-                    },
-                    "name": "bash",
-                    "type": "tool_use"
-                  }
-                ],
-                "role": "assistant"
+                "content": [],
+                "encrypted_content": "gAAAAABq31BINzpCqufGcEDBVQP8Fu3tSWIRjzs5PDUJjv1SqAMfzU3nYNbY_fPrw0V9_BBHyACHQhti4OEFUUoDCcuIs7yNUQmGaI5m8Xb31RTuxxKCe1kql8tXw5HVxfEv_a7RyvaWpa_20lh_KHLONOWRHh_do-n2SuBhma0wBeFTFmkdk4NSGoNgwmKP0r0QDHxbbVPwXfJpZQQXtbg4WuY2v1NCE2XgNCdxkioHp4Ye20aESCyLJnQHCrk2vAV68kJV9YRqe5sNiSXIvO-27Sn8_RJrXlozmXZ4_XWAQNpr26D_b5vmz6yJKVQ6zx4jErnaPacl5LzKG1qyCn94PpScB1HNTNnsMf6qqQjSgY6-auvIFaKUZBQEG29yh5NPP0030erc_CJdWrBO1SLdB5_u-Uz6dadsyOcz4NqzqMMFWs_j7OGsh2AjrDiKbbAUbDEen-CgBFHaev_aVaibzViP_F_TwL2Z1OeVlH1wpXqtn5MVhNe-RikxsDx4hZh3kza0nWtZUzwqnwhzEe_B3hcBSArbQOjfBwIHCq7gZpSPq5vBhaN8sIP98_YoS8E-QCZZJ14pmWWNxLahMhRoFE2zT55Ye83R-l0h3SjEjyGROzb__D-eUWC58ldwOLLoQMSlg1uk7PBl2NvWrpc_gVMPz4sOUOoeAyAViZFpUy_S6v3b0nIlobBrZWjBfloJwuqRz7aRzRC_8VMImdWKX7ESn1B8mIRmiaSZGcprh48ACX_-kI9jl-35Y3j8jcUlwtbmR7XfKDldZ7DWbXeIAqtX2p3WFzu_gFcHlDY0v-HUSJ1rSQm-L5zeEpcw6tHOwIJykuT_FirVMp9jW8MGAYHkjUjBg8DBrkyZWuGdDEDz7DsjkNK5i3vdO4eSvGVt2Mo9H9qs7KRN66tbIYRfFhI1Sc3oC7DZwwOAk9nEWZFfdvKnU83FkB_l2VB7iU5QHalYzKiifgDIQgK6qRCQ_SL2TEfBKecO2rKlGLKp5gNvzL7HP0oU7F7bc2AMJsAvxiKDypeXqFIUayP0Top5VLHeFTAraL_t34_KTiJGO1GZb3IBUyHqWLsZtGuWfSvnlicR64rN4leBNxKu-wqCZqMEVqAqdmydzaE0lq6caxSqxBmz68-5B5UIiGfarNWnF-KJU-Xm6oV1G0EBhF1mbUOxCcx2YUPCOYog0AkONfENVS-bCZV4nytMqI--XxfNGYAMBnR9ZyIO6Qc-nsPlsWc443FA8DPV1OYv3fYiWGg5DSJMEKDuFweJXCTBqzRPqFBoK5oxsvBlG0Q3VUFuVsWjEfTI7D2XmzOhh3mg9kE1H2XT879A_FzMmMG4IA8UwaEniKJ1HDzlaCKbuOSv0B0nLqjOsNhYMVcF65NZwlNg7pxs7cIDvkZL_AQiW4bDL7qJkRKKKY801Hw-JcMbTu-sAWTio35Gb9HzM6bynj_RiAECjbetVi7kPWJqk9Aq0JJb5Zz8QfnBKwSQego34a-SyteeB3vTPKhgFl237dcT2qPHIPhYhCHoZu1ZecHHUIc-tDGIquUzDZcDBo4oq4WfTaPwo0DHZHcV5oND-rdbUOLCJ8pmC7FQ5xwlsnSggbz33SxLMlFdMBdpAf9RRumEvZ38NncAMITJ7z4FfdlIYT9UDp0=",
+                "id": "rs_0b86321b42b1ad5e016adf50481f5487d1816244e8f64a915c",
+                "summary": [],
+                "type": "reasoning"
               },
               {
-                "content": [
-                  {
-                    "cache_control": {
-                      "type": "ephemeral"
-                    },
-                    "content": "pi_tool_ok",
-                    "is_error": false,
-                    "tool_use_id": "toolu_015FEcLpdNm5dDJCRYpiqTPj",
-                    "type": "tool_result"
-                  }
-                ],
-                "role": "user"
-              }
-            ],
-            "model": "claude-haiku-4-5",
-            "stream": true,
-            "system": [
+                "arguments": "{\"command\":\"printf pi_tool_ok\",\"timeout\":120000}",
+                "call_id": "call_nfMLwtliP8Lmn5SMjdlCMUVh",
+                "id": "fc_0b86321b42b1ad5e016adf50483ed487d180778d474ab895e7",
+                "name": "bash",
+                "type": "function_call"
+              },
               {
-                "cache_control": {
-                  "type": "ephemeral"
-                },
-                "text": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\nAvailable tools:\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n\nGuidelines:\n- Use bash for file operations like ls, rg, find\n- Be concise in your responses\n- Show file paths clearly when working with files\n\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: /workspace/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-a0beda3ff342f9cd/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: /workspace/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-a0beda3ff342f9cd/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: /workspace/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-a0beda3ff342f9cd/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.79.1_ws@8.21.0_zod@4.4.3/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\n\n<project_context>\n\nProject-specific instructions and guidelines:\n\n<project_instructions path=\"/workspace/AGENTS.md\">\n# Braintrust JavaScript SDK Monorepo\n\nTypeScript SDKs and integrations for Braintrust. Uses `pnpm` workspaces.\n\n## Repository Structure\n\n```text\n.\n├── js/             # Main `braintrust` package\n├── integrations/   # Integration packages (@braintrust/*)\n├── e2e/            # End-to-end scenario tests (mock server + subprocess isolation)\n├── docs/           # Docs and reference material\n└── internal/       # Internal test fixtures and golden projects\n```\n\n## Setup\n\n```bash\nmise install        # Install toolchain and dependencies\n```\n\n## Build\n\n```bash\npnpm run build      # Build all workspace packages (from repo root)\n```\n\n## Instrumentation\n\nUse the normal Orchestrion config plus plugin/channel path by default. Special-case source patches should be rare exceptions only when the target SDK cannot be instrumented through the standard transformer path, and the reason should be documented next to the patch.\n\n## Testing\n\nUses Vitest. Prefer running the **narrowest relevant test** rather than the full suite.\n\n**From `js/` directory:**\n\n```bash\npnpm test                         # Core vitest suite (excludes wrappers)\npnpm test -- -t \"test name\"       # Filter by test name\npnpm run test:checks              # Hermetic tests (core + vitest wrapper)\n```\n\n**E2E tests (`e2e/`):**\n\nEach scenario runs the SDK in a subprocess against a mock Braintrust server and snapshots the results. No API keys required for replay; recording needs provider keys.\n\n```bash\npnpm run test:e2e                 # Run all e2e scenarios (from repo root)\npnpm run test:e2e:update          # Update e2e snapshots without re-recording cassettes\npnpm run test:e2e:record          # Re-record provider cassettes and update snapshots\n```\n\nWhen adding or modifying e2e tests, run the relevant e2e verification twice before stopping so flakes are caught proactively. After running `pnpm run test:e2e:update` or `pnpm run test:e2e:record`, always run the normal e2e tests afterward to verify there is no snapshot drift or unstable output.\n\nSpan-tree snapshots are paired: `*.span-tree.json` is the structural contract, and `*.span-tree.txt` is the human-readable ASCII tree generated from the same normalized spans. Both files are asserted and should be updated together through `pnpm run test:e2e:update` or `pnpm run test:e2e:record`; do not hand-edit only one side of the pair.\n\n**From repo root:**\n\n```bash\npnpm run test       # Run all workspace tests via turbo\n```\n\n## Linting & Formatting\n\nRun from the repo root. **Always run `fix:formatting` before committing** — there is a pre-commit hook that will reject unformatted code.\n\n```bash\npnpm run formatting      # Check formatting (prettier)\npnpm run lint            # Run eslint checks\npnpm run fix:formatting  # Auto-fix formatting\npnpm run fix:lint        # Auto-fix eslint issues\n```\n\n## Vendored Forks and Licenses\n\nWhen touching forked third-party code in this repository, including the\nvendored `import-in-the-middle`, `require-in-the-middle`, or `orchestrion-js`\ncode, preserve and respect the upstream license requirements. Keep copyright\nnotices, license files, provenance notes, and `js/NOTICE` entries accurate when\ncopying, updating, or materially modifying vendored code.\n\n</project_instructions>\n\n</project_context>\n\nCurrent date: 2026-07-06\nCurrent working directory: /workspace/e2e/.bt-tmp/run-65wF9N/scenarios/pi-coding-agent-instrumentation",
-                "type": "text"
+                "call_id": "call_nfMLwtliP8Lmn5SMjdlCMUVh",
+                "output": "pi_tool_ok",
+                "type": "function_call_output"
               }
             ],
-            "thinking": {
-              "type": "disabled"
+            "max_output_tokens": 128000,
+            "model": "gpt-5-nano",
+            "prompt_cache_key": "[REDACTED]",
+            "reasoning": {
+              "effort": "minimal",
+              "summary": "auto"
             },
+            "store": false,
+            "stream": true,
             "tools": [
               {
-                "cache_control": {
-                  "type": "ephemeral"
-                },
                 "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
-                "eager_input_streaming": true,
-                "input_schema": {
+                "name": "bash",
+                "parameters": {
+                  "additionalProperties": false,
                   "properties": {
                     "command": {
-                      "description": "Bash command to execute",
+                      "description": "Shell command to execute",
                       "type": "string"
                     },
                     "timeout": {
-                      "description": "Timeout in seconds (optional, no default timeout)",
-                      "type": "number"
+                      "anyOf": [
+                        {
+                          "description": "Timeout in seconds (optional, no default timeout)",
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
-                  "required": ["command"],
+                  "required": ["command", "timeout"],
                   "type": "object"
                 },
-                "name": "bash"
+                "strict": true,
+                "type": "function"
               }
             ]
           }
         },
         "headers": {},
         "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages"
+        "url": "https://api.openai.com/v1/responses"
       },
       "response": {
         "body": {
           "chunks": [
-            "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01XGoGZGY6NLAfyzKALmg6nJ\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":2335,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}}",
-            "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
-            "event: ping\ndata: {\"type\":\"ping\"}",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"PI\"}}",
-            "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"_CODING_AGENT_OK\\n\\nCommand output: `pi_tool_ok`\"}}",
-            "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}",
-            "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":2335,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":23}}",
-            "event: message_stop\ndata: {\"type\":\"message_stop\"}"
+            "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_0b86321b42b1ad5e016adf50488dfc87d18fbbe77f9028820a\",\"object\":\"response\",\"created_at\":1793019976,\"status\":\"in_progress\",\"access_programs\":null,\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5-nano-2025-08-07\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"01a17851-9740-712e-af1b-3238a14569b1\",\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":\"current_turn\",\"effort\":\"minimal\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.\",\"name\":\"bash\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"command\",\"timeout\"],\"properties\":{\"command\":{\"type\":\"string\",\"description\":\"Shell command to execute\"},\"timeout\":{\"anyOf\":[{\"type\":\"number\",\"description\":\"Timeout in seconds (optional, no default timeout)\"},{\"type\":\"null\"}]}},\"additionalProperties\":false},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":0}",
+            "event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"resp_0b86321b42b1ad5e016adf50488dfc87d18fbbe77f9028820a\",\"object\":\"response\",\"created_at\":1793019976,\"status\":\"in_progress\",\"access_programs\":null,\"background\":false,\"completed_at\":null,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5-nano-2025-08-07\",\"moderation\":null,\"output\":[],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"01a17851-9740-712e-af1b-3238a14569b1\",\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":\"current_turn\",\"effort\":\"minimal\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"auto\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.\",\"name\":\"bash\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"command\",\"timeout\"],\"properties\":{\"command\":{\"type\":\"string\",\"description\":\"Shell command to execute\"},\"timeout\":{\"anyOf\":[{\"type\":\"number\",\"description\":\"Timeout in seconds (optional, no default timeout)\"},{\"type\":\"null\"}]}},\"additionalProperties\":false},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}},\"sequence_number\":1}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"rs_0b86321b42b1ad5e016adf5049369887d1b48119b94600893e\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABq31BJoKK46j9aSrVQ1M4KuMloctdLmSnUwtQANv1bJ4k_Y4mn9ZslJkj6geZNhJjRrWU7loQ6SJrC5_NaytPcV553TDJx8cYektkgW8spHDueAwbw-HPRBi77p8-nIbW7Da7P68Wsfp5CyjmZlJml_THOrP8ASFeWxpdx9gw6HvzVoLp-ZM2ZTmuR6JQvWguITHVZVen5klvXK4pTqn0Oy1fAt5tvBN4sm6Pp4scRMrX_0xPtIRM-W57-0kJciICZySVObnsSWYhdyHlhntoRY0n2A83coAH46rPQbnyxJ97E-SFb8TAEQkx8YpdPea5ef3bxkfuE0jZ-x-dgLOjHr1WVZ7kAkPZNmPjD32mAhh6D2eQdbyYY181K75iuTH96-WXKkULnoyZudQw-gxsiHzmLu6qxNPDAQoFjoLBOoIdxJbh3SrVraMs476gbE9ATKdgum0MBdgzIT3NfpxCAXWAisj7JFz-PBWPRWDOFsgcSVu6LSE3N1M72Xt1r-mj6QNfitSIB_yWrg18Y312QH0aIjR1oQAUoLaCg40JgYNbjts1FvuJN3Zk76fh7zYJyREg6NaepKuW7TBsQi4AmerSe3hDGfXekeuYZ98aUAvlIltkxnxpr4aw0gXUlMVflkRk9WDdjaeAgEGS6NTsZHa8zOiB9SP5uPPwlp-_ZkJHfHBDW0vT-Xf1f2Przbbxoq3Ke-OjwWtHHU8_6YW6fCQy-E69mRKSyKjsTF9W96NDlzsowyYEI9FIRuI3Fhqm7Im1QuZU2WDD6x3L2UzCS_YIxz-Gl7MOn6yNhyPdNJsV_4MhDpQCNhKVzlQpgq2fcJZLbA1__A5D1tIt9f1o8O0IewUCS2HI7Qu-sd8IuOZWSmfkDleNvl2QpxIwx7ljaTfhkpdm04cQNNWa-NY4t-pRym_rE88E05ieL7yjuzEyzXDtwkXLwzP25j0vu-Y2QVY_llf-7_tnXWTxz63QtSAqWuZoqcp3IGBp3uPlj22-ReSUwpCud6ZaqzDIbAfEYcfTLQdd7pgXpA7Of34udjPgbFzBCV31ttsxlarKiQ8m3SCZZOZ_7tqKq5Z0hhxDVDM0_DXpnSU5_MptiB-ULY4gu9thfUPIv-F_vEuRGoGYiWNzB7okAeqqTntiiViCBgZ-uyHNn7qVx-xU3AV0hxpSehYnQJQBFeAxWGazDrEwVJgvjFhUGDXqK5YFldoPnpAnH\",\"summary\":[]},\"output_index\":0,\"sequence_number\":2}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"rs_0b86321b42b1ad5e016adf5049369887d1b48119b94600893e\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABq31BJdF8AfASjmO2ndbenRB2c2Vj7MsZxvkI1YBi0_pCPqVTLIZtS4oT4fdhj7NLSFnSfdlSCc8kjjp43DfHaKPgDpHS_hWOHs10LcU_wc-mkG3SMD-m6xCrNlMKDAc6gHW8P8tfhwl2Ag3_zmrRvu9xDx1SVl1GpPR011TDzHtSPEpRZpvA8XdYScGWwnxRiUiyiZQcOv_JLO91K_CR71Rr40LmRPjLa-1DK3yRH74GvSYywAm5XMucLxpWLlipBgxbsxI1bssg57FRDPIvUUwX0F2uD2qd1TSt3kNI8bMJco6QmbzoHXTb8vUobqDAYWGsq5_QWbtBS_UBIjEdRxDZ-xpTQEPEqTU14T9cSGFpbg-G2lhmy1Ue9R_uszsr_QScak4rl94pOnmsPBG5iObksWVZ1iwQWgRfKd9_mWRC1xlCuPb_k_WtBjzT6QrwwKoG28ZwDg48JhzHMD7XZrcrFfVZPv3Y6jsC5rgAcQ8jBPTNFJbn5e4-CFUiZFRABV-YPCBLSGNu_urjaEP2uwwSnX_gmcwN7yclYUi0lWVmOcJ58T7RKkXGDSghZ7dCyslGCOSvHPYgzg1LzIOZa9MY4jtNY2gtI-3hSsq2Zlt8dGza6W0t0XHcV2pC6WgtmnLggoOULh8Wv6KKfAYDcGZaYewyGDZghrD4KIECiNynOCkfXNAi93LTYOA0UuRX72LrTCcc6i3E9LUnNj6o-P0v9RCgaECBIgtrD29pp1UNLh2Bb20cBl231nuOyH5HSJlzBAoHLJDKX7fg5HGGpcsrbFItwMRMxKK-nJMt4yYb52tThKVcn4zFKwpQKwDo6QjEe7kI14eqUP8akoMHh3X4Tykm3Qk5uPyZO9Q8xRlqEfuJ5CHTstwL3wjahc4FvW9BaTDWUgnfb54sYRoqbs1MccMCUc2ZnEeBN0zCBNyLOZMt2FwNxcfrUlccMNlBghnxSQtUfxztFVTMQZd3HbMOF7zvW4YUvi9uzjs1tAgAFeDo-NTx4utcDSc8B9CIloLe37xZBRNO9JZWUCD_ddRJ4VBDdl5uTVrZgZMOoHY3OHcVnNkdriakG8YOhyEcM7aJomwtT6pN5EbjasHNEfyp7_oA0LKylRW8EbDl51V5zl7zdWI1YQTC4IcKA_89vFNRPLvzPui8CDorei4jDS4j4RddIVTCnHU02yEp6x5coeC98lbMuPmluf2SXokOrA5saezfSL5MqhFok6oK2joBY1DYaWx12txiQ8c_QR2GDhzsTJkKthiM7oNVmXRc2g-Uv-17RhfXJkrmyrbFnPTSI2r_UYUB8bp5xm61F-XaJKr4ifGPfomB0KO_3YN4BKIFrSQqtONMuY3A9nWrJo9xejgQ2hlUiyTxGx9yssISGRRGdPixFaaZKzZwW9LRgDXIFkojSjrLMeMiLwcvIU_PYgtESnaTY5x4W5T3MdfQK0yhyxQ-yBQxrQvDvety5VnsXKJTsaUsfqoW3FMp3kCjvrWK_26IxE4tWKNzj0ZWXGcAYx2Npzh3OAKFvlYilGkGv2M-NxVpmf3lPDgDqLv6QSA3AhMxG3WuiwBsxqqX8cpgVJLzJZc3UDHvdM-Lzv6Kv4wNkQj4dmpl3z8FAV2-V4i3PmH81YAfuF01l0GSIjAk=\",\"summary\":[]},\"output_index\":0,\"sequence_number\":3}",
+            "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"item\":{\"id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"type\":\"message\",\"status\":\"in_progress\",\"content\":[],\"role\":\"assistant\"},\"output_index\":1,\"sequence_number\":4}",
+            "event: response.content_part.added\ndata: {\"type\":\"response.content_part.added\",\"content_index\":0,\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"output_index\":1,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"\"},\"sequence_number\":5}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"PI\",\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"obfuscation\":\"KKYtqknL3Nzgpq\",\"output_index\":1,\"sequence_number\":6}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"_C\",\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"obfuscation\":\"fCp1dbH69rPFBS\",\"output_index\":1,\"sequence_number\":7}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"OD\",\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"obfuscation\":\"2DFqlcDASqBgkS\",\"output_index\":1,\"sequence_number\":8}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"ING\",\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"obfuscation\":\"64Nin47VBa4fh\",\"output_index\":1,\"sequence_number\":9}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"_AGENT\",\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"obfuscation\":\"wpKnQbTJ8a\",\"output_index\":1,\"sequence_number\":10}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"_OK\",\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"obfuscation\":\"4dlArS4ZYBesY\",\"output_index\":1,\"sequence_number\":11}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"\\n\",\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"obfuscation\":\"IO6hydX3q9Oa2Ak\",\"output_index\":1,\"sequence_number\":12}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"pi\",\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"obfuscation\":\"zCtUVMkB4dPa6R\",\"output_index\":1,\"sequence_number\":13}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"_tool\",\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"obfuscation\":\"llSK6rgjMuA\",\"output_index\":1,\"sequence_number\":14}",
+            "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"content_index\":0,\"delta\":\"_ok\",\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"obfuscation\":\"wnjBOCVvAAcCm\",\"output_index\":1,\"sequence_number\":15}",
+            "event: response.output_text.done\ndata: {\"type\":\"response.output_text.done\",\"content_index\":0,\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"logprobs\":[],\"output_index\":1,\"sequence_number\":16,\"text\":\"PI_CODING_AGENT_OK\\npi_tool_ok\"}",
+            "event: response.content_part.done\ndata: {\"type\":\"response.content_part.done\",\"content_index\":0,\"item_id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"output_index\":1,\"part\":{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"PI_CODING_AGENT_OK\\npi_tool_ok\"},\"sequence_number\":17}",
+            "event: response.output_item.done\ndata: {\"type\":\"response.output_item.done\",\"item\":{\"id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"PI_CODING_AGENT_OK\\npi_tool_ok\"}],\"role\":\"assistant\"},\"output_index\":1,\"sequence_number\":18}",
+            "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_0b86321b42b1ad5e016adf50488dfc87d18fbbe77f9028820a\",\"object\":\"response\",\"created_at\":1793019976,\"status\":\"completed\",\"access_programs\":null,\"background\":false,\"completed_at\":1793019977,\"error\":null,\"frequency_penalty\":0,\"incomplete_details\":null,\"instructions\":null,\"max_output_tokens\":128000,\"max_tool_calls\":null,\"model\":\"gpt-5-nano-2025-08-07\",\"moderation\":null,\"output\":[{\"id\":\"rs_0b86321b42b1ad5e016adf5049369887d1b48119b94600893e\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABq31BJ88sFQIQ9oEdsMREM1qJE0yOfCQVWYylHg_xwz_TDxvF-sUxBfjpDQuy6uzr5TsfvpVAG5sQa74fpOHv7w6JWOpyIdoQAAuF5sXgsgTSIarbkVN55pVC11Xjwz1O_RcNehqcyMpk3pdTXGQykWvDAdcaaEbsVEG3cXMcJ2EEpgoE0if6riFnSVnT-cvTIkXAvV4ayTA4ZuPGA6ThsxSlY0P2J31d9jQt6tUdbzYUjaZyCOF2GuTkEkshuxSIxPUmjlyCVS0tJCqlPNveV53FLf8i-6ZtejiWLlCc-7M30PHFkjQ8gLQeV7MmacbKUTdNQz7ih3MKmkXllhBhbZ-5K020TrUG0KL_lto3YVGbeHmfOXPrpJedbNPBiW86Sm5peLVhjN4mBhZYIAtNrbNAQt86C9aOsSAo9N71JeQ73Gnn4ieFmNS5-m6akiNHFT7c73KDS4kw8w-U3D08Ih-Aur3C5-rupP0J1eMCvcgGV3-R8ibZh9bJxR4KH2To_UswipcWznd-4ybqsON5BYq0guC5PPGd5bFzm9Vi1jbwZbEaksSb6M2U8f6Lqm6mBNL9dP05bJwGwjgpwNOFObcNanHgV9x0rOxov6JaUSFSfv83FZGg4REPxgdhA7Y6zAOcLjQ2sok5Dq8Ob6tCvc5tHxbDfnTiui3tA11H4wNrjEi3y61tobXdnN7mKeM8-j9WhJAgU4Hl-rtKq3cOhPEHmbJkJo2nw5CcaViuaiO5O5egQBSxWOgfRYmVmBvP7ujkigC88qQXixw9JiRihE-0eZBFhCyO11JDfSSpjPw7fWaS6jMOaXoq_IVxpBuapiW0p-Ril6Z2b48TLUbV5DW55JFsfY3gFiAqKptHsMcvPMNxjSugMcRZCFe6ExUaqZ5UAJIGzlKlKKjITj1IVK9VLY5pzcOvXrM9dU4yhjz8JM2Q7GEOxL77ipzKh5CBkXfhM-KjY7Do1MvzWUWU-w3Bo0YMYsuxAVuCpTLkQ76BM3jQ87bJ9aJ53QOwO-bMo73RHx4JB2EY2QfJErXWuo0-j2AgrPlue5_wJbOb00Z_B7dKAz2Rg-L16UJ8OqboP5cPBsely22ruH3k6jZfOVYYjrCoWtAcoPw5Xda3tR5qja6CEcEnyPO6qvk-cZZxtwK5p1MsTAeUlGX8SHCc6mg4VHlmxpTE7_8B9JYUBDIVLnM8W_iMle5ZDHypQm4nar_4o7ae_193MxjXYqguXI2gvbsqtco8nARR0Qzdm_Z1WHjhbQdGJbH8Y323eEsuLLnIuzXQTiS-DbqSwizsYh5MFYxOzZcdeaVjJRTY-FpgZUCwIojEqt7J1gX2d_jFagqgA064XYuh3fYc6IBjvfKHwG8vVO1ojBq_GG2QJ7G2LSrMlBYM3HZPXdDVZIrYnPQzvG0IlECLWdQGsnbV3AgSyLXJ2J_XiLycaolGRZEHZVo1HjPh6IhN0FtQNU3wxkGRawKA1dVS7H4iA5Ezd8z35I5Z9pnI4z8QvVCF_OPmWm5sDHG0pU_jhMGD8xr5Znd84gRuXNjxouJKlUkhbQkmXxw3IDf_F2BoqDt2vVw78U2PQ9BMPFWPWrDlAUmFeGWYMNYKUS1FhNKIiwMtiyVZOfZfwnvzvdcooFScjbrKX0qU=\",\"summary\":[]},{\"id\":\"msg_0b86321b42b1ad5e016adf5049433887d1b1e3393a274b6862\",\"type\":\"message\",\"status\":\"completed\",\"content\":[{\"type\":\"output_text\",\"annotations\":[],\"logprobs\":[],\"text\":\"PI_CODING_AGENT_OK\\npi_tool_ok\"}],\"role\":\"assistant\"}],\"parallel_tool_calls\":true,\"presence_penalty\":0,\"previous_response_id\":null,\"prompt_cache_key\":\"01a17851-9740-712e-af1b-3238a14569b1\",\"prompt_cache_retention\":\"in_memory\",\"reasoning\":{\"context\":\"current_turn\",\"effort\":\"minimal\",\"mode\":\"standard\",\"summary\":\"detailed\"},\"safety_identifier\":null,\"service_tier\":\"default\",\"store\":false,\"temperature\":1,\"text\":{\"format\":{\"type\":\"text\"},\"verbosity\":\"medium\"},\"tool_choice\":\"auto\",\"tool_usage\":{\"image_gen\":{\"input_tokens\":0,\"input_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"image_tokens\":0,\"text_tokens\":0},\"total_tokens\":0},\"web_search\":{\"num_requests\":0}},\"tools\":[{\"type\":\"function\",\"description\":\"Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.\",\"name\":\"bash\",\"output_schema\":null,\"parameters\":{\"type\":\"object\",\"required\":[\"command\",\"timeout\"],\"properties\":{\"command\":{\"type\":\"string\",\"description\":\"Shell command to execute\"},\"timeout\":{\"anyOf\":[{\"type\":\"number\",\"description\":\"Timeout in seconds (optional, no default timeout)\"},{\"type\":\"null\"}]}},\"additionalProperties\":false},\"strict\":true}],\"top_logprobs\":0,\"top_p\":1,\"truncation\":\"disabled\",\"usage\":{\"input_tokens\":272,\"input_tokens_details\":{\"cache_write_tokens\":0,\"cached_tokens\":0},\"output_tokens\":28,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":300},\"user\":null,\"metadata\":{}},\"sequence_number\":19}"
           ],
           "kind": "sse"
         },
         "headers": {
-          "anthropic-organization-id": "27796668-7351-40ac-acc4-024aee8995a5",
-          "anthropic-ratelimit-input-tokens-limit": "10000000",
-          "anthropic-ratelimit-input-tokens-remaining": "9999000",
-          "anthropic-ratelimit-input-tokens-reset": "2026-07-06T18:58:08Z",
-          "anthropic-ratelimit-output-tokens-limit": "2000000",
-          "anthropic-ratelimit-output-tokens-remaining": "2000000",
-          "anthropic-ratelimit-output-tokens-reset": "2026-07-06T18:58:08Z",
-          "anthropic-ratelimit-requests-limit": "20000",
-          "anthropic-ratelimit-requests-remaining": "19999",
-          "anthropic-ratelimit-requests-reset": "2026-07-06T18:58:08Z",
-          "anthropic-ratelimit-tokens-limit": "12000000",
-          "anthropic-ratelimit-tokens-remaining": "11999000",
-          "anthropic-ratelimit-tokens-reset": "2026-07-06T18:58:08Z",
-          "cache-control": "no-cache",
+          "access-control-expose-headers": "X-Request-ID, Server-Timing-Total, CF-Ray, CF-Ray",
+          "alt-svc": "h3=\":443\"; ma=86400",
           "cf-cache-status": "DYNAMIC",
-          "cf-ray": "a170d6d20dbdcb7b-VIE",
-          "connection": "keep-alive",
-          "content-encoding": "gzip",
-          "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+          "cf-ray": "a509ad64ee9a051b-YYZ",
           "content-type": "text/event-stream; charset=utf-8",
-          "date": "Mon, 06 Jul 2026 18:58:08 GMT",
-          "request-id": "req_011CcmKJJ66tPfgsxWNTwjup",
+          "date": "Mon, 26 Oct 2026 13:06:16 GMT",
+          "openai-organization": "braintrust-data",
+          "openai-processing-ms": "391",
+          "openai-project": "proj_vsCSXafhhByzWOThMrJcZiw9",
+          "openai-version": "2020-10-01",
           "server": "cloudflare",
+          "set-cookie": "[REDACTED]",
           "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
-          "traceresponse": "00-cd3deb39b87618ac8715904e54233712-85010038df6bc187-01",
-          "transfer-encoding": "chunked",
-          "vary": "Accept-Encoding",
-          "x-robots-tag": "none"
+          "x-content-type-options": "nosniff",
+          "x-ratelimit-limit-requests": "30000",
+          "x-ratelimit-limit-tokens": "180000000",
+          "x-ratelimit-remaining-requests": "29999",
+          "x-ratelimit-remaining-tokens": "179999232",
+          "x-ratelimit-reset-requests": "2ms",
+          "x-ratelimit-reset-tokens": "0s",
+          "x-request-id": "req_12609f8134ea4096b1e480adeaa5d757"
         },
-        "status": 200,
-        "statusText": "OK"
+        "status": 200
       }
     }
   ],

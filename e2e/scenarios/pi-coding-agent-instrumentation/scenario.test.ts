@@ -49,11 +49,10 @@ const piCodingAgentScenarios = await Promise.all(
       wrapperSnapshotName: "pi-coding-agent-v081-latest-wrapped",
     },
     {
-      // The v1 cassettes reuse v0's real Anthropic bash exchange. Keep separate
-      // files so future recordings and latest-version bumps remain independent.
       autoEntry: "scenario.pi-coding-agent-v079.mjs",
       autoSnapshotName: "pi-coding-agent-v1-auto-hook",
       dependencyName: "pi-coding-agent-v1",
+      provider: "openai" as const,
       variantKey: "pi-coding-agent-v1",
       wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
       wrapperSnapshotName: "pi-coding-agent-v1-wrapped",
@@ -62,6 +61,7 @@ const piCodingAgentScenarios = await Promise.all(
       autoEntry: "scenario.pi-coding-agent-v079.mjs",
       autoSnapshotName: "pi-coding-agent-v1-latest-auto-hook",
       dependencyName: "pi-coding-agent-v1-latest",
+      provider: "openai" as const,
       variantKey: "pi-coding-agent-v1-latest",
       wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
       wrapperSnapshotName: "pi-coding-agent-v1-latest-wrapped",
@@ -82,12 +82,16 @@ describe.concurrent("variants", () => {
       () => {
         definePiCodingAgentInstrumentationAssertions({
           name: "wrapped instrumentation",
+          provider: piCodingAgentScenario.provider,
           runScenario: async ({ runNodeScenarioDir }) => {
             await runNodeScenarioDir({
               entry: piCodingAgentScenario.wrapperEntry,
               env: {
                 PI_CODING_AGENT_PACKAGE_NAME:
                   piCodingAgentScenario.dependencyName,
+                ...(piCodingAgentScenario.provider
+                  ? { PI_CODING_AGENT_PROVIDER: piCodingAgentScenario.provider }
+                  : {}),
                 ...(piCodingAgentScenario.fakeStream
                   ? { PI_CODING_AGENT_FAKE_STREAM: "true" }
                   : {}),
@@ -110,12 +114,16 @@ describe.concurrent("variants", () => {
 
         definePiCodingAgentInstrumentationAssertions({
           name: "auto-hook instrumentation",
+          provider: piCodingAgentScenario.provider,
           runScenario: async ({ runNodeScenarioDir }) => {
             await runNodeScenarioDir({
               entry: piCodingAgentScenario.autoEntry,
               env: {
                 PI_CODING_AGENT_PACKAGE_NAME:
                   piCodingAgentScenario.dependencyName,
+                ...(piCodingAgentScenario.provider
+                  ? { PI_CODING_AGENT_PROVIDER: piCodingAgentScenario.provider }
+                  : {}),
                 ...(piCodingAgentScenario.fakeStream
                   ? { PI_CODING_AGENT_FAKE_STREAM: "true" }
                   : {}),

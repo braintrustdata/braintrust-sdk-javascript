@@ -96,14 +96,13 @@ function findPiTask(events: CapturedLogEvent[]) {
   );
 }
 
-function summarize(events: CapturedLogEvent[]): SpanTreeEntry[] {
+function summarize(
+  events: CapturedLogEvent[],
+  llmSpanName: string,
+): SpanTreeEntry[] {
   const operation = findLatestSpan(events, "pi-coding-agent-prompt-operation");
   const task = findPiTask(events);
-  const llm = findChildSpans(
-    events,
-    "anthropic.messages.create",
-    task?.span.id,
-  ).at(-1);
+  const llm = findChildSpans(events, llmSpanName, task?.span.id).at(-1);
   const tool = findChildSpans(events, "bash", task?.span.id).at(-1);
   const toolChild = findChildSpans(
     events,
@@ -132,11 +131,19 @@ function summarize(events: CapturedLogEvent[]): SpanTreeEntry[] {
 
 export function definePiCodingAgentInstrumentationAssertions(options: {
   name: string;
+  provider?: "anthropic" | "openai";
   runScenario: RunPiCodingAgentScenario;
   snapshotName: string;
   testFileUrl: string;
   timeoutMs: number;
 }): void {
+  const provider = options.provider ?? "anthropic";
+  const llmSpanName =
+    provider === "openai"
+      ? "openai.responses.create"
+      : "anthropic.messages.create";
+  const api = provider === "openai" ? "openai-responses" : "anthropic-messages";
+  const modelId = provider === "openai" ? "gpt-5-nano" : "claude-haiku-4-5";
   const snapshotPath = resolveFileSnapshotPath(
     options.testFileUrl,
     `${options.snapshotName}.span-tree.json`,
@@ -169,11 +176,7 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
           "pi-coding-agent-prompt-operation",
         );
         const task = findPiTask(events);
-        const llmSpans = findChildSpans(
-          events,
-          "anthropic.messages.create",
-          task?.span.id,
-        );
+        const llmSpans = findChildSpans(events, llmSpanName, task?.span.id);
         const llm = llmSpans.at(-1);
         const tool = findChildSpans(events, "bash", task?.span.id).at(-1);
         const toolChild = findChildSpans(
@@ -188,7 +191,7 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
         expect(task?.span.type).toBe("task");
         expect(task?.row.metadata).toMatchObject({
           "pi_coding_agent.operation": "AgentSession.prompt",
-          provider: "anthropic",
+          provider,
         });
         for (const metric of [
           "prompt_tokens",
@@ -206,10 +209,10 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
         expect(llmSpans).toHaveLength(2);
         expect(llm?.span.type).toBe("llm");
         expect(llm?.row.metadata).toMatchObject({
-          "pi_coding_agent.api": "anthropic-messages",
-          provider: "anthropic",
+          "pi_coding_agent.api": api,
+          provider,
         });
-        expect(String(llm?.row.metadata?.model)).toContain("claude-haiku-4-5");
+        expect(String(llm?.row.metadata?.model)).toContain(modelId);
         for (const llmSpan of llmSpans) {
           expect(llmSpan.input).toEqual(
             expect.arrayContaining([
@@ -259,7 +262,7 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
 
     test("matches the shared span tree snapshot", testConfig, async () => {
       expect(setupError).toBeUndefined();
-      await matchSpanTreeSnapshot(summarize(events), snapshotPath);
+      await matchSpanTreeSnapshot(summarize(events, llmSpanName), snapshotPath);
     });
   });
 }
