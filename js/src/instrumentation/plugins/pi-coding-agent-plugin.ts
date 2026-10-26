@@ -722,11 +722,8 @@ function finishOpenToolSpans(state: PiPromptState, error?: unknown): void {
 }
 
 function normalizePiContextInput(context: PiContext): unknown[] {
-  const content: string[] = [];
-  const sections = new Map<string, string>();
   const messages: unknown[] = [];
   if (context.systemPrompt) {
-    content.push(context.systemPrompt);
     messages.push({ role: "system", content: context.systemPrompt });
   }
   for (const message of context.messages) {
@@ -742,22 +739,24 @@ function normalizePiContextInput(context: PiContext): unknown[] {
             .filter((part) => part.type === "text")
             .map((part) => part.text)
             .join("\n");
-    if (text) {
-      content.push(text);
-    }
+    const initial = messages.length === 0;
+    const content = [text];
+    // Later system messages are deltas. Name section patches explicitly so
+    // replacements and removals retain their meaning without repeating history.
     for (const [name, value] of Object.entries(message.sections ?? {})) {
-      if (value === null) {
-        sections.delete(name);
+      if (value === null && !initial) {
+        content.push(`Removed system prompt section ${JSON.stringify(name)}.`);
       } else if (typeof value === "string") {
-        sections.set(name, value);
+        content.push(
+          initial
+            ? value
+            : `Updated system prompt section ${JSON.stringify(name)}:\n\n${value}`,
+        );
       }
     }
-    // Preserve each system message's position and show the prompt in effect there.
     messages.push({
       role: "system",
-      content: [...content, ...sections.values()]
-        .filter((part) => part.length > 0)
-        .join("\n\n"),
+      content: content.filter((part) => part.length > 0).join("\n\n"),
     });
   }
   return messages;

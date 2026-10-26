@@ -222,7 +222,7 @@ describe("PiCodingAgentPlugin", () => {
     },
   );
 
-  it("replays Pi 1.4 prompt and tool updates without changing the transcript", async () => {
+  it("preserves Pi 1.4 prompt deltas and resolves tool updates without mutation", async () => {
     const original = {
       name: "lookup",
       description: "Old lookup",
@@ -274,12 +274,11 @@ describe("PiCodingAgentPlugin", () => {
       {
         role: "system",
         content:
-          "Base instructions\n\nMore instructions\nSecond block\n\nBe concise\n\nKeep this section\n\nNew section",
+          'More instructions\nSecond block\n\nUpdated system prompt section "preamble":\n\nBe concise\n\nRemoved system prompt section "cwd".\n\nUpdated system prompt section "extra":\n\nNew section',
       },
       {
         role: "system",
-        content:
-          "Base instructions\n\nMore instructions\nSecond block\n\nBe concise\n\nKeep this section",
+        content: 'Removed system prompt section "extra".',
       },
     ]);
     expect(
