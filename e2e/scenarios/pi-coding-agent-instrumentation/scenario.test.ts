@@ -48,6 +48,24 @@ const piCodingAgentScenarios = await Promise.all(
       wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
       wrapperSnapshotName: "pi-coding-agent-v081-latest-wrapped",
     },
+    {
+      // The v1 cassettes reuse v0's real Anthropic bash exchange. Keep separate
+      // files so future recordings and latest-version bumps remain independent.
+      autoEntry: "scenario.pi-coding-agent-v079.mjs",
+      autoSnapshotName: "pi-coding-agent-v1-auto-hook",
+      dependencyName: "pi-coding-agent-v1",
+      variantKey: "pi-coding-agent-v1",
+      wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
+      wrapperSnapshotName: "pi-coding-agent-v1-wrapped",
+    },
+    {
+      autoEntry: "scenario.pi-coding-agent-v079.mjs",
+      autoSnapshotName: "pi-coding-agent-v1-latest-auto-hook",
+      dependencyName: "pi-coding-agent-v1-latest",
+      variantKey: "pi-coding-agent-v1-latest",
+      wrapperEntry: "scenario.pi-coding-agent-v079-wrapped.mjs",
+      wrapperSnapshotName: "pi-coding-agent-v1-latest-wrapped",
+    },
   ].map(async (scenario) => ({
     ...scenario,
     version: await readInstalledPackageVersion(

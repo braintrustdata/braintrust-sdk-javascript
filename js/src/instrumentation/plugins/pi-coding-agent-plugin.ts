@@ -24,6 +24,7 @@ import type {
   PiPromptOptions,
   PiSimpleStreamOptions,
   PiStreamFunction,
+  PiSystemMessage,
   PiTextContent,
   PiTool,
   PiToolCall,
@@ -308,7 +309,7 @@ function makeInstrumentedStreamFunction(
       return invokeOriginal();
     }
 
-    wrapPiToolExecutors(context.tools);
+    wrapPiToolExecutors(agent.state?.tools);
     const llmState = await startPiLlmSpan(
       state,
       model,
@@ -382,7 +383,7 @@ async function startPiLlmSpan(
   const metadata = {
     ...extractModelMetadata(model),
     ...extractStreamOptionsMetadata(options),
-    ...extractToolMetadata(context.tools),
+    ...extractToolMetadata(resolvePiContextTools(context)),
     "pi_coding_agent.operation": `agent.${property}`,
   };
   const span = startBaseSpan(
@@ -720,13 +721,68 @@ function finishOpenToolSpans(state: PiPromptState, error?: unknown): void {
 }
 
 function normalizePiContextInput(context: PiContext): unknown[] {
-  const messages = context.messages.flatMap((message) =>
-    normalizePiMessage(message),
-  );
+  const content: string[] = [];
+  const sections = new Map<string, string>();
+  const messages: unknown[] = [];
   if (context.systemPrompt) {
-    return [{ role: "system", content: context.systemPrompt }, ...messages];
+    content.push(context.systemPrompt);
+    messages.push({ role: "system", content: context.systemPrompt });
+  }
+  for (const message of context.messages) {
+    if (!isPiSystemMessage(message)) {
+      messages.push(...normalizePiMessage(message));
+      continue;
+    }
+
+    const text =
+      typeof message.content === "string"
+        ? message.content
+        : message.content
+            .filter((part) => part.type === "text")
+            .map((part) => part.text)
+            .join("\n");
+    if (text) {
+      content.push(text);
+    }
+    for (const [name, value] of Object.entries(message.sections ?? {})) {
+      if (value === null) {
+        sections.delete(name);
+      } else if (typeof value === "string") {
+        sections.set(name, value);
+      }
+    }
+    // Preserve each system message's position and show the prompt in effect there.
+    messages.push({
+      role: "system",
+      content: [...content, ...sections.values()]
+        .filter((part) => part.length > 0)
+        .join("\n\n"),
+    });
   }
   return messages;
+}
+
+function resolvePiContextTools(context: PiContext): PiTool[] | undefined {
+  const tools = new Map<string, PiTool>();
+  let hasDeclarations = false;
+  for (const message of context.messages) {
+    if (!isPiSystemMessage(message)) {
+      continue;
+    }
+    if (
+      message.toolsAdded !== undefined ||
+      message.toolsRemoved !== undefined
+    ) {
+      hasDeclarations = true;
+    }
+    for (const tool of message.toolsRemoved ?? []) {
+      tools.delete(tool.name);
+    }
+    for (const tool of message.toolsAdded ?? []) {
+      tools.set(tool.name, tool);
+    }
+  }
+  return hasDeclarations ? [...tools.values()] : context.tools;
 }
 
 function normalizePiMessage(message: PiMessage): unknown[] {
@@ -818,6 +874,13 @@ function extractAssistantOutput(message: PiAssistantMessage): unknown {
       message: normalizeAssistantMessage(message),
     },
   ]);
+}
+
+function isPiSystemMessage(message: PiMessage): message is PiSystemMessage {
+  return (
+    message.role === "system" &&
+    (typeof message.content === "string" || Array.isArray(message.content))
+  );
 }
 
 function isPiUserMessage(

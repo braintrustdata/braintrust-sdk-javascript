@@ -1,0 +1,182 @@
+{
+  "span_tree": [
+    {
+      "name": "pi-coding-agent-root",
+      "type": "task",
+      "children": [
+        {
+          "name": "pi-coding-agent-prompt-operation",
+          "children": [
+            {
+              "name": "AgentSession.prompt",
+              "type": "task",
+              "children": [
+                {
+                  "name": "anthropic.messages.create",
+                  "type": "llm",
+                  "children": [],
+                  "input": [
+                    {
+                      "content": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.\n\n<tools>\n- bash: Execute bash commands (ls, grep, find, etc.)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n</tools>\n\n<rules>\n- Use bash for file operations like ls, rg, find\n- You can inspect PI_* environment variables for current model and session details.\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>\n\n<docs>\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-<hash>/node_modules/.pnpm/@earendil-works+pi-coding-agent@1.4.0_@aws-sdk+credential-provider-node@3.972.88_@smith_82bd6a53c1340e96f9e45bfc178511a2/node_modules/@earendil-works/pi-coding-agent/README.md\n- Additional docs: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-<hash>/node_modules/.pnpm/@earendil-works+pi-coding-agent@1.4.0_@aws-sdk+credential-provider-node@3.972.88_@smith_82bd6a53c1340e96f9e45bfc178511a2/node_modules/@earendil-works/pi-coding-agent/docs\n- Examples: <repo>/e2e/.bt-tmp/scenario-deps/pi-coding-agent-instrumentation-locked-<hash>/node_modules/.pnpm/@earendil-works+pi-coding-agent@1.4.0_@aws-sdk+credential-provider-node@3.972.88_@smith_82bd6a53c1340e96f9e45bfc178511a2/node_modules/@earendil-works/pi-coding-agent/examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\n</docs>\n\n<cwd>\n<repo>/e2e/scenarios/pi-coding-agent-instrumentation/\n</cwd>",
+                      "role": "system"
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output.",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    {
+                      "content": null,
+                      "role": "assistant",
+                      "tool_calls": [
+                        {
+                          "function": {
+                            "arguments": "{\"command\":\"printf pi_tool_ok\"}",
+                            "name": "bash"
+                          },
+                          "id": "<span:1>",
+                          "type": "function"
+                        }
+                      ]
+                    },
+                    {
+                      "content": [
+                        {
+                          "text": "pi_tool_ok",
+                          "type": "text"
+                        }
+                      ],
+                      "role": "tool",
+                      "tool_call_id": "<tool-call-id>"
+                    }
+                  ],
+                  "output": [
+                    {
+                      "finish_reason": "stop",
+                      "index": 0,
+                      "message": {
+                        "content": "PI_CODING_AGENT_OK\n\nCommand output: `pi_tool_ok`",
+                        "role": "assistant"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "model": "claude-haiku-4-5-20251001",
+                    "pi_coding_agent.api": "anthropic-messages",
+                    "pi_coding_agent.model": "claude-haiku-4-5",
+                    "pi_coding_agent.operation": "agent.streamFunction",
+                    "pi_coding_agent.stop_reason": "stop",
+                    "provider": "anthropic",
+                    "tools": [
+                      {
+                        "function": {
+                          "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
+                          "name": "bash",
+                          "parameters": {
+                            "properties": {
+                              "command": {
+                                "description": "Shell command to execute",
+                                "type": "string"
+                              },
+                              "timeout": {
+                                "description": "Timeout in seconds (optional, no default timeout)",
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "command"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "type": "function"
+                      }
+                    ]
+                  },
+                  "metrics": {
+                    "completion_tokens": 23,
+                    "duration": 0,
+                    "prompt_cache_creation_tokens": 0,
+                    "prompt_cached_tokens": 0,
+                    "prompt_tokens": 2335,
+                    "time_to_first_token": 0,
+                    "tokens": 2358
+                  }
+                },
+                {
+                  "name": "bash",
+                  "type": "tool",
+                  "children": [
+                    {
+                      "name": "pi-tool-child",
+                      "children": []
+                    }
+                  ],
+                  "input": {
+                    "command": "printf pi_tool_ok"
+                  },
+                  "output": {
+                    "content": [
+                      {
+                        "text": "pi_tool_ok",
+                        "type": "text"
+                      }
+                    ],
+                    "structuredContent": {
+                      "exit_code": 0,
+                      "output": "pi_tool_ok",
+                      "truncated": false,
+                      "wall_time_seconds": 0
+                    }
+                  },
+                  "metadata": {
+                    "gen_ai.tool.call.id": "<tool-call-id>",
+                    "gen_ai.tool.name": "bash",
+                    "pi_coding_agent.tool.name": "bash"
+                  }
+                }
+              ],
+              "input": "Use the bash tool to run `printf pi_tool_ok` exactly once, then reply with exactly PI_CODING_AGENT_OK and include the command output.",
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": "PI_CODING_AGENT_OK\n\nCommand output: `pi_tool_ok`",
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "model": "claude-haiku-4-5",
+                "pi_coding_agent.api": "anthropic-messages",
+                "pi_coding_agent.model": "claude-haiku-4-5",
+                "pi_coding_agent.operation": "AgentSession.prompt",
+                "pi_coding_agent.source": "rpc",
+                "provider": "anthropic"
+              },
+              "metrics": {
+                "completion_tokens": 80,
+                "duration": 0,
+                "prompt_cache_creation_tokens": 0,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 4596,
+                "tokens": 4676
+              }
+            }
+          ],
+          "metadata": {
+            "operation": "prompt"
+          }
+        }
+      ],
+      "metadata": {
+        "scenario": "pi-coding-agent-instrumentation"
+      }
+    }
+  ]
+}

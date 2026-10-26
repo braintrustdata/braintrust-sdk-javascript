@@ -86,7 +86,32 @@ span_tree:
             │     "pi_coding_agent.model": "claude-haiku-4-5",
             │     "pi_coding_agent.operation": "agent.streamFunction",
             │     "pi_coding_agent.stop_reason": "stop",
-            │     "provider": "anthropic"
+            │     "provider": "anthropic",
+            │     "tools": [
+            │       {
+            │         "function": {
+            │           "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds.",
+            │           "name": "bash",
+            │           "parameters": {
+            │             "properties": {
+            │               "command": {
+            │                 "description": "Bash command to execute",
+            │                 "type": "string"
+            │               },
+            │               "timeout": {
+            │                 "description": "Timeout in seconds (optional, no default timeout)",
+            │                 "type": "number"
+            │               }
+            │             },
+            │             "required": [
+            │               "command"
+            │             ],
+            │             "type": "object"
+            │           }
+            │         },
+            │         "type": "function"
+            │       }
+            │     ]
             │   }
             │   metrics: {
             │     "completion_tokens": 3,

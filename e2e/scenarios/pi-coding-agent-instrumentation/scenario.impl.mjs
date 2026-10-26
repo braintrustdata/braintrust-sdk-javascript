@@ -54,6 +54,7 @@ async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
     agentDir: cwd,
     cwd,
     noContextFiles: true,
+    noSkills: true,
   });
   await resourceLoader.reload();
 

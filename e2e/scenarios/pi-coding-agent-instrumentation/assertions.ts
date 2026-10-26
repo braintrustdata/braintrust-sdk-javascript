@@ -13,11 +13,7 @@ import {
   type SpanTreeEntry,
   type SpanTreeFields,
 } from "../../helpers/span-tree";
-import {
-  ROOT_NAME,
-  SCENARIO_NAME,
-  TOOL_CHILD_SPAN_NAME,
-} from "./scenario.impl.mjs";
+import { ROOT_NAME, TOOL_CHILD_SPAN_NAME } from "./scenario.impl.mjs";
 
 type RunPiCodingAgentScenario = (harness: {
   runNodeScenarioDir: (options: {
@@ -40,6 +36,7 @@ const METADATA_KEYS = [
   "model",
   "operation",
   "scenario",
+  "tools",
   "gen_ai.tool.call.id",
   "gen_ai.tool.name",
   "pi_coding_agent.api",
@@ -162,14 +159,6 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
       }
     }, timeoutMs);
 
-    test("captures the root trace", testConfig, () => {
-      expect(setupError).toBeUndefined();
-      const root = findLatestSpan(events, ROOT_NAME);
-
-      expect(root).toBeDefined();
-      expect(root?.row.metadata).toMatchObject({ scenario: SCENARIO_NAME });
-    });
-
     test(
       "captures prompt task with nested LLM and tool spans",
       testConfig,
@@ -221,7 +210,26 @@ export function definePiCodingAgentInstrumentationAssertions(options: {
           provider: "anthropic",
         });
         expect(String(llm?.row.metadata?.model)).toContain("claude-haiku-4-5");
-        expect(llm?.input).toEqual(expect.any(Array));
+        for (const llmSpan of llmSpans) {
+          expect(llmSpan.input).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                role: "system",
+                content: expect.stringContaining("coding assistant"),
+              }),
+            ]),
+          );
+          expect(llmSpan.row.metadata?.tools).toEqual([
+            {
+              type: "function",
+              function: expect.objectContaining({
+                name: "bash",
+                description: expect.any(String),
+                parameters: expect.any(Object),
+              }),
+            },
+          ]);
+        }
         expect(llm?.output).toBeDefined();
         for (const llmSpan of llmSpans) {
           expect(llmSpan.metrics).toMatchObject({
