@@ -310,6 +310,7 @@ function makeInstrumentedStreamFunction(
     }
 
     wrapPiToolExecutors(agent.state?.tools);
+    wrapPiToolExecutors(context.tools);
     const llmState = await startPiLlmSpan(
       state,
       model,

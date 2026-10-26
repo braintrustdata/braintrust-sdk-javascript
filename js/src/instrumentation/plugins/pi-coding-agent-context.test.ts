@@ -44,14 +44,16 @@ describe("Pi tool execution context", () => {
   });
 
   it.each([
-    { property: "streamFn", label: "legacy streamFn" },
+    { property: "streamFn", source: "agent state" },
     {
       property: "streamFunction",
-      label: "streamFunction after refreshing tools",
+      source: "refreshed agent state",
     },
+    { property: "streamFn", source: "context without agent state" },
+    { property: "streamFunction", source: "context distinct from agent state" },
   ] as const)(
-    "parents tool children before and after await with $label",
-    async ({ property }) => {
+    "parents tool children across await with $property and $source",
+    async ({ property, source }) => {
       let rootSpan: Span;
       let toolSpan: Span;
       const tool: PiTool = {
@@ -70,7 +72,7 @@ describe("Pi tool execution context", () => {
       };
       const message = { role: "assistant" as const, content: [] };
       const fixture = makeFixture(
-        property === "streamFunction" ? { name: tool.name } : tool,
+        source === "agent state" ? tool : { ...tool },
         property,
         async () => ({
           async *[Symbol.asyncIterator]() {
@@ -85,11 +87,15 @@ describe("Pi tool execution context", () => {
       await experiment.traced(async (root) => {
         rootSpan = root;
         await fixture.prompt(async () => {
-          if (property === "streamFunction") {
+          if (source === "refreshed agent state") {
             // Pi 1.4 can refresh executors during prompt setup; the transcript
             // declares tools but does not carry their execute functions.
-            fixture.agent.state.tools = [tool];
-            const stream = await fixture.agent.streamFunction!(
+            fixture.agent.state!.tools = [tool];
+          } else if (source === "context without agent state") {
+            fixture.agent.state = undefined;
+          }
+          if (source !== "agent state") {
+            const stream = await fixture.agent[property]!(
               { id: "model" },
               {
                 messages: [
@@ -99,6 +105,7 @@ describe("Pi tool execution context", () => {
                     toolsAdded: [{ name: tool.name }],
                   },
                 ],
+                ...(source.startsWith("context") ? { tools: [tool] } : {}),
               },
             );
             await stream.result();
@@ -325,7 +332,9 @@ function makeFixture(
   },
 ) {
   const listeners = new Set<PiAgentEventListener>();
-  const agent: PiAgentSession["agent"] & { state: { tools: PiTool[] } } = {
+  const agent: PiAgentSession["agent"] & {
+    state: { tools: PiTool[] } | undefined;
+  } = {
     state: { tools: [tool] },
     [property]: streamFunction,
     subscribe(listener: PiAgentEventListener) {
