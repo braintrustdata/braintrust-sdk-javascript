@@ -29,6 +29,7 @@ export function getExtensionFromMediaType(mediaType: string): string {
     "audio/mpeg": "mp3",
     "audio/flac": "flac",
     "audio/basic": "mulaw",
+    "audio/pcm": "pcm",
     "audio/mp4": "m4a",
     "audio/wav": "wav",
     "audio/webm": "webm",

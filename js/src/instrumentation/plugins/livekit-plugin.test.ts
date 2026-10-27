@@ -8,6 +8,10 @@ import {
   test,
   vi,
 } from "vitest";
+import type {
+  AttachmentStreamHook,
+  AttachmentStreamSource,
+} from "../../attachment-stream";
 import { EventEmitter } from "node:events";
 import { z } from "zod/v3";
 import { configureNode } from "../../node/config";
@@ -1290,11 +1294,24 @@ describe("recording files", () => {
     channel,
   });
   /** A recording whose wall-clock hold no longer limits uploads. */
-  function recording(chunkBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES) {
+  function recording(
+    chunkBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES,
+    hook?: AttachmentStreamHook,
+    captures?: { input: boolean; output: boolean },
+  ) {
     const log = vi.fn();
     const turn = vi.fn();
-    const r = new Recording({ spanId: "root", log } as any, chunkBytes, (id) =>
-      id === "turn" ? ({ span: { log: turn } } as any) : undefined,
+    const owner = initLogger({
+      projectId: "recording-project",
+      attachmentStreamHook: hook,
+    });
+    const span = owner.startSpan();
+    vi.spyOn(span, "log").mockImplementation(log);
+    const r = new Recording(
+      span,
+      chunkBytes,
+      (id) => (id === "turn" ? ({ span: { log: turn } } as any) : undefined),
+      captures,
     );
     now += 3_600_000;
     const last = (fn: typeof log, key: string) =>
@@ -1304,7 +1321,12 @@ describe("recording files", () => {
         .at(-1);
     return {
       r,
+      owner,
       log,
+      sources: () =>
+        (last(log, "audio.recordings") as any[]).map((f) =>
+          f.sources.map((source: any) => source.channel_index),
+        ),
       files: () =>
         (last(log, "audio.recordings") as any[]).map((f) => [
           f.id,
@@ -1320,6 +1342,395 @@ describe("recording files", () => {
         ]),
     };
   }
+  // A test encoder chooses its own frame-aligned boundaries, independently of
+  // incoming chunk sizes. Real encoders may also wait for codec-safe boundaries.
+  async function* segmentPcm(
+    source: AttachmentStreamSource,
+    size = source.targetFileInputBytes,
+  ) {
+    let parts: Uint8Array[] = [];
+    let buffered = 0;
+    let offset = 0;
+    for await (const chunk of source.chunks) {
+      for (let at = 0; at < chunk.length; ) {
+        const count = Math.min(size - buffered, chunk.length - at);
+        parts.push(chunk.subarray(at, at + count));
+        at += count;
+        buffered += count;
+        if (buffered === size) {
+          const data = parts;
+          yield {
+            format: source.format,
+            timeRange: {
+              startMs: offset / 96,
+              endMs: (offset + buffered) / 96,
+            },
+            chunks: (async function* () {
+              yield* data;
+            })(),
+          };
+          offset += buffered;
+          buffered = 0;
+          parts = [];
+        }
+      }
+    }
+    if (buffered)
+      yield {
+        format: source.format,
+        timeRange: { startMs: offset / 96, endMs: (offset + buffered) / 96 },
+        chunks: (async function* () {
+          yield* parts;
+        })(),
+      };
+  }
+
+  test("hooks preserve bytes, closure state, chosen file boundaries and selections", async () => {
+    const closed = vi.fn();
+    const hook = vi.fn(async function* (source: AttachmentStreamSource) {
+      let count = 0;
+      try {
+        // Deliberately exceed the SDK's target; the hook owns file boundaries.
+        for await (const file of segmentPcm(source, 96000)) {
+          count++;
+          yield file;
+        }
+      } finally {
+        closed(count);
+      }
+    });
+    const { r, files, selections } = recording(9600, hook);
+    r.select("turn", 0, 2000, 0);
+    r.record(packet(0, 48000));
+    r.advance();
+    await vi.waitFor(() => expect(uploads).toHaveLength(2));
+    const expected = Buffer.alloc(48000 * 4);
+    for (let i = 0; i < 48000; i++)
+      expected.writeInt16LE(((i * 31) % 30000) - 15000, i * 4);
+    expect(Buffer.concat(uploads)).toEqual(expected);
+    await r.finish();
+    expect(hook).toHaveBeenCalledTimes(1);
+    expect(closed).toHaveBeenCalledExactlyOnceWith(2);
+    expect(files()).toEqual([
+      ["call-0000", "ready", 0, 1000],
+      ["call-0001", "ready", 1000, 1000],
+    ]);
+    expect(selections()).toEqual([
+      ["call-0000", 0, 1000],
+      ["call-0001", 0, 1000],
+    ]);
+  });
+
+  test("consumes partial input incrementally but does not force a file boundary on flush", async () => {
+    const read = vi.fn();
+    const { r, owner } = recording(9600, async function* (source) {
+      yield {
+        format: source.format,
+        chunks: (async function* () {
+          for await (const chunk of source.chunks) {
+            read(chunk.length);
+            yield chunk;
+          }
+        })(),
+      };
+    });
+    r.record(packet(0, 4800));
+    r.advance();
+    await vi.waitFor(() => expect(read).toHaveBeenCalled());
+    await owner.flush();
+    expect(uploads).toHaveLength(0);
+    await r.finish();
+    expect(uploads[0]).toHaveLength(19200);
+  });
+
+  test("hooks are not started for recordings without audio", async () => {
+    const hook = vi.fn(async function* (source: AttachmentStreamSource) {
+      yield { format: source.format, chunks: source.chunks };
+    });
+    const { r, files } = recording(9600, hook);
+    await r.finish();
+    expect(hook).not.toHaveBeenCalled();
+    expect(uploads).toHaveLength(0);
+    expect(r.reason).toBeUndefined();
+    expect(files()).toEqual([["call", "omitted", undefined, undefined]]);
+  });
+
+  test("logger flush sends pending rows, then waits for a closed stream's final processing and upload", async () => {
+    let release!: () => void;
+    const waiting = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { r, owner, files } = recording(96000, async function* (source) {
+      await waiting;
+      yield { format: source.format, chunks: source.chunks };
+    });
+    const sent = vi.spyOn(logger, "flush");
+    r.record(packet(0));
+    const finish = r.finish();
+    const flushed = vi.fn();
+    const done = owner.flush().then(flushed);
+    await Promise.resolve();
+    expect(sent).toHaveBeenCalledTimes(1);
+    expect(flushed).not.toHaveBeenCalled();
+    release();
+    await done;
+    expect(sent).toHaveBeenCalledTimes(2);
+    await finish;
+    expect(files()).toEqual([["call-0000", "ready", 0, 1000]]);
+  });
+
+  test("logger flush waits for default uploads already started", async () => {
+    let release!: () => void;
+    const waiting = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const upload = Attachment.prototype.upload;
+    vi.spyOn(Attachment.prototype, "upload").mockImplementationOnce(
+      async function (this: Attachment) {
+        await waiting;
+        return upload.call(this);
+      },
+    );
+    const owner = initLogger({ projectId: "default-project" });
+    const r = new Recording(owner.startSpan(), 9600, () => undefined);
+    now += 3_600_000;
+    r.record(packet(0, 4800));
+    r.advance();
+    const flushed = vi.fn();
+    const done = owner.flush().then(flushed);
+    await Promise.resolve();
+    expect(flushed).not.toHaveBeenCalled();
+    release();
+    await done;
+    expect(uploads[0]).toHaveLength(9600);
+    await r.finish();
+  });
+
+  test("sync-flush logging does not wait for attachment uploads", async () => {
+    let release!: () => void;
+    const waiting = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const upload = Attachment.prototype.upload;
+    vi.spyOn(Attachment.prototype, "upload").mockImplementationOnce(
+      async function (this: Attachment) {
+        await waiting;
+        return upload.call(this);
+      },
+    );
+    const owner = initLogger<false>({
+      projectId: "sync-project",
+      asyncFlush: false,
+    });
+    const r = new Recording(owner.startSpan(), 9600, () => undefined);
+    now += 3_600_000;
+    r.record(packet(0, 4800));
+    r.advance();
+    await owner.traced(() => undefined);
+    expect(uploads).toHaveLength(0);
+    release();
+    await r.finish();
+    expect(uploads[0]).toHaveLength(9600);
+  });
+
+  test.each([false, true])(
+    "declining a hook retains default PCM handling (async=%s)",
+    async (asyncDecline) => {
+      const hook = vi.fn(() =>
+        asyncDecline ? Promise.resolve(undefined) : undefined,
+      );
+      const { r, files } = recording(9600, hook);
+      r.record(packet(0, 4800));
+      await r.finish();
+      expect(hook).toHaveBeenCalledTimes(1);
+      expect(files()).toEqual([
+        ["call-0000", "ready", 0, 100],
+        ["call-0001", "ready", 100, 100],
+      ]);
+      expect(uploads.map((b) => b.length)).toEqual([9600, 9600]);
+    },
+  );
+
+  test.each([
+    ["chunk", "attachment_stream_hook_failed"],
+    ["files", "attachment_stream_hook_failed"],
+    ["format", "attachment_stream_invalid_audio"],
+    ["range", "attachment_stream_invalid_audio"],
+    ["gap", "attachment_stream_invalid_audio"],
+  ])(
+    "hook %s failure stops capture without source fallback",
+    async (failure, reason) => {
+      const closed = vi.fn();
+      const { r, files, selections } = recording(
+        9600,
+        async function* (source) {
+          try {
+            if (failure === "files") throw new Error("private payload");
+            yield {
+              format:
+                failure === "format"
+                  ? { contentType: "audio/flac" }
+                  : source.format,
+              timeRange:
+                failure === "range"
+                  ? { startMs: 100, endMs: 0 }
+                  : failure === "gap"
+                    ? { startMs: 50, endMs: 100 }
+                    : undefined,
+              chunks: (async function* () {
+                for await (const chunk of source.chunks) {
+                  if (failure === "chunk") throw new Error("private payload");
+                  yield chunk;
+                }
+              })(),
+            };
+          } finally {
+            closed();
+          }
+        },
+      );
+      r.select("turn", 0, 100, 0);
+      r.record(packet(0, 4800));
+      await r.finish();
+      expect(r.active).toBe(false);
+      expect(uploads).toHaveLength(0);
+      expect(files().every(([, state]) => state === "omitted")).toBe(true);
+      expect(selections() ?? []).toEqual([]);
+      expect(r.reason).toBe(reason);
+      expect(closed).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  test("can omit one file and retain its source time for the next file", async () => {
+    const { r, files } = recording(9600, async function* (source) {
+      let index = 0;
+      for await (const file of segmentPcm(source)) {
+        yield index++ ? file : { ...file, chunks: (async function* () {})() };
+      }
+    });
+    r.record(packet(0, 4800));
+    await r.finish();
+    expect(files()).toEqual([
+      ["call-0000", "omitted", 0, undefined],
+      ["call-0001", "ready", 100, 100],
+    ]);
+    expect(uploads).toHaveLength(1);
+    expect(r.reason).toBeUndefined();
+  });
+
+  test("preserves leading silence so hook timing uses the session clock", async () => {
+    const { r, files, selections } = recording(9600, segmentPcm);
+    r.select("turn", 100, 200, 0);
+    r.record(packet(100, 2400));
+    await r.finish();
+    expect(uploads[0]).toEqual(new Uint8Array(9600));
+    expect(files()).toEqual([
+      ["call-0000", "ready", 0, 100],
+      ["call-0001", "ready", 100, 100],
+    ]);
+    expect(selections()).toEqual([["call-0001", 0, 100]]);
+  });
+
+  test("slow hooks stop capturing at the capture limit and finish with the audio captured so far", async () => {
+    let release!: () => void;
+    const released = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const waiting = vi.fn();
+    const closed = vi.fn();
+    let consumed = 0;
+    const { r, files } = recording(8 * 1024 * 1024, async function* (source) {
+      try {
+        yield {
+          format: source.format,
+          chunks: (async function* () {
+            for await (const chunk of source.chunks) {
+              waiting();
+              await released;
+              consumed += chunk.length;
+            }
+            yield new Uint8Array(1);
+          })(),
+        };
+      } finally {
+        closed(source.signal.aborted);
+      }
+    });
+    const samples = 2 * 1024 * 1024;
+    let recorded = 1;
+    r.record(packet(0, samples));
+    r.advance();
+    await vi.waitFor(() => expect(waiting).toHaveBeenCalled());
+    while (r.record(packet((recorded * samples) / 24, samples))) recorded++;
+    expect(r.reason).toBe("capture_byte_limit");
+    release();
+    await r.finish();
+    expect(consumed).toBe(recorded * samples * 4);
+    expect(uploads).toHaveLength(1);
+    expect(files()[0]).toEqual([
+      "call-0000",
+      "ready",
+      0,
+      (recorded * samples) / 24,
+    ]);
+    expect(closed).toHaveBeenCalledExactlyOnceWith(false);
+  });
+
+  test.each([
+    [{ input: true, output: false }, [0]],
+    [{ input: false, output: true }, [1]],
+    [{ input: true, output: true }, [0, 1]],
+  ])(
+    "hook files report the captured directions as sources (%o)",
+    async (captures, channels) => {
+      const { r, sources } = recording(9600, segmentPcm, captures);
+      r.record(packet(0, 2400, channels[0]));
+      await r.finish();
+      expect(sources()).toEqual([channels]);
+    },
+  );
+
+  test("a soft stop drains the captured audio into the hook's unfinished file", async () => {
+    const { r, files } = recording(96000, async function* (source) {
+      yield { format: source.format, chunks: source.chunks };
+    });
+    r.record(packet(0, 4800));
+    r.advance();
+    r.stop("unfinished_output_segment");
+    await r.finish();
+    expect(uploads.map((b) => b.length)).toEqual([4800 * 4]);
+    expect(files()[0]).toEqual(["call-0000", "ready", 0, 200]);
+    expect(r.reason).toBe("unfinished_output_segment");
+  });
+
+  test("failure in a later file preserves previously completed attachments", async () => {
+    const { r, files } = recording(9600, async function* (source) {
+      for await (const file of segmentPcm(source)) {
+        yield file;
+        throw new Error("private payload");
+      }
+    });
+    r.record(packet(0, 4800));
+    await r.finish();
+    expect(uploads).toHaveLength(1);
+    expect(files()[0]).toEqual(["call-0000", "ready", 0, 100]);
+    expect(r.reason).toBe("attachment_stream_hook_failed");
+  });
+
+  test("ending output before the input ends truncates the recording", async () => {
+    const { r, files } = recording(9600, async function* (source) {
+      for await (const file of segmentPcm(source)) {
+        yield file;
+        return;
+      }
+    });
+    r.record(packet(0, 4800));
+    await r.finish();
+    expect(uploads).toHaveLength(1);
+    expect(files()[0]).toEqual(["call-0000", "ready", 0, 100]);
+    expect(r.reason).toBe("attachment_stream_output_ended");
+  });
+
   test("publishes attachment references and selections only after upload succeeds", async () => {
     let complete!: () => void;
     const blocked = new Promise<void>((resolve) => {

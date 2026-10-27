@@ -1013,7 +1013,7 @@
   },
   {
     "scenarioDirName": "livekit-instrumentation",
-    "label": "LiveKit cascade instrumentation and PCM recording (streaming STT, tools, interruption recovery; automatic and manual)",
+    "label": "LiveKit cascade instrumentation, PCM recording, and attachment stream hooks (streaming STT, tools, interruption recovery; automatic and manual)",
     "metadataScenario": "livekit-instrumentation",
     "variants": [
       {

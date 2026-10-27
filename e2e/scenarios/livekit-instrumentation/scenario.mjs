@@ -42,7 +42,119 @@ if (process.env.LIVEKIT_SEGMENTS === "1") {
     return response;
   });
 }
-const logger = initLogger({ projectName: scopedName("e2e-livekit") });
+// Buffer only one file in encoder-owned state to produce a valid WAV header.
+// File boundaries are chosen by this hook, independently of incoming chunks.
+const hookStats = { chunks: 0, files: 0, closes: 0 };
+const attachmentStreamHook =
+  process.env.LIVEKIT_STREAM_HOOK === "1"
+    ? async function* (source) {
+        const { format, targetFileInputBytes, signal } = source;
+        assert.equal(format.contentType, "audio/pcm");
+        assert.equal(format.audio.sampleFormat, "s16le");
+        const target = Math.max(4, Math.floor(targetFileInputBytes / 4) * 4);
+        let parts = [];
+        let inputBytes = 0;
+        let offsetBytes = 0;
+        function finishFile() {
+          const data = parts;
+          const size = inputBytes / 2;
+          const header = Buffer.alloc(44);
+          header.write("RIFF", 0);
+          header.writeUInt32LE(36 + size, 4);
+          header.write("WAVEfmt ", 8);
+          header.writeUInt32LE(16, 16);
+          header.writeUInt16LE(1, 20);
+          header.writeUInt16LE(format.audio.channels, 22);
+          header.writeUInt32LE(format.audio.sampleRate, 24);
+          header.writeUInt32LE(
+            format.audio.sampleRate * format.audio.channels,
+            28,
+          );
+          header.writeUInt16LE(format.audio.channels, 32);
+          header.writeUInt16LE(8, 34);
+          header.write("data", 36);
+          header.writeUInt32LE(size, 40);
+          const bytesPerMs =
+            (format.audio.sampleRate * format.audio.channels * 2) / 1000;
+          const timeRange = {
+            startMs: offsetBytes / bytesPerMs,
+            endMs: (offsetBytes + inputBytes) / bytesPerMs,
+          };
+          const filename = `encoded-${hookStats.files++}.wav`;
+          offsetBytes += inputBytes;
+          inputBytes = 0;
+          parts = [];
+          return {
+            filename,
+            timeRange,
+            chunks: (async function* () {
+              yield header;
+              yield* data;
+            })(),
+            format: {
+              contentType: "audio/wav",
+              audio: {
+                channels: format.audio.channels,
+                sampleRate: format.audio.sampleRate,
+              },
+            },
+          };
+        }
+        try {
+          for await (const chunk of source.chunks) {
+            hookStats.chunks++;
+            for (let at = 0; at < chunk.byteLength; ) {
+              const length = Math.min(
+                target - inputBytes,
+                chunk.byteLength - at,
+              );
+              const pcm8 = new Uint8Array(length / 2);
+              const view = new DataView(
+                chunk.buffer,
+                chunk.byteOffset + at,
+                length,
+              );
+              for (let i = 0; i < pcm8.length; i++)
+                pcm8[i] = (view.getInt16(i * 2, true) >> 8) + 128;
+              parts.push(pcm8);
+              inputBytes += length;
+              at += length;
+              if (inputBytes === target) yield finishFile();
+            }
+          }
+          if (inputBytes) yield finishFile();
+        } finally {
+          hookStats.closes++;
+          assert.equal(signal.aborted, false);
+          assert.equal(parts.length, 0);
+        }
+      }
+    : undefined;
+const uploadedWavs = [];
+if (attachmentStreamHook) {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    if (init?.method === "PUT" && init.body instanceof Blob) {
+      const bytes = Buffer.from(await init.body.arrayBuffer());
+      assert.equal(bytes.toString("ascii", 0, 4), "RIFF");
+      assert.equal(bytes.toString("ascii", 8, 12), "WAVE");
+      assert.equal(bytes.toString("ascii", 36, 40), "data");
+      assert.equal(bytes.readUInt32LE(4), bytes.length - 8);
+      assert.equal(bytes.readUInt32LE(40), bytes.length - 44);
+      assert.equal(bytes.readUInt16LE(22), 2);
+      assert.equal(bytes.readUInt16LE(34), 8);
+      uploadedWavs.push({
+        samples: (bytes.length - 44) / 2,
+        sampleRate: bytes.readUInt32LE(24),
+      });
+    }
+    return originalFetch(input, init);
+  };
+}
+const logger = initLogger({
+  projectName: scopedName("e2e-livekit"),
+  attachmentStreamHook,
+});
 const providerMode = process.env.LIVEKIT_PROVIDER === "1";
 class Output extends voice.AudioOutput {
   samples = 0;
@@ -271,6 +383,13 @@ try {
   if (streamingStt) await session.input.audio?.close();
   await session.close();
   await logger.flush();
+  if (attachmentStreamHook)
+    console.log(
+      JSON.stringify({
+        hookStats,
+        uploadedWavs,
+      }),
+    );
   if (provider) assert.equal(telemetry.tracer.getProvider(), provider);
   // LiveKit's job process exits right after its shutdown callbacks, like this;
   // anything not finished by then is lost.
