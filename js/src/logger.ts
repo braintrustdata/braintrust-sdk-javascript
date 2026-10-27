@@ -1,4 +1,9 @@
 /// <reference lib="dom" />
+import {
+  ATTACHMENT_STREAM_HOOK,
+  type AttachmentStreamHook,
+  type AttachmentStreamOptions,
+} from "./attachment-stream";
 
 import { TypedAttachmentProcessor } from "./typed-attachments";
 import {
@@ -763,6 +768,8 @@ export class BraintrustState {
   private _apiConn: HTTPConnection | null = null;
   private _proxyConn: HTTPConnection | null = null;
 
+  /** Attachment work started by this state's spans, awaited by flush(). */
+  public readonly attachmentJobs = new Set<Promise<void>>();
   public promptCache: PromptCache;
   public parametersCache: ParametersCache;
   public spanCache: SpanCache;
@@ -1880,6 +1887,7 @@ export interface LinkArgs {
 
 export interface LogOptions<IsAsyncFlush> {
   asyncFlush?: IsAsyncFlush;
+  attachmentStreamHook?: AttachmentStreamHook;
   computeMetadataArgs?: Record<string, any>;
   linkArgs?: LinkArgs;
 }
@@ -2899,6 +2907,7 @@ function startSpanParentArgs(args: {
 }
 
 export class Logger<IsAsyncFlush extends boolean> implements Exportable {
+  readonly [ATTACHMENT_STREAM_HOOK]?: AttachmentStreamHook;
   private state: BraintrustState;
   private lazyMetadata: LazyValue<OrgProjectMetadata>;
   private _asyncFlush: IsAsyncFlush | undefined;
@@ -2917,6 +2926,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
     lazyMetadata: LazyValue<OrgProjectMetadata>,
     logOptions: LogOptions<IsAsyncFlush> = {},
   ) {
+    this[ATTACHMENT_STREAM_HOOK] = logOptions.attachmentStreamHook;
     this.lazyMetadata = lazyMetadata;
     this._asyncFlush = logOptions.asyncFlush;
     this.computeMetadataArgs = logOptions.computeMetadataArgs;
@@ -2985,7 +2995,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
       return ret as Ret;
     } else {
       return (async () => {
-        await this.flush();
+        await this.state.bgLogger().flush();
         return ret;
       })() as Ret;
     }
@@ -3031,7 +3041,10 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
     });
     type Ret = PromiseUnless<IsAsyncFlush, string>;
     if (this.asyncFlush === true) return span.id as Ret;
-    return this.flush().then(() => span.id) as Ret;
+    return this.state
+      .bgLogger()
+      .flush()
+      .then(() => span.id) as Ret;
   }
 
   /**
@@ -3143,7 +3156,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
     } else {
       return (async () => {
         const awaitedRet = await ret;
-        await this.flush();
+        await this.state.bgLogger().flush();
         return awaitedRet;
       })() as Ret;
     }
@@ -3163,6 +3176,9 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
 
   private startSpanImpl(args?: StartSpanArgs): Span {
     return new SpanImpl({
+      [ATTACHMENT_STREAM_HOOK]: args?.parent
+        ? undefined
+        : this[ATTACHMENT_STREAM_HOOK],
       ...args,
       // Sometimes `args` gets passed directly into this function, and it contains an undefined value for `state`.
       // To ensure that we always use this logger's state, we override the `state` argument no matter what.
@@ -3242,7 +3258,7 @@ export class Logger<IsAsyncFlush extends boolean> implements Exportable {
    * Flush any pending logs to the server.
    */
   async flush(): Promise<void> {
-    return await this.state.bgLogger().flush();
+    return await flush({ state: this.state });
   }
 
   get asyncFlush(): IsAsyncFlush | undefined {
@@ -5486,6 +5502,8 @@ type AsyncFlushArg<IsAsyncFlush> = {
 };
 
 export type InitLoggerOptions<IsAsyncFlush> = FullLoginOptions & {
+  /** Transform captured attachment streams for this logger and its child spans. */
+  attachmentStreamHook?: AttachmentStreamHook;
   projectName?: string;
   projectId?: string;
   _createInProjectGroup?: string;
@@ -5569,6 +5587,7 @@ export function initLogger<IsAsyncFlush extends boolean = true>(
   );
 
   const ret = new Logger<IsAsyncFlush>(state, lazyMetadata, {
+    attachmentStreamHook: options.attachmentStreamHook,
     asyncFlush,
     computeMetadataArgs,
     linkArgs,
@@ -7366,6 +7385,11 @@ export function _internalStartSpanWithContext<
  */
 export async function flush(options?: OptionalStateArg): Promise<void> {
   const state = options?.state ?? _globalState;
+  // Send pending rows before waiting on attachment work, which may run customer
+  // hooks, then send the attachment references that work logged.
+  await state.bgLogger().flush();
+  if (!state.attachmentJobs.size) return;
+  await Promise.allSettled(state.attachmentJobs);
   return await state.bgLogger().flush();
 }
 
@@ -8683,6 +8707,7 @@ function _resolveSpanIds(
  * We suggest using one of the various `traced` methods, instead of creating Spans directly. See {@link Span.startSpan} for full details.
  */
 export class SpanImpl implements Span {
+  readonly [ATTACHMENT_STREAM_HOOK]?: AttachmentStreamHook;
   private _state: BraintrustState;
 
   private isMerge: boolean;
@@ -8720,8 +8745,10 @@ export class SpanImpl implements Span {
       propagatedState?: PropagatedState | undefined;
     } & Omit<StartSpanArgs, "parent"> &
       InitialSpanWriteAsMergeArg &
-      InternalSpanContextArg,
+      InternalSpanContextArg &
+      AttachmentStreamOptions,
   ) {
+    this[ATTACHMENT_STREAM_HOOK] = args[ATTACHMENT_STREAM_HOOK];
     this._state = args.state;
     this._propagatedState = args.propagatedState;
     const instrumentationName =
@@ -8951,6 +8978,9 @@ export class SpanImpl implements Span {
       ? undefined
       : { spanId: this._spanId, rootSpanId: this._rootSpanId };
     return new SpanImpl({
+      [ATTACHMENT_STREAM_HOOK]: args?.parent
+        ? undefined
+        : this[ATTACHMENT_STREAM_HOOK],
       state: this._state,
       ...args,
       ...startSpanParentArgs({
@@ -8976,6 +9006,9 @@ export class SpanImpl implements Span {
       rootSpanId: this._rootSpanId,
     };
     return new SpanImpl({
+      [ATTACHMENT_STREAM_HOOK]: args?.parent
+        ? undefined
+        : this[ATTACHMENT_STREAM_HOOK],
       state: this._state,
       ...args,
       ...startSpanParentArgs({

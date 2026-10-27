@@ -1,5 +1,3 @@
-import { Attachment } from "./logger";
-
 const MAX_CHUNKS = 100_000;
 
 type Chunk = { samples: Int16Array; start: number; channel: number };
@@ -7,7 +5,7 @@ type Chunk = { samples: Int16Array; start: number; channel: number };
 /**
  * Incremental signed 16-bit little-endian PCM on a shared sample clock.
  * update() copies, resamples, and downmixes a positioned source onto one
- * output channel; digest() consumes a prefix into an ordinary attachment.
+ * output channel; read() consumes a prefix as owned bytes.
  */
 export class PcmAudio {
   private chunks: Chunk[] = [];
@@ -41,6 +39,13 @@ export class PcmAudio {
   get bufferedByteLength() {
     return this.bytes;
   }
+
+  /** Release unprocessed input after capture has irrecoverably failed. */
+  discard(): void {
+    this.chunks = [];
+    this.bytes = 0;
+  }
+
   get endOffsetMs() {
     return samplesToMs(this.end, this.sampleRate);
   }
@@ -108,36 +113,38 @@ export class PcmAudio {
   /**
    * Consume at most maxBytes through an optional confirmed offset; future
    * updates may continue. Waits for a full chunk unless flush is set. Cuts align
-   * to complete sample frames (at least one), skipping wholly empty intervals.
+   * to complete sample frames (at least one), skipping wholly empty intervals
+   * unless continuous reads preserve silence on the source clock.
    */
-  digest(options: {
+  read(options: {
     maxBytes: number;
     endOffsetMs?: number;
     flush?: boolean;
-    filename?: string;
+    continuous?: boolean;
   }) {
     if (!Number.isSafeInteger(options.maxBytes) || options.maxBytes <= 0)
-      throw new Error("invalid_digest_byte_limit");
+      throw new Error("invalid_read_byte_limit");
     let end =
       options.endOffsetMs === undefined
         ? this.end
         : Math.round(msToSamples(options.endOffsetMs, this.sampleRate));
     if (!Number.isSafeInteger(end) || end < this.start || end > this.end)
-      throw new Error("invalid_digest_offset");
+      throw new Error("invalid_read_offset");
     const frames = Math.max(
       1,
       Math.floor(options.maxBytes / (this.channels * 2)),
     );
-    const first = this.chunks.reduce((min, c) => Math.min(min, c.start), end);
-    // Skip empty chunks without allocating silence or emitting attachments.
-    this.start += Math.floor((first - this.start) / frames) * frames;
+    if (!options.continuous) {
+      const first = this.chunks.reduce((min, c) => Math.min(min, c.start), end);
+      this.start += Math.floor((first - this.start) / frames) * frames;
+    }
     const cut = this.start + frames;
     if (end < cut && !options.flush) return;
     end = Math.min(end, cut);
     const start = this.start;
     if (end === start) return;
     const included = this.chunks.filter((c) => c.start < end);
-    if (!included.length) {
+    if (!included.length && !options.continuous) {
       this.start = end;
       return;
     }
@@ -161,18 +168,14 @@ export class PcmAudio {
       if (chunk.start >= end) return [chunk];
       const consumed = Math.min(chunk.samples.length, end - chunk.start);
       this.bytes -= consumed * 2;
-      // Copy the tail so it doesn't retain the already digested prefix's allocation.
+      // Copy the tail so it doesn't retain the already read prefix's allocation.
       return consumed === chunk.samples.length
         ? []
         : [{ ...chunk, start: end, samples: chunk.samples.slice(consumed) }];
     });
     this.start = end;
     return {
-      attachment: new Attachment({
-        data: bytes,
-        filename: options.filename ?? "audio.pcm",
-        contentType: "audio/pcm",
-      }),
+      data: bytes,
       metadata: {
         mime_type: "audio/pcm",
         sample_rate_hz: this.sampleRate,

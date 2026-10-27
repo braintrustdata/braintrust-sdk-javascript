@@ -22,7 +22,14 @@ import { runInstrumentation } from "../core/observe-result";
 import { livekitChannels } from "./livekit-interceptors";
 import { v4 as uuidv4 } from "uuid";
 import { runWithAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
-import { startSpan, withCurrent, type Span } from "../../logger";
+import { Attachment, startSpan, withCurrent, type Span } from "../../logger";
+import {
+  ATTACHMENT_STREAM_HOOK,
+  AttachmentStreamError,
+  AttachmentStreamProcessor,
+  type AttachmentStreamOptions,
+  type AttachmentStreamFile,
+} from "../../attachment-stream";
 import {
   withSpanInstrumentationName,
   INSTRUMENTATION_NAMES,
@@ -30,7 +37,10 @@ import {
 import { isObject } from "../../../util";
 import { zodToJsonSchema } from "../../zod/utils";
 import { debugLogger } from "../../debug-logger";
-import { isEnvFlagEnabled } from "../../wrappers/attachment-utils";
+import {
+  getExtensionFromMediaType,
+  isEnvFlagEnabled,
+} from "../../wrappers/attachment-utils";
 import { DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES } from "../config";
 import {
   PcmAudio,
@@ -1142,7 +1152,13 @@ type AudioFile = {
   start: number;
   end: number;
   channels: number[];
-  metadata: NonNullable<ReturnType<PcmAudio["digest"]>>["metadata"];
+  metadata: {
+    mime_type: string;
+    sample_rate_hz: number;
+    channel_count: number;
+    sample_format?: string;
+    duration_ms: number;
+  };
   state: "pending" | "ready" | "omitted";
   reason?: string;
 };
@@ -1156,6 +1172,10 @@ class Recording {
   /** Session-clock playout that each pending output run may still add audio before. */
   readonly holds = new Map<object, number>();
   private pcm: PcmAudio;
+  private processor?: AttachmentStreamProcessor;
+  private transformJob?: Promise<void>;
+  private inputChanged?: () => void;
+  private consumedThroughMs = 0;
   private files: AudioFile[] = [];
   private formats = [
     new Map<string, { sample_rate_hz: number; channel_count: number }>(),
@@ -1188,6 +1208,30 @@ class Recording {
         Math.max(32 * 1024 * 1024, 2 * chunkBytes),
       ),
     });
+    const hook = (span as Span & AttachmentStreamOptions)[
+      ATTACHMENT_STREAM_HOOK
+    ];
+    if (hook)
+      this.processor = new AttachmentStreamProcessor(
+        hook,
+        {
+          contentType: "audio/pcm",
+          audio: {
+            sampleRate: SAMPLE_RATE,
+            channels: 2,
+            sampleFormat: "s16le",
+          },
+        },
+        chunkBytes,
+        () => this.availableBytes,
+      );
+  }
+
+  /** Capture budget left after buffered and staged PCM; the processor adds its own bytes. */
+  private get availableBytes(): number {
+    return (
+      this.pcm.maxBufferBytes - this.pcm.bufferedByteLength - this.stagedBytes
+    );
   }
 
   get active(): boolean {
@@ -1195,6 +1239,8 @@ class Recording {
   }
   stop(reason: string): void {
     this.reason ??= reason;
+    // Capture has ended: a hook drains what was already captured, like finish().
+    this.inputChanged?.();
   }
 
   /** Validates a LiveKit frame, returning its samples while capture continues. */
@@ -1230,8 +1276,8 @@ class Recording {
         ((packet.pcm.length / packet.channels) * SAMPLE_RATE) / packet.rate,
       ) * 2;
     if (
-      this.pcm.bufferedByteLength + this.stagedBytes + bytes >
-      this.pcm.maxBufferBytes
+      bytes + (this.processor?.bufferedByteLength ?? 0) >
+      this.availableBytes
     ) {
       this.stop("capture_byte_limit");
       return false;
@@ -1259,8 +1305,8 @@ class Recording {
     const data = this.samples(frame);
     if (!data) return;
     if (
-      this.stagedBytes + this.pcm.bufferedByteLength + data.byteLength >
-      this.pcm.maxBufferBytes
+      data.byteLength + (this.processor?.bufferedByteLength ?? 0) >
+      this.availableBytes
     ) {
       this.stop("capture_byte_limit");
       return;
@@ -1377,15 +1423,22 @@ class Recording {
   }
 
   finish(): Promise<void> {
-    return (this.finishing ??= (async () => {
-      this.closed = true;
-      this.upload();
-      while (this.job) await this.job;
-      this.publishFiles();
-    })());
+    return (this.finishing ??= this.track(
+      (async () => {
+        this.closed = true;
+        this.upload();
+        await this.transformJob;
+        while (this.job) await this.job;
+        this.publishFiles();
+      })(),
+    ));
   }
 
   private upload(): void {
+    if (this.processor) {
+      this.uploadTransformed();
+      return;
+    }
     if (
       this.job ||
       !this.pcm.bufferedByteLength ||
@@ -1393,15 +1446,14 @@ class Recording {
     )
       return;
     const id = `call-${String(this.files.length).padStart(4, "0")}`;
-    let result: ReturnType<PcmAudio["digest"]>;
+    let result: ReturnType<PcmAudio["read"]>;
     try {
-      result = this.pcm.digest({
+      result = this.pcm.read({
         maxBytes: this.chunkBytes,
         endOffsetMs: this.closed
           ? undefined
           : Math.min(this.confirmedThroughMs, this.pcm.endOffsetMs),
         flush: this.closed,
-        filename: `${id}.pcm`,
       });
     } catch (error) {
       this.stop(
@@ -1410,7 +1462,6 @@ class Recording {
       return;
     }
     if (!result) return;
-    const { attachment } = result;
     const file: AudioFile = {
       id,
       start: result.startOffsetMs,
@@ -1421,33 +1472,194 @@ class Recording {
     };
     this.files.push(file);
     this.publishFiles();
-    // One ordinary SDK attachment upload at a time; capture continues into the next digest.
-    this.job = (async () => {
-      try {
-        const status = await attachment.upload();
-        file.state = status.upload_status === "done" ? "ready" : "omitted";
-      } catch {
-        file.state = "omitted";
-      }
-      if (file.state === "ready") {
-        this.span.log({ input: { audio: { [id]: attachment.reference } } });
-      } else {
-        file.reason = "recording_export_failed";
-        this.stop(file.reason);
-      }
-      this.publishFiles();
-      if (file.state === "ready")
-        this.publish(
-          [...this.selections]
-            .filter(([, list]) =>
-              list.some((s) => s.start < file.end && s.end > file.start),
-            )
-            .map(([owner]) => owner),
-        );
-    })().finally(() => {
+    // One ordinary SDK attachment upload at a time; capture continues into the next read.
+    const attachment = new Attachment({
+      data: result.data,
+      filename: `${id}.pcm`,
+      contentType: "audio/pcm",
+      state: this.span.state(),
+    });
+    this.job = this.track(this.uploadFile(file, attachment)).finally(() => {
       this.job = undefined;
       this.upload();
     });
+  }
+
+  private track(job: Promise<void>): Promise<void> {
+    const jobs = this.span.state().attachmentJobs;
+    jobs.add(job);
+    void job.then(
+      () => jobs.delete(job),
+      () => jobs.delete(job),
+    );
+    return job;
+  }
+
+  /** A continuous PCM clock, including silence, independent of output file boundaries. */
+  private async *sourceChunks(): AsyncGenerator<Uint8Array> {
+    const signal = this.processor!.signal;
+    const wake = () => this.inputChanged?.();
+    signal.addEventListener("abort", wake);
+    try {
+      while (true) {
+        signal.throwIfAborted();
+        const ended = !this.active;
+        const endOffsetMs = ended
+          ? this.pcm.endOffsetMs
+          : Math.min(this.confirmedThroughMs, this.pcm.endOffsetMs);
+        if (endOffsetMs > this.consumedThroughMs) {
+          const chunk = this.pcm.read({
+            maxBytes: 64 * 1024,
+            endOffsetMs,
+            flush: true,
+            continuous: true,
+          });
+          if (chunk) {
+            this.consumedThroughMs = chunk.endOffsetMs;
+            yield chunk.data;
+            continue;
+          }
+        }
+        if (ended) return;
+        await new Promise<void>((resolve) => {
+          this.inputChanged = resolve;
+        });
+        this.inputChanged = undefined;
+      }
+    } finally {
+      signal.removeEventListener("abort", wake);
+      this.inputChanged = undefined;
+    }
+  }
+
+  private uploadTransformed(): void {
+    this.inputChanged?.();
+    if (this.transformJob || !this.pcm.bufferedByteLength) return;
+    const processor = this.processor!;
+    this.transformJob = (async () => {
+      try {
+        const handled = await processor.run(
+          this.sourceChunks(),
+          (output, data) => this.uploadTransformedFile(processor, output, data),
+        );
+        if (!handled) {
+          this.processor = undefined;
+          this.upload();
+          return;
+        }
+        if (!processor.inputEnded) {
+          this.stop("attachment_stream_output_ended");
+          this.pcm.discard();
+        }
+      } catch (error) {
+        // Never log customer exception payloads or fall back to the original bytes.
+        this.stop(
+          error instanceof AttachmentStreamError
+            ? error.message
+            : "attachment_stream_hook_failed",
+        );
+        this.pcm.discard();
+        debugLogger.warn(
+          "Attachment stream processing failed; capture stopped.",
+        );
+      } finally {
+        this.publishFiles();
+      }
+    })();
+  }
+
+  private async uploadTransformedFile(
+    processor: AttachmentStreamProcessor,
+    output: AttachmentStreamFile,
+    data: Blob,
+  ): Promise<void> {
+    const audio = output.format.audio;
+    // Explicit source ranges support encoder read-ahead. Files are contiguous so
+    // every gap is reported; omissions are files without bytes. Only a
+    // whole-source file can infer its range from input exhaustion.
+    let range = output.timeRange;
+    if (range == null && processor.inputEnded && !this.files.length) {
+      range = { startMs: 0, endMs: this.consumedThroughMs };
+    }
+    if (
+      !audio ||
+      audio.channels !== 2 ||
+      !Number.isSafeInteger(audio.sampleRate) ||
+      audio.sampleRate <= 0 ||
+      !range ||
+      !Number.isFinite(range.startMs) ||
+      !Number.isFinite(range.endMs) ||
+      Math.abs(range.startMs - (this.files.at(-1)?.end ?? 0)) > 1e-6 ||
+      range.endMs <= range.startMs ||
+      range.endMs > this.consumedThroughMs + 1e-6
+    )
+      throw new AttachmentStreamError("attachment_stream_invalid_audio");
+    const id = `call-${String(this.files.length).padStart(4, "0")}`;
+    const file: AudioFile = {
+      id,
+      start: range.startMs,
+      end: range.endMs,
+      // The normalized stereo source keeps one channel per captured direction.
+      channels: [0, 1].filter((channel) =>
+        channel ? this.captures.output : this.captures.input,
+      ),
+      metadata: {
+        mime_type: output.format.contentType,
+        sample_rate_hz: audio.sampleRate,
+        channel_count: audio.channels,
+        ...(audio.sampleFormat ? { sample_format: audio.sampleFormat } : {}),
+        duration_ms: range.endMs - range.startMs,
+      },
+      state: data.size ? "pending" : "omitted",
+    };
+    if (!data.size) file.reason = "attachment_stream_hook_omitted";
+    this.files.push(file);
+    this.publishFiles();
+    if (!data.size) return;
+    // flush() waits for completed files being uploaded, not an open input
+    // stream. finish() additionally registers the stream's final drain.
+    await this.track(
+      this.uploadFile(
+        file,
+        new Attachment({
+          data,
+          filename:
+            output.filename ??
+            `${id}.${getExtensionFromMediaType(output.format.contentType)}`,
+          contentType: output.format.contentType,
+          state: this.span.state(),
+        }),
+      ),
+    );
+    if (file.state === "omitted")
+      throw new AttachmentStreamError("recording_export_failed");
+  }
+
+  private async uploadFile(
+    file: AudioFile,
+    attachment: Attachment,
+  ): Promise<void> {
+    try {
+      const status = await attachment.upload();
+      file.state = status.upload_status === "done" ? "ready" : "omitted";
+    } catch {
+      file.state = "omitted";
+    }
+    if (file.state === "ready") {
+      this.span.log({ input: { audio: { [file.id]: attachment.reference } } });
+    } else {
+      file.reason = "recording_export_failed";
+      this.stop(file.reason);
+    }
+    this.publishFiles();
+    if (file.state === "ready")
+      this.publish(
+        [...this.selections]
+          .filter(([, list]) =>
+            list.some((s) => s.start < file.end && s.end > file.start),
+          )
+          .map(([owner]) => owner),
+      );
   }
 
   private publishFiles(): void {

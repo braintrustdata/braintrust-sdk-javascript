@@ -184,6 +184,66 @@ for (const variant of variants) {
       120000,
     );
 
+  for (const mode of ["auto", "wrapped"] as const)
+    test.sequential(
+      `${variant} ${mode} attachment stream hook`,
+      async () => {
+        await withScenarioHarness(async (harness) => {
+          const result = await harness.runNodeScenarioDir(
+            scenarioOptions(variant, {
+              mode,
+              cassette: "order",
+              env: { LIVEKIT_STREAM_HOOK: "1", LIVEKIT_SEGMENTS: "1" },
+            }),
+          );
+          const events = assertAudioTrace(harness.events());
+          const root = findLatestSpan(events, "session")!;
+          const recordings = root.metadata?.["audio.recordings"] as {
+            state: string;
+            mime_type: string;
+            duration_ms: number;
+            sample_format?: string;
+          }[];
+          expect(recordings.length).toBeGreaterThan(1);
+          for (const recording of recordings) {
+            expect(recording).toMatchObject({
+              state: "ready",
+              mime_type: "audio/wav",
+            });
+            expect(recording).not.toHaveProperty("sample_format");
+          }
+          const attachments = (
+            root.row.input as {
+              audio: Record<string, { content_type: string; filename: string }>;
+            }
+          ).audio;
+          expect(Object.values(attachments)).toHaveLength(recordings.length);
+          for (const attachment of Object.values(attachments)) {
+            expect(attachment.content_type).toBe("audio/wav");
+            expect(attachment.filename).toMatch(/\.wav$/);
+          }
+          const stats = JSON.parse(
+            result.stdout
+              .split("\n")
+              .find((line) => line.startsWith('{"hookStats":'))!,
+          );
+          expect(stats.hookStats).toMatchObject({
+            files: recordings.length,
+            closes: 1,
+          });
+          expect(stats.hookStats.chunks).toBeGreaterThan(0);
+          expect(stats.uploadedWavs).toHaveLength(recordings.length);
+          for (const [index, wav] of stats.uploadedWavs.entries()) {
+            expect((wav.samples / wav.sampleRate) * 1000).toBeCloseTo(
+              recordings[index].duration_ms,
+              5,
+            );
+          }
+        });
+      },
+      120000,
+    );
+
   test.sequential(
     `${variant} recording requires attachment capture`,
     async () => {
