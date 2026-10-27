@@ -74,8 +74,7 @@ export interface LiveKitIntegrationConfig {
    * BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS.
    *
    * Defaults to Opus in Ogg when `@braintrust/audio` is installed, and raw
-   * PCM otherwise. Set `codec: { name: "pcm" }`, or
-   * BRAINTRUST_AUDIO_COMPRESSION=false, to always record raw PCM.
+   * PCM otherwise. Set `codec: { name: "pcm" }` to always record raw PCM.
    *
    * @example
    * ```ts

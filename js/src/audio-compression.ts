@@ -7,7 +7,6 @@ import { isObject } from "../util";
 const AUDIO_PACKAGE = "@braintrust/audio";
 /** Set by @braintrust/audio when it loads. */
 const REGISTRY = Symbol.for("braintrust.audio");
-const COMPRESSION_ENV = "BRAINTRUST_AUDIO_COMPRESSION";
 const PCM = "audio is recorded as uncompressed PCM, which can be very large.";
 
 type AudioCodecs = {
@@ -24,16 +23,15 @@ const warned = new Set<string>();
 
 /**
  * Returns the middleware that encodes one recording, or an empty stack for raw
- * PCM. Configured settings win over BRAINTRUST_AUDIO_COMPRESSION, then the
- * integration's defaults apply. Never throws: problems are warned about once
- * per process and the recording stays raw PCM.
+ * PCM. Configured settings win, then the integration's defaults apply. Never
+ * throws: problems are warned about once per process and the recording stays
+ * raw PCM.
  */
 export function audioEncodingStack(
   configured: AudioEncodingConfig | undefined,
   defaults: AudioEncodingDefaults,
 ): AudioMiddlewareStack {
-  const codec =
-    configured?.codec ?? (compressionDisabled() ? PCM_CODEC : defaults.codec);
+  const codec = configured?.codec ?? defaults.codec;
   if (codec.name === "pcm") return [];
   if (codecs === undefined) codecs = loadCodecs() ?? null;
   if (!codecs) return [];
@@ -45,13 +43,6 @@ export function audioEncodingStack(
   } catch (error) {
     return warnOnce(`${message(error)}: ${PCM}`);
   }
-}
-
-const PCM_CODEC = { name: "pcm" } as const;
-
-function compressionDisabled(): boolean {
-  const value = iso.getEnv(COMPRESSION_ENV)?.trim().toLowerCase();
-  return value === "0" || value === "false";
 }
 
 function loadCodecs(): AudioCodecs | undefined {

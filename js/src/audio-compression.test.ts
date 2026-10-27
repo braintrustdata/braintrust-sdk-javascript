@@ -37,7 +37,6 @@ beforeEach(() => {
   vi.spyOn(console, "warn").mockImplementation((...args: unknown[]) => {
     warnings.push(args.join(" "));
   });
-  vi.stubEnv("BRAINTRUST_AUDIO_COMPRESSION", "");
   load = vi.fn(() => undefined);
   iso.loadOptionalModule = load;
 });
@@ -45,7 +44,6 @@ afterEach(() => {
   delete registry[REGISTRY];
   iso.loadOptionalModule = original;
   _exportsForTestingOnly.reset();
-  vi.unstubAllEnvs();
   vi.restoreAllMocks();
 });
 
@@ -84,36 +82,11 @@ test("an app that imports the package itself needs no loading", () => {
   expect(load).not.toHaveBeenCalled();
 });
 
-test.each([
-  ["codec pcm", { codec: { name: "pcm" } } as const, ""],
-  ["BRAINTRUST_AUDIO_COMPRESSION=false", undefined, "false"],
-  ["BRAINTRUST_AUDIO_COMPRESSION=0", undefined, "0"],
-])(
-  "%s records raw PCM without loading or warning",
-  (_name, configured, env) => {
-    vi.stubEnv("BRAINTRUST_AUDIO_COMPRESSION", env);
-    install();
-    expect(audioEncodingStack(configured, DEFAULTS)).toEqual([]);
-    expect(load).not.toHaveBeenCalled();
-    expect(warnings).toEqual([]);
-  },
-);
-
-test.each(["true", "1", "", "yes"])(
-  "BRAINTRUST_AUDIO_COMPRESSION=%j keeps the default",
-  (env) => {
-    vi.stubEnv("BRAINTRUST_AUDIO_COMPRESSION", env);
-    install();
-    expect(audioEncodingStack(undefined, DEFAULTS)).toEqual([tag]);
-  },
-);
-
-test("a configured codec wins over BRAINTRUST_AUDIO_COMPRESSION=false", () => {
-  vi.stubEnv("BRAINTRUST_AUDIO_COMPRESSION", "false");
+test("codec pcm records raw PCM without loading or warning", () => {
   install();
-  expect(audioEncodingStack({ codec: { name: "opus" } }, DEFAULTS)).toEqual([
-    tag,
-  ]);
+  expect(audioEncodingStack({ codec: { name: "pcm" } }, DEFAULTS)).toEqual([]);
+  expect(load).not.toHaveBeenCalled();
+  expect(warnings).toEqual([]);
 });
 
 test("not installed: raw PCM, warned once per process", () => {

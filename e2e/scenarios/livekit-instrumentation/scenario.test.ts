@@ -124,7 +124,6 @@ function scenarioOptions(
       BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS: recording ? "true" : "",
       BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS: recording ? "true" : "",
       BRAINTRUST_DISABLE_INSTRUMENTATION: "",
-      BRAINTRUST_AUDIO_COMPRESSION: "",
       ...(cassette ? { LIVEKIT_PROVIDER: "1" } : {}),
       ...env,
     },
@@ -249,43 +248,36 @@ for (const variant of variants) {
     );
 
   // Turning compression off records raw PCM, without a warning.
-  for (const [name, env] of [
-    [
-      "BRAINTRUST_AUDIO_COMPRESSION=false",
-      { BRAINTRUST_AUDIO_COMPRESSION: "false" },
-    ],
-    [
-      "codec pcm",
-      { LIVEKIT_AUDIO: JSON.stringify({ codec: { name: "pcm" } }) },
-    ],
-  ] as const)
-    test.sequential(
-      `${variant} raw PCM recording with ${name}`,
-      async () => {
-        await withScenarioHarness(async (harness) => {
-          const result = await harness.runNodeScenarioDir(
-            scenarioOptions(variant, {
-              env: { LIVEKIT_PROBE_UPLOADS: "1", ...env },
-            }),
-          );
-          const root = findLatestSpan(
-            assertAudioTrace(harness.events()),
-            "session",
-          )!;
-          expect(root.metadata?.["audio.recordings"]).toMatchObject([
-            {
-              id: "call-0000",
-              state: "ready",
-              mime_type: "audio/pcm",
-              sample_format: "s16le",
+  test.sequential(
+    `${variant} raw PCM recording with codec pcm`,
+    async () => {
+      await withScenarioHarness(async (harness) => {
+        const result = await harness.runNodeScenarioDir(
+          scenarioOptions(variant, {
+            env: {
+              LIVEKIT_PROBE_UPLOADS: "1",
+              LIVEKIT_AUDIO: JSON.stringify({ codec: { name: "pcm" } }),
             },
-          ]);
-          expect(uploadedAudio(result.stdout)).toEqual([{ format: "raw" }]);
-          expect(result.stderr).not.toContain("uncompressed PCM");
-        });
-      },
-      120000,
-    );
+          }),
+        );
+        const root = findLatestSpan(
+          assertAudioTrace(harness.events()),
+          "session",
+        )!;
+        expect(root.metadata?.["audio.recordings"]).toMatchObject([
+          {
+            id: "call-0000",
+            state: "ready",
+            mime_type: "audio/pcm",
+            sample_format: "s16le",
+          },
+        ]);
+        expect(uploadedAudio(result.stdout)).toEqual([{ format: "raw" }]);
+        expect(result.stderr).not.toContain("uncompressed PCM");
+      });
+    },
+    120000,
+  );
 
   test.sequential(
     `${variant} recording requires attachment capture`,

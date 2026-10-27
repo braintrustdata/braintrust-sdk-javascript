@@ -39,8 +39,6 @@ configureInstrumentation({
 | `codec.options.application` | `"audio"` | Encoder tuning: `"audio"`, `"voip"`, or `"lowdelay"`.        |
 | `container.name`            | `"ogg"`   | The file format.                                             |
 
-To turn compression off without code, set `BRAINTRUST_AUDIO_COMPRESSION=false`. Settings in code take precedence.
-
 If the package is missing or a setting is unsupported, recordings upload as raw PCM and a warning explains why.
 
 ## Bundled apps
