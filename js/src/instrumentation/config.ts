@@ -64,6 +64,7 @@ export interface InstrumentationIntegrationsConfig {
   workersAI?: boolean;
   elevenlabs?: boolean;
   livekit?: boolean;
+  mcp?: boolean;
 }
 
 export const DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES = 4 * 1024 * 1024;
@@ -187,6 +188,10 @@ const envIntegrationAliases: Record<
   "@elevenlabs/elevenlabs-js": "elevenlabs",
   livekit: "livekit",
   "@livekit/agents": "livekit",
+  mcp: "mcp",
+  modelcontextprotocol: "mcp",
+  "@modelcontextprotocol/sdk": "mcp",
+  "@modelcontextprotocol/server": "mcp",
 };
 
 export function getDefaultInstrumentationIntegrations(): Record<
@@ -232,6 +237,7 @@ export function getDefaultInstrumentationIntegrations(): Record<
     workersAI: true,
     elevenlabs: true,
     livekit: true,
+    mcp: true,
     piCodingAgent: true,
     strandsAgentSDK: true,
     cloudflareAgents: true,

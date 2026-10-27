@@ -48,6 +48,8 @@ type AsyncChannelSpanConfig<TChannel extends AnyAsyncChannel> =
       result: ResultOf<TChannel>,
       endEvent?: AsyncEndOf<TChannel>,
     ) => unknown;
+    /** Report a failure that the callee returned instead of throwing. */
+    extractError?: (result: ResultOf<TChannel>) => unknown;
     extractMetrics: (
       result: ResultOf<TChannel>,
       startTime?: number,
@@ -353,9 +355,11 @@ export function traceAsyncCall<TChannel extends AnyAsyncChannel>(
         asyncEndEvent.result,
         asyncEndEvent,
       );
+      const error = config.extractError?.(asyncEndEvent.result);
 
       span.log({
         output,
+        ...(error !== undefined ? { error } : {}),
         ...(normalizeMetadata(metadata) !== undefined
           ? { metadata: normalizeMetadata(metadata) }
           : {}),

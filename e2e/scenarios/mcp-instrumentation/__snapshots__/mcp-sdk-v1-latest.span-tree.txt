@@ -1,0 +1,140 @@
+span_tree:
+└── mcp-instrumentation-root [task]
+    metadata: {
+      "scenario": "mcp-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── mcp-http-session-operation
+    │   metadata: {
+    │     "operation": "http-session",
+    │     "testRunId": "<run:1>"
+    │   }
+    │   ├── get_weather [tool]
+    │   │   input: {
+    │   │     "city": "Vienna"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "Sunny in Vienna",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ]
+    │   │   }
+    │   │   metadata: {
+    │   │     "mcp.method": "tools/call",
+    │   │     "mcp.request_id": 1,
+    │   │     "mcp.session_id": "<uuid:1>"
+    │   │   }
+    │   │   └── weather-lookup
+    │   ├── get_weather [tool]
+    │   │   input: {
+    │   │     "city": "Paris"
+    │   │   }
+    │   │   output: {
+    │   │     "content": [
+    │   │       {
+    │   │         "text": "Sunny in Paris",
+    │   │         "type": "text"
+    │   │       }
+    │   │     ]
+    │   │   }
+    │   │   metadata: {
+    │   │     "mcp.method": "tools/call",
+    │   │     "mcp.request_id": 2,
+    │   │     "mcp.session_id": "<uuid:1>"
+    │   │   }
+    │   │   └── weather-lookup
+    │   ├── resources/read [function]
+    │   │   input: {
+    │   │     "uri": "notes://forecast"
+    │   │   }
+    │   │   output: {
+    │   │     "contents": [
+    │   │       {
+    │   │         "text": "Bring an umbrella.",
+    │   │         "uri": "notes://forecast"
+    │   │       }
+    │   │     ]
+    │   │   }
+    │   │   metadata: {
+    │   │     "mcp.method": "resources/read",
+    │   │     "mcp.request_id": 3,
+    │   │     "mcp.resource_uri": "notes://forecast",
+    │   │     "mcp.session_id": "<uuid:1>"
+    │   │   }
+    │   └── prompts/get [function]
+    │       input: {
+    │         "city": "Vienna"
+    │       }
+    │       output: {
+    │         "messages": [
+    │           {
+    │             "content": {
+    │               "text": "What is the forecast for Vienna?",
+    │               "type": "text"
+    │             },
+    │             "role": "user"
+    │           }
+    │         ]
+    │       }
+    │       metadata: {
+    │         "mcp.method": "prompts/get",
+    │         "mcp.prompt_name": "forecast",
+    │         "mcp.request_id": 4,
+    │         "mcp.session_id": "<uuid:1>"
+    │       }
+    └── mcp-in-memory-session-operation
+        metadata: {
+          "operation": "in-memory-session",
+          "testRunId": "<run:1>"
+        }
+        ├── get_weather [tool]
+        │   input: {
+        │     "city": "Tokyo"
+        │   }
+        │   output: {
+        │     "content": [
+        │       {
+        │         "text": "Sunny in Tokyo",
+        │         "type": "text"
+        │       }
+        │     ]
+        │   }
+        │   metadata: {
+        │     "mcp.method": "tools/call",
+        │     "mcp.request_id": 1,
+        │     "mcp.session_id": "<uuid:1>"
+        │   }
+        │   └── weather-lookup
+        ├── render_map [tool]
+        │   output: {
+        │     "content": [
+        │       {
+        │         "data": "<omitted>",
+        │         "mimeType": "image/png",
+        │         "type": "image"
+        │       }
+        │     ]
+        │   }
+        │   metadata: {
+        │     "mcp.method": "tools/call",
+        │     "mcp.request_id": 2,
+        │     "mcp.session_id": "<uuid:1>"
+        │   }
+        └── get_alerts [tool]
+            output: {
+              "content": [
+                {
+                  "text": "Alert service unavailable",
+                  "type": "text"
+                }
+              ],
+              "isError": true
+            }
+            metadata: {
+              "mcp.method": "tools/call",
+              "mcp.request_id": 3,
+              "mcp.session_id": "<uuid:1>"
+            }
+            error: "Alert service unavailable"

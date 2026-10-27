@@ -23,6 +23,7 @@ import { LangSmithPlugin } from "./plugins/langsmith-plugin";
 import { PiCodingAgentPlugin } from "./plugins/pi-coding-agent-plugin";
 import { StrandsAgentSDKPlugin } from "./plugins/strands-agent-sdk-plugin";
 import { VoyageAIPlugin } from "./plugins/voyageai-plugin";
+import { MCPPlugin } from "./plugins/mcp-plugin";
 import { TypeSafePlugin } from "./plugins/typesafe-plugin";
 import { CloudflareAIChatPlugin } from "./plugins/cloudflare-ai-chat-plugin";
 import { CloudflareAgentsPlugin } from "./plugins/cloudflare-agents-plugin";
@@ -137,6 +138,10 @@ vi.mock("./plugins/strands-agent-sdk-plugin", () => ({
 
 vi.mock("./plugins/voyageai-plugin", () => ({
   VoyageAIPlugin: createPluginClassMock(),
+}));
+
+vi.mock("./plugins/mcp-plugin", () => ({
+  MCPPlugin: createPluginClassMock(),
 }));
 
 vi.mock("./plugins/typesafe-plugin", () => ({
@@ -288,6 +293,15 @@ describe("BraintrustPlugin", () => {
 
       expect(VoyageAIPlugin).toHaveBeenCalledTimes(1);
       const mockInstance = vi.mocked(VoyageAIPlugin).mock.results[0].value;
+      expect(mockInstance.enable).toHaveBeenCalledTimes(1);
+    });
+
+    it("should create and enable MCP plugin by default", () => {
+      const plugin = new BraintrustPlugin();
+      plugin.enable();
+
+      expect(MCPPlugin).toHaveBeenCalledTimes(1);
+      const mockInstance = vi.mocked(MCPPlugin).mock.results[0].value;
       expect(mockInstance.enable).toHaveBeenCalledTimes(1);
     });
 
@@ -1211,6 +1225,15 @@ describe("BraintrustPlugin", () => {
       plugin.enable();
 
       expect(VoyageAIPlugin).not.toHaveBeenCalled();
+    });
+
+    it("should not create MCP plugin when mcp: false", () => {
+      const plugin = new BraintrustPlugin({
+        integrations: { mcp: false },
+      });
+      plugin.enable();
+
+      expect(MCPPlugin).not.toHaveBeenCalled();
     });
 
     it("should not create TypeSafe plugin when typesafe: false", () => {
