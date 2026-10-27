@@ -1147,7 +1147,8 @@ type AudioFile = {
   id: string;
   start: number;
   end: number;
-  sources: AudioSegmentMeta["sources"];
+  /** Each source heard in the file and its channel. */
+  sources: { channel: number; name: string }[];
   metadata?: Record<string, unknown>;
   state: "pending" | "ready" | "omitted";
   reason?: string;
@@ -1379,11 +1380,12 @@ class Recording {
     file.metadata = {
       mime_type: meta.mimeType,
       sample_rate_hz: meta.sampleRate,
-      channel_count: meta.channelCount,
+      channel_count: meta.channels.length,
       // Headerless PCM needs its sample format published; files such as Ogg carry their own.
-      ...(meta.mimeType === "audio/pcm" && { sample_format: meta.encoding }),
+      ...(meta.mimeType === "audio/pcm" && {
+        sample_format: meta.attributes?.["pcm.sample_format"],
+      }),
       duration_ms: meta.durationMs,
-      ...(meta.attributes && { attributes: meta.attributes }),
     };
     this.publishFiles();
     const attachment = new Attachment({
@@ -1430,7 +1432,9 @@ class Recording {
         id,
         start: meta.startOffsetMs,
         end: meta.startOffsetMs + meta.durationMs,
-        sources: meta.sources,
+        sources: meta.channels.flatMap((c, channel) =>
+          c.sources.map((name) => ({ channel, name })),
+        ),
         state: "pending",
       };
       this.files.push(file);

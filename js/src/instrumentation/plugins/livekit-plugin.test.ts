@@ -1062,9 +1062,8 @@ describe("recording", () => {
     ]);
     // Only raw PCM publishes a sample format.
     expect(recordings[0]).not.toHaveProperty("sample_format");
-    // Attributes describe the published file; state stays in the pipeline.
-    expect(recordings[0].attributes).toEqual({ "acme.framing": "test" });
-    expect(JSON.stringify(recordings)).not.toContain("acme.header");
+    // Pipeline attributes and state are not published in the recording descriptor.
+    expect(JSON.stringify(recordings)).not.toContain("acme.");
     expect(selections("agent_turn")).toEqual([["call-0000", 10, 30]]);
     expect([...uploads[0].slice(0, 4)]).toEqual([0x54, 0x45, 0x53, 0x54]);
     expect(channelSamples(uploads[0].slice(4), 1)[300]).toBe(1234);

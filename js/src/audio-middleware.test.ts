@@ -10,13 +10,13 @@ const meta: AudioSegmentMeta = {
   startOffsetMs: 1000,
   durationMs: 2,
   sampleRate: 1000,
-  channelCount: 2,
-  sources: [
-    { channel: 0, name: "a" },
-    { channel: 1, name: "b" },
-  ],
+  channels: [{ sources: ["a"] }, { sources: ["b"] }],
   mimeType: "audio/pcm",
-  encoding: "s16le",
+  encoding: "pcm",
+  attributes: {
+    "pcm.sample_format": "s16le",
+    "pcm.channel_layout": "interleaved",
+  },
 };
 /** Two stereo frames: a = [2, 4], b = [6, 8]. */
 const pcm = () => new Uint8Array(Int16Array.from([2, 6, 4, 8]).buffer);
@@ -49,8 +49,8 @@ test("middleware runs outermost first, transforms input and observes results on 
   };
   const result = await runMiddleware([outer, reverse], pcm(), meta);
   expect(calls).toEqual([
-    "outer in s16le",
-    "reverse in s16le",
+    "outer in pcm",
+    "reverse in pcm",
     "reverse out reversed",
     "outer out reversed",
   ]);
@@ -121,19 +121,12 @@ test("middleware that changes the layout describes it in the metadata", async ()
     );
     return next(new Uint8Array(mono.buffer), {
       ...meta,
-      channelCount: 1,
-      sources: meta.sources.map((source) => ({ ...source, channel: 0 })),
+      channels: [{ sources: meta.channels.flatMap((c) => c.sources) }],
     });
   };
   const result = await runMiddleware([mixdown], pcm(), meta);
   expect(samples(result.segment)).toEqual([4, 6]);
-  expect(result.meta).toMatchObject({
-    channelCount: 1,
-    sources: [
-      { channel: 0, name: "a" },
-      { channel: 0, name: "b" },
-    ],
-  });
+  expect(result.meta.channels).toEqual([{ sources: ["a", "b"] }]);
 });
 
 test.each<[string, AudioMiddleware]>([

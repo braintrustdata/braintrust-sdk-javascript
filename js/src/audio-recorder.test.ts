@@ -47,13 +47,13 @@ test("without middleware, segments carry the recorded PCM and its format and pla
     startOffsetMs: 20,
     durationMs: 4,
     sampleRate: 1000,
-    channelCount: 2,
-    sources: [
-      { channel: 0, name: "a" },
-      { channel: 1, name: "b" },
-    ],
+    channels: [{ sources: ["a"] }, { sources: ["b"] }],
     mimeType: "audio/pcm",
-    encoding: "s16le",
+    encoding: "pcm",
+    attributes: {
+      "pcm.sample_format": "s16le",
+      "pcm.channel_layout": "interleaved",
+    },
   });
 });
 
@@ -94,8 +94,15 @@ test("late writes behind the newest audio land in segments that have not been co
   expect(r.record("b", Int16Array.from([-7, -8]), mono(12))).toBe(true);
   await r.finish();
   expect(samples(flushed[1].segment).slice(4, 8)).toEqual([13, -7, 14, -8]);
-  expect(flushed[1].meta.sources.map((s) => s.name)).toEqual(["a", "b"]);
-  expect(flushed[0].meta.sources).toEqual([{ channel: 0, name: "a" }]);
+  expect(flushed[1].meta.channels).toEqual([
+    { sources: ["a"] },
+    { sources: ["b"] },
+  ]);
+  // Every channel is listed; one nobody was heard in has no sources.
+  expect(flushed[0].meta.channels).toEqual([
+    { sources: ["a"] },
+    { sources: [] },
+  ]);
 });
 
 test("advance() drains confirmed audio without new writes", async () => {

@@ -12,16 +12,18 @@ export interface AudioSegmentMeta {
   /** Playable duration of the segment. */
   readonly durationMs: number;
   readonly sampleRate: number;
-  readonly channelCount: number;
-  /** Sources heard in this segment and the file channel each occupies. */
-  readonly sources: readonly AudioSource[];
-  /** Content type of the segment bytes, such as `audio/pcm`. */
+  /**
+   * Every output channel in order, each with the sources heard in it at any
+   * point in this segment (empty when none were).
+   */
+  readonly channels: readonly AudioChannel[];
+  /** Media or container type of the segment bytes, such as `audio/pcm`. */
   readonly mimeType: string;
-  /** Sample or codec encoding, such as `s16le`. */
+  /** Audio codec, such as `pcm` or `opus`. */
   readonly encoding: string;
   /**
-   * Facts about the resulting file, such as decoding hints, published with it.
-   * Use namespaced keys (`"acme.key_id"`).
+   * Format details of the resulting file, published with it, such as
+   * `pcm.sample_format`. Use namespaced keys (`"acme.key_id"`).
    */
   readonly attributes?: Readonly<Record<string, AudioAttributeValue>>;
   /** Private values for later middleware, including binary data. Never published. */
@@ -36,8 +38,8 @@ type AudioAttributeValue =
   | readonly AudioAttributeValue[]
   | { readonly [key: string]: AudioAttributeValue };
 
-/** A recorder source key, as given by the integration, on one file channel. */
-type AudioSource = { readonly channel: number; readonly name: string };
+/** One output channel: the recorder source keys, as given by the integration, it carries. */
+type AudioChannel = { readonly sources: readonly string[] };
 
 export type AudioResult = { segment: Uint8Array; meta: AudioSegmentMeta };
 
@@ -111,7 +113,11 @@ function freeze(meta: AudioSegmentMeta): AudioSegmentMeta {
   if (Object.isFrozen(meta)) return meta;
   return Object.freeze({
     ...meta,
-    sources: Object.freeze(meta.sources.map((s) => Object.freeze({ ...s }))),
+    channels: Object.freeze(
+      meta.channels.map((c) =>
+        Object.freeze({ sources: Object.freeze([...c.sources]) }),
+      ),
+    ),
     ...(meta.attributes && {
       attributes: Object.freeze({ ...meta.attributes }),
     }),
@@ -136,6 +142,6 @@ function preservesIdentity(
     isObject(meta) &&
     meta.index === original.index &&
     meta.startOffsetMs === original.startOffsetMs &&
-    Array.isArray(meta.sources)
+    Array.isArray(meta.channels)
   );
 }

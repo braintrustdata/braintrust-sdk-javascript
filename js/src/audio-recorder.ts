@@ -23,6 +23,11 @@ type AudioRecorderOptions = {
   onError(meta: AudioSegmentMeta, reason: string, error: unknown): void;
 };
 
+const PCM_ATTRIBUTES = {
+  "pcm.sample_format": "s16le",
+  "pcm.channel_layout": "interleaved",
+};
+
 /**
  * Assembles PCM on a channel timeline, cuts bounded segments behind a confirmed
  * offset, and passes them through middleware to `onFlush`, one at a time.
@@ -175,13 +180,13 @@ export class AudioRecorder {
       startOffsetMs: cut.startOffsetMs,
       durationMs: cut.endOffsetMs - cut.startOffsetMs,
       sampleRate: this.buffer.sampleRate,
-      channelCount: this.buffer.channels,
-      sources: cut.channels.map((channel) => ({
-        channel,
-        name: this.options.sources[channel],
+      // One channel per source, listing its source when it was heard.
+      channels: this.options.sources.map((source, channel) => ({
+        sources: cut.channels.includes(channel) ? [source] : [],
       })),
       mimeType: "audio/pcm",
-      encoding: "s16le",
+      encoding: "pcm",
+      attributes: PCM_ATTRIBUTES,
     };
     this.job = this.process(cut.data, meta).finally(() => {
       this.job = undefined;
