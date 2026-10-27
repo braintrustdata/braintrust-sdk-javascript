@@ -7,20 +7,21 @@
       "dependencies": {
         "eve-v0-latest": {
           "package": "eve",
-          "range": "0"
+          "range": ">=0.72 <0.84"
         }
       }
     }
   },
   "dependencies": {
     "@openrouter/ai-sdk-provider": "3.0.0",
-    "ai": "7.0.105",
+    "ai": "7.0.137",
     "eve": "0.52.2",
     "eve-v0": "npm:eve@0.22.1",
     "eve-v0-latest-pinned": "npm:eve@0.37.1",
     "eve-v0-provider": "npm:eve@0.34.0",
     "eve-v0-70": "npm:eve@0.70.0",
-    "eve-v0-latest": "npm:eve@0.70.0",
+    "eve-v0-72": "npm:eve@0.72.0",
+    "eve-v0-latest": "npm:eve@0.83.3",
     "zod": "4.3.6"
   },
   "pnpm": {
