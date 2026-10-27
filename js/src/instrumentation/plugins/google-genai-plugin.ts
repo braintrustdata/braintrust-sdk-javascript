@@ -2064,10 +2064,7 @@ function aggregateGenerateContentChunks(
       // finish reason and ratings still belong in the output.
       const candidateDict: Record<string, unknown> = {};
       if (parts.length > 0) {
-        candidateDict.content = {
-          parts,
-          role: "model",
-        };
+        candidateDict.content = { parts, role: "model" };
       }
 
       if (candidate.finishReason !== undefined) {
