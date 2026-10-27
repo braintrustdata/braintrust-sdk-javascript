@@ -31,9 +31,16 @@ import { isObject } from "../../../util";
 import { zodToJsonSchema } from "../../zod/utils";
 import { debugLogger } from "../../debug-logger";
 import { isEnvFlagEnabled } from "../../wrappers/attachment-utils";
-import { DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES } from "../config";
+import {
+  DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES,
+  type AudioEncodingConfig,
+} from "../config";
 import { pcmBytesToMs, msToSamples, samplesToMs } from "../../pcm-buffer";
 import { AudioRecorder } from "../../audio-recorder";
+import {
+  audioEncodingStack,
+  type AudioEncodingDefaults,
+} from "../../audio-compression";
 import type {
   AudioMiddlewareStack,
   AudioSegmentMeta,
@@ -52,6 +59,11 @@ const FINAL_TRANSCRIPT = 2; // SpeechEventType.FINAL_TRANSCRIPT
 // than the shared BRAINTRUST_CAPTURE_ATTACHMENTS, which also enables other media.
 const CAPTURE_USER_AUDIO = "BRAINTRUST_CAPTURE_USER_AUDIO_ATTACHMENTS";
 const CAPTURE_AGENT_AUDIO = "BRAINTRUST_CAPTURE_AGENT_AUDIO_ATTACHMENTS";
+/** Speech compresses well as Opus, and Ogg is its standard file format. */
+const AUDIO_DEFAULTS: AudioEncodingDefaults = {
+  codec: { name: "opus" },
+  container: { name: "ogg" },
+};
 
 // Native spans with a Braintrust name. Other session spans export as `livekit.<name>`.
 const SPANS = new Map<string, { name: string; type: "task" | "llm" | "tool" }>([
@@ -78,6 +90,7 @@ export class LiveKitPlugin extends BasePlugin {
   private tracing?: LiveKitTracing;
   constructor(
     private streamingAttachmentBufferBytes = DEFAULT_STREAMING_ATTACHMENT_BUFFER_BYTES,
+    private audio?: AudioEncodingConfig,
   ) {
     super();
   }
@@ -85,6 +98,7 @@ export class LiveKitPlugin extends BasePlugin {
   protected onEnable(): void {
     const tracing = (this.tracing = new LiveKitTracing(
       this.streamingAttachmentBufferBytes,
+      () => audioEncodingStack(this.audio, AUDIO_DEFAULTS),
     ));
     const observeActive =
       <T>(fn: (span: LiveKitSpan) => T, options: TraceOptions) =>

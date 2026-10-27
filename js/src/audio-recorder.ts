@@ -28,6 +28,9 @@ const PCM_ATTRIBUTES = {
   "pcm.channel_layout": "interleaved",
 };
 
+/** Encoding failures are reported once per process. */
+let warnedEncodingFailure = false;
+
 /**
  * Assembles PCM on a channel timeline, cuts bounded segments behind a confirmed
  * offset, and passes them through middleware to `onFlush`, one at a time.
@@ -39,7 +42,6 @@ export class AudioRecorder {
   private index = 0;
   private job?: Promise<void>;
   private finishing?: Promise<void>;
-  private warned = false;
   private stopReason?: string;
   private isClosed = false;
 
@@ -203,12 +205,12 @@ export class AudioRecorder {
         meta,
       );
     } catch (error) {
-      if (!this.warned)
+      if (!warnedEncodingFailure) {
+        warnedEncodingFailure = true;
         debugLogger.notice.warn(
-          "Audio middleware failed; the recording omits this segment and stops.",
-          error,
+          `Audio encoding failed (${error instanceof Error ? error.message : String(error)}): the rest of this recording is not uploaded.`,
         );
-      this.warned = true;
+      }
       return this.fail("recording_transform_failed", error, meta);
     }
     try {

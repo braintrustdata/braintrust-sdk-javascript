@@ -9,6 +9,7 @@
     "test:e2e:cassettes": "node ./scripts/run-e2e-tests.mjs --check-cassettes"
   },
   "devDependencies": {
+    "@braintrust/audio": "workspace:^",
     "@braintrust/deepseek-harness": "workspace:^",
     "@braintrust/langchain-js": "workspace:^",
     "@braintrust/otel": "workspace:^",
