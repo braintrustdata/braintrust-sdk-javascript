@@ -1,4 +1,16 @@
 /// <reference lib="dom" />
+import { TypedAttachmentProcessor } from "../typed-attachments";
+import {
+  formatLogTemplate,
+  renderLogBody,
+  type ApplicationLogLevel,
+  type ApplicationLogOptions,
+  type ApplicationLogTemplate,
+} from "../logs/templates";
+import {
+  automaticAttachmentOriginals,
+  restoreAutomaticAttachments,
+} from "../automatic-attachments";
 import { v4 as uuidv4 } from "uuid";
 import { Queue, DEFAULT_QUEUE_SIZE } from "../queue";
 import {
@@ -43,7 +55,6 @@ import {
   IS_MERGE_FIELD,
   LogFeedbackFullArgs,
   mergeDicts,
-  mergeRowBatch,
   OBJECT_DELETE_FIELD,
   OBJECT_ID_KEYS,
   SanitizedExperimentLogPartialArgs,
@@ -99,6 +110,7 @@ import {
 import {
   createMaskingCustomizer,
   customizeSpanExport,
+  mergeCustomizedSpanRecords,
 } from "../span-customizer";
 import type { SpanCustomizer, SpanExportData } from "../instrumentation/config";
 import type { Experiment, ExperimentSummary } from "./experiments";
@@ -1203,6 +1215,33 @@ export class BraintrustState {
       if (generation !== this.loginGeneration) {
         throw new Error("Login cancelled by a reset.");
       }
+      // A non-forced login may have been queued while another login was in
+      // flight. Recheck the active credentials after that login completes so
+      // a queued caller cannot silently replace the shared state's identity.
+      if (this.apiUrl && !loginParams.forceLogin) {
+        if (
+          this.appUrl !== appUrl ||
+          this.loginToken !==
+            (apiKey && HTTPConnection.sanitize_token(apiKey)) ||
+          (this.activeLoginOrgNameSelector !== orgName &&
+            (this.orgName === undefined || this.orgName !== orgName)) ||
+          this.fetch !== fetch
+        ) {
+          throw new Error(
+            "Another login completed with different options. To force re-login, pass `forceLogin: true`.",
+          );
+        }
+        // copyLoginInfo() may have replaced this queued caller's effective
+        // debug level while its login was waiting.
+        if (options.debugLogLevel === undefined) {
+          this.debugLogLevelConfigured = false;
+          this.debugLogLevel = getEnvDebugLogLevel();
+          setGlobalDebugLogLevel(undefined);
+        } else {
+          this.setDebugLogLevel(options.debugLogLevel);
+        }
+        return;
+      }
       const newState = await loginToState({
         ...options,
         appUrl,
@@ -1866,6 +1905,17 @@ export class Attachment extends BaseAttachment {
   }
 
   private initUploader(): LazyValue<AttachmentStatus> {
+    const withRetry = async <T>(request: () => Promise<T>): Promise<T> => {
+      const retries = automaticAttachmentOriginals.has(this) ? 8 : 0;
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return await request();
+        } catch (error) {
+          if (attempt >= retries || !isRetryableHTTPError(error)) throw error;
+          await waitForRetry(500 * 2 ** attempt);
+        }
+      }
+    };
     const doUpload = async (conn: HTTPConnection, orgId: string) => {
       const requestParams = {
         key: this.reference.key,
@@ -1875,7 +1925,7 @@ export class Attachment extends BaseAttachment {
       };
       const [metadataPromiseResult, dataPromiseResult] =
         await Promise.allSettled([
-          conn.post("/attachment", requestParams),
+          withRetry(() => conn.post("/attachment", requestParams)),
           this._data.get(),
         ]);
       if (metadataPromiseResult.status === "rejected") {
@@ -1913,12 +1963,14 @@ export class Attachment extends BaseAttachment {
       // TODO multipart upload.
       let objectStoreResponse: Response | undefined;
       try {
-        objectStoreResponse = await checkResponse(
-          await fetch(signedUrl, {
-            method: "PUT" satisfies RequestInit["method"],
-            headers,
-            body: data,
-          }),
+        objectStoreResponse = await withRetry(async () =>
+          checkResponse(
+            await fetch(signedUrl, {
+              method: "PUT" satisfies RequestInit["method"],
+              headers,
+              body: data,
+            }),
+          ),
         );
         await objectStoreResponse.body?.cancel();
       } catch (error) {
@@ -1938,7 +1990,7 @@ export class Attachment extends BaseAttachment {
       const status: AttachmentStatus = { upload_status: "done" };
 
       const state = this.state ?? _internalGetGlobalState();
-      await state.login({});
+      await withRetry(() => state.login({}));
 
       const conn = state.apiConn();
       const orgId = state.orgId ?? "";
@@ -1956,9 +2008,8 @@ export class Attachment extends BaseAttachment {
         org_id: orgId,
         status,
       };
-      const statusResponse = await conn.post(
-        "/attachment/status",
-        requestParams,
+      const statusResponse = await withRetry(() =>
+        conn.post("/attachment/status", requestParams),
       );
       await statusResponse.body?.cancel();
       if (!statusResponse.ok) {
@@ -2410,7 +2461,7 @@ export function updateSpanImpl({
         ...updateEvent,
         ...(await parentIds()),
         [IS_MERGE_FIELD]: true,
-      }) as BackgroundLogEvent | null,
+      }) as BackgroundLogEvent,
   );
   state.bgLogger().log([record]);
 }
@@ -2760,6 +2811,7 @@ export class Logger implements Exportable {
   private lastStartTime: number;
   private lazyId: LazyValue<string>;
   private calledStartSpan: boolean;
+  private baselineTraceId?: string;
   private readonly autoCaptureAttachments: boolean | undefined;
 
   // For type identification.
@@ -2846,6 +2898,105 @@ export class Logger implements Exportable {
     const span = this.startSpanImpl({ startTime: this.lastStartTime, event });
     this.lastStartTime = span.end();
     return span.id;
+  }
+
+  /**
+   * Capture an application log as one complete row, correlated with the active
+   * Braintrust or OpenTelemetry span. Without an active span, logs from this
+   * logger share a baseline trace ID.
+   */
+  private emitLog(
+    body: unknown,
+    level: ApplicationLogLevel,
+    options?: ApplicationLogOptions,
+  ): string {
+    const rendered = renderLogBody(body, options);
+    const timestamp = getCurrentUnixTimestamp();
+    const current = this.state.contextManager.getParentSpanIds();
+    // Supply all fields in the initial write. Calling span.end() here would
+    // enqueue an unnecessary second write for this instantaneous event.
+    const span = new SpanImpl({
+      state: this.state,
+      parentObjectType: this.parentObjectType(),
+      parentObjectId: this.lazyId,
+      parentComputeObjectMetadataArgs: this.computeMetadataArgs,
+      parentSpanIds: {
+        // Late OpenTelemetry setup can replace the ID generator. Resolve the
+        // baseline only when a standalone log first needs it.
+        rootSpanId:
+          current?.rootSpanId ??
+          (this.baselineTraceId ??= this.state.idGenerator.getTraceId()),
+        parentSpanIds: [],
+      },
+      spanId: current?.spanParents[0],
+      name: "Log",
+      spanAttributes: { name: null, type: "log", log_level: level },
+      startTime: timestamp,
+      event: {
+        output: rendered.body,
+        metadata: rendered.metadata,
+        metrics: { end: timestamp },
+      },
+    });
+    return span.id;
+  }
+
+  /**
+   * Preserve a native JavaScript template literal and its interpolation values.
+   * Format values with JavaScript expressions, such as `${amount.toFixed(2)}`.
+   * Pass the result to any application-log severity method.
+   *
+   * @example
+   * logger.info(logger.fmt`User ${userId} paid ${amount.toFixed(2)}`, {
+   *   metadata: { source: "checkout" },
+   * });
+   */
+  public fmt(
+    strings: TemplateStringsArray,
+    ...values: unknown[]
+  ): ApplicationLogTemplate {
+    return formatLogTemplate(strings, values);
+  }
+
+  /** Capture a trace-level application log. Does not start a trace. */
+  public trace(body: unknown, options?: ApplicationLogOptions): string {
+    return this.emitLog(body, "trace", options);
+  }
+
+  /** Capture a debug-level application log. Supports {@link Logger.fmt} templates. */
+  public debug(body: unknown, options?: ApplicationLogOptions): string {
+    return this.emitLog(body, "debug", options);
+  }
+
+  /**
+   * Capture an info-level application log. Bodies may be any JSON-serializable value.
+   * Logs share the active span's IDs, or a baseline trace ID for this logger.
+   * Use {@link Logger.fmt} to preserve a native JavaScript template and its values
+   * in `braintrust.template` metadata fields.
+   * Returns the row ID.
+   *
+   * @example
+   * logger.info(logger.fmt`User ${userId} paid ${amount.toFixed(2)}`, {
+   *   metadata: { source: "checkout" },
+   * });
+   */
+  public info(body: unknown, options?: ApplicationLogOptions): string {
+    return this.emitLog(body, "info", options);
+  }
+
+  /** Capture a warn-level application log. Supports {@link Logger.fmt} templates. */
+  public warn(body: unknown, options?: ApplicationLogOptions): string {
+    return this.emitLog(body, "warn", options);
+  }
+
+  /** Capture an error-level application log. Supports {@link Logger.fmt} templates. */
+  public error(body: unknown, options?: ApplicationLogOptions): string {
+    return this.emitLog(body, "error", options);
+  }
+
+  /** Capture a fatal-level application log. Supports {@link Logger.fmt} templates. */
+  public fatal(body: unknown, options?: ApplicationLogOptions): string {
+    return this.emitLog(body, "fatal", options);
   }
 
   /**
@@ -3167,8 +3318,36 @@ function getNumericEnv(name: string): number | undefined {
   return isNaN(value) ? undefined : value;
 }
 
+// Like the OTel BatchSpanProcessor, wait briefly before flushing so rows
+// logged close together share a request and a span's start and end rows can
+// merge into one. Rows still waiting on the delay are lost when the process
+// exits without `beforeExit` (signals, `process.exit()`).
+// Only long-lived Node processes delay by default: serverless and
+// scale-to-zero platforms may freeze or throttle the process before a timer
+// fires, and browser and edge runtimes have no exit flush.
+const DEFAULT_FLUSH_DELAY_MS = 1000;
+
+function isServerlessEnvironment(): boolean {
+  return (
+    !!iso.getEnv("VERCEL") ||
+    !!iso.getEnv("NETLIFY") ||
+    !!iso.getEnv("AWS_EXECUTION_ENV")?.startsWith("AWS_Lambda_") ||
+    !!iso.getEnv("AWS_LAMBDA_FUNCTION_NAME") ||
+    !!iso.getEnv("K_SERVICE") ||
+    !!iso.getEnv("FUNCTION_TARGET") ||
+    iso.getEnv("GAE_ENV") === "standard" ||
+    !!iso.getEnv("FUNCTIONS_WORKER_RUNTIME")
+  );
+}
+
+function defaultFlushDelayMs(): number {
+  return iso.buildType === "node" && !isServerlessEnvironment()
+    ? DEFAULT_FLUSH_DELAY_MS
+    : 0;
+}
+
 interface BackgroundLogger {
-  log(items: LazyValue<BackgroundLogEvent | null>[]): void;
+  log(items: LazyValue<BackgroundLogEvent>[]): void;
   flush(): Promise<void>;
   pendingFlushBytes(): number;
   flushBackpressureBytes(): number;
@@ -3178,10 +3357,10 @@ interface BackgroundLogger {
 }
 
 export class TestBackgroundLogger implements BackgroundLogger {
-  private items: LazyValue<BackgroundLogEvent | null>[][] = [];
+  private items: LazyValue<BackgroundLogEvent>[][] = [];
   private exportCustomizers: readonly SpanCustomizer[] = [];
 
-  log(items: LazyValue<BackgroundLogEvent | null>[]): void {
+  log(items: LazyValue<BackgroundLogEvent>[]): void {
     this.items.push(items);
   }
 
@@ -3213,23 +3392,20 @@ export class TestBackgroundLogger implements BackgroundLogger {
     const events: BackgroundLogEvent[] = [];
     for (const item of items) {
       for (const event of item) {
-        const value = await event.get();
-        if (value !== null) events.push(value);
+        events.push(await event.get());
       }
     }
 
-    let batch = mergeRowBatch(events);
+    let batch = mergeCustomizedSpanRecords(events).flat();
 
     if (this.exportCustomizers.length) {
-      batch = batch
-        .map(
-          (item) =>
-            customizeSpanExport(
-              item as SpanExportData,
-              this.exportCustomizers,
-            ) as BackgroundLogEvent | null,
-        )
-        .filter((item): item is BackgroundLogEvent => item !== null);
+      batch = batch.map(
+        (item) =>
+          customizeSpanExport(
+            item as SpanExportData,
+            this.exportCustomizers,
+          ) as BackgroundLogEvent,
+      );
     }
 
     return batch;
@@ -3326,10 +3502,11 @@ class ConcurrencyLimiter {
 
 interface QueuedLogEvent {
   sequence: number;
-  event: LazyValue<BackgroundLogEvent | null>;
+  event: LazyValue<BackgroundLogEvent>;
 }
 
 class HTTPBackgroundLogger implements BackgroundLogger {
+  private readonly typedAttachments = new TypedAttachmentProcessor();
   private apiConn: LazyValue<HTTPConnection>;
   private queue: Queue<QueuedLogEvent>;
   private activeFlush: Promise<void> = Promise.resolve();
@@ -3339,8 +3516,13 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   private readonly requestLimiter: ConcurrencyLimiter;
   private lastEnqueuedSequence = 0;
   private completedSequence = 0;
+  private cancelFlushTimer: (() => void) | undefined;
+  // Enqueue time of the oldest row that no flush has drained yet.
+  private pendingSince: number | undefined;
+  private readonly exitFlushRegistered: boolean;
 
   public syncFlush: boolean = false;
+  public flushDelayMs: number;
   private maxRequestSizeOverride: number | null = null;
   private _maxRequestSizePromise: Promise<{
     maxRequestSize: number;
@@ -3357,6 +3539,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   private _pendingBytes: number = 0;
 
   private _disabled = false;
+  private automaticAttachmentsDisabled = false;
 
   private queueDropLoggingState = {
     numDropped: 0,
@@ -3376,6 +3559,12 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     if (defaultBatchSizeEnv !== undefined) {
       this.defaultBatchSize = defaultBatchSizeEnv;
     }
+
+    const flushDelayMsEnv = getNumericEnv("BRAINTRUST_FLUSH_DELAY_MS");
+    this.flushDelayMs =
+      flushDelayMsEnv !== undefined && flushDelayMsEnv >= 0
+        ? flushDelayMsEnv
+        : defaultFlushDelayMs();
 
     const maxRequestSizeEnv = getNumericEnv("BRAINTRUST_MAX_REQUEST_SIZE");
     if (maxRequestSizeEnv !== undefined) {
@@ -3461,6 +3650,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         await this.flush();
       });
     }
+    this.exitFlushRegistered = !opts.noExitFlush;
     this.onFlushError = opts.onFlushError;
   }
 
@@ -3480,7 +3670,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     return this._flushBackpressureBytes;
   }
 
-  log(items: LazyValue<BackgroundLogEvent | null>[]): void {
+  log(items: LazyValue<BackgroundLogEvent>[]): void {
     if (this._disabled) {
       return;
     }
@@ -3493,9 +3683,10 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     // Queue limits reject a suffix of newly pushed items, so their sequence
     // numbers can be reused by the next accepted events.
     this.lastEnqueuedSequence -= droppedItems.length;
+    this.pendingSince ??= Date.now();
 
     if (!this.syncFlush) {
-      this.triggerActiveFlush();
+      this.scheduleFlush();
     }
 
     if (droppedItems.length) {
@@ -3581,7 +3772,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   }
 
   private async flushWrappedItemsChunk(
-    wrappedItems: LazyValue<BackgroundLogEvent | null>[],
+    wrappedItems: LazyValue<BackgroundLogEvent>[],
     batchSize: number,
   ) {
     if (!wrappedItems.length) {
@@ -3589,38 +3780,95 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     }
 
     const [allItems, attachments] = await this.unwrapLazyValues(wrappedItems);
-    if (allItems.length === 0) {
-      return;
+    // Decision/extraction media is converted only after customizers/masking. Commit each
+    // record's references only after every automatic upload succeeds, so errors
+    // retain the customized original payload and never prevent span export.
+    for (const group of allItems) {
+      for (let i = 0; i < group.length; i++) {
+        if ("span_id" in group[i]) {
+          group[i] = await this.typedAttachments.process(
+            group[i],
+            Reflect.get(group[i], CAPTURE_ATTACHMENTS),
+          );
+        }
+      }
     }
 
-    // Construct batches of records to flush in parallel.
-    let chunkBytes = 0;
-    const allItemsWithMeta = allItems.map((item) => {
-      const withMeta = stringifyWithOverflowMeta(item);
-      chunkBytes += withMeta.str.length;
-      return withMeta;
+    // Upload automatic conversions in the background before serialization so
+    // pipeline failures can export inline media. Customizers and masking have
+    // already removed any private media; fallback must not resurrect it.
+    const originals = new Map<string, unknown>();
+    const automatic = attachments.filter((attachment) => {
+      if (!automaticAttachmentOriginals.has(attachment)) return false;
+      originals.set(
+        attachment.reference.key,
+        automaticAttachmentOriginals.get(attachment),
+      );
+      return true;
     });
+    for (const attachment of automatic) {
+      if (this.automaticAttachmentsDisabled) break;
+      try {
+        const status = await attachment.upload();
+        if (status.upload_status === "error")
+          throw new Error("Automatic attachment upload failed");
+      } catch {
+        this.automaticAttachmentsDisabled = true;
+        debugLogger.warn(
+          "Automatic attachment uploads disabled after an upload failure; exporting original inline media.",
+        );
+      }
+    }
+    if (this.automaticAttachmentsDisabled && automatic.length) {
+      for (const group of allItems) {
+        for (let i = 0; i < group.length; i++) {
+          group[i] = restoreAutomaticAttachments(
+            group[i],
+            originals,
+          ) as BackgroundLogEvent;
+        }
+      }
+    }
+
+    // Failure barriers must be sent in order, in separate requests. Within each
+    // group, retain the normal parallel transport batching.
+    let chunkBytes = 0;
+    const groupsWithMeta = allItems.map((group) =>
+      group.map((item) => {
+        const withMeta = stringifyWithOverflowMeta(item);
+        chunkBytes += withMeta.str.length;
+        return withMeta;
+      }),
+    );
     this._pendingBytes += chunkBytes;
 
     const maxRequestSizeResult = await this.getMaxRequestSize();
-    const batches = batchItems({
-      items: allItemsWithMeta,
-      batchMaxNumItems: batchSize,
-      batchMaxNumBytes: maxRequestSizeResult.maxRequestSize / 2,
-      getByteSize: (item) => item.str.length,
-    });
-
-    const postPromises = batches.map((batch) =>
-      this.requestLimiter.run(async () => {
-        try {
-          await this.submitLogsRequest(batch, maxRequestSizeResult);
-          return { type: "success" } as const;
-        } catch (e) {
-          return { type: "error", value: e } as const;
-        }
-      }),
-    );
-    const results = await Promise.all(postPromises);
+    const results: ({ type: "success" } | { type: "error"; value: unknown })[] =
+      [];
+    for (const items of groupsWithMeta) {
+      // Later groups may depend on rows in a failed group, so stop sending.
+      if (results.some((r) => r.type === "error")) break;
+      const batches = batchItems({
+        items,
+        batchMaxNumItems: batchSize,
+        batchMaxNumBytes: maxRequestSizeResult.maxRequestSize / 2,
+        getByteSize: (item) => item.str.length,
+      });
+      results.push(
+        ...(await Promise.all(
+          batches.map((batch) =>
+            this.requestLimiter.run(async () => {
+              try {
+                await this.submitLogsRequest(batch, maxRequestSizeResult);
+                return { type: "success" } as const;
+              } catch (e) {
+                return { type: "error", value: e } as const;
+              }
+            }),
+          ),
+        )),
+      );
+    }
     this._pendingBytes = Math.max(0, this._pendingBytes - chunkBytes);
     const failingResultErrors = results
       .map((r) => (r.type === "success" ? undefined : r.value))
@@ -3635,6 +3883,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     const attachmentErrors: unknown[] = [];
     // For now, upload attachments serially.
     for (const attachment of attachments) {
+      if (automaticAttachmentOriginals.has(attachment)) continue;
       try {
         const result = await attachment.upload();
         if (result.upload_status === "error") {
@@ -3655,34 +3904,49 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   }
 
   private async unwrapLazyValues(
-    wrappedItems: LazyValue<BackgroundLogEvent | null>[],
-  ): Promise<[BackgroundLogEvent[], Attachment[]]> {
+    wrappedItems: LazyValue<BackgroundLogEvent>[],
+  ): Promise<[BackgroundLogEvent[][], Attachment[]]> {
     for (let i = 0; i < this.numTries; ++i) {
       try {
-        const items = (
-          await Promise.all(wrappedItems.map((x) => x.get()))
-        ).filter((item): item is BackgroundLogEvent => item !== null);
+        const items = await Promise.all(wrappedItems.map((x) => x.get()));
 
         // TODO(kevin): `extractAttachments` should ideally come after
         // `mergeRowBatch`, since merge-overwriting could result in some
         // attachments that no longer need to be uploaded. This would require
         // modifying the merge logic to treat the Attachment object as a "leaf"
         // rather than attempting to merge the keys of the Attachment.
-        const attachments: Attachment[] = [];
+        let attachments: Attachment[] = [];
         items.forEach((item) => extractAttachments(item, attachments));
 
-        let mergedItems = mergeRowBatch(items);
+        let mergedItems = mergeCustomizedSpanRecords(items);
 
         if (this.exportCustomizers.length) {
-          mergedItems = mergedItems
-            .map(
-              (item) =>
-                customizeSpanExport(
-                  item as SpanExportData,
-                  this.exportCustomizers,
-                ) as BackgroundLogEvent | null,
-            )
-            .filter((item): item is BackgroundLogEvent => item !== null);
+          mergedItems = mergedItems.map((group) =>
+            group.map((item) => {
+              const customized = customizeSpanExport(
+                item as SpanExportData,
+                this.exportCustomizers,
+              ) as BackgroundLogEvent;
+              Object.defineProperty(customized, CAPTURE_ATTACHMENTS, {
+                value: Reflect.get(item, CAPTURE_ATTACHMENTS),
+                configurable: true,
+              });
+              return customized;
+            }),
+          );
+          // Customizers may strip or replace attachment references; don't upload
+          // content that is no longer referenced by any exported record.
+          const referencedKeys = new Set<string>();
+          mergedItems.forEach((group) =>
+            group.forEach((item) =>
+              collectAttachmentReferenceKeys(item, referencedKeys),
+            ),
+          );
+          attachments = attachments.filter(
+            (attachment) =>
+              attachment.reference.type !== BRAINTRUST_ATTACHMENT ||
+              referencedKeys.has(attachment.reference.key),
+          );
         }
 
         return [mergedItems, attachments];
@@ -3867,7 +4131,7 @@ class HTTPBackgroundLogger implements BackgroundLogger {
   }
 
   private async dumpDroppedEvents(
-    wrappedItems: LazyValue<BackgroundLogEvent | null>[],
+    wrappedItems: LazyValue<BackgroundLogEvent>[],
   ) {
     const publishPayloadsDir = [
       this.allPublishPayloadsDir,
@@ -3881,7 +4145,9 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         await this.unwrapLazyValues(wrappedItems);
 
       const dataStr = constructLogs3Data(
-        allItems.map((x) => stringifyWithOverflowMeta(x)),
+        allItems.flatMap((group) =>
+          group.map((x) => stringifyWithOverflowMeta(x)),
+        ),
       );
       const attachmentStr = JSON.stringify(
         allAttachments.map((a) => a.debugInfo()),
@@ -3925,6 +4191,59 @@ class HTTPBackgroundLogger implements BackgroundLogger {
     }
   }
 
+  // Flush once the oldest pending row has waited `flushDelayMs`, or right away
+  // once a full batch of `defaultBatchSize` rows is queued. An active flush
+  // reschedules when it finishes, so only one is ever in flight.
+  private scheduleFlush() {
+    const queueLength = this.queue.length();
+    if (queueLength === 0) {
+      return;
+    }
+    if (queueLength >= this.defaultBatchSize) {
+      // No-op while a flush is in flight; it reschedules when it finishes.
+      this.triggerActiveFlush();
+      return;
+    }
+    if (!this.activeFlushResolved || this.cancelFlushTimer !== undefined) {
+      return;
+    }
+
+    const now = Date.now();
+    const delay = this.pendingSince! + this.flushDelayMs - now;
+    if (delay <= 0) {
+      this.triggerActiveFlush();
+      return;
+    }
+
+    let resolveTimer!: () => void;
+    const timerDone = new Promise<void>((resolve) => {
+      resolveTimer = resolve;
+    });
+    const timer = setTimeout(() => {
+      this.cancelFlushTimer?.();
+      this.triggerActiveFlush();
+    }, delay);
+    this.cancelFlushTimer = () => {
+      clearTimeout(timer);
+      this.cancelFlushTimer = undefined;
+      resolveTimer();
+    };
+    // With an exit flush registered, a pending timer must not keep the
+    // process alive: `beforeExit` flushes whatever is still queued.
+    if (this.exitFlushRegistered) {
+      (timer as { unref?: () => void }).unref?.();
+    }
+    this.registerWaitUntil(timerDone);
+  }
+
+  private registerWaitUntil(promise: Promise<void>) {
+    try {
+      waitUntil(promise);
+    } catch (error) {
+      debugLogger.error("Failed to register background flush", error);
+    }
+  }
+
   private triggerActiveFlush() {
     if (this.activeFlushResolved) {
       const flushBoundary = this.lastEnqueuedSequence;
@@ -3932,6 +4251,9 @@ class HTTPBackgroundLogger implements BackgroundLogger {
         return;
       }
 
+      // This flush drains everything queued, which supersedes any timer.
+      this.cancelFlushTimer?.();
+      this.pendingSince = undefined;
       this.activeFlushResolved = false;
       this.activeFlush = (async () => {
         try {
@@ -3940,17 +4262,12 @@ class HTTPBackgroundLogger implements BackgroundLogger {
           this.reportFlushError(err);
         } finally {
           this.activeFlushResolved = true;
-          if (!this.syncFlush && this.queue.length() > 0) {
-            this.triggerActiveFlush();
+          if (!this.syncFlush) {
+            this.scheduleFlush();
           }
         }
       })();
-
-      try {
-        waitUntil(this.activeFlush);
-      } catch (error) {
-        debugLogger.error("Failed to register background flush", error);
-      }
+      this.registerWaitUntil(this.activeFlush);
     }
   }
 
@@ -4348,7 +4665,7 @@ async function loginToLoaderRequestState({
     );
     const org = selectLoginOrg(info.org_info, orgName);
     orgId = org.id;
-    apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
+    apiUrl = iso.getEnv("BRAINTRUST_API_URL") || org.api_url;
     if (!apiUrl) {
       throw new Error(
         orgName
@@ -5661,8 +5978,8 @@ function _saveOrgInfo(
   const org = selectLoginOrg(orgInfo, orgName);
   state.orgId = org.id;
   state.orgName = org.name;
-  state.apiUrl = iso.getEnv("BRAINTRUST_API_URL") ?? org.api_url;
-  state.proxyUrl = iso.getEnv("BRAINTRUST_PROXY_URL") ?? org.proxy_url;
+  state.apiUrl = iso.getEnv("BRAINTRUST_API_URL") || org.api_url;
+  state.proxyUrl = iso.getEnv("BRAINTRUST_PROXY_URL") || org.proxy_url;
   state.gitMetadataSettings = org.git_metadata || undefined;
 }
 
@@ -5864,47 +6181,91 @@ export function extractAttachments(
   event: Record<string, any>,
   attachments: BaseAttachment[],
 ): void {
-  for (const [key, value] of Object.entries(event)) {
-    if (!value) {
-      continue;
-    }
+  const pending: {
+    event: Record<string, any>;
+    key: string;
+    attachment: BaseAttachment;
+  }[] = [];
+  let automatic = false;
+  const walk = (event: Record<string, any>, depth = 0): void => {
+    if (depth >= 128) return;
+    for (const [key, value] of Object.entries(event)) {
+      if (!value) {
+        continue;
+      }
 
-    // Base case: Attachment or ExternalAttachment.
-    if (value instanceof BaseAttachment) {
-      attachments.push(value);
-      event[key] = value.reference;
-      continue; // Attachment cannot be nested.
-    }
+      // Base case: Attachment or ExternalAttachment.
+      if (value instanceof BaseAttachment) {
+        automatic ||= automaticAttachmentOriginals.has(value);
+        pending.push({ event, key, attachment: value });
+        continue; // Attachment cannot be nested.
+      }
 
-    // Skip if this is already just a reference (no uploader field)
-    if (value?.type === BRAINTRUST_ATTACHMENT && value.key && !value.uploader) {
-      // This is already just a reference, skip it
-      continue;
-    }
+      // Skip if this is already just a reference (no uploader field)
+      if (
+        [
+          BRAINTRUST_ATTACHMENT,
+          EXTERNAL_ATTACHMENT,
+          "inline_attachment",
+        ].includes(value?.type)
+      ) {
+        // This is already just a reference, skip it
+        continue;
+      }
 
-    // Somewhere in our pipeline we're serializing the attachment and then deserializing it.
-    // This loses the instanceof identity of the attachment, so we need to recreate it because
-    // the above instance check doesn't catch it.
-    if (value?.reference?.type === BRAINTRUST_ATTACHMENT && value?.uploader) {
-      // This looks like a serialized Attachment object, recreate it properly
-      const attachment = new Attachment({
-        data: value.dataDebugString,
-        filename: value.reference.filename,
-        contentType: value.reference.content_type,
-      });
-      attachments.push(attachment);
-      event[key] = attachment.reference;
-      continue;
-    }
+      // Somewhere in our pipeline we're serializing the attachment and then deserializing it.
+      // This loses the instanceof identity of the attachment, so we need to recreate it because
+      // the above instance check doesn't catch it.
+      if (value?.reference?.type === BRAINTRUST_ATTACHMENT && value?.uploader) {
+        // This looks like a serialized Attachment object, recreate it properly
+        const attachment = new Attachment({
+          data: value.dataDebugString,
+          filename: value.reference.filename,
+          contentType: value.reference.content_type,
+        });
+        pending.push({ event, key, attachment });
+        continue;
+      }
 
-    // Base case: non-object.
-    if (!(value instanceof Object)) {
-      continue; // Nothing to explore recursively.
-    }
+      // Base case: non-object.
+      if (!(value instanceof Object)) {
+        continue; // Nothing to explore recursively.
+      }
 
-    // Recursive case: object or array.
-    extractAttachments(value, attachments);
+      // Recursive case: object or array.
+      walk(value, depth + 1);
+    }
+  };
+  const queueLength = attachments.length;
+  try {
+    walk(event);
+    // Read all references and enqueue before committing any replacement.
+    const references = pending.map(({ attachment }) => attachment.reference);
+    for (const { attachment } of pending) attachments.push(attachment);
+    pending.forEach(({ event, key }, index) => {
+      event[key] = references[index];
+    });
+  } catch (error) {
+    attachments.length = queueLength;
+    if (!automatic) throw error;
+    Object.assign(event, restoreAutomaticAttachments(event));
   }
+}
+
+function collectAttachmentReferenceKeys(value: unknown, keys: Set<string>) {
+  if (!value || typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectAttachmentReferenceKeys(item, keys));
+    return;
+  }
+  const record = value as Record<string, unknown>;
+  if (record.type === BRAINTRUST_ATTACHMENT && typeof record.key === "string") {
+    keys.add(record.key);
+    return;
+  }
+  Object.values(record).forEach((item) =>
+    collectAttachmentReferenceKeys(item, keys),
+  );
 }
 
 /**
@@ -6336,8 +6697,15 @@ export class SpanImpl implements Span {
         }).objectIdFields(),
       };
       // Customize inside the memoized lazy value, before attachment processing,
-      // merging, and masking. Retries reuse the customized record or drop result.
-      return customizeSpanExport(record) as BackgroundLogEvent | null;
+      // merging, and masking. Retries reuse the customized or stripped record.
+      const customized = customizeSpanExport(record) as BackgroundLogEvent;
+      // Background flushes run outside this span's context. Keep its policy on
+      // the record without exposing internal metadata to customizers or JSON.
+      Object.defineProperty(customized, CAPTURE_ATTACHMENTS, {
+        value: this[CAPTURE_ATTACHMENTS],
+        configurable: true,
+      });
+      return customized;
     };
     this._state.bgLogger().log([new LazyValue(computeRecord)]);
   }

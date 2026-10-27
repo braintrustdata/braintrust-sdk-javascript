@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vite-plus/test";
 import { debugLogger } from "../debug-logger";
-import { ollamaChannels } from "../instrumentation/providers/ollama-channels";
+import { ollamaChannels } from "../instrumentation/providers/ollama-interceptors";
 import type { OllamaClient } from "../vendor-sdk-types/ollama";
 import { wrapOllama } from "./ollama";
 
 describe("wrapOllama", () => {
-  it("emits channel events for every supported generation surface", async () => {
+  it("invokes wrapping hooks for every supported generation surface", async () => {
     const client: OllamaClient = {
       chat: vi.fn(async () => ({
         message: { role: "assistant", content: "OK" },
@@ -15,14 +15,20 @@ describe("wrapOllama", () => {
       embed: vi.fn(async () => ({ embeddings: [[0.1, 0.2]] })),
     };
     const chatSpy = vi
-      .spyOn(ollamaChannels.chat, "tracePromise")
-      .mockImplementation((fn) => fn());
+      .spyOn(ollamaChannels.chat, "invoke")
+      .mockImplementation((fn, receiver, args) =>
+        Reflect.apply(fn, receiver, args),
+      );
     const generateSpy = vi
-      .spyOn(ollamaChannels.generate, "tracePromise")
-      .mockImplementation((fn) => fn());
+      .spyOn(ollamaChannels.generate, "invoke")
+      .mockImplementation((fn, receiver, args) =>
+        Reflect.apply(fn, receiver, args),
+      );
     const embedSpy = vi
-      .spyOn(ollamaChannels.embed, "tracePromise")
-      .mockImplementation((fn) => fn());
+      .spyOn(ollamaChannels.embed, "invoke")
+      .mockImplementation((fn, receiver, args) =>
+        Reflect.apply(fn, receiver, args),
+      );
     const wrapped = wrapOllama(client);
     expect(wrapped.chat).toBe(wrapped.chat);
     expect(wrapped.generate).toBe(wrapped.generate);
@@ -46,7 +52,9 @@ describe("wrapOllama", () => {
 
   it("returns unsupported objects unchanged", () => {
     const client = {};
-    const warn = vi.spyOn(debugLogger, "warn").mockImplementation(() => {});
+    const warn = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => true);
 
     expect(wrapOllama(client)).toBe(client);
     expect(warn).toHaveBeenCalledWith(
@@ -60,9 +68,11 @@ describe("wrapOllama", () => {
       done: true,
     }));
     const client: OllamaClient = { chat: originalChat };
-    const tracePromise = vi
-      .spyOn(ollamaChannels.chat, "tracePromise")
-      .mockImplementation((fn) => fn());
+    const invoke = vi
+      .spyOn(ollamaChannels.chat, "invoke")
+      .mockImplementation((fn, receiver, args) =>
+        Reflect.apply(fn, receiver, args),
+      );
     const wrapped = wrapOllama(client);
     const firstWrappedChat = wrapped.chat;
 
@@ -82,6 +92,6 @@ describe("wrapOllama", () => {
 
     client.chat = undefined;
     expect(wrapped.chat).toBeUndefined();
-    tracePromise.mockRestore();
+    invoke.mockRestore();
   });
 });

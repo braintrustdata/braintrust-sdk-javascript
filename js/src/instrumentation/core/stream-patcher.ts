@@ -152,8 +152,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
 
   // Check if object is extensible (can be patched)
   if (Object.isFrozen(stream) || Object.isSealed(stream)) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn(
+    debugLogger.warn(
       "Cannot patch frozen/sealed stream. Stream output will not be collected.",
     );
     return stream;
@@ -222,8 +221,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
               try {
                 await options.onComplete(chunks);
               } catch (error) {
-                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                console.error("Error in stream onComplete handler:", error);
+                debugLogger.error("Error in stream onComplete handler:", error);
               }
             }
           } else {
@@ -239,8 +237,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
                 try {
                   await options.onChunk(chunk);
                 } catch (error) {
-                  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                  console.error("Error in stream onChunk handler:", error);
+                  debugLogger.error("Error in stream onChunk handler:", error);
                 }
               }
             }
@@ -257,8 +254,10 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
                   chunks,
                 );
               } catch (handlerError) {
-                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                console.error("Error in stream onError handler:", handlerError);
+                debugLogger.error(
+                  "Error in stream onError handler:",
+                  handlerError,
+                );
               }
             }
           }
@@ -289,8 +288,10 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
               try {
                 await options.onError(error, chunks);
               } catch (handlerError) {
-                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                console.error("Error in stream onError handler:", handlerError);
+                debugLogger.error(
+                  "Error in stream onError handler:",
+                  handlerError,
+                );
               }
             }
           }
@@ -305,8 +306,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
       patchAbortIfPresent();
       return stream;
     } catch (error) {
-      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-      console.warn("Failed to patch stream iterator methods:", error);
+      debugLogger.warn("Failed to patch stream iterator methods:", error);
     }
   }
 
@@ -340,8 +340,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
               try {
                 await options.onComplete(chunks);
               } catch (error) {
-                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                console.error("Error in stream onComplete handler:", error);
+                debugLogger.error("Error in stream onComplete handler:", error);
               }
             }
           } else {
@@ -361,8 +360,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
                 try {
                   await options.onChunk(chunk);
                 } catch (error) {
-                  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                  console.error("Error in stream onChunk handler:", error);
+                  debugLogger.error("Error in stream onChunk handler:", error);
                 }
               }
             }
@@ -380,8 +378,10 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
                   chunks,
                 );
               } catch (handlerError) {
-                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                console.error("Error in stream onError handler:", handlerError);
+                debugLogger.error(
+                  "Error in stream onError handler:",
+                  handlerError,
+                );
               }
             }
           }
@@ -416,8 +416,10 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
               try {
                 await options.onError(error, chunks);
               } catch (handlerError) {
-                // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-                console.error("Error in stream onError handler:", handlerError);
+                debugLogger.error(
+                  "Error in stream onError handler:",
+                  handlerError,
+                );
               }
             }
           }
@@ -440,8 +442,7 @@ export function patchStreamIfNeeded<TChunk = unknown, TFinal = unknown>(
     return stream;
   } catch (error) {
     // If patching fails for any reason, log warning and return original
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Failed to patch stream:", error);
+    debugLogger.warn("Failed to patch stream:", error);
     return stream;
   }
 }
@@ -765,8 +766,7 @@ export function wrapStreamResult<TChunk = unknown, TProcessed = unknown>(
           const processed = options.processChunks(chunks);
           options.onResult(processed);
         } catch (error) {
-          // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-          console.error("Error processing stream chunks:", error);
+          debugLogger.error("Error processing stream chunks:", error);
           if (options.onError) {
             options.onError(
               error instanceof Error ? error : new Error(String(error)),
@@ -786,8 +786,7 @@ export function wrapStreamResult<TChunk = unknown, TProcessed = unknown>(
         : result;
       options.onResult(processed);
     } catch (error) {
-      // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-      console.error("Error processing non-stream result:", error);
+      debugLogger.error("Error processing non-stream result:", error);
       if (options.onError) {
         options.onError(
           error instanceof Error ? error : new Error(String(error)),

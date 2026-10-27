@@ -7,11 +7,19 @@ import {
   it,
   vi,
 } from "vite-plus/test";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
 import type { StartSpanArgs } from "../../logger/core";
 import {
-  getSpanInstrumentationName,
   INSTRUMENTATION_NAMES,
+  getSpanInstrumentationName,
 } from "../../span-origin";
+import { invocationController } from "../test-utils/invocation";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
 const { mockStartSpan } = vi.hoisted(() => ({
   mockStartSpan: vi.fn(),
@@ -24,18 +32,19 @@ vi.mock("../../logger/core", () => ({
 vi.mock("#braintrust-platform", () => ({
   default: {
     getEnv: vi.fn(),
-    newTracingChannel: vi.fn(),
   },
 }));
 
-import iso from "#braintrust-platform";
 import { registerCloudflareAgentsInstrumentation } from "./cloudflare-agents-instrumentation";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 describe("registerCloudflareAgentsInstrumentation", () => {
   let handlers: any;
-  let subscribe: ReturnType<typeof vi.fn>;
+  let subscribe: ReturnType<typeof vi.fn<(value: any) => void>>;
+  let unsubscribe: ReturnType<typeof vi.fn>;
   let spans: Array<{
     args: any;
     context: any;
@@ -48,7 +57,13 @@ describe("registerCloudflareAgentsInstrumentation", () => {
     subscribe = vi.fn((nextHandlers) => {
       handlers = nextHandlers;
     });
-    mockNewTracingChannel.mockReturnValue({ subscribe });
+    unsubscribe = vi.fn();
+    mockNewInvocationHook.mockReturnValue({
+      intercept: (interceptor: any) => {
+        subscribe(invocationController(interceptor));
+        return unsubscribe;
+      },
+    });
     mockStartSpan.mockImplementation((args: any, context: any) => {
       const span = { args, context, end: vi.fn(), log: vi.fn() };
       spans.push(span);
@@ -63,7 +78,7 @@ describe("registerCloudflareAgentsInstrumentation", () => {
   it("subscribes to the process-lifetime channel", () => {
     registerCloudflareAgentsInstrumentation();
 
-    expect(mockNewTracingChannel).toHaveBeenCalledWith(
+    expect(mockNewInvocationHook).toHaveBeenCalledWith(
       "orchestrion:agents:Agent.runAgentTool",
     );
     expect(subscribe).toHaveBeenCalledTimes(1);
@@ -92,8 +107,8 @@ describe("registerCloudflareAgentsInstrumentation", () => {
       ],
     };
 
-    handlers.start(event);
-    handlers.asyncEnd(
+    handlers.begin(event);
+    handlers.resolve(
       Object.assign(event, {
         result: {
           status: "completed",
@@ -138,8 +153,8 @@ describe("registerCloudflareAgentsInstrumentation", () => {
     class FailingAgent {}
     const event = { arguments: [FailingAgent, { input: "fail" }] };
 
-    handlers.start(event);
-    handlers.asyncEnd(
+    handlers.begin(event);
+    handlers.resolve(
       Object.assign(event, {
         result: {
           status: "error",
@@ -163,10 +178,10 @@ describe("registerCloudflareAgentsInstrumentation", () => {
     const second = { arguments: [SecondAgent, { input: 2 }] };
     const rejection = new Error("rejected");
 
-    handlers.start(first);
-    handlers.start(second);
-    handlers.error(Object.assign(second, { error: rejection }));
-    handlers.asyncEnd(
+    handlers.begin(first);
+    handlers.begin(second);
+    handlers.reject(Object.assign(second, { error: rejection }));
+    handlers.resolve(
       Object.assign(first, {
         result: { status: "completed", output: "first" },
       }),
@@ -194,7 +209,7 @@ describe("registerCloudflareAgentsInstrumentation", () => {
       },
     );
 
-    handlers.start({ arguments: [AgentWithGetter, options] });
+    handlers.begin({ arguments: [AgentWithGetter, options] });
 
     expect(spans).toHaveLength(0);
     expect(nameGetter).not.toHaveBeenCalled();

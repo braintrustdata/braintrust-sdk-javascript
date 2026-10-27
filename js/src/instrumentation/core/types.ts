@@ -1,14 +1,4 @@
-/**
- * Standard event types for global hook-based instrumentation.
- *
- * These types retain the TracingChannel-compatible lifecycle.
- * For async functions (tracePromise):
- * - start: Called before the synchronous portion executes
- * - end: Called after the synchronous portion completes (promise returned)
- * - asyncStart: Called when the promise begins to settle
- * - asyncEnd: Called when the promise finishes settling (before user code continues)
- * - error: Called if the function throws or the promise rejects
- */
+/** Per-call tracing data. These types do not define invocation hooks or event subscriptions. */
 
 export type EventArguments = readonly unknown[];
 
@@ -25,25 +15,22 @@ export type SpanInfoCarrier<
 };
 
 /**
- * Base context object shared across all events in a trace.
+ * Per-call context passed to tracing callbacks.
  */
 interface BaseContext {
   /**
    * Unique identifier for this trace.
-   * Can be used to correlate start/end/error events.
    */
   traceId?: string;
 
   /**
-   * Arbitrary data that can be attached by event handlers
-   * and passed between start/end/error events.
+   * Additional data used by tracing callbacks.
    */
   [key: string]: unknown;
 }
 
 /**
- * Event emitted before the synchronous portion of a function executes.
- * This is where you should create spans and extract input data.
+ * Input context for a tracing function.
  */
 export interface StartEvent<TInput = unknown> extends BaseContext {
   /**
@@ -52,6 +39,9 @@ export interface StartEvent<TInput = unknown> extends BaseContext {
   arguments: TInput[];
 }
 
+/**
+ * Input context preserving the callable argument tuple.
+ */
 export interface TypedStartEvent<
   TArguments extends EventArguments = unknown[],
 > extends BaseContext {

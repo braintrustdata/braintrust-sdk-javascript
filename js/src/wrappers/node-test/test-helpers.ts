@@ -2,7 +2,7 @@ import { vi } from "vite-plus/test";
 import { configureNode } from "../../node/config";
 import { _exportsForTestingOnly } from "../../logger/testing";
 import { type TestBackgroundLogger } from "../../logger/core";
-import * as logger from "../../logger";
+import * as logger from "../../logger/experiments";
 import type { MinimalTestContext } from "./types";
 
 /**

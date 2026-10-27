@@ -2,9 +2,10 @@
 
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { readdir } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { auditCassettes } from "./cassette-audit.mjs";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const E2E_DIR = path.resolve(SCRIPT_DIR, "..");
@@ -18,6 +19,8 @@ const DEFAULT_OPENAI_CODEX_E2E_MODEL = "gpt-5.3-codex";
 
 const rawArgs = process.argv.slice(2).filter((arg) => arg !== "--");
 const updateSnapshots = rawArgs.includes("--update");
+const cleanCassettes = rawArgs.includes("--clean-cassettes");
+const checkCassettes = cleanCassettes || rawArgs.includes("--check-cassettes");
 const shardArgIndex = rawArgs.findIndex(
   (arg) => arg === "--shard" || arg.startsWith("--shard="),
 );
@@ -36,9 +39,34 @@ const shardArgs = shardValue ? [`--shard=${shardValue}`] : [];
 const scenarioArgs = rawArgs.filter(
   (arg, index) =>
     arg !== "--update" &&
+    arg !== "--check-cassettes" &&
+    arg !== "--clean-cassettes" &&
     index !== shardArgIndex &&
     !(shardArg === "--shard" && index === shardArgIndex + 1),
 );
+if (
+  checkCassettes &&
+  (shardValue ||
+    updateSnapshots ||
+    scenarioArgs.some(
+      (name) =>
+        !/^[a-z0-9][a-z0-9-]*$/.test(name) ||
+        !existsSync(path.join(E2E_DIR, "scenarios", name, "scenario.test.ts")),
+    ))
+) {
+  console.error(
+    "[cassettes] Select whole scenarios by name; filters, sharding, and snapshot updates are not supported.",
+  );
+  process.exit(1);
+}
+const contextParent = process.env.BRAINTRUST_E2E_RUN_CONTEXT_DIR;
+let auditDir;
+if (checkCassettes) {
+  const parent = contextParent || path.join(E2E_DIR, ".bt-tmp");
+  await mkdir(parent, { recursive: true });
+  auditDir = await mkdtemp(path.join(parent, "cassette-audit-"));
+}
+const reportPath = auditDir && path.join(auditDir, "results.json");
 const testTargets =
   scenarioArgs.length > 0
     ? scenarioArgs.map((arg) => scenarioPathArg(arg))
@@ -50,17 +78,41 @@ const vitestArgs = [
   ...testTargets,
   ...shardArgs,
   ...(updateSnapshots ? ["--update"] : []),
+  ...(checkCassettes
+    ? ["--reporter=default", "--reporter=json", `--outputFile=${reportPath}`]
+    : []),
 ];
-const result = await runProcess(VITEST_COMMAND, vitestArgs, {
-  cwd: E2E_DIR,
-  env: replayEnv(),
-});
-
-if (result.signal) {
-  console.error(`[e2e] Vitest exited after receiving ${result.signal}.`);
-  process.exit(1);
+let exitCode;
+try {
+  const result = await runProcess(VITEST_COMMAND, vitestArgs, {
+    cwd: E2E_DIR,
+    env: {
+      ...replayEnv(),
+      ...(auditDir ? { BRAINTRUST_E2E_RUN_CONTEXT_DIR: auditDir } : {}),
+    },
+  });
+  exitCode = result.code ?? 1;
+  if (result.signal) {
+    console.error(`[e2e] Vitest exited after receiving ${result.signal}.`);
+    exitCode = 1;
+  } else if (result.code === 0 && checkCassettes) {
+    const { unused, skipped } = await auditCassettes({
+      e2eDir: E2E_DIR,
+      runContextDir: auditDir,
+      reportPath,
+      clean: cleanCassettes,
+    });
+    if ((!cleanCassettes && unused.length > 0) || skipped.length > 0) {
+      exitCode = 1;
+    }
+  }
+} finally {
+  // Preserve explicitly requested trace records for the e2e summary.
+  if (auditDir && !contextParent) {
+    await rm(auditDir, { recursive: true, force: true });
+  }
 }
-process.exit(result.code ?? 1);
+process.exit(exitCode);
 
 function scenarioPathArg(arg) {
   if (!/^[a-z0-9][a-z0-9-]*$/.test(arg)) {

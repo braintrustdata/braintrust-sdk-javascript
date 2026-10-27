@@ -5,6 +5,7 @@ import {
   Attachment,
 } from "../../logger/core";
 import { processInputAttachments } from "../../wrappers/attachment-utils";
+import { INSTRUMENTATION_NAMES } from "../../span-origin";
 import type {
   OllamaChatRequest,
   OllamaChatResponse,
@@ -17,44 +18,63 @@ import type {
   OllamaToolCall,
   OllamaUsageResponse,
 } from "../../vendor-sdk-types/ollama";
-import type { AsyncEndOf } from "../core/channel-definitions";
-import {
-  traceAsyncChannel,
-  traceStreamingChannel,
-} from "../core/channel-tracing";
-import { ollamaChannels } from "./ollama-channels";
+
+import { traceAsyncCall, traceStreamingCall } from "../core/tracing";
+import type { AsyncEndOf } from "../core/tracing-types";
+import { ollamaChannels } from "./ollama-interceptors";
 
 export function registerOllamaInstrumentation(): void {
-  traceStreamingChannel(ollamaChannels.chat, {
-    name: "ollama.chat",
-    type: SpanTypeAttribute.LLM,
-    extractInput: extractOllamaChatInput,
-    extractOutput: (result, event) =>
-      extractOllamaChatOutput(
-        result,
-        countOllamaToolCalls(event?.arguments?.[0]?.messages),
-      ),
-    extractMetadata: extractOllamaResponseMetadata,
-    extractMetrics: extractOllamaMetrics,
-    aggregateChunks: aggregateOllamaChatChunks,
-  });
-  traceStreamingChannel(ollamaChannels.generate, {
-    name: "ollama.generate",
-    type: SpanTypeAttribute.LLM,
-    extractInput: extractOllamaGenerateInput,
-    extractOutput: extractOllamaGenerateOutput,
-    extractMetadata: extractOllamaResponseMetadata,
-    extractMetrics: extractOllamaMetrics,
-    aggregateChunks: aggregateOllamaGenerateChunks,
-  });
-  traceAsyncChannel(ollamaChannels.embed, {
-    name: "ollama.embed",
-    type: SpanTypeAttribute.LLM,
-    extractInput: extractOllamaEmbedInput,
-    extractOutput: extractOllamaEmbedOutput,
-    extractMetadata: extractOllamaResponseMetadata,
-    extractMetrics: extractOllamaMetrics,
-  });
+  ollamaChannels.chat.intercept((target, receiver, args, additional) =>
+    traceStreamingCall<typeof ollamaChannels.chat>(
+      () => Reflect.apply(target, receiver, args),
+      { ...additional, arguments: args, self: receiver },
+      {
+        instrumentationName: INSTRUMENTATION_NAMES.OLLAMA,
+        name: "ollama.chat",
+        type: SpanTypeAttribute.LLM,
+        extractInput: extractOllamaChatInput,
+        extractOutput: (result, event) =>
+          extractOllamaChatOutput(
+            result,
+            countOllamaToolCalls(event?.arguments?.[0]?.messages),
+          ),
+        extractMetadata: extractOllamaResponseMetadata,
+        extractMetrics: extractOllamaMetrics,
+        aggregateChunks: aggregateOllamaChatChunks,
+      },
+    ),
+  );
+  ollamaChannels.generate.intercept((target, receiver, args, additional) =>
+    traceStreamingCall<typeof ollamaChannels.generate>(
+      () => Reflect.apply(target, receiver, args),
+      { ...additional, arguments: args, self: receiver },
+      {
+        instrumentationName: INSTRUMENTATION_NAMES.OLLAMA,
+        name: "ollama.generate",
+        type: SpanTypeAttribute.LLM,
+        extractInput: extractOllamaGenerateInput,
+        extractOutput: extractOllamaGenerateOutput,
+        extractMetadata: extractOllamaResponseMetadata,
+        extractMetrics: extractOllamaMetrics,
+        aggregateChunks: aggregateOllamaGenerateChunks,
+      },
+    ),
+  );
+  ollamaChannels.embed.intercept((target, receiver, args, additional) =>
+    traceAsyncCall<typeof ollamaChannels.embed>(
+      () => Reflect.apply(target, receiver, args),
+      { ...additional, arguments: args, self: receiver },
+      {
+        instrumentationName: INSTRUMENTATION_NAMES.OLLAMA,
+        name: "ollama.embed",
+        type: SpanTypeAttribute.LLM,
+        extractInput: extractOllamaEmbedInput,
+        extractOutput: extractOllamaEmbedOutput,
+        extractMetadata: extractOllamaResponseMetadata,
+        extractMetrics: extractOllamaMetrics,
+      },
+    ),
+  );
 }
 
 function isNonNegativeNumber(value: unknown): value is number {

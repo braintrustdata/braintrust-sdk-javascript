@@ -1,20 +1,12 @@
+import { debugLogger } from "../../debug-logger";
 import { createUnplugin, type UnpluginInstance } from "unplugin";
-import { create, type InstrumentationConfig } from "../orchestrion-js";
-import { Transformer } from "../orchestrion-js/transformer";
-import { extname, isAbsolute, join, sep } from "path";
-import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import moduleDetailsFromPath from "module-details-from-path";
+import { InstrumentationMatcher } from "../orchestrion-js";
+import { isAbsolute } from "node:path";
+import { fileURLToPath } from "node:url";
 import { getDefaultAutoInstrumentationConfigs } from "../configs/all";
-import { applySpecialCasePatch } from "../loader/special-case-patches";
-import { getPackageName } from "../loader/get-package-version";
+import { transformBundledModule } from "./transform";
 
 export interface BundlerPluginOptions {
-  /**
-   * Additional instrumentation configs to apply
-   */
-  instrumentations?: InstrumentationConfig[];
-
   /**
    * Whether the transformed source will run in a browser or edge-like
    * environment.
@@ -27,32 +19,12 @@ export interface BundlerPluginOptions {
   browser?: boolean;
 }
 
-/**
- * Helper function to get module version from package.json
- */
-function getModuleVersion(basedir: string): string | undefined {
-  try {
-    const packageJsonPath = join(basedir, "package.json");
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
-    if (packageJson.version) {
-      return packageJson.version;
-    }
-  } catch (error) {
-    //
-  }
-
-  return undefined; // No version found
-}
-
 export const unplugin: UnpluginInstance<BundlerPluginOptions, boolean> =
   createUnplugin<BundlerPluginOptions>((options = {}) => {
     const browser = options.browser ?? false;
-    const allInstrumentations = getDefaultAutoInstrumentationConfigs(
-      options.instrumentations,
+    const matcher = new InstrumentationMatcher(
+      getDefaultAutoInstrumentationConfigs(),
     );
-
-    // Create the code transformer instrumentor
-    const instrumentationMatcher = create(allInstrumentations);
 
     return {
       name: "code-transformer",
@@ -88,91 +60,13 @@ export const unplugin: UnpluginInstance<BundlerPluginOptions, boolean> =
           ? fileURLToPath(cleanId)
           : cleanId;
 
-        // Determine if this is an ES module using multiple methods for accurate detection
-        const ext = extname(filePath);
-        let isModule = ext === ".mjs" || ext === ".ts" || ext === ".tsx";
-
-        // For .js files, use content analysis for module detection
-        if (ext === ".js") {
-          isModule = code.includes("export ") || code.includes("import ");
-        }
-
-        // Try to get module details from the file path
-        // IMPORTANT: module-details-from-path uses path.sep to split paths.
-        // On Windows (path.sep = '\'), we need to convert forward slashes to backslashes.
-        // On Unix (path.sep = '/'), paths should already use forward slashes.
-        // Some bundlers (like Vite/Rollup) may pass paths with forward slashes even on Windows.
-        const normalizedForPlatform = filePath.split("/").join(sep);
-        const moduleDetails = moduleDetailsFromPath(normalizedForPlatform);
-
-        // If no module details found, the file is not part of a module
-        if (!moduleDetails) {
-          return null;
-        }
-
-        // npm aliases retain the canonical package name in package.json even
-        // though their node_modules directory uses the alias. Match configs
-        // against that canonical name so aliased dependencies are instrumented.
-        const moduleName =
-          getPackageName(moduleDetails.basedir) ?? moduleDetails.name;
-        // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
-        const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
-        const moduleVersion = getModuleVersion(moduleDetails.basedir);
-
-        // Per-package source patches (see loader/special-case-patches.ts).
-        // Same anti-pattern fallback the runtime loader uses — mirrored here
-        // so bundled apps get the patches without relying on hook.mjs.
-        const patched = applySpecialCasePatch({
-          packageName: moduleName,
-          modulePath: normalizedModulePath,
-          source: code,
-          format: isModule ? "esm" : "cjs",
-          browser,
-        });
-        if (patched !== null) {
-          return new Transformer(
-            moduleName,
-            moduleVersion ?? "",
-            normalizedModulePath,
-            [],
-          ).transform(patched, isModule ? "esm" : "cjs", "braintrust/auto");
-        }
-
-        // If no version found
-        if (!moduleVersion) {
-          console.warn(
-            `No 'package.json' version found for module ${moduleName} at ${moduleDetails.basedir}. Skipping transformation.`,
-          );
-          return null;
-        }
-
-        // Try to get a transformer for this file
-        const transformer = instrumentationMatcher.getTransformer(
-          moduleName,
-          moduleVersion,
-          normalizedModulePath,
-        );
-
-        if (!transformer) {
-          // No instrumentations match this file
-          return null;
-        }
-
         try {
-          // Transform the code
-          const moduleType = isModule ? "esm" : "cjs";
-          const result = transformer.transform(
-            code,
-            moduleType,
-            "braintrust/auto",
-          );
-          return {
-            code: result.code,
-            map: result.map,
-          };
+          return transformBundledModule(code, filePath, matcher, browser);
         } catch (error) {
           // If transformation fails, warn and return original code
-          console.warn(`Code transformation failed for ${id}: ${error}`);
+          debugLogger.notice.warn(
+            `Code transformation failed for ${id}: ${error}`,
+          );
           return null;
         }
       },

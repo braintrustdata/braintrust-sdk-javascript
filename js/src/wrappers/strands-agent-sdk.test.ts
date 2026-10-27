@@ -1,22 +1,19 @@
+import { debugLogger } from "../debug-logger";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 const { invoke } = vi.hoisted(() => ({
   invoke: vi.fn(
     (
-      target: Function,
-      thisArg: unknown,
+      target: (...args: any[]) => any,
+      receiver: unknown,
       args: unknown[],
       _additional?: unknown,
-    ) => Reflect.apply(target, thisArg, args),
+    ) => Reflect.apply(target, receiver, args),
   ),
 }));
-
-vi.mock("#braintrust-platform", () => ({
-  default: {
-    newTracingChannel: vi.fn(() => ({
-      invoke,
-    })),
-  },
+vi.mock("../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../global-instrumentation-hooks")>()),
+  newGlobalInvocationHook: vi.fn(() => ({ invoke })),
 }));
 
 import { wrapStrandsAgentSDK } from "./strands-agent-sdk";
@@ -27,7 +24,9 @@ describe("wrapStrandsAgentSDK", () => {
   });
 
   it("returns invalid modules unchanged", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => true);
     const sdk = { AgentSession: class {} };
 
     expect(wrapStrandsAgentSDK(sdk)).toBe(sdk);

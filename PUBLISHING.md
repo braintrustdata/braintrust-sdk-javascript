@@ -4,7 +4,7 @@ All package publishing happens in GitHub Actions. Do not publish from your local
 
 ## Short Version
 
-- If your PR changes a publishable package, run `pnpm changeset` and commit the generated `.changeset/*.md` file.
+- If your PR changes a publishable package, add a `.changeset/*.md` file to it.
 - Merge the PR into `main`.
 - For a stable release:
   - Run **Prepare Release** on `main`.
@@ -21,19 +21,7 @@ All package publishing happens in GitHub Actions. Do not publish from your local
 
 If your PR changes a publishable package, CI expects a changeset unless you explicitly skip it.
 
-Create one with:
-
-```bash
-pnpm changeset
-```
-
-That creates a `.changeset/*.md` file. Commit it with your PR.
-
-Use:
-
-- `patch` for fixes and non-breaking maintenance changes
-- `minor` for new backwards-compatible features
-- `major` for breaking changes
+To add one, have an agent follow [`.agents/skills/create-changeset/SKILL.md`](.agents/skills/create-changeset/SKILL.md), then commit the generated `.changeset/*.md` file with your PR.
 
 If no release is intended, bypass the check with either:
 

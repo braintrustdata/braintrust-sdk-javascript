@@ -1,4 +1,4 @@
-import { create, type ModuleType } from "@apm-js-collab/code-transformer";
+import { InstrumentationMatcher, type ModuleType } from "../orchestrion-js";
 import { describe, expect, it } from "vite-plus/test";
 import { bedrockRuntimeConfigs } from "./bedrock-runtime";
 
@@ -27,78 +27,70 @@ export class Client {
 
 describe("bedrockRuntimeConfigs", () => {
   it("matches current and legacy Smithy Client.send entry files", () => {
-    const matcher = create(bedrockRuntimeConfigs);
+    const matcher = new InstrumentationMatcher(bedrockRuntimeConfigs);
 
-    try {
-      for (const entry of [
-        {
-          channelName: "orchestrion:@smithy/core:client.send",
-          moduleName: "@smithy/core",
-          moduleType: "cjs" as ModuleType,
-          path: "dist-cjs/submodules/client/index.js",
-          source: CJS_CLIENT_SOURCE,
-          version: "3.25.1",
-        },
-        {
-          channelName: "orchestrion:@smithy/core:client.send",
-          moduleName: "@smithy/core",
-          moduleType: "esm" as ModuleType,
-          path: "dist-es/submodules/client/smithy-client/client.js",
-          source: ESM_CLIENT_SOURCE,
-          version: "3.25.1",
-        },
-        {
-          channelName: "orchestrion:@smithy/smithy-client:client.send",
-          moduleName: "@smithy/smithy-client",
-          moduleType: "cjs" as ModuleType,
-          path: "dist-cjs/index.js",
-          source: CJS_CLIENT_SOURCE,
-          version: "3.0.0",
-        },
-        {
-          channelName: "orchestrion:@smithy/smithy-client:client.send",
-          moduleName: "@smithy/smithy-client",
-          moduleType: "esm" as ModuleType,
-          path: "dist-es/client.js",
-          source: ESM_CLIENT_SOURCE,
-          version: "3.0.0",
-        },
-        {
-          channelName: "orchestrion:@smithy/smithy-client:client.send",
-          moduleName: "@smithy/smithy-client",
-          moduleType: "cjs" as ModuleType,
-          path: "dist-cjs/index.js",
-          source: CJS_CLIENT_SOURCE,
-          version: "4.8.0",
-        },
-        {
-          channelName: "orchestrion:@smithy/smithy-client:client.send",
-          moduleName: "@smithy/smithy-client",
-          moduleType: "esm" as ModuleType,
-          path: "dist-es/client.js",
-          source: ESM_CLIENT_SOURCE,
-          version: "4.8.0",
-        },
-      ]) {
-        const transformer = matcher.getTransformer(
-          entry.moduleName,
-          entry.version,
-          entry.path,
-        );
+    for (const entry of [
+      {
+        channelName: "orchestrion:@smithy/core:client.send",
+        moduleName: "@smithy/core",
+        moduleType: "cjs" as ModuleType,
+        path: "dist-cjs/submodules/client/index.js",
+        source: CJS_CLIENT_SOURCE,
+        version: "3.25.1",
+      },
+      {
+        channelName: "orchestrion:@smithy/core:client.send",
+        moduleName: "@smithy/core",
+        moduleType: "esm" as ModuleType,
+        path: "dist-es/submodules/client/smithy-client/client.js",
+        source: ESM_CLIENT_SOURCE,
+        version: "3.25.1",
+      },
+      {
+        channelName: "orchestrion:@smithy/smithy-client:client.send",
+        moduleName: "@smithy/smithy-client",
+        moduleType: "cjs" as ModuleType,
+        path: "dist-cjs/index.js",
+        source: CJS_CLIENT_SOURCE,
+        version: "3.0.0",
+      },
+      {
+        channelName: "orchestrion:@smithy/smithy-client:client.send",
+        moduleName: "@smithy/smithy-client",
+        moduleType: "esm" as ModuleType,
+        path: "dist-es/client.js",
+        source: ESM_CLIENT_SOURCE,
+        version: "3.0.0",
+      },
+      {
+        channelName: "orchestrion:@smithy/smithy-client:client.send",
+        moduleName: "@smithy/smithy-client",
+        moduleType: "cjs" as ModuleType,
+        path: "dist-cjs/index.js",
+        source: CJS_CLIENT_SOURCE,
+        version: "4.8.0",
+      },
+      {
+        channelName: "orchestrion:@smithy/smithy-client:client.send",
+        moduleName: "@smithy/smithy-client",
+        moduleType: "esm" as ModuleType,
+        path: "dist-es/client.js",
+        source: ESM_CLIENT_SOURCE,
+        version: "4.8.0",
+      },
+    ]) {
+      const transformer = matcher.getTransformer(
+        entry.moduleName,
+        entry.version,
+        entry.path,
+      );
 
-        try {
-          expect(transformer).toBeDefined();
-          const transformed = transformer!.transform(
-            entry.source,
-            entry.moduleType,
-          );
-          expect(transformed.code).toContain(entry.channelName);
-        } finally {
-          transformer?.free();
-        }
-      }
-    } finally {
-      matcher.free();
+      expect(transformer).toBeDefined();
+      const transformed = transformer!.transform(
+        entry.source,
+        entry.moduleType,
+      );
+      expect(transformed.code).toContain(entry.channelName);
     }
   });
 });

@@ -10,7 +10,7 @@ import {
 import { Attachment, initLogger } from "../../logger/core";
 import { _exportsForTestingOnly } from "../../logger/testing";
 import { configureNode } from "../../node/config";
-import { voyageAIChannels } from "./voyageai-channels";
+import { voyageAIChannels } from "./voyageai-interceptors";
 
 try {
   configureNode();

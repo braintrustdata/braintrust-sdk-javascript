@@ -11,6 +11,12 @@ importers:
       typesafe-sdk-v0:
         specifier: npm:@typesafe-ai/sdk@0.6.0
         version: '@typesafe-ai/sdk@0.6.0'
+      typesafe-sdk-v0-7:
+        specifier: npm:@typesafe-ai/sdk@0.7.0
+        version: '@typesafe-ai/sdk@0.7.0'
+      typesafe-sdk-v0-7-latest:
+        specifier: npm:@typesafe-ai/sdk@0.7.0
+        version: '@typesafe-ai/sdk@0.7.0'
       typesafe-sdk-v0-latest:
         specifier: npm:@typesafe-ai/sdk@0.6.0
         version: '@typesafe-ai/sdk@0.6.0'
@@ -21,6 +27,12 @@ packages:
     resolution: {integrity: sha512-IddX+Q0XM+VagOUZFeP7wZjaO4SHMdvnh2zEBdrZZnXedWI3BNK1lKhMx3ayrkFWvVLbVcUHJy6AVZlY+e6Jaw==}
     engines: {node: '>=20'}
 
+  '@typesafe-ai/sdk@0.7.0':
+    resolution: {integrity: sha512-Yg3OZArCQMJx98ut8QVkhx3rFo9ON7pz8Hjzv8c3FGz69Sk8jYftLOlz+Wf6kq6jol/1m08aBnjRAzJr2x3GoQ==}
+    engines: {node: '>=22'}
+
 snapshots:
 
   '@typesafe-ai/sdk@0.6.0': {}
+
+  '@typesafe-ai/sdk@0.7.0': {}

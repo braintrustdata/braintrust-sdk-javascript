@@ -6,15 +6,21 @@ import {
   it,
   vi,
 } from "vite-plus/test";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+import { invocationController } from "../test-utils/invocation";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
 const { mockStartSpan } = vi.hoisted(() => ({
   mockStartSpan: vi.fn(),
 }));
 
 vi.mock("#braintrust-platform", () => ({
-  default: {
-    newTracingChannel: vi.fn(),
-  },
+  default: {},
 }));
 
 vi.mock("../../logger/core", () => ({
@@ -22,10 +28,11 @@ vi.mock("../../logger/core", () => ({
   _internalStartSpan: (...args: unknown[]) => mockStartSpan(...args),
 }));
 
-import iso from "#braintrust-platform";
 import { registerOpenAICodexInstrumentation } from "./openai-codex-instrumentation";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 describe("registerOpenAICodexInstrumentation", () => {
   let handlersByName: Map<string, any>;
@@ -39,8 +46,11 @@ describe("registerOpenAICodexInstrumentation", () => {
   beforeEach(() => {
     handlersByName = new Map();
     spans = [];
-    mockNewTracingChannel.mockImplementation((name: string) => ({
-      subscribe: vi.fn((handlers) => handlersByName.set(name, handlers)),
+    mockNewInvocationHook.mockImplementation((name: string) => ({
+      intercept: vi.fn((interceptor) => {
+        handlersByName.set(name, invocationController(interceptor));
+        return vi.fn();
+      }),
     }));
     mockStartSpan.mockImplementation((args: any) => {
       const span = {
@@ -85,8 +95,8 @@ describe("registerOpenAICodexInstrumentation", () => {
       thread: { id: "thread-1" },
     };
 
-    runHandlers.start(event);
-    await runHandlers.asyncEnd(event);
+    runHandlers.begin(event);
+    await runHandlers.resolve(event);
 
     const rootSpan = spans.find((span) => span.name === "OpenAI Codex");
     expect(rootSpan?.log).toHaveBeenCalledWith(

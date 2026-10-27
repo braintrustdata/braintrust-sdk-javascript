@@ -1,3 +1,4 @@
+import { debugLogger } from "./debug-logger";
 import Ajv from "ajv";
 import { Prompt, RemoteEvalParameters } from "./logger/prompts";
 import {
@@ -117,8 +118,7 @@ function validateParametersWithZod<
           return [name, schema.parse(value)];
         }
       } catch (e) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.error("Error validating parameter", name, e);
+        debugLogger.notice.error("Error validating parameter", name, e);
         throw Error(
           `Invalid parameter '${name}': ${e instanceof Error ? e.message : String(e)}`,
         );

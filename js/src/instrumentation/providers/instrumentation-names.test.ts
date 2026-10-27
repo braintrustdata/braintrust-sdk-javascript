@@ -1,40 +1,40 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { INSTRUMENTATION_NAMES } from "../../span-origin";
-import { aiSDKChannels, harnessAgentChannels } from "./ai-sdk-channels";
-import { anthropicChannels } from "./anthropic-channels";
+import { aiSDKChannels, harnessAgentChannels } from "./ai-sdk-interceptors";
+import { anthropicChannels } from "./anthropic-interceptors";
 import {
   bedrockRuntimeChannels,
   smithyClientChannels,
   smithyCoreChannels,
-} from "./bedrock-runtime-channels";
-import { claudeAgentSDKChannels } from "./claude-agent-sdk-channels";
-import { cloudflareAIChatChannels } from "./cloudflare-ai-chat-channels";
-import { cloudflareAgentsChannels } from "./cloudflare-agents-channels";
-import { cloudflareThinkChannels } from "./cloudflare-think-channels";
-import { cohereChannels } from "./cohere-channels";
-import { cursorSDKChannels } from "./cursor-sdk-channels";
-import { genkitChannels, genkitCoreChannels } from "./genkit-channels";
-import { gitHubCopilotChannels } from "./github-copilot-channels";
-import { googleADKChannels } from "./google-adk-channels";
-import { googleGenerativeAIChannels } from "./google-generative-ai-channels";
-import { googleGenAIChannels } from "./google-genai-channels";
-import { groqChannels } from "./groq-channels";
-import { huggingFaceChannels } from "./huggingface-channels";
-import { langGraphSDKChannels } from "./langgraph-sdk-channels";
-import { langChainChannels } from "./langchain-channels";
-import { langSmithChannels } from "./langsmith-channels";
-import { mistralChannels } from "./mistral-channels";
-import { ollamaChannels } from "./ollama-channels";
-import { openAIAgentsCoreChannels } from "./openai-agents-channels";
-import { openAIChannels } from "./openai-channels";
-import { openAICodexChannels } from "./openai-codex-channels";
-import { openRouterAgentChannels } from "./openrouter-agent-channels";
-import { openRouterChannels } from "./openrouter-channels";
-import { piCodingAgentChannels } from "./pi-coding-agent-channels";
-import { strandsAgentSDKChannels } from "./strands-agent-sdk-channels";
+} from "./bedrock-runtime-interceptors";
+import { claudeAgentSDKChannels } from "./claude-agent-sdk-interceptors";
+import { cloudflareAgentsChannels } from "./cloudflare-agents-interceptors";
+import { cloudflareAIChatChannels } from "./cloudflare-ai-chat-interceptors";
+import { cloudflareThinkChannels } from "./cloudflare-think-interceptors";
+import { cohereChannels } from "./cohere-interceptors";
+import { cursorSDKChannels } from "./cursor-sdk-interceptors";
+import { genkitChannels, genkitCoreChannels } from "./genkit-interceptors";
+import { gitHubCopilotChannels } from "./github-copilot-interceptors";
+import { googleADKChannels } from "./google-adk-interceptors";
+import { googleGenAIChannels } from "./google-genai-interceptors";
+import { googleGenerativeAIChannels } from "./google-generative-ai-interceptors";
+import { groqChannels } from "./groq-interceptors";
+import { huggingFaceChannels } from "./huggingface-interceptors";
+import { langChainChannels } from "./langchain-interceptors";
+import { langGraphSDKChannels } from "./langgraph-sdk-interceptors";
+import { langSmithChannels } from "./langsmith-interceptors";
+import { mistralChannels } from "./mistral-interceptors";
+import { ollamaChannels } from "./ollama-interceptors";
+import { openAIAgentsCoreChannels } from "./openai-agents-interceptors";
+import { openAIChannels } from "./openai-interceptors";
+import { openAICodexChannels } from "./openai-codex-interceptors";
+import { openRouterAgentChannels } from "./openrouter-agent-interceptors";
+import { openRouterChannels } from "./openrouter-interceptors";
+import { piCodingAgentChannels } from "./pi-coding-agent-interceptors";
+import { strandsAgentSDKChannels } from "./strands-agent-sdk-interceptors";
 
-describe("built-in instrumentation provenance names", () => {
+describe("wrapping definitions are independent of span provenance", () => {
   it.each([
     [aiSDKChannels.generateText, INSTRUMENTATION_NAMES.AI_SDK],
     [harnessAgentChannels.generate, INSTRUMENTATION_NAMES.AI_SDK],
@@ -86,7 +86,8 @@ describe("built-in instrumentation provenance names", () => {
       strandsAgentSDKChannels.agentStream,
       INSTRUMENTATION_NAMES.STRANDS_AGENT_SDK,
     ],
-  ])("uses %s for its canonical channel group", (channel, expected) => {
-    expect(channel.instrumentationName).toBe(expected);
+  ])("keeps span configuration out of %s", (channel, _instrumentationName) => {
+    expect(channel).not.toHaveProperty("instrumentationName");
+    expect(channel).not.toHaveProperty("tracingChannel");
   });
 });

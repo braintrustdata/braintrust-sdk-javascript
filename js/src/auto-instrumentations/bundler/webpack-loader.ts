@@ -8,67 +8,35 @@
  * configuring Turbopack; it is not a user-facing package entrypoint.
  */
 
-import { create } from "../orchestrion-js";
-import { Transformer } from "../orchestrion-js/transformer";
-import { extname, join, sep } from "path";
-import { readFileSync } from "fs";
-import moduleDetailsFromPath from "module-details-from-path";
+import { debugLogger } from "../../debug-logger";
+
+import { InstrumentationMatcher } from "../orchestrion-js";
 import { getDefaultAutoInstrumentationConfigs } from "../configs/all";
 import { type BundlerPluginOptions } from "./plugin";
-import { applySpecialCasePatch } from "../loader/special-case-patches";
-import { getPackageName } from "../loader/get-package-version";
+import { transformBundledModule } from "./transform";
 
-/**
- * Helper function to get module version from package.json
- */
-function getModuleVersion(basedir: string): string | undefined {
-  try {
-    const packageJsonPath = join(basedir, "package.json");
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
-    if (packageJson.version) {
-      return packageJson.version;
+let cachedMatcher:
+  | {
+      disabledIntegrations: string | undefined;
+      matcher: InstrumentationMatcher;
     }
-  } catch (error) {
-    //
-  }
+  | undefined;
 
-  return undefined;
+function getMatcher(): InstrumentationMatcher {
+  const disabledIntegrations = process.env.BRAINTRUST_DISABLE_INSTRUMENTATION;
+  if (
+    !cachedMatcher ||
+    cachedMatcher.disabledIntegrations !== disabledIntegrations
+  ) {
+    cachedMatcher = {
+      disabledIntegrations,
+      matcher: new InstrumentationMatcher(
+        getDefaultAutoInstrumentationConfigs(),
+      ),
+    };
+  }
+  return cachedMatcher.matcher;
 }
-
-type Matcher = ReturnType<typeof create>;
-type ModuleType = "esm" | "cjs";
-
-// Matcher cache keyed by config hash for cache invalidation.
-const matcherCache = new Map<string, Matcher>();
-
-/**
- * Get or create a matcher instance, caching by config hash
- */
-function getMatcher(options: BundlerPluginOptions): Matcher {
-  const allInstrumentations = getDefaultAutoInstrumentationConfigs(
-    options.instrumentations,
-  );
-  const configHash = JSON.stringify({ allInstrumentations });
-
-  if (matcherCache.has(configHash)) {
-    return matcherCache.get(configHash)!;
-  }
-
-  for (const hash of matcherCache.keys()) {
-    if (hash !== configHash) {
-      matcherCache.delete(hash);
-    }
-  }
-
-  const matcher = create(allInstrumentations);
-  matcherCache.set(configHash, matcher);
-  return matcher;
-}
-
-// Cleanup on process exit
-process.on("exit", () => {
-  matcherCache.clear();
-});
 
 /**
  * Webpack loader that instruments JavaScript code using code-transformer.
@@ -89,69 +57,20 @@ function codeTransformerLoader(
     return callback(null, code, inputSourceMap);
   }
 
-  // Determine if this is an ES module using multiple methods for accurate detection
-  const ext = extname(resourcePath);
-  let isModule = ext === ".mjs" || ext === ".ts" || ext === ".tsx";
-
-  // For .js files, use content analysis for module detection
-  if (ext === ".js") {
-    isModule = code.includes("export ") || code.includes("import ");
-  }
-
-  // Try to get module details from the file path
-  // IMPORTANT: module-details-from-path uses path.sep to split paths.
-  // On Windows (path.sep = '\'), we need to convert forward slashes to backslashes.
-  const normalizedForPlatform = resourcePath.split("/").join(sep);
-  const moduleDetails = moduleDetailsFromPath(normalizedForPlatform);
-
-  if (!moduleDetails) {
-    return callback(null, code, inputSourceMap);
-  }
-
-  const moduleName =
-    getPackageName(moduleDetails.basedir) ?? moduleDetails.name;
-  // Normalize the module path for Windows compatibility (WASM transformer expects forward slashes)
-  const normalizedModulePath = moduleDetails.path.replace(/\\/g, "/");
-
-  const patched = applySpecialCasePatch({
-    packageName: moduleName,
-    modulePath: normalizedModulePath,
-    source: code,
-    format: isModule ? "esm" : "cjs",
-    browser: options.browser ?? false,
-  });
-  if (patched !== null) {
-    const result = new Transformer(
-      moduleName,
-      "",
-      normalizedModulePath,
-      [],
-    ).transform(patched, isModule ? "esm" : "cjs", "braintrust/auto");
-    return callback(null, result.code, result.map);
-  }
-
-  const moduleVersion = getModuleVersion(moduleDetails.basedir);
-  if (!moduleVersion) {
-    return callback(null, code, inputSourceMap);
-  }
-
-  const matcher = getMatcher(options);
-  const transformer = matcher.getTransformer(
-    moduleName,
-    moduleVersion,
-    normalizedModulePath,
-  );
-
-  if (!transformer) {
-    return callback(null, code, inputSourceMap);
-  }
-
   try {
-    const moduleType: ModuleType = isModule ? "esm" : "cjs";
-    const result = transformer.transform(code, moduleType, "braintrust/auto");
-    callback(null, result.code, result.map ?? undefined);
+    const result = transformBundledModule(
+      code,
+      resourcePath,
+      getMatcher(),
+      options.browser ?? false,
+    );
+    if (result) {
+      callback(null, result.code, result.map ?? undefined);
+    } else {
+      callback(null, code, inputSourceMap);
+    }
   } catch (error) {
-    console.warn(
+    debugLogger.notice.warn(
       `[code-transformer-loader] Error transforming ${resourcePath}:`,
       error,
     );

@@ -1,0 +1,20 @@
+{
+  "name": "@braintrust/e2e-ts-exec-loader",
+  "private": true,
+  "type": "module",
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "ts-exec-v1-latest": {
+          "package": "@poppinss/ts-exec",
+          "range": "1"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "openai": "6.25.0",
+    "ts-exec-v1": "npm:@poppinss/ts-exec@1.5.1",
+    "ts-exec-v1-latest": "npm:@poppinss/ts-exec@1.5.1"
+  }
+}

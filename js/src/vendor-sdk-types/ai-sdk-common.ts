@@ -80,6 +80,11 @@ export interface AISDKGeneratedFile {
 }
 
 export interface AISDKEvaluateParams {
+  telemetry?: {
+    isEnabled?: boolean;
+    recordInputs?: boolean;
+    recordOutputs?: boolean;
+  };
   model: string | { modelId: string; provider: string };
   state: unknown;
   questions: Record<string, unknown>;
@@ -210,6 +215,8 @@ export interface AISDKRerankParams {
 }
 
 export interface AISDKCallParams {
+  telemetry?: { isEnabled?: boolean };
+  experimental_telemetry?: { isEnabled?: boolean };
   model?: AISDKModel;
   instructions?: unknown;
   prompt?: string | AISDKMessage[] | Record<string, unknown>;
@@ -395,6 +402,7 @@ export interface AISDKNamespaceBase {
   Experimental_Agent?: AISDKAgentClass;
   ToolLoopAgent?: AISDKAgentClass;
   experimental_evaluate?: AISDKEvaluateFunction;
+  experimental_decide?: AISDKEvaluateFunction;
   generateText: AISDKGenerateFunction;
   generateImage?: AISDKGenerateImageFunction;
   experimental_generateImage?: AISDKGenerateImageFunction;

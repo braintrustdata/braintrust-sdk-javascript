@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { cursorSDKChannels } from "../../instrumentation/providers/cursor-sdk-channels";
+import { cursorSDKChannels } from "../../instrumentation/providers/cursor-sdk-interceptors";
 
 const cursorSDKVersionRange = ">=1.0.7 <2.0.0";
 
@@ -17,7 +17,6 @@ export const cursorSDKConfigs: InstrumentationConfig[] =
       functionQuery: {
         className: "Agent",
         methodName: "create",
-        kind: "Async",
       },
     },
     {
@@ -30,7 +29,6 @@ export const cursorSDKConfigs: InstrumentationConfig[] =
       functionQuery: {
         className: "Agent",
         methodName: "resume",
-        kind: "Async",
       },
     },
     {
@@ -43,7 +41,6 @@ export const cursorSDKConfigs: InstrumentationConfig[] =
       functionQuery: {
         className: "Agent",
         methodName: "prompt",
-        kind: "Async",
       },
     },
   ]);

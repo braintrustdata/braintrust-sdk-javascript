@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -47,16 +48,23 @@ describeVariants("variants", () => {
     const supportsOutputObjectScenario =
       scenario.supportsOutputObjectScenario ?? supportsRichInputScenarios;
 
-    describe(`ai sdk ${scenario.version}`, { concurrent: false }, () => {
+    describeVariant(`ai sdk ${scenario.version}`, () => {
       defineAISDKInstrumentationAssertions({
         agentSpanName: scenario.agentSpanName,
         name: scenario.wrapperTestName ?? "wrapped instrumentation",
+        codeModeModes: scenario.codeModeModuleName ? ["wrapped"] : [],
         runScenario: async ({ runScenarioDir }) => {
           await runScenarioDir({
             entry: scenario.wrapperEntry,
             env: {
               BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               AI_SDK_PACKAGE_NAME: scenario.packageName,
+              ...(scenario.codeModeModuleName
+                ? {
+                    AI_SDK_CODE_MODE_PACKAGE_NAME: scenario.codeModeModuleName,
+                  }
+                : {}),
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               AI_SDK_OPENAI_PACKAGE_NAME: scenario.openaiModuleName,
               AI_SDK_SUPPORTS_EVALUATE_STRING_MODEL: String(
                 scenario.supportsEvaluateStringModel !== false,
@@ -113,12 +121,21 @@ describeVariants("variants", () => {
       defineAISDKInstrumentationAssertions({
         agentSpanName: scenario.agentSpanName,
         name: "auto-hook instrumentation",
+        codeModeModes: scenario.codeModeModuleName
+          ? ["auto-hook", "combined"]
+          : [],
         runScenario: async ({ runNodeScenarioDir }) => {
           await runNodeScenarioDir({
             entry: scenario.autoEntry,
             env: {
               BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               AI_SDK_PACKAGE_NAME: scenario.packageName,
+              ...(scenario.codeModeModuleName
+                ? {
+                    AI_SDK_CODE_MODE_PACKAGE_NAME: scenario.codeModeModuleName,
+                  }
+                : {}),
+              BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS: "true",
               AI_SDK_OPENAI_PACKAGE_NAME: scenario.openaiModuleName,
               AI_SDK_SUPPORTS_EVALUATE_STRING_MODEL: String(
                 scenario.supportsEvaluateStringModel !== false,

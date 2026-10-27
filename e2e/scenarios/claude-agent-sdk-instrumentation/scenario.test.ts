@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -41,61 +42,53 @@ const claudeAgentSDKScenarios = await Promise.all(
 
 describe.concurrent("wrapped instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    describe(
-      `claude agent sdk ${scenario.version}`,
-      { concurrent: false },
-      () => {
-        defineClaudeAgentSDKInstrumentationAssertions({
-          assertLocalToolHandlerParenting: true,
-          expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
-          name: "scenario",
-          runScenario: ({ runScenarioDir }) =>
-            runScenarioDir({
-              entry: scenario.wrapperEntry,
-              env: { CLAUDE_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
-              runContext: {
-                variantKey: scenario.snapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            }),
-          snapshotName: `${scenario.snapshotName}-wrapped`,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-    );
+    describeVariant(`claude agent sdk ${scenario.version}`, () => {
+      defineClaudeAgentSDKInstrumentationAssertions({
+        assertLocalToolHandlerParenting: true,
+        expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
+        name: "scenario",
+        runScenario: ({ runScenarioDir }) =>
+          runScenarioDir({
+            entry: scenario.wrapperEntry,
+            env: { CLAUDE_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          }),
+        snapshotName: `${scenario.snapshotName}-wrapped`,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
+    });
   }
 });
 
 describe.concurrent("auto-hook instrumentation", () => {
   for (const scenario of claudeAgentSDKScenarios) {
-    describe(
-      `claude agent sdk ${scenario.version}`,
-      { concurrent: false },
-      () => {
-        defineClaudeAgentSDKInstrumentationAssertions({
-          assertLocalToolHandlerParenting: true,
-          expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
-          name: "scenario",
-          runScenario: ({ runNodeScenarioDir }) =>
-            runNodeScenarioDir({
-              entry: scenario.autoEntry,
-              env: { CLAUDE_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              runContext: {
-                variantKey: scenario.snapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: TIMEOUT_MS,
-            }),
-          snapshotName: `${scenario.snapshotName}-auto-hook`,
-          testFileUrl: import.meta.url,
-          timeoutMs: TIMEOUT_MS,
-        });
-      },
-    );
+    describeVariant(`claude agent sdk ${scenario.version}`, () => {
+      defineClaudeAgentSDKInstrumentationAssertions({
+        assertLocalToolHandlerParenting: true,
+        expectTaskLifecycleDetails: scenario.expectTaskLifecycleDetails,
+        name: "scenario",
+        runScenario: ({ runNodeScenarioDir }) =>
+          runNodeScenarioDir({
+            entry: scenario.autoEntry,
+            env: { CLAUDE_AGENT_SDK_PACKAGE_NAME: scenario.dependencyName },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: TIMEOUT_MS,
+          }),
+        snapshotName: `${scenario.snapshotName}-auto-hook`,
+        testFileUrl: import.meta.url,
+        timeoutMs: TIMEOUT_MS,
+      });
+    });
   }
 });

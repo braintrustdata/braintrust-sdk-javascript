@@ -1,35 +1,39 @@
 const { parentPort } = require("node:worker_threads");
 
-Object.defineProperty(globalThis, "__braintrust_instrumentation_hooks", {
+Object.defineProperty(globalThis, "__braintrust_invocation_hooks_v2", {
   configurable: false,
   enumerable: false,
   value: {},
   writable: false,
 });
 
-const { newGlobalTracingChannel } = require(
+const { newGlobalInvocationHook } = require(
   process.env.BRAINTRUST_TEST_GLOBAL_HOOK_RUNTIME,
 );
 
-const channel = newGlobalTracingChannel(
+const channel = newGlobalInvocationHook(
   "orchestrion:test:incompatible-registry",
 );
 let subscriberCalls = 0;
 let providerCalls = 0;
-channel.subscribe({
-  start() {
-    subscriberCalls += 1;
+channel.intercept((target, receiver, args) => {
+  subscriberCalls += 1;
+  return Reflect.apply(target, receiver, args);
+});
+const result = channel.invoke(
+  () => {
+    providerCalls += 1;
+    return "result";
   },
-});
-const result = channel.traceSync(() => {
-  providerCalls += 1;
-  return "result";
-});
+  undefined,
+  [],
+  {},
+);
 
 parentPort?.postMessage({
   type: "incompatible-registry",
   result: {
-    hasSubscribers: channel.hasSubscribers,
+    hasInterceptors: channel.hasInterceptors,
     providerCalls,
     result,
     subscriberCalls,

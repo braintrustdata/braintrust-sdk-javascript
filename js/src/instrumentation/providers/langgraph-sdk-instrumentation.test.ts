@@ -11,7 +11,7 @@ import { _exportsForTestingOnly } from "../../logger/testing";
 import { initLogger } from "../../logger/core";
 import { configureNode } from "../../node/config";
 import { wrapLangGraphSDK } from "../../wrappers/langgraph-sdk";
-import { langGraphSDKChannels } from "./langgraph-sdk-channels";
+import { langGraphSDKChannels } from "./langgraph-sdk-interceptors";
 
 configureNode();
 registerInstrumentation();

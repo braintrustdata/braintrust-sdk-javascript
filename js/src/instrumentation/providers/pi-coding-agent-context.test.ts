@@ -7,10 +7,11 @@ import type {
   PiAgentEvent,
   PiAgentEventListener,
   PiAgentSession,
+  PiStreamFunction,
   PiTool,
 } from "../../vendor-sdk-types/pi-coding-agent";
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
-import { piCodingAgentChannels } from "./pi-coding-agent-channels";
+import { piCodingAgentChannels } from "./pi-coding-agent-interceptors";
 
 // Use real Braintrust spans and async context, capturing all log writes in memory.
 configureNode();
@@ -33,9 +34,17 @@ describe("Pi tool execution context", () => {
     _exportsForTestingOnly.simulateLogoutForTests();
   });
 
-  it.each(["streamFn", "streamFunction"] as const)(
-    "parents children before and after await to the tool with %s",
-    async (property) => {
+  it.each([
+    { property: "streamFn", source: "agent state" },
+    {
+      property: "streamFunction",
+      source: "refreshed agent state",
+    },
+    { property: "streamFn", source: "context without agent state" },
+    { property: "streamFunction", source: "context distinct from agent state" },
+  ] as const)(
+    "parents tool children across await with $property and $source",
+    async ({ property, source }) => {
       let rootSpan: Span;
       let toolSpan: Span;
       const tool: PiTool = {
@@ -52,11 +61,46 @@ describe("Pi tool execution context", () => {
           return "result";
         },
       };
-      const fixture = makeFixture(tool, property);
+      const message = { role: "assistant" as const, content: [] };
+      const fixture = makeFixture(
+        source === "agent state" ? tool : { ...tool },
+        property,
+        async () => ({
+          async *[Symbol.asyncIterator]() {
+            yield { type: "done", message };
+          },
+          async result() {
+            return message;
+          },
+        }),
+      );
 
       await experiment.traced(async (root) => {
         rootSpan = root;
         await fixture.prompt(async () => {
+          if (source === "refreshed agent state") {
+            // Pi 1.4 can refresh executors during prompt setup; the transcript
+            // declares tools but does not carry their execute functions.
+            fixture.agent.state!.tools = [tool];
+          } else if (source === "context without agent state") {
+            fixture.agent.state = undefined;
+          }
+          if (source !== "agent state") {
+            const stream = await fixture.agent[property]!(
+              { id: "model" },
+              {
+                messages: [
+                  {
+                    role: "system",
+                    content: "",
+                    toolsAdded: [{ name: tool.name }],
+                  },
+                ],
+                ...(source.startsWith("context") ? { tools: [tool] } : {}),
+              },
+            );
+            await stream.result();
+          }
           await fixture.start("call");
           expect(await tool.execute!("call")).toBe("result");
           expect(currentSpan()).toBe(root);
@@ -272,13 +316,16 @@ describe("Pi tool execution context", () => {
 function makeFixture(
   tool: PiTool,
   property: "streamFn" | "streamFunction" = "streamFunction",
+  streamFunction: PiStreamFunction = () => {
+    throw new Error("This context test must not call a model");
+  },
 ) {
   const listeners = new Set<PiAgentEventListener>();
-  const agent = {
+  const agent: PiAgentSession["agent"] & {
+    state: { tools: PiTool[] } | undefined;
+  } = {
     state: { tools: [tool] },
-    [property]: () => {
-      throw new Error("This context test must not call a model");
-    },
+    [property]: streamFunction,
     subscribe(listener: PiAgentEventListener) {
       listeners.add(listener);
       return () => {
@@ -292,6 +339,7 @@ function makeFixture(
       await listener(event, new AbortController().signal);
   };
   return {
+    agent,
     prompt: (callback: () => Promise<void>) =>
       piCodingAgentChannels.prompt.invoke(
         callback,

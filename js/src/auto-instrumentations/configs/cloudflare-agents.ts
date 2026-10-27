@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { cloudflareAgentsChannels } from "../../instrumentation/providers/cloudflare-agents-channels";
+import { cloudflareAgentsChannels } from "../../instrumentation/providers/cloudflare-agents-interceptors";
 
 const cloudflareAgentsVersionRange = ">=0.17.0 <0.18.0";
 
@@ -14,7 +14,6 @@ export const cloudflareAgentsConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Agent",
       methodName: "runAgentTool",
-      kind: "Async",
     },
   },
 ];

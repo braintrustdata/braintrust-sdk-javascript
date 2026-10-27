@@ -1,5 +1,5 @@
 import { registerInstrumentation } from "./instrumentation/registrations/openai";
-import { openAIChannels } from "./instrumentation/providers/openai-channels";
+import { openAIChannels } from "./instrumentation/providers/openai-interceptors";
 import { getSpanParentObject } from "./logger/core";
 import {
   createLazyAPIPromise,

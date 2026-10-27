@@ -1,4 +1,6 @@
 import { isObject } from "../../../util/index";
+import { uint8ArrayToBase64 } from "../../../util/bytes";
+import { prepareTypedAttachments } from "../../typed-attachments";
 import { debugLogger } from "../../debug-logger";
 import { startSpan, withCurrent } from "../../logger/core";
 import type { Span } from "../../logger/core";
@@ -8,6 +10,8 @@ import {
 } from "../../span-origin";
 import type {
   TypeSafeAPIPromise,
+  TypeSafeImage,
+  TypeSafeTextWithAssets,
   TypeSafeSystemOneRequest,
   TypeSafeSystemOneResult,
 } from "../../vendor-sdk-types/typesafe";
@@ -15,7 +19,9 @@ import {
   isAutoInstrumentationSuppressed,
   runWithAutoInstrumentationSuppressed,
 } from "../auto-instrumentation-suppression";
-import { typeSafeChannels } from "./typesafe-channels";
+import { isAutoCaptureAttachmentsEnabled } from "../../wrappers/attachment-utils";
+
+import { typeSafeChannels } from "./typesafe-interceptors";
 
 export function registerTypeSafeInstrumentation(): void {
   typeSafeChannels.systemOne.intercept((target, thisArg, args) =>
@@ -50,17 +56,13 @@ function interceptSystemOne(
       withSpanInstrumentationName(
         {
           event: {
-            input: {
-              state: request?.state,
-              questions: addIds(request?.questions),
-            },
             metadata: {
               ...(model ? { model } : {}),
               provider: "typesafe",
             },
           },
           name: "typesafe.systemOne",
-          spanAttributes: { type: "question" },
+          spanAttributes: { type: "decision" },
         },
         INSTRUMENTATION_NAMES.TYPESAFE,
       ),
@@ -70,22 +72,30 @@ function interceptSystemOne(
     return invokeTarget();
   }
 
+  // Snapshot caller-owned bytes before invoking the provider. Blob reads may
+  // finish asynchronously, but never delay the provider call or replace its promise.
+  const prepared = prepareTypeSafeInput(args[0]).catch(() => {
+    debugLogger.error("Error capturing input for typesafe.systemOne");
+    return { input: undefined, imagePath: undefined };
+  });
   let result: PromiseLike<TypeSafeSystemOneResult>;
   try {
     result = withCurrent(span, () =>
       runWithAutoInstrumentationSuppressed(invokeTarget),
     );
   } catch (error) {
-    span.log({ error });
-    span.end();
+    void prepared.then(({ input }) => {
+      span.log({ input, error });
+      span.end();
+    });
     throw error;
   }
 
   if (!isTypeSafeAPIPromise(result)) {
     const finished = Promise.resolve(result).then(
-      (value) => finishSuccessfulSpan(span, value),
-      (error) => {
-        span.log({ error });
+      async (value) => finishSuccessfulSpan(span, value, await prepared),
+      async (error) => {
+        span.log({ input: (await prepared).input, error });
         span.end();
       },
     );
@@ -101,17 +111,18 @@ function interceptSystemOne(
         if (!isObject(value)) {
           throw new TypeError("Expected TypeSafe to return a JSON object");
         }
-        finishSuccessfulSpan(span, value);
+        finishSuccessfulSpan(span, value, await prepared);
       } catch (error) {
         debugLogger.error(
           "Error reading response for typesafe.systemOne:",
           error,
         );
+        span.log({ input: (await prepared).input });
         span.end();
       }
     },
-    (error) => {
-      span.log({ error });
+    async (error) => {
+      span.log({ input: (await prepared).input, error });
       span.end();
     },
   );
@@ -218,12 +229,14 @@ function preserveTypeSafePromise<T>(
 function finishSuccessfulSpan(
   span: Span,
   result: TypeSafeSystemOneResult,
+  { input, imagePath }: Awaited<ReturnType<typeof prepareTypeSafeInput>>,
 ): void {
   const metrics = extractMetrics(result);
   span.log({
+    input,
     output:
       isObject(result) && result.answers !== undefined
-        ? { answers: addIds(result.answers) }
+        ? { answers: addIds(result.answers, imagePath) }
         : undefined,
     ...(isObject(result) && typeof result.model === "string"
       ? { metadata: { model: result.model } }
@@ -233,13 +246,21 @@ function finishSuccessfulSpan(
   span.end();
 }
 
-function addIds(value: unknown): unknown {
+function addIds(value: unknown, imagePath?: string): unknown {
   if (!isObject(value)) {
     return value;
   }
 
   return Object.entries(value).map(([id, entry]) =>
-    isObject(entry) ? { ...entry, id } : { id, value: entry },
+    isObject(entry)
+      ? {
+          ...entry,
+          id,
+          ...(entry.type === "box" && imagePath && !("image_path" in entry)
+            ? { image_path: imagePath }
+            : {}),
+        }
+      : { id, value: entry },
   );
 }
 
@@ -264,4 +285,147 @@ function validTokenCount(value: unknown): number | undefined {
   return typeof value === "number" && Number.isInteger(value) && value >= 0
     ? value
     : undefined;
+}
+
+/** Normalize SDK media in place; shared decision processing uploads after customization. */
+async function prepareTypeSafeInput(request: TypeSafeSystemOneRequest) {
+  const capture = isAutoCaptureAttachmentsEnabled();
+  const namedAssets = new Map(Object.entries(request.assets ?? {}));
+  const captured = new Map<TypeSafeImage, Promise<unknown>>();
+  const imagePaths: string[] = [];
+
+  const expand = (
+    text: string,
+    references: Map<string, TypeSafeImage>,
+    path: string,
+    depth: number,
+  ): Promise<unknown> => {
+    const names = [...references.keys()]
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length);
+    if (!names.length) return Promise.resolve(text);
+    const pattern = new RegExp(
+      `(${names.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
+      "g",
+    );
+    const parts = text.split(pattern).filter((part) => part !== "");
+    if (!parts.some((part) => references.has(part)))
+      return Promise.resolve(text);
+    // A standalone reference stays at its original location. Templates become
+    // ordered text/media parts instead of moving images into an asset side table.
+    if (parts.length === 1)
+      return visit(references.get(parts[0]), path, depth + 1);
+    return Promise.all(
+      parts.map((part, index) =>
+        references.has(part)
+          ? visit(references.get(part), `${path}/${index}`, depth + 1)
+          : part,
+      ),
+    );
+  };
+  const visit = async (
+    value: unknown,
+    path: string,
+    depth = 0,
+  ): Promise<unknown> => {
+    if (depth >= 128) return "<omitted>";
+    if (typeof value === "string")
+      return expand(value, namedAssets, path, depth);
+    if (Array.isArray(value))
+      return Promise.all(
+        value.map((item, index) => visit(item, `${path}/${index}`, depth + 1)),
+      );
+    if (value === null || typeof value !== "object") return value;
+    if (Symbol.for("@typesafe-ai/sdk/image") in value) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- The shared SDK brand identifies images across package copies.
+      const asset = value as unknown as TypeSafeImage;
+      imagePaths.push(path);
+      if (!capture) return { type: "image" };
+      if (!captured.has(asset)) {
+        captured.set(
+          asset,
+          (async () => {
+            try {
+              const data = asset.data;
+              const bytes =
+                data instanceof Blob
+                  ? new Uint8Array(await data.arrayBuffer())
+                  : new Uint8Array(data);
+              // TypeSafe detects PNG/JPEG from bytes, including Blobs without MIME.
+              const contentType = [137, 80, 78, 71, 13, 10, 26, 10].every(
+                (byte, i) => bytes[i] === byte,
+              )
+                ? "image/png"
+                : bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+                  ? "image/jpeg"
+                  : undefined;
+              const base64 = uint8ArrayToBase64(bytes);
+              return contentType
+                ? `data:${contentType};base64,${base64}`
+                : { type: "image", data: base64 };
+            } catch {
+              // Preserve the SDK's serialized reference when the bytes cannot be
+              // read. A capture failure must not discard the decision or its boxes.
+              return asset.toString();
+            }
+          })(),
+        );
+      }
+      return captured.get(asset);
+    }
+    if (Symbol.for("@typesafe-ai/sdk/text-with-assets") in value) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- The SDK brand identifies text templates across package copies.
+      const template = value as unknown as TypeSafeTextWithAssets;
+      return expand(
+        template.text,
+        new Map([
+          ...namedAssets,
+          ...template.assets.map((asset): [string, TypeSafeImage] => [
+            asset.toString(),
+            asset,
+          ]),
+        ]),
+        path,
+        depth,
+      );
+    }
+    if (![Object.prototype, null].includes(Object.getPrototypeOf(value)))
+      return value;
+    return Object.fromEntries(
+      await Promise.all(
+        Object.entries(value).map(async ([key, child]) => [
+          key,
+          await visit(
+            child,
+            `${path}/${key.replace(/~/g, "~0").replace(/\//g, "~1")}`,
+            depth + 1,
+          ),
+        ]),
+      ),
+    );
+  };
+  const [state, questions] = await Promise.all([
+    visit(request.state, "/state"),
+    Promise.all(
+      Object.entries(request.questions).map(async ([id, question], index) => {
+        if (!isObject(question)) return { id, value: question };
+        const [instructions, criteria] = await Promise.all([
+          visit(question.instructions, `/questions/${index}/instructions`),
+          visit(question.criteria, `/questions/${index}/criteria`),
+        ]);
+        return {
+          ...question,
+          id,
+          ...("instructions" in question ? { instructions } : {}),
+          ...("criteria" in question ? { criteria } : {}),
+        };
+      }),
+    ),
+  ]);
+  return {
+    input: prepareTypedAttachments({ state, questions }),
+    // Jev exposes no structured image selector. Repeated occurrences have
+    // distinct paths; neither answer order nor instruction text selects one.
+    imagePath: imagePaths.length === 1 ? imagePaths[0] : undefined,
+  };
 }

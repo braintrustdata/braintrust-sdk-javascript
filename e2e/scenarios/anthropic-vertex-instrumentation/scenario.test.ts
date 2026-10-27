@@ -1,4 +1,5 @@
 import { describe } from "vite-plus/test";
+import { describeVariant } from "../../helpers/describe-variant";
 import {
   prepareScenarioDir,
   readInstalledPackageVersion,
@@ -32,78 +33,74 @@ const anthropicVertexScenarios = await Promise.all(
 
 describe.concurrent("variants", () => {
   for (const scenario of anthropicVertexScenarios) {
-    describe(
-      `anthropic vertex sdk ${scenario.version}`,
-      { concurrent: false },
-      () => {
-        defineAnthropicVertexInstrumentationAssertions({
-          name: "wrapped instrumentation",
-          runScenario: async ({ runScenarioDir }) => {
-            await runScenarioDir({
-              entry: "scenario.ts",
-              env: {
-                ANTHROPIC_VERTEX_PACKAGE_NAME: scenario.dependencyName,
-              },
-              runContext: {
-                cassette: false,
-                variantKey: scenario.snapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.snapshotName}-wrapped`,
-          testFileUrl: import.meta.url,
-          timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
-        });
+    describeVariant(`anthropic vertex sdk ${scenario.version}`, () => {
+      defineAnthropicVertexInstrumentationAssertions({
+        name: "wrapped instrumentation",
+        runScenario: async ({ runScenarioDir }) => {
+          await runScenarioDir({
+            entry: "scenario.ts",
+            env: {
+              ANTHROPIC_VERTEX_PACKAGE_NAME: scenario.dependencyName,
+            },
+            runContext: {
+              cassette: false,
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-wrapped`,
+        testFileUrl: import.meta.url,
+        timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
+      });
 
-        defineAnthropicVertexInstrumentationAssertions({
-          name: "auto-hook instrumentation ESM",
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: "scenario.mjs",
-              env: {
-                ANTHROPIC_VERTEX_PACKAGE_NAME: scenario.dependencyName,
-              },
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              runContext: {
-                cassette: false,
-                variantKey: scenario.snapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.snapshotName}-auto-esm`,
-          testFileUrl: import.meta.url,
-          timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
-        });
+      defineAnthropicVertexInstrumentationAssertions({
+        name: "auto-hook instrumentation ESM",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.mjs",
+            env: {
+              ANTHROPIC_VERTEX_PACKAGE_NAME: scenario.dependencyName,
+            },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              cassette: false,
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-auto-esm`,
+        testFileUrl: import.meta.url,
+        timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
+      });
 
-        defineAnthropicVertexInstrumentationAssertions({
-          name: "auto-hook instrumentation CJS",
-          runScenario: async ({ runNodeScenarioDir }) => {
-            await runNodeScenarioDir({
-              entry: "scenario.cjs",
-              env: {
-                ANTHROPIC_VERTEX_PACKAGE_NAME: scenario.dependencyName,
-              },
-              nodeArgs: ["--import", "braintrust/hook.mjs"],
-              runContext: {
-                cassette: false,
-                variantKey: scenario.snapshotName,
-                originalScenarioDir,
-              },
-              scenarioDir,
-              timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
-            });
-          },
-          snapshotName: `${scenario.snapshotName}-auto-cjs`,
-          testFileUrl: import.meta.url,
-          timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
-        });
-      },
-    );
+      defineAnthropicVertexInstrumentationAssertions({
+        name: "auto-hook instrumentation CJS",
+        runScenario: async ({ runNodeScenarioDir }) => {
+          await runNodeScenarioDir({
+            entry: "scenario.cjs",
+            env: {
+              ANTHROPIC_VERTEX_PACKAGE_NAME: scenario.dependencyName,
+            },
+            nodeArgs: ["--import", "braintrust/hook.mjs"],
+            runContext: {
+              cassette: false,
+              variantKey: scenario.snapshotName,
+              originalScenarioDir,
+            },
+            scenarioDir,
+            timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
+          });
+        },
+        snapshotName: `${scenario.snapshotName}-auto-cjs`,
+        testFileUrl: import.meta.url,
+        timeoutMs: ANTHROPIC_VERTEX_SCENARIO_TIMEOUT_MS,
+      });
+    });
   }
 });

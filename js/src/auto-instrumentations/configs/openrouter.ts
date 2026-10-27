@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { openRouterChannels } from "../../instrumentation/providers/openrouter-channels";
+import { openRouterChannels } from "../../instrumentation/providers/openrouter-interceptors";
 
 export const openRouterConfigs: InstrumentationConfig[] = [
   {
@@ -12,7 +12,6 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Chat",
       methodName: "send",
-      kind: "Async",
     },
   },
 
@@ -26,7 +25,6 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Embeddings",
       methodName: "generate",
-      kind: "Async",
     },
   },
 
@@ -40,7 +38,6 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Rerank",
       methodName: "rerank",
-      kind: "Async",
     },
   },
 
@@ -54,7 +51,6 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Responses",
       methodName: "send",
-      kind: "Async",
     },
   },
 
@@ -68,7 +64,6 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "BetaResponses",
       methodName: "send",
-      kind: "Async",
     },
   },
 
@@ -82,7 +77,6 @@ export const openRouterConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "OpenRouter",
       methodName: "callModel",
-      kind: "Sync",
     },
   },
 ];

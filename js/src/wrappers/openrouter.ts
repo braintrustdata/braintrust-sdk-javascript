@@ -1,9 +1,12 @@
 import { registerInstrumentation } from "../instrumentation/registrations/openrouter";
-import { openRouterChannels } from "../instrumentation/providers/openrouter-channels";
+import { debugLogger } from "../debug-logger";
+import { openRouterChannels } from "../instrumentation/providers/openrouter-interceptors";
 import type {
   OpenRouterBeta,
   OpenRouterCallModelRequest,
   OpenRouterChat,
+  OpenRouterChatCreateParams,
+  OpenRouterChatResult,
   OpenRouterClient,
   OpenRouterEmbeddingCreateParams,
   OpenRouterEmbeddingResponse,
@@ -14,8 +17,6 @@ import type {
   OpenRouterResponses,
   OpenRouterResponsesCreateParams,
   OpenRouterResponsesResult,
-  OpenRouterChatCreateParams,
-  OpenRouterChatResult,
 } from "../vendor-sdk-types/openrouter";
 
 /**
@@ -45,8 +46,7 @@ export function wrapOpenRouter<T>(openrouter: T): T {
     return openRouterProxy(or as OpenRouterClient) as T;
   }
 
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.warn("Unsupported OpenRouter library. Not wrapping.");
+  debugLogger.notice.warn("Unsupported OpenRouter library. Not wrapping.");
   return openrouter;
 }
 
@@ -139,9 +139,7 @@ function wrapChatSend(
   ) => Promise<OpenRouterChatResult>,
 ): OpenRouterChat["send"] {
   return (request, options) =>
-    openRouterChannels.chatSend.tracePromise(() => send(request, options), {
-      arguments: [request],
-    } as Parameters<typeof openRouterChannels.chatSend.tracePromise>[1]);
+    openRouterChannels.chatSend.invoke(send, undefined, [request, options], {});
 }
 
 function wrapEmbeddingsGenerate(
@@ -151,9 +149,11 @@ function wrapEmbeddingsGenerate(
   ) => Promise<OpenRouterEmbeddingResponse>,
 ): OpenRouterEmbeddings["generate"] {
   return (request, options) =>
-    openRouterChannels.embeddingsGenerate.tracePromise(
-      () => generate(request, options),
-      { arguments: [request] },
+    openRouterChannels.embeddingsGenerate.invoke(
+      generate,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -164,9 +164,11 @@ function wrapResponsesSend(
   ) => Promise<OpenRouterResponsesResult>,
 ): OpenRouterResponses["send"] {
   return (request, options) =>
-    openRouterChannels.betaResponsesSend.tracePromise(
-      () => send(request, options),
-      { arguments: [request] },
+    openRouterChannels.betaResponsesSend.invoke(
+      send,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -177,9 +179,11 @@ function wrapRerank(
   ) => Promise<OpenRouterRerankResult>,
 ): OpenRouterRerank["rerank"] {
   return (request, options) =>
-    openRouterChannels.rerankRerank.tracePromise(
-      () => rerank(request, options),
-      { arguments: [request] },
+    openRouterChannels.rerankRerank.invoke(
+      rerank,
+      undefined,
+      [request, options],
+      {},
     );
 }
 
@@ -191,11 +195,11 @@ function wrapCallModel(
 ): NonNullable<OpenRouterClient["callModel"]> {
   return (request, options) => {
     const tracedRequest = { ...request };
-    return openRouterChannels.callModel.traceSync(
-      () => callModel(tracedRequest, options),
-      {
-        arguments: [tracedRequest],
-      } as Parameters<typeof openRouterChannels.callModel.traceSync>[1],
+    return openRouterChannels.callModel.invoke(
+      callModel,
+      undefined,
+      [tracedRequest, options],
+      {},
     );
   };
 }

@@ -32,7 +32,7 @@ export function wrapCloudflareAIChat<T>(module: T): T {
   }
 
   if (typeof AIChatAgent !== "function") {
-    debugLogger.warn(
+    debugLogger.notice.warn(
       "Unsupported @cloudflare/ai-chat module. AIChatAgent was not found; not wrapping.",
     );
     return module;

@@ -19,7 +19,7 @@ import {
 import { getCurrentUnixTimestamp } from "../../util";
 import { isObject, SpanTypeAttribute } from "../../../util/index";
 import { SpanComponentsV4 } from "../../../util/span_identifier_v4";
-import { openAIChannels } from "./openai-channels";
+import { openAIChannels } from "./openai-interceptors";
 import {
   deterministicDigest,
   digestHex,

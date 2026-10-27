@@ -9,6 +9,7 @@ export const spanTypeAttributeValues = [
   "facet",
   "preprocessor",
   "classifier",
+  "extraction",
   "review",
 ] as const;
 
@@ -24,6 +25,7 @@ export enum SpanTypeAttribute {
   FACET = "facet",
   PREPROCESSOR = "preprocessor",
   CLASSIFIER = "classifier",
+  EXTRACTION = "extraction",
   REVIEW = "review",
 }
 

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { IsoChannelHandlers } from "#braintrust-platform";
-import type { ChannelMessage } from "../instrumentation/core/channel-definitions";
-import { genkitChannels } from "../instrumentation/providers/genkit-channels";
+
+import type { ChannelMessage } from "../instrumentation/core/tracing-types";
+import { genkitChannels } from "../instrumentation/providers/genkit-interceptors";
 import { configureNode } from "../node/config";
 import type {
   GenkitAction,
@@ -16,15 +16,9 @@ try {
 }
 
 describe("wrapGenkit", () => {
-  const tracingChannel = genkitChannels.actionRun.tracingChannel();
-  const handlers: IsoChannelHandlers<
-    ChannelMessage<typeof genkitChannels.actionRun>
-  >[] = [];
-
+  const removals: Array<() => void> = [];
   afterEach(() => {
-    for (const handler of handlers.splice(0)) {
-      tracingChannel.unsubscribe(handler);
-    }
+    for (const remove of removals.splice(0)) remove();
     vi.restoreAllMocks();
   });
 
@@ -33,18 +27,22 @@ describe("wrapGenkit", () => {
       phase: "start" | "asyncEnd";
       event: ChannelMessage<typeof genkitChannels.actionRun>;
     }> = [];
-    const handler: IsoChannelHandlers<
-      ChannelMessage<typeof genkitChannels.actionRun>
-    > = {
-      asyncEnd: (event) => {
-        actionRunEvents.push({ event, phase: "asyncEnd" });
-      },
-      start: (event) => {
-        actionRunEvents.push({ event, phase: "start" });
-      },
-    };
-    tracingChannel.subscribe(handler);
-    handlers.push(handler);
+    removals.push(
+      genkitChannels.actionRun.intercept(
+        (target, receiver, args, additional) => {
+          const event = { ...additional, arguments: args, self: receiver };
+          actionRunEvents.push({ event, phase: "start" });
+          const result = Reflect.apply(target, receiver, args);
+          result.then((value) =>
+            actionRunEvents.push({
+              event: { ...event, result: value },
+              phase: "asyncEnd",
+            }),
+          );
+          return result;
+        },
+      ),
+    );
 
     const originalTool = Object.assign(
       vi.fn(async (input: unknown) => ({ echoed: input })),

@@ -10,7 +10,8 @@ import {
 } from "vite-plus/test";
 import OpenAI from "openai";
 import { configureNode } from "../src/node/config";
-import { _exportsForTestingOnly, Attachment, initLogger } from "../src/logger";
+import { _exportsForTestingOnly } from "../src/logger/testing";
+import { Attachment, initLogger } from "../src/logger/core";
 import { wrapClaudeAgentSDK } from "../src/wrappers/claude-agent-sdk/claude-agent-sdk";
 import { wrapGoogleGenAI } from "../src/wrappers/google-genai";
 import { wrapOpenAI } from "../src/wrappers/oai";

@@ -1,5 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/voyageai";
-import { voyageAIChannels } from "../instrumentation/providers/voyageai-channels";
+import { debugLogger } from "../debug-logger";
+import { voyageAIChannels } from "../instrumentation/providers/voyageai-interceptors";
 import type {
   VoyageAIClient,
   VoyageAIContextualizedEmbedRequest,
@@ -15,8 +16,7 @@ import type {
 export function wrapVoyageAI<T>(client: T): T {
   registerInstrumentation();
   if (!isSupportedVoyageAIClient(client)) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported Voyage AI library. Not wrapping.");
+    debugLogger.notice.warn("Unsupported Voyage AI library. Not wrapping.");
     return client;
   }
 

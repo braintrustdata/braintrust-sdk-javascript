@@ -1,5 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/typesafe";
-import { typeSafeChannels } from "../instrumentation/providers/typesafe-channels";
+import { debugLogger } from "../debug-logger";
+import { typeSafeChannels } from "../instrumentation/providers/typesafe-interceptors";
 import type {
   TypeSafeClient,
   TypeSafeSystemOneRequest,
@@ -10,8 +11,7 @@ export function wrapTypeSafe<T>(client: T): T;
 export function wrapTypeSafe(client: unknown): unknown {
   registerInstrumentation();
   if (!isSupportedTypeSafeClient(client)) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported TypeSafe AI library. Not wrapping.");
+    debugLogger.notice.warn("Unsupported TypeSafe AI library. Not wrapping.");
     return client;
   }
 

@@ -48,7 +48,7 @@
         "src/node/index.ts",
         "src/exports.ts",
         "src/auto.ts",
-        "src/auto-instrumentations/{index.ts,hook.mts,loader/esm-hook.mts}",
+        "src/auto-instrumentations/{index.ts,hook.mts,loader/module-hooks.mts}",
         "src/{node,non-node}/apply-auto-instrumentation-entry.ts",
         "src/{node,browser,workerd,edge-light}/{isomorph,config}.ts",
         "src/{custom-views,preprocessors}/exports.ts",

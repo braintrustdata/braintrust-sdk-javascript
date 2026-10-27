@@ -1,18 +1,21 @@
 import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
-import { startSpan as startBaseSpan } from "../../logger/core";
 import type { Span } from "../../logger/core";
+import { startSpan as startBaseSpan } from "../../logger/core";
+import { LRUCache } from "../../lru-cache";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import { LRUCache } from "../../lru-cache";
 import type {
   LangSmithBatchIngestRuns,
   LangSmithRun,
 } from "../../vendor-sdk-types/langsmith";
-import type { ChannelMessage } from "../core/channel-definitions";
-import { langSmithChannels } from "./langsmith-channels";
+
+import { runInstrumentation } from "../core/observe-result";
+
+import type { ChannelMessage } from "../core/tracing-types";
+import { langSmithChannels } from "./langsmith-interceptors";
 
 type ActiveRun = {
   run: LangSmithRun;
@@ -53,41 +56,51 @@ class LangSmithInstrumentationConsumer {
   }
 
   public register(): void {
-    const createChannel = langSmithChannels.createRun.tracingChannel();
-    const createHandlers = {
-      start: (
-        event: ChannelMessage<typeof langSmithChannels.createRun>,
-      ): void => {
-        this.containLifecycleFailure("createRun", () => {
-          this.processCreate(event.arguments[0]);
-        });
-      },
-    };
-    createChannel.subscribe(createHandlers);
+    const createChannel = langSmithChannels.createRun;
 
-    const updateChannel = langSmithChannels.updateRun.tracingChannel();
-    const updateHandlers = {
-      start: (
-        event: ChannelMessage<typeof langSmithChannels.updateRun>,
-      ): void => {
-        this.containLifecycleFailure("updateRun", () => {
-          this.processUpdate(event.arguments[0], event.arguments[1]);
-        });
-      },
-    };
-    updateChannel.subscribe(updateHandlers);
+    createChannel.intercept((target, receiver, args, additional) => {
+      runInstrumentation(() =>
+        ((event: ChannelMessage<typeof langSmithChannels.createRun>): void => {
+          this.containLifecycleFailure("createRun", () => {
+            this.processCreate(additional.runTree ?? event.arguments[0]);
+          });
+        })({ arguments: args }),
+      );
+      return Reflect.apply(target, receiver, args);
+    });
 
-    const batchChannel = langSmithChannels.batchIngestRuns.tracingChannel();
-    const batchHandlers = {
-      start: (
-        event: ChannelMessage<typeof langSmithChannels.batchIngestRuns>,
-      ): void => {
-        this.containLifecycleFailure("batchIngestRuns", () => {
-          this.processBatch(event.arguments[0]);
-        });
-      },
-    };
-    batchChannel.subscribe(batchHandlers);
+    const updateChannel = langSmithChannels.updateRun;
+
+    updateChannel.intercept((target, receiver, args, additional) => {
+      runInstrumentation(() =>
+        ((event: ChannelMessage<typeof langSmithChannels.updateRun>): void => {
+          this.containLifecycleFailure("updateRun", () => {
+            this.processUpdate(
+              additional.runTree
+                ? ((additional.runTree as LangSmithRun).id as string)
+                : event.arguments[0],
+              additional.runTree ?? event.arguments[1],
+            );
+          });
+        })({ arguments: args }),
+      );
+      return Reflect.apply(target, receiver, args);
+    });
+
+    const batchChannel = langSmithChannels.batchIngestRuns;
+
+    batchChannel.intercept((target, receiver, args, additional) => {
+      runInstrumentation(() =>
+        ((
+          event: ChannelMessage<typeof langSmithChannels.batchIngestRuns>,
+        ): void => {
+          this.containLifecycleFailure("batchIngestRuns", () => {
+            this.processBatch(event.arguments[0]);
+          });
+        })({ arguments: args }),
+      );
+      return Reflect.apply(target, receiver, args);
+    });
   }
 
   private processBatch(batch: LangSmithBatchIngestRuns): void {

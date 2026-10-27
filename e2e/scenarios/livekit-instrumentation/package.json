@@ -1,0 +1,22 @@
+{
+  "name": "@braintrust/e2e-livekit-instrumentation",
+  "private": true,
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "livekit-v1-latest": {
+          "package": "@livekit/agents",
+          "range": "~1.9.1",
+          "targetDependency": "@livekit/agents",
+          "targetManifest": "versions/livekit-v1-latest/package.json"
+        },
+        "livekit-openai-v1-latest": {
+          "package": "@livekit/agents-plugin-openai",
+          "range": "~1.9.1",
+          "targetDependency": "@livekit/agents-plugin-openai",
+          "targetManifest": "versions/livekit-v1-latest/package.json"
+        }
+      }
+    }
+  }
+}

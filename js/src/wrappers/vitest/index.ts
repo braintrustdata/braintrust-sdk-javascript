@@ -1,3 +1,4 @@
+import { debugLogger } from "../../debug-logger";
 import { wrapTest, wrapDescribe, getExperimentContext } from "./wrapper";
 import { wrapExpect } from "./expect-wrapper";
 import { summarizeAndFlush } from "../shared/flush";
@@ -17,7 +18,7 @@ import type { VitestMethods, BraintrustVitest, WrapperConfig } from "./types";
  *
  * @example Basic Usage
  * ```typescript
- * import * as vitest from "vitest";
+ * import * as vitest from "vite-plus/test";
  * import { wrapVitest } from 'braintrust';
  *
  * const {test, expect, describe } = wrapVitest(
@@ -99,9 +100,8 @@ export function wrapVitest<
     flushExperiment: async (options?: { displaySummary?: boolean }) => {
       const ctx = getExperimentContext();
       if (!ctx) {
-        // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-        console.warn(
-          "Braintrust: No experiment context found. Make sure you're using bt.describe() and calling flushExperiment() within an afterAll() hook.",
+        debugLogger.notice.warn(
+          "No experiment context found. Make sure you're using bt.describe() and calling flushExperiment() within an afterAll() hook.",
         );
         return;
       }

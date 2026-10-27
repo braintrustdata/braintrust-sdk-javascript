@@ -6,7 +6,18 @@ description: Create or update Changesets for this repository with a Conventional
 # Create a Changeset
 
 Inspect the diff to identify every publishable package affected and choose the appropriate semantic version bump for each package.
-Use `pnpm changeset` when creating the changeset unless the existing task requires editing a specific changeset file.
+Create the changeset by writing a new Markdown file under `.changeset/` directly, with a short kebab-case filename such as `.changeset/fix-queued-login-race.md`.
+
+```markdown
+---
+"braintrust": patch
+"@braintrust/otel": minor
+---
+
+fix: Prevent conflicting queued logins from replacing active credentials
+```
+
+List each affected package by its `package.json` name with `major`, `minor`, or `patch`.
 
 ## Summary
 

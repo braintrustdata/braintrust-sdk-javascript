@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { openRouterAgentChannels } from "../../instrumentation/providers/openrouter-agent-channels";
+import { openRouterAgentChannels } from "../../instrumentation/providers/openrouter-agent-interceptors";
 
 export const openRouterAgentConfigs: InstrumentationConfig[] = [
   {
@@ -11,7 +11,6 @@ export const openRouterAgentConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       functionName: "callModel",
-      kind: "Sync",
     },
   },
 ];

@@ -9,7 +9,7 @@
           "children": [
             {
               "name": "typesafe.systemOne",
-              "type": "question",
+              "type": "decision",
               "children": [],
               "input": {
                 "questions": [
@@ -102,7 +102,7 @@
           "children": [
             {
               "name": "typesafe.systemOne",
-              "type": "question",
+              "type": "decision",
               "children": [],
               "input": {
                 "questions": [

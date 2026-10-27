@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { langChainChannels } from "../../instrumentation/providers/langchain-channels";
+import { langChainChannels } from "../../instrumentation/providers/langchain-interceptors";
 
 const langChainCoreVersionRange = ">=0.3.42";
 const langChainCallbackManagerFilePath = "dist/callbacks/manager.js";
@@ -15,7 +15,6 @@ export const langchainConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "CallbackManager",
       methodName: "configure",
-      kind: "Sync",
     },
   },
   {
@@ -28,7 +27,6 @@ export const langchainConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "CallbackManager",
       methodName: "_configureSync",
-      kind: "Sync",
     },
   },
 ];

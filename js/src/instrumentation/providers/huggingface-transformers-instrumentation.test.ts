@@ -2,7 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   registerHuggingFaceTransformersPipeline,
   type HuggingFaceTransformersEventContext,
-} from "./huggingface-transformers-channels";
+} from "./huggingface-transformers-interceptors";
 import { _exportsForTestingOnly } from "./huggingface-transformers-instrumentation";
 import type { HuggingFaceTransformersPipeline } from "../../vendor-sdk-types/huggingface-transformers";
 

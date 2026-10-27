@@ -13,7 +13,12 @@ import {
   findLatestSpan,
 } from "../../helpers/trace-selectors";
 
-import { ROOT_NAME, SCENARIO_NAME } from "./scenario.impl.mjs";
+import {
+  MODEL_OUTPUT_TOOL_SECRET,
+  MODEL_OUTPUT_TOOL_VALUE,
+  ROOT_NAME,
+  SCENARIO_NAME,
+} from "./scenario.impl.mjs";
 
 type AgentSpanName = "Agent" | "ToolLoopAgent";
 
@@ -136,7 +141,7 @@ function findModelChildren(
   });
 }
 
-function findModelDescendants(
+function findSpanDescendants(
   capturedEvents: CapturedLogEvent[],
   parentId: string | undefined,
 ) {
@@ -151,13 +156,9 @@ function findModelDescendants(
     }
   }
 
-  return capturedEvents.filter((event) => {
-    const name = event.span.name ?? "";
-    return (
-      event.span.parentIds.some((id) => descendantIds.has(id)) &&
-      (name === "doGenerate" || name === "doStream")
-    );
-  });
+  return capturedEvents.filter((event) =>
+    event.span.parentIds.some((id) => descendantIds.has(id)),
+  );
 }
 
 function findParentSpan(
@@ -332,7 +333,10 @@ function findAgentGenerateTrace(
     `${agentSpanName}.generate`,
     operation?.span.id,
   );
-  const modelChildren = findModelDescendants(events, parent?.span.id);
+  const modelChildren = findSpanDescendants(events, parent?.span.id).filter(
+    (event) =>
+      event.span.name === "doGenerate" || event.span.name === "doStream",
+  );
 
   return {
     latestChild: latestEvent(modelChildren),
@@ -352,7 +356,10 @@ function findAgentStreamTrace(
     `${agentSpanName}.stream`,
     operation?.span.id,
   );
-  const modelChildren = findModelDescendants(events, parent?.span.id);
+  const modelChildren = findSpanDescendants(events, parent?.span.id).filter(
+    (event) =>
+      event.span.name === "doGenerate" || event.span.name === "doStream",
+  );
 
   return {
     latestChild: latestEvent(modelChildren),
@@ -665,6 +672,7 @@ function expectAnyMetricGreaterThanZero(
 
 export function defineAISDKInstrumentationAssertions(options: {
   agentSpanName?: AgentSpanName;
+  codeModeModes: string[];
   name: string;
   runScenario: RunAISDKScenario;
   sdkMajorVersion: number;
@@ -1005,6 +1013,74 @@ export function defineAISDKInstrumentationAssertions(options: {
       );
     }
 
+    if (options.snapshotName.startsWith("ai-sdk-v7-latest")) {
+      test(
+        "captures multiple decision images for both API names",
+        testConfig,
+        () => {
+          for (const method of [
+            "experimental_decide",
+            "experimental_evaluate",
+          ]) {
+            const operation = findLatestSpan(
+              events,
+              `ai-sdk-${method}-images-operation`,
+            );
+            const spans = findChildSpans(
+              events,
+              "evaluate",
+              operation?.span.id,
+            );
+            expect(spans).toHaveLength(1);
+            const [span] = spans;
+            expect(span.span.type).toBe("question");
+            const ref = {
+              type: "braintrust_attachment",
+              content_type: "image/png",
+              key: expect.any(String),
+            };
+            expect(span.input).toEqual({
+              state: [
+                { type: "text", text: "Compare these two pixels." },
+                {
+                  type: "file",
+                  mediaType: "image/png",
+                  filename: "first.png",
+                  data: { ...ref, filename: "first.png" },
+                },
+                { type: "json", value: { label: "two pixels" } },
+                {
+                  type: "file",
+                  mediaType: "image/png",
+                  filename: "second.png",
+                  data: {
+                    type: "data",
+                    data: { ...ref, filename: "second.png" },
+                  },
+                },
+              ],
+              questions: [
+                {
+                  id: "same",
+                  type: "boolean",
+                  instructions: "Do both images show the same color?",
+                },
+              ],
+            });
+            expect(span.output).toEqual({
+              answers: [
+                {
+                  id: "same",
+                  type: "boolean",
+                  probability: expect.any(Number),
+                },
+              ],
+            });
+          }
+        },
+      );
+    }
+
     if (options.supportsRerank) {
       test("captures trace for rerank()", testConfig, () => {
         const root = findLatestSpan(events, ROOT_NAME);
@@ -1194,6 +1270,56 @@ export function defineAISDKInstrumentationAssertions(options: {
         );
       }
     });
+
+    if (options.supportsToolExecution && options.sdkMajorVersion >= 5) {
+      for (const [operation, parentName] of [
+        ["ai-sdk-tool-model-output-operation", "generateText"],
+        ["ai-sdk-tool-model-output-stream-operation", "streamText"],
+      ] as const) {
+        test(
+          `logs toModelOutput results for ${parentName}() tools`,
+          testConfig,
+          () => {
+            const operationSpan = findLatestSpan(events, operation);
+            const parent = findParentSpan(
+              events,
+              parentName,
+              operationSpan?.span.id,
+            );
+            const toolSpans = findChildSpans(
+              events,
+              "lookup_signups",
+              parent?.span.id,
+            );
+
+            expect(toolSpans.length).toBeGreaterThanOrEqual(1);
+            for (const toolSpan of toolSpans) {
+              expect(toolSpan.output).toEqual({
+                type: "text",
+                value: MODEL_OUTPUT_TOOL_VALUE,
+              });
+            }
+            // Before v7, streamText parents log only text and finishReason.
+            if (parentName === "generateText" || options.sdkMajorVersion >= 7) {
+              expect(collectToolResultNames(parent?.output)).toContain(
+                "lookup_signups",
+              );
+              expect(JSON.stringify(parent?.output)).toContain(
+                MODEL_OUTPUT_TOOL_VALUE,
+              );
+            }
+            for (const event of [
+              parent,
+              ...findSpanDescendants(events, parent?.span.id),
+            ]) {
+              expect(JSON.stringify(event?.row)).not.toContain(
+                MODEL_OUTPUT_TOOL_SECRET,
+              );
+            }
+          },
+        );
+      }
+    }
 
     if (options.supportsGenerateObject) {
       test("captures trace for generateObject()", testConfig, () => {
@@ -1502,19 +1628,30 @@ export function defineAISDKInstrumentationAssertions(options: {
       );
     }
 
-    test("matches the shared span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath, {
-        normalize: {
-          additionalProviderIdKeys: ["callId"],
-          omittedKeys: [
-            "id",
-            "performance",
-            "prompt_cache_key",
-            ...(options.sdkMajorVersion < 6 ? ["toolCallId"] : []),
-          ],
-        },
+    for (const mode of options.codeModeModes) {
+      test(`captures code-mode ${mode} execution`, testConfig, () => {
+        assertAISDKCodeModeInstrumentation(events, mode);
       });
-    });
+    }
+
+    test(
+      "matches the shared span tree snapshot",
+      testConfig,
+      async ({ expect }) => {
+        await matchSpanTreeSnapshot(events, spanSnapshotPath, {
+          snapshotExpect: expect,
+          normalize: {
+            additionalProviderIdKeys: ["callId"],
+            omittedKeys: [
+              "id",
+              "performance",
+              "prompt_cache_key",
+              ...(options.sdkMajorVersion < 6 ? ["toolCallId"] : []),
+            ],
+          },
+        });
+      },
+    );
   });
 }
 
@@ -1542,4 +1679,124 @@ function findWorkflowAgentTrace(
     toolSpans,
     workflowSpans,
   };
+}
+
+function assertAISDKCodeModeInstrumentation(
+  events: CapturedLogEvent[],
+  mode: string,
+) {
+  const roots = [
+    "sequential",
+    "parallel",
+    "nested",
+    "host-error",
+    "code-error",
+    "caught-error",
+    "stream-output",
+    "concurrent",
+    "direct",
+    ...(mode === "wrapped" ? [] : ["factory", "generation"]),
+  ];
+  const root = (name: string) =>
+    findAllSpans(events, `ai-sdk-code-mode-${mode}-${name}-operation`)[0]!;
+  for (const name of roots) {
+    expect(root(name)).toBeDefined();
+    expect(root(name).span.parentIds).toEqual([
+      findLatestSpan(events, ROOT_NAME)!.span.id,
+    ]);
+  }
+  const spans = (name: string, rootName: string) =>
+    findAllSpans(findSpanDescendants(events, root(rootName).span.id), name);
+  for (const name of roots.filter((n) => n !== "generation")) {
+    const outer = spans("codeMode", name);
+    expect(outer).toHaveLength(name === "concurrent" ? 2 : 1);
+    for (const span of outer) {
+      expect(span.span.type).toBe("tool");
+      expect(span.span.parentIds).toEqual([root(name).span.id]);
+      expect(span.span.ended).toBe(true);
+      for (const child of events.filter((event) =>
+        event.span.parentIds.includes(span.span.id),
+      )) {
+        expect(child.span.type).toBe("function");
+      }
+    }
+  }
+  expect(findAllSpans(events, "unused")).toHaveLength(0);
+  for (const name of ["sequential", "concurrent"]) {
+    const host = spans("host", name);
+    const outer = spans("codeMode", name);
+    expect(host).toHaveLength(2);
+    for (const span of host) {
+      expect(span.span.type).toBe("function");
+      expect(span.output).toEqual({
+        value: (span.input as { value: number }).value * 2,
+      });
+      const parent = outer.find((s) => s.span.id === span.span.parentIds[0])!;
+      expect(parent).toBeDefined();
+      expect(span.metrics!.start).toBeGreaterThanOrEqual(
+        parent.metrics!.start as number,
+      );
+      expect(span.metrics!.end).toBeLessThanOrEqual(
+        parent.metrics!.end as number,
+      );
+    }
+    if (name === "sequential")
+      expect(host[1]!.metrics!.start).toBeGreaterThanOrEqual(
+        host[0]!.metrics!.end as number,
+      );
+    else expect(new Set(host.map((s) => s.span.parentIds[0])).size).toBe(2);
+  }
+  const parallel = spans("parallel", "parallel").filter(
+    (s) => s.span.type === "function",
+  );
+  expect(parallel).toHaveLength(2);
+  expect(
+    Math.max(...parallel.map((s) => s.metrics!.start as number)),
+  ).toBeLessThan(Math.min(...parallel.map((s) => s.metrics!.end as number)));
+  for (const span of parallel)
+    expect(span.span.parentIds).toEqual([
+      spans("codeMode", "parallel")[0]!.span.id,
+    ]);
+  const nested = spans("nested", "nested").find(
+    (s) => s.span.type === "function",
+  )!;
+  expect(nested.span.parentIds).toEqual([
+    spans("codeMode", "nested")[0]!.span.id,
+  ]);
+  expect(spans("host", "nested")).toHaveLength(1);
+  expect(spans("host", "nested")[0]!.span.type).toBe("function");
+  expect(spans("host", "nested")[0]!.span.parentIds).toEqual([nested.span.id]);
+  for (const name of ["host-error", "code-error"])
+    expect(spans("codeMode", name)[0]!.row.error).toBeTruthy();
+  expect(spans("fail", "host-error")[0]!.row.error).toContain("host failure");
+  expect(spans("fail", "caught-error")[0]!.row.error).toContain("host failure");
+  expect(spans("codeMode", "caught-error")[0]!.row.error).toBeUndefined();
+  expect(spans("codeMode", "caught-error")[0]!.output).toBe("recovered");
+  expect(spans("stream", "stream-output")[0]!.output).toEqual({
+    value: 9,
+  });
+  expect(spans("codeMode", "direct")[0]!.output).toBe(42);
+  if (mode !== "wrapped") {
+    const code = spans("code", "generation");
+    const host = spans("host", "generation");
+    expect(code).toHaveLength(1);
+    expect(code[0]!.span.type).toBe("tool");
+    expect(code[0]!.output).toEqual({ value: 12 });
+    expect(spans("codeMode", "generation")).toHaveLength(0);
+    expect(host).toHaveLength(2);
+    expect(
+      host.find((s) => (s.input as { value: number }).value === 6)!.span.type,
+    ).toBe("function");
+    expect(
+      host.find((s) => (s.input as { value: number }).value === 8)!.span.type,
+    ).toBe("tool");
+    expect(
+      host.find((s) => (s.input as { value: number }).value === 6)!.span
+        .parentIds,
+    ).toEqual([code[0]!.span.id]);
+    expect(
+      host.find((s) => (s.input as { value: number }).value === 8)!.span
+        .parentIds,
+    ).not.toEqual([code[0]!.span.id]);
+  }
 }

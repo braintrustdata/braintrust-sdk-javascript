@@ -1,8 +1,38 @@
 [
   {
+    "scenarioDirName": "ai-sdk-batch-instrumentation",
+    "label": "AI SDK Batch Instrumentation",
+    "metadataScenario": "ai-sdk-batch-instrumentation",
+    "variants": [
+      {
+        "variantKey": "ai-sdk-v7",
+        "label": "v7 pinned"
+      },
+      {
+        "variantKey": "ai-sdk-v7-latest",
+        "label": "v7 latest"
+      }
+    ]
+  },
+  {
     "scenarioDirName": "trace-primitives-basic",
     "label": "Trace primitives and project caching",
     "metadataScenario": "trace-primitives-basic"
+  },
+  {
+    "scenarioDirName": "ts-exec-loader",
+    "label": "TypeScript loader compatibility",
+    "metadataScenario": "ts-exec-loader",
+    "variants": [
+      {
+        "variantKey": "ts-exec-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "ts-exec-v1-latest",
+        "label": "v1 latest"
+      }
+    ]
   },
   {
     "scenarioDirName": "deepseek-harness-instrumentation",
@@ -62,6 +92,14 @@
       {
         "variantKey": "openai-v6-latest",
         "label": "v6 latest"
+      },
+      {
+        "variantKey": "openai-v7",
+        "label": "v7 pinned"
+      },
+      {
+        "variantKey": "openai-v7-latest",
+        "label": "v7 latest"
       }
     ]
   },
@@ -108,6 +146,14 @@
       {
         "variantKey": "pi-coding-agent-v081-latest",
         "label": "v0.81 latest"
+      },
+      {
+        "variantKey": "pi-coding-agent-v1",
+        "label": "v1 pinned"
+      },
+      {
+        "variantKey": "pi-coding-agent-v1-latest",
+        "label": "v1 latest"
       }
     ]
   },
@@ -147,12 +193,44 @@
     "metadataScenario": "cloudflare-think-instrumentation",
     "variants": [
       {
-        "variantKey": "cloudflare-think-v0",
-        "label": "v0.13 pinned"
+        "variantKey": "cloudflare-think-v0-13-ai6",
+        "label": "v0.13 pinned / AI SDK 6",
+        "variantKeys": [
+          "cloudflare-think-v0-13-ai6-manual",
+          "cloudflare-think-v0-13-ai6-auto"
+        ]
       },
       {
-        "variantKey": "cloudflare-think-v0-latest",
-        "label": "v0.13 latest"
+        "variantKey": "cloudflare-think-v0-13-latest-ai6",
+        "label": "v0.13 latest / AI SDK 6",
+        "variantKeys": [
+          "cloudflare-think-v0-13-latest-ai6-manual",
+          "cloudflare-think-v0-13-latest-ai6-auto"
+        ]
+      },
+      {
+        "variantKey": "cloudflare-think-v0-20-ai7",
+        "label": "v0.20 pinned / AI SDK 7",
+        "variantKeys": [
+          "cloudflare-think-v0-20-ai7-manual",
+          "cloudflare-think-v0-20-ai7-auto"
+        ]
+      },
+      {
+        "variantKey": "cloudflare-think-v0-20-latest-ai7",
+        "label": "v0.20 latest / AI SDK 7",
+        "variantKeys": [
+          "cloudflare-think-v0-20-latest-ai7-manual",
+          "cloudflare-think-v0-20-latest-ai7-auto"
+        ]
+      },
+      {
+        "variantKey": "cloudflare-think-v0-20-1-ai7",
+        "label": "v0.20.1 / AI SDK 7",
+        "variantKeys": [
+          "cloudflare-think-v0-20-1-ai7-manual",
+          "cloudflare-think-v0-20-1-ai7-auto"
+        ]
       }
     ]
   },
@@ -521,11 +599,19 @@
     "variants": [
       {
         "variantKey": "typesafe-v0",
-        "label": "v0 pinned"
+        "label": "v0.6 pinned"
       },
       {
         "variantKey": "typesafe-v0-latest",
-        "label": "v0 latest"
+        "label": "v0.6 latest"
+      },
+      {
+        "variantKey": "typesafe-v0-7",
+        "label": "v0.7 pinned"
+      },
+      {
+        "variantKey": "typesafe-v0-7-latest",
+        "label": "v0.7 latest"
       }
     ]
   },
@@ -598,11 +684,11 @@
       },
       {
         "variantKey": "ai-sdk-v7",
-        "label": "v7 pinned (including evaluate)"
+        "label": "v7 pinned"
       },
       {
         "variantKey": "ai-sdk-v7-latest",
-        "label": "v7 latest (including evaluate)"
+        "label": "v7 latest"
       }
     ]
   },
@@ -891,6 +977,38 @@
       {
         "variantKey": "langchain-anthropic-v1-latest",
         "label": "v1 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "livekit-instrumentation",
+    "label": "LiveKit cascade instrumentation and PCM recording (streaming STT, tools, interruption recovery; automatic and manual)",
+    "metadataScenario": "livekit-instrumentation",
+    "variants": [
+      {
+        "variantKey": "livekit-v1",
+        "label": "v1.9 pinned"
+      },
+      {
+        "variantKey": "livekit-v1-latest",
+        "label": "v1.9 latest"
+      }
+    ]
+  },
+  {
+    "scenarioDirName": "workers-ai-instrumentation",
+    "label": "Workers AI binding instrumentation",
+    "metadataScenario": "workers-ai-instrumentation",
+    "variants": [
+      {
+        "variantKey": "miniflare-v4",
+        "variantKeys": ["miniflare-v4", "miniflare-v4-binding"],
+        "label": "v4 pinned"
+      },
+      {
+        "variantKey": "miniflare-v4-latest",
+        "variantKeys": ["miniflare-v4-latest", "miniflare-v4-latest-binding"],
+        "label": "v4 latest"
       }
     ]
   }

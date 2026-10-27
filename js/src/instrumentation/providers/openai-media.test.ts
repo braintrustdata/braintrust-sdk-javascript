@@ -4,7 +4,7 @@ import { afterEach, beforeAll, beforeEach, expect, it } from "vite-plus/test";
 import { Attachment, initLogger } from "../../logger/core";
 import { _exportsForTestingOnly } from "../../logger/testing";
 import { configureNode } from "../../node/config";
-import { openAIChannels } from "./openai-channels";
+import { openAIChannels } from "./openai-interceptors";
 configureNode();
 registerInstrumentation();
 const originalAutoCaptureAttachments =

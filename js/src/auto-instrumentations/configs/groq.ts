@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { groqChannels } from "../../instrumentation/providers/groq-channels";
+import { groqChannels } from "../../instrumentation/providers/groq-interceptors";
 
 export const groqConfigs: InstrumentationConfig[] = [
   {
@@ -12,7 +12,6 @@ export const groqConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Completions",
       methodName: "create",
-      kind: "Async",
     },
   },
   {
@@ -25,7 +24,6 @@ export const groqConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Embeddings",
       methodName: "create",
-      kind: "Async",
     },
   },
   {
@@ -38,7 +36,6 @@ export const groqConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Speech",
       methodName: "create",
-      kind: "Async",
     },
   },
   {
@@ -51,7 +48,6 @@ export const groqConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Transcriptions",
       methodName: "create",
-      kind: "Async",
     },
   },
   {
@@ -64,7 +60,6 @@ export const groqConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Translations",
       methodName: "create",
-      kind: "Async",
     },
   },
 ];

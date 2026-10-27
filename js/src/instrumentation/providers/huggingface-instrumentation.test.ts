@@ -89,6 +89,98 @@ describe("aggregateChatCompletionChunks", () => {
     });
   });
 
+  it("keeps tool calls apart when the provider omits index", () => {
+    const chunk = (toolCall: Record<string, unknown>) => ({
+      choices: [{ delta: { tool_calls: [toolCall] } }],
+    });
+    const result = aggregateChatCompletionChunks([
+      chunk({
+        id: "call_1",
+        type: "function",
+        function: { name: "get_weather", arguments: '{"city":' },
+      }),
+      chunk({ function: { arguments: '"Paris"}' } }),
+      chunk({
+        id: "call_2",
+        type: "function",
+        function: { name: "get_time", arguments: '{"tz":"CET"}' },
+      }),
+    ]);
+
+    expect(result).toMatchObject({
+      choices: [
+        {
+          message: {
+            tool_calls: [
+              {
+                id: "call_1",
+                type: "function",
+                function: {
+                  name: "get_weather",
+                  arguments: '{"city":"Paris"}',
+                },
+              },
+              {
+                id: "call_2",
+                type: "function",
+                function: { name: "get_time", arguments: '{"tz":"CET"}' },
+              },
+            ],
+          },
+        },
+      ],
+    });
+  });
+
+  it.each([undefined, null])(
+    "merges interleaved tool calls by ID when index is %s",
+    (index) => {
+      const chunks = [
+        {
+          id: "call_1",
+          type: "function",
+          function: { name: "get_weather", arguments: '{"city":' },
+        },
+        {
+          id: "call_2",
+          type: "function",
+          function: { name: "get_time", arguments: '{"tz":' },
+        },
+        { id: "call_1", function: { arguments: '"Paris"}' } },
+        { id: "call_2", function: { arguments: '"CET"}' } },
+      ].map((toolCall) => ({
+        choices: [
+          { index: 0, delta: { tool_calls: [{ ...toolCall, index }] } },
+        ],
+      }));
+      const result = aggregateChatCompletionChunks(chunks);
+
+      expect(result).toMatchObject({
+        choices: [
+          {
+            message: {
+              tool_calls: [
+                {
+                  id: "call_1",
+                  type: "function",
+                  function: {
+                    name: "get_weather",
+                    arguments: '{"city":"Paris"}',
+                  },
+                },
+                {
+                  id: "call_2",
+                  type: "function",
+                  function: { name: "get_time", arguments: '{"tz":"CET"}' },
+                },
+              ],
+            },
+          },
+        ],
+      });
+    },
+  );
+
   it("preserves full tool calls emitted in a single streamed chunk", () => {
     expect(
       aggregateChatCompletionChunks([

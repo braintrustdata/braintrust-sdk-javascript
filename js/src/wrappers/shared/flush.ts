@@ -1,3 +1,4 @@
+import { sdkConsole } from "../../logs/console";
 import type { Experiment } from "../../logger/experiments";
 import { formatExperimentSummary } from "./format";
 
@@ -17,6 +18,5 @@ export async function summarizeAndFlush(
   }
 
   const summary = await experiment.summarize();
-  // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-  console.log(formatExperimentSummary(summary));
+  sdkConsole.log(formatExperimentSummary(summary));
 }

@@ -1,265 +1,29 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { cohereChannels } from "../../instrumentation/providers/cohere-channels";
+import { cohereChannels } from "../../instrumentation/providers/cohere-interceptors";
 
-export const cohereConfigs: InstrumentationConfig[] = [
-  {
-    channelName: cohereChannels.chat.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.0.0 <8.0.0",
-      filePath: "Client.js",
-    },
-    functionQuery: {
+// Keep major-version ranges separate to preserve prerelease matching.
+export const cohereConfigs: InstrumentationConfig[] = (
+  ["chat", "chatStream", "embed", "rerank"] as const
+).flatMap((methodName) =>
+  [
+    {
       className: "CohereClient",
-      methodName: "chat",
-      kind: "Async",
+      filePath: "Client.js",
+      versionRange: ">=7.0.0 <8.0.0 || >=8.0.0 <9.0.0",
     },
-  },
-  {
-    channelName: cohereChannels.chat.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.0.0 <7.21.0",
-      filePath: "api/resources/v2/client/Client.js",
-    },
-    functionQuery: {
+    {
       className: "V2",
-      methodName: "chat",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.chat.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.21.0 <8.0.0",
       filePath: "api/resources/v2/client/Client.js",
-    },
-    functionQuery: {
-      className: "V2Client",
-      methodName: "chat",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.chat.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=8.0.0 <9.0.0",
-      filePath: "Client.js",
-    },
-    functionQuery: {
-      className: "CohereClient",
-      methodName: "chat",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.chat.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=8.0.0 <9.0.0",
-      filePath: "api/resources/v2/client/Client.js",
-    },
-    functionQuery: {
-      className: "V2Client",
-      methodName: "chat",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.chatStream.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.0.0 <8.0.0",
-      filePath: "Client.js",
-    },
-    functionQuery: {
-      className: "CohereClient",
-      methodName: "chatStream",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.chatStream.channelName,
-    module: {
-      name: "cohere-ai",
       versionRange: ">=7.0.0 <7.21.0",
-      filePath: "api/resources/v2/client/Client.js",
     },
-    functionQuery: {
-      className: "V2",
-      methodName: "chatStream",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.chatStream.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.21.0 <8.0.0",
-      filePath: "api/resources/v2/client/Client.js",
-    },
-    functionQuery: {
+    {
       className: "V2Client",
-      methodName: "chatStream",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.chatStream.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=8.0.0 <9.0.0",
-      filePath: "Client.js",
-    },
-    functionQuery: {
-      className: "CohereClient",
-      methodName: "chatStream",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.chatStream.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=8.0.0 <9.0.0",
       filePath: "api/resources/v2/client/Client.js",
+      versionRange: ">=7.21.0 <8.0.0 || >=8.0.0 <9.0.0",
     },
-    functionQuery: {
-      className: "V2Client",
-      methodName: "chatStream",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.embed.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.0.0 <8.0.0",
-      filePath: "Client.js",
-    },
-    functionQuery: {
-      className: "CohereClient",
-      methodName: "embed",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.embed.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.0.0 <7.21.0",
-      filePath: "api/resources/v2/client/Client.js",
-    },
-    functionQuery: {
-      className: "V2",
-      methodName: "embed",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.embed.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.21.0 <8.0.0",
-      filePath: "api/resources/v2/client/Client.js",
-    },
-    functionQuery: {
-      className: "V2Client",
-      methodName: "embed",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.embed.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=8.0.0 <9.0.0",
-      filePath: "Client.js",
-    },
-    functionQuery: {
-      className: "CohereClient",
-      methodName: "embed",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.embed.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=8.0.0 <9.0.0",
-      filePath: "api/resources/v2/client/Client.js",
-    },
-    functionQuery: {
-      className: "V2Client",
-      methodName: "embed",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.rerank.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.0.0 <8.0.0",
-      filePath: "Client.js",
-    },
-    functionQuery: {
-      className: "CohereClient",
-      methodName: "rerank",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.rerank.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.0.0 <7.21.0",
-      filePath: "api/resources/v2/client/Client.js",
-    },
-    functionQuery: {
-      className: "V2",
-      methodName: "rerank",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.rerank.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=7.21.0 <8.0.0",
-      filePath: "api/resources/v2/client/Client.js",
-    },
-    functionQuery: {
-      className: "V2Client",
-      methodName: "rerank",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.rerank.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=8.0.0 <9.0.0",
-      filePath: "Client.js",
-    },
-    functionQuery: {
-      className: "CohereClient",
-      methodName: "rerank",
-      kind: "Async",
-    },
-  },
-  {
-    channelName: cohereChannels.rerank.channelName,
-    module: {
-      name: "cohere-ai",
-      versionRange: ">=8.0.0 <9.0.0",
-      filePath: "api/resources/v2/client/Client.js",
-    },
-    functionQuery: {
-      className: "V2Client",
-      methodName: "rerank",
-      kind: "Async",
-    },
-  },
-];
+  ].map(({ className, filePath, versionRange }) => ({
+    channelName: cohereChannels[methodName].channelName,
+    module: { name: "cohere-ai", filePath, versionRange },
+    functionQuery: { className, methodName },
+  })),
+);

@@ -23,6 +23,7 @@ import { huggingFaceConfigs } from "./huggingface";
 import { huggingFaceTransformersConfigs } from "./huggingface-transformers";
 import { langchainConfigs } from "./langchain";
 import { langSmithConfigs } from "./langsmith";
+import { livekitConfigs } from "./livekit";
 import { mistralConfigs } from "./mistral";
 import { langGraphSDKConfigs } from "./langgraph-sdk";
 import { ollamaConfigs } from "./ollama";
@@ -124,6 +125,10 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
       configs: strandsAgentSDKConfigs,
     },
     {
+      integrations: ["livekit"],
+      configs: livekitConfigs,
+    },
+    {
       integrations: ["elevenlabs"],
       configs: elevenLabsConfigs,
     },
@@ -140,43 +145,28 @@ const defaultInstrumentationConfigGroups: readonly InstrumentationConfigGroup[] 
     // content-hashed chunks make `filePath`-based matching too brittle.
     // Instead it's handled by the source-replacement entry in
     // `loader/special-case-patches.ts`, which both the runtime loader
-    // (`hook.mjs` → `cjs-patch.ts`/`esm-hook.mts`) and the bundler plugin
+    // (`hook.mjs` → `module-hooks.mts`/`cjs-patch.ts`) and the bundler plugin
     // (`bundler/plugin.ts`) call. The `mastra` env-var disable still works.
   ];
 
 export function getDefaultInstrumentationConfigs({
-  additionalInstrumentations,
   disabledIntegrationConfig,
-  disabledIntegrations,
 }: {
-  additionalInstrumentations?: readonly InstrumentationConfig[];
   disabledIntegrationConfig?: InstrumentationIntegrationsConfig;
-  disabledIntegrations?: ReadonlySet<string>;
 } = {}): InstrumentationConfig[] {
-  const disabledConfig =
-    disabledIntegrationConfig ??
-    (disabledIntegrations
-      ? readDisabledInstrumentationEnvConfig(
-          [...disabledIntegrations].join(","),
-        ).integrations
-      : undefined);
-
-  return [
-    ...defaultInstrumentationConfigGroups.flatMap(
-      ({ configs, integrations }) =>
-        isInstrumentationIntegrationDisabled(disabledConfig, ...integrations)
-          ? []
-          : configs,
-    ),
-    ...(additionalInstrumentations ?? []),
-  ];
+  return defaultInstrumentationConfigGroups.flatMap(
+    ({ configs, integrations }) =>
+      isInstrumentationIntegrationDisabled(
+        disabledIntegrationConfig,
+        ...integrations,
+      )
+        ? []
+        : configs,
+  );
 }
 
-export function getDefaultAutoInstrumentationConfigs(
-  additionalInstrumentations?: readonly InstrumentationConfig[],
-): InstrumentationConfig[] {
+export function getDefaultAutoInstrumentationConfigs(): InstrumentationConfig[] {
   return getDefaultInstrumentationConfigs({
-    additionalInstrumentations,
     disabledIntegrationConfig: readDisabledInstrumentationEnvConfig(
       process.env.BRAINTRUST_DISABLE_INSTRUMENTATION,
     ).integrations,

@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { cloudflareAIChatChannels } from "../../instrumentation/providers/cloudflare-ai-chat-channels";
+import { cloudflareAIChatChannels } from "../../instrumentation/providers/cloudflare-ai-chat-interceptors";
 
 const cloudflareAIChatVersionRange = ">=0.9.0 <0.10.0";
 
@@ -18,7 +18,6 @@ export const cloudflareAIChatConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "AIChatAgent",
       methodName: "_runExclusiveChatTurn",
-      kind: "Async",
     },
   },
 ];

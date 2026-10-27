@@ -53,6 +53,13 @@ async function main() {
   }
   await symlink(evePackageDir, eveModuleDir, "dir");
 
+  // Variants share this directory. Discard the previous variant's active local
+  // Workflow runs so `eve start` does not re-enqueue them on startup.
+  await rm(path.join(process.cwd(), ".eve", ".workflow-data"), {
+    force: true,
+    recursive: true,
+  });
+
   const agentDir = path.join(process.cwd(), "agent");
   await rm(path.join(agentDir, "instrumentation.ts"), { force: true });
   await rm(path.join(agentDir, "instrumentation"), {

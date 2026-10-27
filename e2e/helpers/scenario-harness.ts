@@ -27,6 +27,7 @@ import {
   type InstallScenarioDependenciesOptions,
   type InstallScenarioDependenciesResult,
 } from "./scenario-installer";
+import { extractOtelSpans } from "./trace-summary";
 
 type EventPredicate = (event: CapturedLogEvent) => boolean;
 type PayloadPredicate = (payload: CapturedLogPayload) => boolean;
@@ -80,9 +81,10 @@ export interface ScenarioRunContext {
 }
 
 interface ScenarioRunContextRecord {
+  cassetteVariantKey: string | null;
   forwardToProduction?: boolean;
-  logRootSpanIds?: string[];
-  experimentNames?: string[];
+  logRootSpanIds: string[];
+  experimentNames: string[];
   entry: string;
   runner: ScenarioRunner;
   scenarioDirName: string;
@@ -295,6 +297,7 @@ function getBedrockRegion(): string {
 
 function getCassetteServerRoutes(): CassetteServerRoute[] {
   return [
+    { prefix: "/ai-gateway", upstreamOrigin: "https://ai-gateway.vercel.sh" },
     { prefix: "/anthropic", upstreamOrigin: "https://api.anthropic.com" },
     {
       prefix: "/anthropic-bedrock",
@@ -324,6 +327,7 @@ function getCassetteServerRoutes(): CassetteServerRoute[] {
     { prefix: "/openai", upstreamOrigin: "https://api.openai.com" },
     { prefix: "/openrouter", upstreamOrigin: "https://openrouter.ai" },
     { prefix: "/typesafe", upstreamOrigin: "https://api.typesafe.ai" },
+    { prefix: "/cloudflare", upstreamOrigin: "https://api.cloudflare.com" },
   ];
 }
 
@@ -334,10 +338,18 @@ const CASSETTE_IGNORED_REQUESTS = [
 function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
   const serverUrl = wiring.serverUrl;
   return {
+    // Provider CLIs must connect directly to the local cassette server.
+    HTTP_PROXY: "",
+    HTTPS_PROXY: "",
+    ALL_PROXY: "",
+    http_proxy: "",
+    https_proxy: "",
+    all_proxy: "",
     BRAINTRUST_E2E_CASSETTE_PATH: wiring.cassetteDir,
     BRAINTRUST_E2E_CASSETTE_MODE: wiring.mode,
     BRAINTRUST_E2E_CASSETTE_SERVER_URL: serverUrl,
     BRAINTRUST_E2E_CASSETTE_VARIANT: wiring.variantKey,
+    BRAINTRUST_E2E_AI_GATEWAY_BASE_URL: `${serverUrl}/ai-gateway/v4/ai`,
     BRAINTRUST_E2E_MODEL_BASE_URL: `${serverUrl}/openai/v1`,
     ANTHROPIC_BASE_URL: `${serverUrl}/anthropic`,
     ANTHROPIC_BEDROCK_BASE_URL: `${serverUrl}/anthropic-bedrock`,
@@ -362,6 +374,7 @@ function getCassetteEnv(wiring: ActiveCassetteWiring): Record<string, string> {
     OPENAI_BASE_URL: `${serverUrl}/openai/v1`,
     OPENROUTER_BASE_URL: `${serverUrl}/openrouter/api/v1`,
     TYPESAFE_BASE_URL: `${serverUrl}/typesafe`,
+    CLOUDFLARE_BASE_URL: `${serverUrl}/cloudflare`,
   };
 }
 
@@ -418,6 +431,11 @@ const CASSETTE_PROVIDER_KEYS: Array<{
     placeholder: "sk-or-cassette-placeholder",
   },
   { envVars: ["TYPESAFE_API_KEY"], placeholder: "cassette-placeholder" },
+  {
+    envVars: ["CLOUDFLARE_AI_API_KEY", "CLOUDFLARE_API_TOKEN"],
+    placeholder: "cassette-placeholder",
+  },
+  { envVars: ["CLOUDFLARE_ACCOUNT_ID"], placeholder: "cassette-account" },
 ];
 
 function getProviderKeyPlaceholders(): Record<string, string> {
@@ -444,6 +462,7 @@ function resolveCassetteMode(
 
 async function loadScenarioCassetteOptions(scenarioDir: string): Promise<{
   filter: FilterSpec | undefined;
+  inlineRequestBodies?: boolean;
   redact: RedactionSpec | undefined;
   streamingRequests: StreamingRequestMatcher[] | undefined;
 }> {
@@ -457,11 +476,13 @@ async function loadScenarioCassetteOptions(scenarioDir: string): Promise<{
   }
   const mod = (await import(pathToFileURL(filterPath).href)) as {
     filter?: FilterSpec;
+    inlineRequestBodies?: boolean;
     redact?: RedactionSpec;
     streamingRequests?: StreamingRequestMatcher[];
   };
   return {
     filter: mod.filter ?? "default",
+    inlineRequestBodies: mod.inlineRequestBodies,
     redact: mod.redact,
     streamingRequests: mod.streamingRequests,
   };
@@ -709,7 +730,10 @@ interface ScenarioHarness {
 
 export async function withScenarioHarness(
   body: (harness: ScenarioHarness) => Promise<void>,
-  optionsForHarness: { forwardToProduction?: boolean } = {},
+  optionsForHarness: {
+    forwardToProduction?: boolean;
+    isolateProductionLogIds?: boolean;
+  } = {},
 ): Promise<void> {
   const { getProdForwarding } = await import("./prod-forwarding");
   const prodForwarding =
@@ -720,6 +744,7 @@ export async function withScenarioHarness(
   const server = await startMockBraintrustServer({
     prodForwarding,
     testRunId,
+    isolateProductionLogIds: optionsForHarness.isolateProductionLogIds,
   });
   const testEnv = getTestServerEnv(
     testRunId,
@@ -779,15 +804,9 @@ export async function withScenarioHarness(
   };
 
   const runWithCassetteServer = async (
-    options: {
-      entry?: string;
-      env?: Record<string, string>;
-      runContext?: ScenarioRunContext;
-      scenarioDir: string;
-    },
+    wiring: CassetteWiring | null,
     run: (cassetteEnv: Record<string, string>) => Promise<ScenarioResult>,
   ): Promise<ScenarioResult> => {
-    const wiring = cassetteWiringFor(options);
     if (!wiring) {
       return await run({});
     }
@@ -800,6 +819,7 @@ export async function withScenarioHarness(
       mode: wiring.mode,
       store: createJsonFileStore({ rootDir: wiring.cassetteDir }),
       filters: cassetteOptions.filter,
+      inlineRequestBodies: cassetteOptions.inlineRequestBodies,
       redact: cassetteOptions.redact,
       streamingRequests: cassetteOptions.streamingRequests,
       ignoredRequests: CASSETTE_IGNORED_REQUESTS,
@@ -841,44 +861,44 @@ export async function withScenarioHarness(
     },
     runner: ScenarioRunner,
     defaultEntry: string,
-    run: () => Promise<ScenarioResult>,
+    run: (wiring: CassetteWiring | null) => Promise<ScenarioResult>,
   ): Promise<ScenarioResult> => {
-    const result = await run();
-    await recordScenarioRunContext({
-      forwardToProduction: Boolean(prodForwarding),
-      logRootSpanIds: [
-        ...new Set(
-          server.events.flatMap((event) =>
-            event.projectId && !event.experimentId && event.span.rootId
-              ? [event.span.rootId]
-              : [],
+    const wiring = runner === "deno" ? null : cassetteWiringFor(options);
+    try {
+      return await run(wiring);
+    } finally {
+      // Expected failures can still consume a cassette. Keep that usage too.
+      await recordScenarioRunContext({
+        cassetteVariantKey: wiring?.variantKey ?? null,
+        forwardToProduction: prodForwarding !== null,
+        logRootSpanIds: [
+          ...new Set(
+            [
+              ...server.events
+                .filter((event) => !event.experimentId)
+                .map((event) => event.span.rootId),
+              ...server.requests
+                .filter((request) => request.path === "/otel/v1/traces")
+                .flatMap((request) => extractOtelSpans(request.jsonBody))
+                .map((span) => span.traceId),
+            ].filter((id): id is string => typeof id === "string"),
           ),
+        ],
+        experimentNames: server.experiments
+          .filter((experiment) =>
+            server.events.some((event) => event.experimentId === experiment.id),
+          )
+          .map((experiment) => experiment.name),
+        entry: options.entry ?? defaultEntry,
+        runner,
+        scenarioDirName: path.basename(
+          options.runContext?.originalScenarioDir ?? options.scenarioDir,
         ),
-      ],
-      experimentNames: [
-        ...new Set(
-          server.requests.flatMap((request) => {
-            const body = request.jsonBody;
-            return request.path === "/api/experiment/register" &&
-              body &&
-              typeof body === "object" &&
-              !Array.isArray(body) &&
-              typeof body.experiment_name === "string"
-              ? [body.experiment_name]
-              : [];
-          }),
-        ),
-      ],
-      entry: options.entry ?? defaultEntry,
-      runner,
-      scenarioDirName: path.basename(
-        options.runContext?.originalScenarioDir ?? options.scenarioDir,
-      ),
-      testRunId,
-      timestamp: new Date().toISOString(),
-      variantKey: options.runContext?.variantKey,
-    });
-    return result;
+        testRunId,
+        timestamp: new Date().toISOString(),
+        variantKey: options.runContext?.variantKey,
+      });
+    }
   };
 
   try {
@@ -901,8 +921,8 @@ export async function withScenarioHarness(
           }),
         ),
       runNodeScenarioDir: (options) =>
-        runWithContext(options, "node", "scenario.mjs", async () =>
-          runWithCassetteServer(options, (cassetteEnv) =>
+        runWithContext(options, "node", "scenario.mjs", async (wiring) =>
+          runWithCassetteServer(wiring, (cassetteEnv) =>
             runNodeScenarioDir({
               ...options,
               env: {
@@ -914,8 +934,8 @@ export async function withScenarioHarness(
           ),
         ),
       runScenarioDir: (options) =>
-        runWithContext(options, "tsx", "scenario.ts", async () =>
-          runWithCassetteServer(options, (cassetteEnv) =>
+        runWithContext(options, "tsx", "scenario.ts", async (wiring) =>
+          runWithCassetteServer(wiring, (cassetteEnv) =>
             runScenarioDir({
               ...options,
               env: {

@@ -19,40 +19,23 @@ export interface TransformOutput {
 }
 
 /**
- * The kind of function.
- */
-export type FunctionKind = "Sync" | "Async" | "Callback";
-
-interface FunctionQueryBase {
-  kind: FunctionKind;
-  index?: number | null;
-  callbackIndex?: number;
-}
-
-/**
  * Describes which function to instrument.
  */
-export type FunctionQuery =
-  | (FunctionQueryBase & {
+export type FunctionQuery = {
+  index?: number;
+} & (
+  | {
       className: string;
       methodName: string;
       isExportAlias?: boolean;
-    })
-  | (FunctionQueryBase & {
-      className: string;
-      privateMethodName: string;
-      isExportAlias?: boolean;
-    })
-  | (FunctionQueryBase & { methodName: string })
-  | (FunctionQueryBase & {
+    }
+  | { methodName: string }
+  | {
       functionName: string;
       isExportAlias?: boolean;
-    })
-  | (FunctionQueryBase & {
-      objectName: string;
-      propertyName: string;
-    })
-  | FunctionQueryBase;
+    }
+  | { propertyName: string }
+);
 
 /**
  * Configuration for injecting instrumentation code.
@@ -72,12 +55,6 @@ export interface InstrumentationConfig {
    * The function query to identify the function to instrument.
    */
   functionQuery: FunctionQuery;
-
-  /**
-   * Optional raw esquery selector. When provided, this selector is used instead
-   * of deriving one from functionQuery.
-   */
-  astQuery?: string;
 }
 
 /**

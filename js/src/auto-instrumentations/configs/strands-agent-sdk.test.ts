@@ -25,7 +25,6 @@ describe("strandsAgentSDKConfigs", () => {
         functionQuery: {
           className: "Agent",
           methodName: "stream",
-          kind: "Sync",
         },
       }),
       expect.objectContaining({

@@ -5,38 +5,19 @@
   "braintrustScenario": {
     "bump": {
       "dependencies": {
-        "cloudflare-think-v0-latest": {
+        "cloudflare-think-v0-13-latest-ai6": {
           "package": "@cloudflare/think",
-          "range": ">=0.13.0 <0.14.0"
+          "range": ">=0.13.0 <0.14.0",
+          "targetManifest": "versions/ai6/package.json",
+          "targetDependency": "cloudflare-think-v0-13-latest"
+        },
+        "cloudflare-think-v0-20-latest-ai7": {
+          "package": "@cloudflare/think",
+          "range": ">=0.20.0 <0.21.0",
+          "targetManifest": "versions/ai7/package.json",
+          "targetDependency": "cloudflare-think-v0-20-latest"
         }
       }
-    }
-  },
-  "dependencies": {
-    "@ai-sdk/openai": "3.0.80",
-    "@cloudflare/vite-plugin": "1.45.1",
-    "agents": "0.17.4",
-    "ai": "6.0.202",
-    "ai-unwrapped": "npm:ai@6.0.202",
-    "cloudflare-think-v0": "npm:@cloudflare/think@0.13.0",
-    "cloudflare-think-v0-latest": "npm:@cloudflare/think@0.13.0",
-    "dc-browser": "1.0.4",
-    "vite": "7.3.5",
-    "wrangler": "4.112.0",
-    "zod": "4.3.6"
-  },
-  "pnpm": {
-    "overrides": {
-      "esbuild@<0.28.1": "^0.28.1",
-      "ip-address@<10.2.2": "^10.2.2",
-      "sharp@<0.35.0": "^0.35.3",
-      "@hono/node-server@<2.0.5": "^2.0.10",
-      "brace-expansion@5.0.7": "^5.0.9",
-      "undici@<7.29.0": "^7.29.0",
-      "hono@<4.12.34": "^4.12.34",
-      "nanoid@<3.3.18": "^3.3.18",
-      "fast-uri@<3.1.5": "^3.1.5",
-      "postcss@<8.5.23": "^8.5.23"
     }
   }
 }

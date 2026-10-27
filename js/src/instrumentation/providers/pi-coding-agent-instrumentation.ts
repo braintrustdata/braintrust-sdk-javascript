@@ -1,6 +1,6 @@
 import { toLoggedError } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
-import iso, { type IsoAsyncLocalStorage } from "#braintrust-platform";
+
+import { SpanTypeAttribute, isObject } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
 import {
   _internalCaptureAttachmentsEnabled,
@@ -8,19 +8,14 @@ import {
   withCurrent,
   _internalStartSpan as startBaseSpan,
 } from "../../logger/core";
+import iso, { type IsoAsyncLocalStorage } from "#braintrust-platform";
 import type { Span } from "../../logger/core";
+
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
-import { SpanTypeAttribute, isObject } from "../../../util/index";
-import { processInputAttachments } from "../../wrappers/attachment-utils";
-import {
-  runWithAutoInstrumentationAllowed,
-  runWithAutoInstrumentationSuppressed,
-} from "../auto-instrumentation-suppression";
-import { piCodingAgentChannels } from "./pi-coding-agent-channels";
 import type {
   PiAgent,
   PiAgentEvent,
@@ -35,20 +30,27 @@ import type {
   PiPromptOptions,
   PiSimpleStreamOptions,
   PiStreamFunction,
+  PiSystemMessage,
   PiTextContent,
   PiTool,
   PiToolCall,
   PiToolResultMessage,
 } from "../../vendor-sdk-types/pi-coding-agent";
+import { processInputAttachments } from "../../wrappers/attachment-utils";
+import {
+  runWithAutoInstrumentationAllowed,
+  runWithAutoInstrumentationSuppressed,
+} from "../auto-instrumentation-suppression";
+import type { ChannelMessage } from "../core/tracing-types";
+import { piCodingAgentChannels } from "./pi-coding-agent-interceptors";
 
 type PiPromptState = {
   activeLlmSpans: Set<PiLlmSpanState>;
   activeToolSpans: Map<string, PiToolSpanState>;
   agent: PiAgent;
-  collectedLlmUsageMetrics: boolean;
   deferCompletionUntilTurnEnd: boolean;
   finalized: boolean;
-  metrics: Record<string, number>;
+  onFinalize?: (state: PiPromptState) => void;
   metadata: Record<string, unknown>;
   output?: unknown;
   promptCallEnded: boolean;
@@ -182,13 +184,11 @@ function startPiPromptRun(
     activeLlmSpans: new Set(),
     activeToolSpans: new Map(),
     agent,
-    collectedLlmUsageMetrics: false,
     deferCompletionUntilTurnEnd:
       options?.streamingBehavior === "followUp" ||
       options?.streamingBehavior === "steer",
     finalized: false,
     metadata,
-    metrics: {},
     promptCallEnded: false,
     span,
     startTime: getCurrentUnixTimestamp(),
@@ -291,6 +291,7 @@ function makeInstrumentedStreamFunction(
       return invokeOriginal();
     }
 
+    wrapPiToolExecutors(agent.state?.tools);
     wrapPiToolExecutors(context.tools);
     const llmState = await startPiLlmSpan(
       state,
@@ -365,7 +366,7 @@ async function startPiLlmSpan(
   const metadata = {
     ...extractModelMetadata(model),
     ...extractStreamOptionsMetadata(options),
-    ...extractToolMetadata(context.tools),
+    ...extractToolMetadata(resolvePiContextTools(context)),
     "pi_coding_agent.operation": `agent.${property}`,
   };
   const captureAttachments = _internalCaptureAttachmentsEnabled(state.span);
@@ -558,9 +559,6 @@ async function handlePiAgentEvent(
           event.message,
           _internalCaptureAttachmentsEnabled(state.span),
         );
-        if (!state.collectedLlmUsageMetrics) {
-          addMetrics(state.metrics, extractUsageMetrics(event.message.usage));
-        }
       }
       if (state.promptCallEnded && state.deferCompletionUntilTurnEnd) {
         finishPiPromptRun(state);
@@ -651,10 +649,8 @@ function finishPiPromptRun(state: PiPromptState, error?: unknown): void {
     safeLog(state.span, {
       ...(error ? { error: toLoggedError(error) } : {}),
       metadata,
-      metrics: {
-        ...cleanMetrics(state.metrics),
-        ...buildDurationMetrics(state.startTime),
-      },
+      // Usage belongs to LLM spans; repeating it here doubles trace rollups and cost.
+      metrics: buildDurationMetrics(state.startTime),
       output: state.output,
     });
   } finally {
@@ -690,11 +686,6 @@ function finishPiLlmSpan(
     ...cleanMetrics(llmState.metrics),
     ...buildDurationMetrics(llmState.startTime),
   };
-  const usageMetrics = extractUsageMetrics(message?.usage);
-  if (Object.keys(usageMetrics).length > 0) {
-    promptState.collectedLlmUsageMetrics = true;
-    addMetrics(promptState.metrics, usageMetrics);
-  }
 
   try {
     safeLog(llmState.span, {
@@ -731,13 +722,67 @@ function finishOpenToolSpans(state: PiPromptState, error?: unknown): void {
 }
 
 function normalizePiContextInput(context: PiContext): unknown[] {
-  const messages = context.messages.flatMap((message) =>
-    normalizePiMessage(message),
-  );
+  const messages: unknown[] = [];
   if (context.systemPrompt) {
-    return [{ role: "system", content: context.systemPrompt }, ...messages];
+    messages.push({ role: "system", content: context.systemPrompt });
+  }
+  for (const message of context.messages) {
+    if (!isPiSystemMessage(message)) {
+      messages.push(...normalizePiMessage(message));
+      continue;
+    }
+
+    const text =
+      typeof message.content === "string"
+        ? message.content
+        : message.content
+            .filter((part) => part.type === "text")
+            .map((part) => part.text)
+            .join("\n");
+    const initial = messages.length === 0;
+    const content = [text];
+    // Later system messages are deltas. Name section patches explicitly so
+    // replacements and removals retain their meaning without repeating history.
+    for (const [name, value] of Object.entries(message.sections ?? {})) {
+      if (value === null && !initial) {
+        content.push(`Removed system prompt section ${JSON.stringify(name)}.`);
+      } else if (typeof value === "string") {
+        content.push(
+          initial
+            ? value
+            : `Updated system prompt section ${JSON.stringify(name)}:\n\n${value}`,
+        );
+      }
+    }
+    messages.push({
+      role: "system",
+      content: content.filter((part) => part.length > 0).join("\n\n"),
+    });
   }
   return messages;
+}
+
+function resolvePiContextTools(context: PiContext): PiTool[] | undefined {
+  const tools = new Map<string, PiTool>();
+  let hasDeclarations = false;
+  for (const message of context.messages) {
+    if (!isPiSystemMessage(message)) {
+      continue;
+    }
+    if (
+      message.toolsAdded !== undefined ||
+      message.toolsRemoved !== undefined
+    ) {
+      hasDeclarations = true;
+    }
+    for (const tool of message.toolsRemoved ?? []) {
+      tools.delete(tool.name);
+    }
+    for (const tool of message.toolsAdded ?? []) {
+      tools.set(tool.name, tool);
+    }
+  }
+  return hasDeclarations ? [...tools.values()] : context.tools;
 }
 
 function normalizePiMessage(message: PiMessage): unknown[] {
@@ -834,6 +879,13 @@ function extractAssistantOutput(
       },
     ],
     captureAttachments,
+  );
+}
+
+function isPiSystemMessage(message: PiMessage): message is PiSystemMessage {
+  return (
+    message.role === "system" &&
+    (typeof message.content === "string" || Array.isArray(message.content))
   );
 }
 
@@ -1067,18 +1119,13 @@ function extractUsageMetrics(
     completion_tokens: usage.output,
     prompt_cache_creation_tokens: usage.cacheWrite,
     prompt_cached_tokens: usage.cacheRead,
-    prompt_tokens: usage.input,
+    // Pi reports cache reads and writes outside `input`; Braintrust's `prompt_tokens` includes them.
+    prompt_tokens:
+      typeof usage.input === "number"
+        ? usage.input + (usage.cacheRead ?? 0) + (usage.cacheWrite ?? 0)
+        : undefined,
     tokens: usage.totalTokens ?? usage.tokens,
   });
-}
-
-function addMetrics(
-  target: Record<string, number>,
-  source: Record<string, number>,
-): void {
-  for (const [key, value] of Object.entries(source)) {
-    target[key] = (target[key] ?? 0) + value;
-  }
 }
 
 function buildDurationMetrics(startTime: number): Record<string, number> {

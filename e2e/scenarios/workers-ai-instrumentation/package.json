@@ -1,0 +1,20 @@
+{
+  "name": "workers-ai-instrumentation-scenario",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "esbuild": "0.28.1",
+    "miniflare-v4": "npm:miniflare@4.20260730.0",
+    "miniflare-v4-latest": "npm:miniflare@4.20260730.0"
+  },
+  "braintrustScenario": {
+    "bump": {
+      "dependencies": {
+        "miniflare-v4-latest": {
+          "package": "miniflare",
+          "range": "^4.20260730.0"
+        }
+      }
+    }
+  }
+}

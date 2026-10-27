@@ -1,5 +1,7 @@
+import { registerInstrumentation } from "../registrations/aisdk";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
+import * as ai from "ai";
 import {
   afterEach,
   beforeAll,
@@ -8,17 +10,16 @@ import {
   expect,
   test,
 } from "vite-plus/test";
-import * as ai from "ai";
-import { configureNode } from "../../node/config";
+import { TestBackgroundLogger, initLogger } from "../../logger/core";
 import { _exportsForTestingOnly } from "../../logger/testing";
-import { initLogger, TestBackgroundLogger } from "../../logger/core";
+import { configureNode } from "../../node/config";
 import { wrapAISDK, wrapAgentClass } from "../../wrappers/ai-sdk";
 import {
   captureHarnessCreateSessionParent,
   harnessContinuationParent,
 } from "../../wrappers/ai-sdk/harness-agent-context";
 import { workflowAgentWrapperSpanCountForTesting } from "../../wrappers/ai-sdk/workflow-agent-context";
-import { aiSDKChannels } from "./ai-sdk-channels";
+import { aiSDKChannels } from "./ai-sdk-interceptors";
 
 try {
   configureNode();
@@ -150,9 +151,11 @@ describe("AI SDK streaming instrumentation", () => {
     });
     const params = { model, prompt: "Say hello" };
 
-    await aiSDKChannels.generateText.tracePromise(
+    await aiSDKChannels.generateText.invoke(
       () => model.doGenerate(params),
-      { arguments: [params] } as any,
+      undefined,
+      [params],
+      {},
     );
 
     const spans = (await backgroundLogger.drain()) as any[];
@@ -249,7 +252,7 @@ describe("AI SDK streaming instrumentation", () => {
         },
       };
 
-      await aiSDKChannels.generateText.tracePromise(
+      await aiSDKChannels.generateText.invoke(
         async () => {
           const result = params.tools.get_weather.execute(input, options);
           if (Symbol.asyncIterator in result) {
@@ -263,7 +266,9 @@ describe("AI SDK streaming instrumentation", () => {
           }
           return { text: "done" };
         },
-        { arguments: [params] } as any,
+        undefined,
+        [params],
+        {},
       );
 
       const spans = (await backgroundLogger.drain()) as any[];
@@ -303,11 +308,11 @@ describe("AI SDK streaming instrumentation", () => {
       prompt: "Say hello.",
       maxOutputTokens: 16,
     };
-    const result = (await aiSDKChannels.generateText.tracePromise(
+    const result = (await aiSDKChannels.generateText.invoke(
       async () => params.model.doGenerate(params),
-      {
-        arguments: [params],
-      } as any,
+      undefined,
+      [params],
+      {},
     )) as any;
 
     expect(result.text).toBe("hello");
@@ -364,11 +369,11 @@ describe("AI SDK streaming instrumentation", () => {
       prompt: "Say hello.",
       maxOutputTokens: 16,
     };
-    const result = (await aiSDKChannels.generateText.tracePromise(
+    const result = (await aiSDKChannels.streamText.invoke(
       async () => params.model.doStream(params),
-      {
-        arguments: [params],
-      } as any,
+      undefined,
+      [params],
+      {},
     )) as any;
 
     for await (const _chunk of result.stream) {
@@ -427,11 +432,11 @@ describe("AI SDK streaming instrumentation", () => {
       prompt: "Say hello.",
       maxOutputTokens: 16,
     };
-    const result = (await aiSDKChannels.generateText.tracePromise(
+    const result = (await aiSDKChannels.streamText.invoke(
       async () => params.model.doStream(params),
-      {
-        arguments: [params],
-      } as any,
+      undefined,
+      [params],
+      {},
     )) as any;
 
     const chunks: any[] = [];
@@ -1060,8 +1065,8 @@ describe("AI SDK streaming instrumentation", () => {
 
     const contentDelayMs = 80;
     let sentContent = false;
-    const result = aiSDKChannels.streamTextSync.traceSync(
-      () => ({
+    const result = (await aiSDKChannels.streamText.invoke(
+      async () => ({
         baseStream: new ReadableStream({
           start(controller) {
             controller.enqueue({ type: "stream-start", warnings: [] });
@@ -1089,15 +1094,15 @@ describe("AI SDK streaming instrumentation", () => {
           },
         }),
       }),
-      {
-        arguments: [
-          {
-            model: "mock-tool-model",
-            prompt: "Call the lookup tool.",
-          },
-        ],
-      } as any,
-    ) as any;
+      undefined,
+      [
+        {
+          model: "mock-tool-model",
+          prompt: "Call the lookup tool.",
+        },
+      ],
+      {},
+    )) as any;
 
     const reader = result.baseStream.getReader();
     while (true) {
@@ -1120,9 +1125,10 @@ describe("AI SDK streaming instrumentation", () => {
   test("baseStream patch preserves derived stream getters", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
+    registerInstrumentation();
     let chunkSent = false;
-    const result = aiSDKChannels.streamTextSync.traceSync(
-      () => {
+    const result = (await aiSDKChannels.streamText.invoke(
+      async () => {
         const resultRecord = {
           baseStream: new ReadableStream({
             pull(controller) {
@@ -1162,15 +1168,15 @@ describe("AI SDK streaming instrumentation", () => {
 
         return resultRecord;
       },
-      {
-        arguments: [
-          {
-            model: "mock-stream-model",
-            prompt: "Reply with fresh.",
-          },
-        ],
-      } as any,
-    ) as any;
+      undefined,
+      [
+        {
+          model: "mock-stream-model",
+          prompt: "Reply with fresh.",
+        },
+      ],
+      {},
+    )) as any;
 
     expect(Object.getOwnPropertyDescriptor(result, "textStream")?.get).toEqual(
       expect.any(Function),
@@ -1193,8 +1199,9 @@ describe("AI SDK streaming instrumentation", () => {
   test("async iterable stream accessors preserve ReadableStream methods", async () => {
     expect(await backgroundLogger.drain()).toHaveLength(0);
 
-    const result = aiSDKChannels.streamTextSync.traceSync(
-      () => {
+    registerInstrumentation();
+    const result = (await aiSDKChannels.streamText.invoke(
+      async () => {
         const resultRecord = {
           stream: new ReadableStream({
             start(controller) {
@@ -1221,15 +1228,15 @@ describe("AI SDK streaming instrumentation", () => {
 
         return resultRecord;
       },
-      {
-        arguments: [
-          {
-            model: "mock-v7-stream-model",
-            prompt: "Reply with v7.",
-          },
-        ],
-      } as any,
-    ) as any;
+      undefined,
+      [
+        {
+          model: "mock-v7-stream-model",
+          prompt: "Reply with v7.",
+        },
+      ],
+      {},
+    )) as any;
 
     expect(result.stream.pipeThrough).toEqual(expect.any(Function));
     expect(result.stream.getReader).toEqual(expect.any(Function));

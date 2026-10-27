@@ -22,7 +22,7 @@ import {
 } from "@opentelemetry/sdk-trace-base";
 import { BraintrustSpanProcessor } from "./otel";
 import { createTracerProvider } from "../tests/utils";
-import { _exportsForTestingOnly } from "../../../js/src/logger";
+import { _exportsForTestingOnly } from "../../../js/src/logger/testing";
 
 type OtlpTraceRequest = {
   resourceSpans?: Array<{

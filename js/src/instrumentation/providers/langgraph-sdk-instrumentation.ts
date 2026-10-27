@@ -15,7 +15,7 @@ import {
   runWithAutoInstrumentationSuppressed,
 } from "../auto-instrumentation-suppression";
 import { patchStreamIfNeeded } from "../core/stream-patcher";
-import { langGraphSDKChannels } from "./langgraph-sdk-channels";
+import { langGraphSDKChannels } from "./langgraph-sdk-interceptors";
 
 export function registerLangGraphSDKInstrumentation(): void {
   langGraphSDKChannels.wait.intercept((target, self, args) =>

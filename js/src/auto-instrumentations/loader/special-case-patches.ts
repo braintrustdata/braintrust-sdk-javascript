@@ -82,9 +82,8 @@ export function applySpecialCasePatch(input: SpecialCaseInput): string | null {
 }
 
 /**
- * Synchronous predicate variant used by the ESM resolve hook to decide
- * up-front whether a URL needs to be remembered for later patching. The
- * load step still calls `applySpecialCasePatch` against the actual source.
+ * Identify files that need a source patch before the ESM loader reads their
+ * source. Unrelated CommonJS files can keep Node's default loading behavior.
  */
 export function isSpecialCaseTarget(
   packageName: string,

@@ -9,7 +9,7 @@ import {
 import { _exportsForTestingOnly } from "../../logger/testing";
 import { initLogger } from "../../logger/core";
 import { registerGenkitInstrumentation } from "./genkit-instrumentation";
-import { genkitChannels } from "./genkit-channels";
+import { genkitChannels } from "./genkit-interceptors";
 
 function singleQueueStream<T>(
   chunks: T[],
@@ -64,7 +64,7 @@ describe("registerGenkitInstrumentation stream patching", () => {
     registerGenkitInstrumentation();
     const stream = singleQueueStream([{ text: "hello" }, { text: " world" }]);
 
-    const result = genkitChannels.generateStream.traceSync(
+    const result = genkitChannels.generateStream.invoke(
       () => ({
         response: Promise.resolve({
           text: "hello world",
@@ -76,9 +76,9 @@ describe("registerGenkitInstrumentation stream patching", () => {
         }),
         stream,
       }),
-      { arguments: [{ prompt: "Say hello world." }] } as Parameters<
-        typeof genkitChannels.generateStream.traceSync
-      >[1],
+      undefined,
+      [{ prompt: "Say hello world." }],
+      {},
     );
 
     await drainMicrotasks();
@@ -99,15 +99,14 @@ describe("registerGenkitInstrumentation stream patching", () => {
       },
     });
 
-    const result = genkitChannels.actionStream.traceSync(
+    const result = genkitChannels.actionStream.invoke(
       () => ({
         output: Promise.resolve({ done: true }),
         stream,
       }),
-      {
-        arguments: [{ input: true }],
-        self: action,
-      } as Parameters<typeof genkitChannels.actionStream.traceSync>[1],
+      action,
+      [{ input: true }],
+      {},
     );
 
     await drainMicrotasks();

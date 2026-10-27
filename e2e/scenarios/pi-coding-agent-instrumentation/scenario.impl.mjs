@@ -11,6 +11,16 @@ export const TOOL_CHILD_SPAN_NAME = "pi-tool-child";
 async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
   const instrumentedSDK = decorateSDK ? decorateSDK(sdk) : sdk;
   const useFakeStream = process.env.PI_CODING_AGENT_FAKE_STREAM === "true";
+  const provider = process.env.PI_CODING_AGENT_PROVIDER ?? "anthropic";
+  const modelId = provider === "openai" ? "gpt-5-nano" : "claude-haiku-4-5";
+  const apiKey =
+    provider === "openai"
+      ? process.env.OPENAI_API_KEY
+      : process.env.ANTHROPIC_API_KEY;
+  const baseUrl =
+    provider === "openai"
+      ? process.env.OPENAI_BASE_URL
+      : process.env.ANTHROPIC_BASE_URL;
   const {
     AuthStorage,
     DefaultResourceLoader,
@@ -26,15 +36,11 @@ async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
   if (ModelRuntime) {
     modelRuntime = await ModelRuntime.create({ modelsPath: null });
     if (!useFakeStream) {
-      modelRuntime.registerProvider("anthropic", {
-        baseUrl: process.env.ANTHROPIC_BASE_URL,
-      });
+      modelRuntime.registerProvider(provider, { baseUrl });
     }
     await modelRuntime.setRuntimeApiKey(
-      "anthropic",
-      useFakeStream
-        ? "pi-coding-agent-e2e-placeholder"
-        : process.env.ANTHROPIC_API_KEY,
+      provider,
+      useFakeStream ? "pi-coding-agent-e2e-placeholder" : apiKey,
     );
     modelRegistry = new ModelRegistry(modelRuntime);
   } else {
@@ -45,15 +51,21 @@ async function runPiCodingAgentScenario({ decorateSDK, sdk }) {
       baseUrl: process.env.ANTHROPIC_BASE_URL,
     });
   }
-  const model = modelRegistry.find("anthropic", "claude-haiku-4-5");
+  const model = modelRegistry.find(provider, modelId);
   if (!model) {
-    throw new Error("Expected Pi Coding Agent Anthropic model");
+    throw new Error(`Expected Pi Coding Agent ${provider} model ${modelId}`);
   }
   const cwd = process.cwd();
   const resourceLoader = new DefaultResourceLoader({
     agentDir: cwd,
     cwd,
     noContextFiles: true,
+    noSkills: true,
+    ...(provider === "openai"
+      ? {
+          systemPrompt: "You are a coding assistant. Use tools when requested.",
+        }
+      : {}),
   });
   await resourceLoader.reload();
 

@@ -124,8 +124,10 @@ export function defineOpenAIAgentsAutoInstrumentationAssertions(options: {
       },
     );
 
-    test("matches the span tree snapshot", testConfig, async () => {
-      await matchSpanTreeSnapshot(events, spanSnapshotPath);
+    test("matches the span tree snapshot", testConfig, async ({ expect }) => {
+      await matchSpanTreeSnapshot(events, spanSnapshotPath, {
+        snapshotExpect: expect,
+      });
     });
   });
 }

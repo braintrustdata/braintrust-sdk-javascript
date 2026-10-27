@@ -1,3 +1,4 @@
+import { debugLogger } from "../debug-logger";
 import {
   afterEach,
   beforeAll,
@@ -43,7 +44,9 @@ describe("groq wrapper", () => {
   });
 
   test("returns original object for unsupported clients", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => true);
     const invalid = { foo: "bar" };
 
     expect(wrapGroq(invalid)).toBe(invalid);

@@ -31,7 +31,7 @@ import {
 import { OpenAIAgentsTraceProcessor } from "./instrumentation/providers/openai-agents-trace-processor";
 import type { OpenAIAgentsSpan } from "./vendor-sdk-types/openai-agents";
 import { extractOllamaChatInput } from "./instrumentation/providers/ollama-instrumentation";
-import { openAIChannels } from "./instrumentation/providers/openai-channels";
+import { openAIChannels } from "./instrumentation/providers/openai-interceptors";
 import { registerInstrumentation } from "./instrumentation/registrations/openai";
 
 configureNode();
@@ -912,11 +912,11 @@ it.each([false, true])(
         },
       ],
     };
-    await openAIChannels.chatCompletionsCreate.tracePromise(
+    await openAIChannels.chatCompletionsCreate.invoke(
       async () => result,
-      {
-        arguments: [{ model: "audio-model", messages: [] }],
-      },
+      undefined,
+      [{ model: "audio-model", messages: [] }],
+      {},
     );
     const rows = await background.drain();
     expect(rows.find((row) => "output" in row)).toHaveProperty(
@@ -955,9 +955,11 @@ it.each([false, true])(
         ],
       },
     ];
-    await openAIChannels.chatCompletionsCreate.tracePromise(
+    await openAIChannels.chatCompletionsCreate.invoke(
       async () => ({ choices: [] }),
-      { arguments: [{ model: "model", messages }] },
+      undefined,
+      [{ model: "model", messages }],
+      {},
     );
     const rows = await background.drain();
     expect(rows.find((row) => "input" in row)).toHaveProperty("input", [
@@ -1019,9 +1021,12 @@ it.each([false, true])(
       openAIChannels.chatCompletionsCreate,
       openAIChannels.betaChatCompletionsParse,
     ]) {
-      await channel.tracePromise(async () => ({ choices }), {
-        arguments: [{ model: "model", messages: [] }],
-      });
+      await channel.invoke(
+        async () => ({ choices }),
+        undefined,
+        [{ model: "model", messages: [] }],
+        {},
+      );
       const rows = await background.drain();
       expect(rows.find((row) => "output" in row)).toHaveProperty(
         "output",
@@ -1054,15 +1059,18 @@ it.each([
       openAIChannels.chatCompletionsCreate,
       openAIChannels.betaChatCompletionsParse,
     ]) {
-      await channel.tracePromise(async () => ({ choices }), {
-        arguments: [
+      await channel.invoke(
+        async () => ({ choices }),
+        undefined,
+        [
           {
             model: "audio-model",
             messages: [],
             audio: { format, voice: "alloy" },
           },
         ],
-      });
+        {},
+      );
       const rows = await background.drain();
       expect(rows.find((row) => "output" in row)).toHaveProperty(
         "output.0.message.audio",

@@ -6,6 +6,14 @@ import {
   it,
   vi,
 } from "vite-plus/test";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+import { invocationController } from "../test-utils/invocation";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
 const { mockStartSpan, mockWithCurrent } = vi.hoisted(() => ({
   mockStartSpan: vi.fn(),
@@ -19,12 +27,11 @@ vi.mock("#braintrust-platform", () => ({
       getStore: vi.fn(() => undefined),
       run: vi.fn((_store: unknown, callback: () => unknown) => callback()),
     })),
-    newTracingChannel: vi.fn(),
   },
 }));
 
 vi.mock("../../logger/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../logger")>();
+  const actual = await importOriginal<typeof import("../../logger/core")>();
   return {
     ...actual,
     startSpan: (...args: unknown[]) => mockStartSpan(...args),
@@ -32,11 +39,12 @@ vi.mock("../../logger/core", async (importOriginal) => {
   };
 });
 
-import iso from "#braintrust-platform";
 import { collectAnthropicSession } from "../../wrappers/anthropic-session-collector";
 import { registerAnthropicInstrumentation } from "./anthropic-instrumentation";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 describe("registerAnthropicInstrumentation Sessions instrumentation", () => {
   let currentSpan: TestSpan | undefined;
@@ -47,8 +55,11 @@ describe("registerAnthropicInstrumentation Sessions instrumentation", () => {
     currentSpan = undefined;
     handlersByName = new Map();
     spans = [];
-    mockNewTracingChannel.mockImplementation((name: string) => ({
-      subscribe: vi.fn((handlers) => handlersByName.set(name, handlers)),
+    mockNewInvocationHook.mockImplementation((name: string) => ({
+      intercept: vi.fn((interceptor) => {
+        handlersByName.set(name, invocationController(interceptor));
+        return vi.fn();
+      }),
     }));
     mockWithCurrent.mockImplementation(
       (span: TestSpan, callback: () => unknown) => {
@@ -159,8 +170,8 @@ describe("registerAnthropicInstrumentation Sessions instrumentation", () => {
       result?: ReturnType<typeof sessionStream>;
     } = { arguments: ["session-1"] };
 
-    handlers.start(context);
-    handlers.asyncEnd(Object.assign(context, { result: stream }));
+    handlers.begin(context);
+    handlers.resolve(Object.assign(context, { result: stream }));
     expect(context.result).toBe(stream);
     expect(spans).toEqual([]);
     expect(collectAnthropicSession(stream)).toBe(stream);
@@ -281,8 +292,8 @@ describe("registerAnthropicInstrumentation Sessions instrumentation", () => {
     ]);
     const context = { arguments: ["session-1"] };
 
-    handlers.start(context);
-    handlers.asyncEnd(Object.assign(context, { result: stream }));
+    handlers.begin(context);
+    handlers.resolve(Object.assign(context, { result: stream }));
     for await (const _event of stream) {
       // Consume the stream without opting into collection.
     }
@@ -320,8 +331,8 @@ describe("registerAnthropicInstrumentation Sessions instrumentation", () => {
       arguments: ["thread-1", { session_id: "session-1" }],
     };
 
-    handlers.start(context);
-    handlers.asyncEnd(Object.assign(context, { result: stream }));
+    handlers.begin(context);
+    handlers.resolve(Object.assign(context, { result: stream }));
     expect(collectAnthropicSession(stream)).toBe(stream);
     for await (const _event of stream) {
       // Consume the stream.

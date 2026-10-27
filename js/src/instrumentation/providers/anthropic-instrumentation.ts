@@ -1,6 +1,6 @@
+import type { Span } from "../../logger/core";
 import { omitMediaData } from "../../wrappers/attachment-utils";
 import { toLoggedError } from "../core";
-import { traceStreamingChannel } from "../core/channel-tracing";
 import { isAsyncIterable, patchStreamIfNeeded } from "../core/stream-patcher";
 import {
   _internalCaptureAttachmentsEnabled,
@@ -8,27 +8,21 @@ import {
   startSpan as startBaseSpan,
   withCurrent,
 } from "../../logger/core";
-import type { Span } from "../../logger/core";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type {
-  IsoChannelHandlers,
-  IsoTracingChannel,
-} from "#braintrust-platform";
-import { debugLogger } from "../../debug-logger";
+
+import { traceStreamingCall } from "../core/tracing";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
 import {
   SpanTypeAttribute,
   isObject,
   isPromiseLike,
 } from "../../../util/index";
-import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
+import { debugLogger } from "../../debug-logger";
 import { filterFrom, getCurrentUnixTimestamp } from "../../util";
-import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
-import { registerAnthropicSessionStreamCollector } from "../../wrappers/anthropic-session-collector";
-import { anthropicChannels } from "./anthropic-channels";
 import type {
   AnthropicBase64Source,
   AnthropicCitation,
@@ -51,6 +45,11 @@ import type {
   AnthropicToolRunnerTool,
   AnthropicUsage,
 } from "../../vendor-sdk-types/anthropic";
+import { registerAnthropicSessionStreamCollector } from "../../wrappers/anthropic-session-collector";
+import { finalizeAnthropicTokens } from "../../wrappers/anthropic-tokens-util";
+import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
+import type { ChannelMessage } from "../core/tracing-types";
+import { anthropicChannels } from "./anthropic-interceptors";
 
 type AnthropicToolRunnerState = {
   aggregatedMetrics: Record<string, number>;
@@ -164,26 +163,46 @@ class AnthropicInstrumentationConsumer {
     };
 
     // Messages API - supports streaming via stream=true parameter
-    traceStreamingChannel(anthropicChannels.messagesCreate, anthropicConfig);
+    anthropicChannels.messagesCreate.intercept(
+      (target, receiver, args, additional) =>
+        traceStreamingCall<typeof anthropicChannels.messagesCreate>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            ...anthropicConfig,
+            instrumentationName: INSTRUMENTATION_NAMES.ANTHROPIC,
+          },
+        ),
+    );
 
     // Beta Messages API - supports streaming via stream=true parameter
-    traceStreamingChannel(anthropicChannels.betaMessagesCreate, {
-      ...anthropicConfig,
-      name: "anthropic.messages.create",
-    });
+    anthropicChannels.betaMessagesCreate.intercept(
+      (target, receiver, args, additional) =>
+        traceStreamingCall<typeof anthropicChannels.betaMessagesCreate>(
+          () => Reflect.apply(target, receiver, args),
+          { ...additional, arguments: args, self: receiver },
+          {
+            instrumentationName: INSTRUMENTATION_NAMES.ANTHROPIC,
+            ...anthropicConfig,
+            name: "anthropic.messages.create",
+          },
+        ),
+    );
   }
 
   private subscribeToAnthropicToolRunner(): void {
-    const tracingChannel =
-      anthropicChannels.betaMessagesToolRunner.tracingChannel() as IsoTracingChannel<
-        ChannelMessage<typeof anthropicChannels.betaMessagesToolRunner>
-      >;
+    const invocationHook = anthropicChannels.betaMessagesToolRunner;
     const states = new WeakMap<object, AnthropicToolRunnerState>();
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof anthropicChannels.betaMessagesToolRunner>
-    > = {
-      start: (event) => {
+    invocationHook.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<typeof anthropicChannels.betaMessagesToolRunner>;
+      const prepare = (
+        event: ChannelMessage<typeof anthropicChannels.betaMessagesToolRunner>,
+      ) => {
         if (isAutoInstrumentationSuppressed()) {
           return;
         }
@@ -221,21 +240,23 @@ class AnthropicInstrumentationConsumer {
         } satisfies AnthropicToolRunnerState;
 
         states.set(event as object, state);
-      },
-
-      end: (event) => {
+      };
+      const returned = (
+        event: ChannelMessage<typeof anthropicChannels.betaMessagesToolRunner>,
+      ) => {
         const state = states.get(event as object);
         if (!state) {
           return;
         }
 
         patchAnthropicToolRunner({
-          runner: event.result as AnthropicToolRunner<unknown>,
+          runner: event.result as unknown as AnthropicToolRunner<unknown>,
           state,
         });
-      },
-
-      error: (event) => {
+      };
+      const failed = (
+        event: ChannelMessage<typeof anthropicChannels.betaMessagesToolRunner>,
+      ) => {
         const state = states.get(event as object);
         if (!state || !event.error) {
           return;
@@ -243,10 +264,20 @@ class AnthropicInstrumentationConsumer {
 
         finalizeAnthropicToolRunnerError(state, event.error);
         states.delete(event as object);
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        Object.assign(event, { error });
+        runInstrumentation(() => failed(event));
+        throw error;
+      }
+      Object.assign(event, { result });
+      runInstrumentation(() => returned(event));
+      return result;
+    });
   }
 
   private subscribeToAnthropicSessionStreams(): void {
@@ -269,18 +300,23 @@ class AnthropicInstrumentationConsumer {
     type SessionChannelMessage = ChannelMessage<
       typeof anthropicChannels.betaSessionsEventsStream
     >;
-    const tracingChannel =
-      channel.tracingChannel() as IsoTracingChannel<SessionChannelMessage>;
+    const invocationHook = channel;
     const pending = new WeakSet<object>();
 
-    const handlers: IsoChannelHandlers<SessionChannelMessage> = {
-      start: (event) => {
+    invocationHook.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as SessionChannelMessage;
+
+      const prepare = (event: SessionChannelMessage) => {
         if (isAutoInstrumentationSuppressed()) {
           return;
         }
         pending.add(event as object);
-      },
-      asyncEnd: (event) => {
+      };
+      const resolved = (event: SessionChannelMessage) => {
         if (!pending.delete(event as object)) {
           return;
         }
@@ -292,13 +328,31 @@ class AnthropicInstrumentationConsumer {
         registerAnthropicSessionStreamCollector(stream, () => {
           wrapAnthropicSessionEventStream(stream, isThread);
         });
-      },
-      error: (event) => {
+      };
+      const failed = (event: SessionChannelMessage) => {
         pending.delete(event as object);
-      },
-    };
-
-    tracingChannel.subscribe(handlers);
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        Object.assign(event, { error });
+        runInstrumentation(() => failed(event));
+        throw error;
+      }
+      return observeResult(
+        result,
+        (value) => {
+          Object.assign(event, { result: value });
+          resolved(event);
+        },
+        (error) => {
+          Object.assign(event, { error });
+          failed(event);
+        },
+      );
+    });
   }
 }
 

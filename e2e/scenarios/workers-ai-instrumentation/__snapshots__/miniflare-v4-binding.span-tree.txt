@@ -1,0 +1,80 @@
+span_tree:
+└── workers-ai-root [task]
+    metadata: {
+      "scenario": "workers-ai-instrumentation",
+      "testRunId": "<run:1>"
+    }
+    ├── binding-a
+    │   └── workers_ai.run [decision]
+    │       input: {
+    │         "questions": [
+    │           {
+    │             "id": "<span:1>",
+    │             "instructions": "Is this urgent?",
+    │             "type": "noul"
+    │           },
+    │           {
+    │             "criteria": {
+    │               "billing": "Invoices",
+    │               "engineering": "Errors and outages"
+    │             },
+    │             "id": "<span:2>",
+    │             "instructions": "Which team should handle this?",
+    │             "type": "choice"
+    │           },
+    │           {
+    │             "criteria": [
+    │               "None",
+    │               "Some",
+    │               "All"
+    │             ],
+    │             "id": "<span:3>",
+    │             "instructions": "How many customers are affected?",
+    │             "type": "score"
+    │           }
+    │         ],
+    │         "state": "Checkout has failed for every customer for an hour."
+    │       }
+    │       metadata: {
+    │         "model": "@cf/cloudflare/clef-flash",
+    │         "operation": "decision",
+    │         "provider": "cloudflare"
+    │       }
+    │       error: "Do not know how to serialize a BigInt"
+    └── binding-b
+        └── workers_ai.run [decision]
+            input: {
+              "questions": [
+                {
+                  "id": "<span:1>",
+                  "instructions": "Is this urgent?",
+                  "type": "noul"
+                },
+                {
+                  "criteria": {
+                    "billing": "Invoices",
+                    "engineering": "Errors and outages"
+                  },
+                  "id": "<span:2>",
+                  "instructions": "Which team should handle this?",
+                  "type": "choice"
+                },
+                {
+                  "criteria": [
+                    "None",
+                    "Some",
+                    "All"
+                  ],
+                  "id": "<span:3>",
+                  "instructions": "How many customers are affected?",
+                  "type": "score"
+                }
+              ],
+              "state": "Checkout has failed for every customer for an hour."
+            }
+            metadata: {
+              "model": "@cf/cloudflare/clef-flash",
+              "operation": "decision",
+              "provider": "cloudflare"
+            }
+            error: "Do not know how to serialize a BigInt"

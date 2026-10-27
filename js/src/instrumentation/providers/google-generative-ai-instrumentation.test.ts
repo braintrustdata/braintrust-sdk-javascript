@@ -11,7 +11,7 @@ import { Attachment, initLogger } from "../../logger/core";
 import { _exportsForTestingOnly } from "../../logger/testing";
 import { configureNode } from "../../node/config";
 import { wrapGoogleGenerativeAI } from "../../wrappers/google-generative-ai";
-import { googleGenerativeAIChannels as channels } from "./google-generative-ai-channels";
+import { googleGenerativeAIChannels as channels } from "./google-generative-ai-interceptors";
 
 configureNode();
 

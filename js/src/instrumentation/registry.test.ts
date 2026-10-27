@@ -62,6 +62,7 @@ describe("explicit instrumentation registration", () => {
     registry.register("openai", () => {});
     configureInstrumentation({ integrations: { openai: false } });
     expect(warn).toHaveBeenCalledWith(
+      "[braintrust]",
       expect.stringContaining("Cannot configure"),
     );
   });

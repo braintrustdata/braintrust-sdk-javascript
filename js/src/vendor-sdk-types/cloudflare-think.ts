@@ -19,6 +19,7 @@ export type CloudflareThinkInstance = {
   messages?: CloudflareThinkMessage[];
   _runInferenceLoop?: (
     input: CloudflareThinkTurnInput,
+    historyLeafId?: string | null,
   ) => Promise<CloudflareThinkStreamableResult>;
 };
 

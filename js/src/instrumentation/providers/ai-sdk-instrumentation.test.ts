@@ -1,4 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vite-plus/test";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
 const telemetryMocks = vi.hoisted(() => ({
   braintrustAISDKTelemetry: vi.fn(),
@@ -11,17 +18,11 @@ const telemetryMocks = vi.hoisted(() => ({
   },
 }));
 
-// Mock iso's newTracingChannel - must be before any imports that use it
+// Mock platform context independently of invocation hooks.
 vi.mock("#braintrust-platform", () => ({
   default: {
-    newTracingChannel: vi.fn(),
-    getEnv: vi.fn((name: string) =>
+    getEnv: (name: string) =>
       name === "BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS" ? "true" : undefined,
-    ),
-    newAsyncLocalStorage: () => ({
-      getStore: () => undefined,
-      run: (_store: unknown, callback: () => unknown) => callback(),
-    }),
   },
 }));
 
@@ -30,22 +31,26 @@ vi.mock("../../wrappers/ai-sdk/telemetry", () => ({
 }));
 
 import {
+  BRAINTRUST_AI_SDK_V7_TELEMETRY,
+  BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY,
+} from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
+import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
+import {
   registerAISDKInstrumentation,
   DEFAULT_DENY_OUTPUT_PATHS,
+  extractTokenMetrics,
   processAISDKCallInput,
   processAISDKGenerateImageInput,
+  processAISDKGenerateImageOutput,
+  processAISDKOutput as processAISDKOutputActual,
   processAISDKWorkflowAgentCallInput,
   processAISDKWorkflowAgentModelCallInput,
-  processAISDKOutput as processAISDKOutputActual,
-  processAISDKGenerateImageOutput,
-  extractTokenMetrics,
   serializeModelWithProvider,
 } from "./ai-sdk-instrumentation";
-import iso from "#braintrust-platform";
-import { serializeAISDKToolsForLogging } from "../../wrappers/ai-sdk/tool-serialization";
-import { BRAINTRUST_AI_SDK_V7_OPERATION_KEY as AI_SDK_V7_OPERATION_KEY } from "../../vendor-sdk-types/ai-sdk-v7-telemetry";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 type MockTracingChannel = {
   handlers: any[];
   hasSubscribers: boolean;
@@ -71,7 +76,7 @@ describe("registerAISDKInstrumentation", () => {
     telemetryMocks.braintrustAISDKTelemetry.mockReturnValue(
       telemetryMocks.telemetry,
     );
-    mockNewTracingChannel.mockImplementation((name: string) => {
+    mockNewInvocationHook.mockImplementation((name: string) => {
       const channel: MockTracingChannel = {
         handlers: [],
         hasSubscribers: false,
@@ -200,7 +205,7 @@ describe("registerAISDKInstrumentation", () => {
       registerAISDKInstrumentation();
 
       expect(
-        mockChannels.get("orchestrion:ai:generateImage")?.subscribe,
+        mockChannels.get("orchestrion:ai:generateImage")?.intercept,
       ).toHaveBeenCalledTimes(1);
     });
 
@@ -555,6 +560,35 @@ describe("registerAISDKInstrumentation", () => {
 
       rejectExisting!(rejection);
       await expect(returned).rejects.toBe(rejection);
+    });
+
+    it("defers to explicit telemetry, respecting per-call registry overrides", () => {
+      const explicit = { [BRAINTRUST_AI_SDK_V7_TELEMETRY]: true };
+      vi.stubGlobal("AI_SDK_TELEMETRY_INTEGRATIONS", [explicit]);
+      try {
+        registerAISDKInstrumentation();
+        const channel = mockChannels.get(
+          "orchestrion:ai:createTelemetryDispatcher",
+        );
+        for (const integrations of [undefined, explicit, [explicit]]) {
+          const dispatcher = { onStart: vi.fn() };
+          const original = dispatcher.onStart;
+          channel?.handlers[0]?.end({
+            arguments: [{ telemetry: { integrations } }],
+            result: dispatcher,
+          });
+          expect(dispatcher.onStart).toBe(original);
+        }
+        const dispatcher = { onStart: vi.fn() };
+        const original = dispatcher.onStart;
+        channel?.handlers[0]?.end({
+          arguments: [{ telemetry: { integrations: [] } }],
+          result: dispatcher,
+        });
+        expect(dispatcher.onStart).not.toBe(original);
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
 
     it("patches each dispatcher once and respects telemetry opt-out", () => {

@@ -1,16 +1,15 @@
 import { toLoggedError } from "../core";
-import type { ChannelMessage } from "../core/channel-definitions";
-import type { IsoChannelHandlers } from "#braintrust-platform";
+import { observeResult, runInstrumentation } from "../core/observe-result";
+
+import { SpanTypeAttribute } from "../../../util/index";
 import { debugLogger } from "../../debug-logger";
-import { _internalStartSpan as startBaseSpan } from "../../logger/core";
 import type { Span } from "../../logger/core";
+import { _internalStartSpan as startBaseSpan } from "../../logger/core";
 import {
   INSTRUMENTATION_NAMES,
   withSpanInstrumentationName,
 } from "../../span-origin";
 import { getCurrentUnixTimestamp } from "../../util";
-import { SpanTypeAttribute } from "../../../util/index";
-import { openAICodexChannels } from "./openai-codex-channels";
 import type {
   OpenAICodexCommandExecutionItem,
   OpenAICodexFileChangeItem,
@@ -26,6 +25,8 @@ import type {
   OpenAICodexUsage,
   OpenAICodexWebSearchItem,
 } from "../../vendor-sdk-types/openai-codex";
+import type { ChannelMessage } from "../core/tracing-types";
+import { openAICodexChannels } from "./openai-codex-interceptors";
 
 type InternalStartSpanArgs = NonNullable<Parameters<typeof startBaseSpan>[0]>;
 
@@ -64,65 +65,119 @@ class OpenAICodexInstrumentationConsumer {
   }
 
   private subscribeToRun(): void {
-    const channel = openAICodexChannels.run.tracingChannel();
+    const channel = openAICodexChannels.run;
     const states = new WeakMap<object, CodexRunState>();
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof openAICodexChannels.run>
-    > = {
-      start: (event) => {
+    channel.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<typeof openAICodexChannels.run>;
+      const prepare = (
+        event: ChannelMessage<typeof openAICodexChannels.run>,
+      ) => {
         states.set(event, startCodexRun(event, "Thread.run"));
-      },
-      asyncEnd: async (event) => {
+      };
+      const resolved = async (
+        event: ChannelMessage<typeof openAICodexChannels.run>,
+      ) => {
         const state = states.get(event);
         if (!state) {
           return;
         }
         states.delete(event);
         await finalizeCompletedRun(state, event.result);
-      },
-      error: async (event) => {
+      };
+      const failed = async (
+        event: ChannelMessage<typeof openAICodexChannels.run>,
+      ) => {
         const state = states.get(event);
         if (!state) {
           return;
         }
         states.delete(event);
         await finalizeCodexRun(state, { error: event.error });
-      },
-    };
-
-    channel.subscribe(handlers);
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        Object.assign(event, { error });
+        runInstrumentation(() => failed(event));
+        throw error;
+      }
+      return observeResult(
+        result,
+        (value) => {
+          Object.assign(event, { result: value });
+          return resolved(event);
+        },
+        (error) => {
+          Object.assign(event, { error });
+          return failed(event);
+        },
+      );
+    });
   }
 
   private subscribeToRunStreamed(): void {
-    const channel = openAICodexChannels.runStreamed.tracingChannel();
+    const channel = openAICodexChannels.runStreamed;
     const states = new WeakMap<object, CodexRunState>();
 
-    const handlers: IsoChannelHandlers<
-      ChannelMessage<typeof openAICodexChannels.runStreamed>
-    > = {
-      start: (event) => {
+    channel.intercept((target, receiver, args, additional) => {
+      const event = {
+        ...additional,
+        arguments: args,
+        self: receiver,
+      } as ChannelMessage<typeof openAICodexChannels.runStreamed>;
+      const prepare = (
+        event: ChannelMessage<typeof openAICodexChannels.runStreamed>,
+      ) => {
         states.set(event, startCodexRun(event, "Thread.runStreamed"));
-      },
-      asyncEnd: async (event) => {
+      };
+      const resolved = async (
+        event: ChannelMessage<typeof openAICodexChannels.runStreamed>,
+      ) => {
         const state = states.get(event);
         if (!state) {
           return;
         }
         states.delete(event);
         await patchStreamedTurn(event.result, state);
-      },
-      error: async (event) => {
+      };
+      const failed = async (
+        event: ChannelMessage<typeof openAICodexChannels.runStreamed>,
+      ) => {
         const state = states.get(event);
         if (!state) {
           return;
         }
         states.delete(event);
         await finalizeCodexRun(state, { error: event.error });
-      },
-    };
-
-    channel.subscribe(handlers);
+      };
+      runInstrumentation(() => prepare(event));
+      let result;
+      try {
+        result = Reflect.apply(target, receiver, args);
+      } catch (error) {
+        Object.assign(event, { error });
+        runInstrumentation(() => failed(event));
+        throw error;
+      }
+      return observeResult(
+        result,
+        (value) => {
+          Object.assign(event, { result: value });
+          return resolved(event);
+        },
+        (error) => {
+          Object.assign(event, { error });
+          return failed(event);
+        },
+      );
+    });
   }
 }
 

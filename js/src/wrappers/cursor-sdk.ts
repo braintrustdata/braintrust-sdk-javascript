@@ -1,5 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/cursorSDK";
-import { cursorSDKChannels } from "../instrumentation/providers/cursor-sdk-channels";
+import { debugLogger } from "../debug-logger";
+import { cursorSDKChannels } from "../instrumentation/providers/cursor-sdk-interceptors";
 import type {
   CursorSDKAgent,
   CursorSDKAgentClass,
@@ -13,7 +14,7 @@ const WRAPPED_AGENT = Symbol.for("braintrust.cursor-sdk.wrapped-agent");
 
 /**
  * Wraps the Cursor TypeScript SDK with Braintrust tracing. The wrapper emits
- * diagnostics-channel events; the Cursor SDK plugin owns span lifecycle.
+ * invocation hooks; the Cursor SDK plugin owns span lifecycle.
  */
 export function wrapCursorSDK<T>(sdk: T): T {
   registerInstrumentation();
@@ -23,8 +24,7 @@ export function wrapCursorSDK<T>(sdk: T): T {
 
   const maybeSDK = sdk as Record<PropertyKey, unknown>;
   if (!maybeSDK.Agent || typeof maybeSDK.Agent !== "function") {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported Cursor SDK. Not wrapping.");
+    debugLogger.notice.warn("Unsupported Cursor SDK. Not wrapping.");
     return sdk;
   }
 
@@ -76,10 +76,8 @@ function wrapCursorAgentClass(Agent: CursorSDKAgentClass): CursorSDKAgentClass {
           options: CursorSDKAgentOptions,
         ): Promise<CursorSDKAgent> {
           const args = [options] as [CursorSDKAgentOptions];
-          return cursorSDKChannels.create.tracePromise(
-            async () =>
-              wrapCursorAgent(await Reflect.apply(value, target, args)),
-            { arguments: args } as never,
+          return wrapCursorAgent(
+            await cursorSDKChannels.create.invoke(value, target, args, {}),
           );
         };
         cache.set(prop, wrapped);
@@ -95,10 +93,8 @@ function wrapCursorAgentClass(Agent: CursorSDKAgentClass): CursorSDKAgentClass {
             string,
             Partial<CursorSDKAgentOptions> | undefined,
           ];
-          return cursorSDKChannels.resume.tracePromise(
-            async () =>
-              wrapCursorAgent(await Reflect.apply(value, target, args)),
-            { arguments: args } as never,
+          return wrapCursorAgent(
+            await cursorSDKChannels.resume.invoke(value, target, args, {}),
           );
         };
         cache.set(prop, wrapped);
@@ -114,10 +110,7 @@ function wrapCursorAgentClass(Agent: CursorSDKAgentClass): CursorSDKAgentClass {
             string | CursorSDKUserMessage,
             CursorSDKAgentOptions | undefined,
           ];
-          return cursorSDKChannels.prompt.tracePromise(
-            () => Reflect.apply(value, target, args),
-            { arguments: args } as never,
-          );
+          return cursorSDKChannels.prompt.invoke(value, target, args, {});
         };
         cache.set(prop, wrapped);
         return wrapped;
@@ -149,7 +142,13 @@ function wrapCursorAgent(agent: CursorSDKAgent): CursorSDKAgent {
       }
 
       const value = Reflect.get(target, prop, receiver);
-      if (prop === "send" && typeof value === "function") {
+      if (
+        prop === "send" &&
+        typeof value === "function" &&
+        !(target as Record<PropertyKey, unknown>)[
+          Symbol.for("braintrust.cursor-sdk.auto-patched-agent")
+        ]
+      ) {
         return function (
           message: string | CursorSDKUserMessage,
           options?: CursorSDKSendOptions,
@@ -158,13 +157,11 @@ function wrapCursorAgent(agent: CursorSDKAgent): CursorSDKAgent {
             string | CursorSDKUserMessage,
             CursorSDKSendOptions | undefined,
           ];
-          return cursorSDKChannels.send.tracePromise(
-            () => Reflect.apply(value, target, args),
-            {
-              agent: target,
-              arguments: args,
-              operation: "send",
-            } as never,
+          return cursorSDKChannels.send.invoke(
+            value as CursorSDKAgent["send"],
+            target,
+            args,
+            { agent: target, operation: "send" },
           );
         };
       }

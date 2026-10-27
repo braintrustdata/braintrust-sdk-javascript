@@ -1,5 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/strandsAgentSDK";
-import { strandsAgentSDKChannels } from "../instrumentation/providers/strands-agent-sdk-channels";
+import { debugLogger } from "../debug-logger";
+import { strandsAgentSDKChannels } from "../instrumentation/providers/strands-agent-sdk-interceptors";
 import type {
   StrandsAgent,
   StrandsAgentConstructor,
@@ -37,8 +38,7 @@ export function wrapStrandsAgentSDK<T>(sdk: T): T {
     typeof maybeSDK.Graph !== "function" &&
     typeof maybeSDK.Swarm !== "function"
   ) {
-    // eslint-disable-next-line no-restricted-properties -- preserving intentional console usage.
-    console.warn("Unsupported Strands Agent SDK. Not wrapping.");
+    debugLogger.notice.warn("Unsupported Strands Agent SDK. Not wrapping.");
     return sdk;
   }
 
@@ -223,9 +223,7 @@ function wrapMultiAgentInstance(
             value as StrandsMultiAgent["stream"],
             target,
             callArgs,
-            {
-              orchestrator: proxy,
-            },
+            { orchestrator: proxy },
           );
         };
       }

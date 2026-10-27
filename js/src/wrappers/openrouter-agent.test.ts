@@ -1,6 +1,7 @@
+import { debugLogger } from "../debug-logger";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { wrapOpenRouterAgent } from "./openrouter-agent";
-import { openRouterAgentChannels } from "../instrumentation/providers/openrouter-agent-channels";
+import { openRouterAgentChannels } from "../instrumentation/providers/openrouter-agent-interceptors";
 
 describe("wrapOpenRouterAgent", () => {
   afterEach(() => {
@@ -8,7 +9,9 @@ describe("wrapOpenRouterAgent", () => {
   });
 
   it("returns the original value and warns for unsupported inputs", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn(debugLogger.notice, "warn")
+      .mockImplementation(() => true);
     const input = { notCallModel: true };
 
     expect(wrapOpenRouterAgent(input as object)).toBe(input);
@@ -17,8 +20,8 @@ describe("wrapOpenRouterAgent", () => {
     );
   });
 
-  it("emits callModel tracing events and clones the request", () => {
-    const traceSpy = vi.spyOn(openRouterAgentChannels.callModel, "traceSync");
+  it("invokes the callModel hook and clones the request", () => {
+    const traceSpy = vi.spyOn(openRouterAgentChannels.callModel, "invoke");
     const sdk = {
       name: "agent-sdk",
       callModel(request: Record<string, unknown>, options?: unknown) {
@@ -35,14 +38,12 @@ describe("wrapOpenRouterAgent", () => {
     const result = wrapped.callModel(request);
 
     expect(traceSpy).toHaveBeenCalledTimes(1);
-    const traceContext = traceSpy.mock.calls[0]?.[1] as {
-      arguments: unknown[];
-    };
-    expect(traceContext.arguments[0]).toMatchObject(request);
-    expect(traceContext.arguments[0]).not.toBe(request);
+    const callArgs = traceSpy.mock.calls[0]![2];
+    expect(callArgs[0]).toMatchObject(request);
+    expect(callArgs[0]).not.toBe(request);
     expect(result).toMatchObject({
       options: undefined,
-      request: traceContext.arguments[0],
+      request: callArgs[0],
       thisName: "agent-sdk",
     });
   });

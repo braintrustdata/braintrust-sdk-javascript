@@ -27,25 +27,30 @@ vi.mock("#braintrust-platform", async (importOriginal) => {
     default: {
       ...actual.default,
       newAsyncLocalStorage: <T>() => new AsyncLocalStorage<T>(),
-      newTracingChannel: mockNewTracingChannel,
     },
   };
 });
 
-vi.mock("../../logger/core", async () => {
-  const { default: iso } = await import("#braintrust-platform");
-  return {
-    _internalCaptureAttachmentsEnabled: () =>
-      iso.getEnv("BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS") === "true",
-    CAPTURE_ATTACHMENTS: Symbol.for("braintrust.captureAttachments"),
-    BaseAttachment: class {},
-    _internalStartSpan: (...args: unknown[]) => mockStartSpan(...args),
-    startSpan: (...args: unknown[]) => mockStartSpan(...args),
-    withCurrent: (_span: unknown, callback: () => unknown) => callback(),
-  };
-});
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: mockNewTracingChannel,
+}));
+
+vi.mock("../../logger/core", () => ({
+  CAPTURE_ATTACHMENTS: Symbol.for("braintrust.captureAttachments"),
+  startSpan: (...args: unknown[]) => mockStartSpan(...args),
+  _internalStartSpan: (...args: unknown[]) => mockStartSpan(...args),
+  _internalCaptureAttachmentsEnabled: () => true,
+  withCurrent: (_span: unknown, callback: () => unknown) => callback(),
+}));
 
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
+import type {
+  PiContext,
+  PiModel,
+} from "../../vendor-sdk-types/pi-coding-agent";
 import { registerPiCodingAgentInstrumentation } from "./pi-coding-agent-instrumentation";
 
 const PROMPT_CHANNEL =
@@ -104,6 +109,7 @@ describe("registerPiCodingAgentInstrumentation", () => {
   ])(
     "uses interceptor ALS for prompt, LLM, and tool spans with $property",
     async ({ property, version }) => {
+      registerPiCodingAgentInstrumentation();
       registerPiCodingAgentInstrumentation();
       const interceptor = promptInterceptor();
       const finalMessage = makeAssistantMessage("done");
@@ -210,16 +216,197 @@ describe("registerPiCodingAgentInstrumentation", () => {
         expect.objectContaining({ output: { stdout: "pi_tool_ok" } }),
       );
       const finalTaskLog = taskSpan?.log.mock.calls.at(-1)?.[0];
-      expect(finalTaskLog?.metrics).toMatchObject({
-        completion_tokens: 3,
-        prompt_tokens: 5,
-        tokens: 8,
+      expect(finalTaskLog?.metrics).toEqual({
+        duration: expect.any(Number),
+        end: expect.any(Number),
+        start: expect.any(Number),
       });
       expect(taskSpan?.end).toHaveBeenCalledTimes(1);
     },
   );
 
+  it("preserves Pi 1.4 prompt deltas and resolves tool updates without mutation", async () => {
+    const original = {
+      name: "lookup",
+      description: "Old lookup",
+      parameters: { type: "object" },
+    };
+    const replacement = { ...original, description: "New lookup" };
+    const prototypeNamed = { name: "__proto__", description: "Safe name" };
+    const context: PiContext = {
+      tools: [{ name: "stale" }],
+      messages: [
+        {
+          role: "system",
+          content: "Base instructions",
+          sections: JSON.parse(
+            '{"preamble":"Be helpful","cwd":"/old","__proto__":"Keep this section"}',
+          ),
+          toolsAdded: [original, { name: "removed" }, prototypeNamed],
+        },
+        { role: "user", content: "hello" },
+        {
+          role: "system",
+          content: [
+            { type: "text", text: "More instructions" },
+            { type: "text", text: "Second block" },
+          ],
+          sections: { preamble: "Be concise", cwd: null, extra: "New section" },
+          toolsRemoved: [{ name: "removed" }, { name: "lookup" }],
+          toolsAdded: [replacement],
+        },
+        {
+          role: "system",
+          content: "",
+          sections: { extra: null },
+          toolsAdded: [{ ...prototypeNamed, description: "Updated safely" }],
+        },
+      ],
+    };
+    const originalContext = structuredClone(context);
+    await captureContext(context);
+
+    expect(
+      findSpan(spans, "anthropic.messages.create")?.args.event.input,
+    ).toEqual([
+      {
+        role: "system",
+        content: "Base instructions\n\nBe helpful\n\n/old\n\nKeep this section",
+      },
+      { role: "user", content: "hello" },
+      {
+        role: "system",
+        content:
+          'More instructions\nSecond block\n\nUpdated system prompt section "preamble":\n\nBe concise\n\nRemoved system prompt section "cwd".\n\nUpdated system prompt section "extra":\n\nNew section',
+      },
+      {
+        role: "system",
+        content: 'Removed system prompt section "extra".',
+      },
+    ]);
+    expect(
+      findSpan(spans, "anthropic.messages.create")?.args.event.metadata.tools,
+    ).toEqual([
+      {
+        type: "function",
+        function: { ...prototypeNamed, description: "Updated safely" },
+      },
+      { type: "function", function: replacement },
+    ]);
+    expect(context).toEqual(originalContext);
+  });
+
+  it("does not restore legacy tools after the transcript removes every tool", async () => {
+    await captureContext({
+      tools: [{ name: "removed" }],
+      messages: [
+        { role: "system", content: "", toolsAdded: [{ name: "removed" }] },
+        { role: "system", content: "", toolsRemoved: [{ name: "removed" }] },
+      ],
+    });
+
+    expect(
+      findSpan(spans, "anthropic.messages.create")?.args.event.metadata,
+    ).not.toHaveProperty("tools");
+  });
+
+  it("falls back to legacy tools when system messages do not declare tools", async () => {
+    await captureContext({
+      tools: [{ name: "lookup" }],
+      messages: [{ role: "system", content: "Instructions" }],
+    });
+
+    expect(
+      findSpan(spans, "anthropic.messages.create")?.args.event.metadata.tools,
+    ).toEqual([{ type: "function", function: { name: "lookup" } }]);
+  });
+
+  async function captureContext(context: PiContext) {
+    registerPiCodingAgentInstrumentation();
+    const interceptor = promptInterceptor();
+    const originalStream = vi.fn(async (_model: PiModel, _context: PiContext) =>
+      makeStream(makeAssistantMessage("done")),
+    );
+    const agent = makeAgent(originalStream, "streamFunction");
+    const session = makeSession(agent);
+    await interceptor(
+      async () => {
+        const stream = await agent.streamFunction(anthropicModel(), context);
+        await stream.result();
+      },
+      session,
+      ["hello", undefined],
+      { moduleVersion: "1.4.0" },
+    );
+    expect(originalStream.mock.calls[0]?.[1]).toBe(context);
+  }
+
+  it("counts cached usage once across multiple LLM turns", async () => {
+    registerPiCodingAgentInstrumentation();
+    const interceptor = promptInterceptor();
+    // Pi's `input` excludes cached tokens (its OpenAI client subtracts them from
+    // `input_tokens`; Anthropic reports them separately), so 5 + 20 + 4 + 3 = 32.
+    const message = {
+      ...makeAssistantMessage("done"),
+      usage: {
+        cacheRead: 20,
+        cacheWrite: 4,
+        input: 5,
+        output: 3,
+        totalTokens: 32,
+      },
+    };
+    const agent = makeAgent(vi.fn(async () => makeStream(message)));
+    const session = makeSession(agent);
+
+    await interceptor(
+      async function (this: typeof session) {
+        for (let turnIndex = 0; turnIndex < 2; turnIndex++) {
+          const stream = await this.agent.streamFn(anthropicModel(), {
+            messages: [{ role: "user", content: "hello" }],
+          });
+          await stream.result();
+          await this.agent.emit({
+            type: "turn_end",
+            message,
+            toolResults: [],
+            turnIndex,
+          });
+        }
+      },
+      session,
+      ["hello", undefined],
+      {},
+    );
+
+    const expected = {
+      completion_tokens: 3,
+      prompt_cache_creation_tokens: 4,
+      prompt_cached_tokens: 20,
+      prompt_tokens: 29,
+      tokens: 32,
+    };
+    const llmSpans = spans.filter(
+      (span) => span.args.spanAttributes.type === "llm",
+    );
+    expect(llmSpans).toHaveLength(2);
+    for (const span of llmSpans) {
+      expect(span.log).toHaveBeenCalledWith(
+        expect.objectContaining({ metrics: expect.objectContaining(expected) }),
+      );
+    }
+    for (const [metric, value] of Object.entries(expected)) {
+      const total = spans.reduce(
+        (sum, span) =>
+          sum + (span.log.mock.calls.at(-1)?.[0].metrics?.[metric] ?? 0),
+        0,
+      );
+      expect(total).toBe(value * 2);
+    }
+  });
+
   it("isolates overlapping prompts on the same agent without prompt matching", async () => {
+    registerPiCodingAgentInstrumentation();
     registerPiCodingAgentInstrumentation();
     const interceptor = promptInterceptor();
     const originalStreamFn = vi.fn(async () =>
@@ -280,6 +467,7 @@ describe("registerPiCodingAgentInstrumentation", () => {
 
   it("keeps deferred follow-up prompts open for their ALS-owned turn", async () => {
     registerPiCodingAgentInstrumentation();
+    registerPiCodingAgentInstrumentation();
     const interceptor = promptInterceptor();
     const agent = makeAgent(
       vi.fn(async () => makeStream(makeAssistantMessage("done"))),
@@ -315,9 +503,15 @@ describe("registerPiCodingAgentInstrumentation", () => {
       expect.objectContaining({ output: expect.any(Array) }),
     );
     expect(taskSpan?.end).toHaveBeenCalledTimes(1);
+    expect(taskSpan?.log.mock.calls.at(-1)?.[0].metrics).toEqual({
+      duration: expect.any(Number),
+      end: expect.any(Number),
+      start: expect.any(Number),
+    });
   });
 
   it("preserves full-iterator stream behavior", async () => {
+    registerPiCodingAgentInstrumentation();
     registerPiCodingAgentInstrumentation();
     const interceptor = promptInterceptor();
     const message = makeAssistantMessage("done");
@@ -355,6 +549,7 @@ describe("registerPiCodingAgentInstrumentation", () => {
 
   it("forwards iterator failures and closes the underlying iterator", async () => {
     registerPiCodingAgentInstrumentation();
+    registerPiCodingAgentInstrumentation();
     const interceptor = promptInterceptor();
     const { iterator, stream } = makeIteratorBackedStream([]);
     iterator.next.mockRejectedValueOnce(new Error("stream next failed"));
@@ -389,6 +584,7 @@ describe("registerPiCodingAgentInstrumentation", () => {
 
   it("closes active prompt and LLM spans when the target rejects", async () => {
     registerPiCodingAgentInstrumentation();
+    registerPiCodingAgentInstrumentation();
     const interceptor = promptInterceptor();
     const agent = makeAgent(
       vi.fn(async () => makeStream(makeAssistantMessage("unused"))),
@@ -422,6 +618,7 @@ describe("registerPiCodingAgentInstrumentation", () => {
   });
 
   it("keeps in-flight prompts active until the call completes", async () => {
+    registerPiCodingAgentInstrumentation();
     registerPiCodingAgentInstrumentation();
     const interceptor = promptInterceptor();
     const originalStreamFn = vi.fn(async () =>

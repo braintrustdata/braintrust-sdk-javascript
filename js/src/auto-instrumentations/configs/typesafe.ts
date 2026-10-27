@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { typeSafeChannels } from "../../instrumentation/providers/typesafe-channels";
+import { typeSafeChannels } from "../../instrumentation/providers/typesafe-interceptors";
 
 export const typeSafeConfigs: InstrumentationConfig[] = [
   "dist/index.mjs",
@@ -14,6 +14,5 @@ export const typeSafeConfigs: InstrumentationConfig[] = [
   functionQuery: {
     className: "TypeSafeClient",
     methodName: "systemOne",
-    kind: "Async" as const,
   },
 }));

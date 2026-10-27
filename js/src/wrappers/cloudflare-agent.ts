@@ -1,6 +1,6 @@
 import { registerInstrumentation } from "../instrumentation/registrations/cloudflareAgents";
 import { debugLogger } from "../debug-logger";
-import { cloudflareAgentsChannels } from "../instrumentation/providers/cloudflare-agents-channels";
+import { cloudflareAgentsChannels } from "../instrumentation/providers/cloudflare-agents-interceptors";
 import type { CloudflareAgent } from "../vendor-sdk-types/cloudflare-agents";
 
 const WRAPPED_RUN_AGENT_TOOL = Symbol.for(
@@ -56,9 +56,11 @@ export function wrapCloudflareAgent<T>(Agent: T): T {
         return Reflect.apply(originalRunAgentTool, this, args);
       }
 
-      return cloudflareAgentsChannels.runAgentTool.tracePromise(
-        () => Reflect.apply(originalRunAgentTool, this, args),
-        { arguments: args, self: this },
+      return cloudflareAgentsChannels.runAgentTool.invoke(
+        originalRunAgentTool,
+        this,
+        args,
+        {},
       );
     },
   });
@@ -86,5 +88,7 @@ function isObjectLike(value: unknown): value is object {
 }
 
 function warnUnsupportedAgent(): void {
-  debugLogger.warn("Unsupported Cloudflare Agents Agent class. Not wrapping.");
+  debugLogger.notice.warn(
+    "Unsupported Cloudflare Agents Agent class. Not wrapping.",
+  );
 }

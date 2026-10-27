@@ -195,13 +195,16 @@ function normalizeStackLikeString(value: string): string {
     "<tmp>/claude-agent/tasks/<output-file>",
   );
 
-  normalized = normalized.replace(
-    STACK_FRAME_REPO_PATH_REGEX,
-    (_, suffix: string) => `<repo>${suffix.replace(/\\/g, "/")}:0:0`,
-  );
-  normalized = normalized.replace(REPO_PATH_REGEX, (_, suffix: string) => {
-    return `<repo>${suffix.replace(/\\/g, "/")}`;
-  });
+  // Avoid quadratic path matching on large inline media strings.
+  if (normalized.includes("braintrust-sdk-javascript")) {
+    normalized = normalized.replace(
+      STACK_FRAME_REPO_PATH_REGEX,
+      (_, suffix: string) => `<repo>${suffix.replace(/\\/g, "/")}:0:0`,
+    );
+    normalized = normalized.replace(REPO_PATH_REGEX, (_, suffix: string) => {
+      return `<repo>${suffix.replace(/\\/g, "/")}`;
+    });
+  }
   normalized = normalized.replace(SDK_CHUNK_PATH_REGEX, "$1index$2");
   normalized = normalized.replace(
     /(<repo>(?:\/(?:e2e|js)\/[^:\s)\n]+)):\d+:\d+/g,

@@ -12,13 +12,12 @@ describe("piCodingAgentConfigs", () => {
       channelName: piCodingAgentChannelName,
       module: {
         name: "@earendil-works/pi-coding-agent",
-        versionRange: ">=0.79.0 <1.0.0",
+        versionRange: ">=0.79.0 <2.0.0",
         filePath: "dist/core/agent-session.js",
       },
       functionQuery: {
         className: "AgentSession",
         methodName: "prompt",
-        kind: "Async",
       },
     });
     expect(piCodingAgentConfigs[0].module.filePath).not.toContain("cli");

@@ -1,3 +1,4 @@
+import iso from "#braintrust-platform";
 import {
   afterEach,
   beforeEach,
@@ -6,6 +7,13 @@ import {
   it,
   vi,
 } from "vite-plus/test";
+import { newGlobalInvocationHook } from "../../global-instrumentation-hooks";
+vi.mock("../../global-instrumentation-hooks", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../global-instrumentation-hooks")
+  >()),
+  newGlobalInvocationHook: vi.fn(),
+}));
 
 const { mockWithCurrent, mockNewAsyncLocalStorage, mockStartSpan } = vi.hoisted(
   () => ({
@@ -35,12 +43,11 @@ vi.mock("#braintrust-platform", () => ({
       name === "BRAINTRUST_AUTO_CAPTURE_ATTACHMENTS" ? "true" : undefined,
     ),
     newAsyncLocalStorage: mockNewAsyncLocalStorage,
-    newTracingChannel: vi.fn(),
   },
 }));
 
 vi.mock("../../logger/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../logger")>();
+  const actual = await importOriginal<typeof import("../../logger/core")>();
   return {
     ...actual,
     startSpan: (...args: unknown[]) => mockStartSpan(...args),
@@ -48,15 +55,13 @@ vi.mock("../../logger/core", async (importOriginal) => {
   };
 });
 
-vi.mock("../../lru-cache", { spy: true });
-
-import { LRUCache } from "../../lru-cache";
-import iso from "#braintrust-platform";
 import { Attachment } from "../../logger/core";
 import { isAutoInstrumentationSuppressed } from "../auto-instrumentation-suppression";
 import { registerStrandsAgentSDKInstrumentation } from "./strands-agent-sdk-instrumentation";
 
-const mockNewTracingChannel = iso.newTracingChannel as ReturnType<typeof vi.fn>;
+const mockNewInvocationHook = newGlobalInvocationHook as ReturnType<
+  typeof vi.fn
+>;
 
 describe("registerStrandsAgentSDKInstrumentation", () => {
   let handlersByName: Map<string, any>;
@@ -77,7 +82,7 @@ describe("registerStrandsAgentSDKInstrumentation", () => {
   beforeEach(() => {
     handlersByName = new Map();
     spans = [];
-    mockNewTracingChannel.mockImplementation((name: string) => ({
+    mockNewInvocationHook.mockImplementation((name: string) => ({
       intercept: vi.fn((interceptor) => {
         const handlers = {
           end: (event: any) =>
@@ -392,7 +397,6 @@ describe("registerStrandsAgentSDKInstrumentation", () => {
         modelSpan?.args.event.input[0].content[0].document.source?.bytes;
 
       if (!captureAttachments) {
-        expect(LRUCache).not.toHaveBeenCalled();
         expect(rootAttachment).toBeUndefined();
         expect(modelAttachment).toBeUndefined();
         return;

@@ -1,0 +1,133 @@
+{
+  "span_tree": [
+    {
+      "name": "ai-sdk-batch",
+      "type": "task",
+      "children": [
+        {
+          "name": "ai.batch",
+          "type": "task",
+          "children": [
+            {
+              "name": "ai.batch.request",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with only the word one.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": [
+                      {
+                        "text": "One",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "batch_id": "<batch_id:1>",
+                "max_tokens": 16,
+                "model": "google/gemini-2.5-flash",
+                "provider": "gateway.batch",
+                "reasoning": "none",
+                "request_id": "one",
+                "status": "succeeded",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 1,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 8,
+                "tokens": 9
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
+            },
+            {
+              "name": "ai.batch.request",
+              "type": "llm",
+              "children": [],
+              "input": [
+                {
+                  "content": "Reply with only the word two.",
+                  "role": "user"
+                }
+              ],
+              "output": [
+                {
+                  "finish_reason": "stop",
+                  "index": 0,
+                  "message": {
+                    "content": [
+                      {
+                        "text": "two",
+                        "type": "text"
+                      }
+                    ],
+                    "role": "assistant"
+                  }
+                }
+              ],
+              "metadata": {
+                "batch_id": "<batch_id:1>",
+                "max_tokens": 16,
+                "model": "google/gemini-2.5-flash",
+                "provider": "gateway.batch",
+                "reasoning": "none",
+                "request_id": "two",
+                "status": "succeeded",
+                "temperature": 0
+              },
+              "metrics": {
+                "completion_tokens": 1,
+                "prompt_cached_tokens": 0,
+                "prompt_tokens": 8,
+                "tokens": 9
+              },
+              "context": {
+                "caller_filename": "<node-internal>",
+                "caller_functionname": "<node-internal>",
+                "caller_lineno": 0
+              }
+            }
+          ],
+          "metadata": {
+            "batch_id": "<batch_id:1>",
+            "provider": "gateway.batch",
+            "raw_status": "BATCH_STATE_SUCCEEDED",
+            "request_counts": {
+              "completed": 2,
+              "failed": 0,
+              "pending": 0,
+              "total": 2
+            },
+            "status": "completed"
+          },
+          "context": {
+            "caller_filename": "<node-internal>",
+            "caller_functionname": "<node-internal>",
+            "caller_lineno": 0
+          }
+        }
+      ],
+      "metadata": {
+        "mode": "manual",
+        "scenario": "ai-sdk-batch-instrumentation",
+        "testRunId": "<run:1>",
+        "variant": "ai-sdk-v7-latest"
+      }
+    }
+  ]
+}

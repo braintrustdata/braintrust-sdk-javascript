@@ -30,9 +30,10 @@ import type { ProgressReporter } from "./reporters/types";
 import { InternalAbortError } from "./util";
 import { getEventListeners } from "node:events";
 
+// SDK initialization can exceed the default hook timeout on Windows CI.
 beforeAll(() => {
   configureNode();
-});
+}, 30_000);
 
 class NoopProgressReporter implements ProgressReporter {
   public start() {}

@@ -1,5 +1,15 @@
 # @braintrust/otel
 
+## 1.1.0
+
+### Minor Changes
+
+- feat: support OpenTelemetry span customizers Thanks @realark! (https://github.com/braintrustdata/braintrust-sdk-javascript/pull/2615)
+
+### Patch Changes
+
+- Updated dependencies: braintrust@3.38.0
+
 ## 1.0.2
 
 ### Patch Changes

@@ -12,11 +12,16 @@ import type { InstrumentationConfig } from "./types";
  * returns a cached Transformer for matching configs.
  */
 export class InstrumentationMatcher {
-  private configs: InstrumentationConfig[] = [];
+  private configs = new Map<string, InstrumentationConfig[]>();
   private transformers: Record<string, Transformer> = {};
 
   constructor(configs: InstrumentationConfig[]) {
-    this.configs = configs;
+    for (const config of configs) {
+      const name = config.module.name;
+      const packageConfigs = this.configs.get(name);
+      if (packageConfigs) packageConfigs.push(config);
+      else this.configs.set(name, [config]);
+    }
   }
 
   /**
@@ -28,6 +33,9 @@ export class InstrumentationMatcher {
     version: string,
     filePath: string,
   ): Transformer | undefined {
+    const packageConfigs = this.configs.get(moduleName);
+    if (!packageConfigs) return undefined;
+
     filePath = filePath.replace(/\\/g, "/");
 
     const id = `${moduleName}/${filePath}@${version}`;
@@ -36,11 +44,9 @@ export class InstrumentationMatcher {
       return this.transformers[id];
     }
 
-    const configs = this.configs.filter(
+    const configs = packageConfigs.filter(
       ({ module: mod }) =>
-        mod.name === moduleName &&
-        mod.filePath === filePath &&
-        semifies(version, mod.versionRange),
+        mod.filePath === filePath && semifies(version, mod.versionRange),
     );
 
     if (configs.length === 0) {
@@ -55,9 +61,5 @@ export class InstrumentationMatcher {
     );
 
     return this.transformers[id];
-  }
-
-  free(): void {
-    this.transformers = {};
   }
 }

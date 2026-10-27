@@ -20,15 +20,23 @@ it("links published runs while preserving legacy records and excluding local-onl
           label: "Scenario",
           metadataScenario: "scenario",
         },
+        ...["captured", "eval-only", "empty"].map((name) => ({
+          scenarioDirName: name,
+          label: name,
+          metadataScenario: name,
+        })),
         {
-          scenarioDirName: "without-metadata",
-          label: "Without metadata",
-          metadataScenario: "without-metadata",
-        },
-        {
-          scenarioDirName: "experiment",
-          label: "Experiment",
-          metadataScenario: "experiment",
+          scenarioDirName: "grouped",
+          label: "Grouped",
+          metadataScenario: "grouped",
+          variants: [
+            {
+              variantKey: "v1",
+              label: "v1",
+              variantKeys: ["v1-manual", "v1-auto"],
+            },
+            { variantKey: "v2", label: "v2" },
+          ],
         },
       ]),
     );
@@ -39,19 +47,34 @@ it("links published runs while preserving legacy records and excluding local-onl
         { testRunId: "e2e-local-only", forwardToProduction: false },
         { testRunId: "e2e-legacy" },
         {
-          scenarioDirName: "without-metadata",
-          testRunId: "e2e-no-metadata",
+          scenarioDirName: "captured",
+          testRunId: "e2e-captured",
           forwardToProduction: true,
-          logRootSpanIds: ["root-without-metadata"],
+          logRootSpanIds: ["trace-without-scenario-metadata"],
           experimentNames: [],
         },
         {
-          scenarioDirName: "experiment",
-          testRunId: "e2e-experiment",
+          scenarioDirName: "eval-only",
+          testRunId: "e2e-eval",
           forwardToProduction: true,
           logRootSpanIds: [],
-          experimentNames: ["suite with spaces"],
+          experimentNames: ["eval/with spaces"],
         },
+        {
+          scenarioDirName: "empty",
+          testRunId: "e2e-empty",
+          forwardToProduction: true,
+          logRootSpanIds: [],
+          experimentNames: [],
+        },
+        ...["manual", "auto"].map((mode) => ({
+          scenarioDirName: "grouped",
+          variantKey: `v1-${mode}`,
+          testRunId: `e2e-${mode}`,
+          forwardToProduction: true,
+          logRootSpanIds: [`trace-${mode}`],
+          experimentNames: [],
+        })),
       ]
         .map((record) =>
           JSON.stringify({ scenarioDirName: "scenario", ...record }),
@@ -79,21 +102,29 @@ it("links published runs while preserving legacy records and excluding local-onl
     expect(stdout).toContain("e2e-published");
     expect(stdout).toContain("e2e-legacy");
     expect(stdout).not.toContain("e2e-local-only");
-    const logRow = stdout
-      .split("\n")
-      .find((line) => line.startsWith("| Without metadata |"))!;
-    const logUrl = new URL(logRow.match(/\]\(([^)]+)\)/)![1]);
-    const search = JSON.parse(logUrl.searchParams.get("search")!);
-    expect(
-      search.filter.map((filter: { text: string }) =>
-        decodeURIComponent(filter.text),
-      ),
-    ).toEqual(['root_span_id IN ("root-without-metadata")']);
-    const evalRow = stdout
-      .split("\n")
-      .find((line) => line.startsWith("| Experiment |"))!;
-    expect(evalRow).toContain("/experiments/suite%20with%20spaces");
-    expect(evalRow).not.toContain("/logs?");
+    const logsLinks = [...stdout.matchAll(/\[Open logs\]\(([^)]+)\)/g)];
+    expect(logsLinks).toHaveLength(3);
+    const search = JSON.parse(
+      new URL(logsLinks[1][1]).searchParams.get("search")!,
+    );
+    expect(decodeURIComponent(search.filter[0].text)).toBe(
+      '(root_span_id IN ("trace-without-scenario-metadata"))',
+    );
+    expect(stdout).toContain("/experiments/eval%2Fwith%20spaces");
+    expect(stdout).toContain("| empty | N/A | Observed (no captured traces) |");
+    expect(stdout).not.toContain("e2e-eval");
+    const groupedSearch = JSON.parse(
+      new URL(logsLinks[2][1]).searchParams.get("search")!,
+    );
+    expect(decodeURIComponent(groupedSearch.filter[0].text)).toBe(
+      '(root_span_id IN ("trace-manual", "trace-auto"))',
+    );
+    expect(stdout).toContain("| Grouped (v1) |");
+    expect(stdout).toContain("| Observed (2 runs) |");
+    expect(stdout).toContain(
+      "| Grouped (v2) | N/A | Not observed in this run |",
+    );
+    expect(stdout).not.toContain("unconfigured variant");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

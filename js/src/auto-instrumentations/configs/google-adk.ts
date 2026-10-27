@@ -1,5 +1,5 @@
 import type { InstrumentationConfig } from "../orchestrion-js";
-import { googleADKChannels } from "../../instrumentation/providers/google-adk-channels";
+import { googleADKChannels } from "../../instrumentation/providers/google-adk-interceptors";
 
 const googleADKVersionRange = ">=0.1.0";
 const googleADKBundledIndexV06VersionRange = ">=0.6.1 <0.7.0";
@@ -8,16 +8,12 @@ const googleADKBundledIndexV1VersionRange = ">=1.0.0 <2.0.0";
 /**
  * Instrumentation configurations for the Google ADK (@google/adk).
  *
- * Runner.runAsync and BaseAgent.runAsync are async generators (`async *`).
- * They synchronously return an AsyncGenerator object, so we use kind "Sync"
- * paired with "sync-stream" channels — the same pattern used by the
- * Claude Agent SDK's `query` function.
- *
- * FunctionTool.runAsync is a regular async method (returns Promise<unknown>)
- * and uses kind "Async".
+ * Runner.runAsync and BaseAgent.runAsync synchronously return async generators.
+ * FunctionTool.runAsync returns a Promise; the plugin handles these result
+ * shapes independently of the transformer.
  */
 export const googleADKConfigs: InstrumentationConfig[] = [
-  // --- Runner.runAsync --- async generator, kind "Sync" + sync-stream channel
+  // --- Runner.runAsync --- async generator
 
   // Runner.runAsync — ESM individual module file
   {
@@ -30,7 +26,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "Runner",
       methodName: "runAsync",
-      kind: "Sync",
     },
   },
 
@@ -48,7 +43,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Sync",
       index: 11,
     },
   },
@@ -61,7 +55,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Sync",
       index: 11,
     },
   },
@@ -76,7 +69,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Sync",
       index: 12,
     },
   },
@@ -89,12 +81,11 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Sync",
       index: 12,
     },
   },
 
-  // --- BaseAgent.runAsync --- async generator, kind "Sync" + sync-stream channel
+  // --- BaseAgent.runAsync --- async generator
 
   // BaseAgent.runAsync — ESM individual module file
   {
@@ -107,7 +98,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "BaseAgent",
       methodName: "runAsync",
-      kind: "Sync",
     },
   },
 
@@ -125,7 +115,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Sync",
       index: 0,
     },
   },
@@ -138,7 +127,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Sync",
       index: 0,
     },
   },
@@ -153,7 +141,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Sync",
       index: 0,
     },
   },
@@ -166,12 +153,11 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Sync",
       index: 0,
     },
   },
 
-  // --- FunctionTool.runAsync --- regular async, kind "Async"
+  // --- FunctionTool.runAsync --- regular async
 
   // FunctionTool.runAsync — ESM individual module file
   {
@@ -184,7 +170,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     functionQuery: {
       className: "FunctionTool",
       methodName: "runAsync",
-      kind: "Async",
     },
   },
 
@@ -202,7 +187,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Async",
       index: 1,
     },
   },
@@ -215,7 +199,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Async",
       index: 1,
     },
   },
@@ -229,7 +212,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Async",
       index: 1,
     },
   },
@@ -242,7 +224,6 @@ export const googleADKConfigs: InstrumentationConfig[] = [
     },
     functionQuery: {
       methodName: "runAsync",
-      kind: "Async",
       index: 1,
     },
   },

@@ -1,3 +1,4 @@
+import { resetInstrumentationForTest } from "./instrumentation/test-utils/reset";
 import {
   afterEach,
   beforeEach,
@@ -30,11 +31,7 @@ describe.each([
       vi.restoreAllMocks();
 
       Reflect.deleteProperty(globalThis, braintrustStateSymbol);
-      Reflect.deleteProperty(
-        globalThis,
-        Symbol.for("braintrust.registry.global-hooks.v1"),
-      );
-      Reflect.deleteProperty(globalThis, "__braintrust_instrumentation_hooks");
+      resetInstrumentationForTest();
 
       if (originalAsyncLocalStorageDescriptor) {
         Object.defineProperty(
@@ -81,7 +78,7 @@ describe.each([
       const platform = await import(entrypoint.replace("/index", "/config"));
       (platform.configureWorkerd ?? platform.configureEdgeLight)();
       const braintrust = await import(entrypoint);
-      const { _exportsForTestingOnly } = await import("./logger");
+      const { _exportsForTestingOnly } = await import("./logger/testing");
 
       _exportsForTestingOnly.setInitialTestState();
       await _exportsForTestingOnly.simulateLoginForTests();
@@ -129,7 +126,7 @@ describe.each([
       const platform = await import(entrypoint.replace("/index", "/config"));
       (platform.configureWorkerd ?? platform.configureEdgeLight)();
       const braintrust = await import(entrypoint);
-      const { _exportsForTestingOnly } = await import("./logger");
+      const { _exportsForTestingOnly } = await import("./logger/testing");
 
       _exportsForTestingOnly.setInitialTestState();
       await _exportsForTestingOnly.simulateLoginForTests();

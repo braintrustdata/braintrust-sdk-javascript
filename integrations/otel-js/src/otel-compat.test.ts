@@ -7,12 +7,12 @@
 
 import { beforeEach, afterEach, describe, expect, test } from "vite-plus/test";
 import { initLogger, currentSpan, Eval } from "braintrust";
+import { _exportsForTestingOnly } from "../../../js/src/logger/testing";
 import {
-  _exportsForTestingOnly,
   _internalStartSpan,
   _internalWithParent,
   getContextManager,
-} from "../../../js/src/logger";
+} from "../../../js/src/logger/core";
 import {
   BasicTracerProvider,
   InMemorySpanExporter,

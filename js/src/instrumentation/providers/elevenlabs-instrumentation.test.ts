@@ -16,7 +16,7 @@ import {
 import { Attachment, initLogger } from "../../logger/core";
 import { _exportsForTestingOnly } from "../../logger/testing";
 import { configureNode } from "../../node/config";
-import { elevenLabsChannels } from "./elevenlabs-channels";
+import { elevenLabsChannels } from "./elevenlabs-interceptors";
 import { wrapElevenLabs } from "../../wrappers/elevenlabs";
 
 configureNode();

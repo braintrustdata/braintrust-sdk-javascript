@@ -5,6 +5,85 @@ import { describe, expect, it } from "vite-plus/test";
 import { startMockBraintrustServer } from "./mock-braintrust-server";
 
 describe("production forwarding", () => {
+  it("isolates replayed row IDs across runs while preserving merges and captured rows", async () => {
+    const stored = new Map<string, Record<string, unknown>>();
+    const upstream = createServer(async (req, res) => {
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      if (body) {
+        for (const row of JSON.parse(body).rows) {
+          stored.set(
+            row.id,
+            row._is_merge ? { ...stored.get(row.id), ...row } : row,
+          );
+        }
+      }
+      res.end("{}");
+    });
+    await new Promise<void>((resolve) =>
+      upstream.listen(0, "127.0.0.1", resolve),
+    );
+    const url = `http://127.0.0.1:${(upstream.address() as AddressInfo).port}`;
+    try {
+      for (const testRunId of ["first", "second"]) {
+        const server = await startMockBraintrustServer({
+          testRunId,
+          isolateProductionLogIds: true,
+          prodForwarding: {
+            apiKey: "test-only-key",
+            apiUrl: url,
+            appUrl: url,
+            orgId: "org",
+            orgName: "org",
+            projectId: "project",
+            projectName: "tmp-luca-forwarding-test",
+          },
+        });
+        try {
+          for (const update of [{ input: "hello" }, { output: testRunId }]) {
+            const response = await fetch(`${server.url}/logs3`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                api_version: 2,
+                rows: [
+                  {
+                    id: "batch-request",
+                    _is_merge: true,
+                    span_id: "span",
+                    root_span_id: testRunId,
+                    ...update,
+                  },
+                ],
+              }),
+            });
+            expect(response.ok).toBe(true);
+            await response.text();
+          }
+          expect(
+            server.payloads
+              .flatMap((payload) => payload.rows)
+              .map((row) => row.id),
+          ).toEqual(["batch-request", "batch-request"]);
+        } finally {
+          await server.close();
+        }
+      }
+      expect(stored.size).toBe(2);
+      for (const testRunId of ["first", "second"]) {
+        expect(stored.get(`${testRunId}:batch-request`)).toMatchObject({
+          input: "hello",
+          output: testRunId,
+          span_id: "span",
+          root_span_id: testRunId,
+        });
+      }
+    } finally {
+      upstream.closeAllConnections();
+      await new Promise<void>((resolve) => upstream.close(() => resolve()));
+    }
+  });
+
   it.each(["/logs3", "/otel/v1/traces"])(
     "preserves write order for %s even when the initial write is slow",
     async (path) => {
